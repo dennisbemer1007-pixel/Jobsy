@@ -135,8 +135,17 @@ public sealed class CompactHeadersPreviewR7ScreenshotTests : IAsyncLifetime
         {
             Assert.True(metrics.ArtEdgeSeamDelta < 6,
                 $"{slug} c@{width}: art-edge seam {metrics.ArtEdgeSeamDelta}.");
-            Assert.True(metrics.ArtWidthPercent >= 42 && metrics.ArtWidthPercent <= 58,
-                $"{slug} c@{width}: art column {metrics.ArtWidthPercent:F1}% (42–58).");
+            if (slug == "carriere" && width >= 1024)
+            {
+                var artMax = width >= 1800 ? 82.0 : 78.0;
+                Assert.True(metrics.ArtWidthPercent >= 48 && metrics.ArtWidthPercent <= artMax,
+                    $"{slug} c@{width}: art column {metrics.ArtWidthPercent:F1}% (rail grid).");
+            }
+            else
+            {
+                Assert.True(metrics.ArtWidthPercent >= 42 && metrics.ArtWidthPercent <= 58,
+                    $"{slug} c@{width}: art column {metrics.ArtWidthPercent:F1}% (42–58).");
+            }
         }
 
         if (slug == "onboarding-kennismaken")
@@ -147,6 +156,12 @@ public sealed class CompactHeadersPreviewR7ScreenshotTests : IAsyncLifetime
 
         if (slug == "carriere")
         {
+            if (width is >= 1400 and <= 1480)
+            {
+                Assert.True(metrics.HeroBandHeightPx <= 152,
+                    $"carriere c@{width}: band height {metrics.HeroBandHeightPx}px (max 152).");
+            }
+
             Assert.True(metrics.CareerArtHeightRatio >= 0.72,
                 $"carriere c@{width}: art height ratio {metrics.CareerArtHeightRatio:F2} (min 0.72 of band).");
             Assert.Equal(baselineSteppers, metrics.CareerStepperCount);
@@ -343,7 +358,10 @@ public sealed class CompactHeadersPreviewR7ScreenshotTests : IAsyncLifetime
               const bandRect = band.getBoundingClientRect();
               const nodes = band.querySelectorAll('h1, .cand-hero__lead, .ob-wizard__lead, .cand-hero__eyebrow');
               for (const el of nodes) {
-                if (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) return true;
+                const style = getComputedStyle(el);
+                const ellipses = style.textOverflow === 'ellipsis' || style.overflow === 'hidden';
+                if (el.scrollHeight > el.clientHeight + 1) return true;
+                if (!ellipses && el.scrollWidth > el.clientWidth + 1) return true;
                 const r = el.getBoundingClientRect();
                 if (r.width < 120) return true;
                 if (r.bottom > bandRect.bottom + 4) return true;

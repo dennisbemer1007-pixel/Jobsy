@@ -13,7 +13,7 @@ public static class CompactHeroPreviewArt
         if (artUrl.Contains("opleiding.jpg", StringComparison.OrdinalIgnoreCase)
             || artUrl.Contains("leren-groeien-hero", StringComparison.OrdinalIgnoreCase))
         {
-            return CandidateIllustratedImages.LearnGrowHeroFiguresMobile;
+            return CandidateIllustratedImages.LearnGrowHeroCompactC;
         }
 
         if (artUrl.Contains("kompas-hero-wide", StringComparison.OrdinalIgnoreCase))

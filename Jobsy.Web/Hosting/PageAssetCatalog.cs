@@ -275,7 +275,7 @@ public static class PageAssetCatalog
             || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
             || path == PassportRedirects.PassportPath)
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261019-18"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261019-22"];
         }
 
         return [];
