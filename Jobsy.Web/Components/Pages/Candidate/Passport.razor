@@ -37,6 +37,7 @@
     {
         <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r3.css?v=20261019-r3" />
         <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r4.css?v=20261019-r4b" />
+        <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r5.css?v=20261019-r5b" />
     }
     <h1 class="visually-hidden">@Culture["Passport.Title"]</h1>
 
@@ -59,10 +60,10 @@
             @if (_compactLayout == "c")
             {
                 <div class="passport-margin-decor passport-margin-decor--left" aria-hidden="true">
-                    <img src="@($"/{BrandImages.MascotWebp256}")"
+                    <img src="@BrandImages.MarkSvg"
                          alt=""
-                         width="256"
-                         height="256"
+                         width="220"
+                         height="220"
                          decoding="async" />
                 </div>
             }

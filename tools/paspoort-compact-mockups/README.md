@@ -10,7 +10,7 @@ Mockups render the **actual** paspoort page with stubbed API data (fake user **A
 | --- | --- |
 | `compactLayout=a` | Slim ~84px greeting band |
 | `compactLayout=b` | Greeting in passport card, no top hero |
-| `compactLayout=c` | Wide canvas (PO choice, **r4**): greeting in card, gutter spot art + mascot, anchored nudge |
+| `compactLayout=c` | Wide canvas (PO choice, **r5**): logo-E mark + vragen spot in gutters, anchored nudge |
 
 Regenerate PNGs and coverage table:
 
@@ -21,8 +21,9 @@ dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter FullyQualifiedName~PassportC
 Outputs:
 
 - `/opt/cursor/artifacts/paspoort-compact-mockups/variant-{a,b,c}-{viewport}-r2.png`
-- `/opt/cursor/artifacts/paspoort-compact-mockups/variant-c-{viewport}-r3.png`
-- `above-the-fold-coverage-r2.md` / `above-the-fold-coverage-r3.md`
+- `/opt/cursor/artifacts/paspoort-compact-mockups/variant-c-{viewport}-r4.png`
+- `above-the-fold-coverage-r2.md` / `above-the-fold-coverage-r4.md`
+- Margin QA crops (1920): `variant-c-1920x1080-margin-{left,right}-r4.png`
 
 ## r1 (deprecated)
 

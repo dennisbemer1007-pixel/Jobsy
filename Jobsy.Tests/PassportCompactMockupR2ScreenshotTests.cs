@@ -65,6 +65,25 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_real_paspoort_compact_variant_c_r5()
+    {
+        Directory.CreateDirectory(ArtifactsDir);
+        var tableRows = new List<string>();
+        foreach (var (width, height, tag) in Viewports())
+        {
+            tableRows.Add(await CaptureAsync("c", width, height, tag, revision: "r5"));
+        }
+
+        await SaveMarginCropsAsync(1920, 1080, revision: "r5");
+
+        var md = BuildMarkdown(tableRows, revision: "r5", title: "Paspoort compact mockup variant C (r5, logo-E mark + soft spot fade)");
+        await File.WriteAllTextAsync(Path.Combine(ArtifactsDir, "above-the-fold-coverage-r5.md"), md);
+        await File.WriteAllTextAsync(
+            Path.Combine(FindRepoRoot(), "tools", "paspoort-compact-mockups", "above-the-fold-coverage-r5.md"),
+            md);
+    }
+
+    [Fact]
     public async Task Capture_real_paspoort_compact_variant_c_r4()
     {
         Directory.CreateDirectory(ArtifactsDir);
@@ -74,7 +93,7 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
             tableRows.Add(await CaptureAsync("c", width, height, tag, revision: "r4"));
         }
 
-        await SaveMarginCropsAsync(1920, 1080);
+        await SaveMarginCropsAsync(1920, 1080, revision: "r4");
 
         var md = BuildMarkdown(tableRows, revision: "r4", title: "Paspoort compact mockup variant C (r4, margin art fix)");
         await File.WriteAllTextAsync(Path.Combine(ArtifactsDir, "above-the-fold-coverage-r4.md"), md);
@@ -190,7 +209,7 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
         return FormatRow(layout.ToUpperInvariant(), tag, fold, fileName);
     }
 
-    private async Task SaveMarginCropsAsync(int width, int height)
+    private async Task SaveMarginCropsAsync(int width, int height, string revision = "r4")
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
@@ -217,7 +236,7 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
 
             await locator.ScreenshotAsync(new()
             {
-                Path = Path.Combine(ArtifactsDir, $"variant-c-{width}x{height}-margin-{side}-r4.png")
+                Path = Path.Combine(ArtifactsDir, $"variant-c-{width}x{height}-margin-{side}-{revision}.png")
             });
         }
     }
