@@ -1,7 +1,7 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace Jobsy.Web.Media;
+namespace Jobsy.Tests;
 
 /// <summary>Sample illustration band colour from the art file's left-edge column (x 0–10, full height).</summary>
 public static class CompactHeroPreviewCreamSampler

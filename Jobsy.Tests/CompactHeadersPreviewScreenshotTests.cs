@@ -91,44 +91,44 @@ public sealed class CompactHeadersPreviewScreenshotTests : IAsyncLifetime
         var pathWithQuery = page.Path + query;
         try
         {
-        await browserPage.GotoAsync(
-            $"{page.Server}/__test/sign-in?return={Uri.EscapeDataString(pathWithQuery)}",
-            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await browserPage.GotoAsync($"{page.Server}{pathWithQuery}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await browserPage.AddStyleTagAsync(new()
-        {
-            Content = """
+            await browserPage.GotoAsync(
+                $"{page.Server}/__test/sign-in?return={Uri.EscapeDataString(pathWithQuery)}",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await browserPage.GotoAsync($"{page.Server}{pathWithQuery}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await browserPage.AddStyleTagAsync(new()
+            {
+                Content = """
                 .pub-header, .jobsy-chrome__header, .bottom-nav, .candidate-bottom-nav,
                 .lobsy-coach-dock, .pub-coach-dock { position: static !important; }
                 .passport-layout__card--desktop { position: static !important; }
                 .lobsy-assistant-tab, .pub-assistant-rail, .assistant-rail, [data-assistant-rail] { display: none !important; }
                 """
-        });
+            });
 
-        if (page.Onboarding)
-        {
-            await browserPage.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new() { Timeout = 120_000 });
-            if (width > 390)
+            if (page.Onboarding)
             {
-                await browserPage.Locator("[data-testid=onboarding-step-1-illustrated] .ob-illustrated-step__hero-band")
-                    .WaitForAsync(new() { Timeout = 120_000 });
+                await browserPage.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new() { Timeout = 120_000 });
+                if (width > 390)
+                {
+                    await browserPage.Locator("[data-testid=onboarding-step-1-illustrated] .ob-illustrated-step__hero-band")
+                        .WaitForAsync(new() { Timeout = 120_000 });
+                }
+                else
+                {
+                    await browserPage.Locator("[data-testid=onboarding-mobile-hero]").WaitForAsync(new() { Timeout = 120_000 });
+                }
             }
             else
             {
-                await browserPage.Locator("[data-testid=onboarding-mobile-hero]").WaitForAsync(new() { Timeout = 120_000 });
+                await browserPage.Locator(".cand-hero").First.WaitForAsync(new() { Timeout = 120_000 });
             }
-        }
-        else
-        {
-            await browserPage.Locator(".cand-hero").First.WaitForAsync(new() { Timeout = 120_000 });
-        }
 
-        await browserPage.WaitForTimeoutAsync(800);
-        var file = Path.Combine(ArtifactsDir, $"{page.Slug}-{variant}-{width}.png");
-        await browserPage.ScreenshotAsync(new() { Path = file, FullPage = false });
-        Assert.True(File.Exists(file));
+            await browserPage.WaitForTimeoutAsync(800);
+            var file = Path.Combine(ArtifactsDir, $"{page.Slug}-{variant}-{width}.png");
+            await browserPage.ScreenshotAsync(new() { Path = file, FullPage = false });
+            Assert.True(File.Exists(file));
 
-        await WriteHeroMetaAsync(browserPage, page, variant, width, file);
+            await WriteHeroMetaAsync(browserPage, page, variant, width, file);
         }
         finally
         {

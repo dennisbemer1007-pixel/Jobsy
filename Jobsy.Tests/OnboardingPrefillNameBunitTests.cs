@@ -35,7 +35,7 @@ public sealed class OnboardingPrefillNameBunitTests : BunitContext
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<IHostEnvironment>(new FakeHostEnv());
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
-        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => new FixedPreviewGate());
+        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
         Services.AddSingleton(sp => new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton(sp => new GratisDnaMergeService(
             sp.GetRequiredService<GratisDnaStorage>(),
@@ -101,13 +101,6 @@ public sealed class OnboardingPrefillNameBunitTests : BunitContext
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
             };
-    }
-
-    private sealed class FixedPreviewGate : ICandidateHeroCompactPreviewGate
-    {
-        public CandidateHeroCompactPreviewVariant Variant => CandidateHeroCompactPreviewVariant.None;
-        public string? CandHeroCssClass => null;
-        public string? OnboardingStepCssClass => null;
     }
 
     private sealed class FixedFinaleGate : IOnboardingFinaleV2Gate
