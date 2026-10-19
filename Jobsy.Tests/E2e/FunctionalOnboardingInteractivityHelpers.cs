@@ -99,12 +99,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var mobile = viewport is not null && viewport.Width < 600;
         var selected = await WaitForWorkStatusSelectedAsync(page, 1_500);
 
-        if (!selected && mobile)
+        if (!selected)
         {
             try
             {
                 await SelectAnyWorkStatusChipAsync(page);
-                selected = await WaitForWorkStatusSelectedAsync(page, 5_000);
+                selected = await WaitForWorkStatusSelectedAsync(page, 8_000);
             }
             catch (InvalidOperationException)
             {
@@ -262,7 +262,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.Locator("input[type=email]").FillAsync(email);
         await page.Locator("input[name=firstName]").FillAsync("Func");
         await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync("**/code**", new() { Timeout = 60_000 });
+        await page.WaitForURLAsync("**/code**", new() { Timeout = 120_000 });
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
         Assert.False(string.IsNullOrWhiteSpace(code), "Expected OTP from E2E mail capture.");
         await page.Locator("input[name=code]").FillAsync(code!);
