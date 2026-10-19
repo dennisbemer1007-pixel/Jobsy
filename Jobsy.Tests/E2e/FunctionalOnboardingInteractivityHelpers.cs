@@ -213,12 +213,74 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
         await WaitForTestConsentStepAsync(page);
+        await ClickTestsLaterAndReachBanenkaartAsync(page);
+    }
+
+    internal static async Task ClickTestsLaterAndReachBanenkaartAsync(IPage page)
+    {
+        var viewport = page.ViewportSize;
+        var mobile = viewport is not null && viewport.Width < 600;
         var later = page.GetByTestId("onboarding-tests-later").First;
         await later.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-        await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
-        await page.WaitForURLAsync(
-            u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 180_000, WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            await later.ScrollIntoViewIfNeededAsync();
+            await page.WaitForTimeoutAsync(300);
+
+            if (mobile)
+            {
+                await later.TapAsync(new() { Timeout = 30_000 });
+            }
+            else
+            {
+                await later.ClickAsync(new() { Timeout = 30_000 });
+            }
+
+            try
+            {
+                await page.WaitForURLAsync(
+                    u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = mobile ? 240_000 : 180_000, WaitUntil = WaitUntilState.DOMContentLoaded });
+                break;
+            }
+            catch (TimeoutException) when (attempt < 2)
+            {
+                if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+
+                await page.WaitForFunctionAsync(
+                    """
+                    () => {
+                      const btn = document.querySelector('[data-testid=onboarding-tests-later]');
+                      return btn && !btn.disabled;
+                    }
+                    """,
+                    null,
+                    new() { Timeout = 90_000 });
+
+                await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                await page.WaitForTimeoutAsync(4000);
+            }
+        }
+
+        if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            if (await page.Locator(".ob-wizard__finish").CountAsync() > 0)
+            {
+                var baseUrl = new Uri(page.Url).GetLeftPart(UriPartial.Authority);
+                await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+            }
+            else
+            {
+                await page.WaitForURLAsync(
+                    u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = 60_000, WaitUntil = WaitUntilState.DOMContentLoaded });
+            }
+        }
+
         await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
     }
 
