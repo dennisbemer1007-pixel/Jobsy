@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (267 routes)
+## Table (276 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -135,6 +135,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
 | `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/candidate/applications/{ApplicationId:guid}/after-match` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/bevestiging` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/herinneringen` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
 | `/candidate/beroep/{EscoId:guid}/dag` | `Pages/Candidate/OccupationDayPage.razor` | Candidate |
 | `/candidate/binnenkort` | `Pages/Candidate/CandidateBinnenkort.razor` | Candidate |
 | `/candidate/career` | `Pages/Candidate/CareerTest.razor` | Candidate |
@@ -147,6 +150,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/external/add` | `Pages/Candidate/ExternalVacancyAdd.razor` | Candidate |
 | `/candidate/external/{Id:guid}` | `Pages/Candidate/ExternalVacancyDetail.razor` | Candidate |
 | `/candidate/external/{Id:guid}/apply` | `Pages/Candidate/ExternalVacancyApply.razor` | Candidate |
+| `/candidate/gevoelig-demo` | `Pages/Candidate/GevoeligDemo.razor` | Candidate |
+| `/candidate/gevoelig-demo/{Screen}` | `Pages/Candidate/GevoeligDemo.razor` | Candidate |
 | `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate |
 | `/candidate/home` | `Pages/Candidate/CandidateHomeRedirect.razor` | Candidate |
 | `/candidate/kandidatenkaart-instellingen` | `Pages/Candidate/CandidateKandidatenkaartSettings.razor` | Candidate |
@@ -162,13 +167,16 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/share-in` | `Pages/Candidate/ShareIn.razor` | anonymous |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
+| `/candidate/start/nearby` | `Pages/Candidate/OnboardingStartNearbyRedirect.razor` | any (no Authorize attribute) |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
 | `/candidate/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/candidate/uren` | `Pages/Candidate/MaqqieHours.razor` | Candidate |
 | `/candidate/vacancies` | `Pages/Candidate/Vacancies.razor` | Candidate |
 | `/candidate/values` | `Pages/Candidate/ValuesScan.razor` | Candidate |
 | `/carriere` | `Pages/Candidate/CareerDashboard.razor` | Candidate |
+| `/carriere/leren` | `Pages/Candidate/CareerLearnGrow.razor` | Candidate |
 | `/contact` | `Pages/Legal/Contact.razor` | anonymous |
+| `/dev/na-de-match/{ScreenId}` | `Pages/Dev/NaDeMatchPreview.razor` | any (no Authorize attribute) |
 | `/dna` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/employer/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/employer/company` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -288,6 +296,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/partner/uitbetalen` | `Pages/Werkgever/PartnerSalesPayoutCheckoutStub.razor` | EnterpriseManager, Intermediary |
 | `/werkgever/sollicitaties` | `Pages/Werkgever/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/sollicitaties/{ApplicationId:guid}` | `Pages/Werkgever/ApplicationCandidate.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match` | `Pages/Werkgever/WerkgeverAfterMatch.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/talentpool` | `Pages/Werkgever/TalentPool.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/te-doen` | `Pages/Werkgever/TeDoen.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/werkgever/tokens` | `Pages/Werkgever/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |

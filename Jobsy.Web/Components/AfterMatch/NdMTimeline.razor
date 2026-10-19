@@ -1,0 +1,47 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<nav class="tl" aria-label="@Culture["AfterMatch.Timeline.Plan"]">
+    <div class="s @StepClass(0)">
+        <i>@((MarkupString)NdMIcons.Check)</i>
+        @Culture["AfterMatch.Timeline.Yes"]
+        @if (!string.IsNullOrWhiteSpace(YesDate))
+        {
+            <small>@YesDate</small>
+        }
+    </div>
+    <div class="s @StepClass(1)">
+        <i>@((MarkupString)NdMIcons.Calendar)</i>
+        @Culture["AfterMatch.Timeline.Plan"]
+        <small>@(CurrentStep == 1 ? Culture["AfterMatch.Timeline.Now"] : PlanHint)</small>
+    </div>
+    <div class="s @StepClass(2)">
+        <i>@((MarkupString)NdMIcons.Handshake)</i>
+        @Culture["AfterMatch.Timeline.Interview"]
+        <small>@InterviewHint</small>
+    </div>
+    <div class="s @StepClass(3)">
+        <i>@((MarkupString)NdMIcons.Flag)</i>
+        @Culture["AfterMatch.Timeline.Outcome"]
+        <small>@OutcomeHint</small>
+    </div>
+</nav>
+
+@code {
+    /// <summary>0=Ja done, 1=planning, 2=interview, 3=outcome</summary>
+    [Parameter] public int CurrentStep { get; set; } = 1;
+    [Parameter] public string? YesDate { get; set; }
+    [Parameter] public string? PlanHint { get; set; }
+    [Parameter] public string? InterviewHint { get; set; }
+    [Parameter] public string? OutcomeHint { get; set; }
+
+    private string StepClass(int index)
+    {
+        if (index < CurrentStep)
+        {
+            return "done";
+        }
+
+        return index == CurrentStep ? "now" : "";
+    }
+}

@@ -33,17 +33,20 @@ def counters(trx: Path) -> dict[str, str]:
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
-        print("Usage: compare-failures-with-acceptatie.py <pr.trx> <acceptatie.trx>", file=sys.stderr)
+    if len(sys.argv) not in (3, 4):
+        print("Usage: compare-failures-with-acceptatie.py <pr.trx> <acceptatie.trx> [pr-only-out.txt]", file=sys.stderr)
         return 2
     pr_path = Path(sys.argv[1])
     acc_path = Path(sys.argv[2])
+    out_path = Path(sys.argv[3]) if len(sys.argv) == 4 else None
     pr = failed_names(pr_path)
     acc = failed_names(acc_path)
     acc_defs = defined_names(acc_path)
     # Only regressions vs acceptatie catalog: tests that existed on acceptatie CI but fail newly on PR.
     new = sorted((pr - acc) & acc_defs)
     pr_only = sorted(pr - acc_defs)
+    if out_path is not None:
+        out_path.write_text("\n".join(new) + ("\n" if new else ""), encoding="utf-8")
     print("PR failed:", len(pr), "Acceptatie failed:", len(acc))
     print("failed(PR) ⊆ failed(acceptatie):", (pr & acc_defs).issubset(acc))
     print("NEW on PR (in acceptatie catalog, not failed there):", len(new))

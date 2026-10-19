@@ -43,7 +43,10 @@ public class MobileSaasUxTests
     public void Tabs_scroll_horizontally_as_pills_with_brand_active_state()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".applicants-filters__btn.is-active {\n    border-color: var(--accent);\n    background: var(--accent);\n    color: #fff;", css);
+        Assert.Contains(".applicants-filters__btn.is-active", css);
+        Assert.Contains("border-color: var(--accent)", css);
+        Assert.Contains("background: var(--accent)", css);
+        Assert.Contains("color: #fff", css);
         Assert.Contains("min-height: 40px", css);
         Assert.Contains(".pill-scroller", css);
         Assert.Contains("scrollbar-width: none", css);

@@ -600,6 +600,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidatePassportEnabled", before.CandidatePassportEnabled.ToString(), after.CandidatePassportEnabled.ToString());
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
+        Add("PupilPassportV2Enabled", before.PupilPassportV2Enabled.ToString(), after.PupilPassportV2Enabled.ToString());
+        Add("StudentPassportEnabled", before.StudentPassportEnabled.ToString(), after.StudentPassportEnabled.ToString());
         Add("PassportPdfDnaBlocksEnabled", before.PassportPdfDnaBlocksEnabled.ToString(), after.PassportPdfDnaBlocksEnabled.ToString());
         Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
@@ -612,6 +614,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
         Add("KandidatenkaartEnabled", before.KandidatenkaartEnabled.ToString(), after.KandidatenkaartEnabled.ToString());
+        Add("AfterMatchEnabled", before.AfterMatchEnabled.ToString(), after.AfterMatchEnabled.ToString());
         Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
         Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
         Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
@@ -655,6 +658,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
             employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
             kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
+            afterMatchEnabled = snap.AfterMatchEnabled,
             referenceVerificationEnabled = snap.ReferenceVerificationEnabled,
             sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,
             trainingPartnersEnabled = snap.TrainingPartnersEnabled,

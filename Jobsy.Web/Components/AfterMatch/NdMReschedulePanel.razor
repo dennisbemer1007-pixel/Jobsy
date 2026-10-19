@@ -1,0 +1,30 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="card stack">
+    <label class="lbl">@Culture["AfterMatch.Screen08.Reason"]</label>
+    <textarea class="inp area" style="width:100%" @bind="_reason"></textarea>
+    <div class="row wrapflex">
+        <button type="button" class="btn" disabled="@Busy" @onclick="RescheduleAsync">@Culture["AfterMatch.Screen08.Reschedule"]</button>
+        <button type="button" class="btn line" disabled="@Busy" @onclick="CancelAsync">@Culture["AfterMatch.Screen08.Cancel"]</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<string> OnReschedule { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string _reason = "";
+
+    private async Task RescheduleAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_reason))
+        {
+            await OnReschedule.InvokeAsync(_reason.Trim());
+        }
+    }
+
+    private Task CancelAsync() => OnCancel.HasDelegate ? OnCancel.InvokeAsync() : Task.CompletedTask;
+}

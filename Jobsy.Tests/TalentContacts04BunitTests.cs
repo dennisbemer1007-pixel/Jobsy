@@ -284,6 +284,7 @@ public class TalentContacts04BunitTests : BunitContext
     [Fact]
     public async Task Arabic_renders_the_page_right_to_left()
     {
+        Jobsy.Core.Localization.JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         var previous = CultureInfo.DefaultThreadCurrentUICulture;
         try
         {
@@ -303,6 +304,7 @@ public class TalentContacts04BunitTests : BunitContext
         }
         finally
         {
+            Jobsy.Core.Localization.JobsyLanguages.ResetEnabledForTests();
             CultureInfo.DefaultThreadCurrentUICulture = previous;
             CultureInfo.DefaultThreadCurrentCulture = previous;
             CultureInfo.CurrentUICulture = previous ?? CultureInfo.GetCultureInfo("nl-NL");

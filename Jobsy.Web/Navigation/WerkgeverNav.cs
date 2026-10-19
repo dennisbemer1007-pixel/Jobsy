@@ -117,8 +117,7 @@ public static class WerkgeverNav
                 },
                 CountKey: "todo"),
             new("notifications", "WgNav.Notifications", "/werkgever/meldingen", NavIcons.Notifications,
-                [], new RoleVisibility(RoleVisibilityKind.Hidden, RoleVisibilityKind.Hidden,
-                    RoleVisibilityKind.Hidden, RoleVisibilityKind.Hidden)),
+                [], BmRmVm with { Intermediair = RoleVisibilityKind.Full }),
         ]),
         new("recruitment", "WgNav.Group.Recruitment",
         [

@@ -187,6 +187,7 @@ public static class JobsyDbSeeder
                 await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
                 await AtsScrapeSourceSeeder.SeedAsync(db, logger);
                 await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+                await AfterMatchDemoSeeder.EnsureAsync(db, logger);
                 await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
             }
             catch (Exception ex)
@@ -226,6 +227,7 @@ public static class JobsyDbSeeder
             await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
             await AtsScrapeSourceSeeder.SeedAsync(db, logger);
             await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+            await AfterMatchDemoSeeder.EnsureAsync(db, logger);
             await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }

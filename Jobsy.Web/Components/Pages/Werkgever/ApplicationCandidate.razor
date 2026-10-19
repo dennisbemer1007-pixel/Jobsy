@@ -97,6 +97,11 @@ else
                                     CanWrite="CanWrite"
                                     OnChanged="ReloadSelfAsync" />
 
+            @if (_afterMatchEnabled && AfterMatchEligible(a.Status))
+            {
+                <a class="btn-compact" href="/werkgever/sollicitaties/@(a.Id)/after-match">@Culture["AfterMatch.Link.Open"]</a>
+            }
+
             <section>
                 <h2>@Culture["WgApp.Tab.Motivation"]</h2>
                 <div class="wg-app-cand__block">
@@ -195,6 +200,7 @@ else
     private bool _hireOpen;
     private string? _message;
     private bool _phase2Enabled;
+    private bool _afterMatchEnabled;
 
     private string EmployerHistory(int count)
         => count == 1
@@ -216,6 +222,7 @@ else
             await ScopeBootstrap.EnsureLoadedAsync();
             var flags = await FeatureFlags.GetAsync();
             _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
+            _afterMatchEnabled = flags.IsEnabled(PlatformFeature.AfterMatch);
             var items = await Api.GetApplicationsAsync();
             _item = items.FirstOrDefault(a => a.Id == ApplicationId);
         }
@@ -245,6 +252,9 @@ else
 
         return string.IsNullOrWhiteSpace(item.AvailabilitySummary) ? "—" : item.AvailabilitySummary;
     }
+
+    private static bool AfterMatchEligible(string status) =>
+        status is "Accepted" or "EmployerContacting" or "Hired";
 
     private static string? HoursFact(EmployerApplicationItem item)
     {

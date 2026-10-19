@@ -165,7 +165,7 @@ public class CareerCompassTests
         Assert.Equal("Wat betekent dit voor jou?", UiStrings.Get("Kompas.PracticalTitle", "nl"));
         Assert.Contains("Past het best", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.Ordinal);
         var explainer = UiStrings.Get("Kompas.FitExplainer", "nl");
-        Assert.Contains("gemiddelde", explainer, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("wegen zwaarder", explainer, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("plek in de lijst", explainer, StringComparison.OrdinalIgnoreCase);
         Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Kompas.FitExplainer", "en")));
         Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Kompas.FitExplainer", "pl")));

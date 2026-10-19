@@ -465,6 +465,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("AfterMatchEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "AfterMatchEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.AfterMatch.Enabled.Title",
+                DescriptionKey: "AdminSettings.AfterMatch.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.AfterMatchEnabled,
+                Write: v => new PlatformFeatureUpdate(AfterMatchEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("TrainingPartnersEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -832,6 +845,7 @@ public static class PlatformSettingsCatalog
         bool? matchCalibrationV1Enabled = null;
         bool? employerFitQuestionnairesEnabled = null;
         bool? kandidatenkaartEnabled = null;
+        bool? afterMatchEnabled = null;
         bool? sensitiveExperienceEnabled = null;
         bool? trainingPartnersEnabled = null;
         bool? testJourneyIllustrationEnabled = null;
@@ -911,6 +925,11 @@ public static class PlatformSettingsCatalog
             if (p.KandidatenkaartEnabled is not null)
             {
                 kandidatenkaartEnabled = p.KandidatenkaartEnabled;
+            }
+
+            if (p.AfterMatchEnabled is not null)
+            {
+                afterMatchEnabled = p.AfterMatchEnabled;
             }
 
             if (p.TrainingPartnersEnabled is not null)
@@ -1011,6 +1030,7 @@ public static class PlatformSettingsCatalog
             MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled: employerFitQuestionnairesEnabled,
             KandidatenkaartEnabled: kandidatenkaartEnabled,
+            AfterMatchEnabled: afterMatchEnabled,
             SensitiveExperienceEnabled: sensitiveExperienceEnabled,
             TrainingPartnersEnabled: trainingPartnersEnabled,
             TestJourneyIllustrationEnabled: testJourneyIllustrationEnabled,

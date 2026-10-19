@@ -119,6 +119,10 @@
     "sha256": "8153c2bf25b54c1805ca10eb48a627bc18b72bcb1e7a5f4de54a2eb3228c3307",
     "v": "20261015-09"
   },
+  "css/features/na-de-match.css": {
+    "sha256": "93ff7cc1d7ffc9d915dff67d6eae227e846a21eb3c155a43295b0665cafd6d90",
+    "v": "20261019-12"
+  },
   "css/features/nav-feedback.css": {
     "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",
     "v": "20261004-10"
@@ -212,8 +216,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "b88aced1b026d443b3ce7441442dfb043bb4a5c6146c45116b1d0c92552f8fd2",
-    "v": "20261012-06"
+    "sha256": "d37ca6393394117d9f08cf711a1bb1e9b5f54c4daa674b63f28e77ef3a0cb4f7",
+    "v": "20261018-04"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",

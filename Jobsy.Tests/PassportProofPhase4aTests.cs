@@ -83,7 +83,7 @@ public class ProfileSectionsExtractionTests
         Assert.Contains("profile-contact__names", blob);
         Assert.Contains("profile-devices", blob);
         Assert.Contains("profile-check-grid", blob);
-        Assert.Contains("availability-matrix", blob);
+        Assert.Contains("AvailabilityDayPartMatrix", blob);
         Assert.Contains("availability-presets", blob);
         Assert.Contains("profile-employer-card", blob);
         Assert.Contains("profile-cert-row", blob);
