@@ -163,6 +163,9 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
             if (cap.Path.Contains("ondernemerscheck", StringComparison.OrdinalIgnoreCase)
                 && cap.Path.Contains("result", StringComparison.OrdinalIgnoreCase))
             {
+                await page.Locator(".uwv-ondernemer-result__scene img").WaitForAsync(new() { Timeout = 30_000 });
+                await page.Locator(".uwv-ondernemer-result__scene img").EvaluateAsync(
+                    "img => img.complete ? Promise.resolve() : img.decode()");
                 await AssertOndernemerResultLayoutAsync(page, cap.Width);
             }
 
@@ -197,7 +200,9 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
               const img = document.querySelector('.uwv-ondernemer-result__scene img');
               let insetOk = true;
               let inset = { left: 0, right: 0, top: 0, bottom: 0 };
-              if (panel && img && window.innerWidth >= 640) {
+              let edgeOk = true;
+              let edgeDiffs = [];
+              if (panel && img && scene && window.innerWidth >= 640 && img.complete) {
                 const pr = panel.getBoundingClientRect();
                 const ir = img.getBoundingClientRect();
                 inset = {
@@ -207,11 +212,35 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
                   bottom: pr.bottom - ir.bottom
                 };
                 insetOk = inset.left >= 16 && inset.right >= 16 && inset.top >= 16 && inset.bottom >= 16;
+                const w = Math.max(1, Math.round(ir.width));
+                const h = Math.max(1, Math.round(ir.height));
+                const pad = 8;
+                const canvas = document.createElement('canvas');
+                canvas.width = w + pad * 2;
+                canvas.height = h + pad * 2;
+                const ctx = canvas.getContext('2d');
+                const bgMatch = getComputedStyle(scene).backgroundColor.match(/[\\d.]+/g);
+                const bg = bgMatch ? bgMatch.map(Number) : [245, 242, 238];
+                ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, pad, pad, w, h);
+                const sample = (x, y) => ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+                const diff = (a, b) => Math.max(
+                  Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]), Math.abs(a[3] - b[3]));
+                edgeDiffs = [
+                  diff(sample(pad + w / 2, pad - 3), sample(pad + w / 2, pad + 3)),
+                  diff(sample(pad + w / 2, pad + h + 3), sample(pad + w / 2, pad + h - 3)),
+                  diff(sample(pad - 3, pad + h / 2), sample(pad + 3, pad + h / 2)),
+                  diff(sample(pad + w + 3, pad + h / 2), sample(pad + w - 3, pad + h / 2))
+                ];
+                edgeOk = edgeDiffs.every((d) => d < 6);
               }
               return {
-                ok: !overlap && insetOk,
+                ok: !overlap && insetOk && edgeOk,
                 overlap,
                 insetOk,
+                edgeOk,
+                edgeDiffs,
                 inset,
                 doneBottom: dr.bottom,
                 coachTop: cr.top,
@@ -227,6 +256,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
         {
             Assert.False(layout.SceneHidden, "result scene should be visible from 640px up");
             Assert.True(layout.InsetOk, $"vignette img must sit >=16px inside card (inset L{layout.Inset?.Left} R{layout.Inset?.Right} T{layout.Inset?.Top} B{layout.Inset?.Bottom})");
+            Assert.True(layout.EdgeOk, $"vignette edge feather failed (diffs={string.Join(',', layout.EdgeDiffs ?? [])})");
         }
         else
         {
@@ -234,10 +264,20 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
         }
     }
 
-    private static string DescribeLayoutFailure(CoachOverlapDto layout) =>
-        layout.Overlap
-            ? $"coach overlaps done line (doneBottom={layout.DoneBottom}, coachTop={layout.CoachTop})"
-            : $"vignette inset too tight (L{layout.Inset?.Left} R{layout.Inset?.Right} T{layout.Inset?.Top} B{layout.Inset?.Bottom})";
+    private static string DescribeLayoutFailure(CoachOverlapDto layout)
+    {
+        if (layout.Overlap)
+        {
+            return $"coach overlaps done line (doneBottom={layout.DoneBottom}, coachTop={layout.CoachTop})";
+        }
+
+        if (!layout.InsetOk)
+        {
+            return $"vignette inset too tight (L{layout.Inset?.Left} R{layout.Inset?.Right} T{layout.Inset?.Top} B{layout.Inset?.Bottom})";
+        }
+
+        return $"vignette edge feather failed (diffs={string.Join(',', layout.EdgeDiffs ?? [])})";
+    }
 
     private sealed class CoachOverlapDto
     {
@@ -245,6 +285,8 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
         public string? Reason { get; set; }
         public bool Overlap { get; set; }
         public bool InsetOk { get; set; }
+        public bool EdgeOk { get; set; }
+        public double[]? EdgeDiffs { get; set; }
         public InsetDto? Inset { get; set; }
         public double DoneBottom { get; set; }
         public double CoachTop { get; set; }
