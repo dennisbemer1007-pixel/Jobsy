@@ -26,10 +26,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
     private static readonly string[] PartialCapturePrefixes =
     [
         "02-banenkaart-kanslaag-",
-        "03-workshops-omscholen-",
-        "04-ondernemer-vraag-",
         "04-ondernemer-result-",
-        "06-adviseur-share-",
     ];
 
     private IllustratedPagesWebFactory? _web;

@@ -73,16 +73,25 @@ else
     <div class="uwv-ondernemer-test__shell uwv-ondernemer-result">
         <article class="detail-card career-card uwv-ondernemer-result__card">
             <p class="uwv-ondernemer-result__eyebrow">@(UwvMockupCopy.IsEnglish(Lang) ? "Self-employment check · Short" : "Past ondernemen bij mij? · Kort")</p>
-            <figure class="uwv-ondernemer-result__art" aria-hidden="true">
-                <img src="@CandidateIllustratedImages.OndernemerIntroHero" alt="" width="640" height="360" decoding="async" loading="lazy" />
-            </figure>
             <h1 class="uwv-ondernemer-result__title">@resultTitle</h1>
             <p class="uwv-ondernemer-result__lead">@resultLead</p>
             <h2 class="uwv-ondernemer-result__steps-title">@UwvMockupCopy.Ondernemer.ResultNextStepsTitle(Lang)</h2>
             <ol class="uwv-ondernemer-result__steps">
                 @foreach (var step in UwvMockupCopy.Ondernemer.ResultNextSteps(Lang))
                 {
-                    <li><a href="@step.Href">@step.Label</a></li>
+                    <li>
+                        @if (step.External)
+                        {
+                            <a class="uwv-ondernemer-result__step-link uwv-ondernemer-result__step-link--external"
+                               href="@step.Href"
+                               target="_blank"
+                               rel="noopener noreferrer">@step.Label</a>
+                        }
+                        else
+                        {
+                            <a class="uwv-ondernemer-result__step-link" href="@step.Href">@step.Label</a>
+                        }
+                    </li>
                 }
             </ol>
             <footer class="test-shell__footer uwv-ondernemer-result__footer">

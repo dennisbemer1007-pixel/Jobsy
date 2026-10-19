@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261019-04";
+    public const string Version = "20261019-05";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -109,7 +109,8 @@ public static class CandidateIllustratedImages
     public const string SpotOpleiding = $"{Base}/opleiding.jpg?v={Version}";
     public const string SpotDroombaan = $"{Base}/droombaan.jpg?v={Version}";
 
-    public const string SpotJobZorg = $"{Base}/spots/job-zorg.jpg?v={Version}";
+    /// <summary>Care sector spot — full-figure scene (not portrait crop).</summary>
+    public const string SpotJobZorg = $"{Base}/spots/job-zorg-scene.jpg?v={Version}";
     public const string SpotJobLogistiek = $"{Base}/spots/job-logistiek.jpg?v={Version}";
     public const string SpotJobRetail = $"{Base}/spots/job-retail.jpg?v={Version}";
     public const string SpotJobDieren = $"{Base}/spots/job-dieren.jpg?v={Version}";

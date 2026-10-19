@@ -988,37 +988,38 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 .uwv-ondernemer-result__card {
   padding: 1.25rem 1.35rem 1.5rem;
   max-width: 36rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.uwv-ondernemer-result__card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5.5rem;
+  background:
+    radial-gradient(ellipse 90% 100% at 85% 0%, color-mix(in srgb, var(--coral-soft) 55%, transparent), transparent 70%),
+    radial-gradient(ellipse 70% 80% at 10% 20%, color-mix(in srgb, var(--accent-soft) 40%, transparent), transparent 65%);
+  pointer-events: none;
 }
 
 .uwv-ondernemer-result__eyebrow {
+  position: relative;
+  z-index: 1;
   margin: 0 0 0.75rem;
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--muted);
 }
 
-.uwv-ondernemer-result__art {
-  margin: 0 0 1rem;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  max-height: 9rem;
+.uwv-ondernemer-result__title,
+.uwv-ondernemer-result__lead,
+.uwv-ondernemer-result__steps-title,
+.uwv-ondernemer-result__steps,
+.uwv-ondernemer-result__footer,
+.uwv-ondernemer-result__done {
   position: relative;
-}
-
-.uwv-ondernemer-result__art::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 35%, var(--surface) 92%);
-  pointer-events: none;
-}
-
-.uwv-ondernemer-result__art img {
-  display: block;
-  width: 100%;
-  height: 9rem;
-  object-fit: cover;
-  object-position: 72% 40%;
+  z-index: 1;
 }
 
 .uwv-ondernemer-result__title {
@@ -1040,14 +1041,34 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 
 .uwv-ondernemer-result__steps {
   margin: 0 0 1.25rem;
-  padding-left: 1.25rem;
+  padding: 0;
+  list-style: none;
   display: grid;
-  gap: 0.45rem;
+  gap: 0.55rem;
   line-height: 1.45;
 }
 
-.uwv-ondernemer-result__steps a {
+.uwv-ondernemer-result__step-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--brand);
   font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.uwv-ondernemer-result__step-link::after {
+  content: "›";
+  font-size: 1.1em;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.uwv-ondernemer-result__step-link--external::after {
+  content: "↗";
+  font-size: 0.95em;
 }
 
 .uwv-ondernemer-result__footer {

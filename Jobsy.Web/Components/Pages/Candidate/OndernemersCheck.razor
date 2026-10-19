@@ -134,9 +134,6 @@ else
         <div class="uwv-ondernemer-test__shell uwv-ondernemer-result">
             <article class="detail-card career-card uwv-ondernemer-result__card">
                 <p class="uwv-ondernemer-result__eyebrow">@Culture.Format("TestDone.Eyebrow", UwvMockupCopy.Ondernemer.TestName(Culture.Language), UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")</p>
-                <figure class="uwv-ondernemer-result__art" aria-hidden="true">
-                    <img src="@CandidateIllustratedImages.OndernemerIntroHero" alt="" width="640" height="360" decoding="async" loading="lazy" />
-                </figure>
                 <h1 class="uwv-ondernemer-result__title" tabindex="-1">@resultTitle</h1>
                 <p class="uwv-ondernemer-result__lead">@resultLead</p>
                 <h2 class="uwv-ondernemer-result__steps-title">@UwvMockupCopy.Ondernemer.ResultNextStepsTitle(Culture.Language)</h2>
@@ -146,11 +143,14 @@ else
                         <li>
                             @if (step.External)
                             {
-                                <a href="@step.Href" target="_blank" rel="noopener noreferrer">@step.Label</a>
+                                <a class="uwv-ondernemer-result__step-link uwv-ondernemer-result__step-link--external"
+                                   href="@step.Href"
+                                   target="_blank"
+                                   rel="noopener noreferrer">@step.Label</a>
                             }
                             else
                             {
-                                <a href="@step.Href">@step.Label</a>
+                                <a class="uwv-ondernemer-result__step-link" href="@step.Href">@step.Label</a>
                             }
                         </li>
                     }
