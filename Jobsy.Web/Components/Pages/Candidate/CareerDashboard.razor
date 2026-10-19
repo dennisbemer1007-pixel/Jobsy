@@ -21,7 +21,7 @@
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
-<div class="journey-page career-page career-page--illustrated panel-page--cand-ill">
+<div class="journey-page career-page career-page--illustrated panel-page--cand-ill @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "career-page--compact-preview-c" : null)">
     <p class="career-live visually-hidden" role="status" aria-live="polite">@_announcement</p>
 
     @if (_plan.HasPlan)
@@ -34,7 +34,7 @@
                                   Lead="@Culture["Career.Overview.Lead"]"
                                   ArtUrl="@CareerHeroArt"
                                   ArtPosition="58% center"
-                                  CompactHeroLayout="career"
+                                  CompactHeroLayout="@(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "onboarding" : "career")"
                                   CssClass="@HeroCompactPreview.CandHeroCssClass" />
     }
     else if (!_bootstrapping)
@@ -226,7 +226,7 @@
     [SupplyParameterFromQuery(Name = "stap")] public int? Stap { get; set; }
 
     private string CareerHeroArt => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
-        ? LearnGrowHeroCompactC
+        ? LearnGrowHeroBandC
         : CarriereBand;
 
     private CareerPathPlanApiModel? _planApi;

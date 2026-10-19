@@ -273,7 +273,7 @@ public sealed class CompactHeadersPreviewR9ScreenshotTests : IAsyncLifetime
             }
             else
             {
-                await browserPage.Locator(".cand-compact-hero--career").WaitForAsync(new() { Timeout = 120_000 });
+                await browserPage.Locator(".career-page--compact-preview-c .cand-compact-hero--onboarding").WaitForAsync(new() { Timeout = 120_000 });
             }
 
             await browserPage.WaitForTimeoutAsync(900);
@@ -298,7 +298,7 @@ public sealed class CompactHeadersPreviewR9ScreenshotTests : IAsyncLifetime
             ? viewportWidth <= 390
                 ? ".ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover"
                 : ".ob-illustrated-step--compact-preview-c .cand-compact-hero--onboarding"
-            : ".cand-compact-hero--career";
+            : ".career-page--compact-preview-c .cand-compact-hero--onboarding";
         var token = CompactHeroPreviewBand.Token.ToLowerInvariant();
         metrics.BandUsesPaspoortToken = await browserPage.EvaluateAsync<bool>(
             """
@@ -361,7 +361,7 @@ public sealed class CompactHeadersPreviewR9ScreenshotTests : IAsyncLifetime
         var leadInfo = await browserPage.EvaluateAsync<LeadInfo>(
             """
             () => {
-              const lead = document.querySelector('.cand-compact-hero--career .cand-hero__lead');
+              const lead = document.querySelector('.career-page--compact-preview-c .cand-hero__lead');
               if (!lead) return null;
               const style = getComputedStyle(lead);
               return {
@@ -382,7 +382,7 @@ public sealed class CompactHeadersPreviewR9ScreenshotTests : IAsyncLifetime
             var artPct = await browserPage.EvaluateAsync<double>(
                 """
                 () => {
-                  const hero = document.querySelector('.cand-compact-hero--career');
+                  const hero = document.querySelector('.career-page--compact-preview-c .cand-compact-hero--onboarding');
                   const art = hero?.querySelector('.cand-compact-hero__art');
                   if (!hero || !art) return 0;
                   const hr = hero.getBoundingClientRect();
@@ -396,7 +396,7 @@ public sealed class CompactHeadersPreviewR9ScreenshotTests : IAsyncLifetime
         metrics.HeroToCardGapPx = await browserPage.EvaluateAsync<int>(
             """
             () => {
-              const hero = document.querySelector('.cand-compact-hero--career');
+              const hero = document.querySelector('.career-page--compact-preview-c .cand-compact-hero--onboarding');
               const card = document.querySelector('.career-card--overview');
               if (!hero || !card) return 999;
               return Math.round(card.getBoundingClientRect().top - hero.getBoundingClientRect().bottom);
