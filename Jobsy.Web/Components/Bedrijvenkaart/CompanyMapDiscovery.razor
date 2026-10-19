@@ -11,9 +11,11 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Features
+@inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @implements IAsyncDisposable
 
-<div class="bk-page">
+<div class="bk-page panel-page--cand-ill @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "bk-page--compact-preview-c" : null)">
     <div class="bk-page__hero-stack">
         <div class="bk-map-toggle" role="tablist" aria-label="@Culture["Kb.MapToggle.Jobs"]">
             <a href="@KbRoutes.Map" role="tab">@Culture["Kb.MapToggle.Jobs"]</a>
@@ -25,15 +27,14 @@
                                   ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
                                   ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
                                   ArtPosition="84% bottom"
-                                  CssClass="cand-hero--bk-single bk-cand-hero">
-            <div class="bk-week-dots" aria-live="polite">
-                @for (var i = 0; i < _weekMax; i++)
-                {
-                    <span aria-hidden="true" style="@(i < _weekUsed ? "" : "opacity:.25")"></span>
-                }
-                <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
-            </div>
-        </CandidateIllustratedHero>
+                                  CssClass="cand-hero--bk-single bk-cand-hero" />
+        <div class="bk-week-dots" aria-live="polite">
+            @for (var i = 0; i < _weekMax; i++)
+            {
+                <span aria-hidden="true" style="@(i < _weekUsed ? "" : "opacity:.25")"></span>
+            }
+            <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
+        </div>
     </div>
 
     <div class="bk-page__frame">

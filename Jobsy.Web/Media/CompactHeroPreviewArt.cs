@@ -1,6 +1,6 @@
 namespace Jobsy.Web.Media;
 
-/// <summary>Preview-only wide art URLs for ?heroPreview=c (not production rollout).</summary>
+/// <summary>Band-C art URLs for the default compact candidate hero.</summary>
 public static class CompactHeroPreviewArt
 {
     public static string CandHeroArtForVariantC(string artUrl)
@@ -26,6 +26,27 @@ public static class CompactHeroPreviewArt
             || artUrl.Contains("finale-hero", StringComparison.OrdinalIgnoreCase))
         {
             return OnboardingKennismakenDesktop;
+        }
+
+        if (artUrl.Contains("werkervaring-profession-wide", StringComparison.OrdinalIgnoreCase)
+            || artUrl.Contains("sollicitaties", StringComparison.OrdinalIgnoreCase))
+        {
+            return CandidateIllustratedImages.SollicitatiesHeroBandC;
+        }
+
+        if (artUrl.Contains("vervoer-profession-wide", StringComparison.OrdinalIgnoreCase))
+        {
+            return CandidateIllustratedImages.BewaardHeroBandC;
+        }
+
+        if (artUrl.Contains("beschikbaarheid-profession-wide", StringComparison.OrdinalIgnoreCase))
+        {
+            return CandidateIllustratedImages.InstellingenHeroBandC;
+        }
+
+        if (artUrl.Contains("bedrijvenkaart-hero", StringComparison.OrdinalIgnoreCase))
+        {
+            return CandidateIllustratedImages.BedrijvenkaartHeroBandC;
         }
 
         return artUrl;

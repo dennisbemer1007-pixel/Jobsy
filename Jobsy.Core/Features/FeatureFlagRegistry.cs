@@ -37,6 +37,7 @@ public static class FeatureFlagRegistry
     {
         "TestProgressInsightEnabled", // PR #733
         "DreamJobIllustrationEnabled", // PR #724
+        "CandidateCompactHeroEnabled", // compact hero rollout — config Jobsy:CandidateCompactHeroEnabled until admin field lands
     };
 
     public static IReadOnlyList<FeatureFlagDefinition> All { get; } = Build();

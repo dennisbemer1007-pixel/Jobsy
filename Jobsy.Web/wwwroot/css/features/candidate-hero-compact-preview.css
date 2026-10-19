@@ -1,4 +1,4 @@
-/* Owner preview only (?heroPreview=a|b|c) — three pages, not global rollout. */
+/* Default compact candidate hero (variant C, #FAEBDB ~130–150px). Legacy: ?heroPreview=legacy or Jobsy:CandidateCompactHeroEnabled=false. */
 
 /* Variant C (r7): unified CandidateCompactHero — paspoort band token + grid. */
 .cand-compact-hero {
@@ -295,6 +295,12 @@
     max-height: 150px !important;
   }
 
+  .career-page--compact-preview-c > header.cand-compact-hero--onboarding {
+    min-height: 150px !important;
+    height: 150px !important;
+    max-height: 150px !important;
+  }
+
   .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art,
   .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img {
     min-height: 150px;
@@ -353,6 +359,22 @@
       linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
+  }
+
+  /* Desktop/tablet: fixed ~150px band on illustrated app pages (not onboarding wizard). */
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c,
+  .career-page--compact-preview-c > header.cand-compact-hero--page.cand-hero--profession-band {
+    min-height: 150px !important;
+    height: 150px !important;
+    max-height: 150px !important;
+    background-image: none !important;
+  }
+
+  .bk-page.panel-page--cand-ill .bk-cand-hero.cand-compact-hero.cand-hero--compact-preview-c::before,
+  .bk-page.panel-page--cand-ill .bk-cand-hero.cand-compact-hero.cand-hero--compact-preview-c::after {
+    display: block !important;
+    content: "" !important;
   }
 
   @media (min-width: 1024px) {
@@ -519,6 +541,96 @@
   }
 
   .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero .cand-hero__compact-c-art img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    min-inline-size: 100%;
+    min-block-size: 100%;
+    object-fit: cover;
+    object-position: right center;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 20%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  /* Illustrated app pages (sollicitaties, bewaard, instellingen, bedrijvenkaart): compact band on mobile. */
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c {
+    --cand-hero-mobile-h: 9.375rem;
+    --cand-compact-c-img-mask: linear-gradient(to right, transparent 0, #000 18%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    position: relative;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-block-end: 0.65rem;
+    block-size: min(9.375rem, 150px);
+    min-block-size: min(9.375rem, 150px);
+    max-block-size: min(9.375rem, 150px);
+    min-height: 0 !important;
+    height: min(9.375rem, 150px) !important;
+    max-height: min(9.375rem, 150px) !important;
+    overflow: hidden;
+    background-color: var(--cand-compact-hero-band) !important;
+    background-image: none !important;
+  }
+
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before,
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-hero-band) 0%,
+      var(--cand-compact-hero-band) 46%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 82%, transparent) 54%,
+      transparent 72%
+    );
+  }
+
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__copy,
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero .cand-hero__copy {
+    grid-area: 1 / 1;
+    position: relative !important;
+    inset: auto !important;
+    z-index: 2;
+    box-sizing: border-box;
+    width: 58% !important;
+    max-width: 58% !important;
+    margin: 0 !important;
+    padding: 0.55rem 0.65rem 0.5rem !important;
+    overflow: visible !important;
+    background: transparent !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: min(58%, 14.5rem) !important;
+  }
+
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art,
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero .cand-hero__compact-c-art {
+    grid-area: 1 / 1;
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    z-index: 0;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img,
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero .cand-hero__compact-c-art img {
     display: block;
     inline-size: 100%;
     block-size: 100%;
@@ -720,5 +832,29 @@
     height: 100% !important;
     max-height: 40px;
     object-fit: contain;
+  }
+
+  /* Default compact hero on illustrated app pages (sollicitaties, bewaard, …). */
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c {
+    min-height: 150px !important;
+    height: 150px !important;
+    max-height: 150px !important;
+    background-image: none !important;
+  }
+
+  .bk-page.panel-page--cand-ill .bk-cand-hero.cand-compact-hero.cand-hero--compact-preview-c::before,
+  .bk-page.panel-page--cand-ill .bk-cand-hero.cand-compact-hero.cand-hero--compact-preview-c::after {
+    display: block !important;
+    content: "" !important;
+  }
+
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img,
+  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c .cand-hero__compact-c-art img {
+    min-height: 150px;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 10%, #000 24%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, transparent 10%, #000 24%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
   }
 }

@@ -40,7 +40,8 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 ["ApiBaseUrl"] = "http://api.test/",
                 ["Landing:ForceVariant"] = "on",
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
-                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
+                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
+                ["Jobsy:CandidateCompactHeroEnabled"] = "true"
             });
         });
         builder.ConfigureTestServices(services =>

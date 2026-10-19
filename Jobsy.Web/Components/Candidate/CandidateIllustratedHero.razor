@@ -68,7 +68,8 @@ else
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private bool UseUnifiedCompactHero
-        => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
+        => HeroCompactPreview.IsEnabled
+           && HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
            && !string.IsNullOrWhiteSpace(CompactCArtUrl);
 
     private string? CompactCArtUrl

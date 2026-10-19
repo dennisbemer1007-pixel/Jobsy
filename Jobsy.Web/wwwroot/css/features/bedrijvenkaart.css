@@ -1058,7 +1058,14 @@ textarea.bk-wg-input {
   align-self: flex-start;
 }
 
-.bk-page .bk-cand-hero.cand-hero--bk-single {
+.bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+  margin-bottom: 0.65rem;
+}
+
+.bk-page .bk-cand-hero.cand-compact-hero.cand-hero--bk-single {
   width: 100%;
   max-width: 100%;
   margin-inline: 0;
@@ -1072,7 +1079,7 @@ textarea.bk-wg-input {
 
 /* Desktop/tablet: pre-faded PNG on plain pearl (no ::before band). */
 @media (min-width: 640px) {
-  .bk-page .bk-cand-hero.cand-hero--bk-single {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
     position: relative;
     background-color: var(--pearl, #f7f4f0) !important;
     background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
@@ -1116,13 +1123,13 @@ textarea.bk-wg-input {
     margin: 0;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
     min-height: clamp(11.25rem, 15.28vw, 13.75rem);
     height: clamp(11.25rem, 15.28vw, 13.75rem);
     max-height: 280px;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) .cand-hero__copy {
     width: auto;
     max-width: min(52%, 36rem);
     margin-inline: 0;

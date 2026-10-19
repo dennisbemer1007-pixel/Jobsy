@@ -239,6 +239,27 @@ public static class PageAssetCatalog
         return list;
     }
 
+    internal static bool RouteUsesCompactHeroCss(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        if (path == OnboardingRoutes.ClassicStartPath
+            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/carriere/", StringComparison.OrdinalIgnoreCase)
+            || path == PassportRedirects.PassportPath
+            || path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/liked", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/bedrijvenkaart", StringComparison.OrdinalIgnoreCase)
+            || path is "/banenkaart" or "/banen"
+            || path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/profiel/tests", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public static IReadOnlyList<string> RouteStylesheets(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
@@ -254,7 +275,13 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-04"];
+            var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-04" };
+            if (RouteUsesCompactHeroCss(path))
+            {
+                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-51");
+            }
+
+            return appsCss;
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
@@ -271,11 +298,9 @@ public static class PageAssetCatalog
             ];
         }
 
-        if (path == OnboardingRoutes.ClassicStartPath
-            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
-            || path == PassportRedirects.PassportPath)
+        if (RouteUsesCompactHeroCss(path))
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261019-46"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261019-51"];
         }
 
         return [];

@@ -7,6 +7,8 @@ public sealed class CandidateHeroCompactPreviewGateStub : ICandidateHeroCompactP
 {
     public static CandidateHeroCompactPreviewGateStub None { get; } = new();
 
+    public bool IsEnabled => false;
+
     public CandidateHeroCompactPreviewVariant Variant => CandidateHeroCompactPreviewVariant.None;
 
     public string? CandHeroCssClass => null;
