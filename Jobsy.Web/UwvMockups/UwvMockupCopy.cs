@@ -165,7 +165,7 @@ public static class UwvMockupCopy
                         "You like to plan your own work, start small, and create room to grow. Discuss concrete next steps with your adviser.",
                         lang)),
                 "cautious" => (
-                    T("Neem de tijd — ondernemen vraagt voorbereiding", "Take your time — self-employment needs preparation", lang),
+                    T("Neem de tijd: ondernemen vraagt voorbereiding", "Take your time: self-employment needs preparation", lang),
                     T(
                         "Zelfstandig ondernemen vraagt veel van je. Verken eerst andere routes of versterk je netwerk; je adviseur kan helpen kiezen.",
                         "Self-employment asks a lot of you. Explore other routes or strengthen your network first; your adviser can help you choose.",
