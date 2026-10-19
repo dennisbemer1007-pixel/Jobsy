@@ -63,6 +63,7 @@ public static class FeatureFlagRegistry
             Def("PhoneVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false),
             Def("WhatsAppRemindersEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.WhatsAppReminders, pub, false),
             Def("ReferenceVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ReferenceVerification, pub, false),
+            Def("ContextualTipsEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ContextualTips, pub, false),
             Def("TestJourneyIllustrationEnabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false, "TestJourneyIllustrationEnabled"),
             Def("OnboardingFinaleV2Enabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false, "Onboarding:FinaleV2Enabled"),
 
@@ -111,6 +112,11 @@ public static class FeatureFlagRegistry
         {
             title = "AdminSettings.VacancyModeration.Title";
             desc = "AdminSettings.VacancyModeration.Desc";
+        }
+        else if (key == "ContextualTipsEnabled")
+        {
+            title = "AdminSettings.ContextualTips.Enabled.Title";
+            desc = "AdminSettings.ContextualTips.Enabled.Desc";
         }
 
         return new FeatureFlagDefinition(
