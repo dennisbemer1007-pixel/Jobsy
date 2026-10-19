@@ -43,6 +43,10 @@
     "sha256": "0b77b38c48253751260a0b6f1797f81a555ab1aa95a8333fb28bc343352eeeeb",
     "v": "20261016-02"
   },
+  "css/features/bedrijvenkaart.css": {
+    "sha256": "a4aafc3498ecd038c454606d68911fee9bd7733824c28df858546d0e1b1a04c7",
+    "v": "20261018-22"
+  },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
@@ -338,9 +342,5 @@
   "service-worker.published.js": {
     "sha256": "76649cde3c22a5487625a439b28bb5d6f614c21b310aebb5f052d6b9aae5b5f5",
     "v": "20261016-06"
-  },
-  "css/features/bedrijvenkaart.css": {
-    "v": "20261018-22",
-    "sha256": "5610377d500a39cc68736fb091e9d19bfc202674d0d8c45d257c51acbb671dbe"
   }
 }
