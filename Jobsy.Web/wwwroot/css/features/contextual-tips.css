@@ -465,29 +465,31 @@
 
   .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__copy {
     position: relative;
-    z-index: 4;
+    z-index: 2;
     background: var(--pearl);
-    box-shadow: 0.65rem 0 0.85rem 0.35rem var(--pearl);
   }
 
   .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures-wrap {
-    z-index: 1;
-    grid-column: 1 / -1;
+    grid-column: 2;
     grid-row: 1;
-    padding: 0.15rem 0.5rem 0.5rem 0;
+    z-index: 1;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 0.375rem 0.5rem 0.375rem 0.25rem;
+    align-items: flex-end;
     justify-content: flex-end;
-    overflow: visible;
+    overflow: hidden;
     pointer-events: none;
   }
 
   .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures {
     display: block;
+    box-sizing: border-box;
     width: auto;
     height: auto;
-    max-width: 58%;
-    max-height: calc(100% - 0.625rem);
+    max-width: 100%;
+    max-height: 100%;
     margin: 0;
-    margin-left: auto;
     transform: none;
     object-fit: contain;
     object-position: right bottom;
