@@ -26,8 +26,8 @@
 
     @if (_plan.HasPlan)
     {
-        var stepTotal = Math.Max(_plan.Stones.Count, 1);
-        var stepCurrent = Math.Clamp(_plan.CurrentStoneIndex + 1, 1, stepTotal);
+        var stepTotal = Math.Max(_plan.TotalSteps, 1);
+        var stepCurrent = Math.Clamp(_plan.CurrentStepNumber > 0 ? _plan.CurrentStepNumber : 1, 1, stepTotal);
         <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
                                   CoralEyebrow="true"
                                   Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
@@ -186,6 +186,7 @@
             </RailContent>
             <ChildContent>
                 <CareerOverviewCard Plan="@_plan"
+                                    Illustrated="@(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)"
                                     Busy="@_busy"
                                     EmployersOn="@_employersOn"
                                     PassportOn="@_passportOn"

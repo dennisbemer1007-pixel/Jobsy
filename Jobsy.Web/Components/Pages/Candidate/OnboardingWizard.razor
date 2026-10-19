@@ -47,7 +47,7 @@
     }
 </HeadContent>
 
-<div class="ob-wizard ob-wizard--richting-a @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null)">
+<div class="ob-wizard ob-wizard--richting-a @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)">
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>

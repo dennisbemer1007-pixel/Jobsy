@@ -47,6 +47,31 @@
     else
     {
         <h1 id="career-title" class="visually-hidden" tabindex="-1">@TitleText</h1>
+        @if (!Plan.GoalReached)
+        {
+            <div class="career-card__top career-card__top--hero-only">
+                <button type="button"
+                        class="career-card__edit career-only-desktop"
+                        disabled="@Busy"
+                        @onclick="OnChangeDream">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                    <span>@Culture["Career.EditDream"]</span>
+                </button>
+                <button type="button"
+                        class="career-card__edit career-card__edit--icon career-only-mobile"
+                        aria-label="@Culture["Career.EditDream"]"
+                        disabled="@Busy"
+                        @onclick="OnChangeDream">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                </button>
+            </div>
+        }
     }
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))
