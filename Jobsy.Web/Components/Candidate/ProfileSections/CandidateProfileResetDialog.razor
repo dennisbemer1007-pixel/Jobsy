@@ -5,12 +5,14 @@
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Antiforgery
 @inherits CultureAwareComponentBase
 @inject IHttpClientFactory HttpClientFactory
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IAntiforgery Antiforgery
 @inject NavigationManager Navigation
+@inject UserFacingError UserFacingError
 
 @if (IsOpen)
 {
@@ -117,9 +119,9 @@
             await Task.Delay(400);
             Navigation.NavigateTo(result?.RedirectPath ?? OnboardingRoutes.ClassicStartPath, forceLoad: true);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _error = Culture["Common.ErrorGeneric"];
+            _error = UserFacingError.Describe(ex);
         }
         finally
         {
@@ -152,14 +154,18 @@
                 message = msg.GetString();
             }
 
-            if (doc.RootElement.TryGetProperty("referenceCode", out var refProp))
+            if (doc.RootElement.TryGetProperty("supportCode", out var supportProp))
+            {
+                referenceCode = supportProp.GetString();
+            }
+            else if (doc.RootElement.TryGetProperty("referenceCode", out var refProp))
             {
                 referenceCode = refProp.GetString();
             }
 
             if (string.IsNullOrWhiteSpace(message))
             {
-                return null;
+                message = Culture["Common.ErrorGeneric"];
             }
 
             if (string.IsNullOrWhiteSpace(referenceCode))

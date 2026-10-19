@@ -1,6 +1,9 @@
+using Jobsy.Web.Localization;
+using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests.TestSupport;
 
@@ -17,6 +20,10 @@ internal static class BunitAntiforgery
                 ?? new HttpClient(new HttpClientHandler()) { BaseAddress = new Uri("http://localhost/") };
             return new StubHttpClientFactory(client);
         });
+        services.AddSingleton(sp => new UserFacingError(
+            NullLogger<UserFacingError>.Instance,
+            sp.GetRequiredService<CultureState>(),
+            sp.GetRequiredService<IHttpContextAccessor>()));
     }
 
     private sealed class AlwaysValidAntiforgery : IAntiforgery

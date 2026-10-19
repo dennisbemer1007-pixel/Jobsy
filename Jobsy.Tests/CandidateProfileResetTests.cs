@@ -7,6 +7,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.TestStubs;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Tests;
@@ -160,91 +161,21 @@ public class CandidateProfileResetTests
     }
 
     [Fact]
-    public void Candidate_user_relation_catalog_requires_profile_reset_coverage_for_every_model_entity()
+    public void Candidate_user_relation_catalog_requires_cleanup_for_every_candidate_scoped_user_fk()
     {
         using var db = CreateDb();
+        var required = CandidateUserRelationCatalog.CandidateScopedRelations(db);
+        var covered = CandidateUserRelationCatalog.CleanupCoverageEntityTypes;
 
-        var userRelationTypes = db.Model.GetEntityTypes()
-            .Where(entity => entity.ClrType != typeof(User)
-                && (entity.FindProperty("UserId") is not null
-                    || entity.FindProperty("CandidateUserId") is not null))
-            .Select(entity => entity.ClrType)
-            .OrderBy(type => type.Name)
-            .ToArray();
+        var missing = required
+            .Where(r => !covered.Contains(r.EntityClrType))
+            .Select(r => $"{r.EntityClrType.Name}.{r.ForeignKeyProperty}")
+            .ToList();
 
-        var resetCoverage = new[]
-        {
-            typeof(AfterMatchReminderPreference),
-            typeof(AmbassadeurProfile),
-            typeof(Application),
-            typeof(AssessmentResearchAttempt),
-            typeof(CandidateActionToken),
-            typeof(CandidateAssessmentAdjustment),
-            typeof(CandidateAssessmentAttempt),
-            typeof(CandidateCareerInterest),
-            typeof(CandidateCareerGeneration),
-            typeof(CandidateCareerPlan),
-            typeof(CandidateCareerStepProgress),
-            typeof(CandidateCompetency),
-            typeof(CandidateCulturePersonalityProfile),
-            typeof(CandidateDeepAnalysis),
-            typeof(CandidateDiplomaEvaluation),
-            typeof(CandidateExternalVacancy),
-            typeof(CandidateMatchSnapshot),
-            typeof(CandidateOnboarding),
-            typeof(CandidateProactiveMatchingSettings),
-            typeof(CandidateKandidatenkaartSettings),
-            typeof(KandidatenkaartInviteDelivery),
-            typeof(CandidateReference),
-            typeof(CandidateReminderPreference),
-            typeof(ReferenceConfirmation),
-            typeof(ReferenceConfirmationConsentLog),
-            typeof(ReferenceMisuseReport),
-            typeof(WorkExperienceReferenceRequest),
-            typeof(CandidateRoleFitCheck),
-            typeof(CandidateTestReflection),
-            typeof(CandidateUploadedCv),
-            typeof(CandidateVacancyCultureFit),
-            typeof(CandidateValuesProfile),
-            typeof(CandidateWhoAmIProfile),
-            typeof(ComebackReminderLog),
-            typeof(ConsumerPurchaseInvoice),
-            typeof(CandidatePrivatePreferences),
-            typeof(DeepAnalysisCheckout),
-            typeof(DeviceLoginHandoff),
-            typeof(InterviewReminder),
-            typeof(LocalAuthCredential),
-            typeof(MfaTrustedDevice),
-            typeof(OneTimeLink),
-            typeof(PartnerAffiliateProfile),
-            typeof(PassportAccessLog),
-            typeof(PassportPartnerCandidateLink),
-            typeof(PhoneVerificationChallenge),
-            typeof(PlatformFeedback),
-            typeof(ProactiveMatchSuggestion),
-            typeof(SalesIbanChangePending),
-            typeof(SalesManagerProfile),
-            typeof(SalesSelfBillingConsent),
-            typeof(SiteVisit),
-            typeof(TalentContactRequest),
-            typeof(TrainingClick),
-            typeof(TrainingEnrollment),
-            typeof(UserCompany),
-            typeof(UserDeviceSession),
-            typeof(UserExternalLogin),
-            typeof(UserNotification),
-            typeof(VacancyClick),
-            typeof(VacancyLike),
-            typeof(VacancySearchImpression),
-            typeof(VacancyShare),
-            typeof(WebPushSubscription),
-            typeof(WorkInitiative),
-            typeof(WorkInitiativeDraft)
-        }
-        .OrderBy(type => type.Name)
-        .ToArray();
-
-        Assert.Equal(userRelationTypes, resetCoverage);
+        Assert.True(
+            missing.Count == 0,
+            "Add CandidateOwnedDataCleanup handling (and catalog entry) for: "
+            + string.Join(", ", missing));
     }
 
     [Fact]
@@ -412,6 +343,145 @@ public class CandidateProfileResetTests
     }
 
     [Fact]
+    public async Task Reset_removes_candidate_messages_and_after_match_reminder_data()
+    {
+        await using var db = CreateDb();
+        var candidateId = Guid.NewGuid();
+        var employerId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        var vacancyId = Guid.NewGuid();
+        var appId = Guid.NewGuid();
+        const string email = "after-match-reset@test.nl";
+
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "BV",
+            Address = "Straat 1",
+            KvkNumber = "12345678",
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
+        db.Users.AddRange(
+            new User
+            {
+                Id = candidateId,
+                Email = email,
+                FullName = "Kandidaat",
+                Role = UserRole.Candidate,
+                IsActive = true
+            },
+            new User
+            {
+                Id = employerId,
+                Email = "wg@test.nl",
+                FullName = "WG",
+                Role = UserRole.BranchManager,
+                IsActive = true
+            });
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacancyId,
+            CompanyId = companyId,
+            Title = "Vacature",
+            Description = "x",
+            HourlyWage = 14m,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+            Status = VacancyStatus.Active,
+            Location = new GeoPoint(52, 4),
+            RequiredTransport = TransportMode.Bike
+        });
+        db.Applications.Add(new Application
+        {
+            Id = appId,
+            VacancyId = vacancyId,
+            CandidateUserId = candidateId,
+            CandidateName = "Kandidaat",
+            CandidateEmail = email,
+            PreferredTransport = "Bike",
+            Status = ApplicationStatus.Accepted,
+            EmailVerifiedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        });
+        db.ApplicationMessages.Add(new ApplicationMessage
+        {
+            Id = Guid.NewGuid(),
+            ApplicationId = appId,
+            SenderUserId = candidateId,
+            Body = "Hallo werkgever",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        db.AfterMatchReminderPreferences.Add(new AfterMatchReminderPreference
+        {
+            UserId = candidateId,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CandidateProfileResetService(db, new StubUserLookup(db));
+        await service.ResetAsync(CreatePrincipal(email), "VERWIJDER", "nl");
+
+        Assert.False(await db.ApplicationMessages.AnyAsync(m => m.SenderUserId == candidateId));
+        Assert.False(await db.AfterMatchReminderPreferences.AnyAsync(p => p.UserId == candidateId));
+        var app = await db.Applications.SingleAsync(a => a.Id == appId);
+        Assert.Null(app.CandidateUserId);
+    }
+
+    [Fact]
+    public async Task After_profile_reset_account_delete_frees_email_for_new_signup()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        const string email = "reset-then-delete@test.nl";
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "Cycle User",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            PreferencesJson = """{"roles":["horeca"]}""",
+            OpenForWork = true
+        });
+        db.LocalAuthCredentials.Add(new LocalAuthCredential
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Email = email,
+            PasswordHash = "hash"
+        });
+        db.CandidateCompetencies.Add(new CandidateCompetency { Id = Guid.NewGuid(), UserId = userId });
+        await db.SaveChangesAsync();
+
+        var reset = new CandidateProfileResetService(db, new StubUserLookup(db));
+        await reset.ResetAsync(CreatePrincipal(email), "VERWIJDER", "nl");
+
+        var privacy = new PrivacyDataService(db, new StubUserLookup(db), new NoOpMailer(), new AlwaysOnFeatures());
+        await privacy.DeleteOrAnonymizeAsync(CreatePrincipal(email));
+
+        var deleted = await db.Users.SingleAsync(u => u.Id == userId);
+        Assert.False(deleted.IsActive);
+        Assert.StartsWith("deleted-", deleted.Email, StringComparison.Ordinal);
+
+        var newUserId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = newUserId,
+            Email = email,
+            FullName = "Nieuwe Cycle",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        Assert.True(await db.Users.AnyAsync(u => u.Id == newUserId && u.Email == email && u.IsActive));
+    }
+
+    [Fact]
     public async Task Non_candidate_cannot_reset()
     {
         await using var db = CreateDb();
@@ -449,5 +519,15 @@ public class CandidateProfileResetTests
             var email = principal.FindFirst(ClaimTypes.Email)?.Value;
             return db.Users.FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken);
         }
+    }
+
+    private sealed class NoOpMailer : ITransactionalMailer
+    {
+        public Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new EmailSendOutcome(Sent: false, Suppressed: false, Reason: "test"));
     }
 }

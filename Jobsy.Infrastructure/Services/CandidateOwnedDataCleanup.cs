@@ -124,6 +124,36 @@ internal static class CandidateOwnedDataCleanup
             }
         }
 
+        await RemoveRangeAsync(
+            db,
+            db.ApplicationMessages.Where(m => m.SenderUserId == user.Id),
+            cancellationToken);
+
+        var dismissedSuggestions = await db.DismissedVestigingSuggestions
+            .Where(d => d.DismissedByUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var dismissed in dismissedSuggestions)
+        {
+            dismissed.DismissedByUserId = null;
+        }
+
+        var contentReports = await db.ContentReports
+            .Where(r => r.ReporterUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var report in contentReports)
+        {
+            report.ReporterUserId = null;
+            report.ReporterEmail = null;
+        }
+
+        var supportGrants = await db.SupportAccessGrants
+            .Where(g => g.SubjectUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (supportGrants.Count > 0)
+        {
+            db.SupportAccessGrants.RemoveRange(supportGrants);
+        }
+
         await RemoveRangeAsync(db, db.VacancyLikes.Where(l => l.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.VacancyShares.Where(s => s.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.VacancyClicks.Where(c => c.UserId == user.Id), cancellationToken);
@@ -323,7 +353,7 @@ internal static class CandidateOwnedDataCleanup
         }
 
         var accessLogs = await db.PersonalDataAccessLogs
-            .Where(l => l.SubjectUserId == user.Id)
+            .Where(l => l.SubjectUserId == user.Id || l.ActorUserId == user.Id)
             .ToListAsync(cancellationToken);
         if (accessLogs.Count > 0)
         {

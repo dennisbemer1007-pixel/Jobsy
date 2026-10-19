@@ -32,14 +32,22 @@ public static class CandidateProfileResetEndpoints
         {
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.BadRequest(new { message = "Ongeldige sessie. Vernieuw de pagina en probeer opnieuw." });
+                return PrivacyErrorJson(
+                    "Ongeldige sessie. Vernieuw de pagina en probeer opnieuw.",
+                    StatusCodes.Status400BadRequest);
             }
 
             var clientIp = TrustedClientIp.Resolve(http);
             var jwt = accessTokens.TryCreate(http.User, clientIp);
             if (string.IsNullOrWhiteSpace(jwt))
             {
-                return Results.Unauthorized();
+                var code = PrivacyOperationErrors.CreateSupportCode();
+                loggerFactory
+                    .CreateLogger("Jobsy.Web.CandidateProfileReset")
+                    .LogError(
+                        "Profile reset could not mint API token for authenticated user ({SupportCode})",
+                        code);
+                return PrivacyErrorJson(PrivacyOperationErrors.GenericMessageNl, StatusCodes.Status502BadGateway, code);
             }
 
             try
@@ -57,58 +65,95 @@ public static class CandidateProfileResetEndpoints
                 var json = await response.Content.ReadAsStringAsync(http.RequestAborted);
                 if (!response.IsSuccessStatusCode)
                 {
-                    try
+                    if (TryReadPrivacyError(json, out var message, out var supportCode))
                     {
-                        using var doc = JsonDocument.Parse(json);
-                        if (doc.RootElement.TryGetProperty("message", out var msg))
-                        {
-                            return Results.Json(new { message = msg.GetString() }, statusCode: (int)response.StatusCode);
-                        }
-                    }
-                    catch (JsonException)
-                    {
-                        // fall through
+                        return PrivacyErrorJson(
+                            message ?? PrivacyOperationErrors.GenericMessageNl,
+                            (int)response.StatusCode,
+                            supportCode);
                     }
 
-                    var refCode = PrivacyOperationErrors.ShortReference(http.TraceIdentifier);
+                    var fallbackCode = PrivacyOperationErrors.CreateSupportCode();
                     loggerFactory
                         .CreateLogger("Jobsy.Web.CandidateProfileReset")
                         .LogError(
-                            "Profile reset API returned {StatusCode} without message (ref {ReferenceCode})",
+                            "Profile reset API returned {StatusCode} without privacy payload ({SupportCode}) body={Body}",
                             (int)response.StatusCode,
-                            refCode);
-                    return Results.Json(
-                        new
-                        {
-                            message = PrivacyOperationErrors.GenericMessageNl,
-                            referenceCode = refCode
-                        },
-                        statusCode: (int)response.StatusCode);
+                            fallbackCode,
+                            json);
+                    return PrivacyErrorJson(
+                        PrivacyOperationErrors.GenericMessageNl,
+                        (int)response.StatusCode,
+                        fallbackCode);
                 }
 
                 var result = JsonSerializer.Deserialize<ResetCandidateProfileResponse>(json, JsonOptions);
                 return result is null
-                    ? Results.StatusCode(502)
+                    ? PrivacyErrorJson(PrivacyOperationErrors.GenericMessageNl, StatusCodes.Status502BadGateway)
                     : Results.Ok(result);
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
             {
-                var refCode = PrivacyOperationErrors.ShortReference(http.TraceIdentifier);
+                var supportCode = PrivacyOperationErrors.CreateSupportCode();
                 loggerFactory
                     .CreateLogger("Jobsy.Web.CandidateProfileReset")
-                    .LogError(ex, "Profile reset forward to API failed (ref {ReferenceCode})", refCode);
-                return Results.Json(
-                    new
-                    {
-                        message = PrivacyOperationErrors.GenericMessageNl,
-                        referenceCode = refCode
-                    },
-                    statusCode: StatusCodes.Status502BadGateway);
+                    .LogError(ex, "Profile reset forward to API failed ({SupportCode})", supportCode);
+                return PrivacyErrorJson(
+                    PrivacyOperationErrors.GenericMessageNl,
+                    StatusCodes.Status502BadGateway,
+                    supportCode);
             }
         })
         .RequireAuthorization()
         .RequireRateLimiting("auth");
 
         return app;
+    }
+
+    private static IResult PrivacyErrorJson(string message, int statusCode, string? supportCode = null)
+    {
+        supportCode ??= PrivacyOperationErrors.CreateSupportCode();
+        return Results.Json(
+            new
+            {
+                message,
+                supportCode,
+                referenceCode = supportCode
+            },
+            statusCode: statusCode);
+    }
+
+    private static bool TryReadPrivacyError(string json, out string? message, out string? supportCode)
+    {
+        message = null;
+        supportCode = null;
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("message", out var msg))
+            {
+                message = msg.GetString();
+            }
+
+            if (doc.RootElement.TryGetProperty("supportCode", out var sc))
+            {
+                supportCode = sc.GetString();
+            }
+            else if (doc.RootElement.TryGetProperty("referenceCode", out var rc))
+            {
+                supportCode = rc.GetString();
+            }
+
+            return !string.IsNullOrWhiteSpace(message) || !string.IsNullOrWhiteSpace(supportCode);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

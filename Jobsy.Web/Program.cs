@@ -258,7 +258,7 @@ builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidateProfileResetEndpoints.
         builder.Configuration["ApiBaseUrl"],
         "http://localhost:5200/");
     client.BaseAddress = new Uri(apiBaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromMinutes(2);
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
 builder.Services.AddHttpClient("JobsyWebSelf", client =>
@@ -267,7 +267,7 @@ builder.Services.AddHttpClient("JobsyWebSelf", client =>
         builder.Configuration["PublicBaseUrl"] ?? builder.Configuration["ApiBaseUrl"],
         "http://localhost:5100/");
     client.BaseAddress = new Uri(publicBase);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromMinutes(2);
 }).AddHttpMessageHandler<Jobsy.Web.Security.ForwardCircuitCookiesHandler>();
 builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.HttpClientName, client =>
 {
