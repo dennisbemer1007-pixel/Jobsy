@@ -1112,8 +1112,9 @@ textarea.bk-wg-input {
     inset: 0 0 0 55%;
     background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
     background-repeat: no-repeat;
-    background-size: cover;
-    background-position: var(--cand-hero-pos-desktop, right bottom);
+    /* Fit full scene by band height — nothing clipped at the top (Dennis rule). */
+    background-size: auto 100%;
+    background-position: calc(100% - 7.5rem) bottom;
     opacity: 1 !important;
     filter: none !important;
     mix-blend-mode: normal !important;
