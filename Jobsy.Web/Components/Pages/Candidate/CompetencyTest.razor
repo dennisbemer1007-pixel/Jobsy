@@ -4,6 +4,8 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.TestResult
 @using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
@@ -11,6 +13,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject IFeatureFlags FeatureFlags
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Competency.Title"] · Lobsy</PageTitle>
@@ -111,6 +114,12 @@ else
                                 <li>✓ @line</li>
                             }
                         </ul>
+                        @if (_depthMockupEnabled && (_reachedLevel ?? _target) != TestDepthLevel.Bottom)
+                        {
+                            <TestDepthValueUnlockCards Kind="AssessmentKind.Competence"
+                                                       AnsweredCount="_answered"
+                                                       QuickScanVersion="_quickScanVersion" />
+                        }
                         <footer class="test-shell__footer">
                             <a href="/profiel/tests/competence">@Culture["TestDone.Back"]</a>
                             <a class="btn btn-primary" href="@(_fromReis ? "/candidate/ontdekkingsreis" : "/profiel/tests/competence")">
@@ -140,6 +149,7 @@ else
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
     private int _quickScanVersion = AssessmentTestVersions.V1;
+    private bool _depthMockupEnabled;
     private string IntroLead => AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)
         ? Culture.Format("TestFlow.Lead.Competence.V2", _fullCount)
         : Culture["TestFlow.Lead.Competence"];
@@ -186,6 +196,8 @@ else
 
         try
         {
+            var flags = await FeatureFlags.GetAsync();
+            _depthMockupEnabled = flags.TestDepthValueMockupEnabled;
             var state = await Api.GetMyCompetenciesAsync();
             var answers = new Dictionary<int, int>();
             if (state?.Answers is not null)

@@ -202,6 +202,9 @@ public class PlatformFeatureSettings
     /// <summary>Voorbeeld-PDF on test result pages. Default false.</summary>
     public bool SamplePdfEnabled { get; set; }
 
+    /// <summary>Progressive test depth mockup (mini-spiegel, unlock cards). Default true.</summary>
+    public bool TestDepthValueMockupEnabled { get; set; } = true;
+
     /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
     public string AdminFlagOverridesJson { get; set; } = "[]";
 

@@ -171,7 +171,13 @@ public static class TestsOverviewBuilder
             else if (freeAnswered >= TestDepthRules.FirstCount)
             {
                 accent = "pending";
-                statusKey = "TestDepth.First";
+                statusKey = "Test.Status.InProgress";
+                icon = "○";
+            }
+            else if (freeAnswered > 0)
+            {
+                accent = "pending";
+                statusKey = "Test.Status.InProgress";
                 icon = "○";
             }
             else

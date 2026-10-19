@@ -243,6 +243,65 @@ public static class CompetenceDeepReportTexts
         return $"{sentence1} {sentence2} {sentence3}";
     }
 
+    /// <summary>Candidate summary without scores or percentages (mockup / privacy copy).</summary>
+    public static string TemplateSummaryWordsOnly(IReadOnlyList<CompetenceDeepTraitReport> traits)
+    {
+        if (traits.Count == 0)
+        {
+            return "We konden nog geen samenvatting maken. Vul de vragenlijst volledig in voor je persoonlijke profiel.";
+        }
+
+        var ranked = traits.OrderByDescending(t => t.Score).ToList();
+        var top = ranked[0];
+        var second = ranked.Count > 1 ? ranked[1] : null;
+        var lowest = ranked[^1];
+
+        var sentence1 = $"Je valt vooral op in {LabelNl(top.Domain)}: {top.Meaning}";
+        var sentence2 = second is not null
+            ? $"Ook {LabelNl(second.Domain)} speelt een rol in hoe je werkt."
+            : "Je profiel laat een herkenbaar patroon zien in hoe je werkt.";
+        var sentence3 = lowest.Score < top.Score
+            ? $"{LabelNl(lowest.Domain)} vraagt bij jou soms extra aandacht; dat zegt iets over je voorkeuren, niet over minder kwaliteit."
+            : "Je profiel is evenwichtig over je verschillende kanten.";
+
+        return $"{sentence1} {sentence2} {sentence3}";
+    }
+
+    /// <summary>Occupation fit line without numeric matching.</summary>
+    public static string OccupationReasonWordsOnly(string traitLabelNl, string occupationReason)
+        => $"Past bij je kant {traitLabelNl}: {occupationReason}";
+
+    /// <summary>Rewrite stored report copy for mockup/demo (no scores in summary or occupations).</summary>
+    public static void ApplyCandidateWordsOnly(CompetenceDeepReport report)
+    {
+        report.Summary = TemplateSummaryWordsOnly(report.Traits);
+        report.NormSourceLine = null;
+
+        foreach (var occupation in report.Occupations)
+        {
+            var rewritten = false;
+            foreach (var trait in report.Traits)
+            {
+                foreach (var pick in OccupationsFor(trait.Domain))
+                {
+                    if (!string.Equals(pick.Title, occupation.Title, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    occupation.Reason = OccupationReasonWordsOnly(trait.LabelNl, pick.Reason);
+                    rewritten = true;
+                    break;
+                }
+
+                if (rewritten)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
     /// <summary>Fallback (no-AI) three-step action plan built from the candidate's own scores.</summary>
     public static IReadOnlyList<(string Title, string Body)> TemplateActionPlan(
         IReadOnlyList<CompetenceDeepTraitReport> traits)
