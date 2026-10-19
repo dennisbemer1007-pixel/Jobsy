@@ -52,6 +52,7 @@ internal static class UiStringsTestResults
         ["TestResult.Card.Comparison.Sub.Competence"] = "Indicatie t.o.v. 2.707 Nederlandse volwassenen (Johnson, 2014)",
         ["TestResult.Card.Comparison.Sub.Lobsy"] = "Jij tegenover alle Lobsy-kandidaten die deze test deden",
         ["TestResult.Card.Facets"] = "Deelscores per eigenschap",
+        ["TestResult.Card.Facets.Competence"] = "Dieper per eigenschap",
         ["TestResult.Card.Facets.Sub"] = "Zes facetten per eigenschap met normmarkers",
         ["TestResult.Card.Facets.Sub.Culture"] = "Elf domeinscores: werkcultuur en persoonlijkheid op het werk",
         ["TestResult.Card.Occupations"] = "Beroepen die bij je passen",
@@ -121,7 +122,8 @@ internal static class UiStringsTestResults
         ["TestDepthValue.Unlock.NowLine.Deeper3"] = "Waar je energie van krijgt bij elk thema",
         ["TestDepthValue.Unlock.NowLine.Full1"] = "Volledige Jouw spiegel",
         ["TestDepthValue.Unlock.NowLine.Full2"] = "Praktijkvoorbeelden en energie-balans",
-        ["TestDepthValue.Unlock.NowLine.Full3"] = "Gratis na 25 vragen — de basis voor solliciteren"
+        ["TestDepthValue.Unlock.NowLine.Full3"] = "Gratis na 25 vragen, de basis voor solliciteren",
+        ["TestDepthValue.Unlock.PreviewMirrorBadge"] = "Jouw spiegel"
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -151,6 +153,7 @@ internal static class UiStringsTestResults
         ["TestResult.Card.Comparison.Sub.Competence"] = "Indication vs 2,707 Dutch adults (Johnson, 2014)",
         ["TestResult.Card.Comparison.Sub.Lobsy"] = "You versus all Lobsy candidates who took this test",
         ["TestResult.Card.Facets"] = "Facet scores per trait",
+        ["TestResult.Card.Facets.Competence"] = "Deeper per trait",
         ["TestResult.Card.Facets.Sub"] = "Six facets per trait with norm markers",
         ["TestResult.Card.Facets.Sub.Culture"] = "Eleven domain scores: work culture and workplace personality",
         ["TestResult.Card.Occupations"] = "Occupations that fit you",
@@ -220,7 +223,8 @@ internal static class UiStringsTestResults
         ["TestDepthValue.Unlock.NowLine.Deeper3"] = "What gives you energy for each theme",
         ["TestDepthValue.Unlock.NowLine.Full1"] = "Full Jouw spiegel",
         ["TestDepthValue.Unlock.NowLine.Full2"] = "Practical examples and energy balance",
-        ["TestDepthValue.Unlock.NowLine.Full3"] = "Free after 25 questions — your base for applying"
+        ["TestDepthValue.Unlock.NowLine.Full3"] = "Free after 25 questions, your base for applying",
+        ["TestDepthValue.Unlock.PreviewMirrorBadge"] = "Your mirror"
     };
 
     private static Dictionary<string, string> Pl()

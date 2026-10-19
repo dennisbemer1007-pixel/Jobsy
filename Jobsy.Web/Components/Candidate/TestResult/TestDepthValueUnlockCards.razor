@@ -25,7 +25,7 @@
                 <p class="test-depth-unlock__promise">@_previewPromise</p>
                 <div class="test-depth-unlock__preview" aria-hidden="true">
                     <div class="test-depth-unlock__preview-inner test-depth-unlock__preview-inner--@PreviewVariant">
-                        <span class="test-depth-unlock__preview-badge">@Culture["TestDepthValue.MiniMirror.Badge"]</span>
+                        <span class="test-depth-unlock__preview-badge">@Culture[_previewBadgeKey]</span>
                         @foreach (var theme in _previewThemes)
                         {
                             <div class="test-depth-unlock__preview-theme">
@@ -51,6 +51,7 @@
     private IReadOnlyList<string> _nowLines = [];
     private TestDepthValuePreviewCopy.PreviewModel? _preview;
     private string _previewPromise = "";
+    private string _previewBadgeKey = "TestDepthValue.MiniMirror.Badge";
     private IReadOnlyList<PreviewTheme> _previewThemes = [];
 
     private sealed record PreviewTheme(string Title, string Body);
@@ -106,6 +107,9 @@
 
         var nl = Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase);
         _previewPromise = nl ? _preview.PromiseNl : _preview.PromiseEn;
+        _previewBadgeKey = _preview.FullMirrorSections
+            ? "TestDepthValue.Unlock.PreviewMirrorBadge"
+            : "TestDepthValue.MiniMirror.Badge";
         _previewThemes = _preview.ThemeTitleKeys
             .Select(key => BuildPreviewTheme(key, nl))
             .ToList();
@@ -113,6 +117,13 @@
 
     private PreviewTheme BuildPreviewTheme(string domainKey, bool nl)
     {
+        if (_preview?.FullMirrorSections == true)
+        {
+            return new PreviewTheme(
+                Culture[domainKey],
+                TestDepthValuePreviewCopy.MirrorSectionBody(domainKey, nl));
+        }
+
         if (_next == TestDepthLevel.Bottom)
         {
             var title = CompetenceDeepReportTexts.LabelNl(domainKey);

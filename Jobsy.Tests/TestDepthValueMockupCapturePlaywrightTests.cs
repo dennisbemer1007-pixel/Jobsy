@@ -24,7 +24,7 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
 {
     private const string BaseUrl = "http://127.0.0.1:5201";
     private const string Password = DemoUsersSeeder.DemoPassword;
-    private const string OutputDir = "/cursor/stores/self/artifacts/test-levels-mockup-r2";
+    private const string OutputDir = "/cursor/stores/self/artifacts/test-levels-mockup-r3";
 
     private static readonly (int N, string Email, string Name)[] Levels =
     [
