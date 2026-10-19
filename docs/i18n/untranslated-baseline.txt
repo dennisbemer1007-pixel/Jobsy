@@ -1,8 +1,9 @@
 # Untranslated (identical-to-nl) counts after allow-list exemptions.
 # Format: lang=count
 # LocalizationParityReportTests fails only if a language count increases.
+# 2026-10-19: merged acceptatie #742 (AfterMatch); en debt matches acceptatie PR baseline.
 # 2026-10-17: acceptatie tip (#661/#707) + employer-fit (#655); rebaseline to merged catalog (no new debt vs acceptatie+3 en).
-en=354
-pl=274
-ro=292
-ar=257
+en=357
+pl=277
+ro=295
+ar=260
