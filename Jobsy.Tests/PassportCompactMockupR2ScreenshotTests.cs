@@ -65,6 +65,25 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_real_paspoort_compact_variant_c_r4()
+    {
+        Directory.CreateDirectory(ArtifactsDir);
+        var tableRows = new List<string>();
+        foreach (var (width, height, tag) in Viewports())
+        {
+            tableRows.Add(await CaptureAsync("c", width, height, tag, revision: "r4"));
+        }
+
+        await SaveMarginCropsAsync(1920, 1080);
+
+        var md = BuildMarkdown(tableRows, revision: "r4", title: "Paspoort compact mockup variant C (r4, margin art fix)");
+        await File.WriteAllTextAsync(Path.Combine(ArtifactsDir, "above-the-fold-coverage-r4.md"), md);
+        await File.WriteAllTextAsync(
+            Path.Combine(FindRepoRoot(), "tools", "paspoort-compact-mockups", "above-the-fold-coverage-r4.md"),
+            md);
+    }
+
+    [Fact]
     public async Task Capture_real_paspoort_compact_variant_c_r3()
     {
         Directory.CreateDirectory(ArtifactsDir);
@@ -169,6 +188,38 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
 
         var fold = JsonSerializer.Deserialize<FoldPayload>(foldJson, Json)!;
         return FormatRow(layout.ToUpperInvariant(), tag, fold, fileName);
+    }
+
+    private async Task SaveMarginCropsAsync(int width, int height)
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        var returnUrl = "/candidate/paspoort?compactLayout=c&encouragePreview=wist-tests-match";
+        await page.GotoAsync(
+            $"{_web!.ServerAddress}/__test/sign-in?return={Uri.EscapeDataString(returnUrl)}",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.WaitForSelectorAsync(".passport-margin-decor--left img", new() { State = WaitForSelectorState.Visible });
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        foreach (var side in new[] { "left", "right" })
+        {
+            var locator = page.Locator($".passport-margin-decor--{side} img");
+            if (await locator.CountAsync() == 0)
+            {
+                continue;
+            }
+
+            await locator.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(ArtifactsDir, $"variant-c-{width}x{height}-margin-{side}-r4.png")
+            });
+        }
     }
 
     private static string FormatRow(string variant, string viewport, FoldPayload fold, string file)

@@ -10,7 +10,7 @@ Mockups render the **actual** paspoort page with stubbed API data (fake user **A
 | --- | --- |
 | `compactLayout=a` | Slim ~84px greeting band |
 | `compactLayout=b` | Greeting in passport card, no top hero |
-| `compactLayout=c` | Wide canvas (PO choice, **r3**): greeting in card, soft margin art, anchored nudge |
+| `compactLayout=c` | Wide canvas (PO choice, **r4**): greeting in card, gutter spot art + mascot, anchored nudge |
 
 Regenerate PNGs and coverage table:
 
