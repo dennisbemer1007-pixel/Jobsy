@@ -22271,6 +22271,10 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         max-inline-size: calc(100% - 68px);
     }
 
+    .app-shell:has([data-lobsy-coach]) main .kb-ext :is(a, button).kb-ext__btn {
+        max-inline-size: none;
+    }
+
     .app-shell:has([data-lobsy-coach]) :is(
         .passport-tabs,
         .passport-tests__bar-labels,

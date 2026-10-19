@@ -89,6 +89,40 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
     }
 
     [Fact]
+    public async Task Mobile_390_external_vacancy_apply_cta_matches_card_width()
+    {
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+        });
+        var page = await context.NewPageAsync();
+        await page.SetContentAsync(BuildShellHtml("kb-ext"), new() { WaitUntil = WaitUntilState.Load });
+
+        var audit = await page.EvaluateAsync<JsonElement>("""
+            () => {
+              const card = document.querySelector('.kb-ext__card');
+              const apply = document.querySelector('[data-testid="kb-ext-apply-cta"]');
+              if (!card || !apply) return { ok: false, reason: 'missing-card-or-apply' };
+              const c = card.getBoundingClientRect();
+              const a = apply.getBoundingClientRect();
+              const widthOk = Math.abs(a.width - c.width) <= 2;
+              const leftOk = Math.abs(a.left - c.left) <= 2;
+              return {
+                ok: widthOk && leftOk,
+                reason: widthOk && leftOk ? 'ok' : `apply-${Math.round(a.width)}x${Math.round(a.left)}-card-${Math.round(c.width)}x${Math.round(c.left)}`,
+              };
+            }
+            """);
+
+        Assert.True(audit.GetProperty("ok").GetBoolean(), audit.GetProperty("reason").GetString());
+    }
+
+    [Fact]
     public async Task Mobile_390_external_vacancy_coach_does_not_overlap_facts_text()
     {
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -115,14 +149,25 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
 
         await page.EvaluateAsync("""
             () => {
-              const main = document.querySelector('.app-main');
-              if (main) main.scrollTop = main.scrollHeight;
+              const actions = document.querySelector('[data-testid="kb-ext-detail-actions"]');
+              const root = document.scrollingElement || document.documentElement;
+              if (actions) {
+                const y = window.scrollY + actions.getBoundingClientRect().top - window.innerHeight * 0.55;
+                root.scrollTop = Math.max(0, y);
+                window.scrollTo(0, Math.max(0, y));
+              } else {
+                root.scrollTop = root.scrollHeight;
+                window.scrollTo(0, document.body.scrollHeight);
+              }
             }
             """);
         await page.WaitForTimeoutAsync(150);
 
         var audit = await AuditCoachTextOverlapAsync(page);
         Assert.True(audit.Ok, audit.Reason ?? "coach overlap audit failed");
+
+        var actionAudit = await AuditCoachActionsClearanceAsync(page);
+        Assert.True(actionAudit.Ok, actionAudit.Reason ?? "coach actions clearance failed");
 
         Assert.False(await page.Locator(".lobsy-coach-dock__label").IsVisibleAsync());
 
@@ -168,6 +213,24 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
                 ? 'ok'
                 : `scrollSlack-${Math.round(scrollSlack)}-maxSlack-${Math.round(maxSlack)}`;
               return { ok, reason, scrollSlack, maxSlack };
+            }
+            """);
+        return (json.GetProperty("ok").GetBoolean(), json.GetProperty("reason").GetString());
+    }
+
+    private static async Task<(bool Ok, string? Reason)> AuditCoachActionsClearanceAsync(IPage page)
+    {
+        var json = await page.EvaluateAsync<JsonElement>("""
+            () => {
+              const coach = document.querySelector('#lobsy-coach-btn') || document.querySelector('.lobsy-coach-dock__btn');
+              const notInterested = document.querySelector('[data-testid="kb-ext-not-interested"]');
+              if (!coach || !notInterested) return { ok: true, reason: 'no-coach-or-actions' };
+              const c = coach.getBoundingClientRect();
+              const b = notInterested.getBoundingClientRect();
+              if (c.width < 8) return { ok: false, reason: 'coach-not-laid-out' };
+              const gap = c.left - b.right;
+              const ok = gap >= 11;
+              return { ok, reason: ok ? 'ok' : `coach-gap-${Math.round(gap)}` };
             }
             """);
         return (json.GetProperty("ok").GetBoolean(), json.GetProperty("reason").GetString());
@@ -254,8 +317,8 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
         <section class="kb-ext__card"><h2 class="kb-ext__method-title">Match</h2><ul class="kb-ext__bullets"><li>Sterkte</li><li>Uitdaging</li></ul></section>
         <section class="kb-ext__card"><p class="kb-ext__privacy">Privacy</p></section>
         <div class="kb-ext__actions" data-testid="kb-ext-detail-actions">
-        <a class="kb-ext__btn" href="#">Ik wil solliciteren</a>
-        <div class="kb-ext__actions-row"><button type="button" class="kb-ext__btn kb-ext__btn--secondary">Uit Bewaard</button><button type="button" class="kb-ext__btn kb-ext__btn--secondary">Niet interessant</button></div>
+        <a class="kb-ext__btn" href="#" data-testid="kb-ext-apply-cta">Ik wil solliciteren</a>
+        <div class="kb-ext__actions-row"><button type="button" class="kb-ext__btn kb-ext__btn--secondary" data-testid="kb-ext-save-toggle">Uit Bewaard</button><button type="button" class="kb-ext__btn kb-ext__btn--secondary" data-testid="kb-ext-not-interested">Niet interessant</button></div>
         </div></div>
         """;
 
