@@ -5,11 +5,12 @@
 @using Jobsy.Core.Reports.Competence
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @inject CultureState Culture
 
 @if (Report is not null)
 {
-    <article class="competence-report" aria-label="@Culture["Deep.CompetenceTitle"]">
+    <article class="competence-report @(CandidateWordsOnly ? "competence-report--illustrated" : null)" aria-label="@Culture["Deep.CompetenceTitle"]">
         <header class="competence-report__header">
             <span class="test-status-badge test-status-badge--gold competence-report__badge">
                 <span aria-hidden="true">★</span>
@@ -147,7 +148,17 @@
         @if (SelectedTrait is { } workTrait)
         {
             <section class="competence-report__section">
-                <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                @if (CandidateWordsOnly)
+                {
+                    <div class="competence-report__section-head">
+                        <div class="competence-report__section-art test-depth-spot-art test-depth-spot-art--section" style="@_workArtStyle" aria-hidden="true"></div>
+                        <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                    </div>
+                }
+                else
+                {
+                    <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                }
                 <div class="competence-work-cards">
                     <article class="competence-work-card">
                         <h3>@Culture["Deep.Competence.ThriveTitle"]</h3>
@@ -168,7 +179,17 @@
         @if (Report.Occupations.Count > 0)
         {
             <section class="competence-report__section">
-                <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                @if (CandidateWordsOnly)
+                {
+                    <div class="competence-report__section-head">
+                        <div class="competence-report__section-art test-depth-spot-art test-depth-spot-art--section" style="@_occupationsArtStyle" aria-hidden="true"></div>
+                        <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                    </div>
+                }
+                else
+                {
+                    <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                }
                 <ul class="competence-occupations">
                     @foreach (var occupation in Report.Occupations)
                     {
@@ -190,7 +211,17 @@
         @if (Report.ActionPlan.Count > 0)
         {
             <section class="competence-report__section">
-                <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                @if (CandidateWordsOnly)
+                {
+                    <div class="competence-report__section-head">
+                        <div class="competence-report__section-art test-depth-spot-art test-depth-spot-art--section" style="@_actionArtStyle" aria-hidden="true"></div>
+                        <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                    </div>
+                }
+                else
+                {
+                    <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                }
                 <ol class="competence-action-plan">
                     @foreach (var (step, index) in Report.ActionPlan.Select((s, i) => (s, i + 1)))
                     {
@@ -227,6 +258,9 @@
     private int[] _traitScores = [];
     private int[]? _traitNorms;
     private string? _selectedDomain;
+    private string _workArtStyle = "";
+    private string _occupationsArtStyle = "";
+    private string _actionArtStyle = "";
 
     private CompetenceDeepTraitReport? SelectedTrait =>
         Report?.Traits.FirstOrDefault(t => t.Domain == _selectedDomain) ?? Report?.Traits.FirstOrDefault();
@@ -283,6 +317,22 @@
             _selectedDomain = Report.Traits
                 .OrderByDescending(t => t.Score)
                 .FirstOrDefault()?.Domain;
+        }
+
+        if (CandidateWordsOnly)
+        {
+            var (workUrl, workPos) = TestDepthValueIllustratedArt.DeepReportWork();
+            _workArtStyle = TestDepthValueIllustratedArt.InlineBackground(workUrl, workPos);
+            var (occUrl, occPos) = TestDepthValueIllustratedArt.DeepReportOccupations();
+            _occupationsArtStyle = TestDepthValueIllustratedArt.InlineBackground(occUrl, occPos);
+            var (actUrl, actPos) = TestDepthValueIllustratedArt.DeepReportActionPlan();
+            _actionArtStyle = TestDepthValueIllustratedArt.InlineBackground(actUrl, actPos);
+        }
+        else
+        {
+            _workArtStyle = "";
+            _occupationsArtStyle = "";
+            _actionArtStyle = "";
         }
     }
 

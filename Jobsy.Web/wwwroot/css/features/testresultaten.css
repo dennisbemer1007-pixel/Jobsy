@@ -1273,12 +1273,45 @@
 .test-depth-reward__art {
     position: absolute;
     inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Stijl A: photo melts into cream — no hard box edges */
+.test-depth-spot-art {
     background-size: cover;
     background-repeat: no-repeat;
-    opacity: 0.42;
-    mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.15) 35%, rgba(0, 0, 0, 0.85) 100%);
-    -webkit-mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.15) 35%, rgba(0, 0, 0, 0.85) 100%);
     pointer-events: none;
+}
+
+.test-depth-spot-art--hero {
+    opacity: 0.4;
+    mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.72) 100%);
+    -webkit-mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.72) 100%);
+}
+
+.test-depth-reward--light .test-depth-spot-art--hero {
+    opacity: 0.28;
+    mask-image: linear-gradient(100deg, transparent 0%, rgba(0, 0, 0, 0.06) 50%, rgba(0, 0, 0, 0.48) 100%);
+    -webkit-mask-image: linear-gradient(100deg, transparent 0%, rgba(0, 0, 0, 0.06) 50%, rgba(0, 0, 0, 0.48) 100%);
+}
+
+.test-depth-spot-art--band {
+    opacity: 0.32;
+    mask-image: linear-gradient(95deg, transparent 0%, rgba(0, 0, 0, 0.08) 38%, rgba(0, 0, 0, 0.55) 100%);
+    -webkit-mask-image: linear-gradient(95deg, transparent 0%, rgba(0, 0, 0, 0.08) 38%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.test-depth-spot-art--card {
+    opacity: 0.38;
+    mask-image: radial-gradient(ellipse 130% 120% at 88% 42%, #000 0%, transparent 68%);
+    -webkit-mask-image: radial-gradient(ellipse 130% 120% at 88% 42%, #000 0%, transparent 68%);
+}
+
+.test-depth-spot-art--section {
+    opacity: 0.34;
+    mask-image: radial-gradient(ellipse 115% 100% at 92% 50%, #000 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse 115% 100% at 92% 50%, #000 0%, transparent 70%);
 }
 
 .test-depth-reward--150 .test-depth-reward__inner {
@@ -1337,11 +1370,15 @@
     padding: 1.25rem 1.35rem 1rem;
 }
 
+.test-depth-mini-mirror__hero > :not(.test-depth-mini-mirror__hero-art) {
+    position: relative;
+    z-index: 1;
+}
+
 .test-depth-mini-mirror__hero-art {
     position: absolute;
-    inset: 0 0 0 40%;
-    background: radial-gradient(circle at 70% 30%, rgba(255, 220, 180, 0.35), transparent 70%);
-    pointer-events: none;
+    inset: 0 0 0 35%;
+    z-index: 0;
 }
 
 .test-depth-mini-mirror__badge {
@@ -1376,9 +1413,26 @@
 }
 
 .test-depth-mini-mirror__theme {
+    position: relative;
+    overflow: hidden;
     background: #f7f2ea;
     border-radius: 0.75rem;
-    padding: 0.85rem 1rem;
+    padding: 0.85rem 1rem 0.85rem 0.95rem;
+}
+
+.test-depth-mini-mirror__theme-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 46%;
+    height: 100%;
+    min-height: 4.5rem;
+}
+
+.test-depth-mini-mirror__theme > :not(.test-depth-mini-mirror__theme-art) {
+    position: relative;
+    z-index: 1;
+    max-width: 92%;
 }
 
 .test-depth-mini-mirror__theme small {
@@ -1424,10 +1478,30 @@
 }
 
 .test-depth-unlock__card {
+    position: relative;
+    overflow: hidden;
     border: 1px solid var(--border);
     border-radius: 1rem;
     padding: 1.1rem 1.25rem;
     background: var(--surface, #fffcfa);
+}
+
+.test-depth-unlock__card--next {
+    background: linear-gradient(135deg, #fff9f2 0%, var(--surface, #fffcfa) 55%);
+}
+
+.test-depth-unlock__next-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 42%;
+    height: 5.5rem;
+    max-height: 55%;
+}
+
+.test-depth-unlock__card--next > :not(.test-depth-unlock__next-art) {
+    position: relative;
+    z-index: 1;
 }
 
 .test-depth-unlock__card h2 {
@@ -1490,4 +1564,60 @@
 
 .test-depth-unlock__preview-inner--10 .test-depth-unlock__preview-theme:nth-child(4) .test-depth-unlock__preview-theme-body {
     min-height: 2.6rem;
+}
+
+.competence-report--illustrated .competence-report__section-head {
+    position: relative;
+    margin-bottom: 0.75rem;
+    padding-right: 0;
+    min-height: 2.75rem;
+}
+
+.competence-report--illustrated .competence-report__section-head .test-detail__section-title {
+    margin: 0;
+    max-width: 68%;
+}
+
+.competence-report__section-art {
+    position: absolute;
+    top: -0.35rem;
+    right: 0;
+    width: 38%;
+    height: 4.25rem;
+    max-width: 9.5rem;
+}
+
+@media (max-width: 480px) {
+    .test-depth-spot-art--hero {
+        opacity: 0.24;
+    }
+
+    .test-depth-reward--light .test-depth-spot-art--hero {
+        opacity: 0.2;
+    }
+
+    .test-depth-mini-mirror__theme-art {
+        width: 40%;
+        opacity: 0.32;
+    }
+
+    .test-depth-mini-mirror__theme > :not(.test-depth-mini-mirror__theme-art) {
+        max-width: 88%;
+    }
+
+    .test-depth-unlock__next-art {
+        width: 36%;
+        height: 4.25rem;
+    }
+
+    .competence-report__section-art {
+        width: 34%;
+        height: 3.5rem;
+        max-width: 7.5rem;
+    }
+
+    .competence-report--illustrated .competence-report__section-head .test-detail__section-title {
+        max-width: 62%;
+        font-size: 1.05rem;
+    }
 }

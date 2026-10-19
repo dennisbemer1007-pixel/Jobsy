@@ -3,6 +3,7 @@
 @using Jobsy.Core.Reports.Competence
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @inject CultureState Culture
 
 @if (_reached is not null)
@@ -21,6 +22,7 @@
         @if (_next is not null && _preview is not null)
         {
             <article class="test-depth-unlock__card test-depth-unlock__card--next">
+                <div class="test-depth-unlock__next-art test-depth-spot-art test-depth-spot-art--card" style="@_nextArtStyle" aria-hidden="true"></div>
                 <h2>@Culture["TestDepthValue.Unlock.NextTitle"]</h2>
                 <p class="test-depth-unlock__promise">@_previewPromise</p>
                 <div class="test-depth-unlock__preview" aria-hidden="true">
@@ -53,6 +55,7 @@
     private string _previewPromise = "";
     private string _previewBadgeKey = "TestDepthValue.MiniMirror.Badge";
     private IReadOnlyList<PreviewTheme> _previewThemes = [];
+    private string _nextArtStyle = "";
 
     private sealed record PreviewTheme(string Title, string Body);
 
@@ -102,8 +105,12 @@
         {
             _previewPromise = "";
             _previewThemes = [];
+            _nextArtStyle = "";
             return;
         }
+
+        var (nextUrl, nextPos) = TestDepthValueIllustratedArt.ForUnlockNextPreview(PreviewVariant);
+        _nextArtStyle = TestDepthValueIllustratedArt.InlineBackground(nextUrl, nextPos);
 
         var nl = Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase);
         _previewPromise = nl ? _preview.PromiseNl : _preview.PromiseEn;

@@ -24,7 +24,7 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
 {
     private const string BaseUrl = "http://127.0.0.1:5201";
     private const string Password = DemoUsersSeeder.DemoPassword;
-    private const string OutputDir = "/cursor/stores/self/artifacts/test-levels-mockup-r3";
+    private const string OutputDir = "/cursor/stores/self/artifacts/test-levels-mockup-r4";
 
     private static readonly (int N, string Email, string Name)[] Levels =
     [
@@ -186,7 +186,7 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
         else if (url.Contains("/profiel/tests/competence", StringComparison.Ordinal))
         {
             await page.WaitForSelectorAsync(
-                ".test-depth-mini-mirror, .test-mirror__title, .test-detail__header, .competence-report",
+                ".test-depth-spot-art, .test-depth-mini-mirror, .test-mirror__title, .test-detail__header, .competence-report",
                 new() { Timeout = 60_000 });
         }
         else if (url.Contains("/paspoort", StringComparison.Ordinal))
