@@ -511,7 +511,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             await page.WaitForFunctionAsync(
                 """
                 () => !!document.querySelector(
-                  '.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed="true"]')
+                  '.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips .work-status-chip.is-selected, .work-status-chips [aria-pressed="true"], .work-status-chips [aria-checked="true"]')
                 """,
                 null,
                 new() { Timeout = timeoutMs });

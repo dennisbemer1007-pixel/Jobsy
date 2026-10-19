@@ -48,7 +48,7 @@ public class AdminRun5Tests
             out _));
 
         var app = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("js/app-core.js?v=20261019-14", app, StringComparison.Ordinal);
+        Assert.Contains("js/app-core.js?v=20261019-15", app, StringComparison.Ordinal);
         var adminSheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(
             Jobsy.Web.Hosting.PageAssetCatalog.ResolveAreas("/admin/users"));
         Assert.Contains("css/features/admin.css?v=20261018-11", adminSheets, StringComparer.Ordinal);

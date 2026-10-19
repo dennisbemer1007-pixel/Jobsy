@@ -2243,9 +2243,11 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
       });
     }
 
-    window.jobsyCoachDock.bindKbExtCoachGuard();
   },
   bindKbExtCoachGuard: function () {
+    if (!document.querySelector(".kb-ext[data-testid='kb-ext-detail']")) {
+      return;
+    }
     var state = window.jobsyCoachDock._kbExtGuard = window.jobsyCoachDock._kbExtGuard || {};
 
     function mobileKbExt() {
@@ -2374,6 +2376,9 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
 
 (function jobsyCoachKbExtBoot() {
   function boot() {
+    if (!document.querySelector(".kb-ext[data-testid='kb-ext-detail']")) {
+      return;
+    }
     if (window.jobsyCoachDock && typeof window.jobsyCoachDock.bindKbExtCoachGuard === "function") {
       window.jobsyCoachDock.bindKbExtCoachGuard();
     }
