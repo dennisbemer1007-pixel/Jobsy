@@ -112,6 +112,23 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var mobile = viewport is not null && viewport.Width < 600;
         var selected = false;
 
+        // Compact variant C can wrap long werkstatus labels; prefer a single-line chip first.
+        foreach (var label in new[] { "Scholier", "Student", "Stagiair" })
+        {
+            var quick = page.GetByRole(AriaRole.Button, new() { Name = label, Exact = true });
+            if (await quick.CountAsync() == 0)
+            {
+                continue;
+            }
+
+            await quick.First.ScrollIntoViewIfNeededAsync();
+            await quick.First.ClickAsync(new() { Timeout = 15_000, Force = mobile });
+            if (await WaitForWorkStatusSelectedAsync(page, 12_000))
+            {
+                return;
+            }
+        }
+
         for (var round = 0; round < 2 && !selected; round++)
         {
 
@@ -124,14 +141,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
                 try
                 {
-                    if (mobile)
-                    {
-                        await chip.TapAsync(new() { Timeout = 15_000 });
-                    }
-                    else
-                    {
-                        await chip.ClickAsync(new() { Timeout = 15_000 });
-                    }
+                    await chip.ClickAsync(new() { Timeout = 15_000, Force = mobile });
                 }
                 catch (PlaywrightException)
                 {

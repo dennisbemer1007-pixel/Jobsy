@@ -1425,6 +1425,9 @@
   padding-block: 0.55rem 0.68rem !important;
   align-items: flex-start !important;
   overflow: visible !important;
+  position: relative;
+  z-index: 5;
+  touch-action: manipulation;
 }
 
 .ob-wizard--compact-preview-c.ob-wizard--richting-a .work-status-chips .lobsy-choice-tile__label {
