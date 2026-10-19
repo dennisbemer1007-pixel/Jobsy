@@ -280,7 +280,7 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/uwv-mockups.css?v=20261019-01",
+                "css/features/uwv-mockups.css?v=20261019-04",
                 "css/features/banenkaart.css?v=20261018-02",
                 "css/features/banenkaart-illustrated.css?v=20261018-14",
             ];

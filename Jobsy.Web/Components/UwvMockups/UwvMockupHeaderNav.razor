@@ -2,19 +2,19 @@
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
-
 <nav class="app-header__nav candidate-header-nav" aria-label="@Culture["Nav.Main"]" data-testid="candidate-header-nav">
-    @foreach (var item in Items)
+    @foreach (var item in UwvMockupNav.Items)
     {
         var title = Culture[item.TitleKey];
         var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
             ? Culture[item.ShortTitleKey!]
             : title;
-        var active = string.Equals(item.Href, ActiveHref, StringComparison.OrdinalIgnoreCase);
+        var active = RoleNavCatalog.IsActive(item, ActiveHref, UwvMockupNav.Items);
         <a class="candidate-header-nav__link @(active ? "is-active" : null)"
-           href="@PreviewHref(item.Href)"
+           href="@UwvMockupNav.PreviewHref(item.Href, Lang)"
            title="@title"
-           aria-current="@(active ? "page" : null)">
+           aria-current="@(active ? "page" : null)"
+           data-testid="@HeaderNavTestId(item)">
             @shortTitle
         </a>
     }
@@ -24,18 +24,23 @@
     [Parameter] public string ActiveHref { get; set; } = "/carriere";
     [Parameter] public string Lang { get; set; } = "nl";
 
-    private IReadOnlyList<NavItem> Items { get; } = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
-
-    private string PreviewHref(string href)
+    private static string? HeaderNavTestId(NavItem item)
     {
-        var screen = href switch
+        if (string.Equals(item.Href, RoleNavCatalog.HoursItem.Href, StringComparison.OrdinalIgnoreCase))
         {
-            var h when string.Equals(h, PublicRoutes.Banenkaart, StringComparison.OrdinalIgnoreCase) => "banenkaart",
-            var h when string.Equals(h, "/carriere/leren", StringComparison.OrdinalIgnoreCase) => "workshops",
-            var h when string.Equals(h, "/ontdek", StringComparison.OrdinalIgnoreCase) => "drijfveren",
-            var h when h.StartsWith("/profiel", StringComparison.OrdinalIgnoreCase) => "adviseur",
-            _ => "carriere"
-        };
-        return $"/preview/uwv-mockups/{screen}?lang={Uri.EscapeDataString(Lang)}";
+            return "nav-maqqie-uren";
+        }
+
+        if (string.Equals(item.Href, RoleNavCatalog.DiscoveryItem.Href, StringComparison.OrdinalIgnoreCase))
+        {
+            return "header-nav-discovery";
+        }
+
+        if (string.Equals(item.Href, RoleNavCatalog.SearchItem.Href, StringComparison.OrdinalIgnoreCase))
+        {
+            return "header-nav-search";
+        }
+
+        return null;
     }
 }

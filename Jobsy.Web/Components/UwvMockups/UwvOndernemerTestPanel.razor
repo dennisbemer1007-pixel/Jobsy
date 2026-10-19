@@ -1,8 +1,17 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Media
 @using Jobsy.Web.UwvMockups
 
+<div class="test-page journey-page uwv-test-mock__shell">
+    <div class="uwv-test-mock__scene-art" aria-hidden="true">
+        <img src="@CandidateIllustratedImages.StepBanen"
+             alt=""
+             loading="eager"
+             decoding="async" />
+        <p class="uwv-test-mock__scene-bubble">@(UwvMockupCopy.IsEnglish(Lang) ? "Short deepening" : "Korte verdieping")</p>
+    </div>
 @if (Phase == "intro")
 {
     <TestPageShell Kind="AssessmentKind.Career"
@@ -72,6 +81,7 @@ else
         </ChildContent>
     </TestPageShell>
 }
+</div>
 
 @code {
     [Parameter] public string Phase { get; set; } = "intro";

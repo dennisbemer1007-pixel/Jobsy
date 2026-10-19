@@ -21,6 +21,7 @@
         <UwvMockupHeaderNav ActiveHref="@_activeNav" Lang="@_lang" />
         <div class="app-header__actions">
             <PageHelp />
+            <NotificationBell />
             <LanguageSelector />
             <span class="uwv-mockup-shell__user muted">@_demoUser</span>
         </div>
@@ -68,11 +69,11 @@
         else if (path.Contains("drijfveren", StringComparison.OrdinalIgnoreCase)
                  || path.Contains("ondernemer", StringComparison.OrdinalIgnoreCase))
         {
-            _activeNav = "/ontdek";
+            _activeNav = "/candidate/ontdekkingsreis";
         }
         else if (path.Contains("adviseur", StringComparison.OrdinalIgnoreCase))
         {
-            _activeNav = "/profiel";
+            _activeNav = "/candidate/paspoort";
         }
         else
         {

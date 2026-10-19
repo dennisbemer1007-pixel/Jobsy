@@ -16,7 +16,9 @@
 <div class="uwv-mockup-page @(_wide ? "uwv-mockup-page--wide" : null)" data-uwv-screen="@_screenKey" data-uwv-lang="@_lang">
     @if (_screenKey == "banenkaart")
     {
-        <UwvBanenkaartKansLayer Lang="@_lang" />
+        <div class="uwv-mockup-page--banenkaart">
+            <UwvBanenkaartKansLayer Lang="@_lang" />
+        </div>
     }
     else if (_screenKey == "workshops")
     {
@@ -60,15 +62,21 @@
     }
     else if (_screenKey == "ondernemer-intro")
     {
-        <UwvOndernemerTestPanel Phase="intro" Lang="@_lang" />
+        <div class="uwv-test-mock">
+            <UwvOndernemerTestPanel Phase="intro" Lang="@_lang" />
+        </div>
     }
     else if (_screenKey == "ondernemer-question")
     {
-        <UwvOndernemerTestPanel Phase="question" Lang="@_lang" />
+        <div class="uwv-test-mock">
+            <UwvOndernemerTestPanel Phase="question" Lang="@_lang" />
+        </div>
     }
     else if (_screenKey == "ondernemer-result")
     {
-        <UwvOndernemerTestPanel Phase="result" Lang="@_lang" />
+        <div class="uwv-test-mock">
+            <UwvOndernemerTestPanel Phase="result" Lang="@_lang" />
+        </div>
     }
     else
     {
