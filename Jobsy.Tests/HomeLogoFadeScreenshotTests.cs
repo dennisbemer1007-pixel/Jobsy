@@ -51,6 +51,52 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_home_logo_and_illustration_fades_r7()
+    {
+        Directory.CreateDirectory(OutDir);
+
+        foreach (var (w, h, slug, mobile) in new (int W, int H, string Slug, bool Mobile)[]
+                 {
+                     (1920, 900, "1920", false),
+                     (1440, 900, "1440", false),
+                     (1024, 768, "1024", false),
+                     (390, 844, "390", true),
+                 })
+        {
+            await CaptureFullPageAsync(w, h, $"full-{slug}-r7", mobile);
+            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r7", mobile);
+            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r7", mobile);
+            for (var i = 0; i < 3; i++)
+            {
+                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r7", mobile, scroll: true);
+            }
+
+            if (!mobile)
+            {
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "left", "r7");
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "right", "r7");
+                await CaptureHeroBottomZoomAsync(w, h, slug, "r7");
+                if (slug is "1920" or "1440")
+                {
+                    await AssertHeroSideSeamColorDeltaAsync(w, h, slug);
+                }
+
+                await AssertHeroTopBandSmoothnessAsync(w, h, slug);
+            }
+
+            await AssertHeroCtasReceiveClicksAsync(w, h, mobile);
+        }
+
+        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r7", scroll: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r7", scroll: true);
+        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r7", mobile: true);
+        await AssertStep2DnaCirclesMarginAsync(390, 844);
+
+        var logoHeight = await MeasureLogoHeightAsync(1024, 768);
+        Assert.InRange(logoHeight, 34, 42);
+    }
+
+    [Fact]
     public async Task Capture_home_logo_and_illustration_fades_r6()
     {
         Directory.CreateDirectory(OutDir);
@@ -191,7 +237,72 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
         return ((byte)(r / n), (byte)(g / n), (byte)(b / n));
     }
 
-    private async Task AssertStep2LeftCircleVisibleAsync(int w, int h)
+    private async Task AssertHeroTopBandSmoothnessAsync(int w, int h, string slug)
+    {
+        await using var context = await NewContextAsync(w, h);
+        var page = await OpenHomeAsync(context);
+        var bounds = await page.EvaluateAsync<HeroArtBounds>(
+            """
+            () => {
+              const hero = document.querySelector('.pub-landing__hero--illustrated');
+              if (!hero) return null;
+              const heroR = hero.getBoundingClientRect();
+              const vw = window.innerWidth;
+              const artH = parseFloat(getComputedStyle(hero).getPropertyValue('--pub-hero-art-h').trim()) || 680;
+              const iw = 2048;
+              const ih = 720;
+              const scale = Math.min(vw / iw, artH / ih);
+              const rw = iw * scale;
+              const rh = ih * scale;
+              const bandLeft = heroR.left + heroR.width / 2 - vw / 2;
+              const imgLeft = bandLeft + (vw - rw) / 2;
+              const imgTop = heroR.bottom - rh;
+              return { imgLeft, imgRight: imgLeft + rw, imgTop, scale };
+            }
+            """);
+        Assert.NotNull(bounds);
+
+        var hero = page.Locator("#top.pub-landing__hero").First;
+        var box = await hero.BoundingBoxAsync();
+        Assert.NotNull(box);
+        var bytes = await hero.ScreenshotAsync(new() { Type = ScreenshotType.Png });
+        using var image = Image.Load<Rgb24>(bytes);
+
+        var seamY = (int)Math.Round(bounds!.ImgTop - box!.Y);
+        foreach (var viewportX in new[] { 700, 1100, 1300 })
+        {
+            var x = (int)Math.Round(viewportX - box.X);
+            if (x < 1 || x >= image.Width - 1)
+            {
+                continue;
+            }
+
+            AssertVerticalStripSmooth(image, x, seamY, slug, viewportX);
+        }
+    }
+
+    private static void AssertVerticalStripSmooth(Image<Rgb24> image, int x, int seamY, string slug, int viewportX)
+    {
+        var y0 = Math.Clamp(seamY - 4, 0, image.Height - 22);
+        var y1 = Math.Clamp(seamY + 26, y0 + 2, image.Height - 1);
+        for (var y = y0; y < y1; y++)
+        {
+            var a = image[x, y];
+            var b = image[x, y + 1];
+            Assert.True(Math.Abs(a.R - b.R) <= 1, $"{slug} x={viewportX} row {y}→{y + 1} R step {Math.Abs(a.R - b.R)}.");
+            Assert.True(Math.Abs(a.G - b.G) <= 1, $"{slug} x={viewportX} row {y}→{y + 1} G step {Math.Abs(a.G - b.G)}.");
+            Assert.True(Math.Abs(a.B - b.B) <= 1, $"{slug} x={viewportX} row {y}→{y + 1} B step {Math.Abs(a.B - b.B)}.");
+        }
+
+        var yStart = Math.Clamp(seamY, 0, image.Height - 21);
+        var top = image[x, yStart];
+        var below = image[x, yStart + 20];
+        Assert.True(Math.Abs(top.R - below.R) <= 3, $"{slug} x={viewportX} 20px R total {Math.Abs(top.R - below.R)}.");
+        Assert.True(Math.Abs(top.G - below.G) <= 3, $"{slug} x={viewportX} 20px G total {Math.Abs(top.G - below.G)}.");
+        Assert.True(Math.Abs(top.B - below.B) <= 3, $"{slug} x={viewportX} 20px B total {Math.Abs(top.B - below.B)}.");
+    }
+
+    private async Task AssertStep2DnaCirclesMarginAsync(int w, int h)
     {
         await using var context = await NewContextAsync(w, h, mobile: true);
         var page = await OpenHomeAsync(context);
@@ -200,24 +311,50 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
         await page.WaitForTimeoutAsync(600);
         var bytes = await loc.ScreenshotAsync(new() { Type = ScreenshotType.Png });
         using var image = Image.Load<Rgb24>(bytes);
-        var x1 = Math.Max(4, image.Width / 12);
-        var blueHits = 0;
-        var samples = 0;
-        for (var y = (int)(image.Height * 0.08); y < (int)(image.Height * 0.55); y++)
+
+        var minBlueX = int.MaxValue;
+        var maxBlueX = int.MinValue;
+        var blueRows = 0;
+        for (var y = (int)(image.Height * 0.05); y < (int)(image.Height * 0.62); y++)
         {
-            for (var x = 2; x < x1; x++)
+            for (var x = 0; x < image.Width; x++)
             {
-                var p = image[x, y];
-                samples++;
-                if (p.B > p.R + 18 && p.B > p.G + 8 && p.B > 120)
+                if (!IsDnaCirclePixel(image[x, y]))
                 {
-                    blueHits++;
+                    continue;
+                }
+
+                minBlueX = Math.Min(minBlueX, x);
+                maxBlueX = Math.Max(maxBlueX, x);
+                blueRows++;
+            }
+        }
+
+        Assert.True(blueRows >= 80, $"Expected DNA circle pixels on step 2 @390, got {blueRows}.");
+        Assert.True(minBlueX >= 8, $"Left DNA circle margin {minBlueX}px is below 8px.");
+        Assert.True(maxBlueX <= image.Width - 9, $"Right DNA circle margin {image.Width - maxBlueX}px is below 8px.");
+
+        var leftQuarterBlue = 0;
+        for (var y = (int)(image.Height * 0.12); y < (int)(image.Height * 0.5); y++)
+        {
+            for (var x = 8; x < image.Width / 4; x++)
+            {
+                if (IsDnaCirclePixel(image[x, y]))
+                {
+                    leftQuarterBlue++;
                 }
             }
         }
 
-        Assert.True(samples > 0);
-        Assert.True(blueHits >= 12, $"Expected left DNA circle pixels on step 2 @390, got {blueHits} blue hits in {samples} samples.");
+        Assert.True(leftQuarterBlue >= 24, $"Leftmost circle not fully in frame (hits={leftQuarterBlue}).");
+    }
+
+    private static bool IsDnaCirclePixel(Rgb24 p) =>
+        p.B > p.R + 16 && p.B > p.G + 6 && p.B > 115;
+
+    private async Task AssertStep2LeftCircleVisibleAsync(int w, int h)
+    {
+        await AssertStep2DnaCirclesMarginAsync(w, h);
     }
 
     private sealed class HeroArtBounds

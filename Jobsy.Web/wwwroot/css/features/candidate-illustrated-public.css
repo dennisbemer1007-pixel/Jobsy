@@ -111,9 +111,10 @@
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
   --pub-hero-art-h: 680px;
+  --pub-hero-img-rh: min(calc(100vw * 720 / 2048), var(--pub-hero-art-h));
   --pub-hero-shell-l: 238, 230, 218;
   --pub-hero-shell-r: 238, 230, 218;
-  --pub-hero-shell-top: 251, 242, 227;
+  --pub-hero-shell-top: 255, 248, 231;
   --pub-hero-shell-bottom: 218, 210, 205;
   position: relative;
   min-height: max(640px, var(--pub-hero-art-h));
@@ -149,15 +150,43 @@
   transform: translateX(-50%);
   background: var(--pub-hero-art) no-repeat center bottom / contain;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 20%, #000 80%, transparent 100%),
-    linear-gradient(180deg, #000 0%, #000 98%, transparent 100%);
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))),
+      #000 calc(max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))) + 140px),
+      #000 98%,
+      transparent 100%
+    );
   mask-image: linear-gradient(90deg, transparent 0%, #000 20%, #000 80%, transparent 100%),
-    linear-gradient(180deg, #000 0%, #000 98%, transparent 100%);
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))),
+      #000 calc(max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))) + 140px),
+      #000 98%,
+      transparent 100%
+    );
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after {
-  display: none;
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh));
+  z-index: 0;
+  width: 100vw;
+  height: min(180px, calc(var(--pub-hero-img-rh) * 0.42));
+  pointer-events: none;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    rgb(var(--pub-hero-shell-top)) 0%,
+    color-mix(in srgb, rgb(var(--pub-hero-shell-top)) 78%, transparent) 48%,
+    transparent 100%
+  );
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
@@ -507,17 +536,16 @@
 
 @media (max-width: 900px) {
   .pub-theme .pub-landing__step-art--2 {
-    height: clamp(195px, 56vw, 232px);
-    padding: 0;
+    height: clamp(200px, 58vw, 240px);
+    padding: 0 8px;
+    box-sizing: border-box;
     background-color: var(--surface);
-    background-size: 88% auto;
-    background-position: 54% center;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%),
-      linear-gradient(180deg, transparent 0%, #000 10%, #000 86%, transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%),
-      linear-gradient(180deg, transparent 0%, #000 10%, #000 86%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-origin: content-box;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
   }
 
   .pub-theme .pub-landing__steps-grid {
