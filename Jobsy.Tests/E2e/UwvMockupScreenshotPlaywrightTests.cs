@@ -25,7 +25,10 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
     private static readonly string[] PartialCapturePrefixes =
     [
-        "04-ondernemer-result-",
+        "04-ondernemer-result-nl-1440",
+        "04-ondernemer-result-nl-1920",
+        "04-ondernemer-result-en-1440",
+        "04-ondernemer-result-en-1920",
     ];
 
     private IllustratedPagesWebFactory? _web;
@@ -190,9 +193,26 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
                 const style = getComputedStyle(scene);
                 sceneHiddenMobile = style.display === 'none' || sr.width < 8 || sr.height < 8;
               }
+              const panel = document.querySelector('.uwv-ondernemer-result__panel');
+              const img = document.querySelector('.uwv-ondernemer-result__scene img');
+              let insetOk = true;
+              let inset = { left: 0, right: 0, top: 0, bottom: 0 };
+              if (panel && img && window.innerWidth >= 640) {
+                const pr = panel.getBoundingClientRect();
+                const ir = img.getBoundingClientRect();
+                inset = {
+                  left: ir.left - pr.left,
+                  right: pr.right - ir.right,
+                  top: ir.top - pr.top,
+                  bottom: pr.bottom - ir.bottom
+                };
+                insetOk = inset.left >= 16 && inset.right >= 16 && inset.top >= 16 && inset.bottom >= 16;
+              }
               return {
-                ok: !overlap,
+                ok: !overlap && insetOk,
                 overlap,
+                insetOk,
+                inset,
                 doneBottom: dr.bottom,
                 coachTop: cr.top,
                 sceneHidden: sceneHiddenMobile,
@@ -201,11 +221,12 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
             }
             """);
 
-        Assert.True(layout.Ok, layout.Reason ?? $"coach overlaps done line (overlap={layout.Overlap}, doneBottom={layout.DoneBottom}, coachTop={layout.CoachTop})");
+        Assert.True(layout.Ok, layout.Reason ?? DescribeLayoutFailure(layout));
 
         if (width >= 640)
         {
             Assert.False(layout.SceneHidden, "result scene should be visible from 640px up");
+            Assert.True(layout.InsetOk, $"vignette img must sit >=16px inside card (inset L{layout.Inset?.Left} R{layout.Inset?.Right} T{layout.Inset?.Top} B{layout.Inset?.Bottom})");
         }
         else
         {
@@ -213,14 +234,29 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
         }
     }
 
+    private static string DescribeLayoutFailure(CoachOverlapDto layout) =>
+        layout.Overlap
+            ? $"coach overlaps done line (doneBottom={layout.DoneBottom}, coachTop={layout.CoachTop})"
+            : $"vignette inset too tight (L{layout.Inset?.Left} R{layout.Inset?.Right} T{layout.Inset?.Top} B{layout.Inset?.Bottom})";
+
     private sealed class CoachOverlapDto
     {
         public bool Ok { get; set; }
         public string? Reason { get; set; }
         public bool Overlap { get; set; }
+        public bool InsetOk { get; set; }
+        public InsetDto? Inset { get; set; }
         public double DoneBottom { get; set; }
         public double CoachTop { get; set; }
         public bool SceneHidden { get; set; }
+    }
+
+    private sealed class InsetDto
+    {
+        public double Left { get; set; }
+        public double Right { get; set; }
+        public double Top { get; set; }
+        public double Bottom { get; set; }
     }
 
     private static async Task BuildPerScreenContactSheetsAsync(string dir)
