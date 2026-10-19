@@ -1,0 +1,46 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+
+<section class="detail-card career-card uwv-block uwv-similar" aria-labelledby="@_titleId">
+    <p class="uwv-block__eyebrow">
+        <i class="uwv-block__dot" aria-hidden="true"></i>
+        @UwvMockupCopy.Similar.Eyebrow(Lang)
+    </p>
+    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Similar.Title(Lang)</h2>
+    <p class="uwv-block__lead">@UwvMockupCopy.Similar.Lead(Lang)</p>
+
+    <ul class="uwv-similar__list">
+        @for (var i = 0; i < UwvMockupData.SimilarJobs.Count; i++)
+        {
+            var job = UwvMockupData.SimilarJobs[i];
+            var open = _expandedIndex == i;
+            <li class="uwv-similar__item">
+                <h3>@(UwvMockupCopy.IsEnglish(Lang) ? job.TitleEn : job.TitleNl)</h3>
+                <p>@(UwvMockupCopy.IsEnglish(Lang) ? job.WhyEn : job.WhyNl)</p>
+                <button type="button"
+                        class="uwv-similar__routes-btn @(open ? "is-open" : null)"
+                        aria-expanded="@(open ? "true" : "false")"
+                        @onclick="() => Toggle(i)">
+                    @UwvMockupCopy.Similar.RoutesToggle(Lang)
+                </button>
+                @if (open)
+                {
+                    <div class="uwv-similar__routes-panel">
+                        <p>@UwvMockupCopy.Similar.RoutesHint(Lang)</p>
+                        <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? job.RouteEn : job.RouteNl)</p>
+                    </div>
+                }
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    private string Lang => Culture.Language;
+    private readonly string _titleId = "uwv-similar-" + Guid.NewGuid().ToString("N")[..8];
+    private int? _expandedIndex = 0;
+
+    private void Toggle(int index) =>
+        _expandedIndex = _expandedIndex == index ? null : index;
+}

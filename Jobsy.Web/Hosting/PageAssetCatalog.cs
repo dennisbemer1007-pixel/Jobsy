@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261019-12",
+        "css/app.min.css?v=20261019-13",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/candidate-illustrated-decorative-layers.css?v=20261019-03",
@@ -44,6 +44,13 @@ public static class PageAssetCatalog
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261019-extvac5",
+    ];
+
+    private static readonly string[] UwvMockupRouteCss =
+    [
+        "css/features/uwv-mockups.css?v=20261019-r8",
+        "css/features/banenkaart.css?v=20261018-02",
+        "css/features/banenkaart-illustrated.css?v=20261018-14",
     ];
 
     public static readonly string[] CandidateAppCss =
@@ -181,6 +188,11 @@ public static class PageAssetCatalog
             return Area.CandidatePublic | Area.CandidateApp | Area.Werkgever;
         }
 
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.CandidatePublic | Area.CandidateApp;
+        }
+
         if (path.StartsWith("/candidate/", StringComparison.Ordinal)
             || path.StartsWith("/vacancies/", StringComparison.Ordinal)
             || path is "/home" or "/ontdek" or "/candidate/match")
@@ -269,6 +281,22 @@ public static class PageAssetCatalog
                 "css/features/reference-verification-hero.css?v=20261018-16",
                 "css/features/reference-verification.css?v=20261018-16"
             ];
+        }
+
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return UwvMockupRouteCss;
+        }
+
+        if (path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/ondernemerscheck", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/wat-drijft-jou", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/adviseur-werk", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/deel/uwv-adviseur/", StringComparison.OrdinalIgnoreCase))
+        {
+            return UwvMockupRouteCss;
         }
 
         return [];

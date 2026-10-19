@@ -1,0 +1,23 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+
+<label class="kb-chip kb-chip--toggle @(_on ? "is-on" : null) uwv-kans-map-toggle" data-testid="uwv-kansberoepen-toggle">
+    <input type="checkbox" checked="@_on" @onchange="OnToggle" />
+    <span>@UwvMockupCopy.Banenkaart.LayerLabel(Culture.Language)</span>
+</label>
+
+@code {
+    [Parameter] public bool On { get; set; } = true;
+    [Parameter] public EventCallback<bool> OnChanged { get; set; }
+
+    private bool _on = true;
+
+    protected override void OnParametersSet() => _on = On;
+
+    private async Task OnToggle(ChangeEventArgs e)
+    {
+        _on = e.Value is true;
+        await OnChanged.InvokeAsync(_on);
+    }
+}

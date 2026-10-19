@@ -16,12 +16,12 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "95baf7c8f02db45cf9be3971d16eda13401a71c5f34beaea85ce195b92eef27e",
-    "v": "20261019-12"
+    "sha256": "3b5dd49e035287dfa065cca53c9d18f874d993fc5c037f65d55f861c2a829ebd",
+    "v": "20261019-13"
   },
   "css/critical.css": {
     "sha256": "8deaeb75ee0cd6f71b031c184212319ca55579ce3a76cba4b618c3a4d3e72443",
-    "v": "20261018-23"
+    "v": "20261019-12"
   },
   "css/features/account-mfa.css": {
     "sha256": "77ffff1997179f77bc2086c352bb23b7cea454b05c0fc555a8bcf4e6371f3df3",
@@ -260,7 +260,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "895c1ae37324823fa08ca803ee7ecbcf8d39d352bf08f8e322293e51db7e6717",
+    "sha256": "b6cffff99d6eca14400e9c82a9f8bb049d71cfb15f1ffc854f2fee1677a2433b",
     "v": "20261019-15"
   },
   "js/app-extras.js": {
@@ -300,8 +300,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "e4b9992b370f05544914b3216135c0a688702276b75f909c6386676d2f53d0ce",
-    "v": "20261018-20"
+    "sha256": "412ce30dcc82f4f25591a588f49e2fb17fb7096a1b97c027bb66e554c93a86d3",
+    "v": "20261019-uwv5"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",
@@ -344,11 +344,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "14bb5ab766bdf092dfc6678c71ec6b168551fa1eafc61ad262cb8fd0e9293979",
+    "sha256": "3a40163b295b3a45a07a853c1fec3a929bb9bb45a9894aeabdb4fc843c0049ce",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "26504bc27d48828d17aed6795673600986d2abc2615e19d114484ea6ac0cc082",
+    "sha256": "64accb94f4604ca91a345a31491251639b09fa3c3bac852b43ab910e5d5187ac",
     "v": "20261016-06"
   }
 }

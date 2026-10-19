@@ -84,5 +84,8 @@ public enum PlatformFeature
     SensitiveExperience,
 
     /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
-    TrainingPartners
+    TrainingPartners,
+
+    /// <summary>UWV werkmap: kansberoepen, ondernemerstest, drijfveren, adviseur-deel. Default false.</summary>
+    UwvFeatures
 }

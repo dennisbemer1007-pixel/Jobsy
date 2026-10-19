@@ -232,6 +232,18 @@ public static class UiStringsFeatureFlags
             "Wł. = przy zawodzie widać krótką zapisaną radę. Wył. = ten blok zostaje ukryty. Nic nie jest wymyślane na żywo.",
             "Pornit = la o meserie apare un sfat scurt salvat. Oprit = blocul rămâne ascuns. Nu se inventează nimic pe loc.",
             "تشغيل = تظهر نصيحة قصيرة محفوظة عند المهنة. إيقاف = يبقى هذا الجزء مخفياً. لا يُختلق شيء مباشرة.");
+        Add("AdminSettings.UwvFeatures.Enabled.Title",
+            "UWV werkmap",
+            "UWV toolkit",
+            "UWV toolkit",
+            "UWV toolkit",
+            "UWV toolkit");
+        Add("AdminSettings.UwvFeatures.Enabled.Desc",
+            "Aan = kansberoepen, ondernemerstest, drijfveren en adviseur-deel op echte kandidatenroutes. Uit = alles verborgen.",
+            "On = opportunity occupations, entrepreneur check, drivers and adviser share on live candidate routes. Off = hidden.",
+            "Wł. = katalog szans, test przedsiębiorcy, motywatory i udostępnianie doradcy na trasach kandydata. Wył. = ukryte.",
+            "Pornit = ocupații cu șanse, test antreprenor, motivatori și partajare consilier pe rutele candidatului. Oprit = ascuns.",
+            "تشغيل = فرص العمل واختبار ريادة الأعمال والدوافع ومشاركة المستشار على مسارات المرشح. إيقاف = مخفي.");
         Add("AdminSettings.CompactTestPdf.Enabled.Desc",
             "Aan = het uitgebreide persoonlijke testrapport is ongeveer 4 pagina's met grafieken. Uit = de langere rapporten van nu.",
             "On = the extended personal test report is about 4 pages with charts. Off = today's longer reports.",

@@ -38,41 +38,87 @@ internal static class FunctionalOnboardingInteractivityHelpers
         Assert.True(audit.Ok, $"{label}: {audit.Reason}");
     }
 
+    private static ILocator WorkStatusChips(IPage page)
+        => page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
+
+    private static ILocator WorkStatusSelectedChip(IPage page)
+        => page.Locator(
+            ".work-status-chips .lobsy-choice-tile.is-selected, " +
+            ".work-status-chips .work-status-chip.is-selected, " +
+            ".work-status-chips [aria-pressed=\"true\"], " +
+            ".work-status-chips [aria-checked=\"true\"]");
+
+    internal static async Task WaitForBlazorCircuitReadyAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
+    }
+
+    private static async Task<bool> TryActivateWorkStatusChipAsync(IPage page, ILocator chip)
+    {
+        if (await WorkStatusSelectedChip(page).CountAsync() > 0)
+        {
+            return true;
+        }
+
+        var mobile = page.ViewportSize is { Width: < 600 };
+        await chip.ScrollIntoViewIfNeededAsync();
+        await Assertions.Expect(chip).ToBeEnabledAsync(new() { Timeout = 30_000 });
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            if (await WorkStatusSelectedChip(page).CountAsync() > 0)
+            {
+                return true;
+            }
+
+            try
+            {
+                if (mobile)
+                {
+                    await chip.TapAsync(new() { Timeout = 15_000 });
+                }
+                else
+                {
+                    await chip.ClickAsync(new() { Timeout = 15_000 });
+                }
+            }
+            catch (PlaywrightException)
+            {
+                await chip.ClickAsync(new() { Force = true, Timeout = 15_000 });
+            }
+
+            try
+            {
+                await Assertions.Expect(WorkStatusSelectedChip(page).First)
+                    .ToBeVisibleAsync(new() { Timeout = 25_000 });
+                return true;
+            }
+            catch (PlaywrightException) when (attempt < 2)
+            {
+                // Blazor may still be rendering; retry activation on the same chip.
+            }
+        }
+
+        return await WorkStatusSelectedChip(page).CountAsync() > 0;
+    }
+
     internal static async Task SelectAnyWorkStatusChipAsync(IPage page)
     {
-        var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
+        var chips = WorkStatusChips(page);
         if (await chips.CountAsync() == 0)
         {
             return;
         }
 
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 90_000 });
+        await WaitForBlazorCircuitReadyAsync(page);
 
-        var mobile = page.ViewportSize is { Width: < 600 };
-        for (var i = 0; i < await chips.CountAsync(); i++)
+        var count = await chips.CountAsync();
+        for (var i = 0; i < count; i++)
         {
-            var chip = chips.Nth(i);
-            await chip.ScrollIntoViewIfNeededAsync();
-            try
-            {
-                if (mobile)
-                {
-                    await chip.TapAsync(new() { Timeout = 10_000 });
-                }
-                else
-                {
-                    await chip.ClickAsync(new() { Timeout = 10_000 });
-                }
-            }
-            catch (PlaywrightException)
-            {
-                await chip.ClickAsync(new() { Force = true, Timeout = 10_000 });
-            }
-
-            if (await WaitForWorkStatusSelectedAsync(page, 8_000))
+            if (await TryActivateWorkStatusChipAsync(page, chips.Nth(i)))
             {
                 return;
             }
@@ -87,84 +133,24 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AssertWorkStatusChipTogglesAsync(IPage page)
     {
-        var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
+        var chips = WorkStatusChips(page);
         await chips.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 90_000 });
-        await page.WaitForTimeoutAsync(400);
+        await WaitForBlazorCircuitReadyAsync(page);
 
-        var firstName = page.Locator("input[autocomplete=given-name]").First;
-        if (await firstName.CountAsync() > 0)
+        var count = await chips.CountAsync();
+        for (var i = 0; i < count; i++)
         {
-            await firstName.FillAsync("Func");
-            var lastName = page.Locator("input[autocomplete=family-name]").First;
-            if (await lastName.CountAsync() > 0)
+            if (await TryActivateWorkStatusChipAsync(page, chips.Nth(i)))
             {
-                await lastName.FillAsync("Test");
-            }
-
-            await page.WaitForTimeoutAsync(300);
-        }
-
-        var viewport = page.ViewportSize;
-        var mobile = viewport is not null && viewport.Width < 600;
-        var selected = false;
-
-        for (var round = 0; round < 2 && !selected; round++)
-        {
-
-            var count = await chips.CountAsync();
-            for (var i = 0; i < count && !selected; i++)
-            {
-                var chip = chips.Nth(i);
-                await chip.ScrollIntoViewIfNeededAsync();
-                await page.WaitForTimeoutAsync(200);
-
-                try
-                {
-                    if (mobile)
-                    {
-                        await chip.TapAsync(new() { Timeout = 15_000 });
-                    }
-                    else
-                    {
-                        await chip.ClickAsync(new() { Timeout = 15_000 });
-                    }
-                }
-                catch (PlaywrightException)
-                {
-                    await chip.ClickAsync(new() { Timeout = 15_000, Force = true });
-                }
-
-                selected = await WaitForWorkStatusSelectedAsync(page, 25_000);
-                if (selected)
-                {
-                    break;
-                }
-
-                await chip.EvaluateAsync(
-                    """
-                    el => {
-                      if (!(el instanceof HTMLElement)) return;
-                      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));
-                      el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerType: 'touch' }));
-                      el.click();
-                    }
-                    """);
-                selected = await WaitForWorkStatusSelectedAsync(page, 12_000);
+                return;
             }
         }
 
-        if (!selected)
-        {
-            var audits = await DescribeHitAuditsAsync(page, [
-                (".work-status-chips .lobsy-choice-tile", "werkstatus-chip"),
-                ("[data-testid=onboarding-next]", "volgende"),
-            ]);
-            Assert.True(selected, $"werkstatus chip did not select after trying all chips. Hit audits: {audits}");
-        }
+        var audits = await DescribeHitAuditsAsync(page, [
+            (".work-status-chips .lobsy-choice-tile", "werkstatus-chip"),
+            ("[data-testid=onboarding-next]", "volgende"),
+        ]);
+        Assert.Fail($"werkstatus chip did not select after trying all chips. Hit audits: {audits}");
     }
 
     internal static async Task<string> DescribeHitAuditsAsync(IPage page, (string Selector, string Label)[] targets)
@@ -501,25 +487,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
         {
             await birth.FillAsync("2000-06-15");
             await birth.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))");
-        }
-    }
-
-    private static async Task<bool> WaitForWorkStatusSelectedAsync(IPage page, int timeoutMs)
-    {
-        try
-        {
-            await page.WaitForFunctionAsync(
-                """
-                () => !!document.querySelector(
-                  '.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips .work-status-chip.is-selected, .work-status-chips [aria-pressed="true"], .work-status-chips [aria-checked="true"]')
-                """,
-                null,
-                new() { Timeout = timeoutMs });
-            return true;
-        }
-        catch (TimeoutException)
-        {
-            return false;
         }
     }
 

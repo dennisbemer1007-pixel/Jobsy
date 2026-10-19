@@ -320,6 +320,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("UwvFeaturesEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "UwvFeaturesEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.UwvFeatures.Enabled.Title",
+                DescriptionKey: "AdminSettings.UwvFeatures.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.UwvFeaturesEnabled,
+                Write: v => new PlatformFeatureUpdate(UwvFeaturesEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("FutureJobsForYouEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -864,6 +877,7 @@ public static class PlatformSettingsCatalog
         bool? afterMatchEnabled = null;
         bool? sensitiveExperienceEnabled = null;
         bool? trainingPartnersEnabled = null;
+        bool? uwvFeaturesEnabled = null;
         bool? testJourneyIllustrationEnabled = null;
         bool? onboardingFinaleV2Enabled = null;
         bool? occupationDayInLifeEnabled = null;
@@ -956,6 +970,11 @@ public static class PlatformSettingsCatalog
             if (p.TrainingPartnersEnabled is not null)
             {
                 trainingPartnersEnabled = p.TrainingPartnersEnabled;
+            }
+
+            if (p.UwvFeaturesEnabled is not null)
+            {
+                uwvFeaturesEnabled = p.UwvFeaturesEnabled;
             }
 
             if (p.SensitiveExperienceEnabled is not null)
@@ -1055,6 +1074,7 @@ public static class PlatformSettingsCatalog
             AfterMatchEnabled: afterMatchEnabled,
             SensitiveExperienceEnabled: sensitiveExperienceEnabled,
             TrainingPartnersEnabled: trainingPartnersEnabled,
+            UwvFeaturesEnabled: uwvFeaturesEnabled,
             TestJourneyIllustrationEnabled: testJourneyIllustrationEnabled,
             OnboardingFinaleV2Enabled: onboardingFinaleV2Enabled,
             OccupationDayInLifeEnabled: occupationDayInLifeEnabled,

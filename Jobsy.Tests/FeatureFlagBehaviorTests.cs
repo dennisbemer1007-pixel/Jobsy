@@ -13,6 +13,7 @@ public sealed class FeatureFlagBehaviorTests
     [InlineData(PlatformFeature.TrainingPartners)]
     [InlineData(PlatformFeature.ReferenceVerification)]
     [InlineData(PlatformFeature.Employers)]
+    [InlineData(PlatformFeature.UwvFeatures)]
     public void Snapshot_is_enabled_maps_platform_feature(PlatformFeature feature)
     {
         var snap = new FeatureFlagSnapshot(
@@ -21,7 +22,8 @@ public sealed class FeatureFlagBehaviorTests
             KandidatenkaartEnabled: feature == PlatformFeature.Kandidatenkaart,
             SensitiveExperienceEnabled: feature == PlatformFeature.SensitiveExperience,
             TrainingPartnersEnabled: feature == PlatformFeature.TrainingPartners,
-            ReferenceVerificationEnabled: feature == PlatformFeature.ReferenceVerification);
+            ReferenceVerificationEnabled: feature == PlatformFeature.ReferenceVerification,
+            UwvFeaturesEnabled: feature == PlatformFeature.UwvFeatures);
         Assert.True(snap.IsEnabled(feature));
     }
 
