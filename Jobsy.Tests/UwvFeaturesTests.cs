@@ -4,6 +4,7 @@ using Jobsy.Core.Options;
 using Jobsy.Core.Uwv;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Web.UwvMockups;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -13,6 +14,14 @@ namespace Jobsy.Tests;
 
 public sealed class UwvFeaturesTests
 {
+    [Fact]
+    public void Ondernemer_result_next_steps_kvk_opens_in_new_tab()
+    {
+        var kvk = UwvMockupCopy.Ondernemer.ResultNextSteps("nl").Single(s => s.Href.Contains("kvk.nl", StringComparison.Ordinal));
+        Assert.True(kvk.External);
+        Assert.StartsWith("https://", kvk.Href, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void FeatureFlagSnapshot_uwv_features_off_by_default()
     {
