@@ -242,6 +242,13 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
                     lines.push('media-figures:' + ms.backgroundImage);
                 }
             }
+            const gesprek = hero.querySelector('.cand-hero__tips-gesprek-art');
+            if (gesprek) {
+                const gs = getComputedStyle(gesprek);
+                if (gs.backgroundImage && gs.backgroundImage !== 'none') {
+                    lines.push('tips-gesprek-art:' + gs.backgroundImage);
+                }
+            }
             const after = getComputedStyle(hero, '::after');
             if (after.backgroundImage && after.backgroundImage !== 'none') {
                 lines.push('after-atmosphere:' + after.backgroundImage);

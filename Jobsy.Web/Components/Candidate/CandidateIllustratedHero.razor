@@ -68,7 +68,8 @@
         CssClass?.Contains("cand-hero--tips-moment", StringComparison.Ordinal) == true;
 
     private bool ShowMobileFiguresImage =>
-        !UsesCompositeMobileHero
+        !ShowTipsGesprekMobileArt
+        && !UsesCompositeMobileHero
         && !UsesSingleMobileHeroArt
         && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
 
