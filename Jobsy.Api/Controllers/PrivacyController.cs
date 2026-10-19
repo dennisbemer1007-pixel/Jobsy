@@ -257,19 +257,20 @@ public sealed class PrivacyController : ControllerBase
 
     private ObjectResult PrivacyFailure(Exception ex, string operation)
     {
-        var refCode = PrivacyOperationErrors.ShortReference(HttpContext.TraceIdentifier);
+        var supportCode = PrivacyOperationErrors.CreateSupportCode();
         _logger.LogError(
             ex,
-            "Privacy operation {Operation} failed for authenticated user (ref {ReferenceCode}, trace {TraceId})",
+            "Privacy operation {Operation} failed for authenticated user ({SupportCode}, trace {TraceId})",
             operation,
-            refCode,
+            supportCode,
             HttpContext.TraceIdentifier);
         return StatusCode(
             StatusCodes.Status500InternalServerError,
             new
             {
                 message = PrivacyOperationErrors.GenericMessageNl,
-                referenceCode = refCode
+                supportCode,
+                referenceCode = supportCode
             });
     }
 }
