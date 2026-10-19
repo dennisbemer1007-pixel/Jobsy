@@ -278,9 +278,11 @@
   .passport-page--compact-preview-c > header.cand-compact-hero--onboarding::before {
     background: linear-gradient(
       90deg,
-      var(--cand-compact-hero-page) 0%,
-      color-mix(in srgb, var(--cand-compact-hero-page) 65%, transparent) 10%,
-      transparent 42%,
+      var(--cand-compact-hero-band) 0%,
+      var(--cand-compact-hero-band) 42%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 82%, transparent) 54%,
+      transparent 72%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 55%, transparent) 88%,
       transparent 100%
     );
   }

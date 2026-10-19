@@ -10,7 +10,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class CompactHeadersPreviewR14ScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/workspace/artifacts/compact-headers-preview-r14";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/compact-headers-preview-r14";
     private static readonly (int R, int G, int B) BandRgb = (250, 235, 219);
 
     private IllustratedPagesWebFactory? _web;
