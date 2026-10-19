@@ -77,7 +77,7 @@ public static class PageAssetCatalog
 
     public static readonly string[] ContextualTipsCss =
     [
-        "css/features/contextual-tips.css?v=20261019-r11",
+        "css/features/contextual-tips.css?v=20261019-r12",
     ];
 
     public static readonly string[] WerkgeverCss =
