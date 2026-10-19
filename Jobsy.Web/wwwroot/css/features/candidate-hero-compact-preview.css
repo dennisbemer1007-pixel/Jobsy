@@ -289,6 +289,17 @@
     background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-hero-page) 100%);
   }
 
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding {
+    min-height: 150px !important;
+    height: 150px !important;
+    max-height: 150px !important;
+  }
+
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art,
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img {
+    min-height: 150px;
+  }
+
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__body {
     padding-inline: clamp(16px, 3vw, 28px);
     padding-block-end: calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 16px);
@@ -315,9 +326,23 @@
     ) !important;
   }
 
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-hero-band) 0%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 92%, transparent) 8%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 45%, transparent) 32%,
+      transparent 48%
+    );
+  }
+
   .ob-illustrated-step--compact-preview-c .cand-compact-hero--onboarding .cand-compact-hero__art img,
-  .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img,
-  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img {
+  .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img {
     width: 112%;
     max-width: none;
     min-height: max(8.125rem, 130px);
@@ -327,6 +352,20 @@
       linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 12px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, transparent 48px, #000 48px, #000 88%, transparent 100%),
       linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 12px), transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img {
+    width: 112%;
+    max-width: none;
+    min-height: 150px;
+    object-fit: cover;
+    object-position: right center;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 30%, #000 58%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, transparent 30%, #000 58%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
   }

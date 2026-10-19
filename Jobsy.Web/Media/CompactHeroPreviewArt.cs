@@ -16,9 +16,9 @@ public static class CompactHeroPreviewArt
             return CandidateIllustratedImages.LearnGrowHeroBandC;
         }
 
-        if (artUrl.Contains("kompas-hero-wide", StringComparison.OrdinalIgnoreCase))
+        if (artUrl.Contains("kompas-hero", StringComparison.OrdinalIgnoreCase))
         {
-            return artUrl;
+            return CandidateIllustratedImages.KompasHeroBandC;
         }
 
         if (artUrl.Contains("kennismaken", StringComparison.OrdinalIgnoreCase)
