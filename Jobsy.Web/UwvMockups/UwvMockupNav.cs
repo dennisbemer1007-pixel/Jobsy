@@ -29,7 +29,7 @@ public static class UwvMockupNav
         }
 
         if (string.Equals(href, "/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(href, "/candidate/start", StringComparison.OrdinalIgnoreCase))
+            || string.Equals(href, OnboardingRoutes.ClassicStartPath, StringComparison.OrdinalIgnoreCase))
         {
             return "drijfveren";
         }

@@ -135,9 +135,9 @@
 
             _shareUrl = Navigation.ToAbsoluteUri($"/deel/uwv-adviseur/{created.Token}").ToString();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _shareError = ex.Message;
+            _shareError = Culture["Common.Error"];
         }
         finally
         {

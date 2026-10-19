@@ -3,7 +3,7 @@
 # Replace the use with UserFacingError (Jobsy.Web/Services/UserFacingError.cs),
 # then regenerate: JOBSY_UPDATE_EXMESSAGE_BASELINE=1 dotnet test --filter ExMessage
 # A file missing from this list must be at 0. This list is also the to-do list.
-# Total: 273 in 97 files.
+# Total: 274 in 97 files.
 1	Jobsy.Web/Auth/EntraAuthFailureFormatter.cs
 1	Jobsy.Web/Auth/EntraOidcAudienceDiagnostics.cs
 1	Jobsy.Web/Components/Admin/GrantTokensDialog.razor
@@ -25,7 +25,7 @@
 2	Jobsy.Web/Components/Admin/Sections/LobsyCompanySection.razor
 3	Jobsy.Web/Components/Admin/Sections/MarketingFlyerSection.razor
 3	Jobsy.Web/Components/Admin/Sections/MasterdataSection.razor
-3	Jobsy.Web/Components/Admin/Sections/PlatformSettingsEditor.razor
+4	Jobsy.Web/Components/Admin/Sections/PlatformSettingsEditor.razor
 8	Jobsy.Web/Components/Admin/Sections/PricingSettingsSection.razor
 5	Jobsy.Web/Components/Admin/Sections/SalesCommercialSection.razor
 7	Jobsy.Web/Components/Admin/Sections/SalesManagersSection.razor

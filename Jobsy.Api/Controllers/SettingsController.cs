@@ -631,6 +631,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
+        Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
+        Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
         Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
         Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
