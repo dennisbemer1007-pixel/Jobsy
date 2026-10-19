@@ -25,7 +25,8 @@
                  height="267"
                  loading="@(Eager ? "eager" : "lazy")"
                  decoding="async"
-                 draggable="false" />
+                 draggable="false"
+                 style="@PhotoObjectPositionStyle" />
         }
         else
         {
@@ -129,6 +130,10 @@
     [Parameter] public bool UwvKansberoepBadge { get; set; }
     [Parameter] public bool UwvBaangarantieBadge { get; set; }
     [Parameter] public bool UwvKansberoepBadgeEnglish { get; set; }
+    [Parameter] public string? PhotoObjectPosition { get; set; }
+
+    private string? PhotoObjectPositionStyle =>
+        string.IsNullOrWhiteSpace(PhotoObjectPosition) ? null : $"object-position:{PhotoObjectPosition}";
 
     private Guid _renderVacancyId;
     private bool _renderHighlighted;

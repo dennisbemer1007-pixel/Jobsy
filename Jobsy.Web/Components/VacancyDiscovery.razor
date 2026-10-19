@@ -391,6 +391,7 @@
                                              UwvKansberoepBadge="true"
                                              UwvBaangarantieBadge="@kansMeta.Baangarantie"
                                              UwvKansberoepBadgeEnglish="@UwvMockupCopy.IsEnglish(Culture.Language)"
+                                             PhotoObjectPosition="@UwvKansPhotoObjectPosition(vacancy)"
                                              OnSelect="OnSelect"
                                              OnOpen="OnOpenVacancy"
                                              OnExplainMatch="OpenMatchExplain" />
@@ -438,6 +439,7 @@
                                              UwvKansberoepBadge="true"
                                              UwvBaangarantieBadge="@kansMeta.Baangarantie"
                                              UwvKansberoepBadgeEnglish="@UwvMockupCopy.IsEnglish(Culture.Language)"
+                                             PhotoObjectPosition="@UwvKansPhotoObjectPosition(vacancy)"
                                              OnSelect="OnSelect"
                                              OnOpen="OnOpenVacancy"
                                              OnExplainMatch="OpenMatchExplain" />
@@ -3239,6 +3241,14 @@
         var en = UwvMockupCopy.IsEnglish(Culture.Language);
         return (en ? card.ProspectEn : card.ProspectNl, card.Baangarantie);
     }
+
+    private static string? UwvKansPhotoObjectPosition(VacancyListItem vacancy) =>
+        vacancy.Id.ToString("D") switch
+        {
+            "c1000001-0000-0000-0000-000000000001" => "26% 48%",
+            "c1000003-0000-0000-0000-000000000003" => "74% 48%",
+            _ => "50% 48%",
+        };
 
     private async Task OnUwvKansLayerChangedAsync(bool on)
     {

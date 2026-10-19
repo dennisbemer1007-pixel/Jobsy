@@ -506,17 +506,30 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   margin: 0;
   order: -1;
   position: relative;
-  overflow: visible;
-  mask-image: radial-gradient(ellipse 98% 92% at 55% 52%, #000 52%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 98% 92% at 55% 52%, #000 52%, transparent 100%);
+  overflow: hidden;
+  padding: 0.75rem;
+  mask-image: radial-gradient(ellipse 72% 68% at 50% 48%, #000 38%, transparent 92%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 48%, #000 38%, transparent 92%);
+}
+
+.uwv-ondernemer-intro-layout__art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 78% 74% at 50% 46%,
+    transparent 42%,
+    color-mix(in srgb, var(--bg) 88%, transparent) 100%
+  );
 }
 
 .uwv-ondernemer-intro-layout__art img {
   display: block;
   width: 100%;
-  max-height: min(240px, 40vh);
+  max-height: min(260px, 42vh);
   object-fit: contain;
-  object-position: 55% 100%;
+  object-position: 50% 88%;
   border-radius: 0;
 }
 

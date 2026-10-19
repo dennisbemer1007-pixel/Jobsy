@@ -13,10 +13,22 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
 
+    private const string EnvPartial = "JOBSY_UWV_MOCKUP_PARTIAL";
+
+    private static bool PartialCapturesOnly =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvPartial), "1", StringComparison.Ordinal);
+
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS"))
-            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r7"))
+            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r8"))
             : Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS")!;
+
+    private static readonly string[] PartialCapturePrefixes =
+    [
+        "02-banenkaart-kanslaag-",
+        "03-workshops-omscholen-",
+        "04-ondernemer-intro-",
+    ];
 
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
@@ -97,7 +109,11 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
         Directory.CreateDirectory(OutDir);
 
-        foreach (var cap in Captures)
+        var captures = PartialCapturesOnly
+            ? Captures.Where(c => PartialCapturePrefixes.Any(p => c.FileSlug.StartsWith(p, StringComparison.Ordinal))).ToArray()
+            : Captures;
+
+        foreach (var cap in captures)
         {
             var lang = cap.FileSlug.Contains("-en-", StringComparison.Ordinal) ? "en" : "nl";
             await using var context = await _browser!.NewContextAsync(KbE2e.ContextFor(cap.Width, cap.Height));

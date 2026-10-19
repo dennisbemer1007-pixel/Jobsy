@@ -53,7 +53,7 @@ public static class RoleNavCatalog
         new("Nav.Applications", "/candidate/applications", NavIcons.Applications);
 
     public static readonly NavItem CareerItem =
-        new("Nav.CareerPath", "/carriere", NavIcons.Career);
+        new("Nav.CareerPath", "/carriere", NavIcons.Career, ["/carriere/leren"]);
 
     public static readonly NavItem HoursItem =
         new("Nav.Hours", "/candidate/uren", NavIcons.Clock, ShortTitleKey: "Nav.Hours.Short");
