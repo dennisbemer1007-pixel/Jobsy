@@ -76,6 +76,9 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen04.Hero.Lead",
             "Linda stelde deze momenten voor. Kies er één of stel zelf een ander moment voor.",
             "Linda proposed these times. Pick one or suggest another time yourself.");
+        Add("AfterMatch.Screen04.Hero.LeadCompact",
+            "Kies een moment of stel zelf een ander voor.",
+            "Pick a time or suggest another yourself.");
         Add("AfterMatch.Screen04.Confirm", "Dit moment bevestigen", "Confirm this time");
         Add("AfterMatch.Screen04.ProposeOther", "Ander moment voorstellen", "Suggest another time");
 
