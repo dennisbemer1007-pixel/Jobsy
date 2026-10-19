@@ -450,28 +450,49 @@
   border-color: var(--coral);
 }
 
-/* Tips mobile hero: same grid/fade/copy as Bewaard (cand-hero--with-art); larger desk scene PNG */
+/* Tips mobile hero: fade only on text column; scene fully opaque, no img mask */
 @media (max-width: 639px) {
   .ctips-page .cand-hero.cand-hero--tips-moment.cand-hero--with-art {
+    grid-template-columns: 43% 57%;
     background-image: none !important;
-    overflow: visible;
+    overflow: hidden;
+  }
+
+  .ctips-page .cand-hero--tips-moment.cand-hero--with-art::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__copy {
+    position: relative;
+    z-index: 4;
+    background: var(--pearl);
+    box-shadow: 0.65rem 0 0.85rem 0.35rem var(--pearl);
   }
 
   .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures-wrap {
-    padding: 0.25rem 0.5rem 0.5rem 0;
+    z-index: 1;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    padding: 0.15rem 0.5rem 0.5rem 0;
+    justify-content: flex-end;
     overflow: visible;
+    pointer-events: none;
   }
 
   .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures {
+    display: block;
     width: auto;
-    height: 88%;
-    max-height: 88%;
-    max-width: none;
-    transform: translateX(-12px);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 32%, #000 100%),
-      linear-gradient(to top, transparent 0%, #000 8%, #000 100%);
-    mask-image: linear-gradient(to right, transparent 0%, #000 32%, #000 100%),
-      linear-gradient(to top, transparent 0%, #000 8%, #000 100%);
+    height: auto;
+    max-width: 58%;
+    max-height: calc(100% - 0.625rem);
+    margin: 0;
+    margin-left: auto;
+    transform: none;
+    object-fit: contain;
+    object-position: right bottom;
+    mask: none !important;
+    -webkit-mask: none !important;
   }
 }
 
