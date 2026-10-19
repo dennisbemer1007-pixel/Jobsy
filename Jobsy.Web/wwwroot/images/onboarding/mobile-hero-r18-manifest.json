@@ -1,0 +1,114 @@
+{
+  "steps": {
+    "kennismaken": {
+      "width": 780,
+      "height": 520,
+      "audit": {
+        "slug": "kennismaken",
+        "ok": true,
+        "min_fig_x": 429,
+        "fig_start": 429,
+        "overlap_left_band": false
+      }
+    },
+    "beschikbaarheid": {
+      "width": 780,
+      "height": 520,
+      "audit": {
+        "slug": "beschikbaarheid",
+        "ok": true,
+        "min_fig_x": 429,
+        "fig_start": 429,
+        "overlap_left_band": false
+      }
+    },
+    "vervoer": {
+      "width": 780,
+      "height": 520,
+      "audit": {
+        "slug": "vervoer",
+        "ok": true,
+        "min_fig_x": 429,
+        "fig_start": 429,
+        "overlap_left_band": false
+      }
+    },
+    "werkervaring": {
+      "width": 780,
+      "height": 520,
+      "audit": {
+        "slug": "werkervaring",
+        "ok": true,
+        "min_fig_x": 429,
+        "fig_start": 429,
+        "overlap_left_band": false
+      }
+    },
+    "opleiding": {
+      "width": 780,
+      "height": 520,
+      "audit": {
+        "slug": "opleiding",
+        "ok": true,
+        "min_fig_x": 429,
+        "fig_start": 429,
+        "overlap_left_band": false
+      }
+    },
+    "droombaan": {
+      "width": 780,
+      "height": 520,
+      "audit": {
+        "slug": "droombaan",
+        "ok": true,
+        "min_fig_x": 429,
+        "fig_start": 429,
+        "overlap_left_band": false
+      }
+    }
+  },
+  "audits": [
+    {
+      "slug": "kennismaken",
+      "ok": true,
+      "min_fig_x": 429,
+      "fig_start": 429,
+      "overlap_left_band": false
+    },
+    {
+      "slug": "beschikbaarheid",
+      "ok": true,
+      "min_fig_x": 429,
+      "fig_start": 429,
+      "overlap_left_band": false
+    },
+    {
+      "slug": "vervoer",
+      "ok": true,
+      "min_fig_x": 429,
+      "fig_start": 429,
+      "overlap_left_band": false
+    },
+    {
+      "slug": "werkervaring",
+      "ok": true,
+      "min_fig_x": 429,
+      "fig_start": 429,
+      "overlap_left_band": false
+    },
+    {
+      "slug": "opleiding",
+      "ok": true,
+      "min_fig_x": 429,
+      "fig_start": 429,
+      "overlap_left_band": false
+    },
+    {
+      "slug": "droombaan",
+      "ok": true,
+      "min_fig_x": 429,
+      "fig_start": 429,
+      "overlap_left_band": false
+    }
+  ]
+}
