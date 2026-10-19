@@ -186,11 +186,13 @@
 .pub-theme .pub-landing__step-card {
   border: 1px solid var(--border);
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
   background: var(--surface);
 }
 
 .pub-theme .pub-landing__step-art {
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
   height: clamp(190px, 21vw, 215px);
   background-size: cover;
   background-repeat: no-repeat;
@@ -213,8 +215,8 @@
 
 .pub-theme .pub-landing__step-art--2 {
   height: clamp(200px, 22vw, 225px);
-  background-size: contain;
-  background-position: center center;
+  background-size: 100% auto;
+  background-position: center top;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
   mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
 }
