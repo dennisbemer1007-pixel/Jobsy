@@ -128,30 +128,32 @@
                                              AskAnotherHref="@AskAnotherReferenceHref()" />
                 }
 
-                <div class="passport-tabs"
-                     role="tablist"
-                     aria-label="@Culture["Passport.Title"]"
-                     @onkeydown="OnTabListKeyDown">
-                    @foreach (var tab in VisibleTabs())
-                    {
-                        var id = $"passport-tab-{tab}";
-                        var selected = _tab == tab;
-                        <button type="button"
-                                id="@id"
-                                class="passport-tab @(selected ?"passport-tab--active" : null)"
-                                role="tab"
-                                aria-selected="@(selected ? "true" : "false")"
-                                aria-controls="@($"passport-panel-{tab}")"
-                                tabindex="@(selected ? 0 : -1)"
-                                @onclick="() => SetTab(tab)">
-                            <span class="passport-tabs__icon" aria-hidden="true">@((MarkupString)TabIcon(tab))</span>
-                            <span>@Culture[TabLabelKey(tab)]</span>
-                            @if (tab == PassportTabs.Tests && _testsNextStepCount > 0)
-                            {
-                                <span class="passport-tabs__pill">@_testsNextStepCount</span>
-                            }
-                        </button>
-                    }
+                <div class="passport-tabs-shell">
+                    <div class="passport-tabs"
+                         role="tablist"
+                         aria-label="@Culture["Passport.Title"]"
+                         @onkeydown="OnTabListKeyDown">
+                        @foreach (var tab in VisibleTabs())
+                        {
+                            var id = $"passport-tab-{tab}";
+                            var selected = _tab == tab;
+                            <button type="button"
+                                    id="@id"
+                                    class="passport-tab @(selected ?"passport-tab--active" : null)"
+                                    role="tab"
+                                    aria-selected="@(selected ? "true" : "false")"
+                                    aria-controls="@($"passport-panel-{tab}")"
+                                    tabindex="@(selected ? 0 : -1)"
+                                    @onclick="() => SetTab(tab)">
+                                <span class="passport-tabs__icon" aria-hidden="true">@((MarkupString)TabIcon(tab))</span>
+                                <span>@Culture[TabLabelKey(tab)]</span>
+                                @if (tab == PassportTabs.Tests && _testsNextStepCount > 0)
+                                {
+                                    <span class="passport-tabs__pill">@_testsNextStepCount</span>
+                                }
+                            </button>
+                        }
+                    </div>
                 </div>
 
                 <div class="passport-panels">

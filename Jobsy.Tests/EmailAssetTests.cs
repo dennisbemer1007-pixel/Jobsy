@@ -71,7 +71,7 @@ public class EmailAssetTests
         Assert.Contains("BrandImages.MarkSvg", coach);
         Assert.DoesNotContain("mascot-coach.webp", coach);
         var coachAvatar = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyCoachAvatar.razor"));
-        Assert.Contains("BrandImages.MascotWebp128", coachAvatar);
+        Assert.Contains("BrandImages.MarkSvg", coachAvatar);
     }
 
     private static string FindRepoRoot()

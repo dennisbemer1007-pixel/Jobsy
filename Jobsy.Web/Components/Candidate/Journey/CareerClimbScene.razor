@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Journey
 @using System.Globalization
+@using Jobsy.Web.Media
 <div class="career-scene @(Mobile ?"career-scene--mobile" : "career-scene--desktop") @(Celebrate ? "career-scene--celebrate" : null)"
      aria-hidden="true">
     @((MarkupString)_svg)
@@ -8,7 +9,9 @@
     {
         <div class="career-scene__lob" style="--x:@(LobsterX)%;--y:@(LobsterY)%;--size:@(LobsterSize)px">
             <img class="lobsy-coach-art"
-                 src="/images/brand/mascot-coach.webp"
+                 src="@BrandImages.MarkSvg"
+                 srcset="@BrandImages.SrcSet56"
+                 sizes="@($"{LobsterSize}px")"
                  alt=""
                  width="@LobsterSize"
                  height="@LobsterSize" />

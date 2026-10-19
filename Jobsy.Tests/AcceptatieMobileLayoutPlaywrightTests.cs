@@ -36,44 +36,24 @@ public class AcceptatieMobileLayoutPlaywrightTests
     }
 
     [Fact]
-    public async Task Mobile_passport_tabs_sit_above_bottom_nav()
+    public async Task Mobile_passport_tabs_sticky_shell_does_not_overlap_preceding_card()
     {
         await using var page = await OpenStaticPageAsync(390, 844, PassportTabsHtml());
-        await page.EvaluateAsync("""
+
+        var shellSticky = await page.Locator(".passport-tabs-shell").EvaluateAsync<string>("el => getComputedStyle(el).position");
+        Assert.Equal("sticky", shellSticky);
+
+        var noOverlap = await page.EvaluateAsync<bool>("""
             () => {
-              document.documentElement.style.setProperty('--bottom-nav-h', '64px');
+              const shell = document.querySelector('.passport-tabs-shell');
+              const card = document.querySelector('.passport-overview');
+              if (!shell || !card) return false;
+              const s = shell.getBoundingClientRect();
+              const c = card.getBoundingClientRect();
+              return s.top >= c.bottom - 1;
             }
             """);
-
-        var tabs = page.Locator(".passport-tabs");
-        var position = await tabs.EvaluateAsync<string>("el => getComputedStyle(el).position");
-        Assert.Equal("fixed", position);
-
-        var aboveNav = await tabs.EvaluateAsync<bool>("""
-            () => {
-              const tabs = document.querySelector('.passport-tabs');
-              const nav = document.querySelector('.bottom-nav');
-              if (!tabs || !nav) return false;
-              const t = tabs.getBoundingClientRect();
-              const n = nav.getBoundingClientRect();
-              return t.bottom <= n.top + 1 && t.height > 0;
-            }
-            """);
-        Assert.True(aboveNav);
-
-        var hitIsTab = await page.EvaluateAsync<bool>("""
-            () => {
-              const tabs = document.querySelector('.passport-tabs');
-              const btn = document.querySelector('#passport-tab-tests');
-              if (!tabs || !btn) return false;
-              const r = btn.getBoundingClientRect();
-              const x = r.left + r.width / 2;
-              const y = r.top + r.height / 2;
-              const el = document.elementFromPoint(x, y);
-              return !!(el && (el === btn || el.closest('#passport-tab-tests')));
-            }
-            """);
-        Assert.True(hitIsTab);
+        Assert.True(noOverlap);
     }
 
     [Fact]
@@ -184,20 +164,26 @@ public class AcceptatieMobileLayoutPlaywrightTests
         var root = FindRepoRoot();
         var appCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         var passportCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/mijn-paspoort.css"));
+        var kompasCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/kompas-illustrated.css"));
         return """
             <!DOCTYPE html><html lang="nl"><head><meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
-            """ + appCss + passportCss + """
+            :root { --app-header-height: 56px; --bg: #f5f2ee; --surface: #fffcfa; --border: #ddd5cc; --brand: #0f2d5c; --z-sticky: 20; --space-3: 0.75rem; }
+            """ + appCss + passportCss + kompasCss + """
             </style></head><body>
             <div class="app-shell has-bottom-nav" data-lobsy-coach style="--bottom-nav-h:64px">
             <main class="app-main">
-            <div class="panel-page passport-page">
+            <div class="panel-page passport-page passport-page--illustrated">
             <div class="passport-layout"><div class="passport-layout__main">
+            <section class="passport-overview" style="background:var(--surface);padding:1rem;margin-bottom:1rem;border:1px solid var(--border);border-radius:12px">
+            <button type="button" style="width:100%;padding:0.75rem;background:var(--brand);color:#fff;border:0;border-radius:8px">Naar de tests</button>
+            </section>
+            <div class="passport-tabs-shell">
             <div class="passport-tabs" role="tablist">
             <button type="button" class="passport-tab passport-tab--active" id="passport-tab-dna">DNA</button>
             <button type="button" class="passport-tab" id="passport-tab-tests">Tests</button>
-            </div></div></div></div></main>
+            </div></div></div></div></div></main>
             <nav class="bottom-nav" aria-label="Nav" style="height:64px"></nav>
             </div></body></html>
             """;
