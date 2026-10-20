@@ -73,6 +73,31 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
     [Theory]
     [MemberData(nameof(ViewportCases))]
+    public async Task Wizard_chips_on_steps_1_3_toggle_within_300ms(int width, int height, bool mobile, string tag)
+    {
+        var (run, baseUrl) = await TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, $"func-chips-{tag}");
+        await FunctionalOnboardingInteractivityHelpers.AssertRapidWizardChipInteractionsSteps1To3Async(page, baseUrl);
+        await FunctionalE2eArtifacts.CaptureAsync(page, "wizard-rapid-chips", tag);
+    }
+
+    [Theory]
+    [MemberData(nameof(ViewportCases))]
     public async Task Kennismaken_step1_stays_interactive_after_slow_typing(int width, int height, bool mobile, string tag)
     {
         var (run, baseUrl) = await TryBeginAsync();

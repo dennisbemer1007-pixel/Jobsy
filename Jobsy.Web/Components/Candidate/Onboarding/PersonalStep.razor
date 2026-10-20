@@ -229,7 +229,7 @@
         }
 
         await NotifyAsync();
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
     }
 
     private async Task OnAddressQueryChangedAsync(string value)

@@ -222,6 +222,81 @@ internal static class FunctionalOnboardingInteractivityHelpers
             null,
             new() { Timeout = 90_000 });
 
+    internal static async Task AssertChoiceTileTogglesWithinMsAsync(IPage page, ILocator tile, int maxMs = 300)
+    {
+        await tile.ScrollIntoViewIfNeededAsync();
+        await WaitForCircuitReadyAsync(page);
+        var selector = await TargetSelectorAsync(tile);
+        var before = await tile.GetAttributeAsync("aria-pressed") ?? "false";
+        var started = DateTime.UtcNow;
+        await tile.ClickAsync(new() { Timeout = 10_000, Force = true });
+        await page.WaitForFunctionAsync(
+            """
+            ({ selector, before }) => {
+              const el = document.querySelector(selector);
+              if (!el) return false;
+              const now = el.getAttribute('aria-pressed') ?? 'false';
+              return now !== before;
+            }
+            """,
+            new { selector, before },
+            new() { Timeout = maxMs });
+        var elapsed = (DateTime.UtcNow - started).TotalMilliseconds;
+        Assert.True(elapsed <= maxMs + 120, $"Choice tile did not toggle within {maxMs}ms (took {elapsed:F0}ms).");
+        await WaitForCircuitReadyAsync(page);
+    }
+
+    internal static async Task FillKennismakenBasicsExceptWorkStatusAsync(IPage page)
+    {
+        await page.Locator("input[autocomplete=given-name]").FillAsync("Func");
+        await page.Locator("input[autocomplete=family-name]").FillAsync("Test");
+        await ResolveHomeAddressAsync(page, "2671GB");
+        await FillBirthDateAsync(page);
+    }
+
+    internal static async Task AssertRapidWizardChipInteractionsSteps1To3Async(IPage page, string baseUrl)
+    {
+        await BeginKennismakenStepAsync(page, baseUrl);
+        await WaitForCircuitReadyAsync(page);
+
+        var workStatus = page.Locator(".work-status-chips .lobsy-choice-tile");
+        var workCount = await workStatus.CountAsync();
+        Assert.True(workCount > 0, "Expected werkstatus chips on step 1.");
+        for (var i = 0; i < Math.Min(3, workCount); i++)
+        {
+            await AssertChoiceTileTogglesWithinMsAsync(page, workStatus.Nth(i));
+        }
+
+        await SelectAnyWorkStatusChipAsync(page);
+        await FillKennismakenBasicsExceptWorkStatusAsync(page);
+        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+
+        var presets = page.Locator(".ob-wizard__presets .lobsy-choice-tile");
+        await presets.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        var presetCount = await presets.CountAsync();
+        for (var i = 0; i < Math.Min(3, presetCount); i++)
+        {
+            await AssertChoiceTileTogglesWithinMsAsync(page, presets.Nth(i));
+        }
+
+        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await page.Locator("[data-testid=onboarding-step-3-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+
+        var transport = page.Locator(".ob-wizard__transport .lobsy-choice-tile").First;
+        await transport.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        var transportTiles = page.Locator("#onboarding-field-transport .lobsy-choice-tile");
+        var transportCount = await transportTiles.CountAsync();
+        for (var i = 0; i < Math.Min(3, transportCount); i++)
+        {
+            await AssertChoiceTileTogglesWithinMsAsync(page, transportTiles.Nth(i));
+        }
+
+        await AssertHitTargetAsync(page, page.GetByTestId("onboarding-next"), "volgende-after-chips");
+    }
+
     internal static async Task AssertBirthDateFieldInteractiveAsync(IPage page)
     {
         var field = page.Locator("[data-testid=onboarding-birth-date]").First;
