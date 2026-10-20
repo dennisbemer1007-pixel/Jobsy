@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-step06-b" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-step06-c" />
     }
 </HeadContent>
 
@@ -753,7 +753,7 @@
         ? Culture["Onboarding.NotSaved"]
         : _profilePersistInFlight
             ? Culture["Onboarding.Saving"]
-            : $"✓ {Culture["Onboarding.Saved"]}";
+            : Culture["Onboarding.Rustig.Saved"];
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
     private string DaysSummary => Draft.Availability.Count == 0

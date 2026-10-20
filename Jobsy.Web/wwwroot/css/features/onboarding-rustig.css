@@ -698,11 +698,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.35rem;
     text-align: start;
     min-block-size: 42px;
     padding-block: 0.35rem;
-    padding-inline: 0.75rem;
-    font-size: 0.9375rem;
+    padding-inline: 0.65rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     touch-action: manipulation;
   }
@@ -1309,6 +1310,10 @@
   font-size: 0.8125rem;
   font-weight: 600;
   text-align: center;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
+  line-height: 1.25;
 }
 
 .ob-rustig__dream.is-on {
@@ -1739,14 +1744,14 @@
   }
 
   .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame {
-    block-size: clamp(84px, 24vw, 112px);
-    max-block-size: 112px;
-    border-block-end: none;
+    block-size: clamp(200px, 56vw, 240px);
+    max-block-size: 240px;
   }
 
   .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame img {
-    object-fit: cover;
-    object-position: center 72%;
+    object-fit: contain;
+    object-position: center bottom;
+    block-size: 100%;
   }
 
   .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__chrome-row {
@@ -1775,12 +1780,6 @@
 }
 
 @media (min-width: 1024px) {
-  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame img {
-    aspect-ratio: 6.7 / 1;
-    object-fit: cover;
-    object-position: center 58%;
-  }
-
   .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__footer-actions {
     max-inline-size: min(52rem, 100%);
   }
