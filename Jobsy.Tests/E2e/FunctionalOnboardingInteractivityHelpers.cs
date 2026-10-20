@@ -675,9 +675,64 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task CaptureOnboardingStartHotfixAsync(IPage page, string tag)
     {
-        const string dir = "/workspace/artifacts/onboarding-start-hotfix";
-        Directory.CreateDirectory(dir);
-        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"start-{tag}.png"), FullPage = true });
+        var dir = ResolveOnboardingStartCaptureDir();
+        if (dir is null)
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(dir);
+            await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"start-{tag}.png"), FullPage = true });
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+        {
+            // Optional evidence; never fail the functional gate when the runner cannot write.
+        }
+    }
+
+    private static string? ResolveOnboardingStartCaptureDir()
+    {
+        foreach (var candidate in new[]
+                 {
+                     Environment.GetEnvironmentVariable("JOBSY_ONBOARDING_START_ARTIFACTS"),
+                     Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT") is { } root
+                         ? Path.Combine(root, "onboarding-start-hotfix")
+                         : null,
+                     Path.Combine(AppContext.BaseDirectory, "test-output", "onboarding-start-hotfix"),
+                     Path.Combine(Path.GetTempPath(), "jobsy-onboarding-start-hotfix"),
+                     "/workspace/artifacts/onboarding-start-hotfix",
+                 })
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                continue;
+            }
+
+            if (TryEnsureWritableDirectory(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryEnsureWritableDirectory(string dir)
+    {
+        try
+        {
+            Directory.CreateDirectory(dir);
+            var probe = Path.Combine(dir, $".write-probe-{Guid.NewGuid():N}");
+            File.WriteAllText(probe, "ok");
+            File.Delete(probe);
+            return true;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+        {
+            return false;
+        }
     }
 
     internal static async Task BeginKennismakenStepAsync(IPage page, string baseUrl)
