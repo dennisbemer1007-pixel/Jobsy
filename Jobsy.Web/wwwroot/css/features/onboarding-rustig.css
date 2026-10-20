@@ -104,9 +104,10 @@
 .ob-rustig__chrome-row {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0.75rem;
   min-inline-size: 0;
+  row-gap: 0.35rem;
 }
 
 .ob-rustig__segments {
@@ -2151,5 +2152,82 @@
 
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__chrome {
     padding-inline: 1rem;
+  }
+}
+
+.ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__canvas--mini-test {
+  max-inline-size: min(52rem, 100%);
+}
+
+.ob-rustig__canvas--mini-test .ob-rustig__question-card {
+  padding: 0.25rem 0 0;
+}
+
+.ob-rustig__canvas--mini-test .test-flow__lead {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+.ob-rustig__canvas--mini-test .test-flow__statement {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
+  line-height: 1.25;
+  color: var(--brand);
+  border: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  hyphens: none;
+  overflow-wrap: break-word;
+}
+
+.ob-rustig__canvas--mini-test .test-flow__footer {
+  margin-block-start: 1.5rem;
+  max-inline-size: 40rem;
+}
+
+/* Match onboarding-wizard test-block-stage: keep Terug + Later doen + Volgende on mobile. */
+@media (max-width: 639px) {
+  .ob-rustig__canvas--mini-test .test-flow--compact .test-flow__footer[data-sticky-footer] {
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.65rem;
+    padding-inline: max(1rem, env(safe-area-inset-inline-start, 0px))
+      max(1rem, env(safe-area-inset-inline-end, 0px));
+  }
+
+  .ob-rustig__canvas--mini-test .test-flow--compact .test-flow__back {
+    order: 0;
+    flex: 0 0 auto;
+  }
+
+  .ob-rustig__canvas--mini-test .test-flow--compact .test-flow__later {
+    display: inline-flex !important;
+    order: 1;
+    flex: 0 0 auto;
+    align-items: center;
+    min-block-size: 44px;
+    margin-inline-start: auto;
+    white-space: nowrap;
+  }
+
+  .ob-rustig__canvas--mini-test .test-flow--compact .test-flow__next {
+    order: 2;
+    flex: 1 1 55%;
+    min-inline-size: 55%;
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-band {
+    --ob-rustig-hero-h: 140px;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-img {
+    object-fit: contain;
+    object-position: center bottom;
   }
 }

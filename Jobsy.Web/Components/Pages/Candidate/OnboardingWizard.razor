@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-10" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-13" />
     }
 </HeadContent>
 
@@ -276,6 +276,27 @@
                                          OnBack="BackAsync"
                                          OnNext="@(() => NextAsync())"
                                          OnLater="LaterAsync" />
+    }
+    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 8 && Draft.HasConsent)
+    {
+        <OnboardingRustigMiniTestStep Step="_step"
+                                      FlowEpoch="_miniFlowEpoch"
+                                      CurrentQuestion="_currentQuestion"
+                                      TestTabs="MiniTestTabs"
+                                      Questions="_miniQuestions"
+                                      Answers="MiniVisibleAnswers"
+                                      Depth="TestDepthLevel.First"
+                                      InputPrefix="@MiniPrefix"
+                                      LaterLabel="@Culture["Onboarding.Tests.LaterDoen"]"
+                                      Error="@_error"
+                                      SaveStatus="@RustigSaveStatus"
+                                      Answer="OnMiniAnswer"
+                                      OnFinished="FinishMiniAsync"
+                                      OnLeave="BackAsync"
+                                      OnTestsLater="SkipTestsLaterAsync"
+                                      ExpandQuestion="ExpandQuestion"
+                                      ResolveQuestionText="QuestionText"
+                                      OnLater="LaterAsync" />
     }
     else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 6)
     {
