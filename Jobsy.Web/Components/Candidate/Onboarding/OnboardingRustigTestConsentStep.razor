@@ -1,0 +1,59 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Onboarding
+
+<OnboardingRustigShell ScreenId="step-07"
+                       Step="7"
+                       PhaseLabel="@Culture["Onboarding.Rustig.Phase.WieBenJij"]"
+                       Title="@Culture["Onboarding.Consent.Title"]"
+                       Lead="@Culture["Onboarding.Consent.Lead"]"
+                       SaveStatus="@SaveStatus"
+                       OnLater="OnLater">
+    <Hero>
+        <OnboardingRustigHero DesktopUrl="@OnboardingRustigStep07IllustrationAssets.DesktopJpg"
+                              MobileUrl="@OnboardingRustigStep07IllustrationAssets.MobileJpg" />
+    </Hero>
+    <ChildContent>
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <p class="state-message error">@Error</p>
+        }
+        <div class="ob-rustig__canvas ob-rustig__canvas--consent" data-testid="onboarding-step-7-consent">
+            <TestConsentStep Draft="Draft"
+                             ShowValidation="ShowValidation"
+                             TestTabs="TestTabs"
+                             ConsentChanged="ConsentChanged" />
+            <div class="ob-rustig__footer-actions">
+                <button type="button"
+                        class="ob-rustig__btn"
+                        data-testid="onboarding-back"
+                        disabled="@Busy"
+                        @onclick="OnBack">
+                    @Culture["Onboarding.Back"]
+                </button>
+                <button type="button"
+                        class="ob-rustig__btn ob-rustig__btn--primary"
+                        data-testid="onboarding-next"
+                        disabled="@Busy"
+                        @onclick="OnNext">
+                    @Culture["Onboarding.Next"]
+                </button>
+            </div>
+        </div>
+    </ChildContent>
+</OnboardingRustigShell>
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public bool ShowValidation { get; set; }
+    [Parameter] public IReadOnlyList<TestConsentStep.TestTab> TestTabs { get; set; } = [];
+    [Parameter] public EventCallback<bool> ConsentChanged { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? SaveStatus { get; set; }
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}
