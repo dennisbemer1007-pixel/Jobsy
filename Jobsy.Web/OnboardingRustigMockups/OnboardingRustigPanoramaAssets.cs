@@ -3,7 +3,7 @@ namespace Jobsy.Web.OnboardingRustigMockups;
 public static class OnboardingRustigPanoramaAssets
 {
     public const string Version = "20261020-u10a";
-    public const string StartVersion = "20261020-start-c";
+    public const string StartVersion = "20261020-start-d";
 
     public static string Desktop(string slug) =>
         $"/images/onboarding/rustig-panorama/{slug}-desktop.jpg?v={CacheVersion(slug)}";
