@@ -1,0 +1,467 @@
+@namespace Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Core.Rules
+@using Jobsy.Web.OnboardingRustigMockups
+
+@if (Meta is null)
+{
+    <p>Onbekend scherm.</p>
+}
+else
+{
+    <OnboardingRustigShell ScreenId="@ShellScreenId"
+                           Step="@DisplayStep"
+                           PhaseLabel="@Meta.PhaseLabel"
+                           MinutesLeft="@Meta.MinutesLeft"
+                           ShowSaved="@Meta.ShowSaved"
+                           Title="@ShellTitle"
+                           Lead="@ShellLead"
+                           PanoramaDesktop="@PanoramaDesktop"
+                           PanoramaMobile="@PanoramaMobile"
+                           IllustratedDesktop="@IllustratedDesktop"
+                           IllustratedMobile="@IllustratedMobile"
+                           MockupKind="@Meta.Kind"
+                           ShowJobsRail="@Meta.ShowJobsRail"
+                           RightRail="@RightRail"
+                           WelcomeMeta="@(Meta.Kind == OnboardingRustigMockupKind.Start)">
+        @Body
+    </OnboardingRustigShell>
+}
+
+@code {
+    [Parameter, EditorRequired] public OnboardingRustigMockupScreen? Meta { get; set; }
+    [Parameter] public OnboardingRustigMockupView View { get; set; } = OnboardingRustigMockupView.Default;
+    [Parameter] public bool ShowOverviewResultRail { get; set; }
+
+    private string ShellScreenId => View switch
+    {
+        OnboardingRustigMockupView.TestIntro => $"{Meta!.Slug}-intro",
+        OnboardingRustigMockupView.TestQuestion => $"{Meta!.Slug}-vraag",
+        OnboardingRustigMockupView.TestResult => $"{Meta!.Slug}-result",
+        _ => Meta!.Slug,
+    };
+
+    private int DisplayStep => Meta!.Kind switch
+    {
+        OnboardingRustigMockupKind.Start => 0,
+        OnboardingRustigMockupKind.Kompas => 10,
+        _ => Meta.WizardStep,
+    };
+
+    private string? ShellTitle => View switch
+    {
+        OnboardingRustigMockupView.TestIntro => OnboardingRustigMockupContent.TestIntroCopy(Meta!.TestKey).Title,
+        OnboardingRustigMockupView.TestResult => $"Klaar: {OnboardingRustigMockupContent.TestResult(Meta!.TestKey).TabLabel}",
+        _ => Meta!.Kind switch
+        {
+            OnboardingRustigMockupKind.Start => "Hoi Sam, fijn dat je er bent",
+            OnboardingRustigMockupKind.Kompas => "Sam, je Kompas staat klaar",
+            OnboardingRustigMockupKind.TestOverview => Meta.Title,
+            OnboardingRustigMockupKind.TestQuestion => null,
+            _ => Meta.Title,
+        },
+    };
+
+    private string? ShellLead => View switch
+    {
+        OnboardingRustigMockupView.TestIntro => OnboardingRustigMockupContent.TestIntroCopy(Meta!.TestKey).Lead,
+        OnboardingRustigMockupView.TestResult => "Dit is je eerste uitslag. Je kunt later verder verfijnen.",
+        _ => Meta!.Kind switch
+        {
+            OnboardingRustigMockupKind.Start =>
+                $"In ongeveer {OnboardingWizardCatalog.V3TotalMinutesEstimate} minuten doorlopen we samen tien korte stappen. Daarna staat je Kompas klaar en zie je welk werk bij je past.",
+            OnboardingRustigMockupKind.Kompas =>
+                "Je gaat nu de kracht van Lobsy meemaken. Dit is wat je vanaf nu kunt verwachten.",
+            _ => Meta.Lead,
+        },
+    };
+
+    private RenderFragment? RightRail => View == OnboardingRustigMockupView.TestsOverview && ShowOverviewResultRail
+        ? FinishedTestResult
+        : null;
+
+    private string? PanoramaDesktop =>
+        Meta is not null && UsesPanoramaHero(Meta.Slug)
+            ? OnboardingRustigPanoramaAssets.Desktop(Meta.Slug)
+            : null;
+
+    private string? PanoramaMobile =>
+        Meta is not null && UsesPanoramaHero(Meta.Slug)
+            ? OnboardingRustigPanoramaAssets.Mobile(Meta.Slug)
+            : null;
+
+    private static bool UsesPanoramaHero(string slug) =>
+        string.Equals(slug, "start", StringComparison.OrdinalIgnoreCase)
+        || (slug.StartsWith("step-", StringComparison.Ordinal) && slug != "step-06");
+
+    private string? IllustratedDesktop => Meta?.Slug switch
+    {
+        "step-06" => OnboardingRustigDreamIllustrationAssets.DesktopJpg,
+        "kompas" => OnboardingRustigKompasIllustrationAssets.DesktopJpg,
+        _ => null,
+    };
+
+    private string? IllustratedMobile => Meta?.Slug switch
+    {
+        "step-06" => OnboardingRustigDreamIllustrationAssets.MobileJpg,
+        "kompas" => OnboardingRustigKompasIllustrationAssets.MobileJpg,
+        _ => null,
+    };
+
+    private RenderFragment Body => View switch
+    {
+        OnboardingRustigMockupView.TestsOverview => TestOverviewBody,
+        OnboardingRustigMockupView.TestIntro => TestIntroBody,
+        OnboardingRustigMockupView.TestQuestion => TestQuestionBody,
+        OnboardingRustigMockupView.TestResult => TestResultBody,
+        _ => Meta!.Kind switch
+        {
+            OnboardingRustigMockupKind.Start => StartBody,
+            OnboardingRustigMockupKind.Personal => PersonalBody,
+            OnboardingRustigMockupKind.TestOverview => TestOverviewBody,
+            OnboardingRustigMockupKind.TestQuestion => TestQuestionBody,
+            OnboardingRustigMockupKind.Kompas => KompasFinaleBody,
+            _ => Empty,
+        },
+    };
+
+    private RenderFragment PersonalBody => Meta!.Slug switch
+    {
+        "step-01" => Step01,
+        "step-02" => Step02,
+        "step-03" => Step03,
+        "step-04" => Step04,
+        "step-05" => Step05,
+        "step-06" => Step06,
+        _ => Empty,
+    };
+
+    private static readonly RenderFragment Empty = _ => { };
+
+    private static readonly RenderFragment StartBody = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__phase-cards">
+                @foreach (var phase in OnboardingRustigMockupContent.StartJourneyPhases)
+                {
+                    <article class="ob-rustig__phase-card">
+                        <span>@phase.Number</span>
+                        <div><strong>@phase.Title</strong><small>@phase.Sub</small></div>
+                        @if (!string.IsNullOrWhiteSpace(phase.Meta))
+                        {
+                            <small>@phase.Meta</small>
+                        }
+                    </article>
+                }
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Aan de slag</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment Step01 = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__form-grid">
+                <div class="ob-rustig__row-2">
+                    <div class="ob-rustig__field">
+                        <label for="mock-voornaam">Voornaam</label>
+                        <input id="mock-voornaam" type="text" value="Sam" readonly />
+                    </div>
+                    <div class="ob-rustig__field">
+                        <label for="mock-achternaam">Achternaam</label>
+                        <input id="mock-achternaam" type="text" value="de Vries" readonly />
+                    </div>
+                </div>
+                <div class="ob-rustig__field">
+                    <label for="mock-adres">Jouw adres</label>
+                    <input id="mock-adres" type="text" value="Kerkstraat 12, 8011 Zwolle" readonly />
+                </div>
+                <div class="ob-rustig__field">
+                    <label for="mock-geboorte">Geboortedatum</label>
+                    <input id="mock-geboorte" type="text" value="14-03-2004" readonly />
+                </div>
+                <fieldset class="work-status-field">
+                    <legend class="ob-rustig__section-title">Wat is je huidige werkstatus?</legend>
+                    <p class="ob-wizard__section-hint">Optioneel. Je mag er meer dan één kiezen.</p>
+                    <div class="work-status-chips lobsy-choice-grid">
+                        @foreach (var label in OnboardingRustigMockupContent.WorkStatusLabels)
+                        {
+                            <span class="work-status-chip lobsy-choice-tile @(label == "Student (mbo/hbo/wo)" ? "is-selected" : null)">@label</span>
+                        }
+                    </div>
+                </fieldset>
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment Step02 = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <p class="ob-rustig__section-title" style="margin-top:0">1. Kies wat bij je past</p>
+            <div class="ob-rustig__preset-grid">
+                <div class="ob-rustig__preset"><strong>Bijbaan naast school</strong><span>Ochtenden en middagen op doordeweekse dagen</span></div>
+                <div class="ob-rustig__preset is-on"><strong>Kantoordagen</strong><span>Ma t/m vr, overdag</span></div>
+                <div class="ob-rustig__preset"><strong>Weekenden</strong><span>Zaterdag en zondag</span></div>
+                <div class="ob-rustig__preset is-on"><strong>Vakantiewerk</strong><span>Flexibel in schoolvakanties</span></div>
+                <div class="ob-rustig__preset"><strong>Avonden</strong><span>Na 17:00</span></div>
+                <div class="ob-rustig__preset"><strong>Parttime vaste uren</strong><span>12 tot 24 uur per week</span></div>
+            </div>
+            <div class="ob-rustig__avail-card">
+                <h3>Stel zelf uren en dagen in</h3>
+                <p class="ob-rustig__avail-hint">Tik op elk vakje waarop je kunt werken.</p>
+                <div class="ob-rustig__avail-grid" role="grid" aria-label="Beschikbaarheid">
+                    <span></span>
+                    <span class="head">Ochtend</span>
+                    <span class="head">Middag</span>
+                    <span class="head">Avond</span>
+                    <span class="head">Nacht</span>
+                    @foreach (var row in OnboardingRustigMockupContent.AvailDays)
+                    {
+                        <span class="day">@row.Day</span>
+                        @foreach (var on in row.On)
+                        {
+                            <span class="ob-rustig__avail-cell @(on ? "is-on" : null)" role="gridcell">@(on ? "✓" : null)</span>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment Step03 = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <p class="ob-rustig__section-title" style="margin-top:0">Vervoer</p>
+            <p class="ob-wizard__section-hint">Je mag er meer dan één kiezen.</p>
+            <div class="ob-rustig__tile-grid">
+                @foreach (var t in OnboardingRustigMockupContent.TransportLabels)
+                {
+                    <span class="ob-rustig__tile @(t is "Fiets" or "Openbaar vervoer" ? "is-on" : null)">@t</span>
+                }
+            </div>
+            <p class="ob-rustig__section-title">Maximale reistijd</p>
+            <div class="ob-rustig__tile-grid ob-rustig__tile-grid--compact">
+                @foreach (var m in OnboardingRustigMockupContent.TravelMinutes)
+                {
+                    <span class="ob-rustig__tile @(m == "30" ? "is-on" : null)">@m min</span>
+                }
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment Step04 = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <span class="ob-rustig__badge">Optioneel</span>
+            <div class="ob-rustig__job-card">
+                <div class="ob-rustig__field">
+                    <label>Functie</label>
+                    <input type="text" value="Horecamedewerker" readonly />
+                </div>
+                <div class="ob-rustig__row-2">
+                    <div class="ob-rustig__field">
+                        <label>Van</label>
+                        <input type="text" value="06-2023" readonly />
+                    </div>
+                    <div class="ob-rustig__field">
+                        <label>Tot</label>
+                        <input type="text" value="08-2024" readonly />
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="ob-rustig__link ob-rustig__link--underline">+ Nog een baan toevoegen</button>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn">Overslaan</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment Step05 = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <span class="ob-rustig__badge">Optioneel</span>
+            <div class="ob-rustig__tile-grid">
+                @foreach (var ed in OnboardingRustigMockupContent.EducationLabels)
+                {
+                    <span class="ob-rustig__tile @(ed == "MBO" ? "is-on" : null)">@ed</span>
+                }
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn">Overslaan</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment Step06 = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__dream-grid">
+                @foreach (var title in OnboardingRustigMockupContent.DreamJobTitles)
+                {
+                    <span class="ob-rustig__dream @(title == "Software developer" ? "is-on" : null)">@title</span>
+                }
+            </div>
+            <div class="ob-rustig__field" style="margin-top:1rem">
+                <label>Of typ je eigen droombaan</label>
+                <input type="text" value="Software developer" readonly />
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment TestOverviewBody = __builder =>
+    {
+        <div class="ob-rustig__canvas">
+            <p class="ob-rustig__privacy-line">
+                Je antwoorden blijven privé. Werkgevers zien pas iets als jij akkoord geeft op een match.
+            </p>
+            <div class="ob-rustig__tests-layout ob-rustig__tests-layout--a">
+                <div>
+                    <ol class="ob-rustig__test-cards">
+                        <li class="ob-rustig__test-card is-next">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">1</span> Hoe je werkt</div>
+                            <p>Samen &amp; aardig</p>
+                        </li>
+                        <li class="ob-rustig__test-card">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">2</span> Leuk</div>
+                            <p>Wat je energie geeft op het werk</p>
+                        </li>
+                        <li class="ob-rustig__test-card">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">3</span> Sfeer</div>
+                            <p>Welke werksfeer bij je past</p>
+                        </li>
+                        <li class="ob-rustig__test-card">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">4</span> Waarden</div>
+                            <p>Wat voor jou belangrijk is</p>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+            <div class="ob-rustig__consent-block">
+                <label class="ob-rustig__consent">
+                    <input type="checkbox" checked />
+                    <span>Ik geef toestemming om mijn antwoorden te gebruiken voor mijn Kompas en passende vacatures.</span>
+                </label>
+                <a class="ob-rustig__meer" href="#">Meer uitleg</a>
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Start met test 1</button>
+            </div>
+        </div>;
+    };
+
+    private RenderFragment TestQuestionBody => __builder =>
+    {
+        var q = OnboardingRustigMockupContent.TestQuestion(Meta!.TestKey);
+        var tabs = new[] { "Hoe je werkt", "Leuk", "Sfeer", "Waarden" };
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__test-tabs" aria-label="Tests">
+                @for (var i = 0; i < tabs.Length; i++)
+                {
+                    var state = q.TabStates[i];
+                    <span class="ob-rustig__test-tab @state">@(state == "is-done" ? "✓ " : "")@tabs[i]</span>
+                }
+            </div>
+            <div class="ob-rustig__question-card">
+                <p class="ob-rustig__q-meta">Hoe goed past elke zin bij jou?</p>
+                <p class="ob-rustig__q-meta">Vraag @q.QuestionIndex van 5</p>
+                <div class="ob-rustig__q-progress" aria-hidden="true">
+                    @for (var n = 1; n <= 5; n++)
+                    {
+                        <span class="@(n <= q.QuestionIndex ? "is-on" : null)"></span>
+                    }
+                </div>
+                <p class="ob-rustig__statement">@q.Statement</p>
+                <div class="ob-rustig__scale-labels">
+                    <span>Past niet</span>
+                    <span>Past heel goed</span>
+                </div>
+                <div class="ob-rustig__scale" role="group" aria-label="Antwoord 1 tot 5">
+                    @for (var n = 1; n <= 5; n++)
+                    {
+                        <button type="button" class="@(n == q.SelectedAnswer ? "is-on" : null)">@n</button>
+                    }
+                </div>
+                <div class="ob-rustig__footer-actions">
+                    <button type="button" class="ob-rustig__btn">Terug</button>
+                    <button type="button" class="ob-rustig__btn">Later doen</button>
+                </div>
+            </div>
+        </div>;
+    };
+
+    private RenderFragment TestIntroBody => __builder =>
+    {
+        var q = OnboardingRustigMockupContent.TestQuestion(Meta!.TestKey);
+        var tabs = new[] { "Hoe je werkt", "Leuk", "Sfeer", "Waarden" };
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__test-tabs" aria-label="Tests">
+                @for (var i = 0; i < tabs.Length; i++)
+                {
+                    var state = q.TabStates[i];
+                    <span class="ob-rustig__test-tab @state">@(state == "is-done" ? "✓ " : "")@tabs[i]</span>
+                }
+            </div>
+            <p class="ob-rustig__privacy-line">
+                Beantwoord op gevoel — er zijn geen foute antwoorden. Je antwoorden blijven privé.
+            </p>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Start met de stellingen</button>
+            </div>
+        </div>;
+    };
+
+    private RenderFragment TestResultBody => __builder =>
+    {
+        var r = OnboardingRustigMockupContent.TestResult(Meta!.TestKey);
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__result-card">
+                <kbd>@r.TabLabel</kbd>
+                <h3>@r.Title</h3>
+                <p>@r.Summary</p>
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende test</button>
+            </div>
+        </div>;
+    };
+
+    private static readonly RenderFragment KompasFinaleBody = __builder =>
+    {
+        <div class="ob-rustig__canvas ob-rustig__kompas">
+            <OnboardingRustigKompasFinale />
+        </div>;
+    };
+
+    private static readonly RenderFragment FinishedTestResult = __builder =>
+    {
+        <div class="ob-rustig__result-card">
+            <kbd>Hoe je werkt</kbd>
+            <h3>Samen &amp; aardig</h3>
+            <p>Je werkt graag samen en houdt rekening met anderen.</p>
+        </div>;
+    };
+
+}

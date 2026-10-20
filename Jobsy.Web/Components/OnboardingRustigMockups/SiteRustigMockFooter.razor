@@ -1,0 +1,48 @@
+@namespace Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Web.Media
+@using Jobsy.Web.SiteRustigMockups
+
+<footer class="site-rustig-footer" data-testid="site-rustig-footer">
+    <div class="site-rustig-footer__inner">
+        <div class="site-rustig-footer__brand">
+            <img class="site-rustig-footer__logo"
+                 src="@BrandImages.HorizontalSvg"
+                 width="154"
+                 height="44"
+                 alt="Lobsy"
+                 data-logo-fallback="off"
+                 decoding="async" />
+            <p class="site-rustig-footer__tagline">
+                @(SiteRustigMockupCopy.IsEn(Lang)
+                    ? "Lobsy shows who you are and which work fits you."
+                    : "Lobsy laat zien wie jij bent en welk werk bij je past.")
+            </p>
+        </div>
+        <div class="site-rustig-footer__col">
+            <h2>Lobsy</h2>
+            <ul>
+                <li><span>@(SiteRustigMockupCopy.IsEn(Lang) ? "How it works" : "Hoe het werkt")</span></li>
+                <li><span>@(SiteRustigMockupCopy.IsEn(Lang) ? "For employers" : "Voor werkgevers")</span></li>
+                <li><span>@(SiteRustigMockupCopy.IsEn(Lang) ? "About us" : "Wie zijn wij")</span></li>
+                <li><span>Contact</span></li>
+            </ul>
+        </div>
+        <div class="site-rustig-footer__col">
+            <h2>@(SiteRustigMockupCopy.IsEn(Lang) ? "Help and legal" : "Hulp en juridisch")</h2>
+            <ul>
+                <li><span>Privacy</span></li>
+                <li><span>@(SiteRustigMockupCopy.IsEn(Lang) ? "Terms" : "Voorwaarden")</span></li>
+                <li><span>Cookies</span></li>
+                <li><span>@(SiteRustigMockupCopy.IsEn(Lang) ? "Accessibility" : "Toegankelijkheid")</span></li>
+            </ul>
+        </div>
+    </div>
+    <div class="site-rustig-footer__bottom">
+        <p class="site-rustig-footer__bronnen">@(SiteRustigMockupCopy.IsEn(Lang) ? "Sources" : "Bronnen")</p>
+        <p class="site-rustig-footer__legal">Bemer IT Solutions · KvK 71018050</p>
+    </div>
+</footer>
+
+@code {
+    [Parameter] public string? Lang { get; set; }
+}

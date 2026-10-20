@@ -5,7 +5,9 @@
 @using Jobsy.Web.Models
 @inject CultureState Culture
 
-<section class="ob-finale" data-testid="onboarding-finale-v2">
+<section class="ob-finale @(HideHero ? "ob-finale--no-hero" : null)" data-testid="onboarding-finale-v2">
+    @if (!HideHero)
+    {
     <div class="ob-finale__hero">
         <figure class="ob-finale__art" aria-hidden="true">
             <img src="/images/onboarding/finale-hero.jpg" alt="" width="1280" height="720" decoding="async" />
@@ -22,6 +24,12 @@
             </div>
         </header>
     </div>
+    }
+
+    @if (HeaderContent is not null)
+    {
+        @HeaderContent
+    }
 
     <div class="ob-finale__wrap">
         @if (ShowMatchBar)
@@ -39,7 +47,7 @@
             </a>
         }
 
-        @if (_insights.Count > 0)
+        @if (!HideInsights && _insights.Count > 0)
         {
             <h2>@Culture["Onboarding.FinaleV2.Insights.Title"]</h2>
             <p class="ob-finale__h2s">@Culture["Onboarding.FinaleV2.Insights.Lead"]</p>
@@ -70,7 +78,7 @@
             }
         </div>
 
-        @if (_soonCards.Count > 0)
+        @if (!HideSoon && _soonCards.Count > 0)
         {
             <div class="ob-finale__soon" data-testid="onboarding-finale-soon">
                 <div class="ob-finale__soon-title">@Culture["Onboarding.FinaleV2.Soon.Title"]</div>
@@ -90,27 +98,33 @@
             </div>
         }
 
-        <h2>@Culture["Onboarding.FinaleV2.Timeline.Title"]</h2>
-        <p class="ob-finale__h2s">@Culture["Onboarding.FinaleV2.Timeline.Lead"]</p>
-        <ol class="ob-finale__tl">
-            <li>
-                <b>@Culture["Onboarding.FinaleV2.Timeline.Today"]</b>
-                <span>@Culture.Format("Onboarding.FinaleV2.Timeline.TodayBody", MatchCount)</span>
-            </li>
-            <li>
-                <b>@Culture["Onboarding.FinaleV2.Timeline.Week"]</b>
-                <span>@Culture["Onboarding.FinaleV2.Timeline.WeekBody"]</span>
-            </li>
-            <li>
-                <b>@Culture["Onboarding.FinaleV2.Timeline.Ongoing"]</b>
-                <span>@OngoingText</span>
-            </li>
-        </ol>
+        @if (!HideTimeline)
+        {
+            <h2>@Culture["Onboarding.FinaleV2.Timeline.Title"]</h2>
+            <p class="ob-finale__h2s">@Culture["Onboarding.FinaleV2.Timeline.Lead"]</p>
+            <ol class="ob-finale__tl">
+                <li>
+                    <b>@Culture["Onboarding.FinaleV2.Timeline.Today"]</b>
+                    <span>@Culture.Format("Onboarding.FinaleV2.Timeline.TodayBody", MatchCount)</span>
+                </li>
+                <li>
+                    <b>@Culture["Onboarding.FinaleV2.Timeline.Week"]</b>
+                    <span>@Culture["Onboarding.FinaleV2.Timeline.WeekBody"]</span>
+                </li>
+                <li>
+                    <b>@Culture["Onboarding.FinaleV2.Timeline.Ongoing"]</b>
+                    <span>@OngoingText</span>
+                </li>
+            </ol>
+        }
 
-        <div class="ob-finale__end">
-            <p><b>@Culture["Onboarding.FinaleV2.End.Title"]</b>@Culture["Onboarding.FinaleV2.End.Lead"]</p>
-            <button type="button" class="ob-finale__btn" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
-        </div>
+        @if (!HideEndBlock)
+        {
+            <div class="ob-finale__end">
+                <p><b>@Culture["Onboarding.FinaleV2.End.Title"]</b>@Culture["Onboarding.FinaleV2.End.Lead"]</p>
+                <button type="button" class="ob-finale__btn" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+            </div>
+        }
     </div>
 </section>
 
@@ -123,6 +137,14 @@
     [Parameter] public string? DreamJob { get; set; }
     [Parameter] public OnboardingFinaleCardsInput CardsInput { get; set; } = new(false, false, false, false, false, false);
     [Parameter] public EventCallback OnComplete { get; set; }
+    [Parameter] public bool HideHero { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public bool HideInsights { get; set; }
+    [Parameter] public bool HideSoon { get; set; }
+    [Parameter] public bool HideTimeline { get; set; }
+    [Parameter] public bool HideEndBlock { get; set; }
+    [Parameter] public bool HideDreamRouteCard { get; set; }
+    [Parameter] public bool HideKompasWordsCard { get; set; }
 
     private IReadOnlyList<OnboardingFinaleInsight> _insights = [];
     private IReadOnlyList<OnboardingFinaleCard> _nowCards = [];
@@ -142,6 +164,16 @@
     {
         _insights = OnboardingFinaleInsights.FromImpression(Impression, $" {Culture["Onboarding.And"]} ");
         _nowCards = OnboardingFinaleCards.BuildNow(CardsInput);
+        if (HideDreamRouteCard)
+        {
+            _nowCards = _nowCards.Where(c => c.Id != OnboardingFinaleCardId.DreamRoute).ToList();
+        }
+
+        if (HideKompasWordsCard)
+        {
+            _nowCards = _nowCards.Where(c => c.Id != OnboardingFinaleCardId.KompasWords).ToList();
+        }
+
         _soonCards = OnboardingFinaleCards.BuildSoon(CardsInput);
     }
 

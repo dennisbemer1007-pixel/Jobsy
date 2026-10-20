@@ -1,0 +1,80 @@
+@page "/mockups/onboarding-rustig"
+@page "/mockups/onboarding-rustig/{Screen}"
+@layout Jobsy.Web.Components.Layout.OnboardingRustigMockupLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Web.OnboardingRustigMockups
+
+<PageTitle>Onboarding rustig mockup · @_screen · Lobsy</PageTitle>
+
+<HeadContent>
+    <link rel="stylesheet" href="css/features/onboarding-rustig-mockup.css?v=20261020-u3c" />
+    <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261020-start-g" />
+</HeadContent>
+
+@if (_screen == "index")
+{
+    <div class="ob-rustig" style="padding:2rem 1.5rem;max-width:40rem">
+        <h1 style="font-family:var(--font-display,Georgia,serif);color:var(--brand)">Onboarding rustig (PO mockups)</h1>
+        <p class="ob-rustig__lead">Statische schermen ter goedkeuring. Geen productie-onboarding.</p>
+        <ul class="ob-rustig__index">
+            @foreach (var entry in OnboardingRustigMockupRegistry.Ordered)
+            {
+                <li><a href="/mockups/onboarding-rustig/@entry.Slug">@IndexLabel(entry)</a></li>
+                @if (string.Equals(entry.Slug, "step-07", StringComparison.Ordinal))
+                {
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/step-07-b">↳ Overzicht + resultaat (rail)</a></li>
+                }
+                @if (entry.Kind == OnboardingRustigMockupKind.TestQuestion)
+                {
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/@(entry.Slug)-intro">↳ Intro</a></li>
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/@(entry.Slug)-vraag">↳ Vraag</a></li>
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/@(entry.Slug)-result">↳ Resultaat</a></li>
+                }
+            }
+            <li><a href="/mockups/site-rustig">Site mockups (partners, footer, …)</a></li>
+        </ul>
+    </div>
+}
+else if (_resolved is not null)
+{
+    <OnboardingRustigMockupScreenHost Meta="_resolved.Meta"
+                                       View="_resolved.View"
+                                       ShowOverviewResultRail="_resolved.ShowOverviewResultRail" />
+}
+else
+{
+    <p>Onbekend scherm. <a href="/mockups/onboarding-rustig">Terug naar index</a>.</p>
+}
+
+@code {
+    private string _screen = "index";
+    private OnboardingRustigMockupRoute.Resolved? _resolved;
+
+    [Parameter] public string? Screen { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _screen = string.IsNullOrWhiteSpace(Screen) ? "index" : Screen.Trim().ToLowerInvariant();
+        _resolved = _screen == "index" ? null : OnboardingRustigMockupRoute.Resolve(_screen);
+    }
+
+    private static string IndexLabel(OnboardingRustigMockupScreen entry) => entry.Slug switch
+    {
+        "start" => "Start · Welkom",
+        "kompas" => "Kompas · Resultaat",
+        _ when entry.Kind == OnboardingRustigMockupKind.TestQuestion =>
+            $"Stap {entry.WizardStep} · Test · {TestLabel(entry.TestKey)}",
+        _ => $"Stap {entry.WizardStep} · {entry.Title}",
+    };
+
+    private static string TestLabel(string? key) => key switch
+    {
+        "werkt" => "Hoe je werkt",
+        "leuk" => "Leuk",
+        "sfeer" => "Sfeer",
+        "waarden" => "Waarden",
+        _ => "Vraag",
+    };
+}

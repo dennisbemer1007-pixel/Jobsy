@@ -1,0 +1,60 @@
+@namespace Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Web.Media
+@using Jobsy.Web.SiteRustigMockups
+
+<div class="site-rustig" data-site-rustig-screen="@ScreenId" lang="@(SiteRustigMockupCopy.IsEn(Lang) ? "en" : "nl")">
+    <header class="site-rustig__top">
+        <a class="site-rustig__logo-link" href="#" aria-label="Lobsy">
+            <img class="site-rustig__logo-e"
+                 src="@BrandImages.MarkSvg"
+                 width="48"
+                 height="48"
+                 alt=""
+                 data-logo-fallback="off"
+                 decoding="async" />
+        </a>
+        <nav class="site-rustig__lang" aria-label="Taal">
+            <a class="@LangClass("nl")" href="@LangHref("nl")">NL</a>
+            <span aria-hidden="true">·</span>
+            <a class="@LangClass("en")" href="@LangHref("en")">EN</a>
+        </nav>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(HeroJpg))
+    {
+        <div class="site-rustig__hero-band" style="@HeroStyle" aria-hidden="true"></div>
+    }
+
+    <main class="site-rustig__main @MainClass">
+        @ChildContent
+    </main>
+
+    @if (ShowFooter)
+    {
+        <SiteRustigMockFooter Lang="@Lang" />
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string ScreenId { get; set; } = "";
+    [Parameter] public string? Lang { get; set; }
+    [Parameter] public string? HeroWebp { get; set; }
+    [Parameter] public string? HeroJpg { get; set; }
+    [Parameter] public string? HeroArtPosition { get; set; }
+    [Parameter] public string? MainClass { get; set; }
+    [Parameter] public bool ShowFooter { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? HeroStyle =>
+        string.IsNullOrWhiteSpace(HeroJpg)
+            ? null
+            : $"--site-rustig-hero-jpg:url('{HeroJpg}');--site-rustig-art-pos:{HeroArtPosition ?? "50% 42%"};";
+
+    private string LangClass(string code) =>
+        string.Equals(Lang, code, StringComparison.OrdinalIgnoreCase) || (code == "nl" && string.IsNullOrWhiteSpace(Lang))
+            ? "is-active"
+            : "";
+
+    private string LangHref(string code) =>
+        $"/mockups/site-rustig/{ScreenId}?lang={code}";
+}

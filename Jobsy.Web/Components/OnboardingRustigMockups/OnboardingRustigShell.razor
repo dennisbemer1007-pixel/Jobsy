@@ -1,0 +1,199 @@
+@namespace Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Web.Media
+@using Jobsy.Web.Onboarding
+@using Jobsy.Web.OnboardingRustigMockups
+
+<div class="ob-rustig" data-ob-rustig-screen="@ScreenId">
+    <div class="ob-rustig__layout @(ShowJobsRail || RightRail is not null ? "ob-rustig__layout--with-rail" : null)">
+        <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
+            <img class="ob-rustig__logo-e"
+                 src="@BrandImages.AppIconSvg"
+                 width="56"
+                 height="56"
+                 alt="Lobsy"
+                 decoding="async"
+                 data-logo-fallback="off"
+                 draggable="false" />
+            @foreach (var item in NavItems)
+            {
+                <div class="ob-wizard__side-item @(item.Current ? "is-current" : null)">
+                    <span>@item.Number</span>
+                    <div>
+                        <strong>@item.Title</strong>
+                        @if (!string.IsNullOrWhiteSpace(item.Sub))
+                        {
+                            <small>@item.Sub</small>
+                        }
+                    </div>
+                </div>
+            }
+        </aside>
+
+        <div class="ob-rustig__main">
+            <header class="ob-rustig__chrome">
+                <div class="ob-rustig__mobile-brand">
+                    <img class="ob-rustig__logo-e"
+                         src="@BrandImages.AppIconSvg"
+                         width="40"
+                         height="40"
+                         alt=""
+                         decoding="async"
+                         data-logo-fallback="off"
+                         draggable="false" />
+                </div>
+                <div class="ob-rustig__chrome-row">
+                    <button type="button" class="ob-rustig__link" aria-hidden="true">‹</button>
+                    <div class="ob-rustig__segments" role="progressbar" aria-valuenow="@(WelcomeMeta ? 0 : Step)" aria-valuemin="0" aria-valuemax="10">
+                        @foreach (var phase in PhaseWidths)
+                        {
+                            <span><i style="--w:@(phase.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></i></span>
+                        }
+                    </div>
+                    <div class="ob-rustig__actions">
+                        <button type="button" class="ob-rustig__link">Later verder</button>
+                        <button type="button" class="ob-rustig__link ob-rustig__link--underline">Mijn gegevens &amp; account</button>
+                    </div>
+                </div>
+                <div class="ob-rustig__meta">
+                    <span>
+                        @if (WelcomeMeta)
+                        {
+                            <strong>Start</strong>
+                            <text> · ± @MinutesLeft minuten</text>
+                        }
+                        else
+                        {
+                            <strong>@PhaseLabel</strong>
+                            <text> · Stap @Step van 10 · ± @MinutesLeft minuten</text>
+                        }
+                    </span>
+                    @if (ShowSaved)
+                    {
+                        <span class="ob-rustig__saved">✓ Bewaard</span>
+                    }
+                </div>
+            </header>
+
+            @if (!string.IsNullOrWhiteSpace(PanoramaDesktop))
+            {
+                <div class="ob-rustig__hero-band" aria-hidden="true" data-testid="ob-rustig-hero">
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--desk"
+                         src="@PanoramaDesktop"
+                         width="2280"
+                         height="340"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high"
+                         data-testid="ob-rustig-hero-desk" />
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--mob"
+                         src="@(PanoramaMobile ?? PanoramaDesktop)"
+                         width="780"
+                         height="184"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high"
+                         data-testid="ob-rustig-hero-mob" />
+                </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(IllustratedDesktop))
+            {
+                <div class="ob-rustig__illustrated-hero" data-testid="ob-rustig-hero" aria-hidden="true">
+                    <picture class="ob-rustig__illustrated-frame">
+                        <source media="(max-width: 1023px)" srcset="@IllustratedMobile" />
+                        <img src="@IllustratedDesktop"
+                             alt=""
+                             width="3500"
+                             height="1000"
+                             decoding="async"
+                             fetchpriority="high" />
+                    </picture>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <div class="ob-rustig__page-head">
+                    <h1 tabindex="-1">@Title</h1>
+                    @if (!string.IsNullOrWhiteSpace(Lead))
+                    {
+                        <p class="ob-rustig__lead">@Lead</p>
+                    }
+                </div>
+            }
+
+            <div class="ob-rustig__body">
+                @ChildContent
+            </div>
+        </div>
+
+        @if (ShowJobsRail)
+        {
+            <aside class="ob-rustig__rail" aria-label="Banen in de buurt">
+                <h2>65 banen bij jou in de buurt</h2>
+                <ul class="ob-rustig__rail-list">
+                    <li>Glas- en gevelreiniger<small>2,1 km · parttime</small></li>
+                    <li>Magazijnmedewerker<small>3,4 km · avond</small></li>
+                    <li>Horecamedewerker<small>4,0 km · weekend</small></li>
+                </ul>
+            </aside>
+        }
+
+        @if (RightRail is not null)
+        {
+            <aside class="ob-rustig__rail ob-rustig__rail--result" aria-label="Resultaat">
+                @RightRail
+            </aside>
+        }
+    </div>
+</div>
+
+@code {
+    public sealed record NavItem(string Number, string Title, string? Sub, bool Current);
+
+    [Parameter, EditorRequired] public string ScreenId { get; set; } = "";
+    [Parameter] public int Step { get; set; } = 1;
+    [Parameter] public string PhaseLabel { get; set; } = "Over jou";
+    [Parameter] public int MinutesLeft { get; set; } = 12;
+    [Parameter] public bool ShowSaved { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? PanoramaDesktop { get; set; }
+    [Parameter] public string? PanoramaMobile { get; set; }
+    [Parameter] public string? IllustratedDesktop { get; set; }
+    [Parameter] public string? IllustratedMobile { get; set; }
+    [Parameter] public OnboardingRustigMockupKind MockupKind { get; set; }
+    [Parameter] public bool ShowJobsRail { get; set; }
+    [Parameter] public bool WelcomeMeta { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? RightRail { get; set; }
+
+    private IReadOnlyList<NavItem> NavItems
+    {
+        get
+        {
+            var active = OnboardingRustigSidebarNav.ActiveSection(Step, MockupKind);
+            return
+            [
+                new("1", "Over jou", "3 stappen", active == 1),
+                new("2", "Achtergrond", "optioneel", active == 2),
+                new("3", "Droom", "1 stap", active == 3),
+                new("4", "Wie ben jij", "4 korte tests", active == 4),
+                new("5", "Jouw Kompas", "bijna klaar", active == 5),
+            ];
+        }
+    }
+
+    private static double[] PhaseWidthsForStep(int step) =>
+        step switch
+        {
+            <= 0 => [0, 0, 0, 0],
+            <= 3 => [100, 0, 0, 0],
+            <= 6 => [100, 100, 0, 0],
+            <= 9 => [100, 100, 100, 0],
+            _ => [100, 100, 100, 100],
+        };
+
+    private IReadOnlyList<double> PhaseWidths => PhaseWidthsForStep(Step);
+}

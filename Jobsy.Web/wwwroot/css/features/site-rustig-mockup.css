@@ -1,0 +1,467 @@
+/* Static PO mockups: public/marketing pages (NL+EN). */
+
+.app-shell--site-rustig-mockup {
+  --site-rustig-hero-h: clamp(7.5rem, 10vw, 10rem);
+  background: var(--bg);
+}
+
+.app-shell--site-rustig-mockup .app-main {
+  padding: 0;
+  display: block;
+}
+
+.site-rustig {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.site-rustig__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem clamp(1rem, 3vw, 2rem);
+  border-block-end: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.site-rustig__logo-e {
+  display: block;
+  inline-size: 48px;
+  block-size: 48px;
+  object-fit: contain;
+}
+
+.site-rustig__lang {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.site-rustig__lang a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.25rem 0.35rem;
+}
+
+.site-rustig__lang a.is-active {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-rustig__hero-band {
+  block-size: var(--site-rustig-hero-h);
+  inline-size: 100%;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 10%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 25%, transparent) 55%,
+      var(--bg) 100%
+    ),
+    linear-gradient(
+      90deg,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 30%, transparent) 8%,
+      transparent 16%,
+      transparent 84%,
+      color-mix(in srgb, var(--bg) 30%, transparent) 92%,
+      var(--bg) 100%
+    ),
+    var(--site-rustig-hero-jpg);
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover;
+  background-position: center, center, var(--site-rustig-art-pos, 50% 42%);
+}
+
+.site-rustig__main {
+  padding: 1.25rem clamp(1rem, 3vw, 2rem) 2.5rem;
+  max-inline-size: 72rem;
+  margin-inline: auto;
+}
+
+.site-rustig__main--narrow {
+  max-inline-size: 42rem;
+}
+
+.site-rustig__main--wide {
+  max-inline-size: 56rem;
+}
+
+.site-rustig h1 {
+  margin: 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  line-height: 1.12;
+  color: var(--brand);
+}
+
+.site-rustig__lead {
+  margin: 0.55rem 0 1.25rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--text) 82%, var(--muted));
+  max-inline-size: 38rem;
+}
+
+.site-rustig__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--coral, #f54a1b);
+}
+
+.site-rustig__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-block: 1rem 1.5rem;
+}
+
+.site-rustig__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 2.75rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
+.site-rustig__btn--primary {
+  background: var(--brand);
+  color: #fff;
+}
+
+.site-rustig__btn--ghost {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
+  color: var(--brand);
+}
+
+.site-rustig__grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.site-rustig__card {
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--border) 72%, var(--brand) 28%);
+  background: var(--surface);
+}
+
+.site-rustig__card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--brand);
+}
+
+.site-rustig__card p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.site-rustig__dna-blocks {
+  display: grid;
+  gap: 0.65rem;
+  margin-block: 1rem;
+}
+
+.site-rustig__dna-block {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.site-rustig__dna-block strong {
+  display: block;
+  color: var(--brand);
+  font-size: 0.9375rem;
+}
+
+.site-rustig__dna-block span {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.site-rustig__register-wrap {
+  position: relative;
+  padding: 1.5rem 0;
+}
+
+.site-rustig__register-wrap::before,
+.site-rustig__register-wrap::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inline-size: min(22vw, 280px);
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.92;
+  z-index: 0;
+}
+
+.site-rustig__register-wrap::before {
+  inset-inline-start: 0;
+  background-image:
+    linear-gradient(90deg, var(--bg) 0%, transparent 55%),
+    url("/images/candidate-illustrated/spots/werkgever.jpg");
+  background-position: center, 30% center;
+}
+
+.site-rustig__register-wrap::after {
+  inset-inline-end: 0;
+  background-image:
+    linear-gradient(270deg, var(--bg) 0%, transparent 55%),
+    url("/images/candidate-illustrated/spots/werkgever.jpg");
+  background-position: center, 70% center;
+}
+
+.site-rustig__register-card {
+  position: relative;
+  z-index: 1;
+  max-inline-size: 32rem;
+  margin-inline: auto;
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 96%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--border) 75%, var(--brand) 25%);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--brand) 6%, transparent);
+}
+
+.site-rustig__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-block: 0.85rem;
+}
+
+.site-rustig__field label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.site-rustig__field input {
+  min-block-size: 2.75rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--brand) 15%);
+  background: var(--surface);
+  font: inherit;
+}
+
+.site-rustig__lang-pills {
+  display: flex;
+  gap: 0.45rem;
+  margin-block: 0.75rem 1rem;
+}
+
+.site-rustig__lang-pills span {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.site-rustig__lang-pills span.is-on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.site-rustig__legal-excerpt {
+  padding: 1rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+}
+
+.site-rustig__legal-excerpt h2 {
+  font-size: 1rem;
+  margin: 1.25rem 0 0.35rem;
+  color: var(--brand);
+}
+
+.site-rustig__a11y p {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin: 0 0 0.85rem;
+  max-inline-size: 40rem;
+}
+
+.site-rustig__start {
+  text-align: center;
+  max-inline-size: 52rem;
+  margin-inline: auto;
+}
+
+.site-rustig__start-logo {
+  inline-size: min(120px, 28vw);
+  block-size: auto;
+  margin: 0 auto 0.75rem;
+  display: block;
+}
+
+.site-rustig__start-art {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin: 1.25rem 0 1.5rem;
+}
+
+.site-rustig__start-art img {
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--radius-sm);
+  opacity: 0.95;
+}
+
+.site-rustig__phase-cards {
+  display: grid;
+  gap: 0.55rem;
+  text-align: start;
+  margin-block: 1rem 1.25rem;
+}
+
+.site-rustig__phase-cards article {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.site-rustig__phase-cards article > span:first-child {
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.site-rustig-footer {
+  margin-block-start: 2rem;
+  padding: 2rem clamp(1rem, 3vw, 2rem) 1.25rem;
+  border-block-start: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  background: color-mix(in srgb, var(--bg) 92%, var(--surface));
+}
+
+.site-rustig-footer__inner {
+  max-inline-size: 72rem;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.site-rustig-footer__logo {
+  inline-size: min(180px, 42vw);
+  block-size: auto;
+  margin-block-end: 0.65rem;
+}
+
+.site-rustig-footer__tagline {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+  max-inline-size: 16rem;
+}
+
+.site-rustig-footer__col h2 {
+  margin: 0 0 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.site-rustig-footer__col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.site-rustig-footer__col li span {
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--text) 85%, var(--muted));
+}
+
+.site-rustig-footer__bottom {
+  max-inline-size: 72rem;
+  margin: 1.25rem auto 0;
+  padding-block-start: 0.85rem;
+  border-block-start: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  align-items: baseline;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.site-rustig-footer__bronnen {
+  margin: 0;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.site-rustig-footer__legal {
+  margin: 0;
+}
+
+.site-rustig__index {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+@media (max-width: 900px) {
+  .site-rustig__grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-rustig-footer__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-rustig__register-wrap::before,
+  .site-rustig__register-wrap::after {
+    display: none;
+  }
+
+  .site-rustig__start-art {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
