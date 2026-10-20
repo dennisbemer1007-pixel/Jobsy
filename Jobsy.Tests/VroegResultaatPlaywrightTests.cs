@@ -591,6 +591,8 @@ combo.save(out)
             null,
             new() { Timeout = 30_000 });
 
+        await FunctionalOnboardingInteractivityHelpers.DismissAddressSuggestionsAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 15_000);
         await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
         await ClickNextAsync(page);

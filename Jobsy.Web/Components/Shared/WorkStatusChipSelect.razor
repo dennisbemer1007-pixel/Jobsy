@@ -6,21 +6,55 @@
 <fieldset class="work-status-field">
     <legend class="ob-wizard__section-title">@Culture["WorkStatus.Legend"]</legend>
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["WorkStatus.Hint"]</p>
-    <ChoiceTileGrid Class="work-status-chips" AriaLabel="@Culture["WorkStatus.Legend"]">
+    <ChoiceTileGrid Class="work-status-chips" AriaLabel="@Culture["WorkStatus.Legend"]" data-selection-rev="@SelectionRevision">
         @foreach (var code in WorkStatusCatalog.AllCodes)
         {
-            var selected = Selected.Contains(code);
+            var selected = _displaySelected.Contains(code);
             <ChoiceTile @key="code"
                         Class="work-status-chip"
                         Label="@Culture[WorkStatusCatalog.LabelKey(code)]"
                         Icon="@ChoiceTileIcons.ForWorkStatus(code)"
                         Selected="selected"
-                        OnClick="@(() => OnToggle.InvokeAsync(code))" />
+                        OnClick="@(() => ToggleAsync(code))" />
         }
     </ChoiceTileGrid>
 </fieldset>
 
 @code {
     [Parameter] public IReadOnlySet<string> Selected { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Bump when <see cref="Selected"/> is mutated in place so tiles refresh (Blazor param reference unchanged).</summary>
+    [Parameter] public int SelectionRevision { get; set; }
     [Parameter] public EventCallback<string> OnToggle { get; set; }
+
+    private HashSet<string> _displaySelected = new(StringComparer.OrdinalIgnoreCase);
+    private int _lastSelectionRevision = -1;
+    private IReadOnlySet<string>? _lastSelectedRef;
+
+    protected override void OnParametersSet()
+    {
+        if (SelectionRevision != _lastSelectionRevision)
+        {
+            _lastSelectionRevision = SelectionRevision;
+            _lastSelectedRef = Selected;
+            _displaySelected = new HashSet<string>(Selected, StringComparer.OrdinalIgnoreCase);
+            return;
+        }
+
+        if (!ReferenceEquals(Selected, _lastSelectedRef))
+        {
+            _lastSelectedRef = Selected;
+            _displaySelected = new HashSet<string>(Selected, StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private async Task ToggleAsync(string code)
+    {
+        if (!_displaySelected.Add(code))
+        {
+            _displaySelected.Remove(code);
+        }
+
+        await InvokeAsync(StateHasChanged);
+        await OnToggle.InvokeAsync(code);
+    }
 }

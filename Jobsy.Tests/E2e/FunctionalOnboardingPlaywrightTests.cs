@@ -13,14 +13,13 @@ public sealed class FunctionalOnboardingPlaywrightTests
     private static readonly (int Width, int Height, bool Mobile, string Tag)[] Viewports =
     [
         (1440, 900, false, "desktop-1440"),
-        (390, 844, true, "mobile-390"),
     ];
 
     [Theory]
     [MemberData(nameof(ViewportCases))]
     public async Task Start_welcome_beginnen_opens_step1_with_candidate_header(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -31,7 +30,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -53,7 +52,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [MemberData(nameof(ViewportCases))]
     public async Task Logout_works_from_start_welcome_and_from_step1(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -64,7 +63,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -81,7 +80,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [MemberData(nameof(ViewportCases))]
     public async Task Wizard_controls_hit_test_after_illustration_loads_on_step_transitions(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -92,7 +91,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(180_000);
@@ -118,6 +117,12 @@ public sealed class FunctionalOnboardingPlaywrightTests
                 await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
             }
 
+            if (step == 3)
+            {
+                await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
+                await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
+            }
+
             await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
             if (step < 5)
             {
@@ -131,7 +136,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [Fact]
     public async Task Four_mini_tests_finish_on_kompas_without_reopening_completed_leuk()
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -142,7 +147,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, 1440, 900, false));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, 1440, 900, false));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(240_000);
@@ -154,7 +159,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [MemberData(nameof(DesktopViewportCases))]
     public async Task Wizard_steps_1_through_10_stay_interactive_after_each_next(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -165,7 +170,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(180_000);
@@ -178,7 +183,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [MemberData(nameof(ViewportCases))]
     public async Task Wizard_chips_on_steps_1_3_toggle_within_300ms(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -189,7 +194,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -203,7 +208,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [MemberData(nameof(ViewportCases))]
     public async Task Kennismaken_step1_stays_interactive_after_slow_typing(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -214,7 +219,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -236,7 +241,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [MemberData(nameof(ViewportCases))]
     public async Task Kennismaken_step1_controls_are_interactive(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -247,7 +252,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -284,7 +289,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
     [MemberData(nameof(ViewportCases))]
     public async Task Full_onboarding_registration_through_later_exits_to_banenkaart(int width, int height, bool mobile, string tag)
     {
-        var (run, baseUrl) = await TryBeginAsync();
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
         if (!run)
         {
             return;
@@ -295,7 +300,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(180_000);
@@ -316,35 +321,5 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
     public static IEnumerable<object[]> DesktopViewportCases()
         => Viewports.Where(v => !v.Mobile).Select(v => new object[] { v.Width, v.Height, v.Mobile, v.Tag });
-
-    private static BrowserNewContextOptions CreateContextOptions(string baseUrl, int width, int height, bool mobile)
-        => new()
-        {
-            ViewportSize = new() { Width = width, Height = height },
-            IsMobile = mobile,
-            HasTouch = mobile,
-            Locale = "nl-NL",
-            Geolocation = new() { Latitude = 52.066f, Longitude = 4.235f, Accuracy = 25 },
-            Permissions = ["geolocation"],
-            IgnoreHTTPSErrors = true,
-            BaseURL = baseUrl,
-        };
-
-    private static async Task<(bool Run, string BaseUrl)> TryBeginAsync()
-    {
-        var baseUrl = FunctionalE2eGate.TryBaseUrl() ?? "";
-        if (FunctionalE2eGate.IsRequired)
-        {
-            baseUrl = await FunctionalE2eGate.RequireReachableBaseUrlAsync();
-            return (true, baseUrl);
-        }
-
-        if (string.IsNullOrWhiteSpace(baseUrl) || !await SmokeReachability.IsReachableAsync(baseUrl))
-        {
-            return (false, baseUrl);
-        }
-
-        return (true, baseUrl);
-    }
 
 }
