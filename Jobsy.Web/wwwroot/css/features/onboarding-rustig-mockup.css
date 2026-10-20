@@ -214,8 +214,8 @@
 
 @media (min-width: 1024px) {
   .ob-rustig__illustrated-frame {
-    block-size: clamp(280px, 24vw, 340px);
-    min-block-size: 280px;
+    block-size: clamp(300px, 24vw, 340px);
+    min-block-size: 300px;
     max-block-size: 340px;
     border-block-end: none;
   }
@@ -223,6 +223,35 @@
   .ob-rustig__illustrated-frame img {
     object-fit: contain;
     object-position: center bottom;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        90deg,
+        var(--bg) 0%,
+        color-mix(in srgb, var(--bg) 70%, transparent) 10%,
+        transparent 24%,
+        transparent 76%,
+        color-mix(in srgb, var(--bg) 70%, transparent) 90%,
+        var(--bg) 100%
+      ),
+      linear-gradient(
+        180deg,
+        var(--bg) 0%,
+        color-mix(in srgb, var(--bg) 55%, transparent) 12%,
+        transparent 28%
+      ),
+      linear-gradient(
+        0deg,
+        var(--bg) 0%,
+        color-mix(in srgb, var(--bg) 45%, transparent) 14%,
+        transparent 32%
+      );
   }
 }
 
