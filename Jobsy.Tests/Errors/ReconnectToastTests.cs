@@ -7,6 +7,7 @@ namespace Jobsy.Tests.Errors;
 /// errors 04 §04.3: the reconnect toast is part of the static App shell, so it must read the
 /// catalog with the request language instead of hard-coded Dutch.
 /// </summary>
+[Collection("JobsyLanguagesState")]
 public class ReconnectToastTests
 {
     private static readonly string[] Keys =
