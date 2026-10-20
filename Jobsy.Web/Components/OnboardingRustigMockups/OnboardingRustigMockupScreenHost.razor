@@ -14,11 +14,10 @@ else
                            ShowSaved="@Meta.ShowSaved"
                            Title="@ShellTitle"
                            Lead="@ShellLead"
-                           HeroWebp="@Meta.HeroWebp"
-                           HeroJpg="@Meta.HeroJpg"
-                           HeroArtPosition="@Meta.HeroPosition"
+                           PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(Meta.Slug)"
+                           PanoramaMobile="@OnboardingRustigPanoramaAssets.Mobile(Meta.Slug)"
+                           MockupKind="@Meta.Kind"
                            ShowJobsRail="@Meta.ShowJobsRail"
-                           NavOverride="@Nav"
                            RightRail="@RightRail"
                            WelcomeMeta="@(Meta.Kind == OnboardingRustigMockupKind.Start)">
         @Body
@@ -51,14 +50,6 @@ else
         _ => Meta.Lead,
     };
 
-    private IReadOnlyList<OnboardingRustigShell.NavItem>? Nav => Meta!.Kind switch
-    {
-        OnboardingRustigMockupKind.Start => StartNav,
-        OnboardingRustigMockupKind.Kompas => KompasNav,
-        OnboardingRustigMockupKind.TestOverview or OnboardingRustigMockupKind.TestQuestion => JourneyNav,
-        _ => null,
-    };
-
     private RenderFragment? RightRail => Meta!.Kind == OnboardingRustigMockupKind.TestOverview
         ? FinishedTestResult
         : null;
@@ -83,33 +74,6 @@ else
         "step-06" => Step06,
         _ => Empty,
     };
-
-    private static readonly IReadOnlyList<OnboardingRustigShell.NavItem> StartNav =
-    [
-        new("1", "Over jou", "3 stappen", true),
-        new("2", "Achtergrond", "optioneel", false),
-        new("3", "Droom", "1 stap", false),
-        new("4", "Wie ben jij", "4 korte tests", false),
-        new("5", "Jouw Kompas", "bijna klaar", false),
-    ];
-
-    private static readonly IReadOnlyList<OnboardingRustigShell.NavItem> JourneyNav =
-    [
-        new("1", "Over jou", "3 stappen", false),
-        new("2", "Achtergrond", "optioneel", false),
-        new("3", "Droom", "1 stap", false),
-        new("4", "Wie ben jij", "4 korte tests", true),
-        new("5", "Jouw Kompas", "bijna klaar", false),
-    ];
-
-    private static readonly IReadOnlyList<OnboardingRustigShell.NavItem> KompasNav =
-    [
-        new("1", "Over jou", "3 stappen", false),
-        new("2", "Achtergrond", "optioneel", false),
-        new("3", "Droom", "1 stap", false),
-        new("4", "Wie ben jij", "4 korte tests", false),
-        new("5", "Jouw Kompas", "bijna klaar", true),
-    ];
 
     private static readonly RenderFragment Empty = _ => { };
 

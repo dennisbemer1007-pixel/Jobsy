@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.OnboardingRustigMockups
 @using Jobsy.Web.Media
 @using Jobsy.Web.Onboarding
+@using Jobsy.Web.OnboardingRustigMockups
 
 <div class="ob-rustig" data-ob-rustig-screen="@ScreenId">
     <div class="ob-rustig__layout @(ShowJobsRail || RightRail is not null ? "ob-rustig__layout--with-rail" : null)">
@@ -73,12 +74,19 @@
                 </div>
             </header>
 
-            @if (!string.IsNullOrWhiteSpace(HeroJpg))
+            @if (!string.IsNullOrWhiteSpace(PanoramaDesktop))
             {
-                <div class="ob-rustig__hero-band"
-                     style="@HeroStyle"
-                     aria-hidden="true"
-                     data-testid="ob-rustig-hero">
+                <div class="ob-rustig__hero-band" aria-hidden="true" data-testid="ob-rustig-hero">
+                    <picture class="ob-rustig__hero-picture">
+                        <source media="(min-width: 1024px)" srcset="@PanoramaDesktop" type="image/jpeg" />
+                        <img class="ob-rustig__hero-img"
+                             src="@PanoramaMobile"
+                             alt=""
+                             width="780"
+                             height="110"
+                             decoding="async"
+                             fetchpriority="high" />
+                    </picture>
                 </div>
             }
 
@@ -129,42 +137,29 @@
     [Parameter] public bool ShowSaved { get; set; }
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Lead { get; set; }
-    [Parameter] public string? HeroWebp { get; set; }
-    [Parameter] public string? HeroJpg { get; set; }
-    [Parameter] public string? HeroArtPosition { get; set; }
+    [Parameter] public string? PanoramaDesktop { get; set; }
+    [Parameter] public string? PanoramaMobile { get; set; }
+    [Parameter] public OnboardingRustigMockupKind MockupKind { get; set; }
     [Parameter] public bool ShowJobsRail { get; set; }
     [Parameter] public bool WelcomeMeta { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RightRail { get; set; }
 
-    private string? HeroStyle
+    private IReadOnlyList<NavItem> NavItems
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(HeroJpg))
-            {
-                return null;
-            }
-
-            var pos = string.IsNullOrWhiteSpace(HeroArtPosition) ? "50% 42%" : HeroArtPosition;
-            var jpg = HeroJpg;
-            var webp = string.IsNullOrWhiteSpace(HeroWebp) ? jpg : HeroWebp;
-            return $"--ob-rustig-hero-jpg:url('{jpg}');--ob-rustig-hero-webp:url('{webp}');--ob-rustig-art-pos:{pos};";
+            var active = OnboardingRustigSidebarNav.ActiveSection(Step, MockupKind);
+            return
+            [
+                new("1", "Over jou", "3 stappen", active == 1),
+                new("2", "Achtergrond", "optioneel", active == 2),
+                new("3", "Droom", "1 stap", active == 3),
+                new("4", "Wie ben jij", "4 korte tests", active == 4),
+                new("5", "Jouw Kompas", "bijna klaar", active == 5),
+            ];
         }
     }
-
-    private static readonly NavItem[] DefaultNav =
-    [
-        new("1", "Over jou", "3 stappen", true),
-        new("2", "Achtergrond", "optioneel", false),
-        new("3", "Droom", "1 stap", false),
-        new("4", "Wie ben jij", "4 korte tests", false),
-        new("5", "Jouw Kompas", "bijna klaar", false),
-    ];
-
-    [Parameter] public IReadOnlyList<NavItem>? NavOverride { get; set; }
-
-    private IReadOnlyList<NavItem> NavItems => NavOverride ?? DefaultNav;
 
     private static double[] PhaseWidthsForStep(int step) =>
         step switch

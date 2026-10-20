@@ -2,7 +2,7 @@
 
 .app-shell--onboarding-rustig-mockup {
   --ob-rustig-sidebar: 300px;
-  --ob-rustig-hero-h: clamp(7.5rem, 10vw, 10rem);
+  --ob-rustig-hero-h: 110px;
   background: var(--bg);
 }
 
@@ -145,27 +145,29 @@
   flex-shrink: 0;
   overflow: hidden;
   background-color: var(--bg);
-  background-image:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--bg) 8%, transparent) 0%,
-      color-mix(in srgb, var(--bg) 18%, transparent) 52%,
-      var(--bg) 100%
-    ),
-    linear-gradient(
-      90deg,
-      var(--bg) 0%,
-      color-mix(in srgb, var(--bg) 35%, transparent) 6%,
-      transparent 14%,
-      transparent 86%,
-      color-mix(in srgb, var(--bg) 35%, transparent) 94%,
-      var(--bg) 100%
-    ),
-    var(--ob-rustig-hero-jpg);
-  background-repeat: no-repeat;
-  background-size: cover, cover, cover;
-  background-position: center, center, var(--ob-rustig-art-pos, 50% 42%);
   pointer-events: none;
+}
+
+.ob-rustig__hero-picture {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  line-height: 0;
+}
+
+.ob-rustig__hero-img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+@media (min-width: 1024px) {
+  .app-shell--onboarding-rustig-mockup {
+    --ob-rustig-hero-h: 160px;
+  }
 }
 
 .ob-rustig__page-head {
