@@ -21,7 +21,7 @@ ORDER = ["step-02", "step-04", "step-05", "step-06", "step-07", "step-08", "step
 MOB_CENTER: dict[str, tuple[float, float]] = {
     "step-02": (0.76, 0.55),
     "step-04": (0.12, 0.58),
-    "step-05": (0.55, 0.65),
+    "step-05": (0.14, 0.66),
     "step-06": (0.68, 0.55),
     "step-07": (0.35, 0.57),
     "step-08": (0.15, 0.64),

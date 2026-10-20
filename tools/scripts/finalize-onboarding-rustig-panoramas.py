@@ -28,11 +28,11 @@ FADE_SIDE = 24
 # 16:9 raws: vertical band with headroom (tuned vs approved step-03 crop).
 Y0_FRAC_16X9 = 0.456
 Y0_FRAC_SLUG: dict[str, float] = {
-    "step-02": 0.488,
-    "step-04": 0.478,
-    "step-05": 0.488,
+    "step-02": 0.448,
+    "step-04": 0.456,
+    "step-05": 0.548,
 }
-PALETTE_SOFTEN_SLUGS = frozenset({"step-02", "step-04", "step-05"})
+PALETTE_SOFTEN_SLUGS: frozenset[str] = frozenset({"step-02"})
 
 SLUGS = [
     "start",
