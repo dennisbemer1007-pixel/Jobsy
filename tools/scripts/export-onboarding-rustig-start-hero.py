@@ -45,18 +45,21 @@ def apply_top_sky_fade(im: Image.Image, top_frac: float = 0.12) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
-def export_start(src: Path) -> None:
-    fin = load_fin()
-    raw = Image.open(src).convert("RGB")
-    desk = fin.apply_cream_fades(fin.fit_desktop(raw, "start"))
-    mob = fin.apply_cream_fades(fin.fit_mobile(raw, "start"))
-    desk = apply_top_sky_fade(desk, 0.11)
-    mob = apply_top_sky_fade(mob, 0.10)
-    DESK_OUT.parent.mkdir(parents=True, exist_ok=True)
-    desk.save(DESK_OUT, quality=92, optimize=True)
-    mob.save(MOB_OUT, quality=92, optimize=True)
-    print(f"wrote {DESK_OUT} size={desk.size}")
-    print(f"wrote {MOB_OUT} size={mob.size}")
+def export_start(src: Path, *, include_mobile: bool = False) -> None:
+    import subprocess
+
+    subprocess.check_call(
+        [sys.executable, str(ROOT / "tools/scripts/build-onboarding-rustig-start-desktop-band.py"), str(src)],
+        cwd=ROOT,
+    )
+    if include_mobile:
+        fin = load_fin()
+        raw = Image.open(src).convert("RGB")
+        mob = fin.apply_cream_fades(fin.fit_mobile(raw, "start"))
+        mob = apply_top_sky_fade(mob, 0.10)
+        MOB_OUT.parent.mkdir(parents=True, exist_ok=True)
+        mob.save(MOB_OUT, quality=92, optimize=True)
+        print(f"wrote {MOB_OUT} size={mob.size}")
 
 
 def main() -> None:
