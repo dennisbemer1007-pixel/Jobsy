@@ -1048,12 +1048,16 @@
             Draft.EducationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
         }
 
-        Draft.WorkStatuses.Clear();
-        foreach (var code in preferences.WorkStatuses ?? [])
+        var serverWorkStatuses = preferences.WorkStatuses ?? [];
+        if (serverWorkStatuses.Count > 0 || Draft.WorkStatuses.Count == 0)
         {
-            if (WorkStatusCatalog.IsKnown(code))
+            Draft.WorkStatuses.Clear();
+            foreach (var code in serverWorkStatuses)
             {
-                Draft.WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
+                if (WorkStatusCatalog.IsKnown(code))
+                {
+                    Draft.WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
+                }
             }
         }
     }

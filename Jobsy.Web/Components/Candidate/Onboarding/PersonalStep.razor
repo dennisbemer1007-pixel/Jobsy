@@ -122,8 +122,7 @@
     }
 </fieldset>
 
-<WorkStatusChipSelect Selected="_workStatusUiSnapshot"
-                      SelectionRevision="_workStatusUiRevision"
+<WorkStatusChipSelect Selected="Draft.WorkStatuses"
                       OnToggle="ToggleWorkStatusAsync" />
 
 <label>
@@ -174,17 +173,6 @@
     private CancellationTokenSource? _postcodeCts;
     private CancellationTokenSource? _addressSaveCts;
     private int _suggestGeneration;
-    private int _workStatusUiRevision;
-    private HashSet<string> _workStatusUiSnapshot = new(StringComparer.OrdinalIgnoreCase);
-
-    protected override void OnParametersSet()
-    {
-        if (_workStatusUiRevision == 0 && Draft.WorkStatuses.Count > 0 && _workStatusUiSnapshot.Count == 0)
-        {
-            _workStatusUiSnapshot = new HashSet<string>(Draft.WorkStatuses, StringComparer.OrdinalIgnoreCase);
-        }
-    }
-
     private string? LocationHint
     {
         get
@@ -241,20 +229,8 @@
             Draft.WorkStatuses.Remove(code);
         }
 
-        RefreshWorkStatusUi();
         await NotifyAsync();
         await SafeStateHasChangedAsync();
-    }
-
-    private void SyncWorkStatusSnapshot()
-    {
-        _workStatusUiSnapshot = new HashSet<string>(Draft.WorkStatuses, StringComparer.OrdinalIgnoreCase);
-    }
-
-    private void RefreshWorkStatusUi()
-    {
-        _workStatusUiRevision++;
-        SyncWorkStatusSnapshot();
     }
 
     private async Task OnAddressQueryChangedAsync(string value)
@@ -314,7 +290,6 @@
         {
             await Task.Delay(450, cancellationToken);
             await AddressChanged.InvokeAsync();
-            SyncWorkStatusSnapshot();
             await SafeStateHasChangedAsync();
         }
         catch (OperationCanceledException)
@@ -340,7 +315,6 @@
             Draft.BirthYear = "";
         }
 
-        SyncWorkStatusSnapshot();
         await NotifyAsync();
         if (BirthDateChanged.HasDelegate)
         {

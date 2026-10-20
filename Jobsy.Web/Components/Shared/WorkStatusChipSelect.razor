@@ -43,6 +43,11 @@
         if (!ReferenceEquals(Selected, _lastSelectedRef))
         {
             _lastSelectedRef = Selected;
+            if (Selected.Count == 0 && _displaySelected.Count > 0)
+            {
+                return;
+            }
+
             _displaySelected = new HashSet<string>(Selected, StringComparer.OrdinalIgnoreCase);
         }
     }
