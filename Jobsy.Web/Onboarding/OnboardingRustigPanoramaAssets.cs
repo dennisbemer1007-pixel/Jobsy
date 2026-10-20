@@ -48,6 +48,7 @@ public static class OnboardingRustigPanoramaAssets
             "step-02" => Step02Version,
             "step-03" => Step03Version,
             "step-08" => "20261020-15",
+            "step-09" => "20261020-16",
             _ => DefaultVersion,
         };
 }
