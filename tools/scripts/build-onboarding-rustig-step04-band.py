@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""Build step-04 band-native raw: full-width 6:1 bleed, complete figures + headroom."""
+"""Build step-04 band-native raw from a seamless wide source (no side patching)."""
 
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw"
-SRC = RAW / "step-04-source-16x9-u6o-v3.jpg"
+DEFAULT_SRC = RAW / "step-04-source-16x9-u6x-seamless.jpg"
 OUT = RAW / "step-04-desktop-raw.jpg"
 OUT_SIZE = (2400, 400)
-HEAD_MIN_FRAC = 0.14
+HEAD_MIN_FRAC = 0.16
 FADE_BOTTOM = 36
 
 
@@ -26,23 +28,20 @@ def load_fin():
     return m
 
 
-def widen_landscape(im: Image.Image, fin, target_ratio: float = 2.35) -> Image.Image:
-    """Extend wings from side strips so the band can fill 6:1 without side letterbox."""
-    w, h = im.size
-    target_w = int(h * target_ratio)
-    if target_w <= w:
+def defuse_right_foliage_red(im: Image.Image) -> Image.Image:
+    """Pull sunset-red out of the top-right sky band (report check); skip figures/vests below."""
+    rgb = np.asarray(im.convert("RGB"))
+    h, w = rgb.shape[:2]
+    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    roi = np.zeros((h, w), dtype=bool)
+    roi[: int(h * 0.58), int(w * 0.90) :] = True
+    warm = roi & (r > g + 10)
+    if not warm.any():
         return im
-    cream = tuple(int(c) for c in fin.CREAM)
-    out = Image.new("RGB", (target_w, h), cream)
-    ox = (target_w - w) // 2
-    wing = ox
-    strip = max(96, w // 8)
-    left = im.crop((0, 0, strip, h)).resize((wing, h), Image.Resampling.LANCZOS)
-    right = im.crop((w - strip, 0, w, h)).resize((wing, h), Image.Resampling.LANCZOS)
-    out.paste(left, (0, 0))
-    out.paste(right, (wing + w, 0))
-    out.paste(im, (ox, 0))
-    return out
+    out = rgb.copy()
+    gfix = out[warm, 1].astype(np.int16)
+    out[warm, 0] = np.minimum(out[warm, 0], (gfix + 6).astype(np.uint8))
+    return Image.fromarray(out)
 
 
 def apply_strong_bottom_fade(im: Image.Image, fin) -> Image.Image:
@@ -51,9 +50,9 @@ def apply_strong_bottom_fade(im: Image.Image, fin) -> Image.Image:
     px = overlay.load()
     cream = tuple(int(c) for c in fin.CREAM)
     for y in range(h):
+        if y < h - FADE_BOTTOM:
+            continue
         for x in range(w):
-            if y < h - FADE_BOTTOM:
-                continue
             t = (y - (h - FADE_BOTTOM)) / max(1, FADE_BOTTOM - 1)
             a = int(255 * min(1.0, t**0.85))
             if a:
@@ -62,34 +61,28 @@ def apply_strong_bottom_fade(im: Image.Image, fin) -> Image.Image:
 
 
 def pick_slice(im: Image.Image, fin) -> Image.Image:
+    """Fixed vertical window: figures sit in the middle band (YOLO bbox skips heads)."""
     w, h = im.size
-    cb = fin.content_bbox(im) or (0, int(h * 0.15), w, h)
-    slice_h = int(w / 4.35)
-    slice_h = min(slice_h, h - 4)
-    y0 = max(0, min(int(cb[3] - slice_h * 0.94), h - slice_h))
-    for _ in range(24):
-        band = im.crop((0, y0, w, y0 + slice_h))
-        fb = fin.figure_bbox(band)
-        if fb is None:
-            break
-        head = fb[1] / band.size[1]
-        if head >= HEAD_MIN_FRAC:
-            break
-        y0 = max(0, y0 - max(4, int(slice_h * 0.03)))
-    return im.crop((0, y0, w, min(h, y0 + slice_h)))
+    y0 = int(h * 0.11)
+    y_end = int(h * 0.79)
+    return im.crop((0, y0, w, y_end))
 
 
 def main() -> None:
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SRC
+    if not src.is_file():
+        raise SystemExit(f"missing source: {src}")
     fin = load_fin()
-    im = widen_landscape(Image.open(SRC).convert("RGB"), fin)
+    im = Image.open(src).convert("RGB")
     slice_im = pick_slice(im, fin)
     band = slice_im.resize(OUT_SIZE, Image.Resampling.LANCZOS)
     band = fin.apply_cream_fades(band)
+    band = defuse_right_foliage_red(band)
     band = apply_strong_bottom_fade(band, fin)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     band.save(OUT, quality=95, optimize=True)
     bb = fin.content_bbox(band)
-    print(f"wrote {OUT} size={OUT_SIZE} content_bbox={bb} from {SRC.name}")
+    print(f"wrote {OUT} content_bbox={bb} from {src.name}")
 
 
 if __name__ == "__main__":
