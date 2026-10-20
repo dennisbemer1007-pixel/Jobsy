@@ -54,6 +54,13 @@ fi
 capture_mockup_refs
 bash "$ROOT/.github/scripts/start-ci-stack.sh"
 
+if [[ -f /tmp/jobsy-ci-logs/web.pid ]]; then
+  kill "$(cat /tmp/jobsy-ci-logs/web.pid)" 2>/dev/null || true
+fi
+pkill -f "127.0.0.1:5201" 2>/dev/null || true
+sleep 2
+bash "$ROOT/.github/scripts/start-ci-stack.sh"
+
 echo "=== Rustig Kompas (enabled) ==="
 dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
   --filter "FullyQualifiedName~OnboardingRustigKompasCaptureTests" || true

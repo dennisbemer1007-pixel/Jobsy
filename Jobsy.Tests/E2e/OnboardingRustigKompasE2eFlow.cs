@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,10 @@ internal static class OnboardingRustigKompasE2eFlow
         _ = mobile;
         var email = await RegisterFreshCandidateEmailAsync(page, baseUrl, "rustig-kompas");
         await CandidateJourneyE2e.EnsureTestAiConsentForE2eAsync(email);
+        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Competence);
+        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Career);
+        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Culture);
+        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Values);
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 10, currentStep: 10);
         await SetFinishReachedForE2eAsync(email);
 
