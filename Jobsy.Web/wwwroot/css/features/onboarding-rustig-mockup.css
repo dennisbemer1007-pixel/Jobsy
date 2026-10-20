@@ -965,9 +965,10 @@
 }
 
 .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
-  block-size: clamp(220px, 62vw, 260px);
-  min-block-size: 220px;
-  max-block-size: 260px;
+  block-size: auto;
+  min-block-size: 0;
+  max-block-size: none;
+  aspect-ratio: 390 / 240;
   border-block-end: none;
 }
 
@@ -991,18 +992,20 @@
 .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
   inline-size: 100%;
   block-size: 100%;
-  object-fit: contain;
-  object-position: center bottom;
+  object-fit: cover;
+  object-position: center 42%;
 }
 
 @media (min-width: 1024px) {
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
+    aspect-ratio: auto;
     block-size: clamp(360px, 28vw, 440px);
     min-block-size: 360px;
     max-block-size: 440px;
   }
 
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
+    object-fit: contain;
     object-position: center 40%;
   }
 }

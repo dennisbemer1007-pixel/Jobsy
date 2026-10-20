@@ -144,6 +144,7 @@
     [Parameter] public bool HideTimeline { get; set; }
     [Parameter] public bool HideEndBlock { get; set; }
     [Parameter] public bool HideDreamRouteCard { get; set; }
+    [Parameter] public bool HideKompasWordsCard { get; set; }
 
     private IReadOnlyList<OnboardingFinaleInsight> _insights = [];
     private IReadOnlyList<OnboardingFinaleCard> _nowCards = [];
@@ -166,6 +167,11 @@
         if (HideDreamRouteCard)
         {
             _nowCards = _nowCards.Where(c => c.Id != OnboardingFinaleCardId.DreamRoute).ToList();
+        }
+
+        if (HideKompasWordsCard)
+        {
+            _nowCards = _nowCards.Where(c => c.Id != OnboardingFinaleCardId.KompasWords).ToList();
         }
 
         _soonCards = OnboardingFinaleCards.BuildSoon(CardsInput);
