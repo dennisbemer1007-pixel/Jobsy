@@ -339,6 +339,16 @@
       var(--bg) 100%
     );
   }
+
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-rustig__hero-band::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 86%,
+      color-mix(in srgb, var(--bg) 18%, transparent) 94%,
+      var(--bg) 100%
+    );
+  }
 }
 
 @media (min-width: 1024px) {
@@ -415,6 +425,64 @@
   border: 1px solid color-mix(in srgb, var(--border) 85%, var(--brand) 15%);
   background: var(--surface);
   font: inherit;
+}
+
+.ob-rustig .work-status-field {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.ob-rustig .work-status-field .ob-wizard__section-hint {
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--text) 70%, var(--muted));
+}
+
+.ob-rustig .work-status-chips.lobsy-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-block-start: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.ob-rustig .work-status-chip.lobsy-choice-tile {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  height: auto;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--brand) 15%);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
+}
+
+.ob-rustig .work-status-chip.lobsy-choice-tile.is-selected {
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig .work-status-chips.lobsy-choice-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ob-rustig__chips {
