@@ -189,7 +189,7 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
-MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-05", "step-10"})
+MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-04", "step-05", "step-10"})
 
 
 def fit_mobile_band_native(raw: Image.Image, slug: str = "") -> Image.Image:
