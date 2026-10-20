@@ -43,8 +43,8 @@ public static class OnboardingRustigMockupContent
             ["is-done", "is-current", "", ""]),
         "sfeer" => new TestQuestionMock(
             "Sfeer",
-            "Ik voel me op mijn gemak in een informele werksfeer.",
-            2, 2,
+            "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt.",
+            1, 3,
             ["is-done", "is-done", "is-current", ""]),
         "waarden" => new TestQuestionMock(
             "Waarden",

@@ -189,9 +189,9 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
-MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-04", "step-05", "step-06", "step-07", "step-08", "step-10"})
+MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-04", "step-05", "step-06", "step-07", "step-08", "step-09", "step-10"})
 
-SEAMLESS_HERO_SLUGS = frozenset({"step-04", "step-05", "step-06", "step-07", "step-08"})
+SEAMLESS_HERO_SLUGS = frozenset({"step-04", "step-05", "step-06", "step-07", "step-08", "step-09"})
 
 
 def _load_step04_defuse():
@@ -219,7 +219,7 @@ def _load_step08_report_defuse():
 
 
 def _save_seamless_jpeg(im: Image.Image, path: Path, *, slug: str) -> None:
-    if slug == "step-08":
+    if slug in ("step-08", "step-09"):
         im.save(path, quality=100, subsampling=0, optimize=False)
     else:
         im.save(path, quality=98, optimize=True)
@@ -238,14 +238,22 @@ def _report_band_red_count(rgb: np.ndarray) -> int:
 def step04_defuse_jpeg(path: Path) -> None:
     """Re-run foliage defuse after JPEG save (quantization can reintroduce red specks)."""
     defuse = _load_step04_defuse()
-    report_defuse = _load_step08_report_defuse() if "step-08" in path.name else None
+    report_defuse = (
+        _load_step08_report_defuse()
+        if ("step-08" in path.name or "step-09" in path.name)
+        else None
+    )
     for _ in range(20):
         im = defuse(Image.open(path))
         if report_defuse is not None:
             for _ in range(4):
                 im = report_defuse(im)
-        slug = "step-08" if "step-08" in path.name else ""
-        if slug == "step-08":
+        slug = (
+            "step-08"
+            if "step-08" in path.name
+            else ("step-09" if "step-09" in path.name else "")
+        )
+        if slug in ("step-08", "step-09"):
             _save_seamless_jpeg(im, path, slug=slug)
         else:
             im.save(path, quality=98, optimize=True)
@@ -340,7 +348,7 @@ def main() -> None:
             mob = soften_hero_palette(mob)
         if slug in SEAMLESS_HERO_SLUGS:
             mob = _load_step04_defuse()(mob)
-        if slug == "step-08":
+        if slug in ("step-08", "step-09"):
             rd = _load_step08_report_defuse()
             mob = rd(rd(mob))
         mob_path = OUT / f"{slug}-mobile.jpg"
@@ -359,7 +367,7 @@ def main() -> None:
             desk = soften_hero_palette(desk)
         if slug in SEAMLESS_HERO_SLUGS:
             desk = _load_step04_defuse()(desk)
-        if slug == "step-08":
+        if slug in ("step-08", "step-09"):
             rd = _load_step08_report_defuse()
             desk = rd(rd(desk))
         desk_path = OUT / f"{slug}-desktop.jpg"
