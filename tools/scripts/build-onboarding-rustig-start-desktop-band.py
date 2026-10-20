@@ -8,7 +8,6 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,7 +16,9 @@ FALLBACK = Path("/opt/cursor/artifacts/assets/start-desktop-raw-v3.jpg")
 OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/start-desktop.jpg"
 DESK = (2280, 340)
 FADE_BOTTOM = 14
-FEET_Y_TARGET = 172
+# v3 16:9 raw: gate + walker sit in this vertical window (no cream-fill shift).
+SLICE_Y0_FRAC = 0.30
+SLICE_Y1_FRAC = 0.50
 
 
 def load_fin():
@@ -32,38 +33,7 @@ def load_fin():
 
 def pick_slice(im: Image.Image) -> Image.Image:
     w, h = im.size
-    return im.crop((0, int(h * 0.08), w, int(h * 0.82)))
-
-
-def person_bbox_yolo(im: Image.Image) -> tuple[int, int, int, int] | None:
-    try:
-        from ultralytics import YOLO
-
-        wpath = ROOT / "yolov8n.pt"
-        model = YOLO(str(wpath if wpath.is_file() else "yolov8n.pt"))
-        res = model(np.asarray(im), verbose=False)[0]
-        if res.boxes is None:
-            return None
-        w = im.size[0]
-        best = None
-        for b in res.boxes:
-            if int(b.cls[0]) != 0:
-                continue
-            conf = float(b.conf[0])
-            if conf < 0.35:
-                continue
-            x0, y0, x1, y1 = (int(v) for v in b.xyxy[0].tolist())
-            cx = (x0 + x1) / 2
-            if cx < w * 0.25 or cx > w * 0.92:
-                continue
-            area = (x1 - x0) * (y1 - y0)
-            if best is None or area > best[0]:
-                best = (area, x0, y0, x1, y1)
-        if best is None:
-            return None
-        return best[1], best[2], best[3], best[4]
-    except Exception:
-        return None
+    return im.crop((0, int(h * SLICE_Y0_FRAC), w, int(h * SLICE_Y1_FRAC)))
 
 
 def estimate_region_bbox(
@@ -96,19 +66,7 @@ def apply_bottom_fade(im: Image.Image, fin) -> Image.Image:
 
 
 def compose_band(src: Image.Image, fin) -> tuple[Image.Image, dict]:
-    band = pick_slice(src).resize(DESK, Image.Resampling.LANCZOS)
-    fb0 = fin.figure_bbox(band) or fin.content_bbox(band)
-    feet_y = fb0[3] if fb0 else DESK[1]
-    shift = max(0, feet_y - FEET_Y_TARGET)
-    if shift > 0:
-        cream = tuple(int(c) for c in fin.CREAM)
-        arr = np.asarray(band, dtype=np.uint8)
-        out = np.empty_like(arr)
-        out[:] = cream
-        keep = DESK[1] - shift
-        out[:keep] = arr[shift : shift + keep]
-        band = Image.fromarray(out)
-    band_pre = band
+    band_pre = pick_slice(src).resize(DESK, Image.Resampling.LANCZOS)
     band = apply_bottom_fade(band_pre, fin)
     fb = fin.figure_bbox(band_pre) or fin.content_bbox(band_pre)
     person = estimate_region_bbox(band_pre, fin, 0.52, 0.80)
@@ -117,10 +75,11 @@ def compose_band(src: Image.Image, fin) -> tuple[Image.Image, dict]:
     metrics = {
         "band_px": list(DESK),
         "fade_start_y_px": fade_start_y,
+        "source_slice_y_frac": [SLICE_Y0_FRAC, SLICE_Y1_FRAC],
         "content_bbox_px": list(fb) if fb else None,
         "person_bbox_px": list(person) if person else None,
         "sign_bbox_px": list(sign) if sign else None,
-        "vertical_shift_px": shift,
+        "vertical_shift_px": 0,
     }
     if person:
         cy = (person[1] + person[3]) / 2
@@ -156,7 +115,7 @@ def main() -> None:
         raise SystemExit("FAIL: sign in asset fade zone")
     cy = metrics.get("person_cy_pct", 0)
     if not (0.35 <= cy <= 0.45):
-        print(f"WARN person_cy_pct={cy} (target 35-45%)")
+        raise SystemExit(f"FAIL: person_cy_pct={cy} (target 35-45%)")
 
 
 if __name__ == "__main__":

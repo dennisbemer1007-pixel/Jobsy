@@ -330,17 +330,12 @@
 }
 
 @media (min-width: 1024px) {
-  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-img--desk {
-    object-fit: cover;
-    object-position: 46% 68%;
-  }
-
   .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-band::after {
     background: linear-gradient(
       to bottom,
       transparent 0%,
-      transparent 82%,
-      color-mix(in srgb, var(--bg) 18%, transparent) 92%,
+      transparent 88%,
+      color-mix(in srgb, var(--bg) 18%, transparent) 95%,
       var(--bg) 100%
     );
   }
