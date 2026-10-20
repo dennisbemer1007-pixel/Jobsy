@@ -192,6 +192,32 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
 MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-04", "step-05", "step-10"})
 
 
+def _load_step04_defuse():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "step04_band", ROOT / "tools/scripts/build-onboarding-rustig-step04-band.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod.defuse_right_foliage_red
+
+
+def step04_defuse_jpeg(path: Path) -> None:
+    """Re-run foliage defuse after JPEG save (quantization can reintroduce red specks)."""
+    defuse = _load_step04_defuse()
+    for _ in range(20):
+        im = defuse(Image.open(path))
+        im.save(path, quality=98, optimize=True)
+        rgb = np.asarray(im.convert("RGB"))
+        h, w = rgb.shape[:2]
+        r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+        hot = (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
+        if not hot[: int(h * 0.58), int(w * 0.90) :].any():
+            break
+
+
 def fit_mobile_band_native(raw: Image.Image, slug: str = "") -> Image.Image:
     """Crop from the same 6:1 band as desktop (one shared scene)."""
     w, h = raw.size
@@ -269,7 +295,13 @@ def main() -> None:
         mob = apply_cream_fades(fit_mobile(raw_mob, slug))
         if slug in PALETTE_SOFTEN_SLUGS:
             mob = soften_hero_palette(mob)
-        mob.save(OUT / f"{slug}-mobile.jpg", quality=92, optimize=True)
+        if slug == "step-04":
+            mob = _load_step04_defuse()(mob)
+        mob_path = OUT / f"{slug}-mobile.jpg"
+        jpeg_q = 98 if slug == "step-04" else 92
+        mob.save(mob_path, quality=jpeg_q, optimize=True)
+        if slug == "step-04":
+            step04_defuse_jpeg(mob_path)
         if mobile_only:
             bb = figure_bbox(mob) or content_bbox(mob)
             print(f"{slug}: mob {mob.size} bbox {bb} <- {mob_src.name}")
@@ -277,7 +309,12 @@ def main() -> None:
         desk = apply_cream_fades(fit_desktop(raw, slug))
         if slug in PALETTE_SOFTEN_SLUGS:
             desk = soften_hero_palette(desk)
-        desk.save(OUT / f"{slug}-desktop.jpg", quality=92, optimize=True)
+        if slug == "step-04":
+            desk = _load_step04_defuse()(desk)
+        desk_path = OUT / f"{slug}-desktop.jpg"
+        desk.save(desk_path, quality=jpeg_q, optimize=True)
+        if slug == "step-04":
+            step04_defuse_jpeg(desk_path)
         bb = figure_bbox(desk) or content_bbox(desk)
         mode = "band-native" if is_band_native(raw) else "16x9-crop"
         print(

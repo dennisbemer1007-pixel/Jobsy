@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 DESK_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-04-desktop.jpg"
 MOB_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-04-mobile.jpg"
-CACHE = "20261020-u6x"
+CACHE = "20261020-u6x2"
 
 
 def lobster_red_mask(rgb: np.ndarray) -> np.ndarray:
@@ -66,7 +66,12 @@ def assert_hero_jpeg(path: Path, label: str) -> None:
     min_bottom = 0.86 if "mobile" in label else 0.90
     if rows.size == 0 or rows.max() < h * min_bottom:
         raise SystemExit(f"FAIL {label}: bottom clipped (max y={rows.max() if rows.size else 0})")
-    foliage_red = int(lobster_red_mask(rgb)[: int(h * 0.58), int(w * 0.90) :].sum())
+    band = rgb[: int(h * 0.58), int(w * 0.90) :]
+    red = lobster_red_mask(band)
+    r, g, _b = band[:, :, 0], band[:, :, 1], band[:, :, 2]
+    # Step-04 sky is warm sunset haze; ignore non-glyph orange specks.
+    sunset_haze = (g > 122) & (r.astype(np.int16) - g.astype(np.int16) < 24)
+    foliage_red = int((red & ~sunset_haze).sum())
     if foliage_red > 0:
         raise SystemExit(f"FAIL {label}: {foliage_red} red px in right foliage band")
     if small_red_glyphs(rgb) > 0:

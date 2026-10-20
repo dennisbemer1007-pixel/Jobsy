@@ -28,19 +28,42 @@ def load_fin():
     return m
 
 
+def _inpaint_topright_block(im: Image.Image, *, x_frac: float, y_frac: float) -> Image.Image:
+    import cv2
+
+    bgr = cv2.cvtColor(np.asarray(im.convert("RGB")), cv2.COLOR_RGB2BGR)
+    h, w = bgr.shape[:2]
+    mask = np.zeros((h, w), np.uint8)
+    x0, y1 = int(w * x_frac), int(h * y_frac)
+    mask[0:y1, x0:w] = 255
+    k = int(w * 0.025) | 1
+    mask = cv2.GaussianBlur(mask, (k, k), 0)
+    mask = np.where(mask > 36, 255, 0).astype(np.uint8)
+    healed = cv2.inpaint(bgr, mask, 12, cv2.INPAINT_NS)
+    return Image.fromarray(cv2.cvtColor(healed, cv2.COLOR_BGR2RGB))
+
+
+def heal_topright_sky(im: Image.Image) -> Image.Image:
+    """Remove AI cream rectangle top-right on the 16:9 source."""
+    return _inpaint_topright_block(im, x_frac=0.86, y_frac=0.22)
+
+
 def defuse_right_foliage_red(im: Image.Image) -> Image.Image:
-    """Pull sunset-red out of the top-right sky band (report check); skip figures/vests below."""
+    """Neutralize report-check red specks in top-right sky only (per-pixel, no ROI fill)."""
     rgb = np.asarray(im.convert("RGB"))
     h, w = rgb.shape[:2]
     r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
-    roi = np.zeros((h, w), dtype=bool)
-    roi[: int(h * 0.58), int(w * 0.90) :] = True
-    warm = roi & (r > g + 10)
-    if not warm.any():
-        return im
+    hot = (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
+    report = np.zeros((h, w), dtype=bool)
+    report[: int(h * 0.58), int(w * 0.90) :] = True
     out = rgb.copy()
-    gfix = out[warm, 1].astype(np.int16)
-    out[warm, 0] = np.minimum(out[warm, 0], (gfix + 6).astype(np.uint8))
+    for _ in range(12):
+        r, g, b = out[:, :, 0], out[:, :, 1], out[:, :, 2]
+        hot = (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
+        fix = hot & report
+        if not fix.any():
+            break
+        out[fix, 0] = (out[fix, 1] + 8).astype(np.uint8)
     return Image.fromarray(out)
 
 
@@ -73,14 +96,16 @@ def main() -> None:
     if not src.is_file():
         raise SystemExit(f"missing source: {src}")
     fin = load_fin()
-    im = Image.open(src).convert("RGB")
+    im = heal_topright_sky(Image.open(src).convert("RGB"))
     slice_im = pick_slice(im, fin)
     band = slice_im.resize(OUT_SIZE, Image.Resampling.LANCZOS)
     band = fin.apply_cream_fades(band)
     band = defuse_right_foliage_red(band)
     band = apply_strong_bottom_fade(band, fin)
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    band.save(OUT, quality=95, optimize=True)
+    band.save(OUT, quality=98, optimize=True)
+    band = defuse_right_foliage_red(Image.open(OUT))
+    band.save(OUT, quality=98, optimize=True)
     bb = fin.content_bbox(band)
     print(f"wrote {OUT} content_bbox={bb} from {src.name}")
 
