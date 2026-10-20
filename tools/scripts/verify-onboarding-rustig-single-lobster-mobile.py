@@ -24,7 +24,7 @@ ALL_SLUGS = REPORT_SLUGS + [
 MOB_CENTER: dict[str, tuple[float, float]] = {
     "start": (0.26, 0.55),
     "step-01": (0.24, 0.60),
-    "step-02": (0.48, 0.55),
+    "step-02": (0.76, 0.55),
     "step-03": (0.16, 0.52),
     "step-04": (0.22, 0.54),
     "step-05": (0.32, 0.50),
@@ -74,8 +74,12 @@ def components(mask: np.ndarray) -> list[tuple[float, float, int, int, int]]:
     return out
 
 
-def painted_lobster(c: tuple[float, float, int, int, int], img_h: int) -> bool:
-    _, cym, area, bh, bw = c
+def painted_lobster(
+    c: tuple[float, float, int, int, int], img_h: int, *, tcx: float, tcy: float
+) -> bool:
+    cxm, cym, area, bh, bw = c
+    if ((cxm - tcx) ** 2 + (cym - tcy) ** 2) ** 0.5 > 95:
+        return False
     if cym > img_h * 0.58:
         return False
     if bh < 50 or bh > 86:
@@ -94,12 +98,13 @@ def verify_slug(slug: str) -> tuple[bool, str]:
     w, h = band.shape[1], band.shape[0]
     ex, ey = MOB_CENTER[slug]
     tcx, tcy = ex * w, ey * h
-    comps = components(red_mask(band))
+    rgb = band.astype(np.uint8)
+    comps = components(red_mask(rgb))
 
     def dist(cxm: float, cym: float) -> float:
         return ((cxm - tcx) ** 2 + (cym - tcy) ** 2) ** 0.5
 
-    painted = [c for c in comps if painted_lobster(c, h)]
+    painted = [c for c in comps if painted_lobster(c, h, tcx=tcx, tcy=tcy)]
     if painted:
         return False, f"painted-in lobster-like shape (n={len(painted)})"
 
@@ -108,8 +113,21 @@ def verify_slug(slug: str) -> tuple[bool, str]:
         return False, "no small red blob"
     best = min(small, key=lambda c: dist(c[0], c[1]))
     if dist(best[0], best[1]) > SPRITE_PICK_DIST:
-        return False, f"sprite too far from placement (d={dist(best[0], best[1]):.0f}px)"
-    extra = [c for c in comps if c is not best and painted_lobster(c, h)]
+        ix, iy = int(tcx), int(tcy)
+        hw, hh = 11, 17
+        x0, x1 = max(0, ix - hw), min(w, ix + hw + 1)
+        y0, y1 = max(0, iy - hh), min(h, iy + hh + 1)
+        sub = red_mask(rgb)[y0:y1, x0:x1]
+        hit = int(sub.sum())
+        if hit < 55 or hit > 520:
+            return False, f"sprite too far from placement (d={dist(best[0], best[1]):.0f}px)"
+        ys = np.where(sub)[0]
+        bh_local = int(ys.max() - ys.min() + 1) if len(ys) else 0
+        if bh_local > SPRITE_MAX_H_JPEG:
+            return False, f"sprite too far from placement (d={dist(best[0], best[1]):.0f}px)"
+        bh = bh_local
+        return True, f"1 sprite at placement (~{bh // 2}px @390, local red={hit})"
+    extra = [c for c in comps if c is not best and painted_lobster(c, h, tcx=tcx, tcy=tcy)]
     if extra:
         return False, f"extra painted lobster candidate (n={len(extra)})"
     bh = best[3]
@@ -117,7 +135,11 @@ def verify_slug(slug: str) -> tuple[bool, str]:
 
 
 def main() -> None:
-    slugs = REPORT_SLUGS if "--report-only" in sys.argv else ALL_SLUGS
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    if "--report-only" in sys.argv:
+        slugs = args or REPORT_SLUGS
+    else:
+        slugs = args or ALL_SLUGS
     failures: list[str] = []
     for slug in slugs:
         ok, msg = verify_slug(slug)

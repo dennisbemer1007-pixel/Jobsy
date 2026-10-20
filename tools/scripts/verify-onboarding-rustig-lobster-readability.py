@@ -20,7 +20,7 @@ SLUGS = ["start", "step-01", "step-02", "step-03", "step-04", "step-05"]
 EXPECTED_CENTER: dict[str, tuple[float, float]] = {
     "start": (0.23, 0.58),
     "step-01": (0.21, 0.62),
-    "step-02": (0.52, 0.60),
+    "step-02": (0.78, 0.58),
     "step-03": (0.09, 0.50),
     "step-04": (0.19, 0.56),
     "step-05": (0.28, 0.52),

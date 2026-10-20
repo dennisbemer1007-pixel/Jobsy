@@ -20,7 +20,7 @@ MOBILE = (780, 184)  # 2× for CSS band 390×92 (~4.24:1)
 CREAM = np.array([247, 244, 240], dtype=np.float32)
 DESKTOP_RATIO = 6.0
 MOBILE_RATIO = 4.0
-HEAD_MARGIN = 8
+HEAD_MARGIN = 14
 FEET_ABOVE_FADE = 25
 FADE_BOTTOM = 25
 FADE_SIDE = 30
@@ -144,7 +144,7 @@ def crop_to_ratio(
         y0 = max(0, int(scaled_h * 0.42) - crop_h // 2)
     else:
         _x1, y1, _x2, y2 = bbox
-        sky = int(crop_h * 0.32)
+        sky = int(crop_h * 0.38)
         y0 = y1 - sky
         ground_y = int(scaled_h * 0.70)
         y0 = min(y0, ground_y - int(crop_h * 0.72))
@@ -192,8 +192,10 @@ def fit_mobile(raw: Image.Image) -> Image.Image:
 
 def main() -> None:
     mobile_only = "--mobile-only" in sys.argv
+    slug_filter = [a for a in _args[1:] if not a.startswith("-")]
+    targets = slug_filter if slug_filter else SLUGS
     OUT.mkdir(parents=True, exist_ok=True)
-    for slug in SLUGS:
+    for slug in targets:
         candidates = [
             RAW / f"{slug}-desktop-raw.jpg",
             RAW / f"{slug}-raw.jpg",

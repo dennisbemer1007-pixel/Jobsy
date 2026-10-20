@@ -7,7 +7,7 @@ public static class OnboardingRustigPanoramaBriefs
     {
         "start" => "Welkom: start van je reis, pad dat opengaat, iemand zwaait bij een trailhead",
         "step-01" => "Kennismaken: huis en buurt, adres, geboortedatum-kalender, werkstatus",
-        "step-02" => "Beschikbaarheid: weekkalender, klokken ochtend-middag-avond, rooster",
+        "step-02" => "Wanneer kun je werken: dagverloop ochtend (koffie/fiets), middag (klok/station), avond (lantaarn/shift)",
         "step-03" => "Vervoer: lopen, fiets, trein, bus, auto, scooter over de volle breedte",
         "step-04" => "Werkervaring: horeca, winkel, magazijn als eerdere banen",
         "step-05" => "Opleiding: boeken, diploma, campus/bibliotheek",
@@ -26,7 +26,7 @@ public static class OnboardingRustigPanoramaBriefs
     {
         "start" => "Op de linkerpoot van het Welkom-hek",
         "step-01" => "Op de drempel voor de groene voordeur",
-        "step-02" => "Op de houten bankleuning bij de zittende vrouw",
+        "step-02" => "Op de voet van de lantaarnpaal bij het avonddeel",
         "step-03" => "Op de stenen rechts van de rollator",
         "step-04" => "Op een plank achter de toonbank links",
         "step-05" => "Bovenop een stapel boeken op de traptrede",

@@ -4,7 +4,7 @@ Shared suffix: Wide establishing 16:9. Warm Lobsy cream flat illustration. FULL 
 
 - **start**: Journey begins: trailhead gate opening onto a path, one person waving welcome, milestone stone, morning light—not a city commute scene.
 - **step-01**: Getting to know you: row house street, person at front door with envelope, wall calendar for birth date, small work-status icons (student, job)—home neighbourhood.
-- **step-02**: When can you work: giant week planner, clocks 8:00 13:00 18:00, sun and moon, person marking weekday cells—scheduling not transport.
+- **step-02**: When can you work (Wanneer kun je werken?): panoramic day left-to-right—morning sunrise person with coffee and bike, midday sunny town clock tower, evening warm lamplight worker heading to shift. No park bench scene.
 - **step-03**: Transport only: walker, cyclist, train, bus stop, car, scooter spread wide.
 - **step-04**: Past jobs: barista at café counter, shop cashier, warehouse worker with pallet—three job vignettes one continuous street.
 - **step-05**: Education: library shelves, diploma scroll, graduate with books on campus path.

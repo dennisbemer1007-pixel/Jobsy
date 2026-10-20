@@ -15,8 +15,8 @@ ROW_OCCUPANCY = 0.05
 ARTIFACTS = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 JPEG_DIR = Path(__file__).resolve().parents[2] / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
 
-DESKTOP_BAND = (300, 100, 1440, 270)
-MOBILE_BAND = (0, 118, 390, 248)
+DESKTOP_BAND = (300, 67, 1280, 237)
+MOBILE_BAND = (0, 67, 390, 159)
 
 
 def region_figure_top(band: Image.Image, x0_frac: float, x1_frac: float) -> int | None:

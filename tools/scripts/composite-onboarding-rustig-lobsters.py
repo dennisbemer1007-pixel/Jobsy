@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 PAN = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
@@ -24,7 +24,7 @@ Y_MAX = 0.78
 PLACEMENTS: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {
     "start": ((0.23, 0.58), (0.26, 0.55)),
     "step-01": ((0.21, 0.62), (0.24, 0.60)),
-    "step-02": ((0.52, 0.60), (0.48, 0.55)),
+    "step-02": ((0.78, 0.58), (0.76, 0.55)),
     "step-03": ((0.09, 0.50), (0.16, 0.52)),
     "step-04": ((0.19, 0.56), (0.22, 0.54)),
     "step-05": ((0.28, 0.52), (0.32, 0.50)),
@@ -68,10 +68,28 @@ def clamp_y(cy_frac: float) -> float:
     return max(Y_MIN, min(Y_MAX, cy_frac))
 
 
-def paste_sprite(base: Image.Image, piece: Image.Image, cx_frac: float, cy_frac: float) -> None:
+def cream_pad(base: Image.Image, cx_frac: float, cy_frac: float, *, mobile: bool) -> None:
+    """Soft cream oval under the sprite so it reads on busy watercolor (mobile band)."""
+    if not mobile:
+        return
+    w, h = base.size
+    cx, cy = int(w * cx_frac), int(h * cy_frac)
+    pad_w = max(14, int(w * 0.055))
+    pad_h = max(10, int(h * 0.14))
+    layer = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    cream = (247, 244, 240, 210)
+    draw.ellipse((cx - pad_w, cy - pad_h // 2, cx + pad_w, cy + pad_h // 2 + 4), fill=cream)
+    base.paste(Image.alpha_composite(base.convert("RGBA"), layer).convert("RGB"))
+
+
+def paste_sprite(
+    base: Image.Image, piece: Image.Image, cx_frac: float, cy_frac: float, *, mobile: bool = False
+) -> None:
     w, h = base.size
     cy_frac = clamp_y(cy_frac)
     cx, cy = int(w * cx_frac), int(h * cy_frac)
+    cream_pad(base, cx_frac, cy_frac, mobile=mobile)
     x0 = cx - piece.size[0] // 2
     y0 = cy - piece.size[1] // 2
     canvas = base.convert("RGBA")
@@ -111,7 +129,7 @@ def main() -> None:
             path = PAN / f"{slug}-{variant}.jpg"
             im = Image.open(path).convert("RGB")
             piece = scaled_sprite(im, band, lob, sprite)
-            paste_sprite(im, piece, xy[0], xy[1])
+            paste_sprite(im, piece, xy[0], xy[1], mobile=(variant == "mobile"))
             im.save(path, quality=92, optimize=True)
             print(f"{path.name}: ~{piece.size[1]}px on JPEG, center {xy}")
 
