@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-start-g2" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-start-g2-u1b-m2" />
     }
 </HeadContent>
 
@@ -197,6 +197,48 @@
                 </button>
             </section>
         }
+    }
+    else if (RustigStepOne)
+    {
+        var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
+        <OnboardingRustigShell ScreenId="step-01"
+                               Step="_step"
+                               PhaseLabel="@Culture[rustigPhase.NameKey]"
+                               MinutesLeft="@OnboardingWizardCatalog.V3RemainingMinutes(_step)"
+                               ShowSaved="true"
+                               SaveStatus="@RustigSaveStatus"
+                               Title="@Culture["Onboarding.Step1.Title"]"
+                               Lead="@Culture["Onboarding.Step1.Lead"]"
+                               PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(1)"
+                               PanoramaMobile="@OnboardingRustigPanoramaAssets.Mobile(1)"
+                               BackDisabled="true"
+                               OnBack="BackAsync"
+                               OnLater="LaterAsync">
+            <ChildContent>
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <p class="state-message error">@_error</p>
+                }
+                <OnboardingRustigPersonalStepBody Step="_step"
+                                                   Draft="Draft"
+                                                   ShowValidation="_showValidation"
+                                                   AddressChanged="AddressChanged"
+                                                   ShowCity="ShowCity"
+                                                   SelectAddress="SelectAddress" />
+                <div class="ob-rustig__footer-actions">
+                    <button type="button"
+                            class="ob-rustig__btn"
+                            data-testid="onboarding-back"
+                            disabled="true"
+                            @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                    <button type="button"
+                            class="ob-rustig__btn ob-rustig__btn--primary"
+                            data-testid="onboarding-next"
+                            disabled="@_busy"
+                            @onclick="@(() => NextAsync())">@NextLabel</button>
+                </div>
+            </ChildContent>
+        </OnboardingRustigShell>
     }
     else
     {
@@ -629,6 +671,9 @@
     private int _step = 1;
     private bool SoftIllustratedStep => _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= 6;
 
+    private bool RustigStepOne =>
+        OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 1;
+
     private string Step1HeroJpg => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
         ? CompactHeroPreviewArt.OnboardingKennismakenDesktop
         : OnboardingIllustrationAssets.KennismakenJpg;
@@ -730,6 +775,10 @@
     private string SaveText => _saveError
         ? Culture["Onboarding.NotSaved"]
         : _profilePersistInFlight ? Culture["Onboarding.Saving"] : "";
+
+    private string RustigSaveStatus => string.IsNullOrEmpty(SaveText)
+        ? $"✓ {Culture["Onboarding.Saved"]}"
+        : SaveText;
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
     private string DaysSummary => Draft.Availability.Count == 0
@@ -1212,6 +1261,15 @@
             Interlocked.Increment(ref _stepTransitionGeneration);
             await PrepareMiniAsync();
             RequestStepScrollReset();
+            try
+            {
+                await RefreshNearbySignalIfEligibleAsync();
+            }
+            catch
+            {
+                // Nearby panel is informational only.
+            }
+
             await Task.Yield();
         }
         catch (Exception ex)
@@ -2148,7 +2206,7 @@
 
     private void ScheduleDebouncedNearbyRefresh()
     {
-        if (_step <= 3 || !NearbyBasicsSaved() || _welcome || _finish)
+        if (_step < 2 || !NearbyBasicsSaved() || _welcome || _finish)
         {
             return;
         }

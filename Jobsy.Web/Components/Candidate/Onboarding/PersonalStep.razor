@@ -123,6 +123,7 @@
 </fieldset>
 
 <WorkStatusChipSelect Selected="Draft.WorkStatuses"
+                      SelectionRevision="_workStatusRevision"
                       OnToggle="ToggleWorkStatusAsync" />
 
 <label>
@@ -164,6 +165,7 @@
         Draft.PostcodeResolved,
         Draft.GeolocationPendingConfirm);
 
+    private int _workStatusRevision;
     private bool _locating;
     private bool _suggesting;
     private bool _showSuggestions;
@@ -229,6 +231,7 @@
             Draft.WorkStatuses.Remove(code);
         }
 
+        _workStatusRevision++;
         await NotifyAsync();
         await SafeStateHasChangedAsync();
     }

@@ -1,0 +1,29 @@
+@using Jobsy.Core.Models
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+
+<div class="ob-rustig__canvas" data-testid="@($"onboarding-step-{Step}-illustrated")">
+    @switch (Step)
+    {
+        case 1:
+            <div class="ob-rustig__form-grid">
+                <PersonalStep Draft="Draft"
+                              Illustrated="true"
+                              ShowValidation="ShowValidation"
+                              AddressChanged="AddressChanged"
+                              ShowCity="ShowCity"
+                              SelectAddress="SelectAddress" />
+            </div>
+            break;
+    }
+</div>
+
+@code {
+    [Parameter] public int Step { get; set; }
+    [Parameter] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public bool ShowValidation { get; set; }
+    [Parameter] public EventCallback AddressChanged { get; set; }
+    [Parameter] public EventCallback ShowCity { get; set; }
+    [Parameter] public EventCallback<AddressSuggestion> SelectAddress { get; set; }
+}
