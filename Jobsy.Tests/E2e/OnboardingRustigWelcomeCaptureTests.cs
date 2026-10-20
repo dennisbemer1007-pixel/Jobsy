@@ -39,6 +39,8 @@ public sealed class OnboardingRustigWelcomeCaptureTests
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
         await page.Locator("[data-ob-rustig-screen=start]").WaitForAsync(new() { Timeout = 60_000 });
         await page.WaitForTimeoutAsync(800);
-        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, fileName), FullPage = true });
+        var baseName = Path.GetFileNameWithoutExtension(fileName);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{baseName}-full.png"), FullPage = true });
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{baseName}-viewport.png"), FullPage = false });
     }
 }
