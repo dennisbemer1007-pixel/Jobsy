@@ -19,7 +19,8 @@ MOBILE = (780, 260)
 CREAM = np.array([247, 244, 240], dtype=np.float32)
 DESKTOP_RATIO = 6.0
 MOBILE_RATIO = 3.0
-HEAD_MARGIN = 8
+HEAD_MARGIN = 12
+MIN_HEAD_PX = 12
 FEET_ABOVE_FADE = 25
 FADE_BOTTOM = 25
 FADE_SIDE = 30
@@ -208,6 +209,55 @@ def fit_desktop(raw: Image.Image) -> Image.Image:
 
 def fit_mobile(raw: Image.Image) -> Image.Image:
     return crop_to_ratio(raw, MOBILE[0], MOBILE[1], MOBILE_RATIO)
+
+
+def figure_head_tops(im: Image.Image) -> list[int]:
+    rgb = np.asarray(im.convert("RGB"), dtype=np.float32)
+    dist = np.linalg.norm(rgb - CREAM, axis=2)
+    h, w = dist.shape
+    mask = dist > 28.0
+    visited = np.zeros_like(mask, dtype=bool)
+    tops: list[int] = []
+    min_area = max(80, int(h * w * 0.002))
+    for y in range(h):
+        for x in range(w):
+            if not mask[y, x] or visited[y, x]:
+                continue
+            stack = [(y, x)]
+            ys: list[int] = []
+            xs: list[int] = []
+            while stack:
+                cy, cx = stack.pop()
+                if cy < 0 or cy >= h or cx < 0 or cx >= w:
+                    continue
+                if visited[cy, cx] or not mask[cy, cx]:
+                    continue
+                visited[cy, cx] = True
+                ys.append(cy)
+                xs.append(cx)
+                stack.extend([(cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)])
+            if len(ys) < min_area:
+                continue
+            y0, y1 = min(ys), max(ys)
+            x0, x1 = min(xs), max(xs)
+            blob_h, blob_w = y1 - y0 + 1, x1 - x0 + 1
+            if blob_h < int(h * 0.12):
+                continue
+            if blob_h > int(h * 0.72):
+                continue
+            if blob_w > int(w * 0.55) and blob_h < int(h * 0.35):
+                continue
+            tops.append(y0)
+    return tops
+
+
+def assert_headroom(im: Image.Image, label: str) -> None:
+    tops = figure_head_tops(im)
+    if not tops:
+        return
+    y_top = min(tops)
+    if y_top < MIN_HEAD_PX:
+        raise SystemExit(f"{label}: figure head too close to top (y={y_top}px, need >={MIN_HEAD_PX})")
 
 
 def main() -> None:
