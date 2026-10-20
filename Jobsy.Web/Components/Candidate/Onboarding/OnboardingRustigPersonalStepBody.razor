@@ -31,6 +31,16 @@
                                   ResetPresets="ResetPresets" />
             </div>
             break;
+        case 3:
+            <div class="ob-rustig__form-grid">
+                <TransportStep Draft="Draft"
+                               Illustrated="true"
+                               ShowValidation="ShowValidation"
+                               SelectTransport="SelectTransport"
+                               SelectTravelTime="SelectTravelTime"
+                               ShowCustomTravel="ShowCustomTravel" />
+            </div>
+            break;
     }
 </div>
 
@@ -49,4 +59,7 @@
     [Parameter] public EventCallback ManualAvailability { get; set; }
     [Parameter] public EventCallback<string> ToggleAvailability { get; set; }
     [Parameter] public EventCallback ResetPresets { get; set; }
+    [Parameter] public EventCallback<string> SelectTransport { get; set; }
+    [Parameter] public EventCallback<int> SelectTravelTime { get; set; }
+    [Parameter] public EventCallback ShowCustomTravel { get; set; }
 }

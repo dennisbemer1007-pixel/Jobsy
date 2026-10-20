@@ -2153,3 +2153,63 @@
     padding-inline: 1rem;
   }
 }
+
+/* --- Live step-03 (u3c): full-width personal screen + jobs rail (additive) --- */
+@media (min-width: 1024px) {
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__layout {
+    min-block-size: calc(100dvh - var(--app-header-height, 4.25rem));
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__main {
+    min-block-size: 0;
+    flex: 1 1 auto;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+    padding-block-end: 1.25rem;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__canvas {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    max-inline-size: none;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__footer-actions {
+    margin-block-start: auto;
+    max-inline-size: none;
+    inline-size: 100%;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__page-head {
+    max-inline-size: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__hero-band {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__chrome {
+    position: relative;
+    z-index: 3;
+    padding-inline: 1rem;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__chrome-row {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__actions {
+    margin-inline-start: auto;
+  }
+}

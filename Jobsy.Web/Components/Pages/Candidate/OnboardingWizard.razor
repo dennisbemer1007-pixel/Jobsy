@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-10" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-11" />
     }
 </HeadContent>
 
@@ -235,7 +235,10 @@
                                                    SetMaxHours="SetMaxHoursAsync"
                                                    ManualAvailability="ManualAvailabilityAsync"
                                                    ToggleAvailability="ToggleAvailability"
-                                                   ResetPresets="ResetPresets" />
+                                                   ResetPresets="ResetPresets"
+                                                   SelectTransport="SelectTransport"
+                                                   SelectTravelTime="SelectTravelTime"
+                                                   ShowCustomTravel="ShowCustomTravel" />
                 @if (rustigJobsRail)
                 {
                     <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Mobile"
@@ -726,7 +729,7 @@
     private int _step = 1;
     private bool SoftIllustratedStep => _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= 6;
 
-    private const int MaxRustigPersonalStep = 2;
+    private const int MaxRustigPersonalStep = 3;
 
     private bool RustigPersonalSteps =>
         OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= MaxRustigPersonalStep;

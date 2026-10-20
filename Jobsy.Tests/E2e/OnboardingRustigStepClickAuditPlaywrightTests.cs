@@ -21,7 +21,14 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
     public async Task Audit_step02_clicks(int width, int height, bool mobile, string tag)
         => await AuditStepAsync(2, width, height, mobile, tag);
 
+    [Theory]
+    [MemberData(nameof(Step03Cases))]
+    public async Task Audit_step03_clicks(int width, int height, bool mobile, string tag)
+        => await AuditStepAsync(3, width, height, mobile, tag);
+
     public static IEnumerable<object[]> Step02Cases() => ViewportCases();
+
+    public static IEnumerable<object[]> Step03Cases() => ViewportCases();
 
     private static IEnumerable<object[]> ViewportCases()
     {
@@ -64,6 +71,8 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
         await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
         await FunctionalOnboardingInteractivityHelpers.ReachOnboardingRustigStepAsync(page, step, mobile);
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+        await page.Locator(".ob-rustig__chrome").First.ScrollIntoViewIfNeededAsync();
 
         var rows = new List<(string Control, string Result)>();
 
@@ -77,6 +86,11 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
 
             await AuditButtonAsync(page, rows, "Later verder", later);
             var privacy = page.Locator(".ob-rustig__actions a.ob-rustig__link--underline[href='/privacy/data']");
+            if (await privacy.CountAsync() == 0)
+            {
+                privacy = page.GetByRole(AriaRole.Link, new() { Name = "Mijn gegevens & account" });
+            }
+
             rows.Add(("Mijn gegevens & account", await TryHitAuditAsync(page, privacy, "privacy")));
             rows.Add(("Privacy (/privacy/data)", rows[^1].Result));
 
@@ -111,6 +125,17 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
 
         var next = page.GetByTestId("onboarding-next");
         await AuditButtonAsync(page, rows, "Volgende", next);
+
+        if (step == 3)
+        {
+            var stepLine = page.Locator(".ob-rustig__meta").GetByText("Stap 3 van 10", new() { Exact = false });
+            if (await stepLine.CountAsync() == 0)
+            {
+                stepLine = page.GetByText("Stap 3 van 10", new() { Exact = false });
+            }
+
+            rows.Add(("Stap 3 van 10 (header)", await stepLine.CountAsync() > 0 ? "ok" : "n/a"));
+        }
 
         if (step == 1 && mobile && rustig)
         {

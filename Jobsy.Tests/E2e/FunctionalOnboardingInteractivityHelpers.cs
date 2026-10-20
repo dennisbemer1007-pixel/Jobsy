@@ -714,7 +714,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         await FillKennismakenBasicsExceptWorkStatusAsync(page);
         await SelectAnyWorkStatusChipAsync(page);
-        await ClickWizardNextWhenVisibleAsync(page);
+        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
         await page.Locator("[data-ob-rustig-screen=step-02], [data-testid=onboarding-step-2-illustrated]")
             .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         if (targetStep == 2)
@@ -722,9 +722,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
             return;
         }
 
-        await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First
-            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await ClickWizardNextWhenVisibleAsync(page);
+        var preset = page.Locator(".ob-wizard__presets .lobsy-choice-tile, .ob-wizard__presets button").First;
+        await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await preset.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await WaitForCircuitReadyAsync(page, 60_000);
+        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await WaitForCircuitReadyAsync(page, 60_000);
         await page.Locator("[data-ob-rustig-screen=step-03], [data-testid=onboarding-step-3-illustrated]")
             .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         if (targetStep == 3)
