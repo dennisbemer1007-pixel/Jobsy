@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export start hero bands from clean 16:9 source (no inpaint)."""
+"""Export start hero bands from native start-g aquarel source (no stitch)."""
 
 from __future__ import annotations
 
@@ -11,9 +11,8 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw/start-desktop-raw.jpg"
-FALLBACK = Path("/opt/cursor/artifacts/assets/start-desktop-raw-v3.jpg")
-DESK_OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/start-desktop.jpg"
+RAW = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/start-g-aquarel-source.jpg"
+FALLBACK = Path("/opt/cursor/artifacts/assets/start-g-wide-aquarel-source.jpg")
 MOB_OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/start-mobile.jpg"
 CREAM = np.array([247.0, 244.0, 240.0], dtype=np.float32)
 
@@ -49,11 +48,7 @@ def export_start(src: Path, *, include_mobile: bool = False) -> None:
     import subprocess
 
     subprocess.check_call(
-        [sys.executable, str(ROOT / "tools/scripts/build-onboarding-rustig-start-wide-source.py"), str(src)],
-        cwd=ROOT,
-    )
-    subprocess.check_call(
-        [sys.executable, str(ROOT / "tools/scripts/build-onboarding-rustig-start-desktop-band.py")],
+        [sys.executable, str(ROOT / "tools/scripts/build-onboarding-rustig-start-desktop-band.py"), str(src)],
         cwd=ROOT,
     )
     if include_mobile:

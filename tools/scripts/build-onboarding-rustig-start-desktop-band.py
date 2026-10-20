@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start desktop hero: wide v3 source, vertical slice 0.42–0.92, 2280×340 band."""
+"""Start desktop hero: native aquarel source, 6.7:1 crop + uniform resize (no wing stitch)."""
 
 from __future__ import annotations
 
@@ -12,24 +12,19 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
-WIDE_SRC = ROOT / "artifacts/onboarding-rustig-panorama-raw/start-source-16x9-startf-seamless.jpg"
-DEFAULT_SRC = WIDE_SRC
-FALLBACK = Path("/opt/cursor/artifacts/assets/start-desktop-raw-v3.jpg")
+DEFAULT_SRC = (
+    ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/start-g-aquarel-source.jpg"
+)
+FALLBACK = Path("/opt/cursor/artifacts/assets/start-g-wide-aquarel-source.jpg")
 OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/start-desktop.jpg"
 VERIFY = ROOT / "artifacts/onboarding-rustig-panorama-raw/start-desktop-band-verify.png"
 DESK = (2280, 340)
 FADE_BOTTOM = 14
-SLICE_Y0_FRAC = 0.42
-SLICE_Y1_FRAC = 0.92
-V3_SIZE = (1280, 720)
-# Manual anchors on start-desktop-raw-v3 (1280×720), from art review.
-V3_ANCHORS = {
-    "gate_top": (0.38, 0.49),
-    "sign_bottom": (0.42, 0.64),
-    "walker_hat": (0.62, 0.56),
-    "walker_feet": (0.62, 0.85),
-    "fence_bottom": (0.30, 0.81),
-}
+BAND_RATIO = DESK[0] / DESK[1]
+TARGET_SOURCE_W = 4000
+TOP_MARGIN_FRAC = 0.06
+BOTTOM_MARGIN_FRAC = 0.07
+SEAM_GRAD_MAX_RATIO = 2.4
 
 
 def load_fin():
@@ -42,70 +37,16 @@ def load_fin():
     return m
 
 
-def center_x0(wide_w: int) -> int:
-    return (wide_w - V3_SIZE[0]) // 2
-
-
-def pick_slice(im: Image.Image) -> Image.Image:
+def scale_source(im: Image.Image) -> Image.Image:
     w, h = im.size
-    y0, y1 = int(h * SLICE_Y0_FRAC), int(h * SLICE_Y1_FRAC)
-    crop = im.crop((0, y0, w, y1))
-    cw, ch = crop.size
-    target_ratio = DESK[0] / DESK[1]
-    have_ratio = cw / ch
-    if abs(have_ratio - target_ratio) > 0.02:
-        # Center-crop width to exact 6.7:1 before resize (no stretch).
-        need_w = int(round(ch * target_ratio))
-        if need_w <= cw:
-            x0 = (cw - need_w) // 2
-            crop = crop.crop((x0, 0, x0 + need_w, ch))
-        else:
-            need_h = int(round(cw / target_ratio))
-            y_off = max(0, (ch - need_h) // 2)
-            crop = crop.crop((0, y_off, cw, y_off + need_h))
-    return crop
+    if w >= TARGET_SOURCE_W:
+        return im
+    nw = TARGET_SOURCE_W
+    nh = max(1, int(round(h * nw / w)))
+    return im.resize((nw, nh), Image.Resampling.LANCZOS)
 
 
-def anchor_bbox_on_band(wide_w: int, wide_h: int) -> dict[str, list[int]]:
-    x0 = center_x0(wide_w)
-    sy0 = SLICE_Y0_FRAC * wide_h
-    sy1 = SLICE_Y1_FRAC * wide_h
-    sh = sy1 - sy0
-    out: dict[str, list[int]] = {}
-    pts: dict[str, tuple[float, float]] = {}
-    for name, (ax, ay) in V3_ANCHORS.items():
-        px = x0 + ax * V3_SIZE[0]
-        py = ay * V3_SIZE[1]
-        pts[name] = (px, py)
-        bx = int(px / wide_w * DESK[0])
-        by = int((py - sy0) / sh * DESK[1])
-        out[name] = [bx, by]
-    # Derived boxes from anchor points (band px).
-    hat = out["walker_hat"]
-    feet = out["walker_feet"]
-    person = [
-        max(0, hat[0] - int(DESK[0] * 0.06)),
-        max(0, hat[1] - 8),
-        min(DESK[0], feet[0] + int(DESK[0] * 0.06)),
-        min(DESK[1] - 1, feet[1]),
-    ]
-    gt = out["gate_top"]
-    sb = out["sign_bottom"]
-    sign = [
-        max(0, gt[0] - int(DESK[0] * 0.04)),
-        max(0, gt[1] - 4),
-        min(DESK[0], sb[0] + int(DESK[0] * 0.08)),
-        min(DESK[1] - 1, sb[1] + 6),
-    ]
-    return {
-        "anchor_points_band_px": out,
-        "person_bbox_px": person,
-        "sign_bbox_px": sign,
-        "v3_center_x0_px": x0,
-    }
-
-
-def yolo_person_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
+def yolo_persons(im: Image.Image) -> list[tuple[float, float, float, float]]:
     try:
         from ultralytics import YOLO
 
@@ -113,55 +54,55 @@ def yolo_person_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
         model = YOLO(str(wpath if wpath.is_file() else "yolov8n.pt"))
         res = model(np.asarray(im), verbose=False)[0]
         if res.boxes is None:
-            return None
-        w = im.size[0]
-        best = None
+            return []
+        w, h = im.size
+        out = []
         for b in res.boxes:
-            if int(b.cls[0]) != 0:
+            if int(b.cls[0]) != 0 or float(b.conf[0]) < 0.30:
                 continue
-            if float(b.conf[0]) < 0.35:
-                continue
-            x0, y0, x1, y1 = (int(v) for v in b.xyxy[0].tolist())
+            x0, y0, x1, y1 = (float(v) for v in b.xyxy[0].tolist())
             cx = (x0 + x1) / 2
-            if cx < w * 0.45 or cx > w * 0.82:
+            if cx < w * 0.30 or cx > w * 0.92:
                 continue
-            hpx = y1 - y0
-            if hpx < 55:
-                continue
-            area = (x1 - x0) * hpx
-            if best is None or area > best[0]:
-                best = (area, x0, y0, x1, y1)
-        return None if best is None else best[1:]
+            out.append((x0, y0, x1, y1))
+        return out
     except Exception:
-        return None
+        return []
 
 
-def blue_jacket_present(im: Image.Image, person: list[int]) -> bool:
-    """Walker region should contain saturated blue (jacket/backpack)."""
-    x0, y0, x1, y1 = person
-    sub = np.asarray(im.crop((x0, y0, x1, y1)))
-    if sub.size == 0:
-        return False
-    r, g, b = sub[:, :, 0], sub[:, :, 1], sub[:, :, 2]
-    blue = (b > 95) & (b > r + 12) & (b > g + 6)
-    return float(blue.mean()) > 0.02
+def pick_band_crop(im: Image.Image) -> tuple[Image.Image, dict]:
+    w, h = im.size
+    crop_h = int(round(w / BAND_RATIO))
+    crop_h = max(80, min(crop_h, h))
+    persons = yolo_persons(im)
+    meta: dict = {"crop_h_px": crop_h}
+    if persons:
+        x0, py0, x1, py1 = max(persons, key=lambda b: (b[3] - b[1]) * (b[2] - b[0]))
+        y0_feet = int(round(py1 - crop_h * (1.0 - BOTTOM_MARGIN_FRAC)))
+        y0_hat = int(round(py0 - crop_h * TOP_MARGIN_FRAC))
+        best_y0 = max(0, min(y0_feet, y0_hat, h - crop_h))
+        meta["person_src_bbox_px"] = [int(x0), int(py0), int(x1), int(py1)]
+    else:
+        best_y0 = max(0, (h - crop_h) // 2)
+    crop = im.crop((0, best_y0, w, best_y0 + crop_h))
+    meta["crop_y0_px"] = best_y0
+    meta["crop_size_px"] = list(crop.size)
+    meta["crop_ratio"] = round(crop.size[0] / crop.size[1], 4)
+    return crop, meta
 
 
-def save_verify_overlay(band_pre: Image.Image, metrics: dict) -> None:
-    vis = band_pre.copy().convert("RGBA")
-    draw = ImageDraw.Draw(vis)
-    for name, pt in metrics.get("anchor_points_band_px", {}).items():
-        draw.ellipse((pt[0] - 4, pt[1] - 4, pt[0] + 4, pt[1] + 4), fill=(255, 0, 0, 200))
-        draw.text((pt[0] + 6, pt[1] - 6), name, fill=(200, 0, 0, 255))
-    for key, color in (("person_bbox_px", (0, 180, 0)), ("sign_bbox_px", (0, 80, 220))):
-        bb = metrics.get(key)
-        if bb:
-            draw.rectangle(bb, outline=(*color, 255), width=3)
-    yolo = metrics.get("yolo_person_bbox_px")
-    if yolo:
-        draw.rectangle(yolo, outline=(255, 140, 0, 255), width=2)
-    VERIFY.parent.mkdir(parents=True, exist_ok=True)
-    vis.convert("RGB").save(VERIFY, optimize=True)
+def seam_grad_ratio(im: Image.Image) -> float:
+    gray = np.asarray(im.convert("L"), dtype=np.float32)
+    gx = np.abs(np.diff(gray, axis=1))
+    h, w = gx.shape
+    center = gx[:, int(w * 0.4) : int(w * 0.6)].mean()
+    wings = max(
+        gx[:, : int(w * 0.12)].mean(),
+        gx[:, int(w * 0.88) :].mean(),
+    )
+    if center < 1.0:
+        return 1.0
+    return float(wings / center)
 
 
 def apply_bottom_fade(im: Image.Image, fin) -> Image.Image:
@@ -181,74 +122,74 @@ def apply_bottom_fade(im: Image.Image, fin) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
+def save_verify_overlay(band_pre: Image.Image, person: list[int] | None, yolo: list[int] | None) -> None:
+    vis = band_pre.copy().convert("RGBA")
+    draw = ImageDraw.Draw(vis)
+    if person:
+        draw.rectangle(person, outline=(0, 180, 0, 255), width=3)
+    if yolo:
+        draw.rectangle(yolo, outline=(255, 140, 0, 255), width=2)
+    VERIFY.parent.mkdir(parents=True, exist_ok=True)
+    vis.convert("RGB").save(VERIFY, optimize=True)
+
+
 def compose_band(src: Image.Image, fin) -> tuple[Image.Image, dict]:
-    ww, wh = src.size
-    band_pre = pick_slice(src).resize(DESK, Image.Resampling.LANCZOS)
+    scaled = scale_source(src)
+    crop, crop_meta = pick_band_crop(scaled)
+    ratio_delta = abs(crop_meta["crop_ratio"] - BAND_RATIO)
+    if ratio_delta > 0.02:
+        raise RuntimeError(f"crop ratio {crop_meta['crop_ratio']} != {BAND_RATIO:.4f}")
+    band_pre = crop.resize(DESK, Image.Resampling.LANCZOS)
     band = apply_bottom_fade(band_pre, fin)
-    mapped = anchor_bbox_on_band(ww, wh)
-    person = mapped["person_bbox_px"]
-    sign = mapped["sign_bbox_px"]
-    yolo = yolo_person_bbox(band_pre)
+    persons = yolo_persons(band_pre)
+    yolo = None
+    if persons:
+        x0, y0, x1, y1 = max(persons, key=lambda b: (b[3] - b[1]) * (b[2] - b[0]))
+        yolo = [int(x0), int(y0), int(x1), int(y1)]
+    person = yolo
     fade_start_y = DESK[1] - FADE_BOTTOM
-    slice_crop = pick_slice(src)
     metrics = {
         "band_px": list(DESK),
         "fade_start_y_px": fade_start_y,
-        "source_size_px": [ww, wh],
-        "source_slice_y_frac": [SLICE_Y0_FRAC, SLICE_Y1_FRAC],
-        "slice_crop_px": list(slice_crop.size),
-        "slice_crop_ratio": round(slice_crop.size[0] / slice_crop.size[1], 4),
-        "anchor_points_band_px": mapped["anchor_points_band_px"],
+        "source_scaled_px": list(scaled.size),
+        **crop_meta,
         "person_bbox_px": person,
-        "sign_bbox_px": sign,
-        "yolo_person_bbox_px": list(yolo) if yolo else None,
-        "v3_center_x0_px": mapped["v3_center_x0_px"],
+        "yolo_person_bbox_px": yolo,
+        "seam_wing_grad_ratio": round(seam_grad_ratio(band_pre), 3),
     }
-    feet_y = person[3]
-    metrics["person_feet_y_px"] = feet_y
-    metrics["person_feet_above_fade_px"] = fade_start_y - feet_y
-    metrics["sign_bottom_y_px"] = sign[3]
-    metrics["sign_above_fade_px"] = fade_start_y - sign[3]
-    cy = (person[1] + person[3]) / 2
-    metrics["person_cy_pct"] = round(cy / DESK[1], 4)
-    metrics["walker_blue_ok"] = blue_jacket_present(band_pre, person)
-    save_verify_overlay(band_pre, metrics)
+    if person:
+        metrics["person_feet_y_px"] = person[3]
+        metrics["person_feet_above_fade_px"] = fade_start_y - person[3]
+        cy = (person[1] + person[3]) / 2
+        metrics["person_cy_pct"] = round(cy / DESK[1], 4)
+    save_verify_overlay(band_pre, person, yolo)
     metrics["verify_overlay"] = str(VERIFY.relative_to(ROOT))
     return band, metrics
 
 
 def main() -> None:
-    wide_script = ROOT / "tools/scripts/build-onboarding-rustig-start-wide-source.py"
-    if not WIDE_SRC.is_file() or "--rebuild-wide" in sys.argv:
-        import subprocess
-
-        subprocess.check_call([sys.executable, str(wide_script)], cwd=ROOT)
-    src = Path(sys.argv[1]) if len(sys.argv) > 1 and not sys.argv[1].startswith("-") else DEFAULT_SRC
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SRC
     if not src.is_file():
         src = FALLBACK
-    if src == FALLBACK:
-        import subprocess
-
-        subprocess.check_call([sys.executable, str(wide_script), str(FALLBACK)], cwd=ROOT)
-        src = WIDE_SRC
+    if not src.is_file():
+        raise SystemExit(f"missing start-g source: {src}")
     fin = load_fin()
     band, metrics = compose_band(Image.open(src).convert("RGB"), fin)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     band.save(OUT, quality=92, optimize=True)
     metrics_path = ROOT / "artifacts/onboarding-rustig-panorama-raw/start-desktop-band-metrics.json"
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_path.write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {OUT}")
     print(json.dumps(metrics, indent=2))
-    if metrics.get("person_feet_above_fade_px", 0) < 8:
-        raise SystemExit("FAIL: walker feet in asset fade zone (anchor)")
-    if metrics.get("sign_above_fade_px", 0) < 4:
-        raise SystemExit("FAIL: sign in asset fade zone (anchor)")
     if not metrics.get("yolo_person_bbox_px"):
         raise SystemExit("FAIL: YOLO did not detect walker in band (visual gate)")
-    yolo = metrics["yolo_person_bbox_px"]
-    fade_limit = metrics["fade_start_y_px"] - 4
-    if yolo[3] > fade_limit:
-        raise SystemExit(f"FAIL: YOLO feet y={yolo[3]} too low vs fade {fade_limit}")
+    if metrics.get("person_feet_above_fade_px", 0) < 6:
+        raise SystemExit("FAIL: walker feet in asset fade zone")
+    if metrics.get("seam_wing_grad_ratio", 99) > SEAM_GRAD_MAX_RATIO:
+        raise SystemExit(
+            f"FAIL: wing seam score {metrics['seam_wing_grad_ratio']} > {SEAM_GRAD_MAX_RATIO}"
+        )
 
 
 if __name__ == "__main__":

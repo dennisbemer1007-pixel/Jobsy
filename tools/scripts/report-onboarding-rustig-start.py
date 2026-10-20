@@ -15,8 +15,8 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 METRICS_SRC = ROOT / "artifacts/onboarding-rustig-panorama-raw/start-desktop-band-metrics.json"
-CACHE = "20261020-start-f"
-PREFIX = "start-f"
+CACHE = "20261020-start-g"
+PREFIX = "start-g"
 
 
 def save_hero_2x(page, path: Path) -> None:

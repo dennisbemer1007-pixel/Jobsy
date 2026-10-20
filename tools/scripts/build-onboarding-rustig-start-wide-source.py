@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Widen start-desktop-raw-v3 for 6.7:1 band slice (outpaint wings, single center scene)."""
+"""DEPRECATED (start-f): edge-stripe wings — use start-g-aquarel-source.jpg instead."""
 
 from __future__ import annotations
 
