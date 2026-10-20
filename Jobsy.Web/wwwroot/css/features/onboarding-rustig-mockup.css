@@ -178,11 +178,6 @@
   object-position: center center;
 }
 
-.ob-rustig[data-ob-rustig-screen="step-04"] .ob-rustig__hero-img {
-  object-fit: cover;
-  object-position: center 100%;
-}
-
 @media (min-width: 1024px) {
   .app-shell--onboarding-rustig-mockup {
     --ob-rustig-hero-h: 170px;
