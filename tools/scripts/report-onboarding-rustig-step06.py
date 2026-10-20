@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import time
 from pathlib import Path
@@ -20,7 +21,7 @@ MOB_JPEG = (
     ROOT
     / "Jobsy.Web/wwwroot/images/onboarding/rustig-mockup/step-06-droom-professions-u6-aquarel-mobile.jpg"
 )
-CACHE = "20261020-u6-aquarel-v6"
+CACHE = "20261020-u6-aquarel-v7"
 
 
 def assert_illustration(path: Path, label: str) -> None:
@@ -35,6 +36,35 @@ def assert_illustration(path: Path, label: str) -> None:
         raise SystemExit(f"FAIL {label}: no figure content")
     if rows.max() < h * 0.55:
         raise SystemExit(f"FAIL {label}: feet may be clipped (max y={rows.max()})")
+
+
+def assert_desktop_hero_metrics(page, desk_path: Path) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "fin", ROOT / "tools/scripts/finalize-onboarding-rustig-panoramas.py"
+    )
+    fin = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(fin)
+    metrics = page.evaluate(
+        """() => {
+          const main = document.querySelector('.ob-rustig__main');
+          const img = document.querySelector('[data-testid=ob-rustig-hero] img');
+          if (!main || !img) return null;
+          const mr = main.getBoundingClientRect();
+          const ir = img.getBoundingClientRect();
+          return { mainW: mr.width, imgW: ir.width, imgH: ir.height };
+        }"""
+    )
+    if not metrics:
+        raise SystemExit("FAIL desktop: hero metrics unavailable")
+    if abs(metrics["mainW"] - metrics["imgW"]) > 6:
+        raise SystemExit(
+            f"FAIL desktop: hero width {metrics['imgW']:.0f}px != column {metrics['mainW']:.0f}px"
+        )
+    if metrics["imgH"] < 280 or metrics["imgH"] > 345:
+        raise SystemExit(f"FAIL desktop: hero height {metrics['imgH']:.0f}px outside 280-345")
+    if metrics["imgH"] / metrics["imgW"] < 0.26:
+        raise SystemExit("FAIL desktop: hero looks letterboxed (height/width too small)")
 
 
 def main() -> None:
@@ -68,6 +98,7 @@ def main() -> None:
             page.goto(url, wait_until="networkidle")
             page.wait_for_selector("[data-testid=ob-rustig-hero]", timeout=30_000)
             page.wait_for_timeout(400)
+            assert_desktop_hero_metrics(page, DESK_JPEG)
             page.screenshot(path=str(OUT / "step-06-desktop-1440.png"))
             page.close()
 
@@ -82,7 +113,7 @@ def main() -> None:
         proc.terminate()
         proc.wait(timeout=30)
     sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True).strip()
-    print(f"step-06 mockups OK (u6-aquarel-v6 @ {sha})")
+    print(f"step-06 mockups OK (u6-aquarel-v7 @ {sha})")
 
 
 if __name__ == "__main__":
