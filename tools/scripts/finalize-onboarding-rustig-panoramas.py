@@ -40,9 +40,9 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     for y in range(h):
         for x in range(w):
             a = 0
-            if y > h * 0.55:
-                t = (y - h * 0.55) / (h * 0.45)
-                a = max(a, int(245 * min(1.0, t**1.05)))
+            if y > h * 0.82:
+                t = (y - h * 0.82) / (h * 0.18)
+                a = max(a, int(220 * min(1.0, t**1.15)))
             if x < w * 0.05:
                 t = 1.0 - x / (w * 0.05)
                 a = max(a, int(200 * t))
@@ -54,28 +54,27 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
-def fit_desktop(raw: Image.Image) -> Image.Image:
-    """Scale to full band width, keep bottom slice (for bottom-weighted 16:9 sources)."""
-    target_w, target_h = DESKTOP
+def fit_band(raw: Image.Image, target_w: int, target_h: int) -> Image.Image:
+    """Contain full source in band: no head/feet crop; ground aligned to bottom."""
     sw, sh = raw.size
-    scale = target_w / sw
-    nh = int(sh * scale)
-    scaled = raw.resize((target_w, nh), Image.Resampling.LANCZOS)
-    if nh >= target_h:
-        top = nh - target_h
-        return scaled.crop((0, top, target_w, nh))
-    canvas = Image.new("RGB", DESKTOP, CREAM)
-    canvas.paste(scaled, (0, target_h - nh))
+    # Leave a little top sky in the band (figures ~55–70% of height).
+    max_scene_h = int(target_h * 0.84)
+    scale = min(target_w / sw, max_scene_h / sh)
+    nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
+    scaled = raw.resize((nw, nh), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGB", (target_w, target_h), CREAM)
+    x = (target_w - nw) // 2
+    y = max(0, target_h - nh - 6)
+    canvas.paste(scaled, (x, y))
     return canvas
 
 
-def mobile_from_desktop(desk: Image.Image) -> Image.Image:
-    w, h = desk.size
-    crop_w = int(h * (MOBILE[0] / MOBILE[1]))
-    crop_w = min(crop_w, w)
-    x0 = (w - crop_w) // 2
-    crop = desk.crop((x0, 0, x0 + crop_w, h))
-    return crop.resize(MOBILE, Image.Resampling.LANCZOS)
+def fit_desktop(raw: Image.Image) -> Image.Image:
+    return fit_band(raw, DESKTOP[0], DESKTOP[1])
+
+
+def fit_mobile(raw: Image.Image) -> Image.Image:
+    return fit_band(raw, MOBILE[0], MOBILE[1])
 
 
 def main() -> None:
@@ -91,7 +90,7 @@ def main() -> None:
             raise SystemExit(f"missing raw for {slug} in {RAW}")
         raw = Image.open(src).convert("RGB")
         desk = apply_cream_fades(fit_desktop(raw))
-        mob = apply_cream_fades(mobile_from_desktop(desk))
+        mob = apply_cream_fades(fit_mobile(raw))
         desk.save(OUT / f"{slug}-desktop.jpg", quality=92, optimize=True)
         mob.save(OUT / f"{slug}-mobile.jpg", quality=92, optimize=True)
         print(f"{slug}: {desk.size} / {mob.size} <- {src.name}")
