@@ -44,10 +44,12 @@ public class AssistantTabPlaywrightTests
         });
         await page.FillAsync("input[name='email']", email);
         await page.FillAsync("input[name='password']", password);
-        await page.ClickAsync("button.login-submit");
-        await page.WaitForURLAsync(
-            url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 60_000 });
+        var submit = page.Locator("button.login-submit, button.au-submit[type=submit]");
+        await Task.WhenAll(
+            page.WaitForURLAsync(
+                url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+                new() { Timeout = 60_000, WaitUntil = WaitUntilState.DOMContentLoaded }),
+            submit.ClickAsync());
 
         await page.GotoAsync(baseUrl + "/candidate/paspoort", new()
         {
