@@ -24,6 +24,14 @@ public class ReconnectToastTests : IDisposable
         "Status.Reconnect.Trying",
         "Status.Reconnect.Failed",
         "Status.Reconnect.Rejected",
+        "Status.Reconnect.SessionExpired",
+        "Status.Reconnect.ReconnectButton",
+        "Status.Reconnect.SignInAgain"
+    ];
+
+    private static readonly string[] CatalogKeys =
+    [
+        ..Keys,
         "Status.Reconnect.Reload"
     ];
 
@@ -100,7 +108,7 @@ public class ReconnectToastTests : IDisposable
     [Fact]
     public void The_toast_keys_exist_in_all_five_languages()
     {
-        foreach (var key in Keys)
+        foreach (var key in CatalogKeys)
         {
             foreach (var language in new[] { "nl", "en", "pl", "ro", "ar" })
             {

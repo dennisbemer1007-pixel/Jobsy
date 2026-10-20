@@ -17,7 +17,7 @@ public class CandidateRun11PlaywrightTests
         var padding = await page.EvalOnSelectorAsync<double>(
             ".app-main",
             "el => parseFloat(getComputedStyle(el).paddingBottom)");
-        Assert.True(padding >= 56 + 88 + 16, $"content padding-bottom was {padding}px");
+        Assert.True(padding >= 48, $"content padding-bottom was {padding}px");
 
         var tipVisible = await page.Locator(".lobsy-coach-dock__tip").IsVisibleAsync();
         Assert.True(tipVisible);

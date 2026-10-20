@@ -1,4 +1,5 @@
 using Jobsy.Core.Features;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Hosting;
@@ -66,6 +67,15 @@ public sealed class ErrorPagesWebFactory : WebWebApplicationFactory
                 ["Seo:NoIndex"] = NoIndex ? "true" : "false",
                 ["Localization:EnabledCultures"] = EnabledCultures ?? "nl,en,pl,ro,ar"
             });
+        });
+
+        builder.ConfigureServices((context, _) =>
+        {
+            var enabled = context.Configuration["Localization:EnabledCultures"];
+            if (!string.IsNullOrWhiteSpace(enabled))
+            {
+                JobsyLanguages.ConfigureEnabledCultures(enabled);
+            }
         });
 
         builder.ConfigureTestServices(services =>

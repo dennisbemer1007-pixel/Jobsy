@@ -45,8 +45,8 @@ public class MascotAssetsGuardTests
         var waving = MascotAssets.Resolve(MascotPose.Waving);
         Assert.True(waving.IsFallback);
         Assert.Equal("pub-mascot--fb-waving", waving.FallbackTransformClass);
-        Assert.Contains("mascot-64.webp", waving.SrcSet, StringComparison.Ordinal);
-        Assert.Contains(BrandImages.MascotVersion, waving.Src, StringComparison.Ordinal);
+        Assert.Contains("lobsy-64.webp", waving.SrcSet, StringComparison.Ordinal);
+        Assert.Contains(BrandImages.Version, waving.Src, StringComparison.Ordinal);
 
         var shell = MascotAssets.Resolve(MascotPose.Shell);
         Assert.True(shell.IsFallback);

@@ -153,7 +153,7 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
-        Assert.Contains("FlowEpoch=\"_step\"", wizard, StringComparison.Ordinal);
+        Assert.Contains("FlowEpoch=\"_miniFlowEpoch\"", wizard, StringComparison.Ordinal);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

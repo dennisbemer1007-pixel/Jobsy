@@ -6,7 +6,8 @@ on:
   push:
     branches:
       - acceptatie
-      # PR #754: cloud-agent pushes do not always emit pull_request synchronize.
+      # Cloud-agent pushes do not always emit pull_request synchronize.
+      - cursor/replace-old-lobster-logo-e-bb18
       - cursor/compact-headers-preview-voornaam-4b3d
 
 concurrency:
@@ -101,6 +102,17 @@ jobs:
           done
           echo "Acceptatie not reachable"
           exit 1
+
+      - name: Paspoort circuit resume (390 mobile, CI stack)
+        if: steps.target.outputs.mode == 'ci-stack'
+        env:
+          JOBSY_PASPOORT_IDLE_MS: "25000"
+        run: |
+          dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
+            --results-directory test-results \
+            --report-trx \
+            --timeout 12m \
+            --filter-class '*MobilePaspoortCircuitResumePlaywrightTests'
 
       - name: Run functional Playwright gate
         env:

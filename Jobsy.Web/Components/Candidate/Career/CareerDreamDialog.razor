@@ -14,7 +14,7 @@
                      CloseOnBackdrop="@(!Busy)"
                      OnClose="OnCancel">
     <div class="career-dialog__lob" aria-hidden="true">
-        <img class="lobsy-coach-art" src="/images/brand/mascot-coach.webp" alt="" width="56" height="56" />
+        <img class="lobsy-coach-art" src="@Jobsy.Web.Media.BrandImages.MarkSvg" srcset="@Jobsy.Web.Media.BrandImages.SrcSet56" sizes="56px" alt="" width="56" height="56" />
     </div>
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))

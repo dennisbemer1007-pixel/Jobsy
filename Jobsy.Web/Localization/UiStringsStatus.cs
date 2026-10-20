@@ -479,11 +479,29 @@ public static class UiStringsStatus
             "Conexiunea s-a pierdut.",
             "انقطع الاتصال.");
         Add("Status.Reconnect.Rejected",
+            "De verbinding kon niet worden hersteld.",
+            "The connection could not be restored.",
+            "Nie udało się przywrócić połączenia.",
+            "Conexiunea nu a putut fi restabilită.",
+            "تعذّر استعادة الاتصال.");
+        Add("Status.Reconnect.SessionExpired",
             "Je sessie is verlopen.",
             "Your session has expired.",
             "Twoja sesja wygasła.",
             "Sesiunea ta a expirat.",
             "انتهت صلاحية جلستك.");
+        Add("Status.Reconnect.ReconnectButton",
+            "Opnieuw verbinden",
+            "Reconnect",
+            "Połącz ponownie",
+            "Reconectează",
+            "إعادة الاتصال");
+        Add("Status.Reconnect.SignInAgain",
+            "Opnieuw inloggen",
+            "Sign in again",
+            "Zaloguj się ponownie",
+            "Autentifică-te din nou",
+            "سجّل الدخول مرة أخرى");
         Add("Status.Reconnect.Reload",
             "Opnieuw laden",
             "Reload",

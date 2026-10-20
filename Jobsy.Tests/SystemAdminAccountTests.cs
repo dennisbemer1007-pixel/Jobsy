@@ -216,6 +216,7 @@ public class SystemAdminAccountTests
             new MfaChallengeService(new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings { RequireTwoFactor = requireTwoFactor },
             notifier,

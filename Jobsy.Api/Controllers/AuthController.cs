@@ -39,6 +39,7 @@ public class AuthController : ControllerBase
     private readonly MfaChallengeService _mfaChallenges;
     private readonly IPlatformFeatureService _features;
     private readonly UnknownAccountLockoutTracker _unknownLockouts;
+    private readonly AccountLockoutPolicy _lockoutPolicy;
     private readonly ITestAccountsRuntime _testAccounts;
     private readonly ISystemAdminSettings _systemAdmin;
     private readonly SystemAdminLoginNotifier _systemAdminLoginNotifier;
@@ -56,6 +57,7 @@ public class AuthController : ControllerBase
         MfaChallengeService mfaChallenges,
         IPlatformFeatureService features,
         UnknownAccountLockoutTracker unknownLockouts,
+        AccountLockoutPolicy lockoutPolicy,
         ITestAccountsRuntime testAccounts,
         ISystemAdminSettings systemAdmin,
         SystemAdminLoginNotifier systemAdminLoginNotifier,
@@ -72,6 +74,7 @@ public class AuthController : ControllerBase
         _mfaChallenges = mfaChallenges;
         _features = features;
         _unknownLockouts = unknownLockouts;
+        _lockoutPolicy = lockoutPolicy;
         _testAccounts = testAccounts;
         _systemAdmin = systemAdmin;
         _systemAdminLoginNotifier = systemAdminLoginNotifier;
@@ -176,7 +179,7 @@ public class AuthController : ControllerBase
         if (!JobsyPasswordHasher.Verify(request.Password, credential.PasswordHash))
         {
             credential.FailedLoginCount++;
-            if (credential.FailedLoginCount >= LoginLockoutRules.FailedAttemptsBeforeLockout)
+            if (credential.FailedLoginCount >= _lockoutPolicy.FailedAttemptsBeforeLockout)
             {
                 credential.LockoutCount++;
                 credential.LastLockoutAtUtc = now;

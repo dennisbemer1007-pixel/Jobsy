@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "eb1a03047524183b9625dbcbff0bf604d96b6747468e06806e98c5d9450997c7",
+    "sha256": "506c098240ef1827c4bb42e010239c98a88cc82dfb2be4e84687d4444fb88c18",
     "v": "20261019-13"
   },
   "css/critical.css": {
@@ -48,16 +48,16 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "5f9c983a876ac9d1d75e08c3344c87479aa24f9942ce5ecb187ed6e6e741d00b",
-    "v": "20261019-68"
+    "sha256": "62ef50acd8000eede3e3b7e71e0ba3604b2dec3da999893724dcb7e87de94fcd",
+    "v": "20261020-r8"
   },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
   "css/features/candidate-illustrated-decorative-layers.css": {
-    "sha256": "43ca69ac848dfe48455ebdd47906dc848c5099bb46dd5962f45d93ec2a8ba92e",
-    "v": "20261019-03"
+    "sha256": "900dc5e9bf425f86dfdb9012f4f7e9ced2baba54475bfabad71ee4adda830ce5",
+    "v": "20261020-01"
   },
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
@@ -112,7 +112,7 @@
     "v": "20261004-10"
   },
   "css/features/kb-external-vacancy.css": {
-    "sha256": "9f3e4fcee659c120f0fca535027c64e20a790a4fcc3dfcea6b87319239d338c6",
+    "sha256": "7831996af5de14d7471ee4653c5410bf1704822dbf2d9a878c3c8b683391ce36",
     "v": "20261011-03"
   },
   "css/features/landing.css": {
@@ -128,12 +128,12 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "8153c2bf25b54c1805ca10eb48a627bc18b72bcb1e7a5f4de54a2eb3228c3307",
+    "sha256": "e9155e2d15ff59183fcfe6044e5d6413b1c3c8341b7e4dd8ef34727fdae41414",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
-    "sha256": "93ff7cc1d7ffc9d915dff67d6eae227e846a21eb3c155a43295b0665cafd6d90",
-    "v": "20261019-12"
+    "sha256": "aa3b50de268dd2e856a1caa7e32066130b4eec4b959d9e3ae00ea8bc7d4f05f1",
+    "v": "20261020-01"
   },
   "css/features/nav-feedback.css": {
     "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",
@@ -164,7 +164,7 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "fea8a83ed549d468dcfb5e5df787c469cd09aa1762b53c49ed3caa3dd8fd5e9d",
+    "sha256": "6dd4532d9c4978fdbd3e09890bf94cfd09d2b50b3c1d03740f2dda204265dca0",
     "v": "20261019-r25"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -204,7 +204,7 @@
     "v": "20261004-10"
   },
   "css/features/reconnect.css": {
-    "sha256": "2cb9fa41cad047d76ad7702f97e7b8f1f49cb938437abd55b2c9b8c4a4ef0ac1",
+    "sha256": "b22d8098dfcf18ea60729ee8097fe243aad5502f73619d53fc76b2e484adae98",
     "v": "20261015-02"
   },
   "css/features/sales.css": {
@@ -228,8 +228,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "a6ceea6a1b9e8bf61433175b0556e9d536c439d388f122e1ee336c6a6b64730b",
-    "v": "20261018-04"
+    "sha256": "4a14c2a587ec9d49f1561e8e2f778afe12870783e328cd50c463e2e90ea79fb6",
+    "v": "20261020-r8"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",
@@ -264,8 +264,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "a38c05d56184040ea1efe57c857a0f82c59aa6dc53a237a582ff088b68a8a2a9",
-    "v": "20261019-02"
+    "sha256": "6c31fb8ab5e36efac83971d63f001868cd60809b70e9c9ec8e49e65449d0c236",
+    "v": "20261020-01"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -276,7 +276,7 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "c55af54b6bdd40dd5e677a90aa334e4338a567e355fad730b0a716f7a327b8d2",
+    "sha256": "fda947426087584f5177e2f09de69848a46c586dfb7f3b3f7d3c373fd0cc7307",
     "v": "20261017-01"
   },
   "js/discoveryHover.js": {
@@ -348,11 +348,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "4a76aa58a4a04f88f2e5345f62fc34f8abcf1ab29bdcbcbf4b8e65c885cbf2ed",
+    "sha256": "15f3851f338c539c341db65dd4efb4e6f61dd13e4e045646c31b5621c66eae04",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "be98bebfcf6bcb90d0738cf9f042175e8f6ae4bb6b8704f1acaaf398d603ba95",
+    "sha256": "d909d018299a317fabdcf1da94af1e120fa1ebc35aa944ccaf3627ad26343572",
     "v": "20261016-06"
   }
 }

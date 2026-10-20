@@ -58,7 +58,7 @@ internal static class OnboardingMiniBlockCompletion
             }
         }
 
-        return 0;
+        return Math.Max(0, miniIds.Length - 1);
     }
 
     public static Dictionary<int, int> ScopeToMiniIds(

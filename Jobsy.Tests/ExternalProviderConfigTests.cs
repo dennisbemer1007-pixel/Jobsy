@@ -1,5 +1,6 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Api.Controllers;
+using Jobsy.Api.Security;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -90,6 +91,7 @@ public class ExternalProviderConfigTests
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),

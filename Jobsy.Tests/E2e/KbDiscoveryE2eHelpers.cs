@@ -17,6 +17,21 @@ internal static class KbDiscoveryE2eHelpers
             new() { Timeout = 90_000 });
 
         await DismissStartPromptIfPresentAsync(page);
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const shell = document.querySelector('.app-shell');
+              if (!shell) return false;
+              if (shell.classList.contains('app-shell--candidate')
+                  || shell.classList.contains('app-shell--banenkaart-shell')) {
+                return true;
+              }
+              const toggle = document.querySelector('.app-header .language-selector__toggle');
+              return !!toggle && toggle.checkVisibility();
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
     }
 

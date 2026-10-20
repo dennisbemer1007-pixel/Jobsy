@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
 @using System.Globalization
 @using Jobsy.Web.Components.Candidate.Dna
+@using Jobsy.Web.Media
 
 <svg class="passport-dna-ring @CssClass"
      viewBox="0 0 120 120"
@@ -36,7 +37,7 @@
             stroke="var(--gold-light)"
             stroke-width="1.5"
             stroke-dasharray="3 3" />
-    <image href="/images/brand/mascot-128.webp"
+    <image href="@("/" + BrandImages.Webp128)"
            x="36" y="36" width="48" height="48"
            preserveAspectRatio="xMidYMid meet" />
 </svg>

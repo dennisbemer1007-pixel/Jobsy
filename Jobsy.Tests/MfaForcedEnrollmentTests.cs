@@ -475,6 +475,7 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
             challenges,
             new StubFeatures(authenticatorEnabled: true),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),
