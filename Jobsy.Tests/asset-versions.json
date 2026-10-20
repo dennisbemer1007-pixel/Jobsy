@@ -48,16 +48,16 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "5f9c983a876ac9d1d75e08c3344c87479aa24f9942ce5ecb187ed6e6e741d00b",
-    "v": "20261019-68"
+    "sha256": "62ef50acd8000eede3e3b7e71e0ba3604b2dec3da999893724dcb7e87de94fcd",
+    "v": "20261020-r8"
   },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
   "css/features/candidate-illustrated-decorative-layers.css": {
-    "sha256": "43ca69ac848dfe48455ebdd47906dc848c5099bb46dd5962f45d93ec2a8ba92e",
-    "v": "20261019-03"
+    "sha256": "900dc5e9bf425f86dfdb9012f4f7e9ced2baba54475bfabad71ee4adda830ce5",
+    "v": "20261020-01"
   },
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
@@ -228,8 +228,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "a6ceea6a1b9e8bf61433175b0556e9d536c439d388f122e1ee336c6a6b64730b",
-    "v": "20261018-04"
+    "sha256": "4a14c2a587ec9d49f1561e8e2f778afe12870783e328cd50c463e2e90ea79fb6",
+    "v": "20261020-r8"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",

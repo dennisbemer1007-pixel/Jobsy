@@ -73,6 +73,78 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
     [Theory]
     [MemberData(nameof(ViewportCases))]
+    public async Task Wizard_controls_hit_test_after_illustration_loads_on_step_transitions(int width, int height, bool mobile, string tag)
+    {
+        var (run, baseUrl) = await TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(180_000);
+
+        await FunctionalOnboardingInteractivityHelpers.BeginKennismakenStepAsync(page, baseUrl);
+        await FunctionalOnboardingInteractivityHelpers.FillKennismakenBasicsExceptWorkStatusAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
+
+        for (var step = 1; step <= 5; step++)
+        {
+            await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, step);
+            await FunctionalOnboardingInteractivityHelpers.AssertOnboardingStepInteractiveAsync(page, step);
+            if (step == 1)
+            {
+                await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
+                await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                continue;
+            }
+
+            if (step == 2)
+            {
+                await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
+            }
+
+            await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
+            if (step < 5)
+            {
+                await page.Locator($"[data-testid=onboarding-step-{step + 1}-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(DesktopViewportCases))]
+    public async Task Wizard_steps_1_through_10_stay_interactive_after_each_next(int width, int height, bool mobile, string tag)
+    {
+        var (run, baseUrl) = await TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(180_000);
+
+        await FunctionalOnboardingInteractivityHelpers.WalkWizardSteps1Through10WithNextAsync(page, baseUrl);
+        await FunctionalE2eArtifacts.CaptureAsync(page, "wizard-steps-1-10-transitions", tag);
+    }
+
+    [Theory]
+    [MemberData(nameof(ViewportCases))]
     public async Task Wizard_chips_on_steps_1_3_toggle_within_300ms(int width, int height, bool mobile, string tag)
     {
         var (run, baseUrl) = await TryBeginAsync();
@@ -210,6 +282,9 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
     public static IEnumerable<object[]> ViewportCases()
         => Viewports.Select(v => new object[] { v.Width, v.Height, v.Mobile, v.Tag });
+
+    public static IEnumerable<object[]> DesktopViewportCases()
+        => Viewports.Where(v => !v.Mobile).Select(v => new object[] { v.Width, v.Height, v.Mobile, v.Tag });
 
     private static BrowserNewContextOptions CreateContextOptions(string baseUrl, int width, int height, bool mobile)
         => new()

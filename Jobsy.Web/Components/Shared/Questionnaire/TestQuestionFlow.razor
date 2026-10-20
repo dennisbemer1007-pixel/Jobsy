@@ -288,23 +288,23 @@
                 {
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
                 }
-
             }
             catch
             {
                 // bUnit / no JS
             }
+
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.syncStickyFooters");
+            }
+            catch
+            {
+                // bUnit / disconnected circuit
+            }
         }
 
         _focusRequest = false;
-        try
-        {
-            await Js.InvokeVoidAsync("jobsyCoachDock.syncStickyFooters");
-        }
-        catch
-        {
-            // bUnit
-        }
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

@@ -47,6 +47,7 @@ else
                       Questions="_flowQuestions"
                       Answers="Answers"
                       StartAt="CurrentQuestion"
+                      ExternalIndex="CurrentQuestion"
                       Target="Depth"
                       Compact="true"
                       QuestionTitle="@(JourneyShell ? (string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey]) : null)"

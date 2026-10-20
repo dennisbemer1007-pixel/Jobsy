@@ -89,6 +89,29 @@
   pointer-events: none;
 }
 
+.cand-compact-hero__art,
+.cand-compact-hero__art *,
+.cand-hero__compact-c-art,
+.cand-hero__compact-c-art *,
+.test-block-stage__mobile-hero--band,
+.test-block-stage__mobile-hero--compact,
+.test-block-stage__mobile-hero__figure,
+.test-block-stage__mobile-hero__figure *,
+.test-block-stage__mobile-hero__fade,
+.test-block-stage__scene-band {
+  pointer-events: none;
+}
+
+/* Compact hero band: inert shell; copy (and its controls) stay clickable. */
+header.cand-compact-hero.cand-hero--compact-preview-c {
+  pointer-events: none;
+}
+
+header.cand-compact-hero.cand-hero--compact-preview-c .cand-compact-hero__copy,
+header.cand-compact-hero.cand-hero--compact-preview-c .cand-compact-hero__copy * {
+  pointer-events: auto;
+}
+
 /* §content — raise interactive copy/forms above full-bleed art */
 .cand-hero__copy,
 .ob-illustrated-step__body,
@@ -105,8 +128,21 @@
 .panel-page--cand-ill .panel-page__body,
 .panel-page--cand-ill main,
 .kb-apps--illustrated .kb-apps__toolbar,
-.jobsy-discovery .filter-bar {
+.jobsy-discovery .filter-bar,
+.test-block-stage__content,
+.test-block-stage__content .test-shell__main,
+.test-block-stage__content .test-shell__card,
+.test-block-stage__content .test-flow,
+.ob-illustrated-step--compact-preview-c .cand-compact-hero--onboarding .cand-compact-hero__copy {
   position: relative;
   z-index: 1;
   isolation: isolate;
+}
+
+.ob-illustrated-step--compact-preview-c > header.cand-compact-hero--onboarding {
+  pointer-events: none;
+}
+
+.ob-illustrated-step--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__copy {
+  pointer-events: auto;
 }

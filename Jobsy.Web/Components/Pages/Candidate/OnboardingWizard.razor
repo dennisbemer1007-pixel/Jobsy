@@ -22,6 +22,7 @@
 @inject UserFacingError UserFacing
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Features
 @using Jobsy.Web.Media
 @using Jobsy.Web.Onboarding
@@ -489,7 +490,7 @@
 
                         case >= 7 and <= 10:
                             <OnboardingMiniTest Step="_step"
-                                                FlowEpoch="_step"
+                                                FlowEpoch="_miniFlowEpoch"
                                                 CurrentQuestion="_currentQuestion"
                                                 TestTabs="MiniTestTabs"
                                                 Questions="_miniQuestions"
@@ -640,6 +641,9 @@
         _nearbySignal?.Examples.Select(example => example.Title).ToList() ?? [];
 
     private int _currentQuestion;
+    private int _miniFlowEpoch;
+    private int _preparedMiniStep;
+    private int _stepTransitionGeneration;
     private string _installMessage = "";
     private string? _error;
     private WizardPhase _phase;
@@ -1069,8 +1073,8 @@
             Api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
             await RefreshJourneyCompletionAsync();
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
+            await DeferredTryAutoAdvanceAsync();
         }
         catch (Exception ex)
         {
@@ -1100,7 +1104,7 @@
         }
 
         if (_step <= 1) return;
-        await FlushAsync();
+        await FlushBeforeLeavingStepAsync();
         ClearStepValidation();
         _miniArrivedViaBack = true;
         _step--;
@@ -1157,8 +1161,8 @@
                 _step++;
                 _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
                 await PrepareMiniAsync();
-                await TryAutoAdvanceEmptyMiniStepAsync();
                 RequestStepScrollReset();
+                await DeferredTryAutoAdvanceAsync();
                 return;
             }
 
@@ -1167,9 +1171,7 @@
                 await AcceptConsentAsync();
                 return;
             }
-            if (_step <= 5) await FlushAsync();
-            if (_step == 6) await SaveDreamAsync();
-            if (_step >= 7 && _autosave is not null) await _autosave.FlushAsync();
+            await FlushBeforeLeavingStepAsync();
             if (_step == 10)
             {
                 if (!await TryRouteToFirstIncompleteMiniBlockAsync())
@@ -1192,9 +1194,10 @@
             ClearMiniAnswersBeforeStepChange();
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
+            Interlocked.Increment(ref _stepTransitionGeneration);
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
+            await Task.Yield();
         }
         catch (Exception ex)
         {
@@ -1205,19 +1208,24 @@
         {
             _busy = false;
         }
+
+        if (!fromMiniTestFinish)
+        {
+            await DeferredTryAutoAdvanceAsync();
+        }
     }
 
     private async Task SkipOptionalAsync()
     {
-        await FlushAsync();
+        await FlushBeforeLeavingStepAsync();
         ClearStepValidation();
         _miniArrivedViaBack = false;
         ClearMiniAnswersBeforeStepChange();
         _step++;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
-        await TryAutoAdvanceEmptyMiniStepAsync();
         RequestStepScrollReset();
+        await DeferredTryAutoAdvanceAsync();
     }
 
     private async Task LaterAsync()
@@ -1550,18 +1558,24 @@
 
     private async Task PrepareMiniAsync()
     {
-        if (_autosave is not null)
-        {
-            await _autosave.DisposeAsync();
-            _autosave = null;
-        }
+        await DisposeMiniAutosaveAsync();
         _miniAnswers.Clear();
         _serverAnswers.Clear();
         _lockedIds.Clear();
         _miniBlockQuestionIds = [];
         _miniQuestions = [];
         _currentQuestion = 0;
-        if (_step is < 7 or > 10 || !Draft.HasConsent) return;
+        if (_step is < 7 or > 10 || !Draft.HasConsent)
+        {
+            _preparedMiniStep = 0;
+            return;
+        }
+
+        if (_preparedMiniStep != _step)
+        {
+            _miniFlowEpoch++;
+            _preparedMiniStep = _step;
+        }
 
         Dictionary<string, int>? answers;
         IEnumerable<(int Id, string Key)> catalog;
@@ -1665,6 +1679,96 @@
         }, onChanged: null, debounceMs: QuestionnaireAutosave.DefaultDebounceMs);
     }
 
+    private async Task DisposeMiniAutosaveAsync()
+    {
+        if (_autosave is null)
+        {
+            return;
+        }
+
+        var autosave = _autosave;
+        _autosave = null;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(12));
+            await autosave.FlushAsync(timeout.Token);
+        }
+        catch
+        {
+            // Best effort; step transition must not hang the circuit.
+        }
+
+        try
+        {
+            await autosave.DisposeAsync();
+        }
+        catch
+        {
+        }
+    }
+
+    private Task DeferredTryAutoAdvanceAsync()
+    {
+        var generation = Volatile.Read(ref _stepTransitionGeneration);
+        return InvokeAsync(async () =>
+        {
+            if (generation != Volatile.Read(ref _stepTransitionGeneration))
+            {
+                return;
+            }
+
+            try
+            {
+                await TryAutoAdvanceEmptyMiniStepAsync();
+            }
+            catch (Exception ex)
+            {
+                _error = UserFacing.Describe(ex);
+                _saveError = true;
+                await SafeStateHasChangedAsync();
+            }
+        });
+    }
+
+    private async Task FlushBeforeLeavingStepAsync()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        var token = timeout.Token;
+        var pending = new List<Task>();
+        if (_step <= 6 && _profileAutosave is not null)
+        {
+            pending.Add(_profileAutosave.FlushAsync(token));
+        }
+
+        if (_step == 6)
+        {
+            pending.Add(SaveDreamAsync());
+        }
+
+        if (_step >= 7 && _autosave is not null)
+        {
+            pending.Add(_autosave.FlushAsync(token));
+        }
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await Task.WhenAll(pending);
+        }
+        catch (OperationCanceledException)
+        {
+            // Proceed with navigation; autosave will retry on next edit or dispose flush.
+        }
+        catch
+        {
+            _saveError = true;
+        }
+    }
+
     private async Task TryAutoAdvanceEmptyMiniStepAsync()
     {
         if (_miniArrivedViaBack || _welcome || _finish)
@@ -1720,8 +1824,8 @@
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
+            await DeferredTryAutoAdvanceAsync();
         }
         catch (Exception ex)
         {
@@ -1885,8 +1989,10 @@
         Draft.HasConsent = profile?.TestAiConsentAt is not null;
         if (Draft.HasConsent)
         {
+            Interlocked.Increment(ref _stepTransitionGeneration);
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
+            RequestStepScrollReset();
+            await DeferredTryAutoAdvanceAsync();
         }
         else _error = Culture["Onboarding.Consent.Failed"];
     }
@@ -1907,10 +2013,10 @@
                 {
                     await RefreshJourneyCompletionAsync();
                     await PrepareMiniAsync();
-                    await TryAutoAdvanceEmptyMiniStepAsync();
+                    await DeferredTryAutoAdvanceAsync();
                 }
 
-                StateHasChanged();
+                await SafeStateHasChangedAsync();
             });
         }
         catch

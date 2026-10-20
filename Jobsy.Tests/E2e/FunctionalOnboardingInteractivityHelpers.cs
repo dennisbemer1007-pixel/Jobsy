@@ -254,6 +254,256 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await FillBirthDateAsync(page);
     }
 
+    internal static async Task InstallReloadCounterAsync(IPage page)
+    {
+        await page.AddInitScriptAsync(
+            """
+            () => {
+              if (window.__lobsyNavCountInstalled) return;
+              window.__lobsyNavCountInstalled = true;
+              window.__lobsyNavCount = 0;
+              window.addEventListener('load', () => { window.__lobsyNavCount = (window.__lobsyNavCount || 0) + 1; });
+            }
+            """);
+    }
+
+    internal static async Task AssertNoUnpromptedReloadAsync(IPage page, string label)
+    {
+        var navCount = await page.EvaluateAsync<int>("() => window.__lobsyNavCount || 0");
+        Assert.True(navCount == 0, $"{label}: expected no full document reload (load count={navCount}).");
+    }
+
+    internal static async Task WaitForStepIllustrationLoadedAsync(IPage page, int step)
+    {
+        if (step is >= 1 and <= 6)
+        {
+            var mobile = (page.ViewportSize?.Width ?? 1440) < 768;
+            var selector = mobile
+                ? "[data-testid=onboarding-mobile-hero-img]"
+                : "[data-testid=onboarding-illustration-img]";
+            await page.Locator(selector).First.WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 90_000,
+            });
+            await page.WaitForFunctionAsync(
+                """
+                ({ selector }) => {
+                  const img = document.querySelector(selector);
+                  if (!(img instanceof HTMLImageElement)) return false;
+                  return img.complete && img.naturalWidth > 0;
+                }
+                """,
+                new { selector },
+                new() { Timeout = 60_000 });
+            return;
+        }
+
+        if (step is >= 7 and <= 10)
+        {
+            var mobileHero = page.Locator(".test-block-stage__mobile-hero--band, .test-block-stage__mobile-hero--compact").First;
+            if (await mobileHero.CountAsync() > 0 && await mobileHero.IsVisibleAsync())
+            {
+                await page.WaitForFunctionAsync(
+                    """
+                    () => {
+                      const band = document.querySelector('.test-block-stage__mobile-hero--band, .test-block-stage__mobile-hero--compact');
+                      if (!band) return false;
+                      const img = band.querySelector('img');
+                      if (img instanceof HTMLImageElement) {
+                        return img.complete && img.naturalWidth > 0;
+                      }
+                      const bg = getComputedStyle(band).backgroundImage;
+                      return bg && bg !== 'none';
+                    }
+                    """,
+                    null,
+                    new() { Timeout = 60_000 });
+                return;
+            }
+
+            var compactArt = page.Locator("[data-testid=test-block-stage] [data-testid=onboarding-illustration-img]").First;
+            if (await compactArt.CountAsync() > 0)
+            {
+                await page.WaitForFunctionAsync(
+                    """
+                    () => {
+                      const img = document.querySelector('[data-testid=test-block-stage] [data-testid=onboarding-illustration-img]');
+                      return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+                    }
+                    """,
+                    null,
+                    new() { Timeout = 60_000 });
+            }
+        }
+    }
+
+    internal static async Task AssertOnboardingStepInteractiveAsync(IPage page, int step)
+    {
+        await WaitForCircuitReadyAsync(page);
+        await WaitForStepIllustrationLoadedAsync(page, step);
+        await AssertNoUnpromptedReloadAsync(page, $"step-{step}");
+
+        var reconnect = page.Locator("#components-reconnect-modal.components-reconnect-show, #components-reconnect-modal.components-reconnect-failed");
+        Assert.Equal(0, await reconnect.CountAsync());
+
+        if (step is >= 7 and <= 10)
+        {
+            if (await page.Locator(".test-likert").CountAsync() > 0)
+            {
+                var likert = page.Locator(".test-likert__opt").First;
+                await likert.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+                await AssertHitTargetAsync(page, likert, $"step-{step}-likert");
+                return;
+            }
+
+            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
+            {
+                var consent = page.Locator(".ob-wizard__consent input[type=checkbox]").First;
+                await AssertHitTargetAsync(page, consent, $"step-{step}-consent");
+                return;
+            }
+        }
+
+        if (step == 2)
+        {
+            var preset = page.Locator(".ob-wizard__presets .lobsy-choice-tile").First;
+            await AssertHitTargetAsync(page, preset, "step-2-preset");
+            return;
+        }
+
+        if (step == 3)
+        {
+            var transport = page.Locator("#onboarding-field-transport .lobsy-choice-tile").First;
+            await AssertHitTargetAsync(page, transport, "step-3-transport");
+            return;
+        }
+
+        var next = page.GetByTestId("onboarding-next");
+        if (await next.CountAsync() > 0)
+        {
+            await AssertHitTargetAsync(page, next, $"step-{step}-volgende");
+        }
+    }
+
+    internal static async Task ClickWizardNextWhenVisibleAsync(IPage page)
+    {
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        var next = page.GetByTestId("onboarding-next");
+        if (await next.CountAsync() > 0 && await next.IsVisibleAsync())
+        {
+            await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await page.WaitForTimeoutAsync(400);
+            return;
+        }
+
+        var flowNext = page.Locator("button.test-flow__next:not([disabled])").First;
+        if (await flowNext.CountAsync() > 0)
+        {
+            await flowNext.ClickAsync(new() { Force = true, Timeout = 15_000 });
+            await page.WaitForTimeoutAsync(400);
+        }
+    }
+
+    internal static async Task AcceptTestConsentIfPresentAsync(IPage page)
+    {
+        var box = page.Locator(".ob-wizard__consent input[type=checkbox], .ob-wizard__card input[type=checkbox]").First;
+        if (await box.CountAsync() == 0)
+        {
+            return;
+        }
+
+        await box.CheckAsync(new() { Force = true });
+        await ClickWizardNextWhenVisibleAsync(page);
+        await page.WaitForTimeoutAsync(600);
+    }
+
+    internal static async Task AdvanceThroughMiniBlockIfPresentAsync(IPage page, int maxAnswers = 16)
+    {
+        for (var i = 0; i < maxAnswers && await page.Locator(".test-likert").CountAsync() > 0; i++)
+        {
+            await page.Locator(".test-likert__opt").Nth(2).ClickAsync(new() { Force = true, Timeout = 15_000 });
+            await page.WaitForTimeoutAsync(350);
+            await ClickWizardNextWhenVisibleAsync(page);
+            await WaitForCircuitReadyAsync(page);
+        }
+    }
+
+    internal static async Task WalkWizardSteps1Through10WithNextAsync(IPage page, string baseUrl)
+    {
+        await InstallReloadCounterAsync(page);
+        await RegisterFreshCandidateAsync(page, baseUrl, "func-steps-1-10");
+        await BeginKennismakenStepAsync(page, baseUrl);
+        await page.EvaluateAsync("() => { window.__lobsyNavCount = 0; }");
+
+        await FillKennismakenBasicsExceptWorkStatusAsync(page);
+        await SelectAnyWorkStatusChipAsync(page);
+
+        for (var step = 1; step <= 10; step++)
+        {
+            await AssertOnboardingStepInteractiveAsync(page, step);
+
+            switch (step)
+            {
+                case 1:
+                    await ClickWizardNextWhenVisibleAsync(page);
+                    await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                    await WaitForStepIllustrationLoadedAsync(page, 2);
+                    break;
+                case 2:
+                    await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
+                    await ClickWizardNextWhenVisibleAsync(page);
+                    await page.Locator("[data-testid=onboarding-step-3-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                    await WaitForStepIllustrationLoadedAsync(page, 3);
+                    break;
+                case 3:
+                    await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
+                    await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
+                    await ClickWizardNextWhenVisibleAsync(page);
+                    await page.WaitForTimeoutAsync(500);
+                    break;
+                case 4:
+                case 5:
+                    await ClickWizardNextWhenVisibleAsync(page);
+                    await page.WaitForTimeoutAsync(500);
+                    break;
+                case 6:
+                    var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Weet ik nog niet", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
+                    if (await unknown.CountAsync() > 0)
+                    {
+                        await unknown.First.ClickAsync(new() { Force = true });
+                    }
+                    else
+                    {
+                        await ClickWizardNextWhenVisibleAsync(page);
+                    }
+
+                    await page.WaitForTimeoutAsync(600);
+                    break;
+                case 7:
+                    await AcceptTestConsentIfPresentAsync(page);
+                    await AdvanceThroughMiniBlockIfPresentAsync(page);
+                    await ClickWizardNextWhenVisibleAsync(page);
+                    await page.WaitForTimeoutAsync(600);
+                    break;
+                default:
+                    await AdvanceThroughMiniBlockIfPresentAsync(page);
+                    await ClickWizardNextWhenVisibleAsync(page);
+                    await page.WaitForTimeoutAsync(600);
+                    break;
+            }
+
+            await WaitForCircuitReadyAsync(page);
+        }
+
+        await AssertNoUnpromptedReloadAsync(page, "after-step-10");
+        Assert.True(
+            await page.Locator(".test-likert").CountAsync() > 0
+            || await page.Locator(".ob-wizard__finish").CountAsync() > 0
+            || page.Url.Contains("/candidate/start", StringComparison.OrdinalIgnoreCase),
+            "Expected to reach test flow or finish after step 10 walk.");
+    }
+
     internal static async Task AssertRapidWizardChipInteractionsSteps1To3Async(IPage page, string baseUrl)
     {
         await BeginKennismakenStepAsync(page, baseUrl);
