@@ -174,9 +174,22 @@
   color: var(--text);
 }
 
+.ob-rustig__meta {
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+}
+
+.ob-rustig__meta > span:first-child {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ob-rustig__saved {
   color: var(--success, #2d6a4f);
   font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .ob-rustig__hero-band {
@@ -498,6 +511,16 @@
 .ob-rustig__canvas {
   inline-size: 100%;
   max-inline-size: min(52rem, 100%);
+  background: transparent;
+}
+
+/* Cream canvas: no legacy white wizard card inside rustig shells. */
+.ob-wizard--rustig .ob-rustig__canvas .ob-wizard__card {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .ob-rustig__canvas--split {
@@ -585,7 +608,7 @@
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: normal;
-  hyphens: auto;
+  hyphens: none;
 }
 
 .ob-rustig .work-status-chip.lobsy-choice-tile.is-selected {
@@ -595,9 +618,102 @@
   font-weight: 600;
 }
 
+.ob-wizard--rustig .work-status-field .ob-wizard__section-hint {
+  display: none;
+}
+
+.ob-wizard--rustig .work-status-chip .lobsy-choice-tile__icon {
+  display: none;
+}
+
+.ob-wizard--rustig .work-status-chips.lobsy-choice-grid {
+  gap: 0.45rem;
+}
+
+.ob-wizard--rustig .work-status-chip.lobsy-choice-tile {
+  min-block-size: 42px;
+  block-size: auto;
+  padding-block: 0.35rem;
+  padding-inline: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.ob-wizard--rustig .work-status-chip .lobsy-choice-tile__label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
 @media (max-width: 1023px) {
   .ob-rustig .work-status-chips.lobsy-choice-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ob-rustig .work-status-chip.lobsy-choice-tile,
+  .ob-wizard--rustig .work-status-chip.lobsy-choice-tile {
+    justify-content: space-between;
+    padding-inline-end: 2.25rem;
+    position: relative;
+    text-align: start;
+  }
+
+  .ob-rustig .work-status-chip.lobsy-choice-tile.is-selected::after,
+  .ob-wizard--rustig .work-status-chip.lobsy-choice-tile.is-selected::after {
+    content: "✓";
+    position: absolute;
+    inset-inline-end: 0.75rem;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .ob-rustig .work-status-chip .lobsy-choice-tile__check,
+  .ob-wizard--rustig .work-status-chip .lobsy-choice-tile__check {
+    display: none;
+  }
+
+  .ob-rustig__tile {
+    justify-content: space-between;
+    padding-inline-end: 2.25rem;
+    position: relative;
+  }
+
+  .ob-rustig__tile.is-on::after {
+    content: "✓";
+    position: absolute;
+    inset-inline-end: 0.75rem;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .ob-rustig__dream-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ob-rustig__dream {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    text-align: start;
+    min-block-size: 42px;
+    padding-block: 0.35rem;
+    padding-inline: 0.65rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    touch-action: manipulation;
+  }
+
+  .ob-rustig__dream.is-on::after {
+    content: "✓";
+    flex-shrink: 0;
+    margin-inline-start: 0.5rem;
+    font-weight: 700;
+    color: var(--brand);
   }
 }
 
@@ -1194,6 +1310,10 @@
   font-size: 0.8125rem;
   font-weight: 600;
   text-align: center;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  line-height: 1.25;
 }
 
 .ob-rustig__dream.is-on {
@@ -1549,6 +1669,122 @@
   }
 }
 
+/* #768 layout: full-width shell (no legacy 560px column), visible progress, single scroll. */
+.ob-wizard--rustig:has(.ob-rustig) {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin: 0;
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-wizard__welcome {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig {
+  inline-size: 100%;
+  min-block-size: min(100dvh, 100%);
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__layout {
+  inline-size: 100%;
+  min-block-size: min(100dvh, 100%);
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments {
+  min-inline-size: 0;
+  flex: 1 1 12rem;
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments span {
+  block-size: 5px;
+  background: color-mix(in srgb, var(--brand) 22%, var(--border));
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments i {
+  min-inline-size: 2px;
+}
+
+.ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__page-head {
+  max-inline-size: none;
+}
+
+.ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__page-head h1 {
+  font-size: clamp(1.65rem, 2.05vw, 2.125rem);
+  line-height: 1.08;
+  max-inline-size: 52rem;
+}
+
+.ob-wizard--rustig button.ob-rustig__dream,
+.ob-wizard--rustig button.ob-rustig__btn {
+  cursor: pointer;
+}
+
+.ob-rustig__field--dream input {
+  inline-size: 100%;
+  min-block-size: 42px;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
+  background: var(--surface);
+  font: inherit;
+}
+
+.ob-rustig__field--dream .error {
+  margin-block-start: 0.35rem;
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-hero {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame {
+    block-size: clamp(200px, 56vw, 240px);
+    max-block-size: 240px;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame img {
+    object-fit: contain;
+    object-position: center bottom;
+    block-size: 100%;
+  }
+
+  .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__chrome-row {
+    gap: 0.5rem;
+  }
+
+  .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments {
+    flex: 1 1 auto;
+    min-inline-size: 4.5rem;
+  }
+
+  .app-shell:has(.ob-wizard--rustig > .ob-rustig) .app-main,
+  .app-shell:has(.ob-wizard--rustig .ob-wizard__welcome > .ob-rustig) .app-main {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    display: block !important;
+    min-height: 0 !important;
+  }
+
+  .app-shell:has(.ob-wizard--rustig > .ob-rustig) .ob-wizard--rustig.ob-wizard,
+  .app-shell:has(.ob-wizard--rustig .ob-wizard__welcome > .ob-rustig) .ob-wizard--rustig.ob-wizard {
+    min-block-size: auto !important;
+    block-size: auto !important;
+    overflow: visible !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__footer-actions {
+    max-inline-size: min(52rem, 100%);
+  }
+}
+
 /* --- Live step-01 (u1b): full-width personal screen (additive) --- */
 @media (min-width: 1024px) {
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-01"] .ob-rustig__layout {
@@ -1596,86 +1832,4 @@
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-01"] .ob-rustig__chrome {
     padding-inline: 1rem;
   }
-}
-
-/* --- Rustig personal steps: mockup form chrome (no wizard card, tighter fields) --- */
-.ob-wizard--rustig .ob-wizard__card,
-.ob-wizard--rustig .ob-wizard__card--illustrated {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-}
-
-.ob-wizard--rustig .ob-fields--illustrated {
-  gap: 0.65rem;
-}
-
-.ob-wizard--rustig .ob-wizard__field-row {
-  gap: 0.65rem;
-}
-
-.ob-wizard--rustig .ob-wizard__card label,
-.ob-wizard--rustig .ob-wizard__card fieldset {
-  margin-block-end: 0.65rem;
-}
-
-.ob-wizard--rustig .ob-wizard__card input:not([type="checkbox"]),
-.ob-wizard--rustig .ob-wizard__card select,
-.ob-wizard--rustig .ob-wizard__card .jobsy-date-field input {
-  min-block-size: 42px;
-  block-size: 42px;
-  padding-block: 0.4rem;
-  padding-inline: 0.75rem;
-  font-size: 0.9375rem;
-}
-
-.ob-wizard--rustig .work-status-field .ob-wizard__section-hint {
-  display: none;
-}
-
-.ob-wizard--rustig .work-status-chip .lobsy-choice-tile__icon {
-  display: none;
-}
-
-.ob-wizard--rustig .work-status-chips.lobsy-choice-grid {
-  gap: 0.45rem;
-}
-
-.ob-wizard--rustig .work-status-chip.lobsy-choice-tile {
-  min-block-size: 42px;
-  block-size: auto;
-  padding-block: 0.35rem;
-  padding-inline: 0.75rem;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  touch-action: manipulation;
-}
-
-.ob-wizard--rustig .work-status-chip .lobsy-choice-tile__label {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  line-height: 1.25;
-}
-
-.ob-rustig__meta {
-  flex-wrap: nowrap;
-  gap: 0.75rem;
-  white-space: nowrap;
-}
-
-.ob-rustig__meta > span {
-  min-inline-size: 0;
-}
-
-.ob-rustig__meta > span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ob-rustig__saved {
-  flex-shrink: 0;
-  white-space: nowrap;
 }

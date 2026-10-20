@@ -14,15 +14,9 @@
                  decoding="async"
                  data-logo-fallback="off"
                  draggable="false" />
-            @{
-                var active = OnboardingRustigSidebarNav.ActiveSection(Step);
-                var n = 0;
-            }
-            @foreach (var item in OnboardingRustigWelcomeContent.SidebarNav)
+            @foreach (var item in OnboardingRustigSidebarNav.Items(Step))
             {
-                n++;
-                var isCurrent = n == active;
-                <div class="ob-wizard__side-item @(isCurrent ? "is-current" : null)">
+                <div class="ob-wizard__side-item @(item.Current ? "is-current" : null)">
                     <span>@item.Number</span>
                     <div>
                         <strong>@item.Title</strong>
@@ -48,11 +42,18 @@
                          draggable="false" />
                 </div>
                 <div class="ob-rustig__chrome-row">
-                    <button type="button"
-                            class="ob-rustig__link"
-                            disabled="@BackDisabled"
-                            aria-label="@Culture["Onboarding.BackAria"]"
-                            @onclick="OnBack">‹</button>
+                    @if (HeaderBackEnabled)
+                    {
+                        <button type="button"
+                                class="ob-rustig__link"
+                                disabled="@BackDisabled"
+                                aria-label="@Culture["Onboarding.BackAria"]"
+                                @onclick="OnBack">‹</button>
+                    }
+                    else
+                    {
+                        <button type="button" class="ob-rustig__link" aria-hidden="true" tabindex="-1">‹</button>
+                    }
                     <div class="ob-rustig__segments"
                          role="progressbar"
                          aria-valuemin="1"
@@ -74,16 +75,20 @@
                 <div class="ob-rustig__meta">
                     <span>
                         <strong>@PhaseLabel</strong>
-                        <text> · @Culture.Format("Onboarding.StepLine", Step, MinutesLeft)</text>
+                        <text> · @Culture.Format("Onboarding.StepLine", Step, MinutesLeft > 0 ? MinutesLeft : OnboardingWizardCatalog.V3RemainingMinutes(Step))</text>
                     </span>
-                    @if (ShowSaved)
+                    @if (ShowSaved && !string.IsNullOrWhiteSpace(SaveStatus))
                     {
                         <span class="ob-rustig__saved" aria-live="polite">@SaveStatus</span>
                     }
                 </div>
             </header>
 
-            @if (!string.IsNullOrWhiteSpace(PanoramaDesktop))
+            @if (Hero is not null)
+            {
+                @Hero
+            }
+            else if (!string.IsNullOrWhiteSpace(PanoramaDesktop))
             {
                 <OnboardingRustigHero DesktopUrl="@PanoramaDesktop" MobileUrl="@(PanoramaMobile ?? PanoramaDesktop)" />
             }
@@ -122,8 +127,8 @@
     [Parameter] public int Step { get; set; } = 1;
     [Parameter] public string PhaseLabel { get; set; } = "";
     [Parameter] public int MinutesLeft { get; set; }
-    [Parameter] public bool ShowSaved { get; set; }
-    [Parameter] public string SaveStatus { get; set; } = "";
+    [Parameter] public bool ShowSaved { get; set; } = true;
+    [Parameter] public string? SaveStatus { get; set; }
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? PanoramaDesktop { get; set; }
@@ -131,8 +136,10 @@
     [Parameter] public bool ShowOptionalBadge { get; set; }
     [Parameter] public bool ShowJobsRail { get; set; }
     [Parameter] public bool BackDisabled { get; set; }
+    [Parameter] public bool HeaderBackEnabled { get; set; }
     [Parameter] public EventCallback OnBack { get; set; }
     [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public RenderFragment? Hero { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? JobsRail { get; set; }
 
