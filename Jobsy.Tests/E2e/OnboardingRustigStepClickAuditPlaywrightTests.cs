@@ -72,7 +72,14 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
         await FunctionalOnboardingInteractivityHelpers.ReachOnboardingRustigStepAsync(page, step, mobile);
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
-        await page.Locator(".ob-rustig__chrome").First.ScrollIntoViewIfNeededAsync();
+        if (mobile && rustig)
+        {
+            await page.Locator(".ob-rustig__actions").First.ScrollIntoViewIfNeededAsync();
+        }
+        else
+        {
+            await page.Locator(".ob-rustig__chrome").First.ScrollIntoViewIfNeededAsync();
+        }
 
         var rows = new List<(string Control, string Result)>();
 
