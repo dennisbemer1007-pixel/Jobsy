@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CREAM = np.array([247.0, 244.0, 240.0], dtype=np.float32)
 DEFAULT_SRC = ROOT / "artifacts/onboarding-rustig-panorama-raw/kompas-a-source-16x9-seamless.jpg"
 DESK_OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-mockup/kompas-a-hero-desktop.jpg"
-MOB_OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-mockup/kompas-a-hero-mobile.jpg"
+MOB_OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-mockup/kompas-b-hero-mobile.jpg"
+MOB_SRC_DEFAULT = ROOT / "artifacts/onboarding-rustig-panorama-raw/kompas-b-hero-mobile-source.jpg"
 DIR_OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-mockup"
 TARGET_W = 3500
 DESK_RATIO = 3.35  # ~400px at 1440 col
@@ -85,34 +86,69 @@ def export_band(src: Path, out: Path, target_w: int, ratio: float, label: str) -
     print(f"wrote {out} size={band.size} figure_bbox={fb} ({label})")
 
 
-def export_direction_thumbs(src: Path) -> None:
+def export_mobile_compose(src: Path, out: Path) -> None:
+    """Mobile hero: scale full width, vertical slice with figure head-to-toe (mobile source)."""
     fin = load_fin()
     im = Image.open(src).convert("RGB")
     w, h = im.size
-    boxes = [
-        ("kompas-a-direction-zorg.jpg", 0.52, 0.38, 0.68, 0.58),
-        ("kompas-a-direction-kas.jpg", 0.62, 0.36, 0.78, 0.56),
-        ("kompas-a-direction-kantoor.jpg", 0.72, 0.34, 0.88, 0.54),
-    ]
-    for name, x0f, y0f, x1f, y1f in boxes:
-        crop = im.crop((int(w * x0f), int(h * y0f), int(w * x1f), int(h * y1f)))
-        crop = crop.resize((240, 180), Image.Resampling.LANCZOS)
-        crop = apply_edge_vignette(crop, fin)
-        crop.save(DIR_OUT / name, quality=90, optimize=True)
-        print(f"wrote {DIR_OUT / name}")
+    target_h = max(1, int(round(MOB_W / MOB_RATIO)))
+    y0s, y1s = int(h * 0.06), int(h * 0.86)
+    slice_im = im.crop((0, y0s, w, y1s))
+    band = slice_im.resize((MOB_W, target_h), Image.Resampling.LANCZOS)
+    fb = fin.figure_bbox(band)
+    margin = int(MOB_W * 0.06)
+    if fb and fb[0] < margin:
+        shift = margin - fb[0]
+        inner_w = MOB_W - shift
+        band = band.resize((inner_w, target_h), Image.Resampling.LANCZOS)
+        canvas = Image.new("RGB", (MOB_W, target_h), tuple(int(c) for c in fin.CREAM))
+        canvas.paste(band, (shift, 0))
+        band = canvas
+    # Lighter bottom vignette so boots stay visible in the mobile frame.
+    w, h = band.size
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = overlay.load()
+    cream = tuple(int(c) for c in fin.CREAM)
+    top = int(h * 0.05)
+    bottom = int(h * 0.04)
+    for y in range(h):
+        for x in range(w):
+            a = 0
+            if y < top:
+                t = 1.0 - y / max(1, top - 1)
+                a = max(a, int(255 * t**0.85))
+            elif y >= h - bottom:
+                t = (y - (h - bottom)) / max(1, bottom - 1)
+                a = max(a, int(255 * min(1.0, t**1.1)))
+            if a:
+                px[x, y] = (*cream, a)
+    band = Image.alpha_composite(band.convert("RGBA"), overlay).convert("RGB")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    band.save(out, quality=92, optimize=True)
+    fb2 = fin.figure_bbox(band)
+    left = fb2[0] / MOB_W if fb2 else 0
+    print(f"wrote {out} size={band.size} figure_bbox={fb2} left={left:.1%} (mobile compose)")
 
 
 def main() -> None:
-    src = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SRC
-    if not src.is_file():
-        alt = Path("/opt/cursor/artifacts/assets/kompas-a-source-16x9-seamless.jpg")
-        if alt.is_file():
-            src = alt
-        else:
-            raise SystemExit(f"missing source: {src}")
-    export_band(src, DESK_OUT, TARGET_W, DESK_RATIO, "desktop")
-    export_band(src, MOB_OUT, MOB_W, MOB_RATIO, "mobile")
-    export_direction_thumbs(src)
+    mode = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in ("desktop", "mobile") else "all"
+    args = [a for a in sys.argv[1:] if a not in ("desktop", "mobile")]
+    src = Path(args[0]) if args else DEFAULT_SRC
+    if mode in ("all", "desktop"):
+        if not src.is_file():
+            alt = Path("/opt/cursor/artifacts/assets/kompas-a-source-16x9-seamless.jpg")
+            if alt.is_file():
+                src = alt
+            else:
+                raise SystemExit(f"missing source: {src}")
+        export_band(src, DESK_OUT, TARGET_W, DESK_RATIO, "desktop")
+    if mode in ("all", "mobile"):
+        mob_src = MOB_SRC_DEFAULT
+        if not mob_src.is_file():
+            mob_src = Path("/opt/cursor/artifacts/assets/kompas-b-hero-mobile-source.jpg")
+        if not mob_src.is_file():
+            raise SystemExit(f"missing mobile source: {mob_src}")
+        export_mobile_compose(mob_src, MOB_OUT)
 
 
 if __name__ == "__main__":

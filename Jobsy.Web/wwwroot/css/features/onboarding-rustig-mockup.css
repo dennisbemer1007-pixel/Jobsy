@@ -971,11 +971,28 @@
   border-block-end: none;
 }
 
+.ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    var(--bg) 0%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 8%,
+    transparent 22%,
+    transparent 78%,
+    color-mix(in srgb, var(--bg) 40%, transparent) 92%,
+    var(--bg) 100%
+  );
+}
+
 .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
   inline-size: 100%;
   block-size: 100%;
-  object-fit: cover;
-  object-position: center 42%;
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 @media (min-width: 1024px) {
@@ -1106,22 +1123,12 @@
   color: var(--muted);
 }
 
-.ob-rustig__kompas-next {
-  margin-block: 1.5rem 1rem;
-  display: grid;
-  gap: 0.5rem;
+.ob-rustig__kompas-finale .ob-finale__hl {
+  margin-block-start: 0.25rem;
 }
 
-.ob-rustig__kompas-next .ob-rustig__btn--primary {
-  inline-size: fit-content;
-  text-decoration: none;
-  text-align: center;
-}
-
-.ob-rustig__kompas-next-hint {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--muted);
+.ob-rustig__kompas-finale .ob-finale__wrap > h2:first-of-type {
+  margin-block-start: 1.75rem;
 }
 
 .ob-rustig__kompas-badge {

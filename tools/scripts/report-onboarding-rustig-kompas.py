@@ -11,7 +11,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
-CACHE = "20261020-kompas-a"
+CACHE = "20261020-kompas-b"
 
 
 def main() -> None:
