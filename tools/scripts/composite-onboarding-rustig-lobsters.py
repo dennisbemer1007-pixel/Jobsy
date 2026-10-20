@@ -14,9 +14,9 @@ PAN = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
 DEFAULT_SPRITE = ROOT / "Jobsy.Web/wwwroot/images/onboarding/lobsy-mascot-sprite.png"
 
 DESK_BAND_PX = 170
-MOB_BAND_PX = 130
+MOB_BAND_PX = 92
 DESK_LOBSTER_PX = 30
-MOB_LOBSTER_PX = 17
+MOB_LOBSTER_PX = 15
 
 Y_MIN = 0.12
 Y_MAX = 0.78

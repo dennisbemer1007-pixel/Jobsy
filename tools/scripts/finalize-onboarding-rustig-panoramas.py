@@ -11,14 +11,15 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
-RAW = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "artifacts/onboarding-rustig-panorama-raw"
+_args = [a for a in sys.argv[1:] if a != "--mobile-only"]
+RAW = Path(_args[0]) if _args else ROOT / "artifacts/onboarding-rustig-panorama-raw"
 
-# 2× assets: ~1140×170 desktop (6:1), 390×130 mobile (3:1)
+# 2× assets: ~1140×170 desktop (6:1), 390×92 mobile (~4:1)
 DESKTOP = (2280, 340)  # 6:1 at 2× (matches ~1140×170 content column)
-MOBILE = (780, 260)
+MOBILE = (780, 184)  # 2× for CSS band 390×92 (~4.24:1)
 CREAM = np.array([247, 244, 240], dtype=np.float32)
 DESKTOP_RATIO = 6.0
-MOBILE_RATIO = 3.0
+MOBILE_RATIO = 4.0
 HEAD_MARGIN = 8
 FEET_ABOVE_FADE = 25
 FADE_BOTTOM = 25
@@ -190,6 +191,7 @@ def fit_mobile(raw: Image.Image) -> Image.Image:
 
 
 def main() -> None:
+    mobile_only = "--mobile-only" in sys.argv
     OUT.mkdir(parents=True, exist_ok=True)
     for slug in SLUGS:
         candidates = [
@@ -203,10 +205,14 @@ def main() -> None:
         if src is None:
             raise SystemExit(f"missing raw for {slug} in {RAW}")
         raw = Image.open(src).convert("RGB")
-        desk = apply_cream_fades(fit_desktop(raw))
         mob = apply_cream_fades(fit_mobile(raw))
-        desk.save(OUT / f"{slug}-desktop.jpg", quality=92, optimize=True)
         mob.save(OUT / f"{slug}-mobile.jpg", quality=92, optimize=True)
+        if mobile_only:
+            bb = figure_bbox(mob) or content_bbox(mob)
+            print(f"{slug}: mob {mob.size} bbox {bb} <- {src.name}")
+            continue
+        desk = apply_cream_fades(fit_desktop(raw))
+        desk.save(OUT / f"{slug}-desktop.jpg", quality=92, optimize=True)
         bb = figure_bbox(desk) or content_bbox(desk)
         print(f"{slug}: desk {desk.size} mob {mob.size} bbox {bb} <- {src.name}")
 
