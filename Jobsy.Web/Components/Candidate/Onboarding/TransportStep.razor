@@ -33,11 +33,11 @@ else if (!Illustrated)
     <ChoiceTileGrid Class="ob-wizard__transport" AriaLabel="@Culture["Onboarding.Transport"]">
         @foreach (var transport in TransportOptions)
         {
-            var isSelected = Selected.Contains(transport);
+            var isSelected = _displayTransport.Contains(transport);
             <ChoiceTile Label="@TransportLabel(transport)"
                         Icon="@ChoiceTileIcons.ForTransport(transport)"
                         Selected="isSelected"
-                        OnClick="@(() => SelectTransport.InvokeAsync(transport))" />
+                        OnClick="@(() => SelectTransportAsync(transport))" />
         }
     </ChoiceTileGrid>
     @if (ShowValidation && string.IsNullOrWhiteSpace(Draft.Transport))
@@ -46,16 +46,16 @@ else if (!Illustrated)
     }
 </fieldset>
 <fieldset>
-    <legend>@Culture["Onboarding.MaxTravel"] <strong>@Draft.MaxTravel @Culture["Onboarding.Minutes"]</strong></legend>
+    <legend>@Culture["Onboarding.MaxTravel"] <strong>@_displayMaxTravel @Culture["Onboarding.Minutes"]</strong></legend>
     <ChoiceTileGrid Class="ob-wizard__transport ob-wizard__travel-times" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.MaxTravel"]">
         @foreach (var minutes in TravelChoices)
         {
-            var selected = Draft.MaxTravel == minutes;
+            var selected = _displayMaxTravel == minutes;
             <ChoiceTile Label="@minutes.ToString()"
                         Icon="@ChoiceTileIcons.Clock"
                         Selected="selected"
                         Inline="true"
-                        OnClick="@(() => SelectTravelTime.InvokeAsync(minutes))" />
+                        OnClick="@(() => SelectTravelTimeAsync(minutes))" />
         }
     </ChoiceTileGrid>
     <button type="button" class="ob-wizard__inline-link" @onclick="ShowCustomTravel">
@@ -104,15 +104,43 @@ else if (!Illustrated)
     private static readonly string[] TransportOptions = TransportLabels.Selectable;
     private static readonly int[] TravelChoices = [10, 20, 30, 45];
 
-    private HashSet<string> Selected { get; } = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _displayTransport = new(StringComparer.OrdinalIgnoreCase);
+    private int _displayMaxTravel;
 
     protected override void OnParametersSet()
     {
-        Selected.Clear();
-        foreach (var mode in TransportLabels.SplitMany(Draft.Transport))
+        var modes = TransportLabels.SplitMany(Draft.Transport);
+        if (modes.Count > 0 || _displayTransport.Count == 0)
         {
-            Selected.Add(mode);
+            _displayTransport = new HashSet<string>(modes, StringComparer.OrdinalIgnoreCase);
         }
+
+        if (Draft.MaxTravel > 0)
+        {
+            _displayMaxTravel = Draft.MaxTravel;
+        }
+        else if (_displayMaxTravel <= 0)
+        {
+            _displayMaxTravel = 30;
+        }
+    }
+
+    private async Task SelectTransportAsync(string transport)
+    {
+        if (!_displayTransport.Add(transport))
+        {
+            _displayTransport.Remove(transport);
+        }
+
+        await InvokeAsync(StateHasChanged);
+        await SelectTransport.InvokeAsync(transport);
+    }
+
+    private async Task SelectTravelTimeAsync(int minutes)
+    {
+        _displayMaxTravel = minutes;
+        await InvokeAsync(StateHasChanged);
+        await SelectTravelTime.InvokeAsync(minutes);
     }
 
     private string TransportLabel(string transport) => transport switch
