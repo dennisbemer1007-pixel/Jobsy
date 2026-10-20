@@ -469,6 +469,40 @@
     display: none;
   }
 
+  /* Onboarding mini-tests: wizard footer is hidden; keep Later in the flow footer on mobile. */
+  .ob-wizard__content:has([data-testid="test-block-stage"]) .test-flow--compact .test-flow__footer[data-sticky-footer] {
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.65rem;
+    padding-inline: max(1rem, env(safe-area-inset-inline-start, 0px))
+      max(1rem, env(safe-area-inset-inline-end, 0px));
+  }
+
+  .ob-wizard__content:has([data-testid="test-block-stage"]) .test-flow--compact .test-flow__back {
+    order: 0;
+    flex: 0 0 auto;
+    justify-self: auto;
+  }
+
+  .ob-wizard__content:has([data-testid="test-block-stage"]) .test-flow--compact .test-flow__later {
+    display: inline-flex;
+    order: 1;
+    flex: 0 0 auto;
+    align-items: center;
+    min-block-size: 44px;
+    margin-inline-start: auto;
+    white-space: nowrap;
+  }
+
+  .ob-wizard__content:has([data-testid="test-block-stage"]) .test-flow--compact .test-flow__next {
+    order: 2;
+    flex: 1 1 55%;
+    min-inline-size: 55%;
+    display: inline-flex !important;
+  }
+
   .app-shell--candidate .test-page:has([data-testid="test-block-stage"]) .test-flow__footer[data-sticky-footer],
   .test-page:has([data-testid="test-block-stage"]) .test-flow__footer[data-sticky-footer] {
     display: flex !important;

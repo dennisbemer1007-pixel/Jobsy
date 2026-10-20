@@ -188,7 +188,7 @@
                     @onclick="GoBackAsync">
                 @Culture["TestFlow.Back"]
             </button>
-            @if (!flowCompact && OnLater.HasDelegate)
+            @if (OnLater.HasDelegate && (!flowCompact || TestBlockStageActive))
             {
                 <button type="button" class="test-flow__later" data-testid="onboarding-tests-later" @onclick="LaterAsync">
                     @(LaterLabel ?? Culture["TestFlow.Later"])

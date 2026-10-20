@@ -1478,7 +1478,56 @@
     -webkit-mask-image: var(--cand-compact-art-feather);
     mask-image: var(--cand-compact-art-feather);
     object-fit: contain;
-    object-position: right bottom;
+    object-position: right 58%;
+  }
+
+  [data-testid="test-block-stage"].test-block-stage--hoe-je-werkt
+    > .test-block-stage__content
+    > header.cand-compact-hero.cand-hero--compact-preview-c {
+    min-height: max(8.75rem, 142px) !important;
+    height: max(8.75rem, 142px) !important;
+    max-height: max(8.75rem, 142px) !important;
+    padding-block-start: 0.4rem;
+    box-sizing: border-box;
+  }
+
+  [data-testid="test-block-stage"].test-block-stage--hoe-je-werkt
+    > .test-block-stage__content
+    > header.cand-compact-hero
+    .cand-compact-hero__art
+    img {
+    object-position: right 54%;
+  }
+
+  [data-testid="test-block-stage"].test-block-stage--leuk
+    > .test-block-stage__content
+    > header.cand-compact-hero.cand-hero--compact-preview-c {
+    --cand-compact-art-feather: radial-gradient(ellipse 104% 92% at 70% 56%, #000 26%, transparent 82%);
+    min-height: max(8.875rem, 144px) !important;
+    height: max(8.875rem, 144px) !important;
+    max-height: max(8.875rem, 144px) !important;
+    padding-block-start: 0.45rem;
+    box-sizing: border-box;
+  }
+
+  [data-testid="test-block-stage"].test-block-stage--leuk
+    > .test-block-stage__content
+    > header.cand-compact-hero.cand-hero--compact-preview-c::before {
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-hero-band) 0%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 94%, transparent) 38%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 72%, transparent) 52%,
+      transparent 70%
+    );
+  }
+
+  [data-testid="test-block-stage"].test-block-stage--leuk
+    > .test-block-stage__content
+    > header.cand-compact-hero
+    .cand-compact-hero__art
+    img {
+    object-position: right 52%;
   }
 }
 
