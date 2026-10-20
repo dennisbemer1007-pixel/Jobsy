@@ -13,7 +13,7 @@ public static class OnboardingRustigPanoramaBriefs
         "step-05" => "Opleiding: boeken, diploma, campus/bibliotheek",
         "step-06" => "Droombaan: horizon, sterrenpad, droomberoepen in de verte",
         "step-07" => "Vier tests: reis met vier duidelijke borden/stations",
-        "step-08" => "Hoe je werkt: samenwerken, team, whiteboard",
+        "step-08" => "Leuk: hobby's en activiteiten waar mensen energie van krijgen",
         "step-09" => "Leuk: energie van doen, gereedschap, makerplezier",
         "step-10" => "Sfeer: warme werksfeer, lounge, koffie, informeel",
         "step-11" => "Waarden: zorg, community, duurzaamheid, zinvol werk",
