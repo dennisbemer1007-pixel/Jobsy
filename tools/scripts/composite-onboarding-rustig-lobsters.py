@@ -29,7 +29,7 @@ Y_MAX = lob_layout.Y_MAX
 PLACEMENTS = lob_layout.PLACEMENTS
 LOBSTER_PX_SLUG = lob_layout.LOBSTER_PX_SLUG
 # Dennis: no mascot composite on these slugs (illustration only).
-NO_LOBSTER_SLUGS: frozenset[str] = frozenset({"step-02", "step-04"})
+NO_LOBSTER_SLUGS: frozenset[str] = frozenset({"step-02", "step-04", "step-05"})
 
 
 def load_sprite(path: Path) -> Image.Image:

@@ -191,6 +191,8 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
 
 MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-04", "step-05", "step-10"})
 
+SEAMLESS_HERO_SLUGS = frozenset({"step-04", "step-05"})
+
 
 def _load_step04_defuse():
     import importlib.util
@@ -295,12 +297,12 @@ def main() -> None:
         mob = apply_cream_fades(fit_mobile(raw_mob, slug))
         if slug in PALETTE_SOFTEN_SLUGS:
             mob = soften_hero_palette(mob)
-        if slug == "step-04":
+        if slug in SEAMLESS_HERO_SLUGS:
             mob = _load_step04_defuse()(mob)
         mob_path = OUT / f"{slug}-mobile.jpg"
-        jpeg_q = 98 if slug == "step-04" else 92
+        jpeg_q = 98 if slug in SEAMLESS_HERO_SLUGS else 92
         mob.save(mob_path, quality=jpeg_q, optimize=True)
-        if slug == "step-04":
+        if slug in SEAMLESS_HERO_SLUGS:
             step04_defuse_jpeg(mob_path)
         if mobile_only:
             bb = figure_bbox(mob) or content_bbox(mob)
@@ -309,11 +311,11 @@ def main() -> None:
         desk = apply_cream_fades(fit_desktop(raw, slug))
         if slug in PALETTE_SOFTEN_SLUGS:
             desk = soften_hero_palette(desk)
-        if slug == "step-04":
+        if slug in SEAMLESS_HERO_SLUGS:
             desk = _load_step04_defuse()(desk)
         desk_path = OUT / f"{slug}-desktop.jpg"
         desk.save(desk_path, quality=jpeg_q, optimize=True)
-        if slug == "step-04":
+        if slug in SEAMLESS_HERO_SLUGS:
             step04_defuse_jpeg(desk_path)
         bb = figure_bbox(desk) or content_bbox(desk)
         mode = "band-native" if is_band_native(raw) else "16x9-crop"
