@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Tests.Errors;
@@ -8,8 +9,16 @@ namespace Jobsy.Tests.Errors;
 /// catalog with the request language instead of hard-coded Dutch.
 /// </summary>
 [Collection("JobsyLanguagesState")]
-public class ReconnectToastTests
+public class ReconnectToastTests : IDisposable
 {
+    public ReconnectToastTests() => JobsyLanguages.ResetEnabledForTests();
+
+    public void Dispose()
+    {
+        JobsyLanguages.ResetEnabledForTests();
+        GC.SuppressFinalize(this);
+    }
+
     private static readonly string[] Keys =
     [
         "Status.Reconnect.Trying",
@@ -38,31 +47,24 @@ public class ReconnectToastTests
     [Fact]
     public async Task App_shell_renders_the_toast_in_arabic_when_the_culture_cookie_says_so()
     {
-        Jobsy.Core.Localization.JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
-        try
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        await using var factory = new ErrorPagesWebFactory
         {
-            await using var factory = new ErrorPagesWebFactory
-            {
-                EmployersEnabled = true,
-                EnabledCultures = "nl,en,pl,ro,ar"
-            };
-            using var client = factory.CreateHtmlClient();
-            client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
+            EmployersEnabled = true,
+            EnabledCultures = "nl,en,pl,ro,ar"
+        };
+        using var client = factory.CreateHtmlClient();
+        client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
 
-            // Razor encodes non-ASCII (the ellipsis, Arabic) as numeric entities; compare decoded.
-            var html = WebUtility.HtmlDecode(
-                await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync());
+        // Razor encodes non-ASCII (the ellipsis, Arabic) as numeric entities; compare decoded.
+        var html = WebUtility.HtmlDecode(
+            await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync());
 
-            Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
-            foreach (var key in Keys)
-            {
-                Assert.Contains(UiStrings.Get(key, "ar"), html, StringComparison.Ordinal);
-                Assert.DoesNotContain(UiStrings.Get(key, "nl"), html, StringComparison.Ordinal);
-            }
-        }
-        finally
+        Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
+        foreach (var key in Keys)
         {
-            Jobsy.Core.Localization.JobsyLanguages.ResetEnabledForTests();
+            Assert.Contains(UiStrings.Get(key, "ar"), html, StringComparison.Ordinal);
+            Assert.DoesNotContain(UiStrings.Get(key, "nl"), html, StringComparison.Ordinal);
         }
     }
 

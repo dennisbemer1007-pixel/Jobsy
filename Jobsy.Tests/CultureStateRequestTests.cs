@@ -5,8 +5,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobsy.Tests;
 
-public class CultureStateRequestTests
+[Collection("JobsyLanguagesState")]
+public class CultureStateRequestTests : IDisposable
 {
+    public CultureStateRequestTests() => JobsyLanguages.ResetEnabledForTests();
+
+    public void Dispose()
+    {
+        JobsyLanguages.ResetEnabledForTests();
+        GC.SuppressFinalize(this);
+    }
+
     [Fact]
     public void Lang_query_beats_cookie_beats_nl()
     {

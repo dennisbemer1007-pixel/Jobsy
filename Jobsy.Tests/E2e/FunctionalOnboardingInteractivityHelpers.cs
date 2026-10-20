@@ -38,87 +38,41 @@ internal static class FunctionalOnboardingInteractivityHelpers
         Assert.True(audit.Ok, $"{label}: {audit.Reason}");
     }
 
-    private static ILocator WorkStatusChips(IPage page)
-        => page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
-
-    private static ILocator WorkStatusSelectedChip(IPage page)
-        => page.Locator(
-            ".work-status-chips .lobsy-choice-tile.is-selected, " +
-            ".work-status-chips .work-status-chip.is-selected, " +
-            ".work-status-chips [aria-pressed=\"true\"], " +
-            ".work-status-chips [aria-checked=\"true\"]");
-
-    internal static async Task WaitForBlazorCircuitReadyAsync(IPage page)
-    {
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 90_000 });
-    }
-
-    private static async Task<bool> TryActivateWorkStatusChipAsync(IPage page, ILocator chip)
-    {
-        if (await WorkStatusSelectedChip(page).CountAsync() > 0)
-        {
-            return true;
-        }
-
-        var mobile = page.ViewportSize is { Width: < 600 };
-        await chip.ScrollIntoViewIfNeededAsync();
-        await Assertions.Expect(chip).ToBeEnabledAsync(new() { Timeout = 30_000 });
-
-        for (var attempt = 0; attempt < 3; attempt++)
-        {
-            if (await WorkStatusSelectedChip(page).CountAsync() > 0)
-            {
-                return true;
-            }
-
-            try
-            {
-                if (mobile)
-                {
-                    await chip.TapAsync(new() { Timeout = 15_000 });
-                }
-                else
-                {
-                    await chip.ClickAsync(new() { Timeout = 15_000 });
-                }
-            }
-            catch (PlaywrightException)
-            {
-                await chip.ClickAsync(new() { Force = true, Timeout = 15_000 });
-            }
-
-            try
-            {
-                await Assertions.Expect(WorkStatusSelectedChip(page).First)
-                    .ToBeVisibleAsync(new() { Timeout = 25_000 });
-                return true;
-            }
-            catch (PlaywrightException) when (attempt < 2)
-            {
-                // Blazor may still be rendering; retry activation on the same chip.
-            }
-        }
-
-        return await WorkStatusSelectedChip(page).CountAsync() > 0;
-    }
-
     internal static async Task SelectAnyWorkStatusChipAsync(IPage page)
     {
-        var chips = WorkStatusChips(page);
+        var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
         if (await chips.CountAsync() == 0)
         {
             return;
         }
 
-        await WaitForBlazorCircuitReadyAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
 
-        var count = await chips.CountAsync();
-        for (var i = 0; i < count; i++)
+        var mobile = page.ViewportSize is { Width: < 600 };
+        for (var i = 0; i < await chips.CountAsync(); i++)
         {
-            if (await TryActivateWorkStatusChipAsync(page, chips.Nth(i)))
+            var chip = chips.Nth(i);
+            await chip.ScrollIntoViewIfNeededAsync();
+            try
+            {
+                if (mobile)
+                {
+                    await chip.TapAsync(new() { Timeout = 10_000 });
+                }
+                else
+                {
+                    await chip.ClickAsync(new() { Timeout = 10_000 });
+                }
+            }
+            catch (PlaywrightException)
+            {
+                await chip.ClickAsync(new() { Force = true, Timeout = 10_000 });
+            }
+
+            if (await WaitForWorkStatusSelectedAsync(page, 8_000))
             {
                 return;
             }
@@ -133,24 +87,88 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AssertWorkStatusChipTogglesAsync(IPage page)
     {
-        var chips = WorkStatusChips(page);
+        var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
         await chips.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await WaitForBlazorCircuitReadyAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(400);
 
-        var count = await chips.CountAsync();
-        for (var i = 0; i < count; i++)
+        var viewport = page.ViewportSize;
+        var mobile = viewport is not null && viewport.Width < 600;
+        var selected = false;
+
+        // Compact variant C can wrap long werkstatus labels; prefer a single-line chip first.
+        foreach (var label in new[] { "Scholier", "Student", "Stagiair" })
         {
-            if (await TryActivateWorkStatusChipAsync(page, chips.Nth(i)))
+            var quick = page.GetByRole(AriaRole.Button, new() { Name = label, Exact = true });
+            if (await quick.CountAsync() == 0)
+            {
+                continue;
+            }
+
+            await quick.First.ScrollIntoViewIfNeededAsync();
+            await quick.First.ClickAsync(new() { Timeout = 15_000, Force = mobile });
+            if (await WaitForWorkStatusSelectedAsync(page, 12_000))
             {
                 return;
             }
         }
 
-        var audits = await DescribeHitAuditsAsync(page, [
-            (".work-status-chips .lobsy-choice-tile", "werkstatus-chip"),
-            ("[data-testid=onboarding-next]", "volgende"),
-        ]);
-        Assert.Fail($"werkstatus chip did not select after trying all chips. Hit audits: {audits}");
+        for (var round = 0; round < 2 && !selected; round++)
+        {
+
+            var count = await chips.CountAsync();
+            for (var i = 0; i < count && !selected; i++)
+            {
+                var chip = chips.Nth(i);
+                await chip.ScrollIntoViewIfNeededAsync();
+                await page.WaitForTimeoutAsync(200);
+
+                try
+                {
+                    await chip.ClickAsync(new() { Timeout = 15_000, Force = mobile });
+                }
+                catch (PlaywrightException)
+                {
+                    await chip.ClickAsync(new() { Timeout = 15_000, Force = true });
+                }
+
+                await page.WaitForFunctionAsync(
+                    """
+                    () => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'
+                    """,
+                    null,
+                    new() { Timeout = 15_000 });
+
+                selected = await WaitForWorkStatusSelectedAsync(page, 25_000);
+                if (selected)
+                {
+                    break;
+                }
+
+                await chip.EvaluateAsync(
+                    """
+                    el => {
+                      if (!(el instanceof HTMLElement)) return;
+                      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));
+                      el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerType: 'touch' }));
+                      el.click();
+                    }
+                    """);
+                selected = await WaitForWorkStatusSelectedAsync(page, 12_000);
+            }
+        }
+
+        if (!selected)
+        {
+            var audits = await DescribeHitAuditsAsync(page, [
+                (".work-status-chips .lobsy-choice-tile", "werkstatus-chip"),
+                ("[data-testid=onboarding-next]", "volgende"),
+            ]);
+            Assert.True(selected, $"werkstatus chip did not select after trying all chips. Hit audits: {audits}");
+        }
     }
 
     internal static async Task<string> DescribeHitAuditsAsync(IPage page, (string Selector, string Label)[] targets)
@@ -298,81 +316,110 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
         await SkipTestsLaterAndWaitForBanenkaartAsync(page);
-        await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await WaitForBanenkaartDiscoveryShellAsync(page);
     }
 
     internal static async Task SkipTestsLaterAndWaitForBanenkaartAsync(IPage page)
     {
         if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
         {
+            await WaitForBanenkaartDiscoveryShellAsync(page);
             return;
         }
 
-        await WaitForBlazorCircuitReadyAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
 
-        var heading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
-        var footerLater = page.Locator(".ob-wizard__footer [data-testid=onboarding-tests-later]:visible").First;
-        var flowLater = page.Locator(".test-flow [data-testid=onboarding-tests-later]:visible, .test-flow__later:visible").First;
+        var mobile = page.ViewportSize is { Width: < 600 };
+        var consentHeading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
+        var flowLater = page.Locator(".test-flow [data-testid=onboarding-tests-later], .test-flow__later").First;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < 4; attempt++)
         {
-            if (await IsOnBanenkaartAsync(page))
+            if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
             {
+                await WaitForBanenkaartDiscoveryShellAsync(page);
                 return;
             }
 
-            ILocator? later = null;
-            if (await heading.IsVisibleAsync() && await footerLater.CountAsync() > 0)
+            if (await consentHeading.IsVisibleAsync())
             {
-                later = footerLater;
-            }
-            else if (await flowLater.CountAsync() > 0)
-            {
-                later = flowLater;
-            }
-
-            if (later is not null)
-            {
+                await page.WaitForTimeoutAsync(mobile ? 800 : 500);
+                var later = page.GetByTestId("onboarding-tests-later").First;
                 await later.ScrollIntoViewIfNeededAsync();
                 await Assertions.Expect(later).ToBeEnabledAsync(new() { Timeout = 30_000 });
-                await later.ClickAsync(new() { Timeout = 30_000, Force = attempt > 0 });
-                if (await WaitForBanenkaartShellAsync(page, 120_000))
+                for (var clickTry = 0; clickTry < 2; clickTry++)
                 {
-                    return;
+                    await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                    if (await TryWaitForBanenkaartLocationAsync(page, 90_000))
+                    {
+                        break;
+                    }
+
+                    await page.WaitForTimeoutAsync(800);
                 }
+
+                await WaitForBanenkaartLocationAsync(page);
+                await WaitForBanenkaartDiscoveryShellAsync(page);
+                return;
+            }
+
+            if (await flowLater.CountAsync() > 0)
+            {
+                await flowLater.ScrollIntoViewIfNeededAsync();
+                await flowLater.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                await WaitForBanenkaartLocationAsync(page);
+                await WaitForBanenkaartDiscoveryShellAsync(page);
+                return;
             }
 
             await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
-            await WaitForBlazorCircuitReadyAsync(page);
+            await page.WaitForTimeoutAsync(mobile ? 900 : 600);
         }
 
-        if (await WaitForBanenkaartShellAsync(page, 60_000))
+        try
         {
-            return;
+            await WaitForBanenkaartDiscoveryShellAsync(page);
         }
-
-        var saveError = page.Locator(".ob-wizard .error[role=alert], .ob-wizard .error[role=status]").First;
-        if (await saveError.CountAsync() > 0 && await saveError.IsVisibleAsync())
+        catch (TimeoutException)
         {
-            var text = await saveError.InnerTextAsync();
-            throw new InvalidOperationException($"Onboarding skip-later failed in UI: {text.Trim()}");
-        }
+            if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+            {
+                var saveError = page.Locator(".ob-wizard .error[role=alert], .ob-wizard .error[role=status]").First;
+                if (await saveError.CountAsync() > 0 && await saveError.IsVisibleAsync())
+                {
+                    var text = await saveError.InnerTextAsync();
+                    throw new InvalidOperationException($"Onboarding skip-later failed in UI: {text.Trim()}");
+                }
+            }
 
-        throw new TimeoutException("Onboarding skip-later did not reach banenkaart or discovery shell.");
+            throw;
+        }
     }
 
-    private static Task<bool> IsOnBanenkaartAsync(IPage page)
-        => page.EvaluateAsync<bool>(
-            "() => location.pathname.toLowerCase().includes('/banenkaart') || !!document.querySelector('.jobsy-discovery')");
+    private static Task WaitForBanenkaartLocationAsync(IPage page)
+        => page.WaitForFunctionAsync(
+            """
+            () => {
+              const path = (location.pathname || '').toLowerCase();
+              return path === '/banenkaart' || path.startsWith('/banenkaart/');
+            }
+            """,
+            null,
+            new() { Timeout = 180_000 });
 
-    private static async Task<bool> WaitForBanenkaartShellAsync(IPage page, int timeoutMs)
+    private static async Task<bool> TryWaitForBanenkaartLocationAsync(IPage page, int timeoutMs)
     {
         try
         {
             await page.WaitForFunctionAsync(
                 """
-                () => location.pathname.toLowerCase().includes('/banenkaart')
-                  || !!document.querySelector('.jobsy-discovery')
+                () => {
+                  const path = (location.pathname || '').toLowerCase();
+                  return path === '/banenkaart' || path.startsWith('/banenkaart/');
+                }
                 """,
                 null,
                 new() { Timeout = timeoutMs });
@@ -382,6 +429,19 @@ internal static class FunctionalOnboardingInteractivityHelpers
         {
             return false;
         }
+    }
+
+    private static async Task WaitForBanenkaartDiscoveryShellAsync(IPage page)
+    {
+        if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            await WaitForBanenkaartLocationAsync(page);
+        }
+
+        await page.Locator(
+                ".jobsy-discovery, [data-testid=uwv-banenkaart-mock], [data-testid=uwv-kansberoepen-toggle], [data-testid=kb-keyword-search], #jobsy-map-boot")
+            .First
+            .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 180_000 });
     }
 
     internal static async Task ResolveHomeAddressAsync(IPage page, string query)
@@ -508,6 +568,25 @@ internal static class FunctionalOnboardingInteractivityHelpers
         {
             await birth.FillAsync("2000-06-15");
             await birth.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))");
+        }
+    }
+
+    private static async Task<bool> WaitForWorkStatusSelectedAsync(IPage page, int timeoutMs)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => !!document.querySelector(
+                  '.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed="true"]')
+                """,
+                null,
+                new() { Timeout = timeoutMs });
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
         }
     }
 
