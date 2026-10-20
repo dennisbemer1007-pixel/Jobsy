@@ -1,107 +1,60 @@
 /* Static PO mockups: calm onboarding (strak, rustig, warm). Not used in production wizard. */
 
 .app-shell--onboarding-rustig-mockup {
-  --ob-rustig-sidebar: 280px;
-  --ob-rustig-hero-h: clamp(4.75rem, 7.5vw, 6.25rem);
+  --ob-rustig-sidebar: 300px;
+  --ob-rustig-hero-h: clamp(7.5rem, 10vw, 10rem);
   background: var(--bg);
-  min-block-size: 100dvh;
 }
 
 .app-shell--onboarding-rustig-mockup .app-main {
   display: block;
   overflow: visible;
-  min-block-size: 100dvh;
   padding: 0;
 }
 
 .ob-rustig {
   color: var(--text);
   background: var(--bg);
-  min-block-size: 100dvh;
 }
 
 .ob-rustig__layout {
   display: grid;
   grid-template-columns: var(--ob-rustig-sidebar) minmax(0, 1fr);
-  min-block-size: 100dvh;
+  align-items: start;
 }
 
 .ob-rustig__layout--with-rail {
   grid-template-columns: var(--ob-rustig-sidebar) minmax(0, 1fr) min(300px, 26vw);
 }
 
-.ob-rustig__sidebar {
+.ob-rustig__sidebar.ob-wizard__sidebar {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.35rem 1.15rem 1.5rem;
-  border-inline-end: 1px solid color-mix(in srgb, var(--border) 55%, #c9a87a);
-  background: var(--bg);
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-block-size: 100dvh;
 }
 
-.ob-rustig__brand {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin-block-end: 0.35rem;
-}
-
-.ob-rustig__brand .lobsy-logo__img {
-  inline-size: 40px;
-  block-size: 40px;
-}
-
-.ob-rustig__nav {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.ob-rustig__nav-item {
-  display: flex;
-  gap: 0.65rem;
-  align-items: flex-start;
-  padding: 0.55rem 0.65rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  line-height: 1.35;
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-}
-
-.ob-rustig__nav-item span:first-child {
+.ob-rustig__logo-e {
+  display: block;
+  inline-size: 56px;
+  block-size: 56px;
+  object-fit: contain;
   flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  inline-size: 1.65rem;
-  block-size: 1.65rem;
-  border-radius: 50%;
-  font-weight: 600;
-  font-size: 0.8rem;
-  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
-  color: var(--brand);
 }
 
-.ob-rustig__nav-item.is-current {
-  background: color-mix(in srgb, var(--accent-soft) 88%, var(--surface));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 12%, transparent);
-  color: var(--text);
-  font-weight: 600;
+.ob-rustig__sidebar .ob-wizard__side-item strong {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.25;
 }
 
-.ob-rustig__nav-item.is-current span:first-child {
-  background: var(--brand);
-  color: #fff;
-}
-
-.ob-rustig__nav-sub {
+.ob-rustig__sidebar .ob-wizard__side-item small {
   display: block;
   font-size: 0.75rem;
-  font-weight: 500;
+  line-height: 1.3;
   color: var(--muted);
-  margin-block-start: 0.1rem;
+  white-space: nowrap;
 }
 
 .ob-rustig__main {
@@ -188,50 +141,31 @@
 .ob-rustig__hero-band {
   position: relative;
   block-size: var(--ob-rustig-hero-h);
-  overflow: hidden;
-  background: var(--bg);
-  flex-shrink: 0;
-}
-
-.ob-rustig__hero-band picture,
-.ob-rustig__hero-band img {
-  position: absolute;
-  inset: 0;
   inline-size: 100%;
-  block-size: 100%;
-  object-fit: cover;
-  object-position: var(--ob-rustig-art-pos, 72% 42%);
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 8%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 18%, transparent) 52%,
+      var(--bg) 100%
+    ),
+    linear-gradient(
+      90deg,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 35%, transparent) 6%,
+      transparent 14%,
+      transparent 86%,
+      color-mix(in srgb, var(--bg) 35%, transparent) 94%,
+      var(--bg) 100%
+    ),
+    var(--ob-rustig-hero-jpg);
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover;
+  background-position: center, center, var(--ob-rustig-art-pos, 50% 42%);
   pointer-events: none;
-}
-
-.ob-rustig__hero-band::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg) 12%, transparent) 0%,
-    color-mix(in srgb, var(--bg) 55%, transparent) 55%,
-    var(--bg) 100%
-  );
-}
-
-.ob-rustig__hero-band::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    var(--bg) 0%,
-    color-mix(in srgb, var(--bg) 92%, transparent) 18%,
-    transparent 42%,
-    transparent 58%,
-    color-mix(in srgb, var(--bg) 90%, transparent) 82%,
-    var(--bg) 100%
-  );
-  z-index: 1;
 }
 
 .ob-rustig__page-head {
@@ -256,14 +190,26 @@
 }
 
 .ob-rustig__body {
-  padding: 0.75rem 1.35rem 2rem;
+  padding: 0.75rem clamp(1.15rem, 2.5vw, 1.75rem) 2rem;
   flex: 1 1 auto;
+}
+
+.ob-rustig__canvas {
+  inline-size: 100%;
+  max-inline-size: min(52rem, 100%);
+}
+
+.ob-rustig__canvas--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 17rem);
+  gap: 1.25rem;
+  align-items: start;
 }
 
 .ob-rustig__form-grid {
   display: grid;
   gap: 1rem;
-  max-inline-size: 40rem;
+  inline-size: 100%;
 }
 
 .ob-rustig__row-2 {
@@ -324,7 +270,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
-  max-inline-size: 40rem;
 }
 
 .ob-rustig__preset {
@@ -375,11 +320,8 @@
 
 .ob-rustig__avail-card {
   margin-block-start: 1.25rem;
-  padding: 1rem 1rem 1.1rem;
-  border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
-  background: var(--surface);
-  max-inline-size: 40rem;
+  padding: 0.15rem 0 0;
+  max-inline-size: none;
 }
 
 .ob-rustig__avail-card h3 {
@@ -435,6 +377,14 @@
   padding: 1.35rem 1rem 1.5rem;
   border-inline-start: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
   background: color-mix(in srgb, var(--bg) 92%, var(--surface));
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-block-size: 100dvh;
+}
+
+.ob-rustig__rail--result {
+  padding-block-start: 2.5rem;
 }
 
 .ob-rustig__rail h2 {
@@ -638,7 +588,8 @@
 }
 
 .ob-rustig__question-card {
-  max-inline-size: 40rem;
+  inline-size: 100%;
+  max-inline-size: none;
   padding: 0.25rem 0 0;
 }
 
@@ -681,14 +632,14 @@
   font-size: 0.75rem;
   color: var(--muted);
   margin-block-end: 0.45rem;
-  max-inline-size: 28rem;
+  inline-size: 100%;
 }
 
 .ob-rustig__scale {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.45rem;
-  max-inline-size: 28rem;
+  inline-size: 100%;
 }
 
 .ob-rustig__scale button {
@@ -749,14 +700,20 @@
   font-weight: 600;
 }
 
+@media (min-width: 1024px) {
+  .ob-rustig__sidebar.ob-wizard__sidebar {
+    display: flex !important;
+  }
+}
+
 @media (max-width: 1023px) {
   .ob-rustig__layout,
   .ob-rustig__layout--with-rail {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .ob-rustig__sidebar {
-    display: none;
+  .ob-rustig__sidebar.ob-wizard__sidebar {
+    display: none !important;
   }
 
   .ob-rustig__rail {
@@ -770,7 +727,8 @@
     margin-block-end: 0.35rem;
   }
 
-  .ob-rustig__tests-layout--a {
+  .ob-rustig__tests-layout--a,
+  .ob-rustig__canvas--split {
     grid-template-columns: minmax(0, 1fr);
   }
 

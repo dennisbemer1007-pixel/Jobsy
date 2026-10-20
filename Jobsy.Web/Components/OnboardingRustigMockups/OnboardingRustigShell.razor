@@ -4,31 +4,41 @@
 
 <div class="ob-rustig" data-ob-rustig-screen="@ScreenId">
     <div class="ob-rustig__layout @(ShowJobsRail || RightRail is not null ? "ob-rustig__layout--with-rail" : null)">
-        <aside class="ob-rustig__sidebar" aria-label="Stappen">
-            <div class="ob-rustig__brand">
-                <LobsyLogo Variant="LobsyLogoVariant.Mark" Alt="Lobsy" />
-            </div>
-            <ol class="ob-rustig__nav">
-                @foreach (var item in NavItems)
-                {
-                    <li class="ob-rustig__nav-item @(item.Current ? "is-current" : null)">
-                        <span>@item.Number</span>
-                        <div>
-                            @item.Title
-                            @if (!string.IsNullOrWhiteSpace(item.Sub))
-                            {
-                                <span class="ob-rustig__nav-sub">@item.Sub</span>
-                            }
-                        </div>
-                    </li>
-                }
-            </ol>
+        <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
+            <img class="ob-rustig__logo-e"
+                 src="@BrandImages.MarkSvg"
+                 width="56"
+                 height="56"
+                 alt="Lobsy"
+                 decoding="async"
+                 data-logo-fallback="off"
+                 draggable="false" />
+            @foreach (var item in NavItems)
+            {
+                <div class="ob-wizard__side-item @(item.Current ? "is-current" : null)">
+                    <span>@item.Number</span>
+                    <div>
+                        <strong>@item.Title</strong>
+                        @if (!string.IsNullOrWhiteSpace(item.Sub))
+                        {
+                            <small>@item.Sub</small>
+                        }
+                    </div>
+                </div>
+            }
         </aside>
 
         <div class="ob-rustig__main">
             <header class="ob-rustig__chrome">
                 <div class="ob-rustig__mobile-brand">
-                    <LobsyLogo Variant="LobsyLogoVariant.Mark" Alt="Lobsy" />
+                    <img class="ob-rustig__logo-e"
+                         src="@BrandImages.MarkSvg"
+                         width="40"
+                         height="40"
+                         alt=""
+                         decoding="async"
+                         data-logo-fallback="off"
+                         draggable="false" />
                 </div>
                 <div class="ob-rustig__chrome-row">
                     <button type="button" class="ob-rustig__link" aria-hidden="true">‹</button>
@@ -52,13 +62,12 @@
                 </div>
             </header>
 
-            @if (!string.IsNullOrWhiteSpace(HeroWebp))
+            @if (!string.IsNullOrWhiteSpace(HeroJpg))
             {
-                <div class="ob-rustig__hero-band" style="@HeroStyle">
-                    <picture aria-hidden="true">
-                        <source type="image/webp" srcset="@HeroWebp" />
-                        <img src="@HeroJpg" alt="" width="1440" height="200" decoding="async" />
-                    </picture>
+                <div class="ob-rustig__hero-band"
+                     style="@HeroStyle"
+                     aria-hidden="true"
+                     data-testid="ob-rustig-hero">
                 </div>
             }
 
@@ -92,7 +101,7 @@
 
         @if (RightRail is not null)
         {
-            <aside class="ob-rustig__rail" aria-label="Resultaat">
+            <aside class="ob-rustig__rail ob-rustig__rail--result" aria-label="Resultaat">
                 @RightRail
             </aside>
         }
@@ -116,10 +125,21 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RightRail { get; set; }
 
-    private string? HeroStyle =>
-        string.IsNullOrWhiteSpace(HeroArtPosition)
-            ? null
-            : $"--ob-rustig-art-pos:{HeroArtPosition};";
+    private string? HeroStyle
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(HeroJpg))
+            {
+                return null;
+            }
+
+            var pos = string.IsNullOrWhiteSpace(HeroArtPosition) ? "50% 42%" : HeroArtPosition;
+            var jpg = HeroJpg;
+            var webp = string.IsNullOrWhiteSpace(HeroWebp) ? jpg : HeroWebp;
+            return $"--ob-rustig-hero-jpg:url('{jpg}');--ob-rustig-hero-webp:url('{webp}');--ob-rustig-art-pos:{pos};";
+        }
+    }
 
     private static readonly NavItem[] DefaultNav =
     [

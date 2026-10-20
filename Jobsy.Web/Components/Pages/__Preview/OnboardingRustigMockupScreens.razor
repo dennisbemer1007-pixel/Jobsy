@@ -9,7 +9,7 @@
 <PageTitle>Onboarding rustig mockup · @_screen · Lobsy</PageTitle>
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/onboarding-rustig-mockup.css?v=20261020-r1" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig-mockup.css?v=20261020-r2" />
 </HeadContent>
 
 @if (_screen == "index")
@@ -35,34 +35,37 @@ else if (_screen == "step-01")
                            Lead="Klopt dit? We hebben je naam overgenomen van je account."
                            HeroWebp="@OnboardingIllustrationAssets.KennismakenWebp"
                            HeroJpg="@OnboardingIllustrationAssets.KennismakenJpg"
-                           HeroArtPosition="68% 42%">
-        <div class="ob-rustig__form-grid">
-            <div class="ob-rustig__row-2">
-                <div class="ob-rustig__field">
-                    <label for="mock-voornaam">Voornaam</label>
-                    <input id="mock-voornaam" type="text" value="Sam" readonly />
+                           HeroArtPosition="55% 48%">
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__form-grid">
+                <div class="ob-rustig__row-2">
+                    <div class="ob-rustig__field">
+                        <label for="mock-voornaam">Voornaam</label>
+                        <input id="mock-voornaam" type="text" value="Sam" readonly />
+                    </div>
+                    <div class="ob-rustig__field">
+                        <label for="mock-achternaam">Achternaam</label>
+                        <input id="mock-achternaam" type="text" value="de Vries" readonly />
+                    </div>
                 </div>
                 <div class="ob-rustig__field">
-                    <label for="mock-achternaam">Achternaam</label>
-                    <input id="mock-achternaam" type="text" value="de Vries" readonly />
+                    <label for="mock-adres">Jouw adres</label>
+                    <input id="mock-adres" type="text" value="Kerkstraat 12, 8011 Zwolle" readonly />
                 </div>
-            </div>
-            <div class="ob-rustig__field">
-                <label for="mock-adres">Jouw adres</label>
-                <input id="mock-adres" type="text" value="Kerkstraat 12, 8011 Zwolle" readonly />
-            </div>
-            <div class="ob-rustig__field">
-                <label for="mock-geboorte">Geboortedatum</label>
-                <input id="mock-geboorte" type="text" value="14-03-2004" readonly />
-            </div>
-            <div>
-                <p class="ob-rustig__section-title">Wat is je situatie?</p>
-                <div class="ob-rustig__chips">
-                    <span class="ob-rustig__chip is-on">Ik zoek werk</span>
-                    <span class="ob-rustig__chip">Ik heb al een baan</span>
-                    <span class="ob-rustig__chip">Student</span>
-                    <span class="ob-rustig__chip">Uitkering</span>
+                <div class="ob-rustig__field">
+                    <label for="mock-geboorte">Geboortedatum</label>
+                    <input id="mock-geboorte" type="text" value="14-03-2004" readonly />
                 </div>
+                <fieldset class="work-status-field">
+                    <legend class="ob-rustig__section-title">Wat is je huidige werkstatus?</legend>
+                    <p class="ob-wizard__section-hint">Optioneel. Je mag er meer dan één kiezen.</p>
+                    <div class="work-status-chips lobsy-choice-grid">
+                        @foreach (var label in WorkStatusLabels)
+                        {
+                            <span class="work-status-chip lobsy-choice-tile @(label == "Student (mbo/hbo/wo)" ? "is-selected" : null)">@label</span>
+                        }
+                    </div>
+                </fieldset>
             </div>
         </div>
     </OnboardingRustigShell>
@@ -79,33 +82,35 @@ else if (_screen == "step-02")
                            Lead="Kies één of meer opties. Wij zetten uren en dagen voor je klaar."
                            HeroWebp="@OnboardingIllustrationAssets.BeschikbaarheidWebp"
                            HeroJpg="@OnboardingIllustrationAssets.BeschikbaarheidJpg"
-                           HeroArtPosition="62% 38%">
-        <p class="ob-rustig__section-title" style="margin-top:0">1. Kies wat bij je past</p>
-        <div class="ob-rustig__preset-grid">
-            <div class="ob-rustig__preset"><strong>Bijbaan naast school</strong><span>Ochtenden en middagen op doordeweekse dagen</span></div>
-            <div class="ob-rustig__preset is-on"><strong>Kantoordagen</strong><span>Ma t/m vr, overdag</span></div>
-            <div class="ob-rustig__preset"><strong>Weekenden</strong><span>Zaterdag en zondag</span></div>
-            <div class="ob-rustig__preset is-on"><strong>Vakantiewerk</strong><span>Flexibel in schoolvakanties</span></div>
-            <div class="ob-rustig__preset"><strong>Avonden</strong><span>Na 17:00</span></div>
-            <div class="ob-rustig__preset"><strong>Parttime vaste uren</strong><span>12–24 uur per week</span></div>
-        </div>
-        <div class="ob-rustig__avail-card">
-            <h3>Stel zelf uren en dagen in</h3>
-            <p class="ob-rustig__avail-hint">Tik op elk vakje waarop je kunt werken.</p>
-            <div class="ob-rustig__avail-grid" role="grid" aria-label="Beschikbaarheid">
-                <span></span>
-                <span class="head">Ochtend</span>
-                <span class="head">Middag</span>
-                <span class="head">Avond</span>
-                <span class="head">Nacht</span>
-                @foreach (var day in AvailDays)
-                {
-                    <span class="day">@day</span>
-                    @foreach (var on in day.On)
+                           HeroArtPosition="50% 45%">
+        <div class="ob-rustig__canvas">
+            <p class="ob-rustig__section-title" style="margin-top:0">1. Kies wat bij je past</p>
+            <div class="ob-rustig__preset-grid">
+                <div class="ob-rustig__preset"><strong>Bijbaan naast school</strong><span>Ochtenden en middagen op doordeweekse dagen</span></div>
+                <div class="ob-rustig__preset is-on"><strong>Kantoordagen</strong><span>Ma t/m vr, overdag</span></div>
+                <div class="ob-rustig__preset"><strong>Weekenden</strong><span>Zaterdag en zondag</span></div>
+                <div class="ob-rustig__preset is-on"><strong>Vakantiewerk</strong><span>Flexibel in schoolvakanties</span></div>
+                <div class="ob-rustig__preset"><strong>Avonden</strong><span>Na 17:00</span></div>
+                <div class="ob-rustig__preset"><strong>Parttime vaste uren</strong><span>12 tot 24 uur per week</span></div>
+            </div>
+            <div class="ob-rustig__avail-card">
+                <h3>Stel zelf uren en dagen in</h3>
+                <p class="ob-rustig__avail-hint">Tik op elk vakje waarop je kunt werken.</p>
+                <div class="ob-rustig__avail-grid" role="grid" aria-label="Beschikbaarheid">
+                    <span></span>
+                    <span class="head">Ochtend</span>
+                    <span class="head">Middag</span>
+                    <span class="head">Avond</span>
+                    <span class="head">Nacht</span>
+                    @foreach (var row in AvailDays)
                     {
-                        <span class="ob-rustig__avail-cell @(on ? "is-on" : null)" role="gridcell">@(on ? "✓" : null)</span>
+                        <span class="day">@row.Day</span>
+                        @foreach (var on in row.On)
+                        {
+                            <span class="ob-rustig__avail-cell @(on ? "is-on" : null)" role="gridcell">@(on ? "✓" : null)</span>
+                        }
                     }
-                }
+                </div>
             </div>
         </div>
     </OnboardingRustigShell>
@@ -122,64 +127,143 @@ else if (_screen is "step-07-a" or "step-07-b")
                            Lead="Vier korte tests. Samen ongeveer 10 minuten tot je Kompas klaar is."
                            HeroWebp="/images/onboarding/wie-ben-jij-reis-lobsy.webp"
                            HeroJpg="/images/onboarding/wie-ben-jij-reis-lobsy.jpg"
-                           HeroArtPosition="70% 35%"
+                           HeroArtPosition="48% 40%"
                            NavOverride="@JourneyNav"
-                           RightRail="@(variantA ? null : Step07ResultRail)">
-        <p class="ob-rustig__privacy-line">
-            Je antwoorden blijven privé. Werkgevers zien pas iets als jij akkoord geeft op een match.
-        </p>
-        <div class="ob-rustig__tests-layout @(variantA ? "ob-rustig__tests-layout--a" : "ob-rustig__tests-layout--b")">
-            <div>
-                <ol class="ob-rustig__test-cards">
-                    <li class="ob-rustig__test-card is-done">
-                        <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">✓</span> Hoe je werkt</div>
-                        <p>Samen &amp; aardig</p>
-                    </li>
-                    <li class="ob-rustig__test-card is-next">
-                        <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">2</span> Leuk</div>
-                        <p>Wat je energie geeft op het werk</p>
-                    </li>
-                    <li class="ob-rustig__test-card">
-                        <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">3</span> Sfeer</div>
-                        <p>Welke werksfeer bij je past</p>
-                    </li>
-                    <li class="ob-rustig__test-card">
-                        <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">4</span> Waarden</div>
-                        <p>Wat voor jou belangrijk is</p>
-                    </li>
-                </ol>
+                           RightRail="@(variantA ? null : FinishedTestResult)">
+        <div class="ob-rustig__canvas">
+            <p class="ob-rustig__privacy-line">
+                Je antwoorden blijven privé. Werkgevers zien pas iets als jij akkoord geeft op een match.
+            </p>
+            <div class="ob-rustig__tests-layout @(variantA ? "ob-rustig__tests-layout--a" : "ob-rustig__tests-layout--b")">
+                <div>
+                    <ol class="ob-rustig__test-cards">
+                        <li class="ob-rustig__test-card is-done">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">✓</span> Hoe je werkt</div>
+                            <p>Samen &amp; aardig</p>
+                        </li>
+                        <li class="ob-rustig__test-card is-next">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">2</span> Leuk</div>
+                            <p>Wat je energie geeft op het werk</p>
+                        </li>
+                        <li class="ob-rustig__test-card">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">3</span> Sfeer</div>
+                            <p>Welke werksfeer bij je past</p>
+                        </li>
+                        <li class="ob-rustig__test-card">
+                            <div class="ob-rustig__test-card-head"><span class="ob-rustig__mark">4</span> Waarden</div>
+                            <p>Wat voor jou belangrijk is</p>
+                        </li>
+                    </ol>
+                </div>
+                @if (variantA)
+                {
+                    @FinishedTestResult
+                }
             </div>
-            @if (variantA)
-            {
-                @Step07ResultCard
-            }
-        </div>
-        <div class="ob-rustig__consent-block">
-            <label class="ob-rustig__consent">
-                <input type="checkbox" checked />
-                <span>Ik geef toestemming om mijn antwoorden te gebruiken voor mijn Kompas en passende vacatures.</span>
-            </label>
-            <a class="ob-rustig__meer" href="#">Meer uitleg</a>
+            <div class="ob-rustig__consent-block">
+                <label class="ob-rustig__consent">
+                    <input type="checkbox" checked />
+                    <span>Ik geef toestemming om mijn antwoorden te gebruiken voor mijn Kompas en passende vacatures.</span>
+                </label>
+                <a class="ob-rustig__meer" href="#">Meer uitleg</a>
+            </div>
         </div>
     </OnboardingRustigShell>
 }
-else if (_screen == "test-leuk")
+else if (_screen is "test-leuk-a" or "test-leuk-b")
 {
-    <OnboardingRustigShell ScreenId="test-leuk"
+    var variantA = _screen == "test-leuk-a";
+    <OnboardingRustigShell ScreenId="@_screen"
                            Step="8"
                            PhaseLabel="Wie ben jij"
                            MinutesLeft="4"
                            ShowSaved="true"
                            HeroWebp="/images/tests/bg-leuk.webp"
                            HeroJpg="/images/tests/bg-leuk.jpg"
-                           HeroArtPosition="55% 30%"
-                           NavOverride="@JourneyNav">
-        <div class="ob-rustig__test-tabs" aria-label="Tests">
-            <span class="ob-rustig__test-tab is-done">✓ Hoe je werkt</span>
-            <span class="ob-rustig__test-tab is-current">Leuk</span>
-            <span class="ob-rustig__test-tab">Sfeer</span>
-            <span class="ob-rustig__test-tab">Waarden</span>
+                           HeroArtPosition="50% 38%"
+                           NavOverride="@JourneyNav"
+                           RightRail="@(variantA ? null : FinishedTestResult)">
+        <div class="ob-rustig__canvas @(variantA ? "ob-rustig__canvas--split" : null)">
+            <div>
+                <div class="ob-rustig__test-tabs" aria-label="Tests">
+                    <span class="ob-rustig__test-tab is-done">✓ Hoe je werkt</span>
+                    <span class="ob-rustig__test-tab is-current">Leuk</span>
+                    <span class="ob-rustig__test-tab">Sfeer</span>
+                    <span class="ob-rustig__test-tab">Waarden</span>
+                </div>
+                @TestQuestionBody
+            </div>
+            @if (variantA)
+            {
+                @FinishedTestResult
+            }
         </div>
+    </OnboardingRustigShell>
+}
+else if (_screen == "test-leuk")
+{
+    <p>Gebruik <a href="/mockups/onboarding-rustig/test-leuk-a">test-leuk-a</a> of <a href="/mockups/onboarding-rustig/test-leuk-b">test-leuk-b</a>.</p>
+}
+else
+{
+    <p>Onbekend scherm. <a href="/mockups/onboarding-rustig">Terug naar index</a>.</p>
+}
+
+@code {
+    private string _screen = "index";
+
+    [Parameter] public string? Screen { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _screen = string.IsNullOrWhiteSpace(Screen) ? "index" : Screen.Trim().ToLowerInvariant();
+    }
+
+    private static readonly string[] WorkStatusLabels =
+    [
+        "Scholier",
+        "Student (mbo/hbo/wo)",
+        "Stagiair / afstudeerder",
+        "In loondienst, fulltime",
+        "In loondienst, parttime",
+        "Flexwerker",
+        "Zzp'er",
+        "Op dit moment geen baan",
+        "Herintreder",
+        "Gepensioneerd",
+        "Ondernemer",
+    ];
+
+    private static readonly (string Href, string Label)[] IndexLinks =
+    [
+        ("/mockups/onboarding-rustig/step-01", "Stap 1 · Even kennismaken"),
+        ("/mockups/onboarding-rustig/step-02", "Stap 2 · Wanneer kun je werken?"),
+        ("/mockups/onboarding-rustig/step-07-a", "Stap 7 · Nu even over jou (variant A)"),
+        ("/mockups/onboarding-rustig/step-07-b", "Stap 7 · Nu even over jou (variant B)"),
+        ("/mockups/onboarding-rustig/test-leuk-a", "Testvraag · Leuk (variant A)"),
+        ("/mockups/onboarding-rustig/test-leuk-b", "Testvraag · Leuk (variant B)"),
+    ];
+
+    private static readonly IReadOnlyList<OnboardingRustigShell.NavItem> JourneyNav =
+    [
+        new("1", "Over jou", "3 stappen", false),
+        new("2", "Achtergrond", "optioneel", false),
+        new("3", "Droom", "1 stap", false),
+        new("4", "Wie ben jij", "4 korte tests", true),
+        new("5", "Jouw Kompas", "bijna klaar", false),
+    ];
+
+    private static readonly RenderFragment FinishedTestResult = __builder =>
+    {
+        <div class="ob-rustig__result-card">
+            <kbd>Hoe je werkt</kbd>
+            <h3>Samen &amp; aardig</h3>
+            <p>Je werkt graag samen en houdt rekening met anderen.</p>
+        </div>;
+    };
+
+    private static readonly RenderFragment TestQuestionBody = __builder =>
+    {
         <div class="ob-rustig__question-card">
             <p class="ob-rustig__q-meta">Hoe goed past elke zin bij jou?</p>
             <p class="ob-rustig__q-meta">Vraag 1 van 5</p>
@@ -205,57 +289,6 @@ else if (_screen == "test-leuk")
                 <button type="button" class="ob-rustig__btn">Terug</button>
                 <button type="button" class="ob-rustig__btn">Later doen</button>
             </div>
-        </div>
-    </OnboardingRustigShell>
-}
-else
-{
-    <p>Onbekend scherm. <a href="/mockups/onboarding-rustig">Terug naar index</a>.</p>
-}
-
-@code {
-    private string _screen = "index";
-
-    [Parameter] public string? Screen { get; set; }
-
-    protected override void OnParametersSet()
-    {
-        _screen = string.IsNullOrWhiteSpace(Screen) ? "index" : Screen.Trim().ToLowerInvariant();
-    }
-
-    private static readonly (string Href, string Label)[] IndexLinks =
-    [
-        ("/mockups/onboarding-rustig/step-01", "Stap 1 · Even kennismaken"),
-        ("/mockups/onboarding-rustig/step-02", "Stap 2 · Wanneer kun je werken?"),
-        ("/mockups/onboarding-rustig/step-07-a", "Stap 7 · Nu even over jou (variant A)"),
-        ("/mockups/onboarding-rustig/step-07-b", "Stap 7 · Nu even over jou (variant B)"),
-        ("/mockups/onboarding-rustig/test-leuk", "Testvraag · Leuk"),
-    ];
-
-    private static readonly IReadOnlyList<OnboardingRustigShell.NavItem> JourneyNav =
-    [
-        new("1", "Over jou", "3 stappen", false),
-        new("2", "Achtergrond", "optioneel", false),
-        new("3", "Droom", "1 stap", false),
-        new("4", "Wie ben jij", "4 korte tests", true),
-        new("5", "Jouw Kompas", "bijna klaar", false),
-    ];
-
-    private static readonly RenderFragment Step07ResultCard = __builder =>
-    {
-        <div class="ob-rustig__result-card">
-            <kbd>Hoe je werkt</kbd>
-            <h3>Samen &amp; aardig</h3>
-            <p>Je werkt graag samen en houdt rekening met anderen.</p>
-        </div>;
-    };
-
-    private static readonly RenderFragment Step07ResultRail = __builder =>
-    {
-        <div class="ob-rustig__result-card">
-            <kbd>Hoe je werkt</kbd>
-            <h3>Samen &amp; aardig</h3>
-            <p>Je werkt graag samen en houdt rekening met anderen.</p>
         </div>;
     };
 

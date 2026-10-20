@@ -31,8 +31,10 @@ public sealed class OnboardingRustigMockupScreenshotPlaywrightTests : IAsyncLife
         ("step-07-a-mobile", "/mockups/onboarding-rustig/step-07-a", 390, 844),
         ("step-07-b-desktop", "/mockups/onboarding-rustig/step-07-b", 1440, 900),
         ("step-07-b-mobile", "/mockups/onboarding-rustig/step-07-b", 390, 844),
-        ("test-leuk-desktop", "/mockups/onboarding-rustig/test-leuk", 1440, 900),
-        ("test-leuk-mobile", "/mockups/onboarding-rustig/test-leuk", 390, 844),
+        ("test-leuk-a-desktop", "/mockups/onboarding-rustig/test-leuk-a", 1440, 900),
+        ("test-leuk-a-mobile", "/mockups/onboarding-rustig/test-leuk-a", 390, 844),
+        ("test-leuk-b-desktop", "/mockups/onboarding-rustig/test-leuk-b", 1440, 900),
+        ("test-leuk-b-mobile", "/mockups/onboarding-rustig/test-leuk-b", 390, 844),
     ];
 
     public async ValueTask InitializeAsync()
@@ -68,13 +70,13 @@ public sealed class OnboardingRustigMockupScreenshotPlaywrightTests : IAsyncLife
 
             await page.GotoAsync($"{_baseUrl}{path}", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync("[data-ob-rustig-screen]", new PageWaitForSelectorOptions { Timeout = 30_000 });
-            await page.WaitForTimeoutAsync(400);
+            await page.WaitForTimeoutAsync(500);
 
             var file = Path.Combine(OutDir, $"{slug}.png");
             await page.ScreenshotAsync(new PageScreenshotOptions
             {
                 Path = file,
-                FullPage = true,
+                FullPage = false,
             });
 
             await page.CloseAsync();
