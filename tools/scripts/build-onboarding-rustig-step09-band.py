@@ -12,7 +12,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw"
-DEFAULT_SRC = RAW / "step-09-source-16x9-u9a-seamless.jpg"
+DEFAULT_SRC = RAW / "step-09-source-16x9-u9b-seamless.jpg"
 OUT = RAW / "step-09-desktop-raw.jpg"
 OUT_SIZE = (2400, 400)
 
@@ -143,6 +143,8 @@ def main() -> None:
     s4 = load_step04_helpers()
     im = s4.heal_topright_sky(Image.open(src).convert("RGB"))
     band = pick_slice(im).resize(OUT_SIZE, Image.Resampling.LANCZOS)
+    # u9b+: lift scene (no extend_ground — that pasted grass into the bottom fade zone).
+    band = lift_figures_in_band(band, fin, ground_margin=95)
     band = defuse_figure_red(band)
     band = defuse_report_band_red(band)
     band = fin.apply_cream_fades(band)

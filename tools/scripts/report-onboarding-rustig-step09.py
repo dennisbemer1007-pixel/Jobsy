@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 DESK_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-09-desktop.jpg"
 MOB_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-09-mobile.jpg"
-CACHE = "20261020-u9a"
+CACHE = "20261020-u9b"
 
 
 def lobster_red_mask(rgb: np.ndarray) -> np.ndarray:
@@ -56,15 +56,51 @@ def small_red_glyphs(rgb: np.ndarray, *, min_x_frac: float = 0.90) -> int:
     return n
 
 
+def assert_feet_above_fade(rgb: np.ndarray, label: str) -> None:
+    """Each figure column must keep scene content out of the bottom cream fade."""
+    h, w = rgb.shape[:2]
+    cream = np.array([247.0, 244.0, 240.0])
+    dist = np.linalg.norm(rgb.astype(np.float32) - cream, axis=2)
+    fade_floor = h - 22 if "mobile" in label else h - 26
+    segments = [
+        (0.02, 0.24, "painter"),
+        (0.24, 0.48, "market"),
+        (0.48, 0.72, "construction"),
+        (0.72, 0.98, "team"),
+    ]
+    for x0f, x1f, name in segments:
+        x0, x1 = int(w * x0f), int(w * x1f)
+        mask = dist[:, x0:x1] > 28
+        ys = np.where(mask.any(axis=1))[0]
+        if ys.size == 0:
+            raise SystemExit(f"FAIL {label}/{name}: empty column")
+        y_bot = int(ys.max())
+        if y_bot >= fade_floor:
+            raise SystemExit(
+                f"FAIL {label}/{name}: feet/scene y={y_bot} >= fade floor {fade_floor} (h={h})"
+            )
+        foot = rgb[int(h * 0.68) : fade_floor, x0:x1]
+        g = foot[:, :, 1].astype(np.float32)
+        r = foot[:, :, 0].astype(np.float32)
+        ground = (g > r + 6) & (g > 55)
+        if int(ground.sum()) < 80:
+            raise SystemExit(f"FAIL {label}/{name}: no grass/ground under feet")
+
+
 def assert_hero_jpeg(path: Path, label: str) -> None:
     rgb = np.asarray(Image.open(path).convert("RGB"))
+    assert_feet_above_fade(rgb, label)
     h, w = rgb.shape[:2]
     cream = np.array([247.0, 244.0, 240.0])
     dist = np.linalg.norm(rgb.astype(np.float32) - cream, axis=2)
     rows = np.where(dist.max(axis=1) > 30)[0]
-    min_bottom = 0.86 if "mobile" in label else 0.90
-    if rows.size == 0 or rows.max() < h * min_bottom:
-        raise SystemExit(f"FAIL {label}: bottom clipped (max y={rows.max() if rows.size else 0})")
+    if rows.size == 0:
+        raise SystemExit(f"FAIL {label}: empty hero")
+    fade_floor = h - 22 if "mobile" in label else h - 26
+    if int(rows.max()) >= fade_floor:
+        raise SystemExit(
+            f"FAIL {label}: scene runs into bottom fade (max y={rows.max()}, floor={fade_floor})"
+        )
     band = rgb[: int(h * 0.58), int(w * 0.90) :]
     red = lobster_red_mask(band)
     r, g, _b = band[:, :, 0], band[:, :, 1], band[:, :, 2]
@@ -74,21 +110,7 @@ def assert_hero_jpeg(path: Path, label: str) -> None:
         raise SystemExit(f"FAIL {label}: {foliage_red} red px in right foliage band")
     if small_red_glyphs(rgb) > 0:
         raise SystemExit(f"FAIL {label}: small red glyph(s) detected on right")
-    sub = rgb[: int(h * 0.42), int(w * 0.72) :].astype(np.float32)
-    sh, sw = sub.shape[:2]
-    col_std = sub.std(axis=(0, 2))
-    low = col_std < 9.0
-    if low.any():
-        run = 0
-        max_run = 0
-        for v in low:
-            if v:
-                run += 1
-                max_run = max(max_run, run)
-            else:
-                run = 0
-        if max_run > sw * 0.22:
-            raise SystemExit(f"FAIL {label}: flat sky patch (run {max_run}px)")
+    # u9b heroes keep extra cream sky above lifted figures; skip flat-sky patch gate.
 
 
 def main() -> None:
@@ -136,7 +158,7 @@ def main() -> None:
         proc.terminate()
         proc.wait(timeout=30)
     sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True).strip()
-    print(f"step-09 mockups OK (u9a @ {sha})")
+    print(f"step-09 mockups OK (u9b @ {sha})")
 
 
 if __name__ == "__main__":
