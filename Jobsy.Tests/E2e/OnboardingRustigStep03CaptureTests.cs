@@ -43,12 +43,6 @@ public sealed class OnboardingRustigStep03CaptureTests
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(400);
-        if (mobile)
-        {
-            var footerNext = page.GetByTestId("onboarding-next");
-            await footerNext.ScrollIntoViewIfNeededAsync();
-            await page.WaitForTimeoutAsync(200);
-        }
 
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{fileStem}-viewport.png"), FullPage = false });
     }

@@ -480,12 +480,12 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         }
 
         await using (var videoContext = await browser.NewContextAsync(new()
-                     {
-                         ViewportSize = new() { Width = 1440, Height = 900 },
-                         IgnoreHTTPSErrors = true,
-                         RecordVideoDir = OutputDirR7,
-                         RecordVideoSize = new() { Width = 1440, Height = 900 }
-                     }))
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            IgnoreHTTPSErrors = true,
+            RecordVideoDir = OutputDirR7,
+            RecordVideoSize = new() { Width = 1440, Height = 900 }
+        }))
         {
             await PlaywrightCookieConsent.AcceptAsync(videoContext);
             var page = await videoContext.NewPageAsync();

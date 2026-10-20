@@ -129,35 +129,35 @@ public sealed class ReferenceVerificationService(
         Dictionary<Guid, WorkExperienceReferenceToken> latestTokenByRequest,
         DateTime now)
     {
-            latestTokenByRequest.TryGetValue(r.Id, out var token);
-            var display = ReferenceVerificationRules.DisplayStatus(r);
-            DateTime? sentAt = token?.CreatedAtUtc;
-            DateTime? expiresAt = token?.ExpiresAtUtc;
-            if (display == "sent" && token is not null && token.UsedAtUtc is null && token.ExpiresAtUtc < now)
-            {
-                display = "expired";
-            }
+        latestTokenByRequest.TryGetValue(r.Id, out var token);
+        var display = ReferenceVerificationRules.DisplayStatus(r);
+        DateTime? sentAt = token?.CreatedAtUtc;
+        DateTime? expiresAt = token?.ExpiresAtUtc;
+        if (display == "sent" && token is not null && token.UsedAtUtc is null && token.ExpiresAtUtc < now)
+        {
+            display = "expired";
+        }
 
-            int? daysLeft = null;
-            if (display == "sent" && expiresAt is DateTime exp)
-            {
-                daysLeft = Math.Max(0, (int)Math.Ceiling((exp - now).TotalDays));
-            }
+        int? daysLeft = null;
+        if (display == "sent" && expiresAt is DateTime exp)
+        {
+            daysLeft = Math.Max(0, (int)Math.Ceiling((exp - now).TotalDays));
+        }
 
-            return new ReferenceVerificationListRow(
-                r.Id,
-                r.WorkExperienceEntryId,
-                r.EmployerName,
-                r.RoleTitle,
-                display,
-                r.ReferentName,
-                r.Relation,
-                r.CompletedAtUtc,
-                sentAt,
-                expiresAt,
-                daysLeft,
-                ReferenceVerificationRules.IsActiveVerification(r),
-                ReferenceVerificationRules.ParseEndorsedCodes(r.EndorsedCompetenceCodesJson).Count);
+        return new ReferenceVerificationListRow(
+            r.Id,
+            r.WorkExperienceEntryId,
+            r.EmployerName,
+            r.RoleTitle,
+            display,
+            r.ReferentName,
+            r.Relation,
+            r.CompletedAtUtc,
+            sentAt,
+            expiresAt,
+            daysLeft,
+            ReferenceVerificationRules.IsActiveVerification(r),
+            ReferenceVerificationRules.ParseEndorsedCodes(r.EndorsedCompetenceCodesJson).Count);
     }
 
     public async Task<(bool Ok, string? Error)> RequestAsync(
