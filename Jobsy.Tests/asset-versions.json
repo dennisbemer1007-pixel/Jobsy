@@ -48,16 +48,16 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "5f9c983a876ac9d1d75e08c3344c87479aa24f9942ce5ecb187ed6e6e741d00b",
-    "v": "20261019-68"
+    "sha256": "62ef50acd8000eede3e3b7e71e0ba3604b2dec3da999893724dcb7e87de94fcd",
+    "v": "20261020-r8"
   },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
   "css/features/candidate-illustrated-decorative-layers.css": {
-    "sha256": "43ca69ac848dfe48455ebdd47906dc848c5099bb46dd5962f45d93ec2a8ba92e",
-    "v": "20261019-03"
+    "sha256": "900dc5e9bf425f86dfdb9012f4f7e9ced2baba54475bfabad71ee4adda830ce5",
+    "v": "20261020-01"
   },
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
@@ -164,7 +164,7 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "fea8a83ed549d468dcfb5e5df787c469cd09aa1762b53c49ed3caa3dd8fd5e9d",
+    "sha256": "6dd4532d9c4978fdbd3e09890bf94cfd09d2b50b3c1d03740f2dda204265dca0",
     "v": "20261019-r25"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -228,8 +228,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "a6ceea6a1b9e8bf61433175b0556e9d536c439d388f122e1ee336c6a6b64730b",
-    "v": "20261018-04"
+    "sha256": "4a14c2a587ec9d49f1561e8e2f778afe12870783e328cd50c463e2e90ea79fb6",
+    "v": "20261020-r8"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",
@@ -264,8 +264,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "b6cffff99d6eca14400e9c82a9f8bb049d71cfb15f1ffc854f2fee1677a2433b",
-    "v": "20261019-15"
+    "sha256": "708b5a7076e96afa3ade62ba869e925b5d4b7bf7e461e3ae9727d97a058ace5a",
+    "v": "20261020-01"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -348,11 +348,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "3a40163b295b3a45a07a853c1fec3a929bb9bb45a9894aeabdb4fc843c0049ce",
+    "sha256": "15f3851f338c539c341db65dd4efb4e6f61dd13e4e045646c31b5621c66eae04",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "64accb94f4604ca91a345a31491251639b09fa3c3bac852b43ab910e5d5187ac",
+    "sha256": "d909d018299a317fabdcf1da94af1e120fa1ebc35aa944ccaf3627ad26343572",
     "v": "20261016-06"
   }
 }

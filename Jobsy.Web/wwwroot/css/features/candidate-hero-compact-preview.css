@@ -614,6 +614,7 @@
   .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art {
     margin-inline-end: calc(-1 * clamp(16px, 3vw, 28px));
     width: calc(100% + clamp(16px, 3vw, 28px)) !important;
+    pointer-events: none;
   }
 
   .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art {
@@ -630,6 +631,7 @@
     width: 112%;
     max-width: none;
     min-height: max(8.125rem, 130px);
+    pointer-events: none;
     object-fit: cover;
     object-position: right center;
     -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 48px, #000 48px, #000 88%, transparent 100%),
@@ -1474,7 +1476,8 @@
     height: max(8.125rem, 130px) !important;
     max-height: max(8.125rem, 130px) !important;
     background-color: var(--cand-compact-hero-band) !important;
-    overflow: visible;
+    overflow: hidden;
+    pointer-events: none;
     -webkit-mask-image: none;
     mask-image: none;
   }
@@ -1484,9 +1487,10 @@
   }
 
   [data-testid="test-block-stage"] > .test-block-stage__content > header.cand-compact-hero .cand-compact-hero__art {
-    overflow: visible;
+    overflow: hidden;
     padding: 0.4rem 0.65rem 0.55rem 0;
     box-sizing: border-box;
+    pointer-events: none;
   }
 
   [data-testid="test-block-stage"] > .test-block-stage__content > header.cand-compact-hero .cand-compact-hero__art img {

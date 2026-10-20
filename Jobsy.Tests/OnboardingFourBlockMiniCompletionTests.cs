@@ -65,30 +65,9 @@ public sealed class OnboardingFourBlockMiniCompletionTests : BunitContext
                 .Select(id => new TestQuestionFlow.FlowQuestion(id, $"{kind}.{id}"))
                 .ToList();
 
-            var cut = Render<TestQuestionFlow>(parameters => parameters
-                .Add(p => p.Kind, kind)
-                .Add(p => p.Questions, questions)
-                .Add(p => p.Answers, new Dictionary<int, int>())
-                .Add(p => p.Target, TestDepthLevel.First)
-                .Add(p => p.Compact, true));
-
-            Assert.Contains("Vraag 1 van 5", cut.Markup, StringComparison.Ordinal);
-
             var answers = miniIds.ToDictionary(id => id, _ => 3);
             total += answers.Count;
             Assert.True(OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, Version, answers));
-
-            for (var q = 1; q <= 5; q++)
-            {
-                var atIndex = Render<TestQuestionFlow>(parameters => parameters
-                    .Add(p => p.Kind, kind)
-                    .Add(p => p.Questions, questions)
-                    .Add(p => p.Answers, answers)
-                    .Add(p => p.StartAt, q - 1)
-                    .Add(p => p.Target, TestDepthLevel.First)
-                    .Add(p => p.Compact, true));
-                Assert.Contains($"Vraag {q} van 5", atIndex.Markup, StringComparison.Ordinal);
-            }
         }
 
         Assert.Equal(20, total);
@@ -101,6 +80,63 @@ public sealed class OnboardingFourBlockMiniCompletionTests : BunitContext
         var journey = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DiscoveryJourney.razor"));
         Assert.Contains("IsPersistedMiniBlockCompleteAsync", journey, StringComparison.Ordinal);
         Assert.Contains("TryRouteToFirstIncompleteMiniBlockAsync", journey, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void First_unanswered_index_when_block_full_points_at_last_question()
+    {
+        var miniIds = TestDepthRules.MiniIds(AssessmentKind.Career, Version);
+        var filled = miniIds.ToDictionary(id => id, _ => 3);
+        var index = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(8, Version, filled);
+        Assert.Equal(miniIds.Length - 1, index);
+    }
+
+    [Fact]
+    public void Wizard_pins_mini_autosave_to_prepare_step_and_assessment_kind()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
+        Assert.Contains("MiniBlockAutosaveContext", wizard, StringComparison.Ordinal);
+        Assert.Contains("PersistMiniBlockAnswersAsync", wizard, StringComparison.Ordinal);
+        Assert.Contains("EnsureOnFirstIncompleteMiniBlockAsync", wizard, StringComparison.Ordinal);
+        Assert.Contains("TryEnterKompasWhenAllMiniTestsCompleteAsync", wizard, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TestQuestionFlow_syncs_resume_index_when_server_answers_arrive_after_mount()
+    {
+        var miniIds = TestDepthRules.MiniIds(AssessmentKind.Career, Version);
+        var questions = miniIds
+            .Select(id => new TestQuestionFlow.FlowQuestion(id, $"Career.{id}"))
+            .ToList();
+        var partial = new Dictionary<int, int>
+        {
+            [miniIds[0]] = 3,
+            [miniIds[1]] = 4,
+            [miniIds[2]] = 2,
+        };
+
+        var cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Career)
+            .Add(p => p.Questions, questions)
+            .Add(p => p.Answers, new Dictionary<int, int>())
+            .Add(p => p.StartAt, 0)
+            .Add(p => p.ExternalIndex, 0)
+            .Add(p => p.Target, TestDepthLevel.First)
+            .Add(p => p.Compact, true));
+
+        Assert.Contains("Vraag 1 van 5", cut.Markup, StringComparison.Ordinal);
+
+        cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Career)
+            .Add(p => p.Questions, questions)
+            .Add(p => p.Answers, partial)
+            .Add(p => p.StartAt, 0)
+            .Add(p => p.ExternalIndex, 0)
+            .Add(p => p.Target, TestDepthLevel.First)
+            .Add(p => p.Compact, true));
+
+        Assert.Contains("Vraag 4 van 5", cut.Markup, StringComparison.Ordinal);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

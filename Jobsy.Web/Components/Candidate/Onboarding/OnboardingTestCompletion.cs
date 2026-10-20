@@ -16,24 +16,27 @@ internal static class OnboardingTestCompletion
         var culture = await api.GetMyCultureAsync(cancellationToken);
         var values = await api.GetMyValuesAsync(cancellationToken);
 
-        var version = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2Enabled);
         var completed = new List<int>(4);
-        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Competence, version, competency?.Answers))
+        var competenceVersion = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2Enabled);
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Competence, competenceVersion, competency?.Answers))
         {
             completed.Add(7);
         }
 
-        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Career, version, career?.Answers))
+        var careerVersion = ResolveQuickScanVersion(career?.QuickScanVersion, testsV2Enabled);
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Career, careerVersion, career?.Answers))
         {
             completed.Add(8);
         }
 
-        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Culture, version, culture?.Answers))
+        var cultureVersion = ResolveQuickScanVersion(culture?.QuickScanVersion, testsV2Enabled);
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Culture, cultureVersion, culture?.Answers))
         {
             completed.Add(9);
         }
 
-        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Values, version, values?.Answers))
+        var valuesVersion = ResolveQuickScanVersion(values?.QuickScanVersion, testsV2Enabled);
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Values, valuesVersion, values?.Answers))
         {
             completed.Add(10);
         }
@@ -70,6 +73,6 @@ internal static class OnboardingTestCompletion
             return value;
         }
 
-        return testsV2Enabled ? AssessmentTestVersions.V2 : AssessmentTestVersions.V1;
+        return testsV2Enabled ? AssessmentTestVersions.V3 : AssessmentTestVersions.V1;
     }
 }
