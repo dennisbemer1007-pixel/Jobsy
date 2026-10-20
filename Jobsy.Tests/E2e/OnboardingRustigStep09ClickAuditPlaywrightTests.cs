@@ -55,8 +55,24 @@ public sealed class OnboardingRustigStep09ClickAuditPlaywrightTests
 
         var rows = new List<(string Control, string Result)>();
         await AuditAsync(page, rows, "Later verder", page.GetByRole(AriaRole.Button, new() { Name = "Later verder" }));
+
+        var accountLink = page.Locator("a.ob-rustig__link--underline[href='/privacy/data']");
+        if (await accountLink.CountAsync() == 0)
+        {
+            accountLink = page.GetByRole(AriaRole.Link, new() { Name = "Mijn gegevens & account" });
+        }
+
+        rows.Add(("Mijn gegevens & account", await TryHitAuditAsync(page, accountLink, "account")));
+
         var likert = page.Locator(".test-likert button, .lobsy-likert button").First;
         await AuditAsync(page, rows, "Likert 1", likert);
+
+        var flowBack = page.Locator(".test-flow__back").First;
+        await AuditAsync(page, rows, "Test terug", flowBack);
+        var flowNext = page.Locator(".test-flow__next").First;
+        await AuditAsync(page, rows, "Test volgende", flowNext);
+        var testsLater = page.GetByTestId("onboarding-tests-later");
+        await AuditAsync(page, rows, "Tests later", testsLater);
 
         var reportPath = Path.Combine(reportDir, $"click-audit-step-09-{mode}-{tag}.txt");
         var sb = new StringBuilder();
@@ -95,15 +111,25 @@ public sealed class OnboardingRustigStep09ClickAuditPlaywrightTests
             return;
         }
 
+        rows.Add((label, await TryHitAuditAsync(page, locator, label)));
+    }
+
+    private static async Task<string> TryHitAuditAsync(IPage page, ILocator locator, string label)
+    {
+        if (await locator.CountAsync() == 0)
+        {
+            return "n/a";
+        }
+
         try
         {
             await locator.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
             await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, locator.First, label);
-            rows.Add((label, "ok"));
+            return "ok";
         }
         catch (Exception ex)
         {
-            rows.Add((label, ex.Message));
+            return ex.Message;
         }
     }
 }
