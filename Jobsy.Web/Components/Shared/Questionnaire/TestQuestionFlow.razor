@@ -283,6 +283,7 @@
             try
             {
                 var reduce = await MatchesMediaAsync("(prefers-reduced-motion: reduce)");
+                _ = await MatchesMediaAsync("(max-width: 639px)");
                 if (reduce)
                 {
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
