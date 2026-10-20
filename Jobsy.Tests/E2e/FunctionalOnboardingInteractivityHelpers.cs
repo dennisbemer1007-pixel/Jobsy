@@ -807,9 +807,14 @@ internal static class FunctionalOnboardingInteractivityHelpers
             // Nearby panel depends on API signal; still advance through steps 4–6.
         }
 
-        for (var step = 0; step < 16; step++)
+        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+    }
+
+    internal static async Task AdvanceStepsFourThroughSixToConsentAsync(IPage page)
+    {
+        for (var step = 4; step <= 6; step++)
         {
-            if (await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).CountAsync() > 0)
+            if (await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).IsVisibleAsync())
             {
                 return;
             }
@@ -819,11 +824,18 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 return;
             }
 
-            var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Overslaan", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
-            if (await skip.CountAsync() > 0)
+            if (step is 4 or 5)
             {
-                await skip.First.ClickAsync(new() { Timeout = 8_000, Force = true });
-                await page.WaitForTimeoutAsync(450);
+                var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Overslaan", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
+                if (await skip.CountAsync() > 0)
+                {
+                    await skip.First.ClickAsync(new() { Timeout = 8_000, Force = true });
+                    await page.WaitForTimeoutAsync(450);
+                    continue;
+                }
+
+                await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+                await page.WaitForTimeoutAsync(500);
                 continue;
             }
 
@@ -831,26 +843,27 @@ internal static class FunctionalOnboardingInteractivityHelpers
             if (await unknown.CountAsync() > 0)
             {
                 await unknown.First.ClickAsync(new() { Timeout = 8_000, Force = true });
-                await page.WaitForTimeoutAsync(450);
-                continue;
             }
-
-            if (await page.Locator("[data-testid=onboarding-next]").CountAsync() > 0)
+            else
             {
                 await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-                continue;
             }
 
-            break;
+            await page.WaitForTimeoutAsync(600);
         }
+
+        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
     }
 
     internal static async Task RunThroughWizardToFinishAsync(IPage page, string baseUrl)
     {
-        await BeginKennismakenStepAsync(page, baseUrl);
+        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await VroegResultaatPlaywrightTests.EnsureWizardStartedAsync(page);
         await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-        await AdvanceFromTransportToTestConsentAsync(page);
+        await AdvanceStepsFourThroughSixToConsentAsync(page);
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" })
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 120_000 });
 
         var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
         if (mobile)
@@ -896,15 +909,19 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 for (var clickTry = 0; clickTry < 2; clickTry++)
                 {
                     await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
-                    if (await TryWaitForBanenkaartLocationAsync(page, 90_000))
+                    try
                     {
+                        await page.WaitForURLAsync(
+                            u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+                            new() { Timeout = 90_000 });
                         break;
                     }
-
-                    await page.WaitForTimeoutAsync(800);
+                    catch (TimeoutException) when (clickTry == 0)
+                    {
+                        await page.WaitForTimeoutAsync(800);
+                    }
                 }
 
-                await WaitForBanenkaartLocationAsync(page);
                 await WaitForBanenkaartDiscoveryShellAsync(page);
                 return;
             }
@@ -953,33 +970,18 @@ internal static class FunctionalOnboardingInteractivityHelpers
             null,
             new() { Timeout = 180_000 });
 
-    private static async Task<bool> TryWaitForBanenkaartLocationAsync(IPage page, int timeoutMs)
-    {
-        try
-        {
-            await page.WaitForFunctionAsync(
-                """
-                () => {
-                  const path = (location.pathname || '').toLowerCase();
-                  return path === '/banenkaart' || path.startsWith('/banenkaart/');
-                }
-                """,
-                null,
-                new() { Timeout = timeoutMs });
-            return true;
-        }
-        catch (TimeoutException)
-        {
-            return false;
-        }
-    }
-
     private static async Task WaitForBanenkaartDiscoveryShellAsync(IPage page)
     {
         if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
         {
             await WaitForBanenkaartLocationAsync(page);
         }
+
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 120_000 });
 
         await page.Locator(
                 ".jobsy-discovery, [data-testid=uwv-banenkaart-mock], [data-testid=uwv-kansberoepen-toggle], [data-testid=kb-keyword-search], #jobsy-map-boot")
