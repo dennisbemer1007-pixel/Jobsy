@@ -33,9 +33,15 @@ Y0_FRAC_SLUG: dict[str, float] = {
     "step-05": 0.548,
 }
 # Desktop-only vertical crop (mobile keeps Y0_FRAC_SLUG).
+BAND_SHIFT_UP_DESKTOP: dict[str, int] = {
+    "step-02": 50,
+    "step-04": 18,
+    "step-05": 34,
+}
 Y0_FRAC_DESKTOP_SLUG: dict[str, float] = {
-    "step-04": 0.486,
-    "step-05": 0.548,
+    "step-02": 0.468,
+    "step-04": 0.450,
+    "step-05": 0.518,
 }
 PALETTE_SOFTEN_SLUGS: frozenset[str] = frozenset()
 
@@ -242,13 +248,25 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
+def shift_band_up(band: Image.Image, px: int) -> Image.Image:
+    """Move illustration content up within the hero band (cream pad below)."""
+    if px <= 0:
+        return band
+    w, h = band.size
+    cream = tuple(int(c) for c in CREAM)
+    out = Image.new("RGB", (w, h), cream)
+    out.paste(band.crop((0, px, w, h)), (0, 0))
+    return out
+
+
 def fit_desktop(raw: Image.Image, slug: str = "") -> Image.Image:
-    if slug == "step-05":
-        w, h = raw.size
-        raw = raw.resize((int(w * 1.08), h), Image.Resampling.LANCZOS)
-    return crop_to_ratio(
+    band = crop_to_ratio(
         raw, DESKTOP[0], DESKTOP[1], DESKTOP_RATIO, slug=slug, desktop=True
     )
+    shift = BAND_SHIFT_UP_DESKTOP.get(slug, 0)
+    if shift:
+        band = shift_band_up(band, shift)
+    return band
 
 
 def fit_mobile(raw: Image.Image, slug: str = "") -> Image.Image:
