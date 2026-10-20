@@ -240,6 +240,23 @@
     object-fit: cover;
     object-position: 42% 72%;
   }
+
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-rustig__hero-img {
+    object-fit: cover;
+    object-position: 42% 72%;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__hero-img,
+  .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__hero-img,
+  .ob-rustig[data-ob-rustig-screen="step-04"] .ob-rustig__hero-img {
+    object-fit: cover;
+    object-position: center 70%;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-05"] .ob-rustig__hero-img {
+    object-fit: cover;
+    object-position: center 78%;
+  }
 }
 
 /* Step-06: full-width illustrated hero; title/lead in .ob-rustig__page-head below. */
@@ -404,12 +421,21 @@
 
 @media (min-width: 1024px) {
   .ob-wizard--rustig {
-    --ob-rustig-hero-h: 120px;
+    --ob-rustig-hero-h: 170px;
   }
 
   .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-img--desk {
     object-fit: cover;
     object-position: 50% 58%;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-rustig__hero-img--desk,
+  .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__hero-img--desk,
+  .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__hero-img--desk,
+  .ob-rustig[data-ob-rustig-screen="step-04"] .ob-rustig__hero-img--desk,
+  .ob-rustig[data-ob-rustig-screen="step-05"] .ob-rustig__hero-img--desk {
+    object-fit: cover;
+    object-position: center 58%;
   }
 
   .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__page-head {
@@ -1658,6 +1684,9 @@
   font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.25;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .ob-rustig__meta {

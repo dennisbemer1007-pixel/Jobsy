@@ -36,10 +36,22 @@ public sealed class OnboardingRustigStep01CaptureTests
 
         await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, "rustig-u1b");
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
-        await page.Locator("[data-ob-rustig-screen=start]").WaitForAsync(new() { Timeout = 60_000 });
-        await page.GetByTestId("onboarding-begin").ClickAsync(new() { Force = mobile });
-        await page.Locator("[data-ob-rustig-screen=step-01]").WaitForAsync(new() { Timeout = 90_000 });
-        await page.WaitForTimeoutAsync(800);
+        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+        await page.Locator("[data-ob-rustig-screen=step-01], [data-testid=onboarding-step-1-illustrated]")
+            .First.WaitForAsync(new() { Timeout = 90_000 });
+        await FunctionalOnboardingInteractivityHelpers.FillKennismakenBasicsExceptWorkStatusAsync(page);
+        await page.Locator(".work-status-chips .lobsy-choice-tile").First.ClickAsync(new() { Force = mobile });
+        try
+        {
+            await page.Locator(".ob-rustig__saved").Filter(new() { HasText = "Bewaard" })
+                .WaitForAsync(new() { Timeout = 15_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Save indicator is optional for layout capture.
+        }
+
+        await page.WaitForTimeoutAsync(400);
 
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{fileStem}-viewport.png"), FullPage = false });
     }

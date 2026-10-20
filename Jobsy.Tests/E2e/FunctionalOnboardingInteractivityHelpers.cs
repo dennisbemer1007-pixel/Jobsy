@@ -669,7 +669,16 @@ internal static class FunctionalOnboardingInteractivityHelpers
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 120_000 });
-        await page.Locator(".ob-wizard__welcome").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        var rustigStart = page.Locator("[data-ob-rustig-screen=start]");
+        var legacyWelcome = page.Locator(".ob-wizard__welcome");
+        try
+        {
+            await rustigStart.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        }
+        catch (TimeoutException)
+        {
+            await legacyWelcome.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        }
     }
 
     internal static async Task ClickBeginnenOnWelcomeAsync(IPage page, bool mobile)
