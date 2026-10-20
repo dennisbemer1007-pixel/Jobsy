@@ -187,6 +187,41 @@ internal static class FunctionalOnboardingInteractivityHelpers
             new() { Timeout = 60_000 });
     }
 
+    internal static async Task TypeBirthDateSlowlyAsync(IPage page, string digits = "15062000")
+    {
+        var field = page.Locator("[data-testid=onboarding-birth-date]").First;
+        await field.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        var text = field.Locator(".jobsy-date-field__text").First;
+        await text.ClickAsync(new() { Force = true });
+        await text.FillAsync("");
+        await text.PressSequentiallyAsync(digits, new() { Delay = 80 });
+        await page.WaitForTimeoutAsync(600);
+        await WaitForCircuitReadyAsync(page);
+    }
+
+    internal static async Task TypeHomeAddressSlowlyAsync(IPage page, string query = "2671GB")
+    {
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        var address = page.Locator("#onboarding-home-address").First;
+        if (await address.CountAsync() == 0)
+        {
+            address = page.Locator(".ob-fields input[inputmode=text]").First;
+        }
+
+        await address.ScrollIntoViewIfNeededAsync();
+        await address.ClickAsync(new() { Force = true });
+        await address.FillAsync("");
+        await address.PressSequentiallyAsync(query, new() { Delay = 90 });
+        await page.WaitForTimeoutAsync(900);
+        await WaitForCircuitReadyAsync(page);
+    }
+
+    internal static Task WaitForCircuitReadyAsync(IPage page)
+        => page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
+
     internal static async Task AssertBirthDateFieldInteractiveAsync(IPage page)
     {
         var field = page.Locator("[data-testid=onboarding-birth-date]").First;

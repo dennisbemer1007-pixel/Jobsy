@@ -319,7 +319,6 @@
                                                       Illustrated="true"
                                                       ShowValidation="_showValidation"
                                                       AddressChanged="AddressChanged"
-                                                      BirthDateChanged="BirthDateChanged"
                                                       ShowCity="ShowCity"
                                                       SelectAddress="SelectAddress" />
                                     </div>
@@ -660,6 +659,9 @@
     private IReadOnlyList<int> _journeyCompletedSteps = [];
     private int _journeyNextStep = 7;
     private CancellationTokenSource? _saveCts;
+    private readonly SemaphoreSlim _profileSaveGate = new(1, 1);
+    private int _profileSaveGeneration;
+    private int _profileSavedGeneration;
     private CancellationTokenSource? _geocodeCts;
     private CancellationTokenSource? _dreamCts;
 
@@ -1306,22 +1308,12 @@
             ScheduleProfileSave();
         }
 
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
         CandidateHomeAddressLookup.ApplySuggestionToDraft(Draft, item);
-        ScheduleProfileSave();
-    }
-
-    private void BirthDateChanged()
-    {
-        Draft.BirthDate = int.TryParse(Draft.BirthDay, out var day)
-            && int.TryParse(Draft.BirthMonth, out var month)
-            && int.TryParse(Draft.BirthYear, out var year)
-            && DateOnly.TryParse($"{year:D4}-{month:D2}-{day:D2}", out var date)
-                ? date : null;
         ScheduleProfileSave();
     }
 
@@ -1935,9 +1927,15 @@
 
     private void ScheduleProfileSave()
     {
-        if (_loading) return;
+        if (_loading)
+        {
+            return;
+        }
+
+        Interlocked.Increment(ref _profileSaveGeneration);
         _saveCts?.Cancel();
-        _saveCts = new();
+        _saveCts?.Dispose();
+        _saveCts = new CancellationTokenSource();
         _saving = true;
         _saveError = false;
         _ = ProfileDebounceAsync(_saveCts.Token);
@@ -1948,18 +1946,7 @@
         try
         {
             await Task.Delay(350, cancellationToken);
-            await SaveProfileAsync(cancellationToken);
-            _error = null;
-            try
-            {
-                await RefreshNearbySignalIfEligibleAsync();
-            }
-            catch
-            {
-                // Nearby panel is informational; a failed refresh must not block autosave UX.
-            }
-
-            FlashSaved();
+            await FlushPendingProfileSaveAsync(cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -1971,21 +1958,100 @@
         }
         finally
         {
-            _saving = false;
-            await InvokeAsync(StateHasChanged);
+            _saving = _profileSavedGeneration < Volatile.Read(ref _profileSaveGeneration);
+            await SafeStateHasChangedAsync();
         }
     }
 
-    private async Task FlushAsync()
+    private async Task FlushPendingProfileSaveAsync(CancellationToken cancellationToken)
     {
-        _saveCts?.Cancel();
-        await SaveProfileAsync(CancellationToken.None);
+        while (_profileSavedGeneration < Volatile.Read(ref _profileSaveGeneration))
+        {
+            var version = Volatile.Read(ref _profileSaveGeneration);
+            await PersistProfileSaveAsync(version, cancellationToken);
+        }
+    }
+
+    private async Task PersistProfileSaveAsync(int version, CancellationToken cancellationToken)
+    {
+        await _profileSaveGate.WaitAsync(cancellationToken);
+        try
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await SaveProfileAsync(cancellationToken);
+            if (version != Volatile.Read(ref _profileSaveGeneration))
+            {
+                return;
+            }
+
+            _profileSavedGeneration = version;
+            _error = null;
+            FlashSaved();
+            await TryRefreshNearbyAfterProfileSaveAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _error = UserFacing.Describe(ex);
+            _saveError = true;
+            throw;
+        }
+        finally
+        {
+            _profileSaveGate.Release();
+        }
+    }
+
+    private async Task TryRefreshNearbyAfterProfileSaveAsync()
+    {
+        if (_step == 1)
+        {
+            return;
+        }
+
         try
         {
             await RefreshNearbySignalIfEligibleAsync();
         }
         catch
         {
+            // Nearby panel is informational; a failed refresh must not block autosave UX.
+        }
+    }
+
+    private async Task SafeStateHasChangedAsync()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Circuit may be disconnected during teardown.
+        }
+    }
+
+    private async Task FlushAsync()
+    {
+        _saveCts?.Cancel();
+        _saveCts?.Dispose();
+        _saveCts = null;
+        Interlocked.Increment(ref _profileSaveGeneration);
+        try
+        {
+            await FlushPendingProfileSaveAsync(CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _error = UserFacing.Describe(ex);
+            _saveError = true;
         }
     }
 
@@ -2046,7 +2112,7 @@
     {
         await Task.Delay(2500);
         _savedVisible = false;
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
     }
 
     private async Task LoadFinaleContextAsync()
@@ -2090,6 +2156,7 @@
         _loadingNearby = true;
         try
         {
+            await SafeStateHasChangedAsync();
             var signal = await Api.GetOnboardingNearbySignalAsync();
             if (signal is not null)
             {
@@ -2104,6 +2171,7 @@
         finally
         {
             _loadingNearby = false;
+            await SafeStateHasChangedAsync();
         }
     }
 
@@ -2312,8 +2380,10 @@
         Culture.Changed -= CultureChanged;
         GratisDnaMergeNotifier.Merged -= OnGratisDnaMerged;
         _saveCts?.Cancel();
+        _saveCts?.Dispose();
         _geocodeCts?.Cancel();
         _dreamCts?.Cancel();
+        _profileSaveGate.Dispose();
         if (_autosave is not null) await _autosave.DisposeAsync();
     }
 
