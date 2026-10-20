@@ -601,12 +601,21 @@ combo.save(out)
         await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await preset.ClickAsync(new() { Force = true });
         await ClickNextAsync(page);
-        await page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First.ClickAsync();
-        var travel = page.Locator(".ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button")
+        await page.Locator("[data-testid=onboarding-step-3-illustrated]").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000,
+        });
+        await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, 3);
+        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 15_000);
+        var transportTile = page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First;
+        await transportTile.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await transportTile.ClickAsync(new() { Force = true });
+        var travel = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__travel-times button")
             .Filter(new() { HasText = maxTravelMinutes.ToString() });
         if (await travel.CountAsync() == 0)
         {
-            travel = page.Locator(".ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button").First;
+            travel = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button");
         }
 
         await travel.First.ClickAsync();
