@@ -13,17 +13,14 @@ ROOT = Path(__file__).resolve().parents[2]
 PAN = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
 DEFAULT_SPRITE = ROOT / "Jobsy.Web/wwwroot/images/onboarding/lobsy-mascot-sprite.png"
 
-# Rendered band height (CSS): desktop 170px, mobile 130px @2x JPEG doubles.
 DESK_BAND_PX = 170
 MOB_BAND_PX = 130
-DESK_LOBSTER_PX = 30  # ~18% of 170px band (24–32 target)
-MOB_LOBSTER_PX = 17  # ~13% of 130px band (14–18 target)
+DESK_LOBSTER_PX = 30
+MOB_LOBSTER_PX = 17
 
-# Safe vertical band on JPEG: below top 10%, above bottom fade (~22%).
 Y_MIN = 0.12
 Y_MAX = 0.78
 
-# (x_center_frac, y_center_frac) — quiet props, not faces.
 PLACEMENTS: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {
     "start": ((0.23, 0.58), (0.26, 0.55)),
     "step-01": ((0.21, 0.62), (0.24, 0.60)),
@@ -39,11 +36,12 @@ def load_sprite(path: Path) -> Image.Image:
     arr = np.asarray(im).copy()
     r, g, b, a = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2], arr[:, :, 3]
     lum = (r.astype(np.int16) + g.astype(np.int16) + b.astype(np.int16)) // 3
-    neutral = (np.abs(r.astype(np.int16) - g.astype(np.int16)) < 18) & (
-        np.abs(g.astype(np.int16) - b.astype(np.int16)) < 18
+    neutral = (np.abs(r.astype(np.int16) - g.astype(np.int16)) < 20) & (
+        np.abs(g.astype(np.int16) - b.astype(np.int16)) < 20
     )
-    bg = neutral & (lum > 195)
-    a = np.where(bg, 0, np.maximum(a, 255 - bg.astype(np.uint8) * 255))
+    # Remove white/light and black/dark mattes; keep existing alpha when already clear.
+    matte = (neutral & (lum > 235)) | (neutral & (lum < 22))
+    a = np.where(matte, 0, a)
     arr[:, :, 3] = a
     im = Image.fromarray(arr)
     bbox = im.getbbox()
@@ -69,9 +67,11 @@ def paste_sprite(base: Image.Image, piece: Image.Image, cx_frac: float, cy_frac:
     cx, cy = int(w * cx_frac), int(h * cy_frac)
     x0 = cx - piece.size[0] // 2
     y0 = cy - piece.size[1] // 2
-    rgb = base.convert("RGBA")
-    rgb.paste(piece, (x0, y0), piece)
-    base.paste(rgb.convert("RGB"))
+    canvas = base.convert("RGBA")
+    overlay = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    overlay.paste(piece, (x0, y0), piece.split()[3])
+    merged = Image.alpha_composite(canvas, overlay)
+    base.paste(merged.convert("RGB"))
 
 
 def main() -> None:
@@ -79,7 +79,6 @@ def main() -> None:
     if not src.is_file():
         raise SystemExit(f"missing sprite: {src}")
     sprite = load_sprite(src)
-    sprite.save(DEFAULT_SPRITE)
     slugs = sys.argv[2:] if len(sys.argv) > 2 else list(PLACEMENTS.keys())
     for slug in slugs:
         desk_xy, mob_xy = PLACEMENTS[slug]
