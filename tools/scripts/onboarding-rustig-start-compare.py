@@ -17,7 +17,6 @@ MOCK = Path(sys.argv[2] if len(sys.argv) > 2 else "/opt/cursor/artifacts/onboard
 PAIRS = [
     ("start-desktop.png", "desktop-1440-viewport.png", "compare-desktop-start-g.png"),
     ("start-mobile.png", "mobile-390-viewport.png", "compare-mobile-start-d.png"),
-    # Aliases for Dennis naming (start-g / start-d)
     ("step-01-desktop.png", "step-01-desktop-viewport.png", "compare-desktop-step-01.png"),
     ("step-01-mobile.png", "step-01-mobile-viewport.png", "compare-mobile-step-01.png"),
     ("step-02-desktop.png", "step-02-desktop-viewport.png", "compare-desktop-step-02.png"),
@@ -28,6 +27,8 @@ PAIRS = [
     ("step-04-mobile.png", "step-04-mobile-viewport.png", "compare-mobile-step-04.png"),
     ("step-05-desktop.png", "step-05-desktop-viewport.png", "compare-desktop-step-05.png"),
     ("step-05-mobile.png", "step-05-mobile-viewport.png", "compare-mobile-step-05.png"),
+    ("step-06-desktop.png", "step-06-desktop-viewport.png", "compare-desktop-step-06.png"),
+    ("step-06-mobile.png", "step-06-mobile-viewport.png", "compare-mobile-step-06.png"),
 ]
 
 

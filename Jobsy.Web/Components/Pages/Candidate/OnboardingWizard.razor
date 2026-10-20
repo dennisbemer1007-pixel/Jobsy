@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-start-g2-u1b-m2" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-08" />
     }
 </HeadContent>
 
@@ -212,6 +212,7 @@
                                PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(1)"
                                PanoramaMobile="@OnboardingRustigPanoramaAssets.Mobile(1)"
                                BackDisabled="true"
+                               HeaderBackEnabled="true"
                                OnBack="BackAsync"
                                OnLater="LaterAsync">
             <ChildContent>
@@ -239,6 +240,24 @@
                 </div>
             </ChildContent>
         </OnboardingRustigShell>
+    }
+    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 6)
+    {
+        <OnboardingRustigDreamStep Draft="Draft"
+                                   ShowValidation="_showValidation"
+                                   Young="@IsYoungCandidate"
+                                   RegionalVacancyTitles="@DreamStepRegionalTitles"
+                                   Error="@_error"
+                                   Busy="@_busy"
+                                   SaveStatus="@RustigSaveStatus"
+                                   ChooseDream="ChooseDream"
+                                   ChooseTitle="ChooseDreamTitle"
+                                   ChooseOwnDream="ChooseOwnDream"
+                                   DreamKeyDown="DreamKeyDown"
+                                   OnBack="BackAsync"
+                                   OnNext="@(() => NextAsync())"
+                                   OnDreamUnknown="DreamUnknownAsync"
+                                   OnLater="LaterAsync" />
     }
     else
     {
@@ -777,7 +796,7 @@
         : _profilePersistInFlight ? Culture["Onboarding.Saving"] : "";
 
     private string RustigSaveStatus => string.IsNullOrEmpty(SaveText)
-        ? $"✓ {Culture["Onboarding.Saved"]}"
+        ? Culture["Onboarding.Rustig.Saved"]
         : SaveText;
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";

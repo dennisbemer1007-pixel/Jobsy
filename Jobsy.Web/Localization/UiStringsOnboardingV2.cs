@@ -273,6 +273,9 @@ internal static class UiStringsOnboardingV2
             : "In ongeveer 12 minuten doorlopen we samen tien korte stappen. Daarna staat je Kompas klaar en zie je welk werk bij je past.";
         map["Onboarding.Rustig.StartMeta"] = english ? "Getting started" : "Start";
         map["Onboarding.Rustig.MinutesShort"] = english ? "minutes" : "minuten";
+        map["Onboarding.Rustig.Phase.Droom"] = english ? "Dream job" : "Droom";
+        map["Onboarding.Rustig.Saved"] = english ? "✓ Saved" : "✓ Bewaard";
+        map["Onboarding.Rustig.DreamOwnLabel"] = english ? "Or type your own dream job" : "Of typ je eigen droombaan";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.CtaRustig"] = english ? "Get started" : "Aan de slag";
         map["Onboarding.Welcome.OverJou"] = english ? "Where you live and when you can work" : "Waar je woont en wanneer je kunt"; map["Onboarding.Welcome.Background"] = english ? "Your background" : "Je achtergrond"; map["Onboarding.Welcome.BackgroundLead"] = english ? "Work and education, you can skip it" : "Werk en opleiding, mag je overslaan"; map["Onboarding.Welcome.Dream"] = english ? "Your dream job" : "Je droombaan"; map["Onboarding.Welcome.DreamLead"] = english ? "Where do you want to go?" : "Waar wil je naartoe?"; map["Onboarding.Welcome.TestsLead"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Welcome.Time2"] = "2 min"; map["Onboarding.Welcome.Time1"] = "1 min"; map["Onboarding.Welcome.TimeHalf"] = "½ min";

@@ -1291,6 +1291,23 @@ internal static class FunctionalOnboardingInteractivityHelpers
             "Expected Kompas finish screen after all four mini tests.");
     }
 
+    internal static async Task ClickOnboardingNextAsync(IPage page, bool mobile)
+    {
+        var next = page.GetByTestId("onboarding-next");
+        await next.ScrollIntoViewIfNeededAsync();
+        await WaitForCircuitReadyAsync(page, 15_000);
+        await next.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await page.WaitForTimeoutAsync(450);
+    }
+
+    internal static async Task ClickOnboardingBackAsync(IPage page, bool mobile)
+    {
+        var back = page.GetByTestId("onboarding-back");
+        await back.ScrollIntoViewIfNeededAsync();
+        await back.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await page.WaitForTimeoutAsync(450);
+    }
+
     private static async Task<string> TargetSelectorAsync(ILocator target)
     {
         return await target.EvaluateAsync<string>(
