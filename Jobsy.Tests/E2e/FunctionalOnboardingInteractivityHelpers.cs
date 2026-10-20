@@ -46,43 +46,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             return;
         }
 
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 90_000 });
-
-        var mobile = page.ViewportSize is { Width: < 600 };
-        for (var i = 0; i < await chips.CountAsync(); i++)
-        {
-            var chip = chips.Nth(i);
-            await chip.ScrollIntoViewIfNeededAsync();
-            try
-            {
-                if (mobile)
-                {
-                    await chip.TapAsync(new() { Timeout = 10_000 });
-                }
-                else
-                {
-                    await chip.ClickAsync(new() { Timeout = 10_000 });
-                }
-            }
-            catch (PlaywrightException)
-            {
-                await chip.ClickAsync(new() { Force = true, Timeout = 10_000 });
-            }
-
-            if (await WaitForWorkStatusSelectedAsync(page, 8_000))
-            {
-                return;
-            }
-        }
-
-        var audits = await DescribeHitAuditsAsync(page, [
-            (".work-status-chips .lobsy-choice-tile", "werkstatus-chip"),
-            ("[data-testid=onboarding-next]", "volgende"),
-        ]);
-        throw new InvalidOperationException($"Could not select a work-status chip. Hit audits: {audits}");
+        await AssertWorkStatusChipTogglesAsync(page);
     }
 
     internal static async Task AssertWorkStatusChipTogglesAsync(IPage page)

@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "93cf63e83e857efb7bdec1335167f6cfa7beef481793df2f3234ce8fd28ef334",
+    "sha256": "eb1a03047524183b9625dbcbff0bf604d96b6747468e06806e98c5d9450997c7",
     "v": "20261019-13"
   },
   "css/critical.css": {
@@ -48,7 +48,7 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "5b287a08f3ee4b2a0d790656673f815f98745c4ed0e32343110672f72959f138",
+    "sha256": "5f9c983a876ac9d1d75e08c3344c87479aa24f9942ce5ecb187ed6e6e741d00b",
     "v": "20261019-68"
   },
   "css/features/candidate-hub.css": {
@@ -164,7 +164,7 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "8c385ebf8ac87b74d73175a2cd8fb4a2f0ec7f83851980f63b70a618186d96de",
+    "sha256": "fea8a83ed549d468dcfb5e5df787c469cd09aa1762b53c49ed3caa3dd8fd5e9d",
     "v": "20261019-r25"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -184,7 +184,7 @@
     "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "88887ede1d1036cfe353a4347dd608eb9d53113d299049519defbb3b2f2f58f7",
+    "sha256": "dbb6eeb18ce67245e04439b3561c1502e87e2c9569bb720ad3e8754d9325a879",
     "v": "20261015-21"
   },
   "css/features/proactive-matching.css": {
@@ -228,7 +228,7 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "d37ca6393394117d9f08cf711a1bb1e9b5f54c4daa674b63f28e77ef3a0cb4f7",
+    "sha256": "a6ceea6a1b9e8bf61433175b0556e9d536c439d388f122e1ee336c6a6b64730b",
     "v": "20261018-04"
   },
   "css/features/vacancy-wizard.css": {

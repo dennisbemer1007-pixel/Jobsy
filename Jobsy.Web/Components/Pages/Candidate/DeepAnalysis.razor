@@ -157,38 +157,6 @@ else
                     </ChildContent>
                 </TestPageShell>
             }
-            else if (_view == View.Pause && _pausePart is TestDepthPart pausePart)
-            {
-                var next = _parts.FirstOrDefault(p => p.Index == pausePart.Index + 1);
-                <TestPageShell Kind="_kind"
-                               ShowDepthSegments="false"
-                               Mode="TestPageShell.ShellMode.Pause"
-                               Deep="true"
-                               Eyebrow="@ChromeEyebrow(pausePart)"
-                               H1="@Culture["Deep.Pause.Title"]"
-                               Lead="@Culture.Format("Deep.Pause.Lead", pausePart.Index, _answered, _questionCount)"
-                               TestName="@Culture[_titleKey]"
-                               Answered="_answered"
-                               TargetCount="_questionCount"
-                               BubbleText="@Culture["Deep.Pause.Bubble"]">
-                    <RailContent>@RenderRail()</RailContent>
-                    <ChildContent>
-                        <div class="deep-pause" aria-live="polite">
-                            <p>@Culture.Format("Deep.Pause.Live", pausePart.Index)</p>
-                            @if (next is not null)
-                            {
-                                <p class="deep-pause__next">@DeepTestMotivation.PartDisplayName(_kind, next)</p>
-                            }
-                        </div>
-                        <footer class="test-shell__footer">
-                            <a href="@($"/profiel/tests/{_slug}")" @onclick="FlushLaterAsync" @onclick:preventDefault>@Culture["TestFlow.Later"]</a>
-                            <button type="button" class="btn btn-primary" @onclick="ContinueAfterPause">
-                                @Culture.Format("Deep.Pause.Continue", pausePart.Index + 1)
-                            </button>
-                        </footer>
-                    </ChildContent>
-                </TestPageShell>
-            }
             else if (_view == View.Question && _autosave is not null)
             {
                 var part = CurrentPart;
@@ -207,10 +175,21 @@ else
                                LevelName="@Culture["TestDepth.Bottom"]"
                                Answered="_answered"
                                TargetCount="_questionCount"
-                               BubbleText="@Culture["Deep.Bubble.Question"]">
+                               BubbleText="@Culture["Deep.Bubble.Question"]"
+                               ShowProgressSidePanel="_showProgressInsight"
+                               BlockArtSlug="@TestBlockArt.SlugForDeepDomain(_kind, part?.Domains.FirstOrDefault())">
+                    <SidePanel>
+                        @if (_showProgressInsight)
+                        {
+                            <TestProgressInsightPanel Kind="_kind"
+                                                      Lines="_progressInsightLines"
+                                                      NewLineCount="_progressInsightNew" />
+                        }
+                    </SidePanel>
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
-                        @if (!string.IsNullOrWhiteSpace(motivationKey)
+                        @if (!_showProgressInsight
+                             && !string.IsNullOrWhiteSpace(motivationKey)
                              && motivationKey != DeepTestMotivation.PartStart
                              && ShouldShowMotivation(motivationKey, part!.Index))
                         {
@@ -226,8 +205,9 @@ else
                                           Autosave="_autosave"
                                           Compact="false"
                                           InputPrefix="@($"d{_slug}")"
-                                          ShouldPauseAfterIndex="ShouldPauseAfter"
-                                          OnPauseAfter="OnPauseAfterAsync"
+                                          ShowProgressInsight="_showProgressInsight"
+                                          DomainForQuestionId="DeepDomainFor"
+                                          ProgressInsightChanged="OnProgressInsightAsync"
                                           OnFinished="OnFinishedAsync"
                                           OnLater="LaterAsync"
                                           OnChanged="OnFlowChanged" />
@@ -239,7 +219,7 @@ else
 }
 
 @code {
-    private enum View { Offer, Question, Pause, Done }
+    private enum View { Offer, Question, Done }
 
     [Parameter] public string? Kind { get; set; }
 
@@ -265,8 +245,10 @@ else
     private QuestionnaireAutosave? _autosave;
     private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
     private IReadOnlyList<TestDepthPart> _parts = [];
-    private TestDepthPart? _pausePart;
-    private int _resumeIndex;
+    private bool _showProgressInsight;
+    private IReadOnlyList<string> _progressInsightLines = [];
+    private int _progressInsightNew;
+    private readonly Dictionary<int, string> _deepDomainById = [];
     private readonly HashSet<string> _shownCues = [];
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
@@ -390,12 +372,15 @@ else
                 {
                     var q = byId[id];
                     var lang = Culture.Language;
+                    _deepDomainById[id] = q.Domain;
                     return new TestQuestionFlow.FlowQuestion(
                         q.Id,
                         q.Prompt(lang),
                         q.Example(lang));
                 })
                 .ToList();
+
+            _showProgressInsight = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestProgressInsight);
 
             if (_state is { IsCompleted: true })
             {
@@ -428,43 +413,14 @@ else
         return part.QuestionIds.Count(id => _autosave.Answers.ContainsKey(id));
     }
 
-    private bool ShouldPauseAfter(int index)
+    private string DeepDomainFor(int id)
+        => _deepDomainById.TryGetValue(id, out var domain) ? domain : "";
+
+    private Task OnProgressInsightAsync(TestQuestionFlow.ProgressInsightSnapshot snapshot)
     {
-        // Pause after completing the last question of parts 1–4.
-        var answeredAfter = index + 1; // 1-based count if sequential from start
-        // Prefer answer-count based pause when autosave count matches part boundary.
-        if (_autosave is not null && DeepTestMotivation.IsPausePoint(_kind, _autosave.AnsweredCount))
-        {
-            return true;
-        }
-
-        var running = 0;
-        for (var i = 0; i < _parts.Count - 1; i++)
-        {
-            running += _parts[i].Size;
-            if (index + 1 == running)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private Task OnPauseAfterAsync(int index)
-    {
-        var partIndex = DeepTestMotivation.PartIndexForGlobalIndex(_kind, index);
-        _pausePart = _parts.FirstOrDefault(p => p.Index == partIndex);
-        _resumeIndex = index + 1;
-        _answered = _autosave?.AnsweredCount ?? _answered;
-        _view = View.Pause;
+        _progressInsightLines = snapshot.Lines;
+        _progressInsightNew = snapshot.NewLineCount;
         return Task.CompletedTask;
-    }
-
-    private void ContinueAfterPause()
-    {
-        _view = View.Question;
-        _pausePart = null;
     }
 
     private async Task OnFinishedAsync()

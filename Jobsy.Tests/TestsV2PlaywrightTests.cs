@@ -360,12 +360,14 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
     {
         private IHost? _kestrel;
         private readonly bool _testsV2On;
+        private readonly bool _itemExamplesOn;
 
         public string ServerAddress { get; private set; } = "";
 
-        public TestsV2WebFactory(bool testsV2On)
+        public TestsV2WebFactory(bool testsV2On, bool itemExamplesOn = false)
         {
             _testsV2On = testsV2On;
+            _itemExamplesOn = itemExamplesOn;
         }
 
         public string EnsureServerAddress()
@@ -394,7 +396,7 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             {
                 services.AddSingleton<IStartupFilter>(new SignInFilter());
                 services.RemoveAll<IFeatureFlags>();
-                services.AddSingleton<IFeatureFlags>(new StubFlags(_testsV2On));
+                services.AddSingleton<IFeatureFlags>(new StubFlags(_testsV2On, _itemExamplesOn));
                 services.RemoveAll<IHttpClientFactory>();
                 services.AddSingleton<IHttpClientFactory>(new StubFactory());
                 services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
@@ -433,13 +435,14 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
         }
     }
 
-    private sealed class StubFlags(bool testsV2On) : IFeatureFlags
+    private sealed class StubFlags(bool testsV2On, bool itemExamplesOn) : IFeatureFlags
     {
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult(new FeatureFlagSnapshot(
                 EmployersEnabled: false,
                 CandidatePassportEnabled: true,
-                TestsV2Enabled: testsV2On));
+                TestsV2Enabled: testsV2On,
+                TestItemExamplesEnabled: itemExamplesOn));
 
         public async ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
             => (await GetAsync(cancellationToken)).IsEnabled(feature);

@@ -39,6 +39,7 @@ public class KbSavedListBunitTests : BunitContext
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<IFeatureFlags>(new FixedFlags());
+        Services.AddSingleton<ICandidateHeroCompactPreviewGate>(CandidateHeroCompactPreviewGateStub.None);
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler)
         {
             BaseAddress = new Uri("http://localhost/")
