@@ -49,7 +49,11 @@ def export_start(src: Path, *, include_mobile: bool = False) -> None:
     import subprocess
 
     subprocess.check_call(
-        [sys.executable, str(ROOT / "tools/scripts/build-onboarding-rustig-start-desktop-band.py"), str(src)],
+        [sys.executable, str(ROOT / "tools/scripts/build-onboarding-rustig-start-wide-source.py"), str(src)],
+        cwd=ROOT,
+    )
+    subprocess.check_call(
+        [sys.executable, str(ROOT / "tools/scripts/build-onboarding-rustig-start-desktop-band.py")],
         cwd=ROOT,
     )
     if include_mobile:
