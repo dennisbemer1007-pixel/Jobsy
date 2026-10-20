@@ -12,7 +12,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw"
-DEFAULT_SRC = RAW / "step-08-source-16x9-u8c-seamless.jpg"
+DEFAULT_SRC = RAW / "step-08-source-16x9-u8d-seamless.jpg"
 OUT = RAW / "step-08-desktop-raw.jpg"
 OUT_SIZE = (2400, 400)
 
@@ -70,10 +70,69 @@ def defuse_report_band_red(im: Image.Image) -> Image.Image:
 
 
 def pick_slice(im: Image.Image) -> Image.Image:
+    """Middle band: full figures + grass, minimal sky (u8d sources place feet ~75–82%)."""
     w, h = im.size
-    y0 = int(h * 0.11)
-    y_end = int(h * 0.79)
+    y0 = int(h * 0.08)
+    y_end = int(h * 0.82)
     return im.crop((0, y0, w, y_end))
+
+
+def lift_figures_in_band(band: Image.Image, fin, *, ground_margin: int = 54) -> Image.Image:
+    """Scale scene to fit with feet above bottom fade (figure bbox, not full sky)."""
+    bb = fin.figure_bbox(band) or fin.content_bbox(band)
+    if bb is None:
+        return band
+    w, h = band.size
+    x0, y0, x1, y1 = bb
+    crop = band.crop(bb)
+    cw, ch = crop.size
+    max_scene_h = h - ground_margin - 20
+    scale = min(1.0, max_scene_h / ch)
+    if scale < 0.999:
+        nw, nh = max(1, int(cw * scale)), max(1, int(ch * scale))
+        crop = crop.resize((nw, nh), Image.Resampling.LANCZOS)
+        cw, ch = crop.size
+    cream = tuple(int(c) for c in fin.CREAM)
+    canvas = Image.new("RGB", (w, h), cream)
+    paste_x = max(0, (w - cw) // 2)
+    paste_y = h - ground_margin - ch
+    paste_y = max(16, paste_y)
+    canvas.paste(crop, (paste_x, paste_y))
+    return canvas
+
+
+def extend_ground_below_feet(band: Image.Image, fin) -> Image.Image:
+    """Grass/cream fill under feet so the band gate sees ground above the fade."""
+    bb = fin.figure_bbox(band)
+    if bb is None:
+        return band
+    w, h = band.size
+    _, _, _, y1 = bb
+    y1 = min(y1, h - 20)
+    sample_y = max(0, y1 - 8)
+    out = band.copy()
+    strip_h = max(1, h - y1 - 4)
+    strip = band.crop((0, sample_y, w, y1 + 1)).resize((w, strip_h), Image.Resampling.LANCZOS)
+    out.paste(strip, (0, y1 + 1))
+    return out
+
+
+def apply_step08_bottom_fade(im: Image.Image, fin) -> Image.Image:
+    """Shorter fade than step-04 band build — keep feet visible above cream."""
+    fade = 14
+    w, h = im.size
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = overlay.load()
+    cream = tuple(int(c) for c in fin.CREAM)
+    for y in range(h):
+        if y < h - fade:
+            continue
+        for x in range(w):
+            t = (y - (h - fade)) / max(1, fade - 1)
+            a = int(255 * min(1.0, t**1.05))
+            if a:
+                px[x, y] = (*cream, a)
+    return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
 def main() -> None:
@@ -89,7 +148,7 @@ def main() -> None:
     band = fin.apply_cream_fades(band)
     band = s4.defuse_right_foliage_red(band)
     band = defuse_report_band_red(band)
-    band = s4.apply_strong_bottom_fade(band, fin)
+    band = apply_step08_bottom_fade(band, fin)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     band.save(OUT, quality=98, optimize=True)
     band = defuse_report_band_red(s4.defuse_right_foliage_red(Image.open(OUT)))

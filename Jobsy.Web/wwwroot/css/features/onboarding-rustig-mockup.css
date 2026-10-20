@@ -193,6 +193,7 @@
 
 .ob-rustig__illustrated-frame {
   display: block;
+  position: relative;
   inline-size: 100%;
   margin: 0;
   line-height: 0;
@@ -216,6 +217,34 @@
     block-size: clamp(300px, 28vw, 360px);
     min-block-size: 300px;
     max-block-size: 360px;
+    border-block-end: none;
+  }
+
+  .ob-rustig__illustrated-frame img {
+    object-fit: cover;
+    object-position: center bottom;
+  }
+
+  .ob-rustig__illustrated-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        90deg,
+        var(--bg) 0%,
+        color-mix(in srgb, var(--bg) 75%, transparent) 6%,
+        transparent 22%,
+        transparent 78%,
+        color-mix(in srgb, var(--bg) 75%, transparent) 94%,
+        var(--bg) 100%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bg) 85%, transparent) 0%,
+        transparent 18%
+      );
   }
 }
 
@@ -249,8 +278,8 @@
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    transparent 84%,
-    color-mix(in srgb, var(--bg) 22%, transparent) 94%,
+    transparent 92%,
+    color-mix(in srgb, var(--bg) 18%, transparent) 97%,
     var(--bg) 100%
   );
 }
@@ -260,8 +289,8 @@
     background: linear-gradient(
       to bottom,
       transparent 0%,
-      transparent 88%,
-      color-mix(in srgb, var(--bg) 18%, transparent) 96%,
+      transparent 90%,
+      color-mix(in srgb, var(--bg) 16%, transparent) 97%,
       var(--bg) 100%
     );
   }
