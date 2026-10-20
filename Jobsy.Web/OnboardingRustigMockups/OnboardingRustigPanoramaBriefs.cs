@@ -17,7 +17,7 @@ public static class OnboardingRustigPanoramaBriefs
         "step-09" => "Sfeer: verschillende werkomgevingen naast elkaar — atelier, markt, bouw, klein team",
         "step-10" => "Waarden: helpen, samen opbouwen, kind leren, moestuin-vrijwilliger",
         "step-11" => "Waarden: zorg, community, duurzaamheid, zinvol werk",
-        "kompas" => "Kompas klaar: heuveltop, kompas, uitzicht vooruit",
+        "kompas" => "Kompas: heuveltop, kompas, paden naar zorg/kas/kantoor/werkplaats",
         _ => slug,
     };
 
@@ -36,7 +36,7 @@ public static class OnboardingRustigPanoramaBriefs
         "step-09" => "(geen kreeft — naadloos aquarel)",
         "step-10" => "(geen kreeft — naadloos aquarel)",
         "step-11" => "Op de armleuning rechts van een tuinbank",
-        "kompas" => "Op de stenen rand van het kompas op de grond",
+        "kompas" => "(geen kreeft — volle aquarel-hero)",
         _ => "Verstopt in het decor",
     };
 

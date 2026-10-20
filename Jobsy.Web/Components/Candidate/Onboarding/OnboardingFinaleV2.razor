@@ -5,7 +5,9 @@
 @using Jobsy.Web.Models
 @inject CultureState Culture
 
-<section class="ob-finale" data-testid="onboarding-finale-v2">
+<section class="ob-finale @(HideHero ? "ob-finale--no-hero" : null)" data-testid="onboarding-finale-v2">
+    @if (!HideHero)
+    {
     <div class="ob-finale__hero">
         <figure class="ob-finale__art" aria-hidden="true">
             <img src="/images/onboarding/finale-hero.jpg" alt="" width="1280" height="720" decoding="async" />
@@ -22,6 +24,12 @@
             </div>
         </header>
     </div>
+    }
+
+    @if (HeaderContent is not null)
+    {
+        @HeaderContent
+    }
 
     <div class="ob-finale__wrap">
         @if (ShowMatchBar)
@@ -123,6 +131,8 @@
     [Parameter] public string? DreamJob { get; set; }
     [Parameter] public OnboardingFinaleCardsInput CardsInput { get; set; } = new(false, false, false, false, false, false);
     [Parameter] public EventCallback OnComplete { get; set; }
+    [Parameter] public bool HideHero { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
 
     private IReadOnlyList<OnboardingFinaleInsight> _insights = [];
     private IReadOnlyList<OnboardingFinaleCard> _nowCards = [];

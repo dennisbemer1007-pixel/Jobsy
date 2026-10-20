@@ -961,7 +961,167 @@
 }
 
 .ob-rustig__kompas {
-  max-inline-size: 42rem;
+  max-inline-size: none;
+}
+
+.ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
+  block-size: clamp(220px, 62vw, 260px);
+  min-block-size: 220px;
+  max-block-size: 260px;
+  border-block-end: none;
+}
+
+.ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+}
+
+@media (min-width: 1024px) {
+  .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
+    block-size: clamp(360px, 28vw, 440px);
+    min-block-size: 360px;
+    max-block-size: 440px;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
+    object-position: center 40%;
+  }
+}
+
+.ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__page-head {
+  padding-block-start: 1.15rem;
+}
+
+.ob-rustig__kompas-finale .ob-finale {
+  min-height: 0;
+  background: transparent;
+  padding-bottom: 0;
+  color: inherit;
+}
+
+.ob-rustig__kompas-finale .ob-finale__wrap {
+  max-width: none;
+  padding-inline: 0;
+  padding-block: 0;
+}
+
+.ob-rustig__kompas-tests,
+.ob-rustig__kompas-directions {
+  margin-block-end: 1.75rem;
+}
+
+.ob-rustig__kompas-tests h2,
+.ob-rustig__kompas-directions h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.25rem;
+  color: var(--brand);
+}
+
+.ob-rustig__kompas-test-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .ob-rustig__kompas-test-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ob-rustig__kompas-test-card {
+  padding: 1rem 1.05rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--border) 75%, var(--brand) 25%);
+  background: var(--surface);
+}
+
+.ob-rustig__kompas-test-card small {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-block-end: 0.35rem;
+}
+
+.ob-rustig__kompas-test-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--brand);
+}
+
+.ob-rustig__kompas-test-card p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.ob-rustig__kompas-dir-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .ob-rustig__kompas-dir-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ob-rustig__kompas-dir-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
+  background: var(--surface);
+}
+
+.ob-rustig__kompas-dir-card img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.ob-rustig__kompas-dir-card div {
+  padding: 0.85rem 0.95rem 1rem;
+}
+
+.ob-rustig__kompas-dir-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  color: var(--brand);
+}
+
+.ob-rustig__kompas-dir-card p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.ob-rustig__kompas-next {
+  margin-block: 1.5rem 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ob-rustig__kompas-next .ob-rustig__btn--primary {
+  inline-size: fit-content;
+  text-decoration: none;
+  text-align: center;
+}
+
+.ob-rustig__kompas-next-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
 }
 
 .ob-rustig__kompas-badge {

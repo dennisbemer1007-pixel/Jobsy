@@ -79,20 +79,28 @@ else
         : null;
 
     private string? PanoramaDesktop =>
-        Meta is not null && Meta.Slug != "step-06"
+        Meta is not null && Meta.Slug.StartsWith("step-", StringComparison.Ordinal) && Meta.Slug != "step-06"
             ? OnboardingRustigPanoramaAssets.Desktop(Meta.Slug)
             : null;
 
     private string? PanoramaMobile =>
-        Meta is not null && Meta.Slug != "step-06"
+        Meta is not null && Meta.Slug.StartsWith("step-", StringComparison.Ordinal) && Meta.Slug != "step-06"
             ? OnboardingRustigPanoramaAssets.Mobile(Meta.Slug)
             : null;
 
-    private string? IllustratedDesktop =>
-        Meta?.Slug == "step-06" ? OnboardingRustigDreamIllustrationAssets.DesktopJpg : null;
+    private string? IllustratedDesktop => Meta?.Slug switch
+    {
+        "step-06" => OnboardingRustigDreamIllustrationAssets.DesktopJpg,
+        "kompas" => OnboardingRustigKompasIllustrationAssets.DesktopJpg,
+        _ => null,
+    };
 
-    private string? IllustratedMobile =>
-        Meta?.Slug == "step-06" ? OnboardingRustigDreamIllustrationAssets.MobileJpg : null;
+    private string? IllustratedMobile => Meta?.Slug switch
+    {
+        "step-06" => OnboardingRustigDreamIllustrationAssets.MobileJpg,
+        "kompas" => OnboardingRustigKompasIllustrationAssets.MobileJpg,
+        _ => null,
+    };
 
     private RenderFragment Body => View switch
     {
@@ -106,7 +114,7 @@ else
             OnboardingRustigMockupKind.Personal => PersonalBody,
             OnboardingRustigMockupKind.TestOverview => TestOverviewBody,
             OnboardingRustigMockupKind.TestQuestion => TestQuestionBody,
-            OnboardingRustigMockupKind.Kompas => KompasBody,
+            OnboardingRustigMockupKind.Kompas => KompasFinaleBody,
             _ => Empty,
         },
     };
@@ -438,32 +446,10 @@ else
         </div>;
     };
 
-    private static readonly RenderFragment KompasBody = __builder =>
+    private static readonly RenderFragment KompasFinaleBody = __builder =>
     {
         <div class="ob-rustig__canvas ob-rustig__kompas">
-            <span class="ob-rustig__kompas-badge">Onboarding en tests afgerond</span>
-            <a class="ob-rustig__kompas-highlight" href="#">
-                <span class="ob-rustig__kompas-n">65</span>
-                <div><b>65 vacatures passen al bij je</b><small>Allemaal binnen 30 minuten reizen vanaf Zwolle</small></div>
-                <span class="ob-rustig__kompas-go">Bekijk ze</span>
-            </a>
-            <h2 class="ob-rustig__kompas-h2">Dit valt ons nu al op</h2>
-            <p class="ob-rustig__kompas-lead">Een eerste indruk uit je Quick-Scan. Met de verdieping wordt dit scherper.</p>
-            <div class="ob-rustig__kompas-insights">
-                <article><small>Hoe je werkt</small><p>Samen &amp; aardig: je werkt graag samen en houdt rekening met anderen.</p></article>
-                <article><small>Leuk</small><p>Praktisch bezig: je krijgt energie van doen en maken.</p></article>
-            </div>
-            <h2 class="ob-rustig__kompas-h2">Wat Lobsy nu voor je doet</h2>
-            <p class="ob-rustig__kompas-lead">Vanaf nu werken we met jouw Kompas. Dit merk je ervan:</p>
-            <div class="ob-rustig__kompas-cards">
-                <article><h4>Passende vacatures</h4><p>We filteren op reistijd, beschikbaarheid en je tests.</p></article>
-                <article><h4>Jouw Kompas</h4><p>Je ziet wie je bent op het werk en wat bij je past.</p></article>
-                <article><h4>Matches op jouw tempo</h4><p>Jij beslist wanneer een werkgever contact mag opnemen.</p></article>
-            </div>
-            <div class="ob-rustig__footer-actions">
-                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Naar mijn Kompas</button>
-                <button type="button" class="ob-rustig__btn">Doe de volledige tests voor meer precisie</button>
-            </div>
+            <OnboardingRustigKompasFinale />
         </div>;
     };
 

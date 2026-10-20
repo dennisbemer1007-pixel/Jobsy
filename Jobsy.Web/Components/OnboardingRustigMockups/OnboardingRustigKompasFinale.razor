@@ -1,0 +1,57 @@
+@namespace Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.OnboardingRustigMockups
+@using Jobsy.Web.KandidaatBanen
+
+<div class="ob-rustig__kompas-finale">
+    <span class="ob-rustig__kompas-badge">Onboarding en tests afgerond</span>
+
+    <OnboardingFinaleV2 FirstName="Sam"
+                       Impression="@OnboardingRustigMockupContent.KompasImpression()"
+                       MatchCount="65"
+                       MaxTravelMinutes="30"
+                       HomeLabel="Zwolle"
+                       DreamJob="Software developer"
+                       CardsInput="@OnboardingRustigMockupContent.KompasFinaleCards()"
+                       HideHero="true">
+        <HeaderContent>
+            <section class="ob-rustig__kompas-tests" aria-labelledby="kompas-tests-h">
+                <h2 id="kompas-tests-h">Wat je vier tests samen laten zien</h2>
+                <p class="ob-rustig__kompas-lead">In woorden, zonder scores. Dit is je startpunt voor je Kompas.</p>
+                <div class="ob-rustig__kompas-test-grid">
+                    @foreach (var key in new[] { "werkt", "leuk", "sfeer", "waarden" })
+                    {
+                        var t = OnboardingRustigMockupContent.TestResult(key);
+                        <article class="ob-rustig__kompas-test-card">
+                            <small>@t.TabLabel</small>
+                            <h3>@t.Title</h3>
+                            <p>@t.Summary</p>
+                        </article>
+                    }
+                </div>
+            </section>
+
+            <section class="ob-rustig__kompas-directions" aria-labelledby="kompas-dir-h">
+                <h2 id="kompas-dir-h">Richtingen die bij je passen</h2>
+                <p class="ob-rustig__kompas-lead">Warme voorbeelden om op verder te verkennen. Geen beloftes, wel een eerste kompas.</p>
+                <div class="ob-rustig__kompas-dir-grid">
+                    @foreach (var card in OnboardingRustigMockupContent.KompasDirections)
+                    {
+                        <article class="ob-rustig__kompas-dir-card">
+                            <img src="@card.ImageUrl" alt="" width="240" height="180" decoding="async" />
+                            <div>
+                                <h3>@card.Title</h3>
+                                <p>@card.Body</p>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+
+            <div class="ob-rustig__kompas-next">
+                <a class="ob-rustig__btn ob-rustig__btn--primary" href="@KbRoutes.Map">Naar de banenkaart</a>
+                <p class="ob-rustig__kompas-next-hint">65 vacatures passen al bij je binnen 30 minuten reizen vanaf Zwolle.</p>
+            </div>
+        </HeaderContent>
+    </OnboardingFinaleV2>
+</div>

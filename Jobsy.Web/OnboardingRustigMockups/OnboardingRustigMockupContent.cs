@@ -1,7 +1,59 @@
+using Jobsy.Core.Rules;
+using Jobsy.Web.Models;
+
 namespace Jobsy.Web.OnboardingRustigMockups;
 
 public static class OnboardingRustigMockupContent
 {
+    public sealed record KompasDirectionCard(string Title, string Body, string ImageUrl);
+
+    public static readonly KompasDirectionCard[] KompasDirections =
+    [
+        new("Zorg & welzijn", "Passende plekken waar je met mensen werkt en verschil maakt.", OnboardingRustigKompasIllustrationAssets.DirectionZorg),
+        new("Groene techniek", "Buiten en met je handen, met ruimte om te leren.", OnboardingRustigKompasIllustrationAssets.DirectionKas),
+        new("Organiseren & samenwerken", "Structuur, overzicht en contact met een team.", OnboardingRustigKompasIllustrationAssets.DirectionKantoor),
+    ];
+
+    public static OnboardingImpression KompasImpression() => new()
+    {
+        Label = "Sam",
+        Strengths =
+        [
+            new OnboardingImpressionItem
+            {
+                Label = TestResult("werkt").Title,
+                Sentence = TestResult("werkt").Summary,
+            },
+        ],
+        Riasec =
+        [
+            new OnboardingImpressionItem
+            {
+                Label = TestResult("leuk").Title,
+                Sentence = TestResult("leuk").Summary,
+            },
+        ],
+        CultureHighlight = new OnboardingImpressionItem
+        {
+            Label = TestResult("sfeer").Title,
+            Sentence = TestResult("sfeer").Summary,
+        },
+        TopValue = new OnboardingImpressionItem
+        {
+            Label = TestResult("waarden").Title,
+            Sentence = TestResult("waarden").Summary,
+        },
+    };
+
+    public static OnboardingFinaleCardsInput KompasFinaleCards() =>
+        new(
+            CandidatePassportEnabled: false,
+            ReferenceVerificationEnabled: false,
+            ProactiveMatchingEnabled: false,
+            KandidatenkaartEnabled: true,
+            DeeperTestsComplete: false,
+            HasDreamJob: true);
+
     public sealed record TestQuestionMock(
         string TabLabel,
         string Statement,
