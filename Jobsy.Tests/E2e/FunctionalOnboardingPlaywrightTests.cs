@@ -134,6 +134,38 @@ public sealed class FunctionalOnboardingPlaywrightTests
     }
 
     [Fact]
+    public async Task Step3_transport_tiles_visible_after_volgende_from_step2()
+    {
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, 1440, 900, false));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(180_000);
+
+        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, "func-step3-transport");
+        await FunctionalOnboardingInteractivityHelpers.BeginKennismakenStepAsync(page, baseUrl);
+        await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
+
+        await Assertions.Expect(page.Locator("[data-testid=onboarding-step-3-illustrated]")).ToBeVisibleAsync();
+        var selectedTransport = page.Locator(
+            "#onboarding-field-transport .lobsy-choice-tile.is-selected, #onboarding-field-transport [aria-pressed=\"true\"]");
+        await Assertions.Expect(selectedTransport.First).ToBeVisibleAsync(new() { Timeout = 15_000 });
+        var travel30 = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile.is-selected, .ob-wizard__travel-times [aria-pressed=\"true\"]")
+            .Filter(new() { HasText = "30" });
+        await Assertions.Expect(travel30.First).ToBeVisibleAsync(new() { Timeout = 15_000 });
+    }
+
+    [Fact]
     public async Task Four_mini_tests_finish_on_kompas_without_reopening_completed_leuk()
     {
         var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
