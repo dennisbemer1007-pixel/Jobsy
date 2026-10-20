@@ -26,7 +26,7 @@ def region_figure_top(band: Image.Image, x0_frac: float, x1_frac: float) -> int 
     h, w = dist.shape
     x0, x1 = int(w * x0_frac), max(int(w * x1_frac), int(w * x0_frac) + 1)
     sub = dist[:, x0:x1]
-    y_lo = int(h * 0.12)
+    y_lo = max(0, int(h * 0.02))
     peak_y, peak_score = None, 0.0
     for y in range(y_lo, h):
         score = float((sub[y] > 28).mean())

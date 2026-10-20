@@ -7,7 +7,7 @@
 }
 else
 {
-    <OnboardingRustigShell ScreenId="@Meta.Slug"
+    <OnboardingRustigShell ScreenId="@ShellScreenId"
                            Step="@DisplayStep"
                            PhaseLabel="@Meta.PhaseLabel"
                            MinutesLeft="@Meta.MinutesLeft"
@@ -26,6 +26,16 @@ else
 
 @code {
     [Parameter, EditorRequired] public OnboardingRustigMockupScreen? Meta { get; set; }
+    [Parameter] public OnboardingRustigMockupView View { get; set; } = OnboardingRustigMockupView.Default;
+    [Parameter] public bool ShowOverviewResultRail { get; set; }
+
+    private string ShellScreenId => View switch
+    {
+        OnboardingRustigMockupView.TestIntro => $"{Meta!.Slug}-intro",
+        OnboardingRustigMockupView.TestQuestion => $"{Meta!.Slug}-vraag",
+        OnboardingRustigMockupView.TestResult => $"{Meta!.Slug}-result",
+        _ => Meta!.Slug,
+    };
 
     private int DisplayStep => Meta!.Kind switch
     {
@@ -34,34 +44,53 @@ else
         _ => Meta.WizardStep,
     };
 
-    private string? ShellTitle => Meta!.Kind switch
+    private string? ShellTitle => View switch
     {
-        OnboardingRustigMockupKind.Start => "Hoi Sam, fijn dat je er bent",
-        OnboardingRustigMockupKind.Kompas => "Sam, je Kompas staat klaar",
-        _ => Meta.Title,
+        OnboardingRustigMockupView.TestIntro => OnboardingRustigMockupContent.TestIntroCopy(Meta!.TestKey).Title,
+        OnboardingRustigMockupView.TestResult => $"Klaar: {OnboardingRustigMockupContent.TestResult(Meta!.TestKey).TabLabel}",
+        _ => Meta!.Kind switch
+        {
+            OnboardingRustigMockupKind.Start => "Hoi Sam, fijn dat je er bent",
+            OnboardingRustigMockupKind.Kompas => "Sam, je Kompas staat klaar",
+            OnboardingRustigMockupKind.TestOverview => Meta.Title,
+            OnboardingRustigMockupKind.TestQuestion => null,
+            _ => Meta.Title,
+        },
     };
 
-    private string? ShellLead => Meta!.Kind switch
+    private string? ShellLead => View switch
     {
-        OnboardingRustigMockupKind.Start =>
-            "In ongeveer zes minuten maken we samen je startprofiel. Daarna zie je op je Kompas wie je bent en welk werk bij je past.",
-        OnboardingRustigMockupKind.Kompas =>
-            "Je gaat nu de kracht van Lobsy meemaken. Dit is wat je vanaf nu kunt verwachten.",
-        _ => Meta.Lead,
+        OnboardingRustigMockupView.TestIntro => OnboardingRustigMockupContent.TestIntroCopy(Meta!.TestKey).Lead,
+        OnboardingRustigMockupView.TestResult => "Dit is je eerste uitslag. Je kunt later verder verfijnen.",
+        _ => Meta!.Kind switch
+        {
+            OnboardingRustigMockupKind.Start =>
+                "In ongeveer zes minuten maken we samen je startprofiel. Daarna zie je op je Kompas wie je bent en welk werk bij je past.",
+            OnboardingRustigMockupKind.Kompas =>
+                "Je gaat nu de kracht van Lobsy meemaken. Dit is wat je vanaf nu kunt verwachten.",
+            _ => Meta.Lead,
+        },
     };
 
-    private RenderFragment? RightRail => Meta!.Kind == OnboardingRustigMockupKind.TestOverview
+    private RenderFragment? RightRail => View == OnboardingRustigMockupView.TestsOverview && ShowOverviewResultRail
         ? FinishedTestResult
         : null;
 
-    private RenderFragment Body => Meta!.Kind switch
+    private RenderFragment Body => View switch
     {
-        OnboardingRustigMockupKind.Start => StartBody,
-        OnboardingRustigMockupKind.Personal => PersonalBody,
-        OnboardingRustigMockupKind.TestOverview => TestOverviewBody,
-        OnboardingRustigMockupKind.TestQuestion => TestQuestionBody,
-        OnboardingRustigMockupKind.Kompas => KompasBody,
-        _ => Empty,
+        OnboardingRustigMockupView.TestsOverview => TestOverviewBody,
+        OnboardingRustigMockupView.TestIntro => TestIntroBody,
+        OnboardingRustigMockupView.TestQuestion => TestQuestionBody,
+        OnboardingRustigMockupView.TestResult => TestResultBody,
+        _ => Meta!.Kind switch
+        {
+            OnboardingRustigMockupKind.Start => StartBody,
+            OnboardingRustigMockupKind.Personal => PersonalBody,
+            OnboardingRustigMockupKind.TestOverview => TestOverviewBody,
+            OnboardingRustigMockupKind.TestQuestion => TestQuestionBody,
+            OnboardingRustigMockupKind.Kompas => KompasBody,
+            _ => Empty,
+        },
     };
 
     private RenderFragment PersonalBody => Meta!.Slug switch
@@ -317,7 +346,7 @@ else
     {
         var q = OnboardingRustigMockupContent.TestQuestion(Meta!.TestKey);
         var tabs = new[] { "Hoe je werkt", "Leuk", "Sfeer", "Waarden" };
-        <div class="ob-rustig__canvas @(Meta.TestKey == "leuk" ? "ob-rustig__canvas--split" : null)">
+        <div class="ob-rustig__canvas">
             <div class="ob-rustig__test-tabs" aria-label="Tests">
                 @for (var i = 0; i < tabs.Length; i++)
                 {
@@ -350,10 +379,44 @@ else
                     <button type="button" class="ob-rustig__btn">Later doen</button>
                 </div>
             </div>
-            @if (Meta.TestKey == "leuk")
-            {
-                @FinishedTestResult
-            }
+        </div>;
+    };
+
+    private RenderFragment TestIntroBody => __builder =>
+    {
+        var q = OnboardingRustigMockupContent.TestQuestion(Meta!.TestKey);
+        var tabs = new[] { "Hoe je werkt", "Leuk", "Sfeer", "Waarden" };
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__test-tabs" aria-label="Tests">
+                @for (var i = 0; i < tabs.Length; i++)
+                {
+                    var state = q.TabStates[i];
+                    <span class="ob-rustig__test-tab @state">@(state == "is-done" ? "✓ " : "")@tabs[i]</span>
+                }
+            </div>
+            <p class="ob-rustig__privacy-line">
+                Beantwoord op gevoel — er zijn geen foute antwoorden. Je antwoorden blijven privé.
+            </p>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Start met de stellingen</button>
+            </div>
+        </div>;
+    };
+
+    private RenderFragment TestResultBody => __builder =>
+    {
+        var r = OnboardingRustigMockupContent.TestResult(Meta!.TestKey);
+        <div class="ob-rustig__canvas">
+            <div class="ob-rustig__result-card">
+                <kbd>@r.TabLabel</kbd>
+                <h3>@r.Title</h3>
+                <p>@r.Summary</p>
+            </div>
+            <div class="ob-rustig__footer-actions">
+                <button type="button" class="ob-rustig__btn">Terug</button>
+                <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Volgende test</button>
+            </div>
         </div>;
     };
 

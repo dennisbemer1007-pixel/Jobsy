@@ -9,7 +9,7 @@
 <PageTitle>Onboarding rustig mockup · @_screen · Lobsy</PageTitle>
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/onboarding-rustig-mockup.css?v=20261020-u6a" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig-mockup.css?v=20261020-u6b" />
 </HeadContent>
 
 @if (_screen == "index")
@@ -21,14 +21,26 @@
             @foreach (var entry in OnboardingRustigMockupRegistry.Ordered)
             {
                 <li><a href="/mockups/onboarding-rustig/@entry.Slug">@IndexLabel(entry)</a></li>
+                @if (entry.Kind == OnboardingRustigMockupKind.TestOverview)
+                {
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/step-07-b">↳ Overzicht + resultaat (rail)</a></li>
+                }
+                @if (entry.Kind == OnboardingRustigMockupKind.TestQuestion)
+                {
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/@(entry.Slug)-intro">↳ Intro</a></li>
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/@(entry.Slug)-vraag">↳ Vraag</a></li>
+                    <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/@(entry.Slug)-result">↳ Resultaat</a></li>
+                }
             }
             <li><a href="/mockups/site-rustig">Site mockups (partners, footer, …)</a></li>
         </ul>
     </div>
 }
-else if (_meta is not null)
+else if (_resolved is not null)
 {
-    <OnboardingRustigMockupScreenHost Meta="_meta" />
+    <OnboardingRustigMockupScreenHost Meta="_resolved.Meta"
+                                       View="_resolved.View"
+                                       ShowOverviewResultRail="_resolved.ShowOverviewResultRail" />
 }
 else
 {
@@ -37,19 +49,14 @@ else
 
 @code {
     private string _screen = "index";
-    private OnboardingRustigMockupScreen? _meta;
+    private OnboardingRustigMockupRoute.Resolved? _resolved;
 
     [Parameter] public string? Screen { get; set; }
 
     protected override void OnParametersSet()
     {
         _screen = string.IsNullOrWhiteSpace(Screen) ? "index" : Screen.Trim().ToLowerInvariant();
-        _meta = _screen switch
-        {
-            "step-07-a" or "step-07-b" => OnboardingRustigMockupRegistry.Find("step-07"),
-            "test-leuk" or "test-leuk-a" or "test-leuk-b" => OnboardingRustigMockupRegistry.Find("step-09"),
-            _ => OnboardingRustigMockupRegistry.Find(_screen),
-        };
+        _resolved = _screen == "index" ? null : OnboardingRustigMockupRoute.Resolve(_screen);
     }
 
     private static string IndexLabel(OnboardingRustigMockupScreen entry) => entry.Slug switch

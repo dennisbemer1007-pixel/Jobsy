@@ -59,7 +59,7 @@ def figure_head_tops_band(band: Image.Image) -> list[int]:
     rgb = np.asarray(band.convert("RGB"), dtype=np.float32)
     dist = np.linalg.norm(rgb - CREAM, axis=2)
     h, w = dist.shape
-    y_lo = int(h * 0.12)
+    y_lo = max(0, int(h * 0.02))
     row_occ = 0.05
 
     def region_top(x0_frac: float, x1_frac: float) -> int | None:

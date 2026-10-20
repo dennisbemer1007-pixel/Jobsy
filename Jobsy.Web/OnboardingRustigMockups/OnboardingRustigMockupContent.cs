@@ -9,6 +9,26 @@ public static class OnboardingRustigMockupContent
         int SelectedAnswer,
         IReadOnlyList<string> TabStates);
 
+    public sealed record TestResultMock(string TabLabel, string Title, string Summary);
+
+    public static TestResultMock TestResult(string? testKey) => testKey switch
+    {
+        "werkt" => new("Hoe je werkt", "Samen & aardig", "Je werkt graag samen en houdt rekening met anderen."),
+        "leuk" => new("Leuk", "Praktisch bezig", "Je krijgt energie van doen, maken en aanpakken."),
+        "sfeer" => new("Sfeer", "Informeel & warm", "Je voelt je op je gemak in een relaxte werksfeer."),
+        "waarden" => new("Waarden", "Zinvol & betrokken", "Je wilt dat je werk ertoe doet voor anderen of de wereld."),
+        _ => new("Test", "Jouw uitslag", "Dit is een voorbeeldresultaat voor de mockup."),
+    };
+
+    public static (string Title, string Lead) TestIntroCopy(string? testKey) => testKey switch
+    {
+        "werkt" => ("Hoe je werkt", "5 korte stellingen over samenwerken en tempo op het werk."),
+        "leuk" => ("Leuk", "Wat geeft jou energie als je bezig bent?"),
+        "sfeer" => ("Sfeer", "Welke werksfeer past het best bij jou?"),
+        "waarden" => ("Waarden", "Wat vind jij belangrijk in werk en organisatie?"),
+        _ => ("Test", "Beantwoord een paar korte stellingen."),
+    };
+
     public static TestQuestionMock TestQuestion(string? testKey) => testKey switch
     {
         "werkt" => new TestQuestionMock(
