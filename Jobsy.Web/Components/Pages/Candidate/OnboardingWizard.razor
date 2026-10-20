@@ -1066,7 +1066,6 @@
         }
 
         _error = null;
-        _welcome = false;
         _busy = true;
         try
         {
@@ -1074,6 +1073,7 @@
             Api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
             await RefreshJourneyCompletionAsync();
             await PrepareMiniAsync();
+            _welcome = false;
             RequestStepScrollReset();
             await DeferredTryAutoAdvanceAsync();
         }
