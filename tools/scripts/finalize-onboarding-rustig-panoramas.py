@@ -21,6 +21,7 @@ CREAM = np.array([247, 244, 240], dtype=np.float32)
 DESKTOP_RATIO = 6.0
 MOBILE_RATIO = 4.0
 HEAD_MARGIN = 14
+MIN_HEAD_ROW_FRAC = 0.165  # every head below top ~16.5% of hero band
 FEET_ABOVE_FADE = 25
 FADE_BOTTOM = 25
 FADE_SIDE = 30
@@ -51,6 +52,38 @@ def content_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
         return None
     ys, xs = np.where(mask)
     return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+
+
+def figure_head_tops_band(band: Image.Image) -> list[int]:
+    """Same slice head-row logic as verify-onboarding-rustig-capture-heads.py."""
+    rgb = np.asarray(band.convert("RGB"), dtype=np.float32)
+    dist = np.linalg.norm(rgb - CREAM, axis=2)
+    h, w = dist.shape
+    y_lo = int(h * 0.12)
+    row_occ = 0.05
+
+    def region_top(x0_frac: float, x1_frac: float) -> int | None:
+        x0, x1 = int(w * x0_frac), max(int(w * x1_frac), int(w * x0_frac) + 1)
+        sub = dist[:, x0:x1]
+        peak_y, peak_score = None, 0.0
+        for y in range(y_lo, h):
+            score = float((sub[y] > 28).mean())
+            if score >= row_occ and score >= peak_score:
+                peak_score = score
+                peak_y = y
+        if peak_y is None:
+            return None
+        for y in range(y_lo, peak_y + 1):
+            if float((sub[y] > 28).mean()) >= row_occ * 0.65:
+                return y
+        return peak_y
+
+    tops: list[int] = []
+    for a, b in [(0.04, 0.28), (0.28, 0.52), (0.52, 0.76), (0.76, 0.96)]:
+        t = region_top(a, b)
+        if t is not None:
+            tops.append(t)
+    return tops
 
 
 def figure_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
@@ -157,6 +190,17 @@ def crop_to_ratio(
     band = scaled.crop((0, y0, target_w, y0 + crop_h))
     if band.size[1] != target_h:
         band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
+    min_head_row = int(target_h * MIN_HEAD_ROW_FRAC)
+    scale_back = crop_h / max(1, target_h)
+    for _ in range(100):
+        tops = figure_head_tops_band(band)
+        if not tops or min(tops) >= min_head_row:
+            break
+        shift_final = min_head_row - min(tops)
+        y0 = max(0, y0 - max(1, int(shift_final * scale_back)))
+        band = scaled.crop((0, y0, target_w, y0 + crop_h))
+        if band.size[1] != target_h:
+            band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
     return band
 
 

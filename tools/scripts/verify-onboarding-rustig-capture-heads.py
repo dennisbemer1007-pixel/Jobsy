@@ -11,6 +11,7 @@ from PIL import Image
 
 CREAM = np.array([247, 244, 240], dtype=np.float32)
 MIN_HEAD_PX = 8
+MIN_HEAD_ROW_FRAC = 0.15  # no head in top 15% of band (3× zoom check)
 ROW_OCCUPANCY = 0.05
 ARTIFACTS = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 JPEG_DIR = Path(__file__).resolve().parents[2] / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
@@ -58,8 +59,12 @@ def check_image(label: str, im: Image.Image) -> tuple[bool, str]:
     if not good:
         return False, f"{label}: all figure rows too high slices={tops}"
     y_check = min(good)
-    ok = y_check >= MIN_HEAD_PX
-    return ok, f"{label}: figure head rows {tops}, checked={y_check}px (>={MIN_HEAD_PX})"
+    min_row = int(im.size[1] * MIN_HEAD_ROW_FRAC)
+    ok = y_check >= MIN_HEAD_PX and y_check >= min_row
+    return (
+        ok,
+        f"{label}: figure head rows {tops}, checked={y_check}px (>={MIN_HEAD_PX}, top15>={min_row})",
+    )
 
 
 def main() -> None:

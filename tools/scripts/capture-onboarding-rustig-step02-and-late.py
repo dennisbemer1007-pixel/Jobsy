@@ -15,7 +15,30 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 ZOOM = Path("/opt/cursor/artifacts/onboarding-rustig-lobster-zoom")
-STEP02_MOB = (0.76, 0.55)
+REPORT_EARLY = ["step-02", "step-04", "step-05"]
+MOB_CENTER: dict[str, tuple[float, float]] = {
+    "step-02": (0.76, 0.55),
+    "step-04": (0.12, 0.58),
+    "step-05": (0.55, 0.65),
+}
+
+
+def lobster_4x(page, slug: str) -> None:
+    import io
+
+    hero = page.locator("[data-testid=ob-rustig-hero]").bounding_box()
+    im = Image.open(io.BytesIO(page.screenshot(full_page=False)))
+    x0, y0 = int(hero["x"]), int(hero["y"])
+    w, h = int(hero["width"]), int(hero["height"])
+    band = im.crop((x0, y0, x0 + w, y0 + h))
+    ex, ey = MOB_CENTER[slug]
+    cx, cy = int(w * ex), int(h * ey)
+    crop = band.crop((max(0, cx - 14), max(0, cy - 16), min(w, cx + 14), min(h, cy + 16)))
+    zoom = crop.resize((crop.size[0] * 4, crop.size[1] * 4), Image.Resampling.LANCZOS)
+    zoom = zoom.filter(ImageFilter.UnsharpMask(radius=1, percent=80, threshold=2))
+    zout = ZOOM / f"{slug}-mobile-lobster-4x.png"
+    zoom.save(zout)
+    print("wrote", zout)
 
 
 def main() -> None:
@@ -54,24 +77,17 @@ def main() -> None:
                 print("wrote", out)
                 page.close()
 
-            shot("step-02", 1280, 900, "step-02-desktop-1280.png")
-            shot("step-02", 390, 844, "step-02-mobile.png")
-
-            page = browser.new_page(viewport={"width": 390, "height": 844})
-            page.goto(f"{base}/mockups/onboarding-rustig/step-02", wait_until="networkidle")
-            hero = page.locator("[data-testid=ob-rustig-hero]").bounding_box()
-            im = Image.open(io.BytesIO(page.screenshot(full_page=False)))
-            x0, y0 = int(hero["x"]), int(hero["y"])
-            w, h = int(hero["width"]), int(hero["height"])
-            band = im.crop((x0, y0, x0 + w, y0 + h))
-            cx, cy = int(w * STEP02_MOB[0]), int(h * STEP02_MOB[1])
-            crop = band.crop((max(0, cx - 14), max(0, cy - 16), min(w, cx + 14), min(h, cy + 16)))
-            zoom = crop.resize((crop.size[0] * 4, crop.size[1] * 4), Image.Resampling.LANCZOS)
-            zoom = zoom.filter(ImageFilter.UnsharpMask(radius=1, percent=80, threshold=2))
-            zout = ZOOM / "step-02-mobile-lobster-4x.png"
-            zoom.save(zout)
-            print("wrote", zout)
-            page.close()
+            for slug in REPORT_EARLY:
+                shot(slug, 1280, 900, f"{slug}-desktop-1280.png")
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(f"{base}/mockups/onboarding-rustig/{slug}", wait_until="networkidle")
+                page.wait_for_selector("[data-ob-rustig-screen]", timeout=30_000)
+                page.wait_for_timeout(400)
+                out = OUT / f"{slug}-mobile.png"
+                page.screenshot(path=str(out), full_page=False)
+                print("wrote", out)
+                lobster_4x(page, slug)
+                page.close()
 
             for slug in slugs_late:
                 shot(slug, 1280, 900, f"{slug}-desktop-1280.png")

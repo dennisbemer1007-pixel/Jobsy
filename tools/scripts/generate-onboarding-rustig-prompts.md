@@ -6,8 +6,8 @@ Shared suffix: Wide establishing 16:9. Warm Lobsy cream flat illustration. FULL 
 - **step-01**: Getting to know you: row house street, person at front door with envelope, wall calendar for birth date, small work-status icons (student, job)—home neighbourhood.
 - **step-02**: When can you work (Wanneer kun je werken?): panoramic day left-to-right—morning sunrise person with coffee and bike, midday sunny town clock tower, evening warm lamplight worker heading to shift. No park bench scene.
 - **step-03**: Transport only: walker, cyclist, train, bus stop, car, scooter spread wide.
-- **step-04**: Past jobs: barista at café counter, shop cashier, warehouse worker with pallet—three job vignettes one continuous street.
-- **step-05**: Education: library shelves, diploma scroll, graduate with books on campus path.
+- **step-04**: Past jobs only: barista at espresso counter, retail clothing shelves, warehouse pallet—top half empty cream sky, NO text/signs, NO chalkboard letters, heads in lower half with headroom.
+- **step-05**: Education: graduate cap+gown full figure, books stack, diploma scroll, low campus building—top 55–60% empty cream, NO text, NO painted lobster.
 - **step-06**: Dream job: person on hill looking at horizon with faint dream roles (nurse, developer, teacher) in clouds ahead.
 - **step-07**: Four tests journey: winding path with four distinct colored signposts/gates labeled visually (no text)—tests as stations.
 - **step-08**: How you work: coworkers at table, handshake, shared laptop—collaboration.
