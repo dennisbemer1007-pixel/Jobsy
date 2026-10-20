@@ -57,31 +57,65 @@
 else
 {
     <div class="@(RustigLayout ? "ob-rustig__question-card" : "ob-wizard__card")">
-    <TestQuestionFlow @key="FlowEpoch"
-                      Kind="_kind"
-                      Questions="_flowQuestions"
-                      Answers="Answers"
-                      Autosave="Autosave"
-                      StartAt="CurrentQuestion"
-                      ExternalIndex="CurrentQuestion"
-                      Target="Depth"
-                      Compact="true"
-                      QuestionTitle="@(JourneyShell ? (string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey]) : null)"
-                      QuestionLead="@(RustigLayout || JourneyShell ? Culture["Onboarding.Test.Lead"] : null)"
-                      PartIndex="@(JourneyShell ? Step - 6 : 0)"
-                      PartTotal="@(JourneyShell ? 4 : 0)"
-                      FinishLabel="@Culture["Onboarding.NextTest"]"
-                      InputPrefix="@InputPrefix"
-                      AfterLikert="@JourneyAfterLikert"
-                      OnAnswer="OnFlowAnswer"
-                      OnIndexChanged="OnFlowIndexChanged"
-                      OnFinished="OnFlowFinished"
-                      OnLeave="OnLeave"
-                      OnLater="OnLater"
-                      LaterLabel="@LaterLabel"
-                      ShowProgressInsight="ShowProgressInsight"
-                      DomainForQuestionId="DomainForQuestionId"
-                      ProgressInsightChanged="ProgressInsightChanged" />
+    @if (RustigLayout)
+    {
+        @* Rustig disables TestBlockBackground; cascade active stage so compact flow keeps Terug + Later doen (mockup u8d). *@
+        <CascadingValue Name="TestBlockStageActive" Value="true">
+            <TestQuestionFlow @key="FlowEpoch"
+                              Kind="_kind"
+                              Questions="_flowQuestions"
+                              Answers="Answers"
+                              Autosave="Autosave"
+                              StartAt="CurrentQuestion"
+                              ExternalIndex="CurrentQuestion"
+                              Target="Depth"
+                              Compact="true"
+                              QuestionTitle="@(JourneyShell ? (string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey]) : null)"
+                              QuestionLead="@Culture["Onboarding.Test.Lead"]"
+                              PartIndex="@(JourneyShell ? Step - 6 : 0)"
+                              PartTotal="@(JourneyShell ? 4 : 0)"
+                              FinishLabel="@Culture["Onboarding.NextTest"]"
+                              InputPrefix="@InputPrefix"
+                              AfterLikert="@JourneyAfterLikert"
+                              OnAnswer="OnFlowAnswer"
+                              OnIndexChanged="OnFlowIndexChanged"
+                              OnFinished="OnFlowFinished"
+                              OnLeave="OnLeave"
+                              OnLater="OnLater"
+                              LaterLabel="@LaterLabel"
+                              ShowProgressInsight="ShowProgressInsight"
+                              DomainForQuestionId="DomainForQuestionId"
+                              ProgressInsightChanged="ProgressInsightChanged" />
+        </CascadingValue>
+    }
+    else
+    {
+        <TestQuestionFlow @key="FlowEpoch"
+                          Kind="_kind"
+                          Questions="_flowQuestions"
+                          Answers="Answers"
+                          Autosave="Autosave"
+                          StartAt="CurrentQuestion"
+                          ExternalIndex="CurrentQuestion"
+                          Target="Depth"
+                          Compact="true"
+                          QuestionTitle="@(JourneyShell ? (string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey]) : null)"
+                          QuestionLead="@(JourneyShell ? Culture["Onboarding.Test.Lead"] : null)"
+                          PartIndex="@(JourneyShell ? Step - 6 : 0)"
+                          PartTotal="@(JourneyShell ? 4 : 0)"
+                          FinishLabel="@Culture["Onboarding.NextTest"]"
+                          InputPrefix="@InputPrefix"
+                          AfterLikert="@JourneyAfterLikert"
+                          OnAnswer="OnFlowAnswer"
+                          OnIndexChanged="OnFlowIndexChanged"
+                          OnFinished="OnFlowFinished"
+                          OnLeave="OnLeave"
+                          OnLater="OnLater"
+                          LaterLabel="@LaterLabel"
+                          ShowProgressInsight="ShowProgressInsight"
+                          DomainForQuestionId="DomainForQuestionId"
+                          ProgressInsightChanged="ProgressInsightChanged" />
+    }
     </div>
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint && !JourneyShell)
