@@ -185,6 +185,28 @@
   }
 }
 
+.ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__hero-band::after {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 84%,
+    color-mix(in srgb, var(--bg) 22%, transparent) 94%,
+    var(--bg) 100%
+  );
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__hero-band::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 88%,
+      color-mix(in srgb, var(--bg) 18%, transparent) 96%,
+      var(--bg) 100%
+    );
+  }
+}
+
 .ob-rustig__hero-picture {
   display: block;
   inline-size: 100%;

@@ -189,9 +189,9 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
-MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-04", "step-05", "step-10"})
+MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-04", "step-05", "step-06", "step-10"})
 
-SEAMLESS_HERO_SLUGS = frozenset({"step-04", "step-05"})
+SEAMLESS_HERO_SLUGS = frozenset({"step-04", "step-05", "step-06"})
 
 
 def _load_step04_defuse():
