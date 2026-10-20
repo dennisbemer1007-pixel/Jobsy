@@ -271,7 +271,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.WelcomeLead"] = english
             ? "In about 12 minutes we go through ten short steps together. Then your Compass is ready and you see which work fits you."
             : "In ongeveer 12 minuten doorlopen we samen tien korte stappen. Daarna staat je Kompas klaar en zie je welk werk bij je past.";
-        map["Onboarding.Rustig.StartMeta"] = english ? "Start" : "Start";
+        map["Onboarding.Rustig.StartMeta"] = english ? "Getting started" : "Start";
         map["Onboarding.Rustig.MinutesShort"] = english ? "minutes" : "minuten";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.CtaRustig"] = english ? "Get started" : "Aan de slag";

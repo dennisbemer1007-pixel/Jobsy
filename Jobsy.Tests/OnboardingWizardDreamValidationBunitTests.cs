@@ -48,6 +48,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
         Services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate());
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
+        Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
     }
 
     [Fact]
@@ -147,6 +148,11 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
     {
         public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult(false);
+    }
+
+    private sealed class FixedRustigGate : IOnboardingRustigGate
+    {
+        public bool Enabled => false;
     }
 
     private sealed class FixedFlags : IFeatureFlags

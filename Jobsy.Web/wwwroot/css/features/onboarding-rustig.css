@@ -1,13 +1,48 @@
 /* Calm onboarding shell (strak, rustig, warm) on /candidate/start. */
 
 .ob-wizard--rustig {
-  --ob-rustig-sidebar: 300px;
+  --ob-rustig-sidebar: 230px;
   --ob-rustig-hero-h: 92px;
   background: var(--bg);
 }
 
 .ob-wizard--rustig.ob-wizard {
-  min-block-size: 100dvh;
+  min-block-size: auto;
+  block-size: auto;
+}
+
+/* Full-width welcome: undo onboarding-wizard 560px centered column. */
+.ob-wizard--rustig > .ob-wizard__welcome {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin-inline: 0;
+  padding: 0;
+}
+
+.app-shell:has(.ob-wizard--rustig) .app-main,
+.app-shell:has(.ob-wizard--rustig) .app-main__content {
+  max-inline-size: none;
+}
+
+@media (min-width: 1024px) {
+  .ob-wizard--rustig .ob-rustig__sidebar.ob-wizard__sidebar {
+    padding-inline-start: 0;
+    padding-block: 28px;
+    padding-inline-end: 20px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .app-shell:has(.ob-wizard--rustig) .ob-wizard--rustig,
+  .app-shell:has(.ob-wizard--rustig) .ob-wizard--rustig .ob-rustig,
+  .app-shell:has(.ob-wizard--rustig) .ob-wizard--rustig .ob-rustig__layout,
+  .app-shell:has(.ob-wizard--rustig) .ob-wizard--rustig .ob-rustig__main {
+    flex: none !important;
+    min-block-size: auto !important;
+    block-size: auto !important;
+    display: block !important;
+    overflow: visible !important;
+  }
 }
 
 .ob-rustig {
@@ -69,7 +104,9 @@
 .ob-rustig__chrome-row {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 0.75rem;
+  min-inline-size: 0;
 }
 
 .ob-rustig__segments {
@@ -81,10 +118,11 @@
 }
 
 .ob-rustig__segments span {
-  block-size: 4px;
+  block-size: 5px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--brand) 10%, var(--border));
+  background: color-mix(in srgb, var(--brand) 32%, var(--border));
   overflow: hidden;
+  min-inline-size: 0.75rem;
 }
 
 .ob-rustig__segments i {
@@ -314,7 +352,7 @@
   display: block;
   inline-size: 100%;
   block-size: 100%;
-  object-fit: fill;
+  object-fit: cover;
   object-position: center center;
 }
 
@@ -366,7 +404,68 @@
 
 @media (min-width: 1024px) {
   .ob-wizard--rustig {
-    --ob-rustig-hero-h: 170px;
+    --ob-rustig-hero-h: 120px;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-img--desk {
+    object-fit: cover;
+    object-position: 50% 58%;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__page-head {
+    max-inline-size: none;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__page-head h1 {
+    font-size: clamp(1.65rem, 1.35rem + 0.55vw, 2rem);
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__layout {
+    min-block-size: calc(100dvh - var(--app-header-height, 4.25rem));
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__main {
+    min-block-size: 0;
+    flex: 1 1 auto;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+    padding-block-end: 1.25rem;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__canvas {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    max-inline-size: none;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__footer-actions {
+    margin-block-start: auto;
+    max-inline-size: none;
+    inline-size: 100%;
+  }
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-band {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__chrome {
+    padding-inline: 1rem;
+  }
+
+  .ob-rustig__actions .ob-rustig__link--underline {
+    font-size: 0.75rem;
   }
 }
 

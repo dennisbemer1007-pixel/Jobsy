@@ -510,10 +510,15 @@ combo.save(out)
         if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
         {
             await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-            var start = page.Locator("button.ob-wizard__cta.btn-primary").First;
+            var start = page.GetByTestId("onboarding-begin");
             if (await start.CountAsync() == 0)
             {
-                start = page.GetByRole(AriaRole.Button, new() { Name = "Beginnen" });
+                start = page.Locator("button.ob-wizard__cta.btn-primary, .ob-rustig__btn--primary").First;
+            }
+
+            if (await start.CountAsync() == 0)
+            {
+                start = page.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^(Beginnen|Aan de slag)$") });
             }
 
             await start.ClickAsync(new() { Force = true, Timeout = 30_000 });
