@@ -174,9 +174,22 @@
   color: var(--text);
 }
 
+.ob-rustig__meta {
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+}
+
+.ob-rustig__meta > span:first-child {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ob-rustig__saved {
   color: var(--success, #2d6a4f);
   font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .ob-rustig__hero-band {
@@ -498,6 +511,16 @@
 .ob-rustig__canvas {
   inline-size: 100%;
   max-inline-size: min(52rem, 100%);
+  background: transparent;
+}
+
+/* Cream canvas: no legacy white wizard card inside rustig shells. */
+.ob-wizard--rustig .ob-rustig__canvas .ob-wizard__card {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .ob-rustig__canvas--split {
@@ -595,9 +618,101 @@
   font-weight: 600;
 }
 
+.ob-wizard--rustig .work-status-field .ob-wizard__section-hint {
+  display: none;
+}
+
+.ob-wizard--rustig .work-status-chip .lobsy-choice-tile__icon {
+  display: none;
+}
+
+.ob-wizard--rustig .work-status-chips.lobsy-choice-grid {
+  gap: 0.45rem;
+}
+
+.ob-wizard--rustig .work-status-chip.lobsy-choice-tile {
+  min-block-size: 42px;
+  block-size: auto;
+  padding-block: 0.35rem;
+  padding-inline: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.ob-wizard--rustig .work-status-chip .lobsy-choice-tile__label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
 @media (max-width: 1023px) {
   .ob-rustig .work-status-chips.lobsy-choice-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ob-rustig .work-status-chip.lobsy-choice-tile,
+  .ob-wizard--rustig .work-status-chip.lobsy-choice-tile {
+    justify-content: space-between;
+    padding-inline-end: 2.25rem;
+    position: relative;
+    text-align: start;
+  }
+
+  .ob-rustig .work-status-chip.lobsy-choice-tile.is-selected::after,
+  .ob-wizard--rustig .work-status-chip.lobsy-choice-tile.is-selected::after {
+    content: "✓";
+    position: absolute;
+    inset-inline-end: 0.75rem;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .ob-rustig .work-status-chip .lobsy-choice-tile__check,
+  .ob-wizard--rustig .work-status-chip .lobsy-choice-tile__check {
+    display: none;
+  }
+
+  .ob-rustig__tile {
+    justify-content: space-between;
+    padding-inline-end: 2.25rem;
+    position: relative;
+  }
+
+  .ob-rustig__tile.is-on::after {
+    content: "✓";
+    position: absolute;
+    inset-inline-end: 0.75rem;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .ob-rustig__dream-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ob-rustig__dream {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: start;
+    min-block-size: 42px;
+    padding-block: 0.35rem;
+    padding-inline: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    touch-action: manipulation;
+  }
+
+  .ob-rustig__dream.is-on::after {
+    content: "✓";
+    flex-shrink: 0;
+    margin-inline-start: 0.5rem;
+    font-weight: 700;
+    color: var(--brand);
   }
 }
 
@@ -1604,8 +1719,8 @@
 
 .ob-rustig__field--dream input {
   inline-size: 100%;
-  min-block-size: 2.75rem;
-  padding: 0.55rem 0.75rem;
+  min-block-size: 42px;
+  padding: 0.35rem 0.75rem;
   border-radius: var(--radius-sm);
   border: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
   background: var(--surface);

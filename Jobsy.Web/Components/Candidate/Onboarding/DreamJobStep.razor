@@ -52,7 +52,6 @@
                     @foreach (var dreamJob in DreamJobCatalog.Search(Draft.DreamSearch))
                     {
                         <button type="button" role="option" @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
-                            @((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))
                             <span>@Culture[$"DreamJob.{dreamJob.Key}"]</span>
                         </button>
                     }
@@ -84,7 +83,7 @@
             </div>
         }
     </div>
-    @if (ShowChosenChip)
+    @if (ShowChosenChip && !RustigLayout)
     {
         <p class="journey-chip is-selected" role="status">@Draft.Dream</p>
     }

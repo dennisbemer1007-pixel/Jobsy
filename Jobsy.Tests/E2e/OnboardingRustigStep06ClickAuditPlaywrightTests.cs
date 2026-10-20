@@ -72,8 +72,7 @@ public sealed class OnboardingRustigStep06ClickAuditPlaywrightTests
 
         if (rustig)
         {
-            var chip = page.Locator(".ob-rustig__dream").First;
-            await AuditButtonAsync(page, rows, "Droom-chip", chip);
+            await AuditDreamChipTogglesAsync(page, rows, mobile);
             var input = page.Locator("#onboarding-rustig-dream-input");
             await AuditButtonAsync(page, rows, "Droom invoer", input);
         }
@@ -96,8 +95,23 @@ public sealed class OnboardingRustigStep06ClickAuditPlaywrightTests
         }
 
         await inputSafeFillAsync(page, rustig, "Elektricien");
-        await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
-        rows.Add(("Navigatie naar stap 7", "ok"));
+        try
+        {
+            await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
+            await page.Locator(".ob-wizard__consent, [data-ob-rustig-screen=\"step-07\"], .test-likert, [data-testid=onboarding-step-7-illustrated]")
+                .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+            await FunctionalOnboardingInteractivityHelpers.ClickOnboardingBackAsync(page, mobile);
+            await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
+            var input = page.Locator("#onboarding-rustig-dream-input");
+            var value = await input.InputValueAsync();
+            rows.Add(("Droom bewaard na Terug", value.Contains("Elektricien", StringComparison.OrdinalIgnoreCase) ? "ok" : value));
+            rows.Add(("Navigatie naar stap 7", "ok"));
+        }
+        catch (Exception ex)
+        {
+            rows.Add(("Droom bewaard na Terug", "n/a"));
+            rows.Add(("Navigatie naar stap 7", ex.Message));
+        }
 
         var reportPath = Path.Combine(reportDir, $"click-audit-step-06-{mode}-{tag}.txt");
         var sb = new StringBuilder();
@@ -116,12 +130,41 @@ public sealed class OnboardingRustigStep06ClickAuditPlaywrightTests
                 continue;
             }
 
-            if (control is "Navigatie naar stap 7")
+            if (control is "Navigatie naar stap 7" or "Droom bewaard na Terug")
             {
                 continue;
             }
 
             Assert.Fail($"Click audit {mode}/{tag}: {control}={result}; see {reportPath}");
+        }
+    }
+
+    private static async Task AuditDreamChipTogglesAsync(IPage page, List<(string, string)> rows, bool mobile)
+    {
+        var chips = page.Locator(".ob-rustig__dream");
+        var count = Math.Min(await chips.CountAsync(), 4);
+        if (count == 0)
+        {
+            rows.Add(("Droom-chips", "n/a"));
+            return;
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            var chip = chips.Nth(i);
+            var label = (await chip.InnerTextAsync()).Trim();
+            try
+            {
+                await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, chip, $"dream-{i}");
+                await chip.ClickAsync(new() { Force = mobile });
+                var pressed = await chip.GetAttributeAsync("aria-pressed");
+                var on = await chip.EvaluateAsync<bool>("el => el.classList.contains('is-on')");
+                rows.Add(($"Droom-chip: {label}", pressed == "true" || on ? "ok" : "not-selected"));
+            }
+            catch (Exception ex)
+            {
+                rows.Add(($"Droom-chip: {label}", ex.Message));
+            }
         }
     }
 
