@@ -19,7 +19,7 @@ ZOOM = Path("/opt/cursor/artifacts/onboarding-rustig-lobster-zoom")
 ORDER = ["step-02", "step-04", "step-05", "step-06", "step-07", "step-08", "step-09", "step-10", "kompas"]
 
 MOB_CENTER: dict[str, tuple[float, float]] = {
-    "step-02": (0.76, 0.55),
+    "step-02": (0.88, 0.54),
     "step-04": (0.12, 0.58),
     "step-05": (0.14, 0.66),
     "step-06": (0.68, 0.55),

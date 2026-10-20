@@ -28,11 +28,16 @@ FADE_SIDE = 24
 # 16:9 raws: vertical band with headroom (tuned vs approved step-03 crop).
 Y0_FRAC_16X9 = 0.456
 Y0_FRAC_SLUG: dict[str, float] = {
-    "step-02": 0.448,
+    "step-02": 0.500,
     "step-04": 0.456,
     "step-05": 0.548,
 }
-PALETTE_SOFTEN_SLUGS: frozenset[str] = frozenset({"step-02"})
+# Desktop-only vertical crop (mobile keeps Y0_FRAC_SLUG).
+Y0_FRAC_DESKTOP_SLUG: dict[str, float] = {
+    "step-04": 0.486,
+    "step-05": 0.548,
+}
+PALETTE_SOFTEN_SLUGS: frozenset[str] = frozenset()
 
 SLUGS = [
     "start",
@@ -172,6 +177,8 @@ def crop_to_ratio(
     target_h: int,
     ratio: float,
     slug: str = "",
+    *,
+    desktop: bool = False,
 ) -> Image.Image:
     """Scale to cover width, crop vertical band keeping figure bbox inside."""
     wide = extend_ultra_wide(im)
@@ -183,7 +190,7 @@ def crop_to_ratio(
     crop_h = min(crop_h, scaled_h)
     wide_ratio = w / h
     if 1.70 <= wide_ratio <= 1.85:
-        frac = Y0_FRAC_SLUG.get(slug, Y0_FRAC_16X9)
+        frac = y0_frac_for(slug, desktop=desktop)
         y0 = int(scaled_h * frac)
     else:
         fb = figure_bbox(scaled)
@@ -197,6 +204,12 @@ def crop_to_ratio(
     if band.size[1] != target_h:
         band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
     return band
+
+
+def y0_frac_for(slug: str, *, desktop: bool) -> float:
+    if desktop and slug in Y0_FRAC_DESKTOP_SLUG:
+        return Y0_FRAC_DESKTOP_SLUG[slug]
+    return Y0_FRAC_SLUG.get(slug, Y0_FRAC_16X9)
 
 
 def soften_hero_palette(im: Image.Image) -> Image.Image:
@@ -230,7 +243,12 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
 
 
 def fit_desktop(raw: Image.Image, slug: str = "") -> Image.Image:
-    return crop_to_ratio(raw, DESKTOP[0], DESKTOP[1], DESKTOP_RATIO, slug=slug)
+    if slug == "step-05":
+        w, h = raw.size
+        raw = raw.resize((int(w * 1.08), h), Image.Resampling.LANCZOS)
+    return crop_to_ratio(
+        raw, DESKTOP[0], DESKTOP[1], DESKTOP_RATIO, slug=slug, desktop=True
+    )
 
 
 def fit_mobile(raw: Image.Image, slug: str = "") -> Image.Image:
@@ -280,20 +298,30 @@ def main() -> None:
         if src is None:
             raise SystemExit(f"missing raw for {slug} in {RAW}")
         raw = Image.open(src).convert("RGB")
-        mob = apply_cream_fades(fit_mobile(raw, slug))
+        mob_candidates = [
+            RAW / f"{slug}-mobile-raw.jpg",
+            RAW / f"{slug}-mobile-raw.png",
+            *candidates,
+        ]
+        mob_src = next((p for p in mob_candidates if p.is_file()), src)
+        raw_mob = Image.open(mob_src).convert("RGB")
+        mob = apply_cream_fades(fit_mobile(raw_mob, slug))
         if slug in PALETTE_SOFTEN_SLUGS:
             mob = soften_hero_palette(mob)
         mob.save(OUT / f"{slug}-mobile.jpg", quality=92, optimize=True)
         if mobile_only:
             bb = figure_bbox(mob) or content_bbox(mob)
-            print(f"{slug}: mob {mob.size} bbox {bb} <- {src.name}")
+            print(f"{slug}: mob {mob.size} bbox {bb} <- {mob_src.name}")
             continue
         desk = apply_cream_fades(fit_desktop(raw, slug))
         if slug in PALETTE_SOFTEN_SLUGS:
             desk = soften_hero_palette(desk)
         desk.save(OUT / f"{slug}-desktop.jpg", quality=92, optimize=True)
         bb = figure_bbox(desk) or content_bbox(desk)
-        print(f"{slug}: desk {desk.size} mob {mob.size} bbox {bb} <- {src.name}")
+        print(
+            f"{slug}: desk {desk.size} mob {mob.size} bbox {bb} "
+            f"<- desk {src.name} mob {mob_src.name}"
+        )
 
 
 if __name__ == "__main__":
