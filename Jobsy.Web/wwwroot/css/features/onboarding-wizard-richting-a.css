@@ -4,7 +4,7 @@
    * Single scroll surface: .app-main (not a short inner .ob-wizard__content pane).
    * Avoids clipped cards + empty beige gap above the sticky bar.
    */
-  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .app-main {
+  .app-shell:has(.ob-wizard--richting-a) .app-main {
     overflow-x: hidden !important;
     overflow-y: auto !important;
     display: block !important;
@@ -14,22 +14,22 @@
     scroll-padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
-  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .app-main > * {
+  .app-shell:has(.ob-wizard--richting-a) .app-main > * {
     flex: none !important;
     min-height: auto !important;
     display: block !important;
   }
 
-  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard,
-  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard__layout,
-  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard__main {
+  .app-shell:has(.ob-wizard--richting-a) .ob-wizard,
+  .app-shell:has(.ob-wizard--richting-a) .ob-wizard__layout,
+  .app-shell:has(.ob-wizard--richting-a) .ob-wizard__main {
     flex: none !important;
     min-height: auto !important;
     height: auto !important;
     display: block !important;
   }
 
-  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard__content {
+  .app-shell:has(.ob-wizard--richting-a) .ob-wizard__content {
     flex: none !important;
     min-height: auto !important;
     overflow: visible !important;

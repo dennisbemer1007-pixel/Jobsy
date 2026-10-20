@@ -225,8 +225,71 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
     }
 
+    internal static async Task AssertCandidateHeaderVisibleAsync(IPage page)
+    {
+        await Assertions.Expect(page.Locator("[data-testid=app-shell-header]")).ToBeVisibleAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(page.Locator(".account-menu__toggle").First)
+            .ToBeVisibleAsync(new() { Timeout = 30_000 });
+    }
+
+    internal static async Task LogoutViaHeaderAsync(IPage page, bool mobile)
+    {
+        await AssertCandidateHeaderVisibleAsync(page);
+        await page.Locator(".account-menu__toggle").First.ClickAsync(new() { Force = mobile });
+        var logout = page.GetByTestId("auth-logout-link");
+        await Assertions.Expect(logout).ToBeVisibleAsync(new() { Timeout = 15_000 });
+        await logout.ClickAsync(new() { Force = mobile });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const path = location.pathname || '/';
+              if (path.includes('/login') || path.includes('/account-maken')) return true;
+              const menu = document.querySelector('.account-menu.is-open');
+              const toggle = document.querySelector('.account-menu__toggle');
+              return !toggle || !document.querySelector('.auth-user__name');
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
+    }
+
+    internal static async Task OpenStartWelcomeAsync(IPage page, string baseUrl)
+    {
+        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 120_000 });
+        await page.Locator(".ob-wizard__welcome").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+    }
+
+    internal static async Task ClickBeginnenOnWelcomeAsync(IPage page, bool mobile)
+    {
+        var begin = page.GetByTestId("onboarding-begin");
+        if (await begin.CountAsync() == 0)
+        {
+            begin = page.GetByRole(AriaRole.Button, new() { Name = "Beginnen" });
+        }
+
+        await AssertHitTargetAsync(page, begin, "onboarding-begin");
+        await begin.ClickAsync(new() { Timeout = 30_000, Force = mobile });
+        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000,
+        });
+    }
+
+    internal static async Task CaptureOnboardingStartHotfixAsync(IPage page, string tag)
+    {
+        const string dir = "/workspace/artifacts/onboarding-start-hotfix";
+        Directory.CreateDirectory(dir);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"start-{tag}.png"), FullPage = true });
+    }
+
     internal static async Task BeginKennismakenStepAsync(IPage page, string baseUrl)
     {
+        var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
         for (var attempt = 0; attempt < 2; attempt++)
         {
             await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
@@ -236,7 +299,16 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 new() { Timeout = 120_000 });
             try
             {
-                await VroegResultaatPlaywrightTests.EnsureWizardStartedAsync(page);
+                if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
+                {
+                    await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+                    await ClickBeginnenOnWelcomeAsync(page, mobile);
+                }
+                else
+                {
+                    await VroegResultaatPlaywrightTests.EnsureWizardStartedAsync(page);
+                }
+
                 break;
             }
             catch (TimeoutException) when (attempt == 0)
@@ -244,7 +316,10 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 await page.WaitForTimeoutAsync(1500);
             }
         }
+
         await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
     }
 
     internal static async Task FillKennismakenRequiredFieldsAsync(IPage page)

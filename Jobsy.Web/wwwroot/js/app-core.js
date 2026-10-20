@@ -1149,7 +1149,8 @@ window.jobsyPageVisible = function () {
 window.jobsyDom = {
     scrollRoot: function () {
         var richtingA = document.querySelector(".ob-wizard--richting-a");
-        var main = document.querySelector(".app-shell--questionnaire .app-main")
+        var main = document.querySelector(".app-shell:has(.ob-wizard--richting-a) .app-main")
+            || document.querySelector(".app-shell--questionnaire .app-main")
             || document.querySelector(".app-main");
         if (richtingA && main) {
             return main;

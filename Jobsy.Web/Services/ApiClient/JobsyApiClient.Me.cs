@@ -367,7 +367,9 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(ExtractMessage(body) ?? "Voortgang opslaan mislukt.");
         }
 
-        return (await response.Content.ReadFromJsonAsync<OnboardingState>(cancellationToken: ct))!;
+        var state = (await response.Content.ReadFromJsonAsync<OnboardingState>(cancellationToken: ct))!;
+        InvalidateMeCache(OnboardingCacheKey);
+        return state;
     }
 
     public async Task<OnboardingState> CompleteMyOnboardingAsync(CancellationToken ct = default)
