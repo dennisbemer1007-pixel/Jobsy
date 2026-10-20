@@ -26,7 +26,7 @@ public static class OnboardingRustigPanoramaBriefs
     {
         "start" => "Op de linkerpoot van het Welkom-hek",
         "step-01" => "Op de drempel voor de groene voordeur",
-        "step-02" => "Op de bankleuning rechts van de vrouw op de bank",
+        "step-02" => "Op de houten bankleuning bij de zittende vrouw",
         "step-03" => "Op de stenen rechts van de rollator",
         "step-04" => "Op een plank achter de toonbank links",
         "step-05" => "Bovenop een stapel boeken op de traptrede",
