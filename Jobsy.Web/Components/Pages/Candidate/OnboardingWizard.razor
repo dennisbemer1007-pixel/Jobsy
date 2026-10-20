@@ -22,6 +22,7 @@
 @inject UserFacingError UserFacing
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Features
 @using Jobsy.Web.Media
 @using Jobsy.Web.Onboarding
@@ -319,7 +320,6 @@
                                                       Illustrated="true"
                                                       ShowValidation="_showValidation"
                                                       AddressChanged="AddressChanged"
-                                                      BirthDateChanged="BirthDateChanged"
                                                       ShowCity="ShowCity"
                                                       SelectAddress="SelectAddress" />
                                     </div>
@@ -490,7 +490,7 @@
 
                         case >= 7 and <= 10:
                             <OnboardingMiniTest Step="_step"
-                                                FlowEpoch="_step"
+                                                FlowEpoch="_miniFlowEpoch"
                                                 CurrentQuestion="_currentQuestion"
                                                 TestTabs="MiniTestTabs"
                                                 Questions="_miniQuestions"
@@ -599,12 +599,10 @@
     private bool _miniArrivedViaBack;
     private bool _installIos;
     private bool _installCanPrompt;
-    private bool _saving;
-    private bool _savedVisible;
+    private bool _profilePersistInFlight;
     private bool _saveError;
     private bool _showValidation;
     private bool _pendingStepScroll;
-    private bool _loadingNearby;
     private int _nearbyPeakCount;
     private EarlyRewardMoment _earlyMoment;
     private OnboardingNearbySignal? _nearbySignal;
@@ -643,6 +641,9 @@
         _nearbySignal?.Examples.Select(example => example.Title).ToList() ?? [];
 
     private int _currentQuestion;
+    private int _miniFlowEpoch;
+    private int _preparedMiniStep;
+    private int _stepTransitionGeneration;
     private string _installMessage = "";
     private string? _error;
     private WizardPhase _phase;
@@ -659,7 +660,8 @@
     private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
     private IReadOnlyList<int> _journeyCompletedSteps = [];
     private int _journeyNextStep = 7;
-    private CancellationTokenSource? _saveCts;
+    private OnboardingWizardProfileAutosave? _profileAutosave;
+    private CancellationTokenSource? _nearbyRefreshCts;
     private CancellationTokenSource? _geocodeCts;
     private CancellationTokenSource? _dreamCts;
 
@@ -706,9 +708,9 @@
         new(4, "Onboarding.Phase.WieBenJij", "Onboarding.Welcome.TestsLead", "Onboarding.Welcome.Time2")
     ];
 
-    private string SaveText => _saveError ? Culture["Onboarding.NotSaved"]
-        : _saving ? Culture["Onboarding.Saving"]
-        : _savedVisible ? $"✓ {Culture["Onboarding.Saved"]}" : "";
+    private string SaveText => _saveError
+        ? Culture["Onboarding.NotSaved"]
+        : _profilePersistInFlight ? Culture["Onboarding.Saving"] : "";
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
     private string DaysSummary => Draft.Availability.Count == 0
@@ -786,7 +788,7 @@
         && _earlyMoment != EarlyRewardMoment.FirstInsight
         && NearbyBasicsSaved();
 
-    private bool ShowNearbyPanel => NearbyPanelEligible && _nearbySignal is not null && !_loadingNearby;
+    private bool ShowNearbyPanel => NearbyPanelEligible && _nearbySignal is not null;
 
     private bool NearbyRefinedHeadline =>
         _nearbySignal is { Count: > 0 and var count }
@@ -912,6 +914,11 @@
         _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
         Culture.Changed += CultureChanged;
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
+        _profileAutosave = new OnboardingWizardProfileAutosave(
+            PersistProfileDraftAsync,
+            onPersistStarted: () => _profilePersistInFlight = true,
+            onPersistEnded: OnProfilePersistEnded,
+            onPersistSucceeded: ScheduleDebouncedNearbyRefresh);
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
 
         await LoadAsync();
@@ -965,6 +972,7 @@
                 await MarkStartedAsync();
                 await RefreshJourneyCompletionAsync();
                 await PrepareMiniAsync();
+                await EnsureOnFirstIncompleteMiniBlockAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
                 await ApplyLegacyNearbyRedirectAsync();
                 try
@@ -1064,11 +1072,10 @@
         {
             _state = await Api.SaveMyOnboardingProgressAsync(_step, source: WelcomeDismissedSource);
             Api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-            FlashSaved();
             await RefreshJourneyCompletionAsync();
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
+            await DeferredTryAutoAdvanceAsync();
         }
         catch (Exception ex)
         {
@@ -1084,7 +1091,6 @@
     private async Task MarkStartedAsync()
     {
         _state = await Api.SaveMyOnboardingProgressAsync(_step);
-        FlashSaved();
     }
 
     private async Task BackAsync()
@@ -1099,7 +1105,7 @@
         }
 
         if (_step <= 1) return;
-        await FlushAsync();
+        await FlushBeforeLeavingStepAsync();
         ClearStepValidation();
         _miniArrivedViaBack = true;
         _step--;
@@ -1155,10 +1161,9 @@
                 ClearMiniAnswersBeforeStepChange();
                 _step++;
                 _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-                FlashSaved();
                 await PrepareMiniAsync();
-                await TryAutoAdvanceEmptyMiniStepAsync();
                 RequestStepScrollReset();
+                await DeferredTryAutoAdvanceAsync();
                 return;
             }
 
@@ -1167,23 +1172,12 @@
                 await AcceptConsentAsync();
                 return;
             }
-            if (_step <= 5) await FlushAsync();
-            if (_step == 6) await SaveDreamAsync();
-            if (_step >= 7 && _autosave is not null) await _autosave.FlushAsync();
+            await FlushBeforeLeavingStepAsync();
             if (_step == 10)
             {
-                if (!await TryRouteToFirstIncompleteMiniBlockAsync())
+                if (!await TryEnterKompasWhenAllMiniTestsCompleteAsync())
                 {
                     return;
-                }
-
-                await FinalizeApplyReadinessAsync();
-                _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
-                _finish = true;
-                _state = await Api.GetMyOnboardingAsync() ?? _state;
-                if (_finaleV2)
-                {
-                    await LoadFinaleContextAsync();
                 }
 
                 return;
@@ -1192,10 +1186,10 @@
             ClearMiniAnswersBeforeStepChange();
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-            FlashSaved();
+            Interlocked.Increment(ref _stepTransitionGeneration);
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
+            await Task.Yield();
         }
         catch (Exception ex)
         {
@@ -1206,19 +1200,21 @@
         {
             _busy = false;
         }
+
+        await DeferredTryAutoAdvanceAsync();
     }
 
     private async Task SkipOptionalAsync()
     {
-        await FlushAsync();
+        await FlushBeforeLeavingStepAsync();
         ClearStepValidation();
         _miniArrivedViaBack = false;
         ClearMiniAnswersBeforeStepChange();
         _step++;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
-        await TryAutoAdvanceEmptyMiniStepAsync();
         RequestStepScrollReset();
+        await DeferredTryAutoAdvanceAsync();
     }
 
     private async Task LaterAsync()
@@ -1306,22 +1302,12 @@
             ScheduleProfileSave();
         }
 
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
         CandidateHomeAddressLookup.ApplySuggestionToDraft(Draft, item);
-        ScheduleProfileSave();
-    }
-
-    private void BirthDateChanged()
-    {
-        Draft.BirthDate = int.TryParse(Draft.BirthDay, out var day)
-            && int.TryParse(Draft.BirthMonth, out var month)
-            && int.TryParse(Draft.BirthYear, out var year)
-            && DateOnly.TryParse($"{year:D4}-{month:D2}-{day:D2}", out var date)
-                ? date : null;
         ScheduleProfileSave();
     }
 
@@ -1532,7 +1518,6 @@
         {
             await Task.Delay(350, cancellationToken);
             await SaveDreamAsync();
-            FlashSaved();
         }
         catch (OperationCanceledException)
         {
@@ -1562,18 +1547,24 @@
 
     private async Task PrepareMiniAsync()
     {
-        if (_autosave is not null)
-        {
-            await _autosave.DisposeAsync();
-            _autosave = null;
-        }
+        await DisposeMiniAutosaveAsync();
         _miniAnswers.Clear();
         _serverAnswers.Clear();
         _lockedIds.Clear();
         _miniBlockQuestionIds = [];
         _miniQuestions = [];
         _currentQuestion = 0;
-        if (_step is < 7 or > 10 || !Draft.HasConsent) return;
+        if (_step is < 7 or > 10 || !Draft.HasConsent)
+        {
+            _preparedMiniStep = 0;
+            return;
+        }
+
+        if (_preparedMiniStep != _step)
+        {
+            _miniFlowEpoch++;
+            _preparedMiniStep = _step;
+        }
 
         Dictionary<string, int>? answers;
         IEnumerable<(int Id, string Key)> catalog;
@@ -1649,32 +1640,105 @@
             _currentQuestion = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(_step, _miniQuickScanVersion, visible);
         }
         var kind = OnboardingMiniBlockCompletion.AssessmentKindForWizardStep(_step);
+        var autosaveContext = new MiniBlockAutosaveContext(
+            _step,
+            kind,
+            _miniQuickScanVersion,
+            new Dictionary<int, int>(_serverAnswers));
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
-            var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in draft)
+            await PersistMiniBlockAnswersAsync(autosaveContext, draft, cancellationToken);
+        }, onChanged: null, debounceMs: QuestionnaireAutosave.DefaultDebounceMs);
+    }
+
+    private async Task DisposeMiniAutosaveAsync()
+    {
+        if (_autosave is null)
+        {
+            return;
+        }
+
+        var autosave = _autosave;
+        _autosave = null;
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(12));
+            await autosave.FlushAsync(timeout.Token);
+        }
+        catch
+        {
+            // Best effort; step transition must not hang the circuit.
+        }
+
+        try
+        {
+            await autosave.DisposeAsync();
+        }
+        catch
+        {
+        }
+    }
+
+    private Task DeferredTryAutoAdvanceAsync()
+    {
+        var generation = Volatile.Read(ref _stepTransitionGeneration);
+        return InvokeAsync(async () =>
+        {
+            if (generation != Volatile.Read(ref _stepTransitionGeneration))
             {
-                merged[answer.Key] = answer.Value;
+                return;
             }
 
-            var payload = OnboardingMiniBlockCompletion.ScopeToMiniIds(kind, _miniQuickScanVersion, merged);
-
-            switch (_step)
+            try
             {
-                case 7:
-                    await Api.SaveMyCompetenciesAsync(payload, false, cancellationToken);
-                    break;
-                case 8:
-                    await Api.SaveMyCareerInterestsAsync(payload, false, cancellationToken);
-                    break;
-                case 9:
-                    await Api.SaveMyCultureAsync(payload, false, cancellationToken);
-                    break;
-                case 10:
-                    await Api.SaveMyValuesAsync(payload, false, cancellationToken);
-                    break;
+                await TryAutoAdvanceEmptyMiniStepAsync();
             }
-        }, () => InvokeAsync(StateHasChanged), 150);
+            catch (Exception ex)
+            {
+                _error = UserFacing.Describe(ex);
+                _saveError = true;
+                await SafeStateHasChangedAsync();
+            }
+        });
+    }
+
+    private async Task FlushBeforeLeavingStepAsync()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        var token = timeout.Token;
+        var pending = new List<Task>();
+        if (_step <= 6 && _profileAutosave is not null)
+        {
+            pending.Add(_profileAutosave.FlushAsync(token));
+        }
+
+        if (_step == 6)
+        {
+            pending.Add(SaveDreamAsync());
+        }
+
+        if (_step >= 7 && _autosave is not null)
+        {
+            pending.Add(_autosave.FlushAsync(token));
+        }
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await Task.WhenAll(pending);
+        }
+        catch (OperationCanceledException)
+        {
+            // Proceed with navigation; autosave will retry on next edit or dispose flush.
+        }
+        catch
+        {
+            _saveError = true;
+        }
     }
 
     private async Task TryAutoAdvanceEmptyMiniStepAsync()
@@ -1696,6 +1760,19 @@
 
         if (_miniQuestions.Count > 0)
         {
+            if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(_step, _miniQuickScanVersion, MiniVisibleAnswers))
+            {
+                if (_step == 7)
+                {
+                    await LoadEarlyStrengthAsync();
+                    _earlyMoment = EarlyRewardMoment.FirstInsight;
+                    RequestStepScrollReset();
+                    return;
+                }
+
+                await FinishMiniAsync();
+            }
+
             return;
         }
 
@@ -1712,18 +1789,9 @@
         {
             if (_step == 10)
             {
-                if (!await TryRouteToFirstIncompleteMiniBlockAsync())
+                if (!await TryEnterKompasWhenAllMiniTestsCompleteAsync())
                 {
                     return;
-                }
-
-                await FinalizeApplyReadinessAsync();
-                _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
-                _finish = true;
-                _state = await Api.GetMyOnboardingAsync() ?? _state;
-                if (_finaleV2)
-                {
-                    await LoadFinaleContextAsync();
                 }
 
                 return;
@@ -1731,10 +1799,9 @@
 
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-            FlashSaved();
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
+            await DeferredTryAutoAdvanceAsync();
         }
         catch (Exception ex)
         {
@@ -1747,18 +1814,77 @@
         }
     }
 
-    private async Task<bool> TryRouteToFirstIncompleteMiniBlockAsync()
+    /// <summary>
+    /// When saved progress points at a finished mini block, move to the first open block (7→10).
+    /// Never leaves the candidate on a completed test after reload.
+    /// </summary>
+    private async Task EnsureOnFirstIncompleteMiniBlockAsync()
     {
+        if (_welcome || _finish || _step is < 7 or > 10 || !Draft.HasConsent)
+        {
+            return;
+        }
+
+        if (_autosave is not null)
+        {
+            await _autosave.FlushAsync();
+        }
+
         var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        var firstOpen = await FindFirstIncompleteMiniWizardStepAsync(testsV2);
+        if (firstOpen is null)
+        {
+            await EnterKompasFromCompletedMiniTestsAsync();
+            return;
+        }
+
+        if (_step == firstOpen.Value)
+        {
+            return;
+        }
+
+        var currentComplete = await IsMiniBlockCompleteForRoutingAsync(_step, testsV2);
+        if (!currentComplete && _step < firstOpen.Value)
+        {
+            return;
+        }
+
+        ClearMiniAnswersBeforeStepChange();
+        _step = firstOpen.Value;
+        _state = await Api.SaveMyOnboardingProgressAsync(_step);
+        await PrepareMiniAsync();
+        RequestStepScrollReset();
+    }
+
+    private async Task<int?> FindFirstIncompleteMiniWizardStepAsync(bool testsV2)
+    {
         foreach (var step in new[] { 7, 8, 9, 10 })
         {
-            var answers = await LoadMiniAnswersForStepAsync(step);
-            var version = ResolveQuickScanVersion(answers.version, testsV2);
-            if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, version, answers.answers))
+            if (!await IsMiniBlockCompleteForRoutingAsync(step, testsV2))
             {
-                continue;
+                return step;
             }
+        }
 
+        return null;
+    }
+
+    private async Task<bool> TryEnterKompasWhenAllMiniTestsCompleteAsync()
+    {
+        if (_autosave is not null)
+        {
+            await _autosave.FlushAsync();
+        }
+
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        if (!OnboardingMiniBlockCompletion.IsMiniBlockComplete(_step, _miniQuickScanVersion, MiniVisibleAnswers))
+        {
+            return false;
+        }
+
+        var firstOpen = await FindFirstIncompleteMiniWizardStepAsync(testsV2);
+        if (firstOpen is int step)
+        {
             ClearMiniAnswersBeforeStepChange();
             _step = step;
             await PrepareMiniAsync();
@@ -1766,7 +1892,35 @@
             return false;
         }
 
+        await EnterKompasFromCompletedMiniTestsAsync();
         return true;
+    }
+
+    private async Task EnterKompasFromCompletedMiniTestsAsync()
+    {
+        await FinalizeApplyReadinessAsync();
+        _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
+        _finish = true;
+        _state = await Api.GetMyOnboardingAsync() ?? _state;
+        if (_finaleV2)
+        {
+            await LoadFinaleContextAsync();
+        }
+    }
+
+    private async Task<bool> IsMiniBlockCompleteForRoutingAsync(int step, bool testsV2)
+    {
+        if (_step == step && _miniBlockQuestionIds.Length > 0 && Draft.HasConsent)
+        {
+            if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, _miniQuickScanVersion, MiniVisibleAnswers))
+            {
+                return true;
+            }
+        }
+
+        var answers = await LoadMiniAnswersForStepAsync(step);
+        var version = ResolveQuickScanVersion(answers.version, testsV2);
+        return OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, version, answers.answers);
     }
 
     private async Task<(Dictionary<int, int> answers, int? version)> LoadMiniAnswersForStepAsync(int step)
@@ -1835,7 +1989,6 @@
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        FlashSaved();
         if (_autosave is not null)
         {
             _ = SaveMiniQuietAsync(id, value);
@@ -1873,6 +2026,11 @@
             return;
         }
 
+        if (_autosave is not null)
+        {
+            await _autosave.FlushAsync();
+        }
+
         await NextAsync(fromMiniTestFinish: true);
     }
 
@@ -1899,8 +2057,11 @@
         Draft.HasConsent = profile?.TestAiConsentAt is not null;
         if (Draft.HasConsent)
         {
+            Interlocked.Increment(ref _stepTransitionGeneration);
             await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
+            await EnsureOnFirstIncompleteMiniBlockAsync();
+            RequestStepScrollReset();
+            await DeferredTryAutoAdvanceAsync();
         }
         else _error = Culture["Onboarding.Consent.Failed"];
     }
@@ -1921,10 +2082,10 @@
                 {
                     await RefreshJourneyCompletionAsync();
                     await PrepareMiniAsync();
-                    await TryAutoAdvanceEmptyMiniStepAsync();
+                    await DeferredTryAutoAdvanceAsync();
                 }
 
-                StateHasChanged();
+                await SafeStateHasChangedAsync();
             });
         }
         catch
@@ -1935,57 +2096,90 @@
 
     private void ScheduleProfileSave()
     {
-        if (_loading) return;
-        _saveCts?.Cancel();
-        _saveCts = new();
-        _saving = true;
-        _saveError = false;
-        _ = ProfileDebounceAsync(_saveCts.Token);
+        if (_loading || _profileAutosave is null)
+        {
+            return;
+        }
+
+        _profileAutosave.ScheduleSave();
     }
 
-    private async Task ProfileDebounceAsync(CancellationToken cancellationToken)
+    private Task PersistProfileDraftAsync(CancellationToken cancellationToken)
+    {
+        _saveError = false;
+        return SaveProfileAsync(cancellationToken);
+    }
+
+    private void OnProfilePersistEnded(bool succeeded)
+    {
+        _profilePersistInFlight = false;
+        if (succeeded)
+        {
+            _error = null;
+            return;
+        }
+
+        _saveError = true;
+        _ = SafeStateHasChangedAsync();
+    }
+
+    private void ScheduleDebouncedNearbyRefresh()
+    {
+        if (_step <= 3 || !NearbyBasicsSaved() || _welcome || _finish)
+        {
+            return;
+        }
+
+        _nearbyRefreshCts?.Cancel();
+        _nearbyRefreshCts?.Dispose();
+        _nearbyRefreshCts = new CancellationTokenSource();
+        var token = _nearbyRefreshCts.Token;
+        _ = DebouncedNearbyRefreshAsync(token);
+    }
+
+    private async Task DebouncedNearbyRefreshAsync(CancellationToken cancellationToken)
     {
         try
         {
-            await Task.Delay(350, cancellationToken);
-            await SaveProfileAsync(cancellationToken);
-            _error = null;
-            try
-            {
-                await RefreshNearbySignalIfEligibleAsync();
-            }
-            catch
-            {
-                // Nearby panel is informational; a failed refresh must not block autosave UX.
-            }
-
-            FlashSaved();
+            await Task.Delay(2000, cancellationToken);
+            await RefreshNearbySignalIfEligibleAsync();
         }
         catch (OperationCanceledException)
         {
         }
-        catch (Exception ex)
+        catch
         {
-            _error = UserFacing.Describe(ex);
-            _saveError = true;
+            // Informational panel only.
         }
-        finally
+    }
+
+    private async Task SafeStateHasChangedAsync()
+    {
+        try
         {
-            _saving = false;
             await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Circuit may be disconnected during teardown.
         }
     }
 
     private async Task FlushAsync()
     {
-        _saveCts?.Cancel();
-        await SaveProfileAsync(CancellationToken.None);
+        if (_profileAutosave is null)
+        {
+            return;
+        }
+
         try
         {
-            await RefreshNearbySignalIfEligibleAsync();
+            await _profileAutosave.FlushAsync(CancellationToken.None);
         }
-        catch
+        catch (Exception ex)
         {
+            _error = UserFacing.Describe(ex);
+            _saveError = true;
         }
     }
 
@@ -2034,21 +2228,6 @@
         return result;
     }
 
-    private void FlashSaved()
-    {
-        _saving = false;
-        _saveError = false;
-        _savedVisible = true;
-        _ = HideSavedAsync();
-    }
-
-    private async Task HideSavedAsync()
-    {
-        await Task.Delay(2500);
-        _savedVisible = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
     private async Task LoadFinaleContextAsync()
     {
         var flags = await FeatureFlags.GetAsync();
@@ -2087,23 +2266,21 @@
             return;
         }
 
-        _loadingNearby = true;
         try
         {
             var signal = await Api.GetOnboardingNearbySignalAsync();
-            if (signal is not null)
+            if (signal is null)
             {
-                _nearbyPeakCount = Math.Max(_nearbyPeakCount, signal.Count);
-                _nearbySignal = signal;
+                return;
             }
+
+            _nearbyPeakCount = Math.Max(_nearbyPeakCount, signal.Count);
+            _nearbySignal = signal;
+            await SafeStateHasChangedAsync();
         }
         catch
         {
             // Keep last signal; never surface panel refresh as wizard error.
-        }
-        finally
-        {
-            _loadingNearby = false;
         }
     }
 
@@ -2124,7 +2301,6 @@
 
         _step = 4;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-        FlashSaved();
         await PrepareMiniAsync();
     }
 
@@ -2307,13 +2483,55 @@
         return testsV2Enabled ? AssessmentTestVersions.V3 : AssessmentTestVersions.V1;
     }
 
+    /// <summary>Pinned at mini-block prepare time so debounced autosave cannot write to the wrong assessment store after step changes.</summary>
+    private sealed record MiniBlockAutosaveContext(
+        int WizardStep,
+        AssessmentKind Kind,
+        int QuickScanVersion,
+        Dictionary<int, int> ServerBaseline);
+
+    private async Task PersistMiniBlockAnswersAsync(
+        MiniBlockAutosaveContext context,
+        IReadOnlyDictionary<int, int> draft,
+        CancellationToken cancellationToken)
+    {
+        var merged = new Dictionary<int, int>(context.ServerBaseline);
+        foreach (var answer in draft)
+        {
+            merged[answer.Key] = answer.Value;
+        }
+
+        var payload = OnboardingMiniBlockCompletion.ScopeToMiniIds(
+            context.Kind,
+            context.QuickScanVersion,
+            merged);
+
+        switch (context.WizardStep)
+        {
+            case 7:
+                await Api.SaveMyCompetenciesAsync(payload, false, cancellationToken);
+                break;
+            case 8:
+                await Api.SaveMyCareerInterestsAsync(payload, false, cancellationToken);
+                break;
+            case 9:
+                await Api.SaveMyCultureAsync(payload, false, cancellationToken);
+                break;
+            case 10:
+                await Api.SaveMyValuesAsync(payload, false, cancellationToken);
+                break;
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         Culture.Changed -= CultureChanged;
         GratisDnaMergeNotifier.Merged -= OnGratisDnaMerged;
-        _saveCts?.Cancel();
+        _nearbyRefreshCts?.Cancel();
+        _nearbyRefreshCts?.Dispose();
         _geocodeCts?.Cancel();
         _dreamCts?.Cancel();
+        if (_profileAutosave is not null) await _profileAutosave.DisposeAsync();
         if (_autosave is not null) await _autosave.DisposeAsync();
     }
 

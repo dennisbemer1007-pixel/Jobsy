@@ -182,14 +182,10 @@
         await NotifyAsync();
     }
 
-    private async Task OnFineTuneClickAsync()
+    private Task OnFineTuneClickAsync()
     {
         Draft.FineTune = !Draft.FineTune;
-        await NotifyAsync();
-        if (ToggleFineTune.HasDelegate)
-        {
-            await ToggleFineTune.InvokeAsync();
-        }
+        return ToggleFineTune.HasDelegate ? ToggleFineTune.InvokeAsync() : NotifyAsync();
     }
 
     private Task OnResetPresetsClickAsync() => ResetPresets.InvokeAsync();
