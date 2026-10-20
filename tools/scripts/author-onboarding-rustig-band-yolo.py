@@ -23,7 +23,7 @@ def load_yolo():
     return YOLO(str(w if w.is_file() else "yolov8n.pt"))
 
 
-def persons(model, im: Image.Image, conf: float = 0.2):
+def persons(model, im: Image.Image, conf: float = 0.18):
     arr = np.asarray(im.convert("RGB"))
     h, w = arr.shape[:2]
     res = model(arr, verbose=False)[0]
@@ -65,18 +65,33 @@ def main() -> None:
     crop_h = int(w / 6.0)
     model = load_yolo()
     best = None
+    best_any = None
     for y0 in range(0, max(1, h - crop_h), 4):
         band = extract(im, y0, crop_h)
         desk = band.resize(DESK_SIZE, Image.Resampling.LANCZOS)
         fr = persons(model, desk)
-        if not slice_ok(fr):
+        if not fr:
             continue
-        # prefer more headroom: minimize average y1
-        score = sum(y1 for y1, _, _ in fr) / len(fr)
-        if best is None or score < best[0]:
-            best = (score, y0, fr, band)
+        margins = []
+        ok = True
+        for y1, y2, _ in fr:
+            margins.append(min(y1 - TOP_MIN, BOTTOM_MAX - y2))
+            if y1 < TOP_MIN or y2 > BOTTOM_MAX:
+                ok = False
+        min_margin = min(margins)
+        headroom = sum(y1 for y1, _, _ in fr) / len(fr)
+        if best_any is None or min_margin > best_any[0]:
+            best_any = (min_margin, y0, fr, band, ok)
+        if not ok:
+            continue
+        if best is None or headroom < best[0]:
+            best = (headroom, y0, fr, band)
     if best is None:
-        raise SystemExit("FAIL: no vertical slice satisfies YOLO person margins")
+        if best_any is None or best_any[0] < -0.08:
+            raise SystemExit("FAIL: no vertical slice with detectable persons")
+        print(f"WARN: using best-effort slice min_margin={best_any[0]:.3f}")
+        _, y0, fr, band, _ = best_any
+        best = (0.0, y0, fr, band)
     _, y0, fr, band = best
     dst.parent.mkdir(parents=True, exist_ok=True)
     band.save(dst, quality=95, optimize=True)

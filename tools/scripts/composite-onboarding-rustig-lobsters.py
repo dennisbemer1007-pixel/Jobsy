@@ -13,29 +13,21 @@ ROOT = Path(__file__).resolve().parents[2]
 PAN = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
 DEFAULT_SPRITE = ROOT / "Jobsy.Web/wwwroot/images/onboarding/lobsy-mascot-sprite.png"
 
-DESK_BAND_PX = 170
-MOB_BAND_PX = 92
-DESK_LOBSTER_PX = 30
-MOB_LOBSTER_PX = 15
+import importlib.util
 
-Y_MIN = 0.12
-Y_MAX = 0.78
+_layout_path = Path(__file__).resolve().parent / "onboarding_rustig_lobster_layout.py"
+_spec = importlib.util.spec_from_file_location("lob_layout", _layout_path)
+lob_layout = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(lob_layout)
 
-PLACEMENTS: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {
-    "start": ((0.23, 0.58), (0.26, 0.55)),
-    "step-01": ((0.21, 0.62), (0.24, 0.60)),
-    "step-02": ((0.74, 0.66), (0.88, 0.54)),
-    "step-03": ((0.09, 0.50), (0.16, 0.52)),
-    "step-04": ((0.93, 0.72), (0.72, 0.62)),
-    "step-05": ((0.11, 0.68), (0.14, 0.66)),
-    "step-06": ((0.72, 0.58), (0.68, 0.55)),
-    "step-07": ((0.38, 0.60), (0.35, 0.57)),
-    "step-08": ((0.14, 0.68), (0.15, 0.64)),
-    "step-09": ((0.74, 0.56), (0.70, 0.54)),
-    "step-10": ((0.22, 0.58), (0.24, 0.55)),
-    "step-11": ((0.66, 0.57), (0.62, 0.54)),
-    "kompas": ((0.48, 0.60), (0.50, 0.57)),
-}
+DESK_BAND_PX = lob_layout.DESK_BAND_PX
+MOB_BAND_PX = lob_layout.MOB_BAND_PX
+DESK_LOBSTER_PX = lob_layout.DESK_LOBSTER_PX
+MOB_LOBSTER_PX = lob_layout.MOB_LOBSTER_PX
+Y_MIN = lob_layout.Y_MIN
+Y_MAX = lob_layout.Y_MAX
+PLACEMENTS = lob_layout.PLACEMENTS
+LOBSTER_PX_SLUG = lob_layout.LOBSTER_PX_SLUG
 
 
 def load_sprite(path: Path) -> Image.Image:
@@ -57,9 +49,13 @@ def load_sprite(path: Path) -> Image.Image:
     return im
 
 
-def scaled_sprite(base: Image.Image, band_px: int, lobster_px: int, sprite: Image.Image) -> Image.Image:
+def scaled_sprite(
+    base: Image.Image, band_px: int, lobster_px: int, sprite: Image.Image, *, slug: str = "", variant: str = "desktop"
+) -> Image.Image:
+    if slug and slug in LOBSTER_PX_SLUG:
+        lobster_px = LOBSTER_PX_SLUG[slug][0 if variant == "desktop" else 1]
     jpeg_h = base.size[1]
-    target_h = max(12, int(lobster_px * (jpeg_h / band_px)))
+    target_h = max(10, int(lobster_px * (jpeg_h / band_px)))
     w = int(sprite.size[0] * (target_h / sprite.size[1]))
     return sprite.resize((w, target_h), Image.Resampling.LANCZOS)
 
@@ -112,7 +108,7 @@ def main() -> None:
             xy = mob_xy if variant == "mobile" else desk_xy
             path = PAN / f"{slug}-{variant}.jpg"
             im = Image.open(path).convert("RGB")
-            piece = scaled_sprite(im, band, lob, sprite)
+            piece = scaled_sprite(im, band, lob, sprite, slug=slug, variant=variant)
             paste_sprite(im, piece, xy[0], xy[1], mobile=(variant == "mobile"))
             im.save(path, quality=92, optimize=True)
             print(f"{path.name}: ~{piece.size[1]}px on JPEG, center {xy}")

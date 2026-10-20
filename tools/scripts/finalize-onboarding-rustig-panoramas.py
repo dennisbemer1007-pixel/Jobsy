@@ -189,12 +189,18 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
-def fit_mobile_band_native(raw: Image.Image) -> Image.Image:
-    """Center crop from the same 6:1 band as desktop (one shared scene)."""
+MOBILE_FULL_WIDTH_SLUGS = frozenset({"step-05", "step-10"})
+
+
+def fit_mobile_band_native(raw: Image.Image, slug: str = "") -> Image.Image:
+    """Crop from the same 6:1 band as desktop (one shared scene)."""
     w, h = raw.size
-    crop_w = min(w, int(round(h * MOBILE_RATIO)))
-    x0 = max(0, (w - crop_w) // 2)
-    band = raw.crop((x0, 0, x0 + crop_w, h))
+    if slug in MOBILE_FULL_WIDTH_SLUGS:
+        band = raw
+    else:
+        crop_w = min(w, int(round(h * MOBILE_RATIO)))
+        x0 = max(0, (w - crop_w) // 2)
+        band = raw.crop((x0, 0, x0 + crop_w, h))
     if band.size != MOBILE:
         band = band.resize(MOBILE, Image.Resampling.LANCZOS)
     return band
@@ -203,7 +209,7 @@ def fit_mobile_band_native(raw: Image.Image) -> Image.Image:
 def fit_mobile(raw: Image.Image, slug: str = "") -> Image.Image:
     """Mobile band from the same scene as desktop (6:1 center crop or aligned 16:9 slice)."""
     if is_band_native(raw):
-        return fit_mobile_band_native(raw)
+        return fit_mobile_band_native(raw, slug)
     wide = extend_ultra_wide(raw)
     w, h = wide.size
     scale_d = DESKTOP[0] / w
