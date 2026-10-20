@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "eb1a03047524183b9625dbcbff0bf604d96b6747468e06806e98c5d9450997c7",
+    "sha256": "506c098240ef1827c4bb42e010239c98a88cc82dfb2be4e84687d4444fb88c18",
     "v": "20261019-13"
   },
   "css/critical.css": {
@@ -112,7 +112,7 @@
     "v": "20261004-10"
   },
   "css/features/kb-external-vacancy.css": {
-    "sha256": "9f3e4fcee659c120f0fca535027c64e20a790a4fcc3dfcea6b87319239d338c6",
+    "sha256": "7831996af5de14d7471ee4653c5410bf1704822dbf2d9a878c3c8b683391ce36",
     "v": "20261011-03"
   },
   "css/features/landing.css": {
@@ -128,12 +128,12 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "8153c2bf25b54c1805ca10eb48a627bc18b72bcb1e7a5f4de54a2eb3228c3307",
+    "sha256": "e9155e2d15ff59183fcfe6044e5d6413b1c3c8341b7e4dd8ef34727fdae41414",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
-    "sha256": "93ff7cc1d7ffc9d915dff67d6eae227e846a21eb3c155a43295b0665cafd6d90",
-    "v": "20261019-12"
+    "sha256": "aa3b50de268dd2e856a1caa7e32066130b4eec4b959d9e3ae00ea8bc7d4f05f1",
+    "v": "20261020-01"
   },
   "css/features/nav-feedback.css": {
     "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",
@@ -264,7 +264,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "329dca14ddbd37fc668043969352b53a81c66cd02497ab07953b559a8286fd9a",
+    "sha256": "6c31fb8ab5e36efac83971d63f001868cd60809b70e9c9ec8e49e65449d0c236",
     "v": "20261020-01"
   },
   "js/app-extras.js": {

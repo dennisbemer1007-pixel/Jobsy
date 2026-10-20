@@ -395,6 +395,7 @@ public class EmailCodeAuthTests
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
             features,
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),

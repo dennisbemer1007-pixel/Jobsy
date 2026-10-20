@@ -13,9 +13,9 @@
         <meta name="robots" content="noindex, nofollow" />
     }
     <meta name="theme-color" content="#0f2d5c" />
-    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="fonts/fraunces/fraunces-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/nunito-sans/nunito-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/nunito-sans/nunito-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/fraunces/fraunces-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="application-name" content="Lobsy" />
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -94,7 +94,7 @@
             <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
             <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
             <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
-    <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
+            <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
             <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
             <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
             <link rel="stylesheet" href="css/features/reconnect.css?v=20261015-02" />
@@ -161,7 +161,6 @@
             };
             var webp = "/images/brand/lobsy-256.webp?v=20261004-13";
             var png = "/images/brand/lobsy-128.png?v=20261004-13";
-            var mascotPng = "/images/brand/mascot-128.png?v=20261004-13";
             var svg = "data:image/svg+xml," + encodeURIComponent(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#e7eef7"/><text x="32" y="40" text-anchor="middle" font-size="22" font-family="Segoe UI,Arial,sans-serif" fill="#0f2d5c">L</text></svg>'
             );
@@ -192,7 +191,7 @@
                 }
                 if (src.indexOf("mascot-256.webp") !== -1 || src.indexOf("mascot-128.webp") !== -1 || src.indexOf("mascot-64.webp") !== -1) {
                     img.dataset.fb = "png";
-                    img.src = mascotPng;
+                    img.src = png;
                     return true;
                 }
                 if (src.indexOf("mascot-128.png") !== -1 || src.indexOf("mascot-180.png") !== -1 || src.indexOf("mascot-64.png") !== -1) {

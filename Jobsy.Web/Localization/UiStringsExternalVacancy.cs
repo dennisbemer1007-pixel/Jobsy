@@ -42,6 +42,18 @@ public static class UiStringsExternalVacancy
         Add("ExtVac.Detail.DismissedLead", "Deze vacature staat niet meer in je Bewaard-lijst.", "This vacancy is no longer in your Saved list.", "Ta oferta nie jest już na liście Zapisane.", "Acest job nu mai e în lista Salvate.", "لم تعد هذه الوظيفة في قائمة المحفوظات.");
         Add("ExtVac.Detail.DismissUndoToast", "Verwijderd. Ongedaan maken?", "Removed. Undo?", "Usunięto. Cofnąć?", "Eliminat. Anulezi?", "أُزيل. تراجع؟");
         Add("ExtVac.Detail.DismissUndo", "Ongedaan maken", "Undo", "Cofnij", "Anulează", "تراجع");
+        Add("ExtVac.Detail.TravelKnown",
+            "Reistijd: ongeveer {0} min",
+            "Travel time: about {0} min",
+            "Czas dojazdu: ok. {0} min",
+            "Timp de drum: circa {0} min",
+            "وقت التنقل: حوالي {0} د");
+        Add("ExtVac.Detail.TravelNeedAddress",
+            "Vul je adres in om reistijd te zien.",
+            "Add your address to see travel time.",
+            "Podaj adres, aby zobaczyć czas dojazdu.",
+            "Completează adresa ca să vezi timpul de drum.",
+            "أضف عنوانك لرؤية وقت التنقل.");
 
         Add("ExtVac.Apply.Title", "Solliciteren", "Apply", "Aplikuj", "Aplică", "تقديم");
         Add("ExtVac.Apply.Email", "E-mailadres werkgever", "Employer email address", "E-mail pracodawcy", "E-mail angajator", "بريد صاحب العمل");

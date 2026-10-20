@@ -6,12 +6,12 @@
       aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)"
       aria-label="@(string.IsNullOrEmpty(Alt) ? null : Alt)">
     <img class="lobsy-coach__img"
-         src="@LogoSrc"
-         srcset="@Jobsy.Web.Media.BrandImages.MascotSrcSet56"
+         src="@Jobsy.Web.Media.BrandImages.MarkSvg"
+         srcset="@Jobsy.Web.Media.BrandImages.SrcSet56"
          sizes="56px"
          alt=""
-         width="128"
-         height="128"
+         width="56"
+         height="56"
          decoding="async"
          draggable="false" />
     <span class="lobsy-coach__flag-badge" aria-hidden="true">
@@ -20,8 +20,6 @@
 </span>
 
 @code {
-    private const string LogoSrc = Jobsy.Web.Media.BrandImages.MascotWebp128;
-
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "Lobsy";
     [Parameter] public bool Animate { get; set; }

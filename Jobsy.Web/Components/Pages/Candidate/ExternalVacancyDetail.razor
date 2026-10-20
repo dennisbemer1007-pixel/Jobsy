@@ -36,7 +36,7 @@
     else
     {
         <div class="kb-ext__header-row">
-            <div>
+            <div class="kb-ext__header-copy">
                 @if (_detail.IsOnSavedList)
                 {
                     <span class="kb-ext__badge">@Culture["ExtVac.Detail.Saved"]</span>
@@ -44,7 +44,10 @@
                 <h1 class="kb-ext__title">@_detail.Title</h1>
                 <p class="muted">@_detail.CompanyName · @_detail.Place</p>
             </div>
-            <ReadAloudButton Text="@ReadAloudText" SpeechKey="@($"ext-{_detail.Id}")" />
+            <ReadAloudButton Text="@ReadAloudText"
+                             SpeechKey="@($"ext-{_detail.Id}")"
+                             IconOnly="true"
+                             PlayAria="@Culture["ReadAloud.Play"]" />
         </div>
 
         @if (_detail.RequirementsBullets.Count > 0)
@@ -60,9 +63,17 @@
             </section>
         }
 
-        @if (_detail.TravelMinutesEstimate is int travel)
+        @if (_detail.TravelMinutesEstimate is int travel && travel > 0)
         {
-            <p class="muted">@string.Format(Culture["Discovery.TravelMinutes"], travel)</p>
+            <p class="kb-ext__travel" data-testid="kb-ext-travel">
+                @Culture.Format("ExtVac.Detail.TravelKnown", travel)
+            </p>
+        }
+        else
+        {
+            <p class="kb-ext__travel kb-ext__travel--hint muted" data-testid="kb-ext-travel-hint">
+                @Culture["ExtVac.Detail.TravelNeedAddress"]
+            </p>
         }
 
         <section class="kb-ext__card">
@@ -104,9 +115,13 @@
             <p class="kb-ext__privacy">@Culture["ExtVac.Detail.Privacy"]</p>
         </section>
 
-        <p class="muted">
-            <a href="@_detail.SourceUrl" rel="noopener noreferrer" target="_blank">@Culture["ExtVac.Detail.Source"]</a>
-        </p>
+        @if (!string.IsNullOrWhiteSpace(_detail.SourceUrl))
+        {
+            <p class="muted kb-ext__source" data-testid="kb-ext-source">
+                @Culture["ExtVac.Detail.Source"]:
+                <a href="@_detail.SourceUrl" rel="noopener noreferrer" target="_blank">@SourceLinkLabel(_detail.SourceUrl)</a>
+            </p>
+        }
 
         <div class="kb-ext__actions" data-testid="kb-ext-detail-actions">
             @if (_detail.CanApply)
@@ -160,11 +175,33 @@
         ? ""
         : $"{_detail.Title}. {_detail.CompanyName}. {_detail.Place}.";
 
+    private static string SourceLinkLabel(string sourceUrl)
+    {
+        if (Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri))
+        {
+            var host = uri.Host;
+            if (host.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            {
+                host = host[4..];
+            }
+
+            return host;
+        }
+
+        return sourceUrl.Trim();
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
-        _detail = await Api.GetExternalVacancyAsync(Id);
-        _loading = false;
+        try
+        {
+            _detail = await Api.GetExternalVacancyAsync(Id);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private IEnumerable<(string Label, string Value, bool Unknown)> FactRows(ExternalVacancyDetailDto detail)

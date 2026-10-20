@@ -6,7 +6,8 @@ on:
   push:
     branches:
       - acceptatie
-      # PR #754: cloud-agent pushes do not always emit pull_request synchronize.
+      # Cloud-agent pushes do not always emit pull_request synchronize.
+      - cursor/replace-old-lobster-logo-e-bb18
       - cursor/compact-headers-preview-voornaam-4b3d
 
 concurrency:

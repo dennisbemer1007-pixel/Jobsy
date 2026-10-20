@@ -246,6 +246,12 @@ internal static class DemoUsersSeeder
         await EnsureMembershipAsync(db, intermediaryId, CafeId);
         await EnsureMembershipAsync(db, intermediaryId, SupermarketId);
 
+        // Playwright + docs still sign in as kandidaat@jobsy.local (Sanne demo profile since #738).
+        await EnsureLoginEmailAliasAsync(
+            db,
+            Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
+            "kandidaat@jobsy.local");
+
         if (added > 0 || db.ChangeTracker.HasChanges())
         {
             await db.SaveChangesAsync();
@@ -254,6 +260,15 @@ internal static class DemoUsersSeeder
         if (added > 0)
         {
             logger.LogInformation("Ensured {Count} demo role user(s) (candidates, managers, intermediary, admin).", added);
+        }
+
+        try
+        {
+            await ExternalVacancyDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "External vacancy demo seed failed; continuing.");
         }
     }
 
@@ -311,6 +326,40 @@ internal static class DemoUsersSeeder
         db.Users.Add(template);
         await EnsurePasswordAsync(db, template, password);
         return 1;
+    }
+
+    private static async Task EnsureLoginEmailAliasAsync(JobsyDbContext db, Guid userId, string aliasEmail)
+    {
+        var email = aliasEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return;
+        }
+
+        var credential = await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.Email == email);
+        if (credential is null)
+        {
+            db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Email = email,
+                PasswordHash = JobsyPasswordHasher.Hash(DemoPassword)
+            });
+            return;
+        }
+
+        credential.UserId = userId;
+        if (!JobsyPasswordHasher.Verify(DemoPassword, credential.PasswordHash)
+            || JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
+        {
+            credential.PasswordHash = JobsyPasswordHasher.Hash(DemoPassword);
+        }
+
+        credential.FailedLoginCount = 0;
+        credential.LockoutUntil = null;
+        credential.LockoutCount = 0;
     }
 
     private static async Task EnsurePasswordAsync(JobsyDbContext db, User user, string password)

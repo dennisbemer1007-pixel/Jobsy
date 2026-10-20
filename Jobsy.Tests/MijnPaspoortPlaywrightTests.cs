@@ -70,6 +70,7 @@ public class MijnPaspoortPlaywrightTests
         Assert.Contains("position: fixed", css, StringComparison.Ordinal);
         Assert.Contains("--bottom-nav-h", css, StringComparison.Ordinal);
         Assert.Contains(".passport-tabs", css, StringComparison.Ordinal);
+        Assert.Contains(".passport-tabs-shell", css, StringComparison.Ordinal);
         Assert.Contains("overflow-x: auto", css, StringComparison.Ordinal);
         Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
         Assert.Contains(".passport-tests__", css, StringComparison.Ordinal);

@@ -2103,6 +2103,12 @@ window.jobsyRefVerificationTip = window.jobsyRefVerificationTip || {
   }
 };
 
+function jobsyCoachDockElement(dock) {
+  if (!dock) return null;
+  if (dock.nodeType === 1 && dock.classList) return dock;
+  return null;
+}
+
 window.jobsyCoachDock = window.jobsyCoachDock || {
   bind: function (el, cssVar) {
     if (!el || !cssVar) return;
@@ -2136,7 +2142,9 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
     try { localStorage.setItem("lobsy-coach-tip:" + key, "1"); } catch (e) { }
   },
   placeTip: function (dock) {
-    if (!dock) return;
+    var el = jobsyCoachDockElement(dock) || document.querySelector(".lobsy-coach-dock[data-lobsy-coach]");
+    if (!el || !el.classList) return;
+    dock = el;
     var tip = dock.querySelector(".lobsy-coach-dock__tip");
     dock.classList.add("lobsy-coach-dock--tip-above");
     dock.classList.remove("lobsy-coach-dock--tip-aside");
@@ -2187,6 +2195,7 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
     }, { passive: true });
   },
   syncClearance: function (dock) {
+    dock = jobsyCoachDockElement(dock) || document.querySelector(".lobsy-coach-dock[data-lobsy-coach]");
     if (!dock || !dock.getBoundingClientRect) return;
     var btn = dock.querySelector("#lobsy-coach-btn") || dock;
     var box = btn.getBoundingClientRect();
@@ -2240,5 +2249,156 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
         attributeFilter: ["class", "style", "hidden"]
       });
     }
+
+  },
+  bindKbExtCoachGuard: function () {
+    if (!document.querySelector(".kb-ext[data-testid='kb-ext-detail']")) {
+      return;
+    }
+    var state = window.jobsyCoachDock._kbExtGuard = window.jobsyCoachDock._kbExtGuard || {};
+
+    function mobileKbExt() {
+      return window.matchMedia("(max-width: 639px)").matches
+        && !!document.querySelector(".kb-ext[data-testid='kb-ext-detail']");
+    }
+
+    function dockEl() {
+      return document.querySelector(".lobsy-coach-dock[data-lobsy-coach]");
+    }
+
+    function actionsEl() {
+      return document.querySelector("[data-testid='kb-ext-detail-actions']");
+    }
+
+    function setSuppressed(on) {
+      var dock = dockEl();
+      if (!dock || !dock.classList) return;
+      dock.classList.toggle("lobsy-coach-dock--suppressed", !!on);
+      if (document.documentElement && document.documentElement.classList) {
+        document.documentElement.classList.toggle("kb-ext-coach-suppressed", !!on);
+      }
+    }
+
+    function actionsVisible() {
+      var actions = actionsEl();
+      if (!actions) return false;
+      var r = actions.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      return r.height > 0 && r.bottom > 0 && r.top < vh;
+    }
+
+    function coachOverlapsMain() {
+      var dock = dockEl();
+      var coach = dock ? dock.querySelector("#lobsy-coach-btn") : null;
+      if (!coach || !coach.getBoundingClientRect) return false;
+      var c = coach.getBoundingClientRect();
+      if (c.width < 8 || c.height < 8) return false;
+      var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      var nodes = document.querySelectorAll(
+        "main a, main button, main p, main td, main th, main h1, main h2, main h3, main li"
+      );
+      for (var i = 0; i < nodes.length; i++) {
+        var node = nodes[i];
+        if (!node || !dock || dock.contains(node)) continue;
+        var style = window.getComputedStyle(node);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        var box = node.getBoundingClientRect();
+        if (box.width < 4 || box.height < 4) continue;
+        if (box.bottom <= 0 || box.top >= vh) continue;
+        if (
+          c.left < box.right - 1 &&
+          c.right > box.left + 1 &&
+          c.top < box.bottom - 1 &&
+          c.bottom > box.top + 1
+        ) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function refresh() {
+      if (!mobileKbExt()) {
+        setSuppressed(false);
+        return;
+      }
+      var suppress = actionsVisible();
+      if (!suppress) {
+        suppress = coachOverlapsMain();
+      }
+      setSuppressed(suppress);
+    }
+
+    function teardownIo() {
+      if (state.io) {
+        state.io.disconnect();
+        state.io = null;
+      }
+    }
+
+    function setupIo() {
+      teardownIo();
+      if (!mobileKbExt()) return;
+      var actions = actionsEl();
+      if (!actions || typeof IntersectionObserver !== "function") {
+        refresh();
+        return;
+      }
+      state.io = new IntersectionObserver(function () {
+        refresh();
+      }, { threshold: [0, 0.02, 0.08, 0.2] });
+      state.io.observe(actions);
+      refresh();
+    }
+
+    if (!state.bound) {
+      state.bound = true;
+      window.addEventListener("scroll", refresh, { passive: true });
+      window.addEventListener("resize", function () {
+        setupIo();
+      }, { passive: true });
+      if (!state.mq) {
+        state.mq = window.matchMedia("(max-width: 639px)");
+        state.mq.addEventListener("change", setupIo);
+      }
+      if (!state.mo) {
+        state.mo = new MutationObserver(function () {
+          if (document.querySelector(".kb-ext[data-testid='kb-ext-detail']")) {
+            setupIo();
+          }
+        });
+        state.mo.observe(document.body, { childList: true, subtree: true });
+      }
+      document.addEventListener("enhancedload", setupIo);
+      try {
+        if (window.Blazor && typeof Blazor.addEventListener === "function") {
+          Blazor.addEventListener("enhancedload", setupIo);
+        }
+      } catch (e) { }
+    }
+
+    setupIo();
   }
 };
+
+(function jobsyCoachKbExtBoot() {
+  function boot() {
+    if (!document.querySelector(".kb-ext[data-testid='kb-ext-detail']")) {
+      return;
+    }
+    if (window.jobsyCoachDock && typeof window.jobsyCoachDock.bindKbExtCoachGuard === "function") {
+      window.jobsyCoachDock.bindKbExtCoachGuard();
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+  document.addEventListener("enhancedload", boot);
+  try {
+    if (window.Blazor && typeof Blazor.addEventListener === "function") {
+      Blazor.addEventListener("enhancedload", boot);
+    }
+  } catch (e) { }
+})();

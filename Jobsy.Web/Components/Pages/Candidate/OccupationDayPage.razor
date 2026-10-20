@@ -6,6 +6,7 @@
 @using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
+@using Jobsy.Web.Media
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -16,8 +17,9 @@
     <section class="day-life__card" aria-labelledby="day-title">
         <div class="day-life__hello">
             <img class="day-life__mascot"
-                 src="/images/brand/mascot-coach.webp"
-                 srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
+                 src="@BrandImages.MarkSvg"
+                 srcset="@BrandImages.SrcSet56"
+                 sizes="96px"
                  alt=""
                  width="96"
                  height="96"
@@ -112,8 +114,9 @@
             <aside class="day-life__fit" aria-labelledby="day-fit-title">
                 <div class="day-life__tip">
                     <img class="day-life__mascot day-life__mascot--tip"
-                         src="/images/brand/mascot-coach.webp"
-                         srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
+                         src="@BrandImages.MarkSvg"
+                         srcset="@BrandImages.SrcSet56"
+                         sizes="72px"
                          alt=""
                          width="72"
                          height="72"
