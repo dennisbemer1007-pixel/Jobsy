@@ -23,6 +23,23 @@ def lobster_red_mask(rgb: np.ndarray) -> np.ndarray:
     return (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
 
 
+def assert_framing(desk_jpeg: Path) -> None:
+    rgb = np.asarray(Image.open(desk_jpeg).convert("RGB"), dtype=np.float32)
+    h, w = rgb.shape[:2]
+    cream = np.array([247.0, 244.0, 240.0])
+    dist = np.linalg.norm(rgb - cream, axis=2)
+    rows = np.where(dist.max(axis=1) > 30)[0]
+    if rows.size == 0 or rows.max() < h * 0.94:
+        raise SystemExit(f"FAIL: scene bottom too high (max y={rows.max() if rows.size else 0}, need >={h*0.94:.0f})")
+    if dist[int(h * 0.88) :, : int(w * 0.22)].max() < 35:
+        raise SystemExit("FAIL: left foreground (bike path) looks clipped")
+    red = int(
+        lobster_red_mask(rgb.astype(np.uint8))[: int(h * 0.58), int(w * 0.88) :].sum()
+    )
+    if red > 0:
+        raise SystemExit(f"FAIL: {red} lobster-red pixels in foliage (x>=0.88, y<58%)")
+
+
 def right_edge_4x(desk_jpeg: Path) -> Path:
     im = Image.open(desk_jpeg).convert("RGB")
     w, h = im.size
@@ -64,7 +81,7 @@ def main() -> None:
 
             page = browser.new_page(viewport={"width": 1440, "height": 900})
             page.goto(
-                f"{base}/mockups/onboarding-rustig/step-02?cb=20261020-u6r",
+                f"{base}/mockups/onboarding-rustig/step-02?cb=20261020-u6s",
                 wait_until="networkidle",
             )
             page.wait_for_selector("[data-testid=ob-rustig-hero]", timeout=30_000)
@@ -74,7 +91,7 @@ def main() -> None:
 
             page = browser.new_page(viewport={"width": 390, "height": 844})
             page.goto(
-                f"{base}/mockups/onboarding-rustig/step-02?cb=20261020-u6r",
+                f"{base}/mockups/onboarding-rustig/step-02?cb=20261020-u6s",
                 wait_until="networkidle",
             )
             page.wait_for_selector("[data-testid=ob-rustig-hero]", timeout=30_000)
@@ -85,8 +102,8 @@ def main() -> None:
     finally:
         proc.terminate()
         proc.wait(timeout=30)
-    crop_path = right_edge_4x(HERO_JPEG)
-    print(f"step-02 mockups OK; right-edge crop {crop_path}")
+    assert_framing(HERO_JPEG)
+    print("step-02 mockups OK (framing + no red right)")
 
 
 if __name__ == "__main__":
