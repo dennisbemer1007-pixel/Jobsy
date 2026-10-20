@@ -1,0 +1,83 @@
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Onboarding
+
+<div class="ob-rustig__kompas-finale" data-testid="onboarding-rustig-kompas">
+    <span class="ob-rustig__kompas-badge">@Culture["Onboarding.Rustig.Kompas.Badge"]</span>
+
+    <OnboardingFinaleV2 FirstName="@FirstName"
+                       Impression="Impression"
+                       MatchCount="MatchCount"
+                       MaxTravelMinutes="MaxTravelMinutes"
+                       HomeLabel="HomeLabel"
+                       DreamJob="DreamJob"
+                       CardsInput="CardsInput"
+                       HideHero="true"
+                       HideInsights="true"
+                       HideSoon="true"
+                       HideTimeline="true"
+                       HideEndBlock="true"
+                       HideDreamRouteCard="true"
+                       HideKompasWordsCard="true"
+                       OnComplete="OnComplete">
+        <HeaderContent>
+            @{
+                var summaries = OnboardingRustigKompasContent.TestSummaries(Impression);
+            }
+            @if (summaries.Count > 0)
+            {
+                <section class="ob-rustig__kompas-tests" aria-labelledby="kompas-tests-h">
+                    <h2 id="kompas-tests-h">@Culture["Onboarding.Rustig.Kompas.TestsTitle"]</h2>
+                    <p class="ob-rustig__kompas-lead">@Culture["Onboarding.Rustig.Kompas.TestsLead"]</p>
+                    <div class="ob-rustig__kompas-test-grid">
+                        @foreach (var card in summaries)
+                        {
+                            <article class="ob-rustig__kompas-test-card">
+                                <small>@Culture[card.TabKey]</small>
+                                @if (!string.IsNullOrWhiteSpace(card.Title))
+                                {
+                                    <h3>@card.Title</h3>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(card.Summary))
+                                {
+                                    <p>@card.Summary</p>
+                                }
+                            </article>
+                        }
+                    </div>
+                </section>
+            }
+
+            <section class="ob-rustig__kompas-directions" aria-labelledby="kompas-dir-h">
+                <h2 id="kompas-dir-h">@Culture["Onboarding.Rustig.Kompas.DirectionsTitle"]</h2>
+                <p class="ob-rustig__kompas-lead">@Culture["Onboarding.Rustig.Kompas.DirectionsLead"]</p>
+                <div class="ob-rustig__kompas-dir-grid">
+                    @foreach (var card in OnboardingRustigKompasContent.Directions)
+                    {
+                        <article class="ob-rustig__kompas-dir-card">
+                            <img src="@card.ImageUrl" alt="" width="480" height="360" decoding="async" />
+                            <div>
+                                <h3>@Culture[card.TitleKey]</h3>
+                                <p>@Culture[card.BodyKey]</p>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+        </HeaderContent>
+    </OnboardingFinaleV2>
+</div>
+
+@code {
+    [Parameter] public string FirstName { get; set; } = "";
+    [Parameter] public OnboardingImpression? Impression { get; set; }
+    [Parameter] public int MatchCount { get; set; }
+    [Parameter] public int MaxTravelMinutes { get; set; }
+    [Parameter] public string? HomeLabel { get; set; }
+    [Parameter] public string? DreamJob { get; set; }
+    [Parameter] public OnboardingFinaleCardsInput CardsInput { get; set; } = new(false, false, false, false, false, false);
+    [Parameter] public EventCallback OnComplete { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

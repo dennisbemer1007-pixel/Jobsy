@@ -277,6 +277,30 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.Saved"] = english ? "✓ Saved" : "✓ Bewaard";
         map["Onboarding.Rustig.Phase.WieBenJij"] = english ? "Who you are" : "Wie ben jij";
         map["Onboarding.Rustig.Phase.Kompas"] = english ? "Your Compass" : "Jouw Kompas";
+        map["Onboarding.Rustig.Kompas.ShellLead"] = english
+            ? "Discover what Lobsy can do for you from here."
+            : "Je gaat nu de kracht van Lobsy meemaken. Dit is wat je vanaf nu kunt verwachten.";
+        map["Onboarding.Rustig.Kompas.Badge"] = english ? "Onboarding and tests complete" : "Onboarding en tests afgerond";
+        map["Onboarding.Rustig.Kompas.TestsTitle"] = english ? "What your four tests show together" : "Wat je vier tests samen laten zien";
+        map["Onboarding.Rustig.Kompas.TestsLead"] = english
+            ? "In words, without scores. This is your starting point for your Compass."
+            : "In woorden, zonder scores. Dit is je startpunt voor je Kompas.";
+        map["Onboarding.Rustig.Kompas.DirectionsTitle"] = english ? "Directions that fit you" : "Richtingen die bij je passen";
+        map["Onboarding.Rustig.Kompas.DirectionsLead"] = english
+            ? "Warm examples to explore further. Not promises — a first compass."
+            : "Warme voorbeelden om op verder te verkennen. Geen beloftes, wel een eerste kompas.";
+        map["Onboarding.Rustig.Kompas.Dir.Zorg.Title"] = english ? "Care & wellbeing" : "Zorg & welzijn";
+        map["Onboarding.Rustig.Kompas.Dir.Zorg.Body"] = english
+            ? "Places where you work with people and make a difference."
+            : "Passende plekken waar je met mensen werkt en verschil maakt.";
+        map["Onboarding.Rustig.Kompas.Dir.Groen.Title"] = english ? "Green technology" : "Groene techniek";
+        map["Onboarding.Rustig.Kompas.Dir.Groen.Body"] = english
+            ? "Outdoors and hands-on, with room to learn."
+            : "Buiten en met je handen, met ruimte om te leren.";
+        map["Onboarding.Rustig.Kompas.Dir.Team.Title"] = english ? "Organising & teamwork" : "Organiseren & samenwerken";
+        map["Onboarding.Rustig.Kompas.Dir.Team.Body"] = english
+            ? "Structure, overview and contact with a team."
+            : "Structuur, overzicht en contact met een team.";
         map["Onboarding.Rustig.DreamOwnLabel"] = english ? "Or type your own dream job" : "Of typ je eigen droombaan";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.CtaRustig"] = english ? "Get started" : "Aan de slag";

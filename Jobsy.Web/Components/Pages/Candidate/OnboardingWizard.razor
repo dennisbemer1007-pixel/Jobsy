@@ -49,7 +49,11 @@
     }
     @if (OnboardingRustig.Enabled)
     {
+<<<<<<< HEAD
         <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-15" />
+=======
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-14" />
+>>>>>>> 74a3720d1 (Onboarding rustig Kompas finale (kompas-c): illustrated hero and FinaleV2 body.)
     }
 </HeadContent>
 
@@ -94,7 +98,20 @@
     }
     else if (_finish || _state?.FinishReached == true)
     {
-        if (_finaleV2)
+        if (_finaleV2 && OnboardingRustig.Enabled)
+        {
+            <OnboardingRustigKompasStep FirstName="@Draft.FirstName"
+                                        Impression="_state?.Impression"
+                                        MatchCount="@(_state?.Impression?.MatchingVacancyCount ?? 0)"
+                                        MaxTravelMinutes="@_finaleMaxTravel"
+                                        HomeLabel="@_finaleHomeLabel"
+                                        DreamJob="@(string.IsNullOrWhiteSpace(Draft.Dream) ? null : Draft.Dream)"
+                                        CardsInput="_finaleCardsInput"
+                                        SaveStatus="@RustigSaveStatus"
+                                        OnComplete="CompleteAsync"
+                                        OnLater="LaterAsync" />
+        }
+        else if (_finaleV2)
         {
             <OnboardingFinaleV2 FirstName="@Draft.FirstName"
                                 Impression="_state?.Impression"
