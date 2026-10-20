@@ -268,7 +268,13 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Welcome.Title"] = english ? "Hi {0}, nice to have you here" : "Hoi {0}, fijn dat je er bent";
         map["Onboarding.Welcome.TitleNoName"] = english ? "Hi, nice to have you here" : "Hoi, fijn dat je er bent";
         map["Onboarding.Welcome.Lead"] = english ? "In about 12 minutes we make your start profile together. Then your Compass shows who you are and which work fits you." : "In ongeveer 12 minuten maken we samen je startprofiel. Daarna zie je in je Kompas wie je bent en welk werk bij je past.";
+        map["Onboarding.Rustig.WelcomeLead"] = english
+            ? "In about 12 minutes we go through ten short steps together. Then your Compass is ready and you see which work fits you."
+            : "In ongeveer 12 minuten doorlopen we samen tien korte stappen. Daarna staat je Kompas klaar en zie je welk werk bij je past.";
+        map["Onboarding.Rustig.StartMeta"] = english ? "Start" : "Start";
+        map["Onboarding.Rustig.MinutesShort"] = english ? "minutes" : "minuten";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
+        map["Onboarding.Welcome.CtaRustig"] = english ? "Get started" : "Aan de slag";
         map["Onboarding.Welcome.OverJou"] = english ? "Where you live and when you can work" : "Waar je woont en wanneer je kunt"; map["Onboarding.Welcome.Background"] = english ? "Your background" : "Je achtergrond"; map["Onboarding.Welcome.BackgroundLead"] = english ? "Work and education, you can skip it" : "Werk en opleiding, mag je overslaan"; map["Onboarding.Welcome.Dream"] = english ? "Your dream job" : "Je droombaan"; map["Onboarding.Welcome.DreamLead"] = english ? "Where do you want to go?" : "Waar wil je naartoe?"; map["Onboarding.Welcome.TestsLead"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Welcome.Time2"] = "2 min"; map["Onboarding.Welcome.Time1"] = "1 min"; map["Onboarding.Welcome.TimeHalf"] = "½ min";
         map["Onboarding.IllustratedSidebarTitle"] = english ? "Tip for this step" : "Tip bij deze stap";
         map["Onboarding.IllustratedSidebar.SubstepsAria"] = english ? "Steps in this onboarding flow" : "Stappen in deze onboarding";

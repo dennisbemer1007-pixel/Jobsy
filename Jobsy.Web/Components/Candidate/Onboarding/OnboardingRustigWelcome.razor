@@ -1,0 +1,130 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Onboarding
+
+<section class="ob-wizard__welcome">
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <p class="state-message error">@Error</p>
+    }
+    <div class="ob-rustig" data-ob-rustig-screen="start">
+        <div class="ob-rustig__layout">
+            <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
+                <img class="ob-rustig__logo-e"
+                     src="@BrandImages.AppIconSvg"
+                     width="56"
+                     height="56"
+                     alt="Lobsy"
+                     decoding="async"
+                     data-logo-fallback="off"
+                     draggable="false" />
+                @foreach (var item in OnboardingRustigWelcomeContent.SidebarNav)
+                {
+                    var isCurrent = item.Number == "1";
+                    <div class="ob-wizard__side-item @(isCurrent ? "is-current" : null)">
+                        <span>@item.Number</span>
+                        <div>
+                            <strong>@item.Title</strong>
+                            @if (!string.IsNullOrWhiteSpace(item.Sub))
+                            {
+                                <small>@item.Sub</small>
+                            }
+                        </div>
+                    </div>
+                }
+            </aside>
+
+            <div class="ob-rustig__main">
+                <header class="ob-rustig__chrome">
+                    <div class="ob-rustig__mobile-brand">
+                        <img class="ob-rustig__logo-e"
+                             src="@BrandImages.AppIconSvg"
+                             width="40"
+                             height="40"
+                             alt=""
+                             decoding="async"
+                             data-logo-fallback="off"
+                             draggable="false" />
+                    </div>
+                    <div class="ob-rustig__chrome-row">
+                        <button type="button" class="ob-rustig__link" aria-hidden="true" tabindex="-1">‹</button>
+                        <div class="ob-rustig__segments" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="10">
+                            @foreach (var _ in Enumerable.Range(0, 4))
+                            {
+                                <span><i style="--w:0%"></i></span>
+                            }
+                        </div>
+                        <div class="ob-rustig__actions">
+                            <button type="button" class="ob-rustig__link" @onclick="OnLater">@Culture["Onboarding.Later"]</button>
+                            <a class="ob-rustig__link ob-rustig__link--underline"
+                               href="/privacy/data"
+                               title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                        </div>
+                    </div>
+                    <div class="ob-rustig__meta">
+                        <span>
+                            <strong>@Culture["Onboarding.Rustig.StartMeta"]</strong>
+                            <text> · ± @OnboardingWizardCatalog.V3TotalMinutesEstimate @Culture["Onboarding.Rustig.MinutesShort"]</text>
+                        </span>
+                    </div>
+                </header>
+
+                <OnboardingRustigHero DesktopUrl="@OnboardingRustigPanoramaAssets.StartDesktop"
+                                      MobileUrl="@OnboardingRustigPanoramaAssets.StartMobile" />
+
+                <div class="ob-rustig__page-head">
+                    <h1 tabindex="-1">@Title</h1>
+                    <p class="ob-rustig__lead">@Lead</p>
+                </div>
+
+                <div class="ob-rustig__body">
+                    <div class="ob-rustig__canvas">
+                        <div class="ob-rustig__phase-cards">
+                            @foreach (var phase in OnboardingRustigWelcomeContent.JourneyPhases)
+                            {
+                                <article class="ob-rustig__phase-card">
+                                    <span>@phase.Number</span>
+                                    <div>
+                                        <strong>@phase.Title</strong>
+                                        <small>@phase.Sub</small>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(phase.Meta))
+                                    {
+                                        <small>@phase.Meta</small>
+                                    }
+                                </article>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Hint))
+                        {
+                            <p class="ob-wizard__hint">@Hint</p>
+                        }
+                        <div class="ob-rustig__footer-actions">
+                            <button type="button"
+                                    class="ob-rustig__btn ob-rustig__btn--primary"
+                                    data-testid="onboarding-begin"
+                                    disabled="@Busy"
+                                    @onclick="OnBegin">
+                                @Cta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Lead { get; set; } = "";
+    [Parameter] public string Hint { get; set; } = "";
+    [Parameter] public string Cta { get; set; } = "";
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnBegin { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}
