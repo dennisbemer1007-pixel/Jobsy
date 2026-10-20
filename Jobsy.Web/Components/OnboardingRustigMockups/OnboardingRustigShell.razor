@@ -89,51 +89,20 @@
             }
             else if (!string.IsNullOrWhiteSpace(IllustratedDesktop))
             {
-                <div class="ob-rustig__illustrated-hero" data-testid="ob-rustig-hero">
-                    <div class="ob-rustig__illustrated-mobile" aria-hidden="true">
-                        <picture class="ob-rustig__illustrated-mobile-art">
-                            <img src="@IllustratedMobile"
-                                 alt=""
-                                 width="780"
-                                 height="433"
-                                 decoding="async"
-                                 fetchpriority="high" />
-                        </picture>
-                        @if (!string.IsNullOrWhiteSpace(Title))
-                        {
-                            <div class="ob-rustig__illustrated-mobile-copy">
-                                <h1 tabindex="-1">@Title</h1>
-                                @if (!string.IsNullOrWhiteSpace(Lead))
-                                {
-                                    <p>@Lead</p>
-                                }
-                            </div>
-                        }
-                    </div>
-                    <div class="ob-rustig__illustrated-desktop" aria-hidden="true">
-                        <picture class="ob-rustig__illustrated-art">
-                            <img src="@IllustratedDesktop"
-                                 alt=""
-                                 width="1280"
-                                 height="720"
-                                 decoding="async"
-                                 fetchpriority="high" />
-                        </picture>
-                        @if (!string.IsNullOrWhiteSpace(Title))
-                        {
-                            <div class="ob-rustig__illustrated-head">
-                                <h1 tabindex="-1">@Title</h1>
-                                @if (!string.IsNullOrWhiteSpace(Lead))
-                                {
-                                    <p class="ob-rustig__lead">@Lead</p>
-                                }
-                            </div>
-                        }
-                    </div>
+                <div class="ob-rustig__illustrated-hero" data-testid="ob-rustig-hero" aria-hidden="true">
+                    <picture class="ob-rustig__illustrated-frame">
+                        <source media="(max-width: 1023px)" srcset="@IllustratedMobile" />
+                        <img src="@IllustratedDesktop"
+                             alt=""
+                             width="1600"
+                             height="900"
+                             decoding="async"
+                             fetchpriority="high" />
+                    </picture>
                 </div>
             }
 
-            @if (!string.IsNullOrWhiteSpace(Title) && string.IsNullOrWhiteSpace(IllustratedDesktop))
+            @if (!string.IsNullOrWhiteSpace(Title))
             {
                 <div class="ob-rustig__page-head">
                     <h1 tabindex="-1">@Title</h1>

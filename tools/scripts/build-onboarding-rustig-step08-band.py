@@ -12,7 +12,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw"
-DEFAULT_SRC = RAW / "step-08-source-16x9-u8b-seamless.jpg"
+DEFAULT_SRC = RAW / "step-08-source-16x9-u8c-seamless.jpg"
 OUT = RAW / "step-08-desktop-raw.jpg"
 OUT_SIZE = (2400, 400)
 
@@ -51,6 +51,24 @@ def defuse_figure_red(im: Image.Image) -> Image.Image:
     return Image.fromarray(rgb)
 
 
+def defuse_report_band_red(im: Image.Image) -> Image.Image:
+    """Match report-onboarding-rustig-step08 JPEG gate (right 10%, top 58%)."""
+    rgb = np.asarray(im.convert("RGB")).copy()
+    h, w = rgb.shape[:2]
+    report = np.zeros((h, w), dtype=bool)
+    report[: int(h * 0.58), int(w * 0.90) :] = True
+    for _ in range(32):
+        r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+        hot = (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
+        sunset_haze = (g > 118) & (r.astype(np.int16) - g.astype(np.int16) < 30)
+        fix = hot & report & ~sunset_haze
+        if not fix.any():
+            break
+        cap = np.maximum(rgb[fix, 1], rgb[fix, 2]).astype(np.int16) + 4
+        rgb[fix, 0] = np.minimum(rgb[fix, 0], cap.astype(np.uint8))
+    return Image.fromarray(rgb)
+
+
 def pick_slice(im: Image.Image) -> Image.Image:
     w, h = im.size
     y0 = int(h * 0.11)
@@ -67,12 +85,14 @@ def main() -> None:
     im = s4.heal_topright_sky(Image.open(src).convert("RGB"))
     band = pick_slice(im).resize(OUT_SIZE, Image.Resampling.LANCZOS)
     band = defuse_figure_red(band)
+    band = defuse_report_band_red(band)
     band = fin.apply_cream_fades(band)
     band = s4.defuse_right_foliage_red(band)
+    band = defuse_report_band_red(band)
     band = s4.apply_strong_bottom_fade(band, fin)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     band.save(OUT, quality=98, optimize=True)
-    band = s4.defuse_right_foliage_red(Image.open(OUT))
+    band = defuse_report_band_red(s4.defuse_right_foliage_red(Image.open(OUT)))
     band.save(OUT, quality=98, optimize=True)
     bb = fin.content_bbox(band)
     print(f"wrote {OUT} content_bbox={bb} from {src.name}")

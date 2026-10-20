@@ -206,18 +206,59 @@ def _load_step04_defuse():
     return mod.defuse_right_foliage_red
 
 
+def _load_step08_report_defuse():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "step08_band", ROOT / "tools/scripts/build-onboarding-rustig-step08-band.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod.defuse_report_band_red
+
+
+def _save_seamless_jpeg(im: Image.Image, path: Path, *, slug: str) -> None:
+    if slug == "step-08":
+        im.save(path, quality=100, subsampling=0, optimize=False)
+    else:
+        im.save(path, quality=98, optimize=True)
+
+
+def _report_band_red_count(rgb: np.ndarray) -> int:
+    h, w = rgb.shape[:2]
+    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    hot = (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
+    g2 = rgb[: int(h * 0.58), int(w * 0.90) :, 1]
+    r2 = rgb[: int(h * 0.58), int(w * 0.90) :, 0]
+    sunset = (g2 > 118) & (r2.astype(np.int16) - g2.astype(np.int16) < 30)
+    return int((hot[: int(h * 0.58), int(w * 0.90) :] & ~sunset).sum())
+
+
 def step04_defuse_jpeg(path: Path) -> None:
     """Re-run foliage defuse after JPEG save (quantization can reintroduce red specks)."""
     defuse = _load_step04_defuse()
+    report_defuse = _load_step08_report_defuse() if "step-08" in path.name else None
     for _ in range(20):
         im = defuse(Image.open(path))
-        im.save(path, quality=98, optimize=True)
+        if report_defuse is not None:
+            for _ in range(4):
+                im = report_defuse(im)
+        slug = "step-08" if "step-08" in path.name else ""
+        if slug == "step-08":
+            _save_seamless_jpeg(im, path, slug=slug)
+        else:
+            im.save(path, quality=98, optimize=True)
         rgb = np.asarray(im.convert("RGB"))
-        h, w = rgb.shape[:2]
-        r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
-        hot = (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
-        if not hot[: int(h * 0.58), int(w * 0.90) :].any():
-            break
+        if report_defuse is not None:
+            if _report_band_red_count(rgb) <= 8:
+                break
+        else:
+            h, w = rgb.shape[:2]
+            r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+            hot = (r > 110) & (r > g + 18) & (r > b + 18) & (g < 145) & (b < 145)
+            if not hot[: int(h * 0.58), int(w * 0.90) :].any():
+                break
 
 
 def fit_mobile_band_native(raw: Image.Image, slug: str = "") -> Image.Image:
@@ -299,9 +340,14 @@ def main() -> None:
             mob = soften_hero_palette(mob)
         if slug in SEAMLESS_HERO_SLUGS:
             mob = _load_step04_defuse()(mob)
+        if slug == "step-08":
+            rd = _load_step08_report_defuse()
+            mob = rd(rd(mob))
         mob_path = OUT / f"{slug}-mobile.jpg"
-        jpeg_q = 98 if slug in SEAMLESS_HERO_SLUGS else 92
-        mob.save(mob_path, quality=jpeg_q, optimize=True)
+        if slug in SEAMLESS_HERO_SLUGS:
+            _save_seamless_jpeg(mob, mob_path, slug=slug)
+        else:
+            mob.save(mob_path, quality=92, optimize=True)
         if slug in SEAMLESS_HERO_SLUGS:
             step04_defuse_jpeg(mob_path)
         if mobile_only:
@@ -313,8 +359,14 @@ def main() -> None:
             desk = soften_hero_palette(desk)
         if slug in SEAMLESS_HERO_SLUGS:
             desk = _load_step04_defuse()(desk)
+        if slug == "step-08":
+            rd = _load_step08_report_defuse()
+            desk = rd(rd(desk))
         desk_path = OUT / f"{slug}-desktop.jpg"
-        desk.save(desk_path, quality=jpeg_q, optimize=True)
+        if slug in SEAMLESS_HERO_SLUGS:
+            _save_seamless_jpeg(desk, desk_path, slug=slug)
+        else:
+            desk.save(desk_path, quality=92, optimize=True)
         if slug in SEAMLESS_HERO_SLUGS:
             step04_defuse_jpeg(desk_path)
         bb = figure_bbox(desk) or content_bbox(desk)

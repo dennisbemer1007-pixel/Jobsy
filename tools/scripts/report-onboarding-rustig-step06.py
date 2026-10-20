@@ -20,7 +20,7 @@ MOB_JPEG = (
     ROOT
     / "Jobsy.Web/wwwroot/images/onboarding/rustig-mockup/step-06-droom-professions-u6-aquarel-mobile.jpg"
 )
-CACHE = "20261020-u6-aquarel-v2"
+CACHE = "20261020-u6-aquarel-v3"
 
 
 def assert_illustration(path: Path, label: str) -> None:
@@ -82,7 +82,7 @@ def main() -> None:
         proc.terminate()
         proc.wait(timeout=30)
     sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True).strip()
-    print(f"step-06 mockups OK (u6-aquarel @ {sha})")
+    print(f"step-06 mockups OK (u6-aquarel-v3 @ {sha})")
 
 
 if __name__ == "__main__":

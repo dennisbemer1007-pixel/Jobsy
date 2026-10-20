@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 DESK_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-08-desktop.jpg"
 MOB_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-08-mobile.jpg"
-CACHE = "20261020-u8b"
+CACHE = "20261020-u8c"
 
 
 def lobster_red_mask(rgb: np.ndarray) -> np.ndarray:
@@ -136,7 +136,7 @@ def main() -> None:
         proc.terminate()
         proc.wait(timeout=30)
     sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True).strip()
-    print(f"step-08 mockups OK (u8b @ {sha})")
+    print(f"step-08 mockups OK (u8c @ {sha})")
 
 
 if __name__ == "__main__":
