@@ -14,7 +14,11 @@ RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw"
 DEFAULT_SRC = RAW / "step-05-source-16x9-u6y-seamless.jpg"
 OUT = RAW / "step-05-desktop-raw.jpg"
 OUT_SIZE = (2400, 400)
-FADE_BOTTOM = 36
+# Keep graduate feet + grass above the cream fade (step-05 u6y1).
+SLICE_Y0 = 0.06
+SLICE_Y1 = 0.89
+BAND_SCALE_H = 0.74
+FADE_BOTTOM = 10
 
 
 def load_fin():
@@ -37,9 +41,35 @@ def load_step04_helpers():
 
 def pick_slice(im: Image.Image) -> Image.Image:
     w, h = im.size
-    y0 = int(h * 0.10)
-    y_end = int(h * 0.78)
+    y0 = int(h * SLICE_Y0)
+    y_end = int(h * SLICE_Y1)
     return im.crop((0, y0, w, y_end))
+
+
+def fit_band_scaled(slice_im: Image.Image, fin) -> Image.Image:
+    tw, th = OUT_SIZE
+    scaled_h = max(1, int(th * BAND_SCALE_H))
+    scaled = slice_im.resize((tw, scaled_h), Image.Resampling.LANCZOS)
+    cream = tuple(int(c) for c in fin.CREAM)
+    canvas = Image.new("RGB", OUT_SIZE, cream)
+    canvas.paste(scaled, (0, 0))
+    return canvas
+
+
+def apply_bottom_fade(im: Image.Image, fin) -> Image.Image:
+    w, h = im.size
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = overlay.load()
+    cream = tuple(int(c) for c in fin.CREAM)
+    for y in range(h):
+        if y < h - FADE_BOTTOM:
+            continue
+        for x in range(w):
+            t = (y - (h - FADE_BOTTOM)) / max(1, FADE_BOTTOM - 1)
+            a = int(255 * min(1.0, t**0.85))
+            if a:
+                px[x, y] = (*cream, a)
+    return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
 def main() -> None:
@@ -50,10 +80,10 @@ def main() -> None:
     s4 = load_step04_helpers()
     im = s4.heal_topright_sky(Image.open(src).convert("RGB"))
     slice_im = pick_slice(im)
-    band = slice_im.resize(OUT_SIZE, Image.Resampling.LANCZOS)
+    band = fit_band_scaled(slice_im, fin)
     band = fin.apply_cream_fades(band)
     band = s4.defuse_right_foliage_red(band)
-    band = s4.apply_strong_bottom_fade(band, fin)
+    band = apply_bottom_fade(band, fin)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     band.save(OUT, quality=98, optimize=True)
     band = s4.defuse_right_foliage_red(Image.open(OUT))
