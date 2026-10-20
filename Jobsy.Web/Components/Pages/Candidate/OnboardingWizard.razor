@@ -21,6 +21,7 @@
 @inject Jobsy.Web.Features.IOnboardingFinaleV2Gate OnboardingFinaleV2
 @inject UserFacingError UserFacing
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
+@inject IOnboardingRustigGate OnboardingRustig
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Features
@@ -46,9 +47,13 @@
     {
         <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
     }
+    @if (OnboardingRustig.Enabled)
+    {
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-start-g2" />
+    }
 </HeadContent>
 
-<div class="ob-wizard ob-wizard--richting-a @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)">
+<div class="ob-wizard ob-wizard--richting-a @(OnboardingRustig.Enabled ? "ob-wizard--rustig" : null) @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)">
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -148,36 +153,50 @@
     }
     else if (_welcome)
     {
-        <section class="ob-wizard__welcome">
-            @if (!string.IsNullOrWhiteSpace(_error))
-            {
-                <p class="state-message error">@_error</p>
-            }
-            <LobsyLogo Variant="LobsyLogoVariant.Stacked" Alt="" />
-            <h1>@WelcomeTitle</h1>
-            <p class="ob-wizard__lead">@Culture["Onboarding.Welcome.Lead"]</p>
-            <div class="ob-wizard__phase-cards">
-                @foreach (var item in WelcomePhases)
+        @if (OnboardingRustig.Enabled)
+        {
+            <OnboardingRustigWelcome Title="@WelcomeTitle"
+                                     Lead="@Culture["Onboarding.Rustig.WelcomeLead"]"
+                                     Hint="@Culture["Onboarding.Welcome.Hint"]"
+                                     Cta="@Culture["Onboarding.Welcome.CtaRustig"]"
+                                     Error="@_error"
+                                     Busy="@(_busy || _loading)"
+                                     OnBegin="BeginAsync"
+                                     OnLater="LaterAsync" />
+        }
+        else
+        {
+            <section class="ob-wizard__welcome">
+                @if (!string.IsNullOrWhiteSpace(_error))
                 {
-                    <article>
-                        <span>@item.Number</span>
-                        <div>
-                            <strong>@Culture[item.Title]</strong>
-                            <small>@Culture[item.Lead]</small>
-                        </div>
-                        <small>@Culture[item.Time]</small>
-                    </article>
+                    <p class="state-message error">@_error</p>
                 }
-            </div>
-            <p class="ob-wizard__hint">@Culture["Onboarding.Welcome.Hint"]</p>
-            <button type="button"
-                    class="btn btn-primary ob-wizard__cta"
-                    data-testid="onboarding-begin"
-                    disabled="@(_busy || _loading)"
-                    @onclick="BeginAsync">
-                @Culture["Onboarding.Welcome.Cta"]
-            </button>
-        </section>
+                <LobsyLogo Variant="LobsyLogoVariant.Stacked" Alt="" />
+                <h1>@WelcomeTitle</h1>
+                <p class="ob-wizard__lead">@Culture["Onboarding.Welcome.Lead"]</p>
+                <div class="ob-wizard__phase-cards">
+                    @foreach (var item in WelcomePhases)
+                    {
+                        <article>
+                            <span>@item.Number</span>
+                            <div>
+                                <strong>@Culture[item.Title]</strong>
+                                <small>@Culture[item.Lead]</small>
+                            </div>
+                            <small>@Culture[item.Time]</small>
+                        </article>
+                    }
+                </div>
+                <p class="ob-wizard__hint">@Culture["Onboarding.Welcome.Hint"]</p>
+                <button type="button"
+                        class="btn btn-primary ob-wizard__cta"
+                        data-testid="onboarding-begin"
+                        disabled="@(_busy || _loading)"
+                        @onclick="BeginAsync">
+                    @Culture["Onboarding.Welcome.Cta"]
+                </button>
+            </section>
+        }
     }
     else
     {

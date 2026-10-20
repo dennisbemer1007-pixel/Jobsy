@@ -1,0 +1,27 @@
+@* Decorative panorama band; pointer-events none on hero and fade (see onboarding-rustig.css). *@
+
+<div class="ob-rustig__hero-band" aria-hidden="true" data-testid="ob-rustig-hero">
+    <img class="ob-rustig__hero-img ob-rustig__hero-img--desk"
+         src="@DesktopUrl"
+         width="2280"
+         height="340"
+         alt=""
+         loading="eager"
+         decoding="sync"
+         fetchpriority="high"
+         data-testid="ob-rustig-hero-desk" />
+    <img class="ob-rustig__hero-img ob-rustig__hero-img--mob"
+         src="@MobileUrl"
+         width="780"
+         height="184"
+         alt=""
+         loading="eager"
+         decoding="sync"
+         fetchpriority="high"
+         data-testid="ob-rustig-hero-mob" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string DesktopUrl { get; set; } = "";
+    [Parameter, EditorRequired] public string MobileUrl { get; set; } = "";
+}

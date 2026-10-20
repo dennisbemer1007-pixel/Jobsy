@@ -151,6 +151,10 @@
     "sha256": "3dd725e6f8d1efd345f1dc738fee6ec689ec2c53f233ae92b99c6c579c3d0fba",
     "v": "20261019-r24"
   },
+  "css/features/onboarding-rustig.css": {
+    "sha256": "e861738b6086677e71e2b40e1e294ff75c322c17fbf912883ab59d7696351057",
+    "v": "20261020-start-g2"
+  },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
     "v": "20261018-r2"

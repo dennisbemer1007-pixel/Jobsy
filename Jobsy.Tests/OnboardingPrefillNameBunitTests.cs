@@ -43,6 +43,7 @@ public sealed class OnboardingPrefillNameBunitTests : BunitContext
             sp.GetRequiredService<ILogger<GratisDnaMergeService>>()));
         Services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate());
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
+        Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
     }
 
     [Fact]
@@ -107,6 +108,11 @@ public sealed class OnboardingPrefillNameBunitTests : BunitContext
     {
         public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult(false);
+    }
+
+    private sealed class FixedRustigGate : IOnboardingRustigGate
+    {
+        public bool Enabled => false;
     }
 
     private sealed class NoGeocoder : IGeocodingClient

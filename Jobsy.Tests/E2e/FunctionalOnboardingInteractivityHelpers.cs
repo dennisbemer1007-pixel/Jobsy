@@ -677,7 +677,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var begin = page.GetByTestId("onboarding-begin");
         if (await begin.CountAsync() == 0)
         {
-            begin = page.GetByRole(AriaRole.Button, new() { Name = "Beginnen" });
+            begin = page.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^(Beginnen|Aan de slag)$") });
         }
 
         await AssertHitTargetAsync(page, begin, "onboarding-begin");
