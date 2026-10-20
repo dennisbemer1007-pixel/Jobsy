@@ -42,7 +42,7 @@
                 </div>
                 <div class="ob-rustig__chrome-row">
                     <button type="button" class="ob-rustig__link" aria-hidden="true">‹</button>
-                    <div class="ob-rustig__segments" role="progressbar" aria-valuenow="@Step" aria-valuemin="1" aria-valuemax="10">
+                    <div class="ob-rustig__segments" role="progressbar" aria-valuenow="@(WelcomeMeta ? 0 : Step)" aria-valuemin="0" aria-valuemax="10">
                         @foreach (var phase in PhaseWidths)
                         {
                             <span><i style="--w:@(phase.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></i></span>
@@ -54,7 +54,18 @@
                     </div>
                 </div>
                 <div class="ob-rustig__meta">
-                    <span><strong>@PhaseLabel</strong> · Stap @Step van 10 · ± @MinutesLeft minuten</span>
+                    <span>
+                        @if (WelcomeMeta)
+                        {
+                            <strong>Start</strong>
+                            <text> · ± @MinutesLeft minuten</text>
+                        }
+                        else
+                        {
+                            <strong>@PhaseLabel</strong>
+                            <text> · Stap @Step van 10 · ± @MinutesLeft minuten</text>
+                        }
+                    </span>
                     @if (ShowSaved)
                     {
                         <span class="ob-rustig__saved">✓ Bewaard</span>
@@ -122,6 +133,7 @@
     [Parameter] public string? HeroJpg { get; set; }
     [Parameter] public string? HeroArtPosition { get; set; }
     [Parameter] public bool ShowJobsRail { get; set; }
+    [Parameter] public bool WelcomeMeta { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RightRail { get; set; }
 
@@ -157,6 +169,7 @@
     private static double[] PhaseWidthsForStep(int step) =>
         step switch
         {
+            <= 0 => [0, 0, 0, 0],
             <= 3 => [100, 0, 0, 0],
             <= 6 => [100, 100, 0, 0],
             <= 9 => [100, 100, 100, 0],

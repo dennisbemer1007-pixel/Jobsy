@@ -1,3 +1,4 @@
+using Jobsy.Web.OnboardingRustigMockups;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
@@ -21,20 +22,8 @@ public sealed class OnboardingRustigMockupScreenshotPlaywrightTests : IAsyncLife
     private IBrowser? _browser;
     private string _baseUrl = "";
 
-    private static readonly (string Slug, string Path, int Width, int Height, string MarkerAttr)[] Captures =
+    private static readonly (string Slug, string Path, int Width, int Height, string MarkerAttr)[] SiteCaptures =
     [
-        ("step-01-desktop", "/mockups/onboarding-rustig/step-01", 1440, 900, "data-ob-rustig-screen"),
-        ("step-01-mobile", "/mockups/onboarding-rustig/step-01", 390, 844, "data-ob-rustig-screen"),
-        ("step-02-desktop", "/mockups/onboarding-rustig/step-02", 1440, 900, "data-ob-rustig-screen"),
-        ("step-02-mobile", "/mockups/onboarding-rustig/step-02", 390, 844, "data-ob-rustig-screen"),
-        ("step-07-a-desktop", "/mockups/onboarding-rustig/step-07-a", 1440, 900, "data-ob-rustig-screen"),
-        ("step-07-a-mobile", "/mockups/onboarding-rustig/step-07-a", 390, 844, "data-ob-rustig-screen"),
-        ("step-07-b-desktop", "/mockups/onboarding-rustig/step-07-b", 1440, 900, "data-ob-rustig-screen"),
-        ("step-07-b-mobile", "/mockups/onboarding-rustig/step-07-b", 390, 844, "data-ob-rustig-screen"),
-        ("test-leuk-a-desktop", "/mockups/onboarding-rustig/test-leuk-a", 1440, 900, "data-ob-rustig-screen"),
-        ("test-leuk-a-mobile", "/mockups/onboarding-rustig/test-leuk-a", 390, 844, "data-ob-rustig-screen"),
-        ("test-leuk-b-desktop", "/mockups/onboarding-rustig/test-leuk-b", 1440, 900, "data-ob-rustig-screen"),
-        ("test-leuk-b-mobile", "/mockups/onboarding-rustig/test-leuk-b", 390, 844, "data-ob-rustig-screen"),
         ("site-partners-desktop", "/mockups/site-rustig/partners?lang=nl", 1440, 900, "data-site-rustig-screen"),
         ("site-partners-mobile", "/mockups/site-rustig/partners?lang=nl", 390, 844, "data-site-rustig-screen"),
         ("site-gratis-dna-desktop", "/mockups/site-rustig/gratis-dna?lang=nl", 1440, 900, "data-site-rustig-screen"),
@@ -50,6 +39,21 @@ public sealed class OnboardingRustigMockupScreenshotPlaywrightTests : IAsyncLife
         ("site-onboarding-start-desktop", "/mockups/site-rustig/onboarding-start?lang=nl", 1440, 900, "data-site-rustig-screen"),
         ("site-onboarding-start-mobile", "/mockups/site-rustig/onboarding-start?lang=nl", 390, 844, "data-site-rustig-screen"),
     ];
+
+    private static IEnumerable<(string Slug, string Path, int Width, int Height, string MarkerAttr)> AllCaptures()
+    {
+        foreach (var screen in OnboardingRustigMockupRegistry.Ordered)
+        {
+            var path = $"/mockups/onboarding-rustig/{screen.Slug}";
+            yield return ($"{screen.Slug}-desktop", path, 1440, 900, "data-ob-rustig-screen");
+            yield return ($"{screen.Slug}-mobile", path, 390, 844, "data-ob-rustig-screen");
+        }
+
+        foreach (var capture in SiteCaptures)
+        {
+            yield return capture;
+        }
+    }
 
     public async ValueTask InitializeAsync()
     {
@@ -75,7 +79,7 @@ public sealed class OnboardingRustigMockupScreenshotPlaywrightTests : IAsyncLife
             return;
         }
 
-        foreach (var (slug, path, width, height, marker) in Captures)
+        foreach (var (slug, path, width, height, marker) in AllCaptures())
         {
             var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
             {
