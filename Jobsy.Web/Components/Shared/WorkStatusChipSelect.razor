@@ -52,14 +52,5 @@
         }
     }
 
-    private async Task ToggleAsync(string code)
-    {
-        if (!_displaySelected.Add(code))
-        {
-            _displaySelected.Remove(code);
-        }
-
-        await InvokeAsync(StateHasChanged);
-        await OnToggle.InvokeAsync(code);
-    }
+    private Task ToggleAsync(string code) => OnToggle.InvokeAsync(code);
 }
