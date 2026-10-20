@@ -136,7 +136,7 @@ def main() -> None:
         proc.terminate()
         proc.wait(timeout=30)
     sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True).strip()
-    print(f"step-08 mockups OK (u8a @ {sha})")
+    print(f"step-08 mockups OK (u8b @ {sha})")
 
 
 if __name__ == "__main__":
