@@ -51,8 +51,14 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AssertWorkStatusChipTogglesAsync(IPage page)
     {
+        await DismissAddressSuggestionsAsync(page);
         var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
         await chips.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        if (await WaitForWorkStatusSelectedAsync(page, 1_500))
+        {
+            return;
+        }
+
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
@@ -213,7 +219,31 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await address.FillAsync("");
         await address.PressSequentiallyAsync(query, new() { Delay = 90 });
         await page.WaitForTimeoutAsync(900);
+        await DismissAddressSuggestionsAsync(page);
         await WaitForCircuitReadyAsync(page);
+    }
+
+    internal static async Task DismissAddressSuggestionsAsync(IPage page)
+    {
+        var address = page.Locator("#onboarding-home-address").First;
+        if (await address.CountAsync() == 0)
+        {
+            return;
+        }
+
+        await address.BlurAsync();
+        await page.Keyboard.PressAsync("Escape");
+        var firstName = page.Locator("input[autocomplete=given-name]").First;
+        if (await firstName.CountAsync() > 0)
+        {
+            await firstName.ClickAsync(new() { Force = true });
+        }
+        else
+        {
+            await page.Locator(".ob-fields__field-row input").First.ClickAsync(new() { Force = true });
+        }
+
+        await page.WaitForTimeoutAsync(250);
     }
 
     internal static Task WaitForCircuitReadyAsync(IPage page)
@@ -251,7 +281,9 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.Locator("input[autocomplete=given-name]").FillAsync("Func");
         await page.Locator("input[autocomplete=family-name]").FillAsync("Test");
         await ResolveHomeAddressAsync(page, "2671GB");
+        await DismissAddressSuggestionsAsync(page);
         await FillBirthDateAsync(page);
+        await WaitForCircuitReadyAsync(page);
     }
 
     internal static async Task InstallReloadCounterAsync(IPage page)

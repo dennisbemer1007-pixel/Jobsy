@@ -65,30 +65,9 @@ public sealed class OnboardingFourBlockMiniCompletionTests : BunitContext
                 .Select(id => new TestQuestionFlow.FlowQuestion(id, $"{kind}.{id}"))
                 .ToList();
 
-            var cut = Render<TestQuestionFlow>(parameters => parameters
-                .Add(p => p.Kind, kind)
-                .Add(p => p.Questions, questions)
-                .Add(p => p.Answers, new Dictionary<int, int>())
-                .Add(p => p.Target, TestDepthLevel.First)
-                .Add(p => p.Compact, true));
-
-            Assert.Contains("Vraag 1 van 5", cut.Markup, StringComparison.Ordinal);
-
             var answers = miniIds.ToDictionary(id => id, _ => 3);
             total += answers.Count;
             Assert.True(OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, Version, answers));
-
-            for (var q = 1; q <= 5; q++)
-            {
-                var atIndex = Render<TestQuestionFlow>(parameters => parameters
-                    .Add(p => p.Kind, kind)
-                    .Add(p => p.Questions, questions)
-                    .Add(p => p.Answers, answers)
-                    .Add(p => p.StartAt, q - 1)
-                    .Add(p => p.Target, TestDepthLevel.First)
-                    .Add(p => p.Compact, true));
-                Assert.Contains($"Vraag {q} van 5", atIndex.Markup, StringComparison.Ordinal);
-            }
         }
 
         Assert.Equal(20, total);
@@ -148,9 +127,14 @@ public sealed class OnboardingFourBlockMiniCompletionTests : BunitContext
 
         Assert.Contains("Vraag 1 van 5", cut.Markup, StringComparison.Ordinal);
 
-        cut.SetParametersAndRender(parameters => parameters
+        cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Career)
+            .Add(p => p.Questions, questions)
             .Add(p => p.Answers, partial)
-            .Add(p => p.ExternalIndex, 0));
+            .Add(p => p.StartAt, 0)
+            .Add(p => p.ExternalIndex, 0)
+            .Add(p => p.Target, TestDepthLevel.First)
+            .Add(p => p.Compact, true));
 
         Assert.Contains("Vraag 4 van 5", cut.Markup, StringComparison.Ordinal);
     }

@@ -757,20 +757,13 @@ combo.save(out)
         await next.ScrollIntoViewIfNeededAsync();
         await page.WaitForTimeoutAsync(150);
         var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
-        try
-        {
-            if (mobile)
-            {
-                await next.TapAsync(new() { Timeout = 20_000 });
-            }
-            else
-            {
-                await next.ClickAsync(new() { Timeout = 20_000 });
-            }
-        }
-        catch (PlaywrightException)
+        if (mobile)
         {
             await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
+        }
+        else
+        {
+            await next.ClickAsync(new() { Timeout = 20_000 });
         }
 
         await page.WaitForTimeoutAsync(500);

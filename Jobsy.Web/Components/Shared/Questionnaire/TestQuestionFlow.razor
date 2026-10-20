@@ -553,10 +553,6 @@
             {
                 _index = clamped;
             }
-            else if (TargetCount > 0 && clamped < Ordered.Count && _flowAnswers.ContainsKey(Ordered[clamped].Id))
-            {
-                _index = clamped;
-            }
             else
             {
                 SyncResumeIndex();

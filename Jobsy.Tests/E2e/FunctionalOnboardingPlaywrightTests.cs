@@ -40,6 +40,12 @@ public sealed class FunctionalOnboardingPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
         await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
         await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+        await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
+        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000,
+        });
         await FunctionalOnboardingInteractivityHelpers.CaptureOnboardingStartHotfixAsync(page, tag);
     }
 
@@ -91,6 +97,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(180_000);
 
+        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, $"func-illustration-{tag}");
         await FunctionalOnboardingInteractivityHelpers.BeginKennismakenStepAsync(page, baseUrl);
         await FunctionalOnboardingInteractivityHelpers.FillKennismakenBasicsExceptWorkStatusAsync(page);
         await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
@@ -117,6 +124,8 @@ public sealed class FunctionalOnboardingPlaywrightTests
                 await page.Locator($"[data-testid=onboarding-step-{step + 1}-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
             }
         }
+
+        await FunctionalE2eArtifacts.CaptureAsync(page, "wizard-illustration-hit-test", tag);
     }
 
     [Fact]

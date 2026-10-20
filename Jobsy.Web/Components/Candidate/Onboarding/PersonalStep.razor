@@ -170,6 +170,7 @@
     private string? _locationError;
     private CancellationTokenSource? _suggestCts;
     private CancellationTokenSource? _postcodeCts;
+    private CancellationTokenSource? _addressSaveCts;
     private int _suggestGeneration;
 
     private string? LocationHint
@@ -269,9 +270,30 @@
             Draft.City = split.City;
         }
 
-        await AddressChanged.InvokeAsync();
+        ScheduleDebouncedAddressChanged();
         await SuggestAddressesAsync(Draft.AddressQuery);
         SchedulePostcodeResolve();
+    }
+
+    private void ScheduleDebouncedAddressChanged()
+    {
+        _addressSaveCts?.Cancel();
+        _addressSaveCts?.Dispose();
+        _addressSaveCts = new CancellationTokenSource();
+        var token = _addressSaveCts.Token;
+        _ = DebouncedAddressChangedAsync(token);
+    }
+
+    private async Task DebouncedAddressChangedAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(450, cancellationToken);
+            await AddressChanged.InvokeAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     private async Task OnCityChangedAsync() => await AddressChanged.InvokeAsync();
@@ -479,6 +501,8 @@
         _suggestCts?.Dispose();
         _postcodeCts?.Cancel();
         _postcodeCts?.Dispose();
+        _addressSaveCts?.Cancel();
+        _addressSaveCts?.Dispose();
         await Task.CompletedTask;
     }
 }

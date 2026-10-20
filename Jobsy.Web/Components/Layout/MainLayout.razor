@@ -56,7 +56,7 @@
         }
     </main>
 
-    @if (!_isQuestionnairePage && !_banenkaartImmersive)
+    @if (!_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
@@ -102,6 +102,7 @@
     /// <summary>Logged-in candidate on banenkaart: app header + bottom nav; suppress duplicate discovery chrome header.</summary>
     private bool _banenkaartCandidateShell;
     private bool _isQuestionnairePage;
+    private bool _isOnboardingWizardFocus;
     private bool _hideCoachDock;
     private bool _hideFloatingChrome;
     private bool _isCandidate;
@@ -261,7 +262,7 @@
 
     private Task OnBottomNavItemsChanged(bool hasItems)
     {
-        if (_isQuestionnairePage)
+        if (_isQuestionnairePage || _isOnboardingWizardFocus)
         {
             if (_hasBottomNav)
             {
@@ -361,6 +362,7 @@
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
         var banenkaart = IsBanenkaartPath(path);
         var questionnaire = IsQuestionnairePath(path, relative);
+        var onboardingWizard = IsOnboardingWizardFocusPath(path);
         var suppressInstall = SuppressesInstallBanner(path);
         var suppressPwaEntry = SuppressesPwaInstallEntry(path);
         var changed = false;
@@ -391,6 +393,17 @@
         {
             _isQuestionnairePage = questionnaire;
             if (questionnaire)
+            {
+                _hasBottomNav = false;
+            }
+
+            changed = true;
+        }
+
+        if (_isOnboardingWizardFocus != onboardingWizard)
+        {
+            _isOnboardingWizardFocus = onboardingWizard;
+            if (onboardingWizard)
             {
                 _hasBottomNav = false;
             }
@@ -600,6 +613,10 @@
 
     public static bool IsQuestionnairePath(string path)
         => IsQuestionnairePath(path, path);
+
+    /// <summary>Onboarding wizard sticky footer must not fight the global bottom nav on mobile.</summary>
+    public static bool IsOnboardingWizardFocusPath(string path)
+        => path.TrimStart('/').Equals("candidate/start", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Focus mode for questionnaires / classic start / journey-in-progress.
