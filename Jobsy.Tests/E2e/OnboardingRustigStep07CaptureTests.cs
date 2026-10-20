@@ -44,8 +44,43 @@ public sealed class OnboardingRustigStep07CaptureTests
         }
 
         await page.WaitForTimeoutAsync(800);
-        await page.EvaluateAsync(
-            "() => { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; }");
+        await ResetRustigCaptureScrollAsync(page);
+        await page.Locator(".ob-rustig__segments").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000,
+        });
+        await page.Locator(".ob-rustig__meta").Filter(new() { HasText = "Stap 7 van 10" }).WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000,
+        });
+
+        if (!mobile)
+        {
+            var chromeBox = await page.Locator(".ob-rustig__chrome").BoundingBoxAsync();
+            Assert.NotNull(chromeBox);
+            Assert.True(chromeBox.Y >= -2 && chromeBox.Y < 120,
+                $"Desktop capture: progress chrome should be at top (y={chromeBox.Y}).");
+        }
+
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{fileStem}-viewport.png"), FullPage = false });
+    }
+
+    private static async Task ResetRustigCaptureScrollAsync(IPage page)
+    {
+        await page.EvaluateAsync(
+            """
+            () => {
+              window.scrollTo(0, 0);
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
+              for (const sel of ['.app-main', '.app-main__content', '.ob-wizard__content', '.ob-rustig__body']) {
+                const el = document.querySelector(sel);
+                if (el) el.scrollTop = 0;
+              }
+            }
+            """);
+        await page.WaitForTimeoutAsync(150);
     }
 }
