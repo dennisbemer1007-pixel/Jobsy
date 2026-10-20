@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (289 routes)
+## Table (290 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -325,6 +325,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werven/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/westland` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
+| `/__test/capture-test-block` | `Pages/__Test/CaptureTestBlockPreview.razor` | Candidate |
 | `/__test/pwa-vacancy-apply-success` | `Pages/__Test/PwaVacancyApplySuccessPreview.razor` | any (no Authorize attribute) |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |

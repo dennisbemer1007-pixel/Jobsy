@@ -9,6 +9,7 @@
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Features
@@ -630,6 +631,9 @@
                                         ShowQuestionCounter="true"
                                         JourneyShell="true"
                                         JourneyAfterLikert="@JourneyQuestionAfterLikert"
+                                        ShowProgressInsight="_showProgressInsight"
+                                        DomainForQuestionId="JourneyDomainFor"
+                                        ProgressInsightChanged="OnProgressInsightAsync"
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
                                         ResolveQuestionText="QuestionText"
@@ -640,7 +644,15 @@
                 }
             </section>
 
-            @if (UseQuestionCardLayout && ShowDesktopCoach)
+            @if (UseQuestionCardLayout && _showProgressInsight)
+            {
+                <div class="journey-insight-panel journey-only-desktop">
+                    <TestProgressInsightPanel Kind="@AssessmentKindForStep(_countedStep)"
+                                              Lines="_progressInsightLines"
+                                              NewLineCount="_progressInsightNew" />
+                </div>
+            }
+            else if (UseQuestionCardLayout && ShowDesktopCoach)
             {
                 <div class="journey-lz journey-only-desktop">
                     <div class="journey-bubble">
@@ -706,6 +718,9 @@
     private bool _busy;
     private bool _showValidation;
     private bool _employersEnabled = true;
+    private bool _showProgressInsight;
+    private IReadOnlyList<string> _progressInsightLines = [];
+    private int _progressInsightNew;
     private bool _miniArrivedViaBack;
     private string _screen = "start";
     private int _countedStep;
@@ -1149,6 +1164,7 @@
         {
             var flags = await FeatureFlags.GetAsync();
             _employersEnabled = flags.EmployersEnabled;
+            _showProgressInsight = flags.TestProgressInsightEnabled;
         }
         catch
         {
@@ -1877,6 +1893,21 @@
         10 => AssessmentKind.Values,
         _ => AssessmentKind.Competence
     };
+
+    private string JourneyDomainFor(int id) => AssessmentKindForStep(_countedStep) switch
+    {
+        AssessmentKind.Career => AssessmentQuickScanCatalog.CareerQuestions(_quickScanVersion).First(x => x.Id == id).Category,
+        AssessmentKind.Culture => AssessmentQuickScanCatalog.CultureQuestions(_quickScanVersion).First(x => x.Id == id).Category,
+        AssessmentKind.Values => AssessmentQuickScanCatalog.ValuesQuestions(_quickScanVersion).First(x => x.Id == id).Category,
+        _ => AssessmentQuickScanCatalog.CompetenceQuestions(_quickScanVersion).First(x => x.Id == id).Category
+    };
+
+    private Task OnProgressInsightAsync(TestQuestionFlow.ProgressInsightSnapshot snapshot)
+    {
+        _progressInsightLines = snapshot.Lines;
+        _progressInsightNew = snapshot.NewLineCount;
+        return Task.CompletedTask;
+    }
 
     private async Task ShowEndAsync(bool partial)
     {

@@ -1,0 +1,477 @@
+key,nl,en,pl,ro,ar,identical_langs
+A11y.ContactTitle,Contact,Contact,Kontakt,Contact,جهة الاتصال,en|ro
+Admin.Feedback,Feedback,Feedback,Opinie,Feedback,ملاحظات,en|ro
+Admin.FeedbackPr,Pull request,Pull request,Pull request,Pull request,طلب سحب,en|pl|ro
+Admin.Logging,Platform logging,Platform logging,Logi platformy,Jurnal platformă,سجل المنصة,en
+Admin.MailTestGroupInternal,Intern,Internal,Wewnętrzne,Intern,داخلي,ro
+Admin.MailTestTabText,Tekst,Text,Tekst,Text,النص,pl
+Admin.MarketingFlyerDownload,Download PDF,Download PDF,Pobierz PDF,Descarcă PDF,تنزيل PDF,en
+Admin.MarketingFlyerIntro,Intro,Intro,Wstęp,Intro,المقدمة,en|ro
+Admin.Masterdata,Masterdata,Master data,Dane podstawowe,Masterdata,البيانات الأساسية,ro
+Admin.SupportAccessScope,Scope,Scope,Zakres,Scope,النطاق,en|ro
+Admin.TrainingPartners.Demo,Demo,Demo,Demo,Demo,Demo,en|pl|ro|ar
+Admin.TrainingPartners.FeedKind,Feed,Feed,Feed,Feed,Feed,en|pl|ro|ar
+AdminBeheerTaken.Col.Category,Categorie,Category,Kategoria,Categorie,الفئة,ro
+AdminBeheerTaken.Label.Category,Categorie,Category,Kategoria,Categorie,الفئة,ro
+AdminLogs.Level.Info,Info,Info,Informacja,Informație,معلومات,en
+AdminMfa.Col.Role,Rol,Role,Rola,Rol,الدور,ro
+AdminNav.Dashboard,Dashboard,Dashboard,Panel,Tablou,لوحة التحكم,en
+AdminNav.Feedback,Feedback,Feedback,Opinie,Feedback,ملاحظات,en|ro
+AdminNav.Goodwill,Goodwill & tokens,Goodwill & tokens,Goodwill i tokeny,Goodwill și tokenuri,حسن النية والرموز,en
+AdminSettings.TestsV2.Enabled.Title,Quick-Scan v2 (TestsV2),Quick-Scan v2 (TestsV2),Quick-Scan v2 (TestsV2),Quick-Scan v2 (TestsV2),Quick-Scan v2 (TestsV2),en|pl|ro|ar
+AdminShell.SearchShortcut,Ctrl K,Ctrl K,Ctrl K,Ctrl K,Ctrl K,en|pl|ro|ar
+AdminUsers.ColMfa,2FA,2FA,2FA,2FA,2FA,en|pl|ro|ar
+AdminUsers.FieldEarly,Early adopter,Early adopter,Wczesny użytkownik,Adoptator timpuriu,متبنٍ مبكر,en
+AdminUsers.FilterMfa,2FA,2FA,2FA,2FA,2FA,en|pl|ro|ar
+AfterMatch.Demo.Company,Bakkerij De Korenaar,Bakkerij De Korenaar,Bakkerij De Korenaar,Bakkerij De Korenaar,Bakkerij De Korenaar,en|pl|ro|ar
+AfterMatch.Demo.Contact,Linda de Wit,Linda de Wit,Linda de Wit,Linda de Wit,Linda de Wit,en|pl|ro|ar
+AfterMatch.Screen03.Format.Online,Online,Online,Online,Online,Online,en|pl|ro|ar
+Ambassadeur.Onboarding,Onboarding,Onboarding,Onboarding,Onboarding,التسجيل,en|pl|ro
+Apply.DirectContactLead,Neem direct contact op met de ondernemer voor sneller resultaat,Contact the employer directly for a faster result,Neem direct contact op met de ondernemer voor sneller resultaat,Neem direct contact op met de ondernemer voor sneller resultaat,Neem direct contact op met de ondernemer voor sneller resultaat,pl|ro|ar
+Apply.Mail,Mail,Mail,E-mail,E-mail,بريد,en
+Apps.StatusNow,Status: {0},Status: {0},Status: {0},Status: {0},الحالة: {0},en|pl|ro
+Apps.Wizard.Contact,Contact,Contact,Kontakt,Contact,تواصل,en|ro
+CandidatePrivacy.Title,Privacy,Privacy,Prywatność,Confidențialitate,الخصوصية,en
+CandidateSettings.NavPrivacy,Privacy,Privacy,Prywatność,Confidențialitate,الخصوصية,en
+Career.Illustrated.ActionBothFixed,{0} · {1},{0} · {1},{0} · {1},{0} · {1},{0} · {1},en|pl|ro|ar
+Career.Illustrated.LearningDetail,{0} · {1},{0} · {1},{0} · {1},{0} · {1},{0} · {1},en|pl|ro|ar
+CareerDash.CollapsedMatch,match {0}%,match {0}%,PL: match {0}%,RO: match {0}%,‏match {0}%,en
+Common.Details,Details,Details,Szczegóły,Detalii,التفاصيل,en
+Common.Filter,Filter,Filter,Filtr,Filtru,تصفية,en
+Common.Tokens,Tokens,Tokens,Tokeny,Tokenuri,الرموز,en
+Contact.Seo.Title,Contact,Contact,Kontakt,Contact,اتصل,en|ro
+CookieConsent.PrivacyLink,Privacy,Privacy,Prywatność,Confidențialitate,الخصوصية,en
+CookieConsent.Title,Cookies & privacy,Cookies & privacy,Pliki cookie i prywatność,Cookie-uri și confidențialitate,ملفات تعريف الارتباط والخصوصية,en
+Count.Token.Few,{0} tokens,{0} tokens,{0} tokeny,{0} tokenuri,{0} رموز,en
+Count.Token.Many,{0} tokens,{0} tokens,{0} tokenów,{0} tokenuri,{0} رمزاً,en
+Count.Token.One,1 token,1 token,1 token,1 token,رمز واحد,en|pl|ro
+Count.Token.Two,2 tokens,2 tokens,2 tokeny,2 tokenuri,رمزان,en
+CultureScan.Cat.Agreeableness,Prettig samen optrekken,Prettig samen optrekken,PL: Prettig samen optrekken,RO: Prettig samen optrekken,‏Prettig samen optrekken,en
+CultureScan.Cat.Agreeableness.Develop,Oefen één compliment per shift — concreet en kort.,Oefen één compliment per shift — concreet en kort.,PL: Oefen één compliment per shift — concreet en kort.,RO: Oefen één compliment per shift — concreet en kort.,‏Oefen één compliment per shift — concreet en kort.,en
+CultureScan.Cat.Agreeableness.Hint,"Hoe belangrijk is een warme, behulpzame sfeer voor jou?","Hoe belangrijk is een warme, behulpzame sfeer voor jou?","PL: Hoe belangrijk is een warme, behulpzame sfeer voor jou?","RO: Hoe belangrijk is een warme, behulpzame sfeer voor jou?","‏Hoe belangrijk is een warme, behulpzame sfeer voor jou?",en
+CultureScan.Cat.Agreeableness.MeaningHigh,Jij houdt de sfeer prettig. Samen optrekken ligt je.,Jij houdt de sfeer prettig. Samen optrekken ligt je.,PL: Jij houdt de sfeer prettig. Samen optrekken ligt je.,RO: Jij houdt de sfeer prettig. Samen optrekken ligt je.,‏Jij houdt de sfeer prettig. Samen optrekken ligt je.,en
+CultureScan.Cat.Agreeableness.MeaningLow,Je bent direct. Dat helpt in teams die helderheid waarderen.,Je bent direct. Dat helpt in teams die helderheid waarderen.,PL: Je bent direct. Dat helpt in teams die helderheid waarderen.,RO: Je bent direct. Dat helpt in teams die helderheid waarderen.,‏Je bent direct. Dat helpt in teams die helderheid waarderen.,en
+CultureScan.Cat.Agreeableness.MeaningMid,Je kunt meedenken én je grens aangeven.,Je kunt meedenken én je grens aangeven.,PL: Je kunt meedenken én je grens aangeven.,RO: Je kunt meedenken én je grens aangeven.,‏Je kunt meedenken én je grens aangeven.,en
+CultureScan.Cat.Autonomy,Zelfstandig werken,Zelfstandig werken,PL: Zelfstandig werken,RO: Zelfstandig werken,‏Zelfstandig werken,en
+CultureScan.Cat.Autonomy.Develop,Oefen één taak per week volledig zelf plannen — met een korte check-in achteraf.,Oefen één taak per week volledig zelf plannen — met een korte check-in achteraf.,PL: Oefen één taak per week volledig zelf plannen — met een korte check-in achteraf.,RO: Oefen één taak per week volledig zelf plannen — met een korte check-in achteraf.,‏Oefen één taak per week volledig zelf plannen — met een korte check-in achteraf.,en
+CultureScan.Cat.Autonomy.Hint,Hoeveel ruimte wil je om zelf te bepalen hoe je het werk aanpakt?,Hoeveel ruimte wil je om zelf te bepalen hoe je het werk aanpakt?,PL: Hoeveel ruimte wil je om zelf te bepalen hoe je het werk aanpakt?,RO: Hoeveel ruimte wil je om zelf te bepalen hoe je het werk aanpakt?,‏Hoeveel ruimte wil je om zelf te bepalen hoe je het werk aanpakt?,en
+CultureScan.Cat.Autonomy.MeaningHigh,Jij floreert als je zelf mag bepalen hoe je het werk aanpakt.,Jij floreert als je zelf mag bepalen hoe je het werk aanpakt.,PL: Jij floreert als je zelf mag bepalen hoe je het werk aanpakt.,RO: Jij floreert als je zelf mag bepalen hoe je het werk aanpakt.,‏Jij floreert als je zelf mag bepalen hoe je het werk aanpakt.,en
+CultureScan.Cat.Autonomy.MeaningLow,Duidelijke kaders helpen je. Vraag om heldere afspraken bij de start.,Duidelijke kaders helpen je. Vraag om heldere afspraken bij de start.,PL: Duidelijke kaders helpen je. Vraag om heldere afspraken bij de start.,RO: Duidelijke kaders helpen je. Vraag om heldere afspraken bij de start.,‏Duidelijke kaders helpen je. Vraag om heldere afspraken bij de start.,en
+CultureScan.Cat.Autonomy.MeaningMid,"Je kunt zelfstandig werken, en kunt nog groeien in meer eigen regie.","Je kunt zelfstandig werken, en kunt nog groeien in meer eigen regie.","PL: Je kunt zelfstandig werken, en kunt nog groeien in meer eigen regie.","RO: Je kunt zelfstandig werken, en kunt nog groeien in meer eigen regie.","‏Je kunt zelfstandig werken, en kunt nog groeien in meer eigen regie.",en
+CultureScan.Cat.Collaboration,Samenwerken,Samenwerken,PL: Samenwerken,RO: Samenwerken,‏Samenwerken,en
+CultureScan.Cat.Collaboration.Develop,Nodig één collega uit om een taak samen af te ronden.,Nodig één collega uit om een taak samen af te ronden.,PL: Nodig één collega uit om een taak samen af te ronden.,RO: Nodig één collega uit om een taak samen af te ronden.,‏Nodig één collega uit om een taak samen af te ronden.,en
+CultureScan.Cat.Collaboration.Hint,"Werk je het liefst met anderen, of juist zelfstandig aan je eigen stuk?","Werk je het liefst met anderen, of juist zelfstandig aan je eigen stuk?","PL: Werk je het liefst met anderen, of juist zelfstandig aan je eigen stuk?","RO: Werk je het liefst met anderen, of juist zelfstandig aan je eigen stuk?","‏Werk je het liefst met anderen, of juist zelfstandig aan je eigen stuk?",en
+CultureScan.Cat.Collaboration.MeaningHigh,Samenwerken geeft je energie. Ploegenwerk ligt je.,Samenwerken geeft je energie. Ploegenwerk ligt je.,PL: Samenwerken geeft je energie. Ploegenwerk ligt je.,RO: Samenwerken geeft je energie. Ploegenwerk ligt je.,‏Samenwerken geeft je energie. Ploegenwerk ligt je.,en
+CultureScan.Cat.Collaboration.MeaningLow,Je werkt het sterkst zelfstandig. Kies rollen met een eigen stuk werk.,Je werkt het sterkst zelfstandig. Kies rollen met een eigen stuk werk.,PL: Je werkt het sterkst zelfstandig. Kies rollen met een eigen stuk werk.,RO: Je werkt het sterkst zelfstandig. Kies rollen met een eigen stuk werk.,‏Je werkt het sterkst zelfstandig. Kies rollen met een eigen stuk werk.,en
+CultureScan.Cat.Collaboration.MeaningMid,Je kunt samenwerken én alleen doorwerken — beide liggen je redelijk.,Je kunt samenwerken én alleen doorwerken — beide liggen je redelijk.,PL: Je kunt samenwerken én alleen doorwerken — beide liggen je redelijk.,RO: Je kunt samenwerken én alleen doorwerken — beide liggen je redelijk.,‏Je kunt samenwerken én alleen doorwerken — beide liggen je redelijk.,en
+CultureScan.Cat.Conscientiousness,Netjes en betrouwbaar,Netjes en betrouwbaar,PL: Netjes en betrouwbaar,RO: Netjes en betrouwbaar,‏Netjes en betrouwbaar,en
+CultureScan.Cat.Conscientiousness.Develop,Vink twee must-checks af vóór tempo.,Vink twee must-checks af vóór tempo.,PL: Vink twee must-checks af vóór tempo.,RO: Vink twee must-checks af vóór tempo.,‏Vink twee must-checks af vóór tempo.,en
+CultureScan.Cat.Conscientiousness.Hint,"Hoe belangrijk zijn afronden, checken en afspraken nakomen voor jou?","Hoe belangrijk zijn afronden, checken en afspraken nakomen voor jou?","PL: Hoe belangrijk zijn afronden, checken en afspraken nakomen voor jou?","RO: Hoe belangrijk zijn afronden, checken en afspraken nakomen voor jou?","‏Hoe belangrijk zijn afronden, checken en afspraken nakomen voor jou?",en
+CultureScan.Cat.Conscientiousness.MeaningHigh,Jij rondt netjes af. Kwaliteit en checklists liggen je.,Jij rondt netjes af. Kwaliteit en checklists liggen je.,PL: Jij rondt netjes af. Kwaliteit en checklists liggen je.,RO: Jij rondt netjes af. Kwaliteit en checklists liggen je.,‏Jij rondt netjes af. Kwaliteit en checklists liggen je.,en
+CultureScan.Cat.Conscientiousness.MeaningLow,Lijsten voelen als oponthoud. Een korte cursus kwaliteit maakt het lichter.,Lijsten voelen als oponthoud. Een korte cursus kwaliteit maakt het lichter.,PL: Lijsten voelen als oponthoud. Een korte cursus kwaliteit maakt het lichter.,RO: Lijsten voelen als oponthoud. Een korte cursus kwaliteit maakt het lichter.,‏Lijsten voelen als oponthoud. Een korte cursus kwaliteit maakt het lichter.,en
+CultureScan.Cat.Conscientiousness.MeaningMid,"Je wilt het goed doen, en kunt nog scherper volgens de lijst werken.","Je wilt het goed doen, en kunt nog scherper volgens de lijst werken.","PL: Je wilt het goed doen, en kunt nog scherper volgens de lijst werken.","RO: Je wilt het goed doen, en kunt nog scherper volgens de lijst werken.","‏Je wilt het goed doen, en kunt nog scherper volgens de lijst werken.",en
+CultureScan.Cat.EmotionalStability,Kalm onder druk,Kalm onder druk,PL: Kalm onder druk,RO: Kalm onder druk,‏Kalm onder druk,en
+CultureScan.Cat.EmotionalStability.Develop,Neem bij piekdruk één adempauze van 30 seconden vóór je reageert.,Neem bij piekdruk één adempauze van 30 seconden vóór je reageert.,PL: Neem bij piekdruk één adempauze van 30 seconden vóór je reageert.,RO: Neem bij piekdruk één adempauze van 30 seconden vóór je reageert.,‏Neem bij piekdruk één adempauze van 30 seconden vóór je reageert.,en
+CultureScan.Cat.EmotionalStability.Hint,Blijf je overzicht houden als het hectisch wordt?,Blijf je overzicht houden als het hectisch wordt?,PL: Blijf je overzicht houden als het hectisch wordt?,RO: Blijf je overzicht houden als het hectisch wordt?,‏Blijf je overzicht houden als het hectisch wordt?,en
+CultureScan.Cat.EmotionalStability.MeaningHigh,Jij blijft kalm als het druk wordt. Piekdagen liggen je.,Jij blijft kalm als het druk wordt. Piekdagen liggen je.,PL: Jij blijft kalm als het druk wordt. Piekdagen liggen je.,RO: Jij blijft kalm als het druk wordt. Piekdagen liggen je.,‏Jij blijft kalm als het druk wordt. Piekdagen liggen je.,en
+CultureScan.Cat.EmotionalStability.MeaningLow,"Hoge druk kost energie. Zoek tempo dat bij je past, of oefen adempauzes.","Hoge druk kost energie. Zoek tempo dat bij je past, of oefen adempauzes.","PL: Hoge druk kost energie. Zoek tempo dat bij je past, of oefen adempauzes.","RO: Hoge druk kost energie. Zoek tempo dat bij je past, of oefen adempauzes.","‏Hoge druk kost energie. Zoek tempo dat bij je past, of oefen adempauzes.",en
+CultureScan.Cat.EmotionalStability.MeaningMid,"Je houdt meestal overzicht, en kunt nog groeien onder piekdruk.","Je houdt meestal overzicht, en kunt nog groeien onder piekdruk.","PL: Je houdt meestal overzicht, en kunt nog groeien onder piekdruk.","RO: Je houdt meestal overzicht, en kunt nog groeien onder piekdruk.","‏Je houdt meestal overzicht, en kunt nog groeien onder piekdruk.",en
+CultureScan.Cat.Extraversion,Energie van mensen,Energie van mensen,PL: Energie van mensen,RO: Energie van mensen,‏Energie van mensen,en
+CultureScan.Cat.Extraversion.Develop,"Oefen een kort, warm welkom — één zin is genoeg.","Oefen een kort, warm welkom — één zin is genoeg.","PL: Oefen een kort, warm welkom — één zin is genoeg.","RO: Oefen een kort, warm welkom — één zin is genoeg.","‏Oefen een kort, warm welkom — één zin is genoeg.",en
+CultureScan.Cat.Extraversion.Hint,"Krijg je energie van contact, of juist van rustiger doorwerken?","Krijg je energie van contact, of juist van rustiger doorwerken?","PL: Krijg je energie van contact, of juist van rustiger doorwerken?","RO: Krijg je energie van contact, of juist van rustiger doorwerken?","‏Krijg je energie van contact, of juist van rustiger doorwerken?",en
+CultureScan.Cat.Extraversion.MeaningHigh,Contact met mensen geeft je energie. Balie en teamwerk passen.,Contact met mensen geeft je energie. Balie en teamwerk passen.,PL: Contact met mensen geeft je energie. Balie en teamwerk passen.,RO: Contact met mensen geeft je energie. Balie en teamwerk passen.,‏Contact met mensen geeft je energie. Balie en teamwerk passen.,en
+CultureScan.Cat.Extraversion.MeaningLow,Veel praten vermoeit. Kies rollen met rustiger doorwerken.,Veel praten vermoeit. Kies rollen met rustiger doorwerken.,PL: Veel praten vermoeit. Kies rollen met rustiger doorwerken.,RO: Veel praten vermoeit. Kies rollen met rustiger doorwerken.,‏Veel praten vermoeit. Kies rollen met rustiger doorwerken.,en
+CultureScan.Cat.Extraversion.MeaningMid,"Je kunt contact maken, en hebt ook rust nodig.","Je kunt contact maken, en hebt ook rust nodig.","PL: Je kunt contact maken, en hebt ook rust nodig.","RO: Je kunt contact maken, en hebt ook rust nodig.","‏Je kunt contact maken, en hebt ook rust nodig.",en
+CultureScan.Cat.Flexibility,Flexibel meebewegen,Flexibel meebewegen,PL: Flexibel meebewegen,RO: Flexibel meebewegen,‏Flexibel meebewegen,en
+CultureScan.Cat.Flexibility.Develop,Oefen één kleine wijziging per dag zonder stress — noteer wat wél werkte.,Oefen één kleine wijziging per dag zonder stress — noteer wat wél werkte.,PL: Oefen één kleine wijziging per dag zonder stress — noteer wat wél werkte.,RO: Oefen één kleine wijziging per dag zonder stress — noteer wat wél werkte.,‏Oefen één kleine wijziging per dag zonder stress — noteer wat wél werkte.,en
+CultureScan.Cat.Flexibility.Hint,"Houd je van wisselende taken, of van een vaste planning?","Houd je van wisselende taken, of van een vaste planning?","PL: Houd je van wisselende taken, of van een vaste planning?","RO: Houd je van wisselende taken, of van een vaste planning?","‏Houd je van wisselende taken, of van een vaste planning?",en
+CultureScan.Cat.Flexibility.MeaningHigh,Wisselende taken en snelle bijsturing liggen je goed.,Wisselende taken en snelle bijsturing liggen je goed.,PL: Wisselende taken en snelle bijsturing liggen je goed.,RO: Wisselende taken en snelle bijsturing liggen je goed.,‏Wisselende taken en snelle bijsturing liggen je goed.,en
+CultureScan.Cat.Flexibility.MeaningLow,Een vaste planning helpt je. Zoek werk met voorspelbare ronden.,Een vaste planning helpt je. Zoek werk met voorspelbare ronden.,PL: Een vaste planning helpt je. Zoek werk met voorspelbare ronden.,RO: Een vaste planning helpt je. Zoek werk met voorspelbare ronden.,‏Een vaste planning helpt je. Zoek werk met voorspelbare ronden.,en
+CultureScan.Cat.Flexibility.MeaningMid,"Je kunt meebewegen, en houdt ook van enige structuur.","Je kunt meebewegen, en houdt ook van enige structuur.","PL: Je kunt meebewegen, en houdt ook van enige structuur.","RO: Je kunt meebewegen, en houdt ook van enige structuur.","‏Je kunt meebewegen, en houdt ook van enige structuur.",en
+CultureScan.Cat.Informal,Informele sfeer,Informele sfeer,PL: Informele sfeer,RO: Informele sfeer,‏Informele sfeer,en
+CultureScan.Cat.Informal.Develop,Probeer één informeel moment per shift: een kort praatje of een open vraag.,Probeer één informeel moment per shift: een kort praatje of een open vraag.,PL: Probeer één informeel moment per shift: een kort praatje of een open vraag.,RO: Probeer één informeel moment per shift: een kort praatje of een open vraag.,‏Probeer één informeel moment per shift: een kort praatje of een open vraag.,en
+CultureScan.Cat.Informal.Hint,"Liever luchtig en direct, of juist formeler en volgens de hiërarchie?","Liever luchtig en direct, of juist formeler en volgens de hiërarchie?","PL: Liever luchtig en direct, of juist formeler en volgens de hiërarchie?","RO: Liever luchtig en direct, of juist formeler en volgens de hiërarchie?","‏Liever luchtig en direct, of juist formeler en volgens de hiërarchie?",en
+CultureScan.Cat.Informal.MeaningHigh,"Jij voelt je thuis in een luchtige, directe werksfeer.","Jij voelt je thuis in een luchtige, directe werksfeer.","PL: Jij voelt je thuis in een luchtige, directe werksfeer.","RO: Jij voelt je thuis in een luchtige, directe werksfeer.","‏Jij voelt je thuis in een luchtige, directe werksfeer.",en
+CultureScan.Cat.Informal.MeaningLow,Je houdt van duidelijkheid en een formelere toon. Dat is oké — zoek teams die dat waarderen.,Je houdt van duidelijkheid en een formelere toon. Dat is oké — zoek teams die dat waarderen.,PL: Je houdt van duidelijkheid en een formelere toon. Dat is oké — zoek teams die dat waarderen.,RO: Je houdt van duidelijkheid en een formelere toon. Dat is oké — zoek teams die dat waarderen.,‏Je houdt van duidelijkheid en een formelere toon. Dat is oké — zoek teams die dat waarderen.,en
+CultureScan.Cat.Informal.MeaningMid,"Je kunt beide: informeel én formeler, afhankelijk van het team.","Je kunt beide: informeel én formeler, afhankelijk van het team.","PL: Je kunt beide: informeel én formeler, afhankelijk van het team.","RO: Je kunt beide: informeel én formeler, afhankelijk van het team.","‏Je kunt beide: informeel én formeler, afhankelijk van het team.",en
+CultureScan.Cat.Innovation,Nieuwe dingen proberen,Nieuwe dingen proberen,PL: Nieuwe dingen proberen,RO: Nieuwe dingen proberen,‏Nieuwe dingen proberen,en
+CultureScan.Cat.Innovation.Develop,Stel één keer per week één verbeteridee voor — klein is genoeg.,Stel één keer per week één verbeteridee voor — klein is genoeg.,PL: Stel één keer per week één verbeteridee voor — klein is genoeg.,RO: Stel één keer per week één verbeteridee voor — klein is genoeg.,‏Stel één keer per week één verbeteridee voor — klein is genoeg.,en
+CultureScan.Cat.Innovation.Hint,"Zoek je graag nieuwe wegen, of werk je liever met bewezen methodes?","Zoek je graag nieuwe wegen, of werk je liever met bewezen methodes?","PL: Zoek je graag nieuwe wegen, of werk je liever met bewezen methodes?","RO: Zoek je graag nieuwe wegen, of werk je liever met bewezen methodes?","‏Zoek je graag nieuwe wegen, of werk je liever met bewezen methodes?",en
+CultureScan.Cat.Innovation.MeaningHigh,Jij zoekt graag betere manieren. Verbetertrajecten passen bij je.,Jij zoekt graag betere manieren. Verbetertrajecten passen bij je.,PL: Jij zoekt graag betere manieren. Verbetertrajecten passen bij je.,RO: Jij zoekt graag betere manieren. Verbetertrajecten passen bij je.,‏Jij zoekt graag betere manieren. Verbetertrajecten passen bij je.,en
+CultureScan.Cat.Innovation.MeaningLow,Bewezen methodes geven je rust. Dat is een sterkte in stabiele teams.,Bewezen methodes geven je rust. Dat is een sterkte in stabiele teams.,PL: Bewezen methodes geven je rust. Dat is een sterkte in stabiele teams.,RO: Bewezen methodes geven je rust. Dat is een sterkte in stabiele teams.,‏Bewezen methodes geven je rust. Dat is een sterkte in stabiele teams.,en
+CultureScan.Cat.Innovation.MeaningMid,"Je kunt vernieuwen als het nodig is, en kunt ook met de standaard meegaan.","Je kunt vernieuwen als het nodig is, en kunt ook met de standaard meegaan.","PL: Je kunt vernieuwen als het nodig is, en kunt ook met de standaard meegaan.","RO: Je kunt vernieuwen als het nodig is, en kunt ook met de standaard meegaan.","‏Je kunt vernieuwen als het nodig is, en kunt ook met de standaard meegaan.",en
+CultureScan.Cat.Openness,Openstaan voor nieuw,Openstaan voor nieuw,PL: Openstaan voor nieuw,RO: Openstaan voor nieuw,‏Openstaan voor nieuw,en
+CultureScan.Cat.Openness.Develop,Probeer één nieuwe tool of werkwijze per maand.,Probeer één nieuwe tool of werkwijze per maand.,PL: Probeer één nieuwe tool of werkwijze per maand.,RO: Probeer één nieuwe tool of werkwijze per maand.,‏Probeer één nieuwe tool of werkwijze per maand.,en
+CultureScan.Cat.Openness.Hint,Hoe graag leer je nieuwe dingen en verken je andere manieren van werken?,Hoe graag leer je nieuwe dingen en verken je andere manieren van werken?,PL: Hoe graag leer je nieuwe dingen en verken je andere manieren van werken?,RO: Hoe graag leer je nieuwe dingen en verken je andere manieren van werken?,‏Hoe graag leer je nieuwe dingen en verken je andere manieren van werken?,en
+CultureScan.Cat.Openness.MeaningHigh,Nieuw leren geeft je energie. Wisselende taken benutten dat.,Nieuw leren geeft je energie. Wisselende taken benutten dat.,PL: Nieuw leren geeft je energie. Wisselende taken benutten dat.,RO: Nieuw leren geeft je energie. Wisselende taken benutten dat.,‏Nieuw leren geeft je energie. Wisselende taken benutten dat.,en
+CultureScan.Cat.Openness.MeaningLow,Bekende werkwijzen geven rust. Groei stap voor stap.,Bekende werkwijzen geven rust. Groei stap voor stap.,PL: Bekende werkwijzen geven rust. Groei stap voor stap.,RO: Bekende werkwijzen geven rust. Groei stap voor stap.,‏Bekende werkwijzen geven rust. Groei stap voor stap.,en
+CultureScan.Cat.Openness.MeaningMid,"Je kunt nieuw leren, en houdt ook van bekende routes.","Je kunt nieuw leren, en houdt ook van bekende routes.","PL: Je kunt nieuw leren, en houdt ook van bekende routes.","RO: Je kunt nieuw leren, en houdt ook van bekende routes.","‏Je kunt nieuw leren, en houdt ook van bekende routes.",en
+CultureScan.Cat.PeopleFirst,Mensen voorop,Mensen voorop,PL: Mensen voorop,RO: Mensen voorop,‏Mensen voorop,en
+CultureScan.Cat.PeopleFirst.Develop,Vraag één collega hoe het écht gaat — naast de taaklijst.,Vraag één collega hoe het écht gaat — naast de taaklijst.,PL: Vraag één collega hoe het écht gaat — naast de taaklijst.,RO: Vraag één collega hoe het écht gaat — naast de taaklijst.,‏Vraag één collega hoe het écht gaat — naast de taaklijst.,en
+CultureScan.Cat.PeopleFirst.Hint,Kies je eerder voor de mens of voor het resultaat als het schuurt?,Kies je eerder voor de mens of voor het resultaat als het schuurt?,PL: Kies je eerder voor de mens of voor het resultaat als het schuurt?,RO: Kies je eerder voor de mens of voor het resultaat als het schuurt?,‏Kies je eerder voor de mens of voor het resultaat als het schuurt?,en
+CultureScan.Cat.PeopleFirst.MeaningHigh,"Mensen komen bij jou eerst. Zorg, horeca en begeleiding passen sterk.","Mensen komen bij jou eerst. Zorg, horeca en begeleiding passen sterk.","PL: Mensen komen bij jou eerst. Zorg, horeca en begeleiding passen sterk.","RO: Mensen komen bij jou eerst. Zorg, horeca en begeleiding passen sterk.","‏Mensen komen bij jou eerst. Zorg, horeca en begeleiding passen sterk.",en
+CultureScan.Cat.PeopleFirst.MeaningLow,Resultaat telt zwaar voor jou. Kies teams die dat ook zo doen.,Resultaat telt zwaar voor jou. Kies teams die dat ook zo doen.,PL: Resultaat telt zwaar voor jou. Kies teams die dat ook zo doen.,RO: Resultaat telt zwaar voor jou. Kies teams die dat ook zo doen.,‏Resultaat telt zwaar voor jou. Kies teams die dat ook zo doen.,en
+CultureScan.Cat.PeopleFirst.MeaningMid,Je weegt mens én resultaat. Dat helpt in de meeste teams.,Je weegt mens én resultaat. Dat helpt in de meeste teams.,PL: Je weegt mens én resultaat. Dat helpt in de meeste teams.,RO: Je weegt mens én resultaat. Dat helpt in de meeste teams.,‏Je weegt mens én resultaat. Dat helpt in de meeste teams.,en
+CultureScan.PrivacyNote,Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de,Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de,PL: Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de,RO: Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de,‏Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de,en
+Deep.Competence.MatchPercent,{0}% match,{0}% match,PL: {0}% match,RO: {0}% match,‏{0}% match,en
+Discovery.Filters,Filters,Filters,Filtry,Filtre,عوامل التصفية,en
+Discovery.MaxMinutes,max {0} min,max {0} min,maks. {0} min,max {0} min,بحد أقصى {0} د,en|ro
+Discovery.SelectedMore,{0} +{1},{0} +{1},{0} +{1},{0} +{1},{0} +{1},en|pl|ro|ar
+Discovery.TravelModeMinutes,{0} min {1},{0} min {1},{0} min {1},{0} min {1},{0} د {1},en|pl|ro
+Dna.StartTest,Start test,Start test,PL: Start test,Începe test,ابدأ test,en
+Dna.TileStart,Start · ± {0} min,Start · ± {0} min,PL: Start · ± {0} min,Începe · ± {0} min,ابدأ · ± {0} min,en
+Dna.TileSummaryTop,Top: {0},Top: {0},PL: Top: {0},RO: Top: {0},الأعلى: {0},en
+DreamJob.accountant,Accountant,Accountant,Accountant,Accountant,Accountant,en|pl|ro|ar
+DreamJob.acteur,Acteur,Acteur,Acteur,Acteur,Acteur,en|pl|ro|ar
+DreamJob.advocaat,Advocaat,Advocaat,Advocaat,Advocaat,Advocaat,en|pl|ro|ar
+DreamJob.apotheker,Apotheker,Apotheker,Apotheker,Apotheker,Apotheker,en|pl|ro|ar
+DreamJob.architect,Architect,Architect,Architect,Architect,Architect,en|pl|ro|ar
+DreamJob.astronaut,Astronaut,Astronaut,Astronaut,Astronaut,Astronaut,en|pl|ro|ar
+DreamJob.automonteur,Automonteur,Automonteur,Automonteur,Automonteur,Automonteur,en|pl|ro|ar
+DreamJob.bakker,Bakker,Bakker,Bakker,Bakker,Bakker,en|pl|ro|ar
+DreamJob.bioloog,Bioloog,Bioloog,Bioloog,Bioloog,Bioloog,en|pl|ro|ar
+DreamJob.bouwkundige,Bouwkundige,Bouwkundige,Bouwkundige,Bouwkundige,Bouwkundige,en|pl|ro|ar
+DreamJob.brandweer,Brandweerman/-vrouw,Brandweerman/-vrouw,Brandweerman/-vrouw,Brandweerman/-vrouw,Brandweerman/-vrouw,en|pl|ro|ar
+DreamJob.cabinepersoneel,Cabinepersoneel,Cabinepersoneel,Cabinepersoneel,Cabinepersoneel,Cabinepersoneel,en|pl|ro|ar
+DreamJob.contentmaker,Contentmaker,Contentmaker,Contentmaker,Contentmaker,Contentmaker,en|pl|ro|ar
+DreamJob.data-scientist,Data scientist,Data scientist,Data scientist,Data scientist,Data scientist,en|pl|ro|ar
+DreamJob.dierenarts,Dierenarts,Dierenarts,Dierenarts,Dierenarts,Dierenarts,en|pl|ro|ar
+DreamJob.dierenverzorger,Dierenverzorger,Dierenverzorger,Dierenverzorger,Dierenverzorger,Dierenverzorger,en|pl|ro|ar
+DreamJob.elektricien,Elektricien,Elektricien,Elektricien,Elektricien,Elektricien,en|pl|ro|ar
+DreamJob.evenementenorganisator,Evenementenorganisator,Evenementenorganisator,Evenementenorganisator,Evenementenorganisator,Evenementenorganisator,en|pl|ro|ar
+DreamJob.fotograaf,Fotograaf,Fotograaf,Fotograaf,Fotograaf,Fotograaf,en|pl|ro|ar
+DreamJob.fysiotherapeut,Fysiotherapeut,Fysiotherapeut,Fysiotherapeut,Fysiotherapeut,Fysiotherapeut,en|pl|ro|ar
+DreamJob.game-developer,Game developer,Game developer,Game developer,Game developer,Game developer,en|pl|ro|ar
+DreamJob.grafisch-ontwerper,Grafisch ontwerper,Grafisch ontwerper,Grafisch ontwerper,Grafisch ontwerper,Grafisch ontwerper,en|pl|ro|ar
+DreamJob.hovenier,Hovenier,Hovenier,Hovenier,Hovenier,Hovenier,en|pl|ro|ar
+DreamJob.ingenieur,Ingenieur,Ingenieur,Ingenieur,Ingenieur,Ingenieur,en|pl|ro|ar
+DreamJob.journalist,Journalist,Journalist,Journalist,Journalist,Journalist,en|pl|ro|ar
+DreamJob.kapper,Kapper,Kapper,Kapper,Kapper,Kapper,en|pl|ro|ar
+DreamJob.leraar,Leraar,Leraar,Leraar,Leraar,Leraar,en|pl|ro|ar
+DreamJob.makelaar,Makelaar,Makelaar,Makelaar,Makelaar,Makelaar,en|pl|ro|ar
+DreamJob.marketeer,Marketeer,Marketeer,Marketeer,Marketeer,Marketeer,en|pl|ro|ar
+DreamJob.militair,Militair,Militair,Militair,Militair,Militair,en|pl|ro|ar
+DreamJob.muzikant,Muzikant,Muzikant,Muzikant,Muzikant,Muzikant,en|pl|ro|ar
+DreamJob.notaris,Notaris,Notaris,Notaris,Notaris,Notaris,en|pl|ro|ar
+DreamJob.ondernemer,Ondernemer,Ondernemer,Ondernemer,Ondernemer,Ondernemer,en|pl|ro|ar
+DreamJob.pedagogisch-medewerker,Pedagogisch medewerker,Pedagogisch medewerker,Pedagogisch medewerker,Pedagogisch medewerker,Pedagogisch medewerker,en|pl|ro|ar
+DreamJob.personal-trainer,Personal trainer,Personal trainer,Personal trainer,Personal trainer,Personal trainer,en|pl|ro|ar
+DreamJob.piloot,Piloot,Piloot,Piloot,Piloot,Piloot,en|pl|ro|ar
+DreamJob.politie,Politieagent,Politieagent,Politieagent,Politieagent,Politieagent,en|pl|ro|ar
+DreamJob.profsporter,Profsporter,Profsporter,Profsporter,Profsporter,Profsporter,en|pl|ro|ar
+DreamJob.programmeur,Programmeur,Programmeur,Programmeur,Programmeur,Programmeur,en|pl|ro|ar
+DreamJob.psycholoog,Psycholoog,Psycholoog,Psycholoog,Psycholoog,Psycholoog,en|pl|ro|ar
+DreamJob.rechter,Rechter,Rechter,Rechter,Rechter,Rechter,en|pl|ro|ar
+DreamJob.tandarts,Tandarts,Tandarts,Tandarts,Tandarts,Tandarts,en|pl|ro|ar
+DreamJob.timmerman,Timmerman,Timmerman,Timmerman,Timmerman,Timmerman,en|pl|ro|ar
+DreamJob.verloskundige,Verloskundige,Verloskundige,Verloskundige,Verloskundige,Verloskundige,en|pl|ro|ar
+DreamJob.verpleegkundige,Verpleegkundige,Verpleegkundige,Verpleegkundige,Verpleegkundige,Verpleegkundige,en|pl|ro|ar
+DreamJob.wetenschapper,Wetenschapper,Wetenschapper,Wetenschapper,Wetenschapper,Wetenschapper,en|pl|ro|ar
+Employer.FactContact,Contact,Contact,Kontakt,Contact,التواصل,en|ro
+Employer.PublishBaseFree,gratis,free,gratis,gratuit,مجاني,pl
+ExtVac.Add.UrlPlaceholder,https://…,https://…,https://…,https://…,https://…,en|pl|ro|ar
+ExtVac.Apply.DownloadPdf,Download PDF,Download PDF,Pobierz PDF,Descarcă PDF,تحميل PDF,en
+ExtVac.Apply.PlanBTitle,Plan B,Plan B,Plan B,Planul B,الخطة B,en|pl
+ExtVac.Fact.start,Start,Start,Start,Start,البداية,en|pl|ro
+Feedback.Button,Feedback,Feedback,Opinia,Feedback,ملاحظات,en|ro
+Feedback.Capturing,Screenshot…,Screenshot…,Zrzut…,Screenshot…,لقطة…,en|ro
+Feedback.Type,Type,Type,Typ,Tip,النوع,en
+Fit.Dealbreaker,Dealbreaker,Dealbreaker,PL: Dealbreaker,RO: Dealbreaker,‏Dealbreaker,en
+Footer.Westland,Westland,Westland,Westland,Westland,Westland,en|pl|ro|ar
+GratisDna.Share.Instagram,Instagram,Instagram,Instagram,Instagram,Instagram,en|pl|ro|ar
+GratisDna.Tile.Culture.Autonomy,Je werkt graag met ruimte om zelf keuzes te maken.,Je werkt graag met ruimte om zelf keuzes te maken.,Je werkt graag met ruimte om zelf keuzes te maken.,Je werkt graag met ruimte om zelf keuzes te maken.,Je werkt graag met ruimte om zelf keuzes te maken.,en|pl|ro|ar
+GratisDna.Tile.Culture.Collaboration,Je floreert in teams die echt samenwerken.,Je floreert in teams die echt samenwerken.,Je floreert in teams die echt samenwerken.,Je floreert in teams die echt samenwerken.,Je floreert in teams die echt samenwerken.,en|pl|ro|ar
+GratisDna.Tile.Culture.Flexibility,Je past je makkelijk aan als het werk verandert.,Je past je makkelijk aan als het werk verandert.,Je past je makkelijk aan als het werk verandert.,Je past je makkelijk aan als het werk verandert.,Je past je makkelijk aan als het werk verandert.,en|pl|ro|ar
+GratisDna.Tile.Culture.Informal,Je voelt je prettig in een informele werksfeer.,Je voelt je prettig in een informele werksfeer.,Je voelt je prettig in een informele werksfeer.,Je voelt je prettig in een informele werksfeer.,Je voelt je prettig in een informele werksfeer.,en|pl|ro|ar
+GratisDna.Tile.Culture.Innovation,Je zoekt een cultuur die vernieuwing waardeert.,Je zoekt een cultuur die vernieuwing waardeert.,Je zoekt een cultuur die vernieuwing waardeert.,Je zoekt een cultuur die vernieuwing waardeert.,Je zoekt een cultuur die vernieuwing waardeert.,en|pl|ro|ar
+GratisDna.Tile.Culture.PeopleFirst,Je kiest voor plekken waar mensen voorop staan.,Je kiest voor plekken waar mensen voorop staan.,Je kiest voor plekken waar mensen voorop staan.,Je kiest voor plekken waar mensen voorop staan.,Je kiest voor plekken waar mensen voorop staan.,en|pl|ro|ar
+GratisDna.Tile.Value.Achievement,Je wilt groeien en resultaat laten zien.,Je wilt groeien en resultaat laten zien.,Je wilt groeien en resultaat laten zien.,Je wilt groeien en resultaat laten zien.,Je wilt groeien en resultaat laten zien.,en|pl|ro|ar
+GratisDna.Tile.Value.Autonomy,Je vindt eigen regie en uitdaging belangrijk.,Je vindt eigen regie en uitdaging belangrijk.,Je vindt eigen regie en uitdaging belangrijk.,Je vindt eigen regie en uitdaging belangrijk.,Je vindt eigen regie en uitdaging belangrijk.,en|pl|ro|ar
+GratisDna.Tile.Value.Connection,Je hecht aan warme banden met collega’s en klanten.,Je hecht aan warme banden met collega’s en klanten.,Je hecht aan warme banden met collega’s en klanten.,Je hecht aan warme banden met collega’s en klanten.,Je hecht aan warme banden met collega’s en klanten.,en|pl|ro|ar
+GratisDna.Tile.Value.Impact,Je wilt bijdragen aan iets dat ertoe doet.,Je wilt bijdragen aan iets dat ertoe doet.,Je wilt bijdragen aan iets dat ertoe doet.,Je wilt bijdragen aan iets dat ertoe doet.,Je wilt bijdragen aan iets dat ertoe doet.,en|pl|ro|ar
+GratisDna.Tile.Value.Stability,Je zoekt zekerheid en voorspelbaarheid in werk.,Je zoekt zekerheid en voorspelbaarheid in werk.,Je zoekt zekerheid en voorspelbaarheid in werk.,Je zoekt zekerheid en voorspelbaarheid in werk.,Je zoekt zekerheid en voorspelbaarheid in werk.,en|pl|ro|ar
+HowLobsy.Intermediary.Step4Title,4. Tokens,4. Tokens,4. Tokens,4. Tokens,4. Tokens,en|pl|ro|ar
+Initiative.Employer.OpenLabel,OPEN,OPEN,OPEN,OPEN,OPEN,en|pl|ro|ar
+Initiative.Panel.SeesAfter.Contact,Contact,Contact,Contact,Contact,Contact,en|pl|ro|ar
+Initiative.Panel.Team,Team,Team,Team,Team,Team,en|pl|ro|ar
+Initiative.Settings.MaxPerWeek,Max per week,Max per week,Max per week,Max per week,Max per week,en|pl|ro|ar
+Initiative.Settings.Teams,Teams,Teams,Teams,Teams,Teams,en|pl|ro|ar
+Insights.Filter.Km,{0} km,{0} km,{0} km,{0} km,{0} كم,en|pl|ro
+Insights.Kpi.Premium,Premium,Premium,Premium,Complet,مميز,en|pl
+Insights.Section.Trends,Trends,Trends,Trendy,Tendințe,الاتجاهات,en
+Insights.Story.Card9,Trends,Trends,Trendy,Tendințe,الاتجاهات,en
+Kb.Badge.More,+{0},+{0},+{0},+{0},+{0},en|pl|ro|ar
+Kompas.TabWhoAmI,Wie ben ik?,Who am I?,Wie ben ik?,Wie ben ik?,Wie ben ik?,pl|ro|ar
+Landing.Hero.SampleJob1Meta,Hoeve Transport · 18 min,Hoeve Transport · 18 min,Hoeve Transport · 18 min,Hoeve Transport · 18 min,Hoeve Transport · 18 د,en|pl|ro
+Landing.Stats.VacanciesFallback,320+,320+,320+,320+,320+,en|pl|ro|ar
+Landing.Stats.VacanciesValue,{0}+,{0}+,{0}+,{0}+,{0}+,en|pl|ro|ar
+LeerlingPassport.Card.bioloog.Blurb,"Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.","Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.","Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.","Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.","Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.",en|pl|ro|ar
+LeerlingPassport.Card.Blurb.Generic.G78,"Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.","Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.","Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.","Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.","Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.",en|pl|ro|ar
+LeerlingPassport.Card.Blurb.Generic.Vo,"Past bij jouw interesses — om verder te verkennen, geen vacature.","Past bij jouw interesses — om verder te verkennen, geen vacature.","Past bij jouw interesses — om verder te verkennen, geen vacature.","Past bij jouw interesses — om verder te verkennen, geen vacature.","Past bij jouw interesses — om verder te verkennen, geen vacature.",en|pl|ro|ar
+LeerlingPassport.Card.dierenarts.Blurb,Je helpt dieren beter te worden. Je onderzoekt wat er mis is en werkt met mensen die zorgen.,Je helpt dieren beter te worden. Je onderzoekt wat er mis is en werkt met mensen die zorgen.,Je helpt dieren beter te worden. Je onderzoekt wat er mis is en werkt met mensen die zorgen.,Je helpt dieren beter te worden. Je onderzoekt wat er mis is en werkt met mensen die zorgen.,Je helpt dieren beter te worden. Je onderzoekt wat er mis is en werkt met mensen die zorgen.,en|pl|ro|ar
+LeerlingPassport.Card.dierenverzorger.Blurb,"Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.","Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.","Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.","Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.","Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.",en|pl|ro|ar
+LeerlingPassport.Card.Domain.A,Creatief,Creatief,Creatief,Creatief,Creatief,en|pl|ro|ar
+LeerlingPassport.Card.Domain.C,Precies & netjes,Precies & netjes,Precies & netjes,Precies & netjes,Precies & netjes,en|pl|ro|ar
+LeerlingPassport.Card.Domain.E,Ondernemen,Ondernemen,Ondernemen,Ondernemen,Ondernemen,en|pl|ro|ar
+LeerlingPassport.Card.Domain.I,Onderzoek,Onderzoek,Onderzoek,Onderzoek,Onderzoek,en|pl|ro|ar
+LeerlingPassport.Card.Domain.R,Buiten & techniek,Buiten & techniek,Buiten & techniek,Buiten & techniek,Buiten & techniek,en|pl|ro|ar
+LeerlingPassport.Card.Domain.S,Zorg & dieren,Zorg & dieren,Zorg & dieren,Zorg & dieren,Zorg & dieren,en|pl|ro|ar
+LeerlingPassport.Card.Fit.Curious,nieuwsgierig,nieuwsgierig,nieuwsgierig,nieuwsgierig,nieuwsgierig,en|pl|ro|ar
+LeerlingPassport.Card.hovenier.Blurb,Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.,Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.,Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.,Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.,Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.,en|pl|ro|ar
+LeerlingPassport.Cards.Fit,Past bij,Past bij,Past bij,Past bij,Past bij,en|pl|ro|ar
+LeerlingPassport.Cards.Sub,om te ontdekken · geen vacatures,om te ontdekken · geen vacatures,om te ontdekken · geen vacatures,om te ontdekken · geen vacatures,om te ontdekken · geen vacatures,en|pl|ro|ar
+LeerlingPassport.Discover.dierenarts.1,Hoe ziet een dag bij de dierenarts eruit?,Hoe ziet een dag bij de dierenarts eruit?,Hoe ziet een dag bij de dierenarts eruit?,Hoe ziet een dag bij de dierenarts eruit?,Hoe ziet een dag bij de dierenarts eruit?,en|pl|ro|ar
+LeerlingPassport.Discover.dierenarts.2,Welke vakken horen bij biologie op de middelbare school?,Welke vakken horen bij biologie op de middelbare school?,Welke vakken horen bij biologie op de middelbare school?,Welke vakken horen bij biologie op de middelbare school?,Welke vakken horen bij biologie op de middelbare school?,en|pl|ro|ar
+LeerlingPassport.Discover.dierenarts.3,Ben ik ook goed in iets maken met mijn handen?,Ben ik ook goed in iets maken met mijn handen?,Ben ik ook goed in iets maken met mijn handen?,Ben ik ook goed in iets maken met mijn handen?,Ben ik ook goed in iets maken met mijn handen?,en|pl|ro|ar
+LeerlingPassport.Discover.Letter.I.1,Welk vraagstuk zou jij willen uitzoeken?,Welk vraagstuk zou jij willen uitzoeken?,Welk vraagstuk zou jij willen uitzoeken?,Welk vraagstuk zou jij willen uitzoeken?,Welk vraagstuk zou jij willen uitzoeken?,en|pl|ro|ar
+LeerlingPassport.Discover.Letter.I.2,Welke proef of onderzoeksopdracht vond je leuk?,Welke proef of onderzoeksopdracht vond je leuk?,Welke proef of onderzoeksopdracht vond je leuk?,Welke proef of onderzoeksopdracht vond je leuk?,Welke proef of onderzoeksopdracht vond je leuk?,en|pl|ro|ar
+LeerlingPassport.Discover.Letter.I.3,Welk vak geeft je het meeste 'weten hoe het zit'?,Welk vak geeft je het meeste 'weten hoe het zit'?,Welk vak geeft je het meeste 'weten hoe het zit'?,Welk vak geeft je het meeste 'weten hoe het zit'?,Welk vak geeft je het meeste 'weten hoe het zit'?,en|pl|ro|ar
+LeerlingPassport.Discover.Letter.S.1,Bij welk beroep help je anderen het meest?,Bij welk beroep help je anderen het meest?,Bij welk beroep help je anderen het meest?,Bij welk beroep help je anderen het meest?,Bij welk beroep help je anderen het meest?,en|pl|ro|ar
+LeerlingPassport.Discover.Letter.S.2,Wanneer voel jij je het meest nuttig?,Wanneer voel jij je het meest nuttig?,Wanneer voel jij je het meest nuttig?,Wanneer voel jij je het meest nuttig?,Wanneer voel jij je het meest nuttig?,en|pl|ro|ar
+LeerlingPassport.Discover.Letter.S.3,Welke stage of uitje past bij zorg of dieren?,Welke stage of uitje past bij zorg of dieren?,Welke stage of uitje past bij zorg of dieren?,Welke stage of uitje past bij zorg of dieren?,Welke stage of uitje past bij zorg of dieren?,en|pl|ro|ar
+LeerlingPassport.Footer.G78,"Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken, voor jou, je ouders en je leraar.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken, voor jou, je ouders en je leraar.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken, voor jou, je ouders en je leraar.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken, voor jou, je ouders en je leraar.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken, voor jou, je ouders en je leraar.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.",en|pl|ro|ar
+LeerlingPassport.Footer.Vo,"Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.","Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken.
+Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.",en|pl|ro|ar
+LeerlingPassport.Header.G78,MIJN DNA-PASPOORT,MY DNA PASSPORT,MIJN DNA-PASPOORT,MIJN DNA-PASPOORT,MIJN DNA-PASPOORT,pl|ro|ar
+LeerlingPassport.Header.Vo,DNA-paspoort · middelbare school,DNA passport · secondary school,DNA-paspoort · middelbare school,DNA-paspoort · middelbare school,DNA-paspoort · middelbare school,pl|ro|ar
+LeerlingPassport.NameIntro,Dit paspoort is van,Dit paspoort is van,Dit paspoort is van,Dit paspoort is van,Dit paspoort is van,en|pl|ro|ar
+LeerlingPassport.NamePrivacy,je naam schrijf je zelf op · Lobsy bewaart geen namen,je naam schrijf je zelf op · Lobsy bewaart geen namen,je naam schrijf je zelf op · Lobsy bewaart geen namen,je naam schrijf je zelf op · Lobsy bewaart geen namen,je naam schrijf je zelf op · Lobsy bewaart geen namen,en|pl|ro|ar
+LeerlingPassport.OwnWord,mijn eigen woord:,mijn eigen woord:,mijn eigen woord:,mijn eigen woord:,mijn eigen woord:,en|pl|ro|ar
+LeerlingPassport.Section.Cards,Mijn beroepenkaarten,Mijn beroepenkaarten,Mijn beroepenkaarten,Mijn beroepenkaarten,Mijn beroepenkaarten,en|pl|ro|ar
+LeerlingPassport.Section.Discover,Dit wil ik nog ontdekken,Dit wil ik nog ontdekken,Dit wil ik nog ontdekken,Dit wil ik nog ontdekken,Dit wil ik nog ontdekken,en|pl|ro|ar
+LeerlingPassport.Section.Dislikes,Liever niet,Liever niet,Liever niet,Liever niet,Liever niet,en|pl|ro|ar
+LeerlingPassport.Section.DitBenIk,Dit ben ik!,Dit ben ik!,Dit ben ik!,Dit ben ik!,Dit ben ik!,en|pl|ro|ar
+LeerlingPassport.Section.Droom,Hier droom ik van…,Hier droom ik van…,Hier droom ik van…,Hier droom ik van…,Hier droom ik van…,en|pl|ro|ar
+LeerlingPassport.Section.Likes,"Jaaa, leuk!","Jaaa, leuk!","Jaaa, leuk!","Jaaa, leuk!","Jaaa, leuk!",en|pl|ro|ar
+LeerlingPassport.Section.Strengths,Hier ben ik goed in,Hier ben ik goed in,Hier ben ik goed in,Hier ben ik goed in,Hier ben ik goed in,en|pl|ro|ar
+LeerlingPassport.Section.Tip,Tip voor thuis en in de klas,Tip voor thuis en in de klas,Tip voor thuis en in de klas,Tip voor thuis en in de klas,Tip voor thuis en in de klas,en|pl|ro|ar
+LeerlingPassport.Stamp,{0}/{1} werelden ontdekt,{0}/{1} werelden ontdekt,{0}/{1} werelden ontdekt,{0}/{1} werelden ontdekt,{0}/{1} werelden ontdekt,en|pl|ro|ar
+LeerlingPassport.Strength.Betrouwbaar.Sub,afspraken kan je op me rekenen,afspraken kan je op me rekenen,afspraken kan je op me rekenen,afspraken kan je op me rekenen,afspraken kan je op me rekenen,en|pl|ro|ar
+LeerlingPassport.Strength.Doelen.Sub,ik houd van een duidelijk doel,ik houd van een duidelijk doel,ik houd van een duidelijk doel,ik houd van een duidelijk doel,ik houd van een duidelijk doel,en|pl|ro|ar
+LeerlingPassport.Strength.Extraversie.Sub,ik praat graag met anderen,ik praat graag met anderen,ik praat graag met anderen,ik praat graag met anderen,ik praat graag met anderen,en|pl|ro|ar
+LeerlingPassport.Strength.Helpen.Sub,ik zie het als iemand vastzit,ik zie het als iemand vastzit,ik zie het als iemand vastzit,ik zie het als iemand vastzit,ik zie het als iemand vastzit,en|pl|ro|ar
+LeerlingPassport.Strength.Impact.Sub,ik wil iets betekenen voor anderen,ik wil iets betekenen voor anderen,ik wil iets betekenen voor anderen,ik wil iets betekenen voor anderen,ik wil iets betekenen voor anderen,en|pl|ro|ar
+LeerlingPassport.Strength.Innovatie.Sub,ik bedenk graag nieuwe dingen,ik bedenk graag nieuwe dingen,ik bedenk graag nieuwe dingen,ik bedenk graag nieuwe dingen,ik bedenk graag nieuwe dingen,en|pl|ro|ar
+LeerlingPassport.Strength.Onderzoek.Sub,ik wil weten hoe het zit,ik wil weten hoe het zit,ik wil weten hoe het zit,ik wil weten hoe het zit,ik wil weten hoe het zit,en|pl|ro|ar
+LeerlingPassport.Strength.Praktisch.Sub,ik pak dingen graag zelf aan,ik pak dingen graag zelf aan,ik pak dingen graag zelf aan,ik pak dingen graag zelf aan,ik pak dingen graag zelf aan,en|pl|ro|ar
+LeerlingPassport.Strength.Resultaat.Sub,ik werk doelgericht,ik werk doelgericht,ik werk doelgericht,ik werk doelgericht,ik werk doelgericht,en|pl|ro|ar
+LeerlingPassport.Strength.Samenwerken.Sub,ik luister en denk mee,ik luister en denk mee,ik luister en denk mee,ik luister en denk mee,ik luister en denk mee,en|pl|ro|ar
+LeerlingPassport.Strength.Stress.Sub,ik blijf kalm als het druk is,ik blijf kalm als het druk is,ik blijf kalm als het druk is,ik blijf kalm als het druk is,ik blijf kalm als het druk is,en|pl|ro|ar
+LeerlingPassport.Strength.Verbinding.Sub,ik werk het liefst samen,ik werk het liefst samen,ik werk het liefst samen,ik werk het liefst samen,ik werk het liefst samen,en|pl|ro|ar
+LeerlingPassport.Strength.Zorgvuldig.Sub,ik doe dingen netjes,ik doe dingen netjes,ik doe dingen netjes,ik doe dingen netjes,ik doe dingen netjes,en|pl|ro|ar
+LeerlingPassport.Strengths.Sub,zo zie ik mezelf,zo zie ik mezelf,zo zie ik mezelf,zo zie ik mezelf,zo zie ik mezelf,en|pl|ro|ar
+LeerlingPassport.Tip.dierenarts.1,Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.,Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.,Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.,Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.,Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.,en|pl|ro|ar
+LeerlingPassport.Tip.dierenarts.2,Vraag wat het leukst was. Er is geen goed of fout!,Vraag wat het leukst was. Er is geen goed of fout!,Vraag wat het leukst was. Er is geen goed of fout!,Vraag wat het leukst was. Er is geen goed of fout!,Vraag wat het leukst was. Er is geen goed of fout!,en|pl|ro|ar
+LeerlingPassport.Tip.Generic.2,Er is geen goed of fout antwoord; het gaat om ontdekken.,Er is geen goed of fout antwoord; het gaat om ontdekken.,Er is geen goed of fout antwoord; het gaat om ontdekken.,Er is geen goed of fout antwoord; het gaat om ontdekken.,Er is geen goed of fout antwoord; het gaat om ontdekken.,en|pl|ro|ar
+LeerlingPassport.Tip.Letter.S.1,Praat thuis over momenten waarop je iemand hielp — wat deed je precies?,Praat thuis over momenten waarop je iemand hielp — wat deed je precies?,Praat thuis over momenten waarop je iemand hielp — wat deed je precies?,Praat thuis over momenten waarop je iemand hielp — wat deed je precies?,Praat thuis over momenten waarop je iemand hielp — wat deed je precies?,en|pl|ro|ar
+LeerlingPassport.Vo.Archetype.Default,Nieuwsgierige ontdekker — leert door te proberen,Nieuwsgierige ontdekker — leert door te proberen,Nieuwsgierige ontdekker — leert door te proberen,Nieuwsgierige ontdekker — leert door te proberen,Nieuwsgierige ontdekker — leert door te proberen,en|pl|ro|ar
+LeerlingPassport.Vo.Archetype.SI,Zorgzame onderzoeker — wil weten hoe het zit én helpt graag,Zorgzame onderzoeker — wil weten hoe het zit én helpt graag,Zorgzame onderzoeker — wil weten hoe het zit én helpt graag,Zorgzame onderzoeker — wil weten hoe het zit én helpt graag,Zorgzame onderzoeker — wil weten hoe het zit én helpt graag,en|pl|ro|ar
+LeerlingPassport.Vo.Derived,AFGELEID,AFGELEID,AFGELEID,AFGELEID,AFGELEID,en|pl|ro|ar
+LeerlingPassport.Vo.Dislikes,Liever niet,Liever niet,Liever niet,Liever niet,Liever niet,en|pl|ro|ar
+LeerlingPassport.Vo.DnaTitle,Mijn DNA in 4 lagen,Mijn DNA in 4 lagen,Mijn DNA in 4 lagen,Mijn DNA in 4 lagen,Mijn DNA in 4 lagen,en|pl|ro|ar
+LeerlingPassport.Vo.Dream,Droombaan en studierichting,Droombaan en studierichting,Droombaan en studierichting,Droombaan en studierichting,Droombaan en studierichting,en|pl|ro|ar
+LeerlingPassport.Vo.Form.Learn,Wat wil je leren?,Wat wil je leren?,Wat wil je leren?,Wat wil je leren?,Wat wil je leren?,en|pl|ro|ar
+LeerlingPassport.Vo.Form.OwnWords,In mijn eigen woorden,In mijn eigen woorden,In mijn eigen woorden,In mijn eigen woorden,In mijn eigen woorden,en|pl|ro|ar
+LeerlingPassport.Vo.Form.Profile,Profiel,Profiel,Profiel,Profiel,Profiel,en|pl|ro|ar
+LeerlingPassport.Vo.Form.Save,Opslaan en verder,Save and continue,Opslaan en verder,Opslaan en verder,Opslaan en verder,pl|ro|ar
+LeerlingPassport.Vo.Form.Skip,Overslaan,Skip,Overslaan,Overslaan,Overslaan,pl|ro|ar
+LeerlingPassport.Vo.Form.Title,Extra voor je DNA-paspoort,Extra for your DNA passport,Extra voor je DNA-paspoort,Extra voor je DNA-paspoort,Extra voor je DNA-paspoort,pl|ro|ar
+LeerlingPassport.Vo.Form.Travel,Hoe kom je naar werk of stage?,Hoe kom je naar werk of stage?,Hoe kom je naar werk of stage?,Hoe kom je naar werk of stage?,Hoe kom je naar werk of stage?,en|pl|ro|ar
+LeerlingPassport.Vo.Info.ExamAfterHbo,examen in {0} · daarna hbo,examen in {0} · daarna hbo,examen in {0} · daarna hbo,examen in {0} · daarna hbo,examen in {0} · daarna hbo,en|pl|ro|ar
+LeerlingPassport.Vo.Info.SideJobHours,max. 8 uur per week · overdag,max. 8 uur per week · overdag,max. 8 uur per week · overdag,max. 8 uur per week · overdag,max. 8 uur per week · overdag,en|pl|ro|ar
+LeerlingPassport.Vo.Info.SubjectsAlso,ook {0},ook {0},ook {0},ook {0},ook {0},en|pl|ro|ar
+LeerlingPassport.Vo.Info.TravelMax,max. 20 min vanaf huis,max. 20 min vanaf huis,max. 20 min vanaf huis,max. 20 min vanaf huis,max. 20 min vanaf huis,en|pl|ro|ar
+LeerlingPassport.Vo.Learn,Wat ik wil leren,Wat ik wil leren,Wat ik wil leren,Wat ik wil leren,Wat ik wil leren,en|pl|ro|ar
+LeerlingPassport.Vo.Likes,Dit vind ik leuk,Dit vind ik leuk,Dit vind ik leuk,Dit vind ik leuk,Dit vind ik leuk,en|pl|ro|ar
+LeerlingPassport.Vo.OwnWords,In mijn eigen woorden,In mijn eigen woorden,In mijn eigen woorden,In mijn eigen woorden,In mijn eigen woorden,en|pl|ro|ar
+LeerlingPassport.Vo.OwnWords.Note,Geschreven door de leerling · niet aangepast door Lobsy,Geschreven door de leerling · niet aangepast door Lobsy,Geschreven door de leerling · niet aangepast door Lobsy,Geschreven door de leerling · niet aangepast door Lobsy,Geschreven door de leerling · niet aangepast door Lobsy,en|pl|ro|ar
+LeerlingPassport.Vo.Section.Interests,Mijn interesses,Mijn interesses,Mijn interesses,Mijn interesses,Mijn interesses,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.admin.B1,Netjes en gestructureerd,Netjes en gestructureerd,Netjes en gestructureerd,Netjes en gestructureerd,Netjes en gestructureerd,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.admin.B2,Houdt van duidelijke afspraken,Houdt van duidelijke afspraken,Houdt van duidelijke afspraken,Houdt van duidelijke afspraken,Houdt van duidelijke afspraken,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.admin.B3,"Kantoor, finance of ordening","Kantoor, finance of ordening","Kantoor, finance of ordening","Kantoor, finance of ordening","Kantoor, finance of ordening",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.admin.Title,Administratie & zorgvuldig werk,Administratie & zorgvuldig werk,Administratie & zorgvuldig werk,Administratie & zorgvuldig werk,Administratie & zorgvuldig werk,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.creatief.B1,"Tekent, maakt of bedenkt graag","Tekent, maakt of bedenkt graag","Tekent, maakt of bedenkt graag","Tekent, maakt of bedenkt graag","Tekent, maakt of bedenkt graag",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.creatief.B2,Visueel of met verhaal,Visueel of met verhaal,Visueel of met verhaal,Visueel of met verhaal,Visueel of met verhaal,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.creatief.B3,"Design, media of vormgeving","Design, media of vormgeving","Design, media of vormgeving","Design, media of vormgeving","Design, media of vormgeving",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.creatief.Title,Creatief & media,Creatief & media,Creatief & media,Creatief & media,Creatief & media,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.dieren-natuur.B1,Houdt van dieren en buiten zijn,Houdt van dieren en buiten zijn,Houdt van dieren en buiten zijn,Houdt van dieren en buiten zijn,Houdt van dieren en buiten zijn,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.dieren-natuur.B2,Zorgzaam én nieuwsgierig,Zorgzaam én nieuwsgierig,Zorgzaam én nieuwsgierig,Zorgzaam én nieuwsgierig,Zorgzaam én nieuwsgierig,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.dieren-natuur.B3,"Stages in dierentuin, boerderij of natuur","Stages in dierentuin, boerderij of natuur","Stages in dierentuin, boerderij of natuur","Stages in dierentuin, boerderij of natuur","Stages in dierentuin, boerderij of natuur",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.dieren-natuur.Title,Dieren & natuur,Dieren & natuur,Dieren & natuur,Dieren & natuur,Dieren & natuur,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.handel.B1,Houdt van plannen en regelen,Houdt van plannen en regelen,Houdt van plannen en regelen,Houdt van plannen en regelen,Houdt van plannen en regelen,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.handel.B2,Praat graag met mensen,Praat graag met mensen,Praat graag met mensen,Praat graag met mensen,Praat graag met mensen,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.handel.B3,"Retail, events of ondernemen","Retail, events of ondernemen","Retail, events of ondernemen","Retail, events of ondernemen","Retail, events of ondernemen",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.handel.Title,Handel & organisatie,Handel & organisatie,Handel & organisatie,Handel & organisatie,Handel & organisatie,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.lab.B1,Wil weten hoe iets werkt,Wil weten hoe iets werkt,Wil weten hoe iets werkt,Wil weten hoe iets werkt,Wil weten hoe iets werkt,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.lab.B2,Precies en zorgvuldig,Precies en zorgvuldig,Precies en zorgvuldig,Precies en zorgvuldig,Precies en zorgvuldig,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.lab.B3,"Biologie, lab of data verkennen","Biologie, lab of data verkennen","Biologie, lab of data verkennen","Biologie, lab of data verkennen","Biologie, lab of data verkennen",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.lab.Title,Onderzoek & lab,Onderzoek & lab,Onderzoek & lab,Onderzoek & lab,Onderzoek & lab,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.techniek.B1,Houdt van praktisch aanpakken,Houdt van praktisch aanpakken,Houdt van praktisch aanpakken,Houdt van praktisch aanpakken,Houdt van praktisch aanpakken,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.techniek.B2,Buiten of in een werkplaats,Buiten of in een werkplaats,Buiten of in een werkplaats,Buiten of in een werkplaats,Buiten of in een werkplaats,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.techniek.B3,"Monteur, bouw of duurzaamheid","Monteur, bouw of duurzaamheid","Monteur, bouw of duurzaamheid","Monteur, bouw of duurzaamheid","Monteur, bouw of duurzaamheid",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.techniek.Title,Techniek & buiten,Techniek & buiten,Techniek & buiten,Techniek & buiten,Techniek & buiten,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.zorg.B1,"Helpt graag, blijft rustig","Helpt graag, blijft rustig","Helpt graag, blijft rustig","Helpt graag, blijft rustig","Helpt graag, blijft rustig",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.zorg.B2,Werkt fijn in een vast team,Werkt fijn in een vast team,Werkt fijn in een vast team,Werkt fijn in een vast team,Werkt fijn in een vast team,en|pl|ro|ar
+LeerlingPassport.Vo.Sector.zorg.B3,"Verpleging, begeleiding of welzijn verkennen","Verpleging, begeleiding of welzijn verkennen","Verpleging, begeleiding of welzijn verkennen","Verpleging, begeleiding of welzijn verkennen","Verpleging, begeleiding of welzijn verkennen",en|pl|ro|ar
+LeerlingPassport.Vo.Sector.zorg.Title,Zorg & welzijn,Zorg & welzijn,Zorg & welzijn,Zorg & welzijn,Zorg & welzijn,en|pl|ro|ar
+LeerlingPassport.Vo.Sectors,Sectoren die bij mij passen,Sectoren die bij mij passen,Sectoren die bij mij passen,Sectoren die bij mij passen,Sectoren die bij mij passen,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.bibliotheek.Sub,rustig & netjes,rustig & netjes,rustig & netjes,rustig & netjes,rustig & netjes,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.bibliotheek.Title,Hulp in de bibliotheek,Hulp in de bibliotheek,Hulp in de bibliotheek,Hulp in de bibliotheek,Hulp in de bibliotheek,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.bibliotheek.Why,Past bij lezen en puzzels — boeken terugzetten en lezers helpen.,Past bij lezen en puzzels — boeken terugzetten en lezers helpen.,Past bij lezen en puzzels — boeken terugzetten en lezers helpen.,Past bij lezen en puzzels — boeken terugzetten en lezers helpen.,Past bij lezen en puzzels — boeken terugzetten en lezers helpen.,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.dierenkliniek-snuffel.Sub,kort kijken · geen vacature,kort kijken · geen vacature,kort kijken · geen vacature,kort kijken · geen vacature,kort kijken · geen vacature,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.dierenkliniek-snuffel.Title,Snuffelstage dierenkliniek,Snuffelstage dierenkliniek,Snuffelstage dierenkliniek,Snuffelstage dierenkliniek,Snuffelstage dierenkliniek,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.dierenkliniek-snuffel.Why,Om te ontdekken hoe een dierenarts werkt — vaak vanaf 15 jaar met begeleiding.,Om te ontdekken hoe een dierenarts werkt — vaak vanaf 15 jaar met begeleiding.,Om te ontdekken hoe een dierenarts werkt — vaak vanaf 15 jaar met begeleiding.,Om te ontdekken hoe een dierenarts werkt — vaak vanaf 15 jaar met begeleiding.,Om te ontdekken hoe een dierenarts werkt — vaak vanaf 15 jaar met begeleiding.,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.drogisterij-vakken.Sub,netjes & zorgvuldig,netjes & zorgvuldig,netjes & zorgvuldig,netjes & zorgvuldig,netjes & zorgvuldig,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.drogisterij-vakken.Title,Vakkenvuller drogisterij,Vakkenvuller drogisterij,Vakkenvuller drogisterij,Vakkenvuller drogisterij,Vakkenvuller drogisterij,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.drogisterij-vakken.Why,Leuk als je van ordenen houdt; let op tijden (tot 19:00 als je 15 bent).,Leuk als je van ordenen houdt; let op tijden (tot 19:00 als je 15 bent).,Leuk als je van ordenen houdt; let op tijden (tot 19:00 als je 15 bent).,Leuk als je van ordenen houdt; let op tijden (tot 19:00 als je 15 bent).,Leuk als je van ordenen houdt; let op tijden (tot 19:00 als je 15 bent).,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.horeca-help.Sub,avond · vanaf 16 jaar (13–15: niet 's avonds),avond · vanaf 16 jaar (13–15: niet 's avonds),avond · vanaf 16 jaar (13–15: niet 's avonds),avond · vanaf 16 jaar (13–15: niet 's avonds),avond · vanaf 16 jaar (13–15: niet 's avonds),en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.horeca-help.Title,Hulp in de horeca,Hulp in de horeca,Hulp in de horeca,Hulp in de horeca,Hulp in de horeca,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.horeca-help.Why,"Past bij koken en contact — vaak in de avond, let op schooltijden.","Past bij koken en contact — vaak in de avond, let op schooltijden.","Past bij koken en contact — vaak in de avond, let op schooltijden.","Past bij koken en contact — vaak in de avond, let op schooltijden.","Past bij koken en contact — vaak in de avond, let op schooltijden.",en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.kinderboerderij.Sub,dieren & buiten,dieren & buiten,dieren & buiten,dieren & buiten,dieren & buiten,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.kinderboerderij.Title,Hulp op een kinderboerderij,Hulp op een kinderboerderij,Hulp op een kinderboerderij,Hulp op een kinderboerderij,Hulp op een kinderboerderij,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.kinderboerderij.Why,Past bij zorgzaam zijn en dieren — rustig meelopen en vragen stellen.,Past bij zorgzaam zijn en dieren — rustig meelopen en vragen stellen.,Past bij zorgzaam zijn en dieren — rustig meelopen en vragen stellen.,Past bij zorgzaam zijn en dieren — rustig meelopen en vragen stellen.,Past bij zorgzaam zijn en dieren — rustig meelopen en vragen stellen.,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.Meta.FromAge,vanaf {0} jaar,vanaf {0} jaar,vanaf {0} jaar,vanaf {0} jaar,vanaf {0} jaar,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.Meta.Weekday,wo-middag,wo-middag,wo-middag,wo-middag,wo-middag,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.Meta.Weekend,zaterdag,zaterdag,zaterdag,zaterdag,zaterdag,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.Meta.WhyPrefix,Waarom:,Waarom:,Waarom:,Waarom:,Waarom:,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.sportclub.Sub,team & buiten,team & buiten,team & buiten,team & buiten,team & buiten,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.sportclub.Title,Assistent bij een sportclub,Assistent bij een sportclub,Assistent bij een sportclub,Assistent bij een sportclub,Assistent bij een sportclub,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.sportclub.Why,Leuk als je van sport houdt — meehelpen met training of wedstrijddag.,Leuk als je van sport houdt — meehelpen met training of wedstrijddag.,Leuk als je van sport houdt — meehelpen met training of wedstrijddag.,Leuk als je van sport houdt — meehelpen met training of wedstrijddag.,Leuk als je van sport houdt — meehelpen met training of wedstrijddag.,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.techniek-werkplaats.Sub,techniek · kort kijken,techniek · kort kijken,techniek · kort kijken,techniek · kort kijken,techniek · kort kijken,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.techniek-werkplaats.Title,Snuffelen in een werkplaats,Snuffelen in een werkplaats,Snuffelen in een werkplaats,Snuffelen in een werkplaats,Snuffelen in een werkplaats,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.techniek-werkplaats.Why,Om te zien hoe monteurs of makers werken — vaak met begeleiding.,Om te zien hoe monteurs of makers werken — vaak met begeleiding.,Om te zien hoe monteurs of makers werken — vaak met begeleiding.,Om te zien hoe monteurs of makers werken — vaak met begeleiding.,Om te zien hoe monteurs of makers werken — vaak met begeleiding.,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.zorg-thuis.Sub,zorg · 16+,zorg · 16+,zorg · 16+,zorg · 16+,zorg · 16+,en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.zorg-thuis.Title,Hulp bij thuiszorg (indirect),Hulp bij thuiszorg (indirect),Hulp bij thuiszorg (indirect),Hulp bij thuiszorg (indirect),Hulp bij thuiszorg (indirect),en|pl|ro|ar
+LeerlingPassport.Vo.SideJob.zorg-thuis.Why,Alleen via erkende organisaties — om te ontdekken of zorg bij je past.,Alleen via erkende organisaties — om te ontdekken of zorg bij je past.,Alleen via erkende organisaties — om te ontdekken of zorg bij je past.,Alleen via erkende organisaties — om te ontdekken of zorg bij je past.,Alleen via erkende organisaties — om te ontdekken of zorg bij je past.,en|pl|ro|ar
+LeerlingPassport.Vo.SideJobs,Bijbanen en stages die bij mij passen,Bijbanen en stages die bij mij passen,Bijbanen en stages die bij mij passen,Bijbanen en stages die bij mij passen,Bijbanen en stages die bij mij passen,en|pl|ro|ar
+LeerlingPassport.Vo.SideJobs.Sub,types werk · geen vacatures,types werk · No vacancies,types werk · geen vacatures,types werk · geen vacatures,types werk · geen vacatures,pl|ro|ar
+LeerlingPassport.Vo.Strengths,Sterke punten,Sterke punten,Sterke punten,Sterke punten,Sterke punten,en|pl|ro|ar
+LeerlingPassport.Vo.Travel.Fiets,Fiets,Fiets,Fiets,Fiets,Fiets,en|pl|ro|ar
+LeerlingPassport.Vo.Travel.FietsOv,Fiets + OV,Fiets + OV,Fiets + OV,Fiets + OV,Fiets + OV,en|pl|ro|ar
+Legal.Eyebrow.Privacy,Privacy,Privacy,Prywatność,Confidențialitate,الخصوصية,en
+Legal.IdentityCard.Contact,Contact,Contact,Kontakt,Contact,جهة الاتصال,en|ro
+Metrics.Likes,Likes,Likes,Polubienia,Like-uri,الإعجابات,en
+Metrics.Shares,Shares,Shares,Udostępnienia,Distribuiri,المشاركات,en
+Metrics.Week,Week,Week,Tydzień,Săptămână,أسبوع,en
+Mfa.DownloadTxt,Download (.txt),Download (.txt),Pobierz (.txt),Descarcă (.txt),تنزيل (.txt),en
+Mfa.Print,Print,Print,Drukuj,Printează,طباعة,en
+Mfa.StatusExternal,Extern,External,Zewnętrzne,Extern,خارجي,ro
+Nav.AmbassadeurToolkit,Toolkit,Toolkit,Toolkit,Toolkit,الأدوات,en|pl|ro
+Nav.CsvImport,CSV Import,CSV Import,Import CSV,Import CSV,استيراد CSV,en
+Nav.Dashboard,Dashboard,Dashboard,Panel,Dashboard,لوحة التحكم,en|ro
+Nav.Feedback,Feedback,Feedback,Opinie,Feedback,ملاحظات,en|ro
+Nav.Home,Home,Home,Start,Acasă,الرئيسية,en
+Nav.Logging,Logging,Logging,Logi,Jurnal,السجلات,en
+Nav.Onboarding,Onboarding,Onboarding,Onboarding,Onboarding,التسجيل,en|pl|ro
+Nav.Settings,Settings,Settings,Ustawienia,Setări,الإعدادات,en
+Nav.Talent,Talentpool,Talent pool,Talentpool,Talentpool,مجمع المواهب,pl|ro
+Nav.Team,Team,Team,Zespół,Echipă,الفريق,en
+Nav.Tokens,Tokens,Tokens,Tokeny,Tokenuri,الرموز,en
+Onboarding.EducationMboLevel,MBO {0},MBO {0},MBO {0},MBO {0},MBO {0},en|pl|ro|ar
+Onboarding.Postcode,Postcode,Postcode,Postcode,Postcode,Postcode,en|pl|ro|ar
+PartnerPage.Rates.NoTokens,—,—,—,—,—,en|pl|ro|ar
+PartnerPage.Rates.Tokens,Tokens,Tokens,Tokeny,Tokenuri,الرموز,en
+PartnerPage.Share.Flyer,Flyer (pdf),Flyer (pdf),Ulotka (pdf),Flyer (pdf),منشور (pdf),en|ro
+Privacy.Data.Eyebrow,🔒 Privacy,🔒 Privacy,🔒 Prywatność,🔒 Confidențialitate,🔒 الخصوصية,en
+ProactiveMatching.Employer.Shortlist.Rank,#{0},#{0},#{0},#{0},#{0},en|pl|ro|ar
+ProactiveMatching.Suggestions.Match,Match: {0},Match: {0},Dopasowanie: {0},Potrivire: {0},تطابق: {0},en
+Profile.PhonePlaceholder,06 12345678,+31 6 12345678,06 12345678,06 12345678,‏06 12345678,pl|ro
+ProfileHub.Account,Account,Account,PL: Account,RO: Account,‏Account,en
+ProfileHub.Travel,Max. {0} min · {1},Max. {0} min · {1},PL: Max. {0} min · {1},RO: Max. {0} min · {1},‏Max. {0} min · {1},en
+PublicFooter.Contact,Contact,Contact,Kontakt,Contact,اتصل,en|ro
+Pwa.Sheet.Samsung.OpenChrome,Open in Chrome,Open in Chrome,Otwórz w Chrome,Deschide în Chrome,افتح في Chrome,en
+Register.Role,Rol: {0},Role: {0},Rola: {0},Rol: {0},الدور: {0},ro
+Register.StepContact,4. Contact,4. Contact,4. Kontakt,4. Contact,4. الاتصال,en|ro
+Register.StepKvk,1. KVK,1. CoC,1. KVK,1. KVK,1. KVK,pl|ro|ar
+Register.StepScope,3. Scope,3. Scope,3. Zakres,3. Scop,3. النطاق,en
+Research.Demo.Education.havo_vwo,HAVO/VWO,HAVO/VWO,HAVO/VWO,HAVO/VWO,HAVO/VWO,en|pl|ro|ar
+Research.Demo.Education.hbo,HBO,HBO (applied university),HBO,HBO,HBO,pl|ro|ar
+Research.Demo.Education.mbo,MBO,MBO (vocational),MBO,MBO,MBO,pl|ro|ar
+Research.Demo.Education.vmo,VMBO,Lower secondary (VMBO),VMBO,VMBO,VMBO,pl|ro|ar
+Research.Demo.Gender,Gender,Gender,Płeć,Gen,الجنس,en
+Sales.Dashboard,Dashboard,Dashboard,Panel,Dashboard,لوحة التحكم,en|ro
+Sales.Onboarding,Onboarding,Onboarding,Onboarding,Onboarding,التسجيل,en|pl|ro
+Seo.DashboardTitle,Dashboard,Dashboard,Panel,Dashboard,لوحة التحكم,en|ro
+Status.Common.Contact,Contact,Contact,Kontakt,Contact,اتصال,en|ro
+Status.Gone.DistanceKm,{0} km,{0} km,{0} km,{0} km,{0} كم,en|pl|ro
+Status.Gone.TravelMinutes,{0} min,{0} min,{0} min,{0} min,{0} دقيقة,en|pl|ro
+Status.Nav.Privacy,Privacy,Privacy,Prywatność,Confidențialitate,الخصوصية,en
+Talent.Unlock,Start contact (1 token),Start contact (1 token),PL: Start contact (1 token),Începe contact (1 token),ابدأ contact (1 token),en
+TestFlow.DepthMetaShort,{0},{0},{0},{0},{0},en|pl|ro|ar
+TestFlow.Eyebrow.QuickScan,Quick-Scan · {0} · {1},Quick-Scan · {0} · {1},Quick-Scan · {0} · {1},Quick-Scan · {0} · {1},Quick-Scan · {0} · {1},en|pl|ro|ar
+TestFlow.ProgressInsight.Block,Blok {0},Block {0},Blok {0},Blocul {0},الكتلة {0},pl
+TestFlow.ProgressInsight.Line,{0}: {1},{0}: {1},{0}: {1},{0}: {1},{0}: {1},en|pl|ro|ar
+TestResult.ScoresCount,{0} scores,{0} scores,{0} scores,{0} scores,{0} scores,en|pl|ro|ar
+Tests.ScanQuick,gratis test,gratis test,Szybki skan,Scanare rapidă,مسح سريع,en
+TokenSpendCost.PushBom,PushBom,PushBom,PushBom,PushBom,PushBom,en|pl|ro|ar
+Training.Delivery.Blended,Blended,Blended,Blended,Blended,Blended,en|pl|ro|ar
+Training.Delivery.Online,Online,Online,Online,Online,Online,en|pl|ro|ar
+Training.Duration.OneWeek,1 week,1 week,1 week,1 week,1 week,en|pl|ro|ar
+Training.LearnGrow.FilterPanel,Filters,Filters,Filters,Filters,Filters,en|pl|ro|ar
+Training.LearnGrow.Format.Online,Online,Online,Online,Online,Online,en|pl|ro|ar
+Training.Type.Workshop,Workshop,Workshop,Workshop,Workshop,Workshop,en|pl|ro|ar
+Vacancy.Deadline,Deadline,Deadline,Termin,Termen limită,الموعد النهائي,en
+Vacancy.Like,♡ Like,♡ Like,♡ Lubię,♡ Like,♡ إعجاب,en|ro
+Vacancy.StreetView,Street View,Street View,Street View,Street View,Street View,en|pl|ro|ar
+WgApp.Hint.Contact,contact,contact,kontakt,contact,تواصل,en|ro
+WgApp.Match,Match {0}%,Match {0}%,Dopasowanie {0}%,Potrivire {0}%,تطابق {0}%,en
+WgApp.MatchPill,{0}% match,{0}% match,{0}% dopasowanie,{0}% potrivire,تطابق {0}%,en
+WgApp.TravelFmt,{0} min {1},{0} min {1},{0} min {1},{0} min {1},{0} د {1},en|pl|ro
+WgDash.Days,{0:0.#} d,{0:0.#} d,{0:0.#} d,{0:0.#} z,{0:0.#} ي,en|pl
+WgDash.Period.30d,30 d,30 d,30 d,30 z,30 ي,en|pl
+WgDash.Period.7d,7 d,7 d,7 d,7 z,7 ي,en|pl
+WgDash.Period.90d,90 d,90 d,90 d,90 z,90 ي,en|pl
+WgMaterials.DownloadFlyer,Download flyer,Download flyer,Pobierz ulotkę,Descarcă flyerul,تنزيل المنشور,en
+WgNav.Dashboard,Dashboard,Dashboard,Panel,Tablou de bord,لوحة التحكم,en
+WgNav.Team,Team,Team,Zespół,Echipă,الفريق,en
+WgOrg.BranchMeta,{0} live · {1} tokens,{0} live · {1} tokens,{0} live · {1} tokenów,{0} live · {1} tokenuri,{0} مباشرة · {1} رموز,en
+WgOrg.Tab.Team,Team ({0}),Team ({0}),Zespół ({0}),Echipă ({0}),الفريق ({0}),en
+WgOrg.Tab.Tokens,Tokens,Tokens,Tokeny,Tokenuri,الرموز,en
+WgSoon.EmployerCard3Title,Contact,Contact,Kontakt,Contact,تواصل,en|ro
+WgTodo.ApplicationsOverdue.Meta,{0},{0},{0},{0},{0},en|pl|ro|ar
+WgTodo.Filters,Filters,Filters,Filtry,Filtre,عوامل التصفية,en
+WgTodo.PublishRequests.Meta,{0},{0},{0},{0},{0},en|pl|ro|ar
+WgTodo.Severity.Danger,Urgent,Urgent,Pilne,Urgent,عاجل,en|ro
+WgTodo.VacanciesExpiring.Meta,{0},{0},{0},{0},{0},en|pl|ro|ar
+WgTok.PerToken,€ {0} per token,€ {0} each,€ {0} za token,€ {0} per token,€ {0} لكل رمز,ro
+WgVac.Filter.Type,Type,Type,Typ,Tip,النوع,en
+WgVac.Status.Draft,Concept,Draft,Szkic,Concept,مسودة,ro
+WgVac.Tab.Draft,Concept,Draft,Szkic,Concept,مسودة,ro
+WhoAmI.AttachCv,Voeg dit persoonsprofiel toe als officiële bijlage bij mijn Lobsy-cv.,Add this personal profile as an official attachment to my Lobsy CV.,Voeg dit persoonsprofiel toe als officiële bijlage bij mijn Lobsy-cv.,Voeg dit persoonsprofiel toe als officiële bijlage bij mijn Lobsy-cv.,Voeg dit persoonsprofiel toe als officiële bijlage bij mijn Lobsy-cv.,pl|ro|ar
+WhoAmI.AttachHint,"Als je solliciteert of meedoet aan batch-hiring in Den Haag / het Westland, gaat dit verhaal als PDF-bijlage mee met je Lobsy-CV. Werkgevers zien het pas na acceptatie.","When you apply or join batch hiring in The Hague / Westland, this story goes with your Lobsy CV as a PDF attachment. Employers see it only after they accept.","Als je solliciteert of meedoet aan batch-hiring in Den Haag / het Westland, gaat dit verhaal als PDF-bijlage mee met je Lobsy-CV. Werkgevers zien het pas na acceptatie.","Als je solliciteert of meedoet aan batch-hiring in Den Haag / het Westland, gaat dit verhaal als PDF-bijlage mee met je Lobsy-CV. Werkgevers zien het pas na acceptatie.","Als je solliciteert of meedoet aan batch-hiring in Den Haag / het Westland, gaat dit verhaal als PDF-bijlage mee met je Lobsy-CV. Werkgevers zien het pas na acceptatie.",pl|ro|ar
+WhoAmI.Courses,Opleiding & cursussen,Education & courses,Opleiding & cursussen,Opleiding & cursussen,Opleiding & cursussen,pl|ro|ar
+WhoAmI.CultureTitle,Hoe ik graag werk,How I like to work,Hoe ik graag werk,Hoe ik graag werk,Hoe ik graag werk,pl|ro|ar
+WhoAmI.DiscTitle,Hoe ik graag werk,How I like to work,Hoe ik graag werk,Hoe ik graag werk,Hoe ik graag werk,pl|ro|ar
+WhoAmI.Keywords,Sterke punten,Strengths,Sterke punten,Sterke punten,Sterke punten,pl|ro|ar
+WhoAmI.LeadLocked,"Vier stappen tot jouw persoonsprofiel. Zodra elk vinkje groen is, ontvouwt zich je verhaal.","Four steps to your personal profile. When every box is green, your story unlocks.","Vier stappen tot jouw persoonsprofiel. Zodra elk vinkje groen is, ontvouwt zich je verhaal.","Vier stappen tot jouw persoonsprofiel. Zodra elk vinkje groen is, ontvouwt zich je verhaal.","Vier stappen tot jouw persoonsprofiel. Zodra elk vinkje groen is, ontvouwt zich je verhaal.",pl|ro|ar
+WhoAmI.LeadOpen,"Jouw samenvattende verhaal: wie je bent, hoe je samenwerkt, en wat je sterke punten zijn.","Your summary story: who you are, how you work with others, and your strengths.","Jouw samenvattende verhaal: wie je bent, hoe je samenwerkt, en wat je sterke punten zijn.","Jouw samenvattende verhaal: wie je bent, hoe je samenwerkt, en wat je sterke punten zijn.","Jouw samenvattende verhaal: wie je bent, hoe je samenwerkt, en wat je sterke punten zijn.",pl|ro|ar
+WhoAmI.OpenCareer,Start beroepentest,Start career test,Start beroepentest,Start beroepentest,Start beroepentest,pl|ro|ar
+WhoAmI.OpenCareerResults,Bekijk mijn Beroepen-kompas,Open my career compass,Bekijk mijn Beroepen-kompas,Bekijk mijn Beroepen-kompas,Bekijk mijn Beroepen-kompas,pl|ro|ar
+WhoAmI.OpenCompetency,Start competentietest,Start competency test,Start competentietest,Start competentietest,Start competentietest,pl|ro|ar
+WhoAmI.OpenCulture,Start cultuurscan,Start culture scan,Start cultuurscan,Start cultuurscan,Start cultuurscan,pl|ro|ar
+WhoAmI.OpenDisc,Start cultuurscan,Start culture scan,Start cultuurscan,Start cultuurscan,Start cultuurscan,pl|ro|ar
+WhoAmI.OpenProfile,Naar mijn profiel,Go to my profile,Naar mijn profiel,Naar mijn profiel,Naar mijn profiel,pl|ro|ar
+WhoAmI.ProfileTitle,Mijn achtergrond,My background,Mijn achtergrond,Mijn achtergrond,Mijn achtergrond,pl|ro|ar
+WhoAmI.Progress,{0} van 4 stappen klaar,{0} of 4 steps done,{0} van 4 stappen klaar,{0} van 4 stappen klaar,{0} van 4 stappen klaar,pl|ro|ar
+WhoAmI.Saved,Keuze opgeslagen.,Saved.,Keuze opgeslagen.,Keuze opgeslagen.,Keuze opgeslagen.,pl|ro|ar
+WhoAmI.StepCareer,Beroepentest gevuld,Career test complete,Beroepentest gevuld,Beroepentest gevuld,Beroepentest gevuld,pl|ro|ar
+WhoAmI.StepCompetency,Competentietest gevuld,Competency test complete,Competentietest gevuld,Competentietest gevuld,Competentietest gevuld,pl|ro|ar
+WhoAmI.StepCulture,Cultuurscan uitgevoerd,Culture scan complete,Cultuurscan uitgevoerd,Cultuurscan uitgevoerd,Cultuurscan uitgevoerd,pl|ro|ar
+WhoAmI.StepDisc,Cultuurscan uitgevoerd,Culture scan complete,Cultuurscan uitgevoerd,Cultuurscan uitgevoerd,Cultuurscan uitgevoerd,pl|ro|ar
+WhoAmI.StepProfile,Profiel gevuld,Profile complete,Profiel gevuld,Profiel gevuld,Profiel gevuld,pl|ro|ar
+WhoAmI.StepProfileHint,"Naam, achtergrond en reistijd/vervoer","Name, background and travel time/transport","Naam, achtergrond en reistijd/vervoer","Naam, achtergrond en reistijd/vervoer","Naam, achtergrond en reistijd/vervoer",pl|ro|ar
+WhoAmI.StoryTitle,Mijn verhaal,My story,Mijn verhaal,Mijn verhaal,Mijn verhaal,pl|ro|ar
+WhoAmI.WorkExperience,Werkervaring,Work experience,Werkervaring,Werkervaring,Werkervaring,pl|ro|ar
+WorkPref.Place.mix,Mix,Mix,Mix,Mix,مزيج,en|pl|ro
+WorkPref.Structure.mixed,Mix,Mix,Mix,Mix,مزيج,en|pl|ro
+WorkPref.TeamMode.mixed,Mix,Mix,Mix,Mix,مزيج,en|pl|ro
+WorkType.Horeca,Horeca,Hospitality,Gastronomia,Horeca,الضيافة,ro

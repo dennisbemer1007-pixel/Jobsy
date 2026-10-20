@@ -250,6 +250,8 @@ public sealed class PlatformFeatureItem
     public bool PassportPdfV2Enabled { get; set; }
     public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
     public bool TestsV2Enabled { get; set; }
+    public bool TestItemExamplesEnabled { get; set; }
+    public bool TestProgressInsightEnabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
     public bool WhatsAppRemindersEnabled { get; set; }
     /// <summary>Compact chart layout for paid personal test PDFs. Default off.</summary>
@@ -314,6 +316,8 @@ public sealed class PlatformFeaturePatch
     public bool? PassportPdfV2Enabled { get; set; }
     public bool? PassportPdfDnaBlocksEnabled { get; set; }
     public bool? TestsV2Enabled { get; set; }
+    public bool? TestItemExamplesEnabled { get; set; }
+    public bool? TestProgressInsightEnabled { get; set; }
     public bool? PhoneVerificationEnabled { get; set; }
     public bool? WhatsAppRemindersEnabled { get; set; }
     public bool? CompactTestPdfEnabled { get; set; }

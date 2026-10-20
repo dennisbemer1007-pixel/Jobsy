@@ -40,6 +40,12 @@ public sealed class JobsyFeatureOptions
     /// <summary>Na de match (gesprek plannen en berichten). Acceptatie config turns this on.</summary>
     public bool NaDeMatchEnabled { get; set; }
 
+    /// <summary>When true, Quick-Scan questions show per-item practice examples. Overridden by platform settings.</summary>
+    public bool TestItemExamplesEnabled { get; set; }
+
+    /// <summary>When true, Quick-Scan shows motivation + progress insight card. Overridden by platform settings.</summary>
+    public bool TestProgressInsightEnabled { get; set; }
+
     /// <summary>
     /// Personal test mirror after verdieping/volledig free depth. Default on; disable only as emergency kill switch.
     /// </summary>

@@ -164,12 +164,13 @@ public sealed class VroegResultaatPlaywrightTests
 
         await SkipOptionalStepsToConsentAsync(page);
         await FinishCompetencyMiniAsync(page);
-        await page.Locator("[data-testid=early-reward-insight]").WaitForAsync(new() { Timeout = 90_000 });
+        await AssertNoEarlyInsightInterstitialAsync(page);
+        await page.Locator(".test-likert").WaitForAsync(new() { Timeout = 90_000 });
         await AssertEarlyScreenChromeAsync(page);
 
         if (capture)
         {
-            await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-insight-mobile-390.png") });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-after-competency-mini-mobile-390.png") });
         }
 
         if (capture)
@@ -192,8 +193,9 @@ public sealed class VroegResultaatPlaywrightTests
             await ClickNextAsync(bPage2x);
             await SkipOptionalStepsToConsentAsync(bPage2x);
             await FinishCompetencyMiniAsync(bPage2x);
-            await bPage2x.Locator("[data-testid=early-reward-insight]").WaitForAsync(new() { Timeout = 90_000 });
-            await bPage2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-insight-mobile-390@2x.png") });
+            await AssertNoEarlyInsightInterstitialAsync(bPage2x);
+            await bPage2x.Locator(".test-likert").WaitForAsync(new() { Timeout = 90_000 });
+            await bPage2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-after-competency-mini-mobile-390@2x.png") });
         }
 
         await mobile.CloseAsync();
@@ -285,8 +287,9 @@ public sealed class VroegResultaatPlaywrightTests
         await dPage.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "skip-consent-desktop-1440.png") });
         await SkipOptionalStepsToConsentAsync(dPage);
         await FinishCompetencyMiniAsync(dPage);
-        await dPage.Locator("[data-testid=early-reward-insight]").WaitForAsync(new() { Timeout = 90_000 });
-        await dPage.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-insight-desktop-1440.png") });
+        await AssertNoEarlyInsightInterstitialAsync(dPage);
+        await dPage.Locator(".test-likert").WaitForAsync(new() { Timeout = 90_000 });
+        await dPage.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-after-competency-mini-desktop-1440.png") });
 
         CopyMockupCompares(compareDir, afterDir);
     }
@@ -685,11 +688,6 @@ combo.save(out)
     {
         for (var step = 0; step < 4; step++)
         {
-            if (await page.Locator("[data-testid=early-reward-insight]").CountAsync() > 0)
-            {
-                return;
-            }
-
             if (await page.Locator(".test-likert").CountAsync() > 0)
             {
                 return;
@@ -723,16 +721,16 @@ combo.save(out)
         }
     }
 
+    private static async Task AssertNoEarlyInsightInterstitialAsync(IPage page)
+    {
+        Assert.Equal(0, await page.Locator("[data-testid=early-reward-insight]").CountAsync());
+    }
+
     private static async Task FinishCompetencyMiniAsync(IPage page)
     {
         await page.WaitForSelectorAsync(".test-likert", new() { Timeout = 60_000 });
-        for (var i = 0; i < 6; i++)
+        for (var i = 0; i < 12; i++)
         {
-            if (await page.Locator("[data-testid=early-reward-insight]").CountAsync() > 0)
-            {
-                return;
-            }
-
             if (await page.Locator(".test-likert").CountAsync() == 0)
             {
                 break;
@@ -748,6 +746,8 @@ combo.save(out)
 
             await page.WaitForTimeoutAsync(500);
         }
+
+        await AssertNoEarlyInsightInterstitialAsync(page);
     }
 
     internal static async Task ClickNextAsync(IPage page)
