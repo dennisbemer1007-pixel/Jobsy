@@ -1,0 +1,245 @@
+@page "/mockups/site-rustig"
+@page "/mockups/site-rustig/{Screen}"
+@layout Jobsy.Web.Components.Layout.SiteRustigMockupLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Web.SiteRustigMockups
+
+<PageTitle>Site rustig mockup · @_screen · Lobsy</PageTitle>
+
+<HeadContent>
+    <link rel="stylesheet" href="css/features/site-rustig-mockup.css?v=20261020-r1" />
+    <link rel="stylesheet" href="css/features/form-fields.css?v=20261019-01" />
+</HeadContent>
+
+@if (_screen == "index")
+{
+    <div class="site-rustig" style="padding:2rem 1.25rem;max-width:40rem">
+        <h1 style="font-family:var(--font-display,Georgia,serif);color:var(--brand)">Site rustig (PO mockups)</h1>
+        <p class="site-rustig__lead">Marketing en juridische schermen. NL en EN alleen.</p>
+        <ul class="site-rustig__index">
+            @foreach (var link in IndexLinks)
+            {
+                <li><a href="@link.Href">@link.Label</a></li>
+            }
+        </ul>
+    </div>
+}
+else if (_screen == "partners")
+{
+    <SiteRustigPublicShell ScreenId="partners"
+                           Lang="@_lang"
+                           HeroJpg="/images/candidate-illustrated/spots/werkgever.jpg"
+                           HeroArtPosition="50% 40%"
+                           ShowFooter="true">
+        <p class="site-rustig__eyebrow">@(En ? "For employers" : "Voor werkgevers")</p>
+        <h1>@SiteRustigMockupCopy.PartnersTitle(_lang)</h1>
+        <p class="site-rustig__lead">@SiteRustigMockupCopy.PartnersLead(_lang)</p>
+        <div class="site-rustig__actions">
+            <span class="site-rustig__btn site-rustig__btn--primary">@(En ? "Register your company" : "Bedrijf registreren")</span>
+            <span class="site-rustig__btn site-rustig__btn--ghost">@(En ? "See the rates" : "Bekijk de tarieven")</span>
+        </div>
+        <div class="site-rustig__grid-3">
+            <article class="site-rustig__card">
+                <h2>@(En ? "Nearby candidates" : "Kandidaten dichtbij")</h2>
+                <p>@(En ? "Reach people on bike, transit or car time." : "Bereik mensen op fiets-, OV- of autotijd.")</p>
+            </article>
+            <article class="site-rustig__card">
+                <h2>@(En ? "Pay per vacancy" : "Betaal per vacature")</h2>
+                <p>@(En ? "Tokens only when you publish." : "Tokens alleen als je plaatst.")</p>
+            </article>
+            <article class="site-rustig__card">
+                <h2>@(En ? "Start bonus" : "Startbonus")</h2>
+                <p>@(En ? "Free highlight tokens for new partners." : "Gratis uitlicht-tokens voor nieuwe partners.")</p>
+            </article>
+        </div>
+    </SiteRustigPublicShell>
+}
+else if (_screen == "gratis-dna")
+{
+    <SiteRustigPublicShell ScreenId="gratis-dna"
+                           Lang="@_lang"
+                           HeroJpg="/images/candidate-illustrated/spots/dna.jpg"
+                           HeroArtPosition="52% 38%"
+                           ShowFooter="true"
+                           MainClass="site-rustig__main--wide">
+        <p class="site-rustig__eyebrow">@(En ? "Free · no account" : "Gratis · zonder account")</p>
+        <h1>@SiteRustigMockupCopy.GratisDnaTitle(_lang)</h1>
+        <p class="site-rustig__lead">@SiteRustigMockupCopy.GratisDnaLead(_lang)</p>
+        <div class="site-rustig__dna-blocks">
+            <div class="site-rustig__dna-block">
+                <span aria-hidden="true">1</span>
+                <div>
+                    <strong>@(En ? "How you work" : "Hoe je werkt")</strong>
+                    <span>@(En ? "Five questions" : "Vijf vragen")</span>
+                </div>
+            </div>
+            <div class="site-rustig__dna-block">
+                <span aria-hidden="true">2</span>
+                <div>
+                    <strong>@(En ? "What you enjoy" : "Wat je leuk vindt")</strong>
+                    <span>@(En ? "Five questions" : "Vijf vragen")</span>
+                </div>
+            </div>
+            <div class="site-rustig__dna-block">
+                <span aria-hidden="true">3</span>
+                <div>
+                    <strong>@(En ? "Work atmosphere" : "Werksfeer")</strong>
+                    <span>@(En ? "Five questions" : "Vijf vragen")</span>
+                </div>
+            </div>
+            <div class="site-rustig__dna-block">
+                <span aria-hidden="true">4</span>
+                <div>
+                    <strong>@(En ? "Your values" : "Jouw waarden")</strong>
+                    <span>@(En ? "Five questions" : "Vijf vragen")</span>
+                </div>
+            </div>
+        </div>
+        <span class="site-rustig__btn site-rustig__btn--primary">@(En ? "Start the test" : "Start de test")</span>
+    </SiteRustigPublicShell>
+}
+else if (_screen == "bedrijf-registreren")
+{
+    <SiteRustigPublicShell ScreenId="bedrijf-registreren"
+                           Lang="@_lang"
+                           HeroJpg="/images/candidate-illustrated/spots/werkgever.jpg"
+                           HeroArtPosition="48% 42%"
+                           ShowFooter="true">
+        <h1>@SiteRustigMockupCopy.RegisterTitle(_lang)</h1>
+        <p class="site-rustig__lead">@SiteRustigMockupCopy.RegisterLead(_lang)</p>
+        <div class="site-rustig__register-wrap">
+            <div class="site-rustig__register-card">
+                <div class="site-rustig__field">
+                    <label for="mock-kvk">@(En ? "Company name or KVK number" : "Bedrijfsnaam of KVK-nummer")</label>
+                    <input id="mock-kvk" type="text" value="Bemer IT Solutions" readonly />
+                </div>
+                <span class="site-rustig__btn site-rustig__btn--primary">@(En ? "Search" : "Zoeken")</span>
+                <p class="site-rustig__lead" style="margin-top:1rem;font-size:0.8125rem">
+                    @(En ? "Step 1 of 5 · KVK verification" : "Stap 1 van 5 · KVK-controle")
+                </p>
+            </div>
+        </div>
+    </SiteRustigPublicShell>
+}
+else if (_screen == "voorwaarden")
+{
+    <SiteRustigPublicShell ScreenId="voorwaarden"
+                           Lang="@_lang"
+                           HeroJpg="/images/candidate-illustrated/bedrijvenkaart-hero-desktop.jpg"
+                           HeroArtPosition="55% 35%"
+                           ShowFooter="true"
+                           MainClass="site-rustig__main--narrow">
+        <h1>@SiteRustigMockupCopy.TermsTitle(_lang)</h1>
+        <p class="site-rustig__lead">@SiteRustigMockupCopy.TermsLead(_lang)</p>
+        <div class="site-rustig__lang-pills" aria-label="Taal van het document">
+            <span class="is-on">NL</span>
+            <span>EN</span>
+        </div>
+        <div class="site-rustig__legal-excerpt">
+            <h2>@(En ? "1. Who these terms apply to" : "1. Voor wie gelden deze voorwaarden")</h2>
+            <p>@(En
+                ? "These terms apply to employers and partners who publish vacancies via Lobsy."
+                : "Deze voorwaarden gelden voor werkgevers en partners die via Lobsy vacatures plaatsen.")</p>
+            <h2>@(En ? "2. Tokens and publication" : "2. Tokens en publicatie")</h2>
+            <p>@(En
+                ? "You purchase tokens to publish and highlight vacancies. Prices are shown before you confirm."
+                : "Je koopt tokens om vacatures te plaatsen en uit te lichten. Prijzen zie je voordat je bevestigt.")</p>
+        </div>
+    </SiteRustigPublicShell>
+}
+else if (_screen == "footer")
+{
+    <SiteRustigPublicShell ScreenId="footer" Lang="@_lang" ShowFooter="true">
+        <p class="site-rustig__eyebrow">Mockup</p>
+        <h1>@(En ? "Footer" : "Footer")</h1>
+        <p class="site-rustig__lead">@(En ? "Two columns, logo-E, sources line and company line without address." : "Twee kolommen, logo-E, bronnenregel en bedrijfsregel zonder adres.")</p>
+    </SiteRustigPublicShell>
+}
+else if (_screen == "toegankelijkheid")
+{
+    <SiteRustigPublicShell ScreenId="toegankelijkheid"
+                           Lang="@_lang"
+                           HeroJpg="/images/diversiteit/figuur-inclusief-kantoor.jpg"
+                           HeroArtPosition="50% 40%"
+                           ShowFooter="true"
+                           MainClass="site-rustig__main--narrow">
+        <h1>@SiteRustigMockupCopy.A11yTitle(_lang)</h1>
+        <p class="site-rustig__lead">@SiteRustigMockupCopy.A11yLead(_lang)</p>
+        <div class="site-rustig__a11y">
+            <p>@(En
+                ? "We design Lobsy so more people can find work that fits them: readable text, calm colours and clear steps."
+                : "We ontwerpen Lobsy zodat meer mensen werk vinden dat bij hen past: leesbare tekst, rustige kleuren en duidelijke stappen.")</p>
+            <p>@(En
+                ? "Something hard to use? Tell us what you tried to do and on which page. We read every message and fix what we can."
+                : "Iets lastig te gebruiken? Vertel wat je wilde doen en op welke pagina. We lezen elk bericht en lossen op wat we kunnen.")</p>
+            <p><strong>@(En ? "Report a problem" : "Meld een probleem"):</strong> privacy@lobsy.nl</p>
+        </div>
+    </SiteRustigPublicShell>
+}
+else if (_screen == "onboarding-start")
+{
+    <SiteRustigPublicShell ScreenId="onboarding-start"
+                           Lang="@_lang"
+                           HeroJpg="/images/onboarding/finale-hero.jpg"
+                           HeroArtPosition="50% 45%"
+                           ShowFooter="false">
+        <div class="site-rustig__start">
+            <img class="site-rustig__start-logo"
+                 src="@Jobsy.Web.Media.BrandImages.StackedSvg"
+                 alt="Lobsy"
+                 data-logo-fallback="off"
+                 decoding="async" />
+            <h1>@SiteRustigMockupCopy.StartTitle(_lang, "Sam")</h1>
+            <p class="site-rustig__lead">@SiteRustigMockupCopy.StartLead(_lang)</p>
+            <div class="site-rustig__start-art" aria-hidden="true">
+                <img src="/images/onboarding/kennismaken.jpg" alt="" width="640" height="360" decoding="async" />
+                <img src="/images/onboarding/wie-ben-jij-reis-lobsy.jpg" alt="" width="640" height="360" decoding="async" />
+            </div>
+            <div class="site-rustig__phase-cards">
+                <article><span>1</span><div><strong>@(En ? "About you" : "Over jou")</strong><small>@(En ? "Where you live and when you can work" : "Waar je woont en wanneer je kunt")</small></div><small>3 @(En ? "steps" : "stappen")</small></article>
+                <article><span>2</span><div><strong>@(En ? "Background" : "Achtergrond")</strong><small>@(En ? "Optional" : "Optioneel")</small></div><small></small></article>
+                <article><span>3</span><div><strong>@(En ? "Who you are" : "Wie ben jij")</strong><small>@(En ? "Four short tests" : "Vier korte tests")</small></div><small>± 10 min</small></article>
+            </div>
+            <span class="site-rustig__btn site-rustig__btn--primary">@(En ? "Let's go" : "Aan de slag")</span>
+        </div>
+    </SiteRustigPublicShell>
+}
+else
+{
+    <p>Onbekend scherm. <a href="/mockups/site-rustig">Terug naar index</a>.</p>
+}
+
+@code {
+    private string _screen = "index";
+    private string? _lang;
+
+    [Parameter] public string? Screen { get; set; }
+
+    [SupplyParameterFromQuery(Name = "lang")]
+    public string? LangQuery { get; set; }
+
+    private bool En => SiteRustigMockupCopy.IsEn(_lang);
+
+    protected override void OnParametersSet()
+    {
+        _screen = string.IsNullOrWhiteSpace(Screen) ? "index" : Screen.Trim().ToLowerInvariant();
+        _lang = string.IsNullOrWhiteSpace(LangQuery) ? "nl" : LangQuery.Trim().ToLowerInvariant();
+        if (_lang is not ("nl" or "en"))
+        {
+            _lang = "nl";
+        }
+    }
+
+    private static readonly (string Href, string Label)[] IndexLinks =
+    [
+        ("/mockups/site-rustig/partners", "Partners"),
+        ("/mockups/site-rustig/gratis-dna", "Gratis werk-DNA test"),
+        ("/mockups/site-rustig/bedrijf-registreren", "Bedrijf registreren"),
+        ("/mockups/site-rustig/voorwaarden", "Algemene voorwaarden"),
+        ("/mockups/site-rustig/footer", "Footer"),
+        ("/mockups/site-rustig/toegankelijkheid", "Toegankelijkheid"),
+        ("/mockups/site-rustig/onboarding-start", "Onboarding start"),
+    ];
+}
