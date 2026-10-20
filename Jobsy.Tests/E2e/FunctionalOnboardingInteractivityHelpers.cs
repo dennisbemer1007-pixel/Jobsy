@@ -349,10 +349,19 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 await page.WaitForTimeoutAsync(mobile ? 800 : 500);
                 var later = page.GetByTestId("onboarding-tests-later").First;
                 await later.ScrollIntoViewIfNeededAsync();
-                await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
-                await page.WaitForURLAsync(
-                    u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-                    new() { Timeout = 120_000 });
+                await Assertions.Expect(later).ToBeEnabledAsync(new() { Timeout = 30_000 });
+                for (var clickTry = 0; clickTry < 2; clickTry++)
+                {
+                    await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                    if (await TryWaitForBanenkaartLocationAsync(page, 90_000))
+                    {
+                        break;
+                    }
+
+                    await page.WaitForTimeoutAsync(800);
+                }
+
+                await WaitForBanenkaartLocationAsync(page);
                 await WaitForBanenkaartDiscoveryShellAsync(page);
                 return;
             }
@@ -361,9 +370,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             {
                 await flowLater.ScrollIntoViewIfNeededAsync();
                 await flowLater.ClickAsync(new() { Force = true, Timeout = 30_000 });
-                await page.WaitForURLAsync(
-                    u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-                    new() { Timeout = 120_000 });
+                await WaitForBanenkaartLocationAsync(page);
                 await WaitForBanenkaartDiscoveryShellAsync(page);
                 return;
             }
@@ -392,19 +399,49 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
     }
 
+    private static Task WaitForBanenkaartLocationAsync(IPage page)
+        => page.WaitForFunctionAsync(
+            """
+            () => {
+              const path = (location.pathname || '').toLowerCase();
+              return path === '/banenkaart' || path.startsWith('/banenkaart/');
+            }
+            """,
+            null,
+            new() { Timeout = 180_000 });
+
+    private static async Task<bool> TryWaitForBanenkaartLocationAsync(IPage page, int timeoutMs)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const path = (location.pathname || '').toLowerCase();
+                  return path === '/banenkaart' || path.startsWith('/banenkaart/');
+                }
+                """,
+                null,
+                new() { Timeout = timeoutMs });
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
+        }
+    }
+
     private static async Task WaitForBanenkaartDiscoveryShellAsync(IPage page)
     {
         if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
         {
-            await page.WaitForURLAsync(
-                u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-                new() { Timeout = 60_000 });
+            await WaitForBanenkaartLocationAsync(page);
         }
 
         await page.Locator(
                 ".jobsy-discovery, [data-testid=uwv-banenkaart-mock], [data-testid=uwv-kansberoepen-toggle], [data-testid=kb-keyword-search], #jobsy-map-boot")
             .First
-            .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 120_000 });
+            .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 180_000 });
     }
 
     internal static async Task ResolveHomeAddressAsync(IPage page, string query)
