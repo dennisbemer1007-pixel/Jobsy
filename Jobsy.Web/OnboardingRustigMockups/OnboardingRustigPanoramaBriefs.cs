@@ -22,7 +22,7 @@ public static class OnboardingRustigPanoramaBriefs
     };
 
     public const string CompositionRules =
-        "Wide establishing 16:9. Warm Lobsy cream #F7F4F0 flat illustration. " +
-        "Every person FULL BODY head to toe; figures max 30% of frame height; " +
-        "ground at ~85%; top 55% empty cream sky. Continuous edge-to-edge scene. No text.";
+        "Ultra-wide panoramic banner. Warm Lobsy cream #F7F4F0 flat illustration NOT photo. " +
+        "Small full-body figures on a ground line in the vertical middle; generous sky above; " +
+        "scenery continuous to left and right edges. Every person FULL BODY head to toe. No text.";
 }

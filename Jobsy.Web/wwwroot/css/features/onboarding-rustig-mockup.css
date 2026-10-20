@@ -2,7 +2,7 @@
 
 .app-shell--onboarding-rustig-mockup {
   --ob-rustig-sidebar: 300px;
-  --ob-rustig-hero-h: 110px;
+  --ob-rustig-hero-h: 130px;
   background: var(--bg);
 }
 
@@ -161,12 +161,12 @@
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
-  object-position: center center;
+  object-position: center 48%;
 }
 
 @media (min-width: 1024px) {
   .app-shell--onboarding-rustig-mockup {
-    --ob-rustig-hero-h: 160px;
+    --ob-rustig-hero-h: 170px;
   }
 }
 
