@@ -14,6 +14,7 @@ TOP_MIN = 0.10
 BOTTOM_MAX = 0.93
 PERSON_CLS = 0
 MIN_LOBSTER_GAP_PX = 10
+NO_LOBSTER_SLUGS: frozenset[str] = frozenset({"step-02"})
 
 ROOT = Path(__file__).resolve().parents[2]
 _layout_path = ROOT / "tools/scripts/onboarding_rustig_lobster_layout.py"
@@ -107,7 +108,7 @@ def main() -> None:
             all_ok = False
         if not validate_persons(persons, w, h, path.name):
             all_ok = False
-        if args.slug and args.variant:
+        if args.slug and args.variant and args.slug not in NO_LOBSTER_SLUGS:
             if not validate_lobster(im, args.slug, args.variant, persons, path.name):
                 all_ok = False
     if not all_ok:

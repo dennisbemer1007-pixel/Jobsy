@@ -28,6 +28,8 @@ Y_MIN = lob_layout.Y_MIN
 Y_MAX = lob_layout.Y_MAX
 PLACEMENTS = lob_layout.PLACEMENTS
 LOBSTER_PX_SLUG = lob_layout.LOBSTER_PX_SLUG
+# Dennis: no mascot composite on these slugs (illustration only).
+NO_LOBSTER_SLUGS: frozenset[str] = frozenset({"step-02"})
 
 
 def load_sprite(path: Path) -> Image.Image:
@@ -103,6 +105,9 @@ def main() -> None:
         else [("desktop", DESK_BAND_PX, DESK_LOBSTER_PX), ("mobile", MOB_BAND_PX, MOB_LOBSTER_PX)]
     )
     for slug in slugs:
+        if slug in NO_LOBSTER_SLUGS:
+            print(f"skip {slug}: NO_LOBSTER_SLUGS")
+            continue
         desk_xy, mob_xy = PLACEMENTS[slug]
         for variant, band, lob in variants:
             xy = mob_xy if variant == "mobile" else desk_xy
