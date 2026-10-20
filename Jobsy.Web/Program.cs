@@ -142,6 +142,7 @@ builder.Services.AddSingleton<Jobsy.Web.Features.IReferenceVerificationFeatureGa
 builder.Services.AddSingleton<Jobsy.Web.Features.ITestJourneyIllustrationGate, Jobsy.Web.Features.TestJourneyIllustrationGate>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IChatContextGreetingGate, Jobsy.Web.Features.ChatContextGreetingGate>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IOnboardingFinaleV2Gate, Jobsy.Web.Features.OnboardingFinaleV2Gate>();
+builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();
 builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
 builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();

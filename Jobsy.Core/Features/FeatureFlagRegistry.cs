@@ -36,6 +36,7 @@ public static class FeatureFlagRegistry
     public static IReadOnlySet<string> PendingAdminCatalogKeys { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
         "DreamJobIllustrationEnabled", // PR #724
+        "CandidateCompactHeroEnabled", // compact hero rollout — config Jobsy:CandidateCompactHeroEnabled until admin field lands
     };
 
     public static IReadOnlyList<FeatureFlagDefinition> All { get; } = Build();

@@ -46,6 +46,8 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             sp.GetRequiredService<JobsyApiClient>(),
             sp.GetRequiredService<ILogger<GratisDnaMergeService>>()));
         Services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate());
+        Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
+        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
     }
 
     [Fact]

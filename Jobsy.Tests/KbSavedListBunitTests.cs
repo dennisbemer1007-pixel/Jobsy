@@ -45,6 +45,7 @@ public class KbSavedListBunitTests : BunitContext
             BaseAddress = new Uri("http://localhost/")
         }));
         Services.AddLogging();
+        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
         this.AddBunitPersistentComponentState();
     }
 
