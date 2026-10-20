@@ -148,6 +148,20 @@
   pointer-events: none;
 }
 
+.ob-rustig__hero-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 58%,
+    color-mix(in srgb, var(--bg) 35%, transparent) 82%,
+    var(--bg) 100%
+  );
+}
+
 .ob-rustig__hero-picture {
   display: block;
   inline-size: 100%;
@@ -162,6 +176,11 @@
   block-size: 100%;
   object-fit: fill;
   object-position: center center;
+}
+
+.ob-rustig[data-ob-rustig-screen="step-04"] .ob-rustig__hero-img {
+  object-fit: cover;
+  object-position: center 100%;
 }
 
 @media (min-width: 1024px) {
