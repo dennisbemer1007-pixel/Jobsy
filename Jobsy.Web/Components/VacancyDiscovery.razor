@@ -8,6 +8,7 @@
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject MatchVacancyService MatchVacancies
 @inject CandidateMatchProfileService MatchProfile
+@inject IUwvFeaturesGate UwvGate
 @implements IAsyncDisposable
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
@@ -15,12 +16,15 @@
 @using Jobsy.Core.ValueObjects
 @using Jobsy.Web.Components.Discovery
 @using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.Components.UwvFeatures
 @using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
 @using Jobsy.Web.Components.Match
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Models
-@using Jobsy.Web.Services
 @using Jobsy.Web.Media
+@using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Text.Json
@@ -65,7 +69,7 @@
                            enterkeyhint="search"
                            autocomplete="off"
                            data-testid="kb-keyword-search"
-                           placeholder="@Culture["Kb.Filter.KeywordPlaceholder"]"
+                           placeholder="@KeywordPlaceholder"
                            value="@(_searchDraft ?? _searchQuery ?? "")"
                            @oninput="OnSearchInput"
                            @onkeydown="OnSearchKeyDown" />
@@ -133,6 +137,10 @@
                         <p class="kb-filter-bar__count-sub muted">@ResultCountSubtitle</p>
                     }
                 </div>
+                @if (_uwvMockup)
+                {
+                    <UwvKansberoepenMapToggle On="_uwvKansLayerOn" OnChanged="OnUwvKansLayerChangedAsync" />
+                }
                 @if (!_isCandidate || _openForWork)
                 {
                     <a class="kb-match-button kb-match-button--icon jobsy-action--match kb-filter-bar__match"
@@ -214,7 +222,7 @@
                            enterkeyhint="search"
                            autocomplete="off"
                            data-testid="kb-keyword-search-desktop"
-                           placeholder="@Culture["Kb.Filter.KeywordPlaceholder"]"
+                           placeholder="@KeywordPlaceholder"
                            value="@(_searchDraft ?? _searchQuery ?? "")"
                            @oninput="OnSearchInput"
                            @onkeydown="OnSearchKeyDown" />
@@ -234,6 +242,10 @@
                         <span class="jobsy-action__badge" data-testid="kb-filters-badge">@ActiveFilterCount</span>
                     }
                 </button>
+                @if (_uwvMockup)
+                {
+                    <UwvKansberoepenMapToggle On="_uwvKansLayerOn" OnChanged="OnUwvKansLayerChangedAsync" />
+                }
                 @if (!_isCandidate || _openForWork)
                 {
                     <a class="kb-match-button jobsy-action--match kb-panel-head__match"
@@ -269,15 +281,15 @@
             }
         </div>
 
-        @if (_loading && _vacancies.Count == 0)
+        @if (_loading && _vacancies.Count == 0 && !(_uwvMockup && _uwvKansLayerOn))
         {
             <p class="state-message">@Culture["Discovery.Loading"]</p>
         }
-        else if (!string.IsNullOrEmpty(_error) && _vacancies.Count == 0)
+        else if (!string.IsNullOrEmpty(_error) && _vacancies.Count == 0 && !(_uwvMockup && _uwvKansLayerOn))
         {
             <p class="state-message error">@_error</p>
         }
-        else if (_vacancies.Count == 0)
+        else if (_vacancies.Count == 0 && !(_uwvMockup && _uwvKansLayerOn))
         {
             <p class="state-message">
                 @if (_origin is null)
@@ -367,16 +379,36 @@
                         }
                         @foreach (var vacancy in VisibleVacancies)
                         {
-                            <VacancyCard @key="vacancy.Id"
-                                         Vacancy="vacancy"
-                                         IsHighlighted="vacancy.IsHighlighted"
-                                         IsPressed="_pressedVacancyId == vacancy.Id"
-                                         Eager="cardIndex == 0"
-                                         WageText="@FormatWage(vacancy)"
-                                         TravelText="@FormatCardTravel(vacancy)"
-                                         OnSelect="OnSelect"
-                                         OnOpen="OnOpenVacancy"
-                                         OnExplainMatch="OpenMatchExplain" />
+                            if (_uwvMockup && _uwvKansLayerOn)
+                            {
+                                var kansMeta = UwvKansMetaFor(vacancy);
+                                <VacancyCard @key="vacancy.Id"
+                                             Vacancy="vacancy"
+                                             IsPressed="_pressedVacancyId == vacancy.Id"
+                                             Eager="cardIndex == 0"
+                                             WageText="@FormatWage(vacancy)"
+                                             TravelText="@FormatCardTravel(vacancy)"
+                                             UwvKansberoepBadge="true"
+                                             UwvBaangarantieBadge="@kansMeta.Baangarantie"
+                                             UwvKansberoepBadgeEnglish="@UwvMockupCopy.IsEnglish(Culture.Language)"
+                                             PhotoObjectPosition="@UwvKansPhotoObjectPosition(vacancy)"
+                                             OnSelect="OnSelect"
+                                             OnOpen="OnOpenVacancy"
+                                             OnExplainMatch="OpenMatchExplain" />
+                            }
+                            else
+                            {
+                                <VacancyCard @key="vacancy.Id"
+                                             Vacancy="vacancy"
+                                             IsHighlighted="vacancy.IsHighlighted"
+                                             IsPressed="_pressedVacancyId == vacancy.Id"
+                                             Eager="cardIndex == 0"
+                                             WageText="@FormatWage(vacancy)"
+                                             TravelText="@FormatCardTravel(vacancy)"
+                                             OnSelect="OnSelect"
+                                             OnOpen="OnOpenVacancy"
+                                             OnExplainMatch="OpenMatchExplain" />
+                            }
                             cardIndex++;
                         }
                         @if (HasMoreVacancyCards)
@@ -395,15 +427,35 @@
                         }
                         @foreach (var vacancy in VisibleVacancies)
                         {
-                            <KbListRow @key="vacancy.Id"
-                                       Vacancy="vacancy"
-                                       Compact="@(!_wideViewport)"
-                                       IsPressed="_pressedVacancyId == vacancy.Id"
-                                       Eager="rowIndex == 0"
-                                       Transport="@_selectedTransport"
-                                       TravelApprox="@(string.Equals(_selectedTransport, "OV", StringComparison.OrdinalIgnoreCase) || !string.Equals(_isoMode, "real", StringComparison.Ordinal))"
-                                       WageText="@FormatWage(vacancy)"
-                                       OnOpen="OnOpenVacancy" />
+                            if (_uwvMockup && _uwvKansLayerOn)
+                            {
+                                var kansMeta = UwvKansMetaFor(vacancy);
+                                <VacancyCard @key="vacancy.Id"
+                                             Vacancy="vacancy"
+                                             IsPressed="_pressedVacancyId == vacancy.Id"
+                                             Eager="rowIndex == 0"
+                                             WageText="@FormatWage(vacancy)"
+                                             TravelText="@FormatCardTravel(vacancy)"
+                                             UwvKansberoepBadge="true"
+                                             UwvBaangarantieBadge="@kansMeta.Baangarantie"
+                                             UwvKansberoepBadgeEnglish="@UwvMockupCopy.IsEnglish(Culture.Language)"
+                                             PhotoObjectPosition="@UwvKansPhotoObjectPosition(vacancy)"
+                                             OnSelect="OnSelect"
+                                             OnOpen="OnOpenVacancy"
+                                             OnExplainMatch="OpenMatchExplain" />
+                            }
+                            else
+                            {
+                                <KbListRow @key="vacancy.Id"
+                                           Vacancy="vacancy"
+                                           Compact="@(!_wideViewport)"
+                                           IsPressed="_pressedVacancyId == vacancy.Id"
+                                           Eager="rowIndex == 0"
+                                           Transport="@_selectedTransport"
+                                           TravelApprox="@(string.Equals(_selectedTransport, "OV", StringComparison.OrdinalIgnoreCase) || !string.Equals(_isoMode, "real", StringComparison.Ordinal))"
+                                           WageText="@FormatWage(vacancy)"
+                                           OnOpen="OnOpenVacancy" />
+                            }
                             rowIndex++;
                         }
                         @if (HasMoreVacancyCards)
@@ -462,7 +514,7 @@
     </aside>
 
     <section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]">
-        @if (RendererInfo.IsInteractive && _mapPainted && (_vacancies.Count > 0 || ShowTopMatchTile))
+        @if (RendererInfo.IsInteractive && _mapPainted && (_vacancies.Count > 0 || ShowTopMatchTile || (_uwvMockup && _uwvKansLayerOn && _uwvKansVacancies.Count > 0)))
         {
             <div class="map-pane__top-chrome">
                 <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
@@ -1036,6 +1088,9 @@
     private const int HighlightCarouselCap = 8;
     private int _visibleCardCount = VacancyCardPageSize;
     private bool _filtersOpen;
+    private bool _uwvMockup;
+    private bool _uwvKansLayerOn = true;
+    private List<VacancyListItem> _uwvKansVacancies = [];
     private bool _legendOpen;
     private bool _branchMenuOpen;
     private bool _categoryMenuOpen;
@@ -1328,10 +1383,12 @@
     }
 
     private IEnumerable<VacancyListItem> VisibleVacancies =>
-        SortedVacancies.Take(_visibleCardCount);
+        (_uwvMockup && _uwvKansLayerOn ? _uwvKansVacancies : SortedVacancies).Take(_visibleCardCount);
 
     private bool HasMoreVacancyCards =>
-        ShouldRenderVacancyCards && (SortedVacancies.Count > _visibleCardCount || _discoverHasMore);
+        ShouldRenderVacancyCards
+        && !(_uwvMockup && _uwvKansLayerOn)
+        && (SortedVacancies.Count > _visibleCardCount || _discoverHasMore);
 
     private int RemainingVacancyCardCount =>
         Math.Max(0, SortedVacancies.Count - _visibleCardCount);
@@ -1623,8 +1680,15 @@
         || _ageYears is not null
         || (_isCandidate && _minMatchPercent > 0);
 
+    private string KeywordPlaceholder =>
+        _uwvMockup
+            ? UwvMockupCopy.Banenkaart.KeywordPlaceholder(Culture.Language)
+            : Culture["Kb.Filter.KeywordPlaceholder"];
+
     private string ResultCountHeading =>
-        Culture.Format("Kb.Filter.ResultCount", _vacancies.Count);
+        _uwvMockup && _uwvKansLayerOn
+            ? UwvMockupCopy.Banenkaart.KansResultCount(Culture.Language, _uwvKansVacancies.Count)
+            : Culture.Format("Kb.Filter.ResultCount", _vacancies.Count);
 
     private string? ResultCountSubtitle =>
         _origin is not null
@@ -1649,6 +1713,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _uwvMockup = await UwvGate.IsEnabledAsync();
+        if (_uwvMockup)
+        {
+            RebuildUwvKansVacancies();
+        }
+
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
         ApplyWorkTypeFromQuery();
@@ -2409,7 +2479,10 @@
         try
         {
             // Start pins HTTP immediately (no MapLibre required) so first pins beat the circuit.
-            await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
+            if (!(_uwvMockup && _uwvKansLayerOn))
+            {
+                await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
+            }
         }
         catch (JSException)
         {
@@ -2541,7 +2614,7 @@
                 ["travel"] = TravelMapOptions(),
                 ["highlightSeed"] = _highlightShuffleSeed,
                 ["preferFilledLocation"] = preferFilledLocation,
-                ["pinsUrl"] = BuildPinsApiUrl(),
+                ["pinsUrl"] = _uwvMockup && _uwvKansLayerOn ? "" : BuildPinsApiUrl(),
                 ["syncViewportList"] = true,
                 ["labels"] = MapUiLabels(),
                 ["illustratedPopup"] = true,
@@ -2569,6 +2642,7 @@
             await Js.InvokeVoidAsync("jobMap.init", "job-map", Array.Empty<object>(), options);
             _mapReady = true;
             _mapPainted = true;
+            await ApplyUwvKansPinsAsync();
             await InvokeAsync(StateHasChanged);
             await TryFocusCompanyOnMapAsync();
         }
@@ -2767,7 +2841,14 @@
             {
                 if (reloadMapPins)
                 {
-                    await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
+                    if (_uwvMockup && _uwvKansLayerOn)
+                    {
+                        await ApplyUwvKansPinsAsync();
+                    }
+                    else
+                    {
+                        await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
+                    }
                 }
 
                 var travelKey = BuildMapTravelSyncKey();
@@ -3139,8 +3220,90 @@
         return "/api/vacancies/pins?" + string.Join("&", qs);
     }
 
+    private void RebuildUwvKansVacancies()
+    {
+        var lat = _origin?.Latitude ?? 52.0128;
+        var lng = _origin?.Longitude ?? 4.3612;
+        _uwvKansVacancies = UwvBanenkaartMockBuilder
+            .BuildVacancies(UwvMockupCopy.IsEnglish(Culture.Language), lat, lng)
+            .ToList();
+    }
+
+    private (string Prospect, bool Baangarantie) UwvKansMetaFor(VacancyListItem vacancy)
+    {
+        var idx = _uwvKansVacancies.FindIndex(v => v.Id == vacancy.Id);
+        if (idx < 0)
+        {
+            idx = 0;
+        }
+
+        var card = UwvMockupData.Kansberoepen[Math.Min(idx, UwvMockupData.Kansberoepen.Count - 1)];
+        var en = UwvMockupCopy.IsEnglish(Culture.Language);
+        return (en ? card.ProspectEn : card.ProspectNl, card.Baangarantie);
+    }
+
+    private static string? UwvKansPhotoObjectPosition(VacancyListItem vacancy) =>
+        vacancy.Id.ToString("D") switch
+        {
+            "c1000001-0000-0000-0000-000000000001" => "26% 48%",
+            "c1000003-0000-0000-0000-000000000003" => "74% 48%",
+            _ => "50% 48%",
+        };
+
+    private async Task OnUwvKansLayerChangedAsync(bool on)
+    {
+        _uwvKansLayerOn = on;
+        await ApplyUwvKansPinsAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ApplyUwvKansPinsAsync()
+    {
+        if (!_uwvMockup || !_mapReady)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_uwvKansLayerOn)
+            {
+                RebuildUwvKansVacancies();
+                var pins = UwvBanenkaartMockBuilder.BuildPinPayload(_uwvKansVacancies);
+                await Js.InvokeVoidAsync("jobMap.setVacancies", pins);
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
     private async Task ResolveLaunchOriginAsync()
     {
+        if (_uwvMockup)
+        {
+            _origin = new OriginPoint { Latitude = 52.0128, Longitude = 4.3612 };
+            _addressQuery = Culture.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
+                ? "Delft area (sample)"
+                : "Regio Delft (voorbeeld)";
+            _selectedTransport = KbMapStart.DefaultTransport;
+            _maxTravelMinutes = KbMapStart.DefaultMaxTravelMinutes;
+            _showStartPrompt = false;
+            _startPromptDismissed = true;
+            RebuildUwvKansVacancies();
+            return;
+        }
+
         KbMapStart.OriginPoint? urlOrigin = null;
         if (_origin is not null)
         {

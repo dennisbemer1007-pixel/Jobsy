@@ -1,0 +1,80 @@
+@namespace Jobsy.Web.Components.Candidate
+
+<header class="@RootClass">
+    <div class="cand-compact-hero__copy cand-hero__copy">
+        @if (CopyContent is not null)
+        {
+            @CopyContent
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(Eyebrow))
+            {
+                <span class="cand-hero__eyebrow @(CoralEyebrow ? "cand-hero__eyebrow--coral" : null)">@Eyebrow</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <h1 tabindex="@TitleTabIndex">@Title</h1>
+            }
+            @if (!string.IsNullOrWhiteSpace(Lead))
+            {
+                <p class="cand-hero__lead">@Lead</p>
+            }
+        }
+        @ChildContent
+    </div>
+    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    {
+        <div class="cand-compact-hero__art cand-hero__compact-c-art" aria-hidden="true">
+            <img src="@ArtUrl"
+                 alt=""
+                 loading="eager"
+                 fetchpriority="high"
+                 decoding="async"
+                 data-testid="@ArtImageTestId" />
+        </div>
+    }
+</header>
+
+@code {
+    /// <summary>Shared compact hero (preview C): paspoort band token, 50/50 grid, soft art fade.</summary>
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool CoralEyebrow { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public string Layout { get; set; } = "page";
+    [Parameter] public int TitleTabIndex { get; set; } = -1;
+    [Parameter] public RenderFragment? CopyContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? ArtImageTestId
+        => Layout == "onboarding" ? "onboarding-illustration-img" : null;
+
+    private string RootClass
+    {
+        get
+        {
+            var parts = new List<string>
+            {
+                "cand-hero",
+                "cand-compact-hero",
+                "cand-hero--compact-preview-c",
+                Layout switch
+                {
+                    "onboarding" => "cand-compact-hero--onboarding",
+                    "career" => "cand-compact-hero--career",
+                    "passport" => "cand-compact-hero--passport",
+                    _ => "cand-compact-hero--page"
+                }
+            };
+            if (!string.IsNullOrWhiteSpace(CssClass))
+            {
+                parts.Add(CssClass);
+            }
+
+            return string.Join(' ', parts);
+        }
+    }
+}

@@ -750,6 +750,7 @@ public static class DependencyInjection
         services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<ReferenceConfirmationService>();
         services.AddScoped<ReferenceVerificationService>();
+        services.AddScoped<UwvCandidateToolkitService>();
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
         services.AddScoped<IFeedbackService, FeedbackService>();

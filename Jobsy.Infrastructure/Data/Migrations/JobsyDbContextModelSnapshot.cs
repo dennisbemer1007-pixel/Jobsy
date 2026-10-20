@@ -2365,6 +2365,79 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateUploadedCvs", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateUwvAdviseurShare", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SectionsJson")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash");
+
+                    b.HasIndex("UserId", "CreatedAtUtc");
+
+                    b.ToTable("CandidateUwvAdviseurShares", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateUwvToolkitState", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DrijfverenCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DrijfverenDriverKeysJson")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("OndernemerAnswersJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("OndernemerCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OndernemerOutcomeKey")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("CandidateUwvToolkitStates", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateVacancyCultureFit", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6040,6 +6113,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("SupportAccessNotifySubject")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("TestDepthValueMockupEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("TestEditModeEnabled")
                         .HasColumnType("boolean");
 
@@ -6056,6 +6132,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("UwvFeaturesEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("VacancyContentModerationEnabled")
                         .HasColumnType("boolean");

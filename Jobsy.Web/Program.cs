@@ -144,6 +144,7 @@ builder.Services.AddSingleton<Jobsy.Web.Features.IReferenceVerificationFeatureGa
 builder.Services.AddSingleton<Jobsy.Web.Features.ITestJourneyIllustrationGate, Jobsy.Web.Features.TestJourneyIllustrationGate>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IChatContextGreetingGate, Jobsy.Web.Features.ChatContextGreetingGate>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IOnboardingFinaleV2Gate, Jobsy.Web.Features.OnboardingFinaleV2Gate>();
+builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();
 builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
 builder.Services.AddScoped<CultureState>();
@@ -158,6 +159,8 @@ builder.Services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
     Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance); // KB-FALLBACK(D)
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.FeatureFlagEmployersSwitch>();
+builder.Services.AddScoped<Jobsy.Web.UwvFeatures.IUwvFeaturesGate, Jobsy.Web.UwvFeatures.UwvFeaturesGate>();
+builder.Services.AddSingleton<Jobsy.Web.UwvFeatures.IUwvKansberoepenCatalog, Jobsy.Web.UwvFeatures.UwvKansberoepenCatalog>();
 builder.Services.AddSingleton<Jobsy.Web.Hosting.IErrorChromeProvider, Jobsy.Web.Hosting.ErrorChromeProvider>();
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();

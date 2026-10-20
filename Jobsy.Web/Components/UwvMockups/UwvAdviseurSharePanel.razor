@@ -1,0 +1,166 @@
+@using Jobsy.Core.Uwv
+@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+
+<section class="uwv-adviseur uwv-adviseur--full opl-wrap" aria-labelledby="@_titleId" data-testid="uwv-adviseur-share">
+    <div class="uwv-adviseur__main">
+        <div class="uwv-adviseur__intro">
+            <h1 id="@_titleId" class="uwv-block__title uwv-adviseur__h1">@UwvMockupCopy.Adviseur.Title(Lang)</h1>
+            <p class="uwv-block__lead">@UwvMockupCopy.Adviseur.Lead(Lang)</p>
+            <p class="uwv-adviseur__benefit muted">
+                @(UwvMockupCopy.IsEnglish(Lang) ? "± 2 minutes · pick sections for your meeting" : "± 2 minuten · kies wat je meeneemt naar het gesprek")
+            </p>
+        </div>
+
+        <fieldset class="uwv-adviseur__pick">
+            <legend>@(UwvMockupCopy.IsEnglish(Lang) ? "Include in printout" : "Opnemen in printout")</legend>
+            @foreach (var section in UwvAdviseurSectionCatalog.All)
+            {
+                var label = UwvMockupCopy.IsEnglish(Lang) ? section.LabelEn : section.LabelNl;
+                var on = _selectedSections.Contains(section.Key);
+                <label class="uwv-toggle">
+                    <input type="checkbox" checked="@on" @onchange="e => ToggleSection(section.Key, e)" />
+                    <span class="uwv-toggle__track" aria-hidden="true"></span>
+                    <span class="uwv-toggle__label">@label</span>
+                </label>
+            }
+        </fieldset>
+    </div>
+
+    <div class="uwv-adviseur__preview-wrap">
+        <p class="uwv-adviseur__preview-label">@UwvMockupCopy.Adviseur.PreviewTitle(Lang)</p>
+        <UwvAdviseurShareDocument Lang="@Lang"
+                                  CandidateDisplayName="@_candidateName"
+                                  Sections="@PreviewSections"
+                                  OndernemerOutcomeKey="@_toolkit?.OndernemerOutcomeKey"
+                                  DrijfverenDriverKeys="@(_toolkit?.DrijfverenDriverKeys ?? [])"
+                                  VerifiedCompetences="@_verifiedCompetences" />
+        <div class="uwv-adviseur__actions uwv-adviseur__actions--under-preview">
+            <button type="button" class="btn btn-primary" @onclick="PrintAsync">@UwvMockupCopy.Adviseur.Print(Lang)</button>
+            <button type="button" class="btn btn-ghost" disabled="@_shareBusy" @onclick="CreateShareAsync">@UwvMockupCopy.Adviseur.ShareLink(Lang)</button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_shareUrl))
+        {
+            <div class="uwv-adviseur__share-url">
+                <label class="muted" for="uwv-share-url">@(UwvMockupCopy.IsEnglish(Lang) ? "Share link (48h)" : "Deellink (48 uur)")</label>
+                <input id="uwv-share-url" class="uwv-adviseur__share-input" readonly value="@_shareUrl" @onclick="SelectShareUrl" />
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(_shareError))
+        {
+            <p class="state-message" role="alert">@_shareError</p>
+        }
+        <p class="uwv-adviseur__tip muted">@UwvMockupCopy.Adviseur.MeetingTip(Lang)</p>
+    </div>
+</section>
+
+@code {
+    private string Lang => Culture.Language;
+    private readonly string _titleId = "uwv-adviseur-" + Guid.NewGuid().ToString("N")[..8];
+
+    private readonly HashSet<string> _selectedSections = new(StringComparer.Ordinal)
+    {
+        UwvAdviseurSectionKeys.Career,
+        UwvAdviseurSectionKeys.Drijfveren,
+        UwvAdviseurSectionKeys.Competences
+    };
+
+    private UwvToolkitStateDto? _toolkit;
+    private List<JobsyApiClient.VerifiedCompetenceItem> _verifiedCompetences = [];
+    private string _candidateName = "";
+    private string? _shareUrl;
+    private string? _shareError;
+    private bool _shareBusy;
+
+    private IReadOnlyList<string> PreviewSections =>
+        UwvAdviseurSectionKeys.All.Where(_selectedSections.Contains).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var profile = await Api.GetMyProfileAsync();
+        _candidateName = profile?.FullName?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(_candidateName))
+        {
+            _candidateName = UwvMockupCopy.SampleCandidateName(Lang);
+        }
+
+        _toolkit = await Api.GetUwvToolkitAsync();
+        _verifiedCompetences = (await Api.GetVerifiedCompetencesAsync()).ToList();
+    }
+
+    private void ToggleSection(string key, ChangeEventArgs e)
+    {
+        if (e.Value is bool on)
+        {
+            if (on)
+            {
+                _selectedSections.Add(key);
+            }
+            else
+            {
+                _selectedSections.Remove(key);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private Task PrintAsync() => Js.InvokeVoidAsync("print").AsTask();
+
+    private async Task CreateShareAsync()
+    {
+        _shareError = null;
+        if (_selectedSections.Count == 0)
+        {
+            _shareError = UwvMockupCopy.IsEnglish(Lang)
+                ? "Select at least one section."
+                : "Kies minimaal één onderdeel.";
+            return;
+        }
+
+        _shareBusy = true;
+        try
+        {
+            var lang = UwvMockupCopy.IsEnglish(Lang) ? "en" : "nl";
+            var created = await Api.CreateUwvAdviseurShareAsync(_selectedSections.ToArray(), lang);
+            if (created is null || string.IsNullOrWhiteSpace(created.Token))
+            {
+                _shareError = Culture["Common.Error"];
+                return;
+            }
+
+            _shareUrl = Navigation.ToAbsoluteUri($"/deel/uwv-adviseur/{created.Token}").ToString();
+        }
+        catch (Exception)
+        {
+            _shareError = Culture["Common.Error"];
+        }
+        finally
+        {
+            _shareBusy = false;
+        }
+    }
+
+    private async Task SelectShareUrl()
+    {
+        if (string.IsNullOrWhiteSpace(_shareUrl))
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", _shareUrl);
+        }
+        catch
+        {
+            // selection on click is enough for manual copy
+        }
+    }
+}

@@ -36,14 +36,21 @@ public static class PageAssetCatalog
 
     public static readonly string[] CandidatePublicCss =
     [
-        "css/features/banenkaart.css?v=20261018-02",
+        "css/features/banenkaart.css?v=20261019-01",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/bedrijvenkaart.css?v=20261019-04",
+        "css/features/bedrijvenkaart.css?v=20261019-10",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
+    ];
+
+    private static readonly string[] UwvMockupRouteCss =
+    [
+        "css/features/uwv-mockups.css?v=20261019-r8",
+        "css/features/banenkaart.css?v=20261018-02",
+        "css/features/banenkaart-illustrated.css?v=20261018-14",
     ];
 
     public static readonly string[] CandidateAppCss =
@@ -60,9 +67,9 @@ public static class PageAssetCatalog
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
-        "css/features/testresultaten.css?v=20261004-10",
+        "css/features/testresultaten.css?v=20261019-r5billus",
         "css/features/mijn-paspoort.css?v=20261018-06",
-        "css/features/kompas-illustrated.css?v=20261018-05",
+        "css/features/kompas-illustrated.css?v=20261019-02",
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
@@ -181,6 +188,11 @@ public static class PageAssetCatalog
             return Area.CandidatePublic | Area.CandidateApp | Area.Werkgever;
         }
 
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.CandidatePublic | Area.CandidateApp;
+        }
+
         if (path.StartsWith("/candidate/", StringComparison.Ordinal)
             || path.StartsWith("/vacancies/", StringComparison.Ordinal)
             || path is "/home" or "/ontdek" or "/candidate/match")
@@ -239,6 +251,26 @@ public static class PageAssetCatalog
         return list;
     }
 
+    internal static bool RouteUsesCompactHeroCss(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        if (path == OnboardingRoutes.ClassicStartPath
+            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/carriere/", StringComparison.OrdinalIgnoreCase)
+            || path == PassportRedirects.PassportPath
+            || path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/liked", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/bedrijvenkaart", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/profiel/tests", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public static IReadOnlyList<string> RouteStylesheets(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
@@ -249,17 +281,23 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-04"];
+            return ["css/features/bedrijvenkaart.css?v=20261019-10"];
         }
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-04"];
+            var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-10" };
+            if (RouteUsesCompactHeroCss(path))
+            {
+                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-73");
+            }
+
+            return appsCss;
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-04"];
+            return ["css/features/bedrijvenkaart.css?v=20261019-10"];
         }
 
         if (path.StartsWith("/werk-referentie/", StringComparison.OrdinalIgnoreCase))
@@ -269,6 +307,33 @@ public static class PageAssetCatalog
                 "css/features/reference-verification-hero.css?v=20261018-16",
                 "css/features/reference-verification.css?v=20261018-16"
             ];
+        }
+
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return UwvMockupRouteCss;
+        }
+
+        if (path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/ondernemerscheck", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/wat-drijft-jou", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/adviseur-werk", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/deel/uwv-adviseur/", StringComparison.OrdinalIgnoreCase))
+        {
+            var uwvCss = new List<string>(UwvMockupRouteCss);
+            if (RouteUsesCompactHeroCss(path))
+            {
+                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-73");
+            }
+
+            return uwvCss;
+        }
+
+        if (RouteUsesCompactHeroCss(path))
+        {
+            return ["css/features/candidate-hero-compact-preview.css?v=20261019-73"];
         }
 
         return [];

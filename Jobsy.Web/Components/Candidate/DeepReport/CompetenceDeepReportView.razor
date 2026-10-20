@@ -2,13 +2,15 @@
 @* Full paid Competence deep report (150-item Big Five test). *@
 @using System.Globalization
 @using Jobsy.Core.Careers
+@using Jobsy.Core.Reports.Competence
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @inject CultureState Culture
 
 @if (Report is not null)
 {
-    <article class="competence-report" aria-label="@Culture["Deep.CompetenceTitle"]">
+    <article class="competence-report @(CandidateWordsOnly ? "competence-report--illustrated" : null)" aria-label="@Culture["Deep.CompetenceTitle"]">
         <header class="competence-report__header">
             <span class="test-status-badge test-status-badge--gold competence-report__badge">
                 <span aria-hidden="true">★</span>
@@ -21,7 +23,7 @@
 
         <section class="competence-report__section">
             <h2 class="test-detail__section-title">@Culture["Deep.Competence.SummaryTitle"]</h2>
-            <p class="competence-report__summary">@Report.Summary</p>
+            <p class="competence-report__summary">@DisplaySummary</p>
         </section>
 
         <section class="competence-report__section">
@@ -29,10 +31,13 @@
             <ScoreRadarChart AriaLabel="@Culture["Deep.Competence.RadarLabel"]"
                              Labels="@_traitLabels"
                              Values="@_traitScores"
-                             NormValues="@_traitNorms"
-                             NormLegendLabel="@Culture["Deep.Competence.AverageLegend"]" />
+                             NormValues="@(CandidateWordsOnly ? null : _traitNorms)"
+                             NormLegendLabel="@Culture["Deep.Competence.AverageLegend"]"
+                             HideNumericScores="CandidateWordsOnly" />
         </section>
 
+        @if (!CandidateWordsOnly)
+        {
         <section class="competence-report__section">
             <h2 class="test-detail__section-title">@Culture["Deep.Competence.CompareTitle"]</h2>
             <ul class="competence-norm-bars" aria-label="@Culture["Deep.Competence.CompareTitle"]">
@@ -74,6 +79,7 @@
                 <p class="competence-norm-source muted">@Report.NormSourceLine</p>
             }
         </section>
+        }
 
         <section class="competence-report__section">
             <h2 class="test-detail__section-title">@Culture["Deep.Competence.DeeperTitle"]</h2>
@@ -93,6 +99,8 @@
             @if (SelectedTrait is { } selected)
             {
                 <div class="competence-trait-detail">
+                    @if (!CandidateWordsOnly)
+                    {
                     <ul class="competence-facet-bars" aria-label="@Culture.Format("Deep.Competence.FacetsLabel", selected.LabelNl)">
                         @foreach (var facet in selected.Facets)
                         {
@@ -111,6 +119,7 @@
                             </li>
                         }
                     </ul>
+                    }
 
                     <div class="competence-text-block">
                         <h3>@Culture["Deep.Competence.MeaningLabel"]</h3>
@@ -139,7 +148,17 @@
         @if (SelectedTrait is { } workTrait)
         {
             <section class="competence-report__section">
-                <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                @if (CandidateWordsOnly)
+                {
+                    <div class="competence-report__section-head competence-report__section-head--split">
+                        <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                        <div class="competence-report__section-figure test-depth-figure-art" style="@_workArtStyle" aria-hidden="true"></div>
+                    </div>
+                }
+                else
+                {
+                    <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                }
                 <div class="competence-work-cards">
                     <article class="competence-work-card">
                         <h3>@Culture["Deep.Competence.ThriveTitle"]</h3>
@@ -160,19 +179,29 @@
         @if (Report.Occupations.Count > 0)
         {
             <section class="competence-report__section">
-                <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                @if (CandidateWordsOnly)
+                {
+                    <div class="competence-report__section-head competence-report__section-head--split">
+                        <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                        <div class="competence-report__section-figure test-depth-figure-art" style="@_occupationsArtStyle" aria-hidden="true"></div>
+                    </div>
+                }
+                else
+                {
+                    <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                }
                 <ul class="competence-occupations">
                     @foreach (var occupation in Report.Occupations)
                     {
                         <li class="competence-occupation">
                             <div class="competence-occupation__row">
                                 <span class="competence-occupation__title">@occupation.Title</span>
-                                @if (ShowsMatch(occupation.Title))
+                                @if (!CandidateWordsOnly && ShowsMatch(occupation.Title))
                                 {
                                     <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", CareerCompassBuilder.FormatPercent(occupation.MatchPercent, Culture.Language))</span>
                                 }
                             </div>
-                            <p class="muted">@occupation.Reason</p>
+                            <p class="muted">@OccupationReason(occupation)</p>
                         </li>
                     }
                 </ul>
@@ -182,7 +211,17 @@
         @if (Report.ActionPlan.Count > 0)
         {
             <section class="competence-report__section">
-                <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                @if (CandidateWordsOnly)
+                {
+                    <div class="competence-report__section-head competence-report__section-head--split">
+                        <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                        <div class="competence-report__section-figure test-depth-figure-art" style="@_actionArtStyle" aria-hidden="true"></div>
+                    </div>
+                }
+                else
+                {
+                    <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                }
                 <ol class="competence-action-plan">
                     @foreach (var (step, index) in Report.ActionPlan.Select((s, i) => (s, i + 1)))
                     {
@@ -209,6 +248,7 @@
     [Parameter] public DateTime? CompletedAtUtc { get; set; }
     [Parameter] public int QuestionCount { get; set; } = 150;
     [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool CandidateWordsOnly { get; set; }
     [Parameter] public EventCallback OnDownloadPdf { get; set; }
 
     private static bool ShowsMatch(string? title)
@@ -218,9 +258,38 @@
     private int[] _traitScores = [];
     private int[]? _traitNorms;
     private string? _selectedDomain;
+    private string _workArtStyle = "";
+    private string _occupationsArtStyle = "";
+    private string _actionArtStyle = "";
 
     private CompetenceDeepTraitReport? SelectedTrait =>
         Report?.Traits.FirstOrDefault(t => t.Domain == _selectedDomain) ?? Report?.Traits.FirstOrDefault();
+
+    private string DisplaySummary =>
+        CandidateWordsOnly && Report is not null
+            ? CompetenceDeepReportTexts.TemplateSummaryWordsOnly(Report.Traits)
+            : Report?.Summary ?? "";
+
+    private string OccupationReason(CompetenceDeepOccupation occupation)
+    {
+        if (!CandidateWordsOnly || Report is null)
+        {
+            return occupation.Reason;
+        }
+
+        foreach (var trait in Report.Traits)
+        {
+            foreach (var pick in CompetenceDeepReportTexts.OccupationsFor(trait.Domain))
+            {
+                if (string.Equals(pick.Title, occupation.Title, StringComparison.Ordinal))
+                {
+                    return CompetenceDeepReportTexts.OccupationReasonWordsOnly(trait.LabelNl, pick.Reason);
+                }
+            }
+        }
+
+        return occupation.Reason;
+    }
 
     private string FormattedDate =>
         CompletedAtUtc is DateTime dt
@@ -248,6 +317,22 @@
             _selectedDomain = Report.Traits
                 .OrderByDescending(t => t.Score)
                 .FirstOrDefault()?.Domain;
+        }
+
+        if (CandidateWordsOnly)
+        {
+            var (workUrl, workPos) = TestDepthValueIllustratedArt.DeepReportWork();
+            _workArtStyle = TestDepthValueIllustratedArt.InlineFigure(workUrl, workPos);
+            var (occUrl, occPos) = TestDepthValueIllustratedArt.DeepReportOccupations();
+            _occupationsArtStyle = TestDepthValueIllustratedArt.InlineFigure(occUrl, occPos);
+            var (actUrl, actPos) = TestDepthValueIllustratedArt.DeepReportActionPlan();
+            _actionArtStyle = TestDepthValueIllustratedArt.InlineFigure(actUrl, actPos);
+        }
+        else
+        {
+            _workArtStyle = "";
+            _occupationsArtStyle = "";
+            _actionArtStyle = "";
         }
     }
 

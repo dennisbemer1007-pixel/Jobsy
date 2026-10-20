@@ -266,6 +266,7 @@ public sealed class PlatformFeatureItem
     public bool AfterMatchEnabled { get; set; }
     public bool SensitiveExperienceEnabled { get; set; }
     public bool TrainingPartnersEnabled { get; set; }
+    public bool UwvFeaturesEnabled { get; set; }
     public bool ReferenceVerificationEnabled { get; set; }
     public bool TestJourneyIllustrationEnabled { get; set; }
     public bool OnboardingFinaleV2Enabled { get; set; }
@@ -273,6 +274,7 @@ public sealed class PlatformFeatureItem
     public bool ResearchConsentEnabled { get; set; }
     public bool TestEditModeEnabled { get; set; }
     public bool SamplePdfEnabled { get; set; }
+    public bool TestDepthValueMockupEnabled { get; set; } = true;
     public IReadOnlyList<string>? AdminOverriddenFlagKeys { get; set; }
     public int CandidateApplyPerMinuteLimit { get; set; } = 5;
     public int CandidateApplyPerHourLimit { get; set; } = 30;
@@ -326,6 +328,7 @@ public sealed class PlatformFeaturePatch
     public bool? AfterMatchEnabled { get; set; }
     public bool? SensitiveExperienceEnabled { get; set; }
     public bool? TrainingPartnersEnabled { get; set; }
+    public bool? UwvFeaturesEnabled { get; set; }
     public bool? ReferenceVerificationEnabled { get; set; }
     public bool? TestJourneyIllustrationEnabled { get; set; }
     public bool? OnboardingFinaleV2Enabled { get; set; }
@@ -333,6 +336,7 @@ public sealed class PlatformFeaturePatch
     public bool? ResearchConsentEnabled { get; set; }
     public bool? TestEditModeEnabled { get; set; }
     public bool? SamplePdfEnabled { get; set; }
+    public bool? TestDepthValueMockupEnabled { get; set; }
     public IReadOnlyList<string>? ClearAdminFlagOverrideKeys { get; set; }
     public bool? CandidateExternalVacanciesEnabled { get; set; }
     public bool? EmployerPhase2Enabled { get; set; }

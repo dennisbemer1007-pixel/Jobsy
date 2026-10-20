@@ -716,3 +716,36 @@
         padding: 2px 28px 2px 8px;
     }
 }
+
+/* Candidate banenkaart shell: map toggle is a sibling above .jobsy-discovery — give the grid remaining height. */
+@media (max-width: 899px) {
+    .app-shell--banenkaart-shell.app-shell.has-bottom-nav {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell--banenkaart-shell .app-main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell--banenkaart-shell .app-main__content {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .app-shell--banenkaart-shell .bk-map-toggle--banen {
+        flex: 0 0 auto;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+    }
+}

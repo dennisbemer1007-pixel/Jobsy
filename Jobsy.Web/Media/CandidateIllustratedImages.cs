@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261019-04";
+    public const string Version = "20261019-15";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -27,17 +27,30 @@ public static class CandidateIllustratedImages
     public const string EmpWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
 
     public const string SollicitatiesBand = $"{Base}/werkervaring-profession-wide.jpg?v={Version}";
+    public const string SollicitatiesHeroBandC = SollicitatiesBand;
     public const string BewaardBand = $"{Base}/vervoer-profession-wide.jpg?v={Version}";
+    public const string BewaardHeroBandC = BewaardBand;
     public const string CarriereBand = $"{Base}/opleiding.jpg?v={Version}";
     public const string LearnGrowHero = $"{Base}/leren-groeien-hero.jpg?v={Version}";
     public const string LearnGrowHeroWide = $"{Base}/leren-groeien-hero-wide.jpg?v={Version}";
+    public const string LearnGrowHeroCompactC = $"{Base}/leren-groeien-hero-compact-c.jpg?v={Version}";
+    public const string LearnGrowHeroBandC = $"{Base}/leren-groeien-hero-band-c.jpg?v={Version}";
+
+    /// <summary>UWV ondernemer intro: home / small-business scene (no portrait crop).</summary>
+    public const string OndernemerIntroHero = AccountMobileArt;
+
+    /// <summary>UWV ondernemer result — complete werkplaats vignette on cream (no edge crop).</summary>
+    public const string OndernemerResultScene = $"{Base}/ondernemer-result-vignette.png?v={Version}";
     public const string LearnGrowHeroFiguresMobile = $"{Base}/leren-groeien-hero-figures-mobile.png?v={Version}";
     public const string LearnGrowHeroMobileAtmosphere = $"{Base}/leren-groeien-hero-mobile-atmosphere.png?v={Version}";
     public const string InstellingenBand = $"{Base}/beschikbaarheid-profession-wide.jpg?v={Version}";
+    public const string InstellingenHeroBandC = InstellingenBand;
     public const string KompasHeroWide = $"{Base}/kompas-hero-wide.jpg?v={Version}";
+    public const string KompasHeroBandC = $"{Base}/kompas-hero-band-c.jpg?v={Version}";
     public const string BedrijvenkaartHeroMobile = $"{Base}/bedrijvenkaart-hero-mobile.jpg?v={Version}";
     public const string BedrijvenkaartHeroDoorCrop = $"{Base}/bedrijvenkaart-hero-door-crop.jpg?v={Version}";
     public const string BedrijvenkaartHeroDoorDesktop = $"{Base}/bedrijvenkaart-hero-door-desktop.jpg?v={Version}";
+    public const string BedrijvenkaartHeroBandC = BedrijvenkaartHeroDesktopPng;
     public const string BedrijvenkaartHeroDesktopPng = $"{Base}/bedrijvenkaart-hero-desktop.png?v={Version}";
     public const string CompanyPublicHeroArtPng = $"{Base}/company-public-hero-art.png?v={Version}";
 
@@ -106,7 +119,8 @@ public static class CandidateIllustratedImages
     public const string SpotOpleiding = $"{Base}/opleiding.jpg?v={Version}";
     public const string SpotDroombaan = $"{Base}/droombaan.jpg?v={Version}";
 
-    public const string SpotJobZorg = $"{Base}/spots/job-zorg.jpg?v={Version}";
+    /// <summary>Care sector spot — full-figure scene (not portrait crop).</summary>
+    public const string SpotJobZorg = $"{Base}/spots/job-zorg-scene.jpg?v={Version}";
     public const string SpotJobLogistiek = $"{Base}/spots/job-logistiek.jpg?v={Version}";
     public const string SpotJobRetail = $"{Base}/spots/job-retail.jpg?v={Version}";
     public const string SpotJobDieren = $"{Base}/spots/job-dieren.jpg?v={Version}";

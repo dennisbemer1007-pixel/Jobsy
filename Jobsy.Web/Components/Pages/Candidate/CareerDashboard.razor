@@ -11,38 +11,59 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services.Careers
+@using Jobsy.Web.Features
+@using Jobsy.Web.Components.UwvFeatures
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
+@inject IUwvFeaturesGate UwvGate
 @inject ICareerStepVacancyFit VacancyFit
 @inject NavigationManager Navigation
+@inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
-<div class="journey-page career-page career-page--illustrated panel-page--cand-ill">
+<div class="journey-page career-page career-page--illustrated panel-page--cand-ill @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "career-page--compact-preview-c" : null)">
     <p class="career-live visually-hidden" role="status" aria-live="polite">@_announcement</p>
 
-    @if (_plan.HasPlan)
+    @if (_uwvShowcase)
     {
-        var stepTotal = Math.Max(_plan.Stones.Count, 1);
-        var stepCurrent = Math.Clamp(_plan.CurrentStoneIndex + 1, 1, stepTotal);
+        <CandidateIllustratedHero Eyebrow="@UwvMockupCopy.Career.Eyebrow(Culture.Language)"
+                                  CoralEyebrow="true"
+                                  Title="@UwvMockupCopy.Career.Title(Culture.Language)"
+                                  Lead="@UwvMockupCopy.Career.Lead(Culture.Language)"
+                                  ArtUrl="@DroombaanProfessionWide"
+                                  ArtUrlMobileFigures="@MobFiguresOpleiding"
+                                  ArtPosition="right center"
+                                  ArtPositionDesktop="right center"
+                                  CssClass="cand-hero--profession-band cand-hero--with-art uwv-carriere-showcase-hero" />
+        <UwvCarriereSections />
+    }
+    else if (_plan.HasPlan)
+    {
+        var stepTotal = Math.Max(_plan.TotalSteps, 1);
+        var stepCurrent = Math.Clamp(_plan.CurrentStepNumber > 0 ? _plan.CurrentStepNumber : 1, 1, stepTotal);
         <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
                                   CoralEyebrow="true"
                                   Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
                                   Lead="@Culture["Career.Overview.Lead"]"
-                                  ArtUrl="@CarriereBand"
-                                  ArtPosition="58% center" />
+                                  ArtUrl="@CareerHeroArt"
+                                  ArtPosition="58% center"
+                                  CompactHeroLayout="onboarding"
+                                  CssClass="@HeroCompactPreview.CandHeroCssClass" />
     }
     else if (!_bootstrapping)
     {
         <CandidateIllustratedHero Title="@Culture["Career.Empty.Title"]"
                                   Lead="@Culture["Career.Empty.Lead"]"
-                                  ArtUrl="@CarriereBand"
+                                  ArtUrl="@CareerHeroArt"
                                   ArtPosition="58% center"
-                                  CssClass="cand-hero--profession-band" />
+                                  CssClass="@($"{("cand-hero--profession-band")} {HeroCompactPreview.CandHeroCssClass}".Trim())" />
     }
 
-    @if (_proactiveMatchingOn)
+    @if (_proactiveMatchingOn && !_uwvShowcase)
     {
         <aside class="proactive-promo" data-testid="proactive-promo-carriere">
             <div class="proactive-promo__copy">
@@ -55,7 +76,7 @@
         </aside>
     }
 
-    @if (_bootstrapping)
+    @if (!_uwvShowcase && _bootstrapping)
     {
         <CareerStage Variant="ClimbVariant.Stones"
                      DesktopStones="@SceneStones"
@@ -73,7 +94,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else if (!_plan.HasPlan)
+    else if (!_uwvShowcase && !_plan.HasPlan)
     {
         <CareerStage Variant="ClimbVariant.Listen"
                      DesktopStones="@SceneStones"
@@ -102,7 +123,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else if (_done is { } done)
+    else if (!_uwvShowcase && _done is { } done)
     {
         <CareerStage Variant="ClimbVariant.Climb"
                      DesktopStones="@SceneStones"
@@ -140,7 +161,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else if (_step is { } step)
+    else if (!_uwvShowcase && _step is { } step)
     {
         <CareerStage Variant="ClimbVariant.Climb"
                      DesktopStones="@SceneStones"
@@ -167,7 +188,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else
+    else if (!_uwvShowcase)
     {
         <CareerStage Variant="ClimbVariant.Climb"
                      DesktopStones="@SceneStones"
@@ -183,6 +204,7 @@
             </RailContent>
             <ChildContent>
                 <CareerOverviewCard Plan="@_plan"
+                                    Illustrated="@(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)"
                                     Busy="@_busy"
                                     EmployersOn="@_employersOn"
                                     PassportOn="@_passportOn"
@@ -214,11 +236,21 @@
                            OnConfirm="ChangeDreamAsync"
                            OnCancel="CloseDreamDialog" />
     }
+
+    @if (!_uwvShowcase && _uwvBlocks)
+    {
+        <UwvCarriereSections />
+    }
 </div>
 
 @code {
     /// <summary>Deep-linkable step detail: <c>/carriere?stap={order}</c> (03 §1). Invalid ⇒ overview.</summary>
     [SupplyParameterFromQuery(Name = "stap")] public int? Stap { get; set; }
+    [SupplyParameterFromQuery(Name = "uwv")] public string? Uwv { get; set; }
+
+    private string CareerHeroArt => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
+        ? LearnGrowHeroBandC
+        : CarriereBand;
 
     private CareerPathPlanApiModel? _planApi;
     private CareerStepDetailView? _step;
@@ -248,6 +280,9 @@
     private bool _employersOn = true;
     private bool _passportOn;
     private bool _proactiveMatchingOn;
+    private bool _uwvBlocks;
+    private bool _uwvShowcase;
+    private bool _uwvFlagLoaded;
 
     private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
 
@@ -298,11 +333,38 @@
 
     private int DoneVacancyCount => _employersOn && _stepFit.ShowsCount ? _stepFit.GoodCount : 0;
 
+    protected override void OnParametersSet()
+    {
+        if (_uwvFlagLoaded)
+        {
+            _uwvShowcase = _uwvBlocks;
+            if (_uwvShowcase)
+            {
+                _bootstrapping = false;
+                _planLoadStarted = true;
+            }
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender && RendererInfo.IsInteractive && !_uwvFlagLoaded)
+        {
+            _uwvFlagLoaded = true;
+            _uwvBlocks = await UwvGate.IsEnabledAsync();
+            _uwvShowcase = _uwvBlocks;
+            if (_uwvShowcase)
+            {
+                _bootstrapping = false;
+                _planLoadStarted = true;
+                StateHasChanged();
+                return;
+            }
+        }
+
         // Prerender paints the skeleton. Load only after the interactive circuit
         // so the first HTML is not blank while the API responds.
-        if (!firstRender || _planLoadStarted || !RendererInfo.IsInteractive)
+        if (_uwvShowcase || !firstRender || _planLoadStarted || !RendererInfo.IsInteractive)
         {
             return;
         }

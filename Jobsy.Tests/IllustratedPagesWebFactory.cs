@@ -1,5 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+using Jobsy.Web.UwvFeatures;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +11,6 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -35,12 +36,15 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         builder.UseEnvironment("Development");
         builder.ConfigureAppConfiguration((_, config) =>
         {
+            var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ApiBaseUrl"] = "http://api.test/",
                 ["Landing:ForceVariant"] = "on",
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
-                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
+                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
+                ["Jobsy:CandidateCompactHeroEnabled"] = "true",
+                ["Features:UwvFeatures"] = uwvOn ? "true" : "false"
             });
         });
         builder.ConfigureTestServices(services =>
@@ -48,7 +52,8 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.RemoveAll<IHostedService>();
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
-            services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
+            var uwvOn = ResolveUwvFeaturesForIllustratedTests();
+            services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
@@ -86,18 +91,38 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         base.Dispose(disposing);
     }
 
-    private sealed class PassportOnFlags : IFeatureFlags
+    /// <summary>Default ON; set <c>JOBSY_UWV_FEATURES=0</c> or <c>JOBSY_UWV_FEATURES_MOCKUP=0</c> to disable in illustrated e2e.</summary>
+    private static bool ResolveUwvFeaturesForIllustratedTests()
     {
-        private static readonly FeatureFlagSnapshot Snap = new(
+        if (IsUwvFeaturesEnvDisabled("JOBSY_UWV_FEATURES")
+            || IsUwvFeaturesEnvDisabled("JOBSY_UWV_FEATURES_MOCKUP"))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsUwvFeaturesEnvDisabled(string name)
+    {
+        var raw = Environment.GetEnvironmentVariable(name);
+        return string.Equals(raw, "0", StringComparison.Ordinal)
+               || string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class PassportOnFlags(bool uwvFeaturesEnabled) : IFeatureFlags
+    {
+        private readonly FeatureFlagSnapshot _snap = new(
             EmployersEnabled: true,
             CandidatePassportEnabled: true,
-            ProactiveMatchingEnabled: false);
+            ProactiveMatchingEnabled: false,
+            UwvFeaturesEnabled: uwvFeaturesEnabled);
 
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap);
+            => ValueTask.FromResult(_snap);
 
         public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap.IsEnabled(feature));
+            => ValueTask.FromResult(_snap.IsEnabled(feature));
 
         public void Invalidate()
         {

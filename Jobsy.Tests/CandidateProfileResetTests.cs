@@ -204,6 +204,8 @@ public class CandidateProfileResetTests
             typeof(CandidateRoleFitCheck),
             typeof(CandidateTestReflection),
             typeof(CandidateUploadedCv),
+            typeof(CandidateUwvAdviseurShare),
+            typeof(CandidateUwvToolkitState),
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
             typeof(CandidateWhoAmIProfile),

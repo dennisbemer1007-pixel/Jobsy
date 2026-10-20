@@ -6,6 +6,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Pages.Candidate;
+using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -42,6 +43,7 @@ public sealed class JourneyShedFinalizeTests : BunitContext
         Services.AddSingleton<GratisDnaMergeService>();
         Services.AddSingleton<MeGetCache>();
         Services.AddSingleton<DiscoveryOverviewCache>();
+        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
     }
 
     [Fact]

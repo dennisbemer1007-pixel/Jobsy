@@ -6,11 +6,14 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Features
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Features
+@using Jobsy.Web.Media
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Jobsy.Web.Localization
 @using Jobsy.Core.Contracts
 @using Jobsy.Web.Models
@@ -27,11 +30,20 @@
 @inject UserFacingError UserFacing
 @inject ILogger<DiscoveryJourney> JourneyLog
 @inject DiscoveryOverviewCache OverviewCache
+@inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
 
-<div class="@JourneyRootClass">
+<div class="@JourneyRootClass @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "journey--compact-preview-c panel-page--cand-ill" : null)">
+    @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C && _screen == "overview" && !_loading)
+    {
+        <CandidateIllustratedHero Title="@Culture["Discovery.Overview.Title"]"
+                                  Lead="@Culture["Discovery.Overview.Lead"]"
+                                  ArtUrl="@LearnGrowHeroCompactC"
+                                  ArtPosition="right bottom"
+                                  CssClass="cand-hero--profession-band" />
+    }
     @if (_loading && _screen != "overview")
     {
         <p class="journey__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -552,6 +564,10 @@
                 }
                 else if (_screen == "overview")
                 {
+                    @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)
+                    {
+                        <h1 class="visually-hidden" tabindex="-1">@Culture["Discovery.Overview.Title"]</h1>
+                    }
                     <JourneyOverview IsLoading="_overviewLoading"
                                      Rows="_overviewRows"
                                      Tests="_overviewTests"

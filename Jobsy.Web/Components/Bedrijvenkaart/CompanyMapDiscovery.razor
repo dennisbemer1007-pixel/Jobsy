@@ -11,21 +11,28 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Features
+@inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @implements IAsyncDisposable
 
-<div class="bk-page">
+<div class="bk-page panel-page--cand-ill @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "bk-page--compact-preview-c" : null)">
     <div class="bk-page__hero-stack">
         <div class="bk-map-toggle" role="tablist" aria-label="@Culture["Kb.MapToggle.Jobs"]">
             <a href="@KbRoutes.Map" role="tab">@Culture["Kb.MapToggle.Jobs"]</a>
             <a href="@KbRoutes.CompanyMap" class="is-active" role="tab" aria-selected="true">@Culture["Kb.MapToggle.Companies"]</a>
         </div>
-        <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
-                                  Title="@Culture["Bk.Title"]"
-                                  Lead="@Culture["Bk.Lead"]"
-                                  ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
-                                  ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
-                                  ArtPosition="84% bottom"
-                                  CssClass="cand-hero--bk-single bk-cand-hero">
+        @if (HeroCompactPreview.Variant != CandidateHeroCompactPreviewVariant.C)
+        {
+            <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
+                                      Title="@Culture["Bk.Title"]"
+                                      Lead="@Culture["Bk.Lead"]"
+                                      ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
+                                      ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
+                                      ArtPosition="84% bottom"
+                                      CssClass="cand-hero--bk-single bk-cand-hero" />
+        }
+        @if (_weekMax > 0)
+        {
             <div class="bk-week-dots" aria-live="polite">
                 @for (var i = 0; i < _weekMax; i++)
                 {
@@ -33,8 +40,20 @@
                 }
                 <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
             </div>
-        </CandidateIllustratedHero>
+        }
     </div>
+    @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)
+    {
+        <div class="bk-page__hero-band">
+            <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
+                                      Title="@Culture["Bk.Title"]"
+                                      Lead="@Culture["Bk.Lead"]"
+                                      ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
+                                      ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
+                                      ArtPosition="84% bottom"
+                                      CssClass="cand-hero--bk-single bk-cand-hero" />
+        </div>
+    }
 
     <div class="bk-page__frame">
     <p class="bk-info-banner">@Culture["Bk.InfoBanner"]</p>
@@ -187,50 +206,72 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _mapReady)
+        if (firstRender && !_mapReady)
+        {
+            try
+            {
+                if (RendererInfo.IsInteractive)
+                {
+                    await MapScripts.EnsureDiscoveryAsync(Js);
+                    var markers = _filteredList.Select(p => new Dictionary<string, object?>
+                    {
+                        ["id"] = p.CompanyId.ToString("D"),
+                        ["companyId"] = p.CompanyId.ToString("D"),
+                        ["title"] = p.Name,
+                        ["company"] = p.Name,
+                        ["lat"] = p.Latitude,
+                        ["lng"] = p.Longitude,
+                        ["openForInitiative"] = p.OpenForInitiative,
+                        ["isIntermediary"] = p.IsIntermediary,
+                        ["publicMapRadiusKm"] = p.IsIntermediary ? 5 : null,
+                        ["companyHref"] = p.PublicPath
+                    }).ToList();
+
+                    var options = new Dictionary<string, object?>
+                    {
+                        ["pinsUrl"] = $"api/company-map-initiative/pins?radiusKm={_radiusKm}",
+                        ["mapMode"] = "companies",
+                        ["preferFilledLocation"] = false
+                    };
+                    await Js.InvokeVoidAsync("jobMap.init", "bedrijvenkaart-map", markers, options);
+                    _mapReady = true;
+                    await InvalidateMapLayoutAsync();
+                }
+            }
+            catch
+            {
+                // Map stays as static pane in demo/offline mode.
+            }
+        }
+        else if (_mapReady && _mapLayoutPasses < 3)
+        {
+            _mapLayoutPasses++;
+            await InvalidateMapLayoutAsync();
+        }
+    }
+
+    private bool _mapReady;
+    private int _mapLayoutPasses;
+
+    private async Task InvalidateMapLayoutAsync()
+    {
+        if (!_mapReady)
         {
             return;
         }
 
         try
         {
-            if (!RendererInfo.IsInteractive)
-            {
-                return;
-            }
-
-            await MapScripts.EnsureDiscoveryAsync(Js);
-            var markers = _filteredList.Select(p => new Dictionary<string, object?>
-            {
-                ["id"] = p.CompanyId.ToString("D"),
-                ["companyId"] = p.CompanyId.ToString("D"),
-                ["title"] = p.Name,
-                ["company"] = p.Name,
-                ["lat"] = p.Latitude,
-                ["lng"] = p.Longitude,
-                ["openForInitiative"] = p.OpenForInitiative,
-                ["isIntermediary"] = p.IsIntermediary,
-                ["publicMapRadiusKm"] = p.IsIntermediary ? 5 : null,
-                ["companyHref"] = p.PublicPath
-            }).ToList();
-
-            var options = new Dictionary<string, object?>
-            {
-                ["pinsUrl"] = $"api/company-map-initiative/pins?radiusKm={_radiusKm}",
-                ["mapMode"] = "companies",
-                ["preferFilledLocation"] = false
-            };
-            await Js.InvokeVoidAsync("jobMap.init", "bedrijvenkaart-map", markers, options);
-            _mapReady = true;
             await Js.InvokeVoidAsync("jobMap.invalidate");
+            await Task.Delay(120);
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+            await Js.InvokeVoidAsync("jobsyDom.scrollToTop");
         }
         catch
         {
-            // Map stays as static pane in demo/offline mode.
+            // ignore teardown races
         }
     }
-
-    private bool _mapReady;
 
     private void SelectPin(CompanyMapPinDto pin)
     {

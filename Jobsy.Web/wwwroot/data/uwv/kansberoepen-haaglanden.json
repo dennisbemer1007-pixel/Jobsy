@@ -1,0 +1,45 @@
+{
+  "datasetId": "kansberoepen-haaglanden-2026",
+  "regionKeyNl": "Regio Haaglanden",
+  "regionKeyEn": "Haaglanden region",
+  "sourceLineNl": "Gebaseerd op open CBS arbeidsmarkt cijfers en UWV kansberoepen (voorbeeldset voor demo).",
+  "sourceLineEn": "Based on open CBS labour market figures and UWV opportunity occupations (sample set for demo).",
+  "entries": [
+    {
+      "id": "logistiek-medewerker",
+      "titleNl": "Logistiek medewerker",
+      "titleEn": "Logistics associate",
+      "prospectNl": "Veel kans op werk in de regio",
+      "prospectEn": "Strong hiring outlook in the region",
+      "routeNl": "MBO logistiek · BBL mogelijk",
+      "routeEn": "MBO logistics · apprenticeship available",
+      "sectorIcon": "logistiek",
+      "baangarantie": true,
+      "vacancyCount": 12
+    },
+    {
+      "id": "installatiemonteur",
+      "titleNl": "Installatiemonteur",
+      "titleEn": "Installation technician",
+      "prospectNl": "Stabiele vraag, ook via omscholing",
+      "prospectEn": "Steady demand, including retraining routes",
+      "routeNl": "Technische opleiding · erkend leerbedrijf",
+      "routeEn": "Technical training · recognised learning company",
+      "sectorIcon": "techniek",
+      "baangarantie": false,
+      "vacancyCount": 6
+    },
+    {
+      "id": "zorgondersteuner",
+      "titleNl": "Zorgondersteuner",
+      "titleEn": "Care support worker",
+      "prospectNl": "Groeiende sector, korte omscholingsroutes",
+      "prospectEn": "Growing sector, short retraining paths",
+      "routeNl": "BBL zorg · baangarantie-route (voorbeeld)",
+      "routeEn": "Care apprenticeship · job-guarantee route (sample)",
+      "sectorIcon": "zorg",
+      "baangarantie": true,
+      "vacancyCount": 8
+    }
+  ]
+}
