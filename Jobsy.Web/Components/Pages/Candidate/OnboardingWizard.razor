@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-08" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-09" />
     }
 </HeadContent>
 
@@ -198,20 +198,22 @@
             </section>
         }
     }
-    else if (RustigStepOne)
+    else if (RustigPersonalSteps)
     {
         var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
-        <OnboardingRustigShell ScreenId="step-01"
+        var rustigJobsRail = ShowNearbyPanel && _step >= 2;
+        <OnboardingRustigShell ScreenId="@($"step-{_step:D2}")"
                                Step="_step"
                                PhaseLabel="@Culture[rustigPhase.NameKey]"
                                MinutesLeft="@OnboardingWizardCatalog.V3RemainingMinutes(_step)"
                                ShowSaved="true"
                                SaveStatus="@RustigSaveStatus"
-                               Title="@Culture["Onboarding.Step1.Title"]"
-                               Lead="@Culture["Onboarding.Step1.Lead"]"
-                               PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(1)"
-                               PanoramaMobile="@OnboardingRustigPanoramaAssets.Mobile(1)"
-                               BackDisabled="true"
+                               Title="@Culture[$"Onboarding.Step{_step}.Title"]"
+                               Lead="@Culture[$"Onboarding.Step{_step}.Lead"]"
+                               PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(_step)"
+                               PanoramaMobile="@OnboardingRustigPanoramaAssets.Mobile(_step)"
+                               ShowJobsRail="rustigJobsRail"
+                               BackDisabled="@(_step == 1)"
                                HeaderBackEnabled="true"
                                OnBack="BackAsync"
                                OnLater="LaterAsync">
@@ -223,14 +225,29 @@
                 <OnboardingRustigPersonalStepBody Step="_step"
                                                    Draft="Draft"
                                                    ShowValidation="_showValidation"
+                                                   Presets="PresetItems"
                                                    AddressChanged="AddressChanged"
                                                    ShowCity="ShowCity"
-                                                   SelectAddress="SelectAddress" />
+                                                   SelectAddress="SelectAddress"
+                                                   TogglePreset="TogglePreset"
+                                                   ToggleFineTune="ToggleFineTune"
+                                                   SetMinHours="SetMinHoursAsync"
+                                                   SetMaxHours="SetMaxHoursAsync"
+                                                   ManualAvailability="ManualAvailabilityAsync"
+                                                   ToggleAvailability="ToggleAvailability"
+                                                   ResetPresets="ResetPresets" />
+                @if (rustigJobsRail)
+                {
+                    <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Mobile"
+                                           Signal="_nearbySignal"
+                                           TransportLabel="@Draft.Transport"
+                                           RefinedHeadline="NearbyRefinedHeadline" />
+                }
                 <div class="ob-rustig__footer-actions">
                     <button type="button"
                             class="ob-rustig__btn"
                             data-testid="onboarding-back"
-                            disabled="true"
+                            disabled="@(_busy || _step == 1)"
                             @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                     <button type="button"
                             class="ob-rustig__btn ob-rustig__btn--primary"
@@ -239,6 +256,12 @@
                             @onclick="@(() => NextAsync())">@NextLabel</button>
                 </div>
             </ChildContent>
+            <JobsRail>
+                <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Desktop"
+                                       Signal="_nearbySignal"
+                                       TransportLabel="@Draft.Transport"
+                                       RefinedHeadline="NearbyRefinedHeadline" />
+            </JobsRail>
         </OnboardingRustigShell>
     }
     else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 6)
@@ -690,8 +713,10 @@
     private int _step = 1;
     private bool SoftIllustratedStep => _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= 6;
 
-    private bool RustigStepOne =>
-        OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 1;
+    private const int MaxRustigPersonalStep = 2;
+
+    private bool RustigPersonalSteps =>
+        OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= MaxRustigPersonalStep;
 
     private string Step1HeroJpg => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
         ? CompactHeroPreviewArt.OnboardingKennismakenDesktop

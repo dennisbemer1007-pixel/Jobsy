@@ -669,7 +669,16 @@ internal static class FunctionalOnboardingInteractivityHelpers
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 120_000 });
-        await page.Locator(".ob-wizard__welcome").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        var rustigStart = page.Locator("[data-ob-rustig-screen=start]");
+        var legacyWelcome = page.Locator(".ob-wizard__welcome");
+        try
+        {
+            await rustigStart.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        }
+        catch (TimeoutException)
+        {
+            await legacyWelcome.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        }
     }
 
     internal static async Task ClickBeginnenOnWelcomeAsync(IPage page, bool mobile)
@@ -687,6 +696,57 @@ internal static class FunctionalOnboardingInteractivityHelpers
             State = WaitForSelectorState.Visible,
             Timeout = 90_000,
         });
+    }
+
+    internal static async Task ReachOnboardingRustigStepAsync(IPage page, int targetStep, bool mobile)
+    {
+        if (targetStep is < 1 or > 5)
+        {
+            throw new ArgumentOutOfRangeException(nameof(targetStep), targetStep, "Rustig capture/audit supports steps 1–5.");
+        }
+
+        await page.Locator("[data-ob-rustig-screen=step-01], [data-testid=onboarding-step-1-illustrated]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        if (targetStep == 1)
+        {
+            return;
+        }
+
+        await FillKennismakenBasicsExceptWorkStatusAsync(page);
+        await SelectAnyWorkStatusChipAsync(page);
+        await ClickWizardNextWhenVisibleAsync(page);
+        await page.Locator("[data-ob-rustig-screen=step-02], [data-testid=onboarding-step-2-illustrated]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        if (targetStep == 2)
+        {
+            return;
+        }
+
+        await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First
+            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await ClickWizardNextWhenVisibleAsync(page);
+        await page.Locator("[data-ob-rustig-screen=step-03], [data-testid=onboarding-step-3-illustrated]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        if (targetStep == 3)
+        {
+            return;
+        }
+
+        await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First
+            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First
+            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await ClickWizardNextWhenVisibleAsync(page);
+        await page.Locator("[data-ob-rustig-screen=step-04], [data-testid=onboarding-step-4-illustrated]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        if (targetStep == 4)
+        {
+            return;
+        }
+
+        await ClickWizardNextWhenVisibleAsync(page);
+        await page.Locator("[data-ob-rustig-screen=step-05], [data-testid=onboarding-step-5-illustrated]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
     }
 
     internal static async Task CaptureOnboardingStartHotfixAsync(IPage page, string tag)
