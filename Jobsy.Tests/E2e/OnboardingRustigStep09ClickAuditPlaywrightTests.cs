@@ -53,26 +53,11 @@ public sealed class OnboardingRustigStep09ClickAuditPlaywrightTests
             await page.Locator("[data-onboarding-step=\"9\"]").WaitForAsync(new() { Timeout = 60_000 });
         }
 
+        await page.Locator(".test-likert .test-likert__opt").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+
         var rows = new List<(string Control, string Result)>();
-        await AuditAsync(page, rows, "Later verder", page.GetByRole(AriaRole.Button, new() { Name = "Later verder" }));
-
-        var accountLink = page.Locator("a.ob-rustig__link--underline[href='/privacy/data']");
-        if (await accountLink.CountAsync() == 0)
-        {
-            accountLink = page.GetByRole(AriaRole.Link, new() { Name = "Mijn gegevens & account" });
-        }
-
-        rows.Add(("Mijn gegevens & account", await TryHitAuditAsync(page, accountLink, "account")));
-
-        var likert = page.Locator(".test-likert button, .lobsy-likert button").First;
-        await AuditAsync(page, rows, "Likert 1", likert);
-
-        var flowBack = page.Locator(".test-flow__back").First;
-        await AuditAsync(page, rows, "Test terug", flowBack);
-        var flowNext = page.Locator(".test-flow__next").First;
-        await AuditAsync(page, rows, "Test volgende", flowNext);
-        var testsLater = page.GetByTestId("onboarding-tests-later");
-        await AuditAsync(page, rows, "Tests later", testsLater);
+        await OnboardingRustigClickAuditSupport.AppendMiniTestStepRowsAsync(page, rows);
 
         var reportPath = Path.Combine(reportDir, $"click-audit-step-09-{mode}-{tag}.txt");
         var sb = new StringBuilder();
@@ -100,36 +85,6 @@ public sealed class OnboardingRustigStep09ClickAuditPlaywrightTests
         foreach (var (w, h, m, tag) in Viewports)
         {
             yield return [w, h, m, tag];
-        }
-    }
-
-    private static async Task AuditAsync(IPage page, List<(string, string)> rows, string label, ILocator locator)
-    {
-        if (await locator.CountAsync() == 0)
-        {
-            rows.Add((label, "n/a"));
-            return;
-        }
-
-        rows.Add((label, await TryHitAuditAsync(page, locator, label)));
-    }
-
-    private static async Task<string> TryHitAuditAsync(IPage page, ILocator locator, string label)
-    {
-        if (await locator.CountAsync() == 0)
-        {
-            return "n/a";
-        }
-
-        try
-        {
-            await locator.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, locator.First, label);
-            return "ok";
-        }
-        catch (Exception ex)
-        {
-            return ex.Message;
         }
     }
 }
