@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-09" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-10" />
     }
 </HeadContent>
 
@@ -263,6 +263,19 @@
                                        RefinedHeadline="NearbyRefinedHeadline" />
             </JobsRail>
         </OnboardingRustigShell>
+    }
+    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 7 && !Draft.HasConsent)
+    {
+        <OnboardingRustigTestConsentStep Draft="Draft"
+                                         ShowValidation="_showValidation"
+                                         TestTabs="ConsentTabs"
+                                         ConsentChanged="OnConsentChanged"
+                                         Error="@_error"
+                                         Busy="@_busy"
+                                         SaveStatus="@RustigSaveStatus"
+                                         OnBack="BackAsync"
+                                         OnNext="@(() => NextAsync())"
+                                         OnLater="LaterAsync" />
     }
     else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 6)
     {
@@ -867,7 +880,11 @@
     };
 
     private bool ShowJourneyConsent =>
-        TestJourneyIllustration.Enabled && _step == 7 && !Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None;
+        TestJourneyIllustration.Enabled
+        && !OnboardingRustig.Enabled
+        && _step == 7
+        && !Draft.HasConsent
+        && _earlyMoment == EarlyRewardMoment.None;
 
     private string NextLabel => _earlyMoment == EarlyRewardMoment.FirstInsight
             ? Culture["Onboarding.NextTest"]

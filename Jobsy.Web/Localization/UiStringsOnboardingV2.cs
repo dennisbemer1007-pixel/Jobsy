@@ -275,6 +275,8 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.MinutesShort"] = english ? "minutes" : "minuten";
         map["Onboarding.Rustig.Phase.Droom"] = english ? "Dream job" : "Droom";
         map["Onboarding.Rustig.Saved"] = english ? "✓ Saved" : "✓ Bewaard";
+        map["Onboarding.Rustig.Phase.WieBenJij"] = english ? "Who you are" : "Wie ben jij";
+        map["Onboarding.Rustig.Phase.Kompas"] = english ? "Your Compass" : "Jouw Kompas";
         map["Onboarding.Rustig.DreamOwnLabel"] = english ? "Or type your own dream job" : "Of typ je eigen droombaan";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.CtaRustig"] = english ? "Get started" : "Aan de slag";
