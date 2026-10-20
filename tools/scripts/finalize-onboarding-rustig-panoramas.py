@@ -125,59 +125,95 @@ def extend_ultra_wide(raw: Image.Image, min_ratio: float = 6.5) -> Image.Image:
     return canvas
 
 
+def anchored_scene_y0(scaled_h: int, crop_h: int, anchor: float = 0.56) -> int:
+    """Bottom-weighted crop for 16:9 onboarding scenes (ground line ~55–60% of frame)."""
+    y0 = int(scaled_h * anchor) - crop_h // 2
+    return max(0, min(y0, scaled_h - crop_h))
+
+
+def band_content_centroid_y(im: Image.Image) -> float | None:
+    rgb = np.asarray(im.convert("RGB"), dtype=np.float32)
+    dist = np.linalg.norm(rgb - CREAM, axis=2)
+    mask = dist > 28.0
+    if not mask.any():
+        return None
+    ys = np.where(mask.any(axis=1))[0]
+    return float(ys.mean())
+
+
+def scene_activity_row(scaled: Image.Image) -> int | None:
+    """Row with strongest horizontal scene occupancy (ground / figures line)."""
+    rgb = np.asarray(scaled.convert("RGB"), dtype=np.float32)
+    dist = np.linalg.norm(rgb - CREAM, axis=2)
+    h, _w = dist.shape
+    row_occ = (dist > 28.0).mean(axis=1)
+    y_hi = int(h * 0.92)
+    for y_lo_frac in (0.48, 0.40, 0.32):
+        y_lo = int(h * y_lo_frac)
+        if y_hi <= y_lo:
+            continue
+        band = row_occ[y_lo:y_hi]
+        if band.max() >= 0.06:
+            return y_lo + int(band.argmax())
+    return None
+
+
+def scene_crop_y0(scaled: Image.Image, crop_h: int) -> int:
+    scaled_h = scaled.size[1]
+    y_anchor = anchored_scene_y0(scaled_h, crop_h)
+    peak = scene_activity_row(scaled)
+    if peak is not None and peak >= int(scaled_h * 0.58):
+        # Place activity line ~62% down the hero band (figures + lobster stay visible).
+        y0 = peak - int(crop_h * 0.62)
+        y0 = max(0, min(y0, scaled_h - crop_h))
+        band = scaled.crop((0, y0, scaled.size[0], y0 + crop_h))
+        cy = band_content_centroid_y(band)
+        if cy is not None and cy >= crop_h * 0.38:
+            return y0
+    y0 = anchored_scene_y0(scaled_h, crop_h, anchor=0.67)
+    band = scaled.crop((0, y0, scaled.size[0], y0 + crop_h))
+    cy = band_content_centroid_y(band)
+    if cy is not None and cy >= crop_h * 0.35:
+        return y0
+    bbox = figure_bbox(scaled) or content_bbox(scaled)
+    if bbox is None:
+        return y_anchor
+    _x1, y1, _x2, y2 = bbox
+    blob_h = y2 - y1
+    if blob_h > crop_h * 0.72 or blob_h > scaled_h * 0.38:
+        return y_anchor
+    min_headroom = max(HEAD_MARGIN, int(crop_h * 0.28))
+    y0 = max(0, y1 - min_headroom)
+    if y2 > y0 + crop_h - FEET_ABOVE_FADE:
+        y0 = min(scaled_h - crop_h, y2 + FEET_ABOVE_FADE - crop_h)
+    if y1 < y0 + min_headroom:
+        y0 = max(0, y1 - min_headroom)
+    return max(0, min(y0, scaled_h - crop_h))
+
+
 def crop_to_ratio(
     im: Image.Image,
     target_w: int,
     target_h: int,
     ratio: float,
 ) -> Image.Image:
-    """Scale to cover width, crop vertical band keeping figure bbox inside."""
+    """Scale to cover width, crop vertical band keeping figures + lobster in frame."""
     wide = extend_ultra_wide(im)
     w, h = wide.size
     scale = target_w / w
     scaled_h = max(1, int(h * scale))
     scaled = wide.resize((target_w, scaled_h), Image.Resampling.LANCZOS)
     crop_h = min(target_h, scaled_h)
-    bbox = figure_bbox(scaled) or content_bbox(scaled)
-    if bbox is None:
-        y0 = max(0, int(scaled_h * 0.42) - crop_h // 2)
-    else:
-        _x1, y1, _x2, y2 = bbox
-        min_headroom = max(HEAD_MARGIN, int(crop_h * 0.28))
-        cy = (y1 + y2) // 2
-        y0 = cy - crop_h // 2
-        y0 = max(0, min(y0, scaled_h - crop_h))
-        if y1 < y0 + min_headroom:
-            y0 = max(0, y1 - min_headroom)
-        if y2 > y0 + crop_h - FEET_ABOVE_FADE:
-            y0_feet = min(scaled_h - crop_h, y2 + FEET_ABOVE_FADE - crop_h)
-            if y1 >= y0_feet + min_headroom:
-                y0 = y0_feet
-        if y1 < y0 + min_headroom:
-            y0 = max(0, y1 - min_headroom)
-        y0 = max(0, min(y0, scaled_h - crop_h))
+    y0 = scene_crop_y0(scaled, crop_h)
     band = scaled.crop((0, y0, target_w, y0 + crop_h))
     if band.size[1] != target_h:
         band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
-    # If we landed on empty sky, anchor on the lower scene block.
-    check = figure_bbox(band)
-    fig_h = (check[3] - check[1]) if check else 0
-    if fig_h < int(band.size[1] * 0.18):
-        y0_alt = int(scaled_h * 0.56) - crop_h // 2
-        y0_alt = max(0, min(y0_alt, scaled_h - crop_h))
-        band = scaled.crop((0, y0_alt, target_w, y0_alt + crop_h))
+    cy = band_content_centroid_y(band)
+    if cy is not None and cy < target_h * 0.38:
+        y0 = anchored_scene_y0(scaled_h, crop_h)
+        band = scaled.crop((0, y0, target_w, y0 + crop_h))
         if band.size[1] != target_h:
             band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
-        if bbox is not None:
-            _x1, y1, _x2, y2 = bbox
-            mh = max(HEAD_MARGIN, int(crop_h * 0.22))
-            y0_fix = max(0, y1 - mh)
-            if y2 > y0_fix + crop_h - FEET_ABOVE_FADE:
-                y0_fix = min(scaled_h - crop_h, y2 + FEET_ABOVE_FADE - crop_h)
-            y0_fix = max(0, min(y0_fix, scaled_h - crop_h))
-            band = scaled.crop((0, y0_fix, target_w, y0_fix + crop_h))
-            if band.size[1] != target_h:
-                band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
     return band
 
 
