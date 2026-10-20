@@ -11,7 +11,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw"
-DEFAULT_SRC = RAW / "step-06-source-16x9-u6z1-seamless.jpg"
+DEFAULT_SRC = RAW / "step-06-source-16x9-u6z2-seamless.jpg"
 OUT = RAW / "step-06-desktop-raw.jpg"
 OUT_SIZE = (2400, 400)
 
@@ -35,10 +35,10 @@ def load_step04_helpers():
 
 
 def pick_slice(im: Image.Image) -> Image.Image:
-    """Band window: sky + path + full figures (u6z1, match step-04 fill height)."""
+    """Band window: figures drawn small in mid 16:9 — wide slice like step-04 (u6z2)."""
     w, h = im.size
-    y0 = int(h * 0.10)
-    y_end = int(h * 0.80)
+    y0 = int(h * 0.11)
+    y_end = int(h * 0.79)
     return im.crop((0, y0, w, y_end))
 
 
