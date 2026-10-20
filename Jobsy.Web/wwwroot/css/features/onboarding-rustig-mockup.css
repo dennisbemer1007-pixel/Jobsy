@@ -212,7 +212,7 @@
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
-  object-position: 72% 42%;
+  object-position: 55% 48%;
 }
 
 .ob-rustig__illustrated-mobile::before {
@@ -286,7 +286,7 @@
     inline-size: auto;
     max-inline-size: 100%;
     object-fit: contain;
-    object-position: right center;
+    object-position: 58% 52%;
   }
 
   .ob-rustig__illustrated-head {

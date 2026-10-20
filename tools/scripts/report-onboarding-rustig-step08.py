@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 DESK_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-08-desktop.jpg"
 MOB_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-08-mobile.jpg"
-CACHE = "20261020-u8a"
+CACHE = "20261020-u8b"
 
 
 def lobster_red_mask(rgb: np.ndarray) -> np.ndarray:

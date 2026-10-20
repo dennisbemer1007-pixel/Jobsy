@@ -20,7 +20,7 @@ MOB_JPEG = (
     ROOT
     / "Jobsy.Web/wwwroot/images/onboarding/rustig-mockup/step-06-droom-professions-u6-aquarel-mobile.jpg"
 )
-CACHE = "20261020-u6-aquarel"
+CACHE = "20261020-u6-aquarel-v2"
 
 
 def assert_illustration(path: Path, label: str) -> None:

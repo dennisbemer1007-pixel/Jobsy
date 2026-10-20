@@ -12,7 +12,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "artifacts/onboarding-rustig-panorama-raw"
-DEFAULT_SRC = RAW / "step-08-source-16x9-u8a-seamless.jpg"
+DEFAULT_SRC = RAW / "step-08-source-16x9-u8b-seamless.jpg"
 OUT = RAW / "step-08-desktop-raw.jpg"
 OUT_SIZE = (2400, 400)
 
