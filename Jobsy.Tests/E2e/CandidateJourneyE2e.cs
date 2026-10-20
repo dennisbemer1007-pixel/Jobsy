@@ -505,6 +505,80 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Clears culture (step 9) Quick-Scan answers for open likert screenshots.</summary>
+    public static async Task ResetDemoCultureProfileForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateCulturePersonalityProfiles.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateCulturePersonalityProfiles.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Culture)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears values (step 10) Quick-Scan answers for open likert screenshots.</summary>
+    public static async Task ResetDemoValuesProfileForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateValuesProfiles.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateValuesProfiles.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Values)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
     /// <summary>Marks a discovery mini-block answered so wizard routing stays on later steps (Playwright rustig evidence).</summary>
     public static async Task SeedMiniBlockCompleteForE2eAsync(
         string candidateEmail,
