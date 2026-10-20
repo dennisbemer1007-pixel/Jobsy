@@ -11,7 +11,7 @@ public class FilterSheetFooterNavTests
         var root = FindRepoRoot();
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "app.css"));
 
-        Assert.Contains("@media (max-width: 899px)", css, StringComparison.Ordinal);
+        Assert.Contains("@media (max-width: 768px)", css, StringComparison.Ordinal);
         Assert.Contains(
             ".app-shell:has(.jobsy-discovery.filters-open) .bottom-nav",
             css,
