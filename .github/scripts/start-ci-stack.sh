@@ -12,6 +12,8 @@ export Seed__Enabled=true
 export Seed__BanenkaartPerfCount="${Seed__BanenkaartPerfCount:-0}"
 export JobsyAuth__AllowDevelopmentAuth=true
 export JobsyAuth__AllowStubPayments=true
+# Playwright suites reuse kandidaat@jobsy.local across many logins; do not lock shared demo accounts in CI.
+export JobsyAuth__DisableAccountLockout=true
 # Playwright WaitForFunctionAsync needs eval; Acc/prod CSP stays without unsafe-eval.
 export JOBSY_CSP_ALLOW_UNSAFE_EVAL=1
 export JOBSY_E2E_CAPTURE_EMAIL_CODES=1

@@ -291,6 +291,7 @@ public class AuthHardeningHotfixTests
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),

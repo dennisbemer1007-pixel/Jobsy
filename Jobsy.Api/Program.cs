@@ -66,13 +66,15 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddJobsyApiPerformance();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<MfaChallengeService>();
+builder.Services.AddSingleton<Jobsy.Api.Security.AccountLockoutPolicy>();
 builder.Services.AddSingleton(sp =>
 {
     var cfg = sp.GetRequiredService<IConfiguration>();
     var key = JobsyLocalSessionToken.ResolveSigningKey(
         cfg["JobsyAuth:LocalSessionSigningKey"],
         cfg["JobsyAuth:DevelopmentAuthSecret"]);
-    return new UnknownAccountLockoutTracker(key);
+    var lockout = sp.GetRequiredService<Jobsy.Api.Security.AccountLockoutPolicy>();
+    return new UnknownAccountLockoutTracker(key, lockout.FailedAttemptsBeforeLockout);
 });
 builder.Services.AddSingleton(sp =>
 {

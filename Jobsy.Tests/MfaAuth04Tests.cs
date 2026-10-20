@@ -271,6 +271,7 @@ public class MfaTrustedDeviceTests
             challenges,
             new Auth04StubFeatures(true),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),
