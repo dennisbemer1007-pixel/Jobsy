@@ -7,43 +7,27 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance
+from PIL import Image, ImageEnhance
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
 _args = [a for a in sys.argv[1:] if a != "--mobile-only"]
 RAW = Path(_args[0]) if _args else ROOT / "artifacts/onboarding-rustig-panorama-raw"
 
-# 2× assets: ~1140×170 desktop (6:1), 390×92 mobile (~4:1)
+# 2× assets: ~1140×170 desktop (6:1), 390×92 mobile (~4.24:1)
 DESKTOP = (2280, 340)  # 6:1 at 2× (matches ~1140×170 content column)
 MOBILE = (780, 184)  # 2× for CSS band 390×92 (~4.24:1)
 CREAM = np.array([247, 244, 240], dtype=np.float32)
 DESKTOP_RATIO = 6.0
 MOBILE_RATIO = 780 / 184  # 390×92 CSS band at 2×
-HEAD_MARGIN = 14
-MIN_HEAD_ROW_FRAC = 0.165  # every head below top ~16.5% of hero band
-FEET_ABOVE_FADE = 25
 FADE_BOTTOM = 16
 FADE_SIDE = 24
-# 16:9 raws: vertical band with headroom (tuned vs approved step-03 crop).
+# 16:9 raws only (legacy / step-03): vertical band with headroom (approved step-03 crop).
 Y0_FRAC_16X9 = 0.456
-Y0_FRAC_SLUG: dict[str, float] = {
-    "step-02": 0.500,
-    "step-04": 0.456,
-    "step-05": 0.548,
-}
-# Desktop-only vertical crop (mobile keeps Y0_FRAC_SLUG).
-BAND_SHIFT_UP_DESKTOP: dict[str, int] = {
-    "step-02": 50,
-    "step-04": 18,
-    "step-05": 34,
-}
-Y0_FRAC_DESKTOP_SLUG: dict[str, float] = {
-    "step-02": 0.468,
-    "step-04": 0.450,
-    "step-05": 0.518,
-}
+Y0_FRAC_SLUG: dict[str, float] = {}
 PALETTE_SOFTEN_SLUGS: frozenset[str] = frozenset()
+# Desktop raws authored at ~6:1 — scale to DESKTOP, no vertical crop.
+BAND_NATIVE_MIN_RATIO = 5.4
 
 SLUGS = [
     "start",
@@ -71,38 +55,6 @@ def content_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
         return None
     ys, xs = np.where(mask)
     return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
-
-
-def figure_head_tops_band(band: Image.Image) -> list[int]:
-    """Same slice head-row logic as verify-onboarding-rustig-capture-heads.py."""
-    rgb = np.asarray(band.convert("RGB"), dtype=np.float32)
-    dist = np.linalg.norm(rgb - CREAM, axis=2)
-    h, w = dist.shape
-    y_lo = max(0, int(h * 0.02))
-    row_occ = 0.05
-
-    def region_top(x0_frac: float, x1_frac: float) -> int | None:
-        x0, x1 = int(w * x0_frac), max(int(w * x1_frac), int(w * x0_frac) + 1)
-        sub = dist[:, x0:x1]
-        peak_y, peak_score = None, 0.0
-        for y in range(y_lo, h):
-            score = float((sub[y] > 28).mean())
-            if score >= row_occ and score >= peak_score:
-                peak_score = score
-                peak_y = y
-        if peak_y is None:
-            return None
-        for y in range(y_lo, peak_y + 1):
-            if float((sub[y] > 28).mean()) >= row_occ * 0.65:
-                return y
-        return peak_y
-
-    tops: list[int] = []
-    for a, b in [(0.04, 0.28), (0.28, 0.52), (0.52, 0.76), (0.76, 0.96)]:
-        t = region_top(a, b)
-        if t is not None:
-            tops.append(t)
-    return tops
 
 
 def figure_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
@@ -145,7 +97,6 @@ def extend_ultra_wide(raw: Image.Image, min_ratio: float = 6.5) -> Image.Image:
     pw, ph = panel.size
     canvas_w = int(pw * 2.55)
     canvas = Image.new("RGB", (canvas_w, ph), tuple(CREAM.astype(int)))
-    # Left third, center, right third with soft overlap blends.
     positions = [0, int(pw * 0.78), int(pw * 1.56)]
     for i, x in enumerate(positions):
         layer = Image.new("RGBA", (canvas_w, ph), (0, 0, 0, 0))
@@ -156,7 +107,6 @@ def extend_ultra_wide(raw: Image.Image, min_ratio: float = 6.5) -> Image.Image:
         blend_w = int(pw * 0.12)
         for bx in range(blend_w):
             t = bx / max(1, blend_w - 1)
-            alpha = int(255 * t)
             x0 = positions[i] + bx
             if x0 >= canvas_w:
                 break
@@ -169,57 +119,48 @@ def extend_ultra_wide(raw: Image.Image, min_ratio: float = 6.5) -> Image.Image:
                     (x0, y),
                     tuple(int(c1[j] * (1 - t) + c2[j] * t) for j in range(3)),
                 )
-        rest = Image.alpha_composite(
-            canvas.convert("RGBA"),
-            layer,
-        ).convert("RGB")
-        canvas = rest
+        canvas = Image.alpha_composite(canvas.convert("RGBA"), layer).convert("RGB")
     return canvas
 
 
-def crop_to_ratio(
-    im: Image.Image,
-    target_w: int,
-    target_h: int,
-    ratio: float,
-    slug: str = "",
-    *,
-    desktop: bool = False,
-) -> Image.Image:
-    """Scale to cover width, crop vertical band keeping figure bbox inside."""
-    wide = extend_ultra_wide(im)
+def is_band_native(im: Image.Image) -> bool:
+    w, h = im.size
+    return h > 0 and (w / h) >= BAND_NATIVE_MIN_RATIO
+
+
+def fit_desktop_from_16x9(raw: Image.Image, slug: str = "") -> Image.Image:
+    """Legacy: crop vertical slice from 16:9 (same rule as approved step-03)."""
+    wide = extend_ultra_wide(raw)
     w, h = wide.size
-    scale = target_w / w
+    scale = DESKTOP[0] / w
     scaled_h = max(1, int(h * scale))
-    scaled = wide.resize((target_w, scaled_h), Image.Resampling.LANCZOS)
-    crop_h = int(round(target_w / ratio))
+    scaled = wide.resize((DESKTOP[0], scaled_h), Image.Resampling.LANCZOS)
+    crop_h = int(round(DESKTOP[0] / DESKTOP_RATIO))
     crop_h = min(crop_h, scaled_h)
     wide_ratio = w / h
     if 1.70 <= wide_ratio <= 1.85:
-        frac = y0_frac_for(slug, desktop=desktop)
+        frac = Y0_FRAC_SLUG.get(slug, Y0_FRAC_16X9)
         y0 = int(scaled_h * frac)
     else:
         fb = figure_bbox(scaled)
         if fb is None:
             y0 = max(0, int(scaled_h * 0.42) - crop_h // 2)
         else:
-            _fx1, _fy1, _fx2, fy2 = fb
-            y0 = int(fy2 - crop_h * 0.96)
+            y0 = int(fb[3] - crop_h * 0.96)
     y0 = max(0, min(y0, scaled_h - crop_h))
-    band = scaled.crop((0, y0, target_w, y0 + crop_h))
-    if band.size[1] != target_h:
-        band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
+    band = scaled.crop((0, y0, DESKTOP[0], y0 + crop_h))
+    if band.size[1] != DESKTOP[1]:
+        band = band.resize(DESKTOP, Image.Resampling.LANCZOS)
     return band
 
 
-def y0_frac_for(slug: str, *, desktop: bool) -> float:
-    if desktop and slug in Y0_FRAC_DESKTOP_SLUG:
-        return Y0_FRAC_DESKTOP_SLUG[slug]
-    return Y0_FRAC_SLUG.get(slug, Y0_FRAC_16X9)
+def fit_desktop(raw: Image.Image, slug: str = "") -> Image.Image:
+    if is_band_native(raw):
+        return raw.resize(DESKTOP, Image.Resampling.LANCZOS)
+    return fit_desktop_from_16x9(raw, slug)
 
 
 def soften_hero_palette(im: Image.Image) -> Image.Image:
-    """Nudge saturated raws toward approved step-03 pale watercolor."""
     im = ImageEnhance.Color(im).enhance(0.72)
     im = ImageEnhance.Brightness(im).enhance(1.06)
     im = ImageEnhance.Contrast(im).enhance(0.92)
@@ -246,27 +187,6 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
             if a:
                 px[x, y] = (*cream, a)
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
-
-
-def shift_band_up(band: Image.Image, px: int) -> Image.Image:
-    """Move illustration content up within the hero band (cream pad below)."""
-    if px <= 0:
-        return band
-    w, h = band.size
-    cream = tuple(int(c) for c in CREAM)
-    out = Image.new("RGB", (w, h), cream)
-    out.paste(band.crop((0, px, w, h)), (0, 0))
-    return out
-
-
-def fit_desktop(raw: Image.Image, slug: str = "") -> Image.Image:
-    band = crop_to_ratio(
-        raw, DESKTOP[0], DESKTOP[1], DESKTOP_RATIO, slug=slug, desktop=True
-    )
-    shift = BAND_SHIFT_UP_DESKTOP.get(slug, 0)
-    if shift:
-        band = shift_band_up(band, shift)
-    return band
 
 
 def fit_mobile(raw: Image.Image, slug: str = "") -> Image.Image:
@@ -336,9 +256,10 @@ def main() -> None:
             desk = soften_hero_palette(desk)
         desk.save(OUT / f"{slug}-desktop.jpg", quality=92, optimize=True)
         bb = figure_bbox(desk) or content_bbox(desk)
+        mode = "band-native" if is_band_native(raw) else "16x9-crop"
         print(
             f"{slug}: desk {desk.size} mob {mob.size} bbox {bb} "
-            f"<- desk {src.name} mob {mob_src.name}"
+            f"mode={mode} <- desk {src.name} mob {mob_src.name}"
         )
 
 
