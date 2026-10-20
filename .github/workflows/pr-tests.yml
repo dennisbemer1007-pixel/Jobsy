@@ -66,6 +66,7 @@ jobs:
         env:
           JOBSY_CI_WEB_URL: http://127.0.0.1:5201
           JOBSY_E2E_BASE_URL: http://127.0.0.1:5201
+          JOBSY_PASPOORT_IDLE_MS: "25000"
         run: |
           mkdir -p artifacts/playwright-smoke test-results
           # Multiple --filter-class flags are OR'd by xunit.v3 MTP (no `--` separator).
@@ -108,7 +109,8 @@ jobs:
             --filter-class '*AdminUsersPlaywrightTests' \
             --filter-class '*AdminRun4PlaywrightTests' \
             --filter-class '*CandidateTestsPlaywrightTests' \
-            --filter-class '*AssistantTabPlaywrightTests'
+            --filter-class '*AssistantTabPlaywrightTests' \
+            --filter-class '*MobilePaspoortCircuitResumePlaywrightTests'
 
       - name: Upload test results
         if: always()

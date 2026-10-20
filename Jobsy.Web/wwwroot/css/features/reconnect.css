@@ -2,7 +2,7 @@
     display: none;
     position: fixed;
     left: 50%;
-    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-clearance, 5.5rem) + 0.35rem + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     z-index: 10001;
     width: min(22rem, calc(100vw - 1.5rem));
@@ -10,14 +10,18 @@
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.2s ease, visibility 0s linear 0.5s;
-}.reconnect-toast.components-reconnect-show,
+}
+
+.reconnect-toast.components-reconnect-show,
 .reconnect-toast.components-reconnect-retrying {
     display: block;
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
     transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
-}.reconnect-toast.components-reconnect-failed,
+}
+
+.reconnect-toast.components-reconnect-failed,
 .reconnect-toast.components-reconnect-rejected,
 .reconnect-toast.components-reconnect-paused {
     display: block;
@@ -25,37 +29,78 @@
     opacity: 1;
     pointer-events: auto;
     transition-delay: 0s;
-}.reconnect-toast.components-reconnect-hide {
+}
+
+.reconnect-toast.components-reconnect-hide {
     display: none;
-}.reconnect-toast__panel {
+}
+
+.reconnect-toast__panel {
     padding: 0.7rem 0.9rem;
-    border-radius:var(--r-md);
+    border-radius: var(--r-md);
     border: 1px solid var(--border, #ddd5cc);
-    background:var(--surface, #fffcfa);
-    box-shadow:var(--shadow-pop);
+    background: var(--surface, #fffcfa);
+    box-shadow: var(--shadow-pop);
     color: var(--text, #122033);
     font-size: 0.9rem;
     font-weight: 650;
     text-align: center;
-}.reconnect-toast__msg {
+}
+
+.reconnect-toast__msg {
     display: none;
     margin: 0;
-}.reconnect-toast.components-reconnect-show .reconnect-toast__msg--show,
+}
+
+.reconnect-toast.components-reconnect-show .reconnect-toast__msg--show,
 .reconnect-toast.components-reconnect-retrying .reconnect-toast__msg--show,
 .reconnect-toast.components-reconnect-failed .reconnect-toast__msg--failed,
 .reconnect-toast.components-reconnect-paused .reconnect-toast__msg--failed,
 .reconnect-toast.components-reconnect-rejected .reconnect-toast__msg--rejected {
     display: block;
-}.reconnect-toast__action {
+}
+
+.reconnect-toast.components-reconnect-rejected.reconnect-toast--auth-pending .reconnect-toast__msg--rejected,
+.reconnect-toast.components-reconnect-rejected.reconnect-toast--auth-pending .reconnect-toast__msg--session-expired {
+    display: none;
+}
+
+.reconnect-toast.components-reconnect-rejected.reconnect-toast--auth-pending .reconnect-toast__msg--show {
+    display: block;
+}
+
+.reconnect-toast.reconnect-toast--session-expired.components-reconnect-rejected .reconnect-toast__msg--rejected {
+    display: none;
+}
+
+.reconnect-toast.reconnect-toast--session-expired.components-reconnect-rejected .reconnect-toast__msg--session-expired {
+    display: block;
+}
+
+.reconnect-toast__action {
     margin-left: 0.35rem;
     border: none;
-    background:transparent;
+    background: transparent;
     color: var(--brand, #0f2d5c);
     font: inherit;
     font-weight: 800;
     text-decoration: underline;
     cursor: pointer;
-}.lobsy-app-update {
+}
+
+html[data-lobsy-reconnect-active] {
+    --reconnect-toast-reserve: 3.25rem;
+}
+
+html[data-lobsy-reconnect-active] .app-shell.has-bottom-nav {
+    padding-bottom: calc(
+        var(--bottom-nav-clearance, 7rem)
+        + var(--reconnect-toast-reserve, 0px)
+        + env(safe-area-inset-bottom, 0px)
+    );
+}
+
+.lobsy-app-update {
     display: none;
     position: fixed;
     left: 50%;
@@ -66,38 +111,63 @@
     pointer-events: none;
     visibility: hidden;
     opacity: 0;
-}.lobsy-app-update.is-visible {
+}
+
+.lobsy-app-update.is-visible {
     display: block;
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
-}.lobsy-app-update__panel {
+}
+
+.lobsy-app-update__panel {
     padding: 0.65rem 0.85rem;
-    border-radius:var(--r-md);
+    border-radius: var(--r-md);
     border: 1px solid var(--border, #ddd5cc);
-    background:var(--surface, #fffcfa);
-    box-shadow:none;
+    background: var(--surface, #fffcfa);
+    box-shadow: none;
     color: var(--text, #122033);
     font-size: 0.88rem;
     font-weight: 650;
     text-align: center;
-}.lobsy-app-update__action {
+}
+
+.lobsy-app-update__action {
     margin-left: 0.35rem;
     border: none;
-    background:transparent;
+    background: transparent;
     color: var(--brand, #0f2d5c);
     font: inherit;
     font-weight: 800;
     text-decoration: underline;
     cursor: pointer;
-}@media (max-width: 639px) {.lobsy-app-update {
+}
+
+@media (max-width: 639px) {
+    .reconnect-toast {
+        left: max(0.75rem, env(safe-area-inset-left, 0px));
+        right: max(0.75rem, env(safe-area-inset-right, 0px));
+        width: auto;
+        transform: none;
+    }
+
+    .reconnect-toast__panel {
+        padding: 0.5rem 0.65rem;
+        font-size: 0.82rem;
+        text-align: start;
+    }
+
+    .lobsy-app-update {
         left: auto;
         right: max(0.5rem, env(safe-area-inset-right, 0px));
         top: calc(var(--app-header-height, 4.25rem) + 0.35rem);
         transform: none;
         width: min(16rem, calc(100vw - 1rem));
-    }.lobsy-app-update__panel {
+    }
+
+    .lobsy-app-update__panel {
         padding: 0.45rem 0.6rem;
         font-size: 0.75rem;
         text-align: start;
-    }}
+    }
+}

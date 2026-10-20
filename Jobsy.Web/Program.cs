@@ -85,7 +85,9 @@ builder.Services.AddRazorComponents()
         options.MaximumReceiveMessageSize = 2 * 1024 * 1024;
         // Mobile networks / brief background pauses: keep the circuit warmer than defaults.
         options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-        options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+        // Android/iOS can suspend the tab >60s without killing the auth cookie; allow longer silence
+        // before the server drops the circuit (retained disconnects still reconnect for 15 min).
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(90);
     });
 
 var circuitDetailedErrors = builder.Environment.IsDevelopment()
@@ -94,7 +96,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
 {
     // DetailedErrors only in Development and Acceptatie (Circuit__DetailedErrors=true).
     options.DetailedErrors = circuitDetailedErrors;
-    // Acc 27-09 §4: keep backgrounded mobile tabs longer; cap retained circuits on Starter RAM.
+    // Keep backgrounded mobile tabs reconnectable (min ~3 min is far below this cap).
+    // Requires a single web instance or sticky sessions: circuits live in process memory only.
     options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(15);
     options.DisconnectedCircuitMaxRetained = 100;
 });

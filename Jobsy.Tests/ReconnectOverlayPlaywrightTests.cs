@@ -152,7 +152,7 @@ public class ReconnectOverlayPlaywrightTests
         Assert.Equal("block", rejected.Rejected);
         await Assertions.Expect(page.Locator(".reconnect-toast__msg--rejected")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator(".reconnect-toast__msg--failed")).ToBeHiddenAsync();
-        await Assertions.Expect(page.Locator(".reconnect-toast__msg--rejected .reconnect-toast__action")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".reconnect-toast__msg--rejected [data-reconnect-try]")).ToBeVisibleAsync();
 
         Assert.True(
             violations.Count == 0,
