@@ -537,6 +537,7 @@
         else
         {
             MergeParameterAnswers();
+            SyncResumeIndex();
         }
 
         RefreshProgressInsight();
@@ -547,7 +548,38 @@
         if (ExternalIndex is int ei && _appliedExternalIndex != ei)
         {
             _appliedExternalIndex = ei;
-            _index = Math.Clamp(ei, 0, Math.Max(0, TargetCount - 1));
+            var clamped = Math.Clamp(ei, 0, Math.Max(0, TargetCount - 1));
+            if (TargetCount > 0 && clamped < Ordered.Count && !_flowAnswers.ContainsKey(Ordered[clamped].Id))
+            {
+                _index = clamped;
+            }
+            else if (TargetCount > 0 && clamped < Ordered.Count && _flowAnswers.ContainsKey(Ordered[clamped].Id))
+            {
+                _index = clamped;
+            }
+            else
+            {
+                SyncResumeIndex();
+            }
+        }
+    }
+
+    private void SyncResumeIndex()
+    {
+        if (TargetCount <= 0 || Ordered.Count == 0)
+        {
+            return;
+        }
+
+        if (FirstGapIndex() is int gap)
+        {
+            _index = gap;
+            return;
+        }
+
+        if (AnsweredInTargetCount() >= TargetCount)
+        {
+            _index = TargetCount - 1;
         }
     }
 
@@ -652,8 +684,16 @@
                 return;
             }
 
-            if (Autosave is not null) await Autosave.FlushAsync();
-            await OnFinished.InvokeAsync();
+            if (Autosave is not null)
+            {
+                await Autosave.FlushAsync();
+            }
+
+            if (OnFinished.HasDelegate)
+            {
+                await OnFinished.InvokeAsync();
+            }
+
             return;
         }
 

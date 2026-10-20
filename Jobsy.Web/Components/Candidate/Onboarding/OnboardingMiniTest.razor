@@ -46,6 +46,7 @@ else
                       Kind="_kind"
                       Questions="_flowQuestions"
                       Answers="Answers"
+                      Autosave="Autosave"
                       StartAt="CurrentQuestion"
                       ExternalIndex="CurrentQuestion"
                       Target="Depth"
@@ -84,6 +85,7 @@ else
     [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
     [Parameter] public IReadOnlyList<MiniQuestion> Questions { get; set; } = [];
     [Parameter] public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
+    [Parameter] public QuestionnaireAutosave? Autosave { get; set; }
     [Parameter] public string InputPrefix { get; set; } = "obv2-";
     [Parameter] public string? TitleKey { get; set; }
     [Parameter] public string? LeadKey { get; set; }

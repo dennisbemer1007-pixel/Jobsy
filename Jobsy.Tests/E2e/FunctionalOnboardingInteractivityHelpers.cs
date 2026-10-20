@@ -989,6 +989,159 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
     }
 
+    internal static async Task<int> ReadOnboardingWizardStepAsync(IPage page)
+        => await page.EvaluateAsync<int>(
+            """
+            () => {
+              const el = document.querySelector('[data-onboarding-step]');
+              if (!el) return 0;
+              const n = parseInt(el.getAttribute('data-onboarding-step') || '0', 10);
+              return Number.isFinite(n) ? n : 0;
+            }
+            """);
+
+    internal static async Task<string?> ReadMiniTestCounterAsync(IPage page)
+    {
+        var counter = page.Locator(".test-flow__counter").First;
+        if (await counter.CountAsync() == 0)
+        {
+            return null;
+        }
+
+        return (await counter.InnerTextAsync()).Trim();
+    }
+
+    internal static async Task AcceptOnboardingTestConsentAsync(IPage page)
+    {
+        var box = page.Locator(".ob-wizard__consent input[type=checkbox]").First;
+        await box.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await box.CheckAsync(new() { Force = true });
+        await page.GetByTestId("onboarding-next").ClickAsync(new() { Force = true, Timeout = 20_000 });
+        await page.Locator(".test-likert").First.WaitForAsync(new() { Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+    }
+
+    internal static async Task CompleteCurrentMiniTestBlockAsync(IPage page)
+    {
+        for (var q = 0; q < 5; q++)
+        {
+            await page.Locator(".test-likert__opt").Nth(2).ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await WaitForCircuitReadyAsync(page);
+            await page.WaitForTimeoutAsync(350);
+        }
+
+        var flowNext = page.Locator("button.test-flow__next:not([disabled])").First;
+        await flowNext.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await flowNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
+        await WaitForCircuitReadyAsync(page);
+    }
+
+    internal static async Task AdvancePastEarlyInsightIfVisibleAsync(IPage page)
+    {
+        var next = page.GetByTestId("onboarding-next");
+        if (await next.CountAsync() > 0 && await next.IsVisibleAsync())
+        {
+            var counter = await ReadMiniTestCounterAsync(page);
+            if (counter is null)
+            {
+                await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
+                await page.Locator(".test-likert").First.WaitForAsync(new() { Timeout = 90_000 });
+                await WaitForCircuitReadyAsync(page);
+            }
+        }
+    }
+
+    internal static async Task AssertOnKompasFinishScreenAsync(IPage page)
+    {
+        await page.Locator(".ob-wizard__finish, .ob-finale").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 180_000 });
+    }
+
+    /// <summary>
+    /// Completes all four onboarding mini tests (7–10), reloads once after Leuk, and lands on Kompas without revisiting a finished block.
+    /// </summary>
+    internal static async Task CompleteFourMiniTestsToKompasWithResumeChecksAsync(IPage page, string baseUrl)
+    {
+        await RegisterFreshCandidateAsync(page, baseUrl, "func-four-mini");
+        await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
+        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+        await AcceptOnboardingTestConsentAsync(page);
+
+        var maxStepSeenAfterLeavingLeuk = 7;
+
+        for (var block = 0; block < 4; block++)
+        {
+            var expectedStep = 7 + block;
+            await page.Locator(".test-likert").First.WaitForAsync(new() { Timeout = 90_000 });
+            var stepNow = await ReadOnboardingWizardStepAsync(page);
+            Assert.True(
+                stepNow == expectedStep,
+                $"Expected onboarding step {expectedStep} before mini block {block + 1}, got {stepNow}.");
+
+            await CompleteCurrentMiniTestBlockAsync(page);
+            await AdvancePastEarlyInsightIfVisibleAsync(page);
+
+            if (expectedStep == 8)
+            {
+                await page.WaitForFunctionAsync(
+                    """
+                    () => {
+                      const el = document.querySelector('[data-onboarding-step]');
+                      if (!el) return false;
+                      const step = parseInt(el.getAttribute('data-onboarding-step') || '0', 10);
+                      return step >= 9 && document.querySelector('.test-likert');
+                    }
+                    """,
+                    null,
+                    new() { Timeout = 120_000 });
+                maxStepSeenAfterLeavingLeuk = Math.Max(maxStepSeenAfterLeavingLeuk, await ReadOnboardingWizardStepAsync(page));
+                Assert.True(
+                    maxStepSeenAfterLeavingLeuk >= 9,
+                    "Expected to advance past Leuk (step 8) after completing that block.");
+
+                await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                await WaitForCircuitReadyAsync(page);
+                await WaitForCircuitReadyAsync(page);
+                var stepAfterReload = await ReadOnboardingWizardStepAsync(page);
+                Assert.True(
+                    stepAfterReload >= 9,
+                    $"After reload, completed Leuk must not reopen (step 8); got step {stepAfterReload}.");
+                if (stepAfterReload == 8)
+                {
+                    var counter = await ReadMiniTestCounterAsync(page);
+                    throw new InvalidOperationException($"Leuk reopened after reload; counter={counter ?? "n/a"}");
+                }
+            }
+        }
+
+        if (await page.Locator(".ob-wizard__finish").CountAsync() == 0)
+        {
+            var finishNext = page.GetByTestId("onboarding-next");
+            if (await finishNext.CountAsync() > 0 && await finishNext.IsVisibleAsync())
+            {
+                await finishNext.ClickAsync(new() { Force = true, Timeout = 30_000 });
+            }
+            else
+            {
+                var flowNext = page.Locator("button.test-flow__next:not([disabled])").First;
+                if (await flowNext.CountAsync() > 0)
+                {
+                    await flowNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
+                }
+            }
+
+            await WaitForCircuitReadyAsync(page);
+        }
+
+        await AssertOnKompasFinishScreenAsync(page);
+
+        var finalStep = await ReadOnboardingWizardStepAsync(page);
+        Assert.True(
+            finalStep == 0 || await page.Locator(".ob-wizard__finish").CountAsync() > 0,
+            "Expected Kompas finish screen after all four mini tests.");
+    }
+
     private static async Task<string> TargetSelectorAsync(ILocator target)
     {
         return await target.EvaluateAsync<string>(

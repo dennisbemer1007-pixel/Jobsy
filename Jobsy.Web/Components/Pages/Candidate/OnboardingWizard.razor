@@ -972,6 +972,7 @@
                 await MarkStartedAsync();
                 await RefreshJourneyCompletionAsync();
                 await PrepareMiniAsync();
+                await EnsureOnFirstIncompleteMiniBlockAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
                 await ApplyLegacyNearbyRedirectAsync();
                 try
@@ -1174,18 +1175,9 @@
             await FlushBeforeLeavingStepAsync();
             if (_step == 10)
             {
-                if (!await TryRouteToFirstIncompleteMiniBlockAsync())
+                if (!await TryEnterKompasWhenAllMiniTestsCompleteAsync())
                 {
                     return;
-                }
-
-                await FinalizeApplyReadinessAsync();
-                _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
-                _finish = true;
-                _state = await Api.GetMyOnboardingAsync() ?? _state;
-                if (_finaleV2)
-                {
-                    await LoadFinaleContextAsync();
                 }
 
                 return;
@@ -1209,10 +1201,7 @@
             _busy = false;
         }
 
-        if (!fromMiniTestFinish)
-        {
-            await DeferredTryAutoAdvanceAsync();
-        }
+        await DeferredTryAutoAdvanceAsync();
     }
 
     private async Task SkipOptionalAsync()
@@ -1651,31 +1640,14 @@
             _currentQuestion = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(_step, _miniQuickScanVersion, visible);
         }
         var kind = OnboardingMiniBlockCompletion.AssessmentKindForWizardStep(_step);
+        var autosaveContext = new MiniBlockAutosaveContext(
+            _step,
+            kind,
+            _miniQuickScanVersion,
+            new Dictionary<int, int>(_serverAnswers));
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
-            var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in draft)
-            {
-                merged[answer.Key] = answer.Value;
-            }
-
-            var payload = OnboardingMiniBlockCompletion.ScopeToMiniIds(kind, _miniQuickScanVersion, merged);
-
-            switch (_step)
-            {
-                case 7:
-                    await Api.SaveMyCompetenciesAsync(payload, false, cancellationToken);
-                    break;
-                case 8:
-                    await Api.SaveMyCareerInterestsAsync(payload, false, cancellationToken);
-                    break;
-                case 9:
-                    await Api.SaveMyCultureAsync(payload, false, cancellationToken);
-                    break;
-                case 10:
-                    await Api.SaveMyValuesAsync(payload, false, cancellationToken);
-                    break;
-            }
+            await PersistMiniBlockAnswersAsync(autosaveContext, draft, cancellationToken);
         }, onChanged: null, debounceMs: QuestionnaireAutosave.DefaultDebounceMs);
     }
 
@@ -1788,6 +1760,19 @@
 
         if (_miniQuestions.Count > 0)
         {
+            if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(_step, _miniQuickScanVersion, MiniVisibleAnswers))
+            {
+                if (_step == 7)
+                {
+                    await LoadEarlyStrengthAsync();
+                    _earlyMoment = EarlyRewardMoment.FirstInsight;
+                    RequestStepScrollReset();
+                    return;
+                }
+
+                await FinishMiniAsync();
+            }
+
             return;
         }
 
@@ -1804,18 +1789,9 @@
         {
             if (_step == 10)
             {
-                if (!await TryRouteToFirstIncompleteMiniBlockAsync())
+                if (!await TryEnterKompasWhenAllMiniTestsCompleteAsync())
                 {
                     return;
-                }
-
-                await FinalizeApplyReadinessAsync();
-                _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
-                _finish = true;
-                _state = await Api.GetMyOnboardingAsync() ?? _state;
-                if (_finaleV2)
-                {
-                    await LoadFinaleContextAsync();
                 }
 
                 return;
@@ -1838,18 +1814,77 @@
         }
     }
 
-    private async Task<bool> TryRouteToFirstIncompleteMiniBlockAsync()
+    /// <summary>
+    /// When saved progress points at a finished mini block, move to the first open block (7→10).
+    /// Never leaves the candidate on a completed test after reload.
+    /// </summary>
+    private async Task EnsureOnFirstIncompleteMiniBlockAsync()
     {
+        if (_welcome || _finish || _step is < 7 or > 10 || !Draft.HasConsent)
+        {
+            return;
+        }
+
+        if (_autosave is not null)
+        {
+            await _autosave.FlushAsync();
+        }
+
         var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        var firstOpen = await FindFirstIncompleteMiniWizardStepAsync(testsV2);
+        if (firstOpen is null)
+        {
+            await EnterKompasFromCompletedMiniTestsAsync();
+            return;
+        }
+
+        if (_step == firstOpen.Value)
+        {
+            return;
+        }
+
+        var currentComplete = await IsMiniBlockCompleteForRoutingAsync(_step, testsV2);
+        if (!currentComplete && _step < firstOpen.Value)
+        {
+            return;
+        }
+
+        ClearMiniAnswersBeforeStepChange();
+        _step = firstOpen.Value;
+        _state = await Api.SaveMyOnboardingProgressAsync(_step);
+        await PrepareMiniAsync();
+        RequestStepScrollReset();
+    }
+
+    private async Task<int?> FindFirstIncompleteMiniWizardStepAsync(bool testsV2)
+    {
         foreach (var step in new[] { 7, 8, 9, 10 })
         {
-            var answers = await LoadMiniAnswersForStepAsync(step);
-            var version = ResolveQuickScanVersion(answers.version, testsV2);
-            if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, version, answers.answers))
+            if (!await IsMiniBlockCompleteForRoutingAsync(step, testsV2))
             {
-                continue;
+                return step;
             }
+        }
 
+        return null;
+    }
+
+    private async Task<bool> TryEnterKompasWhenAllMiniTestsCompleteAsync()
+    {
+        if (_autosave is not null)
+        {
+            await _autosave.FlushAsync();
+        }
+
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        if (!OnboardingMiniBlockCompletion.IsMiniBlockComplete(_step, _miniQuickScanVersion, MiniVisibleAnswers))
+        {
+            return false;
+        }
+
+        var firstOpen = await FindFirstIncompleteMiniWizardStepAsync(testsV2);
+        if (firstOpen is int step)
+        {
             ClearMiniAnswersBeforeStepChange();
             _step = step;
             await PrepareMiniAsync();
@@ -1857,7 +1892,35 @@
             return false;
         }
 
+        await EnterKompasFromCompletedMiniTestsAsync();
         return true;
+    }
+
+    private async Task EnterKompasFromCompletedMiniTestsAsync()
+    {
+        await FinalizeApplyReadinessAsync();
+        _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
+        _finish = true;
+        _state = await Api.GetMyOnboardingAsync() ?? _state;
+        if (_finaleV2)
+        {
+            await LoadFinaleContextAsync();
+        }
+    }
+
+    private async Task<bool> IsMiniBlockCompleteForRoutingAsync(int step, bool testsV2)
+    {
+        if (_step == step && _miniBlockQuestionIds.Length > 0 && Draft.HasConsent)
+        {
+            if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, _miniQuickScanVersion, MiniVisibleAnswers))
+            {
+                return true;
+            }
+        }
+
+        var answers = await LoadMiniAnswersForStepAsync(step);
+        var version = ResolveQuickScanVersion(answers.version, testsV2);
+        return OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, version, answers.answers);
     }
 
     private async Task<(Dictionary<int, int> answers, int? version)> LoadMiniAnswersForStepAsync(int step)
@@ -1963,6 +2026,11 @@
             return;
         }
 
+        if (_autosave is not null)
+        {
+            await _autosave.FlushAsync();
+        }
+
         await NextAsync(fromMiniTestFinish: true);
     }
 
@@ -1991,6 +2059,7 @@
         {
             Interlocked.Increment(ref _stepTransitionGeneration);
             await PrepareMiniAsync();
+            await EnsureOnFirstIncompleteMiniBlockAsync();
             RequestStepScrollReset();
             await DeferredTryAutoAdvanceAsync();
         }
@@ -2412,6 +2481,46 @@
         }
 
         return testsV2Enabled ? AssessmentTestVersions.V3 : AssessmentTestVersions.V1;
+    }
+
+    /// <summary>Pinned at mini-block prepare time so debounced autosave cannot write to the wrong assessment store after step changes.</summary>
+    private sealed record MiniBlockAutosaveContext(
+        int WizardStep,
+        AssessmentKind Kind,
+        int QuickScanVersion,
+        Dictionary<int, int> ServerBaseline);
+
+    private async Task PersistMiniBlockAnswersAsync(
+        MiniBlockAutosaveContext context,
+        IReadOnlyDictionary<int, int> draft,
+        CancellationToken cancellationToken)
+    {
+        var merged = new Dictionary<int, int>(context.ServerBaseline);
+        foreach (var answer in draft)
+        {
+            merged[answer.Key] = answer.Value;
+        }
+
+        var payload = OnboardingMiniBlockCompletion.ScopeToMiniIds(
+            context.Kind,
+            context.QuickScanVersion,
+            merged);
+
+        switch (context.WizardStep)
+        {
+            case 7:
+                await Api.SaveMyCompetenciesAsync(payload, false, cancellationToken);
+                break;
+            case 8:
+                await Api.SaveMyCareerInterestsAsync(payload, false, cancellationToken);
+                break;
+            case 9:
+                await Api.SaveMyCultureAsync(payload, false, cancellationToken);
+                break;
+            case 10:
+                await Api.SaveMyValuesAsync(payload, false, cancellationToken);
+                break;
+        }
     }
 
     public async ValueTask DisposeAsync()

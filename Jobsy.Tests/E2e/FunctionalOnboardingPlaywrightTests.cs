@@ -119,6 +119,28 @@ public sealed class FunctionalOnboardingPlaywrightTests
         }
     }
 
+    [Fact]
+    public async Task Four_mini_tests_finish_on_kompas_without_reopening_completed_leuk()
+    {
+        var (run, baseUrl) = await TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, 1440, 900, false));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(240_000);
+
+        await FunctionalOnboardingInteractivityHelpers.CompleteFourMiniTestsToKompasWithResumeChecksAsync(page, baseUrl);
+    }
+
     [Theory]
     [MemberData(nameof(DesktopViewportCases))]
     public async Task Wizard_steps_1_through_10_stay_interactive_after_each_next(int width, int height, bool mobile, string tag)
