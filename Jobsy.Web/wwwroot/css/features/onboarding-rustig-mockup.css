@@ -349,6 +349,16 @@
       var(--bg) 100%
     );
   }
+
+  .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__hero-band::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 86%,
+      color-mix(in srgb, var(--bg) 18%, transparent) 94%,
+      var(--bg) 100%
+    );
+  }
 }
 
 @media (min-width: 1024px) {
@@ -434,6 +444,7 @@
   min-inline-size: 0;
 }
 
+.ob-rustig .ob-wizard__section-hint,
 .ob-rustig .work-status-field .ob-wizard__section-hint {
   font: inherit;
   font-size: 0.8125rem;
@@ -918,9 +929,10 @@
   min-block-size: 2.75rem;
   padding: 0.55rem 1.15rem;
   border-radius: var(--radius-sm);
-  font-weight: 700;
+  font: inherit;
   font-size: 0.875rem;
-  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
+  font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--brand) 15%);
   background: var(--surface);
   color: var(--brand);
   cursor: default;
@@ -1005,9 +1017,11 @@
 
 .ob-rustig__tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
   margin-block-end: 1.25rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .ob-rustig__tile-grid--compact {
@@ -1016,20 +1030,38 @@
 }
 
 .ob-rustig__tile {
-  padding: 0.65rem 0.75rem;
+  box-sizing: border-box;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
-  border: 1px solid color-mix(in srgb, var(--border) 75%, var(--brand) 25%);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--brand) 15%);
   background: var(--surface);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-align: center;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--text);
 }
 
 .ob-rustig__tile.is-on {
   border-color: var(--brand);
-  background: color-mix(in srgb, var(--accent-soft) 85%, var(--surface));
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
   color: var(--brand);
+  font-weight: 600;
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig__tile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ob-rustig__tile-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-inline-size: none;
+  }
 }
 
 .ob-rustig__job-card {

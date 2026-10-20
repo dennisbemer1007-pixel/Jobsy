@@ -5,6 +5,7 @@ public static class OnboardingRustigPanoramaAssets
     public const string Version = "20261020-u10a";
     public const string StartVersion = "20261020-start-g";
     public const string Step01Version = "20261020-u1b";
+    public const string Step03Version = "20261020-u3b";
 
     public static string Desktop(string slug) =>
         $"/images/onboarding/rustig-panorama/{slug}-desktop.jpg?v={CacheVersion(slug)}";
@@ -18,6 +19,8 @@ public static class OnboardingRustigPanoramaAssets
             return StartVersion;
         if (string.Equals(slug, "step-01", StringComparison.OrdinalIgnoreCase))
             return Step01Version;
+        if (string.Equals(slug, "step-03", StringComparison.OrdinalIgnoreCase))
+            return Step03Version;
         return Version;
     }
 }

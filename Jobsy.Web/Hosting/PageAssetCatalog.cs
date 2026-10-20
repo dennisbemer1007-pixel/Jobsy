@@ -328,7 +328,7 @@ public static class PageAssetCatalog
                 "css/features/onboarding-wizard.css?v=20261018-02",
                 "css/features/form-fields.css?v=20261019-01",
                 "css/features/choice-tiles.css?v=20261015-06",
-                "css/features/onboarding-rustig-mockup.css?v=20261020-u1b",
+                "css/features/onboarding-rustig-mockup.css?v=20261020-u3b",
             ];
         }
 
