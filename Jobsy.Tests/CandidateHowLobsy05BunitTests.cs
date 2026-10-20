@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Bunit;
 using Jobsy.Core.Features;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Components.Candidate.Journey;
 using Jobsy.Web.Components.Pages.Candidate;
 using Jobsy.Web.Localization;
@@ -254,6 +255,7 @@ public class CandidateHowLobsy05BunitTests : BunitContext
     [Fact]
     public void The_language_line_tags_every_name_with_its_own_lang()
     {
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         var cut = Render<HowLobsyWorks>();
         var langs = cut.Find(".how-safe__langs");
 

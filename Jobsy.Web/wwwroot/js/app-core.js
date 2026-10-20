@@ -1599,6 +1599,9 @@ window.jobsyDialog = (function () {
             try {
                 console.info("[lobsy] manual reload (app update)");
             } catch (e) { }
+            if (window.lobsyAllowDocumentReload) {
+                window.lobsyAllowDocumentReload();
+            }
             navigator.serviceWorker.getRegistration().then(function (reg) {
                 if (reg && reg.waiting) {
                     reg.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -1650,6 +1653,9 @@ window.jobsyDialog = (function () {
 
     navigator.serviceWorker.addEventListener("controllerchange", function () {
         if (userRequestedReload) {
+            if (window.lobsyAllowDocumentReload) {
+                window.lobsyAllowDocumentReload();
+            }
             window.location.reload();
         }
     });

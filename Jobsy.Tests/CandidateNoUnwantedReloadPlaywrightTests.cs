@@ -154,6 +154,10 @@ public class CandidateNoUnwantedReloadPlaywrightTests
 
         var sw = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/service-worker.published.js"));
         Assert.DoesNotContain("return self.skipWaiting();", sw, StringComparison.Ordinal);
+
+        var legacySw = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/image-cache-sw.js"));
+        Assert.Contains("unregister()", legacySw, StringComparison.Ordinal);
+        Assert.DoesNotContain("clients.navigate", legacySw, StringComparison.Ordinal);
     }
 
     private static string? ResolveBaseUrl()
