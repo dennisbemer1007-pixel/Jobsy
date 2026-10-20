@@ -1,0 +1,19 @@
+@* Decorative illustrated hero (step 6 droom, kompas); pointer-events none. *@
+
+<div class="ob-rustig__illustrated-hero" data-testid="ob-rustig-hero" aria-hidden="true">
+    <picture class="ob-rustig__illustrated-frame">
+        <source media="(max-width: 1023px)" srcset="@MobileUrl" />
+        <img src="@DesktopUrl"
+             alt=""
+             width="3500"
+             height="1000"
+             decoding="async"
+             fetchpriority="high"
+             data-testid="ob-rustig-hero-desk" />
+    </picture>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string DesktopUrl { get; set; } = "";
+    [Parameter, EditorRequired] public string MobileUrl { get; set; } = "";
+}

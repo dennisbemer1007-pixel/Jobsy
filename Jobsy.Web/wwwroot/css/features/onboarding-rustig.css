@@ -1548,3 +1548,125 @@
     display: none;
   }
 }
+
+/* #768 layout: full-width shell (no legacy 560px column), visible progress, single scroll. */
+.ob-wizard--rustig:has(.ob-rustig) {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin: 0;
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-wizard__welcome {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig {
+  inline-size: 100%;
+  min-block-size: min(100dvh, 100%);
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__layout {
+  inline-size: 100%;
+  min-block-size: min(100dvh, 100%);
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments {
+  min-inline-size: 0;
+  flex: 1 1 12rem;
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments span {
+  block-size: 5px;
+  background: color-mix(in srgb, var(--brand) 22%, var(--border));
+}
+
+.ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments i {
+  min-inline-size: 2px;
+}
+
+.ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__page-head {
+  max-inline-size: none;
+}
+
+.ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__page-head h1 {
+  font-size: clamp(1.65rem, 2.05vw, 2.125rem);
+  line-height: 1.08;
+  max-inline-size: 52rem;
+}
+
+.ob-wizard--rustig button.ob-rustig__dream,
+.ob-wizard--rustig button.ob-rustig__btn {
+  cursor: pointer;
+}
+
+.ob-rustig__field--dream input {
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
+  background: var(--surface);
+  font: inherit;
+}
+
+.ob-rustig__field--dream .error {
+  margin-block-start: 0.35rem;
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-hero {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame {
+    block-size: clamp(84px, 24vw, 112px);
+    max-block-size: 112px;
+    border-block-end: none;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame img {
+    object-fit: cover;
+    object-position: center 72%;
+  }
+
+  .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__chrome-row {
+    gap: 0.5rem;
+  }
+
+  .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments {
+    flex: 1 1 auto;
+    min-inline-size: 4.5rem;
+  }
+
+  .app-shell:has(.ob-wizard--rustig > .ob-rustig) .app-main,
+  .app-shell:has(.ob-wizard--rustig .ob-wizard__welcome > .ob-rustig) .app-main {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    display: block !important;
+    min-height: 0 !important;
+  }
+
+  .app-shell:has(.ob-wizard--rustig > .ob-rustig) .ob-wizard--rustig.ob-wizard,
+  .app-shell:has(.ob-wizard--rustig .ob-wizard__welcome > .ob-rustig) .ob-wizard--rustig.ob-wizard {
+    min-block-size: auto !important;
+    block-size: auto !important;
+    overflow: visible !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__illustrated-frame img {
+    aspect-ratio: 6.7 / 1;
+    object-fit: cover;
+    object-position: center 58%;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__footer-actions {
+    max-inline-size: min(52rem, 100%);
+  }
+}

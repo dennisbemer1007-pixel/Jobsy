@@ -8,6 +8,104 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
+@if (RustigLayout)
+{
+    @if (Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction())
+    {
+        <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
+    }
+    @if (ShowIdleSuggestions && RustigChipTitles.Count > 0)
+    {
+        <div class="ob-rustig__dream-grid" data-testid="onboarding-dream-suggest-fit">
+            @foreach (var title in RustigChipTitles)
+            {
+                var selected = string.Equals(Draft.Dream, title, StringComparison.OrdinalIgnoreCase);
+                <button type="button"
+                        class="ob-rustig__dream @(selected ? "is-on" : null)"
+                        aria-pressed="@(selected ? "true" : "false")"
+                        @onclick="() => ChooseTitle.InvokeAsync(title)">
+                    @title
+                </button>
+            }
+        </div>
+    }
+    <div class="ob-rustig__field ob-rustig__field--dream" style="margin-top:1rem" id="onboarding-field-dream">
+        <label for="onboarding-rustig-dream-input">@Culture["Onboarding.Rustig.DreamOwnLabel"]</label>
+        <input id="onboarding-rustig-dream-input"
+               role="combobox"
+               aria-expanded="@(Draft.DreamSearch.Length > 0)"
+               aria-autocomplete="list"
+               aria-invalid="@(ShowValidation && string.IsNullOrWhiteSpace(Draft.Dream) ? "true" : "false")"
+               placeholder="@Culture["Onboarding.DreamSearch"]"
+               @bind="Draft.DreamSearch"
+               @bind:event="oninput"
+               @onkeydown="DreamKeyDown" />
+        @if (ShowValidation && string.IsNullOrWhiteSpace(Draft.Dream))
+        {
+            <p class="error" role="alert">@Culture["Onboarding.Validation.Dream"]</p>
+        }
+        @if (Draft.DreamSearch.Length > 0)
+        {
+            <div role="listbox">
+                @if (Young)
+                {
+                    @foreach (var dreamJob in DreamJobCatalog.Search(Draft.DreamSearch))
+                    {
+                        <button type="button" role="option" @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
+                            @((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))
+                            <span>@Culture[$"DreamJob.{dreamJob.Key}"]</span>
+                        </button>
+                    }
+                }
+                else
+                {
+                    @foreach (var hit in OccupationCatalog.Shared.Search(Draft.DreamSearch, 8, Draft.Education))
+                    {
+                        <button type="button" role="option" @onclick="() => ChooseTitle.InvokeAsync(hit.Title)">
+                            <span>@hit.Title</span>
+                            @if (!string.IsNullOrWhiteSpace(hit.Description))
+                            {
+                                <small>@hit.Description</small>
+                            }
+                            @if (hit.NoScore)
+                            {
+                                <small>@Culture["Occ.NoScore"]. @Culture["Occ.NoScoreWhy"]</small>
+                            }
+                            else if (hit.LevelNote)
+                            {
+                                <small>@Culture["Occ.ExtraTraining"]</small>
+                            }
+                        </button>
+                    }
+                }
+                <button type="button" @onclick="ChooseOwnDream">
+                    ＋ @Culture.Format("Onboarding.DreamOwn", Draft.DreamSearch.Trim())
+                </button>
+            </div>
+        }
+    </div>
+    @if (ShowChosenChip)
+    {
+        <p class="journey-chip is-selected" role="status">@Draft.Dream</p>
+    }
+    @if (Young)
+    {
+        <div class="ob-rustig__dream-grid ob-rustig__dream-grid--young">
+            @foreach (var dreamJob in DreamJobCatalog.All)
+            {
+                var isSelected = Draft.Dream == dreamJob.TitleNl;
+                <button type="button"
+                        class="ob-rustig__dream @(isSelected ? "is-on" : null)"
+                        aria-pressed="@(isSelected ? "true" : "false")"
+                        @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
+                    @Culture[$"DreamJob.{dreamJob.Key}"]
+                </button>
+            }
+        </div>
+    }
+}
+else
+{
 @if (ShowHeading)
 {
     @if (AsSubsection)
@@ -160,6 +258,7 @@
     </div>
     </div>
 }
+}
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
@@ -168,6 +267,7 @@
     [Parameter] public EventCallback ChooseOwnDream { get; set; }
     /// <summary>Teen grid only when age is known and under 18. Unknown age uses the adult catalog.</summary>
     [Parameter] public bool Young { get; set; }
+    [Parameter] public bool RustigLayout { get; set; }
 
     private bool ShowChosenChip =>
         !string.IsNullOrWhiteSpace(Draft.Dream)
@@ -186,6 +286,31 @@
 
     private bool ShowIdleSuggestions =>
         !Young && string.IsNullOrWhiteSpace(Draft.DreamSearch);
+
+    private IReadOnlyList<string> RustigChipTitles
+    {
+        get
+        {
+            var list = new List<string>();
+            foreach (var item in FitSuggestions)
+            {
+                if (!list.Contains(item.Title, StringComparer.OrdinalIgnoreCase))
+                {
+                    list.Add(item.Title);
+                }
+            }
+
+            foreach (var title in RegionalTitles)
+            {
+                if (!list.Contains(title, StringComparer.OrdinalIgnoreCase))
+                {
+                    list.Add(title);
+                }
+            }
+
+            return list;
+        }
+    }
 
     protected override void OnParametersSet()
     {

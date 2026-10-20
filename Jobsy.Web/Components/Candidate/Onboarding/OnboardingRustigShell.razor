@@ -1,0 +1,120 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Onboarding
+
+<div class="ob-rustig" data-ob-rustig-screen="@ScreenId">
+    <div class="ob-rustig__layout @(ShowJobsRail ? "ob-rustig__layout--with-rail" : null)">
+        <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
+            <img class="ob-rustig__logo-e"
+                 src="@BrandImages.AppIconSvg"
+                 width="56"
+                 height="56"
+                 alt="Lobsy"
+                 decoding="async"
+                 data-logo-fallback="off"
+                 draggable="false" />
+            @foreach (var item in OnboardingRustigSidebarNav.Items(Step))
+            {
+                <div class="ob-wizard__side-item @(item.Current ? "is-current" : null)">
+                    <span>@item.Number</span>
+                    <div>
+                        <strong>@item.Title</strong>
+                        @if (!string.IsNullOrWhiteSpace(item.Sub))
+                        {
+                            <small>@item.Sub</small>
+                        }
+                    </div>
+                </div>
+            }
+        </aside>
+
+        <div class="ob-rustig__main">
+            <header class="ob-rustig__chrome">
+                <div class="ob-rustig__mobile-brand">
+                    <img class="ob-rustig__logo-e"
+                         src="@BrandImages.AppIconSvg"
+                         width="40"
+                         height="40"
+                         alt=""
+                         decoding="async"
+                         data-logo-fallback="off"
+                         draggable="false" />
+                </div>
+                <div class="ob-rustig__chrome-row">
+                    <button type="button" class="ob-rustig__link" aria-hidden="true" tabindex="-1">‹</button>
+                    <div class="ob-rustig__segments"
+                         role="progressbar"
+                         aria-valuenow="@Step"
+                         aria-valuemin="0"
+                         aria-valuemax="10">
+                        @foreach (var phase in OnboardingRustigSidebarNav.PhaseWidths(Step))
+                        {
+                            <span><i style="--w:@(phase.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></i></span>
+                        }
+                    </div>
+                    <div class="ob-rustig__actions">
+                        <button type="button" class="ob-rustig__link" @onclick="OnLater">@Culture["Onboarding.Later"]</button>
+                        <a class="ob-rustig__link ob-rustig__link--underline"
+                           href="/privacy/data"
+                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                    </div>
+                </div>
+                <div class="ob-rustig__meta">
+                    <span>
+                        <strong>@PhaseLabel</strong>
+                        <text> · @Culture.Format("Onboarding.StepLine", Step, OnboardingWizardCatalog.RemainingMinutes(Step))</text>
+                    </span>
+                    @if (ShowSaved && !string.IsNullOrWhiteSpace(SaveStatus))
+                    {
+                        <span class="ob-rustig__saved" aria-live="polite">@SaveStatus</span>
+                    }
+                </div>
+            </header>
+
+            @if (Hero is not null)
+            {
+                @Hero
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <div class="ob-rustig__page-head">
+                    <h1 tabindex="-1">@Title</h1>
+                    @if (!string.IsNullOrWhiteSpace(Lead))
+                    {
+                        <p class="ob-rustig__lead">@Lead</p>
+                    }
+                </div>
+            }
+
+            <div class="ob-rustig__body">
+                @ChildContent
+            </div>
+        </div>
+
+        @if (ShowJobsRail && JobsRail is not null)
+        {
+            <aside class="ob-rustig__rail" aria-label="Banen in de buurt">
+                @JobsRail
+            </aside>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string ScreenId { get; set; } = "";
+    [Parameter] public int Step { get; set; } = 1;
+    [Parameter] public string PhaseLabel { get; set; } = "";
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public bool ShowSaved { get; set; } = true;
+    [Parameter] public string? SaveStatus { get; set; }
+    [Parameter] public bool ShowJobsRail { get; set; }
+    [Parameter] public RenderFragment? Hero { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? JobsRail { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

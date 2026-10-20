@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-start-g2" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-step06-a" />
     }
 </HeadContent>
 
@@ -197,6 +197,24 @@
                 </button>
             </section>
         }
+    }
+    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 6)
+    {
+        <OnboardingRustigDreamStep Draft="Draft"
+                                   ShowValidation="_showValidation"
+                                   Young="@IsYoungCandidate"
+                                   RegionalVacancyTitles="@DreamStepRegionalTitles"
+                                   Error="@_error"
+                                   Busy="@_busy"
+                                   SaveStatus="@RustigSaveStatus"
+                                   ChooseDream="ChooseDream"
+                                   ChooseTitle="ChooseDreamTitle"
+                                   ChooseOwnDream="ChooseOwnDream"
+                                   DreamKeyDown="DreamKeyDown"
+                                   OnBack="BackAsync"
+                                   OnNext="@(() => NextAsync())"
+                                   OnDreamUnknown="DreamUnknownAsync"
+                                   OnLater="LaterAsync" />
     }
     else
     {
@@ -730,6 +748,12 @@
     private string SaveText => _saveError
         ? Culture["Onboarding.NotSaved"]
         : _profilePersistInFlight ? Culture["Onboarding.Saving"] : "";
+
+    private string RustigSaveStatus => _saveError
+        ? Culture["Onboarding.NotSaved"]
+        : _profilePersistInFlight
+            ? Culture["Onboarding.Saving"]
+            : Culture["Onboarding.AllSaved"];
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
     private string DaysSummary => Draft.Availability.Count == 0
