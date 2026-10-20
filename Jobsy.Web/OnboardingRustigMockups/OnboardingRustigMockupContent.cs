@@ -48,8 +48,8 @@ public static class OnboardingRustigMockupContent
             ["is-done", "is-done", "is-current", ""]),
         "waarden" => new TestQuestionMock(
             "Waarden",
-            "Ik vind het belangrijk dat mijn werk bijdraagt aan iets zinnigs.",
-            3, 5,
+            "Ik wil zelf kunnen beslissen wanneer ik welke taak doe.",
+            1, 4,
             ["is-done", "is-done", "is-done", "is-current"]),
         _ => new TestQuestionMock(
             "Test",
