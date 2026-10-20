@@ -16,6 +16,21 @@
                               SelectAddress="SelectAddress" />
             </div>
             break;
+        case 2:
+            <div class="ob-rustig__form-grid">
+                <AvailabilityStep Draft="Draft"
+                                  Illustrated="true"
+                                  ShowValidation="ShowValidation"
+                                  Presets="Presets"
+                                  TogglePreset="TogglePreset"
+                                  ToggleFineTune="ToggleFineTune"
+                                  SetMinHours="SetMinHours"
+                                  SetMaxHours="SetMaxHours"
+                                  ManualAvailability="ManualAvailability"
+                                  ToggleAvailability="ToggleAvailability"
+                                  ResetPresets="ResetPresets" />
+            </div>
+            break;
     }
 </div>
 
@@ -23,7 +38,15 @@
     [Parameter] public int Step { get; set; }
     [Parameter] public OnboardingProfileDraft Draft { get; set; } = default!;
     [Parameter] public bool ShowValidation { get; set; }
+    [Parameter] public IReadOnlyList<AvailabilityStep.Preset> Presets { get; set; } = Array.Empty<AvailabilityStep.Preset>();
     [Parameter] public EventCallback AddressChanged { get; set; }
     [Parameter] public EventCallback ShowCity { get; set; }
     [Parameter] public EventCallback<AddressSuggestion> SelectAddress { get; set; }
+    [Parameter] public EventCallback<string> TogglePreset { get; set; }
+    [Parameter] public EventCallback ToggleFineTune { get; set; }
+    [Parameter] public EventCallback<int> SetMinHours { get; set; }
+    [Parameter] public EventCallback<int> SetMaxHours { get; set; }
+    [Parameter] public EventCallback ManualAvailability { get; set; }
+    [Parameter] public EventCallback<string> ToggleAvailability { get; set; }
+    [Parameter] public EventCallback ResetPresets { get; set; }
 }

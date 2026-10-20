@@ -6,6 +6,7 @@ public static class OnboardingRustigPanoramaAssets
     public const string StartDesktopVersion = "20261020-start-g";
     public const string StartMobileVersion = "20261020-start-d";
     public const string Step01Version = "20261020-u1b";
+    public const string Step02Version = "20261020-u6s";
     public const string Step03Version = "20261020-u3c";
     public const string DefaultVersion = "20261020-u10a";
 
@@ -40,6 +41,7 @@ public static class OnboardingRustigPanoramaAssets
         {
             "start" => StartDesktopVersion,
             "step-01" => Step01Version,
+            "step-02" => Step02Version,
             "step-03" => Step03Version,
             _ => DefaultVersion,
         };
