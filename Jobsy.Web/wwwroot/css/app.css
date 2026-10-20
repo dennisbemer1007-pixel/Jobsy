@@ -2763,13 +2763,14 @@ html[dir="rtl"] .account-menu__panel {
     background: var(--brand-deep);
 }
 
-/* Mobile: hide fixed bottom-nav + cookie banner while the filter sheet is open so
+/* Mobile/tablet drawer: hide fixed bottom-nav + cookie banner while the filter sheet is open so
    Annuleren / Toon n banen stay tappable. .app-main (z-index: 1) creates a stacking context
    that otherwise traps .filter-sheet (z-index 90) below .bottom-nav (z-index 50) and
-   .cookie-consent (z-index 80). */
-@media (max-width: 768px) {
+   .cookie-consent (z-index 80). Match kb-filter-drawer breakpoint (899px). */
+@media (max-width: 899px) {
     .app-shell:has(.jobsy-discovery.filters-open) .bottom-nav,
-    .app-shell:has(.jobsy-discovery.filters-open) .cookie-consent {
+    .app-shell:has(.jobsy-discovery.filters-open) .cookie-consent,
+    .app-shell:has(.jobsy-discovery.filters-open) .lobsy-coach-dock {
         display: none !important;
     }
 }
@@ -2816,8 +2817,9 @@ html[dir="rtl"] .account-menu__panel {
         bottom: 0;
         left: 0;
         right: 0;
-        height: min(88dvh, 720px);
-        max-height: min(88dvh, 720px);
+        /* svh tracks the visible viewport; dvh alone can exceed window.innerHeight in mobile browsers. */
+        height: min(88svh, 88dvh, 720px);
+        max-height: min(88svh, 88dvh, 720px);
         border-radius: 16px 16px 0 0;
         transform: translate3d(0, 100%, 0);
         opacity: 0;
@@ -2828,10 +2830,16 @@ html[dir="rtl"] .account-menu__panel {
     }
 
     .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
-        transform: translate3d(0, 0, 0);
+        /* Snap open: animating transform leaves the sheet translated down while opacity is already 1. */
+        transition: opacity 220ms ease !important;
+        transform: none !important;
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
+        top: max(0px, calc(100svh - min(88svh, 88dvh, 100vh, 720px)));
+        bottom: 0;
+        height: min(88svh, 88dvh, 100vh, 720px);
+        max-height: min(88svh, 88dvh, 100vh, 720px);
     }
 
     .filter-sheet.kb-filter-drawer::before {
@@ -21932,7 +21940,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 @media (max-width: 639px) {
-    .app-shell:has([data-lobsy-coach]) .app-main {
+    .app-shell:has([data-lobsy-coach]):not(:has(.jobsy-discovery)) .app-main {
         padding-bottom: calc(
             var(--bottom-nav-h, 0px)
             + 48px
@@ -21943,21 +21951,21 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         );
     }
 
-    .app-shell:has([data-lobsy-coach]) .app-main__content {
+    .app-shell:has([data-lobsy-coach]):not(:has(.jobsy-discovery)) .app-main__content {
         flex-grow: 0;
         padding-bottom: 0;
     }
 
-    .app-shell.has-bottom-nav .app-main__content {
+    .app-shell.has-bottom-nav:not(.app-shell--banenkaart-shell) .app-main__content {
         flex-grow: 0;
     }
 
-    .app-shell.has-bottom-nav {
+    .app-shell.has-bottom-nav:not(.app-shell--banenkaart-shell) {
         min-height: auto;
     }
 
-    html:has(.app-shell.has-bottom-nav),
-    body:has(.app-shell.has-bottom-nav) {
+    html:has(.app-shell.has-bottom-nav:not(.app-shell--banenkaart-shell)),
+    body:has(.app-shell.has-bottom-nav:not(.app-shell--banenkaart-shell)) {
         min-height: auto;
     }
 
