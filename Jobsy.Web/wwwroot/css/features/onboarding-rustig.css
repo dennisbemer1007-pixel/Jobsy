@@ -2245,4 +2245,12 @@
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__actions {
     margin-inline-start: auto;
   }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__travel-times.lobsy-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

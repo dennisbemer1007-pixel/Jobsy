@@ -683,19 +683,54 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task ClickBeginnenOnWelcomeAsync(IPage page, bool mobile)
     {
+        var rustigStart = page.Locator("[data-ob-rustig-screen=start]");
+        var useRustig = await rustigStart.CountAsync() > 0;
+        if (useRustig)
+        {
+            await rustigStart.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        }
+
         var begin = page.GetByTestId("onboarding-begin");
         if (await begin.CountAsync() == 0)
         {
             begin = page.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^(Beginnen|Aan de slag)$") });
         }
 
-        await AssertHitTargetAsync(page, begin, "onboarding-begin");
-        await begin.ClickAsync(new() { Timeout = 30_000, Force = mobile });
-        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new()
+        await begin.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        if (!mobile)
         {
-            State = WaitForSelectorState.Visible,
-            Timeout = 90_000,
-        });
+            await AssertHitTargetAsync(page, begin, "onboarding-begin");
+        }
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                await begin.ClickAsync(new() { Timeout = 30_000, Force = mobile });
+                break;
+            }
+            catch (PlaywrightException) when (mobile && attempt < 2)
+            {
+                await page.WaitForTimeoutAsync(400);
+            }
+        }
+
+        if (useRustig)
+        {
+            await OnboardingRustigStepScreen(page, 1).WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 90_000,
+            });
+        }
+        else
+        {
+            await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 90_000,
+            });
+        }
     }
 
     internal static ILocator OnboardingRustigStepScreen(IPage page, int step)
@@ -733,20 +768,23 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await FillKennismakenBasicsExceptWorkStatusAsync(page);
         await SelectAnyWorkStatusChipAsync(page);
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await WaitForCircuitReadyAsync(page, 60_000);
         await AssertOnboardingRustigStepScreenAsync(page, 2);
         if (targetStep == 2)
         {
             return;
         }
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        var preset = page.Locator(
+            ".ob-rustig .ob-wizard__presets .lobsy-choice-tile, .ob-rustig .ob-wizard__presets button, .ob-wizard__presets .lobsy-choice-tile").First;
+        for (var attempt = 0; attempt < 5; attempt++)
         {
             if (await OnboardingRustigStepScreen(page, 3).IsVisibleAsync())
             {
                 break;
             }
 
-            var preset = page.Locator(".ob-wizard__presets .lobsy-choice-tile, .ob-wizard__presets button").First;
+            await AssertOnboardingRustigStepScreenAsync(page, 2);
             await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
             await preset.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
             await WaitForCircuitReadyAsync(page, 60_000);
