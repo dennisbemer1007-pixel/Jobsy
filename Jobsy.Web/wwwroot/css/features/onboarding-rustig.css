@@ -2153,3 +2153,45 @@
     padding-inline: 1rem;
   }
 }
+
+.ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__canvas--mini-test {
+  max-inline-size: min(52rem, 100%);
+}
+
+.ob-rustig__canvas--mini-test .ob-rustig__question-card {
+  padding: 0.25rem 0 0;
+}
+
+.ob-rustig__canvas--mini-test .test-flow__lead {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+.ob-rustig__canvas--mini-test .test-flow__statement {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
+  line-height: 1.25;
+  color: var(--brand);
+  border: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  hyphens: none;
+  overflow-wrap: break-word;
+}
+
+.ob-rustig__canvas--mini-test .test-flow__footer {
+  margin-block-start: 1.5rem;
+  max-inline-size: 40rem;
+}
+
+@media (max-width: 1023px) {
+  .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-band {
+    --ob-rustig-hero-h: 140px;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-img {
+    object-fit: contain;
+    object-position: center bottom;
+  }
+}

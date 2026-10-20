@@ -6,22 +6,37 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<TestBlockBackground Slug="@_blockArtSlug" Enabled="@(Questions.Count > 0)">
-<div class="ob-wizard__test-tabs @(JourneyShell ? "journey-segments" : null)">
+<TestBlockBackground Slug="@_blockArtSlug" Enabled="@(!RustigLayout && Questions.Count > 0)">
+<div class="@(RustigLayout ? "ob-rustig__test-tabs" : $"ob-wizard__test-tabs{(JourneyShell ? " journey-segments" : "")}")"
+     aria-label="@(RustigLayout ? Culture["Onboarding.Journey.StationsAria"] : null)">
     @foreach (var tab in TestTabs)
     {
         var isCurrent = tab.Step == Step;
         var isDone = tab.Step < Step;
-        <span class="ob-wizard__test-tab @(isCurrent ? "is-current" : isDone ? "is-done" : null)">
+        <span class="@(RustigLayout ? "ob-rustig__test-tab" : "ob-wizard__test-tab") @(isCurrent ? "is-current" : isDone ? "is-done" : null)">
             @if (isDone)
             {
-                <span class="ob-wizard__test-tab-check" aria-hidden="true">✓</span>
+                if (RustigLayout)
+                {
+                    <text>✓ </text>
+                }
+                else
+                {
+                    <span class="ob-wizard__test-tab-check" aria-hidden="true">✓</span>
+                }
             }
-            <span class="ob-wizard__test-tab-label">@Culture[tab.Title]</span>
+            @if (!RustigLayout)
+            {
+                <span class="ob-wizard__test-tab-label">@Culture[tab.Title]</span>
+            }
+            else
+            {
+                @Culture[tab.Title]
+            }
         </span>
     }
 </div>
-@if (!JourneyShell)
+@if (!JourneyShell && !RustigLayout)
 {
     @if (Questions.Count > 0)
     {
@@ -41,7 +56,7 @@
 }
 else
 {
-    <div class="ob-wizard__card">
+    <div class="@(RustigLayout ? "ob-rustig__question-card" : "ob-wizard__card")">
     <TestQuestionFlow @key="FlowEpoch"
                       Kind="_kind"
                       Questions="_flowQuestions"
@@ -52,7 +67,7 @@ else
                       Target="Depth"
                       Compact="true"
                       QuestionTitle="@(JourneyShell ? (string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey]) : null)"
-                      QuestionLead="@(JourneyShell ? Culture["TestFlow.QuestionLead"] : null)"
+                      QuestionLead="@(RustigLayout || JourneyShell ? Culture["Onboarding.Test.Lead"] : null)"
                       PartIndex="@(JourneyShell ? Step - 6 : 0)"
                       PartTotal="@(JourneyShell ? 4 : 0)"
                       FinishLabel="@Culture["Onboarding.NextTest"]"
@@ -93,6 +108,7 @@ else
     [Parameter] public bool ShowHint { get; set; }
     [Parameter] public bool ShowQuestionCounter { get; set; }
     [Parameter] public bool JourneyShell { get; set; }
+    [Parameter] public bool RustigLayout { get; set; }
     [Parameter] public TestDepthLevel Depth { get; set; } = TestDepthLevel.First;
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
