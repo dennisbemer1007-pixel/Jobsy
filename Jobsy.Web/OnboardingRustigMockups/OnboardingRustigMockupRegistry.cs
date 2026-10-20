@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Onboarding;
 
 namespace Jobsy.Web.OnboardingRustigMockups;
@@ -31,7 +32,7 @@ public static class OnboardingRustigMockupRegistry
 {
     public static readonly IReadOnlyList<OnboardingRustigMockupScreen> Ordered =
     [
-        new("start", 0, "Over jou", 12, OnboardingRustigMockupKind.Start,
+        new("start", 0, "Over jou", OnboardingWizardCatalog.V3TotalMinutesEstimate, OnboardingRustigMockupKind.Start,
             null, null,
             OnboardingIllustrationAssets.KennismakenJpg,
             OnboardingIllustrationAssets.KennismakenWebp, "50% 45%"),

@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.OnboardingRustigMockups
+@using Jobsy.Core.Rules
 @using Jobsy.Web.OnboardingRustigMockups
 
 @if (Meta is null)
@@ -67,7 +68,7 @@ else
         _ => Meta!.Kind switch
         {
             OnboardingRustigMockupKind.Start =>
-                "In ongeveer zes minuten maken we samen je startprofiel. Daarna zie je op je Kompas wie je bent en welk werk bij je past.",
+                $"In ongeveer {OnboardingWizardCatalog.V3TotalMinutesEstimate} minuten doorlopen we samen tien korte stappen. Daarna staat je Kompas klaar en zie je welk werk bij je past.",
             OnboardingRustigMockupKind.Kompas =>
                 "Je gaat nu de kracht van Lobsy meemaken. Dit is wat je vanaf nu kunt verwachten.",
             _ => Meta.Lead,
@@ -79,14 +80,18 @@ else
         : null;
 
     private string? PanoramaDesktop =>
-        Meta is not null && Meta.Slug.StartsWith("step-", StringComparison.Ordinal) && Meta.Slug != "step-06"
+        Meta is not null && UsesPanoramaHero(Meta.Slug)
             ? OnboardingRustigPanoramaAssets.Desktop(Meta.Slug)
             : null;
 
     private string? PanoramaMobile =>
-        Meta is not null && Meta.Slug.StartsWith("step-", StringComparison.Ordinal) && Meta.Slug != "step-06"
+        Meta is not null && UsesPanoramaHero(Meta.Slug)
             ? OnboardingRustigPanoramaAssets.Mobile(Meta.Slug)
             : null;
+
+    private static bool UsesPanoramaHero(string slug) =>
+        string.Equals(slug, "start", StringComparison.OrdinalIgnoreCase)
+        || (slug.StartsWith("step-", StringComparison.Ordinal) && slug != "step-06");
 
     private string? IllustratedDesktop => Meta?.Slug switch
     {
@@ -136,20 +141,17 @@ else
     {
         <div class="ob-rustig__canvas">
             <div class="ob-rustig__phase-cards">
-                <article class="ob-rustig__phase-card">
-                    <span>1</span>
-                    <div><strong>Over jou</strong><small>Waar je woont en wanneer je kunt</small></div>
-                    <small>3 stappen</small>
-                </article>
-                <article class="ob-rustig__phase-card">
-                    <span>2</span>
-                    <div><strong>Achtergrond</strong><small>Optioneel</small></div>
-                </article>
-                <article class="ob-rustig__phase-card">
-                    <span>3</span>
-                    <div><strong>Wie ben jij</strong><small>Vier korte tests</small></div>
-                    <small>± 10 min</small>
-                </article>
+                @foreach (var phase in OnboardingRustigMockupContent.StartJourneyPhases)
+                {
+                    <article class="ob-rustig__phase-card">
+                        <span>@phase.Number</span>
+                        <div><strong>@phase.Title</strong><small>@phase.Sub</small></div>
+                        @if (!string.IsNullOrWhiteSpace(phase.Meta))
+                        {
+                            <small>@phase.Meta</small>
+                        }
+                    </article>
+                }
             </div>
             <div class="ob-rustig__footer-actions">
                 <button type="button" class="ob-rustig__btn ob-rustig__btn--primary">Aan de slag</button>

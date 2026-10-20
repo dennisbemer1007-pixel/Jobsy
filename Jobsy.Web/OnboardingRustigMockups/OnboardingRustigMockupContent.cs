@@ -5,6 +5,18 @@ namespace Jobsy.Web.OnboardingRustigMockups;
 
 public static class OnboardingRustigMockupContent
 {
+    public sealed record StartPhaseCard(string Number, string Title, string Sub, string? Meta);
+
+    /// <summary>Start screen journey list (matches sidebar nav).</summary>
+    public static readonly StartPhaseCard[] StartJourneyPhases =
+    [
+        new("1", "Over jou", "Waar je woont en wanneer je kunt", "3 stappen"),
+        new("2", "Achtergrond", "Optioneel", null),
+        new("3", "Droom", "1 stap", null),
+        new("4", "Wie ben jij", "4 korte tests", null),
+        new("5", "Jouw Kompas", "bijna klaar", null),
+    ];
+
     public sealed record KompasDirectionCard(string Title, string Body, string ImageUrl);
 
     public static readonly KompasDirectionCard[] KompasDirections =

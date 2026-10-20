@@ -183,6 +183,22 @@
       var(--bg) 100%
     );
   }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-band::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 72%,
+      color-mix(in srgb, var(--bg) 28%, transparent) 88%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 96%,
+      var(--bg) 100%
+    );
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-img {
+    object-fit: cover;
+    object-position: 42% 72%;
+  }
 }
 
 /* Step-06: full-width illustrated hero; title/lead in .ob-rustig__page-head below. */
