@@ -24,10 +24,10 @@ public static class OnboardingRustigPanoramaBriefs
     /// <summary>Where the hidden Lobsy lobster sits in each header (unique per screen).</summary>
     public static string LobsterHideNl(string slug) => slug switch
     {
-        "start" => "Op een mossige rots links langs het pad",
-        "step-01" => "Op de vensterbank rechts van het huis",
-        "step-02" => "Op de grond rechts van het stel bij de middelste klok",
-        "step-03" => "In het mandje van een lege fiets links",
+        "start" => "Op de linkerpoot van het Welkom-hek",
+        "step-01" => "Op de drempel voor de groene voordeur",
+        "step-02" => "Op de bankleuning rechts van de vrouw op de bank",
+        "step-03" => "Op de stenen rechts van de rollator",
         "step-04" => "Op een plank achter de toonbank links",
         "step-05" => "Bovenop een stapel boeken op de traptrede",
         "step-06" => "Op een graspol rechts langs het sterrenpad",
