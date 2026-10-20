@@ -36,17 +36,10 @@ public sealed class OnboardingRustigStep02CaptureTests
 
         await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, "rustig-u6s");
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
-        await page.Locator("[data-ob-rustig-screen=start]").WaitForAsync(new() { Timeout = 60_000 });
-        await page.GetByTestId("onboarding-begin").ClickAsync(new() { Force = mobile });
-        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
-        await FunctionalOnboardingInteractivityHelpers.FillKennismakenBasicsExceptWorkStatusAsync(page);
-        var workChip = page.Locator(".work-status-chips .lobsy-choice-tile, .work-status-chips .work-status-chip").First;
-        await workChip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await workChip.ClickAsync(new() { Force = mobile });
-        await page.GetByTestId("onboarding-next").ClickAsync(new() { Force = mobile });
-        await page.Locator("[data-ob-rustig-screen=step-02]").WaitForAsync(new() { Timeout = 90_000 });
-        await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
-        await page.WaitForTimeoutAsync(800);
+        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+        await FunctionalOnboardingInteractivityHelpers.ReachOnboardingRustigStepAsync(page, 2, mobile);
+        await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = mobile });
+        await page.WaitForTimeoutAsync(400);
 
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{fileStem}-viewport.png"), FullPage = false });
     }
