@@ -31,6 +31,8 @@ PAIRS = [
     ("step-06-mobile.png", "step-06-mobile-viewport.png", "compare-mobile-step-06.png"),
     ("step-07-desktop.png", "step-07-desktop-viewport.png", "compare-desktop-step-07.png"),
     ("step-07-mobile.png", "step-07-mobile-viewport.png", "compare-mobile-step-07.png"),
+    ("step-08-desktop.png", "step-08-desktop-viewport.png", "compare-desktop-step-08.png"),
+    ("step-08-mobile.png", "step-08-mobile-viewport.png", "compare-mobile-step-08.png"),
 ]
 
 

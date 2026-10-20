@@ -30,6 +30,10 @@ public static class OnboardingRustigPanoramaAssets
 
     public static string Mobile(int step) => Mobile(ForStep(step));
 
+    public static string DesktopForStep(int step) => Desktop(step);
+
+    public static string MobileForStep(int step) => Mobile(step);
+
     public static string Desktop(string slug) =>
         $"/images/onboarding/rustig-panorama/{slug}-desktop.jpg?v={CacheVersion(slug)}";
 
@@ -43,6 +47,7 @@ public static class OnboardingRustigPanoramaAssets
             "step-01" => Step01Version,
             "step-02" => Step02Version,
             "step-03" => Step03Version,
+            "step-08" => "20261020-15",
             _ => DefaultVersion,
         };
 }
