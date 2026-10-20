@@ -221,7 +221,8 @@ internal static class LocalizationParityAllowList
         // public-pages 09: a dash placeholder and the loanword "Flyer" are language-neutral.
         "—", "Flyer (pdf)",
         // Sample Dutch mobile number shown in every language.
-        "06 12345678"
+        "06 12345678",
+        "{0}: {1}"
     };
 
     public static bool IsExemptIdenticalValue(string value)

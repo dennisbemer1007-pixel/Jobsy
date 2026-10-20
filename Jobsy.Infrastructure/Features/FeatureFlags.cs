@@ -59,6 +59,8 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.CandidateExternalVacanciesEnabled,
                 snap.ProactiveMatchingEnabled,
                 snap.TestsV2Enabled,
+                TestItemExamplesEnabled: snap.TestItemExamplesEnabled,
+                TestProgressInsightEnabled: snap.TestProgressInsightEnabled,
                 snap.EmployerFitQuestionnairesEnabled,
                 snap.KandidatenkaartEnabled,
                 snap.CompanyMapInitiativeEnabled,

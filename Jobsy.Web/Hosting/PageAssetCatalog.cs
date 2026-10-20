@@ -73,7 +73,7 @@ public static class PageAssetCatalog
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
-        "css/features/tests.css?v=20261018-04",
+        "css/features/tests.css?v=20261020-r7",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/carriere.css?v=20261018-03",
         "css/features/opleidingen.css?v=20261018-r12",
@@ -263,7 +263,12 @@ public static class PageAssetCatalog
             || path.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/bedrijvenkaart", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/profiel/tests", StringComparison.OrdinalIgnoreCase))
+            || path.StartsWith("/profiel/tests", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/__test/capture-test-block", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/competencies", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/career-interests", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/culture", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/values", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
@@ -289,7 +294,7 @@ public static class PageAssetCatalog
             var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-10" };
             if (RouteUsesCompactHeroCss(path))
             {
-                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-73");
+                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261020-r7");
             }
 
             return appsCss;
@@ -325,7 +330,7 @@ public static class PageAssetCatalog
             var uwvCss = new List<string>(UwvMockupRouteCss);
             if (RouteUsesCompactHeroCss(path))
             {
-                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-73");
+                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261020-r7");
             }
 
             return uwvCss;
@@ -333,7 +338,7 @@ public static class PageAssetCatalog
 
         if (RouteUsesCompactHeroCss(path))
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261019-73"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261020-r7"];
         }
 
         return [];

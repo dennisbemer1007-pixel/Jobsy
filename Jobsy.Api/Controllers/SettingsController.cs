@@ -491,6 +491,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
                     PassportPdfDnaBlocksEnabled: request.PassportPdfDnaBlocksEnabled,
                     TestsV2Enabled: request.TestsV2Enabled,
+                    TestItemExamplesEnabled: request.TestItemExamplesEnabled,
+                    TestProgressInsightEnabled: request.TestProgressInsightEnabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
@@ -608,6 +610,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("StudentPassportEnabled", before.StudentPassportEnabled.ToString(), after.StudentPassportEnabled.ToString());
         Add("PassportPdfDnaBlocksEnabled", before.PassportPdfDnaBlocksEnabled.ToString(), after.PassportPdfDnaBlocksEnabled.ToString());
         Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());
+        Add("TestItemExamplesEnabled", before.TestItemExamplesEnabled.ToString(), after.TestItemExamplesEnabled.ToString());
+        Add("TestProgressInsightEnabled", before.TestProgressInsightEnabled.ToString(), after.TestProgressInsightEnabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
@@ -667,6 +671,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
             proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
+            testItemExamplesEnabled = snap.TestItemExamplesEnabled,
+            testProgressInsightEnabled = snap.TestProgressInsightEnabled,
             employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
             kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
             companyMapInitiativeEnabled = snap.CompanyMapInitiativeEnabled,
@@ -992,6 +998,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.PassportPdfV2Enabled,
             snap.PassportPdfDnaBlocksEnabled,
             snap.TestsV2Enabled,
+            snap.TestItemExamplesEnabled,
+            snap.TestProgressInsightEnabled,
             snap.PhoneVerificationEnabled,
             snap.WhatsAppRemindersEnabled,
             snap.CompactTestPdfEnabled,

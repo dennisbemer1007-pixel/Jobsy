@@ -76,7 +76,7 @@ public sealed class ReadAloudScriptTests
         var block = css[start..end];
         Assert.DoesNotContain("position: fixed", block, StringComparison.Ordinal);
         Assert.DoesNotContain("position:fixed", block, StringComparison.Ordinal);
-        Assert.Contains("min-height: 44px", block, StringComparison.Ordinal);
+        Assert.Contains("min-height: 2.25rem", block, StringComparison.Ordinal);
     }
 }
 
@@ -159,7 +159,8 @@ public sealed class ReadAloudBunitTests : BunitContext
             Assert.Equal("Lees deze tekst voor", button.GetAttribute("aria-label"));
             Assert.Equal("false", button.GetAttribute("aria-pressed"));
             Assert.Equal("play", button.GetAttribute("data-read-aloud-state"));
-            Assert.Contains("Lees voor", button.TextContent, StringComparison.Ordinal);
+            Assert.Equal("Lees voor", button.GetAttribute("title"));
+            Assert.DoesNotContain("Lees voor", button.TextContent, StringComparison.Ordinal);
         });
 
         cut.Find("[data-read-aloud]").Click();
@@ -170,7 +171,8 @@ public sealed class ReadAloudBunitTests : BunitContext
             Assert.Equal("Stop met voorlezen", button.GetAttribute("aria-label"));
             Assert.Equal("true", button.GetAttribute("aria-pressed"));
             Assert.Equal("stop", button.GetAttribute("data-read-aloud-state"));
-            Assert.Contains("Stoppen", button.TextContent, StringComparison.Ordinal);
+            Assert.Equal("Stoppen", button.GetAttribute("title"));
+            Assert.DoesNotContain("Stoppen", button.TextContent, StringComparison.Ordinal);
             Assert.Equal("q-1", _coordinator.ActiveKey);
         });
 
@@ -184,7 +186,7 @@ public sealed class ReadAloudBunitTests : BunitContext
     }
 
     [Fact]
-    public void Question_and_example_can_host_a_speaker()
+    public void Question_and_example_share_one_speaker()
     {
         JSInterop.Setup<ReadAloudProbe>("lobsyReadAloud.whenReady", _ => true)
             .SetResult(new ReadAloudProbe { Supported = true, Enabled = true });
@@ -199,7 +201,7 @@ public sealed class ReadAloudBunitTests : BunitContext
             .Add(c => c.Answers, new Dictionary<int, int>())
             .Add(c => c.Target, Jobsy.Core.Rules.TestDepthLevel.First));
 
-        cut.WaitForAssertion(() => Assert.Equal(2, cut.FindAll("[data-read-aloud]").Count));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("[data-read-aloud]")));
         Assert.Contains("Ik help graag mensen.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Bijvoorbeeld in een winkel.", cut.Markup, StringComparison.Ordinal);
     }

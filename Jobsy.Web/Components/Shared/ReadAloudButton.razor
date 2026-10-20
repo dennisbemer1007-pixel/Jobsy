@@ -1,5 +1,7 @@
 @namespace Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Ui
 @using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components
 @using Microsoft.Extensions.DependencyInjection
 @inherits CultureAwareComponentBase
 @inject IJSRuntime Js
@@ -8,18 +10,15 @@
 @if (_show)
 {
     <button type="button"
-            class="read-aloud @(IconOnly ? "read-aloud--icon" : null) @(_speaking ? "is-speaking" : null)"
+            class="read-aloud read-aloud--icon @(_speaking ? "is-speaking" : null)"
             data-read-aloud
             data-read-aloud-state="@(_speaking ? "stop" : "play")"
             aria-pressed="@(_speaking ? "true" : "false")"
             aria-label="@AriaLabel"
+            title="@TooltipText"
             @onclick="ToggleAsync"
             @onclick:stopPropagation="true">
-        <span class="read-aloud__icon" aria-hidden="true">@(_speaking ? "■" : "▶")</span>
-        @if (!IconOnly)
-        {
-            <span class="read-aloud__label">@LabelText</span>
-        }
+        <span class="read-aloud__icon" aria-hidden="true">@((MarkupString)(_speaking ? LineIcons.SquareStop : LineIcons.Volume))</span>
     </button>
     @if (!string.IsNullOrWhiteSpace(_error))
     {
@@ -35,9 +34,6 @@
     /// <summary>Overrides the play aria-label. Pupil pages use the short "Lees voor".</summary>
     [Parameter] public string? PlayAria { get; set; }
 
-    /// <summary>Icon-only control (no visible label text).</summary>
-    [Parameter] public bool IconOnly { get; set; }
-
     private bool _show;
     private bool _speaking;
     private bool _pending;
@@ -48,7 +44,7 @@
 
     private string EffectiveKey => string.IsNullOrWhiteSpace(SpeechKey) ? "text-" + StableHash(Text) : SpeechKey;
 
-    private string LabelText => _pending
+    private string TooltipText => _pending
         ? Culture["ReadAloud.Loading"]
         : _speaking
             ? Culture["ReadAloud.Stop"]
@@ -75,7 +71,6 @@
     {
         if (firstRender)
         {
-            // Let the pupil page start its first load before the voice probe.
             await Task.Yield();
             await ProbeAsync();
         }

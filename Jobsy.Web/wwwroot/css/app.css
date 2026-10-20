@@ -21533,19 +21533,20 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    min-height: 44px;
-    min-width: 44px;
-    margin-block-start: 0.45rem;
-    padding: 0.35rem 0.75rem;
-    border: 2px solid var(--brand);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--border));
     border-radius: 999px;
-    background: var(--surface);
-    color: var(--brand);
+    background: color-mix(in srgb, var(--surface) 88%, var(--accent-soft));
+    color: color-mix(in srgb, var(--brand) 82%, var(--muted));
     font: inherit;
-    font-size: 0.95rem;
-    font-weight: 700;
-    line-height: 1.2;
+    line-height: 1;
     cursor: pointer;
     position: relative;
     z-index: 2;
@@ -21557,8 +21558,9 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 .read-aloud.is-speaking {
-    background: var(--accent-soft);
+    background: color-mix(in srgb, var(--accent-soft) 75%, var(--surface));
     color: var(--brand-deep);
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--border));
 }
 
 .read-aloud__error {
@@ -21588,16 +21590,45 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 .read-aloud__icon {
-    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    pointer-events: none;
+}
+
+.read-aloud__icon svg {
+    inline-size: 100%;
+    block-size: 100%;
+    display: block;
 }
 
 .test-flow__speak,
-.read-aloud-block,
 .test-example__body {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 0.35rem;
+}
+
+.read-aloud-block {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.35rem 0.5rem;
+}
+
+.read-aloud-block > .read-aloud {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+}
+
+.read-aloud-block > :not(.read-aloud):not(.read-aloud__error) {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
 }
 
 .test-example__body p,
@@ -21876,6 +21907,10 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 .lobsy-coach-dock__tip {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.35rem 0.5rem;
     margin: 0;
     padding: 0.65rem 2rem 0.65rem 0.75rem;
     border-radius: 12px;
@@ -21889,13 +21924,15 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     margin: 0;
     overflow: visible;
     white-space: normal;
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
 }
 
 .lobsy-coach-dock__tip .read-aloud {
-    margin-block-start: 0.35rem;
-    max-inline-size: 100%;
-    white-space: normal;
-    justify-content: flex-start;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
 }
 
 .lobsy-coach-dock__close {

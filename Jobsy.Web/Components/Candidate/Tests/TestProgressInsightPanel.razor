@@ -1,0 +1,29 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="test-progress-panel" data-testid="test-progress-insight-panel" aria-labelledby="test-progress-panel-title">
+    <h2 class="test-progress-panel__title" id="test-progress-panel-title">@Culture["TestFlow.ProgressInsight.Title"]</h2>
+    @if (Lines.Count == 0)
+    {
+        <p class="test-progress-panel__empty">@Culture["TestFlow.ProgressInsight.Empty"]</p>
+    }
+    else
+    {
+        <ul class="test-progress-panel__list">
+            @for (var i = 0; i < Lines.Count; i++)
+            {
+                var line = Lines[i];
+                var isNew = i >= Lines.Count - Math.Max(1, NewLineCount);
+                <li class="test-progress-panel__item @(isNew && NewLineCount > 0 ? "is-new" : null)">@line</li>
+            }
+        </ul>
+    }
+</aside>
+
+@code {
+    [Parameter] public AssessmentKind Kind { get; set; }
+    [Parameter] public IReadOnlyList<string> Lines { get; set; } = [];
+    [Parameter] public int NewLineCount { get; set; }
+}
