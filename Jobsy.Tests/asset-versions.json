@@ -153,12 +153,17 @@
   },
   "css/features/onboarding-rustig.css": {
 <<<<<<< HEAD
+<<<<<<< HEAD
     "sha256": "9224e5e101eb14f9df834523fd1256618ff2492925369c1b1c8f6d7e9b4a22f7",
     "v": "20261020-13"
 =======
     "sha256": "0534f823be35acb8582970186786f88d3516cf9bc9aa735baa0c8a0f3739e8e8",
     "v": "20261020-12"
 >>>>>>> a61ea3858 (Onboarding rustig step 9: Sfeer mini-test (u9c panorama hero).)
+=======
+    "sha256": "9224e5e101eb14f9df834523fd1256618ff2492925369c1b1c8f6d7e9b4a22f7",
+    "v": "20261020-14"
+>>>>>>> d26791816 (Fix rustig mini-test Later doen, Likert click-audit, and CSS v20261020-13.)
   },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
