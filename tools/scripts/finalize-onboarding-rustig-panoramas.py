@@ -24,7 +24,7 @@ FADE_BOTTOM = 16
 FADE_SIDE = 24
 # 16:9 raws only (legacy / step-03): vertical band with headroom (approved step-03 crop).
 Y0_FRAC_16X9 = 0.456
-Y0_FRAC_SLUG: dict[str, float] = {}
+Y0_FRAC_SLUG: dict[str, float] = {"start": 0.34}
 PALETTE_SOFTEN_SLUGS: frozenset[str] = frozenset()
 # Desktop raws authored at ~6:1 — scale to DESKTOP, no vertical crop.
 BAND_NATIVE_MIN_RATIO = 5.4
