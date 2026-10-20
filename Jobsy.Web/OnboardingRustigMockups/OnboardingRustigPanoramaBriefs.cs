@@ -22,7 +22,7 @@ public static class OnboardingRustigPanoramaBriefs
     };
 
     public const string CompositionRules =
-        "Ultra-wide panoramic banner. Warm Lobsy cream #F7F4F0 flat illustration NOT photo. " +
-        "Small full-body figures on a ground line in the vertical middle; generous sky above; " +
-        "scenery continuous to left and right edges. Every person FULL BODY head to toe. No text.";
+        "Soft watercolor panorama (match start, step-01, step-03): warm Lobsy cream #F7F4F0, same brush and daylight. " +
+        "Full-width edge-to-edge scenery; small full-body figures with generous sky above heads; soft fade into cream at bottom and sides. " +
+        "Unique on-topic scene per screen. No text in the art.";
 }
