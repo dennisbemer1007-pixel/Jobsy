@@ -5261,6 +5261,36 @@ window.jobMap = (function () {
         }, 400);
     }
 
+    function capturePageScroll() {
+        var snap = { winY: 0, rootTop: 0, root: null };
+        try {
+            snap.winY = window.scrollY || 0;
+        } catch (eWin) { /* ignore */ }
+        try {
+            if (window.jobsyDom && typeof window.jobsyDom.scrollRoot === "function") {
+                snap.root = window.jobsyDom.scrollRoot();
+                if (snap.root && snap.root !== document.documentElement && snap.root !== document.body) {
+                    snap.rootTop = snap.root.scrollTop || 0;
+                }
+            }
+        } catch (eRoot) { /* ignore */ }
+        return snap;
+    }
+
+    function restorePageScroll(snap) {
+        if (!snap) {
+            return;
+        }
+        try {
+            window.scrollTo(0, snap.winY || 0);
+        } catch (eWin) { /* ignore */ }
+        try {
+            if (snap.root && typeof snap.root.scrollTop === "number") {
+                snap.root.scrollTop = snap.rootTop || 0;
+            }
+        } catch (eRoot) { /* ignore */ }
+    }
+
     function invalidate() {
         if (!map) {
             return;
@@ -5268,6 +5298,7 @@ window.jobMap = (function () {
         if (mapResizePausedUntil && typeof performance !== "undefined" && performance.now() < mapResizePausedUntil) {
             return;
         }
+        var scrollSnap = capturePageScroll();
         runWithViewportNotifySuppressed(function () {
             map.resize();
             if (kkMode) {
@@ -5278,6 +5309,7 @@ window.jobMap = (function () {
                 fitToOriginRings(false);
             }
         });
+        restorePageScroll(scrollSnap);
     }
 
     function isAlive() {

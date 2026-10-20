@@ -40,12 +40,16 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart.css": {
-    "sha256": "0b77b38c48253751260a0b6f1797f81a555ab1aa95a8333fb28bc343352eeeeb",
-    "v": "20261016-02"
+    "sha256": "36beb65f1f748a1771d8d932fcf3065f1fd1492b504f08f9ba4899ccffa6402d",
+    "v": "20261019-01"
   },
   "css/features/bedrijvenkaart.css": {
-    "sha256": "793e319e5588e212a9d56279b0d30448566c1eb12e8bd80f6b27d09306115f88",
-    "v": "20261019-03"
+    "sha256": "7ffdb5503fe02cd7ce703cdd3f7c9b2ae55c0ae91f1d61adfedc3e2ddcd7271c",
+    "v": "20261019-09"
+  },
+  "css/features/candidate-hero-compact-preview.css": {
+    "sha256": "5b287a08f3ee4b2a0d790656673f815f98745c4ed0e32343110672f72959f138",
+    "v": "20261019-68"
   },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",

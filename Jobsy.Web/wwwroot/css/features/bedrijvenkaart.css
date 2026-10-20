@@ -17,6 +17,30 @@
   flex-direction: column;
 }
 
+.bk-page--compact-preview-c {
+  overflow-x: clip;
+  overflow-y: visible;
+  overflow-anchor: none;
+}
+
+.bk-page--compact-preview-c .bk-page__hero-band {
+  scroll-margin-top: var(--app-header-height, 4.25rem);
+}
+
+@media (min-width: 901px) {
+  .bk-page--compact-preview-c .bk-shell {
+    min-height: max(420px, calc(100dvh - 20rem));
+  }
+
+  .bk-page--compact-preview-c .bk-map-pane {
+    min-height: 420px;
+  }
+
+  .bk-page--compact-preview-c .bk-map-pane .job-map {
+    min-height: 420px;
+  }
+}
+
 @media (min-width: 901px) {
   .bk-page,
   .app-shell .pub-theme.pub-section.pp-company {
@@ -1058,7 +1082,14 @@ textarea.bk-wg-input {
   align-self: flex-start;
 }
 
-.bk-page .bk-cand-hero.cand-hero--bk-single {
+.bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+  margin-bottom: 0.65rem;
+}
+
+.bk-page .bk-cand-hero.cand-compact-hero.cand-hero--bk-single {
   width: 100%;
   max-width: 100%;
   margin-inline: 0;
@@ -1072,7 +1103,7 @@ textarea.bk-wg-input {
 
 /* Desktop/tablet: pre-faded PNG on plain pearl (no ::before band). */
 @media (min-width: 640px) {
-  .bk-page .bk-cand-hero.cand-hero--bk-single {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
     position: relative;
     background-color: var(--pearl, #f7f4f0) !important;
     background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
@@ -1089,7 +1120,7 @@ textarea.bk-wg-input {
     background: none !important;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single::before {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero)::before {
     display: none !important;
     content: none !important;
     background: none !important;
@@ -1116,13 +1147,23 @@ textarea.bk-wg-input {
     margin: 0;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single {
+  .bk-page--compact-preview-c .bk-page__hero-stack .bk-map-toggle {
+    position: static !important;
+    top: auto;
+    right: auto;
+    margin: 0.65rem 0 0.5rem;
+    width: auto;
+    max-width: none;
+    align-self: flex-start;
+  }
+
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
     min-height: clamp(11.25rem, 15.28vw, 13.75rem);
     height: clamp(11.25rem, 15.28vw, 13.75rem);
     max-height: 280px;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) .cand-hero__copy {
     width: auto;
     max-width: min(52%, 36rem);
     margin-inline: 0;
@@ -1137,7 +1178,7 @@ textarea.bk-wg-input {
 }
 
 @media (max-width: 639px) {
-  .bk-page .bk-cand-hero.cand-hero--bk-single {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
     position: relative;
     display: block !important;
     width: 100vw;
@@ -1155,14 +1196,14 @@ textarea.bk-wg-input {
     overflow: hidden;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single::after,
-  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__media {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero)::after,
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) .cand-hero__media {
     display: none !important;
     content: none !important;
     background: none !important;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single::before {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero)::before {
     display: block !important;
     content: "";
     position: absolute;
@@ -1184,7 +1225,7 @@ textarea.bk-wg-input {
     );
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) .cand-hero__copy {
     position: absolute !important;
     z-index: 2;
     inset: 0 auto auto 0;
@@ -1200,12 +1241,12 @@ textarea.bk-wg-input {
     background: transparent;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy h1 {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) .cand-hero__copy h1 {
     font-size: 1.35rem;
     line-height: 1.12;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__lead {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) .cand-hero__lead {
     font-size: 0.8125rem;
     line-height: 1.35;
     margin-bottom: 0.35rem;
@@ -1932,6 +1973,43 @@ textarea.bk-wg-input {
 
 .bk-map-toggle--banen {
   margin: 0.75rem 1.25rem 0;
+}
+
+/* Banenkaart discovery chrome: keep toggle labels readable on cream/pearl backgrounds. */
+.jobsy-discovery .bk-map-toggle--banen {
+  background: #fff;
+  box-shadow: 0 2px 12px rgb(26 39 68 / 10%);
+}
+
+.jobsy-discovery .bk-map-toggle--banen a {
+  color: var(--bk-navy, #1a2744);
+  font-weight: 600;
+}
+
+.jobsy-discovery .bk-map-toggle--banen a.is-active {
+  background: var(--bk-navy, #1a2744);
+  color: #fff !important;
+}
+
+/* Banenkaart toggle sits outside .jobsy-discovery (sibling on Banenkaart.razor). */
+.app-shell--banenkaart-shell .bk-map-toggle--banen {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin: 0.65rem 1.25rem 0.35rem;
+  background: #fff;
+  box-shadow: 0 2px 12px rgb(26 39 68 / 10%);
+}
+
+.app-shell--banenkaart-shell .bk-map-toggle--banen a {
+  color: var(--bk-navy, #1a2744);
+  font-weight: 600;
+  -webkit-text-fill-color: currentColor;
+}
+
+.app-shell--banenkaart-shell .bk-map-toggle--banen a.is-active {
+  background: var(--bk-navy, #1a2744) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 
 .kb-apps__initiative-row {

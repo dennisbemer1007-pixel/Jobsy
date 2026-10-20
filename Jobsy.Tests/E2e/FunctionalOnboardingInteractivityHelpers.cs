@@ -99,6 +99,23 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var mobile = viewport is not null && viewport.Width < 600;
         var selected = false;
 
+        // Compact variant C can wrap long werkstatus labels; prefer a single-line chip first.
+        foreach (var label in new[] { "Scholier", "Student", "Stagiair" })
+        {
+            var quick = page.GetByRole(AriaRole.Button, new() { Name = label, Exact = true });
+            if (await quick.CountAsync() == 0)
+            {
+                continue;
+            }
+
+            await quick.First.ScrollIntoViewIfNeededAsync();
+            await quick.First.ClickAsync(new() { Timeout = 15_000, Force = mobile });
+            if (await WaitForWorkStatusSelectedAsync(page, 12_000))
+            {
+                return;
+            }
+        }
+
         for (var round = 0; round < 2 && !selected; round++)
         {
 
@@ -111,14 +128,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
                 try
                 {
-                    if (mobile)
-                    {
-                        await chip.TapAsync(new() { Timeout = 15_000 });
-                    }
-                    else
-                    {
-                        await chip.ClickAsync(new() { Timeout = 15_000 });
-                    }
+                    await chip.ClickAsync(new() { Timeout = 15_000, Force = mobile });
                 }
                 catch (PlaywrightException)
                 {
@@ -306,13 +316,14 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
         await SkipTestsLaterAndWaitForBanenkaartAsync(page);
-        await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await WaitForBanenkaartDiscoveryShellAsync(page);
     }
 
     internal static async Task SkipTestsLaterAndWaitForBanenkaartAsync(IPage page)
     {
         if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
         {
+            await WaitForBanenkaartDiscoveryShellAsync(page);
             return;
         }
 
@@ -321,41 +332,56 @@ internal static class FunctionalOnboardingInteractivityHelpers
             null,
             new() { Timeout = 90_000 });
 
-        var heading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
-        var footerLater = page.Locator(".ob-wizard__footer [data-testid=onboarding-tests-later]:visible").First;
-        var flowLater = page.Locator(".test-flow [data-testid=onboarding-tests-later]:visible, .test-flow__later:visible").First;
+        var mobile = page.ViewportSize is { Width: < 600 };
+        var consentHeading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
+        var flowLater = page.Locator(".test-flow [data-testid=onboarding-tests-later], .test-flow__later").First;
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < 4; attempt++)
         {
             if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
             {
+                await WaitForBanenkaartDiscoveryShellAsync(page);
                 return;
             }
 
-            if (await heading.IsVisibleAsync() && await footerLater.CountAsync() > 0)
+            if (await consentHeading.IsVisibleAsync())
             {
-                await page.WaitForTimeoutAsync(500);
-                await footerLater.ScrollIntoViewIfNeededAsync();
-                await Assertions.Expect(footerLater).ToBeEnabledAsync(new() { Timeout = 30_000 });
-                await footerLater.ClickAsync(new() { Timeout = 30_000 });
-                break;
+                await page.WaitForTimeoutAsync(mobile ? 800 : 500);
+                var later = page.GetByTestId("onboarding-tests-later").First;
+                await later.ScrollIntoViewIfNeededAsync();
+                await Assertions.Expect(later).ToBeEnabledAsync(new() { Timeout = 30_000 });
+                for (var clickTry = 0; clickTry < 2; clickTry++)
+                {
+                    await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                    if (await TryWaitForBanenkaartLocationAsync(page, 90_000))
+                    {
+                        break;
+                    }
+
+                    await page.WaitForTimeoutAsync(800);
+                }
+
+                await WaitForBanenkaartLocationAsync(page);
+                await WaitForBanenkaartDiscoveryShellAsync(page);
+                return;
             }
 
             if (await flowLater.CountAsync() > 0)
             {
                 await flowLater.ScrollIntoViewIfNeededAsync();
                 await flowLater.ClickAsync(new() { Force = true, Timeout = 30_000 });
-                break;
+                await WaitForBanenkaartLocationAsync(page);
+                await WaitForBanenkaartDiscoveryShellAsync(page);
+                return;
             }
 
             await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
-            await page.WaitForTimeoutAsync(800);
+            await page.WaitForTimeoutAsync(mobile ? 900 : 600);
         }
 
         try
         {
-            await page.Locator(".jobsy-discovery, [data-testid=uwv-kansberoepen-toggle]").First.WaitForAsync(
-                new() { State = WaitForSelectorState.Attached, Timeout = 240_000 });
+            await WaitForBanenkaartDiscoveryShellAsync(page);
         }
         catch (TimeoutException)
         {
@@ -371,6 +397,51 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
             throw;
         }
+    }
+
+    private static Task WaitForBanenkaartLocationAsync(IPage page)
+        => page.WaitForFunctionAsync(
+            """
+            () => {
+              const path = (location.pathname || '').toLowerCase();
+              return path === '/banenkaart' || path.startsWith('/banenkaart/');
+            }
+            """,
+            null,
+            new() { Timeout = 180_000 });
+
+    private static async Task<bool> TryWaitForBanenkaartLocationAsync(IPage page, int timeoutMs)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const path = (location.pathname || '').toLowerCase();
+                  return path === '/banenkaart' || path.startsWith('/banenkaart/');
+                }
+                """,
+                null,
+                new() { Timeout = timeoutMs });
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
+        }
+    }
+
+    private static async Task WaitForBanenkaartDiscoveryShellAsync(IPage page)
+    {
+        if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            await WaitForBanenkaartLocationAsync(page);
+        }
+
+        await page.Locator(
+                ".jobsy-discovery, [data-testid=uwv-banenkaart-mock], [data-testid=uwv-kansberoepen-toggle], [data-testid=kb-keyword-search], #jobsy-map-boot")
+            .First
+            .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 180_000 });
     }
 
     internal static async Task ResolveHomeAddressAsync(IPage page, string query)

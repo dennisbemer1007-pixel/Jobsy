@@ -387,9 +387,9 @@ else if (_snapshot is not null)
             ApplySnapshot(ToSnapshot(item));
             await LoadRecentChangesAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = UserFacing.Describe(ex);
+            _error = Culture["AdminSettings.SaveFailedEmpty"];
         }
         finally
         {

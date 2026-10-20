@@ -7,6 +7,7 @@ using Bunit.TestDoubles;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Web.Components.Pages.Candidate;
+using Jobsy.Web.Features;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
@@ -43,6 +44,7 @@ public class KbSavedListBunitTests : BunitContext
             BaseAddress = new Uri("http://localhost/")
         }));
         Services.AddLogging();
+        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
         this.AddBunitPersistentComponentState();
     }
 
