@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Full-page start mockup captures (1440 + 390) with hero load gate and fence zoom."""
+"""Start mockup: desktop full page + hero 2x zoom; mobile full (unchanged asset)."""
 
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -13,24 +14,18 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
-CACHE = "20261020-start-d"
-PREFIX = "start-d"
+METRICS_SRC = ROOT / "artifacts/onboarding-rustig-panorama-raw/start-desktop-band-metrics.json"
+CACHE = "20261020-start-e"
+PREFIX = "start-e"
 
 
-def save_fence_zoom_crop(page, path: Path) -> None:
+def save_hero_2x(page, path: Path) -> None:
     hero = page.locator("[data-testid=ob-rustig-hero-desk]")
-    box = hero.bounding_box()
-    if not box:
-        raise SystemExit("no desktop hero box for zoom crop")
     shot = OUT / f"{PREFIX}-hero-desk-shot.png"
     hero.screenshot(path=str(shot))
     im = Image.open(shot)
-    w, h = im.size
-    x1 = max(1, int(w * 0.42))
-    crop = im.crop((0, 0, x1, h))
-    zoom = crop.resize((crop.size[0] * 2, crop.size[1] * 2), Image.Resampling.LANCZOS)
+    zoom = im.resize((im.size[0] * 2, im.size[1] * 2), Image.Resampling.LANCZOS)
     zoom.save(path, optimize=True)
-    print(f"fence zoom crop {path.name} from {crop.size} -> {zoom.size}")
 
 
 def main() -> None:
@@ -45,6 +40,8 @@ def main() -> None:
     base = "http://127.0.0.1:8765"
     url = f"{base}/mockups/onboarding-rustig/start?cb={CACHE}"
     metrics: dict = {}
+    if METRICS_SRC.is_file():
+        metrics["band_build"] = json.loads(METRICS_SRC.read_text(encoding="utf-8"))
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -72,11 +69,8 @@ def main() -> None:
             desk = page.locator("[data-testid=ob-rustig-hero-desk]").evaluate(
                 "el => ({ src: el.currentSrc || el.src, naturalWidth: el.naturalWidth, naturalHeight: el.naturalHeight })"
             )
-            metrics["desktop_hero"] = desk
-            if desk["naturalWidth"] <= 0:
-                raise SystemExit(f"desktop hero not loaded: {desk}")
-            save_fence_zoom_crop(page, OUT / f"{PREFIX}-fence-left-2x.png")
-            page.wait_for_timeout(400)
+            metrics["desktop_hero_render"] = desk
+            save_hero_2x(page, OUT / f"{PREFIX}-hero-desktop-2x.png")
             page.screenshot(path=str(OUT / f"{PREFIX}-desktop-1440-full.png"), full_page=True)
             page.close()
 
@@ -93,10 +87,7 @@ def main() -> None:
             mob = page.locator("[data-testid=ob-rustig-hero-mob]").evaluate(
                 "el => ({ src: el.currentSrc || el.src, naturalWidth: el.naturalWidth, naturalHeight: el.naturalHeight })"
             )
-            metrics["mobile_hero"] = mob
-            if mob["naturalWidth"] <= 0:
-                raise SystemExit(f"mobile hero not loaded: {mob}")
-            page.wait_for_timeout(400)
+            metrics["mobile_hero_render"] = mob
             page.screenshot(path=str(OUT / f"{PREFIX}-mobile-390-full.png"), full_page=True)
             page.close()
             browser.close()
@@ -106,7 +97,9 @@ def main() -> None:
     sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True).strip()
     payload = {"commit": sha, "cache": CACHE, **metrics}
     (OUT / f"{PREFIX}-hero-metrics.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"{PREFIX} full page OK @ {sha}")
+    if METRICS_SRC.is_file():
+        shutil.copy(METRICS_SRC, OUT / f"{PREFIX}-band-metrics.json")
+    print(f"{PREFIX} OK @ {sha}")
     print(json.dumps(payload, indent=2))
 
 
