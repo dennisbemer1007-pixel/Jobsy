@@ -319,7 +319,6 @@
                                                       Illustrated="true"
                                                       ShowValidation="_showValidation"
                                                       AddressChanged="AddressChanged"
-                                                      BirthDateChanged="BirthDateChanged"
                                                       ShowCity="ShowCity"
                                                       SelectAddress="SelectAddress" />
                                     </div>
@@ -599,12 +598,10 @@
     private bool _miniArrivedViaBack;
     private bool _installIos;
     private bool _installCanPrompt;
-    private bool _saving;
-    private bool _savedVisible;
+    private bool _profilePersistInFlight;
     private bool _saveError;
     private bool _showValidation;
     private bool _pendingStepScroll;
-    private bool _loadingNearby;
     private int _nearbyPeakCount;
     private EarlyRewardMoment _earlyMoment;
     private OnboardingNearbySignal? _nearbySignal;
@@ -659,7 +656,8 @@
     private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
     private IReadOnlyList<int> _journeyCompletedSteps = [];
     private int _journeyNextStep = 7;
-    private CancellationTokenSource? _saveCts;
+    private OnboardingWizardProfileAutosave? _profileAutosave;
+    private CancellationTokenSource? _nearbyRefreshCts;
     private CancellationTokenSource? _geocodeCts;
     private CancellationTokenSource? _dreamCts;
 
@@ -706,9 +704,9 @@
         new(4, "Onboarding.Phase.WieBenJij", "Onboarding.Welcome.TestsLead", "Onboarding.Welcome.Time2")
     ];
 
-    private string SaveText => _saveError ? Culture["Onboarding.NotSaved"]
-        : _saving ? Culture["Onboarding.Saving"]
-        : _savedVisible ? $"✓ {Culture["Onboarding.Saved"]}" : "";
+    private string SaveText => _saveError
+        ? Culture["Onboarding.NotSaved"]
+        : _profilePersistInFlight ? Culture["Onboarding.Saving"] : "";
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
     private string DaysSummary => Draft.Availability.Count == 0
@@ -786,7 +784,7 @@
         && _earlyMoment != EarlyRewardMoment.FirstInsight
         && NearbyBasicsSaved();
 
-    private bool ShowNearbyPanel => NearbyPanelEligible && _nearbySignal is not null && !_loadingNearby;
+    private bool ShowNearbyPanel => NearbyPanelEligible && _nearbySignal is not null;
 
     private bool NearbyRefinedHeadline =>
         _nearbySignal is { Count: > 0 and var count }
@@ -912,6 +910,11 @@
         _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
         Culture.Changed += CultureChanged;
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
+        _profileAutosave = new OnboardingWizardProfileAutosave(
+            PersistProfileDraftAsync,
+            onPersistStarted: () => _profilePersistInFlight = true,
+            onPersistEnded: OnProfilePersistEnded,
+            onPersistSucceeded: ScheduleDebouncedNearbyRefresh);
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
 
         await LoadAsync();
@@ -1064,7 +1067,6 @@
         {
             _state = await Api.SaveMyOnboardingProgressAsync(_step, source: WelcomeDismissedSource);
             Api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-            FlashSaved();
             await RefreshJourneyCompletionAsync();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
@@ -1084,7 +1086,6 @@
     private async Task MarkStartedAsync()
     {
         _state = await Api.SaveMyOnboardingProgressAsync(_step);
-        FlashSaved();
     }
 
     private async Task BackAsync()
@@ -1155,7 +1156,6 @@
                 ClearMiniAnswersBeforeStepChange();
                 _step++;
                 _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-                FlashSaved();
                 await PrepareMiniAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
                 RequestStepScrollReset();
@@ -1192,7 +1192,6 @@
             ClearMiniAnswersBeforeStepChange();
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-            FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
@@ -1306,22 +1305,12 @@
             ScheduleProfileSave();
         }
 
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
         CandidateHomeAddressLookup.ApplySuggestionToDraft(Draft, item);
-        ScheduleProfileSave();
-    }
-
-    private void BirthDateChanged()
-    {
-        Draft.BirthDate = int.TryParse(Draft.BirthDay, out var day)
-            && int.TryParse(Draft.BirthMonth, out var month)
-            && int.TryParse(Draft.BirthYear, out var year)
-            && DateOnly.TryParse($"{year:D4}-{month:D2}-{day:D2}", out var date)
-                ? date : null;
         ScheduleProfileSave();
     }
 
@@ -1532,7 +1521,6 @@
         {
             await Task.Delay(350, cancellationToken);
             await SaveDreamAsync();
-            FlashSaved();
         }
         catch (OperationCanceledException)
         {
@@ -1674,7 +1662,7 @@
                     await Api.SaveMyValuesAsync(payload, false, cancellationToken);
                     break;
             }
-        }, () => InvokeAsync(StateHasChanged), 150);
+        }, onChanged: null, debounceMs: QuestionnaireAutosave.DefaultDebounceMs);
     }
 
     private async Task TryAutoAdvanceEmptyMiniStepAsync()
@@ -1731,7 +1719,6 @@
 
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-            FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
             RequestStepScrollReset();
@@ -1835,7 +1822,6 @@
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        FlashSaved();
         if (_autosave is not null)
         {
             _ = SaveMiniQuietAsync(id, value);
@@ -1935,57 +1921,90 @@
 
     private void ScheduleProfileSave()
     {
-        if (_loading) return;
-        _saveCts?.Cancel();
-        _saveCts = new();
-        _saving = true;
-        _saveError = false;
-        _ = ProfileDebounceAsync(_saveCts.Token);
+        if (_loading || _profileAutosave is null)
+        {
+            return;
+        }
+
+        _profileAutosave.ScheduleSave();
     }
 
-    private async Task ProfileDebounceAsync(CancellationToken cancellationToken)
+    private Task PersistProfileDraftAsync(CancellationToken cancellationToken)
+    {
+        _saveError = false;
+        return SaveProfileAsync(cancellationToken);
+    }
+
+    private void OnProfilePersistEnded(bool succeeded)
+    {
+        _profilePersistInFlight = false;
+        if (succeeded)
+        {
+            _error = null;
+            return;
+        }
+
+        _saveError = true;
+        _ = SafeStateHasChangedAsync();
+    }
+
+    private void ScheduleDebouncedNearbyRefresh()
+    {
+        if (_step <= 3 || !NearbyBasicsSaved() || _welcome || _finish)
+        {
+            return;
+        }
+
+        _nearbyRefreshCts?.Cancel();
+        _nearbyRefreshCts?.Dispose();
+        _nearbyRefreshCts = new CancellationTokenSource();
+        var token = _nearbyRefreshCts.Token;
+        _ = DebouncedNearbyRefreshAsync(token);
+    }
+
+    private async Task DebouncedNearbyRefreshAsync(CancellationToken cancellationToken)
     {
         try
         {
-            await Task.Delay(350, cancellationToken);
-            await SaveProfileAsync(cancellationToken);
-            _error = null;
-            try
-            {
-                await RefreshNearbySignalIfEligibleAsync();
-            }
-            catch
-            {
-                // Nearby panel is informational; a failed refresh must not block autosave UX.
-            }
-
-            FlashSaved();
+            await Task.Delay(2000, cancellationToken);
+            await RefreshNearbySignalIfEligibleAsync();
         }
         catch (OperationCanceledException)
         {
         }
-        catch (Exception ex)
+        catch
         {
-            _error = UserFacing.Describe(ex);
-            _saveError = true;
+            // Informational panel only.
         }
-        finally
+    }
+
+    private async Task SafeStateHasChangedAsync()
+    {
+        try
         {
-            _saving = false;
             await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Circuit may be disconnected during teardown.
         }
     }
 
     private async Task FlushAsync()
     {
-        _saveCts?.Cancel();
-        await SaveProfileAsync(CancellationToken.None);
+        if (_profileAutosave is null)
+        {
+            return;
+        }
+
         try
         {
-            await RefreshNearbySignalIfEligibleAsync();
+            await _profileAutosave.FlushAsync(CancellationToken.None);
         }
-        catch
+        catch (Exception ex)
         {
+            _error = UserFacing.Describe(ex);
+            _saveError = true;
         }
     }
 
@@ -2034,21 +2053,6 @@
         return result;
     }
 
-    private void FlashSaved()
-    {
-        _saving = false;
-        _saveError = false;
-        _savedVisible = true;
-        _ = HideSavedAsync();
-    }
-
-    private async Task HideSavedAsync()
-    {
-        await Task.Delay(2500);
-        _savedVisible = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
     private async Task LoadFinaleContextAsync()
     {
         var flags = await FeatureFlags.GetAsync();
@@ -2087,23 +2091,21 @@
             return;
         }
 
-        _loadingNearby = true;
         try
         {
             var signal = await Api.GetOnboardingNearbySignalAsync();
-            if (signal is not null)
+            if (signal is null)
             {
-                _nearbyPeakCount = Math.Max(_nearbyPeakCount, signal.Count);
-                _nearbySignal = signal;
+                return;
             }
+
+            _nearbyPeakCount = Math.Max(_nearbyPeakCount, signal.Count);
+            _nearbySignal = signal;
+            await SafeStateHasChangedAsync();
         }
         catch
         {
             // Keep last signal; never surface panel refresh as wizard error.
-        }
-        finally
-        {
-            _loadingNearby = false;
         }
     }
 
@@ -2124,7 +2126,6 @@
 
         _step = 4;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-        FlashSaved();
         await PrepareMiniAsync();
     }
 
@@ -2311,9 +2312,11 @@
     {
         Culture.Changed -= CultureChanged;
         GratisDnaMergeNotifier.Merged -= OnGratisDnaMerged;
-        _saveCts?.Cancel();
+        _nearbyRefreshCts?.Cancel();
+        _nearbyRefreshCts?.Dispose();
         _geocodeCts?.Cancel();
         _dreamCts?.Cancel();
+        if (_profileAutosave is not null) await _profileAutosave.DisposeAsync();
         if (_autosave is not null) await _autosave.DisposeAsync();
     }
 

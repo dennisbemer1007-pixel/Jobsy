@@ -229,7 +229,7 @@
         }
 
         await NotifyAsync();
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
     }
 
     private async Task OnAddressQueryChangedAsync(string value)
@@ -292,7 +292,11 @@
             Draft.BirthYear = "";
         }
 
-        await BirthDateChanged.InvokeAsync();
+        await NotifyAsync();
+        if (BirthDateChanged.HasDelegate)
+        {
+            await BirthDateChanged.InvokeAsync();
+        }
     }
 
     private Task OnShowCityAsync() => ShowCity.InvokeAsync();
@@ -370,14 +374,24 @@
 
     private async Task ResolvePostcodeAsync(CancellationToken cancellationToken)
     {
-        var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
-            Draft, Geocoder, cancellationToken);
-        if (resolved)
+        try
         {
-            await AddressChanged.InvokeAsync();
-        }
+            var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
+                Draft, Geocoder, cancellationToken);
+            if (resolved)
+            {
+                await AddressChanged.InvokeAsync();
+            }
 
-        await InvokeAsync(StateHasChanged);
+            await SafeStateHasChangedAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            // Postcode lookup is best-effort while typing.
+        }
     }
 
     private async Task SuggestAddressesAsync(string query)
@@ -399,13 +413,13 @@
             Draft.Suggestions.Clear();
             _showSuggestions = false;
             _suggesting = false;
-            await InvokeAsync(StateHasChanged);
+            await SafeStateHasChangedAsync();
             return;
         }
 
         _showSuggestions = true;
         _suggesting = true;
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
 
         try
         {
@@ -442,8 +456,20 @@
                     _showSuggestions = false;
                 }
 
-                await InvokeAsync(StateHasChanged);
+                await SafeStateHasChangedAsync();
             }
+        }
+    }
+
+    private async Task SafeStateHasChangedAsync()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Circuit may be disconnected during teardown.
         }
     }
 
