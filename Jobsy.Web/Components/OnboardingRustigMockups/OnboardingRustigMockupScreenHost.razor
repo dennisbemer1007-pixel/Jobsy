@@ -14,8 +14,10 @@ else
                            ShowSaved="@Meta.ShowSaved"
                            Title="@ShellTitle"
                            Lead="@ShellLead"
-                           PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(Meta.Slug)"
-                           PanoramaMobile="@OnboardingRustigPanoramaAssets.Mobile(Meta.Slug)"
+                           PanoramaDesktop="@PanoramaDesktop"
+                           PanoramaMobile="@PanoramaMobile"
+                           IllustratedDesktop="@IllustratedDesktop"
+                           IllustratedMobile="@IllustratedMobile"
                            MockupKind="@Meta.Kind"
                            ShowJobsRail="@Meta.ShowJobsRail"
                            RightRail="@RightRail"
@@ -75,6 +77,22 @@ else
     private RenderFragment? RightRail => View == OnboardingRustigMockupView.TestsOverview && ShowOverviewResultRail
         ? FinishedTestResult
         : null;
+
+    private string? PanoramaDesktop =>
+        Meta is not null && Meta.Slug != "step-06"
+            ? OnboardingRustigPanoramaAssets.Desktop(Meta.Slug)
+            : null;
+
+    private string? PanoramaMobile =>
+        Meta is not null && Meta.Slug != "step-06"
+            ? OnboardingRustigPanoramaAssets.Mobile(Meta.Slug)
+            : null;
+
+    private string? IllustratedDesktop =>
+        Meta?.Slug == "step-06" ? OnboardingRustigDreamIllustrationAssets.DesktopJpg : null;
+
+    private string? IllustratedMobile =>
+        Meta?.Slug == "step-06" ? OnboardingRustigDreamIllustrationAssets.MobileJpg : null;
 
     private RenderFragment Body => View switch
     {

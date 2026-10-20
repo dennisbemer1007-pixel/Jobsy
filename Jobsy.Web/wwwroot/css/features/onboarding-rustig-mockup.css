@@ -185,25 +185,134 @@
   }
 }
 
-.ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__hero-band::after {
+/* Step-06: illustrated profession collage (u6-aquarel), not panorama band. */
+.ob-rustig__illustrated-hero {
+  flex-shrink: 0;
+}
+
+.ob-rustig__illustrated-desktop {
+  display: none;
+}
+
+.ob-rustig__illustrated-mobile {
+  display: block;
+  position: relative;
+  margin: 0 12px 0.65rem;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 80%, transparent);
+  aspect-ratio: 390 / 210;
+  max-block-size: 13.125rem;
+}
+
+.ob-rustig__illustrated-mobile-art,
+.ob-rustig__illustrated-mobile-art img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: 72% 42%;
+}
+
+.ob-rustig__illustrated-mobile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 84%,
-    color-mix(in srgb, var(--bg) 22%, transparent) 94%,
-    var(--bg) 100%
+    90deg,
+    color-mix(in srgb, var(--pearl) 96%, transparent) 0%,
+    color-mix(in srgb, var(--pearl) 82%, transparent) 34%,
+    color-mix(in srgb, var(--pearl) 35%, transparent) 52%,
+    transparent 72%
   );
 }
 
-@media (max-width: 1023px) {
-  .ob-rustig[data-ob-rustig-screen="step-06"] .ob-rustig__hero-band::after {
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      transparent 88%,
-      color-mix(in srgb, var(--bg) 18%, transparent) 96%,
-      var(--bg) 100%
-    );
+.ob-rustig__illustrated-mobile-copy {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 0.55rem 0.75rem;
+  pointer-events: none;
+  max-inline-size: 52%;
+}
+
+.ob-rustig__illustrated-mobile-copy h1 {
+  margin: 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.15rem;
+  line-height: 1.12;
+  color: var(--brand);
+}
+
+.ob-rustig__illustrated-mobile-copy p {
+  margin: 0.28rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.33;
+  color: color-mix(in srgb, var(--text) 82%, var(--muted));
+}
+
+@media (min-width: 1024px) {
+  .ob-rustig__illustrated-mobile {
+    display: none;
+  }
+
+  .ob-rustig__illustrated-desktop {
+    display: block;
+    position: relative;
+    inline-size: 100%;
+    min-block-size: 220px;
+    max-block-size: 280px;
+    overflow: hidden;
+    border-block-end: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+    background: var(--bg);
+  }
+
+  .ob-rustig__illustrated-art {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+
+  .ob-rustig__illustrated-art img {
+    block-size: 100%;
+    inline-size: auto;
+    max-inline-size: 100%;
+    object-fit: contain;
+    object-position: right center;
+  }
+
+  .ob-rustig__illustrated-head {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-block-size: 220px;
+    max-block-size: 280px;
+    max-inline-size: min(520px, 46%);
+    padding: 14px clamp(16px, 3vw, 28px);
+    pointer-events: none;
+  }
+
+  .ob-rustig__illustrated-head h1 {
+    margin: 0;
+    font-family: var(--font-display, Georgia, serif);
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+    line-height: 1.15;
+    color: var(--brand);
+  }
+
+  .ob-rustig__illustrated-head .ob-rustig__lead {
+    margin: 0.35rem 0 0;
+    max-inline-size: 36ch;
   }
 }
 
