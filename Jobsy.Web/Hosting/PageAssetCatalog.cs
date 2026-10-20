@@ -73,7 +73,7 @@ public static class PageAssetCatalog
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
-        "css/features/tests.css?v=20261020-r6",
+        "css/features/tests.css?v=20261020-r7",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/carriere.css?v=20261018-03",
         "css/features/opleidingen.css?v=20261018-r12",
@@ -294,7 +294,7 @@ public static class PageAssetCatalog
             var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-04" };
             if (RouteUsesCompactHeroCss(path))
             {
-                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261020-r6");
+                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261020-r7");
             }
 
             return appsCss;
@@ -330,7 +330,7 @@ public static class PageAssetCatalog
             var uwvCss = new List<string>(UwvMockupRouteCss);
             if (RouteUsesCompactHeroCss(path))
             {
-                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261020-r6");
+                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261020-r7");
             }
 
             return uwvCss;
@@ -338,7 +338,7 @@ public static class PageAssetCatalog
 
         if (RouteUsesCompactHeroCss(path))
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261020-r6"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261020-r7"];
         }
 
         return [];

@@ -1460,9 +1460,14 @@
 
 /* Compact full-width test header (variant C, ~130px) — illustration in cream band, no side card. */
 .test-block-stage:has(.test-shell--block-compact) {
+  --test-block-tint: var(--bg);
   background: var(--bg);
   border-radius: 0;
   overflow: visible;
+}
+
+.test-page:has(.test-shell--block-compact) {
+  background: var(--bg);
 }
 
 .test-block-stage:has(.test-shell--block-compact) .test-block-stage__content {
@@ -1480,6 +1485,26 @@
     max(1rem, env(safe-area-inset-inline-end, 0px));
   border: 0;
   box-shadow: none;
+  background: transparent;
+}
+
+.test-block-stage:has(.test-shell--block-compact) .test-flow {
+  max-inline-size: none;
+  inline-size: 100%;
+}
+
+.test-block-stage:has(.test-shell--block-compact) .test-progress-panel {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--border) 45%, transparent);
+  box-shadow: none;
+}
+
+@media (min-width: 1024px) {
+  .test-block-stage:has(.test-shell--block-compact) .test-shell__layout--insight {
+    max-inline-size: none;
+    inline-size: 100%;
+    margin-inline: 0;
+  }
 }
 
 .test-shell--block-compact .test-shell__head,
