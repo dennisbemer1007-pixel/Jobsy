@@ -38,6 +38,9 @@ public sealed class OnboardingRustigStep03CaptureTests
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
         await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
         await FunctionalOnboardingInteractivityHelpers.ReachOnboardingRustigStepAsync(page, 3, mobile);
+        await FunctionalOnboardingInteractivityHelpers.AssertOnboardingRustigStepScreenAsync(page, 3);
+        await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(400);
 

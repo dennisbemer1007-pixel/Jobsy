@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-11" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-12" />
     }
 </HeadContent>
 
@@ -208,6 +208,7 @@
                                MinutesLeft="@OnboardingWizardCatalog.V3RemainingMinutes(_step)"
                                ShowSaved="true"
                                SaveStatus="@RustigSaveStatus"
+                               ShowOptionalBadge="@(_step is 4 or 5)"
                                Title="@Culture[$"Onboarding.Step{_step}.Title"]"
                                Lead="@Culture[$"Onboarding.Step{_step}.Lead"]"
                                PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(_step)"
@@ -239,19 +240,20 @@
                                                    SelectTransport="SelectTransport"
                                                    SelectTravelTime="SelectTravelTime"
                                                    ShowCustomTravel="ShowCustomTravel" />
-                @if (rustigJobsRail)
-                {
-                    <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Mobile"
-                                           Signal="_nearbySignal"
-                                           TransportLabel="@Draft.Transport"
-                                           RefinedHeadline="NearbyRefinedHeadline" />
-                }
                 <div class="ob-rustig__footer-actions">
                     <button type="button"
                             class="ob-rustig__btn"
                             data-testid="onboarding-back"
                             disabled="@(_busy || _step == 1)"
                             @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                    @if (_step is 4 or 5)
+                    {
+                        <button type="button"
+                                class="ob-rustig__btn"
+                                data-testid="onboarding-skip-optional"
+                                disabled="@_busy"
+                                @onclick="SkipOptionalAsync">@Culture["Onboarding.Skip"]</button>
+                    }
                     <button type="button"
                             class="ob-rustig__btn ob-rustig__btn--primary"
                             data-testid="onboarding-next"

@@ -24,6 +24,17 @@
   max-inline-size: none;
 }
 
+@media (max-width: 1023px) {
+  .app-shell:has(.ob-wizard--rustig) > .app-header,
+  .app-shell:has(.ob-wizard--rustig) > .app-footer {
+    display: none;
+  }
+
+  .app-shell:has(.ob-wizard--rustig) .app-main {
+    min-block-size: 100dvh;
+  }
+}
+
 @media (min-width: 1024px) {
   .ob-wizard--rustig .ob-rustig__sidebar.ob-wizard__sidebar {
     padding-inline-start: 0;
@@ -1967,6 +1978,28 @@
   box-shadow: none;
   padding: 0;
   margin: 0;
+}
+
+.ob-wizard--rustig .ob-rustig__form-grid .ob-wizard__card fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ob-wizard--rustig .ob-rustig__form-grid #onboarding-field-transport .lobsy-choice-tile,
+.ob-wizard--rustig .ob-rustig__form-grid .ob-wizard__travel-times .lobsy-choice-tile {
+  min-block-size: 44px;
+}
+
+.ob-wizard--rustig .ob-rustig__footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ob-wizard--rustig .ob-rustig__footer-actions .ob-rustig__btn--primary {
+  margin-inline-start: auto;
 }
 
 .ob-wizard--rustig .ob-fields--illustrated {
