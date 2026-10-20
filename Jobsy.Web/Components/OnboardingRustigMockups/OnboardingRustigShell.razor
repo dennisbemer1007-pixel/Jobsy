@@ -77,14 +77,24 @@
             @if (!string.IsNullOrWhiteSpace(PanoramaDesktop))
             {
                 <div class="ob-rustig__hero-band" aria-hidden="true" data-testid="ob-rustig-hero">
-                    <picture class="ob-rustig__hero-picture">
-                        <source media="(max-width: 1023px)" srcset="@PanoramaMobile" type="image/jpeg" />
-                        <img class="ob-rustig__hero-img"
-                             src="@PanoramaDesktop"
-                             alt=""
-                             decoding="async"
-                             fetchpriority="high" />
-                    </picture>
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--desk"
+                         src="@PanoramaDesktop"
+                         width="2280"
+                         height="340"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high"
+                         data-testid="ob-rustig-hero-desk" />
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--mob"
+                         src="@(PanoramaMobile ?? PanoramaDesktop)"
+                         width="780"
+                         height="184"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high"
+                         data-testid="ob-rustig-hero-mob" />
                 </div>
             }
             else if (!string.IsNullOrWhiteSpace(IllustratedDesktop))

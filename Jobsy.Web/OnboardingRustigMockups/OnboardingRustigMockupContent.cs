@@ -14,7 +14,7 @@ public static class OnboardingRustigMockupContent
         new("2", "Achtergrond", "Optioneel", null),
         new("3", "Droom", "1 stap", null),
         new("4", "Wie ben jij", "4 korte tests", null),
-        new("5", "Jouw Kompas", "bijna klaar", null),
+        new("5", "Jouw Kompas", "je resultaat", null),
     ];
 
     public sealed record KompasDirectionCard(string Title, string Body, string ImageUrl);
