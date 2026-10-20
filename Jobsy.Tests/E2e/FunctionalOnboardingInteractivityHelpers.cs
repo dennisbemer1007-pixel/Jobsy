@@ -722,14 +722,23 @@ internal static class FunctionalOnboardingInteractivityHelpers
             return;
         }
 
-        var preset = page.Locator(".ob-wizard__presets .lobsy-choice-tile, .ob-wizard__presets button").First;
-        await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await preset.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await WaitForCircuitReadyAsync(page, 60_000);
-        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-        await WaitForCircuitReadyAsync(page, 60_000);
-        await page.Locator("[data-ob-rustig-screen=step-03], [data-testid=onboarding-step-3-illustrated]")
-            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        var step3 = page.Locator("[data-ob-rustig-screen=step-03], [data-testid=onboarding-step-3-illustrated]").First;
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            if (await step3.IsVisibleAsync())
+            {
+                break;
+            }
+
+            var preset = page.Locator(".ob-wizard__presets .lobsy-choice-tile, .ob-wizard__presets button").First;
+            await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await preset.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+            await WaitForCircuitReadyAsync(page, 60_000);
+            await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+            await WaitForCircuitReadyAsync(page, 60_000);
+        }
+
+        await step3.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         if (targetStep == 3)
         {
             return;
