@@ -189,8 +189,21 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
+def fit_mobile_band_native(raw: Image.Image) -> Image.Image:
+    """Center crop from the same 6:1 band as desktop (one shared scene)."""
+    w, h = raw.size
+    crop_w = min(w, int(round(h * MOBILE_RATIO)))
+    x0 = max(0, (w - crop_w) // 2)
+    band = raw.crop((x0, 0, x0 + crop_w, h))
+    if band.size != MOBILE:
+        band = band.resize(MOBILE, Image.Resampling.LANCZOS)
+    return band
+
+
 def fit_mobile(raw: Image.Image, slug: str = "") -> Image.Image:
-    """Same vertical slice of the raw as desktop (aligned 92px mobile band)."""
+    """Mobile band from the same scene as desktop (6:1 center crop or aligned 16:9 slice)."""
+    if is_band_native(raw):
+        return fit_mobile_band_native(raw)
     wide = extend_ultra_wide(raw)
     w, h = wide.size
     scale_d = DESKTOP[0] / w
@@ -236,13 +249,17 @@ def main() -> None:
         if src is None:
             raise SystemExit(f"missing raw for {slug} in {RAW}")
         raw = Image.open(src).convert("RGB")
-        mob_candidates = [
-            RAW / f"{slug}-mobile-raw.jpg",
-            RAW / f"{slug}-mobile-raw.png",
-            *candidates,
-        ]
-        mob_src = next((p for p in mob_candidates if p.is_file()), src)
-        raw_mob = Image.open(mob_src).convert("RGB")
+        if is_band_native(raw):
+            raw_mob = raw
+            mob_src = src
+        else:
+            mob_candidates = [
+                RAW / f"{slug}-mobile-raw.jpg",
+                RAW / f"{slug}-mobile-raw.png",
+                *candidates,
+            ]
+            mob_src = next((p for p in mob_candidates if p.is_file()), src)
+            raw_mob = Image.open(mob_src).convert("RGB")
         mob = apply_cream_fades(fit_mobile(raw_mob, slug))
         if slug in PALETTE_SOFTEN_SLUGS:
             mob = soften_hero_palette(mob)
