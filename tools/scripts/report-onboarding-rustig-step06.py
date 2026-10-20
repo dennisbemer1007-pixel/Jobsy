@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 DESK_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-06-desktop.jpg"
 MOB_JPEG = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama/step-06-mobile.jpg"
-CACHE = "20261020-u6z"
+CACHE = "20261020-u6z1"
 
 
 def lobster_red_mask(rgb: np.ndarray) -> np.ndarray:
@@ -63,7 +63,7 @@ def assert_hero_jpeg(path: Path, label: str) -> None:
     cream = np.array([247.0, 244.0, 240.0])
     dist = np.linalg.norm(rgb.astype(np.float32) - cream, axis=2)
     rows = np.where(dist.max(axis=1) > 30)[0]
-    min_bottom = 0.75 if "mobile" in label else 0.74
+    min_bottom = 0.86 if "mobile" in label else 0.90
     if rows.size == 0 or rows.max() < h * min_bottom:
         raise SystemExit(f"FAIL {label}: bottom clipped (max y={rows.max() if rows.size else 0})")
     band = rgb[: int(h * 0.58), int(w * 0.90) :]
