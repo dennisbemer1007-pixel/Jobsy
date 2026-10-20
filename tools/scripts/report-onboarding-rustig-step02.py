@@ -55,7 +55,7 @@ def main() -> None:
         stderr=subprocess.DEVNULL,
     )
     base = "http://127.0.0.1:8765"
-    desk_hero = HERO / "step-02-desktop-hero-1280.png"
+    desk_hero = HERO / "step-02-desktop-hero-1440.png"
     mob_hero = HERO / "step-02-mobile-hero.png"
     try:
         with sync_playwright() as p:
@@ -71,17 +71,21 @@ def main() -> None:
             else:
                 raise SystemExit("server not up")
 
-            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
             page.goto(f"{base}/mockups/onboarding-rustig/step-02", wait_until="networkidle")
+            page.wait_for_selector("[data-testid=ob-rustig-hero]", timeout=30_000)
             page.wait_for_timeout(600)
-            page.screenshot(path=str(OUT / "step-02-desktop-1280.png"))
+            page.screenshot(path=str(OUT / "step-02-desktop-1440.png"))
             dh = hero_crop(page)
             dh.save(desk_hero)
-            lobster_4x(dh, "step-02", "desktop").save(ZOOM / "step-02-desktop-lobster-4x.png")
+            lob_desk = lobster_4x(dh, "step-02", "desktop")
+            lob_desk.save(ZOOM / "step-02-desktop-lobster-4x.png")
+            lob_desk.save(OUT / "step-02-lobster-4x.png")
             page.close()
 
             page = browser.new_page(viewport={"width": 390, "height": 844})
             page.goto(f"{base}/mockups/onboarding-rustig/step-02", wait_until="networkidle")
+            page.wait_for_selector("[data-testid=ob-rustig-hero]", timeout=30_000)
             page.wait_for_timeout(600)
             page.screenshot(path=str(OUT / "step-02-mobile.png"))
             mh = hero_crop(page)
@@ -89,7 +93,7 @@ def main() -> None:
             lobster_4x(mh, "step-02", "mobile").save(ZOOM / "step-02-mobile-lobster-4x.png")
             page.close()
 
-            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
             page.goto(f"{base}/mockups/onboarding-rustig/step-03", wait_until="networkidle")
             page.wait_for_timeout(400)
             ref = hero_crop(page)
@@ -102,8 +106,8 @@ def main() -> None:
         canvas.paste(dh, (ref.size[0] + 8, 28))
         d = ImageDraw.Draw(canvas)
         d.text((4, 4), "step-03 (ref)", fill=(40, 40, 40))
-        d.text((ref.size[0] + 12, 4), "step-02 u6o", fill=(40, 40, 40))
-        canvas.save(COMPARE / "step-02-vs-step03-hero-1280-u6o.png")
+        d.text((ref.size[0] + 12, 4), "step-02", fill=(40, 40, 40))
+        canvas.save(COMPARE / "step-02-vs-step03-hero-1440.png")
     finally:
         proc.terminate()
         proc.wait(timeout=30)
