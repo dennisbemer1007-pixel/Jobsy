@@ -17,9 +17,9 @@ OUT = Path("/opt/cursor/artifacts/onboarding-rustig-mockups")
 ZOOM = Path("/opt/cursor/artifacts/onboarding-rustig-lobster-zoom")
 REPORT_EARLY = ["step-02", "step-04", "step-05"]
 MOB_CENTER: dict[str, tuple[float, float]] = {
-    "step-02": (0.76, 0.55),
-    "step-04": (0.12, 0.58),
-    "step-05": (0.55, 0.65),
+    "step-02": (0.86, 0.68),
+    "step-04": (0.81, 0.70),
+    "step-05": (0.20, 0.65),
 }
 
 

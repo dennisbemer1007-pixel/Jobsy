@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 PAN = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
@@ -24,10 +24,10 @@ Y_MAX = 0.78
 PLACEMENTS: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {
     "start": ((0.23, 0.58), (0.26, 0.55)),
     "step-01": ((0.21, 0.62), (0.24, 0.60)),
-    "step-02": ((0.78, 0.58), (0.76, 0.55)),
+    "step-02": ((0.88, 0.70), (0.86, 0.68)),
     "step-03": ((0.09, 0.50), (0.16, 0.52)),
-    "step-04": ((0.11, 0.62), (0.12, 0.58)),
-    "step-05": ((0.58, 0.68), (0.55, 0.65)),
+    "step-04": ((0.82, 0.72), (0.81, 0.70)),
+    "step-05": ((0.20, 0.70), (0.26, 0.62)),
     "step-06": ((0.72, 0.58), (0.68, 0.55)),
     "step-07": ((0.38, 0.60), (0.35, 0.57)),
     "step-08": ((0.14, 0.68), (0.15, 0.64)),
@@ -68,28 +68,12 @@ def clamp_y(cy_frac: float) -> float:
     return max(Y_MIN, min(Y_MAX, cy_frac))
 
 
-def cream_pad(base: Image.Image, cx_frac: float, cy_frac: float, *, mobile: bool) -> None:
-    """Soft cream oval under the sprite so it reads on busy watercolor (mobile band)."""
-    if not mobile:
-        return
-    w, h = base.size
-    cx, cy = int(w * cx_frac), int(h * cy_frac)
-    pad_w = max(14, int(w * 0.055))
-    pad_h = max(10, int(h * 0.14))
-    layer = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-    cream = (247, 244, 240, 210)
-    draw.ellipse((cx - pad_w, cy - pad_h // 2, cx + pad_w, cy + pad_h // 2 + 4), fill=cream)
-    base.paste(Image.alpha_composite(base.convert("RGBA"), layer).convert("RGB"))
-
-
 def paste_sprite(
     base: Image.Image, piece: Image.Image, cx_frac: float, cy_frac: float, *, mobile: bool = False
 ) -> None:
     w, h = base.size
     cy_frac = clamp_y(cy_frac)
     cx, cy = int(w * cx_frac), int(h * cy_frac)
-    cream_pad(base, cx_frac, cy_frac, mobile=mobile)
     x0 = cx - piece.size[0] // 2
     y0 = cy - piece.size[1] // 2
     canvas = base.convert("RGBA")

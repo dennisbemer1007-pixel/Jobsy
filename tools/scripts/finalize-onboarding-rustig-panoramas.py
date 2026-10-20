@@ -25,6 +25,8 @@ MIN_HEAD_ROW_FRAC = 0.165  # every head below top ~16.5% of hero band
 FEET_ABOVE_FADE = 25
 FADE_BOTTOM = 25
 FADE_SIDE = 30
+# 16:9 raws with step-03-style small full-body figures (580/1282 after width cover-scale).
+Y0_FRAC_16X9 = 0.452
 
 SLUGS = [
     "start",
@@ -172,35 +174,20 @@ def crop_to_ratio(
     scaled = wide.resize((target_w, scaled_h), Image.Resampling.LANCZOS)
     crop_h = int(round(target_w / ratio))
     crop_h = min(crop_h, scaled_h)
-    bbox = figure_bbox(scaled) or content_bbox(scaled)
-    if bbox is None:
-        y0 = max(0, int(scaled_h * 0.42) - crop_h // 2)
+    wide_ratio = w / h
+    if 1.70 <= wide_ratio <= 1.85:
+        y0 = int(scaled_h * Y0_FRAC_16X9)
     else:
-        _x1, y1, _x2, y2 = bbox
-        sky = int(crop_h * 0.38)
-        y0 = y1 - sky
-        ground_y = int(scaled_h * 0.70)
-        y0 = min(y0, ground_y - int(crop_h * 0.72))
-        y0 = max(0, min(y0, scaled_h - crop_h))
-        if y1 < y0 + HEAD_MARGIN:
-            y0 = max(0, y1 - HEAD_MARGIN)
-        if y2 > y0 + crop_h - FEET_ABOVE_FADE:
-            y0 = min(scaled_h - crop_h, y2 + FEET_ABOVE_FADE - crop_h)
-        y0 = max(0, min(y0, scaled_h - crop_h))
+        fb = figure_bbox(scaled)
+        if fb is None:
+            y0 = max(0, int(scaled_h * 0.42) - crop_h // 2)
+        else:
+            _fx1, _fy1, _fx2, fy2 = fb
+            y0 = int(fy2 - crop_h * 0.96)
+    y0 = max(0, min(y0, scaled_h - crop_h))
     band = scaled.crop((0, y0, target_w, y0 + crop_h))
     if band.size[1] != target_h:
         band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
-    min_head_row = int(target_h * MIN_HEAD_ROW_FRAC)
-    scale_back = crop_h / max(1, target_h)
-    for _ in range(100):
-        tops = figure_head_tops_band(band)
-        if not tops or min(tops) >= min_head_row:
-            break
-        shift_final = min_head_row - min(tops)
-        y0 = max(0, y0 - max(1, int(shift_final * scale_back)))
-        band = scaled.crop((0, y0, target_w, y0 + crop_h))
-        if band.size[1] != target_h:
-            band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
     return band
 
 
