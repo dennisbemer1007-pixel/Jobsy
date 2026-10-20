@@ -9,7 +9,7 @@
 <PageTitle>Onboarding rustig mockup · @_screen · Lobsy</PageTitle>
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/onboarding-rustig-mockup.css?v=20261020-u6z2" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig-mockup.css?v=20261020-u7a" />
 </HeadContent>
 
 @if (_screen == "index")
@@ -21,7 +21,7 @@
             @foreach (var entry in OnboardingRustigMockupRegistry.Ordered)
             {
                 <li><a href="/mockups/onboarding-rustig/@entry.Slug">@IndexLabel(entry)</a></li>
-                @if (entry.Kind == OnboardingRustigMockupKind.TestOverview)
+                @if (string.Equals(entry.Slug, "step-07", StringComparison.Ordinal))
                 {
                     <li style="margin-inline-start:1rem"><a href="/mockups/onboarding-rustig/step-07-b">↳ Overzicht + resultaat (rail)</a></li>
                 }

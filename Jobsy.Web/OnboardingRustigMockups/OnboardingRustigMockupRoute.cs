@@ -14,7 +14,7 @@ public static class OnboardingRustigMockupRoute
             return null;
 
         if (s is "step-07" or "step-07-a")
-            return new Resolved(Require("step-07"), OnboardingRustigMockupView.TestsOverview);
+            return new Resolved(Require("step-07"), OnboardingRustigMockupView.TestQuestion);
         if (s is "step-07-b")
             return new Resolved(Require("step-07"), OnboardingRustigMockupView.TestsOverview, ShowOverviewResultRail: true);
 
