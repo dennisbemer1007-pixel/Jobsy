@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "Jobsy.Web/wwwroot/images/onboarding/rustig-panorama"
@@ -19,14 +19,20 @@ DESKTOP = (2280, 340)  # 6:1 at 2× (matches ~1140×170 content column)
 MOBILE = (780, 184)  # 2× for CSS band 390×92 (~4.24:1)
 CREAM = np.array([247, 244, 240], dtype=np.float32)
 DESKTOP_RATIO = 6.0
-MOBILE_RATIO = 4.0
+MOBILE_RATIO = 780 / 184  # 390×92 CSS band at 2×
 HEAD_MARGIN = 14
 MIN_HEAD_ROW_FRAC = 0.165  # every head below top ~16.5% of hero band
 FEET_ABOVE_FADE = 25
-FADE_BOTTOM = 25
-FADE_SIDE = 30
-# 16:9 raws with step-03-style small full-body figures (580/1282 after width cover-scale).
-Y0_FRAC_16X9 = 0.452
+FADE_BOTTOM = 16
+FADE_SIDE = 24
+# 16:9 raws: vertical band with headroom (tuned vs approved step-03 crop).
+Y0_FRAC_16X9 = 0.456
+Y0_FRAC_SLUG: dict[str, float] = {
+    "step-02": 0.488,
+    "step-04": 0.478,
+    "step-05": 0.488,
+}
+PALETTE_SOFTEN_SLUGS = frozenset({"step-02", "step-04", "step-05"})
 
 SLUGS = [
     "start",
@@ -165,6 +171,7 @@ def crop_to_ratio(
     target_w: int,
     target_h: int,
     ratio: float,
+    slug: str = "",
 ) -> Image.Image:
     """Scale to cover width, crop vertical band keeping figure bbox inside."""
     wide = extend_ultra_wide(im)
@@ -176,7 +183,8 @@ def crop_to_ratio(
     crop_h = min(crop_h, scaled_h)
     wide_ratio = w / h
     if 1.70 <= wide_ratio <= 1.85:
-        y0 = int(scaled_h * Y0_FRAC_16X9)
+        frac = Y0_FRAC_SLUG.get(slug, Y0_FRAC_16X9)
+        y0 = int(scaled_h * frac)
     else:
         fb = figure_bbox(scaled)
         if fb is None:
@@ -189,6 +197,14 @@ def crop_to_ratio(
     if band.size[1] != target_h:
         band = band.resize((target_w, target_h), Image.Resampling.LANCZOS)
     return band
+
+
+def soften_hero_palette(im: Image.Image) -> Image.Image:
+    """Nudge saturated raws toward approved step-03 pale watercolor."""
+    im = ImageEnhance.Color(im).enhance(0.72)
+    im = ImageEnhance.Brightness(im).enhance(1.06)
+    im = ImageEnhance.Contrast(im).enhance(0.92)
+    return im
 
 
 def apply_cream_fades(im: Image.Image) -> Image.Image:
@@ -204,21 +220,47 @@ def apply_cream_fades(im: Image.Image) -> Image.Image:
                 a = max(a, int(255 * min(1.0, t**1.1)))
             if x < FADE_SIDE:
                 t = 1.0 - x / max(1, FADE_SIDE - 1)
-                a = max(a, int(220 * t))
+                a = max(a, int(150 * t))
             elif x >= w - FADE_SIDE:
                 t = (x - (w - FADE_SIDE)) / max(1, FADE_SIDE - 1)
-                a = max(a, int(220 * t))
+                a = max(a, int(150 * t))
             if a:
                 px[x, y] = (*cream, a)
     return Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
 
 
-def fit_desktop(raw: Image.Image) -> Image.Image:
-    return crop_to_ratio(raw, DESKTOP[0], DESKTOP[1], DESKTOP_RATIO)
+def fit_desktop(raw: Image.Image, slug: str = "") -> Image.Image:
+    return crop_to_ratio(raw, DESKTOP[0], DESKTOP[1], DESKTOP_RATIO, slug=slug)
 
 
-def fit_mobile(raw: Image.Image) -> Image.Image:
-    return crop_to_ratio(raw, MOBILE[0], MOBILE[1], MOBILE_RATIO)
+def fit_mobile(raw: Image.Image, slug: str = "") -> Image.Image:
+    """Same vertical slice of the raw as desktop (aligned 92px mobile band)."""
+    wide = extend_ultra_wide(raw)
+    w, h = wide.size
+    scale_d = DESKTOP[0] / w
+    scaled_h_d = max(1, int(h * scale_d))
+    crop_h_d = min(int(round(DESKTOP[0] / DESKTOP_RATIO)), scaled_h_d)
+    wide_ratio = w / h
+    if 1.70 <= wide_ratio <= 1.85:
+        frac = Y0_FRAC_SLUG.get(slug, Y0_FRAC_16X9)
+        y0_d = int(scaled_h_d * frac)
+    else:
+        scaled_d = wide.resize((DESKTOP[0], scaled_h_d), Image.Resampling.LANCZOS)
+        fb = figure_bbox(scaled_d)
+        if fb is None:
+            y0_d = max(0, int(scaled_h_d * 0.42) - crop_h_d // 2)
+        else:
+            y0_d = int(fb[3] - crop_h_d * 0.96)
+    scale_m = MOBILE[0] / w
+    scaled_h_m = max(1, int(h * scale_m))
+    crop_h_m = min(int(round(MOBILE[0] / MOBILE_RATIO)), scaled_h_m)
+    y0_m = int(y0_d * (MOBILE[0] / DESKTOP[0]))
+    y0_m = max(0, min(y0_m, scaled_h_m - crop_h_m))
+    scaled_m = wide.resize((MOBILE[0], scaled_h_m), Image.Resampling.LANCZOS)
+    band = scaled_m.crop((0, y0_m, MOBILE[0], y0_m + crop_h_m))
+    if band.size[1] != MOBILE[1]:
+        band = band.resize(MOBILE, Image.Resampling.LANCZOS)
+    return band
 
 
 def main() -> None:
@@ -238,13 +280,17 @@ def main() -> None:
         if src is None:
             raise SystemExit(f"missing raw for {slug} in {RAW}")
         raw = Image.open(src).convert("RGB")
-        mob = apply_cream_fades(fit_mobile(raw))
+        mob = apply_cream_fades(fit_mobile(raw, slug))
+        if slug in PALETTE_SOFTEN_SLUGS:
+            mob = soften_hero_palette(mob)
         mob.save(OUT / f"{slug}-mobile.jpg", quality=92, optimize=True)
         if mobile_only:
             bb = figure_bbox(mob) or content_bbox(mob)
             print(f"{slug}: mob {mob.size} bbox {bb} <- {src.name}")
             continue
-        desk = apply_cream_fades(fit_desktop(raw))
+        desk = apply_cream_fades(fit_desktop(raw, slug))
+        if slug in PALETTE_SOFTEN_SLUGS:
+            desk = soften_hero_palette(desk)
         desk.save(OUT / f"{slug}-desktop.jpg", quality=92, optimize=True)
         bb = figure_bbox(desk) or content_bbox(desk)
         print(f"{slug}: desk {desk.size} mob {mob.size} bbox {bb} <- {src.name}")
