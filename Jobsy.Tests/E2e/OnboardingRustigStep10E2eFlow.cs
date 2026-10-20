@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
@@ -16,7 +17,11 @@ internal static class OnboardingRustigStep10E2eFlow
         _ = mobile;
         var email = await RegisterFreshCandidateEmailAsync(page, baseUrl, "rustig-u10");
         await CandidateJourneyE2e.EnsureTestAiConsentForE2eAsync(email);
+        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Competence);
+        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Career);
+        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Culture);
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 9, currentStep: 10);
+        await CandidateJourneyE2e.ResetDemoValuesProfileForE2eAsync(email);
 
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
