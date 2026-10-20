@@ -122,7 +122,9 @@
     }
 </fieldset>
 
-<WorkStatusChipSelect Selected="Draft.WorkStatuses" OnToggle="ToggleWorkStatusAsync" />
+<WorkStatusChipSelect Selected="_workStatusUiSnapshot"
+                      SelectionRevision="_workStatusUiRevision"
+                      OnToggle="ToggleWorkStatusAsync" />
 
 <label>
     @Culture["Profile.Phone"] <small>@Culture["Onboarding.Optional"]</small>
@@ -170,7 +172,18 @@
     private string? _locationError;
     private CancellationTokenSource? _suggestCts;
     private CancellationTokenSource? _postcodeCts;
+    private CancellationTokenSource? _addressSaveCts;
     private int _suggestGeneration;
+    private int _workStatusUiRevision;
+    private HashSet<string> _workStatusUiSnapshot = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override void OnParametersSet()
+    {
+        if (_workStatusUiRevision == 0 && Draft.WorkStatuses.Count > 0 && _workStatusUiSnapshot.Count == 0)
+        {
+            _workStatusUiSnapshot = new HashSet<string>(Draft.WorkStatuses, StringComparer.OrdinalIgnoreCase);
+        }
+    }
 
     private string? LocationHint
     {
@@ -228,8 +241,20 @@
             Draft.WorkStatuses.Remove(code);
         }
 
+        RefreshWorkStatusUi();
         await NotifyAsync();
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
+    }
+
+    private void SyncWorkStatusSnapshot()
+    {
+        _workStatusUiSnapshot = new HashSet<string>(Draft.WorkStatuses, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void RefreshWorkStatusUi()
+    {
+        _workStatusUiRevision++;
+        SyncWorkStatusSnapshot();
     }
 
     private async Task OnAddressQueryChangedAsync(string value)
@@ -269,9 +294,32 @@
             Draft.City = split.City;
         }
 
-        await AddressChanged.InvokeAsync();
+        ScheduleDebouncedAddressChanged();
         await SuggestAddressesAsync(Draft.AddressQuery);
         SchedulePostcodeResolve();
+    }
+
+    private void ScheduleDebouncedAddressChanged()
+    {
+        _addressSaveCts?.Cancel();
+        _addressSaveCts?.Dispose();
+        _addressSaveCts = new CancellationTokenSource();
+        var token = _addressSaveCts.Token;
+        _ = DebouncedAddressChangedAsync(token);
+    }
+
+    private async Task DebouncedAddressChangedAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(450, cancellationToken);
+            await AddressChanged.InvokeAsync();
+            SyncWorkStatusSnapshot();
+            await SafeStateHasChangedAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     private async Task OnCityChangedAsync() => await AddressChanged.InvokeAsync();
@@ -292,7 +340,14 @@
             Draft.BirthYear = "";
         }
 
-        await BirthDateChanged.InvokeAsync();
+        SyncWorkStatusSnapshot();
+        await NotifyAsync();
+        if (BirthDateChanged.HasDelegate)
+        {
+            await BirthDateChanged.InvokeAsync();
+        }
+
+        await SafeStateHasChangedAsync();
     }
 
     private Task OnShowCityAsync() => ShowCity.InvokeAsync();
@@ -370,14 +425,24 @@
 
     private async Task ResolvePostcodeAsync(CancellationToken cancellationToken)
     {
-        var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
-            Draft, Geocoder, cancellationToken);
-        if (resolved)
+        try
         {
-            await AddressChanged.InvokeAsync();
-        }
+            var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
+                Draft, Geocoder, cancellationToken);
+            if (resolved)
+            {
+                await AddressChanged.InvokeAsync();
+            }
 
-        await InvokeAsync(StateHasChanged);
+            await SafeStateHasChangedAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            // Postcode lookup is best-effort while typing.
+        }
     }
 
     private async Task SuggestAddressesAsync(string query)
@@ -399,13 +464,13 @@
             Draft.Suggestions.Clear();
             _showSuggestions = false;
             _suggesting = false;
-            await InvokeAsync(StateHasChanged);
+            await SafeStateHasChangedAsync();
             return;
         }
 
         _showSuggestions = true;
         _suggesting = true;
-        await InvokeAsync(StateHasChanged);
+        await SafeStateHasChangedAsync();
 
         try
         {
@@ -442,8 +507,20 @@
                     _showSuggestions = false;
                 }
 
-                await InvokeAsync(StateHasChanged);
+                await SafeStateHasChangedAsync();
             }
+        }
+    }
+
+    private async Task SafeStateHasChangedAsync()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Circuit may be disconnected during teardown.
         }
     }
 
@@ -453,6 +530,8 @@
         _suggestCts?.Dispose();
         _postcodeCts?.Cancel();
         _postcodeCts?.Dispose();
+        _addressSaveCts?.Cancel();
+        _addressSaveCts?.Dispose();
         await Task.CompletedTask;
     }
 }

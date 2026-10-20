@@ -48,16 +48,16 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "5f9c983a876ac9d1d75e08c3344c87479aa24f9942ce5ecb187ed6e6e741d00b",
-    "v": "20261019-68"
+    "sha256": "62ef50acd8000eede3e3b7e71e0ba3604b2dec3da999893724dcb7e87de94fcd",
+    "v": "20261020-r8"
   },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
   "css/features/candidate-illustrated-decorative-layers.css": {
-    "sha256": "43ca69ac848dfe48455ebdd47906dc848c5099bb46dd5962f45d93ec2a8ba92e",
-    "v": "20261019-03"
+    "sha256": "900dc5e9bf425f86dfdb9012f4f7e9ced2baba54475bfabad71ee4adda830ce5",
+    "v": "20261020-01"
   },
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
@@ -164,7 +164,7 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "fea8a83ed549d468dcfb5e5df787c469cd09aa1762b53c49ed3caa3dd8fd5e9d",
+    "sha256": "6dd4532d9c4978fdbd3e09890bf94cfd09d2b50b3c1d03740f2dda204265dca0",
     "v": "20261019-r25"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -205,7 +205,7 @@
   },
   "css/features/reconnect.css": {
     "sha256": "b22d8098dfcf18ea60729ee8097fe243aad5502f73619d53fc76b2e484adae98",
-    "v": "20261019-01"
+    "v": "20261015-02"
   },
   "css/features/sales.css": {
     "sha256": "1f17cd2984d474f41d5b5c5e752db44482ed32d27e9fe639393193cbaa0c4784",
@@ -228,8 +228,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "a6ceea6a1b9e8bf61433175b0556e9d536c439d388f122e1ee336c6a6b64730b",
-    "v": "20261018-04"
+    "sha256": "4a14c2a587ec9d49f1561e8e2f778afe12870783e328cd50c463e2e90ea79fb6",
+    "v": "20261020-r8"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",
@@ -264,8 +264,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "58b2f2f23d23a950a6ea44620bee0feba1730d4d9c23a1067f1640ae3adb2153",
-    "v": "20261019-03"
+    "sha256": "329dca14ddbd37fc668043969352b53a81c66cd02497ab07953b559a8286fd9a",
+    "v": "20261020-01"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -277,7 +277,7 @@
   },
   "js/blazor-boot.js": {
     "sha256": "fda947426087584f5177e2f09de69848a46c586dfb7f3b3f7d3c373fd0cc7307",
-    "v": "20261019-03"
+    "v": "20261017-01"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
@@ -348,11 +348,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "45c364ee39702bee4505312447a07f43c56d9635901850c1f48c5efba806bf87",
+    "sha256": "15f3851f338c539c341db65dd4efb4e6f61dd13e4e045646c31b5621c66eae04",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "dfc3c757b76f671642ad163d7bdfbd3d6437b417f829764769dbd6659a5e8b09",
+    "sha256": "d909d018299a317fabdcf1da94af1e120fa1ebc35aa944ccaf3627ad26343572",
     "v": "20261016-06"
   }
 }

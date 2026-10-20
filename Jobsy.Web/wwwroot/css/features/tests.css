@@ -801,6 +801,7 @@
     border-radius: 0;
     overflow: hidden;
     isolation: isolate;
+    pointer-events: none;
     background-color: var(--test-block-hero-cream);
     background-image: var(--test-block-mobile-hero-image);
     background-repeat: no-repeat;

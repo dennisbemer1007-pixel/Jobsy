@@ -113,6 +113,8 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.Contains(".ob-illustrated-step__art *", css, StringComparison.Ordinal);
         Assert.Contains(".pp-company__hero-art *", css, StringComparison.Ordinal);
         Assert.Contains(".test-mirror__hero-art *", css, StringComparison.Ordinal);
+        Assert.Contains(".cand-compact-hero__art", css, StringComparison.Ordinal);
+        Assert.Contains(".test-block-stage__mobile-hero--band", css, StringComparison.Ordinal);
         Assert.Matches(@"(?s)pointer-events:\s*none", css);
     }
 

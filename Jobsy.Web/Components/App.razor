@@ -37,7 +37,7 @@
     }
     @if (LoadBlazorRuntime)
     {
-        <link rel="preload" href="js/app-core.js?v=20261019-03" as="script" crossorigin />
+        <link rel="preload" href="js/app-core.js?v=20261020-01" as="script" crossorigin />
         <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
     }
     @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
@@ -52,13 +52,13 @@
     <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
     <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
-    <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261019-03" />
+    <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
     <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
     <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
     @* Outside LoadBlazorRuntime: NoBlazor pages (landing, legal) still ship the modal markup. *@
-    <link rel="stylesheet" href="css/features/reconnect.css?v=20261019-01" data-reconnect-css />
+    <link rel="stylesheet" href="css/features/reconnect.css?v=20261015-02" data-reconnect-css />
     @if (!LoadBlazorRuntime)
     {
         @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
@@ -93,11 +93,11 @@
             <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
             <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
             <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
-            <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261019-03" />
+            <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
     <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
             <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
             <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
-            <link rel="stylesheet" href="css/features/reconnect.css?v=20261019-01" />
+            <link rel="stylesheet" href="css/features/reconnect.css?v=20261015-02" />
         </noscript>
     }
     <script nonce="@Nonce">
@@ -249,21 +249,27 @@
             <p class="reconnect-toast__msg reconnect-toast__msg--show">@Text("Status.Reconnect.Trying")</p>
             <p class="reconnect-toast__msg reconnect-toast__msg--failed">
                 @Text("Status.Reconnect.Failed")
-                <button type="button" class="reconnect-toast__action" data-reconnect-try>@Text("Status.Reconnect.ReconnectButton")</button>
+                <button type="button" class="reconnect-toast__action" data-reconnect-reload>@Text("Status.Reconnect.Reload")</button>
             </p>
             <p class="reconnect-toast__msg reconnect-toast__msg--rejected">
                 @Text("Status.Reconnect.Rejected")
-                <button type="button" class="reconnect-toast__action" data-reconnect-try>@Text("Status.Reconnect.ReconnectButton")</button>
-            </p>
-            <p class="reconnect-toast__msg reconnect-toast__msg--session-expired">
-                @Text("Status.Reconnect.SessionExpired")
-                <button type="button" class="reconnect-toast__action" data-reconnect-login>@Text("Status.Reconnect.SignInAgain")</button>
+                <button type="button" class="reconnect-toast__action" data-reconnect-reload>@Text("Status.Reconnect.Reload")</button>
             </p>
         </div>
     </div>
+    <script nonce="@Nonce">
+        document.addEventListener("click", function (ev) {
+            var t = ev.target;
+            if (!t || !t.closest) return;
+            if (t.closest("[data-reconnect-reload]")) {
+                ev.preventDefault();
+                location.reload();
+            }
+        });
+    </script>
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261019-03" nonce="@Nonce" defer></script>
+            <script src="js/app-core.js?v=20261020-01" nonce="@Nonce" defer></script>
             <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
             <script src="js/lobsyPush.js?v=20261016-02" nonce="@Nonce" defer></script>
             <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
@@ -291,30 +297,9 @@
         }
     @if (LoadBlazorRuntime)
     {
-        @* Block unprompted full reloads before Blazor.start (framework refresh/rejected paths call location.reload). *@
-        <script nonce="@Nonce">
-            (function () {
-                try {
-                    if (window.__lobsyReloadGuardInstalled) return;
-                    window.__lobsyReloadGuardInstalled = true;
-                    window.lobsyAllowDocumentReload = function () { window.__lobsyAllowDocumentReload = true; };
-                    var proto = window.Location && window.Location.prototype;
-                    if (!proto || !proto.reload) return;
-                    var nativeReload = proto.reload;
-                    proto.reload = function () {
-                        if (!window.__lobsyAllowDocumentReload) {
-                            try { console.warn("[lobsy] blocked automatic document.reload()"); } catch (e) { }
-                            return;
-                        }
-                        window.__lobsyAllowDocumentReload = false;
-                        return nativeReload.apply(this, arguments);
-                    };
-                } catch (e) { }
-            })();
-        </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261019-03" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261017-01" nonce="@Nonce" defer></script>
     }
 </body>
 

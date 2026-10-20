@@ -22,6 +22,8 @@ public sealed class DecorativeIllustrationLayersGateTests
         Assert.Contains("[aria-hidden=\"true\"]", css, StringComparison.Ordinal);
         Assert.Contains("[class*=\"__art\"]", css, StringComparison.Ordinal);
         Assert.Contains(".cand-hero__copy", css, StringComparison.Ordinal);
+        Assert.Contains(".cand-compact-hero__art", css, StringComparison.Ordinal);
+        Assert.Contains(".test-block-stage__mobile-hero--band", css, StringComparison.Ordinal);
         Assert.Contains("isolation: isolate", css, StringComparison.Ordinal);
         Assert.Matches(@"(?s)\[aria-hidden=""true""\][^{]*\{[^}]*pointer-events:\s*none", css);
     }
@@ -139,7 +141,9 @@ public sealed class DecorativeIllustrationLayersGateTests
                || Regex.IsMatch(selector, @"\.cand-hero::?(before|after)", RegexOptions.IgnoreCase)
                || selector.Contains("kb-nearby-banner__art", StringComparison.Ordinal)
                || selector.Contains("ndm-hero__art", StringComparison.Ordinal)
-               || selector.Contains(".ndm .band .art", StringComparison.Ordinal);
+               || selector.Contains(".ndm .band .art", StringComparison.Ordinal)
+               || selector.Contains("test-block-stage__mobile-hero", StringComparison.Ordinal)
+               || selector.Contains("cand-compact-hero__art", StringComparison.Ordinal);
     }
 
     private static bool LooksLikeInteractiveContentSelector(string selector)
