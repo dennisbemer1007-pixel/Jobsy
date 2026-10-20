@@ -18,6 +18,61 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
     [Theory]
     [MemberData(nameof(ViewportCases))]
+    public async Task Start_welcome_beginnen_opens_step1_with_candidate_header(int width, int height, bool mobile, string tag)
+    {
+        var (run, baseUrl) = await TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, "func-start");
+        await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
+        await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+        await FunctionalOnboardingInteractivityHelpers.CaptureOnboardingStartHotfixAsync(page, tag);
+    }
+
+    [Theory]
+    [MemberData(nameof(ViewportCases))]
+    public async Task Logout_works_from_start_welcome_and_from_step1(int width, int height, bool mobile, string tag)
+    {
+        var (run, baseUrl) = await TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, $"func-logout-{tag}");
+        await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
+        await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+        await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.LogoutViaHeaderAsync(page, mobile);
+    }
+
+    [Theory]
+    [MemberData(nameof(ViewportCases))]
     public async Task Kennismaken_step1_controls_are_interactive(int width, int height, bool mobile, string tag)
     {
         var (run, baseUrl) = await TryBeginAsync();
