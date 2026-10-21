@@ -14,6 +14,32 @@
     var tryingSinceMs = 0;
     var reconnectMutating = false;
     var reconnectObsFrame = 0;
+    var pendingReloadReason = null;
+
+    function isBrowserOnline() {
+        try {
+            return typeof navigator === "undefined" || navigator.onLine !== false;
+        } catch (e) {
+            return true;
+        }
+    }
+
+    function deferReloadUntilOnline(reason) {
+        pendingReloadReason = reason || pendingReloadReason || "offline";
+        try {
+            console.info("[lobsy] reload deferred until online (" + pendingReloadReason + ")");
+        } catch (e) { }
+        return false;
+    }
+
+    function flushPendingReloadAfterOnline() {
+        if (!isBrowserOnline() || !pendingReloadReason) {
+            return;
+        }
+        var reason = pendingReloadReason;
+        pendingReloadReason = null;
+        reloadPageThrottled(reason);
+    }
 
     function allowDocumentReload() {
         window.__lobsyAllowDocumentReload = true;
@@ -79,6 +105,9 @@
     };
 
     function reloadPageThrottled(reason) {
+        if (!isBrowserOnline()) {
+            return deferReloadUntilOnline(reason);
+        }
         var key = "lobsy:reload-ts";
         try {
             var now = Date.now();
@@ -174,7 +203,7 @@
             handleRejectedState();
             return;
         }
-        if (!circuitInteractive()) {
+        if (!circuitInteractive() && isBrowserOnline()) {
             reloadPageThrottled("mobile-suspend-" + source);
         }
     }
@@ -338,6 +367,10 @@
                     return;
                 }
                 if (Date.now() >= deadline) {
+                    if (!isBrowserOnline()) {
+                        deferReloadUntilOnline("nav-desync-" + expected);
+                        return;
+                    }
                     try {
                         console.warn("[lobsy] candidate nav desync — reloading", expected);
                     } catch (e) { }
@@ -571,6 +604,9 @@
                     return;
                 }
             }
+            if (!isBrowserOnline()) {
+                return;
+            }
             silentRetryCount += 1;
             if (silentRetryCount >= RECONNECT_RELOAD_AFTER) {
                 stopSilentRetry();
@@ -769,6 +805,7 @@
         window.addEventListener("pageshow", onPageShow);
         window.addEventListener("online", function () {
             onResume();
+            flushPendingReloadAfterOnline();
         });
         window.setInterval(function () {
             noteTryingState();

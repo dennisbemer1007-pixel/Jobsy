@@ -229,9 +229,25 @@ a {
     display: none;
 }
 
+.candidate-header-nav--reserve {
+    pointer-events: none;
+}
+
+html[data-lobsy-candidate-nav-interactive="true"] .candidate-header-nav--reserve {
+    display: none !important;
+}
+
+html:not([data-lobsy-candidate-nav-interactive="true"]) .candidate-header-nav:not(.candidate-header-nav--reserve) {
+    display: none !important;
+}
+
 .candidate-header-nav__link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
     padding: 0.35rem 0.55rem;
     border-radius: 8px;
     font-size: 0.8125rem;
@@ -275,14 +291,26 @@ a {
     }
 
     .app-header:has(.candidate-header-nav) .candidate-header-nav {
-        display: flex;
-        flex-wrap: nowrap;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: repeat(var(--candidate-header-nav-slots, 5), minmax(0, 1fr));
+        justify-items: stretch;
         align-items: center;
-        gap: 0.2rem 0.15rem;
+        column-gap: 0.15rem;
         grid-column: 2;
         min-width: 0;
         padding: 0 0.25rem;
+    }
+
+    .app-header:has(.candidate-header-nav) .candidate-header-nav[data-nav-slots="6"] {
+        --candidate-header-nav-slots: 6;
+    }
+
+    .app-header:has(.candidate-header-nav) .candidate-header-nav[data-nav-slots="3"] {
+        --candidate-header-nav-slots: 3;
+    }
+
+    .app-header:has(.candidate-header-nav) .candidate-header-nav[data-nav-slots="2"] {
+        --candidate-header-nav-slots: 2;
     }
 
     .app-header:has(.candidate-header-nav) .app-header__actions {
@@ -301,8 +329,7 @@ a {
     }
 
     .app-header:has(.candidate-header-nav) .candidate-header-nav {
-        flex-wrap: nowrap;
-        gap: 0.02rem;
+        column-gap: 0.02rem;
         padding: 0;
     }
 
