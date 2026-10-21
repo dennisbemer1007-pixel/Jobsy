@@ -23,6 +23,7 @@
 <div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_banenkaartCandidateShell ? "app-shell--banenkaart-shell" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
+    <PageRouteStylesHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
     @if (!_isMatchPage && !_isQuestionnairePage)
     {

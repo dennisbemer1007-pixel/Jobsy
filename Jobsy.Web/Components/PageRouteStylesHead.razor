@@ -1,0 +1,50 @@
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Seo
+@inject NavigationManager Navigation
+@implements IDisposable
+
+@* Route bundles live in App.razor for the first full document only; Blazor enhanced navigation
+   does not re-run App.razor, so HeadContent must publish the current route's stylesheets. *@
+<HeadContent>
+    @foreach (var href in Stylesheets)
+    {
+        if (href.StartsWith("css/app.min.css", StringComparison.Ordinal))
+        {
+            <link rel="stylesheet" href="@href" data-app-css data-page-route-css="true" />
+        }
+        else
+        {
+            <link rel="stylesheet" href="@href" data-page-route-css="true" />
+        }
+    }
+</HeadContent>
+
+@code {
+    private IReadOnlyList<string> Stylesheets => ResolveStylesheets();
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => _ = InvokeAsync(StateHasChanged);
+
+    private IReadOnlyList<string> ResolveStylesheets()
+    {
+        var path = CurrentPath();
+        var areas = PageAssetCatalog.ResolveAreas(path);
+        return PageAssetCatalog.StylesheetsFor(areas, path);
+    }
+
+    private string CurrentPath()
+    {
+        var uriPath = new Uri(Navigation.Uri).AbsolutePath;
+        return PageSeoCatalog.Normalize(uriPath);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}
