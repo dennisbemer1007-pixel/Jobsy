@@ -50,6 +50,7 @@
                                   Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
                                   Lead="@Culture["Career.Overview.Lead"]"
                                   ArtUrl="@CareerHeroArt"
+                                  ArtUrlMobileFigures="@MobFiguresOpleiding"
                                   ArtPosition="58% center"
                                   CompactHeroLayout="onboarding"
                                   CssClass="@HeroCompactPreview.CandHeroCssClass" />
@@ -59,6 +60,7 @@
         <CandidateIllustratedHero Title="@Culture["Career.Empty.Title"]"
                                   Lead="@Culture["Career.Empty.Lead"]"
                                   ArtUrl="@CareerHeroArt"
+                                  ArtUrlMobileFigures="@MobFiguresOpleiding"
                                   ArtPosition="58% center"
                                   CssClass="@($"{("cand-hero--profession-band")} {HeroCompactPreview.CandHeroCssClass}".Trim())" />
     }
