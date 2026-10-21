@@ -159,7 +159,7 @@
                 @if (_screen == "start")
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Eyebrow"]</p>
-                    <h1 tabindex="-1" @ref="_heading">@Culture.Format("Discovery.Start.Title", Draft.FirstName)</h1>
+                    <h1 tabindex="-1" @ref="_heading">@DiscoveryStartTitle</h1>
                     <p class="journey-step__lead">@_startLead</p>
                     <p class="journey-intro">@Culture["Discovery.Intro.Why"]</p>
                     <ul class="journey-zones">
@@ -814,6 +814,11 @@
     }
 
     private string StageMainClass => UseQuestionCardLayout ? "journey-card-wrap" : "journey-stage__main";
+
+    private string DiscoveryStartTitle =>
+        string.IsNullOrWhiteSpace(Draft.FirstName)
+            ? Culture["Discovery.Start.TitleNoName"]
+            : Culture.Format("Discovery.Start.Title", Draft.FirstName.Trim());
 
     private string JourneyStepClass => _countedStep == 6 && _screen is not ("start" or "overview" or "klaar")
         ? "journey-step card journey-step--fit-mobile"
