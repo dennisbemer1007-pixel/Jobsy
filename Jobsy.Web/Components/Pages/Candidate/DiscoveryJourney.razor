@@ -2373,9 +2373,29 @@
         [
             new(0, "Discovery.End.Fact.Strength", EndSummaryOrEmpty(_endStrength), false, JourneyFinished),
             new(0, "Discovery.End.Fact.Work", EndSummaryOrEmpty(_endWork), false, JourneyFinished),
-            new(0, "Discovery.End.Fact.Value", EndSummaryOrEmpty(_endValue), false, JourneyFinished),
+            BuildEndValueSection(),
             new(0, "Discovery.Overview.Section.Passport", Culture["Discovery.End.ViewPassport"], false, true)
         ];
+    }
+
+    private JourneyOverview.PanelSection BuildEndValueSection()
+    {
+        if (string.IsNullOrWhiteSpace(_endValue))
+        {
+            return new JourneyOverview.PanelSection(
+                10,
+                "Discovery.End.Fact.Value",
+                Culture["Discovery.Overview.ValuesShortTest"],
+                false,
+                true);
+        }
+
+        return new JourneyOverview.PanelSection(
+            0,
+            "Discovery.End.Fact.Value",
+            _endValue,
+            false,
+            JourneyFinished);
     }
 
     private IReadOnlyList<JourneyOverview.PanelSection> BuildStepSections(params int[] steps)

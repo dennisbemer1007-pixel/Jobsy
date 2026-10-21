@@ -77,7 +77,7 @@ public static class PageAssetCatalog
         "css/features/kompas-illustrated.css?v=20261019-02",
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
-        "css/features/ontdekkingsreis.css?v=20261021-06",
+        "css/features/ontdekkingsreis.css?v=20261021-07",
         "css/features/tests.css?v=20261020-r8",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/carriere.css?v=20261018-03",

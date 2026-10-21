@@ -718,7 +718,9 @@ public static class UiStringsDiscovery
         Add("Discovery.Overview.FullyDone",
             "Helemaal gedaan", "Fully done", "Całkowicie zrobione", "Complet terminat", "مكتمل بالكامل");
         Add("Discovery.Overview.FullReport",
-            "Uitgebreid rapport", "Full report", "Pełny raport", "Raport complet", "تقرير مفصل");
+            "Rapport", "Report", "Raport", "Raport", "تقرير");
+        Add("Discovery.Overview.ValuesShortTest",
+            "Doe de korte test", "Take the short test", "Zrób krótki test", "Fă testul scurt", "أجرِ الاختبار القصير");
         Add("Discovery.Overview.Depth",
             "{0} van {1} vragen", "{0} of {1} questions", "{0} z {1} pytań", "{0} din {1} întrebări", "{0} من {1} أسئلة");
         Add("Discovery.Overview.All18",

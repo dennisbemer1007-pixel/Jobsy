@@ -1767,6 +1767,37 @@
     stroke-width: 14;
     opacity: 0.88;
   }
+
+  .journey.journey--overview-route.journey--compact-preview-c .journey-stage {
+    padding-inline: var(--space-3);
+    box-sizing: border-box;
+  }
+
+  .journey.journey--overview-route .journey-step:has(.journey-overview) {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    box-sizing: border-box;
+  }
+
+  .journey.journey--overview-route .journey-overview,
+  .journey.journey--overview-route .journey-route,
+  .journey.journey--overview-route .journey-route__canvas,
+  .journey.journey--overview-route .journey-route__stops,
+  .journey.journey--overview-route .journey-route__panel-wrap,
+  .journey.journey--overview-route .journey-route__tests {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .journey.journey--overview-route .journey-route__tests {
+    grid-template-columns: 1fr;
+  }
+
+  .journey.journey--overview-route .journey-route__test {
+    width: 100%;
+  }
 }
 
 @media (min-width: 900px) {
@@ -1799,5 +1830,15 @@
     margin: 0 0 0.35rem;
     font-family: var(--font-display, Georgia, serif);
     font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  }
+
+  .journey.journey--overview-route .journey-overview > .journey-q {
+    margin-top: 1.5rem;
+  }
+
+  .journey.journey--overview-route .journey-route__test-report {
+    white-space: nowrap;
+    padding-inline: 0.75rem;
+    font-size: var(--text-xs);
   }
 }
