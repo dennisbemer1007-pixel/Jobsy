@@ -81,7 +81,8 @@
             homeLat: initial.homeLat,
             homeLng: initial.homeLng,
             suggestGen: 0,
-            strings: initial.strings || {}
+            strings: initial.strings || {},
+            dirty: { first: false, last: false, address: false, birth: false, phone: false }
         };
 
         var first = root.querySelector("[data-ob-client=firstName]");
@@ -91,12 +92,27 @@
         var phone = root.querySelector("[data-ob-client=phone]");
         var grid = root.querySelector("[data-ob-client=workStatusGrid]");
         var list = root.querySelector(".ob-client-suggest");
+        var addressWrap = root.querySelector(".ob-fields__address");
 
-        if (first) first.value = initial.firstName || "";
-        if (last) last.value = initial.lastName || "";
-        if (address) address.value = initial.addressQuery || "";
-        if (birth) birth.value = initial.birthDateText || "";
-        if (phone) phone.value = initial.phone || "";
+        function bindDirty(input, key) {
+            if (!input || input.__obDirtyBound) return;
+            input.__obDirtyBound = true;
+            input.addEventListener("input", function () {
+                state.dirty[key] = true;
+            });
+        }
+
+        bindDirty(first, "first");
+        bindDirty(last, "last");
+        bindDirty(address, "address");
+        bindDirty(birth, "birth");
+        bindDirty(phone, "phone");
+
+        if (first && !state.dirty.first) first.value = initial.firstName || "";
+        if (last && !state.dirty.last) last.value = initial.lastName || "";
+        if (address && !state.dirty.address) address.value = initial.addressQuery || "";
+        if (birth && !state.dirty.birth) birth.value = initial.birthDateText || "";
+        if (phone && !state.dirty.phone) phone.value = initial.phone || "";
 
         function renderWorkStatus() {
             if (!grid) return;
@@ -127,17 +143,45 @@
             });
         }
 
+        var suggestReposition = null;
+
         function hideSuggest() {
             if (!list) return;
             list.hidden = true;
+            list.classList.remove("ob-client-suggest--floating");
+            list.style.cssText = "";
+            if (addressWrap) addressWrap.classList.remove("is-suggest-open");
             if (address) address.setAttribute("aria-expanded", "false");
+            if (suggestReposition) {
+                window.removeEventListener("scroll", suggestReposition, true);
+                window.removeEventListener("resize", suggestReposition);
+                suggestReposition = null;
+            }
+        }
+
+        function positionSuggestList() {
+            if (!list || !address || list.hidden) return;
+            var r = address.getBoundingClientRect();
+            list.style.position = "fixed";
+            list.style.left = r.left + "px";
+            list.style.top = (r.bottom + 4) + "px";
+            list.style.width = Math.max(r.width, 200) + "px";
+            list.style.zIndex = "10000";
         }
 
         function showSuggest(html) {
             if (!list) return;
             list.innerHTML = html;
             list.hidden = false;
+            list.classList.add("ob-client-suggest--floating");
+            if (addressWrap) addressWrap.classList.add("is-suggest-open");
             if (address) address.setAttribute("aria-expanded", "true");
+            positionSuggestList();
+            if (!suggestReposition) {
+                suggestReposition = function () { positionSuggestList(); };
+                window.addEventListener("scroll", suggestReposition, true);
+                window.addEventListener("resize", suggestReposition);
+            }
         }
 
         var debounceTimer = null;
@@ -618,6 +662,13 @@
     }
 
     window.jobsyOnboardingClient = {
+        isReady: function () {
+            return typeof window.jobsyOnboardingClient.mount === "function";
+        },
+        isStepMounted: function (step) {
+            var root = document.querySelector('[data-ob-client-step="' + step + '"]');
+            return !!(root && root.getAttribute("data-ob-client-mounted") === "1");
+        },
         mount: function (root, step) {
             if (!root) return;
             if (root.getAttribute("data-ob-client-mounted") === "1") return;

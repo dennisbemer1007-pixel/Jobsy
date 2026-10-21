@@ -88,9 +88,7 @@
         {
             try
             {
-                var ready = await Js.InvokeAsync<bool>(
-                    "eval",
-                    "typeof window.jobsyOnboardingClient !== 'undefined' && typeof window.jobsyOnboardingClient.mount === 'function'");
+                var ready = await Js.InvokeAsync<bool>("jobsyOnboardingClient.isReady");
                 if (ready)
                 {
                     return;
