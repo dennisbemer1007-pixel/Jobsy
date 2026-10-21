@@ -2,7 +2,7 @@ using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
 
-/// <summary>Manual PR evidence: cropped header on paspoort at 1024 and 1280.</summary>
+/// <summary>Manual PR evidence: cropped header on paspoort at 390, 1024, and 1280.</summary>
 [Collection("PlaywrightSmoke")]
 public sealed class CandidateHeaderNavPaspoortHeaderShotPlaywrightTests : IAsyncLifetime
 {
@@ -34,6 +34,7 @@ public sealed class CandidateHeaderNavPaspoortHeaderShotPlaywrightTests : IAsync
     }
 
     [Theory]
+    [InlineData(390, 844)]
     [InlineData(1024, 900)]
     [InlineData(1280, 900)]
     public async Task Capture_paspoort_header_clip(int width, int height)
@@ -42,6 +43,7 @@ public sealed class CandidateHeaderNavPaspoortHeaderShotPlaywrightTests : IAsync
         await using var context = await _browser!.NewContextAsync(new()
         {
             ViewportSize = new() { Width = width, Height = height },
+            IsMobile = width < 1024,
             IgnoreHTTPSErrors = true,
         });
 
@@ -57,6 +59,7 @@ public sealed class CandidateHeaderNavPaspoortHeaderShotPlaywrightTests : IAsync
 
         var header = page.Locator("[data-testid=app-shell-header]");
         await header.WaitForAsync(new() { Timeout = 30_000 });
+        await WaitForHeaderBrandAndLanguageImagesAsync(page);
 
         var label = Environment.GetEnvironmentVariable("LOBSY_HEADER_SHOT_LABEL") ?? "after";
         var fileName = $"candidate-nav-header-{label}-{width}.png";
@@ -64,5 +67,24 @@ public sealed class CandidateHeaderNavPaspoortHeaderShotPlaywrightTests : IAsync
         {
             Path = Path.Combine(ArtifactsDir, fileName),
         });
+    }
+
+    /// <summary>Logo and NL flag are img tags; capture must wait for decode, not only circuit ready.</summary>
+    private static async Task WaitForHeaderBrandAndLanguageImagesAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const logo = document.querySelector('.app-header .lobsy-logo__img');
+              const flag = document.querySelector('.app-header .language-selector__toggle img.language-selector__flag');
+              if (!logo || !flag) {
+                return false;
+              }
+              const ok = (img) => img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+              return ok(logo) && ok(flag);
+            }
+            """,
+            null,
+            new() { Timeout = 30_000 });
     }
 }
