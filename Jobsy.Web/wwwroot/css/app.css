@@ -1734,6 +1734,33 @@ html[dir="rtl"] .account-menu__panel {
     margin-top: 0.35rem;
 }
 
+.share-modal.profile-reset-modal,
+.share-modal.unsubscribe-modal {
+    width: min(24rem, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+    padding-inline: 1rem;
+}
+
+.share-modal.profile-reset-modal .lobsy-dialog__body,
+.share-modal.unsubscribe-modal .lobsy-dialog__body {
+    min-width: 0;
+}
+
+.share-modal.profile-reset-modal .profile-reset-modal__actions,
+.share-modal.unsubscribe-modal .inline-actions {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.share-modal.profile-reset-modal .profile-reset-modal__actions .btn-compact,
+.share-modal.unsubscribe-modal .inline-actions .btn-compact {
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+}
+
 .profile-page__header {
     margin: 0 -1.25rem 1rem;
 }

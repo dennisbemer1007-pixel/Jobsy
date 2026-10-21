@@ -1505,11 +1505,30 @@ window.jobsyDialog = (function () {
         return list.length ? list[0] : el;
     }
 
+    function portalPaspoortDangerDialog(el) {
+        if (!el || !el.classList) {
+            return;
+        }
+        if (!el.classList.contains("profile-reset-modal") && !el.classList.contains("unsubscribe-modal")) {
+            return;
+        }
+        var backdrop = el.previousElementSibling;
+        if (!backdrop || !backdrop.classList.contains("share-modal-backdrop")) {
+            return;
+        }
+        if (el.parentElement === document.body) {
+            return;
+        }
+        document.body.appendChild(backdrop);
+        document.body.appendChild(el);
+    }
+
     function trap(el) {
         release();
         if (!el) {
             return;
         }
+        portalPaspoortDangerDialog(el);
         previouslyFocused = document.activeElement;
         active = el;
         document.addEventListener("keydown", onKeyDown, true);
