@@ -1362,7 +1362,11 @@
     /// so toggling away from the map does not flash an empty column.
     /// </summary>
     private bool ShouldRenderVacancyCards =>
-        RendererInfo.IsInteractive && (_wideViewport || (_mapPainted && !showMapOnMobile) || (!_wideViewport && !showMapOnMobile));
+        RendererInfo.IsInteractive && (
+            (_uwvMockup && _uwvKansLayerOn && _uwvKansVacancies.Count > 0)
+            || _wideViewport
+            || (_mapPainted && !showMapOnMobile)
+            || (!_wideViewport && !showMapOnMobile));
 
     /// <summary>Full-width list rows (desktop list mode or mobile list).</summary>
     private bool _useListRows =>
