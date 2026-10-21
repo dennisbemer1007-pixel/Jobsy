@@ -1673,3 +1673,118 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Overview route (Verder ontdekken): centered canvas, no duplicate rail/progress */
+.journey.journey--overview-route .journey-mprog.journey-only-mobile {
+  display: none !important;
+}
+
+.journey.journey--overview-route > .journey-scene {
+  display: none !important;
+}
+
+.journey.journey--overview-route .journey-route__canvas {
+  min-height: 18rem;
+}
+
+@media (min-width: 900px) {
+  .journey.journey--overview-route .journey-route__title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.journey.journey--overview-route .journey-route__test-pill-progress {
+  background: var(--accent-soft);
+  color: var(--brand);
+}
+
+@media (max-width: 899px) {
+  .app-shell--questionnaire:has(.journey.journey--overview-route) .journey {
+    min-height: auto;
+    max-height: none;
+  }
+
+  .app-shell--questionnaire:has(.journey.journey--overview-route) .journey-stage {
+    overflow: visible;
+    max-height: none;
+    padding-bottom: calc(var(--bottom-nav-clearance, 4.75rem) + 5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .journey.journey--overview-route .journey-route__stop {
+    width: 100%;
+  }
+
+  .journey.journey--overview-route .journey-route__stop-btn {
+    width: 100%;
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .journey.journey--overview-route .journey-route__label {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .journey.journey--overview-route .journey-route__title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .journey.journey--overview-route .journey-overview > h1 {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    margin: 0 0 0.35rem;
+    font-family: var(--font-display, Georgia, serif);
+    font-size: 1.35rem;
+  }
+
+  .journey.journey--overview-route .journey-route__canvas {
+    min-height: 28rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .journey.journey--overview-route .journey-route__svg path {
+    stroke-width: 14;
+    opacity: 0.88;
+  }
+}
+
+@media (min-width: 900px) {
+  .journey.journey--overview-route.journey--compact-preview-c .journey-stage {
+    grid-template-columns: minmax(0, 1fr) !important;
+    max-width: 55rem !important;
+    width: min(100%, 55rem) !important;
+    margin-inline: auto;
+    padding-inline: var(--cand-compact-hero-gutter, 1.25rem);
+  }
+
+  .journey.journey--overview-route.journey--compact-preview-c .journey-stage__main,
+  .journey.journey--overview-route.journey--compact-preview-c .journey-card-wrap {
+    grid-column: 1 / -1 !important;
+    max-width: 55rem !important;
+    margin-inline: auto;
+  }
+
+  .journey.journey--overview-route .journey-step:has(.journey-overview) {
+    max-width: 55rem;
+    margin-inline: auto;
+  }
+
+  .journey.journey--overview-route .journey-overview > h1 {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    margin: 0 0 0.35rem;
+    font-family: var(--font-display, Georgia, serif);
+    font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  }
+}

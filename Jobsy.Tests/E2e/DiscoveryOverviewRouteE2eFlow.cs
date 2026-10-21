@@ -12,9 +12,9 @@ internal static class DiscoveryOverviewRouteE2eFlow
         var email = await RegisterFreshCandidateEmailAsync(page, baseUrl, "discovery-overview");
         await CandidateJourneyE2e.EnsureTestAiConsentForE2eAsync(email);
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 10, currentStep: 10);
-        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Competence);
-        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Career);
-        await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Culture);
+        await CandidateJourneyE2e.SeedFullTestBlockForE2eAsync(email, AssessmentKind.Competence);
+        await CandidateJourneyE2e.SeedFullTestBlockForE2eAsync(email, AssessmentKind.Career);
+        await CandidateJourneyE2e.SeedFullTestBlockForE2eAsync(email, AssessmentKind.Culture);
         await CandidateJourneyE2e.ResetDemoValuesProfileForE2eAsync(email);
         await CandidateJourneyE2e.MarkDiscoveryJourneyCompleteForOverviewE2eAsync(email);
 

@@ -37,11 +37,11 @@
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
 
-<div class="@JourneyRootClass @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "journey--compact-preview-c panel-page--cand-ill" : null)">
+<div class="@JourneyRootClass @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "journey--compact-preview-c panel-page--cand-ill" : null) @(_screen == "overview" ? "journey--overview-route" : null)">
     @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C && _screen == "overview" && !_loading)
     {
-        <CandidateIllustratedHero Title="@Culture["Discovery.Overview.Title"]"
-                                  Lead="@Culture["Discovery.Overview.Lead"]"
+        <CandidateIllustratedHero Title=""
+                                  Lead=""
                                   ArtUrl="@HeroStrip"
                                   ArtPosition="center 47%"
                                   CssClass="cand-hero--discovery-overview-v8" />
@@ -52,9 +52,14 @@
     }
     else
     {
-        <JourneyScene Depth="_depth" IsMobile="false" />
-        <JourneyScene Depth="_depth" IsMobile="true" />
+        @if (_screen != "overview")
+        {
+            <JourneyScene Depth="_depth" IsMobile="false" />
+            <JourneyScene Depth="_depth" IsMobile="true" />
+        }
 
+        @if (_screen != "overview")
+        {
         <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
             @if (MobileHeaderSingleLine)
             {
@@ -94,6 +99,7 @@
                 </button>
             }
         </div>
+        }
 
         @if (_mobileRailOpen)
         {
@@ -132,13 +138,16 @@
         }
 
         <div class="journey-stage" @onscroll="CloseMobileCoachBubble">
-            <div class="journey-only-desktop">
-                <JourneyProgressRail ActiveStep="@RailStep"
-                                       LightStepComplete="@LightStepComplete"
-                                       SaveStatus="@_saveStatus"
-                                       CompletedSteps="@CompletedStepNumbers"
-                                       OnGoToStep="GoToRailStepAsync" />
-            </div>
+            @if (_screen != "overview")
+            {
+                <div class="journey-only-desktop">
+                    <JourneyProgressRail ActiveStep="@RailStep"
+                                           LightStepComplete="@LightStepComplete"
+                                           SaveStatus="@_saveStatus"
+                                           CompletedSteps="@CompletedStepNumbers"
+                                           OnGoToStep="GoToRailStepAsync" />
+                </div>
+            }
 
             <div class="@StageMainClass">
             <section class="@JourneyStepClass" aria-live="polite">
@@ -566,12 +575,8 @@
                 }
                 else if (_screen == "overview")
                 {
-                    @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)
-                    {
-                        <h1 class="visually-hidden" tabindex="-1">@Culture["Discovery.Overview.Title"]</h1>
-                    }
                     <JourneyOverview IsLoading="_overviewLoading"
-                                     HideTitle="@(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)"
+                                     HideTitle="false"
                                      PhaseStops="_phaseStops"
                                      ActivePhaseId="_activePhaseId"
                                      PanelOpen="_overviewPanelOpen"
@@ -2149,6 +2154,16 @@
     private async Task BuildOverviewAsync()
     {
         _overviewLoading = true;
+        try
+        {
+            _state = await Api.GetMyOnboardingAsync() ?? _state;
+        }
+        catch
+        {
+            /* keep cached state */
+        }
+
+        await LoadEndPresentationAsync();
         _overviewPanel = await OverviewCache.GetPanelAsync();
         var continuePhase = ResolveOpenPhaseId();
         _activePhaseId = continuePhase;
@@ -2160,9 +2175,14 @@
         foreach (var step in new[] { 7, 8, 9, 10 })
         {
             var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
-            var answered = AnsweredCount(kind);
+            var answered = await CountAnsweredAsync(kind);
             var full = OnboardingWizardCatalog.FullLevelCount(kind);
             var complete = answered >= full;
+            var progressText = complete
+                ? null
+                : answered > 0
+                    ? Culture.Format("Discovery.Overview.TestAnsweredCount", answered, full)
+                    : null;
             var next = new List<JourneyOverview.DepthButton>();
             if (!complete)
             {
@@ -2185,9 +2205,10 @@
             };
             _overviewTests.Add(new JourneyOverview.TestRow(
                 step,
-                OnboardingWizardCatalog.TestNameKey(kind),
+                OverviewRouteTestTitleKey(kind),
                 accent,
                 complete,
+                progressText,
                 "/candidate/paspoort?tab=tests",
                 next));
         }
@@ -2397,6 +2418,15 @@
         };
         return string.IsNullOrWhiteSpace(text) ? Culture["Discovery.Overview.SummaryEmpty"] : text;
     }
+
+    private static string OverviewRouteTestTitleKey(OnboardingWizardCatalog.OnboardingTestKind kind) => kind switch
+    {
+        OnboardingWizardCatalog.OnboardingTestKind.Competency => "Discovery.Test.Competency.Title",
+        OnboardingWizardCatalog.OnboardingTestKind.Career => "Discovery.Test.Career.Title",
+        OnboardingWizardCatalog.OnboardingTestKind.Culture => "Discovery.Test.Culture.Title",
+        OnboardingWizardCatalog.OnboardingTestKind.Values => "Discovery.Test.Values.Title",
+        _ => "Discovery.Test.Competency.Title"
+    };
 
     private string TestWordStatus(OnboardingWizardCatalog.OnboardingTestKind kind)
     {

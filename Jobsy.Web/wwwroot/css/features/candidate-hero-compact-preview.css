@@ -778,7 +778,7 @@
     width: 100%;
   }
 
-  .journey.journey--compact-preview-c .journey-overview > h1 {
+  .journey.journey--compact-preview-c:not(.journey--overview-route) .journey-overview > h1 {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -844,12 +844,28 @@
 }
 
 @media (max-width: 767px) {
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero,
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art,
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art {
     min-height: 90px !important;
     height: 90px !important;
     max-height: 90px !important;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art img,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art img {
+    -webkit-mask-image: none;
+    mask-image: none;
+    object-fit: cover;
+    object-position: 50% 47%;
   }
 
   .cand-hero--compact-preview-a {

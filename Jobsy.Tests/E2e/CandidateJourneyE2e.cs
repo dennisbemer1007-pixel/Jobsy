@@ -629,6 +629,134 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Seeds all questions for a test so overview tiles show &quot;Klaar&quot; (Playwright overview route).</summary>
+    public static Task SeedFullTestBlockForE2eAsync(string candidateEmail, AssessmentKind kind)
+        => SeedTestBlockForE2eAsync(
+            candidateEmail,
+            kind,
+            TestDepthRules.FullCount(kind, AssessmentTestVersions.V3),
+            AssessmentTestVersions.V3);
+
+    private static async Task SeedTestBlockForE2eAsync(
+        string candidateEmail,
+        AssessmentKind kind,
+        int targetCount,
+        int quickScanVersion)
+    {
+        var ids = TestDepthRules.QuestionIdsUpTo(kind, targetCount, quickScanVersion).ToArray();
+        if (ids.Length == 0)
+        {
+            return;
+        }
+
+        var answers = ids.ToDictionary(id => id.ToString(), _ => 3);
+        var json = JsonSerializer.Serialize(answers);
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        switch (kind)
+        {
+            case AssessmentKind.Competence:
+                {
+                    var row = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCompetency
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCompetencies.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.Status = CandidateCompetencyStatuses.Completed;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Career:
+                {
+                    var row = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCareerInterest
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCareerInterests.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Culture:
+                {
+                    var row = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCulturePersonalityProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCulturePersonalityProfiles.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Values:
+                {
+                    var row = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateValuesProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateValuesProfiles.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
     /// <summary>Marks a discovery mini-block answered so wizard routing stays on later steps (Playwright rustig evidence).</summary>
     public static async Task SeedMiniBlockCompleteForE2eAsync(
         string candidateEmail,

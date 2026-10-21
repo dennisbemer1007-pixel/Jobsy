@@ -109,6 +109,13 @@
                         <span class="status-pill status-pill--success">@Culture["Discovery.Overview.Done"]</span>
                         <a class="btn btn-secondary journey-route__test-report" href="@test.ReportHref">@Culture["Discovery.Overview.FullReport"]</a>
                     }
+                    else if (!string.IsNullOrWhiteSpace(test.ProgressText))
+                    {
+                        <span class="status-pill journey-route__test-pill-progress">@test.ProgressText</span>
+                        <button type="button" class="btn btn-primary journey-route__test-start" @onclick="() => OnStartTestAsync(test)">
+                            @Culture["Discovery.Overview.Start"]
+                        </button>
+                    }
                     else
                     {
                         <span class="status-pill journey-route__test-pill-todo">@Culture["Discovery.Overview.TestTodo"]</span>
@@ -152,6 +159,7 @@
         string TitleKey,
         string AccentUrl,
         bool IsComplete,
+        string? ProgressText,
         string ReportHref,
         IReadOnlyList<DepthButton> NextLevels);
 
@@ -199,6 +207,8 @@
                 "import",
                 $"./js/discoveryJourneyRoute.js?v={Jobsy.Web.Media.DiscoveryOverviewIllustrationAssets.Version}");
             await _routeModule.InvokeVoidAsync("bindResize", _canvasRef);
+            await RefreshRouteAsync();
+            await Task.Delay(150);
             await RefreshRouteAsync();
         }
         catch (JSException)
