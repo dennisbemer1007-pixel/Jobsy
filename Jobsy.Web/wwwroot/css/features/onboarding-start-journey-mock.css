@@ -55,8 +55,8 @@
   .ob-rustig[data-ob-rustig-screen="start-journey-mock"] .ob-start-journey-mock-hero {
     background-image: var(--ob-start-journey-mock-hero-mob);
     background-repeat: no-repeat;
-    background-size: 320% auto;
-    background-position: 6% 58%;
+    background-size: 210% auto;
+    background-position: 12% 64%;
   }
 
   .ob-rustig[data-ob-rustig-screen="start-journey-mock"] .ob-start-journey-mock-hero__img {
