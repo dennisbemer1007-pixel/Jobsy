@@ -9,6 +9,7 @@ using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Middleware;
 using Jobsy.Web.Security;
 using Jobsy.Web.Seo;
 using Jobsy.Web.Services;
@@ -556,6 +557,7 @@ app.UseWebSockets(new WebSocketOptions
 });
 app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseAdminLegacyRedirects();
+app.UseCandidateLegacyRedirects();
 app.UseResponseCompression();
 
 // Development keeps the developer exception page; tests opt in with Errors:ForceHandler.
