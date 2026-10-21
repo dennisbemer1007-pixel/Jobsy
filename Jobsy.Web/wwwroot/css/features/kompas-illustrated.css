@@ -279,14 +279,26 @@
     overflow-x: auto;
   }
 
+  /* Desktop: stick flush under sticky header — no margin gap, opaque band between header and pills. */
   .passport-page--illustrated .passport-tabs-shell {
-    box-shadow: none;
-    background: transparent;
+    margin-block-start: 0;
+    margin-block-end: var(--space-3);
+    background: var(--bg);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--border) 88%, transparent),
+      0 10px 18px -14px color-mix(in srgb, var(--text) 14%, transparent);
   }
 
-  .passport-page--illustrated .passport-tabs-shell::before,
+  .passport-page--illustrated .passport-tabs-shell::before {
+    display: block;
+    inset-block-start: calc(-1 * var(--space-2));
+    inset-block-end: 0;
+    background: var(--bg);
+    box-shadow: none;
+  }
+
   .passport-page--illustrated .passport-tabs-shell::after {
-    display: none;
+    display: block;
   }
 }
 

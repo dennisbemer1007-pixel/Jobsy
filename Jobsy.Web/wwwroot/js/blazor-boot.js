@@ -287,12 +287,50 @@
             var target = path || location.pathname;
             return this.navActiveMatchesPath(target) && this.contentMatchesPath(target);
         },
+        commitPrimaryNav: function (href, title) {
+            var self = this;
+            var expected = self.normalizePath(href);
+            if (title) {
+                self.applyDocumentTitle(title);
+            }
+            function ensureHistory() {
+                if (self.normalizePath(location.pathname) === expected) {
+                    self.scheduleSyncCheck(href);
+                    return;
+                }
+                try {
+                    console.warn("[lobsy] nav URL lag — assigning", expected);
+                } catch (e) { }
+                allowDocumentReload();
+                try {
+                    var url = typeof href === "string" && href.indexOf("http") === 0
+                        ? href
+                        : expected + location.search + location.hash;
+                    window.location.assign(url);
+                } catch (e2) {
+                    window.location.assign(expected);
+                }
+            }
+            requestAnimationFrame(function () {
+                requestAnimationFrame(ensureHistory);
+            });
+        },
         scheduleSyncCheck: function (expectedHref) {
             var self = this;
             var expected = self.normalizePath(expectedHref);
             var deadline = Date.now() + 1500;
             function tick() {
-                if (self.normalizePath(location.pathname) !== expected) {
+                var path = self.normalizePath(location.pathname);
+                if (path !== expected) {
+                    if (Date.now() >= deadline) {
+                        try {
+                            console.warn("[lobsy] candidate nav URL stuck — assigning", expected);
+                        } catch (e) { }
+                        allowDocumentReload();
+                        window.location.assign(expected + location.search + location.hash);
+                    } else {
+                        requestAnimationFrame(tick);
+                    }
                     return;
                 }
                 if (self.inSync(expected)) {
@@ -395,8 +433,8 @@
                 }
                 ev.preventDefault();
                 try {
-                    window.lobsyCandidateNav.applyDocumentTitleFromAnchor(anchor);
-                    window.lobsyCandidateNav.scheduleSyncCheck(href);
+                    var title = anchor.getAttribute("data-lobsy-document-title");
+                    window.lobsyCandidateNav.commitPrimaryNav(href, title);
                 } catch (eNav) { }
             },
             true
