@@ -1,3 +1,5 @@
+using Jobsy.Web.Localization;
+
 namespace Jobsy.Tests;
 
 public sealed class DiscoveryStartTitleTests

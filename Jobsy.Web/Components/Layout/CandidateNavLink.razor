@@ -1,0 +1,32 @@
+@inject NavigationManager Navigation
+
+<a href="@Href"
+   class="@Class"
+   title="@Title"
+   aria-current="@AriaCurrent"
+   data-testid="@TestId"
+   data-desktop-only="@DesktopOnly"
+   @onclick="Navigate"
+   @onclick:preventDefault="@RendererInfo.IsInteractive">
+    @ChildContent
+</a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = default!;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? AriaCurrent { get; set; }
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public string? DesktopOnly { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private void Navigate()
+    {
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        Navigation.NavigateTo(Href, forceLoad: false);
+    }
+}

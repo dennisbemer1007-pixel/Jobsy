@@ -11,7 +11,7 @@ var PRECACHE = [
     "/css/critical.css?v=20261019-12",
     "/css/app.min.css?v=20261019-13",
     "/css/features/stijl-a.css?v=20261018-03",
-    "/js/app-core.js?v=20261020-01",
+    "/js/app-core.js?v=20261021-01",
     "/icons/icon-192.png?v=20261018-23",
     "/icons/icon-512.png?v=20261018-23",
     "/favicon.ico?v=20261018-23",
@@ -91,13 +91,6 @@ self.addEventListener("fetch", function (event) {
     }
 
     if (request.mode === "navigate") {
-        event.respondWith(
-            fetch(request).then(function (response) {
-                return response;
-            }).catch(function () {
-                return caches.match(request);
-            })
-        );
         return;
     }
 

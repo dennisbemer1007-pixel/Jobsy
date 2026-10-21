@@ -1,6 +1,6 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-published-v20261018-23";
+var CACHE_VERSION = "lobsy-shell-published-v20261021-01";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 var OFFLINE_URL = "/offline.html";
@@ -12,7 +12,7 @@ var PRECACHE = [
     "/css/critical.css?v=20261019-12",
     "/css/app.min.css?v=20261019-13",
     "/css/features/stijl-a.css?v=20261018-03",
-    "/js/app-core.js?v=20261020-01",
+    "/js/app-core.js?v=20261021-01",
     "/icons/icon-192.png?v=20261018-23",
     "/icons/icon-512.png?v=20261018-23",
     "/favicon.ico?v=20261018-23",
@@ -91,16 +91,8 @@ self.addEventListener("fetch", function (event) {
         return;
     }
 
+    /* Document navigations bypass the SW — avoids hung document requests (pending forever). */
     if (request.mode === "navigate") {
-        event.respondWith(
-            fetch(request).then(function (response) {
-                return response;
-            }).catch(function () {
-                return caches.match(OFFLINE_URL).then(function (offline) {
-                    return offline || caches.match(request);
-                });
-            })
-        );
         return;
     }
 

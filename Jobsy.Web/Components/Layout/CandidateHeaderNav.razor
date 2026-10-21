@@ -19,14 +19,13 @@
             ? Culture[item.ShortTitleKey!]
             : title;
         var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-        <a class="candidate-header-nav__link @(active ? "is-active" : null)"
-           href="@item.Href"
-           data-enhance-nav="false"
-           title="@title"
-           aria-current="@(active ? "page" : null)"
-           data-testid="@HeaderNavTestId(item)">
+        <CandidateNavLink Class="@($"candidate-header-nav__link {(active ? "is-active" : null)}")"
+                          Href="@item.Href"
+                          Title="@title"
+                          AriaCurrent="@(active ? "page" : null)"
+                          TestId="@HeaderNavTestId(item)">
             @shortTitle
-        </a>
+        </CandidateNavLink>
     }
 </nav>
 

@@ -59,13 +59,30 @@ public sealed class CandidatePrimaryNavSyncPlaywrightTests : IAsyncLifetime
         await PlaywrightCookieConsent.AcceptAsync(context);
         var signIn = $"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/candidate/ontdekkingsreis")}";
         await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.AddInitScriptAsync(
+            """
+            () => {
+              window.__lobsyLoadCount = 0;
+              window.addEventListener("load", () => { window.__lobsyLoadCount = (window.__lobsyLoadCount || 0) + 1; });
+            }
+            """);
+
+        await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
         await page.Locator(".journey-overview").WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
 
         for (var i = 0; i < cycles; i++)
         {
-            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.WaitForTimeoutAsync(150);
+            await page.EvaluateAsync("() => { window.__lobsyLoadCount = 0; }");
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+                null,
+                new() { Timeout = 60_000 });
+            await page.EvaluateAsync("() => { window.__lobsyLoadCount = 0; }");
 
             var (href, probe, wrongProbe) = Targets[i % Targets.Length];
             var link = width >= 500
@@ -79,6 +96,8 @@ public sealed class CandidatePrimaryNavSyncPlaywrightTests : IAsyncLifetime
 
             var contentOk = await WaitForRouteContentAsync(page, probe, wrongProbe, timeoutMs: 1_000);
             Assert.True(contentOk, $"Cycle {i + 1}: content did not match {href} within 1s at {width}px.");
+            var loads = await page.EvaluateAsync<int>("() => window.__lobsyLoadCount || 0");
+            Assert.True(loads == 0, $"Cycle {i + 1}: unexpected full document reload after nav to {href} at {width}px.");
         }
     }
 
