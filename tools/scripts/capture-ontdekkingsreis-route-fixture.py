@@ -38,10 +38,7 @@ def main() -> None:
         for width, height, tag in ((1440, 900, "1440"), (390, 844, "390")):
             page = browser.new_page(viewport={"width": width, "height": height})
             page.set_content(HTML, wait_until="networkidle")
-            page.evaluate(
-                f"import('{BASE}/js/discoveryJourneyRoute.js?v={V}').then(m => m.refresh(document.getElementById('discovery-route-canvas')))"
-            )
-            page.wait_for_timeout(500)
+            page.wait_for_timeout(300)
             page.locator(".journey-route__adjust").click()
             page.locator(".journey-route__test-start").click()
             path = OUT / f"ontdekkingsreis-route-product-{tag}.png"
