@@ -1,10 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
-<<<<<<< HEAD
 using Jobsy.Tests.E2e;
-=======
 using Jobsy.Web.Services;
->>>>>>> a648617e6 (Fix discovery client build and Playwright step-1 save assertions.)
 using Jobsy.Web.UwvFeatures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
