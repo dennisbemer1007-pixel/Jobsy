@@ -11,10 +11,11 @@ public sealed class CandidateCareerStepFormPlaywrightTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        Environment.SetEnvironmentVariable("JOBSY_CSP_ALLOW_UNSAFE_EVAL", "0");
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        _web = new IllustratedPagesWebFactory();
+        _web = new IllustratedPagesWebFactory(accLikeProductionCsp: true);
         _ = _web.ServerAddress;
     }
 
@@ -37,6 +38,8 @@ public sealed class CandidateCareerStepFormPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
+        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        apiHostGuard.Attach(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var posts = 0;
@@ -64,5 +67,6 @@ public sealed class CandidateCareerStepFormPlaywrightTests : IAsyncLifetime
         await complete.ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("/carriere", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
         Assert.Equal(1, posts);
+        apiHostGuard.AssertZero($"career step complete at {width}px");
     }
 }
