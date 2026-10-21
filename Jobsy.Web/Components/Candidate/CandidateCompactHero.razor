@@ -23,15 +23,29 @@
         }
         @ChildContent
     </div>
-    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    @if (!string.IsNullOrWhiteSpace(ArtUrl) || !string.IsNullOrWhiteSpace(ArtUrlMobile))
     {
         <div class="cand-compact-hero__art cand-hero__compact-c-art" aria-hidden="true">
-            <img src="@ArtUrl"
-                 alt=""
-                 loading="eager"
-                 fetchpriority="high"
-                 decoding="async"
-                 data-testid="@ArtImageTestId" />
+            @if (!string.IsNullOrWhiteSpace(ArtUrl))
+            {
+                <img class="cand-compact-hero__art-img cand-compact-hero__art-img--desktop"
+                     src="@ArtUrl"
+                     alt=""
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="async"
+                     data-testid="@ArtImageTestId" />
+            }
+            @if (!string.IsNullOrWhiteSpace(ArtUrlMobile))
+            {
+                <img class="cand-compact-hero__art-img cand-compact-hero__art-img--mobile"
+                     src="@ArtUrlMobile"
+                     alt=""
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="async"
+                     data-testid="@ArtMobileImageTestId" />
+            }
         </div>
     }
 </header>
@@ -43,6 +57,7 @@
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public string? ArtUrlMobile { get; set; }
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public string Layout { get; set; } = "page";
     [Parameter] public int TitleTabIndex { get; set; } = -1;
@@ -51,6 +66,9 @@
 
     private string? ArtImageTestId
         => Layout == "onboarding" ? "onboarding-illustration-img" : null;
+
+    private string? ArtMobileImageTestId
+        => !string.IsNullOrWhiteSpace(ArtUrlMobile) ? "cand-compact-hero-mobile-art" : null;
 
     private string RootClass
     {

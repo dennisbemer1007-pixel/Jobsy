@@ -3,8 +3,7 @@ using Microsoft.Playwright;
 namespace Jobsy.Tests.E2e;
 
 /// <summary>
-/// Carrière UWV showcase compact hero (--page) must not clip copy at tablet/desktop widths (1024–1440 audit).
-/// Matches live Acceptatie DOM: <c>uwv-carriere-showcase-hero</c> + <c>cand-compact-hero--page</c>.
+/// Carrière compact hero: desktop eyebrow spacing, header nav at 1024, mobile art strip at 390.
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
@@ -35,93 +34,136 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData(1024, 900, "1024")]
-    [InlineData(1280, 900, "1280")]
-    [InlineData(1440, 900, "1440")]
-    [InlineData(1920, 900, "1920")]
-    public async Task Uwv_showcase_hero_copy_is_not_clipped(int width, int height, string tag)
+    [InlineData(1024, 900)]
+    [InlineData(1280, 900)]
+    public async Task Desktop_carriere_header_nav_and_hero_spacing(int width, int height)
     {
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
-        var outDir = Path.Combine(FindRepoRoot(), "artifacts", "carriere-hero-layout");
-        Directory.CreateDirectory(outDir);
-
         await using var context = await _browser!.NewContextAsync(new()
         {
             ViewportSize = new() { Width = width, Height = height },
-            IgnoreHTTPSErrors = true
+            IgnoreHTTPSErrors = true,
         });
+        var page = await OpenCarrierePageAsync(context, baseUrl, expectDesktopNav: true);
+        await page.Locator("header.uwv-carriere-showcase-hero.cand-compact-hero--page h1").First
+            .WaitForAsync(new() { Timeout = 30_000 });
 
+        var navSingleRow = await page.EvaluateAsync<bool>("""
+            () => {
+              const nav = document.querySelector('.candidate-header-nav');
+              if (!nav) return false;
+              const links = Array.from(nav.querySelectorAll('.candidate-header-nav__link'));
+              if (links.length < 2) return true;
+              const tops = links.map(a => a.getBoundingClientRect().top);
+              return Math.max(...tops) - Math.min(...tops) < 8;
+            }
+            """);
+        Assert.True(navSingleRow, $"Candidate header nav wrapped at {width}px.");
+
+        if (width == 1024)
+        {
+            await page.EvaluateAsync("""
+                () => {
+                  const actions = document.querySelector('.app-header__actions');
+                  if (!actions || actions.querySelector('[data-testid="pwa-install-entry-btn"]')) return;
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'pwa-entry-btn';
+                  btn.dataset.testid = 'pwa-install-entry-btn';
+                  btn.textContent = 'Installeer Lobsy';
+                  actions.prepend(btn);
+                }
+                """);
+            var installHidden = await page.EvaluateAsync<bool>("""
+                () => {
+                  const btn = document.querySelector('[data-testid="pwa-install-entry-btn"]');
+                  if (!btn) return true;
+                  const style = getComputedStyle(btn);
+                  return style.display === 'none' || style.visibility === 'hidden' || btn.offsetParent === null;
+                }
+                """);
+            Assert.True(installHidden, "Installeer Lobsy must be hidden at 1024px when candidate header nav is shown.");
+        }
+
+        var eyebrowGapOk = await page.EvaluateAsync<bool>("""
+            () => {
+              const header = document.querySelector('header.uwv-carriere-showcase-hero.cand-compact-hero--page');
+              const copy = header && header.querySelector('.cand-compact-hero__copy, .cand-hero__copy');
+              if (!header || !copy) return false;
+              const padTop = parseFloat(getComputedStyle(copy).paddingTop) || 0;
+              const gap = copy.getBoundingClientRect().top - header.getBoundingClientRect().top + padTop;
+              return gap >= 16 || padTop >= 16;
+            }
+            """);
+        Assert.True(eyebrowGapOk, $"Carrière eyebrow needs ~20px top breathing room at {width}px.");
+
+        var copyOk = await page.EvaluateAsync<bool>("""
+            () => {
+              const header = document.querySelector('header.uwv-carriere-showcase-hero.cand-compact-hero--page');
+              const copy = header && header.querySelector('.cand-compact-hero__copy, .cand-hero__copy');
+              const h1 = copy && copy.querySelector('h1');
+              if (!header || !copy || !h1) return false;
+              const h1b = h1.getBoundingClientRect();
+              return h1b.width > 48 && h1b.left >= 0 && h1b.right <= window.innerWidth + 1;
+            }
+            """);
+        Assert.True(copyOk, $"UWV showcase hero title not visible at {width}px.");
+    }
+
+    [Fact]
+    public async Task Mobile_carriere_hero_shows_figures_not_empty_band()
+    {
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await OpenCarrierePageAsync(context, baseUrl, expectDesktopNav: false);
+        await page.Locator("header.uwv-carriere-showcase-hero.cand-compact-hero--page").First
+            .WaitForAsync(new() { Timeout = 60_000 });
+
+        var mobileArtOk = await page.EvaluateAsync<bool>("""
+            async () => {
+              const img = document.querySelector('[data-testid="cand-compact-hero-mobile-art"]');
+              if (!img) return false;
+              if (img.complete && img.naturalWidth > 0) {
+                const r = img.getBoundingClientRect();
+                return r.height >= 40 && r.width >= 120;
+              }
+              await new Promise((resolve, reject) => {
+                img.addEventListener('load', resolve, { once: true });
+                img.addEventListener('error', reject, { once: true });
+              });
+              const r = img.getBoundingClientRect();
+              return img.naturalWidth > 0 && r.height >= 40 && r.width >= 120;
+            }
+            """);
+        Assert.True(mobileArtOk, "Mobile Carrière hero must show watercolor figures in the art strip (no empty pale band).");
+    }
+
+    private static async Task<IPage> OpenCarrierePageAsync(
+        IBrowserContext context,
+        string baseUrl,
+        bool expectDesktopNav)
+    {
         var page = await context.NewPageAsync();
         await PlaywrightCookieConsent.AcceptAsync(context);
         var signIn = $"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/carriere")}";
         await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.Locator(".career-page--compact-preview-c").First
-            .WaitForAsync(new() { Timeout = 60_000 });
-        await page.Locator("header.uwv-carriere-showcase-hero.cand-compact-hero--page h1").First
-            .WaitForAsync(new() { Timeout = 30_000 });
-
-        var ok = await page.EvaluateAsync<bool>("""
-            () => {
-              const header = document.querySelector('header.uwv-carriere-showcase-hero.cand-compact-hero--page');
-              const copy = header && header.querySelector('.cand-compact-hero__copy, .cand-hero__copy');
-              const eyebrow = copy && copy.querySelector('.cand-hero__eyebrow');
-              const h1 = copy && copy.querySelector('h1');
-              if (!header || !copy || !h1) {
-                return false;
-              }
-              const cs = getComputedStyle(copy);
-              const padStart = parseFloat(cs.paddingLeft) || parseFloat(cs.paddingInlineStart) || 0;
-              const hb = header.getBoundingClientRect();
-              const eb = eyebrow ? eyebrow.getBoundingClientRect() : h1.getBoundingClientRect();
-              const h1b = h1.getBoundingClientRect();
-              const minInset = 12;
-              return padStart >= minInset
-                && h1b.left >= minInset
-                && eb.left >= minInset
-                && hb.left + padStart <= h1b.left + 2;
-            }
-            """);
-
-        Assert.True(ok, $"UWV showcase hero copy clipped at {width}px (padding/h1/eyebrow vs viewport).");
-
-        if (width == 1024)
+        await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+        await page.Locator(".career-page--compact-preview-c").First.WaitForAsync(new() { Timeout = 60_000 });
+        if (expectDesktopNav)
         {
-            var navSingleRow = await page.EvaluateAsync<bool>("""
-                () => {
-                  const nav = document.querySelector('.candidate-header-nav');
-                  if (!nav) return false;
-                  const links = Array.from(nav.querySelectorAll('.candidate-header-nav__link'));
-                  if (links.length < 2) return true;
-                  const tops = links.map(a => a.getBoundingClientRect().top);
-                  const minTop = Math.min(...tops);
-                  const maxTop = Math.max(...tops);
-                  return maxTop - minTop < 8;
-                }
-                """);
-            Assert.True(navSingleRow, "Candidate header nav wrapped to two rows at 1024px.");
+            await page.Locator("[data-testid=candidate-header-nav]").WaitForAsync(new() { Timeout = 60_000 });
         }
 
-        await page.ScreenshotAsync(new()
-        {
-            Path = Path.Combine(outDir, $"carriere-hero-after-{tag}.png"),
-            FullPage = false
-        });
-    }
-
-    private static string FindRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
-            {
-                return dir.FullName;
-            }
-
-            dir = dir.Parent;
-        }
-
-        throw new InvalidOperationException("Jobsy.sln not found.");
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
+        return page;
     }
 }

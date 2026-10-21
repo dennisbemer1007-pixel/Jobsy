@@ -52,6 +52,29 @@ public static class CompactHeroPreviewArt
         return artUrl;
     }
 
+    /// <summary>Watercolor figures strip on phone; falls back to explicit mobile figures from the page.</summary>
+    public static string? CandHeroMobileArtForVariantC(string? artUrl, string? mobileFiguresUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(mobileFiguresUrl))
+        {
+            return mobileFiguresUrl;
+        }
+
+        if (string.IsNullOrWhiteSpace(artUrl))
+        {
+            return null;
+        }
+
+        if (artUrl.Contains("droombaan-profession-wide", StringComparison.OrdinalIgnoreCase)
+            || artUrl.Contains("leren-groeien", StringComparison.OrdinalIgnoreCase)
+            || artUrl.Contains("carriere", StringComparison.OrdinalIgnoreCase))
+        {
+            return CandidateIllustratedImages.MobFiguresOpleiding;
+        }
+
+        return null;
+    }
+
     public const string OnboardingKennismakenDesktop =
         "/images/candidate-illustrated/wie-ben-jij-profession-wide.jpg";
 

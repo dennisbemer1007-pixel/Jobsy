@@ -10,6 +10,7 @@
                           Title="@Title"
                           Lead="@Lead"
                           ArtUrl="@CompactCArtUrl"
+                          ArtUrlMobile="@CompactCMobileArtUrl"
                           TitleTabIndex="@TitleTabIndex"
                           Layout="@CompactHeroLayout"
                           CssClass="@CompactHeroExtraClass">
@@ -74,6 +75,9 @@ else
 
     private string? CompactCArtUrl
         => string.IsNullOrWhiteSpace(ArtUrl) ? null : CompactHeroPreviewArt.CandHeroArtForVariantC(ArtUrl);
+
+    private string? CompactCMobileArtUrl
+        => CompactHeroPreviewArt.CandHeroMobileArtForVariantC(ArtUrl, ArtUrlMobileFigures);
 
     private string? CompactHeroExtraClass
     {
