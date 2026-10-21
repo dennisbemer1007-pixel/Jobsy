@@ -43,6 +43,19 @@
                                ShowCustomTravel="ShowCustomTravel" />
             </div>
             break;
+        case 4:
+            <div class="ob-rustig__form-grid">
+                <WorkHistoryStep Draft="Draft"
+                                 Illustrated="false"
+                                 ShowHeading="false"
+                                 ShowStepTitle="false"
+                                 RustigPersonal="true"
+                                 AddJob="AddJob"
+                                 RemoveJob="RemoveJob"
+                                 SetJobStart="SetJobStart"
+                                 SetJobEnd="SetJobEnd" />
+            </div>
+            break;
     }
 </div>
 
@@ -64,4 +77,8 @@
     [Parameter] public EventCallback<string> SelectTransport { get; set; }
     [Parameter] public EventCallback<int> SelectTravelTime { get; set; }
     [Parameter] public EventCallback ShowCustomTravel { get; set; }
+    [Parameter] public EventCallback AddJob { get; set; }
+    [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }
+    [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
+    [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
 }

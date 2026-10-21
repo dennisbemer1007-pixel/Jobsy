@@ -49,7 +49,7 @@
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-17" />
+        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-18" />
     }
 </HeadContent>
 
@@ -214,7 +214,7 @@
     else if (RustigPersonalSteps)
     {
         var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
-        var rustigJobsRail = ShowNearbyPanel && _step >= 2;
+        var rustigJobsRail = ShowNearbyPanel && _step is 2 or 3;
         <OnboardingRustigShell ScreenId="@($"step-{_step:D2}")"
                                Step="_step"
                                PhaseLabel="@Culture[rustigPhase.NameKey]"
@@ -252,7 +252,11 @@
                                                    ResetPresets="ResetPresets"
                                                    SelectTransport="SelectTransport"
                                                    SelectTravelTime="SelectTravelTime"
-                                                   ShowCustomTravel="ShowCustomTravel" />
+                                                   ShowCustomTravel="ShowCustomTravel"
+                                                   AddJob="AddJob"
+                                                   RemoveJob="RemoveJob"
+                                                   SetJobStart="OnSetJobStart"
+                                                   SetJobEnd="OnSetJobEnd" />
                 <div class="ob-rustig__footer-actions">
                     <button type="button"
                             class="ob-rustig__btn"
@@ -765,7 +769,7 @@
     private int _step = 1;
     private bool SoftIllustratedStep => _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= 6;
 
-    private const int MaxRustigPersonalStep = 3;
+    private const int MaxRustigPersonalStep = 4;
 
     private bool RustigPersonalSteps =>
         OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= MaxRustigPersonalStep;

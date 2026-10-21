@@ -619,6 +619,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl, string emailPrefix)
     {
+        _ = await RegisterFreshCandidateEmailAsync(page, baseUrl, emailPrefix);
+    }
+
+    internal static async Task<string> RegisterFreshCandidateEmailAsync(IPage page, string baseUrl, string emailPrefix)
+    {
         var email = $"{emailPrefix}.{Guid.NewGuid():N}@jobsy.local";
         await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
         await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
@@ -632,6 +637,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.Locator("input[name=code]").FillAsync(code!);
         await page.Locator("button.login-submit").ClickAsync();
         await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
+        return email;
     }
 
     internal static async Task AssertCandidateHeaderVisibleAsync(IPage page)
@@ -752,6 +758,25 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
     }
 
+    internal static async Task SelectRustigTransportAndTravelAsync(IPage page, bool mobile, int maxTravelMinutes = 30)
+    {
+        var transportTile = page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First;
+        await transportTile.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await transportTile.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await WaitForCircuitReadyAsync(page, 30_000);
+
+        var travel = page.Locator(".ob-wizard__transport .lobsy-choice-tile, .ob-wizard__travel-times .lobsy-choice-tile")
+            .Filter(new() { HasText = maxTravelMinutes.ToString() });
+        if (await travel.CountAsync() == 0)
+        {
+            travel = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button");
+        }
+
+        await travel.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await travel.First.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await WaitForCircuitReadyAsync(page, 30_000);
+    }
+
     internal static async Task ReachOnboardingRustigStepAsync(IPage page, int targetStep, bool mobile)
     {
         if (targetStep is < 1 or > 5)
@@ -798,11 +823,24 @@ internal static class FunctionalOnboardingInteractivityHelpers
             return;
         }
 
-        await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First
-            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First
-            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            if (await OnboardingRustigStepScreen(page, 4).IsVisibleAsync())
+            {
+                break;
+            }
+
+            if (await OnboardingRustigStepScreen(page, 3).IsVisibleAsync())
+            {
+                await SelectRustigTransportAndTravelAsync(page, mobile);
+                await ClickWizardNextWhenVisibleAsync(page);
+                await WaitForCircuitReadyAsync(page, 60_000);
+                continue;
+            }
+
+            await page.WaitForTimeoutAsync(400);
+        }
+
         await AssertOnboardingRustigStepScreenAsync(page, 4);
         if (targetStep == 4)
         {
