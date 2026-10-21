@@ -248,7 +248,8 @@ public class MobileSaasUxTests
         Assert.Contains("profile-save-bar", blob);
         Assert.Contains("Profile.ReturnHint", razor);
         Assert.Contains("profile-return-hint", razor);
-        Assert.Contains("aria-expanded=\"@(IsSectionOpen(\"personal\") ? \"true\" : \"false\")\"", razor);
+        Assert.Contains("profile-section-nav", razor);
+        Assert.Contains("admin-sublink--active", razor);
         Assert.DoesNotContain("vacancy-schedule__table", razor);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
