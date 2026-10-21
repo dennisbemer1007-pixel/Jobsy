@@ -100,6 +100,13 @@ public sealed class PassportDesktopSidebarTabsPlaywrightTests : IAsyncLifetime
         await page.Locator("#passport-panel-dna .passport-dna__grid").WaitForAsync(new() { Timeout = 30_000 });
         await Assertions.Expect(page.Locator("#passport-panel-dna .panel-inline-error")).ToHaveCountAsync(0, new() { Timeout = 2_000 });
         await page.Locator("#passport-panel-dna .passport-dna__h").First.WaitForAsync(new() { Timeout = 10_000 });
+        await page.EvaluateAsync(
+            """
+            () => {
+              window.lobsyCandidateNav?.syncAppHeaderHeight?.();
+              window.lobsyPaspoortLayout?.syncSidebarSticky?.();
+            }
+            """);
 
         return page;
     }
@@ -124,7 +131,7 @@ public sealed class PassportDesktopSidebarTabsPlaywrightTests : IAsyncLifetime
             }
             """);
 
-        for (var step = 0; step < 8; step++)
+        for (var step = 0; step < 16; step++)
         {
             var stuck = await page.EvaluateAsync<bool>(
                 """
@@ -161,10 +168,11 @@ public sealed class PassportDesktopSidebarTabsPlaywrightTests : IAsyncLifetime
             (requireSticky) => {
               const header = document.querySelector('.app-header');
               const shell = document.querySelector('.passport-tabs-shell');
+              const sidebar = document.querySelector('.passport-layout__sidebar');
               const sidebarCard = document.querySelector('.passport-layout__sidebar .passport-card');
               const dnaGrid = document.querySelector('#passport-panel-dna .passport-dna__grid');
               const dnaError = document.querySelector('#passport-panel-dna .panel-inline-error');
-              if (!header || !shell || !sidebarCard || !dnaGrid) {
+              if (!header || !shell || !sidebar || !sidebarCard || !dnaGrid) {
                 return { ok: false, reason: 'missing-elements' };
               }
               if (dnaError) {
@@ -172,7 +180,7 @@ public sealed class PassportDesktopSidebarTabsPlaywrightTests : IAsyncLifetime
               }
               const headerBox = header.getBoundingClientRect();
               const shellBox = shell.getBoundingClientRect();
-              const sidebarBox = sidebarCard.getBoundingClientRect();
+              const sidebarBox = sidebar.getBoundingClientRect();
               const dnaBox = dnaGrid.getBoundingClientRect();
               const stickyTop = parseFloat(getComputedStyle(shell).top);
               const stickyTarget = Number.isFinite(stickyTop) && stickyTop >= 0
@@ -185,14 +193,19 @@ public sealed class PassportDesktopSidebarTabsPlaywrightTests : IAsyncLifetime
                 && sidebarBox.left < shellBox.right
                 && sidebarBox.bottom > shellBox.top + 2
                 && sidebarBox.top < shellBox.bottom;
-              const sidebarVisible = sidebarBox.height > 80 && sidebarBox.bottom > headerBox.bottom + 8;
+              const sidebarVisible =
+                sidebarBox.height > 80
+                && sidebarBox.bottom > headerBox.bottom + 8
+                && sidebarBox.top < window.innerHeight - 24;
               const dnaLoaded = dnaBox.height > 40;
               const dnaInViewport = dnaLoaded && dnaBox.bottom > shellBox.bottom + 4 && dnaBox.top < window.innerHeight;
               const shellInMainColumn = shellBox.left >= sidebarBox.right - 6;
-              const probeX = sidebarBox.left + Math.min(48, sidebarBox.width * 0.3);
-              const probeY = Math.min(sidebarBox.bottom - 20, sidebarBox.top + sidebarBox.height * 0.55);
+              const probeX = sidebarBox.left + Math.min(48, sidebarBox.width * 0.35);
+              const probeY = Math.min(
+                Math.max(headerBox.bottom + 36, sidebarBox.top + 36),
+                sidebarBox.bottom - 24);
               const hit = document.elementFromPoint(probeX, probeY);
-              const probeOnSidebar = !!(hit && sidebarCard.contains(hit));
+              const probeOnSidebar = !!(hit && sidebar.contains(hit));
               return {
                 ok: (!requireSticky || sticky)
                   && !horizontalOverlap

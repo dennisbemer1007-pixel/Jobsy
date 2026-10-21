@@ -417,6 +417,24 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPaspoortLayout.syncSidebarSticky");
+            await Js.InvokeVoidAsync("lobsyCandidateNav.syncAppHeaderHeight");
+        }
+        catch
+        {
+            // Disconnected circuit / prerender
+        }
+    }
+
     private async Task LoadReferenceVerificationAsync()
     {
         if (!_flags.ReferenceVerificationEnabled)

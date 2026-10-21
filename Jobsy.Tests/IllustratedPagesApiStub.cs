@@ -23,17 +23,22 @@ internal static class IllustratedPagesApiStub
     /// <summary>When true, /me/onboarding returns step 7 with test consent (mini-tests compact header captures).</summary>
     public static bool OnboardingWizardTestsStepCapture { get; set; }
 
+    /// <summary>When true, kompas payloads use a minimal paspoort profile (many empty fields).</summary>
+    public static bool PassportMinimalProfileCapture { get; set; }
+
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static string BuildJson(string path, bool emptyAppsAndLikes = false)
+    public static string BuildJson(string path, bool emptyAppsAndLikes = false, bool minimalPassportProfile = false)
     {
         if (path.Contains("/kompas/dna", StringComparison.OrdinalIgnoreCase))
         {
-            var k = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
+            var k = minimalPassportProfile || PassportMinimalProfileCapture
+                ? BuildMinimalKompas()
+                : PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
             return Serialize(new CandidateDnaSummary
             {
                 WhoAmI = k.WhoAmI,
@@ -73,6 +78,11 @@ internal static class IllustratedPagesApiStub
 
         if (path.Contains("/kompas", StringComparison.OrdinalIgnoreCase))
         {
+            if (minimalPassportProfile || PassportMinimalProfileCapture)
+            {
+                return Serialize(BuildMinimalKompas());
+            }
+
             var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
             kompas.Profile!.FullName = "Sanne de Vries";
             kompas.Profile.FirstName = "Sanne";
@@ -685,6 +695,18 @@ internal static class IllustratedPagesApiStub
               "companyLogoUrl": null
             }]
             """;
+
+    private static CandidateKompasState BuildMinimalKompas()
+    {
+        var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: false);
+        kompas.ProfileCompletenessPercent = 8;
+        kompas.Profile!.FullName = "Sanne de Vries";
+        kompas.Profile.FirstName = "Sanne";
+        kompas.Profile.Role = "Candidate";
+        kompas.Profile.Preferences = new CandidatePreferences();
+        kompas.WhoAmI = null;
+        return kompas;
+    }
 
     private static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Json);
 }
