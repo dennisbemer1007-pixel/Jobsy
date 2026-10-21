@@ -6,6 +6,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Pwa
+@using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
 @inject PwaInstallSheetState PwaSheet
@@ -294,7 +295,28 @@
             _ = InvokeAsync(StateHasChanged);
         }
 
+        TryApplyRouteDocumentTitle(e.Location);
         _ = RefreshCandidateRoleAsync();
+    }
+
+    private void TryApplyRouteDocumentTitle(string location)
+    {
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        try
+        {
+            var path = PageSeoCatalog.Normalize(new Uri(location).AbsolutePath);
+            var entry = PageSeoCatalog.Resolve(path);
+            var title = PageSeoResolver.WithBrand(Culture[entry.TitleKey]);
+            _ = Js.InvokeVoidAsync("lobsyCandidateNav.applyDocumentTitle", title);
+        }
+        catch
+        {
+            // Disconnected circuit / prerender
+        }
     }
 
     private async Task RefreshCandidateRoleAsync()
