@@ -68,18 +68,35 @@ public sealed class Walkthrough390ScreenshotTests : IAsyncLifetime
         }
         else
         {
-            await page.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            Environment.SetEnvironmentVariable(
+                "JOBSY_WALKTHROUGH_SLOW_SECONDARY",
+                name.Contains("before", StringComparison.OrdinalIgnoreCase) ? "1" : null);
             var waitMs = 2_000;
             if (int.TryParse(Environment.GetEnvironmentVariable("WALKTHROUGH_WAIT_MS"), out var parsed) && parsed >= 0)
             {
                 waitMs = parsed;
             }
 
-            await page.WaitForTimeoutAsync(waitMs);
+            var isBefore = name.Contains("before", StringComparison.OrdinalIgnoreCase);
+            if (isBefore)
+            {
+                await page.EvaluateAsync(
+                    "url => { window.location.href = url; }",
+                    $"{baseUrl}/candidate/paspoort");
+                await page.WaitForTimeoutAsync(waitMs);
+            }
+            else
+            {
+                await page.GotoAsync(
+                    $"{baseUrl}/candidate/paspoort",
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await page.WaitForTimeoutAsync(waitMs);
+            }
         }
 
         var path = Path.Combine(ArtifactsDir, $"{name}.png");
         await page.ScreenshotAsync(new() { Path = path, FullPage = false });
         Assert.True(File.Exists(path));
+        Environment.SetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_SECONDARY", null);
     }
 }
