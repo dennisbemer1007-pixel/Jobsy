@@ -23,6 +23,7 @@
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Onboarding
 @using Jobsy.Web.Discovery
+@using Jobsy.Web.Onboarding
 @using Jobsy.Web.Components.Candidate.Discovery
 @using Microsoft.Extensions.Logging
 @inject JobsyApiClient Api
@@ -457,6 +458,29 @@
         IsYoungCandidate
             ? PresetItems
             : PresetItems.Where(p => p.Code is not ("school" or "holiday")).ToArray();
+
+    private IReadOnlyList<(string Code, string TitleKey, string LeadKey)> VisiblePresetTuples
+        => VisiblePresets.Select(p => (p.Code, p.Title, p.Lead)).ToList();
+
+    private OnboardingClientStepSeed ClientStepSeed => new()
+    {
+        HasConsent = Draft.HasConsent,
+        ConsentRequested = Draft.ConsentRequested,
+        DreamTitles = [],
+        DreamCurrent = Draft.Dream,
+        Jobs = Draft.Jobs
+            .Select(j => new OnboardingClientStepSeed.JobSeed(
+                j.EmployerName ?? "",
+                j.StartMonth,
+                j.EndMonth,
+                j.IsCurrent == true))
+            .ToList(),
+        MiniQuestions = _miniQuestions
+            .Select(q => new OnboardingClientStepSeed.MiniQuestionSeed(q.Id, QuestionText(q)))
+            .ToList(),
+        MiniAnswers = MiniVisibleAnswers.ToDictionary(static pair => pair.Key, static pair => pair.Value),
+    };
+
     private static readonly TestConsentStep.TestTab[] ConsentTabs =
     [
         new(7, "Onboarding.Test.Competency", "Onboarding.Test.Competency.Lead"),
