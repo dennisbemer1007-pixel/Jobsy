@@ -4,6 +4,8 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Web.Components.Candidate.ProfileSections.Forms
+@using Jobsy.Web.Profile
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
 @inject NavigationManager Navigation
@@ -65,7 +67,7 @@
         }
         else
         {
-            <div class="profile-form competency-profile-card">
+            <div class="profile-form competency-profile-card" data-candidate-profile>
                 <nav class="profile-section-nav pill-scroller" aria-label="@Culture["Profile.Lead"]">
                     <button type="button"
                             class="admin-sublink @(IsSectionOpen("personal") ? "admin-sublink--active" : null)"
@@ -90,7 +92,7 @@
                     @if (IsSectionOpen("personal"))
                     {
                         <div class="profile-accordion__body" id="profile-section-personal" role="region" aria-labelledby="profile-section-personal-btn">
-                            <PersonalSection />
+                            <ProfilePersonalSectionForm FirstName="@Editor.FirstName" LastName="@Editor.LastName" HomeAddress="@Editor.HomeAddress" Saved="SectionSaved("personal")" Error="SectionError("personal")" />
                             <DevicesSection />
                         </div>
                     }
@@ -99,7 +101,7 @@
                     @if (IsSectionOpen("preferences"))
                     {
                         <div class="profile-accordion__body" id="profile-section-preferences" role="region" aria-labelledby="profile-section-preferences-btn">
-                            <PreferencesSection />
+                            <ProfilePreferencesSectionForm MaxTravel="Editor.MaxTravel" Saved="SectionSaved("preferences")" Error="SectionError("preferences")" />
                         </div>
                     }
 
@@ -107,7 +109,7 @@
                     @if (IsSectionOpen("availability"))
                     {
                         <div class="profile-accordion__body" id="profile-section-availability" role="region" aria-labelledby="profile-section-availability-btn">
-                            <AvailabilitySection />
+                            <ProfileAvailabilitySectionForm StartImmediately="Editor.StartImmediately" MinHours="Editor.MinHours" Saved="SectionSaved("availability")" Error="SectionError("availability")" />
                         </div>
                     }
 
@@ -115,7 +117,7 @@
                     @if (IsSectionOpen("experience"))
                     {
                         <div class="profile-accordion__body" id="profile-section-experience" role="region" aria-labelledby="profile-section-experience-btn">
-                            <MotivationSection />
+                            <ProfileExperienceSectionForm AboutMe="@Editor.AboutMe" Saved="SectionSaved("experience")" Error="SectionError("experience")" />
                             <CvSection />
                             <ExperienceSection />
                             <EducationSection />
@@ -125,7 +127,6 @@
                     }
                 </div>
 
-                <ProfileSaveBar />
             </div>
         }
 

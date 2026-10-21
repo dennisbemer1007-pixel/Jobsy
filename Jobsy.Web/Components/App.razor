@@ -315,6 +315,10 @@
         {
             <script src="js/onboarding-client-form.js?v=20261021-step1-acc" nonce="@Nonce" defer></script>
         }
+        @if (IncludeCandidateProfileScript)
+        {
+            <script src="js/candidate-profile-client.js?v=20261021-01" nonce="@Nonce" defer></script>
+        }
         @if (IncludeCandidateApplicationsScript)
         {
             <script src="js/candidate-applications-client.js?v=20261021-01" nonce="@Nonce" defer></script>
@@ -437,6 +441,9 @@
 
     private bool IncludeDiscoveryClientScript =>
         PageAssetCatalog.IncludeDiscoveryClientScript(RequestPath);
+
+    private bool IncludeCandidateProfileScript =>
+        PageAssetCatalog.IncludeCandidateProfileScript(RequestPath);
 
     private bool IncludeMapPreconnect =>
         PageAssetCatalog.IncludeMapPreconnect(RequestPath);
