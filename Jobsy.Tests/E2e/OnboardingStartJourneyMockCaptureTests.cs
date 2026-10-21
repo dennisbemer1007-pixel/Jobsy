@@ -70,15 +70,15 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
 
         if (width >= 1024)
         {
-            var heroZoomed = await page.EvaluateAsync<bool>("""
+            var heroCropped = await page.EvaluateAsync<bool>("""
                 () => {
-                  const img = document.querySelector('[data-testid=ob-start-journey-mock-hero-desk]');
-                  if (!img) return false;
-                  const tr = getComputedStyle(img).transform;
-                  return tr && tr !== 'none';
+                  const band = document.querySelector('.ob-start-journey-mock-hero');
+                  if (!band) return false;
+                  const bg = getComputedStyle(band).backgroundImage;
+                  return bg && bg !== 'none';
                 }
                 """);
-            Assert.True(heroZoomed, "Desktop mock hero must use zoom crop (transform) so PNGs exclude the hiker.");
+            Assert.True(heroCropped, "Desktop mock hero must use background crop so PNGs exclude the hiker.");
         }
 
         await page.ScreenshotAsync(new()
@@ -86,6 +86,14 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
             Path = Path.Combine(outDir, $"onboarding-start-journey-mock-{tag}.png"),
             FullPage = false,
         });
+
+        if (width >= 1024)
+        {
+            await page.Locator(".ob-start-journey-mock-hero").ScreenshotAsync(new()
+            {
+                Path = Path.Combine(outDir, "onboarding-start-journey-mock-hero-desk-crop.png"),
+            });
+        }
     }
 
     [Fact]

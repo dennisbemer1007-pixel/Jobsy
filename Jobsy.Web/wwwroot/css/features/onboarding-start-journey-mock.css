@@ -42,10 +42,18 @@
   object-fit: cover;
 }
 
-.ob-rustig[data-ob-rustig-screen="start-journey-mock"] .ob-start-journey-mock-hero__img.ob-rustig__hero-img--desk {
-  object-position: 0% 56%;
-  transform: scale(3.35);
-  transform-origin: 0% 56%;
+@media (min-width: 1024px) {
+  .ob-rustig[data-ob-rustig-screen="start-journey-mock"] .ob-start-journey-mock-hero {
+    background-image: var(--ob-start-journey-mock-hero-desk);
+    background-repeat: no-repeat;
+    background-size: 360% auto;
+    background-position: 0% 58%;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="start-journey-mock"] .ob-start-journey-mock-hero__img.ob-rustig__hero-img--desk {
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 @media (max-width: 1023px) {
