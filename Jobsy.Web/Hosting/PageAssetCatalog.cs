@@ -34,16 +34,21 @@ public static class PageAssetCatalog
         "css/features/nav-feedback.css?v=20261017-01",
     ];
 
-    public static readonly string[] CandidatePublicCss =
+    public static readonly string[] BanenkaartCss =
     [
         "css/features/banenkaart.css?v=20261019-01",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/bedrijvenkaart.css?v=20261019-10",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
+    ];
+
+    public static readonly string[] CandidatePublicCss =
+    [
+        ..BanenkaartCss,
+        "css/features/bedrijvenkaart.css?v=20261019-10",
     ];
 
     private static readonly string[] UwvMockupRouteCss =
@@ -232,7 +237,14 @@ public static class PageAssetCatalog
     {
         var list = new List<string>(BlazorCoreCss.Length + 24);
         list.AddRange(BlazorCoreCss);
-        AppendUnique(list, areas, Area.CandidatePublic, CandidatePublicCss);
+        if ((areas & Area.CandidatePublic) != 0)
+        {
+            var path = PageSeoCatalog.Normalize(rawPath);
+            var publicCss = path is "/banenkaart" or "/banen"
+                ? BanenkaartCss
+                : CandidatePublicCss;
+            AppendUnique(list, areas, Area.CandidatePublic, publicCss);
+        }
         AppendUnique(list, areas, Area.CandidateApp, CandidateAppCss);
         AppendUnique(list, areas, Area.Werkgever, WerkgeverCss);
         AppendUnique(list, areas, Area.Beheer, BeheerCss);
@@ -320,7 +332,14 @@ public static class PageAssetCatalog
         }
 
         if (path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/banen", StringComparison.OrdinalIgnoreCase))
+        {
+            return RouteUsesCompactHeroCss(path)
+                ? ["css/features/candidate-hero-compact-preview.css?v=20261020-r8"]
+                : [];
+        }
+
+        if (path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/ondernemerscheck", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/wat-drijft-jou", StringComparison.OrdinalIgnoreCase)

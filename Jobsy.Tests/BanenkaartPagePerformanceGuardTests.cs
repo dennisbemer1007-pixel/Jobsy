@@ -143,6 +143,8 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.Contains("fetchpriority", bundle);
         Assert.Contains("loadScriptsParallel", bundle);
         Assert.Contains("first pins do not wait on the Blazor circuit", bundle);
+        Assert.Contains("deferPinsWarmup", discovery);
+        Assert.Contains("skip prerender boot to avoid camera/pin jump", bundle);
         // Map-loader section must not use IntersectionObserver (list sentinel lives elsewhere in the bundle).
         var mapsStart = bundle.IndexOf("/* === maps-loader.js === */", StringComparison.Ordinal);
         var mapsEnd = bundle.IndexOf("/* === extras-loader.js === */", StringComparison.Ordinal);

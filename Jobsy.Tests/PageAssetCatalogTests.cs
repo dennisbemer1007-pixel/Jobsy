@@ -4,7 +4,7 @@ public class PageAssetCatalogTests
 {
     // Keep in sync with PageAssetCatalog bundle arrays (Stijl A: tokens + stijl-a in core; illustrated public bundles).
     private const int CoreCss = 6;
-    private const int PublicCss = 7;
+    private const int PublicCss = 6;
     private const int AppCss = 20;
     private const int WerkgeverCss = 6;
     private const int BeheerCss = 2;
@@ -40,9 +40,13 @@ public class PageAssetCatalogTests
 
         if (path is "/banenkaart")
         {
-            Assert.Contains(sheets, s => s.StartsWith("css/features/banenkaart.css", StringComparison.Ordinal));
-            Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
-            Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/vacancy-wizard.css", StringComparison.Ordinal));
+            var banenkaartSheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(areas, path);
+            Assert.Contains(banenkaartSheets, s => s.StartsWith("css/features/banenkaart.css", StringComparison.Ordinal));
+            Assert.Equal(1, banenkaartSheets.Count(s => s.StartsWith("css/features/banenkaart.css", StringComparison.Ordinal)));
+            Assert.DoesNotContain(banenkaartSheets, s => s.StartsWith("css/features/bedrijvenkaart.css", StringComparison.Ordinal));
+            Assert.DoesNotContain(banenkaartSheets, s => s.StartsWith("css/features/uwv-mockups.css", StringComparison.Ordinal));
+            Assert.DoesNotContain(banenkaartSheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
+            Assert.DoesNotContain(banenkaartSheets, s => s.StartsWith("css/features/vacancy-wizard.css", StringComparison.Ordinal));
         }
 
         if (path is "/register")
