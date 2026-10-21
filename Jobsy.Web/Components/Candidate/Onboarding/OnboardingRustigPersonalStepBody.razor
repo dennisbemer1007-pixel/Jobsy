@@ -1,6 +1,7 @@
 @using Jobsy.Core.Models
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Models
+@using Jobsy.Web.Onboarding
 @using Jobsy.Web.Services
 
 <div class="ob-rustig__canvas" data-testid="@($"onboarding-step-{Step}-illustrated")">
@@ -8,62 +9,28 @@
     {
         case 1:
             <div class="ob-rustig__form-grid">
-                <PersonalStep Draft="Draft"
-                              Illustrated="true"
-                              ShowValidation="ShowValidation"
-                              AddressChanged="AddressChanged"
-                              ShowCity="ShowCity"
-                              SelectAddress="SelectAddress" />
+                <OnboardingClientStepIsland Step="1"
+                                            Draft="Draft"
+                                            Presets="PresetTuples"
+                                            Seed="ClientSeed" />
             </div>
             break;
         case 2:
             <div class="ob-rustig__form-grid">
-                <AvailabilityStep Draft="Draft"
-                                  Illustrated="true"
-                                  ShowValidation="ShowValidation"
-                                  Presets="Presets"
-                                  TogglePreset="TogglePreset"
-                                  ToggleFineTune="ToggleFineTune"
-                                  SetMinHours="SetMinHours"
-                                  SetMaxHours="SetMaxHours"
-                                  ManualAvailability="ManualAvailability"
-                                  ToggleAvailability="ToggleAvailability"
-                                  ResetPresets="ResetPresets" />
+                <OnboardingClientStepIsland Step="2"
+                                            Draft="Draft"
+                                            Presets="PresetTuples"
+                                            Seed="ClientSeed" />
             </div>
             break;
         case 3:
-            <div class="ob-rustig__form-grid">
-                <TransportStep Draft="Draft"
-                               Illustrated="false"
-                               RustigPersonal="true"
-                               ShowHeading="false"
-                               ShowStepTitle="false"
-                               ShowValidation="ShowValidation"
-                               SelectTransport="SelectTransport"
-                               SelectTravelTime="SelectTravelTime"
-                               ShowCustomTravel="ShowCustomTravel" />
-            </div>
-            break;
         case 4:
-            <div class="ob-rustig__form-grid">
-                <WorkHistoryStep Draft="Draft"
-                                 Illustrated="false"
-                                 ShowHeading="false"
-                                 ShowStepTitle="false"
-                                 RustigPersonal="true"
-                                 AddJob="AddJob"
-                                 RemoveJob="RemoveJob"
-                                 SetJobStart="SetJobStart"
-                                 SetJobEnd="SetJobEnd" />
-            </div>
-            break;
         case 5:
             <div class="ob-rustig__form-grid">
-                <EducationStep Draft="Draft"
-                               Illustrated="false"
-                               ShowHeading="false"
-                               ShowStepTitle="false"
-                               SelectEducation="SelectEducation" />
+                <OnboardingClientStepIsland Step="@Step"
+                                            Draft="Draft"
+                                            Presets="PresetTuples"
+                                            Seed="ClientSeed" />
             </div>
             break;
     }
@@ -74,6 +41,9 @@
     [Parameter] public OnboardingProfileDraft Draft { get; set; } = default!;
     [Parameter] public bool ShowValidation { get; set; }
     [Parameter] public IReadOnlyList<AvailabilityStep.Preset> Presets { get; set; } = Array.Empty<AvailabilityStep.Preset>();
+
+    private IReadOnlyList<(string Code, string TitleKey, string LeadKey)> PresetTuples
+        => Presets.Select(p => (p.Code, p.Title, p.Lead)).ToList();
     [Parameter] public EventCallback AddressChanged { get; set; }
     [Parameter] public EventCallback ShowCity { get; set; }
     [Parameter] public EventCallback<AddressSuggestion> SelectAddress { get; set; }
@@ -92,4 +62,5 @@
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
     [Parameter] public EventCallback<string> SelectEducation { get; set; }
+    [Parameter] public OnboardingClientStepSeed? ClientSeed { get; set; }
 }

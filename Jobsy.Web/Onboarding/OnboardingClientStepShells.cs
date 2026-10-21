@@ -1,0 +1,142 @@
+using System.Net;
+using System.Text;
+using Jobsy.Web.Localization;
+
+namespace Jobsy.Web.Onboarding;
+
+/// <summary>Static HTML for client onboarding steps (rendered once; JS attaches behavior).</summary>
+internal static class OnboardingClientStepShells
+{
+    public static string Build(int step, CultureState culture)
+    {
+        return step switch
+        {
+            1 => BuildStep1(culture),
+            2 => BuildStep2(culture),
+            3 => BuildStep3(culture),
+            4 => BuildStep4(culture),
+            5 => BuildStep5(culture),
+            6 => BuildStep6(culture),
+            7 => BuildStep7(culture),
+            >= 8 and <= 10 => BuildMiniStep(culture),
+            _ => "",
+        };
+    }
+
+    private static string BuildStep1(CultureState culture)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        sb.Append("<div class=\"ob-wizard__field-row\">");
+        sb.Append(LabelInput("onboarding-field-firstname", culture["Profile.FirstName"], "firstName", "given-name"));
+        sb.Append(LabelInput("onboarding-field-lastname", culture["Profile.LastName"], "lastName", "family-name"));
+        sb.Append("</div>");
+        sb.Append("<div id=\"onboarding-field-location\" class=\"ob-fields__address\">");
+        sb.Append("<label>");
+        sb.Append(WebUtility.HtmlEncode(culture["Discovery.Address"]));
+        sb.Append("<input id=\"onboarding-home-address\" type=\"text\" autocomplete=\"street-address\" data-ob-client=\"address\" />");
+        sb.Append("<ul class=\"address-suggestions ob-client-suggest\" role=\"listbox\" hidden></ul>");
+        sb.Append("</label></div>");
+        sb.Append("<fieldset id=\"onboarding-field-birthdate\"><legend>");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.BirthDate"]));
+        sb.Append("</legend><input data-ob-client=\"birthDate\" inputmode=\"numeric\" autocomplete=\"bday\" /></fieldset>");
+        sb.Append("<div class=\"work-status-chips\"><div data-ob-client=\"workStatusGrid\"></div></div>");
+        sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel"));
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+
+    private static string BuildStep2(CultureState culture)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated ob-wizard__presets\">");
+        sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets\"></div>");
+        sb.Append("<div class=\"hours-range\" data-ob-client=\"hoursRail\">");
+        sb.Append("<label>");
+        sb.Append(WebUtility.HtmlEncode(culture["Vacancy.HoursPerWeek"]));
+        sb.Append(" <span data-ob-client=\"hoursLabel\">12 – 40</span>");
+        sb.Append("<input type=\"range\" min=\"1\" max=\"60\" data-ob-client=\"hoursMin\" />");
+        sb.Append("<input type=\"range\" min=\"1\" max=\"60\" data-ob-client=\"hoursMax\" />");
+        sb.Append("</label></div>");
+        sb.Append("<div class=\"availability-matrix availability-matrix--touch\" data-ob-client=\"matrix\"></div>");
+        sb.Append("<fieldset><legend>");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityStartSummary"]));
+        sb.Append("</legend>");
+        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startImmediate\" checked /> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableImmediate"]));
+        sb.Append("</label>");
+        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startFromDate\" /> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableFrom"]));
+        sb.Append("</label>");
+        sb.Append("<input data-ob-client=\"availableFrom\" hidden />");
+        sb.Append("</fieldset></div>");
+        return sb.ToString();
+    }
+
+    private static string BuildStep3(CultureState culture)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-transport\">");
+        sb.Append("<div data-ob-client=\"transportGrid\" class=\"ob-wizard__transport\"></div>");
+        sb.Append("<div data-ob-client=\"travelGrid\" class=\"ob-wizard__travel-times\"></div>");
+        sb.Append("<label>");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Other"]));
+        sb.Append("<input type=\"number\" min=\"1\" max=\"180\" data-ob-client=\"customTravel\" hidden />");
+        sb.Append("</label></div>");
+        return sb.ToString();
+    }
+
+    private static string BuildStep4(CultureState culture)
+    {
+        return $"""
+<div class="ob-wizard__card ob-wizard__card--illustrated">
+<label class="ob-wizard__check"><input type="checkbox" data-ob-client="noWork" /> {WebUtility.HtmlEncode(culture["Onboarding.NoWorkExperience"])}</label>
+<div data-ob-client="jobsList"></div>
+<button type="button" class="btn btn-secondary" data-ob-client="addJob">{WebUtility.HtmlEncode(culture["Onboarding.AddJob"])}</button>
+</div>
+""";
+    }
+
+    private static string BuildStep5(CultureState _)
+    {
+        return $"""
+<div class="ob-wizard__card ob-wizard__card--illustrated">
+<div data-ob-client="educationGrid" class="ob-wizard__education-grid"></div>
+</div>
+""";
+    }
+
+    private static string BuildStep6(CultureState culture)
+    {
+        return $"""
+<div class="ob-wizard__card ob-wizard__card--illustrated" id="onboarding-field-dream">
+<div data-ob-client="dreamGrid" class="ob-rustig__dream-grid"></div>
+<input id="onboarding-rustig-dream-input" data-ob-client="dreamInput" type="text" autocomplete="off" placeholder="{WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"])}" />
+</div>
+""";
+    }
+
+    private static string BuildStep7(CultureState culture)
+    {
+        return $"""
+<div class="ob-wizard__card" id="onboarding-field-consent">
+<label class="ob-wizard__consent"><input type="checkbox" data-ob-client="consent" /> {WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"])}</label>
+</div>
+""";
+    }
+
+    private static string BuildMiniStep(CultureState _)
+    {
+        return """
+<div class="ob-wizard__card ob-client-mini" data-ob-client="miniRoot"></div>
+""";
+    }
+
+    private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete)
+    {
+        var idAttr = wrapId is null ? "" : $" id=\"{wrapId}\"";
+        return $"""
+<label{idAttr}>{WebUtility.HtmlEncode(label)}<input autocomplete="{autocomplete}" maxlength="128" data-ob-client="{clientKey}" /></label>
+""";
+    }
+}

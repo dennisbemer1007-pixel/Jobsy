@@ -311,6 +311,10 @@
         {
             <script src="js/vacancy-wizard.js?v=20261015-03" nonce="@Nonce" defer></script>
         }
+        @if (IncludeOnboardingClientScript)
+        {
+            <script src="js/onboarding-client-form.js?v=20261021-01" nonce="@Nonce" defer></script>
+        }
     @if (LoadBlazorRuntime)
     {
         @* Block unprompted full reloads before Blazor.start (framework refresh/rejected paths call location.reload). *@
@@ -409,6 +413,9 @@
 
     private bool IncludeVacancyWizardScript =>
         PageAssetCatalog.IncludeVacancyWizardScript(RequestPath);
+
+    private bool IncludeOnboardingClientScript =>
+        PageAssetCatalog.IncludeOnboardingClientScript(RequestPath);
 
     private bool IncludeMapPreconnect =>
         PageAssetCatalog.IncludeMapPreconnect(RequestPath);

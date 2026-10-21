@@ -387,6 +387,12 @@ public static class PageAssetCatalog
             || path.StartsWith("/account-maken/", StringComparison.Ordinal);
     }
 
+    public static bool IncludeOnboardingClientScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal);
+    }
+
     public static bool IncludeVacancyWizardScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
