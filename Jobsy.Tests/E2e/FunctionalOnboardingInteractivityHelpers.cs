@@ -752,6 +752,25 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
     }
 
+    internal static async Task SelectRustigTransportAndTravelAsync(IPage page, bool mobile, int maxTravelMinutes = 30)
+    {
+        var transportTile = page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First;
+        await transportTile.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await transportTile.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await WaitForCircuitReadyAsync(page, 30_000);
+
+        var travel = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__travel-times button")
+            .Filter(new() { HasText = maxTravelMinutes.ToString() });
+        if (await travel.CountAsync() == 0)
+        {
+            travel = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button");
+        }
+
+        await travel.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await travel.First.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+        await WaitForCircuitReadyAsync(page, 30_000);
+    }
+
     internal static async Task ReachOnboardingRustigStepAsync(IPage page, int targetStep, bool mobile)
     {
         if (targetStep is < 1 or > 5)
@@ -798,11 +817,24 @@ internal static class FunctionalOnboardingInteractivityHelpers
             return;
         }
 
-        await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First
-            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First
-            .ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            if (await OnboardingRustigStepScreen(page, 4).IsVisibleAsync())
+            {
+                break;
+            }
+
+            if (await OnboardingRustigStepScreen(page, 3).IsVisibleAsync())
+            {
+                await SelectRustigTransportAndTravelAsync(page, mobile);
+                await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+                await WaitForCircuitReadyAsync(page, 60_000);
+                continue;
+            }
+
+            await page.WaitForTimeoutAsync(400);
+        }
+
         await AssertOnboardingRustigStepScreenAsync(page, 4);
         if (targetStep == 4)
         {
