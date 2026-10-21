@@ -14,7 +14,7 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        _web = new IllustratedPagesWebFactory();
+        _web = new IllustratedPagesWebFactory(statefulMeProfile: true);
         _ = _web.ServerAddress;
     }
 
@@ -91,6 +91,10 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
 
         await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
         await motivation.WaitForAsync(new() { Timeout = 15_000 });
+        await page.WaitForFunctionAsync(
+            "(marker) => { const el = document.querySelector(\"[data-testid='passport-default-motivation']\"); return el && el.value.includes(marker); }",
+            marker,
+            new() { Timeout = 30_000 });
         var value = await motivation.InputValueAsync();
         Assert.Contains(marker, value, StringComparison.Ordinal);
     }
