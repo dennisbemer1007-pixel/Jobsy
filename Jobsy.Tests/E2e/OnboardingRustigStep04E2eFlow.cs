@@ -2,7 +2,7 @@ using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
 
-/// <summary>Seed DB at step 4 after registration (capture/audit fast path).</summary>
+/// <summary>Seed DB at step 4 after registration (single navigation — no welcome MarkStarted race).</summary>
 internal static class OnboardingRustigStep04E2eFlow
 {
     internal static Task ReachRustigStep04Async(IPage page, string baseUrl, bool mobile) =>
@@ -17,10 +17,9 @@ internal static class OnboardingRustigStep04E2eFlow
         var email = await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateEmailAsync(
             page, baseUrl, rustig ? "rustig-u6x2" : "baseline-u6x2");
 
-        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await WaitForOnboardingWizardReadyAsync(page);
         await CandidateJourneyE2e.PrepareDiscoveryStepForE2eAsync(email, step: 4);
-        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+
+        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await WaitForOnboardingWizardReadyAsync(page);
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
 
