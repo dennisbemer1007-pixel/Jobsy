@@ -89,6 +89,9 @@ public class BanenkaartPagePerformanceGuardTests
 
         var consentJs = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("cookie-consent-known", consentJs);
+        Assert.Contains("readCookieValue", consentJs);
+        Assert.Contains("clear: function", consentJs);
+        Assert.Contains("document.cookie.indexOf(key + \"=\")", app);
         Assert.Contains("jobsyViewport", consentJs);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));

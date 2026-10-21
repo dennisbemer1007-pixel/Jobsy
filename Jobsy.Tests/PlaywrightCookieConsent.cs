@@ -10,7 +10,13 @@ internal static class PlaywrightCookieConsent
 {
     public const string InitScript = """
         try {
-          localStorage.setItem('Jobsy.CookieConsent', 'necessary');
+          const v = 'necessary';
+          localStorage.setItem('Jobsy.CookieConsent', v);
+          document.cookie = 'Jobsy.CookieConsent=' + encodeURIComponent(v)
+            + '; Path=/; Max-Age=' + (60 * 60 * 24 * 365)
+            + '; SameSite=Lax'
+            + (location.protocol === 'https:' ? '; Secure' : '');
+          document.documentElement.classList.add('cookie-consent-known');
         } catch (e) {}
         """;
 
