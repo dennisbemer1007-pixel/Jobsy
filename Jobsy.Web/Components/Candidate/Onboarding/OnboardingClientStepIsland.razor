@@ -1,14 +1,20 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Onboarding
+@using Microsoft.AspNetCore.Antiforgery
 @inject IJSRuntime Js
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IAsyncDisposable
 
 <div class="ob-client-step ob-fields ob-fields--illustrated"
      data-ob-client-step="@Step"
      data-initial="@_initialJson"
+     data-ob-antiforgery-header="@_antiforgeryHeader"
+     data-ob-antiforgery-token="@_antiforgeryToken"
+     data-ob-ssr-values="@(Step == 1 ? "1" : null)"
      data-testid="@($"onboarding-step-{Step}-illustrated")"
      @ref="_root">
-    @((MarkupString)OnboardingClientStepShells.Build(Step, Culture))
+    @((MarkupString)OnboardingClientStepShells.Build(Step, Culture, Step == 1 ? Draft : null))
 </div>
 
 @code {
@@ -19,6 +25,8 @@
 
     private ElementReference _root;
     private string _initialJson = "{}";
+    private string _antiforgeryHeader = "RequestVerificationToken";
+    private string _antiforgeryToken = "";
     private bool _mounted;
     private bool _markupLocked;
     private bool _pendingUnmount;
@@ -39,6 +47,14 @@
         }
 
         _initialJson = OnboardingClientStepInitialState.Build(Step, Draft, Culture, Presets, Seed);
+
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryHeader = tokens.HeaderName ?? "RequestVerificationToken";
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
     }
 
     /// <summary>Lock static shell after first paint so parent re-renders do not wipe client DOM before/during mount.</summary>

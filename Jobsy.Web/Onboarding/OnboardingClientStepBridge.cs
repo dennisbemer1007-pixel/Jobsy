@@ -77,6 +77,24 @@ public static class OnboardingClientStepBridge
         return map;
     }
 
+    public static void ApplyStep1(OnboardingProfileDraft draft, OnboardingClientStep1Request request)
+    {
+        ApplyStep1(
+            draft,
+            new Step1Payload
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Phone = request.Phone,
+                WhatsAppAllowed = request.WhatsAppAllowed,
+                WorkStatuses = request.WorkStatuses,
+                AddressQuery = request.AddressQuery,
+                HomeLat = request.HomeLat,
+                HomeLng = request.HomeLng,
+                BirthDateText = request.BirthDateText,
+            });
+    }
+
     private static void ApplyStep1(OnboardingProfileDraft draft, Step1Payload p)
     {
         draft.FirstName = (p.FirstName ?? string.Empty).Trim();

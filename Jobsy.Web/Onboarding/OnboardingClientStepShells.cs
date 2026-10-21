@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text;
+using Jobsy.Core.Rules;
+using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Web.Onboarding;
@@ -7,11 +9,11 @@ namespace Jobsy.Web.Onboarding;
 /// <summary>Static HTML for client onboarding steps (rendered once; JS attaches behavior).</summary>
 internal static class OnboardingClientStepShells
 {
-    public static string Build(int step, CultureState culture)
+    public static string Build(int step, CultureState culture, OnboardingProfileDraft? draft = null)
     {
         return step switch
         {
-            1 => BuildStep1(culture),
+            1 => BuildStep1(culture, draft),
             2 => BuildStep2(culture),
             3 => BuildStep3(culture),
             4 => BuildStep4(culture),
@@ -23,23 +25,32 @@ internal static class OnboardingClientStepShells
         };
     }
 
-    private static string BuildStep1(CultureState culture)
+    private static string BuildStep1(CultureState culture, OnboardingProfileDraft? draft)
     {
+        draft ??= new OnboardingProfileDraft();
+        var birthText = draft.BirthDate is { } d
+            ? JobsyDateInputRules.FormatDisplayDate(d, culture.Language)
+            : string.Empty;
+
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
         sb.Append("<div class=\"ob-wizard__field-row\">");
-        sb.Append(LabelInput("onboarding-field-firstname", culture["Profile.FirstName"], "firstName", "given-name"));
-        sb.Append(LabelInput("onboarding-field-lastname", culture["Profile.LastName"], "lastName", "family-name"));
+        sb.Append(LabelInput("onboarding-field-firstname", culture["Profile.FirstName"], "firstName", "given-name", draft.FirstName));
+        sb.Append(LabelInput("onboarding-field-lastname", culture["Profile.LastName"], "lastName", "family-name", draft.LastName));
         sb.Append("</div>");
         sb.Append("<div id=\"onboarding-field-location\" class=\"ob-fields__address\">");
         sb.Append("<label>");
         sb.Append(WebUtility.HtmlEncode(culture["Discovery.Address"]));
-        sb.Append("<input id=\"onboarding-home-address\" type=\"text\" autocomplete=\"street-address\" data-ob-client=\"address\" />");
+        sb.Append("<input id=\"onboarding-home-address\" type=\"text\" autocomplete=\"street-address\" data-ob-client=\"address\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(draft.AddressQuery ?? string.Empty));
+        sb.Append("\" /></label>");
         sb.Append("<ul class=\"address-suggestions ob-client-suggest\" role=\"listbox\" hidden></ul>");
-        sb.Append("</label></div>");
+        sb.Append("</div>");
         sb.Append("<fieldset id=\"onboarding-field-birthdate\"><legend>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.BirthDate"]));
-        sb.Append("</legend><input data-ob-client=\"birthDate\" inputmode=\"numeric\" autocomplete=\"bday\" /></fieldset>");
+        sb.Append("</legend><input data-ob-client=\"birthDate\" inputmode=\"numeric\" autocomplete=\"bday\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(birthText));
+        sb.Append("\" /></fieldset>");
         sb.Append("<fieldset class=\"work-status-field\" id=\"onboarding-field-work-status\">");
         sb.Append("<legend class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Legend"]));
@@ -49,8 +60,13 @@ internal static class OnboardingClientStepShells
         sb.Append("</p>");
         sb.Append("<div class=\"work-status-chips lobsy-choice-grid lobsy-choice-grid--desktop-3\" data-ob-client=\"workStatusGrid\" role=\"group\"></div>");
         sb.Append("</fieldset>");
-        sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel"));
-        sb.Append("</div>");
+        sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel", draft.Phone));
+        sb.Append("<div class=\"ob-step1-actions\">");
+        sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step1-next\" data-ob-step1-next data-testid=\"onboarding-next\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Next"]));
+        sb.Append("</button>");
+        sb.Append("<p class=\"state-message error ob-step1-next-error\" data-ob-step1-error hidden aria-live=\"polite\"></p>");
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 
@@ -140,11 +156,14 @@ internal static class OnboardingClientStepShells
 """;
     }
 
-    private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete)
+    private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete, string? value = null)
     {
         var idAttr = wrapId is null ? "" : $" id=\"{wrapId}\"";
+        var valueAttr = string.IsNullOrEmpty(value)
+            ? string.Empty
+            : $" value=\"{WebUtility.HtmlEncode(value)}\"";
         return $"""
-<label{idAttr}>{WebUtility.HtmlEncode(label)}<input autocomplete="{autocomplete}" maxlength="128" data-ob-client="{clientKey}" /></label>
+<label{idAttr}>{WebUtility.HtmlEncode(label)}<input autocomplete="{autocomplete}" maxlength="128" data-ob-client="{clientKey}"{valueAttr} /></label>
 """;
     }
 }

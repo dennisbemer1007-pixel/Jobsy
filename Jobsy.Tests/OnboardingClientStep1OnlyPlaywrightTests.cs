@@ -73,9 +73,14 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         var root = web.EnsureServerAddress();
         var suggestGets = 0;
         var browserApiHostFetches = 0;
+        var step1BffPuts = 0;
+        var step1AdvancePuts = 0;
         const string accLikeApiHost = "lobsy-acc-api.test";
 
         await using var context = await browser.NewContextAsync(Step1WebFactory.ContextOptions(mobile));
+        await context.RouteAsync(
+            url => url.Contains("/_blazor", StringComparison.OrdinalIgnoreCase),
+            route => route.AbortAsync());
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -91,11 +96,31 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
             {
                 Interlocked.Increment(ref suggestGets);
             }
+
+            if (req.Method == "PUT" && req.Url.Contains("/api/onboarding-client/step1", StringComparison.OrdinalIgnoreCase))
+            {
+                Interlocked.Increment(ref step1BffPuts);
+            }
+        };
+
+        page.RequestFinished += async (_, req) =>
+        {
+            if (req.Method != "PUT" || !req.Url.Contains("/api/onboarding-client/step1", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var post = req.PostData;
+            if (!string.IsNullOrWhiteSpace(post)
+                && post.Contains("\"advance\":true", StringComparison.OrdinalIgnoreCase))
+            {
+                Interlocked.Increment(ref step1AdvancePuts);
+            }
         };
 
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
+        await WaitForStep1MountedAsync(page);
 
         await AssertClientIslandAsync(page);
         if (!mobile)
@@ -190,10 +215,15 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         await first.FillAsync("Test");
         await last.FillAsync("Kandidaat");
 
-        Assert.Equal(0, web.ProfilePutCount);
-        await page.GetByTestId("onboarding-next").ClickAsync(new() { Timeout = 15_000 });
+        await page.WaitForTimeoutAsync(700);
+        Assert.True(web.ProfilePutCount >= 1, "Debounced step-1 saves should persist profile before Volgende.");
+        Assert.True(step1BffPuts >= 1);
+
+        await page.Locator("[data-ob-step1-next]").ClickAsync(new() { Timeout = 15_000 });
+        await page.WaitForURLAsync("**/candidate/start**", new() { Timeout = 90_000 });
         await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync(new() { Timeout = 90_000 });
-        Assert.Equal(1, web.ProfilePutCount);
+        Assert.True(web.ProfilePutCount >= 1);
+        Assert.Equal(1, step1AdvancePuts);
         Assert.Equal(2, web.SavedStep);
         Assert.Equal(0, browserApiHostFetches);
 
@@ -203,11 +233,15 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         }
 
         await page.ReloadAsync();
-        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
         await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync(new() { Timeout = 90_000 });
 
-        await page.GetByTestId("onboarding-back").ClickAsync(new() { Timeout = 15_000 });
-        await AssertClientIslandAsync(page);
+        web.SavedStep = 1;
+        await page.GotoAsync(root + "/candidate/start");
+        await WaitForStep1MountedAsync(page);
+
+        birth = page.Locator("[data-ob-client=birthDate]");
+        address = page.Locator("#onboarding-home-address");
+        chipB = page.Locator(".work-status-chips.lobsy-choice-grid .lobsy-choice-tile").Nth(1);
 
         await Assertions.Expect(birth).ToHaveValueAsync("12-03-1995");
         Assert.False(string.IsNullOrWhiteSpace(await address.InputValueAsync()));
@@ -219,13 +253,18 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         }
     }
 
-    private static async Task AssertClientIslandAsync(IPage page)
+    private static async Task WaitForStep1MountedAsync(IPage page)
     {
         await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             """() => document.querySelector('[data-ob-client-step="1"]')?.getAttribute('data-ob-client-mounted') === '1'""",
             null,
             new() { Timeout = 90_000 });
+    }
+
+    private static async Task AssertClientIslandAsync(IPage page)
+    {
+        await WaitForStep1MountedAsync(page);
         var hasBlazorBirth = await page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__text").CountAsync();
         Assert.Equal(0, hasBlazorBirth);
     }
@@ -469,6 +508,11 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
                 if (root.TryGetProperty("lastName", out var ln))
                 {
                     factory.StoredProfile.LastName = ln.GetString();
+                }
+
+                if (root.TryGetProperty("phoneNumber", out var phone))
+                {
+                    factory.StoredProfile.PhoneNumber = phone.GetString();
                 }
 
                 if (root.TryGetProperty("dateOfBirth", out var dob) && dob.ValueKind == JsonValueKind.String

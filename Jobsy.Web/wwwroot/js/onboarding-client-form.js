@@ -75,14 +75,38 @@
         return { min: min, max: max, availability: Object.keys(dayParts) };
     }
 
+    function readAntiforgery(root) {
+        return {
+            header: root.getAttribute("data-ob-antiforgery-header") || "RequestVerificationToken",
+            token: root.getAttribute("data-ob-antiforgery-token") || ""
+        };
+    }
+
+    function putStep1(root, collectFn, advance) {
+        var body = collectFn();
+        body.advance = !!advance;
+        var af = readAntiforgery(root);
+        var headers = { "Content-Type": "application/json" };
+        if (af.token) headers[af.header] = af.token;
+        return fetch("/api/onboarding-client/step1", {
+            method: "PUT",
+            credentials: "same-origin",
+            headers: headers,
+            body: JSON.stringify(body)
+        });
+    }
+
     function mountStep1(root, initial) {
+        var ssrValues = root.getAttribute("data-ob-ssr-values") === "1";
         var state = {
             workStatuses: new Set(initial.workStatusesSelected || []),
             homeLat: initial.homeLat,
             homeLng: initial.homeLng,
             suggestGen: 0,
             strings: initial.strings || {},
-            dirty: { first: false, last: false, address: false, birth: false, phone: false }
+            dirty: { first: false, last: false, address: false, birth: false, phone: false },
+            saveTimer: null,
+            saveInFlight: false
         };
 
         var first = root.querySelector("[data-ob-client=firstName]");
@@ -108,11 +132,52 @@
         bindDirty(birth, "birth");
         bindDirty(phone, "phone");
 
-        if (first && !state.dirty.first) first.value = initial.firstName || "";
-        if (last && !state.dirty.last) last.value = initial.lastName || "";
-        if (address && !state.dirty.address) address.value = initial.addressQuery || "";
-        if (birth && !state.dirty.birth) birth.value = initial.birthDateText || "";
-        if (phone && !state.dirty.phone) phone.value = initial.phone || "";
+        if (!ssrValues) {
+            if (first && !state.dirty.first) first.value = initial.firstName || "";
+            if (last && !state.dirty.last) last.value = initial.lastName || "";
+            if (address && !state.dirty.address) address.value = initial.addressQuery || "";
+            if (birth && !state.dirty.birth) birth.value = initial.birthDateText || "";
+            if (phone && !state.dirty.phone) phone.value = initial.phone || "";
+        }
+
+        function collectPayload() {
+            return {
+                firstName: first ? first.value : "",
+                lastName: last ? last.value : "",
+                phone: phone ? phone.value : "",
+                whatsAppAllowed: false,
+                workStatuses: Array.from(state.workStatuses),
+                addressQuery: address ? address.value : "",
+                homeLat: state.homeLat,
+                homeLng: state.homeLng,
+                birthDateText: birth ? birth.value : ""
+            };
+        }
+
+        function scheduleSave() {
+            if (state.saveTimer) clearTimeout(state.saveTimer);
+            state.saveTimer = setTimeout(function () {
+                state.saveTimer = null;
+                if (state.saveInFlight) return;
+                state.saveInFlight = true;
+                putStep1(root, collectPayload, false)
+                    .catch(function () { })
+                    .finally(function () { state.saveInFlight = false; });
+            }, 500);
+        }
+
+        function bindSaveEvents(input) {
+            if (!input || input.__obStep1SaveBound) return;
+            input.__obStep1SaveBound = true;
+            input.addEventListener("change", scheduleSave);
+            input.addEventListener("blur", scheduleSave);
+        }
+
+        bindSaveEvents(first);
+        bindSaveEvents(last);
+        bindSaveEvents(address);
+        bindSaveEvents(birth);
+        bindSaveEvents(phone);
 
         function renderWorkStatus() {
             if (!grid) return;
@@ -130,6 +195,7 @@
                     if (state.workStatuses.has(opt.code)) state.workStatuses.delete(opt.code);
                     else state.workStatuses.add(opt.code);
                     renderWorkStatus();
+                    scheduleSave();
                 });
                 grid.appendChild(btn);
             });
@@ -243,6 +309,7 @@
                             state.homeLat = pick.latitude;
                             state.homeLng = pick.longitude;
                             hideSuggest();
+                            scheduleSave();
                         });
                     });
                 })
@@ -253,19 +320,56 @@
                 });
         }
 
-        state.collect = function () {
-            return {
-                firstName: first ? first.value : "",
-                lastName: last ? last.value : "",
-                phone: phone ? phone.value : "",
-                whatsAppAllowed: false,
-                workStatuses: Array.from(state.workStatuses),
-                addressQuery: address ? address.value : "",
-                homeLat: state.homeLat,
-                homeLng: state.homeLng,
-                birthDateText: birth ? birth.value : ""
-            };
-        };
+        var nextBtn = root.querySelector("[data-ob-step1-next]");
+        var errEl = root.querySelector("[data-ob-step1-error]");
+        if (nextBtn && !nextBtn.__obStep1NextBound) {
+            nextBtn.__obStep1NextBound = true;
+            nextBtn.addEventListener("click", function () {
+                if (errEl) {
+                    errEl.hidden = true;
+                    errEl.textContent = "";
+                }
+                nextBtn.disabled = true;
+                if (state.saveTimer) {
+                    clearTimeout(state.saveTimer);
+                    state.saveTimer = null;
+                }
+                putStep1(root, collectPayload, true)
+                    .then(function (res) {
+                        return res.json().then(function (body) {
+                            return { ok: res.ok, status: res.status, body: body };
+                        }).catch(function () {
+                            return { ok: res.ok, status: res.status, body: {} };
+                        });
+                    })
+                    .then(function (result) {
+                        if (result.ok && result.body && result.body.redirectUrl) {
+                            window.location.assign(result.body.redirectUrl);
+                            return;
+                        }
+                        if (result.ok) {
+                            window.location.reload();
+                            return;
+                        }
+                        var msg = (result.body && result.body.message)
+                            || "Opslaan mislukt. Controleer je gegevens en probeer opnieuw.";
+                        if (errEl) {
+                            errEl.textContent = msg;
+                            errEl.hidden = false;
+                        }
+                        nextBtn.disabled = false;
+                    })
+                    .catch(function () {
+                        if (errEl) {
+                            errEl.textContent = "Verbinding mislukt. Probeer het opnieuw.";
+                            errEl.hidden = false;
+                        }
+                        nextBtn.disabled = false;
+                    });
+            });
+        }
+
+        state.collect = collectPayload;
 
         return state;
     }
@@ -710,4 +814,19 @@
             window.__jobsyKompasCompleteRef = null;
         }
     };
+
+    function autoMountClientSteps() {
+        document.querySelectorAll("[data-ob-client-step]").forEach(function (root) {
+            if (root.getAttribute("data-ob-client-mounted") === "1") return;
+            var step = parseInt(root.getAttribute("data-ob-client-step"), 10);
+            if (!step) return;
+            window.jobsyOnboardingClient.mount(root, step);
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", autoMountClientSteps);
+    } else {
+        autoMountClientSteps();
+    }
 })();

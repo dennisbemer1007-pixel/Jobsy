@@ -1,5 +1,5 @@
 @page "/candidate/start"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Features
@@ -273,11 +273,14 @@
                                 disabled="@_busy"
                                 @onclick="SkipOptionalAsync">@Culture["Onboarding.Skip"]</button>
                     }
-                    <button type="button"
-                            class="ob-rustig__btn ob-rustig__btn--primary"
-                            data-testid="onboarding-next"
-                            disabled="@_busy"
-                            @onclick="@(() => NextAsync())">@NextLabel</button>
+                    @if (_step != 1)
+                    {
+                        <button type="button"
+                                class="ob-rustig__btn ob-rustig__btn--primary"
+                                data-testid="onboarding-next"
+                                disabled="@_busy"
+                                @onclick="@(() => NextAsync())">@NextLabel</button>
+                    }
                 </div>
             </ChildContent>
             <JobsRail>
@@ -691,11 +694,14 @@
                                     data-testid="onboarding-back"
                                     disabled="@(_busy || (_step == 1 && _earlyMoment == EarlyRewardMoment.None))"
                                     @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
-                            <button type="button"
-                                    class="btn btn-primary ob-wizard__cta"
-                                    data-testid="onboarding-next"
-                                    disabled="@_busy"
-                                    @onclick="@(() => NextAsync())">@NextLabel</button>
+                            @if (_step != 1)
+                            {
+                                <button type="button"
+                                        class="btn btn-primary ob-wizard__cta"
+                                        data-testid="onboarding-next"
+                                        disabled="@_busy"
+                                        @onclick="@(() => NextAsync())">@NextLabel</button>
+                            }
                             @if (ShowTestsLaterOffer && !ShowJourneyConsent)
                             {
                                 <button type="button"
@@ -1280,7 +1286,7 @@
 
         if (!fromMiniTestFinish)
         {
-            if (_step is >= 1 and <= 10)
+            if (_step is >= 2 and <= 10)
             {
                 if (!await TryImportClientStepAsync())
                 {
@@ -1291,7 +1297,7 @@
 
             if (_step == 1)
             {
-                await EnsureAddressResolvedAsync();
+                return;
             }
 
             var issues = GetValidationIssues();
