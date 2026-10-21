@@ -21,16 +21,29 @@
     private string _initialJson = "{}";
     private bool _mounted;
     private bool _markupLocked;
+<<<<<<< HEAD
     private bool _pendingUnmount;
+=======
+>>>>>>> cff6e6017 (Fix onboarding step 1 client island on acc (mount, grid, names).)
     private int _lastStep;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (_lastStep != Step)
         {
             if (_mounted)
             {
+<<<<<<< HEAD
                 _pendingUnmount = true;
+=======
+                try
+                {
+                    await Js.InvokeVoidAsync("jobsyOnboardingClient.unmount", _root);
+                }
+                catch (JSException)
+                {
+                }
+>>>>>>> cff6e6017 (Fix onboarding step 1 client island on acc (mount, grid, names).)
             }
 
             _lastStep = Step;

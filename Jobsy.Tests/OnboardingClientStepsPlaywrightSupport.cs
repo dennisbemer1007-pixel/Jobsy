@@ -2,7 +2,9 @@ using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
+using Jobsy.Core.Rules;
 using Jobsy.Tests.E2e;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
@@ -71,6 +73,124 @@ internal static class OnboardingClientStepsPlaywrightSupport
         await address.PressSequentiallyAsync("c", new() { Delay = 50 });
         await page.WaitForTimeoutAsync(450);
         Assert.True(suggestGetCount >= 1, "Expected at least one suggest fetch after 3+ characters.");
+    }
+
+    /// <summary>Returning candidate on step 1 (sidebar layout, prefilled names) — acc regression for client island mount.</summary>
+    internal static async Task RunStep1ReturningCandidateAccLayoutAsync(IBrowser browser, bool mobile)
+    {
+        using var web = new ClientStepsWebFactory
+        {
+            RustigEnabled = false,
+            ProfileFirstName = "Test Kandidaat",
+            ProfileLastName = "Kandidaat",
+            ProfileFullName = "Test Kandidaat",
+            ProfileEmail = "test.kandidaat@example.com",
+            SavedStep = 1,
+            OnboardingSource = "welcome",
+        };
+        var serverRoot = web.EnsureServerAddress();
+
+        await using var context = await browser.NewContextAsync(ContextOptions(mobile));
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await page.GotoAsync(serverRoot + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
+
+        if (mobile)
+        {
+            await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
+        }
+        else
+        {
+            await page.Locator(".ob-wizard__sidebar").WaitForAsync(new() { Timeout = 90_000 });
+            await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
+        }
+        await page.WaitForFunctionAsync(
+            """() => document.querySelector('[data-ob-client-step="1"]')?.getAttribute('data-ob-client-mounted') === '1'""",
+            null,
+            new() { Timeout = 90_000 });
+
+        var first = page.Locator("[data-ob-client=firstName]");
+        var last = page.Locator("[data-ob-client=lastName]");
+        await Assertions.Expect(first).ToHaveValueAsync("Test");
+        await Assertions.Expect(last).ToHaveValueAsync("Kandidaat");
+
+        var chip = page.Locator(".work-status-chips .lobsy-choice-tile").First;
+        for (var i = 0; i < 15; i++)
+        {
+            if (mobile)
+            {
+                await chip.TapAsync(new() { Timeout = 5_000 });
+            }
+            else
+            {
+                await chip.ClickAsync(new() { Timeout = 5_000 });
+            }
+
+            await page.WaitForTimeoutAsync(mobile ? 60 : 80);
+        }
+
+        await Assertions.Expect(chip).ToHaveAttributeAsync("aria-pressed", "true");
+        await Assertions.Expect(chip).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+
+        var birth = page.Locator("[data-ob-client=birthDate]");
+        await birth.FillAsync("");
+        await birth.PressSequentiallyAsync("12031995", new() { Delay = mobile ? 55 : 75 });
+        await Assertions.Expect(birth).ToHaveValueAsync("12-03-1995");
+
+        var address = page.Locator("#onboarding-home-address");
+        await address.FillAsync("");
+        await address.PressSequentiallyAsync("2671GB", new() { Delay = 50 });
+        await page.WaitForTimeoutAsync(400);
+        await page.Locator(".address-suggestions__item").First.ClickAsync(new() { Timeout = 15_000 });
+
+        Assert.Equal(0, web.ProfilePutCount);
+        await page.GetByTestId("onboarding-next").ClickAsync(new() { Timeout = 15_000 });
+        await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync(new() { Timeout = 90_000 });
+        Assert.Equal(1, web.ProfilePutCount);
+    }
+
+    internal static async Task CaptureStep1ReturningLayoutScreenshotAsync(IBrowser browser, bool mobile, string fileName)
+    {
+        using var web = new ClientStepsWebFactory
+        {
+            RustigEnabled = false,
+            ProfileFirstName = "Test Kandidaat",
+            ProfileLastName = "Kandidaat",
+            ProfileFullName = "Test Kandidaat",
+            ProfileEmail = "test.kandidaat@example.com",
+            SavedStep = 1,
+            OnboardingSource = "welcome",
+        };
+        var serverRoot = web.EnsureServerAddress();
+        await using var context = await browser.NewContextAsync(ContextOptions(mobile));
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await page.GotoAsync(serverRoot + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
+        if (!mobile)
+        {
+            await page.Locator(".ob-wizard__sidebar").WaitForAsync(new() { Timeout = 90_000 });
+        }
+
+        await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
+        await page.WaitForFunctionAsync(
+            """() => document.querySelector('[data-ob-client-step="1"]')?.getAttribute('data-ob-client-mounted') === '1'""",
+            null,
+            new() { Timeout = 90_000 });
+        await page.Locator(".work-status-chips.lobsy-choice-grid .lobsy-choice-tile").First.WaitForAsync(new() { Timeout = 30_000 });
+        await page.WaitForTimeoutAsync(400);
+
+        var dir = Environment.GetEnvironmentVariable("JOBSY_ONBOARDING_STEP1_ARTIFACTS")
+                  ?? "/opt/cursor/artifacts";
+        Directory.CreateDirectory(dir);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, fileName), FullPage = true });
     }
 
     internal static async Task RunSteps1And2SaveOnceAsync(IBrowser browser, bool mobile)
@@ -203,6 +323,25 @@ internal static class OnboardingClientStepsPlaywrightSupport
         private IHost? _kestrel;
         internal int SavedStep { get; set; } = 1;
         internal int ProfilePutCount;
+        internal int DreamJobPutCount;
+        internal int ConsentPostCount;
+        internal int CompletePostCount;
+        internal int CompetencyPutCount;
+        internal int CareerPutCount;
+        internal int CulturePutCount;
+        internal int ValuesPutCount;
+        internal bool FinishReached;
+        internal bool HasTestConsent;
+        internal bool RustigEnabled = true;
+        internal string ProfileFirstName = "Onboarding";
+        internal string ProfileLastName = "Tester";
+        internal string? ProfileFullName;
+        internal string ProfileEmail = "onboarding.tester@example.com";
+        internal string? OnboardingSource;
+        internal readonly Dictionary<string, int> CompetencyAnswers = new();
+        internal readonly Dictionary<string, int> CareerAnswers = new();
+        internal readonly Dictionary<string, int> CultureAnswers = new();
+        internal readonly Dictionary<string, int> ValuesAnswers = new();
 
         public string ServerAddress { get; private set; } = "";
 
@@ -218,6 +357,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            var rustigEnabled = RustigEnabled;
             builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) =>
             {
@@ -226,6 +366,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     ["ApiBaseUrl"] = "http://api.test/",
                     ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                     ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
+                    ["Onboarding:RustigEnabled"] = rustigEnabled ? "true" : "false",
                 });
             });
             builder.ConfigureTestServices(services =>
@@ -290,7 +431,10 @@ internal static class OnboardingClientStepsPlaywrightSupport
     private sealed class StubFlags : IFeatureFlags
     {
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: false));
+            => ValueTask.FromResult(new FeatureFlagSnapshot(
+                EmployersEnabled: true,
+                CandidatePassportEnabled: false,
+                OnboardingFinaleV2Enabled: true));
 
         public async ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
             => (await GetAsync(cancellationToken)).IsEnabled(feature);
@@ -353,6 +497,32 @@ internal static class OnboardingClientStepsPlaywrightSupport
         {
             await Task.Delay(80, cancellationToken);
             var path = request.RequestUri?.AbsolutePath ?? "";
+
+            if (path.Contains("/test-ai-consent", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Post)
+            {
+                Interlocked.Increment(ref factory.ConsentPostCount);
+                factory.HasTestConsent = true;
+                return JsonResponse(new MeProfile
+                {
+                    FirstName = "Onboarding",
+                    LastName = "Tester",
+                    TestAiConsentAt = DateTime.UtcNow,
+                });
+            }
+
+            if (path.Contains("/onboarding/complete", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Post)
+            {
+                Interlocked.Increment(ref factory.CompletePostCount);
+                factory.FinishReached = true;
+                return JsonResponse(OnboardingStateDto());
+            }
+
+            if (path.Contains("/dream-job", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
+            {
+                Interlocked.Increment(ref factory.DreamJobPutCount);
+                return JsonResponse(new { ok = true });
+            }
+
             if (path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
             {
                 using var doc = await JsonDocument.ParseAsync(await request.Content!.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
@@ -361,37 +531,105 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     factory.SavedStep = stepProp.GetInt32();
                 }
 
-                return JsonResponse(new { currentStep = factory.SavedStep, shouldShow = true, steps = Array.Empty<object>() });
+                if (doc.RootElement.TryGetProperty("finishReached", out var fin) && fin.GetBoolean())
+                {
+                    factory.FinishReached = true;
+                }
+
+                return JsonResponse(OnboardingStateDto());
             }
 
             if (path.Contains("/profile", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
             {
                 Interlocked.Increment(ref factory.ProfilePutCount);
-                return JsonResponse(new MeProfile { FirstName = "T", LastName = "E" });
+                return JsonResponse(new MeProfile { FirstName = "Onboarding", LastName = "Tester" });
+            }
+
+            if (path.Contains("/competencies", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
+            {
+                Interlocked.Increment(ref factory.CompetencyPutCount);
+                await MergeAnswersAsync(request, factory.CompetencyAnswers, AssessmentKind.Competence, cancellationToken);
+                return JsonResponse(new { answers = factory.CompetencyAnswers, quickScanVersion = 1 });
+            }
+
+            if (path.Contains("/career-interests", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
+            {
+                Interlocked.Increment(ref factory.CareerPutCount);
+                await MergeAnswersAsync(request, factory.CareerAnswers, AssessmentKind.Career, cancellationToken);
+                return JsonResponse(new { answers = factory.CareerAnswers, quickScanVersion = 1 });
+            }
+
+            if (path.Contains("/culture", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
+            {
+                Interlocked.Increment(ref factory.CulturePutCount);
+                await MergeAnswersAsync(request, factory.CultureAnswers, AssessmentKind.Culture, cancellationToken);
+                return JsonResponse(new { answers = factory.CultureAnswers, quickScanVersion = 1 });
+            }
+
+            if (path.Contains("/values", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
+            {
+                Interlocked.Increment(ref factory.ValuesPutCount);
+                await MergeAnswersAsync(request, factory.ValuesAnswers, AssessmentKind.Values, cancellationToken);
+                return JsonResponse(new { answers = factory.ValuesAnswers, quickScanVersion = 1 });
             }
 
             object payload = path switch
             {
-                var p when p.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) => new
-                {
-                    currentStep = factory.SavedStep,
-                    shouldShow = true,
-                    steps = Array.Empty<object>(),
-                },
+                var p when p.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) => OnboardingStateDto(),
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => new MeProfile
                 {
-                    FirstName = "Onboarding",
-                    LastName = "Tester",
+                    FirstName = factory.ProfileFirstName,
+                    LastName = factory.ProfileLastName,
+                    FullName = factory.ProfileFullName ?? "",
+                    Email = factory.ProfileEmail,
+                    TestAiConsentAt = factory.HasTestConsent ? DateTime.UtcNow : null,
                 },
-                var p when p.Contains("/competencies", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
-                var p when p.Contains("/career-interests", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
-                var p when p.Contains("/culture", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
-                var p when p.Contains("/values", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
+                var p when p.Contains("/competencies", StringComparison.OrdinalIgnoreCase) => new { answers = factory.CompetencyAnswers, quickScanVersion = 1 },
+                var p when p.Contains("/career-interests", StringComparison.OrdinalIgnoreCase) => new { answers = factory.CareerAnswers, quickScanVersion = 1 },
+                var p when p.Contains("/culture", StringComparison.OrdinalIgnoreCase) => new { answers = factory.CultureAnswers, quickScanVersion = 1 },
+                var p when p.Contains("/values", StringComparison.OrdinalIgnoreCase) => new { answers = factory.ValuesAnswers, quickScanVersion = 1 },
                 var p when p.Contains("/site/status", StringComparison.OrdinalIgnoreCase) => new { maintenance = false },
+                var p when p.Contains("/nearby", StringComparison.OrdinalIgnoreCase) => new { count = 3, maxTravelMinutes = 30 },
                 _ => new { },
             };
 
             return JsonResponse(payload);
+
+            object OnboardingStateDto() => new
+            {
+                currentStep = factory.SavedStep,
+                startedAtUtc = DateTime.UtcNow,
+                isComplete = false,
+                shouldShow = true,
+                finishReached = factory.FinishReached,
+                wizardVersion = 2,
+                source = factory.OnboardingSource,
+                steps = Array.Empty<object>(),
+            };
+        }
+
+        private static async Task MergeAnswersAsync(
+            HttpRequestMessage request,
+            Dictionary<string, int> target,
+            AssessmentKind kind,
+            CancellationToken cancellationToken)
+        {
+            using var doc = await JsonDocument.ParseAsync(await request.Content!.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+            if (doc.RootElement.TryGetProperty("answers", out var answers) && answers.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in answers.EnumerateObject())
+                {
+                    if (prop.Value.TryGetInt32(out var v) && v is >= 1 and <= 5)
+                    {
+                        target[prop.Name] = v;
+                    }
+                }
+            }
+
+            foreach (var id in TestDepthRules.MiniIds(kind))
+            {
+                target.TryAdd(id.ToString(), 3);
+            }
         }
 
         private static HttpResponseMessage JsonResponse(object payload)
