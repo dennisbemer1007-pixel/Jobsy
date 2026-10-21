@@ -28,17 +28,20 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     private readonly bool _emptyAppsAndLikes;
     private readonly bool _minimalPassportProfile;
     private readonly bool _statefulMeProfile;
+    private readonly bool _candidatePassportOff;
     private readonly Uri _apiBaseUri;
 
     public IllustratedPagesWebFactory(
         bool emptyAppsAndLikes = false,
         bool minimalPassportProfile = false,
         bool accLikeProductionCsp = false,
-        bool statefulMeProfile = false)
+        bool statefulMeProfile = false,
+        bool candidatePassportOff = false)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
         _minimalPassportProfile = minimalPassportProfile;
         _statefulMeProfile = statefulMeProfile;
+        _candidatePassportOff = candidatePassportOff;
         _apiBaseUri = new Uri(
             accLikeProductionCsp ? PlaywrightAccLikeRegression.AccLikeApiBaseUrl : "http://api.test/",
             UriKind.Absolute);
@@ -72,7 +75,8 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
-            services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
+            services.AddSingleton<IFeatureFlags>(
+                _candidatePassportOff ? new PassportOffFlags() : new PassportOnFlags(uwvOn));
             services.RemoveAll<IGeocodingClient>();
             services.AddSingleton<IGeocodingClient>(IllustratedPagesGeocoderStub.Instance);
             services.RemoveAll<IHttpClientFactory>();
@@ -130,6 +134,21 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         var raw = Environment.GetEnvironmentVariable(name);
         return string.Equals(raw, "0", StringComparison.Ordinal)
                || string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class PassportOffFlags : IFeatureFlags
+    {
+        private readonly FeatureFlagSnapshot _snap = new(EmployersEnabled: true, CandidatePassportEnabled: false);
+
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(_snap);
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(_snap.IsEnabled(feature));
+
+        public void Invalidate()
+        {
+        }
     }
 
     private sealed class PassportOnFlags(bool uwvFeaturesEnabled) : IFeatureFlags
