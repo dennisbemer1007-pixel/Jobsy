@@ -46,6 +46,34 @@
                 document.documentElement.setAttribute("data-lobsy-candidate-nav-interactive", "true");
             } catch (e) { }
         },
+        applyDocumentTitle: function (title) {
+            if (!title) {
+                return;
+            }
+            try {
+                document.title = title;
+                var el = document.querySelector("title");
+                if (el) {
+                    el.textContent = title;
+                }
+            } catch (e) { }
+        },
+        applyDocumentTitleFromAnchor: function (anchor) {
+            if (!anchor || !anchor.getAttribute) {
+                return;
+            }
+            this.applyDocumentTitle(anchor.getAttribute("data-lobsy-document-title"));
+        },
+        applyDocumentTitleForPath: function (path) {
+            var target = this.normalizePath(path || location.pathname);
+            var links = this.visibleNavLinks();
+            for (var i = 0; i < links.length; i++) {
+                if (this.normalizePath(links[i].getAttribute("href") || "") === target) {
+                    this.applyDocumentTitleFromAnchor(links[i]);
+                    return;
+                }
+            }
+        },
         normalizePath: function (urlOrPath) {
             try {
                 var u =
@@ -228,6 +256,7 @@
                 }
                 ev.preventDefault();
                 try {
+                    window.lobsyCandidateNav.applyDocumentTitleFromAnchor(anchor);
                     window.lobsyCandidateNav.scheduleSyncCheck(href);
                 } catch (eNav) { }
             },
@@ -239,6 +268,7 @@
                 return;
             }
             try {
+                window.lobsyCandidateNav.applyDocumentTitleForPath(location.pathname);
                 window.lobsyCandidateNav.scheduleSyncCheck(location.pathname);
             } catch (eLoad) { }
         });

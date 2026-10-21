@@ -80,6 +80,13 @@
 
     @if (!_uwvShowcase && _bootstrapping)
     {
+        <CandidateIllustratedHero Title="@Culture["Career.Title"]"
+                                  Lead="@Culture["Career.Overview.Lead"]"
+                                  ArtUrl="@CareerHeroArt"
+                                  ArtUrlMobileFigures="@MobFiguresOpleiding"
+                                  ArtPosition="58% center"
+                                  CompactHeroLayout="onboarding"
+                                  CssClass="@HeroCompactPreview.CandHeroCssClass" />
         <CareerStage Variant="ClimbVariant.Stones"
                      DesktopStones="@SceneStones"
                      CurrentIndex="0">

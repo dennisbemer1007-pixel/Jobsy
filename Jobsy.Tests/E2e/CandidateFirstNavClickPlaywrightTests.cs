@@ -133,7 +133,14 @@ public sealed class CandidateFirstNavClickPlaywrightTests : IAsyncLifetime
                   const actives = visible.filter(el =>
                     el.classList.contains('is-active') || el.getAttribute('aria-current') === 'page');
                   if (actives.length !== 1) return false;
-                  return norm(actives[0].getAttribute('href') || '') === target;
+                  if (norm(actives[0].getAttribute('href') || '') !== target) return false;
+                  const wantTitle = actives[0].getAttribute('data-lobsy-document-title');
+                  if (wantTitle && document.title !== wantTitle) return false;
+                  if (target === '/carriere') {
+                    const h1 = document.querySelector('.career-page h1');
+                    if (!h1 || !(h1.textContent || '').trim()) return false;
+                  }
+                  return true;
                 }
                 """,
                 new { href, probe });

@@ -1,5 +1,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Seo
 @inject NavigationManager Navigation
+@inject CultureState Culture
 @inject IJSRuntime Js
 
 <a href="@Href"
@@ -9,6 +12,7 @@
    data-testid="@TestId"
    data-desktop-only="@DesktopOnly"
    data-lobsy-candidate-nav="true"
+   data-lobsy-document-title="@DocumentTitle"
    data-enhance-nav="false"
    @onclick="NavigateAsync"
    @onclick:preventDefault="true">
@@ -24,11 +28,21 @@
     [Parameter] public string? DesktopOnly { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    private string DocumentTitle
+    {
+        get
+        {
+            var entry = PageSeoCatalog.Resolve(Href);
+            return PageSeoResolver.WithBrand(Culture[entry.TitleKey]);
+        }
+    }
+
     private async Task NavigateAsync()
     {
         Navigation.NavigateTo(Href, forceLoad: false);
         try
         {
+            await Js.InvokeVoidAsync("lobsyCandidateNav.applyDocumentTitle", DocumentTitle);
             await Js.InvokeVoidAsync("lobsyCandidateNav.scheduleSyncCheck", Href);
         }
         catch
