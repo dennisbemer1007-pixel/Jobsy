@@ -1719,6 +1719,12 @@
     padding-top: 0.75rem;
   }
 
+  /* Overview has no floating mobile coach; drop the coach gutter on the card. */
+  .journey.journey--overview-route:not(.journey--fit) .journey-step:has(.journey-overview) {
+    padding-inline: 16px !important;
+    padding-bottom: calc(var(--bottom-nav-clearance, 4.75rem) + 1.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .app-shell--questionnaire:has(.journey.journey--overview-route) .journey-stage {
     overflow: visible;
     max-height: none;

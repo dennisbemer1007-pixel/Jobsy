@@ -55,6 +55,33 @@ public sealed class DiscoveryOverviewRouteCaptureTests
 
         if (mobile)
         {
+            var layoutTopJson = await page.EvaluateAsync<string>(
+                """
+                () => {
+                  const card = document.querySelector('.journey-step:has(.journey-overview)');
+                  const intro = document.querySelector('.journey-route__intro');
+                  if (!card || !intro) return JSON.stringify({ error: 'missing nodes' });
+                  const cr = card.getBoundingClientRect();
+                  const ir = intro.getBoundingClientRect();
+                  return JSON.stringify({
+                    cardLeft: cr.left, cardRight: cr.right,
+                    introLeft: ir.left, introRight: ir.right,
+                    marginLeft: ir.left - cr.left,
+                    marginRight: cr.right - ir.right,
+                  });
+                }
+                """);
+            await File.WriteAllTextAsync(
+                Path.Combine(ArtifactsDir, "ontdekkingsreis-route-390-layout-top.json"),
+                layoutTopJson);
+
+            var layoutTop = JsonDocument.Parse(layoutTopJson).RootElement;
+            Assert.True(layoutTop.TryGetProperty("marginLeft", out var mlTop));
+            Assert.True(layoutTop.TryGetProperty("marginRight", out var mrTop));
+            Assert.InRange(mlTop.GetDouble(), 14, 18);
+            Assert.InRange(mrTop.GetDouble(), 14, 18);
+            Assert.InRange(Math.Abs(mlTop.GetDouble() - mrTop.GetDouble()), 0, 2);
+
             var heroImgPos = await page.EvaluateAsync<string>(
                 """
                 () => {
@@ -83,6 +110,34 @@ public sealed class DiscoveryOverviewRouteCaptureTests
             var testsRegion = page.Locator(".journey-route__tests").Last;
             await testsRegion.ScrollIntoViewIfNeededAsync();
             await page.WaitForTimeoutAsync(400);
+
+            var layoutTestsJson = await page.EvaluateAsync<string>(
+                """
+                () => {
+                  const card = document.querySelector('.journey-step:has(.journey-overview)');
+                  const tile = document.querySelector('.journey-route__test');
+                  if (!card || !tile) return JSON.stringify({ error: 'missing nodes' });
+                  const cr = card.getBoundingClientRect();
+                  const tr = tile.getBoundingClientRect();
+                  return JSON.stringify({
+                    cardLeft: cr.left, cardRight: cr.right,
+                    tileLeft: tr.left, tileRight: tr.right,
+                    marginLeft: tr.left - cr.left,
+                    marginRight: cr.right - tr.right,
+                  });
+                }
+                """);
+            await File.WriteAllTextAsync(
+                Path.Combine(ArtifactsDir, "ontdekkingsreis-route-390-layout-tests.json"),
+                layoutTestsJson);
+
+            var layoutTests = JsonDocument.Parse(layoutTestsJson).RootElement;
+            Assert.True(layoutTests.TryGetProperty("marginLeft", out var mlTests));
+            Assert.True(layoutTests.TryGetProperty("marginRight", out var mrTests));
+            Assert.InRange(mlTests.GetDouble(), 14, 18);
+            Assert.InRange(mrTests.GetDouble(), 14, 18);
+            Assert.InRange(Math.Abs(mlTests.GetDouble() - mrTests.GetDouble()), 0, 2);
+
             await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(ArtifactsDir, "ontdekkingsreis-route-product-390-tests.png"),
