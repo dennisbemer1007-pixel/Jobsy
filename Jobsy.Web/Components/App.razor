@@ -122,6 +122,7 @@
                         if (document.documentElement.getAttribute("data-lobsy-circuit") === "ready") return;
                         var a = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
                         if (!a || a.target === "_blank" || a.getAttribute("data-enhance-nav") === "false") return;
+                        if (a.getAttribute("data-lobsy-candidate-nav") === "true") return;
                         var href = a.getAttribute("href");
                         if (!href || href.charAt(0) === "#") return;
                         try {
@@ -333,7 +334,7 @@
         </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261021-02" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261021-03" nonce="@Nonce" defer></script>
     }
 </body>
 
