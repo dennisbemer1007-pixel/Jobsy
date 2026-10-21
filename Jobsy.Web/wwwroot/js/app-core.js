@@ -1569,6 +1569,11 @@ window.jobsyDialog = (function () {
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
     var userRequestedReload = false;
     var updateBannerVisible = false;
+    var pageLoadedAt = Date.now();
+    var registrationWired = false;
+    var updateDismissed = false;
+    /** Grace after navigation so a stale waiting worker from the previous deploy is not shown immediately. */
+    var UPDATE_BANNER_GRACE_MS = 12000;
 
     function circuitReady() {
         try {
@@ -1588,8 +1593,21 @@ window.jobsyDialog = (function () {
         el.className = "lobsy-app-update";
         el.setAttribute("role", "status");
         el.setAttribute("aria-live", "polite");
-        el.innerHTML = '<div class="lobsy-app-update__panel">Nieuwe versie beschikbaar.<button type="button" class="lobsy-app-update__action" data-lobsy-app-update>Vernieuwen</button></div>';
+        el.innerHTML =
+            '<div class="lobsy-app-update__panel">'
+            + '<span class="lobsy-app-update__text">Nieuwe versie beschikbaar.</span>'
+            + '<button type="button" class="lobsy-app-update__action" data-lobsy-app-update>Vernieuwen</button>'
+            + '<button type="button" class="lobsy-app-update__dismiss" data-lobsy-app-update-dismiss aria-label="Sluiten">&times;</button>'
+            + "</div>";
         el.addEventListener("click", function (ev) {
+            var dismiss = ev.target && ev.target.closest ? ev.target.closest("[data-lobsy-app-update-dismiss]") : null;
+            if (dismiss) {
+                ev.preventDefault();
+                updateDismissed = true;
+                el.classList.remove("is-visible");
+                updateBannerVisible = false;
+                return;
+            }
             var btn = ev.target && ev.target.closest ? ev.target.closest("[data-lobsy-app-update]") : null;
             if (!btn) {
                 return;
@@ -1616,13 +1634,37 @@ window.jobsyDialog = (function () {
         return el;
     }
 
+    function mayShowUpdateBanner() {
+        if (updateDismissed || updateBannerVisible) {
+            return false;
+        }
+        if (!navigator.serviceWorker.controller) {
+            return false;
+        }
+        if (Date.now() - pageLoadedAt < UPDATE_BANNER_GRACE_MS) {
+            return false;
+        }
+        return true;
+    }
+
     function showUpdateBanner() {
-        if (updateBannerVisible) {
+        if (!mayShowUpdateBanner()) {
             return;
         }
         updateBannerVisible = true;
         var el = ensureUpdateBanner();
         el.classList.add("is-visible");
+    }
+
+    function scheduleUpdateBannerCheck() {
+        var wait = UPDATE_BANNER_GRACE_MS - (Date.now() - pageLoadedAt);
+        if (wait <= 0) {
+            showUpdateBanner();
+            return;
+        }
+        window.setTimeout(function () {
+            showUpdateBanner();
+        }, wait + 50);
     }
 
     function wireWaitingWorker(reg, worker) {
@@ -1631,11 +1673,11 @@ window.jobsyDialog = (function () {
         }
         worker.addEventListener("statechange", function () {
             if (worker.state === "installed" && navigator.serviceWorker.controller) {
-                showUpdateBanner();
+                scheduleUpdateBannerCheck();
             }
         });
         if (worker.state === "installed" && navigator.serviceWorker.controller) {
-            showUpdateBanner();
+            scheduleUpdateBannerCheck();
         }
     }
 
@@ -1643,9 +1685,11 @@ window.jobsyDialog = (function () {
         if (!reg) {
             return;
         }
-        if (reg.waiting && navigator.serviceWorker.controller) {
-            showUpdateBanner();
+        if (registrationWired) {
+            return;
         }
+        registrationWired = true;
+        /* Do not surface reg.waiting from before this page load — only updates found after register. */
         reg.addEventListener("updatefound", function () {
             wireWaitingWorker(reg, reg.installing);
         });
