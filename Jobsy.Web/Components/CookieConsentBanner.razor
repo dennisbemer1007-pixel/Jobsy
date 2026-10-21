@@ -95,6 +95,7 @@
                 }
 
                 _visible = false;
+                await ClearCookieBarHeightAsync();
                 StateHasChanged();
             }
         }
@@ -120,10 +121,13 @@
             }
 
             _visible = false;
+            await ClearCookieBarHeightAsync();
             if (OnConsentChanged.HasDelegate)
             {
                 await OnConsentChanged.InvokeAsync();
             }
+
+            StateHasChanged();
         }
         catch
         {
@@ -132,6 +136,18 @@
         finally
         {
             _busy = false;
+        }
+    }
+
+    private async Task ClearCookieBarHeightAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--cookie-bar-h");
+        }
+        catch
+        {
+            // prerender / static mode
         }
     }
 

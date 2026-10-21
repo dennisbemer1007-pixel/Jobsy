@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "0763c5d2396764b9769cb7b6aeeebecd99e0770afa444fd693426bf18815d929",
+    "sha256": "0eb8f8430eec6ad7bc6c5a1f7d975436c75af38425d749222d06664f7ef7a6a7",
     "v": "20261021-03"
   },
   "css/critical.css": {
@@ -48,7 +48,7 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "cbea8ea122fa3d7858eb8f5d4819d11b7a5f2cb9bdd83dd18e25cc529ad10ee2",
+    "sha256": "9a4b09ded5c63c8fa13f36c6b3754151ed1a493ca0bce61e48d1c4ab7ed21952",
     "v": "20261021-r15"
   },
   "css/features/candidate-hub.css": {
@@ -280,8 +280,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "c00ef343d71f83127c8853fef24209bbc9aed5ec52d2aa6be0ce202c863b8240",
-    "v": "20261021-02"
+    "sha256": "c9704f45e8c681efe28f5e59161d5b38b999e8724300ef2d49a74aaea7eb22f2",
+    "v": "20261021-04"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
