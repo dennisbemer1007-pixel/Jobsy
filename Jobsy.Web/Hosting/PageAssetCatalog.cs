@@ -418,6 +418,12 @@ public static class PageAssetCatalog
         return path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase);
     }
 
+    public static bool IncludeCandidateProfileScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return string.Equals(path, "/candidate/profile", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
     {
         if ((areas & flag) == 0)

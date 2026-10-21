@@ -1,0 +1,16 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections.Forms
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Antiforgery
+@inject CultureState Culture
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+<form method="post" action="@CandidateProfileBffEndpoints.ExperiencePath" data-enhance="false">
+<input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+<label>@Culture["Profile.AboutMe"]<textarea name="about_me" rows="3">@AboutMe</textarea></label>
+<div class="profile-save-bar"><button type="submit" class="login-submit">@Culture["Common.Save"]</button></div>
+</form>
+<ProfileSectionFormChrome Saved="Saved" Error="Error" />
+@code { [Parameter] public string? AboutMe { get; set; } [Parameter] public bool Saved { get; set; } [Parameter] public bool Error { get; set; }
+private string _antiforgeryFieldName = ""; private string _antiforgeryToken = "";
+protected override void OnInitialized() { var http = HttpContextAccessor.HttpContext; if (http is null) return; var t = Antiforgery.GetAndStoreTokens(http); _antiforgeryFieldName = t.FormFieldName; _antiforgeryToken = t.RequestToken ?? ""; } }

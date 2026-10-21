@@ -235,10 +235,9 @@ public class MobileSaasUxTests
         var blob = razor + sections + availabilityMatrix;
         Assert.Contains("profile-page--candidate", razor);
         Assert.Contains("profile-accordion", razor);
-        Assert.Contains("ToggleSection(\"personal\")", razor);
-        Assert.Contains("ToggleSection(\"preferences\")", razor);
-        Assert.Contains("ToggleSection(\"availability\")", razor);
-        Assert.Contains("ToggleSection(\"experience\")", razor);
+        Assert.Contains("CandidateProfileSectionUrls.NavHref(\"personal\"", razor);
+        Assert.Contains("data-candidate-profile", razor);
+        Assert.Contains("ProfilePersonalSectionForm", razor);
         Assert.Contains("competency-profile-card", razor);
         Assert.Contains("CandidateKompas", razor);
         Assert.Contains("profile-layout__matches", razor);

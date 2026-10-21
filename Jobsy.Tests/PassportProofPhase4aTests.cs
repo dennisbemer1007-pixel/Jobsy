@@ -54,7 +54,7 @@ public class ProfileSectionsExtractionTests
     {
         var root = FindRepoRoot();
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
-        Assert.Contains("<PersonalSection", profile);
+        Assert.Contains("<ProfilePersonalSectionForm", profile);
         Assert.Contains("<DevicesSection", profile);
         Assert.Contains("<PreferencesSection", profile);
         Assert.Contains("<AvailabilitySection", profile);
