@@ -11,10 +11,11 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        Environment.SetEnvironmentVariable("JOBSY_CSP_ALLOW_UNSAFE_EVAL", "0");
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        _web = new IllustratedPagesWebFactory(statefulMeProfile: true);
+        _web = new IllustratedPagesWebFactory(accLikeProductionCsp: true, statefulMeProfile: true);
         _ = _web.ServerAddress;
     }
 
@@ -37,6 +38,8 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
+        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        apiHostGuard.Attach(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var profilePuts = 0;
@@ -97,5 +100,6 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
             new() { Timeout = 30_000 });
         var value = await motivation.InputValueAsync();
         Assert.Contains(marker, value, StringComparison.Ordinal);
+        apiHostGuard.AssertZero($"passport motivation save at {width}px");
     }
 }
