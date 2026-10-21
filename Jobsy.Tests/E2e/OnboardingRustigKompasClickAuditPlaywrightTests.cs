@@ -74,6 +74,12 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
 
             Assert.Fail($"Click audit kompas/{mode}/{tag}: {control}={result}; see {reportPath}");
         }
+
+        if (rustig && tag == "1440")
+        {
+            var vacatures = rows.FirstOrDefault(r => r.Control == "Vacatures CTA").Result;
+            Assert.Equal("ok", vacatures);
+        }
     }
 
     internal static async Task AppendKompasControlRowsAsync(
@@ -100,13 +106,12 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
 
         rows.Add(("Mijn gegevens & account", await AuditChromeHitAsync(page, accountLink, "account", mobile)));
 
-        var matchBar = page.Locator("[data-testid=onboarding-finale-match-bar], a.ob-finale__hl").First;
-        rows.Add(("Vacatures CTA", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, matchBar, "vacatures")));
-
-        var complete = page.Locator(".ob-finale__btn").First;
+        var complete = page.Locator(
+            ".ob-finale__hero .ob-finale__btn, [data-testid=onboarding-finale-heroless-ctas] .ob-finale__btn, .ob-finale__end .ob-finale__btn").First;
         rows.Add(("Naar Lobsy", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, complete, "Naar Lobsy")));
 
-        var fullTests = page.Locator("a.ob-finale__link[href*='tab=tests']").First;
+        var fullTests = page.Locator(
+            ".ob-finale__hero a.ob-finale__link[href*='tab=tests'], [data-testid=onboarding-finale-heroless-ctas] a.ob-finale__link[href*='tab=tests']").First;
         rows.Add(("Volledige tests", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, fullTests, "Volledige tests")));
 
         var dirCards = page.Locator(".ob-rustig__kompas-dir-card");
@@ -126,6 +131,35 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
         }
 
         rows.Add(("Uitloggen", await TryAuditLogoutAsync(page, mobile)));
+
+        var matchBar = page.Locator("[data-testid=onboarding-finale-match-bar]").First;
+        rows.Add(("Vacatures CTA", await TryAuditVacaturesCtaAsync(page, matchBar)));
+    }
+
+    private static async Task<string> TryAuditVacaturesCtaAsync(IPage page, ILocator matchBar)
+    {
+        if (await matchBar.CountAsync() == 0)
+        {
+            return "n/a";
+        }
+
+        try
+        {
+            await page.Keyboard.PressAsync("Escape");
+            await matchBar.ScrollIntoViewIfNeededAsync();
+            await matchBar.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, matchBar, "vacatures");
+
+            await matchBar.ClickAsync(new() { Force = true, Timeout = 30_000 });
+            await page.WaitForURLAsync(
+                u => u.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+                new() { Timeout = 60_000 });
+            return "ok";
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
     }
 
     private static async Task<string> AuditChromeHitAsync(IPage page, ILocator locator, string label, bool mobile)
@@ -143,7 +177,7 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
 
     private static async Task<string> TryAuditLogoutAsync(IPage page, bool mobile)
     {
-        var toggle = page.Locator("button.account-menu__toggle").First;
+        var toggle = page.Locator("header.app-header button.account-menu__toggle, button.account-menu__toggle").First;
         if (await toggle.CountAsync() == 0)
         {
             return "n/a";
@@ -152,7 +186,16 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
         try
         {
             await page.EvaluateAsync("() => window.scrollTo(0, 0)");
-            await toggle.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            if (mobile)
+            {
+                await page.Keyboard.PressAsync("Escape");
+                await toggle.ScrollIntoViewIfNeededAsync();
+                await toggle.EvaluateAsync("el => el.click()");
+            }
+            else
+            {
+                await toggle.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            }
             await page.WaitForTimeoutAsync(300);
             var logout = page.Locator("[data-testid=auth-logout-link], a.account-menu__link--logout").First;
             if (mobile && !await logout.IsVisibleAsync())

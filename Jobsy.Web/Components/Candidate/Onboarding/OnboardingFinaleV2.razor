@@ -32,6 +32,14 @@
     }
 
     <div class="ob-finale__wrap">
+        @if (HideHero && ShowHerolessPrimaryCtas)
+        {
+            <div class="ob-finale__ctas ob-finale__ctas--heroless" data-testid="onboarding-finale-heroless-ctas">
+                <button type="button" class="ob-finale__btn" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+                <a class="ob-finale__link" href="/home?tab=tests">@Culture["Onboarding.FinaleV2.FullTests"]</a>
+            </div>
+        }
+
         @if (ShowMatchBar)
         {
             <a class="ob-finale__hl" href="@KbRoutes.Map" data-testid="onboarding-finale-match-bar">
@@ -145,6 +153,7 @@
     [Parameter] public bool HideEndBlock { get; set; }
     [Parameter] public bool HideDreamRouteCard { get; set; }
     [Parameter] public bool HideKompasWordsCard { get; set; }
+    [Parameter] public bool ShowHerolessPrimaryCtas { get; set; }
 
     private IReadOnlyList<OnboardingFinaleInsight> _insights = [];
     private IReadOnlyList<OnboardingFinaleCard> _nowCards = [];

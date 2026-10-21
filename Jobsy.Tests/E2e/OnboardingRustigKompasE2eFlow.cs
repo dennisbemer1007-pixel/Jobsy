@@ -24,6 +24,7 @@ internal static class OnboardingRustigKompasE2eFlow
         await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Culture);
         await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Values);
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 10, currentStep: 10);
+        await CandidateJourneyE2e.EnsureKompasLiveMatchesForE2eAsync(email, baseUrl);
         await SetFinishReachedForE2eAsync(email);
 
         if (!rustig)

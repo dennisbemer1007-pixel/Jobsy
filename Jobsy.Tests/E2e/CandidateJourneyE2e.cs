@@ -444,6 +444,27 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Seeds employers flag + demo match profile so Kompas finale shows the vacatures bar (Playwright).</summary>
+    public static async Task EnsureKompasLiveMatchesForE2eAsync(string candidateEmail, string baseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        var url = $"{api}/api/e2e/fixture/kompas-finale?email={Uri.EscapeDataString(candidateEmail.Trim())}";
+        _ = await SeedFreshVacancyFixtureAsync(baseUrl, candidateEmail, "KompasAudit");
+
+        using var response = await http.PostAsync(url, null);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Kompas finale fixture failed ({(int)response.StatusCode}): {body}");
+        }
+    }
+
     /// <summary>Enables onboarding finale v2 so rustig Kompas renders on /candidate/start (CI Playwright).</summary>
     public static async Task EnsureOnboardingFinaleV2EnabledForE2eAsync()
     {
