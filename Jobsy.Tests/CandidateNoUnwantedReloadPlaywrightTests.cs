@@ -151,6 +151,13 @@ public class CandidateNoUnwantedReloadPlaywrightTests
         var core = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js"));
         Assert.Contains("Nieuwe versie beschikbaar", core, StringComparison.Ordinal);
         Assert.Contains("userRequestedReload", core, StringComparison.Ordinal);
+        Assert.Contains("UPDATE_BANNER_GRACE_MS", core, StringComparison.Ordinal);
+        Assert.Contains("data-lobsy-app-update-dismiss", core, StringComparison.Ordinal);
+        Assert.DoesNotContain("reg.waiting && navigator.serviceWorker.controller", core, StringComparison.Ordinal);
+
+        var reconnectCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/reconnect.css"));
+        Assert.Contains(".lobsy-app-update__dismiss", reconnectCss, StringComparison.Ordinal);
+        Assert.Contains("bottom:", reconnectCss, StringComparison.Ordinal);
 
         var sw = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/service-worker.published.js"));
         Assert.DoesNotContain("return self.skipWaiting();", sw, StringComparison.Ordinal);

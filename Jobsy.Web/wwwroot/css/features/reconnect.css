@@ -103,11 +103,12 @@ html[data-lobsy-reconnect-active] .app-shell.has-bottom-nav {
 .lobsy-app-update {
     display: none;
     position: fixed;
-    left: 50%;
-    top: calc(0.75rem + env(safe-area-inset-top, 0px));
-    transform: translateX(-50%);
+    left: max(1rem, env(safe-area-inset-left, 0px));
+    bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+    top: auto;
+    transform: none;
     z-index: 10002;
-    width: min(22rem, calc(100vw - 1.5rem));
+    width: min(22rem, calc(100vw - 2rem));
     pointer-events: none;
     visibility: hidden;
     opacity: 0;
@@ -121,19 +122,29 @@ html[data-lobsy-reconnect-active] .app-shell.has-bottom-nav {
 }
 
 .lobsy-app-update__panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
     padding: 0.65rem 0.85rem;
     border-radius: var(--r-md);
     border: 1px solid var(--border, #ddd5cc);
     background: var(--surface, #fffcfa);
-    box-shadow: none;
+    box-shadow: 0 8px 28px rgb(18 32 51 / 12%);
     color: var(--text, #122033);
     font-size: 0.88rem;
     font-weight: 650;
-    text-align: center;
+    text-align: start;
+}
+
+.lobsy-app-update__text {
+    flex: 1 1 auto;
+    min-width: 8rem;
 }
 
 .lobsy-app-update__action {
-    margin-left: 0.35rem;
+    flex: 0 0 auto;
+    margin: 0;
     border: none;
     background: transparent;
     color: var(--brand, #0f2d5c);
@@ -141,6 +152,19 @@ html[data-lobsy-reconnect-active] .app-shell.has-bottom-nav {
     font-weight: 800;
     text-decoration: underline;
     cursor: pointer;
+}
+
+.lobsy-app-update__dismiss {
+    flex: 0 0 auto;
+    margin: 0;
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #5a6578);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.15rem;
 }
 
 @media (max-width: 639px) {
@@ -158,16 +182,19 @@ html[data-lobsy-reconnect-active] .app-shell.has-bottom-nav {
     }
 
     .lobsy-app-update {
-        left: auto;
-        right: max(0.5rem, env(safe-area-inset-right, 0px));
-        top: calc(var(--app-header-height, 4.25rem) + 0.35rem);
-        transform: none;
-        width: min(16rem, calc(100vw - 1rem));
+        left: max(0.75rem, env(safe-area-inset-left, 0px));
+        right: max(0.75rem, env(safe-area-inset-right, 0px));
+        bottom: calc(
+            var(--bottom-nav-clearance, 5.5rem)
+            + env(safe-area-inset-bottom, 0px)
+            + 0.5rem
+        );
+        top: auto;
+        width: min(20rem, calc(100vw - 1.5rem));
     }
 
     .lobsy-app-update__panel {
-        padding: 0.45rem 0.6rem;
-        font-size: 0.75rem;
-        text-align: start;
+        padding: 0.5rem 0.65rem;
+        font-size: 0.8rem;
     }
 }
