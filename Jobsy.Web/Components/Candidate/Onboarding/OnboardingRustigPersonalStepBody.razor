@@ -56,6 +56,15 @@
                                  SetJobEnd="SetJobEnd" />
             </div>
             break;
+        case 5:
+            <div class="ob-rustig__form-grid">
+                <EducationStep Draft="Draft"
+                               Illustrated="false"
+                               ShowHeading="false"
+                               ShowStepTitle="false"
+                               SelectEducation="SelectEducation" />
+            </div>
+            break;
     }
 </div>
 
@@ -81,4 +90,5 @@
     [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
+    [Parameter] public EventCallback<string> SelectEducation { get; set; }
 }

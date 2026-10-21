@@ -37,7 +37,7 @@ internal static class OnboardingRustigStep04E2eFlow
         }
     }
 
-    private static async Task WaitForOnboardingWizardReadyAsync(IPage page)
+    internal static async Task WaitForOnboardingWizardReadyAsync(IPage page)
     {
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
