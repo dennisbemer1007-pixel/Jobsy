@@ -304,6 +304,20 @@ internal static class IllustratedPagesApiStub
 
         if (path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase))
         {
+            if (emptyAppsAndLikes)
+            {
+                return """
+                    {
+                      "fullName": "Onboarding E2E",
+                      "firstName": "Onboarding",
+                      "lastName": "E2E",
+                      "role": "Candidate",
+                      "openForWork": true,
+                      "preferences": {}
+                    }
+                    """;
+            }
+
             var testConsentLine = OnboardingWizardTestsStepCapture
                 ? "\n                  \"testAiConsentAt\": \"2026-10-01T12:00:00Z\","
                 : string.Empty;

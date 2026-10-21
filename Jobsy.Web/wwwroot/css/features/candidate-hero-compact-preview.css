@@ -442,9 +442,9 @@
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero {
-    min-height: 150px !important;
+    min-height: 0 !important;
     height: auto !important;
-    max-height: none !important;
+    max-height: 190px !important;
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__copy,
@@ -462,17 +462,20 @@
 
   .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__art {
     align-self: stretch;
-    min-height: 150px;
+    min-height: 0;
+    max-height: 190px;
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__art img {
     width: 100%;
     max-width: 100%;
-    min-height: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 190px;
     object-fit: contain;
     object-position: right center;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 98%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 98%, transparent 100%);
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   /* Panel app pages: full-bleed #FAEBDB band, copy aligned to 1100px shell (paspoort r15 art fade). */

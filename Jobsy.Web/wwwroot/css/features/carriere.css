@@ -1222,6 +1222,35 @@
   padding-top: 0.35rem;
 }
 
+.carriere-segmented__empty-profile {
+  margin-bottom: var(--space-3);
+}
+
+.carriere-segmented__empty-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--brand);
+}
+
+.carriere-segmented__empty-lead {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.carriere-segmented__empty-cta {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+@media (min-width: 640px) {
+  .carriere-segmented__empty-cta {
+    width: auto;
+  }
+}
+
 .carriere-segmented__nav-wrap {
   margin-bottom: var(--space-4);
 }
@@ -1379,9 +1408,50 @@
 }
 
 @media (max-width: 639px) {
+  /* Segmented Carrière: copy-only showcase hero; undo illustrated-app 55/45 band. */
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    margin-bottom: 0 !important;
+    border-block-end: 0 !important;
+    grid-template-columns: unset !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background-color: transparent !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art::before,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art .cand-hero__mob-figures-wrap,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art .cand-compact-hero__art,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art .cand-hero__compact-c-art {
+    display: none !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art .cand-hero__copy,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art .cand-compact-hero__copy {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-inline: var(--space-4) !important;
+    padding-block: 0.55rem 0.35rem !important;
+    background: transparent !important;
+  }
+
+  .career-page--compact-preview-c .carriere-segmented.opl-wrap {
+    padding-top: 0;
+  }
+
   .carriere-segmented__nav-wrap {
     position: static;
-    margin-top: 0.15rem;
+    margin-top: 0.5rem;
   }
 
   .carriere-segmented__tab {

@@ -242,6 +242,18 @@ public static class UwvMockupCopy
             "Suggesties zijn gebaseerd op je paspoort en regionale arbeidsmarktinformatie (UWV, Werkcentrum Haaglanden). Routes en regelingen kunnen wijzigen; check altijd de actuele voorwaarden bij UWV of je werkcoach.",
             "Suggestions are based on your passport and regional labour market information (UWV, Werkcentrum Haaglanden). Routes and rules can change; always check current terms with UWV or your work coach.",
             lang);
+        public static string EmptyProfileTitle(string? lang) => T(
+            "Vul je voorkeuren aan",
+            "Complete your preferences",
+            lang);
+        public static string EmptyProfileLead(string? lang) => T(
+            "Met je voorkeuren en regio kunnen we passende routes en beroepen laten zien.",
+            "With your preferences and region we can show fitting routes and occupations.",
+            lang);
+        public static string EmptyProfileCta(string? lang) => T(
+            "Voorkeuren invullen",
+            "Fill in preferences",
+            lang);
     }
 
     public static class StrongMatches

@@ -104,12 +104,28 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
     [Fact]
     public async Task Capture_empty_profile_candidate_voor_jou_390()
     {
-        using var web = new IllustratedPagesWebFactory(emptyAppsAndLikes: true);
-        _ = web.ServerAddress;
         var outDir = Path.Combine(FindRepoRoot(), "artifacts");
         Directory.CreateDirectory(outDir);
+        var filledPath = Path.Combine(outDir, "carriere-segmented-product-390-voor-jou-viewport.png");
+        var emptyPath = Path.Combine(outDir, "carriere-segmented-product-390-empty-profile-voor-jou-viewport.png");
+
+        var filledBaseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using (var filledContext = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        }))
+        {
+            var filledPage = await OpenCarriereAsync(filledContext, filledBaseUrl);
+            await filledPage.ScreenshotAsync(new() { Path = filledPath, FullPage = false });
+        }
+
+        using var web = new IllustratedPagesWebFactory(emptyAppsAndLikes: true);
+        _ = web.ServerAddress;
         var baseUrl = web.ServerAddress.TrimEnd('/');
-        await using var context = await _browser!.NewContextAsync(new()
+        await using var context = await _browser.NewContextAsync(new()
         {
             ViewportSize = new() { Width = 390, Height = 844 },
             IsMobile = true,
@@ -121,11 +137,12 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
         await page.GotoAsync($"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/carriere")}");
         await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
         await page.Locator("[data-testid=uwv-carriere-sections]").WaitForAsync(new() { Timeout = 60_000 });
-        await page.ScreenshotAsync(new()
-        {
-            Path = Path.Combine(outDir, "carriere-segmented-product-390-empty-profile-voor-jou-viewport.png"),
-            FullPage = false,
-        });
+        await page.Locator("[data-testid=carriere-segmented-empty-profile]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.ScreenshotAsync(new() { Path = emptyPath, FullPage = false });
+
+        Assert.False(
+            File.ReadAllBytes(filledPath).AsSpan().SequenceEqual(File.ReadAllBytes(emptyPath)),
+            "Empty-profile capture must differ from the filled 390 voor-jou viewport shot.");
     }
 
     [Fact]
