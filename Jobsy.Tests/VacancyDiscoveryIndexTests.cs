@@ -2,6 +2,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
@@ -9,6 +10,7 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Tests;
 
@@ -140,6 +142,100 @@ public class VacancyDiscoveryQueryTests
 
 public class VacancyDiscoveryIndexTests
 {
+    private static VacancyDiscoveryIndex CreateIndex(IServiceProvider provider, bool includeTestData = false)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(provider.GetRequiredService<IServiceScopeFactory>());
+        services.Configure<VacancyIndexOptions>(o => o.IncludeTestData = includeTestData);
+        var optionsProvider = services.BuildServiceProvider();
+        return new VacancyDiscoveryIndex(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            NullLogger<VacancyDiscoveryIndex>.Instance,
+            optionsProvider.GetRequiredService<IOptionsMonitor<VacancyIndexOptions>>());
+    }
+
+    [Fact]
+    public async Task GetActiveAsync_excludes_IsTestData_vacancies_unless_IncludeTestData_enabled()
+    {
+        var dbName = "DiscoveryIndexTestData-" + Guid.NewGuid();
+        var services = new ServiceCollection();
+        services.AddDbContext<JobsyDbContext>(o => o.UseInMemoryDatabase(dbName));
+        services.AddLogging();
+        await using var provider = services.BuildServiceProvider();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var employerId = Guid.NewGuid();
+        var bureauId = Guid.NewGuid();
+        var liveId = Guid.NewGuid();
+        var testId = Guid.NewGuid();
+
+        using (var seed = provider.CreateScope())
+        {
+            var db = seed.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            db.Companies.AddRange(
+                VerifiedCompany(employerId, "Opdrachtgever Café", "12345678"),
+                VerifiedCompany(bureauId, "Demo Intermediair Flex BV", "55667788"));
+            db.Vacancies.AddRange(
+                new Vacancy
+                {
+                    Id = liveId,
+                    Title = "Barista",
+                    Description = "Koffie",
+                    CompanyId = employerId,
+                    Status = VacancyStatus.Active,
+                    HourlyWage = 14,
+                    Location = new GeoPoint(52.07, 4.30),
+                    StartDate = today,
+                    EndDate = today.AddDays(20),
+                    WorkTypes = WorkType.Horeca,
+                    ContentModerationPassed = true
+                },
+                new Vacancy
+                {
+                    Id = testId,
+                    Title = "Uitzendkracht horeca (test)",
+                    Description = "Test uitzend",
+                    CompanyId = employerId,
+                    IntermediaryCompanyId = bureauId,
+                    Status = VacancyStatus.Active,
+                    HourlyWage = 14,
+                    Location = new GeoPoint(52.0785, 4.3105),
+                    StartDate = today,
+                    EndDate = today.AddDays(20),
+                    WorkTypes = WorkType.Horeca,
+                    IsTestData = true,
+                    ContentModerationPassed = true,
+                    PublishedAtUtc = DateTime.UtcNow
+                });
+            await db.SaveChangesAsync();
+        }
+
+        var defaultIndex = CreateIndex(provider);
+        var withoutTest = await defaultIndex.GetActiveAsync();
+        Assert.Equal(liveId, Assert.Single(withoutTest).Id);
+
+        var accIndex = CreateIndex(provider, includeTestData: true);
+        var withTest = await accIndex.GetActiveAsync();
+        Assert.Equal(2, withTest.Count);
+        var intermediary = Assert.Single(withTest, v => v.Id == testId);
+        Assert.Equal("Uitzendkracht horeca (test)", intermediary.Title);
+        Assert.Equal(bureauId, intermediary.IntermediaryCompanyId);
+    }
+
+    private static Company VerifiedCompany(Guid id, string name, string kvk)
+        => new()
+        {
+            Id = id,
+            Name = name,
+            KvkNumber = kvk,
+            Address = "Plein 1",
+            Location = new GeoPoint(52.07, 4.30),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        };
+
     [Fact]
     public async Task GetActiveAsync_indexes_only_public_vacancies_and_rebuilds_after_invalidate()
     {
@@ -198,9 +294,7 @@ public class VacancyDiscoveryIndexTests
             await db.SaveChangesAsync();
         }
 
-        var index = new VacancyDiscoveryIndex(
-            provider.GetRequiredService<IServiceScopeFactory>(),
-            NullLogger<VacancyDiscoveryIndex>.Instance);
+        var index = CreateIndex(provider);
 
         var first = await index.GetActiveAsync();
         Assert.Equal(liveId, Assert.Single(first).Id);
@@ -268,9 +362,7 @@ public class VacancyDiscoveryIndexTests
             await db.SaveChangesAsync();
         }
 
-        var index = new VacancyDiscoveryIndex(
-            provider.GetRequiredService<IServiceScopeFactory>(),
-            NullLogger<VacancyDiscoveryIndex>.Instance);
+        var index = CreateIndex(provider);
         Assert.Equal(firstId, Assert.Single(await index.GetActiveAsync()).Id);
 
         using (var mutate = provider.CreateScope())
@@ -351,9 +443,7 @@ public class VacancyDiscoveryIndexTests
             await db.SaveChangesAsync();
         }
 
-        var index = new VacancyDiscoveryIndex(
-            provider.GetRequiredService<IServiceScopeFactory>(),
-            NullLogger<VacancyDiscoveryIndex>.Instance);
+        var index = CreateIndex(provider);
         var view = await index.GetMapViewAsync();
         Assert.Equal(2, view.PinCount);
         Assert.Equal(52.01, view.CenterLat, 2);
