@@ -1057,10 +1057,6 @@ window.jobsyMaps = (function () {
                 return;
             }
             var parsed = JSON.parse(node.textContent);
-            if (parsed && parsed.deferPinsWarmup) {
-                // Logged-in banenkaart: one MapLibre init from Blazor after profile/origin — skip prerender boot to avoid camera/pin jump.
-                return;
-            }
             if (parsed && parsed.pinsUrl) {
                 prefetchPins(String(parsed.pinsUrl));
             }
