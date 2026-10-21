@@ -117,9 +117,10 @@ public class MobilePaspoortCircuitResumePlaywrightTests
         Assert.Contains("components-reconnect-state-changed", boot, StringComparison.Ordinal);
         Assert.Contains("data-reconnect-try", app, StringComparison.Ordinal);
         Assert.Contains("data-reconnect-login", app, StringComparison.Ordinal);
-        Assert.DoesNotContain("data-reconnect-reload", app, StringComparison.Ordinal);
-        Assert.DoesNotContain("location.reload()", app, StringComparison.Ordinal);
-        Assert.DoesNotContain("location.reload()", boot, StringComparison.Ordinal);
+        Assert.Contains("data-reconnect-reload", app, StringComparison.Ordinal);
+        Assert.Contains("[data-reconnect-reload]", boot, StringComparison.Ordinal);
+        Assert.DoesNotContain("onclick=\"location.reload()\"", app, StringComparison.Ordinal);
+        Assert.Contains("reloadPageOnce", boot, StringComparison.Ordinal);
     }
 
     private static int ResolveIdleMs()
