@@ -318,8 +318,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] string transport = TransportLabels.Bike,
         CancellationToken cancellationToken = default)
     {
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
-        var record = records.FirstOrDefault(r => r.Id == id);
+        var record = await _discoveryIndex.FindActiveByIdAsync(id, cancellationToken);
         if (record is null)
         {
             return NotFound();
@@ -389,8 +388,7 @@ public class VacanciesController : ControllerBase
             return Forbid();
         }
 
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
-        var record = records.FirstOrDefault(r => r.Id == id);
+        var record = await _discoveryIndex.FindActiveByIdAsync(id, cancellationToken);
         if (record is null)
         {
             return NotFound();
@@ -452,8 +450,15 @@ public class VacanciesController : ControllerBase
             return Ok(Array.Empty<VacancyCardDto>());
         }
 
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
-        var byId = records.Where(r => parsed.Contains(r.Id)).ToDictionary(r => r.Id);
+        var byId = new Dictionary<Guid, VacancyDiscoveryRecord>(parsed.Count);
+        foreach (var vacancyId in parsed)
+        {
+            var row = await _discoveryIndex.FindActiveByIdAsync(vacancyId, cancellationToken);
+            if (row is not null)
+            {
+                byId[vacancyId] = row;
+            }
+        }
         var showWage = await CanViewerSeeWageAsync(cancellationToken);
         var mode = TransportLabels.Parse(transport);
         var hasOrigin = originLat is double lat && originLng is double lng && IsFiniteCoordinate(lat, lng);
@@ -685,6 +690,54 @@ public class VacanciesController : ControllerBase
             }
         }
 
+        // Guest / closed fit gate: paginate before mapping — avoid materializing thousands of list DTOs per open.
+        if (matches is null || !fitGate.IsOpen)
+        {
+            var totalFast = candidates.Count;
+            List<(VacancyDiscoveryRecord Record, int? TravelMinutes, double? DistanceKm)> slice;
+            if (age is not null && (minHourlyWage is not null || maxHourlyWage is not null))
+            {
+                var wageFiltered = new List<(VacancyDiscoveryRecord Record, int? TravelMinutes, double? DistanceKm)>();
+                foreach (var c in candidates)
+                {
+                    var probe = MapRecordToDto(c.Record, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
+                    if (!VacancyDiscoveryQuery.MatchesWageFilter(probe.HourlyWage, minHourlyWage, maxHourlyWage))
+                    {
+                        continue;
+                    }
+
+                    wageFiltered.Add(c);
+                }
+
+                totalFast = wageFiltered.Count;
+                slice = wageFiltered.Skip(skip).Take(takeResolved).ToList();
+            }
+            else
+            {
+                slice = candidates.Skip(skip).Take(takeResolved).ToList();
+            }
+
+            var pageFast = new List<VacancyListItemDto>(slice.Count);
+            foreach (var c in slice)
+            {
+                var dto = MapRecordToDto(c.Record, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
+                if (matchContext is not null && CandidateOpenForWorkGate.HidesMatchScores(matchContext))
+                {
+                    dto = dto with { OpenForWorkRequired = true };
+                }
+
+                pageFast.Add(dto);
+            }
+
+            ApplyPublicListCacheHeaders();
+            return Ok(new VacancyListPageDto(
+                pageFast,
+                skip,
+                takeResolved,
+                totalFast,
+                skip + pageFast.Count < totalFast));
+        }
+
         var results = new List<VacancyListItemDto>(candidates.Count);
         foreach (var c in candidates)
         {
@@ -768,8 +821,7 @@ public class VacanciesController : ControllerBase
     [EnableRateLimiting("public-read")]
     public async Task<IActionResult> GetPublicImage(Guid id, CancellationToken cancellationToken)
     {
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
-        var record = records.FirstOrDefault(r => r.Id == id);
+        var record = await _discoveryIndex.FindActiveByIdAsync(id, cancellationToken);
         if (record is null)
         {
             return NotFound();

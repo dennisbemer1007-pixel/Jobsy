@@ -153,6 +153,10 @@ public class CandidateOnboardingStep1SaveTests
         public DateTime? LastRefreshedAtUtc => DateTime.UtcNow;
         public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<VacancyDiscoveryRecord>>([]);
+
+        public Task<VacancyDiscoveryRecord?> FindActiveByIdAsync(Guid id, CancellationToken cancellationToken = default)
+            => Task.FromResult<VacancyDiscoveryRecord?>(null);
+
         public Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(new VacancyMapView(52.1, 5.1, 8, 0));
         public void Invalidate() { }

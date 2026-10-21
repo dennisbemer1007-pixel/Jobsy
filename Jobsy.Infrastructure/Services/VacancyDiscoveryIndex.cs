@@ -22,6 +22,8 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
     private bool _disposed;
 
     private volatile IReadOnlyList<VacancyDiscoveryRecord>? _snapshot;
+    private volatile IReadOnlyList<VacancyDiscoveryRecord>? _publicActive;
+    private volatile IReadOnlyDictionary<Guid, VacancyDiscoveryRecord>? _publicActiveById;
     private volatile VacancyMapView _mapView = VacancyMapViewCalculator.Fallback;
     private volatile bool _dirty = true;
     private DateOnly _indexedForDate;
@@ -64,8 +66,22 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
             snap = _snapshot ?? [];
         }
 
-        // Public/default callers never see test data; test viewers filter at the controller.
-        return VisibleToday(snap, today).Where(r => !r.IsTestData).ToList();
+        var cached = _publicActive;
+        if (cached is not null && _indexedForDate == today)
+        {
+            return cached;
+        }
+
+        return RebuildPublicActiveCache(snap, today);
+    }
+
+    public async Task<VacancyDiscoveryRecord?> FindActiveByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await GetActiveAsync(cancellationToken);
+        var map = _publicActiveById;
+        return map is not null && map.TryGetValue(id, out var record) ? record : null;
     }
 
     public async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
@@ -106,8 +122,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
             var records = await LoadActiveAsync(cancellationToken);
             var todayAfterLoad = DateOnly.FromDateTime(DateTime.UtcNow);
             _snapshot = records;
-            _mapView = VacancyMapViewCalculator.FromRecords(VisibleToday(records, todayAfterLoad));
+            var visible = VisibleToday(records, todayAfterLoad);
+            _mapView = VacancyMapViewCalculator.FromRecords(visible);
             _indexedForDate = todayAfterLoad;
+            RebuildPublicActiveCache(records, todayAfterLoad);
             Interlocked.Exchange(ref _lastRefreshedTicks, DateTime.UtcNow.Ticks);
             _logger.LogInformation("Banenkaart index refreshed with {Count} public vacancies.", records.Count);
         }
@@ -298,6 +316,19 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
             PublicMapRadiusKm: vacancy.IntermediaryCompanyId is not null
                 ? AcceptCandidatePricingRules.NormalizeAgencyRadiusKm(vacancy.PublicMapRadiusKm)
                 : null);
+    }
+
+    private IReadOnlyList<VacancyDiscoveryRecord> RebuildPublicActiveCache(
+        IReadOnlyList<VacancyDiscoveryRecord> snap,
+        DateOnly today)
+    {
+        var visible = VisibleToday(snap, today);
+        var publicList = visible.Where(r => !r.IsTestData).ToList();
+        _publicActive = publicList;
+        _publicActiveById = publicList.Count == 0
+            ? new Dictionary<Guid, VacancyDiscoveryRecord>()
+            : publicList.ToDictionary(r => r.Id);
+        return publicList;
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(
