@@ -40,6 +40,64 @@
 
     installReloadGuard();
 
+    /* Enhanced nav before Blazor.start can patch the URL without swapping the interactive router. */
+    (function guardInternalNavUntilCircuitReady() {
+        if (window.__lobsyEarlyNavGuard) {
+            return;
+        }
+        window.__lobsyEarlyNavGuard = true;
+
+        function circuitReady() {
+            try {
+                return document.documentElement.getAttribute("data-lobsy-circuit") === "ready";
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function isInternalNavAnchor(anchor) {
+            if (!anchor || !anchor.getAttribute) {
+                return false;
+            }
+            if (anchor.hasAttribute("download") || anchor.target === "_blank") {
+                return false;
+            }
+            if (anchor.getAttribute("data-enhance-nav") === "false") {
+                return false;
+            }
+            var href = anchor.getAttribute("href");
+            if (!href || href.charAt(0) === "#") {
+                return false;
+            }
+            try {
+                var url = new URL(anchor.href, location.href);
+                if (url.origin !== location.origin) {
+                    return false;
+                }
+                return url.pathname !== location.pathname || url.search !== location.search || url.hash !== location.hash;
+            } catch (e2) {
+                return false;
+            }
+        }
+
+        document.addEventListener(
+            "click",
+            function (ev) {
+                if (circuitReady()) {
+                    return;
+                }
+                var anchor = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
+                if (!isInternalNavAnchor(anchor)) {
+                    return;
+                }
+                ev.preventDefault();
+                ev.stopImmediatePropagation();
+                window.location.assign(anchor.href);
+            },
+            true
+        );
+    })();
+
     function modal() {
         return document.getElementById("components-reconnect-modal");
     }
