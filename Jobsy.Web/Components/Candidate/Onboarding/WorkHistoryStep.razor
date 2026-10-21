@@ -169,9 +169,10 @@
     private bool ShowAddJobButton =>
         !Draft.NoWork
         && Draft.Jobs.Count < 3
-        && Draft.HasEngagedJob();
+        && (RustigPersonal || Draft.HasEngagedJob());
 
-    private string AddJobLabel => Culture["Onboarding.AddAnotherJob"];
+    private string AddJobLabel =>
+        RustigPersonal ? $"+ {Culture["Onboarding.AddAnotherJob"]}" : Culture["Onboarding.AddAnotherJob"];
 
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
 

@@ -4,7 +4,7 @@
 @using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
-@if (ShowStepTitle)
+@if (ShowStepTitle && !RustigPersonal)
 {
     @if (ShowHeading && !Illustrated)
     {
@@ -24,9 +24,14 @@
          data-testid="onboarding-transport-heading">@Culture["Onboarding.Transport"]</div>
 }
 <fieldset id="onboarding-field-transport" aria-labelledby="@(Illustrated ? "onboarding-transport-label" : null)">
-    @if (!Illustrated)
+    @if (!Illustrated && !RustigPersonal)
     {
         <legend class="ob-wizard__section-title">@Culture["Onboarding.Transport"]</legend>
+    }
+    else if (!Illustrated && RustigPersonal)
+    {
+        <legend class="visually-hidden">@Culture["Onboarding.Transport"]</legend>
+        <h2 class="ob-wizard__section-title">@Culture["Onboarding.Transport"]</h2>
     }
     else
     {
@@ -101,6 +106,7 @@
     [Parameter] public EventCallback<string> ToggleLicense { get; set; }
     [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public bool ShowStepTitle { get; set; } = true;
+    [Parameter] public bool RustigPersonal { get; set; }
     [Parameter] public bool ShowDrivingLicenses { get; set; }
     [Parameter] public bool ShowValidation { get; set; }
     [Parameter] public bool Illustrated { get; set; }

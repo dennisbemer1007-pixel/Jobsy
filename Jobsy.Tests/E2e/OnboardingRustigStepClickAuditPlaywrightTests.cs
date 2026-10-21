@@ -91,6 +91,17 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
                 await OnboardingRustigStep05E2eFlow.ReachBaselineStep05Async(page, baseUrl, mobile);
             }
         }
+        else if (step == 3)
+        {
+            if (rustig)
+            {
+                await OnboardingRustigStep03E2eFlow.ReachRustigStep03Async(page, baseUrl, mobile);
+            }
+            else
+            {
+                await OnboardingRustigStep03E2eFlow.ReachBaselineStep03Async(page, baseUrl, mobile);
+            }
+        }
         else if (step == 4)
         {
             if (rustig)
@@ -193,6 +204,12 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
             }
 
             rows.Add(($"{stepText} (header)", await stepLine.CountAsync() > 0 ? "ok" : "n/a"));
+        }
+
+        if (step == 4 && rustig)
+        {
+            var addJob = page.Locator("[data-testid=onboarding-add-job]");
+            await AuditButtonAsync(page, rows, "+ Nog een baan toevoegen", addJob);
         }
 
         if (step == 1 && mobile && rustig)
