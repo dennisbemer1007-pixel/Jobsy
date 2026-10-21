@@ -719,6 +719,10 @@
     grid-template-columns: 1fr;
   }
 
+  .ob-rustig .ob-client-step .work-status-chips.lobsy-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .ob-rustig .work-status-chip.lobsy-choice-tile,
   .ob-wizard--rustig .work-status-chip.lobsy-choice-tile {
     justify-content: space-between;

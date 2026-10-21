@@ -21,21 +21,16 @@
     private string _initialJson = "{}";
     private bool _mounted;
     private bool _markupLocked;
+    private bool _pendingUnmount;
     private int _lastStep;
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
         if (_lastStep != Step)
         {
             if (_mounted)
             {
-                try
-                {
-                    await Js.InvokeVoidAsync("jobsyOnboardingClient.unmount", _root);
-                }
-                catch (JSException)
-                {
-                }
+                _pendingUnmount = true;
             }
 
             _lastStep = Step;
@@ -59,6 +54,18 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_pendingUnmount)
+        {
+            _pendingUnmount = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyOnboardingClient.unmount", _root);
+            }
+            catch (JSException)
+            {
+            }
+        }
+
         if (_mounted)
         {
             return;
