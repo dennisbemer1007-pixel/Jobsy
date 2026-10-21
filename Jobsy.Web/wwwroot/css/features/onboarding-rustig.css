@@ -522,6 +522,26 @@
   .ob-rustig__actions .ob-rustig__link--underline {
     font-size: 0.75rem;
   }
+
+  .ob-wizard--rustig .ob-rustig__chrome-row {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+  }
+
+  .ob-wizard--rustig .ob-rustig__actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.65rem;
+    min-block-size: 44px;
+  }
+
+  .ob-wizard--rustig .ob-rustig__actions .ob-rustig__link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: 0.25rem;
+  }
 }
 
 .ob-rustig__page-head {
@@ -1797,12 +1817,26 @@
   }
 
   .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__chrome-row {
+    flex-wrap: wrap;
     gap: 0.5rem;
   }
 
   .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__segments {
-    flex: 1 1 auto;
+    flex: 1 1 55%;
     min-inline-size: 4.5rem;
+  }
+
+  .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    min-block-size: 44px;
+  }
+
+  .ob-wizard--rustig:has(.ob-rustig) .ob-rustig__actions .ob-rustig__link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
   }
 
   .app-shell:has(.ob-wizard--rustig > .ob-rustig) .app-main,
