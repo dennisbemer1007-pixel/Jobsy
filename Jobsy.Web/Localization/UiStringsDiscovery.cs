@@ -134,7 +134,7 @@ public static class UiStringsDiscovery
         Add("Passport.Data.JoySub",
             "Hobby’s en leerdoelen", "Hobbies and learning goals", "Hobby i cele nauki", "Hobby-uri și obiective de învățare", "هوايات وأهداف تعلم");
         Add("Passport.Data.DislikesSub",
-            "Privé — alleen voor matches", "Private — matches only", "Prywatne — tylko dopasowania", "Privat — doar potriviri", "خاص — للمطابقات فقط");
+            "Privé, alleen voor matches", "Private — matches only", "Prywatne — tylko dopasowania", "Privat — doar potriviri", "خاص — للمطابقات فقط");
 
         // Journey shell (07a)
         Add("Discovery.PageTitle",
@@ -235,7 +235,7 @@ public static class UiStringsDiscovery
         Add("Discovery.Start.Cta",
             "Start de reis", "Start the journey", "Zacznij podróż", "Începe călătoria", "ابدأ الرحلة");
         Add("Discovery.Intro.Why",
-            "In een paar korte stappen vul je je paspoort in. Zo zien we beter welk werk bij jou past — en jij snapt wat Lobsy voor je doet.",
+            "In een paar korte stappen vul je je paspoort in. Zo zien we beter welk werk bij jou past, en jij snapt wat Lobsy voor je doet.",
             "In a few short steps you fill in your passport. That helps us see what work fits you — and you know what Lobsy does for you.",
             "W kilku krótkich krokach uzupełnisz paszport. Dzięki temu lepiej widzimy, jaka praca do Ciebie pasuje — a Ty wiesz, co robi Lobsy.",
             "În câțiva pași scurți completezi pașaportul. Așa vedem mai bine ce muncă ți se potrivește — și tu înțelegi ce face Lobsy pentru tine.",
@@ -247,13 +247,13 @@ public static class UiStringsDiscovery
             "Poți opri oricând; totul se salvează. Gata? Pașaportul e pregătit și poți explora potriviri și cariera.",
             "يمكنك التوقف متى شئت؛ يُحفظ كل شيء. انتهيت؟ جوازك جاهز ويمكنك استكشاف المطابقات ومسارك.");
         Add("Discovery.Intro.Lobsy",
-            "Lobsy matcht op wie je bent: waarden, cultuur en competenties — niet alleen op cv-trefwoorden. Geen beloftes die we niet kunnen waarmaken.",
+            "Lobsy matcht op wie je bent: waarden, cultuur en competenties, niet alleen op cv-trefwoorden. Geen beloftes die we niet kunnen waarmaken.",
             "Lobsy matches who you are: values, culture and competencies — not just CV keywords. No promises we can’t keep.",
             "Lobsy dopasowuje to, kim jesteś: wartości, kultura i kompetencje — nie tylko słowa kluczowe z CV. Bez obietnic, których nie dotrzymamy.",
             "Lobsy potrivește cine ești: valori, cultură și competențe — nu doar cuvinte din CV. Fără promisiuni pe care nu le putem ține.",
             "Lobsy يطابق من أنت: القيم والثقافة والكفاءات — لا كلمات السيرة فقط. بلا وعود لا نستطيع الوفاء بها.");
         Add("Discovery.Intro.LightLead",
-            "Je paspoort is klaar — tijd voor nieuwe matches.",
+            "Je paspoort is klaar. Tijd voor nieuwe matches.",
             "Your passport is ready — time for new matches.",
             "Paszport gotowy — czas na nowe dopasowania.",
             "Pașaportul e gata — timp pentru potriviri noi.",
@@ -351,7 +351,7 @@ public static class UiStringsDiscovery
         Add("Discovery.Step5.AboutMe",
             "Over mij", "About me", "O mnie", "Despre mine", "عني");
         Add("Discovery.Step5.AboutMeHint",
-            "Optioneel — een paar zinnen over jezelf.",
+            "Optioneel: een paar zinnen over jezelf.",
             "Optional — a few sentences about yourself.",
             "Opcjonalnie — kilka zdań o sobie.",
             "Opțional — câteva propoziții despre tine.",
