@@ -24,12 +24,10 @@ public class PassportTabsMobileLayoutPlaywrightTests
 
         await page.EvaluateAsync("""
             () => {
-              const root = document.scrollingElement || document.documentElement;
-              root.scrollTop = 420;
-              window.scrollTo(0, 420);
+              window.scrollTo(0, 480);
             }
             """);
-        await page.WaitForTimeoutAsync(200);
+        await page.WaitForTimeoutAsync(250);
 
         var stuck = await AuditTabsAsync(page, scrollMain: true);
         Assert.True(stuck.Ok, stuck.Reason ?? "audit failed");
@@ -77,13 +75,28 @@ public class PassportTabsMobileLayoutPlaywrightTests
               }
 
               if (scrollMain) {
+                const stickyTop = parseFloat(getComputedStyle(shell).top) || 0;
                 const header = document.querySelector('.app-header');
                 if (header) {
                   const h = header.getBoundingClientRect();
                   if (h.bottom <= 4) {
-                    return { ok: false, reason: 'header-scrolled-away' };
-                  }
-                  if (Math.abs(shellBox.top - h.bottom) > 4) {
+                    if (Math.abs(shellBox.top) > 4) {
+                      return { ok: false, reason: 'tabs-not-flush-viewport-top' };
+                    }
+                    if (stickyTop > 1) {
+                      return { ok: false, reason: 'sticky-top-not-zero' };
+                    }
+                    const probeY = Math.min(Math.max(shellBox.top * 0.5, 2), shellBox.top - 2);
+                    if (probeY > 0) {
+                      const hit = document.elementFromPoint(Math.min(window.innerWidth * 0.5, 200), probeY);
+                      if (hit && !shell.contains(hit) && !hit.closest('.passport-tabs-shell')) {
+                        const hitBox = hit.getBoundingClientRect();
+                        if (hitBox.height > 6 && hitBox.width > 6 && hitBox.bottom > shellBox.top + 1) {
+                          return { ok: false, reason: 'content-visible-above-tabs' };
+                        }
+                      }
+                    }
+                  } else if (Math.abs(shellBox.top - h.bottom) > 4) {
                     return { ok: false, reason: 'tabs-not-below-header' };
                   }
                 }

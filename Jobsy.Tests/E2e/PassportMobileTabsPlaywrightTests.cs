@@ -61,17 +61,30 @@ public sealed class PassportMobileTabsPlaywrightTests : IAsyncLifetime
 
         await page.WaitForTimeoutAsync(300);
 
-        var metrics = await page.EvaluateAsync<(double top, double stickyTop)>("""
+        var metrics = await page.EvaluateAsync<(double top, double stickyTop, bool contentAbove)>("""
             () => {
               const shell = document.querySelector('.passport-page--illustrated .passport-tabs-shell');
-              if (!shell) return { top: -1, stickyTop: -1 };
+              if (!shell) return { top: -1, stickyTop: -1, contentAbove: true };
               const cs = getComputedStyle(shell);
-              return { top: shell.getBoundingClientRect().top, stickyTop: parseFloat(cs.top) || 0 };
+              const box = shell.getBoundingClientRect();
+              let contentAbove = false;
+              const probeY = Math.min(Math.max(box.top * 0.5, 2), box.top - 2);
+              if (probeY > 0) {
+                const hit = document.elementFromPoint(Math.min(window.innerWidth * 0.5, 200), probeY);
+                if (hit && !shell.contains(hit)) {
+                  const hb = hit.getBoundingClientRect();
+                  if (hb.height > 6 && hb.width > 6 && hb.bottom > box.top + 1) {
+                    contentAbove = true;
+                  }
+                }
+              }
+              return { top: box.top, stickyTop: parseFloat(cs.top) || 0, contentAbove };
             }
             """);
 
         Assert.True(metrics.stickyTop < 1, $"Expected sticky top ~0, got {metrics.stickyTop}px at {width}px.");
         Assert.True(metrics.top < 4, $"Tabs shell should sit flush while stuck (top={metrics.top}px at {width}px).");
+        Assert.False(metrics.contentAbove, $"Content visible above stuck tabs at {width}px.");
 
         var outDir = Path.Combine(FindRepoRoot(), "artifacts", "passport-mobile-tabs");
         Directory.CreateDirectory(outDir);

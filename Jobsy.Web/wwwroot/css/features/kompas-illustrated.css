@@ -142,7 +142,8 @@
 
 .passport-page--illustrated .passport-tabs-shell {
   position: sticky;
-  inset-block-start: var(--app-header-height, 4.25rem);
+  inset-block-start: var(--passport-tabs-sticky-top, var(--app-header-height, 4.25rem));
+  top: var(--passport-tabs-sticky-top, var(--app-header-height, 4.25rem));
   z-index: calc(var(--z-sticky, 20) + 2);
   margin-block: var(--space-3);
   margin-inline: calc(-1 * var(--passport-layout-pad, 1.25rem));
@@ -223,8 +224,13 @@
 
 @media (max-width: 1023px) {
   /* Mobile: header scrolls away — stick tabs flush to viewport top with opaque band (no bleed-through). */
+  .passport-page--illustrated {
+    --passport-tabs-sticky-top: 0px;
+  }
+
   .passport-page--illustrated .passport-tabs-shell {
     inset-block-start: 0;
+    top: 0;
     margin-block: 0;
     padding-block: var(--space-2);
     padding-inline: max(var(--passport-layout-pad, 1.25rem), env(safe-area-inset-left, 0px))
@@ -235,9 +241,15 @@
       0 6px 14px -10px color-mix(in srgb, var(--text) 16%, transparent);
   }
 
-  .passport-page--illustrated .passport-tabs-shell::before,
   .passport-page--illustrated .passport-tabs-shell::after {
     display: none;
+  }
+
+  .passport-page--illustrated .passport-tabs-shell::before {
+    display: block;
+    inset-block: -0.35rem 0;
+    background: var(--bg);
+    box-shadow: none;
   }
 
   .passport-page--illustrated .passport-tabs {
@@ -258,6 +270,10 @@
 }
 
 @media (min-width: 1024px) {
+  .passport-page--illustrated {
+    --passport-tabs-sticky-top: var(--app-header-height, 4.25rem);
+  }
+
   .passport-page--illustrated .passport-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
