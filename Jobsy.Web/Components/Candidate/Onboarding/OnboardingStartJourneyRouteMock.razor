@@ -1,7 +1,8 @@
 @using Jobsy.Web.Onboarding
 
 <div class="ob-start-journey-route" data-testid="onboarding-start-journey-route">
-    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--horizontal" viewBox="0 0 1000 320" preserveAspectRatio="none" aria-hidden="true">
+    @* Path coords match vignette centers: (9%,53%) (27%,30%) (49%,55%) (71%,28%) (91%,49%) in 1000×240 viewBox *@
+    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--horizontal" viewBox="0 0 1000 240" preserveAspectRatio="none" aria-hidden="true">
         <defs>
             <linearGradient id="obStartJourneyStrokeH" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#c4a574" />
@@ -9,7 +10,7 @@
                 <stop offset="100%" stop-color="#d4b878" />
             </linearGradient>
         </defs>
-        <path d="M 40 210 C 120 210, 150 95, 240 105 S 390 215, 480 175 S 630 72, 720 98 S 870 205, 960 168"
+        <path d="M 90 122 C 175 122, 220 68, 270 68 S 395 127, 490 127 S 615 62, 710 62 S 820 113, 910 113"
               fill="none"
               stroke="url(#obStartJourneyStrokeH)"
               stroke-width="13"
@@ -17,7 +18,8 @@
               stroke-linejoin="round"
               opacity="0.62" />
     </svg>
-    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--vertical" viewBox="0 0 120 560" preserveAspectRatio="none" aria-hidden="true">
+    @* Mobile path through vignette centers with visible S-curves (x swings 34↔86) *@
+    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--vertical" viewBox="0 0 120 580" preserveAspectRatio="none" aria-hidden="true">
         <defs>
             <linearGradient id="obStartJourneyStrokeV" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stop-color="#c4a574" />
@@ -25,7 +27,7 @@
                 <stop offset="100%" stop-color="#d4b878" />
             </linearGradient>
         </defs>
-        <path d="M 62 18 C 64 64, 36 88, 32 132 S 90 188, 64 244 S 30 298, 34 342 S 92 398, 62 452 S 28 506, 36 548"
+        <path d="M 86 52 C 86 78, 38 98, 34 148 S 88 208, 86 268 S 34 318, 38 368 S 92 428, 86 488 S 34 538, 38 568"
               fill="none"
               stroke="url(#obStartJourneyStrokeV)"
               stroke-width="9"

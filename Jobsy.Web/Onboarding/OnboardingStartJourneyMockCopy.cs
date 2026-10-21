@@ -17,7 +17,11 @@ public static class OnboardingStartJourneyMockCopy
     public static string MinutesShort => "12 minuten";
 
     public static string Hint =>
-        "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was.";
+        "Je antwoorden worden bewaard als je op Volgende klikt. Stoppen mag, je gaat later verder waar je was.";
+
+    /// <summary>EN equivalent for future i18n wiring.</summary>
+    public static string HintEn =>
+        "Your answers are saved when you click Next. You can stop anytime and continue later where you left off.";
 
     public static string Cta => "Aan de slag";
 

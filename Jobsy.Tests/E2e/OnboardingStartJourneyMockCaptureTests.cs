@@ -70,15 +70,15 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
 
         if (width >= 1024)
         {
-            var heroCropped = await page.EvaluateAsync<bool>("""
+            var heroMobPanorama = await page.EvaluateAsync<bool>("""
                 () => {
                   const band = document.querySelector('.ob-start-journey-mock-hero');
                   if (!band) return false;
                   const bg = getComputedStyle(band).backgroundImage;
-                  return bg && bg !== 'none';
+                  return bg && bg.includes('start-mobile');
                 }
                 """);
-            Assert.True(heroCropped, "Desktop mock hero must use background crop so PNGs exclude the hiker.");
+            Assert.True(heroMobPanorama, "Desktop mock hero must use mobile panorama (Welkom gate crop).");
         }
 
         await page.ScreenshotAsync(new()
