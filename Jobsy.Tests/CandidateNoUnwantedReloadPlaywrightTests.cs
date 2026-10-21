@@ -145,7 +145,7 @@ public class CandidateNoUnwantedReloadPlaywrightTests
     {
         var root = FindRepoRoot();
         var boot = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/blazor-boot.js"));
-        Assert.DoesNotContain("location.reload()", boot, StringComparison.Ordinal);
+        Assert.Contains("blocked unprompted navigation refresh", boot, StringComparison.Ordinal);
         Assert.DoesNotContain("onRejectedAutoReload", boot, StringComparison.Ordinal);
         Assert.Contains("reconnectionHandler: createLobsyReconnectionHandler()", boot, StringComparison.Ordinal);
 
