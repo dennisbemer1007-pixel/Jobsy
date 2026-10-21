@@ -365,10 +365,18 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             return;
         }
 
-        // Never hijack the HTML document when an API call returns 401 during Blazor SSR or
-        // circuit-backed HttpClient usage. The incoming request Accept is still text/html,
-        // which caused /login ↔ /candidate/settings reload loops while the cookie stayed valid.
-        // Interactive expiry remains: SessionInactivityMiddleware + lobsySessionIdle + reconnect UI.
+        // Interactive navigations for an authenticated session: send the browser to login.
+        // Anonymous SSR routinely gets 401 from optional layout chips (notifications, sales
+        // dashboard) — never hijack those into a /login redirect loop.
+        if (!ShouldRedirectHtmlNavigationToLogin(httpContext))
+        {
+            return;
+        }
+
+        var returnUrl = AuthRedirects.SafeLocalUrl(httpContext.Request.Path.Value);
+        httpContext.Response.Redirect(
+            AuthRedirects.AppendReturnUrl("/login?error=session-expired", returnUrl));
+
         await Task.CompletedTask;
     }
 
@@ -424,13 +432,39 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     }
 
     /// <summary>
-    /// Legacy guard for tests/docs. API 401s must never hijack the HTML document — see
-    /// <see cref="NotifySessionExpiredAsync"/> (Blazor prerender shares Accept: text/html).
+    /// Whether an API 401 during an HTML document request should bounce the browser to login.
     /// </summary>
     public static bool ShouldRedirectHtmlNavigationToLogin(HttpContext httpContext)
     {
-        _ = httpContext;
-        return false;
+        if (httpContext.Response.HasStarted)
+        {
+            return false;
+        }
+
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        // Pupil sessions use the code form. Never the staff login.
+        if (IsPupilPrincipal(httpContext.User))
+        {
+            return false;
+        }
+
+        var path = httpContext.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/external", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/register", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/signin-", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return httpContext.Request.Headers.Accept.ToString()
+            .Contains("text/html", StringComparison.OrdinalIgnoreCase);
     }
 
     private static Task<HttpRequestMessage> CloneRequestAsync(

@@ -1090,7 +1090,7 @@ window.jobsyMaps = (function () {
 window.jobsyExtras = (function () {
     "use strict";
 
-    var extrasSrc = "/js/app-extras.js?v=20261021-idle";
+    var extrasSrc = "/js/app-extras.js?v=20261015-pdfdl";
     var feedbackSrc = "/js/feedback.js?v=20261002-ch10";
     var pending = {};
 

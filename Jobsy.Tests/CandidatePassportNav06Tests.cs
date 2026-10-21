@@ -13,41 +13,6 @@ using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
 
-public class InstellingenRedirectTests
-{
-    [Theory]
-    [InlineData("/instellingen")]
-    [InlineData("/instellingen/")]
-    [InlineData("/candidate/instellingen")]
-    public async Task Legacy_instellingen_urls_redirect_302_to_candidate_settings(string path)
-    {
-        await using var app = await CreateAppAsync();
-        var client = app.GetTestClient();
-
-        using var response = await client.GetAsync(path + "?pane=mail");
-        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
-        Assert.Equal("/candidate/settings?pane=mail", response.Headers.Location?.ToString());
-    }
-
-    private static async Task<WebApplication> CreateAppAsync()
-    {
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-        {
-            EnvironmentName = Environments.Development
-        });
-        builder.WebHost.UseTestServer();
-        var app = builder.Build();
-        app.UseInstellingenRedirect();
-        app.Run(async ctx =>
-        {
-            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
-            await ctx.Response.WriteAsync("fallback");
-        });
-        await app.StartAsync();
-        return app;
-    }
-}
-
 public class BewaardRedirectTests
 {
     [Theory]

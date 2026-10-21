@@ -66,7 +66,7 @@ public static class MailSettingsEndpoints
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect(MailSettingsRedirectTarget(form, error: true));
+                return Results.Redirect("/account/mail-instellingen?error=1");
             }
 
             if (form.ContainsKey("whatsapp_shown"))
@@ -88,40 +88,13 @@ public static class MailSettingsEndpoints
                 var whatsAppResponse = await client.SendAsync(whatsApp);
                 if (!whatsAppResponse.IsSuccessStatusCode)
                 {
-                    return Results.Redirect(MailSettingsRedirectTarget(form, error: true));
+                    return Results.Redirect("/account/mail-instellingen?error=1");
                 }
             }
 
-            return Results.Redirect(MailSettingsRedirectTarget(form, saved: true));
+            return Results.Redirect("/account/mail-instellingen?saved=1");
         }).RequireAuthorization().WithOrder(-1000);
 
         return app;
-    }
-
-    internal static string MailSettingsRedirectTarget(
-        IFormCollection form,
-        bool saved = false,
-        bool error = false)
-    {
-        var returnTo = form["return_to"].ToString();
-        var basePath = AuthRedirects.IsLocalReturnUrl(returnTo) && returnTo.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
-            ? returnTo.Split('?', 2)[0]
-            : "/account/mail-instellingen";
-
-        if (saved)
-        {
-            return basePath.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
-                ? "/candidate/settings?pane=mail&saved=1"
-                : "/account/mail-instellingen?saved=1";
-        }
-
-        if (error)
-        {
-            return basePath.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
-                ? "/candidate/settings?pane=mail&error=1"
-                : "/account/mail-instellingen?error=1";
-        }
-
-        return basePath;
     }
 }
