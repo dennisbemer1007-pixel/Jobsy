@@ -191,8 +191,7 @@
                                       ErrorText="@_error"
                                       CourseSlots="@_courseSlots"
                                       VacancyFit="@_stepFit"
-                                      OnComplete="CompleteStepAsync"
-                                      OnUndo="UndoStepAsync" />
+                                      ReturnUrl="@StepReturnUrl" />
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
@@ -252,6 +251,10 @@
     /// <summary>Deep-linkable step detail: <c>/carriere?stap={order}</c> (03 §1). Invalid ⇒ overview.</summary>
     [SupplyParameterFromQuery(Name = "stap")] public int? Stap { get; set; }
     [SupplyParameterFromQuery(Name = "uwv")] public string? Uwv { get; set; }
+    private string StepReturnUrl =>
+        Stap is int order and > 0
+            ? $"/carriere?stap={order}"
+            : "/carriere";
 
     private string CareerHeroArt => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
         ? LearnGrowHeroBandC
