@@ -2410,6 +2410,31 @@
   }
 }
 
+/* Step 3: shell page-head owns title/lead — hide stray step titles inside form grid */
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__form-grid > h1,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__form-grid > .ob-wizard__lead,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-rustig__form-grid > h2.ob-wizard__subhead {
+  display: none;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-wizard__add-job {
+  inline-size: 100%;
+  min-block-size: 3.25rem;
+  margin-block-start: 0.75rem;
+  padding-inline: 1rem;
+  border: 1px dashed color-mix(in srgb, var(--border) 65%, var(--brand) 35%);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--brand);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-wizard__add-job:hover {
+  background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+}
+
 /* --- Live step-04 (u6x2): optional werkervaring (additive) --- */
 @media (min-width: 1024px) {
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-rustig__layout {
