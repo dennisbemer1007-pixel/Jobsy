@@ -196,6 +196,8 @@ public class JobMapPrerenderGuardTests
         var createEnd = helper.IndexOf("return {", createStart, StringComparison.Ordinal);
         Assert.True(createStart > 0 && createEnd > createStart);
         var createFn = helper[createStart..createEnd];
+        Assert.Contains("transformRequest", createFn);
+        Assert.Contains("rewriteGlyphRequestUrl", helper, StringComparison.Ordinal);
         Assert.Contains("center: options.center", createFn);
         Assert.Contains("zoom: options.zoom", createFn);
         Assert.Contains("controlsPosition", createFn);

@@ -340,6 +340,29 @@ window.jobsyMapLibre = (function () {
         }
     }
 
+    /** OpenFreeMap serves Noto stacks; liberty style still requests Open Sans / Arial Unicode (404). */
+    function rewriteGlyphRequestUrl(url) {
+        if (!url || url.indexOf("/fonts/") === -1) {
+            return url;
+        }
+        try {
+            var decoded = decodeURIComponent(url);
+            if (!/open\s*sans|arial\s*unicode/i.test(decoded)) {
+                return url;
+            }
+            var next = decoded
+                .replace(/Open Sans Regular,\s*Arial Unicode MS Regular/gi, "Noto Sans Regular")
+                .replace(/Open Sans Bold,\s*Arial Unicode MS Bold/gi, "Noto Sans Bold")
+                .replace(/Open Sans Regular/gi, "Noto Sans Regular")
+                .replace(/Open Sans Bold/gi, "Noto Sans Bold")
+                .replace(/Arial Unicode MS Regular/gi, "Noto Sans Regular")
+                .replace(/Arial Unicode MS Bold/gi, "Noto Sans Bold");
+            return encodeURI(next).replace(/#/g, "%23");
+        } catch (e) {
+            return url;
+        }
+    }
+
     function createMap(container, options) {
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
@@ -352,6 +375,12 @@ window.jobsyMapLibre = (function () {
             style: spec.url,
             center: options.center,
             zoom: options.zoom,
+            transformRequest: function (url, resourceType) {
+                if (resourceType === "Glyphs") {
+                    return { url: rewriteGlyphRequestUrl(url) };
+                }
+                return { url: url };
+            },
             attributionControl: {
                 compact: preferCompactAttribution(),
                 customAttribution: OSM_ATTRIBUTION
