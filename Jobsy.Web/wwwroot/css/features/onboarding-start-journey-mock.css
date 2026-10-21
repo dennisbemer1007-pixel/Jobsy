@@ -55,8 +55,8 @@
   .ob-rustig[data-ob-rustig-screen="start-journey-mock"] .ob-start-journey-mock-hero {
     background-image: var(--ob-start-journey-mock-hero-mob);
     background-repeat: no-repeat;
-    background-size: 210% auto;
-    background-position: 12% 64%;
+    background-size: auto 100%;
+    background-position: 28% 50%;
   }
 
   .ob-rustig[data-ob-rustig-screen="start-journey-mock"] .ob-start-journey-mock-hero__img {
@@ -274,7 +274,7 @@
 
   .ob-rustig--start-journey-mock {
     --ob-rustig-hero-h: 48px;
-    --ob-start-journey-route-h: auto;
+    --ob-start-journey-route-h: 21.5rem;
   }
 
   .ob-rustig--start-journey-mock .ob-rustig__page-head--compact {
@@ -293,10 +293,10 @@
   }
 
   .ob-start-journey-route {
-    block-size: auto;
-    min-block-size: 0;
+    block-size: var(--ob-start-journey-route-h);
+    min-block-size: 21.5rem;
     margin-block-start: 0.25rem;
-    padding: 0.25rem 0 1.1rem;
+    padding: 0.35rem 0 1.25rem;
     overflow: visible;
   }
 
@@ -312,79 +312,81 @@
   }
 
   .ob-start-journey-route__stops {
-    display: flex;
-    flex-direction: column;
-    gap: 0.72rem;
-    block-size: auto;
-    padding-block-end: 0.15rem;
+    block-size: 100%;
+    overflow: visible;
   }
 
   .ob-start-journey-route__stop {
-    position: relative;
-    inset: auto;
+    position: absolute;
     transform: none;
-    inline-size: 100%;
+    inline-size: auto;
     max-inline-size: none;
+    overflow: visible;
   }
 
   .ob-start-journey-route__stop-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 3rem minmax(0, 1fr);
-    align-items: center;
-    column-gap: 0.35rem;
-    width: 100%;
-    text-align: start;
+    position: relative;
+    display: block;
+    width: 3rem;
+    text-align: center;
   }
 
   .ob-start-journey-route__here {
-    position: static;
-    transform: none;
-    grid-column: 1 / -1;
-    justify-self: start;
-    margin-block-end: -0.1rem;
+    position: absolute;
+    inset-block-end: calc(100% + 0.28rem);
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
   }
-
-  .ob-start-journey-route__stop.is-side-b .ob-start-journey-route__here {
-    justify-self: end;
-  }
-
-  .ob-start-journey-route__copy {
-    position: static;
-    transform: none;
-  }
-
-  .ob-start-journey-route__stop--1 .ob-start-journey-route__anchor { grid-column: 2; transform: translateX(-0.65rem); }
-  .ob-start-journey-route__stop--2 .ob-start-journey-route__anchor { grid-column: 2; transform: translateX(0.65rem); }
-  .ob-start-journey-route__stop--3 .ob-start-journey-route__anchor { grid-column: 2; transform: translateX(-0.65rem); }
-  .ob-start-journey-route__stop--4 .ob-start-journey-route__anchor { grid-column: 2; transform: translateX(0.65rem); }
-  .ob-start-journey-route__stop--5 .ob-start-journey-route__anchor { grid-column: 2; transform: translateX(-0.65rem); }
 
   .ob-start-journey-route__anchor {
-    grid-row: 1;
-    justify-self: center;
-    align-self: center;
+    position: relative;
+    z-index: 2;
   }
 
   .ob-start-journey-route__copy {
-    grid-row: 1;
-    align-self: center;
+    position: absolute;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    max-width: 7.5rem;
+    white-space: nowrap;
   }
 
-  .ob-start-journey-route__stop.is-current .ob-start-journey-route__anchor,
-  .ob-start-journey-route__stop.is-current .ob-start-journey-route__copy {
-    grid-row: 2;
+  /* Vignette center on path (viewBox y% / x%). Labels on opposite side. */
+  .ob-start-journey-route__stop--1 { left: 71.5%; top: 8.1%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--1 .ob-start-journey-route__copy {
+    right: calc(100% + 0.45rem);
+    left: auto;
+    text-align: end;
   }
 
-  .ob-start-journey-route__stop.is-side-a .ob-start-journey-route__copy {
-    grid-column: 1;
-    justify-self: end;
-    padding-inline-end: 0.2rem;
+  .ob-start-journey-route__stop--2 { left: 28.5%; top: 28.1%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--2 .ob-start-journey-route__copy {
+    left: calc(100% + 0.45rem);
+    right: auto;
+    text-align: start;
   }
 
-  .ob-start-journey-route__stop.is-side-b .ob-start-journey-route__copy {
-    grid-column: 3;
-    justify-self: start;
-    padding-inline-start: 0.2rem;
+  .ob-start-journey-route__stop--3 { left: 71.5%; top: 48.1%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--3 .ob-start-journey-route__copy {
+    right: calc(100% + 0.45rem);
+    left: auto;
+    text-align: end;
+  }
+
+  .ob-start-journey-route__stop--4 { left: 28.5%; top: 68.1%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--4 .ob-start-journey-route__copy {
+    left: calc(100% + 0.45rem);
+    right: auto;
+    text-align: start;
+  }
+
+  .ob-start-journey-route__stop--5 { left: 31.5%; top: 88%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--5 .ob-start-journey-route__copy {
+    left: calc(100% + 0.45rem);
+    right: auto;
+    text-align: start;
   }
 
   .ob-start-journey-route__vignette {
