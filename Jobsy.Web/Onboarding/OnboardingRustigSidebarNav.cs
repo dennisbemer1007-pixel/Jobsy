@@ -14,9 +14,9 @@ public static class OnboardingRustigSidebarNav
             _ => 5,
         };
 
-    public static IReadOnlyList<NavItem> Items(int wizardStep)
+    public static IReadOnlyList<NavItem> Items(int wizardStep, int? activeSectionOverride = null)
     {
-        var active = ActiveSection(wizardStep);
+        var active = activeSectionOverride ?? ActiveSection(wizardStep);
         return
         [
             new("1", "Over jou", "3 stappen", active == 1),
