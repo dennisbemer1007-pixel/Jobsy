@@ -323,6 +323,10 @@
         {
             <script src="js/candidate-passport-client.js?v=20261021-01" nonce="@Nonce" defer></script>
         }
+        @if (IncludeDiscoveryClientScript)
+        {
+            <script src="js/discovery-client-form.js?v=20261021-01" nonce="@Nonce" defer></script>
+        }
     @if (LoadBlazorRuntime)
     {
         @* Block unprompted full reloads before Blazor.start (framework refresh/rejected paths call location.reload). *@
@@ -430,6 +434,9 @@
 
     private bool IncludeCandidatePassportScript =>
         PageAssetCatalog.IncludeCandidatePassportScript(RequestPath);
+
+    private bool IncludeDiscoveryClientScript =>
+        PageAssetCatalog.IncludeDiscoveryClientScript(RequestPath);
 
     private bool IncludeMapPreconnect =>
         PageAssetCatalog.IncludeMapPreconnect(RequestPath);

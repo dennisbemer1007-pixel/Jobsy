@@ -21,6 +21,9 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Onboarding
+@using Jobsy.Web.Discovery
+@using Jobsy.Web.Components.Candidate.Discovery
 @using Microsoft.Extensions.Logging
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -207,10 +210,10 @@
                 else if (_screen == "toestemming")
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
-                    <TestConsentStep Draft="Draft"
-                                     ShowValidation="_showValidation"
-                                     TestTabs="ConsentTabs"
-                                     ConsentChanged="OnConsentChanged" />
+                    <OnboardingClientStepIsland Step="7"
+                                                Draft="Draft"
+                                                Presets="VisiblePresetTuples"
+                                                Seed="ClientStepSeed" />
                     @MobileCoachInlineOnCard
                     <div class="journey-step__foot">
                         <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
@@ -232,15 +235,10 @@
                         <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Coast"]</span>
                         <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", 1)</span>
                     </p>
-                    <PersonalStep Draft="Draft"
-                                  ShowValidation="_showValidation"
-                                  AddressChanged="AddressChanged"
-                                  BirthDateChanged="BirthDateChanged"
-                                  ShowCity="ShowCity"
-                                  SelectAddress="SelectAddress"
-                                  ShowWhatsApp="_employersEnabled"
-                                  EmployersEnabled="_employersEnabled"
-                                  UseDiscoveryPostcodeHint="true" />
+                    <OnboardingClientStepIsland Step="1"
+                                                Draft="Draft"
+                                                Presets="VisiblePresetTuples"
+                                                Seed="ClientStepSeed" />
                     @RenderFooter(showBack: false)
                 }
                 else if (_countedStep == 2)
@@ -249,27 +247,10 @@
                         <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Coast"]</span>
                         <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", 2)</span>
                     </p>
-                    <div class="journey-stack">
-                        <AvailabilityStep Draft="Draft"
-                                          ShowValidation="_showValidation"
-                                          Presets="VisiblePresets"
-                                          TogglePreset="TogglePreset"
-                                          ToggleFineTune="ToggleFineTune"
-                                          SetMinHours="SetMinHoursAsync"
-                                          SetMaxHours="SetMaxHoursAsync"
-                                          ManualAvailability="ManualAvailabilityAsync"
-                                          ToggleAvailability="ToggleAvailability"
-                                          ResetPresets="ResetPresets" />
-                        <div class="journey-stack__divider" role="separator" aria-hidden="true"></div>
-                        <TransportStep Draft="Draft"
-                                       ShowValidation="_showValidation"
-                                       ShowHeading="false"
-                                       ShowDrivingLicenses="true"
-                                       SelectTransport="SelectTransport"
-                                       SelectTravelTime="SelectTravelTime"
-                                       ShowCustomTravel="ShowCustomTravel"
-                                       ToggleLicense="ToggleLicense" />
-                    </div>
+                    <DiscoveryClientStepIsland Step="2"
+                                               Draft="Draft"
+                                               Presets="VisiblePresetTuples"
+                                               Seed="ClientStepSeed" />
                     @RenderFooter()
                 }
                 else if (_countedStep == 3)
@@ -280,51 +261,10 @@
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step3.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step3.Lead"]</p>
-                    <div class="journey-body">
-                        <section>
-                            <h2 class="journey-q">@Culture["Discovery.Step3.Worked"]</h2>
-                            <p class="journey-qs">@Culture["Discovery.Step3.WorkedHint"]</p>
-                            <WorkHistoryStep Draft="Draft"
-                                             ShowHeading="false"
-                                             AddJob="AddJob"
-                                             RemoveJob="RemoveJob"
-                                             SetJobStart="OnSetJobStart"
-                                             SetJobEnd="OnSetJobEnd" />
-                        </section>
-                        <section>
-                            <h2 class="journey-q">@Culture["Discovery.Step3.EmployerWant"]</h2>
-                            <p class="journey-qs">@Culture["Discovery.Step3.EmployerWantHint"]</p>
-                            <ChoiceTileGrid Class="journey-chips" AriaLabel="@Culture["Discovery.Step3.EmployerWant"]">
-                                @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
-                                {
-                                    var selected = Draft.EmployerPreferences.Contains(code);
-                                    <ChoiceTile Class="journey-chip"
-                                                Label="@Culture[DiscoveryCatalogs.EmployerLabelKey(code)]"
-                                                Icon="@ChoiceTileIcons.ForEmployer(code)"
-                                                Selected="selected"
-                                                OnClick="@(() => ToggleEmployerPref(code))" />
-                                }
-                            </ChoiceTileGrid>
-                        </section>
-                        <details class="journey-more">
-                            <summary>
-                                @Culture["Discovery.Step3.Field"]
-                                <span class="journey-more__sp"></span>
-                                <small>@RolesSummary</small>
-                            </summary>
-                            <div class="journey-more__body journey-check-grid">
-                                @foreach (var role in WorkTypeLabels.All)
-                                {
-                                    <label>
-                                        <input type="checkbox"
-                                               checked="@Draft.Roles.Contains(role)"
-                                               @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
-                                        @UiLabels.WorkType(Culture, role)
-                                    </label>
-                                }
-                            </div>
-                        </details>
-                    </div>
+                    <DiscoveryClientStepIsland Step="3"
+                                               Draft="Draft"
+                                               Presets="VisiblePresetTuples"
+                                               Seed="ClientStepSeed" />
                     @RenderFooter()
                 }
                 else if (_countedStep == 4)
@@ -335,123 +275,10 @@
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step4.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step4.Lead"]</p>
-                    <div class="journey-body">
-                        <EducationStep Draft="Draft" ShowHeading="false" SelectEducation="SelectEducation" />
-                        <DreamJobStep Draft="Draft"
-                                      TitleKey="Discovery.Step4.DreamTitle"
-                                      AsSubsection="true"
-                                      ShowLead="false"
-                                      ShowValidation="_showValidation"
-                                      Young="@IsYoungCandidate"
-                                      ChooseDream="ChooseDream"
-                                      ChooseTitle="ChooseDreamTitle"
-                                      ChooseOwnDream="ChooseOwnDream"
-                                      DreamKeyDown="DreamKeyDown" />
-                        <section>
-                            <h2 class="journey-q">@Culture["Discovery.Step4.LearnWant"]</h2>
-                            @for (var i = 0; i < Draft.LearningGoals.Count; i++)
-                            {
-                                var index = i;
-                                <div class="journey-goal-row">
-                                    <input maxlength="@DiscoveryCatalogs.MaxLearningGoalLength"
-                                           value="@Draft.LearningGoals[index]"
-                                           placeholder="@Culture["Profile.LearningGoalPlaceholder"]"
-                                           @oninput="e => SetLearningGoal(index, e.Value?.ToString())" />
-                                    <button type="button" class="btn btn-secondary" @onclick="() => RemoveLearningGoal(index)">×</button>
-                                </div>
-                            }
-                            @if (Draft.LearningGoals.Count < DiscoveryCatalogs.MaxLearningGoals)
-                            {
-                                <button type="button" class="journey-chip journey-chip--add" @onclick="AddLearningGoal">
-                                    + @Culture["Profile.LearningGoalPlaceholder"]
-                                </button>
-                            }
-                        </section>
-                        <details class="journey-more">
-                            <summary>
-                                @Culture["Discovery.Step4.CertificatesSummary"]
-                                <span class="journey-more__sp"></span>
-                                <small>@CertificatesSummary</small>
-                            </summary>
-                            <div class="journey-more__body">
-                                @for (var i = 0; i < Draft.Certificates.Count; i++)
-                                {
-                                    var index = i;
-                                    <div class="journey-cert-row">
-                                        <input type="number" min="1950" max="2100"
-                                               placeholder="@Culture["Profile.CertificateYear"]"
-                                               value="@Draft.Certificates[index].Year"
-                                               @onchange="e => SetCertYear(index, e.Value?.ToString())" />
-                                        <input type="text" maxlength="200"
-                                               placeholder="@Culture["Profile.CertificateName"]"
-                                               value="@Draft.Certificates[index].Name"
-                                               @oninput="e => SetCertName(index, e.Value?.ToString())" />
-                                        <button type="button" class="btn btn-secondary" @onclick="() => RemoveCertificate(index)">×</button>
-                                    </div>
-                                }
-                                <button type="button" class="journey-chip journey-chip--add" @onclick="AddCertificate">
-                                    + @Culture["Profile.AddCertificate"]
-                                </button>
-                            </div>
-                        </details>
-                        <details class="journey-more">
-                            <summary>
-                                @Culture["Discovery.Step4.LanguagesSummary"]
-                                <span class="journey-more__sp"></span>
-                                <small>@LanguagesSummary</small>
-                            </summary>
-                            <div class="journey-more__body">
-                                <fieldset>
-                                    <legend class="journey-q">@Culture["Profile.DutchLevel"]</legend>
-                                    @foreach (var level in DiscoveryCatalogs.DutchLevels)
-                                    {
-                                        var levelCode = level;
-                                        <label class="journey-radio-row">
-                                            <input type="radio" name="journey-dutch"
-                                                   checked="@(string.Equals(Draft.DutchLevel, levelCode, StringComparison.OrdinalIgnoreCase))"
-                                                   @onchange="() => SetDutchLevel(levelCode)" />
-                                            <span>
-                                                <strong>@Culture[DiscoveryCatalogs.DutchLabelKey(levelCode)]</strong>
-                                                <span class="muted"> @Culture[DiscoveryCatalogs.DutchExplainKey(levelCode)]</span>
-                                            </span>
-                                        </label>
-                                    }
-                                </fieldset>
-                                <fieldset>
-                                    <legend class="journey-q">@Culture["Profile.SpokenLanguages"]</legend>
-                                    @foreach (var lang in Draft.SpokenLanguages.ToList())
-                                    {
-                                        var code = lang.Code;
-                                        <div class="journey-lang-row">
-                                            <span>@LanguageDisplay(code)</span>
-                                            <select value="@(lang.Level ?? "")"
-                                                    @onchange="e => SetSpokenLevel(code, e.Value?.ToString())">
-                                                <option value="">@Culture["Profile.LanguageLevel"]</option>
-                                                @foreach (var level in DiscoveryCatalogs.DutchLevels)
-                                                {
-                                                    <option value="@level">@Culture[DiscoveryCatalogs.DutchLabelKey(level)]</option>
-                                                }
-                                            </select>
-                                            <button type="button" class="btn btn-secondary" @onclick="() => RemoveSpokenLanguage(code)">×</button>
-                                        </div>
-                                    }
-                                    @if (Draft.SpokenLanguages.Count < DiscoveryCatalogs.MaxSpokenLanguages)
-                                    {
-                                        <label>
-                                            @Culture["Profile.AddLanguage"]
-                                            <select value="" @onchange="OnAddLanguage">
-                                                <option value="">—</option>
-                                                @foreach (var langCode in AvailableLanguageCodes())
-                                                {
-                                                    <option value="@langCode">@LanguageDisplay(langCode)</option>
-                                                }
-                                            </select>
-                                        </label>
-                                    }
-                                </fieldset>
-                            </div>
-                        </details>
-                    </div>
+                    <DiscoveryClientStepIsland Step="4"
+                                               Draft="Draft"
+                                               Presets="VisiblePresetTuples"
+                                               Seed="ClientStepSeed" />
                     @RenderFooter()
                 }
                 else if (_countedStep == 5)
@@ -462,51 +289,10 @@
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step5.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step5.Lead"]</p>
-                    <div class="journey-body">
-                        <section>
-                            <h2 class="journey-q">@Culture["Discovery.Step5.Hobbies"]</h2>
-                            <p class="journey-qs">@Culture["Discovery.Step5.HobbiesHint"]</p>
-                            <ChoiceTileGrid Class="journey-chips">
-                                @foreach (var code in DiscoveryCatalogs.HobbyCodes)
-                                {
-                                    var selected = Draft.Hobbies.Contains(code);
-                                    <ChoiceTile Class="journey-chip"
-                                                Label="@Culture[DiscoveryCatalogs.HobbyLabelKey(code)]"
-                                                Icon="@ChoiceTileIcons.ForHobby(code)"
-                                                Selected="selected"
-                                                OnClick="@(() => ToggleHobby(code))" />
-                                }
-                                @for (var i = 0; i < Draft.HobbyFreeText.Count; i++)
-                                {
-                                    var index = i;
-                                    <div class="journey-goal-row">
-                                        <input class="journey-custom-input"
-                                               maxlength="@DiscoveryCatalogs.MaxHobbyFreeTextLength"
-                                               value="@Draft.HobbyFreeText[index]"
-                                               placeholder="@Culture["Discovery.Dislike.SomethingElse"]"
-                                               @oninput="e => SetHobbyFree(index, e.Value?.ToString())" />
-                                        <button type="button" class="btn btn-secondary" @onclick="() => RemoveHobbyFree(index)">×</button>
-                                    </div>
-                                }
-                                @if (Draft.HobbyFreeText.Count < 3)
-                                {
-                                    <ChoiceTile Class="journey-chip journey-chip--add"
-                                                IsAdd="true"
-                                                Label="@Culture["Discovery.Dislike.SomethingElse"]"
-                                                OnClick="@AddHobbyFree" />
-                                }
-                            </ChoiceTileGrid>
-                        </section>
-                        <section>
-                            <label>
-                                <span class="journey-q">@Culture["Discovery.Step5.AboutMe"]</span>
-                                <p class="journey-qs">@Culture["Discovery.Step5.AboutMeHint"]</p>
-                                <textarea class="journey-about" maxlength="500" rows="4"
-                                          @bind="Draft.AboutMe" @bind:event="oninput" @bind:after="ScheduleProfileSave"></textarea>
-                                <p class="journey-about-count">@Culture.Format("Discovery.Step5.AboutMeCount", (Draft.AboutMe ?? "").Length)</p>
-                            </label>
-                        </section>
-                    </div>
+                    <DiscoveryClientStepIsland Step="5"
+                                               Draft="Draft"
+                                               Presets="VisiblePresetTuples"
+                                               Seed="ClientStepSeed" />
                     @RenderFooter()
                 }
                 else if (_countedStep == 6)
@@ -524,53 +310,10 @@
                             @Culture["Discovery.Step6.LeadEmployersOff"]
                         </FeatureVisible>
                     </p>
-                    <div class="journey-body journey-body--compact">
-                        <section>
-                            <h2 class="journey-q">@Culture["Discovery.Step6.Question"]</h2>
-                            <p class="journey-qs">@Culture["Discovery.Step6.QuestionHint"]</p>
-                            <ChoiceTileGrid Class="journey-chips" AriaLabel="@Culture["Discovery.Step6.Question"]">
-                                @foreach (var code in DiscoveryCatalogs.DislikeCodes)
-                                {
-                                    var selected = Draft.Dislikes.Contains(code);
-                                    <ChoiceTile Class="journey-chip"
-                                                Label="@Culture[DiscoveryCatalogs.DislikeLabelKey(code)]"
-                                                Icon="@ChoiceTileIcons.ForDislike(code)"
-                                                Selected="selected"
-                                                OnClick="@(() => ToggleDislike(code))" />
-                                }
-                                @for (var i = 0; i < Draft.CustomDislikes.Count; i++)
-                                {
-                                    var index = i;
-                                    <div class="journey-goal-row">
-                                        <input class="journey-custom-input"
-                                               maxlength="@DiscoveryCatalogs.MaxCustomDislikeLength"
-                                               value="@Draft.CustomDislikes[index]"
-                                               placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
-                                               @oninput="e => SetCustomDislike(index, e.Value?.ToString())" />
-                                        <button type="button" class="btn btn-secondary" @onclick="() => RemoveCustomDislike(index)">×</button>
-                                    </div>
-                                }
-                                @if (Draft.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
-                                {
-                                    <ChoiceTile Class="journey-chip journey-chip--add"
-                                                IsAdd="true"
-                                                Label="@Culture["Discovery.Dislike.SomethingElse"]"
-                                                OnClick="@AddCustomDislike" />
-                                }
-                            </ChoiceTileGrid>
-                        </section>
-                        <p class="journey-private-note">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M3 3l18 18M10.6 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.5 9.5 7-.4 1-1.2 2.3-2.4 3.6M6.4 6.4C4.5 7.8 3.2 9.8 2.5 12c1 2.5 4.5 7 9.5 7 1.6 0 3-.4 4.3-1.1" />
-                            </svg>
-                            <FeatureVisible Feature="PlatformFeature.Employers">
-                                @Culture["Discovery.Dislike.PrivateNote"]
-                            </FeatureVisible>
-                            <FeatureVisible Feature="PlatformFeature.Employers" WhenEnabled="false">
-                                @Culture["Discovery.Dislike.PrivateNoteEmployersOff"]
-                            </FeatureVisible>
-                        </p>
-                    </div>
+                    <DiscoveryClientStepIsland Step="6"
+                                               Draft="Draft"
+                                               Presets="VisiblePresetTuples"
+                                               Seed="ClientStepSeed" />
                     @RenderFooter(showSkip: true)
                 }
                 else if (_screen == "overview")
@@ -1618,6 +1361,15 @@
             return;
         }
 
+        if (_screen == "toestemming" || _countedStep is >= 1 and <= 10)
+        {
+            if (!await TryImportClientStepAsync())
+            {
+                _error = Culture["Common.Error.TryAgain"];
+                return;
+            }
+        }
+
         if (_countedStep == 1)
         {
             await EnsureAddressResolvedAsync();
@@ -1653,8 +1405,6 @@
             await FlushAsync();
             if (_countedStep == 4) await SaveDreamAsync();
             if (_countedStep == 6) await FlushPrivateAsync();
-            if (_countedStep is >= 7 and <= 10 && _autosave is not null) await _autosave.FlushAsync();
-
             if (_countedStep == 6)
             {
                 _state = await Api.SaveMyOnboardingProgressAsync(6, stepCompleted: true);
@@ -2889,40 +2639,7 @@
         }
 
         _miniFlowEpoch++;
-        _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
-        {
-            var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in draft)
-            {
-                merged[answer.Key] = answer.Value;
-            }
-
-            var payload = _targetLevel <= OnboardingWizardCatalog.MiniLevelCount
-                ? OnboardingMiniBlockCompletion.ScopeToMiniIds(assessmentKind, _quickScanVersion, merged)
-                : merged;
-
-            switch (_countedStep)
-            {
-                case 7:
-                    await Api.SaveMyCompetenciesAsync(payload, false, cancellationToken);
-                    break;
-                case 8:
-                    await Api.SaveMyCareerInterestsAsync(payload, false, cancellationToken);
-                    break;
-                case 9:
-                    await Api.SaveMyCultureAsync(payload, false, cancellationToken);
-                    break;
-                case 10:
-                    await Api.SaveMyValuesAsync(payload, false, cancellationToken);
-                    break;
-            }
-
-            ClearSaveFailure();
-        }, () => InvokeAsync(StateHasChanged), 150, _ => InvokeAsync(() =>
-        {
-            _saveStatus = "error";
-            return Task.CompletedTask;
-        }));
+        _autosave = null;
     }
 
     private async Task TryAutoAdvanceEmptyMiniStepAsync()
@@ -2962,15 +2679,7 @@
         return Task.CompletedTask;
     }
 
-    private void QueueMiniSave(int id, int value)
-    {
-        if (_autosave is null)
-        {
-            return;
-        }
-
-        _ = SaveMiniQuietAsync(id, value);
-    }
+    private void QueueMiniSave(int id, int value) { }
 
     private async Task SaveMiniQuietAsync(int id, int value)
     {
@@ -3412,8 +3121,40 @@
         SchedulePrivateSave();
     }
 
+    private async Task<bool> TryImportClientStepAsync()
+    {
+        try
+        {
+            if (_screen == "toestemming")
+            {
+                var consentJson = await Js.InvokeAsync<string>("jobsyOnboardingClient.collect", 7);
+                Draft.ConsentRequested = OnboardingClientStepBridge.ParseStep7Consent(consentJson);
+                return true;
+            }
+            if (_countedStep == 1)
+            {
+                OnboardingClientStepBridge.Apply(1, Draft, await Js.InvokeAsync<string>("jobsyOnboardingClient.collect", 1));
+                return true;
+            }
+            if (_countedStep is >= 2 and <= 6)
+            {
+                DiscoveryClientStepBridge.Apply(_countedStep, Draft, await Js.InvokeAsync<string>("jobsyDiscoveryClient.collect", _countedStep));
+                return true;
+            }
+            if (_countedStep is >= 7 and <= 10)
+            {
+                foreach (var (id, value) in OnboardingClientStepBridge.ParseMiniAnswers(await Js.InvokeAsync<string>("jobsyOnboardingClient.collect", _countedStep)))
+                    _miniAnswers[id] = value;
+                return true;
+            }
+            return true;
+        }
+        catch (JSException) { return false; }
+    }
+
     private void ScheduleProfileSave()
     {
+        if (_countedStep is >= 1 and <= 6) return;
         _saveCts?.Cancel();
         _saveCts = new();
         _ = SaveDebounceAsync(_saveCts.Token);
