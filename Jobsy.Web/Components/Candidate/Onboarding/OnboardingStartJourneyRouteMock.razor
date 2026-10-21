@@ -1,0 +1,46 @@
+@using Jobsy.Web.Onboarding
+
+<div class="ob-start-journey-route" data-testid="onboarding-start-journey-route">
+    <svg class="ob-start-journey-route__svg" viewBox="0 0 1000 320" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+            <linearGradient id="obStartJourneyStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#c4a574" />
+                <stop offset="45%" stop-color="#8fb8a8" />
+                <stop offset="100%" stop-color="#d4b878" />
+            </linearGradient>
+        </defs>
+        <path d="M 40 250 C 120 250, 140 120, 220 130 S 380 240, 460 200 S 620 80, 700 110 S 860 220, 960 180"
+              fill="none"
+              stroke="url(#obStartJourneyStroke)"
+              stroke-width="14"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              opacity="0.65" />
+    </svg>
+    <ol class="ob-start-journey-route__stops">
+        @foreach (var stop in OnboardingStartJourneyMockCopy.Stops)
+        {
+            var isCurrent = stop.Number == "1";
+            <li class="ob-start-journey-route__stop ob-start-journey-route__stop--@stop.Number @(isCurrent ? "is-current" : null)"
+                style="--stop-i: @stop.Number;">
+                <div class="ob-start-journey-route__stop-inner">
+                    @if (isCurrent)
+                    {
+                        <span class="ob-start-journey-route__here">@OnboardingStartJourneyMockCopy.HereMarker</span>
+                    }
+                    <div class="ob-start-journey-route__vignette @(isCurrent ? "is-current" : null)">
+                        <img src="@stop.VignettePath" alt="" width="96" height="96" loading="eager" decoding="async" />
+                    </div>
+                    <div class="ob-start-journey-route__label">
+                        <p class="ob-start-journey-route__title">@stop.Title</p>
+                        <p class="ob-start-journey-route__sub">@stop.Subtitle</p>
+                        @if (!string.IsNullOrWhiteSpace(stop.Meta))
+                        {
+                            <p class="ob-start-journey-route__meta">@stop.Meta</p>
+                        }
+                    </div>
+                </div>
+            </li>
+        }
+    </ol>
+</div>

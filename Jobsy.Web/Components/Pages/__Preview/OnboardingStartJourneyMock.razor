@@ -1,0 +1,75 @@
+@page "/preview/onboarding-start-journey"
+@layout Jobsy.Web.Components.Layout.OnboardingStartJourneyMockLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Onboarding
+
+<PageTitle>Mockup · Onboarding start · Lobsy</PageTitle>
+
+<section class="ob-wizard__welcome ob-wizard--rustig">
+    <div class="ob-rustig ob-rustig--start-journey-mock" data-ob-rustig-screen="start-journey-mock">
+        <div class="ob-rustig__layout">
+            <aside class="ob-rustig__sidebar ob-wizard__sidebar ob-rustig__sidebar--no-logo" aria-label="Stappen">
+                @foreach (var item in OnboardingStartJourneyMockCopy.SidebarNav)
+                {
+                    var isCurrent = item.Number == "1";
+                    <div class="ob-wizard__side-item @(isCurrent ? "is-current" : null)">
+                        <span>@item.Number</span>
+                        <div>
+                            <strong>@item.Title</strong>
+                            @if (!string.IsNullOrWhiteSpace(item.Sub))
+                            {
+                                <small>@item.Sub</small>
+                            }
+                        </div>
+                    </div>
+                }
+            </aside>
+
+            <div class="ob-rustig__main">
+                <header class="ob-rustig__chrome ob-rustig__chrome--compact">
+                    <div class="ob-rustig__chrome-row">
+                        <button type="button" class="ob-rustig__link" aria-hidden="true" tabindex="-1">‹</button>
+                        <div class="ob-rustig__segments" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="10">
+                            @foreach (var _ in Enumerable.Range(0, 4))
+                            {
+                                <span><i style="--w:0%"></i></span>
+                            }
+                        </div>
+                        <div class="ob-rustig__actions">
+                            <button type="button" class="ob-rustig__link">@OnboardingStartJourneyMockCopy.Later</button>
+                            <span class="ob-rustig__link ob-rustig__link--underline">@OnboardingStartJourneyMockCopy.AccountLink</span>
+                        </div>
+                    </div>
+                    <div class="ob-rustig__meta">
+                        <span>
+                            <strong>@OnboardingStartJourneyMockCopy.StartMeta</strong>
+                            <text> · ± @OnboardingStartJourneyMockCopy.MinutesShort</text>
+                        </span>
+                    </div>
+                </header>
+
+                <OnboardingRustigHero DesktopUrl="@OnboardingRustigPanoramaAssets.StartDesktop"
+                                      MobileUrl="@OnboardingRustigPanoramaAssets.StartMobile" />
+
+                <div class="ob-rustig__page-head ob-rustig__page-head--compact">
+                    <h1 tabindex="-1">@OnboardingStartJourneyMockCopy.Title</h1>
+                    <p class="ob-rustig__lead">@OnboardingStartJourneyMockCopy.Lead</p>
+                </div>
+
+                <div class="ob-rustig__body ob-rustig__body--journey-mock">
+                    <OnboardingStartJourneyRouteMock />
+                    <div class="ob-rustig__footer-actions ob-rustig__footer-actions--above-fold">
+                        <button type="button"
+                                class="ob-rustig__btn ob-rustig__btn--primary"
+                                data-testid="onboarding-begin">
+                            @OnboardingStartJourneyMockCopy.Cta
+                        </button>
+                    </div>
+                    <p class="ob-wizard__hint ob-wizard__hint--compact">@OnboardingStartJourneyMockCopy.Hint</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

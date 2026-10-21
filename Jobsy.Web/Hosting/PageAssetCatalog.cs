@@ -189,7 +189,8 @@ public static class PageAssetCatalog
             return Area.CandidatePublic | Area.CandidateApp | Area.Werkgever;
         }
 
-        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/preview/onboarding-start-journey", StringComparison.OrdinalIgnoreCase))
         {
             return Area.CandidatePublic | Area.CandidateApp;
         }
@@ -318,6 +319,16 @@ public static class PageAssetCatalog
         if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
         {
             return UwvMockupRouteCss;
+        }
+
+        if (path.StartsWith("/preview/onboarding-start-journey", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                "css/features/onboarding-wizard.css?v=20261018-02",
+                "css/features/onboarding-rustig.css?v=20261018-r12",
+                "css/features/onboarding-start-journey-mock.css?v=20261021-02",
+            ];
         }
 
         if (path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)

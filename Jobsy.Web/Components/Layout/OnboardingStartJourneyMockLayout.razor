@@ -1,0 +1,41 @@
+@inherits LayoutComponentBase
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Onboarding
+
+<div class="app-shell app-shell--candidate ob-start-journey-mock-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <PageSeoHead />
+    <header class="app-header">
+        <div class="app-header__brand">
+            <a class="brand" href="/preview/onboarding-start-journey" aria-label="Lobsy">
+                <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
+                <span class="brand__text">
+                    <span class="brand-tagline">@Culture["Brand.Tagline"]</span>
+                </span>
+            </a>
+        </div>
+        <nav class="candidate-header-nav" aria-label="Hoofdmenu">
+            <a class="candidate-header-nav__link is-active" href="/preview/onboarding-start-journey">Reis</a>
+            <a class="candidate-header-nav__link" href="/preview/onboarding-start-journey">Paspoort</a>
+            <a class="candidate-header-nav__link" href="/preview/onboarding-start-journey">Zoeken</a>
+            <a class="candidate-header-nav__link" href="/preview/onboarding-start-journey">Sollicitaties</a>
+            <a class="candidate-header-nav__link" href="/preview/onboarding-start-journey">Carrière</a>
+        </nav>
+        <div class="app-header__actions">
+            <PageHelp />
+            <NotificationBell />
+            <LanguageSelector />
+            <span class="ob-start-journey-mock-shell__user muted">@OnboardingStartJourneyMockCopy.DemoUser</span>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <div class="app-main__content">
+            @Body
+        </div>
+    </main>
+</div>
+
+@code {
+    [Inject] private CultureState Culture { get; set; } = default!;
+}
