@@ -43,7 +43,7 @@ internal static class DiscoveryClientStepInitialState
             transport = JsonSerializer.Deserialize<object>(transportJson),
             drivingLicenses = draft.DrivingLicenses.ToList(),
             licenseOptions = DrivingLicenseLabels.All
-                .Select(code => new { code, label = UiLabels.DrivingLicense(culture, code) })
+                .Select(code => new { code, label = UiLabels.License(culture, code) })
                 .ToList(),
         };
     }

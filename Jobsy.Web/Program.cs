@@ -683,7 +683,11 @@ app.MapCandidateNotificationBffEndpoints();
 app.MapCandidateCareerBffEndpoints();
 app.MapCandidatePassportPdfEndpoints();
 app.MapCandidateApplicationsBffEndpoints();
+<<<<<<< HEAD
 app.MapCandidatePassportBffEndpoints();
+=======
+app.MapOnboardingClientEndpoints();
+>>>>>>> 52819efdd (Fix discovery client build and Playwright wiring.)
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
