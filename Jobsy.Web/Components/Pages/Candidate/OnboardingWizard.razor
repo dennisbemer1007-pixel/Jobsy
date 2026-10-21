@@ -2290,7 +2290,20 @@
     {
         try
         {
+            var mounted = await Js.InvokeAsync<bool>(
+                "eval",
+                $"document.querySelector('[data-ob-client-step=\"{_step}\"]')?.getAttribute('data-ob-client-mounted')==='1'");
+            if (!mounted)
+            {
+                return false;
+            }
+
             var json = await Js.InvokeAsync<string>("jobsyOnboardingClient.collect", _step);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
             if (_step is >= 1 and <= 6)
             {
                 OnboardingClientStepBridge.Apply(_step, Draft, json);

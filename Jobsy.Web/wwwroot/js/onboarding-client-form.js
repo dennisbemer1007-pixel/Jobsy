@@ -13,6 +13,22 @@
         return digits.slice(0, 2) + "-" + digits.slice(2, 4) + "-" + digits.slice(4);
     }
 
+    function applyDateMaskToInput(input) {
+        if (!input) return;
+        var sel = input.selectionStart == null ? input.value.length : input.selectionStart;
+        var digitsBefore = String(input.value.slice(0, sel)).replace(/\D/g, "").length;
+        var masked = applyDateMask(input.value);
+        input.value = masked;
+        var pos = 0;
+        var digits = 0;
+        for (; pos < masked.length && digits < digitsBefore; pos++) {
+            if (/\d/.test(masked.charAt(pos))) digits++;
+        }
+        try {
+            input.setSelectionRange(pos, pos);
+        } catch (e) { }
+    }
+
     function parseFlexibleDate(text) {
         if (!text || text.trim().length < 8) return null;
         var parts = text.trim().replace(/\./g, "-").replace(/\//g, "-").split("-");
@@ -88,9 +104,12 @@
             (initial.workStatusOptions || []).forEach(function (opt) {
                 var btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = "lobsy-choice-tile work-status-chip";
-                btn.setAttribute("aria-pressed", state.workStatuses.has(opt.code) ? "true" : "false");
-                btn.textContent = opt.label;
+                var selected = state.workStatuses.has(opt.code);
+                btn.className = "lobsy-choice-tile work-status-chip" + (selected ? " is-selected" : "");
+                btn.setAttribute("aria-pressed", selected ? "true" : "false");
+                var iconHtml = opt.icon ? ('<span class="lobsy-choice-tile__icon" aria-hidden="true">' + opt.icon + "</span>") : "";
+                var checkHtml = selected ? ('<span class="lobsy-choice-tile__check" aria-hidden="true">✓</span>') : "";
+                btn.innerHTML = iconHtml + '<span class="lobsy-choice-tile__label">' + escapeHtml(opt.label) + "</span>" + checkHtml;
                 btn.addEventListener("click", function () {
                     if (state.workStatuses.has(opt.code)) state.workStatuses.delete(opt.code);
                     else state.workStatuses.add(opt.code);
@@ -101,11 +120,10 @@
         }
         renderWorkStatus();
 
-        if (birth) {
+        if (birth && !birth.__obBirthMask) {
+            birth.__obBirthMask = true;
             birth.addEventListener("input", function () {
-                var pos = birth.selectionStart;
-                birth.value = applyDateMask(birth.value);
-                try { birth.setSelectionRange(pos, pos); } catch (e) { }
+                applyDateMaskToInput(birth);
             });
         }
 
@@ -602,6 +620,7 @@
     window.jobsyOnboardingClient = {
         mount: function (root, step) {
             if (!root) return;
+            if (root.getAttribute("data-ob-client-mounted") === "1") return;
             var initial = {};
             try {
                 initial = JSON.parse(root.getAttribute("data-initial") || "{}");
@@ -610,16 +629,34 @@
             if (roots) roots.set(root, st);
             else fallbackMap = fallbackMap || {};
             if (!roots) fallbackMap[root.id || "x"] = st;
+            root.setAttribute("data-ob-client-mounted", "1");
         },
         unmount: function (root) {
+            if (!root) return;
+            root.removeAttribute("data-ob-client-mounted");
             if (roots) roots.delete(root);
         },
         collect: function (step) {
             var root = document.querySelector("[data-ob-client-step=\"" + step + "\"]");
-            if (!root) return "{}";
+            if (!root || root.getAttribute("data-ob-client-mounted") !== "1") return "";
             var st = roots ? roots.get(root) : null;
-            if (!st || !st.collect) return "{}";
+            if (!st || !st.collect) return "";
             return JSON.stringify(st.collect());
+        },
+        mountKompasComplete: function (dotNetRef) {
+            window.__jobsyKompasCompleteRef = dotNetRef;
+            document.querySelectorAll("[data-ob-client-kompas-complete]").forEach(function (btn) {
+                if (btn.__jobsyKompasBound) return;
+                btn.__jobsyKompasBound = true;
+                btn.addEventListener("click", function () {
+                    if (window.__jobsyKompasCompleteRef) {
+                        window.__jobsyKompasCompleteRef.invokeMethodAsync("CompleteAsync");
+                    }
+                });
+            });
+        },
+        unmountKompasComplete: function () {
+            window.__jobsyKompasCompleteRef = null;
         }
     };
 })();

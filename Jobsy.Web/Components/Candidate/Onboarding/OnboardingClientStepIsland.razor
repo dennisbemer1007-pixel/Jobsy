@@ -20,23 +20,52 @@
     private ElementReference _root;
     private string _initialJson = "{}";
     private bool _mounted;
+    private bool _markupLocked;
+    private bool _pendingUnmount;
     private int _lastStep;
 
     protected override void OnParametersSet()
     {
         if (_lastStep != Step)
         {
+            if (_mounted)
+            {
+                _pendingUnmount = true;
+            }
+
             _lastStep = Step;
             _mounted = false;
+            _markupLocked = false;
         }
 
         _initialJson = OnboardingClientStepInitialState.Build(Step, Draft, Culture, Presets, Seed);
     }
 
-    protected override bool ShouldRender() => !_mounted;
+    /// <summary>Lock static shell after first paint so parent re-renders do not wipe client DOM before/during mount.</summary>
+    protected override bool ShouldRender() => !_markupLocked;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!_markupLocked)
+        {
+            _markupLocked = true;
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_pendingUnmount)
+        {
+            _pendingUnmount = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyOnboardingClient.unmount", _root);
+            }
+            catch (JSException)
+            {
+            }
+        }
+
         if (_mounted)
         {
             return;
@@ -44,11 +73,34 @@
 
         try
         {
+            await WaitForClientScriptAsync();
             await Js.InvokeVoidAsync("jobsyOnboardingClient.mount", _root, Step);
             _mounted = true;
         }
         catch (JSException)
         {
+        }
+    }
+
+    private async Task WaitForClientScriptAsync()
+    {
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            try
+            {
+                var ready = await Js.InvokeAsync<bool>(
+                    "eval",
+                    "typeof window.jobsyOnboardingClient !== 'undefined' && typeof window.jobsyOnboardingClient.mount === 'function'");
+                if (ready)
+                {
+                    return;
+                }
+            }
+            catch (JSException)
+            {
+            }
+
+            await Task.Delay(50);
         }
     }
 
