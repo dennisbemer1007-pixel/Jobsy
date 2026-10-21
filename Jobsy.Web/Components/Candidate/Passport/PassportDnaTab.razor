@@ -20,7 +20,7 @@
             @if (Highlights.Count == 0)
             {
                 <p class="login-lead">@Culture[EmptyStoryKey]</p>
-                <button type="button" class="btn btn-primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                @TestsCta("btn btn-primary")
             }
             else
             {
@@ -52,7 +52,7 @@
             @if (string.IsNullOrWhiteSpace(Story))
             {
                 <p class="login-lead">@Culture[EmptyStoryKey]</p>
-                <button type="button" class="btn btn-primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                @TestsCta("btn btn-primary")
             }
             else
             {
@@ -102,7 +102,7 @@
             @if (CultureDetail is null || CultureDetail.IsGhost)
             {
                 <p class="login-lead">@Culture["Dna.TeaserCulture"]</p>
-                <button type="button" class="btn btn-secondary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                @TestsCta("btn btn-secondary")
             }
             else
             {
@@ -164,11 +164,24 @@
     [Parameter] public PassportShellRules.ShellProgress Shells { get; set; } =
         new([], 0, 0, 0);
     [Parameter] public EventCallback OnGoTests { get; set; }
+    [Parameter] public string? TestsHref { get; set; }
 
     private bool _storyExpanded;
     private string EmptyStoryKey => TestsComplete ? "Dna.StoryFallback" : "Dna.StoryEmpty";
 
     private void ToggleStory() => _storyExpanded = !_storyExpanded;
+
+    private RenderFragment TestsCta(string cssClass) => __builder =>
+    {
+        if (!string.IsNullOrWhiteSpace(TestsHref))
+        {
+            <a class="@cssClass" href="@TestsHref">@Culture["Dna.StoryEmptyCta"]</a>
+        }
+        else
+        {
+            <button type="button" class="@cssClass" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+        }
+    };
 
     private static IEnumerable<string> StoryParagraphs(string story)
         => story.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

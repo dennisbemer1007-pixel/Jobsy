@@ -65,7 +65,6 @@
                               LanguagesLabel="@_languages"
                               LookingFor="_lookingFor"
                               LicenseLabel="@_license"
-                              CvBusy="_pdfBusy"
                               DnaPassport="_flags.PassportPdfV2Enabled"
                               EditHref="@_dataTabHref"
                               CvDownloadHref="@CandidatePassportPdfEndpoints.LobsyCvPath" />
@@ -85,7 +84,6 @@
                                   VerifiedCompetenceLabels="_verifiedCompetenceLabels"
                                   CompletenessPercent="_completeness"
                                   OneLiner="@_oneLiner"
-                                  CvBusy="_pdfBusy"
                                   DnaPassport="_flags.PassportPdfV2Enabled"
                                   EditHref="@_dataTabHref"
                                   CvDownloadHref="@CandidatePassportPdfEndpoints.LobsyCvPath" />
@@ -206,7 +204,6 @@
     private string? _proofItem;
     private bool _freshLayer;
     private bool _loading = true;
-    private bool _pdfBusy;
     private string? _message;
     private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
 
