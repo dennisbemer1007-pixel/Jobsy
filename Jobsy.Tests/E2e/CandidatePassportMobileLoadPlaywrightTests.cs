@@ -52,7 +52,7 @@ public sealed class CandidatePassportMobileLoadPlaywrightTests : IAsyncLifetime
         var ok = await WaitForPassportContentAsync(page, timeoutMs: 2_000);
         var elapsed = DateTime.UtcNow - started;
         Assert.True(ok, $"Paspoort content not visible within 2s (elapsed {elapsed.TotalSeconds:F1}s).");
-        await Assertions.Expect(page.Locator(".page-content-skeleton")).ToHaveCountAsync(0, new() { Timeout = 500 });
+        await Assertions.Expect(page.Locator(".page-skeleton")).ToHaveCountAsync(0, new() { Timeout = 500 });
         await Assertions.Expect(page.Locator(".panel-inline-error")).ToHaveCountAsync(0, new() { Timeout = 500 });
 
         var navPinned = await page.EvaluateAsync<bool>(
@@ -76,7 +76,7 @@ public sealed class CandidatePassportMobileLoadPlaywrightTests : IAsyncLifetime
                 """
                 () => {
                   if (!document.querySelector('.passport-page')) return false;
-                  if (document.querySelector('.page-content-skeleton')) return false;
+                  if (document.querySelector('.page-skeleton')) return false;
                   const card = document.querySelector('.passport-layout__card--mobile, .passport-layout__sidebar');
                   const overview = document.querySelector('.passport-overview');
                   return !!(card || overview);

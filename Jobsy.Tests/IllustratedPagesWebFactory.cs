@@ -146,9 +146,18 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
 <<<<<<< HEAD
+<<<<<<< HEAD
             var json = IllustratedPagesApiStub.BuildJson(path, emptyAppsAndLikes, minimalPassportProfile);
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
 =======
+=======
+            if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_CORE") == "1"
+                && path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
+            {
+                await Task.Delay(12_000, cancellationToken);
+            }
+
+>>>>>>> 621c156ce (Rework #824 walkthrough: slow-core skeleton before, fix skeleton selectors.)
             if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_SECONDARY") == "1"
                 && path.Contains("/api/me/", StringComparison.OrdinalIgnoreCase)
                 && !path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
