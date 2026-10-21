@@ -43,50 +43,78 @@
                             <a class="account-menu__link" href="/" role="menuitem">@Culture["AdminShell.ToLobsy"]</a>
                             <a class="account-menu__link" href="/admin" role="menuitem">@Culture["AdminShell.ToAdmin"]</a>
                         }
-                        @if (RoleNavCatalog.HowLobsyHrefFor(context.User) is { } howHref)
-                        {
-                            <a class="account-menu__link" href="@howHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>
-                        }
-                        @if (RoleClaimMatching.HasRole(context.User, JobsyRoles.Candidate))
+                        @if (UseCandidateSlimMenu(context.User))
                         {
                             <a class="account-menu__link" href="@_candidateProfileHref" role="menuitem">@Culture["Nav.Profile"]</a>
                             <a class="account-menu__link" href="/candidate/settings" role="menuitem">@Culture["CandidateSettings.Title"]</a>
-                            <a class="account-menu__link account-menu__link--danger"
-                               href="/privacy/data"
-                               role="menuitem"
-                               data-testid="candidate-delete-account-menu">
-                                @Culture["Unsubscribe.Title"]
-                            </a>
-                            <a class="account-menu__link" href="/candidate/privacy" role="menuitem">@Culture["CandidatePrivacy.Title"]</a>
-                        }
-                        <button type="button"
-                                class="account-menu__link"
-                                role="menuitem"
-                                @onclick="OpenFeedbackAsync">
-                            @Culture["Feedback.Button"]
-                        </button>
-                        @if (_showInstall && !_isCandidate)
-                        {
+                            @if (RoleNavCatalog.HowLobsyHrefFor(context.User) is { } candidateHowHref)
+                            {
+                                <a class="account-menu__link" href="@candidateHowHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>
+                            }
                             <button type="button"
                                     class="account-menu__link"
                                     role="menuitem"
-                                    @onclick="InstallAppAsync">
-                                @Culture["Pwa.InstallMenu"]
+                                    @onclick="OpenFeedbackAsync">
+                                @Culture["Feedback.Button"]
                             </button>
+                            <div class="account-menu__footer" role="presentation">
+                                <a class="account-menu__link account-menu__link--logout"
+                                   href="/logout"
+                                   role="menuitem"
+                                   data-testid="auth-logout-link"
+                                   @onclick="DropPushAsync"
+                                   @onclick:preventDefault="true">
+                                    @Culture["Auth.Logout"]
+                                </a>
+                            </div>
                         }
-                        <a class="account-menu__link" href="/account/mail-instellingen" role="menuitem">@Culture["MailSettings.Title"]</a>
-                        <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
-                        <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
-                        <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
-                        <a class="account-menu__link" href="/wie-zijn-wij" role="menuitem">@Culture["Footer.About"]</a>
-                        <a class="account-menu__link account-menu__link--logout"
-                           href="/logout"
-                           role="menuitem"
-                           data-testid="auth-logout-link"
-                           @onclick="DropPushAsync"
-                           @onclick:preventDefault="true">
-                            @Culture["Auth.Logout"]
-                        </a>
+                        else
+                        {
+                            @if (RoleNavCatalog.HowLobsyHrefFor(context.User) is { } howHref)
+                            {
+                                <a class="account-menu__link" href="@howHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>
+                            }
+                            @if (RoleClaimMatching.HasRole(context.User, JobsyRoles.Candidate))
+                            {
+                                <a class="account-menu__link" href="@_candidateProfileHref" role="menuitem">@Culture["Nav.Profile"]</a>
+                                <a class="account-menu__link" href="/candidate/settings" role="menuitem">@Culture["CandidateSettings.Title"]</a>
+                                <a class="account-menu__link account-menu__link--danger"
+                                   href="/privacy/data"
+                                   role="menuitem"
+                                   data-testid="candidate-delete-account-menu">
+                                    @Culture["Unsubscribe.Title"]
+                                </a>
+                                <a class="account-menu__link" href="/candidate/privacy" role="menuitem">@Culture["CandidatePrivacy.Title"]</a>
+                            }
+                            <button type="button"
+                                    class="account-menu__link"
+                                    role="menuitem"
+                                    @onclick="OpenFeedbackAsync">
+                                @Culture["Feedback.Button"]
+                            </button>
+                            @if (_showInstall && !_isCandidate)
+                            {
+                                <button type="button"
+                                        class="account-menu__link"
+                                        role="menuitem"
+                                        @onclick="InstallAppAsync">
+                                    @Culture["Pwa.InstallMenu"]
+                                </button>
+                            }
+                            <a class="account-menu__link" href="/account/mail-instellingen" role="menuitem">@Culture["MailSettings.Title"]</a>
+                            <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
+                            <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
+                            <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
+                            <a class="account-menu__link" href="/wie-zijn-wij" role="menuitem">@Culture["Footer.About"]</a>
+                            <a class="account-menu__link account-menu__link--logout"
+                               href="/logout"
+                               role="menuitem"
+                               data-testid="auth-logout-link"
+                               @onclick="DropPushAsync"
+                               @onclick:preventDefault="true">
+                                @Culture["Auth.Logout"]
+                            </a>
+                        }
                     </div>
             </div>
         </Authorized>
@@ -308,6 +336,36 @@
     private static string? EmailOf(ClaimsPrincipal user)
         => user.FindFirst(ClaimTypes.Email)?.Value
            ?? user.FindFirst("email")?.Value;
+
+    /// <summary>Demo kandidaat menu: five actions plus logout. Staff roles keep the full menu.</summary>
+    internal static bool UseCandidateSlimMenu(ClaimsPrincipal user)
+    {
+        if (!RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            return false;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
+        {
+            return false;
+        }
+
+        foreach (var role in JobsyRoles.EmployerRoles)
+        {
+            if (RoleClaimMatching.HasRole(user, role))
+            {
+                return false;
+            }
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur))
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     public override void Dispose()
     {

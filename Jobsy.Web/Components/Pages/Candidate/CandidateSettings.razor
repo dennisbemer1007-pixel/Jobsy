@@ -62,15 +62,21 @@
             </div>
             <div class="cand-settings__nav-group">
                 <h2>@Culture["CandidateSettings.NavPrivacy"]</h2>
+                <a class="@NavClass("privacy-hub")" href="/candidate/privacy">
+                    <span>
+                        <span class="cand-settings__nav-title">@Culture["CandidatePrivacy.Title"]</span>
+                        <span class="cand-settings__nav-desc">@Culture["CandidatePrivacy.Lead"]</span>
+                    </span>
+                </a>
                 <a class="@NavClass("privacy")" href="/privacy">
                     <span>
                         <span class="cand-settings__nav-title">@Culture["CandidatePrivacy.Policy.Title"]</span>
                         <span class="cand-settings__nav-desc">@Culture["CandidatePrivacy.Policy.Desc"]</span>
                     </span>
                 </a>
-                <a class="@NavClass("data")" href="/privacy/data">
+                <a class="@NavClass("data")" href="/privacy/data" data-testid="candidate-delete-account-settings">
                     <span>
-                        <span class="cand-settings__nav-title">@Culture["CandidatePrivacy.Data.Title"]</span>
+                        <span class="cand-settings__nav-title">@Culture["Unsubscribe.Title"]</span>
                         <span class="cand-settings__nav-desc">@Culture["CandidatePrivacy.Data.Desc"]</span>
                     </span>
                 </a>

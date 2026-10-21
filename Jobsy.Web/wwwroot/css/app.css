@@ -458,6 +458,18 @@ html[dir="rtl"] .account-menu__panel {
     color: var(--brand);
 }
 
+.account-menu__footer {
+    margin-top: 0.15rem;
+    padding-top: 0.15rem;
+    border-top: 1px solid var(--border);
+}
+
+.account-menu__footer .account-menu__link--logout {
+    margin-top: 0;
+    border-top: 0;
+    border-radius: 7px;
+}
+
 .account-menu__link--logout {
     appearance: none;
     width: 100%;
