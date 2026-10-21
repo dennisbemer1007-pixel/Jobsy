@@ -11,10 +11,11 @@ public sealed class CandidateDiscoveryClientPlaywrightTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        Environment.SetEnvironmentVariable("JOBSY_CSP_ALLOW_UNSAFE_EVAL", "0");
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        _web = new IllustratedPagesWebFactory();
+        _web = new IllustratedPagesWebFactory(accLikeProductionCsp: true);
         _ = _web.ServerAddress;
     }
 
@@ -40,6 +41,8 @@ public sealed class CandidateDiscoveryClientPlaywrightTests : IAsyncLifetime
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
+        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        apiHostGuard.Attach(page);
         page.SetDefaultTimeout(120_000);
 
         var signIn = $"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/candidate/ontdekkingsreis?stap=1")}";
@@ -63,6 +66,7 @@ public sealed class CandidateDiscoveryClientPlaywrightTests : IAsyncLifetime
         await page.Locator("[data-discovery-client-step=\"2\"]").WaitForAsync(new() { Timeout = 60_000 });
 
         Assert.Equal(1, IllustratedPagesApiStub.ProfilePutCount);
+        apiHostGuard.AssertZero($"discovery step1 volgende at {width}px");
     }
 
     private static async Task WaitForClientStep1MountedAsync(IPage page)
