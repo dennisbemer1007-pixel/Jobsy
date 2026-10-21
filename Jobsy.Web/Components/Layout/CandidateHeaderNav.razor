@@ -66,7 +66,11 @@
             : RoleNavCatalog.ForUser((await AuthState.GetAuthenticationStateAsync()).User, flags));
 
         NavItems.Changed += OnNavItemsChanged;
+        Navigation.LocationChanged += OnLocationChanged;
     }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => _ = InvokeAsync(StateHasChanged);
 
     private void OnNavItemsChanged()
     {
@@ -120,6 +124,7 @@
     public ValueTask DisposeAsync()
     {
         NavItems.Changed -= OnNavItemsChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
         return ValueTask.CompletedTask;
     }
 }

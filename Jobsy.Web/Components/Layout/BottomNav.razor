@@ -52,7 +52,11 @@
         await NavItems.EnsureInitializedAsync();
         _items = NavItems.Items;
         NavItems.Changed += OnNavItemsChanged;
+        Navigation.LocationChanged += OnLocationChanged;
     }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => _ = InvokeAsync(StateHasChanged);
 
     private async void OnNavItemsChanged()
     {
@@ -120,6 +124,7 @@
     public async ValueTask DisposeAsync()
     {
         NavItems.Changed -= OnNavItemsChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
         try
         {
             if (_viewportWatch is not null)
