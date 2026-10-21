@@ -40,6 +40,111 @@
 
     installReloadGuard();
 
+    window.lobsyCandidateNav = window.lobsyCandidateNav || {
+        markInteractive: function () {
+            try {
+                document.documentElement.setAttribute("data-lobsy-candidate-nav-interactive", "true");
+            } catch (e) { }
+        },
+        normalizePath: function (urlOrPath) {
+            try {
+                var u =
+                    typeof urlOrPath === "string" && urlOrPath.indexOf("http") === 0
+                        ? new URL(urlOrPath)
+                        : new URL(String(urlOrPath || ""), location.href);
+                var path = u.pathname || "/";
+                return path.length > 1 && path.charAt(path.length - 1) === "/"
+                    ? path.slice(0, -1)
+                    : path;
+            } catch (e) {
+                var s = String(urlOrPath || "/").split("?")[0].split("#")[0];
+                if (s.length > 1 && s.charAt(s.length - 1) === "/") {
+                    s = s.slice(0, -1);
+                }
+                return s || "/";
+            }
+        },
+        contentMatchesPath: function (path) {
+            var p = this.normalizePath(path);
+            var routes = [
+                ["/candidate/ontdekkingsreis", [".journey-overview"]],
+                ["/candidate/paspoort", [".passport-page"]],
+                ["/banenkaart", [".jobsy-discovery", ".bk-page"]],
+                ["/candidate/applications", [".apps-page", ".kb-apps"]],
+                ["/carriere", [".career-page", ".career-card"]],
+            ];
+            for (var i = 0; i < routes.length; i++) {
+                if (this.normalizePath(routes[i][0]) !== p) {
+                    continue;
+                }
+                var probes = routes[i][1];
+                for (var j = 0; j < probes.length; j++) {
+                    if (document.querySelector(probes[j])) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return true;
+        },
+        visibleNavLinks: function () {
+            var links = document.querySelectorAll('[data-lobsy-candidate-nav="true"]');
+            var visible = [];
+            for (var i = 0; i < links.length; i++) {
+                var el = links[i];
+                if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                    visible.push(el);
+                }
+            }
+            return visible;
+        },
+        navActiveMatchesPath: function (path) {
+            var p = this.normalizePath(path);
+            var actives = [];
+            var visible = this.visibleNavLinks();
+            for (var i = 0; i < visible.length; i++) {
+                var el = visible[i];
+                if (
+                    el.classList.contains("is-active")
+                    || el.getAttribute("aria-current") === "page"
+                ) {
+                    actives.push(el);
+                }
+            }
+            if (actives.length !== 1) {
+                return false;
+            }
+            return this.normalizePath(actives[0].getAttribute("href") || "") === p;
+        },
+        inSync: function (path) {
+            var target = path || location.pathname;
+            return this.navActiveMatchesPath(target) && this.contentMatchesPath(target);
+        },
+        scheduleSyncCheck: function (expectedHref) {
+            var self = this;
+            var expected = self.normalizePath(expectedHref);
+            var deadline = Date.now() + 1500;
+            function tick() {
+                if (self.normalizePath(location.pathname) !== expected) {
+                    return;
+                }
+                if (self.inSync(expected)) {
+                    return;
+                }
+                if (Date.now() >= deadline) {
+                    try {
+                        console.warn("[lobsy] candidate nav desync — reloading", expected);
+                    } catch (e) { }
+                    allowDocumentReload();
+                    location.reload();
+                    return;
+                }
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        },
+    };
+
     /* Enhanced nav before Blazor.start can patch the URL without swapping the interactive router. */
     (function guardInternalNavUntilCircuitReady() {
         if (window.__lobsyEarlyNavGuard) {
@@ -97,7 +202,7 @@
             true
         );
 
-        /* Block Blazor enhanced navigation on primary candidate nav once the circuit is ready. */
+        /* Primary candidate nav: no enhanced-nav URL patch without interactive @onclick. */
         document.addEventListener(
             "click",
             function (ev) {
@@ -110,10 +215,33 @@
                 if (!anchor) {
                     return;
                 }
+                var href = anchor.href;
+                var navInteractive =
+                    document.documentElement.getAttribute("data-lobsy-candidate-nav-interactive") ===
+                    "true";
+                if (!navInteractive) {
+                    ev.preventDefault();
+                    ev.stopImmediatePropagation();
+                    allowDocumentReload();
+                    window.location.assign(href);
+                    return;
+                }
                 ev.preventDefault();
+                try {
+                    window.lobsyCandidateNav.scheduleSyncCheck(href);
+                } catch (eNav) { }
             },
             true
         );
+
+        document.addEventListener("enhancedload", function () {
+            if (!circuitReady()) {
+                return;
+            }
+            try {
+                window.lobsyCandidateNav.scheduleSyncCheck(location.pathname);
+            } catch (eLoad) { }
+        });
     })();
 
     function modal() {
