@@ -50,8 +50,25 @@
                     </div>
                 </header>
 
-                <OnboardingRustigHero DesktopUrl="@OnboardingRustigPanoramaAssets.StartDesktop"
-                                      MobileUrl="@OnboardingRustigPanoramaAssets.StartMobile" />
+                <div class="ob-rustig__hero-band ob-start-journey-mock-hero" aria-hidden="true" data-testid="ob-rustig-hero">
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--desk ob-start-journey-mock-hero__img"
+                         src="@OnboardingRustigPanoramaAssets.StartDesktop"
+                         width="2280"
+                         height="340"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high"
+                         data-testid="ob-start-journey-mock-hero-desk" />
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--mob ob-start-journey-mock-hero__img"
+                         src="@OnboardingRustigPanoramaAssets.StartMobile"
+                         width="780"
+                         height="184"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high" />
+                </div>
 
                 <div class="ob-rustig__page-head ob-rustig__page-head--compact">
                     <h1 tabindex="-1">@OnboardingStartJourneyMockCopy.Title</h1>

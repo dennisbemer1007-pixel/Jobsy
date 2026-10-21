@@ -68,6 +68,19 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
 
         Assert.True(ctaVisible, $"Aan de slag must be fully visible above the fold at {tag}.");
 
+        if (width >= 1024)
+        {
+            var heroZoomed = await page.EvaluateAsync<bool>("""
+                () => {
+                  const img = document.querySelector('[data-testid=ob-start-journey-mock-hero-desk]');
+                  if (!img) return false;
+                  const tr = getComputedStyle(img).transform;
+                  return tr && tr !== 'none';
+                }
+                """);
+            Assert.True(heroZoomed, "Desktop mock hero must use zoom crop (transform) so PNGs exclude the hiker.");
+        }
+
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(outDir, $"onboarding-start-journey-mock-{tag}.png"),
