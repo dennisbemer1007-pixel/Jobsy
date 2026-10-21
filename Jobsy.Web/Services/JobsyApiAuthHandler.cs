@@ -424,39 +424,13 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     }
 
     /// <summary>
-    /// Whether an API 401 during an HTML document request should bounce the browser to login.
+    /// Legacy guard for tests/docs. API 401s must never hijack the HTML document — see
+    /// <see cref="NotifySessionExpiredAsync"/> (Blazor prerender shares Accept: text/html).
     /// </summary>
     public static bool ShouldRedirectHtmlNavigationToLogin(HttpContext httpContext)
     {
-        if (httpContext.Response.HasStarted)
-        {
-            return false;
-        }
-
-        if (httpContext.User?.Identity?.IsAuthenticated != true)
-        {
-            return false;
-        }
-
-        // Pupil sessions use the code form. Never the staff login.
-        if (IsPupilPrincipal(httpContext.User))
-        {
-            return false;
-        }
-
-        var path = httpContext.Request.Path.Value ?? string.Empty;
-        if (path.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/account/external", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/register", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/signin-", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return httpContext.Request.Headers.Accept.ToString()
-            .Contains("text/html", StringComparison.OrdinalIgnoreCase);
+        _ = httpContext;
+        return false;
     }
 
     private static Task<HttpRequestMessage> CloneRequestAsync(
