@@ -327,7 +327,7 @@ public static class PageAssetCatalog
             [
                 "css/features/onboarding-wizard.css?v=20261018-02",
                 "css/features/onboarding-rustig.css?v=20261018-r12",
-                "css/features/onboarding-start-journey-mock.css?v=20261021-r8b",
+                "css/features/onboarding-start-journey-mock.css?v=20261021-r8c",
             ];
         }
 

@@ -276,11 +276,11 @@
 
   .ob-rustig--start-journey-mock {
     --ob-rustig-hero-h: 40px;
-    --ob-start-journey-row-h: 110px;
+    --ob-start-journey-row-h: 92px;
     --ob-start-journey-route-h: calc(5 * var(--ob-start-journey-row-h));
-    --ob-start-journey-tile: 64px;
-    --ob-start-journey-tile-x-a: 64%;
-    --ob-start-journey-tile-x-b: 36%;
+    --ob-start-journey-tile: 56px;
+    --ob-start-journey-tile-x-a: 60%;
+    --ob-start-journey-tile-x-b: 40%;
   }
 
   .ob-rustig--start-journey-mock .ob-rustig__page-head--compact {
@@ -439,10 +439,18 @@
     isolation: auto;
   }
 
-  .ob-start-journey-route__title,
+  .ob-start-journey-route__title {
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+  }
+
   .ob-start-journey-route__sub {
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
     white-space: normal;
-    overflow-wrap: anywhere;
   }
 
   .ob-rustig__footer-actions--above-fold {

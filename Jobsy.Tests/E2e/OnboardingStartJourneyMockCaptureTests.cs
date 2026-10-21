@@ -97,6 +97,16 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
                     if (r.right > vw - pad + 0.5) return `text-right:${Math.round(r.right)}:${el.textContent?.trim().slice(0, 24)}`;
                   }
 
+                  const titles = [...document.querySelectorAll('.ob-start-journey-route__title')];
+                  for (const t of titles) {
+                    const style = getComputedStyle(t);
+                    const lh = parseFloat(style.lineHeight);
+                    const linePx = Number.isFinite(lh) && lh > 0 ? lh : parseFloat(style.fontSize) * 1.25;
+                    if (t.scrollHeight > linePx * 1.4) {
+                      return `title-multiline:${t.textContent?.trim()}`;
+                    }
+                  }
+
                   const route = document.querySelector('[data-testid=onboarding-start-journey-route]');
                   const cta = document.querySelector('[data-testid=onboarding-begin]');
                   if (route && cta) {
@@ -105,6 +115,9 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
                     const gap = cr.top - rr.bottom;
                     if (gap < gapRouteCta - 1) return `route-cta-gap:${Math.round(gap)}`;
                     if (rectsOverlap(rr, cr, 0)) return 'route-overlaps-cta';
+                    if (cr.top < 0 || cr.bottom > window.innerHeight || cr.height < 20) {
+                      return 'cta-not-above-fold';
+                    }
                   }
 
                   const boxes = [
