@@ -844,7 +844,7 @@ public sealed class CandidateProfileEditor : IDisposable
         HomeLocationDirty = true;
         Message = null;
         LocationError = null;
-        await SuggestAddressesAsync(HomeAddress);
+        _ = SuggestAddressesAsync(HomeAddress);
         Notify();
     }
 
@@ -926,8 +926,10 @@ public sealed class CandidateProfileEditor : IDisposable
 
         try
         {
-            await Task.Delay(280, token);
-            var results = await _geocoder.SuggestAsync(trimmed, token);
+            await Task.Delay(300, token);
+            using var geocodeTimeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+            geocodeTimeout.CancelAfter(TimeSpan.FromSeconds(3));
+            var results = await _geocoder.SuggestAsync(trimmed, geocodeTimeout.Token);
             if (generation != _suggestGeneration || token.IsCancellationRequested)
             {
                 return;

@@ -19,6 +19,7 @@
                disabled="@Disabled"
                aria-invalid="@AriaInvalid"
                aria-describedby="@CombinedAriaDescribedBy"
+               @onfocus="OnTextFocus"
                @oninput="OnTextInputAsync"
                @onblur="OnTextBlurAsync" />
         <button type="button"
@@ -62,6 +63,7 @@
     private string? _errorMessage;
     private JobsyDateValidationCode _validation = JobsyDateValidationCode.None;
     private bool _touched;
+    private bool _focused;
 
     [Parameter] public JobsyDatePickerKind Kind { get; set; } = JobsyDatePickerKind.Date;
     [Parameter] public JobsyDateConstraint Constraint { get; set; } = JobsyDateConstraint.None;
@@ -139,7 +141,17 @@
 
         if (IsMonth)
         {
-            SyncMonthTextFromModel();
+            if (!_focused)
+            {
+                SyncMonthTextFromModel();
+            }
+
+            RefreshValidation(forceMessage: ShowInvalid);
+            return;
+        }
+
+        if (_focused)
+        {
             RefreshValidation(forceMessage: ShowInvalid);
             return;
         }
@@ -202,9 +214,12 @@
         }
     }
 
+    private void OnTextFocus() => _focused = true;
+
     private async Task OnTextInputAsync(ChangeEventArgs e)
     {
         _touched = true;
+        _focused = true;
         if (IsMonth)
         {
             _text = JobsyDateInputRules.ApplyMonthMask(e.Value?.ToString());
@@ -224,14 +239,12 @@
         _text = IsVacancyCsvDate
             ? JobsyDateInputRules.ApplyVacancyCsvDateMask(e.Value?.ToString())
             : JobsyDateInputRules.ApplyDateMask(e.Value?.ToString());
-        if (TryParseCommittedDate(_text, out var parsed))
+        if (JobsyDateInputRules.IsCompleteDisplayDate(_text)
+            && TryParseCommittedDate(_text, out var parsed))
         {
             await CommitDateAsync(parsed);
-            RefreshValidation(forceMessage: false);
-            return;
         }
-
-        if (string.IsNullOrWhiteSpace(_text))
+        else if (string.IsNullOrWhiteSpace(_text))
         {
             await CommitDateAsync(null);
         }
@@ -241,6 +254,7 @@
 
     private async Task OnTextBlurAsync()
     {
+        _focused = false;
         _touched = true;
         await SyncTextFromDomAsync();
         if (IsMonth)

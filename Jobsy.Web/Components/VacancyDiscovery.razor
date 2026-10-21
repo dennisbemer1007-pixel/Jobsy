@@ -3449,12 +3449,13 @@
         _showStartPrompt = false;
     }
 
-    private async Task OnAddressInputAsync(string value)
+    private Task OnAddressInputAsync(string value)
     {
         // Input is source of truth while focused — never overwrite from a stale suggestion task.
         _addressQuery = value ?? string.Empty;
         _locationError = null;
-        await SuggestAddressesAsync(_addressQuery);
+        _ = SuggestAddressesAsync(_addressQuery);
+        return Task.CompletedTask;
     }
 
     private async Task OnAddressQueryChanged(string value)
@@ -3485,8 +3486,10 @@
 
         try
         {
-            await Task.Delay(280, token);
-            var results = await Geocoder.SuggestAsync(trimmed, token);
+            await Task.Delay(300, token);
+            using var geocodeTimeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+            geocodeTimeout.CancelAfter(TimeSpan.FromSeconds(3));
+            var results = await Geocoder.SuggestAsync(trimmed, geocodeTimeout.Token);
             if (generation != _suggestGeneration || token.IsCancellationRequested)
             {
                 return;
@@ -3510,6 +3513,7 @@
             if (generation == _suggestGeneration)
             {
                 _suggesting = false;
+                await InvokeAsync(StateHasChanged);
             }
         }
     }

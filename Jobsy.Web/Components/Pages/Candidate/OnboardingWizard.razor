@@ -1248,10 +1248,11 @@
         {
             _state = await Api.SaveMyOnboardingProgressAsync(_step, source: WelcomeDismissedSource);
             Api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-            await RefreshJourneyCompletionAsync();
-            await PrepareMiniAsync();
             _welcome = false;
             RequestStepScrollReset();
+            await InvokeAsync(StateHasChanged);
+            await RefreshJourneyCompletionAsync();
+            await PrepareMiniAsync();
             await DeferredTryAutoAdvanceAsync();
         }
         catch (Exception ex)

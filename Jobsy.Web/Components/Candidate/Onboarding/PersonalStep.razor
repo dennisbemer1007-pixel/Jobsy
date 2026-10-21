@@ -260,9 +260,9 @@
     {
         _addressSuggestFromUser = true;
         _locationError = null;
-        Draft.AddressQuery = value ?? string.Empty;
+        var query = value ?? string.Empty;
         CandidateHomeAddressLookup.MarkDraftInputChanged(Draft);
-        var split = PostcodeMatch.SplitHomeAddress(Draft.AddressQuery);
+        var split = PostcodeMatch.SplitHomeAddress(query);
         if (!string.IsNullOrWhiteSpace(split.Postcode))
         {
             Draft.Postcode = split.Postcode;
@@ -274,8 +274,8 @@
         }
 
         ScheduleDebouncedAddressChanged();
-        await SuggestAddressesAsync(Draft.AddressQuery);
-        SchedulePostcodeResolve();
+        _ = SuggestAddressesAsync(query);
+        SchedulePostcodeResolve(query);
     }
 
     private void ScheduleDebouncedAddressChanged()
@@ -392,21 +392,33 @@
         }
     }
 
-    private void SchedulePostcodeResolve()
+    private void SchedulePostcodeResolve(string liveQuery)
     {
         _postcodeCts?.Cancel();
         _postcodeCts?.Dispose();
         _postcodeCts = new CancellationTokenSource();
-        _ = ResolvePostcodeAsync(_postcodeCts.Token);
+        _ = ResolvePostcodeAsync(liveQuery, _postcodeCts.Token);
     }
 
-    private async Task ResolvePostcodeAsync(CancellationToken cancellationToken)
+    private async Task ResolvePostcodeAsync(string liveQuery, CancellationToken cancellationToken)
     {
+        var previousQuery = Draft.AddressQuery;
         try
         {
+            Draft.AddressQuery = liveQuery;
             var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
                 Draft, Geocoder, cancellationToken);
-            if (resolved)
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Draft.AddressQuery = previousQuery;
+                return;
+            }
+
+            if (!resolved)
+            {
+                Draft.AddressQuery = previousQuery;
+            }
+            else
             {
                 await AddressChanged.InvokeAsync();
             }
@@ -415,6 +427,7 @@
         }
         catch (OperationCanceledException)
         {
+            Draft.AddressQuery = previousQuery;
         }
         catch
         {
@@ -447,12 +460,13 @@
 
         _showSuggestions = true;
         _suggesting = true;
-        await SafeStateHasChangedAsync();
 
         try
         {
-            await Task.Delay(280, token);
-            var results = await Geocoder.SuggestAsync(trimmed, token);
+            await Task.Delay(300, token);
+            using var geocodeTimeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+            geocodeTimeout.CancelAfter(TimeSpan.FromSeconds(3));
+            var results = await Geocoder.SuggestAsync(trimmed, geocodeTimeout.Token);
             if (generation != _suggestGeneration || token.IsCancellationRequested)
             {
                 return;
