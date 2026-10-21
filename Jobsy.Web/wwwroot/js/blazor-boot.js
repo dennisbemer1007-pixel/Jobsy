@@ -59,12 +59,46 @@
         return false;
     }
 
+    function assignWithServerRetry(href, attempt) {
+        var maxAttempts = 3;
+        var tryAssign = function () {
+            allowDocumentReload();
+            window.location.assign(href);
+        };
+        if (attempt >= maxAttempts) {
+            tryAssign();
+            return;
+        }
+        try {
+            fetch(href, { method: "GET", credentials: "same-origin", cache: "no-store" })
+                .then(function (r) {
+                    if (r.status >= 500 && r.status <= 599 && attempt + 1 < maxAttempts) {
+                        window.setTimeout(function () {
+                            assignWithServerRetry(href, attempt + 1);
+                        }, 400 * Math.pow(2, attempt));
+                        return;
+                    }
+                    tryAssign();
+                })
+                .catch(function () {
+                    if (attempt + 1 < maxAttempts) {
+                        window.setTimeout(function () {
+                            assignWithServerRetry(href, attempt + 1);
+                        }, 400 * Math.pow(2, attempt));
+                        return;
+                    }
+                    tryAssign();
+                });
+        } catch (e) {
+            tryAssign();
+        }
+    }
+
     function safeLocationAssign(href, reason) {
         if (shouldDeferDocumentNavigation()) {
             return deferAssignUntilOnline(href, reason);
         }
-        allowDocumentReload();
-        window.location.assign(href);
+        assignWithServerRetry(href, 0);
         return true;
     }
 
@@ -381,12 +415,26 @@
             }
             return visible;
         },
+        syncActiveClassesFromLocation: function (path) {
+            var p = this.normalizePath(path || location.pathname);
+            var links = document.querySelectorAll('[data-lobsy-candidate-nav="true"]');
+            for (var i = 0; i < links.length; i++) {
+                var el = links[i];
+                var match = this.normalizePath(el.getAttribute("href") || "") === p;
+                el.classList.toggle("is-active", match);
+                if (match) {
+                    el.setAttribute("aria-current", "page");
+                } else {
+                    el.removeAttribute("aria-current");
+                }
+            }
+        },
         navActiveMatchesPath: function (path) {
             var p = this.normalizePath(path);
             var actives = [];
-            var visible = this.visibleNavLinks();
-            for (var i = 0; i < visible.length; i++) {
-                var el = visible[i];
+            var links = document.querySelectorAll('[data-lobsy-candidate-nav="true"]');
+            for (var i = 0; i < links.length; i++) {
+                var el = links[i];
                 if (
                     el.classList.contains("is-active")
                     || el.getAttribute("aria-current") === "page"
@@ -546,17 +594,12 @@
                 var navInteractive =
                     document.documentElement.getAttribute("data-lobsy-candidate-nav-interactive") ===
                     "true";
-                if (!navInteractive) {
-                    ev.preventDefault();
-                    ev.stopImmediatePropagation();
-                    safeLocationAssign(href, "nav-not-interactive");
+                if (navInteractive) {
                     return;
                 }
                 ev.preventDefault();
-                try {
-                    var title = anchor.getAttribute("data-lobsy-document-title");
-                    window.lobsyCandidateNav.commitPrimaryNav(href, title);
-                } catch (eNav) { }
+                ev.stopImmediatePropagation();
+                safeLocationAssign(href, "nav-not-interactive");
             },
             true
         );
@@ -566,6 +609,7 @@
                 return;
             }
             try {
+                window.lobsyCandidateNav.syncActiveClassesFromLocation(location.pathname);
                 window.lobsyCandidateNav.applyDocumentTitleForPath(location.pathname);
                 window.lobsyCandidateNav.scheduleSyncCheck(location.pathname);
                 window.lobsyPaspoortLayout.syncSidebarSticky();
@@ -577,6 +621,7 @@
             try {
                 syncAppHeaderHeightPx();
                 window.lobsyPaspoortLayout.syncSidebarSticky();
+                window.lobsyCandidateNav.syncActiveClassesFromLocation(location.pathname);
             } catch (eResize) { }
         });
     })();
@@ -605,6 +650,42 @@
         } else {
             root.removeAttribute("data-lobsy-reconnect-active");
         }
+    }
+
+    function dismissReconnectToast(reason) {
+        var m = modal();
+        if (!m || !m.classList) {
+            syncReconnectReserve();
+            return;
+        }
+        m.classList.remove(
+            "components-reconnect-show",
+            "components-reconnect-retrying",
+            "components-reconnect-failed",
+            "components-reconnect-rejected",
+            "components-reconnect-paused"
+        );
+        m.classList.add("components-reconnect-hide");
+        m.classList.remove("reconnect-toast--auth-pending");
+        m.classList.remove("reconnect-toast--session-expired");
+        stopSilentRetry();
+        tryingSinceMs = 0;
+        syncReconnectReserve();
+        try {
+            if (reason) {
+                console.info("[lobsy] reconnect toast dismissed (" + reason + ")");
+            }
+        } catch (e) { }
+    }
+
+    function onCircuitHealthyAfterReconnect() {
+        dismissReconnectToast("circuit-healthy");
+        try {
+            if (document.querySelector('[data-testid="candidate-header-nav"]')) {
+                window.lobsyCandidateNav.markInteractive();
+            }
+            window.lobsyCandidateNav.syncActiveClassesFromLocation(location.pathname);
+        } catch (e) { }
     }
 
     function verifySession() {
@@ -681,7 +762,7 @@
             if (ok === true) {
                 silentRetryCount = 0;
                 stopSilentRetry();
-                syncReconnectReserve();
+                onCircuitHealthyAfterReconnect();
                 return true;
             }
         } catch (e) { /* silent */ }
@@ -770,6 +851,9 @@
                 noteTryingState();
                 syncReconnectReserve();
                 handleReconnectModalState();
+                if (circuitInteractive() && !modalNeedsRecovery(modal())) {
+                    onCircuitHealthyAfterReconnect();
+                }
             } finally {
                 reconnectMutating = false;
             }
@@ -864,6 +948,10 @@
 
     document.addEventListener("components-reconnect-state-changed", function (ev) {
         var state = ev && ev.detail ? ev.detail.state : "";
+        if (state === "connected" || state === "connected-successfully") {
+            onCircuitHealthyAfterReconnect();
+            return;
+        }
         if (state === "rejected") {
             handleRejectedState();
             scheduleSilentRetry();
