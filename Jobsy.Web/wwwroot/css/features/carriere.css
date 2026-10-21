@@ -1217,6 +1217,179 @@
   .career-done__top { flex-wrap: wrap; }
 }
 
+/* UWV showcase: segmented tabs (Carrière r2) */
+.carriere-segmented {
+  padding-top: 0.35rem;
+}
+
+.carriere-segmented__nav-wrap {
+  margin-bottom: var(--space-4);
+}
+
+.carriere-segmented__nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--gold-light) 22%, var(--surface));
+}
+
+.carriere-segmented__tab {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 10px 6px;
+  border-radius: calc(var(--radius-sm) + 1px);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.carriere-segmented__tab.is-active {
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--brand) 8%, transparent);
+}
+
+.carriere-segmented__group {
+  margin-bottom: var(--space-5);
+}
+
+.carriere-segmented__group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.carriere-segmented__group-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.carriere-segmented__meer {
+  flex: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent-hover);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.carriere-segmented__meer:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.carriere-segmented__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .carriere-segmented__cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.carriere-segmented__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--brand) 4%, transparent);
+}
+
+.carriere-segmented__card h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: var(--brand);
+}
+
+.carriere-segmented__card p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+
+.carriere-segmented__route {
+  margin-top: auto;
+  font-size: 0.72rem;
+}
+
+.carriere-segmented__card--rich {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.carriere-segmented__card-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.carriere-segmented__card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.carriere-segmented__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 var(--space-3);
+}
+
+.carriere-segmented__aside {
+  margin-top: var(--space-4);
+}
+
+.carriere-segmented__footnote {
+  margin: var(--space-5) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+@media (max-width: 639px) {
+  .carriere-segmented__nav-wrap {
+    position: static;
+    margin-top: 0.15rem;
+  }
+
+  .carriere-segmented__tab {
+    font-size: 0.74rem;
+    padding: 9px 4px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /*
     The growth moment has no fall and no move: the new shell and the new position are

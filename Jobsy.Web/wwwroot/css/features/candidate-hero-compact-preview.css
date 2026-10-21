@@ -420,7 +420,6 @@
     overflow: hidden;
   }
 
-  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__art img,
   .career-page--compact-preview-c > header.cand-compact-hero--page.cand-hero--profession-band .cand-compact-hero__art img {
     width: 100%;
     max-width: 100%;
@@ -429,6 +428,22 @@
     object-position: right center;
     -webkit-mask-image: var(--cand-compact-c-img-mask, linear-gradient(to right, transparent 0, #000 18%, #000 92%, transparent 100%));
     mask-image: var(--cand-compact-c-img-mask, linear-gradient(to right, transparent 0, #000 18%, #000 92%, transparent 100%));
+  }
+
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero {
+    min-height: 150px !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__art img {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100%;
+    object-fit: contain;
+    object-position: right center;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 98%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 98%, transparent 100%);
   }
 
   /* Panel app pages: full-bleed #FAEBDB band, copy aligned to 1100px shell (paspoort r15 art fade). */
@@ -788,7 +803,7 @@
 
   /* Desktop/tablet: fixed ~150px band on illustrated app pages (not onboarding wizard). */
   .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
-  .career-page--compact-preview-c > header.cand-compact-hero--page.cand-hero--profession-band {
+  .career-page--compact-preview-c > header.cand-compact-hero--page.cand-hero--profession-band:not(.uwv-carriere-showcase-hero) {
     min-height: 150px !important;
     height: 150px !important;
     max-height: 150px !important;
@@ -1041,8 +1056,19 @@
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0.65rem var(--cand-compact-hero-gutter, 1rem) 0.75rem !important;
+    padding: 0.65rem var(--cand-compact-hero-gutter, 1rem) 0.85rem !important;
     background: transparent !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-hero__lead {
+    margin-block-end: 0.15rem;
+    line-height: 1.38;
+    overflow: visible;
+    text-wrap: pretty;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) + .carriere-segmented {
+    margin-top: 0.35rem;
   }
 
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero {

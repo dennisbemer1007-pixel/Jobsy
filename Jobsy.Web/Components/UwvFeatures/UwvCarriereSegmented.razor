@@ -1,0 +1,236 @@
+@using Jobsy.Web.Components.UwvFeatures
+@using Jobsy.Web.Localization
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IUwvKansberoepenCatalog KansCatalog
+
+<div class="carriere-segmented career-uwv-sections opl-wrap" data-testid="uwv-carriere-sections">
+    <div class="carriere-segmented__nav-wrap">
+        <div class="carriere-segmented__nav" role="tablist" aria-label="@UwvMockupCopy.Career.Eyebrow(Lang)">
+            <button type="button"
+                    role="tab"
+                    class="carriere-segmented__tab @(_tab == Tab.VoorJou ? "is-active" : null)"
+                    aria-selected="@(_tab == Tab.VoorJou ? "true" : "false")"
+                    id="carriere-tab-voor-jou"
+                    aria-controls="carriere-panel-voor-jou"
+                    @onclick="() => Select(Tab.VoorJou)">
+                @UwvMockupCopy.CarriereSegmented.TabVoorJou(Lang)
+            </button>
+            <button type="button"
+                    role="tab"
+                    class="carriere-segmented__tab @(_tab == Tab.Omscholen ? "is-active" : null)"
+                    aria-selected="@(_tab == Tab.Omscholen ? "true" : "false")"
+                    id="carriere-tab-omscholen"
+                    aria-controls="carriere-panel-omscholen"
+                    @onclick="() => Select(Tab.Omscholen)">
+                @UwvMockupCopy.CarriereSegmented.TabOmscholen(Lang)
+            </button>
+            <button type="button"
+                    role="tab"
+                    class="carriere-segmented__tab @(_tab == Tab.Kansberoepen ? "is-active" : null)"
+                    aria-selected="@(_tab == Tab.Kansberoepen ? "true" : "false")"
+                    id="carriere-tab-kansberoepen"
+                    aria-controls="carriere-panel-kansberoepen"
+                    @onclick="() => Select(Tab.Kansberoepen)">
+                @UwvMockupCopy.CarriereSegmented.TabKansberoepen(Lang)
+            </button>
+        </div>
+    </div>
+
+    @if (_tab == Tab.VoorJou)
+    {
+        <div class="carriere-segmented__panel" role="tabpanel" id="carriere-panel-voor-jou" aria-labelledby="carriere-tab-voor-jou">
+            <section class="carriere-segmented__group" aria-labelledby="carriere-group-similar">
+                <div class="carriere-segmented__group-head">
+                    <h2 id="carriere-group-similar" class="carriere-segmented__group-title">@UwvMockupCopy.Similar.Title(Lang)</h2>
+                    @MeerButton("similar", UwvMockupData.SimilarJobs.Count)
+                </div>
+                <ul class="carriere-segmented__cards">
+                    @foreach (var job in UwvMockupData.SimilarJobs.Take(Visible("similar", UwvMockupData.SimilarJobs.Count)))
+                    {
+                        <li class="carriere-segmented__card">
+                            <h3>@(En(job.TitleEn, job.TitleNl))</h3>
+                            <p>@(En(job.WhyEn, job.WhyNl))</p>
+                            <p class="carriere-segmented__route muted">@(En(job.RouteEn, job.RouteNl))</p>
+                        </li>
+                    }
+                </ul>
+            </section>
+
+            <section class="carriere-segmented__group" aria-labelledby="carriere-group-strong">
+                <div class="carriere-segmented__group-head">
+                    <h2 id="carriere-group-strong" class="carriere-segmented__group-title">@UwvMockupCopy.StrongMatches.Title(Lang)</h2>
+                    @MeerButton("strong", UwvMockupData.StrongMatchJobs.Count)
+                </div>
+                <ul class="carriere-segmented__cards">
+                    @foreach (var job in UwvMockupData.StrongMatchJobs.Take(Visible("strong", UwvMockupData.StrongMatchJobs.Count)))
+                    {
+                        <li class="carriere-segmented__card">
+                            <h3>@(En(job.TitleEn, job.TitleNl))</h3>
+                            <p>@(En(job.WhyEn, job.WhyNl))</p>
+                            <p class="carriere-segmented__route muted">@(En(job.RouteEn, job.RouteNl))</p>
+                            @if (job.Baangarantie)
+                            {
+                                <span class="uwv-badge uwv-badge--guarantee">@BaangarantieRouteLabel</span>
+                            }
+                            @if (job.MapLink)
+                            {
+                                <a class="uwv-inline-link" href="/banenkaart">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
+                            }
+                        </li>
+                    }
+                </ul>
+            </section>
+        </div>
+    }
+    else if (_tab == Tab.Omscholen)
+    {
+        <div class="carriere-segmented__panel" role="tabpanel" id="carriere-panel-omscholen" aria-labelledby="carriere-tab-omscholen">
+            <section class="carriere-segmented__group" aria-labelledby="carriere-group-omscholen">
+                <div class="carriere-segmented__group-head">
+                    <h2 id="carriere-group-omscholen" class="carriere-segmented__group-title">@UwvMockupCopy.Omscholen.Title(Lang)</h2>
+                    @MeerButton("omscholen", UwvMockupData.OmscholenSectors.Count)
+                </div>
+                <ul class="carriere-segmented__cards">
+                    @foreach (var (sector, icon) in UwvMockupData.OmscholenSectors.Take(Visible("omscholen", UwvMockupData.OmscholenSectors.Count)))
+                    {
+                        <li class="carriere-segmented__card carriere-segmented__card--rich">
+                            <UwvSectorIcon Kind="@icon" CssClass="carriere-segmented__card-icon" />
+                            <div class="carriere-segmented__card-body">
+                                <h3>@(En(sector.NameEn, sector.NameNl)) · @(En(sector.DetailEn, sector.DetailNl))</h3>
+                                @if (sector.HasBaangarantie)
+                                {
+                                    <span class="uwv-badge uwv-badge--guarantee">@BaangarantieRouteLabel</span>
+                                }
+                                <a class="uwv-inline-link" href="/banenkaart">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </section>
+
+            <section class="carriere-segmented__group" aria-labelledby="carriere-group-leerbanen">
+                <div class="carriere-segmented__group-head">
+                    <h2 id="carriere-group-leerbanen" class="carriere-segmented__group-title">@LeerbanenTitle</h2>
+                    @MeerButton("leerbanen", UwvMockupData.Leerbanen.Count)
+                </div>
+                <ul class="carriere-segmented__cards">
+                    @foreach (var lb in UwvMockupData.Leerbanen.Take(Visible("leerbanen", UwvMockupData.Leerbanen.Count)))
+                    {
+                        <li class="carriere-segmented__card">
+                            <h3>@(En(lb.TitleEn, lb.TitleNl))</h3>
+                            <p class="muted">@(En(lb.CompanyEn, lb.CompanyNl))</p>
+                            <a class="uwv-inline-link" href="@lb.MapHref">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
+                        </li>
+                    }
+                </ul>
+            </section>
+
+            <aside class="uwv-omscholen__aside carriere-segmented__aside">
+                <p>
+                    @UwvMockupCopy.Omscholen.Werkcentrum(Lang)
+                    <a href="https://www.werkcentrum.nl/" rel="noopener noreferrer">@UwvMockupCopy.Omscholen.WerkcentrumLink(Lang)</a>
+                </p>
+                <p class="uwv-omscholen__ww">
+                    @UwvMockupCopy.Omscholen.WwNote(Lang)
+                    <a href="https://www.uwv.nl/" rel="noopener noreferrer">@UwvMockupCopy.Omscholen.WwLink(Lang)</a>
+                </p>
+            </aside>
+        </div>
+    }
+    else
+    {
+        <div class="carriere-segmented__panel" role="tabpanel" id="carriere-panel-kansberoepen" aria-labelledby="carriere-tab-kansberoepen">
+            <p class="carriere-segmented__meta">
+                <span class="uwv-kans__region">@KansRegionLabel</span>
+                <span class="uwv-block__source">@KansSourceLabel</span>
+            </p>
+            <section class="carriere-segmented__group" aria-labelledby="carriere-group-kans">
+                <div class="carriere-segmented__group-head">
+                    <h2 id="carriere-group-kans" class="carriere-segmented__group-title">@UwvMockupCopy.Kansberoepen.Title(Lang)</h2>
+                    @MeerButton("kans", _kansEntries.Count)
+                </div>
+                <ul class="carriere-segmented__cards">
+                    @foreach (var job in _kansEntries.Take(Visible("kans", _kansEntries.Count)))
+                    {
+                        <li class="carriere-segmented__card carriere-segmented__card--rich">
+                            <UwvSectorIcon Kind="@job.SectorIcon" CssClass="carriere-segmented__card-icon" />
+                            <div class="carriere-segmented__card-body">
+                                <h3>@(En(job.TitleEn, job.TitleNl))</h3>
+                                <p>@(En(job.ProspectEn, job.ProspectNl))</p>
+                                <p class="carriere-segmented__route muted">@(En(job.RouteEn, job.RouteNl))</p>
+                                @if (job.Baangarantie)
+                                {
+                                    <span class="uwv-badge uwv-badge--guarantee">@BaangarantieRouteLabel</span>
+                                }
+                                <a class="uwv-kans__map-link" href="/banenkaart">@UwvMockupCopy.Kansberoepen.VacanciesLink(Lang, job.VacancyCount)</a>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </section>
+        </div>
+    }
+
+    <p class="carriere-segmented__footnote">@UwvMockupCopy.CarriereSegmented.Footnote(Lang)</p>
+</div>
+
+@code {
+    private enum Tab { VoorJou, Omscholen, Kansberoepen }
+
+    private Tab _tab = Tab.VoorJou;
+    private readonly HashSet<string> _expanded = [];
+    private IReadOnlyList<Jobsy.Core.Uwv.UwvKansberoepEntry> _kansEntries = [];
+    private Jobsy.Core.Uwv.UwvKansberoepenDataset? _dataset;
+
+    private string Lang => Culture.Language;
+    private string BaangarantieRouteLabel => UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee route" : "Baangarantie-route";
+    private string LeerbanenTitle => UwvMockupCopy.IsEnglish(Lang) ? "Apprenticeships (BBL)" : "Leerbanen BBL";
+
+    private string KansRegionLabel => _dataset is null
+        ? UwvMockupCopy.Kansberoepen.Region(Lang)
+        : (UwvMockupCopy.IsEnglish(Lang) ? _dataset.RegionKeyEn : _dataset.RegionKeyNl);
+
+    private string KansSourceLabel => _dataset is null
+        ? UwvMockupCopy.Kansberoepen.Source(Lang)
+        : (UwvMockupCopy.IsEnglish(Lang) ? _dataset.SourceLineEn : _dataset.SourceLineNl);
+
+    protected override void OnInitialized()
+    {
+        _dataset = KansCatalog.GetDefault();
+        _kansEntries = _dataset.Entries;
+    }
+
+    private string En(string en, string nl) => UwvMockupCopy.IsEnglish(Lang) ? en : nl;
+
+    private void Select(Tab tab) => _tab = tab;
+
+    private int Visible(string groupId, int total) =>
+        _expanded.Contains(groupId) ? total : Math.Min(3, total);
+
+    private void Toggle(string groupId)
+    {
+        if (!_expanded.Add(groupId))
+        {
+            _expanded.Remove(groupId);
+        }
+    }
+
+    private RenderFragment MeerButton(string groupId, int total) => __builder =>
+    {
+        if (total <= 3)
+        {
+            return;
+        }
+
+        var open = _expanded.Contains(groupId);
+        __builder.OpenElement(0, "button");
+        __builder.AddAttribute(1, "type", "button");
+        __builder.AddAttribute(2, "class", "carriere-segmented__meer");
+        __builder.AddAttribute(3, "aria-expanded", open ? "true" : "false");
+        __builder.AddAttribute(4, "onclick", EventCallback.Factory.Create(this, () => Toggle(groupId)));
+        __builder.AddContent(5, UwvMockupCopy.CarriereSegmented.Meer(Lang));
+        __builder.CloseElement();
+    };
+}

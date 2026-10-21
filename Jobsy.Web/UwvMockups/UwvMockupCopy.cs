@@ -232,6 +232,23 @@ public static class UwvMockupCopy
             lang);
     }
 
+    public static class CarriereSegmented
+    {
+        public static string TabVoorJou(string? lang) => T("Voor jou", "For you", lang);
+        public static string TabOmscholen(string? lang) => T("Omscholen", "Retraining", lang);
+        public static string TabKansberoepen(string? lang) => T("Kansberoepen", "Opportunity occupations", lang);
+        public static string Meer(string? lang) => T("Meer", "More", lang);
+        public static string Footnote(string? lang) => T(
+            "Suggesties zijn gebaseerd op je paspoort en regionale arbeidsmarktinformatie (UWV, Werkcentrum Haaglanden). Routes en regelingen kunnen wijzigen; check altijd de actuele voorwaarden bij UWV of je werkcoach.",
+            "Suggestions are based on your passport and regional labour market information (UWV, Werkcentrum Haaglanden). Routes and rules can change; always check current terms with UWV or your work coach.",
+            lang);
+    }
+
+    public static class StrongMatches
+    {
+        public static string Title(string? lang) => T("Sterke matches voor jou", "Strong matches for you", lang);
+    }
+
     public static class Adviseur
     {
         public static string Title(string? lang) => T("Neem mee naar je adviseur werk", "Take this to your work adviser", lang);

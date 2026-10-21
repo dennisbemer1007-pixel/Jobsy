@@ -10,6 +10,16 @@ public sealed record UwvSimilarJob(
     string RouteNl,
     string RouteEn);
 
+public sealed record UwvStrongMatchJob(
+    string TitleNl,
+    string TitleEn,
+    string WhyNl,
+    string WhyEn,
+    string RouteNl,
+    string RouteEn,
+    bool Baangarantie,
+    bool MapLink);
+
 public sealed record UwvOmscholenSector(
     string NameNl,
     string NameEn,
@@ -136,6 +146,37 @@ public static class UwvMockupData
             CandidateIllustratedImages.SpotJobZorg,
             Kansberoep: true,
             Baangarantie: true),
+    ];
+
+    public static IReadOnlyList<UwvStrongMatchJob> StrongMatchJobs { get; } =
+    [
+        new(
+            "Logistiek planner",
+            "Logistics planner",
+            "Sluit aan op structuur en overzicht in je paspoort.",
+            "Fits the structure and overview in your passport.",
+            "MBO logistiek · BBL mogelijk",
+            "MBO logistics · apprenticeship available",
+            Baangarantie: true,
+            MapLink: false),
+        new(
+            "Magazijnmedewerker",
+            "Warehouse associate",
+            "Praktisch werk, dicht bij je route naar logistiek.",
+            "Hands-on work, close to your path into logistics.",
+            "Instap via erkend leerbedrijf",
+            "Entry via recognised learning company",
+            Baangarantie: false,
+            MapLink: true),
+        new(
+            "Orderpicker",
+            "Order picker",
+            "Overzichtelijk teamwerk met vaste roosters.",
+            "Clear teamwork with fixed schedules.",
+            "Korte inwerkperiode · doorgroeimogelijkheden",
+            "Short onboarding · room to grow",
+            Baangarantie: false,
+            MapLink: false),
     ];
 
     public static IReadOnlyList<UwvSimilarJob> SimilarJobs { get; } =
