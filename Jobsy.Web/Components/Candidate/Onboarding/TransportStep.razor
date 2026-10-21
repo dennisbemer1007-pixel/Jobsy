@@ -4,14 +4,17 @@
 @using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
-@if (ShowHeading && !Illustrated)
+@if (ShowStepTitle)
 {
-    <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1>
-    <p class="ob-wizard__lead">@Culture["Onboarding.Step3.Lead"]</p>
-}
-else if (!Illustrated)
-{
-    <h2 class="ob-wizard__subhead">@Culture["Onboarding.Step3.Title"]</h2>
+    @if (ShowHeading && !Illustrated)
+    {
+        <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1>
+        <p class="ob-wizard__lead">@Culture["Onboarding.Step3.Lead"]</p>
+    }
+    else if (!Illustrated && ShowHeading)
+    {
+        <h2 class="ob-wizard__subhead">@Culture["Onboarding.Step3.Title"]</h2>
+    }
 }
 <div class="ob-wizard__card @(Illustrated ? "ob-wizard__card--illustrated" : null)">
 @if (Illustrated)
@@ -97,6 +100,7 @@ else if (!Illustrated)
     [Parameter] public EventCallback ShowCustomTravel { get; set; }
     [Parameter] public EventCallback<string> ToggleLicense { get; set; }
     [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public bool ShowStepTitle { get; set; } = true;
     [Parameter] public bool ShowDrivingLicenses { get; set; }
     [Parameter] public bool ShowValidation { get; set; }
     [Parameter] public bool Illustrated { get; set; }

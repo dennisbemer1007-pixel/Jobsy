@@ -208,6 +208,7 @@
                                MinutesLeft="@OnboardingWizardCatalog.V3RemainingMinutes(_step)"
                                ShowSaved="true"
                                SaveStatus="@RustigSaveStatus"
+                               ShowOptionalBadge="@(_step is 4 or 5)"
                                Title="@Culture[$"Onboarding.Step{_step}.Title"]"
                                Lead="@Culture[$"Onboarding.Step{_step}.Lead"]"
                                PanoramaDesktop="@OnboardingRustigPanoramaAssets.Desktop(_step)"
@@ -235,20 +236,24 @@
                                                    SetMaxHours="SetMaxHoursAsync"
                                                    ManualAvailability="ManualAvailabilityAsync"
                                                    ToggleAvailability="ToggleAvailability"
-                                                   ResetPresets="ResetPresets" />
-                @if (rustigJobsRail)
-                {
-                    <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Mobile"
-                                           Signal="_nearbySignal"
-                                           TransportLabel="@Draft.Transport"
-                                           RefinedHeadline="NearbyRefinedHeadline" />
-                }
+                                                   ResetPresets="ResetPresets"
+                                                   SelectTransport="SelectTransport"
+                                                   SelectTravelTime="SelectTravelTime"
+                                                   ShowCustomTravel="ShowCustomTravel" />
                 <div class="ob-rustig__footer-actions">
                     <button type="button"
                             class="ob-rustig__btn"
                             data-testid="onboarding-back"
                             disabled="@(_busy || _step == 1)"
                             @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                    @if (_step is 4 or 5)
+                    {
+                        <button type="button"
+                                class="ob-rustig__btn"
+                                data-testid="onboarding-skip-optional"
+                                disabled="@_busy"
+                                @onclick="SkipOptionalAsync">@Culture["Onboarding.Skip"]</button>
+                    }
                     <button type="button"
                             class="ob-rustig__btn ob-rustig__btn--primary"
                             data-testid="onboarding-next"
@@ -747,7 +752,7 @@
     private int _step = 1;
     private bool SoftIllustratedStep => _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= 6;
 
-    private const int MaxRustigPersonalStep = 2;
+    private const int MaxRustigPersonalStep = 3;
 
     private bool RustigPersonalSteps =>
         OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= MaxRustigPersonalStep;
