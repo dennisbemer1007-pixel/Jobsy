@@ -23,8 +23,6 @@
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Onboarding
 @using Jobsy.Web.Discovery
-@using Jobsy.Web.Onboarding
-@using Jobsy.Web.Components.Candidate.Discovery
 @using Microsoft.Extensions.Logging
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -495,7 +493,6 @@
     private bool _overviewLoading;
     private CandidateDiscoveryOverviewPanelDto? _overviewPanel;
     private bool _busy;
-    private bool _showValidation;
     private bool _employersEnabled = true;
     private bool _showProgressInsight;
     private IReadOnlyList<string> _progressInsightLines = [];
@@ -859,7 +856,7 @@
         };
     }
 
-    private void ClearStepValidation() => _showValidation = false;
+    private void ClearStepValidation() { }
 
     private async Task ScrollToFirstIssueAsync(IReadOnlyList<OnboardingValidationIssue> issues)
     {
@@ -1402,7 +1399,6 @@
         var issues = GetValidationIssues();
         if (issues.Count > 0)
         {
-            _showValidation = true;
             await ScrollToFirstIssueAsync(issues);
             return;
         }
@@ -1414,7 +1410,6 @@
             return;
         }
 
-        _showValidation = false;
         _busy = true;
         _error = null;
         _miniArrivedViaBack = false;

@@ -1,6 +1,10 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+<<<<<<< HEAD
 using Jobsy.Tests.E2e;
+=======
+using Jobsy.Web.Services;
+>>>>>>> a648617e6 (Fix discovery client build and Playwright step-1 save assertions.)
 using Jobsy.Web.UwvFeatures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
@@ -72,6 +76,8 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.RemoveAll<IFeatureFlags>();
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
+            services.RemoveAll<IGeocodingClient>();
+            services.AddSingleton<IGeocodingClient>(IllustratedPagesGeocoderStub.Instance);
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory>(
                 new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile, _statefulMeProfile, _apiBaseUri));
@@ -171,6 +177,16 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             }
 
             var path = request.RequestUri?.AbsolutePath ?? "";
+            if (HttpMethod.Put.Equals(request.Method)
+                && path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase))
+            {
+                IllustratedPagesApiStub.RecordProfilePut();
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json")
+                };
+            }
+
             if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_CORE") == "1"
                 && path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
             {
@@ -269,5 +285,19 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 });
                 next(app);
             };
+    }
+
+    private sealed class IllustratedPagesGeocoderStub : IGeocodingClient
+    {
+        internal static readonly IllustratedPagesGeocoderStub Instance = new();
+
+        public Task<IReadOnlyList<AddressSuggestion>> SuggestAsync(string query, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<AddressSuggestion>>(
+            [
+                new("2671 GB Naaldwijk", 51.994, 4.205)
+            ]);
+
+        public Task<string?> ReverseAsync(double latitude, double longitude, CancellationToken cancellationToken = default)
+            => Task.FromResult<string?>("2671 GB Naaldwijk");
     }
 }
