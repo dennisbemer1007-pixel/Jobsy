@@ -72,6 +72,8 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         using var web = new Step1WebFactory();
         var root = web.EnsureServerAddress();
         var suggestGets = 0;
+        var browserApiHostFetches = 0;
+        const string accLikeApiHost = "lobsy-acc-api.test";
 
         await using var context = await browser.NewContextAsync(Step1WebFactory.ContextOptions(mobile));
         await PlaywrightCookieConsent.AcceptAsync(context);
@@ -80,6 +82,11 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
 
         page.Request += (_, req) =>
         {
+            if (req.Url.Contains(accLikeApiHost, StringComparison.OrdinalIgnoreCase))
+            {
+                Interlocked.Increment(ref browserApiHostFetches);
+            }
+
             if (req.Method == "GET" && req.Url.Contains("/api/onboarding-client/address-suggest", StringComparison.OrdinalIgnoreCase))
             {
                 Interlocked.Increment(ref suggestGets);
@@ -147,12 +154,19 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         await Assertions.Expect(birth).ToHaveValueAsync("12-03-1995");
 
         var address = page.Locator("#onboarding-home-address");
+        await address.FillAsync("");
+        await address.PressSequentiallyAsync("Kal", new() { Delay = 60 });
+        await page.WaitForTimeoutAsync(700);
+        await address.PressSequentiallyAsync("verstraat 1 Amsterdam", new() { Delay = 40 });
+        await Assertions.Expect(address).ToHaveValueAsync("Kalverstraat 1 Amsterdam");
+
+        var suggestBaseline = suggestGets;
         await address.FillAsync("ab");
         await page.WaitForTimeoutAsync(400);
-        Assert.Equal(0, suggestGets);
+        Assert.Equal(suggestBaseline, suggestGets);
         await address.PressSequentiallyAsync("cdef", new() { Delay = 40 });
         await page.WaitForTimeoutAsync(500);
-        Assert.True(suggestGets >= 1);
+        Assert.True(suggestGets >= suggestBaseline + 1);
         await page.Locator(".address-suggestions__item").First.WaitForAsync(new() { Timeout = 15_000 });
 
         if (capture)
@@ -163,6 +177,12 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         var suggestTop = await page.Locator(".ob-client-suggest").EvaluateAsync<double>("el => el.getBoundingClientRect().top");
         var chipTop = await chipB.EvaluateAsync<double>("el => el.getBoundingClientRect().top");
         Assert.True(suggestTop < chipTop, "Address suggest list should render above status tiles.");
+        var suggestItems = page.Locator(".address-suggestions__item");
+        if (await suggestItems.CountAsync() >= 4)
+        {
+            var fourthBottom = await suggestItems.Nth(3).EvaluateAsync<double>("el => el.getBoundingClientRect().bottom");
+            Assert.True(fourthBottom <= chipTop + 2, "Fourth suggestion should not sit behind status tiles.");
+        }
 
         await page.Locator(".address-suggestions__item").First.ClickAsync(new() { Timeout = 10_000 });
         Assert.False(string.IsNullOrWhiteSpace(await address.InputValueAsync()));
@@ -175,6 +195,12 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync(new() { Timeout = 90_000 });
         Assert.Equal(1, web.ProfilePutCount);
         Assert.Equal(2, web.SavedStep);
+        Assert.Equal(0, browserApiHostFetches);
+
+        if (capture)
+        {
+            await page.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, $"step1-{label}-after-volgende-step2.png"), FullPage = true });
+        }
 
         await page.ReloadAsync();
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
@@ -251,15 +277,15 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.UseEnvironment("Development");
+            builder.UseEnvironment("Production");
             builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["ApiBaseUrl"] = "http://api.test/",
+                    ["ApiBaseUrl"] = "https://lobsy-acc-api.test/",
                     ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                     ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
-                    ["Onboarding:RustigEnabled"] = "false",
+                    ["Onboarding:RustigEnabled"] = "true",
                 });
             });
             builder.ConfigureTestServices(services =>
@@ -277,7 +303,7 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
                 services.AddScoped(_ => new JobsyApiClient(
                     new HttpClient(new StubApiHandler(this), disposeHandler: false)
                     {
-                        BaseAddress = new Uri("http://api.test/"),
+                        BaseAddress = new Uri("https://lobsy-acc-api.test/"),
                     }));
             });
         }
@@ -374,7 +400,7 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         private sealed class StubHttpFactory(Step1WebFactory factory) : IHttpClientFactory
         {
             public HttpClient CreateClient(string name) =>
-                new(new StubApiHandler(factory), disposeHandler: false) { BaseAddress = new Uri("http://api.test/") };
+                new(new StubApiHandler(factory), disposeHandler: false) { BaseAddress = new Uri("https://lobsy-acc-api.test/") };
         }
 
         private sealed class StubApiHandler(Step1WebFactory factory) : HttpMessageHandler

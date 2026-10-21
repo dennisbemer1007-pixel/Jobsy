@@ -1284,7 +1284,7 @@
             {
                 if (!await TryImportClientStepAsync())
                 {
-                    _error = Culture["Common.Error.TryAgain"];
+                    await SafeStateHasChangedAsync();
                     return;
                 }
             }
@@ -1308,7 +1308,9 @@
             else if (issues.Count > 0)
             {
                 _showValidation = true;
+                _error = Culture[issues[0].MessageKey];
                 await ScrollToFirstIssueAsync(issues);
+                await SafeStateHasChangedAsync();
                 return;
             }
         }
@@ -1345,7 +1347,12 @@
                 return;
             }
 
-            await FlushBeforeLeavingStepAsync();
+            if (!await FlushBeforeLeavingStepAsync())
+            {
+                await SafeStateHasChangedAsync();
+                return;
+            }
+
             if (_step == 10)
             {
                 if (!await TryEnterKompasWhenAllMiniTestsCompleteAsync())
@@ -1884,7 +1891,7 @@
         });
     }
 
-    private async Task FlushBeforeLeavingStepAsync()
+    private async Task<bool> FlushBeforeLeavingStepAsync()
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var token = timeout.Token;
@@ -1906,20 +1913,24 @@
 
         if (pending.Count == 0)
         {
-            return;
+            return true;
         }
 
         try
         {
             await Task.WhenAll(pending);
+            return true;
         }
         catch (OperationCanceledException)
         {
             // Proceed with navigation; autosave will retry on next edit or dispose flush.
+            return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _error = UserFacing.Describe(ex);
             _saveError = true;
+            return false;
         }
     }
 
@@ -2290,17 +2301,17 @@
     {
         try
         {
-            var mounted = await Js.InvokeAsync<bool>(
-                "eval",
-                $"document.querySelector('[data-ob-client-step=\"{_step}\"]')?.getAttribute('data-ob-client-mounted')==='1'");
+            var mounted = await Js.InvokeAsync<bool>("jobsyOnboardingClient.isStepMounted", _step);
             if (!mounted)
             {
+                _error = Culture["Onboarding.ClientFormNotReady"];
                 return false;
             }
 
             var json = await Js.InvokeAsync<string>("jobsyOnboardingClient.collect", _step);
             if (string.IsNullOrWhiteSpace(json))
             {
+                _error = Culture["Onboarding.ClientFormNotReady"];
                 return false;
             }
 

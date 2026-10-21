@@ -202,6 +202,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.ViewKompas"] = english ? "View my Compass" : "Bekijk mijn Kompas";
         map["Onboarding.Done"] = english ? "Done" : "Klaar";
         map["Onboarding.NotSaved"] = english ? "Not saved · Retry" : "Niet bewaard · Opnieuw"; map["Onboarding.AllSaved"] = english ? "Everything is saved" : "Alles is bewaard";
+        map["Onboarding.ClientFormNotReady"] = english
+            ? "The form is still loading. Wait a moment and try again."
+            : "Het formulier laadt nog. Wacht even en probeer opnieuw.";
         map["Onboarding.And"] = english ? "and" : "en";
         map["Onboarding.Finish.Badge"] = english ? "First impression" : "Eerste indruk"; map["Onboarding.Finish.Title"] = english ? "Your Compass is ready, {0}" : "Je Kompas staat klaar, {0}";
         map["Onboarding.Finish.Lead"] = english ? "This already stands out:" : "Dit valt ons nu al op:"; map["Onboarding.Finish.Strength"] = english ? "Your strongest point" : "Je sterkste punt"; map["Onboarding.Finish.Work"] = english ? "Work that fits you" : "Werk dat bij je past"; map["Onboarding.Finish.Value"] = english ? "Important to you" : "Belangrijk voor jou";
