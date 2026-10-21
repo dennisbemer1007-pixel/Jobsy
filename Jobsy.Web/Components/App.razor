@@ -315,6 +315,10 @@
         {
             <script src="js/onboarding-client-form.js?v=20261021-step1-acc" nonce="@Nonce" defer></script>
         }
+        @if (IncludeCandidateApplicationsScript)
+        {
+            <script src="js/candidate-applications-client.js?v=20261021-01" nonce="@Nonce" defer></script>
+        }
     @if (LoadBlazorRuntime)
     {
         @* Block unprompted full reloads before Blazor.start (framework refresh/rejected paths call location.reload). *@
@@ -414,8 +418,13 @@
     private bool IncludeVacancyWizardScript =>
         PageAssetCatalog.IncludeVacancyWizardScript(RequestPath);
 
+<<<<<<< HEAD
     private bool IncludeOnboardingClientScript =>
         PageAssetCatalog.IncludeOnboardingClientScript(RequestPath);
+=======
+    private bool IncludeCandidateApplicationsScript =>
+        PageAssetCatalog.IncludeCandidateApplicationsScript(RequestPath);
+>>>>>>> d9c3c0128 (Candidate applications: static SSR, client filters, BFF withdraw.)
 
     private bool IncludeMapPreconnect =>
         PageAssetCatalog.IncludeMapPreconnect(RequestPath);
