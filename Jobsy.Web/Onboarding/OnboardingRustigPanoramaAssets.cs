@@ -8,6 +8,8 @@ public static class OnboardingRustigPanoramaAssets
     public const string Step01Version = "20261020-u1b";
     public const string Step02Version = "20261020-u6s";
     public const string Step03Version = "20261020-u3c";
+    public const string Step04Version = "20261020-u6x2";
+    public const string Step05Version = "20261020-u6y1";
     public const string DefaultVersion = "20261020-u10a";
 
     public static string StartDesktop =>
@@ -47,9 +49,9 @@ public static class OnboardingRustigPanoramaAssets
             "step-01" => Step01Version,
             "step-02" => Step02Version,
             "step-03" => Step03Version,
+            "step-04" => Step04Version,
+            "step-05" => Step05Version,
             "step-08" => "20261020-15",
-            "step-09" => "20261020-16",
-            "step-10" => "20261020-17",
             _ => DefaultVersion,
         };
 }

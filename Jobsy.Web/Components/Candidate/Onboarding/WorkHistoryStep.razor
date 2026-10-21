@@ -23,11 +23,14 @@
     }
 }
 <div class="ob-wizard__card @(Illustrated ? "ob-wizard__card--illustrated" : null)">
+@if (!RustigPersonal)
+{
 <label class="ob-wizard__check">
     <input type="checkbox" checked="@Draft.NoWork" @onchange="OnNoWorkChangedAsync" />
     @Culture["Onboarding.NoWorkExperience"]
 </label>
-@if (!Draft.NoWork)
+}
+@if (!Draft.NoWork || RustigPersonal)
 {
     @foreach (var job in Draft.Jobs)
     {
@@ -45,10 +48,13 @@
                 @Culture["Profile.Role"]
                 <input @bind="item.Role" @bind:event="oninput" @bind:after="OnRoleChangedAsync" />
             </label>
+            @if (!RustigPersonal)
+            {
             <label>
                 @Culture["Profile.Employer"]
                 <input @bind="item.EmployerName" @bind:event="oninput" @bind:after="NotifyAsync" />
             </label>
+            }
             <div class="ob-job-dates">
                 <label class="ob-job-dates__from">
                     @Culture["Profile.EmployerFrom"]
@@ -73,13 +79,18 @@
                                         ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
                     }
                 </label>
+                @if (!RustigPersonal)
+                {
                 <label class="ob-job-dates__current">
                     <input type="checkbox"
                            checked="@item.ShowsAsCurrent"
                            @onchange="e => SetCurrentJob(item, e.Value is true)" />
                     <span>@Culture["Profile.CurrentJob"]</span>
                 </label>
+                }
             </div>
+            @if (!RustigPersonal)
+            {
             <label class="ob-job-duties">
                 <span>@Culture["Onboarding.Work.DutiesLabel"] <small class="ob-job-duties__optional">@Culture["Onboarding.Optional"]</small></span>
                 <textarea rows="3"
@@ -109,6 +120,7 @@
             {
                 <p class="ob-job-duties__hint">@Culture["Onboarding.Work.DutiesHint"]</p>
             }
+            }
             @if (_sensitiveExperience && !item.IsBlank())
             {
                 <div class="@(item.OnlyForMe ? "gev-private-panel" : null)" style="margin-top:0.75rem">
@@ -135,6 +147,7 @@
     [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public bool ShowStepTitle { get; set; } = true;
     [Parameter] public bool Illustrated { get; set; }
+    [Parameter] public bool RustigPersonal { get; set; }
     [Parameter] public EventCallback AddJob { get; set; }
     [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }

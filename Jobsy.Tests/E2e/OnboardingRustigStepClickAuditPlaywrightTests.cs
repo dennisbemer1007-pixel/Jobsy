@@ -26,9 +26,16 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
     public async Task Audit_step03_clicks(int width, int height, bool mobile, string tag)
         => await AuditStepAsync(3, width, height, mobile, tag);
 
+    [Theory]
+    [MemberData(nameof(Step04Cases))]
+    public async Task Audit_step04_clicks(int width, int height, bool mobile, string tag)
+        => await AuditStepAsync(4, width, height, mobile, tag);
+
     public static IEnumerable<object[]> Step02Cases() => ViewportCases();
 
     public static IEnumerable<object[]> Step03Cases() => ViewportCases();
+
+    public static IEnumerable<object[]> Step04Cases() => ViewportCases();
 
     private static IEnumerable<object[]> ViewportCases()
     {
