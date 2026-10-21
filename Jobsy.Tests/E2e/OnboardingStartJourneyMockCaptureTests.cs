@@ -68,6 +68,43 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
 
         Assert.True(ctaVisible, $"Aan de slag must be fully visible above the fold at {tag}.");
 
+        if (mobile)
+        {
+            var mobileLayout = await page.EvaluateAsync<string>("""
+                () => {
+                  const pad = 16;
+                  const vw = window.innerWidth;
+                  const labels = [...document.querySelectorAll('.ob-start-journey-route__label')];
+                  for (const el of labels) {
+                    const r = el.getBoundingClientRect();
+                    if (r.left < pad - 0.5) return `label-left:${Math.round(r.left)}`;
+                    if (r.right > vw - pad + 0.5) return `label-right:${Math.round(r.right)}`;
+                  }
+
+                  const here = document.querySelector('.ob-start-journey-route__here');
+                  const firstLabel = document.querySelector('.ob-start-journey-route__stop--1 .ob-start-journey-route__label');
+                  if (here && firstLabel) {
+                    const hr = here.getBoundingClientRect();
+                    const lr = firstLabel.getBoundingClientRect();
+                    if (hr.bottom > lr.top - 2) return 'here-overlaps-label';
+                  }
+
+                  for (let i = 0; i < labels.length; i++) {
+                    for (let j = i + 1; j < labels.length; j++) {
+                      const a = labels[i].getBoundingClientRect();
+                      const b = labels[j].getBoundingClientRect();
+                      if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) {
+                        return `labels-overlap:${i}-${j}`;
+                      }
+                    }
+                  }
+
+                  return 'ok';
+                }
+                """);
+            Assert.Equal("ok", mobileLayout);
+        }
+
         if (width >= 1024)
         {
             var heroMobPanorama = await page.EvaluateAsync<bool>("""

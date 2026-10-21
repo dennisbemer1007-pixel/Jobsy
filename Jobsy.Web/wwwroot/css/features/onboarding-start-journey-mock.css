@@ -274,7 +274,7 @@
 
   .ob-rustig--start-journey-mock {
     --ob-rustig-hero-h: 48px;
-    --ob-start-journey-route-h: 21.5rem;
+    --ob-start-journey-route-h: 23rem;
   }
 
   .ob-rustig--start-journey-mock .ob-rustig__page-head--compact {
@@ -287,16 +287,16 @@
   }
 
   .ob-rustig__body--journey-mock {
-    padding-inline: 0.85rem;
+    padding-inline: 1rem;
     gap: 0.35rem;
     margin-block-start: 0.35rem;
   }
 
   .ob-start-journey-route {
     block-size: var(--ob-start-journey-route-h);
-    min-block-size: 21.5rem;
+    min-block-size: 23rem;
     margin-block-start: 0.25rem;
-    padding: 0.35rem 1rem 1.35rem;
+    padding: 0.35rem 0 1.15rem;
     overflow: visible;
   }
 
@@ -348,44 +348,50 @@
 
   .ob-start-journey-route__copy {
     position: absolute;
-    inset-block-start: calc(100% + 0.55rem);
-    z-index: 3;
+    inset-block-start: calc(100% + 0.72rem);
+    inset-block-end: auto;
+    inset-inline-start: auto;
+    inset-inline-end: auto;
+    transform: none;
+    z-index: 4;
     width: max-content;
     max-width: min(7.25rem, calc(100vw - 2rem));
   }
 
-  /* r6 tile positions on path; labels below tile, inner side (toward center). */
+  /* r6 tile positions on path; labels below/above tile on inner half (toward center). */
   .ob-start-journey-route__stop--1 { left: 71.5%; top: 8.1%; transform: translate(-50%, -50%); }
   .ob-start-journey-route__stop--1 .ob-start-journey-route__copy {
-    inset-inline-end: 0;
+    inset-inline-end: 50%;
     inset-inline-start: auto;
     text-align: end;
   }
 
-  .ob-start-journey-route__stop--2 { left: 30%; top: 28.1%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--2 { left: 28.5%; top: 28.1%; transform: translate(-50%, -50%); }
   .ob-start-journey-route__stop--2 .ob-start-journey-route__copy {
-    inset-inline-start: 0;
+    inset-inline-start: 50%;
     inset-inline-end: auto;
     text-align: start;
   }
 
   .ob-start-journey-route__stop--3 { left: 71.5%; top: 48.1%; transform: translate(-50%, -50%); }
   .ob-start-journey-route__stop--3 .ob-start-journey-route__copy {
-    inset-inline-end: 0;
+    inset-inline-end: 50%;
     inset-inline-start: auto;
     text-align: end;
   }
 
-  .ob-start-journey-route__stop--4 { left: 30%; top: 68.1%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--4 { left: 28.5%; top: 67%; transform: translate(-50%, -50%); }
   .ob-start-journey-route__stop--4 .ob-start-journey-route__copy {
-    inset-inline-start: 0;
+    inset-block-start: calc(100% + 0.72rem);
+    inset-block-end: auto;
+    inset-inline-start: 50%;
     inset-inline-end: auto;
     text-align: start;
   }
 
-  .ob-start-journey-route__stop--5 { left: 33%; top: 88%; transform: translate(-50%, -50%); }
+  .ob-start-journey-route__stop--5 { left: 31.5%; top: 91.5%; transform: translate(-50%, -50%); }
   .ob-start-journey-route__stop--5 .ob-start-journey-route__copy {
-    inset-inline-start: 0;
+    inset-inline-start: 50%;
     inset-inline-end: auto;
     text-align: start;
   }
@@ -398,7 +404,8 @@
 
   .ob-start-journey-route__label {
     padding: 0.2rem 0.48rem;
-    background: var(--bg);
+    background: var(--gold-soft);
+    border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
     box-shadow: 0 0 0 4px var(--bg);
     isolation: isolate;
   }
