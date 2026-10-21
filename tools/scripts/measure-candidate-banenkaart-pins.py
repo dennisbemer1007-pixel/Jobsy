@@ -14,6 +14,7 @@ from playwright.async_api import async_playwright
 async def measure(base_url: str, width: int, height: int, mobile: bool) -> dict:
     pins_urls: list[str] = []
     map_view_urls: list[str] = []
+    discover_urls: list[str] = []
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -21,6 +22,9 @@ async def measure(base_url: str, width: int, height: int, mobile: bool) -> dict:
             viewport={"width": width, "height": height},
             is_mobile=mobile,
             has_touch=mobile,
+        )
+        await context.add_init_script(
+            "try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}"
         )
         page = await context.new_page()
 
@@ -30,6 +34,8 @@ async def measure(base_url: str, width: int, height: int, mobile: bool) -> dict:
                 pins_urls.append(u)
             if "/api/vacancies/map-view" in u:
                 map_view_urls.append(u)
+            if "/api/vacancies/discover" in u:
+                discover_urls.append(u)
 
         page.on("request", on_req)
 
@@ -65,6 +71,7 @@ async def measure(base_url: str, width: int, height: int, mobile: bool) -> dict:
     return {
         "firstRenderMs": round(ms, 1),
         "pinsRequests": len(pins_urls),
+        "discoverRequests": len(discover_urls),
         "mapViewRequests": len(map_view_urls),
         "pinsNetworkFetchCount": net_pins,
     }

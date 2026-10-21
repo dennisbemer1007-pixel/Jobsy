@@ -1110,6 +1110,7 @@
     private bool _deferDiscoverUntilMap;
     private bool _initialDiscoverLoaded;
     private bool _lastDiscoverUsedOrigin;
+    private bool _skipDiscoverPinReloadOnce;
 
     private ElementReference _mapElement;
     private ElementReference _filterSheetPanel;
@@ -2297,6 +2298,11 @@
             _ = WarmDiscoveryScriptsAsync();
             await MeasureViewportAsync();
             await HydrateWeergaveAsync();
+            if (_deferDiscoverUntilMap)
+            {
+                await EnsureLaunchHydrationAsync();
+            }
+
             if (!(_desktopListMode && _wideViewport))
             {
                 await TryInitJobMapAsync();
@@ -2305,7 +2311,8 @@
             if (_deferDiscoverUntilMap && !_initialDiscoverLoaded)
             {
                 _initialDiscoverLoaded = true;
-                _ = LoadVacanciesAsync();
+                await LoadVacanciesAsync(reloadMapPins: !_skipDiscoverPinReloadOnce);
+                _skipDiscoverPinReloadOnce = false;
             }
         }
 
@@ -2350,67 +2357,9 @@
             }
         }
 
-        if (!_launchHydrationDone)
+        if (!_launchHydrationDone && !_deferDiscoverUntilMap)
         {
-            var jsReady = true;
-            try
-            {
-                _highlightShuffleSeed = await Js.InvokeAsync<uint>("jobsyGeo.getOrCreateHighlightSeed");
-            }
-            catch (JSException)
-            {
-                jsReady = false;
-            }
-            catch (InvalidOperationException)
-            {
-                jsReady = false;
-            }
-            catch
-            {
-                _highlightShuffleSeed = (uint)Random.Shared.NextInt64(0, uint.MaxValue);
-            }
-
-            if (jsReady)
-            {
-                try
-                {
-                    // Candidate age comes from profile (DOB). Only use localStorage for anonymous / no DOB.
-                    if (_ageYears is null)
-                    {
-                        var storedAge = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
-                        if (storedAge is int age)
-                        {
-                            _ageYears = NormalizeFilterAge(age);
-                            // Do not prefill min wage from WML — user sets wage filters explicitly.
-                        }
-                    }
-                    else
-                    {
-                        await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", _ageYears.Value);
-                    }
-
-                    await ResolveLaunchOriginAsync();
-
-                    _launchHydrationDone = true;
-                    var useOrigin = _origin is not null && !HasCompanyMapFocus;
-                    if (useOrigin && !_lastDiscoverUsedOrigin)
-                    {
-                        await LoadVacanciesAsync();
-                    }
-                }
-                catch (JSException)
-                {
-                    // Keep going — map init must not wait on geo helpers.
-                }
-                catch (InvalidOperationException)
-                {
-                    // Keep going — map init must not wait on geo helpers.
-                }
-                catch
-                {
-                    _launchHydrationDone = true;
-                }
-            }
+            await EnsureLaunchHydrationAsync();
         }
 
         if (_filtersOpen && !_filterSheetTrapped)
@@ -2446,6 +2395,80 @@
             catch (InvalidOperationException)
             {
             }
+        }
+    }
+
+    private async Task EnsureLaunchHydrationAsync()
+    {
+        if (_launchHydrationDone)
+        {
+            return;
+        }
+
+        var jsReady = true;
+        try
+        {
+            _highlightShuffleSeed = await Js.InvokeAsync<uint>("jobsyGeo.getOrCreateHighlightSeed");
+        }
+        catch (JSException)
+        {
+            jsReady = false;
+        }
+        catch (InvalidOperationException)
+        {
+            jsReady = false;
+        }
+        catch
+        {
+            _highlightShuffleSeed = (uint)Random.Shared.NextInt64(0, uint.MaxValue);
+        }
+
+        if (!jsReady)
+        {
+            return;
+        }
+
+        try
+        {
+            // Candidate age comes from profile (DOB). Only use localStorage for anonymous / no DOB.
+            if (_ageYears is null)
+            {
+                var storedAge = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
+                if (storedAge is int age)
+                {
+                    _ageYears = NormalizeFilterAge(age);
+                }
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", _ageYears.Value);
+            }
+
+            await ResolveLaunchOriginAsync();
+            _launchHydrationDone = true;
+
+            if (_deferDiscoverUntilMap)
+            {
+                return;
+            }
+
+            var useOrigin = _origin is not null && !HasCompanyMapFocus;
+            if (useOrigin && !_lastDiscoverUsedOrigin)
+            {
+                await LoadVacanciesAsync();
+            }
+        }
+        catch (JSException)
+        {
+            // Keep going — map init must not wait on geo helpers.
+        }
+        catch (InvalidOperationException)
+        {
+            // Keep going — map init must not wait on geo helpers.
+        }
+        catch
+        {
+            _launchHydrationDone = true;
         }
     }
 
@@ -2653,6 +2676,7 @@
             // Never ship pin payloads over the circuit — browser has boot JSON + HTTP pinsUrl.
             await Js.InvokeVoidAsync("jobMap.init", "job-map", Array.Empty<object>(), options);
             _mapReady = true;
+            _skipDiscoverPinReloadOnce = true;
             _mapPainted = true;
             await ApplyUwvKansPinsAsync();
             await InvokeAsync(StateHasChanged);
@@ -2854,7 +2878,11 @@
             {
                 if (reloadMapPins)
                 {
-                    if (_uwvMockup && _uwvKansLayerOn)
+                    if (_skipDiscoverPinReloadOnce)
+                    {
+                        _skipDiscoverPinReloadOnce = false;
+                    }
+                    else if (_uwvMockup && _uwvKansLayerOn)
                     {
                         await ApplyUwvKansPinsAsync();
                     }
