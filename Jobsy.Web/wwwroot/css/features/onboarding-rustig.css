@@ -30,6 +30,11 @@
     display: none;
   }
 
+  /* Kompas finish: keep global header so account/uitloggen match baseline behaviour. */
+  .app-shell:has([data-ob-rustig-screen="kompas"]) > .app-header {
+    display: flex;
+  }
+
   .app-shell:has(.ob-wizard--rustig) .app-main {
     min-block-size: 100dvh;
   }
@@ -1450,6 +1455,14 @@
   max-width: none;
   padding-inline: 0;
   padding-block: 0;
+}
+
+.ob-rustig__kompas-finale .ob-finale__ctas--heroless {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-block-end: 1.25rem;
 }
 
 .ob-rustig__kompas-tests,

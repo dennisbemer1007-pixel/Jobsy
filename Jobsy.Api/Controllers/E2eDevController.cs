@@ -2,6 +2,9 @@ using System.Security.Claims;
 using Jobsy.Core.Dev;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -228,5 +231,146 @@ public sealed class E2eDevController : ControllerBase
         });
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { id });
+    }
+
+    /// <summary>Playwright Kompas: employers on, demo match profile, refreshed vacancy index.</summary>
+    [HttpPost("fixture/kompas-finale")]
+    [AllowAnonymous]
+    public async Task<IActionResult> KompasFinaleFixture(
+        [FromQuery] string? email,
+        [FromServices] JobsyDbContext db,
+        [FromServices] IHostEnvironment env,
+        [FromServices] IPlatformFeatureService platformFeatures,
+        [FromServices] IVacancyDiscoveryIndex discovery,
+        [FromServices] ICandidateMatchSnapshotService matchSnapshots,
+        CancellationToken cancellationToken)
+    {
+        if (!env.IsDevelopment() || string.IsNullOrWhiteSpace(email))
+        {
+            return env.IsDevelopment() ? BadRequest(new { message = "email required" }) : NotFound();
+        }
+
+        await platformFeatures.UpdateAsync(new PlatformFeatureUpdate(EmployersEnabled: true), cancellationToken);
+
+        var normalized = email.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "user not found" });
+        }
+
+        var anchorVacancy = await db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Active)
+            .OrderByDescending(v => v.PublishedAtUtc ?? v.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        user.DateOfBirth ??= new DateOnly(1998, 6, 15);
+        user.HomeLocation = anchorVacancy is null
+            ? new GeoPoint(52.0, 4.3)
+            : new GeoPoint(anchorVacancy.Location.Latitude, anchorVacancy.Location.Longitude);
+        user.OpenForWork = true;
+
+        await EnsureCompletedMiniProfileAsync(db, user.Id, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+
+        await discovery.RefreshAsync(cancellationToken);
+        var live = await matchSnapshots.ComputeLiveAsync(user.Id, cancellationToken);
+        return Ok(new { matchCount = live.Count, employersEnabled = true });
+    }
+
+    private static async Task EnsureCompletedMiniProfileAsync(
+        JobsyDbContext db,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        const int pct = 82;
+
+        var competency = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (competency is null)
+        {
+            competency = new CandidateCompetency
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CreatedAtUtc = now
+            };
+            db.CandidateCompetencies.Add(competency);
+        }
+
+        competency.Status = CandidateCompetencyStatuses.Completed;
+        competency.SamenwerkenPercent = pct;
+        competency.ResultaatgerichtheidPercent = pct;
+        competency.StressbestendigheidPercent = pct;
+        competency.InnovatiePercent = pct;
+        competency.ExtraversiePercent = pct;
+        competency.UpdatedAtUtc = now;
+
+        var career = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (career is null)
+        {
+            career = new CandidateCareerInterest
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CreatedAtUtc = now
+            };
+            db.CandidateCareerInterests.Add(career);
+        }
+
+        career.Status = CandidateCompetencyStatuses.Completed;
+        career.RealisticPercent = pct;
+        career.InvestigativePercent = pct;
+        career.ArtisticPercent = pct;
+        career.SocialPercent = pct;
+        career.EnterprisingPercent = pct;
+        career.ConventionalPercent = pct;
+        career.UpdatedAtUtc = now;
+
+        var culture = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (culture is null)
+        {
+            culture = new CandidateCulturePersonalityProfile
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CreatedAtUtc = now
+            };
+            db.CandidateCulturePersonalityProfiles.Add(culture);
+        }
+
+        culture.Status = CandidateCompetencyStatuses.Completed;
+        culture.AutonomyPercent = pct;
+        culture.InformalPercent = pct;
+        culture.CollaborationPercent = pct;
+        culture.FlexibilityPercent = pct;
+        culture.InnovationPercent = pct;
+        culture.PeopleFirstPercent = pct;
+        culture.OpennessPercent = pct;
+        culture.ConscientiousnessPercent = pct;
+        culture.ExtraversionPercent = pct;
+        culture.AgreeablenessPercent = pct;
+        culture.EmotionalStabilityPercent = pct;
+        culture.UpdatedAtUtc = now;
+
+        var values = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (values is null)
+        {
+            values = new CandidateValuesProfile
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CreatedAtUtc = now
+            };
+            db.CandidateValuesProfiles.Add(values);
+        }
+
+        values.Status = CandidateCompetencyStatuses.Completed;
+        values.AutonomyPercent = pct;
+        values.ConnectionPercent = pct;
+        values.AchievementPercent = pct;
+        values.StabilityPercent = pct;
+        values.ImpactPercent = pct;
+        values.UpdatedAtUtc = now;
     }
 }
