@@ -1,0 +1,65 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Hosting
+@using Microsoft.AspNetCore.Antiforgery
+@inject CultureState Culture
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<form method="post"
+      action="@CandidatePassportBffEndpoints.MotivationPath"
+      class="profile-form profile-motivation passport-motivation-form"
+      data-testid="passport-motivation-form"
+      data-enhance="false">
+    <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+
+    <label>
+        @Culture["Profile.AboutMe"]
+        <textarea name="about_me" rows="4" data-testid="passport-about-me">@AboutMe</textarea>
+    </label>
+
+    <label>
+        @Culture["Profile.DefaultMotivation"]
+        <textarea name="default_motivation"
+                  rows="4"
+                  maxlength="500"
+                  data-testid="passport-default-motivation">@DefaultMotivation</textarea>
+        <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
+    </label>
+
+    <div class="profile-save-bar">
+        <button type="submit" class="btn btn-primary">@Culture["Common.Save"]</button>
+    </div>
+</form>
+
+@if (Saved)
+{
+    <p class="state-message" role="status" style="color:var(--success)">@Culture["Profile.Saved"]</p>
+}
+else if (Error)
+{
+    <p class="state-message error" role="alert">@Culture["Panel.ErrorInline"]</p>
+}
+
+@code {
+    [Parameter] public string? AboutMe { get; set; }
+    [Parameter] public string? DefaultMotivation { get; set; }
+    [Parameter] public bool Saved { get; set; }
+    [Parameter] public bool Error { get; set; }
+
+    private string _antiforgeryFieldName = "";
+    private string _antiforgeryToken = "";
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        var tokens = Antiforgery.GetAndStoreTokens(http);
+        _antiforgeryFieldName = tokens.FormFieldName;
+        _antiforgeryToken = tokens.RequestToken ?? "";
+    }
+}

@@ -13,8 +13,12 @@
 }
 else
 {
-    <form method="post" action="/account/mail-instellingen" class="login-form" data-enhance="false">
+    <form method="post" action="/account/mail-instellingen" class="login-form cand-mail-settings-form" data-enhance="false">
         <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+        @if (!string.IsNullOrWhiteSpace(ReturnUrl))
+        {
+            <input type="hidden" name="return_url" value="@ReturnUrl" />
+        }
 
         @if (_optional.Count > 0)
         {
@@ -45,27 +49,25 @@ else
             @if (_whatsAppAvailable)
             {
                 <input type="hidden" name="whatsapp_shown" value="1" />
-                <div class="cand-toggle cand-toggle--whatsapp">
-                    <div>
-                        <strong class="mail-settings__label">@Culture["Comeback.WhatsApp.Title"]</strong>
-                        <span class="muted mail-settings__hint" style="display:block">@Culture["Comeback.WhatsApp.Hint"]</span>
+                <div class="cand-settings__whatsapp-block">
+                    <div class="cand-toggle cand-toggle--whatsapp">
+                        <div>
+                            <strong class="mail-settings__label">@Culture["Comeback.WhatsApp.Title"]</strong>
+                            <span class="muted mail-settings__hint" style="display:block">@Culture["Comeback.WhatsApp.Hint"]</span>
+                        </div>
+                        <label class="cand-toggle__switch @(_whatsAppOptedIn ? "is-on" : null)">
+                            <input type="checkbox"
+                                   name="whatsapp_optin"
+                                   value="1"
+                                   checked="@_whatsAppOptedIn" />
+                        </label>
                     </div>
-                    <label class="cand-toggle__switch @(_whatsAppOptedIn ? "is-on" : null)">
-                        <input type="checkbox"
-                               name="whatsapp_optin"
-                               value="1"
-                               checked="@_whatsAppOptedIn"
-                               @onchange="OnWhatsAppToggleChanged" />
-                    </label>
-                </div>
-                @if (_whatsAppOptedIn)
-                {
                     <label class="login-field cand-settings__whatsapp-phone">
                         <span class="cand-settings__field-label">@Culture["Comeback.WhatsApp.Phone"]</span>
                         <input type="tel" name="whatsapp_phone" value="@_whatsAppPhone" autocomplete="tel" inputmode="tel" />
                         <span class="muted">@Culture["Comeback.WhatsApp.PhoneHint"]</span>
                     </label>
-                }
+                </div>
             }
             <button type="submit" class="btn btn-primary" style="margin-top:1rem">@Culture["MailSettings.Save"]</button>
         }
@@ -84,7 +86,11 @@ else
         <p class="muted">@Culture[_employersOn ? "MailSettings.AlwaysHint" : "MailSettings.AlwaysHintOff"]</p>
     </form>
 
-    @if (_saved)
+    @if (_saveError)
+    {
+        <p role="alert" class="form-error" style="margin-top:1rem">@Culture["MailSettings.SaveError"]</p>
+    }
+    else if (_saved)
     {
         <p role="status" style="margin-top:1rem;color:var(--success)">@Culture["MailSettings.Saved"]</p>
     }
@@ -96,12 +102,16 @@ else
     private bool _employersOn = true;
     private bool _loadError;
     private bool _saved;
+    private bool _saveError;
     private bool _reminderEmails = true;
     private bool _whatsAppAvailable;
     private bool _whatsAppOptedIn;
     private string? _whatsAppPhone;
     private string _antiforgeryFieldName = "";
     private string _antiforgeryToken = "";
+
+    [Parameter]
+    public string? ReturnUrl { get; set; }
 
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
@@ -115,6 +125,7 @@ else
             _antiforgeryFieldName = tokens.FormFieldName;
             _antiforgeryToken = tokens.RequestToken ?? "";
             _saved = string.Equals(http.Request.Query["saved"], "1", StringComparison.Ordinal);
+            _saveError = string.Equals(http.Request.Query["error"], "1", StringComparison.Ordinal);
         }
 
         try
@@ -172,8 +183,4 @@ else
         _ => ""
     };
 
-    private void OnWhatsAppToggleChanged(ChangeEventArgs e)
-    {
-        _whatsAppOptedIn = e.Value is true or "true" or "on";
-    }
 }

@@ -3,6 +3,7 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
 
 <section class="career-card career-card--step" aria-labelledby="career-title">
     <a class="career-step__back" href="/carriere">
@@ -58,11 +59,28 @@
                 </ul>
             }
 
-            @if (!_showAll && AllLines.Count > MaxLines)
+            @if (AllLines.Count > MaxLines)
             {
-                <button type="button" class="btn btn-ghost" @onclick="() => _showAll = true">
-                    @Culture.Format("CareerStep.Gaps.ShowAll", AllLines.Count)
-                </button>
+                <details class="career-step__gaps-more">
+                    <summary class="btn btn-ghost">@Culture.Format("CareerStep.Gaps.ShowAll", AllLines.Count)</summary>
+                    <ul class="career-step__gaps">
+                        @foreach (var line in AllLines.Skip(MaxLines))
+                        {
+                            <li class="career-step__gap @(line.Met ? "is-met" : "is-missing")">
+                                @if (line.Met)
+                                {
+                                    <span class="career-step__gap-icon" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
+                                    <span>@line.Text · @Culture["CareerStep.Gaps.Have"]</span>
+                                }
+                                else
+                                {
+                                    <span class="career-step__gap-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                                    <span>@line.Text</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </details>
             }
 
             @if (Step.Years > 0 && !Step.YearsMet)
@@ -122,10 +140,14 @@
                 <span class="career-step__proof-icon" aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
                 <span>@Culture["CareerStep.Proof"]</span>
             </a>
-            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnComplete">
-                <span class="career-step__check" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
-                <span>@Culture["CareerStep.Complete"]</span>
-            </button>
+            <form method="post" action="@CompleteFormAction" class="career-step__complete-form" data-enhance="false">
+                @AntiforgeryFields
+                <input type="hidden" name="return_url" value="@ReturnUrl" />
+                <button type="submit" class="btn btn-primary" disabled="@Busy">
+                    <span class="career-step__check" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
+                    <span>@Culture["CareerStep.Complete"]</span>
+                </button>
+            </form>
         </div>
 
         <div class="career-card__actions career-card__actions--sticky career-only-mobile">
@@ -134,9 +156,13 @@
                aria-label="@Culture["CareerStep.ProofShort"]">
                 <span aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
             </a>
-            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnComplete">
-                @Culture["CareerStep.Complete"]
-            </button>
+            <form method="post" action="@CompleteFormAction" class="career-step__complete-form" data-enhance="false">
+                @AntiforgeryFields
+                <input type="hidden" name="return_url" value="@ReturnUrl" />
+                <button type="submit" class="btn btn-primary" disabled="@Busy">
+                    @Culture["CareerStep.Complete"]
+                </button>
+            </form>
         </div>
     }
     else if (Step.Status == CareerStepStatus.Completed)
@@ -144,9 +170,13 @@
         @if (Step.CanUndo)
         {
             <div class="career-card__actions">
-                <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="OnUndo">
-                    @Culture["CareerStep.Undo"]
-                </button>
+                <form method="post" action="@UndoFormAction" data-enhance="false">
+                    @AntiforgeryFields
+                    <input type="hidden" name="return_url" value="@ReturnUrl" />
+                    <button type="submit" class="btn btn-secondary" disabled="@Busy">
+                        @Culture["CareerStep.Undo"]
+                    </button>
+                </form>
             </div>
         }
     }
@@ -159,8 +189,6 @@
 @code {
     private const int MaxLines = 6;
 
-    private bool _showAll;
-
     [Parameter] public CareerStepDetailView Step { get; set; } = new();
     [Parameter] public bool Busy { get; set; }
     [Parameter] public bool EmployersOn { get; set; } = true;
@@ -172,25 +200,49 @@
     /// <summary>Dependency E; <see cref="CareerStepVacancyFit.None"/> keeps the link countless.</summary>
     [Parameter] public Jobsy.Web.Services.Careers.CareerStepVacancyFit VacancyFit { get; set; }
 
-    [Parameter] public EventCallback OnComplete { get; set; }
-    [Parameter] public EventCallback OnUndo { get; set; }
+    [Parameter] public string ReturnUrl { get; set; } = "/carriere";
 
-    private string _shownStepId = "";
+    private string CompleteFormAction =>
+        $"/bff/candidate/career/steps/{Uri.EscapeDataString(Step.Id)}/complete";
 
-    protected override void OnParametersSet()
+    private string UndoFormAction =>
+        $"/bff/candidate/career/steps/{Uri.EscapeDataString(Step.Id)}/undo";
+
+    private string _antiforgeryFieldName = "";
+    private string _antiforgeryToken = "";
+
+    protected override void OnInitialized()
     {
-        if (!string.Equals(_shownStepId, Step.Id, StringComparison.Ordinal))
+        var http = HttpContextAccessor.HttpContext;
+        var services = http?.RequestServices;
+        var antiforgery = services?.GetService<Microsoft.AspNetCore.Antiforgery.IAntiforgery>();
+        if (http is not null && antiforgery is not null)
         {
-            _shownStepId = Step.Id;
-            _showAll = false;
+            var tokens = antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? "";
         }
     }
+
+    private RenderFragment AntiforgeryFields => builder =>
+    {
+        if (string.IsNullOrEmpty(_antiforgeryFieldName))
+        {
+            return;
+        }
+
+        builder.OpenElement(0, "input");
+        builder.AddAttribute(1, "type", "hidden");
+        builder.AddAttribute(2, "name", _antiforgeryFieldName);
+        builder.AddAttribute(3, "value", _antiforgeryToken);
+        builder.CloseElement();
+    };
 
     private List<CareerStepGapLine> AllLines
         => Step.Missing.Concat(Step.Present).ToList();
 
     private List<CareerStepGapLine> VisibleLines
-        => _showAll ? AllLines : AllLines.Take(MaxLines).ToList();
+        => AllLines.Take(MaxLines).ToList();
 
     private string EyebrowText => Step.Status switch
     {

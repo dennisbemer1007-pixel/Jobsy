@@ -26,6 +26,15 @@ internal static class IllustratedPagesApiStub
     /// <summary>When true, kompas payloads use a minimal paspoort profile (many empty fields).</summary>
     public static bool PassportMinimalProfileCapture { get; set; }
 
+    private static int _profilePutCount;
+
+    /// <summary>PUT <c>api/me/profile</c> calls observed by illustrated API stubs (server-side HttpClient).</summary>
+    public static int ProfilePutCount => Volatile.Read(ref _profilePutCount);
+
+    public static void ResetProfilePutCount() => Interlocked.Exchange(ref _profilePutCount, 0);
+
+    internal static void RecordProfilePut() => Interlocked.Increment(ref _profilePutCount);
+
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

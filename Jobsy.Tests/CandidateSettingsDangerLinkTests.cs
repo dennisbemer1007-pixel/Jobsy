@@ -7,8 +7,8 @@ public sealed class CandidateSettingsDangerLinkTests
     {
         var root = FindRepoRoot();
         var settings = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateSettings.razor"));
-        Assert.Contains("GoPaspoortDanger(\"reset\")", settings, StringComparison.Ordinal);
-        Assert.Contains("GoPaspoortDanger(\"delete\")", settings, StringComparison.Ordinal);
+        Assert.Contains("/candidate/paspoort?tab=data&danger=reset", settings, StringComparison.Ordinal);
+        Assert.Contains("/candidate/paspoort?tab=data&danger=delete", settings, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

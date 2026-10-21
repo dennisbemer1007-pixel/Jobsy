@@ -390,13 +390,32 @@ public static class PageAssetCatalog
     public static bool IncludeOnboardingClientScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
-        return path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal);
+        return path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool IncludeVacancyWizardScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
         return path.StartsWith("/werkgever/vacatures", StringComparison.Ordinal);
+    }
+
+    public static bool IncludeCandidateApplicationsScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeCandidatePassportScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return string.Equals(path, PassportRedirects.PassportPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeDiscoveryClientScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
@@ -415,3 +434,4 @@ public static class PageAssetCatalog
         }
     }
 }
+

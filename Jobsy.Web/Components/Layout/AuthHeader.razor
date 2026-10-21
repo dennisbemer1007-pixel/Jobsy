@@ -16,15 +16,14 @@
 <div class="auth-header">
     <AuthorizeView>
         <Authorized>
-            <div class="account-menu @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="account" @onfocusout="OnFocusOut" @onkeydown="OnMenuKeyDown">
+            <div class="account-menu" data-menu-id="account">
                 <button type="button"
                         data-menu-trigger
                         class="account-menu__toggle"
                         title="@Culture["Footer.Legal"]"
                         aria-label="@Culture["Auth.AccountMenu"]"
                         aria-haspopup="menu"
-                        aria-expanded="@(_open ? "true" : "false")"
-                        @onclick="Toggle">
+                        aria-expanded="false">
                     <span class="auth-user" title="@DisplayName(context.User)">
                         <span class="auth-user__name">@DisplayName(context.User)</span>
                     </span>
@@ -80,11 +79,10 @@
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
                         <a class="account-menu__link" href="/wie-zijn-wij" role="menuitem">@Culture["Footer.About"]</a>
                         <a class="account-menu__link account-menu__link--logout"
-                           href="/logout"
+                           href="/account/logout"
                            role="menuitem"
                            data-testid="auth-logout-link"
-                           @onclick="DropPushAsync"
-                           @onclick:preventDefault="true">
+                           data-lobsy-logout="true">
                             @Culture["Auth.Logout"]
                         </a>
                     </div>
@@ -103,8 +101,6 @@
 </div>
 
 @code {
-    private bool _open;
-    private bool _forceClosed;
     private bool _showInstall;
     private bool _installChecked;
     private bool _isCandidate;
@@ -114,7 +110,6 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        Navigation.LocationChanged += OnLocationChanged;
         CandidateNameBroadcast.Changed += OnProfileNameChanged;
     }
 
@@ -134,13 +129,6 @@
             _candidateProfileHref = RoleNavCatalog.PassportItem.Href;
         }
     }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => InvokeAsync(async () =>
-        {
-            await RefreshProfileNameAsync();
-            StateHasChanged();
-        });
 
     private void OnProfileNameChanged(string name)
     {
@@ -184,21 +172,6 @@
         }
     }
 
-    private void OnMenuKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Escape")
-        {
-            _open = false;
-            _forceClosed = true;
-        }
-    }
-
-    private void Toggle()
-    {
-        _open = !_open;
-        _forceClosed = !_open;
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_installChecked || !firstRender)
@@ -229,16 +202,12 @@
 
     private Task OpenFeedbackAsync()
     {
-        _open = false;
-        _forceClosed = true;
         FeedbackHost.RequestOpen();
         return Task.CompletedTask;
     }
 
     private async Task InstallAppAsync()
     {
-        _open = false;
-        _forceClosed = true;
         try
         {
             var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
@@ -255,24 +224,6 @@
         {
             // Best-effort install prompt (script missing / unsupported browser / circuit gone).
         }
-    }
-
-    private async Task DropPushAsync()
-    {
-        _open = false;
-        _forceClosed = true;
-        // Best-effort; the link still navigates when the circuit is down.
-        // Cookie LogoutPath remains /account/logout; /logout uses the same handler.
-        await CircuitInterop.InvokeVoidIgnoredAsync(Js, "lobsyPush.dropSubscription");
-        Navigation.NavigateTo("/account/logout", forceLoad: true);
-    }
-
-    private async Task OnFocusOut(FocusEventArgs _)
-    {
-        await Task.Delay(150);
-        _open = false;
-        _forceClosed = false;
-        await InvokeAsync(StateHasChanged);
     }
 
     private string DisplayName(ClaimsPrincipal user)
@@ -311,7 +262,6 @@
 
     public override void Dispose()
     {
-        Navigation.LocationChanged -= OnLocationChanged;
         CandidateNameBroadcast.Changed -= OnProfileNameChanged;
         base.Dispose();
     }

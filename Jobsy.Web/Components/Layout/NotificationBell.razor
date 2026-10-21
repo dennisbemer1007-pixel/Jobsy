@@ -4,282 +4,106 @@
 @using Jobsy.Web.Services
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject NotificationUnreadStore UnreadStore
-@inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
 
 <AuthorizeView>
     <Authorized>
-        <div class="notification-bell @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="notifications" @onclick:stopPropagation="true" @onkeydown="OnKeyDown">
+        <div class="notification-bell"
+             data-menu-id="notifications"
+             data-notifications-all-href="@_allNotificationsHref"
+             data-n-i18n-loading="@Culture["Notifications.Loading"]"
+             data-n-i18n-empty-title="@Culture["Notifications.EmptyTitle"]"
+             data-n-i18n-empty-body="@Culture["Notifications.EmptyBody"]"
+             data-n-i18n-error-title="@Culture["Notifications.ErrorTitle"]"
+             data-n-i18n-error-body="@Culture["Notifications.ErrorBody"]"
+             data-n-i18n-retry="@Culture["Notifications.Retry"]"
+             data-n-i18n-default-title="@Culture["Notifications.DefaultTitle"]"
+             data-n-i18n-default-body="@Culture["Notifications.DefaultBody"]"
+             data-n-i18n-just-now="@Culture["Notifications.JustNow"]"
+             data-n-i18n-up-to-date="@Culture["Notifications.UpToDate"]">
             <button type="button"
                     data-menu-trigger
                     class="notification-bell__toggle @(_unread > 0 ? "notification-bell__toggle--unread" : null)"
-                    title="@(_unread > 0 ? $"{_unread} ongelezen bericht{(_unread == 1 ? "" : "en")}" : "Notificaties")"
-                    aria-label="@($"Notificaties{(_unread > 0 ? $", {_unread} ongelezen" : "")}")"
-                    aria-expanded="@(_open ? "true" : "false")"
-                    @onclick="ToggleAsync">
+                    title="@UnreadTitle"
+                    aria-label="@UnreadAria">
                 <span class="notification-bell__icon" aria-hidden="true">@((MarkupString)NavIcons.Notifications)</span>
                 @if (_unread > 0)
                 {
-                    <span class="notification-bell__badge">@(_unread > 99 ? "99+" : _unread.ToString())</span>
+                    <span class="notification-bell__badge" data-notifications-badge>@(_unread > 99 ? "99+" : _unread.ToString())</span>
                 }
             </button>
 
-                <div class="header-dropdown-backdrop" @onclick="Close" aria-hidden="true"></div>
-                <div class="notification-bell__panel notification-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="Je notificaties">
-                    <div class="notification-bell__header">
-                        <div>
-                            <strong>Jouw berichten</strong>
-                            <p class="notification-bell__subtitle">
-                                @(_unread > 0
-                                    ? $"{_unread} ongelezen"
-                                    : "Alles bijgewerkt")
-                            </p>
-                        </div>
-                        <div class="notification-bell__header-actions">
-                            @if (_unread > 0)
-                            {
-                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="MarkAllReadAsync">
-                                    Alles gelezen
-                                </button>
-                            }
-                            <button type="button"
-                                    class="notification-bell__close"
-                                    data-menu-close
-                                    aria-label="Sluiten"
-                                    @onclick="Close">
-                                ×
-                            </button>
-                        </div>
-                    </div>
-
-                    @if (_loading)
-                    {
-                        <p class="muted notification-bell__empty">Berichten laden…</p>
-                    }
-                    else if (_items.Count == 0 && _unread > 0)
-                    {
-                        <div class="notification-bell__empty-state">
-                            <p class="notification-bell__empty-title">Berichten laden mislukt</p>
-                            <p class="muted">Probeer opnieuw of open Alle meldingen.</p>
-                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="LoadListAsync">Opnieuw</button>
-                        </div>
-                    }
-                    else if (_items.Count == 0)
-                    {
-                        <div class="notification-bell__empty-state">
-                            <p class="notification-bell__empty-title">Nog geen berichten</p>
-                            <p class="muted">Updates over sollicitaties en vacatures verschijnen hier.</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <ul class="notification-bell__list">
-                            @foreach (var n in _items)
-                            {
-                                <li class="notification-bell__item @(n.IsRead ? null : "is-unread")">
-                                    <button type="button" class="notification-bell__item-btn" @onclick="() => OpenAsync(n)">
-                                        <span class="notification-bell__item-top">
-                                            <span class="notification-bell__item-title">@FriendlyTitle(n)</span>
-                                            @if (!n.IsRead)
-                                            {
-                                                <span class="notification-bell__dot" aria-label="Ongelezen"></span>
-                                            }
-                                        </span>
-                                        <span class="notification-bell__item-body">@FriendlyBody(n)</span>
-                                        <span class="notification-bell__item-meta">@FormatRelative(n.CreatedAtUtc)</span>
-                                    </button>
-                                    @if (!string.IsNullOrWhiteSpace(n.ActionUrl) && !string.IsNullOrWhiteSpace(n.ActionLabel))
-                                    {
-                                        <a class="notification-bell__action"
-                                           href="@n.ActionUrl"
-                                           @onclick="() => MarkReadQuietAsync(n)"
-                                           @onclick:stopPropagation="true">
-                                            @n.ActionLabel
-                                        </a>
-                                    }
-                                </li>
-                            }
-                        </ul>
-                    }
-                    @if (!_loading)
-                    {
-                        <p class="notification-bell__footer-link">
-                            <a href="@_allNotificationsHref" @onclick="Close">Alle meldingen</a>
+            <div class="header-dropdown-backdrop" aria-hidden="true"></div>
+            <div class="notification-bell__panel notification-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="@Culture["Notifications.PanelTitle"]">
+                <div class="notification-bell__header">
+                    <div>
+                        <strong>@Culture["Notifications.PanelHeading"]</strong>
+                        <p class="notification-bell__subtitle" data-notifications-subtitle>
+                            @UnreadSubtitle
                         </p>
-                    }
+                    </div>
+                    <div class="notification-bell__header-actions">
+                        @if (_unread > 0)
+                        {
+                            <button type="button"
+                                    class="btn-compact"
+                                    data-notifications-mark-all>
+                                @Culture["Notifications.MarkAllRead"]
+                            </button>
+                        }
+                        <button type="button"
+                                class="notification-bell__close"
+                                data-menu-close
+                                aria-label="@Culture["Common.Close"]">
+                            ×
+                        </button>
+                    </div>
                 </div>
+
+                <div data-notifications-list class="notification-bell__list-host">
+                    <p class="muted notification-bell__empty">@Culture["Notifications.LoadHint"]</p>
+                </div>
+
+                <p class="notification-bell__footer-link">
+                    <a href="@_allNotificationsHref">@Culture["Notifications.ViewAll"]</a>
+                </p>
+            </div>
         </div>
     </Authorized>
 </AuthorizeView>
 
 @code {
-    private bool _open;
-    private bool _forceClosed;
-    private bool _loading;
-    private bool _busy;
     private int _unread;
-    private List<UserNotificationItem> _items = [];
     private string _allNotificationsHref = "/notifications";
+
+    private string UnreadTitle =>
+        _unread > 0
+            ? string.Format(Culture["Notifications.UnreadTitle"], _unread)
+            : Culture["Notifications.Title"];
+
+    private string UnreadAria =>
+        _unread > 0
+            ? string.Format(Culture["Notifications.UnreadAria"], _unread)
+            : Culture["Notifications.Title"];
+
+    private string UnreadSubtitle =>
+        _unread > 0
+            ? string.Format(Culture["Notifications.UnreadSubtitle"], _unread)
+            : Culture["Notifications.UpToDate"];
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
         var state = await AuthState.GetAuthenticationStateAsync();
         _allNotificationsHref = RoleNavCatalog.NotificationsHrefFor(state.User);
-        UnreadStore.Changed += OnUnreadChanged;
-        UnreadStore.EnsureStarted();
-        _unread = UnreadStore.Unread;
-    }
-
-    private void OnUnreadChanged()
-        => InvokeAsync(() =>
-        {
-            if (!_open)
-            {
-                _unread = UnreadStore.Unread;
-                StateHasChanged();
-            }
-        });
-
-    private async Task ToggleAsync()
-    {
-        _open = !_open;
-        _forceClosed = !_open;
-        if (_open)
-        {
-            await LoadListAsync();
-        }
-    }
-
-    private void OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Escape")
-        {
-            Close();
-        }
-    }
-
-    private void Close()
-    {
-        _open = false;
-        _forceClosed = true;
-    }
-
-    private async Task LoadListAsync()
-    {
-        _loading = true;
         try
         {
-            for (var attempt = 0; attempt < 3; attempt++)
-            {
-                try
-                {
-                    _items = (await Api.GetNotificationsAsync()).ToList();
-                    _unread = _items.Count(n => !n.IsRead);
-                    UnreadStore.SetUnread(_unread);
-                    return;
-                }
-                catch when (attempt < 2)
-                {
-                    await Task.Delay(400 * (attempt + 1));
-                }
-            }
-
-            _items = [];
             _unread = await Api.GetUnreadNotificationCountAsync();
-            UnreadStore.SetUnread(_unread);
         }
         catch
         {
-            _items = [];
-            _unread = 0;
-            UnreadStore.SetUnread(0);
-        }
-        finally
-        {
-            _loading = false;
-        }
-    }
-
-    private async Task OpenAsync(UserNotificationItem n)
-    {
-        await MarkReadQuietAsync(n);
-        _open = false;
-        if (!string.IsNullOrWhiteSpace(n.DeepLink))
-        {
-            Navigation.NavigateTo(n.DeepLink);
-        }
-    }
-
-    private async Task MarkReadQuietAsync(UserNotificationItem n)
-    {
-        if (n.IsRead)
-        {
-            return;
-        }
-
-        try
-        {
-            var updated = await Api.MarkNotificationReadAsync(n.Id);
-            if (updated is not null)
-            {
-                n.IsRead = true;
-                n.ReadAtUtc = updated.ReadAtUtc;
-                UnreadStore.Decrement();
-                _unread = UnreadStore.Unread;
-            }
-        }
-        catch
-        {
-            // ignore
-        }
-    }
-
-    private async Task MarkAllReadAsync()
-    {
-        _busy = true;
-        try
-        {
-            await Api.MarkAllNotificationsReadAsync();
-            foreach (var n in _items)
-            {
-                n.IsRead = true;
-            }
-
-            UnreadStore.SetUnread(0);
             _unread = 0;
         }
-        catch
-        {
-            // ignore
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
-
-    private static string FriendlyTitle(UserNotificationItem n)
-        => string.IsNullOrWhiteSpace(n.Title) ? "Nieuw bericht" : n.Title;
-
-    private static string FriendlyBody(UserNotificationItem n)
-        => string.IsNullOrWhiteSpace(n.Body) ? "Tik om te openen." : n.Body;
-
-    private static string FormatRelative(DateTime utc)
-    {
-        var local = utc.Kind == DateTimeKind.Utc ? utc.ToLocalTime() : utc;
-        var delta = DateTime.Now - local;
-        if (delta.TotalMinutes < 1) return "Zojuist";
-        if (delta.TotalMinutes < 60) return $"{(int)delta.TotalMinutes} min geleden";
-        if (delta.TotalHours < 24) return $"{(int)delta.TotalHours} uur geleden";
-        if (delta.TotalDays < 7) return $"{(int)delta.TotalDays} dag{((int)delta.TotalDays == 1 ? "" : "en")} geleden";
-        return local.ToString("dd MMM, HH:mm");
-    }
-
-    public override void Dispose()
-    {
-        UnreadStore.Changed -= OnUnreadChanged;
-        base.Dispose();
     }
 }
