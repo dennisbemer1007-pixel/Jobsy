@@ -15,7 +15,9 @@ public sealed class CandidatePrimaryNavEnhancedNavTests
         Assert.DoesNotContain("data-enhance-nav=\"false\"", bottom, StringComparison.Ordinal);
         Assert.Contains("NavigateTo(Href, forceLoad: false)", link, StringComparison.Ordinal);
         Assert.Contains("data-lobsy-candidate-nav=\"true\"", link, StringComparison.Ordinal);
+        Assert.Contains("data-enhance-nav=\"false\"", link, StringComparison.Ordinal);
         Assert.Contains("@onclick:preventDefault=\"true\"", link, StringComparison.Ordinal);
+        Assert.Contains("lobsyCandidateNav.markInteractive", link, StringComparison.Ordinal);
         Assert.Contains("InteractiveServerRenderMode(prerender: false)", link, StringComparison.Ordinal);
     }
 

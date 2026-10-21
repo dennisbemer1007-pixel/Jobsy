@@ -1,5 +1,6 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject NavigationManager Navigation
+@inject IJSRuntime Js
 
 <a href="@Href"
    class="@Class"
@@ -8,6 +9,7 @@
    data-testid="@TestId"
    data-desktop-only="@DesktopOnly"
    data-lobsy-candidate-nav="true"
+   data-enhance-nav="false"
    @onclick="NavigateAsync"
    @onclick:preventDefault="true">
     @ChildContent
@@ -22,6 +24,33 @@
     [Parameter] public string? DesktopOnly { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private void NavigateAsync()
-        => Navigation.NavigateTo(Href, forceLoad: false);
+    private async Task NavigateAsync()
+    {
+        Navigation.NavigateTo(Href, forceLoad: false);
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyCandidateNav.scheduleSyncCheck", Href);
+        }
+        catch
+        {
+            // Disconnected circuit / prerender
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyCandidateNav.markInteractive");
+        }
+        catch
+        {
+            // bUnit / disconnected circuit
+        }
+    }
 }
