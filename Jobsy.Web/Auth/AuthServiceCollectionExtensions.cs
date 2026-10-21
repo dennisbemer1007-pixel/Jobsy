@@ -1275,7 +1275,11 @@ public static class AuthServiceCollectionExtensions
             }
 
             StampLastActivity(http);
-            await RefreshLocalSessionCookieAsync(http);
+            if (HttpMethods.IsPost(http.Request.Method))
+            {
+                await RefreshLocalSessionCookieAsync(http);
+            }
+
             return Results.Json(new { ok = true });
         }).AllowAnonymous().DisableAntiforgery();
 
@@ -1318,6 +1322,11 @@ public static class AuthServiceCollectionExtensions
     private static async Task RefreshLocalSessionCookieAsync(HttpContext http)
     {
         if (http.User.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
+        {
+            return;
+        }
+
+        if (!AuthCookieRefreshThrottle.ShouldRefresh(http))
         {
             return;
         }
@@ -1369,6 +1378,7 @@ public static class AuthServiceCollectionExtensions
         }
 
         identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, fresh));
+        JobsyAuthCookieChunks.DeleteAll(http);
         await http.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             http.User,

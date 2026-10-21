@@ -308,6 +308,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             }
 
             var principal = AuthPrincipalFactory.FromDeviceRefresh(profile);
+            JobsyAuthCookieChunks.DeleteAll(httpContext);
             await httpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
