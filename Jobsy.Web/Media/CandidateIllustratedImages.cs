@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261019-15";
+    public const string Version = "20261021-01";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -47,6 +47,9 @@ public static class CandidateIllustratedImages
     public const string InstellingenHeroBandC = InstellingenBand;
     public const string KompasHeroWide = $"{Base}/kompas-hero-wide.jpg?v={Version}";
     public const string KompasHeroBandC = $"{Base}/kompas-hero-band-c.jpg?v={Version}";
+    public const string PaspoortHeroDeskR3 = KompasHeroBandC;
+    public const string PaspoortHeroMobR3 = KompasHeroBandC;
+    public const string PaspoortTipArtR3 = TipVragen;
     public const string BedrijvenkaartHeroMobile = $"{Base}/bedrijvenkaart-hero-mobile.jpg?v={Version}";
     public const string BedrijvenkaartHeroDoorCrop = $"{Base}/bedrijvenkaart-hero-door-crop.jpg?v={Version}";
     public const string BedrijvenkaartHeroDoorDesktop = $"{Base}/bedrijvenkaart-hero-door-desktop.jpg?v={Version}";
