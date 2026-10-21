@@ -5,7 +5,7 @@ namespace Jobsy.Web.Discovery;
 
 internal static class DiscoveryClientStepShells
 {
-    public static string Build(int step, CultureState culture) => step switch
+    public static string Build(int step, CultureState _) => step switch
     {
         2 => "<div class=\"journey-stack\"><div data-disc-client=\"presetGrid\" class=\"ob-wizard__presets\"></div><div data-disc-client=\"transportGrid\"></div><div data-disc-client=\"licenseGrid\"></div></div>",
         3 => "<div class=\"journey-body\"><div data-disc-client=\"jobsRoot\"></div><div data-disc-client=\"employerGrid\" class=\"journey-chips\"></div><div data-disc-client=\"rolesGrid\"></div></div>",
