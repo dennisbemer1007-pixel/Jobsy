@@ -11,7 +11,6 @@
 @code {
     private bool _started;
     private bool _hooksAttached;
-    private CancellationTokenSource? _pollCts;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -83,54 +82,11 @@
                 _hooksAttached = true;
             }
 
-            _pollCts?.Cancel();
-            _pollCts = new CancellationTokenSource();
-            _ = PollSessionAsync(_pollCts.Token);
         }
         catch
         {
             // JS not ready / prerender — retry on a later render.
             _started = false;
-        }
-    }
-
-    private async Task PollSessionAsync(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(45), ct);
-                bool visible;
-                try
-                {
-                    visible = await Js.InvokeAsync<bool>("jobsyPageVisible");
-                }
-                catch
-                {
-                    visible = true;
-                }
-
-                if (!visible)
-                {
-                    continue;
-                }
-
-                var ok = await Js.InvokeAsync<bool>("lobsySessionIdle.checkSession");
-                if (!ok)
-                {
-                    return;
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-            catch
-            {
-                // Transient JS/circuit — keep polling / allow TryStart on next render.
-                _started = false;
-            }
         }
     }
 
@@ -149,13 +105,6 @@
         {
             Navigation.LocationChanged -= OnLocationChanged;
             _hooksAttached = false;
-        }
-
-        if (_pollCts is not null)
-        {
-            await _pollCts.CancelAsync();
-            _pollCts.Dispose();
-            _pollCts = null;
         }
 
         if (_started)
