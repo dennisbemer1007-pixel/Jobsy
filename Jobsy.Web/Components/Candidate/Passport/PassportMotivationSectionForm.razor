@@ -6,12 +6,12 @@
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 
-<form method="post"
-      action="@CandidatePassportBffEndpoints.MotivationPath"
-      class="profile-form profile-motivation passport-motivation-form"
-      data-testid="passport-motivation-form"
-      data-enhance="false">
+<div class="profile-form profile-motivation passport-motivation-form"
+     data-testid="passport-motivation-form"
+     data-passport-motivation-bff
+     data-bff-url="@CandidatePassportBffEndpoints.MotivationPath">
     <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+    <p data-bff-error class="form-error state-message error" role="alert" hidden></p>
 
     <label>
         @Culture["Profile.AboutMe"]
@@ -26,11 +26,7 @@
                   data-testid="passport-default-motivation">@DefaultMotivation</textarea>
         <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
     </label>
-
-    <div class="profile-save-bar">
-        <button type="submit" class="btn btn-primary">@Culture["Common.Save"]</button>
-    </div>
-</form>
+</div>
 
 @if (Saved)
 {

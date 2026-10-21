@@ -31,9 +31,10 @@ public static class CandidateCareerBffEndpoints
     {
         return async (http, stepKey, antiforgery, httpClientFactory, accessTokens) =>
         {
+            var wantsJson = CandidateBffHttp.WantsJson(http);
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.BadRequest();
+                return wantsJson ? CandidateBffHttp.JsonFail("Ongeldige sessie.") : Results.BadRequest();
             }
 
             var form = await http.Request.ReadFormAsync(http.RequestAborted);
@@ -42,7 +43,9 @@ public static class CandidateCareerBffEndpoints
             var jwt = accessTokens.TryCreate(http.User, TrustedClientIp.Resolve(http));
             if (string.IsNullOrWhiteSpace(jwt))
             {
-                return Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString(returnUrl));
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Niet ingelogd.", status: 401)
+                    : Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString(returnUrl));
             }
 
             var client = httpClientFactory.CreateClient(HttpClientName);
@@ -50,12 +53,14 @@ public static class CandidateCareerBffEndpoints
             using var response = await send(client, stepKey, jwt, http.RequestAborted);
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect(returnUrl.Contains('?', StringComparison.Ordinal)
-                    ? returnUrl + "&careerError=1"
-                    : returnUrl + "?careerError=1");
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Actie mislukt.")
+                    : Results.Redirect(returnUrl.Contains('?', StringComparison.Ordinal)
+                        ? returnUrl + "&careerError=1"
+                        : returnUrl + "?careerError=1");
             }
 
-            return Results.Redirect(returnUrl);
+            return wantsJson ? CandidateBffHttp.JsonOk(returnUrl) : Results.Redirect(returnUrl);
         };
     }
 }

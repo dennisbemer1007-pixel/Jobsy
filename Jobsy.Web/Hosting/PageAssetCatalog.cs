@@ -424,6 +424,27 @@ public static class PageAssetCatalog
         return string.Equals(path, "/candidate/profile", StringComparison.OrdinalIgnoreCase);
     }
 
+    public static bool IncludeCandidateSettingsMailScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeCandidateCareerScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/carriere/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeJobsyBffClientScript(string? rawPath)
+        => IncludeCandidateProfileScript(rawPath)
+           || IncludeCandidateApplicationsScript(rawPath)
+           || IncludeCandidatePassportScript(rawPath)
+           || IncludeCandidateSettingsMailScript(rawPath)
+           || IncludeCandidateCareerScript(rawPath)
+           || IncludeDiscoveryClientScript(rawPath);
+
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
     {
         if ((areas & flag) == 0)

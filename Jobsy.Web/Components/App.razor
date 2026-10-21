@@ -315,6 +315,10 @@
         {
             <script src="js/onboarding-client-form.js?v=20261021-step1-acc" nonce="@Nonce" defer></script>
         }
+        @if (IncludeJobsyBffClientScript)
+        {
+            <script src="js/jobsy-bff-client.js?v=20261021-02" nonce="@Nonce" defer></script>
+        }
         @if (IncludeCandidateProfileScript)
         {
             <script src="js/candidate-profile-client.js?v=20261021-01" nonce="@Nonce" defer></script>
@@ -330,6 +334,15 @@
         @if (IncludeDiscoveryClientScript)
         {
             <script src="js/discovery-client-form.js?v=20261021-01" nonce="@Nonce" defer></script>
+            <script src="js/discovery-journey-nav.js?v=20261021-02" nonce="@Nonce" defer></script>
+        }
+        @if (IncludeCandidateSettingsMailScript)
+        {
+            <script src="js/candidate-settings-mail-client.js?v=20261021-02" nonce="@Nonce" defer></script>
+        }
+        @if (IncludeCandidateCareerScript)
+        {
+            <script src="js/candidate-career-client.js?v=20261021-02" nonce="@Nonce" defer></script>
         }
     @if (LoadBlazorRuntime)
     {
@@ -444,6 +457,15 @@
 
     private bool IncludeCandidateProfileScript =>
         PageAssetCatalog.IncludeCandidateProfileScript(RequestPath);
+
+    private bool IncludeJobsyBffClientScript =>
+        PageAssetCatalog.IncludeJobsyBffClientScript(RequestPath);
+
+    private bool IncludeCandidateSettingsMailScript =>
+        PageAssetCatalog.IncludeCandidateSettingsMailScript(RequestPath);
+
+    private bool IncludeCandidateCareerScript =>
+        PageAssetCatalog.IncludeCandidateCareerScript(RequestPath);
 
     private bool IncludeMapPreconnect =>
         PageAssetCatalog.IncludeMapPreconnect(RequestPath);

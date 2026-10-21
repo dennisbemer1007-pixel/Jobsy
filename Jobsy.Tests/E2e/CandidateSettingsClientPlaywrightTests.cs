@@ -38,12 +38,12 @@ public sealed class CandidateSettingsClientPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
-        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        var apiHostGuard = PlaywrightAccLikeRegression.CreateApiHostGuard();
         apiHostGuard.Attach(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var saves = 0;
-        await page.RouteAsync("**/account/mail-instellingen", route =>
+        await page.RouteAsync("**/bff/candidate/settings/mail", route =>
         {
             if (route.Request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
             {
@@ -59,6 +59,7 @@ public sealed class CandidateSettingsClientPlaywrightTests : IAsyncLifetime
 
         var reminder = page.Locator("input[name='reminder_emails']").First;
         await reminder.WaitForAsync(new() { Timeout = 15_000 });
+        await PlaywrightAccLikeRegression.BlockBlazorAfterReadyAsync(page);
         for (var i = 0; i < 7; i++)
         {
             await reminder.ClickAsync(new() { Force = width < 500 });
@@ -67,13 +68,12 @@ public sealed class CandidateSettingsClientPlaywrightTests : IAsyncLifetime
 
         Assert.Equal(0, saves);
 
-        await page.Locator("form.cand-mail-settings-form button[type='submit']").ClickAsync();
-        await page.WaitForURLAsync(
-            u => u.Contains("saved=1", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 30_000 });
+        for (var i = 0; i < 40 && saves < 1; i++)
+        {
+            await page.WaitForTimeoutAsync(250);
+        }
 
         Assert.Equal(1, saves);
-        await page.GetByText("Opgeslagen.").WaitForAsync(new() { Timeout = 10_000 });
         apiHostGuard.AssertZero($"candidate settings mail save at {width}px");
     }
 }

@@ -5,12 +5,12 @@
 @inject CultureState Culture
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
-<form method="post" action="@CandidateProfileBffEndpoints.AvailabilityPath" data-enhance="false">
+<div data-profile-bff data-bff-url="@CandidateProfileBffEndpoints.AvailabilityPath">
 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+<p data-bff-error class="form-error" role="alert" hidden></p>
 <label><input type="checkbox" name="start_immediately" value="1" checked="@StartImmediately" />@Culture["Profile.AvailabilityStartImmediate"]</label>
 <label>@Culture["Profile.HoursMin"]<input type="number" name="min_hours" value="@MinHours" /></label>
-<div class="profile-save-bar"><button type="submit" class="login-submit">@Culture["Common.Save"]</button></div>
-</form>
+</div>
 <ProfileSectionFormChrome Saved="Saved" Error="Error" />
 @code { [Parameter] public bool StartImmediately { get; set; } = true; [Parameter] public decimal? MinHours { get; set; } [Parameter] public bool Saved { get; set; } [Parameter] public bool Error { get; set; }
 private string _antiforgeryFieldName = ""; private string _antiforgeryToken = "";

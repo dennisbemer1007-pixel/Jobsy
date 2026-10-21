@@ -43,20 +43,18 @@ public sealed class CandidateChromeStaticPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
-        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
-        apiHostGuard.Attach(page);
+        var apiHostGuard = await PlaywrightAccLikeRegression.AttachAccLikePageAsync(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var blazorPosts = 0;
-        await page.RouteAsync("**/_blazor/**", route =>
+        page.Request += (_, req) =>
         {
-            if (route.Request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
+            if (req.Url.Contains("/_blazor/", StringComparison.OrdinalIgnoreCase)
+                && req.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
             {
                 blazorPosts++;
             }
-
-            return route.ContinueAsync();
-        });
+        };
 
         var signIn = $"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/candidate/settings?pane=mail")}";
         await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });

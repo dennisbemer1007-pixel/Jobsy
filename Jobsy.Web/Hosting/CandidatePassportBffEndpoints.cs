@@ -21,21 +21,28 @@ public static class CandidatePassportBffEndpoints
             IHttpClientFactory httpClientFactory,
             JobsyAccessTokenIssuer accessTokens) =>
         {
+            var wantsJson = CandidateBffHttp.WantsJson(http);
             if (http.User.Identity?.IsAuthenticated != true)
             {
-                return Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString("/candidate/paspoort?tab=data&section=motivation"));
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Niet ingelogd.", status: 401)
+                    : Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString("/candidate/paspoort?tab=data&section=motivation"));
             }
 
             var form = await http.Request.ReadFormAsync(http.RequestAborted);
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Ongeldige sessie.")
+                    : Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
             }
 
             var jwt = accessTokens.TryCreate(http.User, TrustedClientIp.Resolve(http));
             if (string.IsNullOrWhiteSpace(jwt))
             {
-                return Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Niet ingelogd.", status: 401)
+                    : Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
             }
 
             var client = httpClientFactory.CreateClient(HttpClientName);
@@ -53,7 +60,9 @@ public static class CandidatePassportBffEndpoints
 
             if (profile is null)
             {
-                return Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Profiel kon niet worden geladen.")
+                    : Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
             }
 
             var aboutMe = form["about_me"].ToString();
@@ -88,7 +97,14 @@ public static class CandidatePassportBffEndpoints
             using var response = await client.SendAsync(put, http.RequestAborted);
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Opslaan is niet gelukt.")
+                    : Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", error: true));
+            }
+
+            if (wantsJson)
+            {
+                return CandidateBffHttp.JsonOk();
             }
 
             return Results.Redirect(PassportRedirects.BuildPassportDataSectionUrl("motivation", saved: true));

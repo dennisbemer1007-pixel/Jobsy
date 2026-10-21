@@ -5,11 +5,11 @@
 @inject CultureState Culture
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
-<form method="post" action="@CandidateProfileBffEndpoints.ExperiencePath" data-enhance="false">
+<div data-profile-bff data-bff-url="@CandidateProfileBffEndpoints.ExperiencePath">
 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+<p data-bff-error class="form-error" role="alert" hidden></p>
 <label>@Culture["Profile.AboutMe"]<textarea name="about_me" rows="3">@AboutMe</textarea></label>
-<div class="profile-save-bar"><button type="submit" class="login-submit">@Culture["Common.Save"]</button></div>
-</form>
+</div>
 <ProfileSectionFormChrome Saved="Saved" Error="Error" />
 @code { [Parameter] public string? AboutMe { get; set; } [Parameter] public bool Saved { get; set; } [Parameter] public bool Error { get; set; }
 private string _antiforgeryFieldName = ""; private string _antiforgeryToken = "";

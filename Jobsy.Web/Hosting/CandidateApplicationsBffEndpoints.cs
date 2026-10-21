@@ -24,21 +24,28 @@ public static class CandidateApplicationsBffEndpoints
                 return Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString("/candidate/applications"));
             }
 
+            var wantsJson = CandidateBffHttp.WantsJson(http);
             var form = await http.Request.ReadFormAsync(http.RequestAborted);
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.Redirect("/candidate/applications?error=1");
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Ongeldige sessie.")
+                    : Results.Redirect("/candidate/applications?error=1");
             }
 
             if (!Guid.TryParse(form["application_id"].ToString(), out var applicationId) || applicationId == Guid.Empty)
             {
-                return Results.Redirect("/candidate/applications?error=1");
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Sollicitatie ontbreekt.")
+                    : Results.Redirect("/candidate/applications?error=1");
             }
 
             var jwt = accessTokens.TryCreate(http.User, TrustedClientIp.Resolve(http));
             if (string.IsNullOrWhiteSpace(jwt))
             {
-                return Results.Redirect("/candidate/applications?error=1");
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Niet ingelogd.", status: 401)
+                    : Results.Redirect("/candidate/applications?error=1");
             }
 
             var client = httpClientFactory.CreateClient(HttpClientName);
@@ -47,10 +54,14 @@ public static class CandidateApplicationsBffEndpoints
             using var response = await client.SendAsync(request, http.RequestAborted);
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect("/candidate/applications?error=1");
+                return wantsJson
+                    ? CandidateBffHttp.JsonFail("Intrekken mislukt.")
+                    : Results.Redirect("/candidate/applications?error=1");
             }
 
-            return Results.Redirect("/candidate/applications?withdrawn=1");
+            return wantsJson
+                ? CandidateBffHttp.JsonOk("/candidate/applications?withdrawn=1")
+                : Results.Redirect("/candidate/applications?withdrawn=1");
         }).RequireAuthorization().WithOrder(-1000);
 
         app.MapGet("/candidate/applications/{applicationId:guid}/lobsy-cv.pdf", async (

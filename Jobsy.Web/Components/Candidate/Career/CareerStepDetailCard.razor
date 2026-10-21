@@ -140,14 +140,15 @@
                 <span class="career-step__proof-icon" aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
                 <span>@Culture["CareerStep.Proof"]</span>
             </a>
-            <form method="post" action="@CompleteFormAction" class="career-step__complete-form" data-enhance="false">
+            <div class="career-step__complete-form" data-career-step-actions>
                 @AntiforgeryFields
                 <input type="hidden" name="return_url" value="@ReturnUrl" />
-                <button type="submit" class="btn btn-primary" disabled="@Busy">
+                <p data-bff-error class="form-error career-card__error" role="alert" hidden></p>
+                <button type="button" class="btn btn-primary" data-career-bff-url="@CompleteFormAction" disabled="@Busy">
                     <span class="career-step__check" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
                     <span>@Culture["CareerStep.Complete"]</span>
                 </button>
-            </form>
+            </div>
         </div>
 
         <div class="career-card__actions career-card__actions--sticky career-only-mobile">
@@ -156,27 +157,26 @@
                aria-label="@Culture["CareerStep.ProofShort"]">
                 <span aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
             </a>
-            <form method="post" action="@CompleteFormAction" class="career-step__complete-form" data-enhance="false">
+            <div class="career-step__complete-form" data-career-step-actions>
                 @AntiforgeryFields
                 <input type="hidden" name="return_url" value="@ReturnUrl" />
-                <button type="submit" class="btn btn-primary" disabled="@Busy">
+                <button type="button" class="btn btn-primary" data-career-bff-url="@CompleteFormAction" disabled="@Busy">
                     @Culture["CareerStep.Complete"]
                 </button>
-            </form>
+            </div>
         </div>
     }
     else if (Step.Status == CareerStepStatus.Completed)
     {
         @if (Step.CanUndo)
         {
-            <div class="career-card__actions">
-                <form method="post" action="@UndoFormAction" data-enhance="false">
-                    @AntiforgeryFields
-                    <input type="hidden" name="return_url" value="@ReturnUrl" />
-                    <button type="submit" class="btn btn-secondary" disabled="@Busy">
-                        @Culture["CareerStep.Undo"]
-                    </button>
-                </form>
+            <div class="career-card__actions" data-career-step-actions>
+                @AntiforgeryFields
+                <input type="hidden" name="return_url" value="@ReturnUrl" />
+                <p data-bff-error class="form-error career-card__error" role="alert" hidden></p>
+                <button type="button" class="btn btn-secondary" data-career-bff-url="@UndoFormAction" disabled="@Busy">
+                    @Culture["CareerStep.Undo"]
+                </button>
             </div>
         }
     }

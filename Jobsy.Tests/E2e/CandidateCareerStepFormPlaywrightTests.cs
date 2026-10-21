@@ -38,8 +38,7 @@ public sealed class CandidateCareerStepFormPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
-        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
-        apiHostGuard.Attach(page);
+        var apiHostGuard = await PlaywrightAccLikeRegression.AttachAccLikePageAsync(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var posts = 0;
@@ -57,12 +56,13 @@ public sealed class CandidateCareerStepFormPlaywrightTests : IAsyncLifetime
         await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.GotoAsync($"{baseUrl}/carriere?stap=1", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
 
-        var complete = page.Locator("form.career-step__complete-form button[type='submit']").First;
+        var complete = page.Locator("[data-career-step-actions] button[data-career-bff-url]").First;
         if (await complete.CountAsync() == 0)
         {
             return;
         }
 
+        await PlaywrightAccLikeRegression.BlockBlazorAfterReadyAsync(page);
         posts = 0;
         await complete.ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("/carriere", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });

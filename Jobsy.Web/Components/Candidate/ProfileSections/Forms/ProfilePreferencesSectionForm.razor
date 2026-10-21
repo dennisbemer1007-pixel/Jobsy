@@ -5,11 +5,11 @@
 @inject CultureState Culture
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
-<form method="post" action="@CandidateProfileBffEndpoints.PreferencesPath" data-enhance="false">
+<div data-profile-bff data-bff-url="@CandidateProfileBffEndpoints.PreferencesPath">
 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+<p data-bff-error class="form-error" role="alert" hidden></p>
 <label>@Culture["Profile.MaxTravel"]<input type="number" name="max_travel" value="@MaxTravel" /></label>
-<div class="profile-save-bar"><button type="submit" class="login-submit">@Culture["Common.Save"]</button></div>
-</form>
+</div>
 <ProfileSectionFormChrome Saved="Saved" Error="Error" />
 @code { [Parameter] public int? MaxTravel { get; set; } [Parameter] public bool Saved { get; set; } [Parameter] public bool Error { get; set; }
 private string _antiforgeryFieldName = ""; private string _antiforgeryToken = "";

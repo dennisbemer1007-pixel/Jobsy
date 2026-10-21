@@ -153,20 +153,21 @@
     </div>
 
     <dialog class="lobsy-dialog application-withdraw-dialog" data-apps-withdraw-dialog>
-    <form method="post" action="@CandidateApplicationsBffEndpoints.WithdrawPath" class="application-withdraw-form" data-enhance="false">
+    <div class="application-withdraw-form" data-apps-withdraw-panel data-bff-url="@CandidateApplicationsBffEndpoints.WithdrawPath">
         <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
         <input type="hidden" name="application_id" value="" />
+        <p data-bff-error class="form-error" role="alert" hidden></p>
         <h2>@Culture["Apps.WithdrawConfirm"]</h2>
         <p class="muted">@Culture["Apps.WithdrawConfirmLead"]</p>
         <div class="application-withdraw-actions">
             <button type="button" class="btn btn-secondary" data-apps-withdraw-cancel>
                 @Culture["Common.Cancel"]
             </button>
-            <button type="submit" class="btn btn-secondary application-withdraw-actions__danger">
+            <button type="button" class="btn btn-secondary application-withdraw-actions__danger" data-apps-withdraw-confirm>
                 @Culture["Apps.Withdraw"]
             </button>
         </div>
-    </form>
+    </div>
     </dialog>
 </div>
 

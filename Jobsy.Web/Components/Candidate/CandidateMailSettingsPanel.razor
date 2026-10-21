@@ -13,8 +13,9 @@
 }
 else
 {
-    <form method="post" action="/account/mail-instellingen" class="login-form cand-mail-settings-form" data-enhance="false">
+    <div class="login-form cand-mail-settings-form" data-cand-mail-settings data-bff-url="/bff/candidate/settings/mail">
         <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+        <p data-bff-error class="form-error" role="alert" hidden></p>
         @if (!string.IsNullOrWhiteSpace(ReturnUrl))
         {
             <input type="hidden" name="return_url" value="@ReturnUrl" />
@@ -69,7 +70,7 @@ else
                     </label>
                 </div>
             }
-            <button type="submit" class="btn btn-primary" style="margin-top:1rem">@Culture["MailSettings.Save"]</button>
+            <p class="muted" style="margin-top:1rem" data-mail-save-status role="status"></p>
         }
         else
         {
@@ -84,7 +85,7 @@ else
             }
         </ul>
         <p class="muted">@Culture[_employersOn ? "MailSettings.AlwaysHint" : "MailSettings.AlwaysHintOff"]</p>
-    </form>
+    </div>
 
     @if (_saveError)
     {

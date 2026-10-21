@@ -37,8 +37,8 @@
         };
 
         var withdrawDialog = qs("[data-apps-withdraw-dialog]", root);
-        var withdrawForm = withdrawDialog ? qs("form", withdrawDialog) : null;
-        var withdrawAppId = withdrawForm ? qs("input[name='application_id']", withdrawForm) : null;
+        var withdrawPanel = withdrawDialog ? qs("[data-apps-withdraw-panel]", withdrawDialog) : null;
+        var withdrawAppId = withdrawPanel ? qs("input[name='application_id']", withdrawPanel) : null;
 
         function visibleItems() {
             return qsa("[data-app-item]", root).filter(function (el) {
@@ -224,7 +224,7 @@
 
         function openWithdraw(appId) {
             closeMenu();
-            if (!withdrawDialog || !withdrawForm || !withdrawAppId) {
+            if (!withdrawDialog || !withdrawPanel || !withdrawAppId) {
                 return;
             }
             withdrawAppId.value = appId;
@@ -319,6 +319,25 @@
             if (target.closest("[data-apps-withdraw-cancel]")) {
                 ev.preventDefault();
                 closeWithdraw();
+                return;
+            }
+
+            if (target.closest("[data-apps-withdraw-confirm]")) {
+                ev.preventDefault();
+                var url = withdrawPanel ? withdrawPanel.getAttribute("data-bff-url") : "";
+                if (!url || !window.jobsyBff) {
+                    return;
+                }
+                window.jobsyBff.postForm(url, window.jobsyBff.formFromContainer(withdrawPanel), withdrawPanel)
+                    .then(function (body) {
+                        closeWithdraw();
+                        if (body && body.redirect) {
+                            window.location.assign(body.redirect);
+                        } else {
+                            window.location.assign("/candidate/applications?withdrawn=1");
+                        }
+                    })
+                    .catch(function () { });
                 return;
             }
         });

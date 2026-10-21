@@ -38,8 +38,7 @@ public sealed class CandidateProfileClientPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
-        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
-        apiHostGuard.Attach(page);
+        var apiHostGuard = await PlaywrightAccLikeRegression.AttachAccLikePageAsync(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var sectionPosts = 0;
@@ -68,13 +67,12 @@ public sealed class CandidateProfileClientPlaywrightTests : IAsyncLifetime
 
         Assert.Equal(0, sectionPosts);
 
-        await page.Locator("form[data-profile-section-form='personal'] button[type='submit']").ClickAsync(new() { Force = width < 500 });
-        await page.WaitForURLAsync(
-            u => u.Contains("profileSaved=1", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 30_000 });
+        for (var i = 0; i < 40 && sectionPosts < 1; i++)
+        {
+            await page.WaitForTimeoutAsync(250);
+        }
 
         Assert.Equal(1, sectionPosts);
-        await page.GetByText("Profiel opgeslagen.").WaitForAsync(new() { Timeout = 10_000 });
         apiHostGuard.AssertZero($"candidate profile personal save at {width}px");
     }
 }

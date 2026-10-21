@@ -23,6 +23,8 @@
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Onboarding
 @using Jobsy.Web.Discovery
+@using Jobsy.Web.Hosting
+@using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.Extensions.Logging
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -33,13 +35,19 @@
 @inject IJSRuntime Js
 @inject UserFacingError UserFacing
 @inject ILogger<DiscoveryJourney> JourneyLog
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
 @inject DiscoveryOverviewCache OverviewCache
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
 
-<div class="@JourneyRootClass @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "journey--compact-preview-c panel-page--cand-ill" : null) @(_screen == "overview" ? "journey--overview-route" : null)">
+<div class="@JourneyRootClass @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "journey--compact-preview-c panel-page--cand-ill" : null) @(_screen == "overview" ? "journey--overview-route" : null)"
+     data-discovery-journey
+     data-discovery-step="@_countedStep"
+     data-discovery-screen="@_screen">
+    <p data-bff-error class="form-error journey-bff-error" role="alert" hidden></p>
     @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C && _screen == "overview" && !_loading)
     {
         <CandidateIllustratedHero Title=""
@@ -215,7 +223,7 @@
                                                 Seed="ClientStepSeed" />
                     @MobileCoachInlineOnCard
                     <div class="journey-step__foot">
-                        <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                        <a class="btn btn-secondary" href="@BackStepHref" data-discovery-action="back" data-discovery-back-url="@BackStepHref">@Culture["Onboarding.Back"]</a>
                         <span class="journey-step__sp"></span>
                         <button type="button"
                                 class="journey-later"
@@ -528,6 +536,8 @@
     private int _shedSelectedLevel = OnboardingWizardCatalog.MiniLevelCount;
     private int _answeredCount;
     private string _memberNumber = "";
+    private string _antiforgeryFieldName = "";
+    private string _antiforgeryToken = "";
     private string? _endStrength;
     private string? _endWork;
     private string? _endValue;
@@ -893,13 +903,29 @@
         return Task.CompletedTask;
     }
 
+    private RenderFragment RenderNextForm(string label) => __builder =>
+    {
+        <form method="post"
+              action="@CandidateDiscoveryBffEndpoints.NextPath"
+              class="discovery-next-form"
+              data-discovery-next-form>
+            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+            <input type="hidden" name="step" value="@_countedStep" />
+            <input type="hidden" name="screen" value="@_screen" />
+            <input type="hidden" name="client_json" value="{}" data-discovery-client-json />
+            <button type="submit" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy">
+                @label
+            </button>
+        </form>
+    };
+
     private RenderFragment RenderFooter(bool showBack = true, bool showSkip = false, bool showPrimary = true) => __builder =>
     {
         @MobileCoachInlineOnCard
         <div class="journey-step__foot">
             @if (showBack)
             {
-                <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                <a class="btn btn-secondary" href="@BackStepHref" data-discovery-action="back" data-discovery-back-url="@BackStepHref">@Culture["Onboarding.Back"]</a>
             }
             <span class="journey-step__sp"></span>
             @if (showSkip)
@@ -909,9 +935,7 @@
             @if (_reviewMode)
             {
                 <button type="button" class="journey-later" @onclick="ShowOverviewAsync">@Culture["Discovery.Overview.Back"]</button>
-                <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">
-                    @Culture["Discovery.Overview.Save"]
-                </button>
+                @RenderNextForm(Culture["Discovery.Overview.Save"])
             }
             else
             {
@@ -921,9 +945,7 @@
                 }
                 @if (showPrimary)
                 {
-                    <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">
-                        @Culture["Onboarding.Next"]
-                    </button>
+                    @RenderNextForm(Culture["Onboarding.Next"])
                 }
             }
         </div>
@@ -941,6 +963,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
+
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Culture.Changed += OnCultureChanged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
@@ -2494,15 +2524,41 @@
         Navigation.NavigateTo("/candidate/paspoort");
     }
 
-    private void NavigateStep(string stap, int? depth = null)
+    private string BackStepHref
+    {
+        get
+        {
+            if (string.Equals(_screen, "toestemming", StringComparison.Ordinal))
+            {
+                return StepHref("6");
+            }
+
+            if (_countedStep <= 1)
+            {
+                return StepHref("start");
+            }
+
+            if (_countedStep == 7 && !Draft.HasConsent)
+            {
+                return StepHref("toestemming");
+            }
+
+            return StepHref((_countedStep - 1).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+    }
+
+    private string StepHref(string stap, int? depth = null)
     {
         var query = new Dictionary<string, object?>
         {
             ["stap"] = stap,
-            ["diepte"] = depth is int level ? JourneyTestFlow.DepthQueryValue(level) : null
+            ["diepte"] = depth is int level ? JourneyTestFlow.DepthQueryValue(level) : null,
         };
-        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(query), replace: true);
+        return Navigation.GetUriWithQueryParameters(query);
     }
+
+    private void NavigateStep(string stap, int? depth = null)
+        => Navigation.NavigateTo(StepHref(stap, depth), replace: true);
 
     private TestDepthLevel MiniDepth
     {

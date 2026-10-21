@@ -38,7 +38,7 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
-        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        var apiHostGuard = PlaywrightAccLikeRegression.CreateApiHostGuard();
         apiHostGuard.Attach(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
@@ -73,7 +73,15 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
 
         var motivation = page.Locator("[data-testid='passport-default-motivation']").First;
         await motivation.WaitForAsync(new() { Timeout = 20_000 });
-
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+                const root = document.querySelector('[data-passport-motivation-bff]');
+                return typeof window.jobsyBff !== 'undefined' && root && root.__jobsyBffAutosave;
+            }
+            """,
+            null,
+            new() { Timeout = 30_000 });
         const string marker = "PW-PASSPORT-MOTIV-7c21";
         await motivation.ClickAsync(new() { Force = width < 500 });
         for (var i = 0; i < marker.Length; i++)
@@ -84,10 +92,10 @@ public sealed class CandidatePassportClientPlaywrightTests : IAsyncLifetime
         Assert.Equal(0, profilePuts);
         Assert.Equal(0, bffPosts);
 
-        await page.Locator("[data-testid='passport-motivation-form'] button[type='submit']").ClickAsync();
-        await page.WaitForURLAsync(
-            u => u.Contains("saved=1", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 30_000 });
+        for (var i = 0; i < 40 && bffPosts < 1; i++)
+        {
+            await page.WaitForTimeoutAsync(250);
+        }
 
         Assert.Equal(0, profilePuts);
         Assert.Equal(1, bffPosts);

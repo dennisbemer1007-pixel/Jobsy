@@ -5,13 +5,13 @@
 @inject CultureState Culture
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
-<form method="post" action="@CandidateProfileBffEndpoints.PersonalPath" data-profile-section-form="personal" data-enhance="false">
+<div data-profile-bff data-bff-url="@CandidateProfileBffEndpoints.PersonalPath" data-profile-section-form="personal">
 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+<p data-bff-error class="form-error" role="alert" hidden></p>
 <label>@Culture["Profile.FirstName"]<input type="text" name="first_name" value="@FirstName" data-testid="profile-first-name" /></label>
 <label>@Culture["Profile.LastName"]<input type="text" name="last_name" value="@LastName" /></label>
 <label>@Culture["Profile.HomeAddress"]<input type="text" name="home_address" value="@HomeAddress" /></label>
-<div class="profile-save-bar"><button type="submit" class="login-submit">@Culture["Common.Save"]</button></div>
-</form>
+</div>
 <ProfileSectionFormChrome Saved="Saved" Error="Error" />
 @code {
 [Parameter] public string FirstName { get; set; } = ""; [Parameter] public string LastName { get; set; } = ""; [Parameter] public string HomeAddress { get; set; } = "";

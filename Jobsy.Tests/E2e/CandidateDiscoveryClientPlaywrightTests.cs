@@ -41,7 +41,7 @@ public sealed class CandidateDiscoveryClientPlaywrightTests : IAsyncLifetime
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
-        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        var apiHostGuard = PlaywrightAccLikeRegression.CreateApiHostGuard();
         apiHostGuard.Attach(page);
         page.SetDefaultTimeout(120_000);
 
@@ -62,10 +62,17 @@ public sealed class CandidateDiscoveryClientPlaywrightTests : IAsyncLifetime
 
         Assert.Equal(0, IllustratedPagesApiStub.ProfilePutCount);
 
-        await page.GetByTestId("onboarding-next").ClickAsync(new() { Force = width < 500, Timeout = 15_000 });
-        await page.Locator("[data-discovery-client-step=\"2\"]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator("[data-discovery-next-form] [data-testid='onboarding-next']").ClickAsync(new() { Force = width < 500, Timeout = 15_000 });
+        for (var i = 0; i < 80 && IllustratedPagesApiStub.ProfilePutCount < 1; i++)
+        {
+            await page.WaitForTimeoutAsync(250);
+        }
 
         Assert.Equal(1, IllustratedPagesApiStub.ProfilePutCount);
+        await page.WaitForURLAsync(
+            u => u.Contains("stap=2", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 60_000 });
+        await page.Locator("[data-discovery-client-step=\"2\"]").WaitForAsync(new() { Timeout = 60_000 });
         apiHostGuard.AssertZero($"discovery step1 volgende at {width}px");
     }
 

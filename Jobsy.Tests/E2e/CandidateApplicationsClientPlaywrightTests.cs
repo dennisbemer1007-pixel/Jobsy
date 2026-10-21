@@ -38,8 +38,7 @@ public sealed class CandidateApplicationsClientPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
-        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
-        apiHostGuard.Attach(page);
+        var apiHostGuard = await PlaywrightAccLikeRegression.AttachAccLikePageAsync(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var withdrawPosts = 0;
@@ -92,7 +91,7 @@ public sealed class CandidateApplicationsClientPlaywrightTests : IAsyncLifetime
         var dialog = page.Locator("[data-apps-withdraw-dialog]");
         await dialog.WaitForAsync(new() { Timeout = 5_000 });
 
-        await page.Locator("[data-apps-withdraw-dialog] button[type='submit']").ClickAsync();
+        await page.Locator("[data-apps-withdraw-dialog] [data-apps-withdraw-confirm]").ClickAsync();
         await page.WaitForURLAsync(
             u => u.Contains("withdrawn=1", StringComparison.OrdinalIgnoreCase)
                  || u.Contains("/candidate/applications", StringComparison.OrdinalIgnoreCase),
