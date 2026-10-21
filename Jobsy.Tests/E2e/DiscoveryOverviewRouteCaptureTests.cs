@@ -77,7 +77,7 @@ public sealed class DiscoveryOverviewRouteCaptureTests
                 """
                 () => {
                   const card = document.querySelector('.journey-step:has(.journey-overview)');
-                  const intro = document.querySelector('.journey-route__mobile-only .journey-route__intro');
+                  const intro = document.querySelector('.journey-overview .journey-route__intro');
                   if (!card || !intro) return JSON.stringify({ error: 'missing nodes' });
                   const cr = card.getBoundingClientRect();
                   const ir = intro.getBoundingClientRect();
@@ -246,8 +246,14 @@ public sealed class DiscoveryOverviewRouteCaptureTests
             await page.Locator($"{routeRoot} .journey-route__stop[data-phase=rots] .journey-route__stop-btn").ClickAsync();
         });
 
-        var adjust = page.Locator($"{routeRoot} .journey-route__panel .journey-route__adjust").First;
-        await RecordAsync("aanpassen_first_section", async () => await adjust.ClickAsync());
+        var adjust = mobile
+            ? page.Locator($"{routeRoot} .journey-route-mobile__inline:not([hidden]) .journey-route__adjust").First
+            : page.Locator($"{routeRoot} .journey-route__panel .journey-route__adjust").First;
+        await RecordAsync("aanpassen_first_section", async () =>
+        {
+            await adjust.ScrollIntoViewIfNeededAsync();
+            await adjust.ClickAsync(new() { Force = mobile });
+        });
 
         await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 60_000 });
