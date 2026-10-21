@@ -21,6 +21,7 @@
             var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
             <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
                href="@item.Href"
+               data-enhance-nav="false"
                title="@title"
                data-desktop-only="@(item.DesktopOnly ? "true" : null)"
                data-testid="@(string.Equals(item.Href, RoleNavCatalog.HoursItem.Href, StringComparison.OrdinalIgnoreCase) ? "nav-maqqie-uren" : null)"

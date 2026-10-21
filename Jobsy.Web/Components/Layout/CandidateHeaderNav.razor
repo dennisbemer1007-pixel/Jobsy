@@ -21,6 +21,7 @@
         var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
         <a class="candidate-header-nav__link @(active ? "is-active" : null)"
            href="@item.Href"
+           data-enhance-nav="false"
            title="@title"
            aria-current="@(active ? "page" : null)"
            data-testid="@HeaderNavTestId(item)">

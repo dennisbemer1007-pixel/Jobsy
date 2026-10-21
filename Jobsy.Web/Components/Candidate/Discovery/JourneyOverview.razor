@@ -215,11 +215,17 @@
         {
             // Non-fatal in prerender or test hosts without ES modules.
         }
+        catch (ObjectDisposedException)
+        {
+            // Left the overview route while the ES module was loading.
+        }
     }
+
+    private bool _disposed;
 
     private async Task RefreshRouteAsync()
     {
-        if (_routeModule is null || IsLoading)
+        if (_disposed || _routeModule is null || IsLoading)
         {
             return;
         }
@@ -232,13 +238,26 @@
         {
             // ignore
         }
+        catch (ObjectDisposedException)
+        {
+            // Navigated away while refresh was in flight.
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
         if (_routeModule is not null)
         {
-            await _routeModule.DisposeAsync();
+            try
+            {
+                await _routeModule.DisposeAsync();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
+            _routeModule = null;
         }
     }
 }

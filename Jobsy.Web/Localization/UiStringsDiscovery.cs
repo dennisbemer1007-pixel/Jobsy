@@ -193,6 +193,8 @@ public static class UiStringsDiscovery
             "Bewaard", "Saved", "Zapisano", "Salvat", "محفوظ");
         Add("Discovery.Start.Title",
             "Hoi {0}, fijn dat je er bent", "Hi {0}, glad you’re here", "Cześć {0}, miło że jesteś", "Salut {0}, ne bucurăm că ești aici", "مرحباً {0}، سعداء بوجودك");
+        Add("Discovery.Start.TitleNoName",
+            "Hoi, fijn dat je er bent", "Hi, glad you’re here", "Cześć, miło że jesteś", "Salut, ne bucurăm că ești aici", "مرحباً، سعداء بوجودك");
         Add("Discovery.Start.Lead",
             "Samen ontdekken we wie je bent en welk werk bij je past. Laag voor laag. Aan het eind staat alles in je paspoort.",
             "Together we discover who you are and what work fits you. Layer by layer. At the end it’s all in your passport.",
