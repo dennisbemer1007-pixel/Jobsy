@@ -94,8 +94,12 @@
                 </div>
                 <CandidateMailSettingsPanel />
                 <div class="cand-settings__calm-links">
-                    <a href="/candidate/paspoort?tab=data">@Culture["Profile.Reset.Title"]</a>
-                    <a href="/candidate/paspoort?tab=data">@Culture["Profile.UnsubscribeTitle"]</a>
+                    <button type="button" class="cand-settings__calm-link" @onclick='() => GoPaspoortDanger("reset")'>
+                        @Culture["Profile.Reset.Title"]
+                    </button>
+                    <button type="button" class="cand-settings__calm-link" @onclick='() => GoPaspoortDanger("delete")'>
+                        @Culture["Profile.UnsubscribeTitle"]
+                    </button>
                 </div>
             }
             else
@@ -128,4 +132,7 @@
 
     private static string NavHref(string pane)
         => pane == "mail" ? "/candidate/settings?pane=mail" : $"/candidate/settings?pane={Uri.EscapeDataString(pane)}";
+
+    private void GoPaspoortDanger(string intent)
+        => Navigation.NavigateTo($"/candidate/paspoort?tab=data&danger={Uri.EscapeDataString(intent)}");
 }

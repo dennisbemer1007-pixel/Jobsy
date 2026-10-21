@@ -271,7 +271,8 @@
                         {
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Data)" />
                             <PanelErrorBoundary Name="passport-data">
-                                <PassportDataTab Active="@(_tab == PassportTabs.Data)" />
+                                <PassportDataTab Active="@(_tab == PassportTabs.Data)"
+                                                 DangerIntent="@_dataDangerIntent" />
                             </PanelErrorBoundary>
                         }
                     </article>
@@ -286,6 +287,7 @@
     private const string KompasPersistKey = "passport-kompas";
 
     private string _tab = PassportTabs.Dna;
+    private string? _dataDangerIntent;
     private string? _fitCheck;
     private string? _proofItem;
     private bool _freshLayer;
@@ -495,6 +497,9 @@
         _fitCheck = query.TryGetValue("check", out var check) ? check.FirstOrDefault() : null;
         _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var preview)
             ? preview.FirstOrDefault()
+            : null;
+        _dataDangerIntent = query.TryGetValue("danger", out var danger)
+            ? danger.FirstOrDefault()
             : null;
         _tab = tab;
         _visited.Add(_tab);
