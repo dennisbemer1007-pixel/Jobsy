@@ -274,15 +274,22 @@
     --passport-tabs-sticky-top: var(--app-header-height, 4.25rem);
   }
 
+  .passport-page--illustrated .passport-layout__sidebar {
+    position: relative;
+    z-index: calc(var(--z-sticky, 20) + 3);
+  }
+
   .passport-page--illustrated .passport-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
   }
 
-  /* Desktop: stick flush under sticky header — no margin gap, opaque band between header and pills. */
+  /* Desktop: opaque sticky band only in the main column — never bleed over the sidebar card. */
   .passport-page--illustrated .passport-tabs-shell {
     margin-block-start: 0;
     margin-block-end: var(--space-3);
+    margin-inline: 0;
+    padding-inline: 0;
     background: var(--bg);
     box-shadow:
       0 1px 0 color-mix(in srgb, var(--border) 88%, transparent),
@@ -290,15 +297,12 @@
   }
 
   .passport-page--illustrated .passport-tabs-shell::before {
-    display: block;
-    inset-block-start: calc(-1 * var(--space-2));
-    inset-block-end: 0;
-    background: var(--bg);
-    box-shadow: none;
+    display: none;
   }
 
   .passport-page--illustrated .passport-tabs-shell::after {
     display: block;
+    inset-inline-end: 0;
   }
 }
 

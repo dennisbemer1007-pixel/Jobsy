@@ -336,7 +336,7 @@
         </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261021-09" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261021-10" nonce="@Nonce" defer></script>
     }
 </body>
 
@@ -362,8 +362,7 @@
     private string Text(string key) => UiStrings.Get(key, HtmlLang);
 
     /// <summary>
-    /// NoBlazor pages keep this first title tag. Privacy, accessibility and schools
-    /// use the catalog; every other route keeps the default tagline.
+    /// Static shell title before HeadOutlet hydrates; matches <see cref="PageSeoCatalog"/> per request path.
     /// </summary>
     private const string DefaultDocumentTitle = "Lobsy — een loopbaangids in je eigen taal";
 
@@ -372,11 +371,6 @@
         get
         {
             var path = PageSeoCatalog.Normalize(HttpContextAccessor.HttpContext?.Request.Path.Value);
-            if (path is not ("/scholen" or "/wie-zijn-wij" or "/privacy" or "/toegankelijkheid"))
-            {
-                return DefaultDocumentTitle;
-            }
-
             var entry = PageSeoCatalog.Resolve(path);
             var localized = UiStrings.Get(entry.TitleKey, HtmlLang);
             if (string.IsNullOrWhiteSpace(localized)

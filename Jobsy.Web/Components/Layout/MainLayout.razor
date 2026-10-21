@@ -216,6 +216,11 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender && RendererInfo.IsInteractive)
+        {
+            TryApplyRouteDocumentTitle(Navigation.Uri);
+        }
+
         if (RendererInfo.IsInteractive)
         {
             try

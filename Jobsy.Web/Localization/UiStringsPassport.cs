@@ -33,7 +33,7 @@ public static class UiStringsPassport
             "Bewaard", "Saved", "Zapisane", "Salvate", "المحفوظات");
 
         Add("Passport.Title",
-            "Mijn Lobsy-paspoort", "My Lobsy passport", "Mój paszport Lobsy", "Pașaportul meu Lobsy", "جواز سفر لوبسي");
+            "Mijn paspoort", "My passport", "Mój paszport", "Pașaportul meu", "جواز سفري");
         Add("Kompas.Greeting.Morning", "Goedemorgen, {0}", "Good morning, {0}", "Dzień dobry, {0}", "Bună dimineața, {0}", "صباح الخير، {0}");
         Add("Kompas.Greeting.Afternoon", "Goedemiddag, {0}", "Good afternoon, {0}", "Dzień dobry, {0}", "Bună ziua, {0}", "مساء الخير، {0}");
         Add("Kompas.Greeting.Evening", "Goedenavond, {0}", "Good evening, {0}", "Dobry wieczór, {0}", "Bună seara, {0}", "مساء الخير، {0}");

@@ -334,6 +334,7 @@
                     return;
                 }
                 if (self.inSync(expected)) {
+                    self.applyDocumentTitleForPath(expected);
                     return;
                 }
                 if (Date.now() >= deadline) {
