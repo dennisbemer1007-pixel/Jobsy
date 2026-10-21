@@ -86,7 +86,11 @@ else
         <p class="muted">@Culture[_employersOn ? "MailSettings.AlwaysHint" : "MailSettings.AlwaysHintOff"]</p>
     </form>
 
-    @if (_saved)
+    @if (_saveError)
+    {
+        <p role="alert" class="form-error" style="margin-top:1rem">@Culture["MailSettings.SaveError"]</p>
+    }
+    else if (_saved)
     {
         <p role="status" style="margin-top:1rem;color:var(--success)">@Culture["MailSettings.Saved"]</p>
     }
@@ -98,6 +102,7 @@ else
     private bool _employersOn = true;
     private bool _loadError;
     private bool _saved;
+    private bool _saveError;
     private bool _reminderEmails = true;
     private bool _whatsAppAvailable;
     private bool _whatsAppOptedIn;
@@ -120,6 +125,7 @@ else
             _antiforgeryFieldName = tokens.FormFieldName;
             _antiforgeryToken = tokens.RequestToken ?? "";
             _saved = string.Equals(http.Request.Query["saved"], "1", StringComparison.Ordinal);
+            _saveError = string.Equals(http.Request.Query["error"], "1", StringComparison.Ordinal);
         }
 
         try

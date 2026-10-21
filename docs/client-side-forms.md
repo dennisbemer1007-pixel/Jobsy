@@ -94,10 +94,7 @@ Errors from API persist as today (`_error`, `_saveError`, rustig save status).
 
 ## Address suggest (browser fetch)
 
-<<<<<<< HEAD
 - **Minimum length 3** — no `fetch` while the trimmed query has fewer than three characters (input handler and `fetchSuggest` both enforce this; the API returns `[]` for `q` shorter than 3 as a backstop).
-=======
->>>>>>> c4d446fa5 (Convert candidate Settings to static SSR with client-side mail toggles.)
 - Endpoint: `GET /api/onboarding-client/address-suggest?q=…` (candidate auth, server timeout 4s).
 - JS: debounce **300ms**, `AbortController` **4.5s**, `credentials: "same-origin"`.
 - Stale generation ignored (`suggestGen`).

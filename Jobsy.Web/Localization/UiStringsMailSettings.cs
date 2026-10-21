@@ -98,6 +98,12 @@ internal static class UiStringsMailSettings
             "لا توجد رسائل اختيارية لدورك.");
         Add("MailSettings.Save", "Opslaan", "Save", "Zapisz", "Salvează", "حفظ");
         Add("MailSettings.Saved", "Opgeslagen.", "Saved.", "Zapisano.", "Salvat.", "تم الحفظ.");
+        Add("MailSettings.SaveError",
+            "Opslaan is niet gelukt. Probeer het opnieuw.",
+            "Could not save. Please try again.",
+            "Nie udało się zapisać. Spróbuj ponownie.",
+            "Nu s-a putut salva. Încearcă din nou.",
+            "تعذر الحفظ. حاول مرة أخرى.");
         Add("MailSettings.LoadError",
             "Kon de instellingen niet laden. Probeer later opnieuw.",
             "Could not load settings. Try again later.",

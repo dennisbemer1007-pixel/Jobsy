@@ -11,10 +11,11 @@ public sealed class CandidateSettingsClientPlaywrightTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        Environment.SetEnvironmentVariable("JOBSY_CSP_ALLOW_UNSAFE_EVAL", "0");
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        _web = new IllustratedPagesWebFactory();
+        _web = new IllustratedPagesWebFactory(accLikeProductionCsp: true);
         _ = _web.ServerAddress;
     }
 
@@ -37,6 +38,8 @@ public sealed class CandidateSettingsClientPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
+        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        apiHostGuard.Attach(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var saves = 0;
@@ -71,5 +74,6 @@ public sealed class CandidateSettingsClientPlaywrightTests : IAsyncLifetime
 
         Assert.Equal(1, saves);
         await page.GetByText("Opgeslagen.").WaitForAsync(new() { Timeout = 10_000 });
+        apiHostGuard.AssertZero($"candidate settings mail save at {width}px");
     }
 }
