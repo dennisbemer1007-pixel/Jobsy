@@ -12,6 +12,8 @@
     var RECONNECT_RELOAD_AFTER = 6;
     var RELOAD_THROTTLE_MS = 30000;
     var tryingSinceMs = 0;
+    var reconnectMutating = false;
+    var reconnectObsFrame = 0;
 
     function allowDocumentReload() {
         window.__lobsyAllowDocumentReload = true;
@@ -160,7 +162,6 @@
         if (document.visibilityState !== "visible") {
             return;
         }
-        demoteInvisibleTryingToFailed();
         noteTryingState();
         var m = modal();
         if (m && modalNeedsRecovery(m)) {
@@ -168,16 +169,6 @@
             if (ok) {
                 return;
             }
-        } else if (window.Blazor && typeof Blazor.reconnect === "function") {
-            try {
-                var silentOk = await Blazor.reconnect();
-                if (silentOk === true) {
-                    silentRetryCount = 0;
-                    stopSilentRetry();
-                    syncReconnectReserve();
-                    return;
-                }
-            } catch (e) { }
         }
         if (m && m.classList.contains("components-reconnect-rejected")) {
             handleRejectedState();
@@ -561,6 +552,59 @@
         }
     }
 
+    function revealHiddenReconnectModal() {
+        var m = modal();
+        if (!m || !m.classList) {
+            return;
+        }
+        if (m.classList.contains("components-reconnect-hide")) {
+            m.classList.remove("components-reconnect-hide");
+        }
+    }
+
+    function handleReconnectModalState() {
+        var m = modal();
+        if (!m || !m.classList) {
+            return;
+        }
+        revealHiddenReconnectModal();
+        if (m.classList.contains("components-reconnect-rejected")) {
+            handleRejectedState();
+        } else if (m.classList.contains("components-reconnect-failed")) {
+            scheduleSilentRetry();
+        } else if (
+            m.classList.contains("components-reconnect-show")
+            || m.classList.contains("components-reconnect-retrying")
+        ) {
+            scheduleSilentRetry();
+        } else {
+            m.classList.remove("reconnect-toast--auth-pending");
+            m.classList.remove("reconnect-toast--session-expired");
+            stopSilentRetry();
+        }
+    }
+
+    function scheduleReconnectModalState() {
+        if (reconnectObsFrame) {
+            return;
+        }
+        reconnectObsFrame = requestAnimationFrame(function () {
+            reconnectObsFrame = 0;
+            if (reconnectMutating) {
+                scheduleReconnectModalState();
+                return;
+            }
+            reconnectMutating = true;
+            try {
+                noteTryingState();
+                syncReconnectReserve();
+                handleReconnectModalState();
+            } finally {
+                reconnectMutating = false;
+            }
+        });
+    }
+
     function watchReconnectModal() {
         var m = modal();
         if (!m || m.__lobsyReconnectObserved) {
@@ -572,40 +616,12 @@
             return;
         }
         var obs = new MutationObserver(function () {
-            noteTryingState();
-            syncReconnectReserve();
-            ensureReconnectModalInteractable();
-            if (m.classList.contains("components-reconnect-rejected")) {
-                handleRejectedState();
-            } else if (m.classList.contains("components-reconnect-failed")) {
-                scheduleSilentRetry();
-            } else if (
-                m.classList.contains("components-reconnect-show")
-                || m.classList.contains("components-reconnect-retrying")
-            ) {
-                scheduleSilentRetry();
-            } else {
-                m.classList.remove("reconnect-toast--auth-pending");
-                m.classList.remove("reconnect-toast--session-expired");
-                stopSilentRetry();
+            if (reconnectMutating) {
+                return;
             }
+            scheduleReconnectModalState();
         });
         obs.observe(m, { attributes: true, attributeFilter: ["class"] });
-    }
-
-    function ensureReconnectModalInteractable() {
-        var m = modal();
-        if (!m || !m.classList) {
-            return;
-        }
-        if (!modalNeedsRecovery(m)) {
-            m.classList.remove("components-reconnect-hide");
-            return;
-        }
-        if (m.classList.contains("components-reconnect-hide")) {
-            m.classList.remove("components-reconnect-hide");
-        }
-        demoteInvisibleTryingToFailed();
     }
 
     function onResume() {
@@ -615,9 +631,7 @@
     function onPageShow(ev) {
         if (ev && ev.persisted) {
             recoverAfterSuspend("bfcache");
-            return;
         }
-        recoverAfterSuspend("pageshow");
     }
 
     async function manualReconnect() {
@@ -719,7 +733,7 @@
         });
         window.setInterval(function () {
             noteTryingState();
-            ensureReconnectModalInteractable();
+            revealHiddenReconnectModal();
         }, 2000);
 
     }).catch(function (err) {
