@@ -29,7 +29,7 @@ public static class OnboardingStartJourneyMockCopy
 
     public static readonly Stop[] Stops =
     [
-        new("1", "Over jou", "Waar je woont en wanneer je kunt", "3 stappen", "/images/candidate-illustrated/spots/kaart.jpg"),
+        new("1", "Over jou", "Waar en wanneer", "3 stappen", "/images/candidate-illustrated/spots/kaart.jpg"),
         new("2", "Achtergrond", "Optioneel", null, "/images/candidate-illustrated/werkervaring.jpg"),
         new("3", "Droom", "1 stap", null, "/images/candidate-illustrated/droombaan.jpg"),
         new("4", "Wie ben jij", "4 korte tests", null, "/images/candidate-illustrated/spots/vragen.jpg"),

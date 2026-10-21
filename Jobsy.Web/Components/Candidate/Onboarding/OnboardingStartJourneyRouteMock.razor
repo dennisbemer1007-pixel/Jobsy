@@ -1,9 +1,9 @@
 @using Jobsy.Web.Onboarding
 
 <div class="ob-start-journey-route" data-testid="onboarding-start-journey-route">
-    <svg class="ob-start-journey-route__svg" viewBox="0 0 1000 320" preserveAspectRatio="none" aria-hidden="true">
+    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--horizontal" viewBox="0 0 1000 320" preserveAspectRatio="none" aria-hidden="true">
         <defs>
-            <linearGradient id="obStartJourneyStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="obStartJourneyStrokeH" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#c4a574" />
                 <stop offset="45%" stop-color="#8fb8a8" />
                 <stop offset="100%" stop-color="#d4b878" />
@@ -11,8 +11,24 @@
         </defs>
         <path d="M 40 250 C 120 250, 140 120, 220 130 S 380 240, 460 200 S 620 80, 700 110 S 860 220, 960 180"
               fill="none"
-              stroke="url(#obStartJourneyStroke)"
+              stroke="url(#obStartJourneyStrokeH)"
               stroke-width="14"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              opacity="0.65" />
+    </svg>
+    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--vertical" viewBox="0 0 120 520" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+            <linearGradient id="obStartJourneyStrokeV" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#c4a574" />
+                <stop offset="50%" stop-color="#8fb8a8" />
+                <stop offset="100%" stop-color="#d4b878" />
+            </linearGradient>
+        </defs>
+        <path d="M 60 16 C 60 72, 28 88, 28 148 S 92 208, 60 268 S 28 328, 28 388 S 92 448, 60 504"
+              fill="none"
+              stroke="url(#obStartJourneyStrokeV)"
+              stroke-width="10"
               stroke-linecap="round"
               stroke-linejoin="round"
               opacity="0.65" />
@@ -21,8 +37,7 @@
         @foreach (var stop in OnboardingStartJourneyMockCopy.Stops)
         {
             var isCurrent = stop.Number == "1";
-            <li class="ob-start-journey-route__stop ob-start-journey-route__stop--@stop.Number @(isCurrent ? "is-current" : null)"
-                style="--stop-i: @stop.Number;">
+            <li class="ob-start-journey-route__stop ob-start-journey-route__stop--@stop.Number @(isCurrent ? "is-current" : null)">
                 <div class="ob-start-journey-route__stop-inner">
                     @if (isCurrent)
                     {
@@ -34,10 +49,6 @@
                     <div class="ob-start-journey-route__label">
                         <p class="ob-start-journey-route__title">@stop.Title</p>
                         <p class="ob-start-journey-route__sub">@stop.Subtitle</p>
-                        @if (!string.IsNullOrWhiteSpace(stop.Meta))
-                        {
-                            <p class="ob-start-journey-route__meta">@stop.Meta</p>
-                        }
                     </div>
                 </div>
             </li>
