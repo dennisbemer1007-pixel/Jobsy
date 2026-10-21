@@ -125,7 +125,7 @@ public sealed class DiscoveryOverviewRouteCaptureTests
                 FullPage = false,
             });
 
-            var testsRegion = page.Locator(".journey-route__mobile-only .journey-route__tests");
+            var testsRegion = page.Locator(".journey-overview .journey-route__tests");
             await testsRegion.ScrollIntoViewIfNeededAsync();
             await page.WaitForTimeoutAsync(400);
 
@@ -133,7 +133,7 @@ public sealed class DiscoveryOverviewRouteCaptureTests
                 """
                 () => {
                   const card = document.querySelector('.journey-step:has(.journey-overview)');
-                  const tile = document.querySelector('.journey-route__mobile-only .journey-route__test');
+                  const tile = document.querySelector('.journey-overview .journey-route__test');
                   if (!card || !tile) return JSON.stringify({ error: 'missing nodes' });
                   const cr = card.getBoundingClientRect();
                   const tr = tile.getBoundingClientRect();
