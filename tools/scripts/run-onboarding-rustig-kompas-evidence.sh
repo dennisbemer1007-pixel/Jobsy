@@ -64,8 +64,25 @@ sleep 2
 env Onboarding__RustigEnabled=true bash "$ROOT/.github/scripts/start-ci-stack.sh"
 
 echo "=== Rustig Kompas (enabled) ==="
+export JOBSY_KOMPAS_AUDIT_MODE=rustig
 dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
   --filter "FullyQualifiedName~OnboardingRustigKompasCaptureTests" || true
+dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
+  --filter "FullyQualifiedName~OnboardingRustigKompasClickAuditPlaywrightTests" || true
+
+if [[ -f /tmp/jobsy-ci-logs/web.pid ]]; then
+  kill "$(cat /tmp/jobsy-ci-logs/web.pid)" 2>/dev/null || true
+fi
+stop_port 5201
+sleep 2
+env Onboarding__RustigEnabled=false ApiBaseUrl=http://localhost:5200/ PublicWebBaseUrl=http://localhost:5201 \
+  dotnet run --project Jobsy.Web/Jobsy.Web.csproj -c Release --no-build --urls http://127.0.0.1:5201 \
+  >/tmp/jobsy-ci-logs/web-baseline.log 2>&1 &
+echo $! >/tmp/jobsy-ci-logs/web.pid
+sleep 12
+
+echo "=== Baseline Kompas (RustigEnabled=false) ==="
+export JOBSY_KOMPAS_AUDIT_MODE=baseline
 dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
   --filter "FullyQualifiedName~OnboardingRustigKompasClickAuditPlaywrightTests" || true
 
