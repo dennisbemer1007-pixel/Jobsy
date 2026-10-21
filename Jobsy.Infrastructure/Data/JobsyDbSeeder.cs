@@ -163,6 +163,7 @@ public static class JobsyDbSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var perfCount = configuration.GetValue("Seed:BanenkaartPerfCount", 0);
+        var seedBanenkaartDemoVacancies = configuration.GetValue("Seed:BanenkaartDemoVacancies", true);
 
         if (await db.Companies.AnyAsync())
         {
@@ -205,9 +206,13 @@ public static class JobsyDbSeeder
                 await VacancyCategorySeeder.SeedAsync(db, logger);
                 await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
                 await SalesManagerDemoSeeder.SeedAsync(db, logger);
-                await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
-                await EnterpriseWestlandVacanciesSeeder.SeedAsync(db, logger);
-                await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+                if (seedBanenkaartDemoVacancies)
+                {
+                    await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+                    await EnterpriseWestlandVacanciesSeeder.SeedAsync(db, logger);
+                    await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+                }
+
                 await SeedVacancyCategoryMix.EnsureAsync(db, logger);
                 // Re-run media backfill after banenkaart seeds so every vacancy has image/video/copy.
                 await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
@@ -216,7 +221,10 @@ public static class JobsyDbSeeder
                 await AtsScrapeSourceSeeder.SeedAsync(db, logger);
                 await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
                 await AfterMatchDemoSeeder.EnsureAsync(db, logger);
-                await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
+                if (seedBanenkaartDemoVacancies)
+                {
+                    await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
+                }
                 await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
                 await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
             }
@@ -250,9 +258,13 @@ public static class JobsyDbSeeder
             await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
             await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
             await SalesManagerDemoSeeder.SeedAsync(db, logger);
-            await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
-            await EnterpriseWestlandVacanciesSeeder.SeedAsync(db, logger);
-            await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+            if (seedBanenkaartDemoVacancies)
+            {
+                await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+                await EnterpriseWestlandVacanciesSeeder.SeedAsync(db, logger);
+                await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+            }
+
             await SeedVacancyCategoryMix.EnsureAsync(db, logger);
             await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
             // EnsureForAll also fills empty tables and assigns missing vacancy salary tables.
@@ -260,7 +272,10 @@ public static class JobsyDbSeeder
             await AtsScrapeSourceSeeder.SeedAsync(db, logger);
             await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
             await AfterMatchDemoSeeder.EnsureAsync(db, logger);
-            await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
+            if (seedBanenkaartDemoVacancies)
+            {
+                await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
+            }
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)
