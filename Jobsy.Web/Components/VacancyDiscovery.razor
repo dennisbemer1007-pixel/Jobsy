@@ -3311,6 +3311,20 @@
 
     private async Task ResolveLaunchOriginAsync()
     {
+        if (_uwvMockup)
+        {
+            _origin = new OriginPoint { Latitude = 52.0128, Longitude = 4.3612 };
+            _addressQuery = Culture.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
+                ? "Delft area (sample)"
+                : "Regio Delft (voorbeeld)";
+            _selectedTransport = KbMapStart.DefaultTransport;
+            _maxTravelMinutes = KbMapStart.DefaultMaxTravelMinutes;
+            _showStartPrompt = false;
+            _startPromptDismissed = true;
+            RebuildUwvKansVacancies();
+            return;
+        }
+
         KbMapStart.OriginPoint? urlOrigin = null;
         if (_origin is not null)
         {
@@ -3409,29 +3423,11 @@
             }
 
             _showStartPrompt = false;
-            if (_uwvMockup)
-            {
-                RebuildUwvKansVacancies();
-            }
-
-            return;
         }
-
-        if (_uwvMockup)
+        else
         {
-            _origin = new OriginPoint { Latitude = 52.0128, Longitude = 4.3612 };
-            _addressQuery = Culture.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
-                ? "Delft area (sample)"
-                : "Regio Delft (voorbeeld)";
-            _selectedTransport = KbMapStart.DefaultTransport;
-            _maxTravelMinutes = KbMapStart.DefaultMaxTravelMinutes;
-            _showStartPrompt = false;
-            _startPromptDismissed = true;
-            RebuildUwvKansVacancies();
-            return;
+            _showStartPrompt = resolved.ShowLocationPrompt && !_startPromptDismissed;
         }
-
-        _showStartPrompt = resolved.ShowLocationPrompt && !_startPromptDismissed;
     }
 
     private sealed class SessionOriginDto
