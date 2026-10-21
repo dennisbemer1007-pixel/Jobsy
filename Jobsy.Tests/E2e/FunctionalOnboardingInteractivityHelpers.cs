@@ -675,7 +675,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 120_000 });
-        var rustigStart = page.Locator("[data-ob-rustig-screen=start]");
+        var rustigStart = page.Locator("[data-ob-rustig-screen=start-journey], [data-ob-rustig-screen=start]");
         var legacyWelcome = page.Locator(".ob-wizard__welcome");
         try
         {
@@ -689,7 +689,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task ClickBeginnenOnWelcomeAsync(IPage page, bool mobile)
     {
-        var rustigStart = page.Locator("[data-ob-rustig-screen=start]");
+        var rustigStart = page.Locator("[data-ob-rustig-screen=start-journey], [data-ob-rustig-screen=start]");
         var useRustig = await rustigStart.CountAsync() > 0;
         if (useRustig)
         {

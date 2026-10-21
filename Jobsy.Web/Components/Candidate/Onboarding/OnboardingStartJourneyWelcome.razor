@@ -1,0 +1,106 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Onboarding
+
+<section class="ob-wizard__welcome">
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <p class="state-message error">@Error</p>
+    }
+    <div class="ob-rustig ob-rustig--start-journey" data-ob-rustig-screen="start-journey">
+        <div class="ob-rustig__layout">
+            <aside class="ob-rustig__sidebar ob-wizard__sidebar ob-rustig__sidebar--no-logo" aria-label="@Culture["Onboarding.IllustratedSidebar.SubstepsAria"]">
+                @foreach (var item in OnboardingStartJourneyContent.SidebarNav(Culture))
+                {
+                    var isCurrent = item.Number == "1";
+                    <div class="ob-wizard__side-item @(isCurrent ? "is-current" : null)">
+                        <span>@item.Number</span>
+                        <div>
+                            <strong>@item.Title</strong>
+                            @if (!string.IsNullOrWhiteSpace(item.Sub))
+                            {
+                                <small>@item.Sub</small>
+                            }
+                        </div>
+                    </div>
+                }
+            </aside>
+
+            <div class="ob-rustig__main">
+                <header class="ob-rustig__chrome ob-rustig__chrome--compact">
+                    <div class="ob-rustig__chrome-row">
+                        <span class="ob-rustig__link" aria-hidden="true">‹</span>
+                        <div class="ob-rustig__segments" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="10">
+                            @foreach (var _ in Enumerable.Range(0, 4))
+                            {
+                                <span><i style="--w:0%"></i></span>
+                            }
+                        </div>
+                        <div class="ob-rustig__actions">
+                            <a class="ob-rustig__link" href="/home">@Culture["Onboarding.Later"]</a>
+                            <a class="ob-rustig__link ob-rustig__link--underline"
+                               href="/privacy/data"
+                               title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                        </div>
+                    </div>
+                    <div class="ob-rustig__meta">
+                        <span>
+                            <strong>@Culture["Onboarding.Rustig.StartMeta"]</strong>
+                            <text> · ± @OnboardingWizardCatalog.V3TotalMinutesEstimate @Culture["Onboarding.Rustig.MinutesShort"]</text>
+                        </span>
+                    </div>
+                </header>
+
+                <div class="ob-rustig__hero-band ob-start-journey-hero"
+                     style="@($"--ob-start-journey-hero-mob: url('{OnboardingRustigPanoramaAssets.StartMobile}');")"
+                     aria-hidden="true"
+                     data-testid="ob-rustig-hero">
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--desk ob-start-journey-hero__img ob-start-journey-hero__img--shared"
+                         src="@OnboardingRustigPanoramaAssets.StartMobile"
+                         width="780"
+                         height="184"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high"
+                         data-testid="ob-start-journey-hero-desk" />
+                    <img class="ob-rustig__hero-img ob-rustig__hero-img--mob ob-start-journey-hero__img ob-start-journey-hero__img--shared"
+                         src="@OnboardingRustigPanoramaAssets.StartMobile"
+                         width="780"
+                         height="184"
+                         alt=""
+                         loading="eager"
+                         decoding="sync"
+                         fetchpriority="high" />
+                </div>
+
+                <div class="ob-rustig__page-head ob-rustig__page-head--compact">
+                    <h1 tabindex="-1">@Title</h1>
+                    <p class="ob-rustig__lead">@Culture["Onboarding.Rustig.WelcomeLead"]</p>
+                </div>
+
+                <div class="ob-rustig__body ob-rustig__body--journey-start">
+                    <OnboardingStartJourneyRoute />
+                    <form class="ob-rustig__footer-actions ob-rustig__footer-actions--above-fold"
+                          method="post"
+                          action="/api/onboarding-client/dismiss-welcome">
+                        <AntiforgeryToken />
+                        <button type="submit"
+                                class="ob-rustig__btn ob-rustig__btn--primary"
+                                data-testid="onboarding-begin">
+                            @Culture["Onboarding.Welcome.CtaRustig"]
+                        </button>
+                    </form>
+                    <p class="ob-wizard__hint ob-wizard__hint--compact">@Culture["Onboarding.StartJourney.Hint"]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Error { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

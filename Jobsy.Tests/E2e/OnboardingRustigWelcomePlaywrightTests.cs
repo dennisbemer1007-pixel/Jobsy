@@ -32,13 +32,13 @@ public sealed class OnboardingRustigWelcomePlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, $"rustig-welcome-{tag}");
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
 
-        await page.Locator("[data-ob-rustig-screen=start]").WaitForAsync(new()
+        await page.Locator("[data-ob-rustig-screen=start-journey]").WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,
             Timeout = 60_000,
         });
 
-        var later = page.GetByRole(AriaRole.Button, new() { Name = "Later verder" });
+        var later = page.GetByRole(AriaRole.Link, new() { Name = "Later verder" });
         await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, later, "later-verder");
 
         var privacy = page.Locator("a.ob-rustig__link--underline");

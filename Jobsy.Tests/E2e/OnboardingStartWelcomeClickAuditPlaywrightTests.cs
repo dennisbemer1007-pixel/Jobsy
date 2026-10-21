@@ -51,7 +51,7 @@ public sealed class OnboardingStartWelcomeClickAuditPlaywrightTests
 
         if (rustig)
         {
-            await page.Locator("[data-ob-rustig-screen=start]").WaitForAsync(new() { Timeout = 60_000 });
+            await page.Locator("[data-ob-rustig-screen=start-journey]").WaitForAsync(new() { Timeout = 60_000 });
         }
 
         var rows = new List<(string Control, string Result)>();
