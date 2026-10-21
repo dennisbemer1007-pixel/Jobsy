@@ -20,17 +20,9 @@
             <p class="state-message error">@Error</p>
         }
         <div class="ob-rustig__canvas" data-testid="onboarding-step-6-illustrated">
-            <DreamJobStep Draft="Draft"
-                          RustigLayout="true"
-                          ShowValidation="ShowValidation"
-                          Young="Young"
-                          RegionalVacancyTitles="RegionalVacancyTitles"
-                          ChooseDream="ChooseDream"
-                          ChooseTitle="ChooseTitle"
-                          ChooseOwnDream="ChooseOwnDream"
-                          DreamKeyDown="DreamKeyDown"
-                          ShowHeading="false"
-                          ShowLead="false" />
+            <OnboardingClientStepIsland Step="6"
+                                        Draft="Draft"
+                                        Seed="ClientSeed" />
             <div class="ob-rustig__footer-actions">
                 <button type="button"
                         class="ob-rustig__btn"
@@ -73,6 +65,7 @@
     [Parameter] public EventCallback OnNext { get; set; }
     [Parameter] public EventCallback OnDreamUnknown { get; set; }
     [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public OnboardingClientStepSeed? ClientSeed { get; set; }
 
     [Inject] private CultureState Culture { get; set; } = default!;
 }

@@ -23,10 +23,10 @@
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @inject IOnboardingRustigGate OnboardingRustig
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Onboarding
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Features
 @using Jobsy.Web.Media
-@using Jobsy.Web.Onboarding
 @using Jobsy.Web.KandidaatBanen
 @implements IAsyncDisposable
 
@@ -240,6 +240,7 @@
                                                    Draft="Draft"
                                                    ShowValidation="_showValidation"
                                                    Presets="PresetItems"
+                                                   ClientSeed="ClientStepSeed"
                                                    AddressChanged="AddressChanged"
                                                    ShowCity="ShowCity"
                                                    SelectAddress="SelectAddress"
@@ -293,6 +294,7 @@
                                          ShowValidation="_showValidation"
                                          TestTabs="ConsentTabs"
                                          ConsentChanged="OnConsentChanged"
+                                         ClientSeed="ClientStepSeed"
                                          Error="@_error"
                                          Busy="@_busy"
                                          SaveStatus="@RustigSaveStatus"
@@ -303,6 +305,8 @@
     else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 8 and <= 10 && Draft.HasConsent)
     {
         <OnboardingRustigMiniTestStep Step="_step"
+                                      Draft="Draft"
+                                      ClientSeed="ClientStepSeed"
                                       FlowEpoch="_miniFlowEpoch"
                                       CurrentQuestion="_currentQuestion"
                                       TestTabs="MiniTestTabs"
@@ -327,6 +331,7 @@
                                    ShowValidation="_showValidation"
                                    Young="@IsYoungCandidate"
                                    RegionalVacancyTitles="@DreamStepRegionalTitles"
+                                   ClientSeed="ClientStepSeed"
                                    Error="@_error"
                                    Busy="@_busy"
                                    SaveStatus="@RustigSaveStatus"
@@ -476,12 +481,10 @@
                                 </HeadContent>
                                 <ChildContent>
                                     <div class="ob-illustrated-step__form">
-                                        <PersonalStep Draft="Draft"
-                                                      Illustrated="true"
-                                                      ShowValidation="_showValidation"
-                                                      AddressChanged="AddressChanged"
-                                                      ShowCity="ShowCity"
-                                                      SelectAddress="SelectAddress" />
+                                        <OnboardingClientStepIsland Step="1"
+                                                                    Draft="Draft"
+                                                                    Presets="IllustratedPresetTuples"
+                                                                    Seed="ClientStepSeed" />
                                     </div>
                                 </ChildContent>
                             </OnboardingIllustratedStep>
@@ -503,17 +506,10 @@
                                 </HeadContent>
                                 <ChildContent>
                                     <div class="ob-illustrated-step__form">
-                                        <AvailabilityStep Draft="Draft"
-                                                          Illustrated="true"
-                                                          ShowValidation="_showValidation"
-                                                          Presets="PresetItems"
-                                                          TogglePreset="TogglePreset"
-                                                          ToggleFineTune="ToggleFineTune"
-                                                          SetMinHours="SetMinHoursAsync"
-                                                          SetMaxHours="SetMaxHoursAsync"
-                                                          ManualAvailability="ManualAvailabilityAsync"
-                                                          ToggleAvailability="ToggleAvailability"
-                                                          ResetPresets="ResetPresets" />
+                                        <OnboardingClientStepIsland Step="2"
+                                                                    Draft="Draft"
+                                                                    Presets="IllustratedPresetTuples"
+                                                                    Seed="ClientStepSeed" />
                                     </div>
                                 </ChildContent>
                             </OnboardingIllustratedStep>
@@ -535,12 +531,10 @@
                                 </HeadContent>
                                 <ChildContent>
                                     <div class="ob-illustrated-step__form">
-                                        <TransportStep Draft="Draft"
-                                                       Illustrated="true"
-                                                       ShowValidation="_showValidation"
-                                                       SelectTransport="SelectTransport"
-                                                       SelectTravelTime="SelectTravelTime"
-                                                       ShowCustomTravel="ShowCustomTravel" />
+                                        <OnboardingClientStepIsland Step="3"
+                                                                    Draft="Draft"
+                                                                    Presets="IllustratedPresetTuples"
+                                                                    Seed="ClientStepSeed" />
                                     </div>
                                 </ChildContent>
                             </OnboardingIllustratedStep>
@@ -566,12 +560,10 @@
                                 </HeadContent>
                                 <ChildContent>
                                     <div class="ob-illustrated-step__form">
-                                        <WorkHistoryStep Draft="Draft"
-                                                         Illustrated="true"
-                                                         AddJob="AddJob"
-                                                         RemoveJob="RemoveJob"
-                                                         SetJobStart="OnSetJobStart"
-                                                         SetJobEnd="OnSetJobEnd" />
+                                        <OnboardingClientStepIsland Step="4"
+                                                                    Draft="Draft"
+                                                                    Presets="IllustratedPresetTuples"
+                                                                    Seed="ClientStepSeed" />
                                     </div>
                                 </ChildContent>
                             </OnboardingIllustratedStep>
@@ -597,9 +589,10 @@
                                 </HeadContent>
                                 <ChildContent>
                                     <div class="ob-illustrated-step__form">
-                                        <EducationStep Draft="Draft"
-                                                       Illustrated="true"
-                                                       SelectEducation="SelectEducation" />
+                                        <OnboardingClientStepIsland Step="5"
+                                                                    Draft="Draft"
+                                                                    Presets="IllustratedPresetTuples"
+                                                                    Seed="ClientStepSeed" />
                                     </div>
                                 </ChildContent>
                             </OnboardingIllustratedStep>
@@ -621,16 +614,10 @@
                                 </HeadContent>
                                 <ChildContent>
                                     <div class="ob-illustrated-step__form">
-                                        <DreamJobStep Draft="Draft"
-                                                      ShowValidation="_showValidation"
-                                                      Young="@IsYoungCandidate"
-                                                      RegionalVacancyTitles="@DreamStepRegionalTitles"
-                                                      ChooseDream="ChooseDream"
-                                                      ChooseTitle="ChooseDreamTitle"
-                                                      ChooseOwnDream="ChooseOwnDream"
-                                                      DreamKeyDown="DreamKeyDown"
-                                                      ShowHeading="false"
-                                                      ShowLead="false" />
+                                        <OnboardingClientStepIsland Step="6"
+                                                                    Draft="Draft"
+                                                                    Presets="IllustratedPresetTuples"
+                                                                    Seed="ClientStepSeed" />
                                     </div>
                                 </ChildContent>
                             </OnboardingIllustratedStep>
@@ -642,28 +629,17 @@
                             break;
 
                         case 7 when !Draft.HasConsent:
-                            <TestConsentStep Draft="Draft"
-                                             ShowValidation="_showValidation"
-                                             TestTabs="ConsentTabs"
-                                             ConsentChanged="OnConsentChanged" />
+                            <OnboardingClientStepIsland Step="7"
+                                                        Draft="Draft"
+                                                        Presets="IllustratedPresetTuples"
+                                                        Seed="ClientStepSeed" />
                             break;
 
-                        case >= 7 and <= 10:
-                            <OnboardingMiniTest Step="_step"
-                                                FlowEpoch="_miniFlowEpoch"
-                                                CurrentQuestion="_currentQuestion"
-                                                TestTabs="MiniTestTabs"
-                                                Questions="_miniQuestions"
-                                                Answers="MiniVisibleAnswers"
-                                                Depth="TestDepthLevel.First"
-                                                InputPrefix="@MiniPrefix"
-                                                LaterLabel="@Culture["Onboarding.Tests.LaterDoen"]"
-                                                Answer="OnMiniAnswer"
-                                                OnFinished="FinishMiniAsync"
-                                                OnLeave="BackAsync"
-                                                OnLater="SkipTestsLaterAsync"
-                                                ExpandQuestion="ExpandQuestion"
-                                                ResolveQuestionText="QuestionText" />
+                        case >= 8 and <= 10:
+                            <OnboardingClientStepIsland Step="_step"
+                                                        Draft="Draft"
+                                                        Presets="IllustratedPresetTuples"
+                                                        Seed="ClientStepSeed" />
                             break;
                     }
 
@@ -829,6 +805,9 @@
     private CancellationTokenSource? _nearbyRefreshCts;
     private CancellationTokenSource? _geocodeCts;
     private CancellationTokenSource? _dreamCts;
+
+    private IReadOnlyList<(string Code, string TitleKey, string LeadKey)> IllustratedPresetTuples
+        => PresetItems.Select(p => (p.Code, p.Title, p.Lead)).ToList();
 
     private static readonly AvailabilityStep.Preset[] PresetItems =
     [
@@ -1302,6 +1281,15 @@
 
         if (!fromMiniTestFinish)
         {
+            if (_step is >= 1 and <= 10)
+            {
+                if (!await TryImportClientStepAsync())
+                {
+                    _error = Culture["Common.Error.TryAgain"];
+                    return;
+                }
+            }
+
             if (_step == 1)
             {
                 await EnsureAddressResolvedAsync();
@@ -1894,9 +1882,9 @@
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var token = timeout.Token;
         var pending = new List<Task>();
-        if (_step <= 6 && _profileAutosave is not null)
+        if (_step <= 6)
         {
-            pending.Add(_profileAutosave.FlushAsync(token));
+            pending.Add(SaveProfileAsync(token));
         }
 
         if (_step == 6)
@@ -2283,13 +2271,54 @@
 
     private void ScheduleProfileSave()
     {
-        if (_loading || _profileAutosave is null)
+        if (_loading || _profileAutosave is null || _step <= 10)
         {
             return;
         }
 
         _profileAutosave.ScheduleSave();
     }
+
+    private async Task<bool> TryImportClientStepAsync()
+    {
+        try
+        {
+            var json = await Js.InvokeAsync<string>("jobsyOnboardingClient.collect", _step);
+            if (_step is >= 1 and <= 6)
+            {
+                OnboardingClientStepBridge.Apply(_step, Draft, json);
+            }
+            else if (_step == 7)
+            {
+                Draft.ConsentRequested = OnboardingClientStepBridge.ParseStep7Consent(json);
+            }
+            else if (_step is >= 8 and <= 10)
+            {
+                foreach (var (id, value) in OnboardingClientStepBridge.ParseMiniAnswers(json))
+                {
+                    _miniAnswers[id] = value;
+                }
+            }
+
+            return true;
+        }
+        catch (JSException)
+        {
+            return false;
+        }
+    }
+
+    private OnboardingClientStepSeed ClientStepSeed => new()
+    {
+        DreamTitles = DreamStepRegionalTitles,
+        DreamCurrent = Draft.Dream,
+        ConsentRequested = Draft.ConsentRequested,
+        HasConsent = Draft.HasConsent,
+        MiniQuestions = _miniQuestions
+            .Select(q => new OnboardingClientStepSeed.MiniQuestionSeed(q.Id, QuestionText(q)))
+            .ToList(),
+        MiniAnswers = MiniVisibleAnswers.ToDictionary(static pair => pair.Key, static pair => pair.Value),
+    };
 
     private Task PersistProfileDraftAsync(CancellationToken cancellationToken)
     {

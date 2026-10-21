@@ -19,10 +19,9 @@
             <p class="state-message error">@Error</p>
         }
         <div class="ob-rustig__canvas ob-rustig__canvas--consent" data-testid="onboarding-step-7-consent">
-            <TestConsentStep Draft="Draft"
-                             ShowValidation="ShowValidation"
-                             TestTabs="TestTabs"
-                             ConsentChanged="ConsentChanged" />
+            <OnboardingClientStepIsland Step="7"
+                                        Draft="Draft"
+                                        Seed="ClientSeed" />
             <div class="ob-rustig__footer-actions">
                 <button type="button"
                         class="ob-rustig__btn"
@@ -54,6 +53,7 @@
     [Parameter] public EventCallback OnBack { get; set; }
     [Parameter] public EventCallback OnNext { get; set; }
     [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public OnboardingClientStepSeed? ClientSeed { get; set; }
 
     [Inject] private CultureState Culture { get; set; } = default!;
 }

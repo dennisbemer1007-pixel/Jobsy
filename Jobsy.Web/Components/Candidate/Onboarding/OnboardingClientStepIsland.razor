@@ -1,0 +1,67 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Onboarding
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<div class="ob-client-step ob-fields ob-fields--illustrated"
+     data-ob-client-step="@Step"
+     data-initial="@_initialJson"
+     data-testid="@($"onboarding-step-{Step}-illustrated")"
+     @ref="_root">
+    @((MarkupString)OnboardingClientStepShells.Build(Step, Culture))
+</div>
+
+@code {
+    [Parameter] public int Step { get; set; }
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public IReadOnlyList<(string Code, string TitleKey, string LeadKey)> Presets { get; set; } = [];
+    [Parameter] public OnboardingClientStepSeed? Seed { get; set; }
+
+    private ElementReference _root;
+    private string _initialJson = "{}";
+    private bool _mounted;
+    private int _lastStep;
+
+    protected override void OnParametersSet()
+    {
+        if (_lastStep != Step)
+        {
+            _lastStep = Step;
+            _mounted = false;
+        }
+
+        _initialJson = OnboardingClientStepInitialState.Build(Step, Draft, Culture, Presets, Seed);
+    }
+
+    protected override bool ShouldRender() => !_mounted;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_mounted)
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyOnboardingClient.mount", _root, Step);
+            _mounted = true;
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyOnboardingClient.unmount", _root);
+        }
+        catch
+        {
+        }
+    }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}
