@@ -59,10 +59,11 @@ public sealed class CandidateCultureNavStabilityPlaywrightTests
             return;
         }
 
+        var mobile = width < 500;
         foreach (var path in new[] { "/banenkaart", "/candidate/paspoort", "/candidate/ontdekkingsreis", "/carriere" })
         {
-            var link = width < 500 && path == "/candidate/paspoort"
-                ? page.Locator("nav.bottom-nav a[href='/candidate/paspoort']").First
+            var link = mobile
+                ? page.Locator($"nav.bottom-nav a[href='{path}']").First
                 : page.Locator($"a[href='{path}']").First;
             if (await link.CountAsync() == 0)
             {
