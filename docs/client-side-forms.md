@@ -102,6 +102,13 @@ Errors from API persist as today (`_error`, `_saveError`, rustig save status).
 
 This keeps geocode latency **off** the SignalR circuit.
 
+## Acceptatie lessons (step 1, #853)
+
+- **Production CSP blocks `eval`** — never use Blazor `InvokeAsync("eval", …)` for mount checks; expose `jobsyOnboardingClient.isReady` / `isStepMounted` in JS instead.
+- **`connect-src` is same-origin only** — browsers must not `fetch` `ApiBaseUrl`; use same-origin BFF routes (e.g. `/api/onboarding-client/address-suggest`, `/account/session-security`) and keep session-idle off cross-origin API fallbacks.
+- **Dirty flags** — after mount, do not overwrite inputs from `data-initial` once the user has typed (avoid “Laden…” / profile hydrate clobbering the address field).
+- **Floating suggest** — position the suggest list with `position: fixed` and a high z-index so items are not painted under work-status tiles below the address field.
+
 ## Checklist: convert another candidate page
 
 1. **Identify hot path** — inputs that `@bind` or call `StateHasChanged` / autosave on every event.
