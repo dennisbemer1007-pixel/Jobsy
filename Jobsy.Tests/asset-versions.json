@@ -268,8 +268,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "6c31fb8ab5e36efac83971d63f001868cd60809b70e9c9ec8e49e65449d0c236",
-    "v": "20261020-01"
+    "sha256": "3d9f3248d0cc8a318e4fa8c52166197470bad0acd5f31acd5273cf7c5694ca6f",
+    "v": "20261021-guest2"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -352,11 +352,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "15f3851f338c539c341db65dd4efb4e6f61dd13e4e045646c31b5621c66eae04",
+    "sha256": "799f983c880dde87e7681b6221804057223c4315c7096304beb1fb49f0a2f19e",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "d909d018299a317fabdcf1da94af1e120fa1ebc35aa944ccaf3627ad26343572",
+    "sha256": "f4b0fe0a9fb18d9f577711eb866fda77443b0a447fc90b49d694a029c9d7dd9e",
     "v": "20261016-06"
   }
 }

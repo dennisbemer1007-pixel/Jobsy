@@ -21,6 +21,9 @@ public static class VacancyMapProxyEndpoints
         app.MapGet("/api/vacancies/pins", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, "api/vacancies/pins", ct));
 
+        app.MapGet("/api/vacancies/map-view", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, "api/vacancies/map-view", ct));
+
         app.MapGet("/api/vacancies/cards", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, "api/vacancies/cards", ct));
 
@@ -213,6 +216,7 @@ public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
 
         // Cache pins + card(s) + isochrones — not legacy full vacancy detail.
         return apiPath.Equals("api/vacancies/pins", StringComparison.OrdinalIgnoreCase)
+               || apiPath.Equals("api/vacancies/map-view", StringComparison.OrdinalIgnoreCase)
                || apiPath.Equals("api/vacancies/cards", StringComparison.OrdinalIgnoreCase)
                || apiPath.Equals("api/travel/isochrones", StringComparison.OrdinalIgnoreCase)
                || (apiPath.StartsWith("api/vacancies/", StringComparison.OrdinalIgnoreCase)
