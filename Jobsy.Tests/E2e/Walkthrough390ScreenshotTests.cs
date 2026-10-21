@@ -69,11 +69,17 @@ public sealed class Walkthrough390ScreenshotTests : IAsyncLifetime
         else
         {
             await page.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.WaitForTimeoutAsync(2_000);
+            var waitMs = 2_000;
+            if (int.TryParse(Environment.GetEnvironmentVariable("WALKTHROUGH_WAIT_MS"), out var parsed) && parsed >= 0)
+            {
+                waitMs = parsed;
+            }
+
+            await page.WaitForTimeoutAsync(waitMs);
         }
 
         var path = Path.Combine(ArtifactsDir, $"{name}.png");
-        await page.ScreenshotAsync(new() { Path = path, FullPage = true });
+        await page.ScreenshotAsync(new() { Path = path, FullPage = false });
         Assert.True(File.Exists(path));
     }
 }

@@ -53,6 +53,18 @@ public sealed class CandidatePassportMobileLoadPlaywrightTests : IAsyncLifetime
         var elapsed = DateTime.UtcNow - started;
         Assert.True(ok, $"Paspoort content not visible within 2s (elapsed {elapsed.TotalSeconds:F1}s).");
         await Assertions.Expect(page.Locator(".page-content-skeleton")).ToHaveCountAsync(0, new() { Timeout = 500 });
+        await Assertions.Expect(page.Locator(".panel-inline-error")).ToHaveCountAsync(0, new() { Timeout = 500 });
+
+        var navPinned = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const nav = document.querySelector('nav.bottom-nav');
+              if (!nav) return false;
+              const r = nav.getBoundingClientRect();
+              return r.bottom <= window.innerHeight + 2 && r.top >= window.innerHeight - r.height - 4;
+            }
+            """);
+        Assert.True(navPinned, "Bottom nav should sit on the viewport bottom, not mid-page.");
     }
 
     private static async Task<bool> WaitForPassportContentAsync(IPage page, int timeoutMs)

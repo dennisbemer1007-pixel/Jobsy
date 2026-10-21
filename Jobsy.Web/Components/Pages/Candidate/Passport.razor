@@ -1,5 +1,5 @@
 @page "/candidate/paspoort"
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/profile")]
@@ -379,11 +379,6 @@
                 return;
             }
 
-            if (!RendererInfo.IsInteractive)
-            {
-                return;
-            }
-
             var dnaTask = Api.GetMyKompasDnaResultAsync();
             var kompasTask = Api.GetMyKompasResultAsync();
             await Task.WhenAll(dnaTask, kompasTask);
@@ -408,15 +403,7 @@
         }
         finally
         {
-            if (RendererInfo.IsInteractive)
-            {
-                _loading = false;
-            }
-        }
-
-        if (!RendererInfo.IsInteractive || _loading)
-        {
-            return;
+            _loading = false;
         }
 
         _ = LoadPassportSecondaryAsync();
