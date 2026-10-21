@@ -14,6 +14,32 @@
     var tryingSinceMs = 0;
     var reconnectMutating = false;
     var reconnectObsFrame = 0;
+    var pendingReloadReason = null;
+
+    function isBrowserOnline() {
+        try {
+            return typeof navigator === "undefined" || navigator.onLine !== false;
+        } catch (e) {
+            return true;
+        }
+    }
+
+    function deferReloadUntilOnline(reason) {
+        pendingReloadReason = reason || pendingReloadReason || "offline";
+        try {
+            console.info("[lobsy] reload deferred until online (" + pendingReloadReason + ")");
+        } catch (e) { }
+        return false;
+    }
+
+    function flushPendingReloadAfterOnline() {
+        if (!isBrowserOnline() || !pendingReloadReason) {
+            return;
+        }
+        var reason = pendingReloadReason;
+        pendingReloadReason = null;
+        reloadPageThrottled(reason);
+    }
 
     function allowDocumentReload() {
         window.__lobsyAllowDocumentReload = true;
@@ -79,6 +105,9 @@
     };
 
     function reloadPageThrottled(reason) {
+        if (!isBrowserOnline()) {
+            return deferReloadUntilOnline(reason);
+        }
         var key = "lobsy:reload-ts";
         try {
             var now = Date.now();
@@ -174,17 +203,55 @@
             handleRejectedState();
             return;
         }
-        if (!circuitInteractive()) {
+        if (!circuitInteractive() && isBrowserOnline()) {
             reloadPageThrottled("mobile-suspend-" + source);
         }
     }
+
+    function syncAppHeaderHeightPx() {
+        try {
+            var header = document.querySelector(".app-header");
+            if (!header) {
+                return;
+            }
+            var px = Math.ceil(header.getBoundingClientRect().height);
+            if (px > 0) {
+                document.documentElement.style.setProperty("--app-header-height", px + "px");
+            }
+        } catch (e) { }
+    }
+
+    window.lobsyPaspoortLayout = window.lobsyPaspoortLayout || {
+        syncSidebarSticky: function () {
+            try {
+                var sidebar = document.querySelector(
+                    ".passport-page--illustrated .passport-layout__sidebar"
+                );
+                if (!sidebar) {
+                    return;
+                }
+                if (window.innerWidth < 1024) {
+                    sidebar.classList.remove("passport-layout__sidebar--sticky-when-fits");
+                    return;
+                }
+                syncAppHeaderHeightPx();
+                var header = document.querySelector(".app-header");
+                var headerBottom = header ? header.getBoundingClientRect().bottom : 68;
+                var available = window.innerHeight - headerBottom - 16;
+                var fits = sidebar.scrollHeight <= available + 1;
+                sidebar.classList.toggle("passport-layout__sidebar--sticky-when-fits", fits);
+            } catch (e) { }
+        },
+    };
 
     window.lobsyCandidateNav = window.lobsyCandidateNav || {
         markInteractive: function () {
             try {
                 document.documentElement.setAttribute("data-lobsy-candidate-nav-interactive", "true");
+                syncAppHeaderHeightPx();
             } catch (e) { }
         },
+        syncAppHeaderHeight: syncAppHeaderHeightPx,
         applyDocumentTitle: function (title) {
             if (!title) {
                 return;
@@ -338,6 +405,10 @@
                     return;
                 }
                 if (Date.now() >= deadline) {
+                    if (!isBrowserOnline()) {
+                        deferReloadUntilOnline("nav-desync-" + expected);
+                        return;
+                    }
                     try {
                         console.warn("[lobsy] candidate nav desync — reloading", expected);
                     } catch (e) { }
@@ -448,7 +519,16 @@
             try {
                 window.lobsyCandidateNav.applyDocumentTitleForPath(location.pathname);
                 window.lobsyCandidateNav.scheduleSyncCheck(location.pathname);
+                window.lobsyPaspoortLayout.syncSidebarSticky();
+                syncAppHeaderHeightPx();
             } catch (eLoad) { }
+        });
+
+        window.addEventListener("resize", function () {
+            try {
+                syncAppHeaderHeightPx();
+                window.lobsyPaspoortLayout.syncSidebarSticky();
+            } catch (eResize) { }
         });
     })();
 
@@ -570,6 +650,9 @@
                     stopSilentRetry();
                     return;
                 }
+            }
+            if (!isBrowserOnline()) {
+                return;
             }
             silentRetryCount += 1;
             if (silentRetryCount >= RECONNECT_RELOAD_AFTER) {
@@ -764,11 +847,19 @@
             performance.measure("jobsy-circuit", "jobsy-blazor-boot-start", "jobsy-circuit-ready");
         } catch (e) { }
         document.documentElement.setAttribute("data-lobsy-circuit", "ready");
+        try {
+            syncAppHeaderHeightPx();
+            if (document.querySelector('[data-testid="candidate-header-nav"]')) {
+                window.lobsyCandidateNav.markInteractive();
+            }
+            window.lobsyPaspoortLayout.syncSidebarSticky();
+        } catch (eReady) { }
         watchReconnectModal();
         document.addEventListener("visibilitychange", onResume);
         window.addEventListener("pageshow", onPageShow);
         window.addEventListener("online", function () {
             onResume();
+            flushPendingReloadAfterOnline();
         });
         window.setInterval(function () {
             noteTryingState();

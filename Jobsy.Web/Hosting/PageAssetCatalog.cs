@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261021-06",
+        "css/app.min.css?v=20261021-07",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/candidate-illustrated-decorative-layers.css?v=20261020-01",
@@ -70,7 +70,7 @@ public static class PageAssetCatalog
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261019-r5billus",
         "css/features/mijn-paspoort.css?v=20261018-06",
-        "css/features/kompas-illustrated.css?v=20261021-04",
+        "css/features/kompas-illustrated.css?v=20261021-06",
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261021-08",

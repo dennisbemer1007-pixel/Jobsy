@@ -55,9 +55,25 @@
   .passport-page--illustrated .passport-layout__sidebar {
     align-self: start;
     justify-content: flex-start;
+    position: relative;
+    z-index: calc(var(--z-sticky, 20) + 3);
+    overflow: visible;
   }
 
-  .passport-page--illustrated .passport-layout__card--desktop {
+  .passport-page--illustrated .passport-layout__sidebar.passport-layout__sidebar--sticky-when-fits {
+    position: sticky;
+    inset-block-start: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
+    top: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
+  }
+
+  .passport-page--illustrated .passport-layout__sidebar.passport-layout__card--desktop {
+    align-self: start;
+    position: relative;
+    inset-block-start: auto;
+    top: auto;
+  }
+
+  .passport-page--illustrated .passport-layout__card--desktop:not(.passport-layout__sidebar) {
     align-self: start;
     position: relative;
     inset-block-start: auto;
@@ -65,9 +81,9 @@
   }
 
   .passport-page--illustrated .passport-layout__sidebar > .passport-card {
-    position: sticky;
-    inset-block-start: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
-    top: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
+    position: relative;
+    inset-block-start: auto;
+    top: auto;
   }
 }
 
@@ -272,11 +288,6 @@
 @media (min-width: 1024px) {
   .passport-page--illustrated {
     --passport-tabs-sticky-top: var(--app-header-height, 4.25rem);
-  }
-
-  .passport-page--illustrated .passport-layout__sidebar {
-    position: relative;
-    z-index: calc(var(--z-sticky, 20) + 3);
   }
 
   .passport-page--illustrated .passport-tabs {
