@@ -10,8 +10,10 @@ public sealed class DiscoveryOverviewRouteCaptureTests
     private const string ArtifactsDir = "/opt/cursor/artifacts";
 
     [Theory]
+    [InlineData(1280, 900, false, "1280")]
     [InlineData(1440, 900, false, "1440")]
     [InlineData(390, 844, true, "390")]
+    [InlineData(412, 915, true, "412")]
     public async Task Capture_real_overview_route(int width, int height, bool mobile, string tag)
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_DISCOVERY_OVERVIEW_ROUTE") ?? "").Trim() != "1")
@@ -38,11 +40,24 @@ public sealed class DiscoveryOverviewRouteCaptureTests
         await DiscoveryOverviewRouteE2eFlow.ReachDiscoveryOverviewAsync(page, baseUrl, mobile);
 
         var routeStrokeWidth = await page.EvaluateAsync<string>(
-            "() => getComputedStyle(document.querySelector('#discovery-route-path')).strokeWidth");
+            """
+            () => {
+              const mobile = window.matchMedia('(max-width: 767px)').matches;
+              const sel = mobile ? '#discovery-route-path-done, #discovery-route-path-future' : '#discovery-route-path';
+              const el = document.querySelector(sel);
+              return el ? getComputedStyle(el).strokeWidth : '0px';
+            }
+            """);
         Assert.NotEqual("0px", routeStrokeWidth);
 
         var panelBg = await page.EvaluateAsync<string>(
-            "() => getComputedStyle(document.querySelector('.journey-route__panel')).backgroundColor");
+            """
+            () => {
+              const panel = document.querySelector('.journey-route-mobile__inline:not([hidden]) .journey-route__panel')
+                || document.querySelector('.journey-route__panel');
+              return panel ? getComputedStyle(panel).backgroundColor : 'rgba(0, 0, 0, 0)';
+            }
+            """);
         Assert.NotEqual("rgba(0, 0, 0, 0)", panelBg);
 
         var fontFamily = await page.EvaluateAsync<string>(

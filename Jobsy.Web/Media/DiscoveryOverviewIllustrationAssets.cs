@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Watercolor assets for De ontdekkingsreis overview (route haltes + hero strip).</summary>
 public static class DiscoveryOverviewIllustrationAssets
 {
-    public const string Version = "20261021-02";
+    public const string Version = "20261021-05";
 
     public static string HeroStrip =>
         $"/images/candidate-illustrated/discovery-overview-strip.webp?v={Version}";
