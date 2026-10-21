@@ -55,6 +55,14 @@ public static class PassportRedirects
     public static string BuildPassportUrl(string tab, string? returnUrl = null)
         => BuildUrl(PassportPath, PassportTabs.Normalize(tab), returnUrl);
 
+    public static string BuildPassportDataSectionUrl(string section, bool saved = false, bool error = false)
+    {
+        var qs = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase) { ["tab"] = PassportTabs.Data, ["section"] = section.Trim() };
+        if (saved) qs["saved"] = "1";
+        if (error) qs["error"] = "1";
+        return QueryHelpers.AddQueryString(PassportPath, qs!);
+    }
+
     public static string BuildClassicProfileUrl(string tab, string? returnUrl = null)
         => BuildUrl(ClassicProfilePath, CandidateKompasTabs.Normalize(tab), returnUrl);
 

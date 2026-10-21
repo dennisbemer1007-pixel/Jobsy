@@ -1,6 +1,6 @@
 @page "/candidate/paspoort"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/profile")]
 @using Jobsy.Core.Enums
@@ -13,7 +13,9 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
 @using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -22,11 +24,14 @@
 @inject PersistentComponentState Persist
 @inject IFeatureFlags FeatureFlags
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page passport-page passport-page--illustrated @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "passport-page--compact-preview-c" : null)">
+<div class="panel-page passport-page passport-page--illustrated @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "passport-page--compact-preview-c" : null)"
+     data-candidate-passport
+     data-tab="@_tab">
     <h1 class="visually-hidden">@Culture["Passport.Title"]</h1>
 
     @if (_loading)
@@ -62,8 +67,8 @@
                               LicenseLabel="@_license"
                               CvBusy="_pdfBusy"
                               DnaPassport="_flags.PassportPdfV2Enabled"
-                              OnEdit="OpenDataTab"
-                              OnDownloadCv="DownloadLobsyCvAsync" />
+                              EditHref="@_dataTabHref"
+                              CvDownloadHref="@CandidatePassportPdfEndpoints.LobsyCvPath" />
                 <CandidateLobsyTipCard />
             </div>
 
@@ -82,8 +87,8 @@
                                   OneLiner="@_oneLiner"
                                   CvBusy="_pdfBusy"
                                   DnaPassport="_flags.PassportPdfV2Enabled"
-                                  OnEdit="OpenDataTab"
-                                  OnDownloadCv="DownloadLobsyCvAsync" />
+                                  EditHref="@_dataTabHref"
+                                  CvDownloadHref="@CandidatePassportPdfEndpoints.LobsyCvPath" />
                 </div>
 
                 <PassportOverview CompetenceProgress="@Arc(AssessmentKind.Competence)"
@@ -99,7 +104,7 @@
                                   CultureHomeStatus="@_cultureHomeStatus"
                                   Important="@_important"
                                   ImportantStatus="@_importantStatus"
-                                  OnGoTests="() => SetTab(PassportTabs.Tests)" />
+                                  TestsHref="@PassportRedirects.BuildPassportUrl(PassportTabs.Tests)" />
 
                 @if (_encourageContext is not null)
                 {
@@ -130,152 +135,57 @@
                 }
 
                 <div class="passport-tabs-shell">
-                    <div class="passport-tabs"
-                         role="tablist"
-                         aria-label="@Culture["Passport.Title"]"
-                         @onkeydown="OnTabListKeyDown">
-                        @foreach (var tab in VisibleTabs())
-                        {
-                            var id = $"passport-tab-{tab}";
-                            var selected = _tab == tab;
-                            <button type="button"
-                                    id="@id"
-                                    class="passport-tab @(selected ?"passport-tab--active" : null)"
-                                    role="tab"
-                                    aria-selected="@(selected ? "true" : "false")"
-                                    aria-controls="@($"passport-panel-{tab}")"
-                                    tabindex="@(selected ? 0 : -1)"
-                                    @onclick="() => SetTab(tab)">
+                    <div class="passport-tabs" role="tablist" aria-label="@Culture["Passport.Title"]">
+                        @foreach (var tab in VisibleTabs()) {
+                            var id = $"passport-tab-{tab}"; var selected = _tab == tab;
+                            <a id="@id" class="passport-tab @(selected ?"passport-tab--active" : null)" role="tab" aria-selected="@(selected ? "true" : "false")" aria-controls="@($"passport-panel-{tab}")" tabindex="@(selected ? 0 : -1)" href="@PassportRedirects.BuildPassportUrl(tab)">
                                 <span class="passport-tabs__icon" aria-hidden="true">@((MarkupString)TabIcon(tab))</span>
                                 <span>@Culture[TabLabelKey(tab)]</span>
-                                @if (tab == PassportTabs.Tests && _testsNextStepCount > 0)
-                                {
-                                    <span class="passport-tabs__pill">@_testsNextStepCount</span>
-                                }
-                            </button>
+                                @if (tab == PassportTabs.Tests && _testsNextStepCount > 0) { <span class="passport-tabs__pill">@_testsNextStepCount</span> }
+                            </a>
                         }
                     </div>
                 </div>
-
-                <div class="passport-panels">
-                    <article id="passport-panel-dna"
-                             class="passport-panel"
-                             role="tabpanel"
-                             aria-labelledby="passport-tab-dna"
-                             hidden="@(_tab != PassportTabs.Dna)">
-                        @if (_visited.Contains(PassportTabs.Dna))
-                        {
+                                <div class="passport-panels">
+                    @if (_tab == PassportTabs.Dna) {
+                        <article id="passport-panel-dna" class="passport-panel" role="tabpanel" aria-labelledby="passport-tab-dna">
                             <PanelErrorBoundary Name="passport-dna">
-                                <PassportDnaTab BubbleText="@BubbleFor(PassportTabs.Dna)"
-                                                Highlights="_highlights"
-                                                TestsComplete="@(_completedTests >= 4)"
-                                                Story="@_story"
-                                                StoryGeneratedAt="_storyAt"
-                                                Keywords="_keywords"
-                                                Hobbies="_hobbies"
-                                                CultureDetail="_cultureDetail"
-                                                ValuesDetail="_valuesDetail"
-                                                Shells="_shells"
-                                                OnGoTests="() => SetTab(PassportTabs.Tests)" />
+                                <PassportDnaTab @rendermode="InteractiveTab" BubbleText="@BubbleFor(PassportTabs.Dna)" Highlights="_highlights" TestsComplete="@(_completedTests >= 4)" Story="@_story" StoryGeneratedAt="_storyAt" Keywords="_keywords" Hobbies="_hobbies" CultureDetail="_cultureDetail" ValuesDetail="_valuesDetail" Shells="_shells" TestsHref="@PassportRedirects.BuildPassportUrl(PassportTabs.Tests)" />
                             </PanelErrorBoundary>
-                        }
-                    </article>
-
-                    <article id="passport-panel-tests"
-                             class="passport-panel"
-                             role="tabpanel"
-                             aria-labelledby="passport-tab-tests"
-                             hidden="@(_tab != PassportTabs.Tests)">
-                        @if (_visited.Contains(PassportTabs.Tests))
-                        {
+                        </article>
+                    } else if (_tab == PassportTabs.Tests) {
+                        <article id="passport-panel-tests" class="passport-panel" role="tabpanel" aria-labelledby="passport-tab-tests">
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Tests)" />
-                            <PanelErrorBoundary Name="passport-tests">
-                                <PassportTestsTab Active="@(_tab == PassportTabs.Tests)" Snapshot="_kompas" />
-                            </PanelErrorBoundary>
-                        }
-                    </article>
-
-                    <article id="passport-panel-fit"
-                             class="passport-panel"
-                             role="tabpanel"
-                             aria-labelledby="passport-tab-fit"
-                             hidden="@(_tab != PassportTabs.Fit)">
-                        @if (_visited.Contains(PassportTabs.Fit))
-                        {
-                            @if (_flags.EmployersEnabled || _flags.FutureJobsForYouEnabled)
-                            {
+                            <PanelErrorBoundary Name="passport-tests"><PassportTestsTab @rendermode="InteractiveTab" Active="true" Snapshot="_kompas" /></PanelErrorBoundary>
+                        </article>
+                    } else if (_tab == PassportTabs.Fit) {
+                        <article id="passport-panel-fit" class="passport-panel" role="tabpanel" aria-labelledby="passport-tab-fit">
+                            @if (_flags.EmployersEnabled || _flags.FutureJobsForYouEnabled) {
                                 <LobsyBubble Text="@BubbleFor(PassportTabs.Fit)" />
-                                <PanelErrorBoundary Name="passport-fit">
-                                    <PassportFitTab Active="@(_tab == PassportTabs.Fit)"
-                                                    Snapshot="_kompas"
-                                                    OpenForWork="@(_profile?.OpenForWork ?? true)"
-                                                    CheckTitle="@_fitCheck" />
-                                </PanelErrorBoundary>
-                            }
-                            else
-                            {
-                                <p class="login-lead" data-testid="passport-fit-soon">@Culture["Passport.Fit.Soon"]</p>
-                            }
-                        }
-                    </article>
-
-                    <article id="passport-panel-career"
-                             class="passport-panel"
-                             role="tabpanel"
-                             aria-labelledby="passport-tab-career"
-                             hidden="@(_tab != PassportTabs.Career)">
-                        @if (_visited.Contains(PassportTabs.Career))
-                        {
+                                <PanelErrorBoundary Name="passport-fit"><PassportFitTab @rendermode="InteractiveTab" Active="true" Snapshot="_kompas" OpenForWork="@(_profile?.OpenForWork ?? true)" CheckTitle="@_fitCheck" /></PanelErrorBoundary>
+                            } else { <p class="login-lead" data-testid="passport-fit-soon">@Culture["Passport.Fit.Soon"]</p> }
+                        </article>
+                    } else if (_tab == PassportTabs.Career) {
+                        <article id="passport-panel-career" class="passport-panel" role="tabpanel" aria-labelledby="passport-tab-career">
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Career)" />
-                            <PanelErrorBoundary Name="passport-career">
-                                <PassportCareerTab Active="@(_tab == PassportTabs.Career)" />
-                            </PanelErrorBoundary>
-                        }
-                    </article>
-
-                    <article id="passport-panel-proof"
-                             class="passport-panel"
-                             role="tabpanel"
-                             aria-labelledby="passport-tab-proof"
-                             hidden="@(_tab != PassportTabs.Proof)">
-                        @if (_visited.Contains(PassportTabs.Proof))
-                        {
+                            <PanelErrorBoundary Name="passport-career"><PassportCareerTab @rendermode="InteractiveTab" Active="true" /></PanelErrorBoundary>
+                        </article>
+                    } else if (_tab == PassportTabs.Proof) {
+                        <article id="passport-panel-proof" class="passport-panel" role="tabpanel" aria-labelledby="passport-tab-proof">
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Proof)" />
-                            <PanelErrorBoundary Name="passport-proof">
-                                <PassportProofTab Active="@(_tab == PassportTabs.Proof)" InitialItem="@_proofItem" />
-                            </PanelErrorBoundary>
-                        }
-                    </article>
-
-                    <article id="passport-panel-references"
-                             class="passport-panel"
-                             role="tabpanel"
-                             aria-labelledby="passport-tab-references"
-                             hidden="@(_tab != PassportTabs.References)">
-                        @if (_visited.Contains(PassportTabs.References))
-                        {
+                            <PanelErrorBoundary Name="passport-proof"><PassportProofTab @rendermode="InteractiveTab" Active="true" InitialItem="@_proofItem" /></PanelErrorBoundary>
+                        </article>
+                    } else if (_tab == PassportTabs.References) {
+                        <article id="passport-panel-references" class="passport-panel" role="tabpanel" aria-labelledby="passport-tab-references">
                             <LobsyBubble Text="@BubbleFor(PassportTabs.References)" />
-                            <PanelErrorBoundary Name="passport-references">
-                                <PassportReferenceVerificationTab Active="@(_tab == PassportTabs.References)"
-                                                                  FirstWorkExperienceEntryId="_firstWorkEntryId" />
-                            </PanelErrorBoundary>
-                        }
-                    </article>
-
-                    <article id="passport-panel-data"
-                             class="passport-panel"
-                             role="tabpanel"
-                             aria-labelledby="passport-tab-data"
-                             hidden="@(_tab != PassportTabs.Data)">
-                        @if (_visited.Contains(PassportTabs.Data))
-                        {
+                            <PanelErrorBoundary Name="passport-references"><PassportReferenceVerificationTab @rendermode="InteractiveTab" Active="true" FirstWorkExperienceEntryId="_firstWorkEntryId" /></PanelErrorBoundary>
+                        </article>
+                    } else if (_tab == PassportTabs.Data) {
+                        <article id="passport-panel-data" class="passport-panel" role="tabpanel" aria-labelledby="passport-tab-data">
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Data)" />
-                            <PanelErrorBoundary Name="passport-data">
-                                <PassportDataTab Active="@(_tab == PassportTabs.Data)"
-                                                 DangerIntent="@_dataDangerIntent" />
-                            </PanelErrorBoundary>
-                        }
-                    </article>
+                            <PanelErrorBoundary Name="passport-data"><PassportDataTab @rendermode="InteractiveTab" Active="true" DangerIntent="@_dataDangerIntent" Section="@_dataSection" SectionLinks="true" ExternalMotivationForm="true" /></PanelErrorBoundary>
+                        </article>
+                    }
                 </div>
             </div>
         </div>
@@ -286,14 +196,16 @@
     private const string DnaPersistKey = "passport-dna";
     private const string KompasPersistKey = "passport-kompas";
 
+    private static readonly InteractiveServerRenderMode InteractiveTab = new(prerender: false);
+
     private string _tab = PassportTabs.Dna;
+    private string? _dataSection;
+    private string _dataTabHref = PassportRedirects.BuildPassportUrl(PassportTabs.Data);
     private string? _dataDangerIntent;
     private string? _fitCheck;
     private string? _proofItem;
     private bool _freshLayer;
-    private readonly HashSet<string> _visited = new(StringComparer.OrdinalIgnoreCase);
     private bool _loading = true;
-    private bool _listening;
     private bool _pdfBusy;
     private string? _message;
     private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
@@ -351,8 +263,6 @@
 
     protected override void OnInitialized()
     {
-        Navigation.LocationChanged += OnLocationChanged;
-        _listening = true;
         _persistSubscription = Persist.RegisterOnPersisting(PersistPassportState);
         if (Persist.TryTakeFromJson<CandidateDnaSummary>(DnaPersistKey, out var dna) && dna is not null)
         {
@@ -365,7 +275,6 @@
         }
 
         ApplyTabFromUri();
-        _visited.Add(_tab);
     }
 
     protected override async Task OnInitializedAsync()
@@ -435,24 +344,6 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_loading)
-        {
-            return;
-        }
-
-        try
-        {
-            await Js.InvokeVoidAsync("lobsyPaspoortLayout.syncSidebarSticky");
-            await Js.InvokeVoidAsync("lobsyCandidateNav.syncAppHeaderHeight");
-        }
-        catch
-        {
-            // Disconnected circuit / prerender
-        }
-    }
-
     private async Task LoadReferenceVerificationAsync()
     {
         if (!_flags.ReferenceVerificationEnabled)
@@ -501,44 +392,26 @@
         return Task.CompletedTask;
     }
 
-    public void Dispose()
-    {
-        _persistSubscription.Dispose();
-        if (_listening)
-        {
-            Navigation.LocationChanged -= OnLocationChanged;
-            _listening = false;
-        }
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        ApplyTabFromUri();
-        _ = InvokeAsync(StateHasChanged);
-    }
+    public void Dispose() => _persistSubscription.Dispose();
 
     private void ApplyTabFromUri()
     {
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var tab = PassportTabs.Dna;
-        var query = QueryHelpers.ParseQuery(uri.Query);
-        if (query.TryGetValue("tab", out var values))
+        var query = HttpContextAccessor.HttpContext?.Request.Query;
+        if (query is null || query.Count == 0)
         {
-            tab = PassportTabs.Normalize(values.FirstOrDefault());
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            query = new QueryCollection(QueryHelpers.ParseQuery(uri.Query));
         }
 
-        _freshLayer = query.TryGetValue("laag", out var laag)
-            && string.Equals(laag.FirstOrDefault(), "1", StringComparison.Ordinal);
+        var tab = PassportTabs.Dna;
+        if (query.TryGetValue("tab", out var values)) tab = PassportTabs.Normalize(values.FirstOrDefault());
+        _freshLayer = query.TryGetValue("laag", out var laag) && string.Equals(laag.FirstOrDefault(), "1", StringComparison.Ordinal);
         _proofItem = query.TryGetValue("item", out var item) ? item.FirstOrDefault() : null;
         _fitCheck = query.TryGetValue("check", out var check) ? check.FirstOrDefault() : null;
-        _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var preview)
-            ? preview.FirstOrDefault()
-            : null;
-        _dataDangerIntent = query.TryGetValue("danger", out var danger)
-            ? danger.FirstOrDefault()
-            : null;
+        _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var preview) ? preview.FirstOrDefault() : null;
+        _dataDangerIntent = query.TryGetValue("danger", out var danger) ? danger.FirstOrDefault() : null;
+        _dataSection = query.TryGetValue("section", out var section) ? section.FirstOrDefault() : null;
         _tab = tab;
-        _visited.Add(_tab);
     }
 
     private void ApplyEncouragePreviewFromUri()
@@ -548,54 +421,6 @@
         _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var v)
             ? v.FirstOrDefault()
             : null;
-    }
-
-    private Task SetTab(string tab)
-    {
-        tab = PassportTabs.Normalize(tab);
-        _tab = tab;
-        _visited.Add(tab);
-        var url = PassportRedirects.BuildPassportUrl(tab);
-        Navigation.NavigateTo(url, forceLoad: false, replace: true);
-        return Task.CompletedTask;
-    }
-
-    private Task OpenDataTab() => SetTab(PassportTabs.Data);
-
-    private async Task OnTabListKeyDown(KeyboardEventArgs e)
-    {
-        var delta = e.Key switch
-        {
-            "ArrowRight" or "ArrowDown" => 1,
-            "ArrowLeft" or "ArrowUp" => -1,
-            "Home" => int.MinValue,
-            "End" => int.MaxValue,
-            _ => 0
-        };
-        if (delta == 0)
-        {
-            return;
-        }
-
-        var visible = VisibleTabs();
-        if (delta == int.MinValue)
-        {
-            await SetTab(visible[0]);
-            return;
-        }
-
-        if (delta == int.MaxValue)
-        {
-            await SetTab(visible[^1]);
-            return;
-        }
-
-        await SetTab(PassportTabs.Neighbor(
-            _tab,
-            delta,
-            _flags.EmployersEnabled,
-            _flags.FutureJobsForYouEnabled,
-            _flags.ReferenceVerificationEnabled));
     }
 
     private void ApplyModel()
@@ -826,23 +651,6 @@
         PassportTabs.Data => NavIcons.Profile,
         _ => NavIcons.DnaHelix
     };
-
-    private async Task DownloadLobsyCvAsync()
-    {
-        _pdfBusy = true;
-        try
-        {
-            await Api.DownloadMyLobsyCvPdfAsync(Js);
-        }
-        catch
-        {
-            _message = Culture["Panel.ErrorInline"];
-        }
-        finally
-        {
-            _pdfBusy = false;
-        }
-    }
 
     private static string InitialsFrom(MeProfile? profile)
     {

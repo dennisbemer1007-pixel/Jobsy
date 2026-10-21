@@ -319,6 +319,10 @@
         {
             <script src="js/candidate-applications-client.js?v=20261021-01" nonce="@Nonce" defer></script>
         }
+        @if (IncludeCandidatePassportScript)
+        {
+            <script src="js/candidate-passport-client.js?v=20261021-01" nonce="@Nonce" defer></script>
+        }
     @if (LoadBlazorRuntime)
     {
         @* Block unprompted full reloads before Blazor.start (framework refresh/rejected paths call location.reload). *@
@@ -425,6 +429,9 @@
     private bool IncludeCandidateApplicationsScript =>
         PageAssetCatalog.IncludeCandidateApplicationsScript(RequestPath);
 >>>>>>> d9c3c0128 (Candidate applications: static SSR, client filters, BFF withdraw.)
+
+    private bool IncludeCandidatePassportScript =>
+        PageAssetCatalog.IncludeCandidatePassportScript(RequestPath);
 
     private bool IncludeMapPreconnect =>
         PageAssetCatalog.IncludeMapPreconnect(RequestPath);
