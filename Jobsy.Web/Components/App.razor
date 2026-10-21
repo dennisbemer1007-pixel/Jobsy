@@ -282,9 +282,9 @@
     </div>
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261021-01" nonce="@Nonce" defer></script>
+            <script src="js/app-core.js?v=20261021-01" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
-            <script src="js/lobsyPush.js?v=20261016-02" nonce="@Nonce" defer></script>
+            <script src="js/lobsyPush.js?v=20261021-02" nonce="@Nonce" defer></script>
             <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
         }
         else
@@ -332,7 +332,7 @@
             })();
         </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
-        <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
+        <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
         <script src="js/blazor-boot.js?v=20261021-02" nonce="@Nonce" defer></script>
     }
 </body>

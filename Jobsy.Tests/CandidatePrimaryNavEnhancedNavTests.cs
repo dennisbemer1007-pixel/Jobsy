@@ -3,13 +3,18 @@ namespace Jobsy.Tests;
 public sealed class CandidatePrimaryNavEnhancedNavTests
 {
     [Fact]
-    public void Candidate_primary_nav_links_disable_blazor_enhanced_navigation()
+    public void Candidate_primary_nav_uses_interactive_nav_link_without_enhance_nav_false()
     {
         var root = FindRepoRoot();
         var header = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "CandidateHeaderNav.razor"));
         var bottom = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "BottomNav.razor"));
-        Assert.Contains("data-enhance-nav=\"false\"", header, StringComparison.Ordinal);
-        Assert.Contains("data-enhance-nav=\"false\"", bottom, StringComparison.Ordinal);
+        var link = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "CandidateNavLink.razor"));
+        Assert.Contains("<CandidateNavLink", header, StringComparison.Ordinal);
+        Assert.Contains("<CandidateNavLink", bottom, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-enhance-nav=\"false\"", header, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-enhance-nav=\"false\"", bottom, StringComparison.Ordinal);
+        Assert.Contains("NavigateTo(Href, forceLoad: false)", link, StringComparison.Ordinal);
+        Assert.Contains("@onclick:preventDefault=\"@RendererInfo.IsInteractive\"", link, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
