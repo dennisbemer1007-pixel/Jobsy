@@ -56,6 +56,8 @@ window.jobMap = (function () {
     let viewportNotifySuppressed = 0;
     let mapResizePausedUntil = 0;
     let viewportBootstrapDone = false;
+    /** When false, pin fetches ignore map bbox so list (travel filter) and pins stay aligned until the user pans/zooms. */
+    let viewportPinBboxEnabled = false;
     let lastUserGestureAt = 0;
     let userGesturePending = false;
     let setVacanciesCallCount = 0;
@@ -2383,6 +2385,9 @@ window.jobMap = (function () {
     }
 
     function viewportQueryString() {
+        if (!viewportPinBboxEnabled) {
+            return "";
+        }
         var box = readViewportBounds();
         if (!box) {
             return "";
@@ -5129,13 +5134,12 @@ window.jobMap = (function () {
                 const user = viewportUserIntent();
                 if (!viewportBootstrapDone) {
                     viewportBootstrapDone = true;
-                    reloadPins();
-                    notifyViewportList();
                     return;
                 }
                 if (!user) {
                     return;
                 }
+                viewportPinBboxEnabled = true;
                 reloadPins();
                 notifyViewportList();
             }, 300);
