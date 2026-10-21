@@ -117,6 +117,7 @@
     private int _activeIndex = -1;
     private bool _focused;
     private bool _suppressBlurClose;
+    private CancellationTokenSource? _queryNotifyCts;
     private string ListboxId => InputId + "-listbox";
 
     private string OptionId(int index) => InputId + "-opt-" + index;
@@ -138,7 +139,11 @@
         }
 
         _wasLocating = Locating;
-        _showSuggestions = ShowSuggestions;
+        if (!_focused || !ShowSuggestions)
+        {
+            _showSuggestions = ShowSuggestions;
+        }
+
         _originSet = OriginSet;
         if (_activeIndex >= Suggestions.Count)
         {
@@ -146,11 +151,51 @@
         }
     }
 
-    private async Task OnQueryChangedAsync()
+    private Task OnQueryChangedAsync()
     {
         _activeIndex = -1;
-        await QueryChanged.InvokeAsync(_query);
-        await OnQueryInput.InvokeAsync(_query);
+        ScheduleDebouncedQueryChanged();
+        if (OnQueryInput.HasDelegate)
+        {
+            _ = OnQueryInput.InvokeAsync(_query);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void ScheduleDebouncedQueryChanged()
+    {
+        _queryNotifyCts?.Cancel();
+        _queryNotifyCts?.Dispose();
+        _queryNotifyCts = new CancellationTokenSource();
+        var token = _queryNotifyCts.Token;
+        _ = FlushQueryChangedDebouncedAsync(token);
+    }
+
+    private async Task FlushQueryChangedDebouncedAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(300, token);
+            if (QueryChanged.HasDelegate)
+            {
+                await QueryChanged.InvokeAsync(_query);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task FlushQueryChangedImmediateAsync()
+    {
+        _queryNotifyCts?.Cancel();
+        _queryNotifyCts?.Dispose();
+        _queryNotifyCts = null;
+        if (QueryChanged.HasDelegate)
+        {
+            await QueryChanged.InvokeAsync(_query);
+        }
     }
 
     private async Task OnFocus()
@@ -181,6 +226,7 @@
         _showSuggestions = false;
         _activeIndex = -1;
         await ShowSuggestionsChanged.InvokeAsync(false);
+        await FlushQueryChangedImmediateAsync();
         await OnBlurComplete.InvokeAsync();
     }
 
