@@ -3,7 +3,6 @@
 @using Jobsy.Web.Media
 @using Jobsy.Web.Pwa
 @using Microsoft.AspNetCore.Components.Authorization
-@inject IHttpContextAccessor HttpContextAccessor
 
 <header class="app-header" data-testid="app-shell-header">
     <div class="app-header__brand">
@@ -14,11 +13,11 @@
             </span>
         </a>
     </div>
-    @if (_showCandidateHeaderNav)
-    {
-        <CandidateHeaderNavReserve />
-        <CandidateHeaderNav />
-    }
+    <AuthorizeView Roles="@JobsyRoles.Candidate">
+        <Authorized>
+            <CandidateHeaderNav />
+        </Authorized>
+    </AuthorizeView>
     <div class="app-header__actions">
         @if (ShowCandidatePwaInstall)
         {
@@ -40,15 +39,6 @@
 </header>
 
 @code {
-    private bool _showCandidateHeaderNav;
-
-    protected override void OnInitialized()
-    {
-        var user = HttpContextAccessor.HttpContext?.User;
-        _showCandidateHeaderNav = user?.Identity?.IsAuthenticated == true
-            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
-    }
-
     [Parameter, EditorRequired]
     public string HomeHref { get; set; } = "/";
 
