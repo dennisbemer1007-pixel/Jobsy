@@ -30,6 +30,14 @@ public sealed class CandidateOnboardingAfterResetApiTests : IClassFixture<RoleFu
             new ResetCandidateProfileRequest("VERWIJDER"));
         Assert.Equal(HttpStatusCode.OK, resetResponse.StatusCode);
 
+        await using (var resetScope = _factory.Services.CreateAsyncScope())
+        {
+            var resetDb = resetScope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var user = await resetDb.Users.AsNoTracking().SingleAsync(u => u.Id == _factory.CandidateId);
+            Assert.Null(user.FirstName);
+            Assert.Null(user.LastName);
+        }
+
         using var onboardingGet = await client.GetAsync("api/me/onboarding");
         Assert.Equal(HttpStatusCode.OK, onboardingGet.StatusCode);
         var onboarding = await onboardingGet.Content.ReadFromJsonAsync<CandidateOnboardingStateDto>();

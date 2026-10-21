@@ -18,7 +18,7 @@
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
-    transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
+    transition-delay: 0s;
 }
 
 .reconnect-toast.components-reconnect-failed,

@@ -8,6 +8,10 @@
     var reconnectAttempts = 0;
     var rejectedAuthCheck = null;
     var silentRetryTimer = null;
+    var silentRetryCount = 0;
+    var RECONNECT_RELOAD_AFTER = 6;
+    var RELOAD_THROTTLE_MS = 30000;
+    var tryingSinceMs = 0;
 
     function allowDocumentReload() {
         window.__lobsyAllowDocumentReload = true;
@@ -39,6 +43,150 @@
     }
 
     installReloadGuard();
+
+    function reconnectModalVisible() {
+        return modalIsVisible(modal());
+    }
+
+    window.lobsyCircuit = {
+        isReadyForAction: function () {
+            try {
+                var html = document.documentElement;
+                if (!html || html.getAttribute("data-lobsy-circuit") !== "ready") {
+                    return false;
+                }
+                if (html.hasAttribute("data-lobsy-reconnect-active")) {
+                    return false;
+                }
+                if (reconnectModalVisible()) {
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        },
+        reloadPageThrottled: reloadPageThrottled,
+        reloadPageOnce: function (reason) {
+            reloadPageThrottled(reason || "default");
+        },
+        recoverAfterSuspend: function (source) {
+            return recoverAfterSuspend(source || "api");
+        },
+        demoteStuckTrying: demoteInvisibleTryingToFailed
+    };
+
+    function reloadPageThrottled(reason) {
+        var key = "lobsy:reload-ts";
+        try {
+            var now = Date.now();
+            var last = parseInt(sessionStorage.getItem(key) || "0", 10);
+            if (last && now - last < RELOAD_THROTTLE_MS) {
+                try {
+                    console.info("[lobsy] reload throttled (" + reason + ")");
+                } catch (e) { }
+                return false;
+            }
+            sessionStorage.setItem(key, String(now));
+        } catch (e2) { }
+        try {
+            console.info("[lobsy] reload (" + reason + ")");
+        } catch (e3) { }
+        allowDocumentReload();
+        window.location.reload();
+        return true;
+    }
+
+    function modalNeedsRecovery(m) {
+        if (!m || !m.classList) {
+            return false;
+        }
+        return (
+            m.classList.contains("components-reconnect-show")
+            || m.classList.contains("components-reconnect-retrying")
+            || m.classList.contains("components-reconnect-failed")
+            || m.classList.contains("components-reconnect-rejected")
+            || m.classList.contains("components-reconnect-paused")
+        );
+    }
+
+    function demoteInvisibleTryingToFailed() {
+        var m = modal();
+        if (!m || !m.classList) {
+            return;
+        }
+        if (
+            m.classList.contains("components-reconnect-show")
+            || m.classList.contains("components-reconnect-retrying")
+        ) {
+            m.classList.remove("components-reconnect-show", "components-reconnect-retrying");
+            m.classList.add("components-reconnect-failed");
+            syncReconnectReserve();
+        }
+    }
+
+    function noteTryingState() {
+        var m = modal();
+        if (!m || !m.classList) {
+            tryingSinceMs = 0;
+            return;
+        }
+        if (
+            m.classList.contains("components-reconnect-show")
+            || m.classList.contains("components-reconnect-retrying")
+        ) {
+            if (!tryingSinceMs) {
+                tryingSinceMs = Date.now();
+            }
+            if (Date.now() - tryingSinceMs > 8000) {
+                demoteInvisibleTryingToFailed();
+                tryingSinceMs = 0;
+            }
+            return;
+        }
+        tryingSinceMs = 0;
+    }
+
+    function circuitInteractive() {
+        try {
+            return document.documentElement.getAttribute("data-lobsy-circuit") === "ready"
+                && !document.documentElement.hasAttribute("data-lobsy-reconnect-active");
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async function recoverAfterSuspend(source) {
+        if (document.visibilityState !== "visible") {
+            return;
+        }
+        demoteInvisibleTryingToFailed();
+        noteTryingState();
+        var m = modal();
+        if (m && modalNeedsRecovery(m)) {
+            var ok = await tryReconnect("suspend-" + source);
+            if (ok) {
+                return;
+            }
+        } else if (window.Blazor && typeof Blazor.reconnect === "function") {
+            try {
+                var silentOk = await Blazor.reconnect();
+                if (silentOk === true) {
+                    silentRetryCount = 0;
+                    stopSilentRetry();
+                    syncReconnectReserve();
+                    return;
+                }
+            } catch (e) { }
+        }
+        if (m && m.classList.contains("components-reconnect-rejected")) {
+            handleRejectedState();
+            return;
+        }
+        if (!circuitInteractive()) {
+            reloadPageThrottled("mobile-suspend-" + source);
+        }
+    }
 
     window.lobsyCandidateNav = window.lobsyCandidateNav || {
         markInteractive: function () {
@@ -360,13 +508,10 @@
     }
 
     function modalShowsReconnect() {
-        var m = modal();
-        if (!m || !m.classList) return false;
-        return m.classList.contains("components-reconnect-failed");
+        return modalNeedsRecovery(modal());
     }
 
     async function tryReconnect(reason) {
-        if (!modalShowsReconnect()) return false;
         if (!window.Blazor || typeof Blazor.reconnect !== "function") return false;
         reconnectAttempts += 1;
         try {
@@ -375,6 +520,7 @@
         try {
             var ok = await Blazor.reconnect();
             if (ok === true) {
+                silentRetryCount = 0;
                 stopSilentRetry();
                 syncReconnectReserve();
                 return true;
@@ -390,7 +536,18 @@
         silentRetryTimer = window.setInterval(function () {
             var m = modal();
             if (!m || !m.classList.contains("components-reconnect-failed")) {
+                if (!m || !m.classList.contains("components-reconnect-rejected")) {
+                    stopSilentRetry();
+                    return;
+                }
+            }
+            silentRetryCount += 1;
+            if (silentRetryCount >= RECONNECT_RELOAD_AFTER) {
                 stopSilentRetry();
+                try {
+                    console.info("[lobsy] reconnect exhausted — reload once");
+                } catch (e) { }
+                window.lobsyCircuit.reloadPageOnce("reconnect-exhausted");
                 return;
             }
             tryReconnect("silent-interval");
@@ -415,10 +572,17 @@
             return;
         }
         var obs = new MutationObserver(function () {
+            noteTryingState();
             syncReconnectReserve();
+            ensureReconnectModalInteractable();
             if (m.classList.contains("components-reconnect-rejected")) {
                 handleRejectedState();
             } else if (m.classList.contains("components-reconnect-failed")) {
+                scheduleSilentRetry();
+            } else if (
+                m.classList.contains("components-reconnect-show")
+                || m.classList.contains("components-reconnect-retrying")
+            ) {
                 scheduleSilentRetry();
             } else {
                 m.classList.remove("reconnect-toast--auth-pending");
@@ -429,15 +593,31 @@
         obs.observe(m, { attributes: true, attributeFilter: ["class"] });
     }
 
-    function onResume() {
-        if (document.visibilityState !== "visible") {
+    function ensureReconnectModalInteractable() {
+        var m = modal();
+        if (!m || !m.classList) {
             return;
         }
-        tryReconnect("visibility");
-        var m = modal();
-        if (m && m.classList.contains("components-reconnect-rejected")) {
-            handleRejectedState();
+        if (!modalNeedsRecovery(m)) {
+            m.classList.remove("components-reconnect-hide");
+            return;
         }
+        if (m.classList.contains("components-reconnect-hide")) {
+            m.classList.remove("components-reconnect-hide");
+        }
+        demoteInvisibleTryingToFailed();
+    }
+
+    function onResume() {
+        recoverAfterSuspend("visibility");
+    }
+
+    function onPageShow(ev) {
+        if (ev && ev.persisted) {
+            recoverAfterSuspend("bfcache");
+            return;
+        }
+        recoverAfterSuspend("pageshow");
     }
 
     async function manualReconnect() {
@@ -478,6 +658,12 @@
             if (t.closest("[data-reconnect-login]")) {
                 ev.preventDefault();
                 goLoginAfterSessionExpired();
+                return;
+            }
+            if (t.closest("[data-reconnect-reload]")) {
+                ev.preventDefault();
+                stopSilentRetry();
+                window.lobsyCircuit.reloadPageOnce("reconnect-manual");
             }
         });
     }
@@ -527,9 +713,14 @@
         document.documentElement.setAttribute("data-lobsy-circuit", "ready");
         watchReconnectModal();
         document.addEventListener("visibilitychange", onResume);
+        window.addEventListener("pageshow", onPageShow);
         window.addEventListener("online", function () {
             onResume();
         });
+        window.setInterval(function () {
+            noteTryingState();
+            ensureReconnectModalInteractable();
+        }, 2000);
 
     }).catch(function (err) {
         try { console.warn("[lobsy] Blazor.start failed", err); } catch (e) { }
