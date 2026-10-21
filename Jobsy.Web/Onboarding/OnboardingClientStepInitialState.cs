@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
+using Jobsy.Web.Components.Shared;
 using Jobsy.Web.Localization;
 namespace Jobsy.Web.Onboarding;
 
@@ -42,6 +43,7 @@ internal static class OnboardingClientStepInitialState
             {
                 code,
                 label = culture[WorkStatusCatalog.LabelKey(code)],
+                icon = ChoiceTileIcons.ForWorkStatus(code) ?? "",
             })
             .ToList();
 

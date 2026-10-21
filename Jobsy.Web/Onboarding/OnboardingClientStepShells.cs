@@ -40,7 +40,15 @@ internal static class OnboardingClientStepShells
         sb.Append("<fieldset id=\"onboarding-field-birthdate\"><legend>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.BirthDate"]));
         sb.Append("</legend><input data-ob-client=\"birthDate\" inputmode=\"numeric\" autocomplete=\"bday\" /></fieldset>");
-        sb.Append("<div class=\"work-status-chips\"><div data-ob-client=\"workStatusGrid\"></div></div>");
+        sb.Append("<fieldset class=\"work-status-field\" id=\"onboarding-field-work-status\">");
+        sb.Append("<legend class=\"ob-wizard__section-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Legend"]));
+        sb.Append("</legend>");
+        sb.Append("<p class=\"ob-wizard__hint ob-wizard__section-hint\">");
+        sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Hint"]));
+        sb.Append("</p>");
+        sb.Append("<div class=\"work-status-chips lobsy-choice-grid lobsy-choice-grid--desktop-3\" data-ob-client=\"workStatusGrid\" role=\"group\"></div>");
+        sb.Append("</fieldset>");
         sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel"));
         sb.Append("</div>");
         return sb.ToString();

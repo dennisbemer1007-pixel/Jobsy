@@ -81,6 +81,19 @@ public static class CandidateNameRules
             resolvedLast = split.LastName;
         }
 
+        if (resolvedFirst is not null
+            && resolvedLast is not null
+            && resolvedFirst.Contains(' ', StringComparison.Ordinal))
+        {
+            var split = SplitFullName(resolvedFirst);
+            if (!string.IsNullOrWhiteSpace(split.FirstName)
+                && !string.IsNullOrWhiteSpace(split.LastName)
+                && string.Equals(split.LastName, resolvedLast, StringComparison.OrdinalIgnoreCase))
+            {
+                resolvedFirst = split.FirstName;
+            }
+        }
+
         return (resolvedFirst ?? string.Empty, resolvedLast ?? string.Empty);
     }
 

@@ -55,5 +55,13 @@ public class CandidateContactRulesTests
             "dbemer@live.com");
         Assert.Equal(string.Empty, first);
         Assert.Equal(string.Empty, last);
+
+        (first, last) = CandidateNameRules.ResolveOnboardingPrefill(
+            "Test Kandidaat",
+            "Kandidaat",
+            "Test Kandidaat",
+            "test@example.com");
+        Assert.Equal("Test", first);
+        Assert.Equal("Kandidaat", last);
     }
 }
