@@ -15,6 +15,7 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Media
 @using static Jobsy.Web.Media.CandidateIllustratedImages
+@using static Jobsy.Web.Media.DiscoveryOverviewIllustrationAssets
 @using Jobsy.Web.Localization
 @using Jobsy.Core.Contracts
 @using Jobsy.Web.Models
@@ -36,14 +37,14 @@
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
 
-<div class="@JourneyRootClass @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "journey--compact-preview-c panel-page--cand-ill" : null)">
+<div class="@JourneyRootClass @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "journey--compact-preview-c panel-page--cand-ill" : null) @(_screen == "overview" ? "journey--overview-route" : null)">
     @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C && _screen == "overview" && !_loading)
     {
-        <CandidateIllustratedHero Title="@Culture["Discovery.Overview.Title"]"
-                                  Lead="@Culture["Discovery.Overview.Lead"]"
-                                  ArtUrl="@LearnGrowHeroCompactC"
-                                  ArtPosition="right bottom"
-                                  CssClass="cand-hero--profession-band" />
+        <CandidateIllustratedHero Title=""
+                                  Lead=""
+                                  ArtUrl="@HeroStrip"
+                                  ArtPosition="center 47%"
+                                  CssClass="cand-hero--discovery-overview-v8" />
     }
     @if (_loading && _screen != "overview")
     {
@@ -51,9 +52,14 @@
     }
     else
     {
-        <JourneyScene Depth="_depth" IsMobile="false" />
-        <JourneyScene Depth="_depth" IsMobile="true" />
+        @if (_screen != "overview")
+        {
+            <JourneyScene Depth="_depth" IsMobile="false" />
+            <JourneyScene Depth="_depth" IsMobile="true" />
+        }
 
+        @if (_screen != "overview")
+        {
         <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
             @if (MobileHeaderSingleLine)
             {
@@ -93,6 +99,7 @@
                 </button>
             }
         </div>
+        }
 
         @if (_mobileRailOpen)
         {
@@ -131,13 +138,16 @@
         }
 
         <div class="journey-stage" @onscroll="CloseMobileCoachBubble">
-            <div class="journey-only-desktop">
-                <JourneyProgressRail ActiveStep="@RailStep"
-                                       LightStepComplete="@LightStepComplete"
-                                       SaveStatus="@_saveStatus"
-                                       CompletedSteps="@CompletedStepNumbers"
-                                       OnGoToStep="GoToRailStepAsync" />
-            </div>
+            @if (_screen != "overview")
+            {
+                <div class="journey-only-desktop">
+                    <JourneyProgressRail ActiveStep="@RailStep"
+                                           LightStepComplete="@LightStepComplete"
+                                           SaveStatus="@_saveStatus"
+                                           CompletedSteps="@CompletedStepNumbers"
+                                           OnGoToStep="GoToRailStepAsync" />
+                </div>
+            }
 
             <div class="@StageMainClass">
             <section class="@JourneyStepClass" aria-live="polite">
@@ -565,15 +575,17 @@
                 }
                 else if (_screen == "overview")
                 {
-                    @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)
-                    {
-                        <h1 class="visually-hidden" tabindex="-1">@Culture["Discovery.Overview.Title"]</h1>
-                    }
                     <JourneyOverview IsLoading="_overviewLoading"
-                                     Rows="_overviewRows"
+                                     HideTitle="false"
+                                     PhaseStops="_phaseStops"
+                                     ActivePhaseId="_activePhaseId"
+                                     PanelOpen="_overviewPanelOpen"
+                                     ActivePanel="_activePhasePanel"
                                      Tests="_overviewTests"
-                                     OnRowAction="OnOverviewRowAsync"
-                                     OnDeepen="OnOverviewDeepenAsync" />
+                                     OnSectionAction="OnOverviewSectionAsync"
+                                     OnContinue="OnOverviewContinueAsync"
+                                     OnStartTest="OnOverviewStartTestAsync"
+                                     OnPhaseChanged="OnOverviewPhaseChangedAsync" />
                 }
                 else if (_screen == "klaar")
                 {
@@ -761,8 +773,11 @@
     private string _endHintKey = "Discovery.End.HintFirst";
     private List<string> _shedLines = [];
     private List<JourneyShedMoment.DepthOption> _shedOptions = [];
-    private List<JourneyOverview.OverviewRow> _overviewRows = [];
+    private List<JourneyOverview.PhaseStop> _phaseStops = [];
     private List<JourneyOverview.TestRow> _overviewTests = [];
+    private string _activePhaseId = "light";
+    private bool _overviewPanelOpen = true;
+    private JourneyOverview.PhasePanel? _activePhasePanel;
     private static readonly JourneyShedMoment.TestTab[] ShedTabs =
     [
         new(7, "Onboarding.Test.Competency"),
@@ -2139,60 +2154,35 @@
     private async Task BuildOverviewAsync()
     {
         _overviewLoading = true;
+        try
+        {
+            _state = await Api.GetMyOnboardingAsync() ?? _state;
+        }
+        catch
+        {
+            /* keep cached state */
+        }
+
+        await LoadEndPresentationAsync();
         _overviewPanel = await OverviewCache.GetPanelAsync();
-        _overviewRows = [];
-        foreach (var step in JourneyCatalog.Steps.Take(6))
-        {
-            var ev = _state?.Steps.FirstOrDefault(s => s.Step == step.Number);
-            var filled = ev?.CompletedAtUtc is not null || ev?.SkippedAtUtc is not null;
-            // Only a finished v2 journey left steps 3–6 empty. A finished v3 journey is done.
-            var isNew = DiscoveryOverviewRules.StepLooksNew(
-                _state?.IsComplete == true,
-                _state?.WizardVersion ?? OnboardingWizardCatalog.WizardVersionV3,
-                step.Number,
-                filled);
-
-            string status;
-            string cls;
-            if (ev?.SkippedAtUtc is not null)
-            {
-                status = Culture["Discovery.Overview.Skipped"];
-                cls = "is-skipped";
-            }
-            else if (ev?.CompletedAtUtc is not null)
-            {
-                status = Culture["Discovery.Overview.Done"];
-                cls = "is-done";
-            }
-            else if (isNew)
-            {
-                status = Culture["Discovery.Overview.New"];
-                cls = "is-new";
-            }
-            else
-            {
-                status = Culture["Discovery.Overview.Done"];
-                cls = "is-done";
-            }
-
-            _overviewRows.Add(new JourneyOverview.OverviewRow(
-                step.Number, step.TitleKey, status, cls, Culture["Discovery.Overview.View"]));
-        }
-
-        if (!Draft.HasConsent)
-        {
-            _overviewRows.Add(new JourneyOverview.OverviewRow(
-                0, "Discovery.Overview.Consent", Culture["Discovery.Overview.New"], "is-new",
-                Culture["Discovery.Overview.GiveConsent"], IsConsent: true));
-        }
+        var continuePhase = ResolveOpenPhaseId();
+        _activePhaseId = continuePhase;
+        _phaseStops = BuildPhaseStops(continuePhase);
+        _overviewPanelOpen = true;
+        _activePhasePanel = BuildPhasePanel(_activePhaseId);
 
         _overviewTests = [];
         foreach (var step in new[] { 7, 8, 9, 10 })
         {
             var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
-            var answered = AnsweredCount(kind);
+            var answered = await CountAnsweredAsync(kind);
             var full = OnboardingWizardCatalog.FullLevelCount(kind);
             var complete = answered >= full;
+            var progressText = complete
+                ? null
+                : answered > 0
+                    ? Culture.Format("Discovery.Overview.TestAnsweredCount", answered, full)
+                    : null;
             var next = new List<JourneyOverview.DepthButton>();
             if (!complete)
             {
@@ -2206,34 +2196,415 @@
                     : Culture["Discovery.Shed.Deepest"]));
             }
 
-            var report = step switch
+            var accent = kind switch
             {
-                7 => "/candidate/paspoort?tab=tests",
-                8 => "/candidate/paspoort?tab=tests",
-                9 => "/candidate/paspoort?tab=tests",
-                _ => "/candidate/paspoort?tab=tests"
+                OnboardingWizardCatalog.OnboardingTestKind.Competency => TestAccent("competency"),
+                OnboardingWizardCatalog.OnboardingTestKind.Career => TestAccent("career"),
+                OnboardingWizardCatalog.OnboardingTestKind.Culture => TestAccent("culture"),
+                _ => TestAccent("values")
             };
             _overviewTests.Add(new JourneyOverview.TestRow(
                 step,
-                OnboardingWizardCatalog.TestNameKey(kind),
-                Culture.Format("Discovery.Overview.Depth", answered, full),
+                OverviewRouteTestTitleKey(kind),
+                accent,
                 complete,
-                report,
+                progressText,
+                "/candidate/paspoort?tab=tests",
                 next));
         }
 
         _overviewLoading = false;
+        await Task.CompletedTask;
     }
 
-    private async Task OnOverviewRowAsync(JourneyOverview.OverviewRow row)
+    private List<JourneyOverview.PhaseStop> BuildPhaseStops(string openPhaseId)
     {
-        if (row.IsConsent)
+        return
+        [
+            BuildPhaseStop("beach", "Discovery.Zone.Beach", Halte("strand"), PhaseSteps("beach", openPhaseId), openPhaseId),
+            BuildPhaseStop("kust", "Discovery.Zone.Coast", Halte("kust"), PhaseSteps("kust", openPhaseId), openPhaseId),
+            BuildPhaseStop("rots", "Discovery.Zone.Rocks", Halte("rotsen"), PhaseSteps("rots", openPhaseId), openPhaseId),
+            BuildPhaseStop("diep", "Discovery.Zone.Deep", Halte("diepte"), PhaseSteps("diep", openPhaseId), openPhaseId),
+            BuildPhaseStop("light", "Discovery.Zone.Light", Halte("licht"), PhaseSteps("light", openPhaseId), openPhaseId)
+        ];
+    }
+
+    private JourneyOverview.PhaseStop BuildPhaseStop(
+        string phaseId,
+        string titleKey,
+        string vignette,
+        (string Text, string Class, bool Done, bool Open, bool OneStep) status,
+        string openPhaseId)
+    {
+        return new JourneyOverview.PhaseStop(
+            phaseId,
+            titleKey,
+            vignette,
+            status.Text,
+            status.Class,
+            status.Done,
+            status.Open && phaseId == openPhaseId);
+    }
+
+    private (string Text, string Class, bool Done, bool Open, bool OneStep) PhaseSteps(string phaseId, string openPhaseId)
+    {
+        if (phaseId == "beach")
+        {
+            if (!Draft.HasConsent)
+            {
+                return phaseId == openPhaseId
+                    ? (Culture["Discovery.Overview.StatusOpen"], "is-open", false, true, false)
+                    : (Culture["Discovery.Overview.StatusOneStep"], "is-progress", false, false, true);
+            }
+
+            return (Culture["Discovery.Overview.Done"], "is-done", true, false, false);
+        }
+
+        if (phaseId == "light")
+        {
+            return JourneyFinished || phaseId == openPhaseId
+                ? (Culture["Discovery.Overview.StatusOpen"], "is-open", false, true, false)
+                : (Culture["Discovery.Overview.TestTodo"], "is-progress", false, false, false);
+        }
+
+        var remaining = RemainingStepsInPhase(phaseId);
+        if (remaining == 0)
+        {
+            return (Culture["Discovery.Overview.Done"], "is-done", true, false, false);
+        }
+
+        if (remaining == 1)
+        {
+            return (Culture["Discovery.Overview.StatusOneStep"], "is-progress", false, phaseId == openPhaseId, true);
+        }
+
+        if (phaseId == openPhaseId)
+        {
+            return (Culture["Discovery.Overview.StatusOpen"], "is-open", false, true, false);
+        }
+
+        return (Culture.Format("Discovery.Rail.PhaseSteps", remaining), "is-progress", false, false, false);
+    }
+
+    private int RemainingStepsInPhase(string phaseId)
+    {
+        return StepsInOverviewPhase(phaseId).Count(s => !CompletedStepNumbers.Contains(s));
+    }
+
+    private static IEnumerable<int> StepsInOverviewPhase(string phaseId) => phaseId switch
+    {
+        "beach" => [],
+        "kust" => [1, 2],
+        "rots" => [3, 4, 5, 6],
+        "diep" => [7, 8, 9, 10],
+        _ => []
+    };
+
+    private string ResolveOpenPhaseId()
+    {
+        if (!Draft.HasConsent)
+        {
+            return "beach";
+        }
+
+        foreach (var phase in new[] { "kust", "rots", "diep" })
+        {
+            if (RemainingStepsInPhase(phase) > 0)
+            {
+                return phase;
+            }
+        }
+
+        return "light";
+    }
+
+    private JourneyOverview.PhasePanel BuildPhasePanel(string phaseId) => phaseId switch
+    {
+        "beach" => new JourneyOverview.PhasePanel(
+            "Discovery.Zone.Beach",
+            "Discovery.Overview.Phase.BeachLead",
+            Halte("strand"),
+            BuildBeachSections()),
+        "kust" => new JourneyOverview.PhasePanel(
+            "Discovery.Zone.Coast",
+            "Discovery.Overview.Phase.CoastLead",
+            Halte("kust"),
+            BuildStepSections(1, 2)),
+        "rots" => new JourneyOverview.PhasePanel(
+            "Discovery.Zone.Rocks",
+            "Discovery.Overview.Phase.RocksLead",
+            Halte("rotsen"),
+            BuildStepSections(3, 4, 5, 6)),
+        "diep" => new JourneyOverview.PhasePanel(
+            "Discovery.Zone.Deep",
+            "Discovery.Overview.Phase.DeepLead",
+            Halte("diepte"),
+            BuildStepSections(7, 8, 9, 10)),
+        _ => new JourneyOverview.PhasePanel(
+            "Discovery.Zone.Light",
+            "Discovery.Overview.Phase.LightLead",
+            Halte("licht"),
+            BuildLightSections())
+    };
+
+    private IReadOnlyList<JourneyOverview.PanelSection> BuildBeachSections()
+    {
+        var sections = new List<JourneyOverview.PanelSection>
+        {
+            new(0, "Discovery.Overview.Section.Start", OverviewJourneyStartedSummary(), false, CompletedLayerCount > 0)
+        };
+        if (!Draft.HasConsent)
+        {
+            sections.Add(new JourneyOverview.PanelSection(
+                0, "Discovery.Overview.Consent", Culture["Discovery.Overview.New"], true, true));
+        }
+        else
+        {
+            sections.Add(new JourneyOverview.PanelSection(
+                0, "Discovery.Overview.Consent", Culture["Discovery.Overview.Done"], false, false));
+        }
+
+        return sections;
+    }
+
+    private IReadOnlyList<JourneyOverview.PanelSection> BuildLightSections()
+    {
+        return
+        [
+            new(0, "Discovery.End.Fact.Strength", EndSummaryOrEmpty(_endStrength), false, JourneyFinished),
+            new(0, "Discovery.End.Fact.Work", EndSummaryOrEmpty(_endWork), false, JourneyFinished),
+            BuildEndValueSection(),
+            new(0, "Discovery.Overview.Section.Passport", Culture["Discovery.End.ViewPassport"], false, true)
+        ];
+    }
+
+    private JourneyOverview.PanelSection BuildEndValueSection()
+    {
+        if (string.IsNullOrWhiteSpace(_endValue))
+        {
+            return new JourneyOverview.PanelSection(
+                10,
+                "Discovery.End.Fact.Value",
+                Culture["Discovery.Overview.ValuesShortTest"],
+                false,
+                true);
+        }
+
+        return new JourneyOverview.PanelSection(
+            0,
+            "Discovery.End.Fact.Value",
+            _endValue,
+            false,
+            JourneyFinished);
+    }
+
+    private IReadOnlyList<JourneyOverview.PanelSection> BuildStepSections(params int[] steps)
+    {
+        return steps.Select(step =>
+        {
+            var info = JourneyCatalog.Steps.First(s => s.Number == step);
+            return new JourneyOverview.PanelSection(
+                step,
+                info.TitleKey,
+                StepOverviewSummary(step),
+                false,
+                CompletedStepNumbers.Contains(step));
+        }).ToList();
+    }
+
+    private string EndSummaryOrEmpty(string? value)
+        => string.IsNullOrWhiteSpace(value) ? Culture["Discovery.Overview.SummaryEmpty"] : value;
+
+    private string OverviewJourneyStartedSummary()
+        => CompletedLayerCount > 0
+            ? Culture["Discovery.Overview.Done"]
+            : Culture["Discovery.Overview.SummaryEmpty"];
+
+    private string StepOverviewSummary(int step)
+    {
+        var text = step switch
+        {
+            1 => OverviewAboutSummary(),
+            2 => OverviewWhenSummary(),
+            3 => OverviewWorkSummary(),
+            4 => OverviewLearnSummary(),
+            5 => OverviewLikesSummary(),
+            6 => OverviewDislikesSummary(),
+            7 => TestWordStatus(OnboardingWizardCatalog.OnboardingTestKind.Competency),
+            8 => TestWordStatus(OnboardingWizardCatalog.OnboardingTestKind.Career),
+            9 => TestWordStatus(OnboardingWizardCatalog.OnboardingTestKind.Culture),
+            10 => TestWordStatus(OnboardingWizardCatalog.OnboardingTestKind.Values),
+            _ => ""
+        };
+        return string.IsNullOrWhiteSpace(text) ? Culture["Discovery.Overview.SummaryEmpty"] : text;
+    }
+
+    private static string OverviewRouteTestTitleKey(OnboardingWizardCatalog.OnboardingTestKind kind) => kind switch
+    {
+        OnboardingWizardCatalog.OnboardingTestKind.Competency => "Discovery.Test.Competency.Title",
+        OnboardingWizardCatalog.OnboardingTestKind.Career => "Discovery.Test.Career.Title",
+        OnboardingWizardCatalog.OnboardingTestKind.Culture => "Discovery.Test.Culture.Title",
+        OnboardingWizardCatalog.OnboardingTestKind.Values => "Discovery.Test.Values.Title",
+        _ => "Discovery.Test.Competency.Title"
+    };
+
+    private string TestWordStatus(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        var answered = AnsweredCount(kind);
+        var full = OnboardingWizardCatalog.FullLevelCount(kind);
+        return answered >= full
+            ? Culture["Discovery.Overview.Done"]
+            : Culture["Discovery.Overview.TestTodo"];
+    }
+
+    private string OverviewAboutSummary()
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Draft.City))
+        {
+            parts.Add(Draft.City);
+        }
+        else if (!string.IsNullOrWhiteSpace(Draft.Postcode))
+        {
+            parts.Add(Draft.Postcode);
+        }
+
+        if (Draft.Immediate)
+        {
+            parts.Add(Culture["Discovery.Overview.Done"]);
+        }
+
+        return string.Join(", ", parts);
+    }
+
+    private string OverviewWhenSummary()
+    {
+        var parts = new List<string>();
+        if (Draft.Presets.Count > 0)
+        {
+            parts.Add(string.Join(", ", Draft.Presets.Take(2)));
+        }
+
+        if (Draft.MaxTravel > 0)
+        {
+            parts.Add($"{Draft.MaxTravel} min");
+        }
+
+        return string.Join(", ", parts);
+    }
+
+    private string OverviewWorkSummary()
+        => string.Join(", ", new[] { RolesSummary, Draft.Dream }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private string OverviewLearnSummary()
+        => string.Join(", ", new[] { Draft.Education, CertificatesSummary, LanguagesSummary }
+            .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private string OverviewLikesSummary()
+        => string.Join(", ", Draft.Hobbies.Take(3).Concat(Draft.HobbyFreeText.Take(1)));
+
+    private string OverviewDislikesSummary()
+        => string.Join(", ", Draft.Dislikes.Take(3).Concat(Draft.CustomDislikes.Where(s => !string.IsNullOrWhiteSpace(s)).Take(1)));
+
+    private Task OnOverviewPhaseChangedAsync(string phaseId)
+    {
+        if (_activePhaseId == phaseId && _overviewPanelOpen)
+        {
+            _overviewPanelOpen = false;
+        }
+        else
+        {
+            _activePhaseId = phaseId;
+            _overviewPanelOpen = true;
+            _activePhasePanel = BuildPhasePanel(phaseId);
+            _phaseStops = BuildPhaseStops(ResolveOpenPhaseId());
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task OnOverviewSectionAsync(JourneyOverview.PanelSection section)
+    {
+        if (section.IsConsent)
         {
             GoToConsent();
             return;
         }
 
-        await GoToRailStepAsync(row.Step);
+        if (section.TitleKey == "Discovery.Overview.Section.Passport")
+        {
+            await GoToPassportAsync();
+            return;
+        }
+
+        if (section.Step is >= 1 and <= 10)
+        {
+            await GoToOverviewStepAsync(section.Step);
+        }
+    }
+
+    private async Task OnOverviewContinueAsync()
+    {
+        if (_activePhaseId == "light")
+        {
+            if (JourneyFinished)
+            {
+                await GoToPassportAsync();
+            }
+            else
+            {
+                _screen = "klaar";
+                _depth = 11;
+                NavigateStep("klaar");
+            }
+
+            return;
+        }
+
+        var step = FirstIncompleteStepInPhase(_activePhaseId);
+        if (step is >= 1 and <= 10)
+        {
+            await GoToOverviewStepAsync(step);
+            return;
+        }
+
+        if (_activePhaseId == "beach" && !Draft.HasConsent)
+        {
+            GoToConsent();
+        }
+    }
+
+    private async Task GoToOverviewStepAsync(int step)
+    {
+        if (CompletedStepNumbers.Contains(step))
+        {
+            await GoToRailStepAsync(step);
+        }
+        else
+        {
+            await GoToCountedStepAsync(step);
+        }
+    }
+
+    private async Task OnOverviewStartTestAsync(JourneyOverview.TestRow test)
+    {
+        if (test.NextLevels.Count > 0)
+        {
+            await OnOverviewDeepenAsync((test.Step, test.NextLevels[0]));
+            return;
+        }
+
+        await GoToRailStepAsync(test.Step);
+    }
+
+    private int FirstIncompleteStepInPhase(string phaseId)
+    {
+        if (phaseId == "beach")
+        {
+            return !Draft.HasConsent ? 0 : StepsInOverviewPhase("kust").FirstOrDefault(s => !CompletedStepNumbers.Contains(s));
+        }
+
+        return StepsInOverviewPhase(phaseId).FirstOrDefault(s => !CompletedStepNumbers.Contains(s));
     }
 
     private async Task GoToRailStepAsync(int step)

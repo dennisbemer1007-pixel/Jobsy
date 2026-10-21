@@ -717,6 +717,44 @@
     object-position: right bottom;
   }
 
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: clamp(150px, 9vw, 168px) !important;
+    height: clamp(150px, 9vw, 168px) !important;
+    max-height: clamp(150px, 9vw, 168px) !important;
+    padding-inline: 0 !important;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    min-height: clamp(150px, 9vw, 168px);
+    height: clamp(150px, 9vw, 168px);
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art img,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art img {
+    -webkit-mask-image: none;
+    mask-image: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 47%;
+    transform: none;
+  }
+
   .journey.journey--compact-preview-c .journey-stage {
     grid-template-columns: minmax(0, 16rem) minmax(0, 1fr) !important;
     max-width: min(100%, 82rem) !important;
@@ -740,7 +778,7 @@
     width: 100%;
   }
 
-  .journey.journey--compact-preview-c .journey-overview > h1 {
+  .journey.journey--compact-preview-c:not(.journey--overview-route) .journey-overview > h1 {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -806,6 +844,66 @@
 }
 
 @media (max-width: 767px) {
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-block-end: 0 !important;
+    padding-inline: 0 !important;
+    min-height: 90px !important;
+    height: 90px !important;
+    max-height: 90px !important;
+    overflow: hidden;
+    background-color: var(--cand-compact-hero-band) !important;
+    background-image: none !important;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero::before,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 90px !important;
+    height: 90px !important;
+    max-height: 90px !important;
+    padding: 0;
+    margin: 0;
+    justify-content: stretch;
+    align-items: stretch;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art img,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    -webkit-mask-image: none;
+    mask-image: none;
+    object-fit: cover;
+    object-position: 27% 47%;
+    transform: none;
+  }
+
   .cand-hero--compact-preview-a {
     --cand-hero-mobile-h: 7.5rem;
     max-height: 7.5rem;
@@ -1007,7 +1105,8 @@
     padding-inline-start: var(--cand-compact-hero-gutter) !important;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before {
+  .panel-page--cand-ill:not(.journey--overview-route)
+    > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.cand-hero--discovery-overview-v8)::before {
     content: "";
     display: block;
     position: absolute;
@@ -1041,7 +1140,9 @@
     min-height: 0 !important;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art {
+  .panel-page--cand-ill:not(.journey--overview-route)
+    > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.cand-hero--discovery-overview-v8)
+    .cand-hero__compact-c-art {
     grid-area: 1 / 1;
     position: relative !important;
     inset: auto !important;
@@ -1053,7 +1154,9 @@
     pointer-events: none;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img {
+  .panel-page--cand-ill:not(.journey--overview-route)
+    > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.cand-hero--discovery-overview-v8)
+    .cand-hero__compact-c-art img {
     display: block;
     inline-size: 100%;
     block-size: 100%;
@@ -1159,7 +1262,8 @@
     background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-hero-page) 100%);
   }
 
-  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding):not(.cand-hero--bk-single) .cand-hero__compact-c-art,
+  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding):not(.cand-hero--bk-single):not(.cand-hero--discovery-overview-v8)
+    .cand-hero__compact-c-art,
   .passport-page--illustrated .cand-hero--compact-preview-c .cand-hero__compact-c-art {
     position: absolute;
     top: 0;
@@ -1301,7 +1405,8 @@
   }
 
   /* Default compact hero on illustrated app pages (sollicitaties, bewaard, …). */
-  .panel-page--cand-ill:not(.bk-page):not(.candidate-hub):not(.kb-apps) > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
+  .panel-page--cand-ill:not(.bk-page):not(.candidate-hub):not(.kb-apps):not(.journey--overview-route)
+    > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.cand-hero--discovery-overview-v8) {
     min-height: 150px !important;
     height: 150px !important;
     max-height: 150px !important;
@@ -1347,7 +1452,9 @@
     content: "" !important;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img {
+  .panel-page--cand-ill:not(.journey--overview-route)
+    > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.cand-hero--discovery-overview-v8)
+    .cand-hero__compact-c-art img {
     min-height: 150px;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 10%, #000 24%, #000 92%, transparent 100%),
       linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
@@ -1638,5 +1745,93 @@
     mask-image: var(--cand-compact-c-img-mask);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
+  }
+
+  /* Ontdekkingsreis overview v8 (mobile): full-width 90px strip; beats generic panel-page compact hero. */
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-block-end: 0 !important;
+    padding-inline: 0 !important;
+    min-height: 90px !important;
+    height: 90px !important;
+    max-height: 90px !important;
+    overflow: hidden;
+    background-color: var(--cand-compact-hero-band) !important;
+    background-image: none !important;
+  }
+
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero::before,
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero
+    .cand-hero__copy {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    max-width: 1px !important;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero
+    .cand-compact-hero__art,
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero
+    .cand-hero__compact-c-art {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    right: auto !important;
+    grid-area: auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 90px !important;
+    height: 90px !important;
+    max-height: 90px !important;
+    margin: 0;
+    padding: 0;
+    display: block !important;
+    justify-content: stretch;
+    align-items: stretch;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero
+    .cand-compact-hero__art
+    img,
+  .journey.journey--overview-route.journey--compact-preview-c.panel-page--cand-ill
+    > header.cand-hero--discovery-overview-v8.cand-compact-hero
+    .cand-hero__compact-c-art
+    img {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    object-fit: cover !important;
+    object-position: 27% 47% !important;
+    transform: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
   }
 }

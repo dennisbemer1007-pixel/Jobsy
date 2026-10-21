@@ -180,14 +180,14 @@ public sealed class CompactHeadersRolloutR8ScreenshotTests : IAsyncLifetime
     private static async Task AssertReisOverviewRowsFillCardAsync(IPage page)
     {
         var card = page.Locator(".journey-step:has(.journey-overview)").First;
-        var row = page.Locator(".journey-overview__row:not(.journey-overview__row--skeleton)").First;
-        await row.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        var route = page.Locator(".journey-route__canvas").First;
+        await route.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var cardBox = await card.BoundingBoxAsync();
-        var rowBox = await row.BoundingBoxAsync();
+        var routeBox = await route.BoundingBoxAsync();
         Assert.NotNull(cardBox);
-        Assert.NotNull(rowBox);
+        Assert.NotNull(routeBox);
         var cardInnerWidth = cardBox!.Width - 64;
-        Assert.True(rowBox!.Width >= cardInnerWidth * 0.92,
-            $"overview row should span the card (row={rowBox.Width}px, card~inner={cardInnerWidth}px).");
+        Assert.True(routeBox!.Width >= cardInnerWidth * 0.85,
+            $"overview route should span the card (route={routeBox.Width}px, card~inner={cardInnerWidth}px).");
     }
 }

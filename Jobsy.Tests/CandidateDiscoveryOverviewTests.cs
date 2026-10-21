@@ -47,13 +47,13 @@ public class CandidateDiscoveryOverviewTests
     }
 
     [Fact]
-    public void Journey_overview_rows_use_actions_column_for_buttons()
+    public void Journey_overview_route_markup_present()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/ontdekkingsreis.css"));
-        Assert.Contains("grid-template-columns: minmax(0, 1fr) auto", css, StringComparison.Ordinal);
+        Assert.Contains("journey-route__canvas", css, StringComparison.Ordinal);
         var markup = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Candidate/Discovery/JourneyOverview.razor"));
-        Assert.Contains("journey-overview__main", markup, StringComparison.Ordinal);
-        Assert.Contains("journey-overview__actions", markup, StringComparison.Ordinal);
+        Assert.Contains("journey-route__stops", markup, StringComparison.Ordinal);
+        Assert.Contains("Discovery.Overview.Adjust", markup, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
