@@ -4,14 +4,11 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Navigation;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Routing;
-
 namespace Jobsy.Web.Services;
 
 /// <summary>Shared primary nav catalog for bottom bar and desktop header (same items, same active rules).</summary>
 public sealed class RoleNavItemsState : IAsyncDisposable
 {
-    private readonly NavigationManager _navigation;
     private readonly AuthenticationStateProvider _authState;
     private readonly JobsyApiClient _api;
     private readonly BottomNavRefreshService _navRefresh;
@@ -29,14 +26,12 @@ public sealed class RoleNavItemsState : IAsyncDisposable
     private bool _initialized;
 
     public RoleNavItemsState(
-        NavigationManager navigation,
         AuthenticationStateProvider authState,
         JobsyApiClient api,
         BottomNavRefreshService navRefresh,
         IFeatureFlags featureFlags,
         CultureState culture)
     {
-        _navigation = navigation;
         _authState = authState;
         _api = api;
         _navRefresh = navRefresh;
@@ -56,7 +51,6 @@ public sealed class RoleNavItemsState : IAsyncDisposable
         }
 
         _initialized = true;
-        _navigation.LocationChanged += OnLocationChanged;
         _culture.Changed += OnCultureChanged;
         _navRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
         _authState.AuthenticationStateChanged += OnAuthenticationStateChanged;
@@ -94,19 +88,6 @@ public sealed class RoleNavItemsState : IAsyncDisposable
         await RefreshFlagsAsync();
         await RefreshItemsAsync(forceRoleApis: true);
         Changed?.Invoke();
-    }
-
-    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        try
-        {
-            await RefreshItemsAsync(forceRoleApis: false);
-            Changed?.Invoke();
-        }
-        catch
-        {
-            // async void: swallow dispose/nav races.
-        }
     }
 
     private async Task RefreshFlagsAsync()
@@ -287,7 +268,6 @@ public sealed class RoleNavItemsState : IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
-        _navigation.LocationChanged -= OnLocationChanged;
         _culture.Changed -= OnCultureChanged;
         _navRefresh.RefreshRequested -= OnNavRefreshRequestedAsync;
         _authState.AuthenticationStateChanged -= OnAuthenticationStateChanged;

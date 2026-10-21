@@ -1,25 +1,20 @@
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@using Jobsy.Core.Authorization
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
-@using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Navigation
 @inject CultureState Culture
 @inject RoleNavItemsState NavItems
-@inject IJSRuntime Js
-@implements IAsyncDisposable
+@inject IHttpContextAccessor HttpContextAccessor
 
-@if (_items.Count > 0 && !_hideForDesktopViewport)
+@if (_items.Count > 0)
 {
-    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]" @ref="_nav">
+    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]" data-testid="candidate-bottom-nav">
         @foreach (var item in _items)
         {
             var title = Culture[item.TitleKey];
             var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
                 ? Culture[item.ShortTitleKey!]
                 : title;
-            var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
+            var active = RoleNavCatalog.IsActive(item, _relativePath, _items);
             <CandidateNavLink Class="@($"bottom-nav__item {(active ? "is-active" : null)} {(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)}")"
                               Href="@item.Href"
                               Title="@title"
@@ -38,108 +33,32 @@
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
-    private ElementReference _nav;
-    /// <summary>≥1024px: header nav only; bottom bar is mobile/PWA.</summary>
-    private bool _hideForDesktopViewport;
-    private DotNetObjectReference<BottomNav>? _dotNetRef;
-    private IJSObjectReference? _viewportWatch;
+    private string _relativePath = "";
 
     [Parameter]
     public EventCallback<bool> HasItemsChanged { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        _relativePath = ResolveRelativePath();
         await NavItems.EnsureInitializedAsync();
         _items = NavItems.Items;
-        NavItems.Changed += OnNavItemsChanged;
-        Navigation.LocationChanged += OnLocationChanged;
-    }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => _ = InvokeAsync(StateHasChanged);
-
-    private async void OnNavItemsChanged()
-    {
-        _items = NavItems.Items;
-        await NotifyHasBottomNavAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
+        if (HasItemsChanged.HasDelegate)
         {
-            await RefreshDesktopViewportAsync();
-        }
-
-        try
-        {
-            if (_items.Count > 0 && !_hideForDesktopViewport)
-            {
-                await Js.InvokeVoidAsync("jobsyCoachDock.bind", _nav, "--bottom-nav-h");
-            }
-            else
-            {
-                await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--bottom-nav-h");
-            }
-        }
-        catch
-        {
-            // bUnit / prerender
+            await HasItemsChanged.InvokeAsync(_items.Count > 0);
         }
     }
 
-    private async Task RefreshDesktopViewportAsync()
+    private string ResolveRelativePath()
     {
-        try
+        var request = HttpContextAccessor.HttpContext?.Request;
+        if (request is null)
         {
-            _hideForDesktopViewport = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");
-            _dotNetRef ??= DotNetObjectReference.Create(this);
-            _viewportWatch ??= await Js.InvokeAsync<IJSObjectReference>(
-                "jobsyViewport.watchKompasWide", _dotNetRef, nameof(SetDesktopViewportHidden));
-            await NotifyHasBottomNavAsync();
-        }
-        catch
-        {
-            _hideForDesktopViewport = false;
-        }
-    }
-
-    [JSInvokable]
-    public async Task SetDesktopViewportHidden(bool isWide)
-    {
-        if (_hideForDesktopViewport == isWide)
-        {
-            return;
+            return "";
         }
 
-        _hideForDesktopViewport = isWide;
-        await NotifyHasBottomNavAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private Task NotifyHasBottomNavAsync()
-        => HasItemsChanged.InvokeAsync(_items.Count > 0 && !_hideForDesktopViewport);
-
-    public async ValueTask DisposeAsync()
-    {
-        NavItems.Changed -= OnNavItemsChanged;
-        Navigation.LocationChanged -= OnLocationChanged;
-        try
-        {
-            if (_viewportWatch is not null)
-            {
-                await _viewportWatch.InvokeVoidAsync("dispose");
-                await _viewportWatch.DisposeAsync();
-            }
-        }
-        catch
-        {
-            // Best-effort unsubscribe.
-        }
-
-        _viewportWatch = null;
-        _dotNetRef?.Dispose();
-        _dotNetRef = null;
+        var path = request.Path.Value ?? "/";
+        return path.TrimStart('/');
     }
 }
