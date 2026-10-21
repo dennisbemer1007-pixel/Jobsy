@@ -301,6 +301,58 @@
     max-height: 150px !important;
   }
 
+  /* Carrière plan hero (1024–1440): keep copy in the content shell; tame full-bleed art bleed. */
+  @media (max-width: 1439px) {
+    .career-page--compact-preview-c > header.cand-compact-hero--onboarding {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      align-items: stretch;
+      width: min(100%, var(--cand-compact-hero-max));
+      max-width: var(--cand-compact-hero-max);
+      margin-inline: auto;
+      padding-inline: var(--cand-compact-hero-gutter);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__copy,
+    .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__copy {
+      grid-column: 1;
+      grid-row: 1;
+      width: 100% !important;
+      max-width: min(100%, 22rem) !important;
+      margin-inline: 0 !important;
+      padding-inline: 0 0.85rem !important;
+      overflow: visible !important;
+    }
+
+    .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art,
+    .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__compact-c-art {
+      grid-column: 2;
+      grid-row: 1;
+      position: relative !important;
+      inset: auto !important;
+      left: auto !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin-inline: 0 !important;
+      overflow: hidden;
+    }
+
+    .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img,
+    .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__compact-c-art img {
+      width: 100%;
+      max-width: 100%;
+      min-height: 100%;
+      object-fit: cover;
+      object-position: right center;
+      -webkit-mask-image: var(--cand-compact-c-img-mask);
+      mask-image: var(--cand-compact-c-img-mask);
+      -webkit-mask-composite: source-in;
+      mask-composite: intersect;
+    }
+  }
+
   /* Panel app pages: full-bleed #FAEBDB band, copy aligned to 1100px shell (paspoort r15 art fade). */
   .panel-page--cand-ill.kb-apps > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
   .panel-page--cand-ill.kb-saved > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
