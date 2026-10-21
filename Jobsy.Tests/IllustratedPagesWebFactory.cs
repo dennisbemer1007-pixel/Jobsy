@@ -1,5 +1,6 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+using Jobsy.Tests.E2e;
 using Jobsy.Web.UwvFeatures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
@@ -25,11 +26,18 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     private IHost? _kestrel;
     private readonly bool _emptyAppsAndLikes;
     private readonly bool _minimalPassportProfile;
+    private readonly Uri _apiBaseUri;
 
-    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false, bool minimalPassportProfile = false)
+    public IllustratedPagesWebFactory(
+        bool emptyAppsAndLikes = false,
+        bool minimalPassportProfile = false,
+        bool accLikeProductionCsp = false)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
         _minimalPassportProfile = minimalPassportProfile;
+        _apiBaseUri = new Uri(
+            accLikeProductionCsp ? PlaywrightAccLikeRegression.AccLikeApiBaseUrl : "http://api.test/",
+            UriKind.Absolute);
         _ = CreateClient();
     }
 
@@ -41,7 +49,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ApiBaseUrl"] = "http://api.test/",
+                ["ApiBaseUrl"] = _apiBaseUri.ToString(),
                 ["Landing:ForceVariant"] = "on",
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
@@ -57,12 +65,13 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
             services.RemoveAll<IHttpClientFactory>();
-            services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile));
+            services.AddSingleton<IHttpClientFactory>(
+                new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile, _apiBaseUri));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
             services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
                 new HttpClient(new StubApiHandler(_emptyAppsAndLikes, _minimalPassportProfile), disposeHandler: false)
                 {
-                    BaseAddress = new Uri("http://api.test/")
+                    BaseAddress = _apiBaseUri
                 }));
         });
     }
@@ -131,12 +140,12 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         }
     }
 
-    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes, bool minimalPassportProfile) : IHttpClientFactory
+    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes, bool minimalPassportProfile, Uri apiBaseUri) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
             => new(new StubApiHandler(emptyAppsAndLikes, minimalPassportProfile), disposeHandler: true)
             {
-                BaseAddress = new Uri("http://api.test/")
+                BaseAddress = apiBaseUri
             };
     }
 

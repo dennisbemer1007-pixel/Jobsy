@@ -271,6 +271,24 @@ builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidateProfileResetEndpoints.
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidateCareerBffEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidateNotificationBffEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(20);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
 builder.Services.AddHttpClient("JobsyWebSelf", client =>
 {
     var publicBase = JobsyPublicUrl.NormalizeBaseUrl(
@@ -643,6 +661,8 @@ app.MapReferenceConfirmationEndpoints();
 app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
 app.MapCandidateProfileResetEndpoints();
+app.MapCandidateNotificationBffEndpoints();
+app.MapCandidateCareerBffEndpoints();
 app.MapCandidatePassportPdfEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();

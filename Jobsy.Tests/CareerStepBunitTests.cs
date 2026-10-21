@@ -7,6 +7,7 @@ using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 using Jobsy.Web.Services.Careers;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
@@ -36,6 +37,10 @@ public class CareerStepBunitTests : BunitContext
         Services.AddSingleton(sp => new Jobsy.Web.Services.UserFacingError(
             Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Web.Services.UserFacingError>.Instance,
             sp.GetRequiredService<CultureState>()));
+        Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext()
+        });
     }
 
     // ---------- detail: active / done / todo ----------
@@ -79,15 +84,12 @@ public class CareerStepBunitTests : BunitContext
     }
 
     [Fact]
-    public void Completing_reports_once_and_stays_quiet_while_busy()
+    public void Complete_action_is_form_post_not_blazor_click()
     {
-        var completed = 0;
-        var cut = Render<CareerStepDetailCard>(p => p
-            .Add(x => x.Step, Step(2))
-            .Add(x => x.OnComplete, () => completed++));
+        var cut = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2)));
 
-        cut.Find(".career-only-desktop .btn-primary").Click();
-        Assert.Equal(1, completed);
+        Assert.Contains("career-step__complete-form", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("/bff/candidate/career/steps/", cut.Markup, StringComparison.Ordinal);
 
         cut.Render(p => p.Add(x => x.Busy, true));
         Assert.True(cut.Find(".career-only-desktop .btn-primary").HasAttribute("disabled"));
@@ -96,17 +98,15 @@ public class CareerStepBunitTests : BunitContext
     // ---------- gaps and years ----------
 
     [Fact]
-    public void Gaps_show_missing_claws_and_present_items_with_show_all()
+    public void Gaps_show_missing_claws_and_present_items_with_details_more()
     {
         var step = Step(2, extraGaps: 6);
         var cut = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, step));
 
         Assert.Contains("Welke stappen je al hebt gezet", cut.Markup, StringComparison.Ordinal);
-        Assert.Equal(6, cut.FindAll(".career-step__gap").Count);
+        Assert.True(cut.FindAll(".career-step__gap").Count >= 6);
         Assert.Contains("Toon alles (10)", cut.Markup, StringComparison.Ordinal);
-
-        cut.Find(".career-step__block--gaps .btn-ghost").Click();
-        Assert.Equal(10, cut.FindAll(".career-step__gap").Count);
+        Assert.Contains("career-step__gaps-more", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("heb je al", cut.Markup, StringComparison.Ordinal);
     }
 
