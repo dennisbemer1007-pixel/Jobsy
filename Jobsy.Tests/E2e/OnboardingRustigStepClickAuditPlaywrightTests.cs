@@ -94,11 +94,14 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         }
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(200);
-        var chromeRow = page.Locator(".ob-rustig__chrome-row").First;
-        await chromeRow.ScrollIntoViewIfNeededAsync();
-        if (!mobile)
+        if (rustig)
         {
-            await page.Locator(".ob-rustig__chrome").First.ScrollIntoViewIfNeededAsync();
+            var chromeRow = page.Locator(".ob-rustig__chrome-row").First;
+            await chromeRow.ScrollIntoViewIfNeededAsync();
+            if (!mobile)
+            {
+                await page.Locator(".ob-rustig__chrome").First.ScrollIntoViewIfNeededAsync();
+            }
         }
 
         var rows = new List<(string Control, string Result)>();
