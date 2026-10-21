@@ -5,12 +5,14 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject CandidateProfileEditor Editor
 @inject IFeatureFlags Flags
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <div class="passport-data">
@@ -96,6 +98,16 @@
                     {
                     <div class="detail-card passport-data__item @(section.Danger ?"passport-data__item--danger" : null) @(open ? "is-open" : null)"
                          role="listitem">
+                        @if (SectionLinks)
+                        {
+                            <a id="@btnId" class="passport-data__toggle @(section.Danger ?"passport-data__toggle--danger" : null)" aria-expanded="@(open ? "true" : "false")" aria-controls="@panelId" href="@PassportRedirects.BuildPassportDataSectionUrl(section.Id)">
+                                <span class="passport-data__icon" aria-hidden="true">@((MarkupString)section.Icon)</span>
+                                <span class="passport-data__toggle-text"><span class="passport-data__title">@Culture[section.TitleKey]</span><span class="passport-data__sub">@Culture[section.SubKey]</span></span>
+                                <span class="passport-data__chevron" aria-hidden="true"></span>
+                            </a>
+                        }
+                        else
+                        {
                         <button type="button"
                                 id="@btnId"
                                 class="passport-data__toggle @(section.Danger ?"passport-data__toggle--danger" : null)"
@@ -109,6 +121,7 @@
                             </span>
                             <span class="passport-data__chevron" aria-hidden="true"></span>
                         </button>
+                        }
                         @if (open)
                         {
                             <div id="@panelId" class="passport-data__body" role="region" aria-labelledby="@btnId">
@@ -139,7 +152,11 @@
                                 }
                                 else if (section.Id == "motivation")
                                 {
-                                    <MotivationSection />
+                                    @if (ExternalMotivationForm)
+                                    {
+                                        <PassportMotivationSectionForm AboutMe="@Editor.AboutMe" DefaultMotivation="@Editor.DefaultMotivation" Saved="_motivationSaved" Error="_motivationError" />
+                                    }
+                                    else { <MotivationSection /> }
                                 }
                                 else if (section.Id == "privacy")
                                 {
@@ -157,7 +174,7 @@
                 }
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(_openSection) && _openSection is not "delete")
+            @if (!string.IsNullOrWhiteSpace(_openSection) && _openSection is not "delete" && !(ExternalMotivationForm && _openSection == "motivation"))
             {
                 @if (_openSection == "dislikes")
                 {
@@ -211,6 +228,9 @@
 
     [Parameter] public bool Active { get; set; }
     [Parameter] public string? DangerIntent { get; set; }
+    [Parameter] public string? Section { get; set; }
+    [Parameter] public bool SectionLinks { get; set; }
+    [Parameter] public bool ExternalMotivationForm { get; set; }
 
     private bool _loading = true;
     private bool _dangerHandled;
@@ -221,6 +241,8 @@
     private bool _employerFitQuestionnaires;
     private bool _phoneVerification;
     private string? _openSection;
+    private bool _motivationSaved;
+    private bool _motivationError;
 
     private IEnumerable<DataSection> VisibleSections
         => _pdfV2 || _employerFitQuestionnaires
@@ -241,9 +263,16 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (!string.IsNullOrWhiteSpace(Section)) { _openSection = Section.Trim(); }
         if (Active && !_loaded)
         {
             await LoadAsync();
+        }
+
+        if (SectionLinks && HttpContextAccessor.HttpContext is { } http)
+        {
+            _motivationSaved = string.Equals(http.Request.Query["saved"], "1", StringComparison.Ordinal);
+            _motivationError = string.Equals(http.Request.Query["error"], "1", StringComparison.Ordinal);
         }
 
         if (!RendererInfo.IsInteractive)

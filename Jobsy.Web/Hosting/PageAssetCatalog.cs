@@ -399,6 +399,18 @@ public static class PageAssetCatalog
         return path.StartsWith("/werkgever/vacatures", StringComparison.Ordinal);
     }
 
+    public static bool IncludeCandidateApplicationsScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeCandidatePassportScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return string.Equals(path, PassportRedirects.PassportPath, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
     {
         if ((areas & flag) == 0)

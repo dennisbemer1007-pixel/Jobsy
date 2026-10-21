@@ -1,5 +1,6 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+using Jobsy.Tests.E2e;
 using Jobsy.Web.UwvFeatures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
@@ -25,11 +26,26 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     private IHost? _kestrel;
     private readonly bool _emptyAppsAndLikes;
     private readonly bool _minimalPassportProfile;
+    private readonly bool _statefulMeProfile;
+    private readonly Uri _apiBaseUri;
 
-    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false, bool minimalPassportProfile = false)
+    public IllustratedPagesWebFactory(
+        bool emptyAppsAndLikes = false,
+        bool minimalPassportProfile = false,
+        bool accLikeProductionCsp = false,
+        bool statefulMeProfile = false)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
         _minimalPassportProfile = minimalPassportProfile;
+        _statefulMeProfile = statefulMeProfile;
+        _apiBaseUri = new Uri(
+            accLikeProductionCsp ? PlaywrightAccLikeRegression.AccLikeApiBaseUrl : "http://api.test/",
+            UriKind.Absolute);
+        if (_statefulMeProfile)
+        {
+            MeProfilePlaywrightStore.ResetToDefault();
+        }
+
         _ = CreateClient();
     }
 
@@ -41,7 +57,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ApiBaseUrl"] = "http://api.test/",
+                ["ApiBaseUrl"] = _apiBaseUri.ToString(),
                 ["Landing:ForceVariant"] = "on",
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
@@ -57,12 +73,13 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
             services.RemoveAll<IHttpClientFactory>();
-            services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile));
+            services.AddSingleton<IHttpClientFactory>(
+                new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile, _statefulMeProfile, _apiBaseUri));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
             services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
-                new HttpClient(new StubApiHandler(_emptyAppsAndLikes, _minimalPassportProfile), disposeHandler: false)
+                new HttpClient(new StubApiHandler(_emptyAppsAndLikes, _minimalPassportProfile, _statefulMeProfile), disposeHandler: false)
                 {
-                    BaseAddress = new Uri("http://api.test/")
+                    BaseAddress = _apiBaseUri
                 }));
         });
     }
@@ -131,19 +148,28 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         }
     }
 
-    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes, bool minimalPassportProfile) : IHttpClientFactory
+    private sealed class StubHttpClientFactory(
+        bool emptyAppsAndLikes,
+        bool minimalPassportProfile,
+        bool statefulMeProfile,
+        Uri apiBaseUri) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
-            => new(new StubApiHandler(emptyAppsAndLikes, minimalPassportProfile), disposeHandler: true)
+            => new(new StubApiHandler(emptyAppsAndLikes, minimalPassportProfile, statefulMeProfile), disposeHandler: true)
             {
-                BaseAddress = new Uri("http://api.test/")
+                BaseAddress = apiBaseUri
             };
     }
 
-    private sealed class StubApiHandler(bool emptyAppsAndLikes, bool minimalPassportProfile) : HttpMessageHandler
+    private sealed class StubApiHandler(bool emptyAppsAndLikes, bool minimalPassportProfile, bool statefulMeProfile) : HttpMessageHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            if (statefulMeProfile && MeProfilePlaywrightStore.TryHandle(request, out var statefulResponse))
+            {
+                return statefulResponse;
+            }
+
             var path = request.RequestUri?.AbsolutePath ?? "";
             if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_CORE") == "1"
                 && path.Contains("kompas", StringComparison.OrdinalIgnoreCase))

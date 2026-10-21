@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Jobsy.Core;
+using Jobsy.Web.Auth;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 
@@ -26,12 +27,11 @@ public static class MailSettingsEndpoints
                 return Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString("/account/mail-instellingen"));
             }
 
+            var form = await http.Request.ReadFormAsync();
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.Redirect("/account/mail-instellingen");
+                return Results.Redirect(ResolveMailSettingsReturn(form, saved: false, error: false));
             }
-
-            var form = await http.Request.ReadFormAsync();
             var keys = handler;
             var items = keys.Select(k => new
             {
@@ -66,7 +66,7 @@ public static class MailSettingsEndpoints
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect("/account/mail-instellingen?error=1");
+                return Results.Redirect(ResolveMailSettingsReturn(form, saved: false, error: true));
             }
 
             if (form.ContainsKey("whatsapp_shown"))
@@ -88,13 +88,34 @@ public static class MailSettingsEndpoints
                 var whatsAppResponse = await client.SendAsync(whatsApp);
                 if (!whatsAppResponse.IsSuccessStatusCode)
                 {
-                    return Results.Redirect("/account/mail-instellingen?error=1");
+                    return Results.Redirect(ResolveMailSettingsReturn(form, saved: false, error: true));
                 }
             }
 
-            return Results.Redirect("/account/mail-instellingen?saved=1");
+            return Results.Redirect(ResolveMailSettingsReturn(form, saved: true, error: false));
         }).RequireAuthorization().WithOrder(-1000);
 
         return app;
+    }
+
+    private static string ResolveMailSettingsReturn(IFormCollection form, bool saved, bool error)
+    {
+        var returnUrl = form["return_url"].ToString();
+        var basePath = AuthRedirects.SafeLocalUrl(returnUrl) ?? "/account/mail-instellingen";
+        if (error)
+        {
+            return basePath.Contains('?', StringComparison.Ordinal)
+                ? basePath + "&error=1"
+                : basePath + "?error=1";
+        }
+
+        if (!saved)
+        {
+            return basePath;
+        }
+
+        return basePath.Contains('?', StringComparison.Ordinal)
+            ? basePath + "&saved=1"
+            : basePath + "?saved=1";
     }
 }

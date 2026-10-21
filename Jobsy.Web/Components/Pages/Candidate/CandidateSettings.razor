@@ -1,6 +1,6 @@
 @page "/candidate/settings"
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
 @using Jobsy.Core.Features
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
@@ -8,7 +8,7 @@
 @using static Jobsy.Web.Media.CandidateIllustratedImages
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
-@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@Culture["CandidateSettings.Title"] · Lobsy</PageTitle>
 
@@ -92,14 +92,14 @@
                         <p class="muted">@Culture["CandidateSettings.Mail.Desc"]</p>
                     </div>
                 </div>
-                <CandidateMailSettingsPanel />
+                <CandidateMailSettingsPanel ReturnUrl="/candidate/settings?pane=mail" />
                 <div class="cand-settings__calm-links">
-                    <button type="button" class="cand-settings__calm-link" @onclick='() => GoPaspoortDanger("reset")'>
+                    <a class="cand-settings__calm-link" href="/candidate/paspoort?tab=data&danger=reset">
                         @Culture["Profile.Reset.Title"]
-                    </button>
-                    <button type="button" class="cand-settings__calm-link" @onclick='() => GoPaspoortDanger("delete")'>
+                    </a>
+                    <a class="cand-settings__calm-link" href="/candidate/paspoort?tab=data&danger=delete">
                         @Culture["Profile.UnsubscribeTitle"]
-                    </button>
+                    </a>
                 </div>
             }
             else
@@ -124,7 +124,9 @@
         var flags = await FeatureFlags.GetAsync();
         _proactiveOn = flags.IsEnabled(PlatformFeature.ProactiveMatching);
         _kandidatenkaartOn = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
-        _pane = string.IsNullOrWhiteSpace(Pane) ? "mail" : Pane.Trim().ToLowerInvariant();
+        var queryPane = HttpContextAccessor.HttpContext?.Request.Query["pane"].ToString();
+        var paneSource = string.IsNullOrWhiteSpace(queryPane) ? Pane : queryPane;
+        _pane = string.IsNullOrWhiteSpace(paneSource) ? "mail" : paneSource.Trim().ToLowerInvariant();
     }
 
     private string? NavClass(string pane)
@@ -132,7 +134,4 @@
 
     private static string NavHref(string pane)
         => pane == "mail" ? "/candidate/settings?pane=mail" : $"/candidate/settings?pane={Uri.EscapeDataString(pane)}";
-
-    private void GoPaspoortDanger(string intent)
-        => Navigation.NavigateTo($"/candidate/paspoort?tab=data&danger={Uri.EscapeDataString(intent)}");
 }

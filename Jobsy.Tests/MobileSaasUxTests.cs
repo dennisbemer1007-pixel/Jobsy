@@ -161,7 +161,11 @@ public class MobileSaasUxTests
         Assert.Contains("application-card--hired", razor);
         Assert.Contains("Kb.Apps.FilterRunning", razor);
         Assert.Contains("Apps.WithdrawConfirm", razor);
-        Assert.Contains("LobsyFriendlyDialog", razor);
+        Assert.Contains("data-apps-withdraw-dialog", razor);
+        Assert.Contains("data-filter-btn", razor);
+        Assert.Contains("ExcludeFromInteractiveRouting", razor);
+        Assert.DoesNotContain("LobsyFriendlyDialog", razor);
+        Assert.DoesNotContain("InteractiveServerRenderMode", razor);
         Assert.Contains("aria-haspopup=\"menu\"", razor);
         Assert.DoesNotContain("apps-tabs", razor);
         Assert.DoesNotContain("application-stepper", razor);
