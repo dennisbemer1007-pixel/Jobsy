@@ -77,6 +77,39 @@ public sealed class MobileSuspendRecoveryPlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Offline_does_not_auto_reload_during_reconnect_exhaustion()
+    {
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        });
+
+        var page = await context.NewPageAsync();
+        await page.GotoAsync($"{baseUrl}/__test/sign-in?role=candidate&return=/candidate/ontdekkingsreis");
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
+
+        await context.SetOfflineAsync(true);
+        await page.EvaluateAsync(
+            """
+            () => {
+              window.lobsyCircuit.reloadPageOnce('playwright-offline-test');
+            }
+            """);
+
+        await page.WaitForTimeoutAsync(45_000);
+        var stillOnApp = await page.EvaluateAsync<bool>(
+            "() => location.href.includes('/candidate/ontdekkingsreis') && !String(document.title).includes('INTERNET_DISCONNECTED')");
+        Assert.True(stillOnApp, "Document reload ran while offline (ERR_INTERNET_DISCONNECTED).");
+    }
+
+    [Fact]
     public async Task Stuck_reconnect_trying_is_demoted_to_failed_with_visible_actions()
     {
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
