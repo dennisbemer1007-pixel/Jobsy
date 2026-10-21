@@ -2,7 +2,7 @@ using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
 
-/// <summary>Seed onboarding at rustig step 4 (u6x2) after fresh registration.</summary>
+/// <summary>Seed DB at step 4 after registration (capture/audit fast path).</summary>
 internal static class OnboardingRustigStep04E2eFlow
 {
     internal static Task ReachRustigStep04Async(IPage page, string baseUrl, bool mobile) =>
@@ -16,13 +16,12 @@ internal static class OnboardingRustigStep04E2eFlow
         _ = mobile;
         var email = await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateEmailAsync(
             page, baseUrl, rustig ? "rustig-u6x2" : "baseline-u6x2");
-        await CandidateJourneyE2e.PrepareDiscoveryStepForE2eAsync(email, step: 4);
 
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 120_000 });
+        await WaitForOnboardingWizardReadyAsync(page);
+        await CandidateJourneyE2e.PrepareDiscoveryStepForE2eAsync(email, step: 4);
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await WaitForOnboardingWizardReadyAsync(page);
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
 
         if (rustig)
@@ -35,6 +34,23 @@ internal static class OnboardingRustigStep04E2eFlow
             {
                 State = WaitForSelectorState.Visible,
                 Timeout = 90_000,
+            });
+        }
+    }
+
+    private static async Task WaitForOnboardingWizardReadyAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 120_000 });
+        var loading = page.Locator(".ob-wizard__loading");
+        if (await loading.CountAsync() > 0)
+        {
+            await loading.First.WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Hidden,
+                Timeout = 120_000,
             });
         }
     }

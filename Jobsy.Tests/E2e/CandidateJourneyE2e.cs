@@ -796,6 +796,11 @@ public static class CandidateJourneyE2e
         onboarding.WizardVersion = version;
         onboarding.FinishReached = false;
         onboarding.CompletedAtUtc = null;
+        if (currentStep > 1)
+        {
+            onboarding.Source = "welcome";
+        }
+
         onboarding.UpdatedAtUtc = DateTime.UtcNow;
         await db.SaveChangesAsync();
     }

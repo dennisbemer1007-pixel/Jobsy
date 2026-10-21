@@ -765,7 +765,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await transportTile.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
         await WaitForCircuitReadyAsync(page, 30_000);
 
-        var travel = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__travel-times button")
+        var travel = page.Locator(".ob-wizard__transport .lobsy-choice-tile, .ob-wizard__travel-times .lobsy-choice-tile")
             .Filter(new() { HasText = maxTravelMinutes.ToString() });
         if (await travel.CountAsync() == 0)
         {
@@ -833,7 +833,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             if (await OnboardingRustigStepScreen(page, 3).IsVisibleAsync())
             {
                 await SelectRustigTransportAndTravelAsync(page, mobile);
-                await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+                await ClickWizardNextWhenVisibleAsync(page);
                 await WaitForCircuitReadyAsync(page, 60_000);
                 continue;
             }
