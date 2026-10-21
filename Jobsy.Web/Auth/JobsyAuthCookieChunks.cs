@@ -1,4 +1,5 @@
 using System.Globalization;
+using Jobsy.Web.Security;
 
 namespace Jobsy.Web.Auth;
 
@@ -14,7 +15,7 @@ public static class JobsyAuthCookieChunks
     public static void DeleteAll(HttpContext http, string cookieName = DefaultCookieName)
     {
         DeleteOne(http, cookieName);
-        for (var i = 1; i <= 12; i++)
+        for (var i = 1; i <= 20; i++)
         {
             DeleteOne(http, cookieName + "C" + i.ToString(CultureInfo.InvariantCulture));
         }
@@ -22,22 +23,29 @@ public static class JobsyAuthCookieChunks
 
     private static void DeleteOne(HttpContext http, string name)
     {
-        http.Response.Cookies.Delete(
-            name,
-            new CookieOptions
+        var secure = JobsyCookie.ShouldMarkSecure(http);
+        var opts = new CookieOptions
+        {
+            Path = "/",
+            SameSite = SameSiteMode.Lax,
+            HttpOnly = true,
+            Secure = secure,
+            Expires = DateTimeOffset.UnixEpoch
+        };
+        http.Response.Cookies.Delete(name, opts);
+        http.Response.Cookies.Append(name, string.Empty, opts);
+        if (secure)
+        {
+            var devOpts = new CookieOptions
             {
                 Path = "/",
-                Secure = true,
                 SameSite = SameSiteMode.Lax,
-                HttpOnly = true
-            });
-        http.Response.Cookies.Delete(
-            name,
-            new CookieOptions
-            {
-                Path = "/",
-                SameSite = SameSiteMode.Lax,
-                HttpOnly = true
-            });
+                HttpOnly = true,
+                Secure = false,
+                Expires = DateTimeOffset.UnixEpoch
+            };
+            http.Response.Cookies.Delete(name, devOpts);
+            http.Response.Cookies.Append(name, string.Empty, devOpts);
+        }
     }
 }

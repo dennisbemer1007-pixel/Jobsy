@@ -20,6 +20,8 @@
     var healthyDismissTimer = null;
     var reconnectFetchBackoffUntil = Object.create(null);
     var reconnectFetchFailStreak = Object.create(null);
+    var reconnectInFlight = null;
+    var onlineRecoveryTimer = null;
 
     function isBrowserOnline() {
         try {
@@ -171,6 +173,22 @@
                 key = "negotiate";
             } else if (url.indexOf("session-security") !== -1) {
                 key = "session-security";
+            } else if (url.indexOf("session-activity") !== -1) {
+                key = "session-activity";
+            }
+            if (key === "session-activity" || key === "session-security") {
+                if (reconnectPendingOffline()) {
+                    return new Promise(function (resolve) {
+                        var deadline = Date.now() + 20000;
+                        (function waitForCircuit() {
+                            if (!reconnectPendingOffline() || Date.now() >= deadline) {
+                                resolve(nativeFetch(input, init));
+                                return;
+                            }
+                            window.setTimeout(waitForCircuit, 250);
+                        })();
+                    });
+                }
             }
             if (!key) {
                 return nativeFetch(input, init);
@@ -999,33 +1017,45 @@
     }
 
     async function tryReconnect(reason) {
-        if (!window.Blazor || typeof Blazor.reconnect !== "function") return false;
-        reconnectAttempts += 1;
-        var quiet = String(reason || "").indexOf("silent") !== -1 || String(reason || "").indexOf("loop-") === 0;
-        if (!quiet) {
-            try {
-                console.info("[lobsy] Blazor.reconnect #" + reconnectAttempts + " (" + reason + ")");
-            } catch (e) { }
+        if (!window.Blazor || typeof Blazor.reconnect !== "function") {
+            return false;
         }
-        try {
-            var ok = await Blazor.reconnect();
-            if (ok === true) {
-                silentRetryCount = 0;
-                stopSilentRetry();
-                onCircuitHealthyAfterReconnect();
-                return true;
+        if (reconnectInFlight) {
+            return reconnectInFlight;
+        }
+        reconnectInFlight = (async function () {
+            reconnectAttempts += 1;
+            var quiet = String(reason || "").indexOf("silent") !== -1 || String(reason || "").indexOf("loop-") === 0;
+            if (!quiet) {
+                try {
+                    console.info("[lobsy] Blazor.reconnect #" + reconnectAttempts + " (" + reason + ")");
+                } catch (e) { }
             }
-            if (typeof Blazor.resumeCircuit === "function") {
-                var resumed = await Blazor.resumeCircuit();
-                if (resumed === true) {
+            try {
+                var ok = await Blazor.reconnect();
+                if (ok === true) {
                     silentRetryCount = 0;
                     stopSilentRetry();
                     onCircuitHealthyAfterReconnect();
                     return true;
                 }
-            }
-        } catch (e) { /* silent */ }
-        return false;
+                if (typeof Blazor.resumeCircuit === "function") {
+                    var resumed = await Blazor.resumeCircuit();
+                    if (resumed === true) {
+                        silentRetryCount = 0;
+                        stopSilentRetry();
+                        onCircuitHealthyAfterReconnect();
+                        return true;
+                    }
+                }
+            } catch (e) { /* silent */ }
+            return false;
+        })();
+        try {
+            return await reconnectInFlight;
+        } finally {
+            reconnectInFlight = null;
+        }
     }
 
     function scheduleSilentRetry() {
@@ -1262,12 +1292,19 @@
         document.addEventListener("visibilitychange", onResume);
         window.addEventListener("pageshow", onPageShow);
         window.addEventListener("online", function () {
-            onResume();
-            scheduleHealthyDismissPoll();
-            tryReconnect("online").finally(function () {
-                flushPendingAfterOnline();
+            if (onlineRecoveryTimer) {
+                window.clearTimeout(onlineRecoveryTimer);
+            }
+            var jitterMs = 200 + Math.floor(Math.random() * 400);
+            onlineRecoveryTimer = window.setTimeout(function () {
+                onlineRecoveryTimer = null;
+                onResume();
                 scheduleHealthyDismissPoll();
-            });
+                tryReconnect("online").finally(function () {
+                    flushPendingAfterOnline();
+                    scheduleHealthyDismissPoll();
+                });
+            }, jitterMs);
         });
         window.setInterval(function () {
             noteTryingState();
