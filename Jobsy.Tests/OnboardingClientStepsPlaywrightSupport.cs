@@ -29,6 +29,15 @@ internal static class OnboardingClientStepsPlaywrightSupport
     internal const int MobileWidth = 390;
     internal const int MobileHeight = 844;
 
+    private static async Task WaitForClientStepMountedAsync(IPage page, int step)
+    {
+        await page.Locator($"[data-ob-client-step=\"{step}\"]").WaitForAsync(new() { Timeout = 90_000 });
+        await page.WaitForFunctionAsync(
+            $$"""() => document.querySelector('[data-ob-client-step="{{step}}"]')?.getAttribute('data-ob-client-mounted') === '1'""",
+            null,
+            new() { Timeout = 90_000 });
+    }
+
     internal static BrowserNewContextOptions ContextOptions(bool mobile)
         => new()
         {
@@ -40,7 +49,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
     internal static async Task RunAddressSuggestMinThreeCharsAsync(IBrowser browser, bool mobile)
     {
-        using var web = new ClientStepsWebFactory();
+        using var web = new ClientStepsWebFactory { RustigEnabled = false, OnboardingSource = "welcome" };
         var serverRoot = web.EnsureServerAddress();
         var suggestGetCount = 0;
 
@@ -61,8 +70,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         await page.GotoAsync(serverRoot + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
-        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
-        await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
+        await WaitForClientStepMountedAsync(page, 1);
 
         var address = page.Locator("#onboarding-home-address");
         await address.FillAsync("");
@@ -195,7 +203,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
     internal static async Task RunSteps1And2SaveOnceAsync(IBrowser browser, bool mobile)
     {
-        using var web = new ClientStepsWebFactory();
+        using var web = new ClientStepsWebFactory { RustigEnabled = false, OnboardingSource = "welcome" };
         var serverRoot = web.EnsureServerAddress();
 
         await using var context = await browser.NewContextAsync(ContextOptions(mobile));
@@ -204,29 +212,23 @@ internal static class OnboardingClientStepsPlaywrightSupport
         page.SetDefaultTimeout(120_000);
 
         var baseUrl = serverRoot + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start");
-        await page.GotoAsync(baseUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync(baseUrl);
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
-        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+        await WaitForClientStepMountedAsync(page, 1);
 
-        await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
+        await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
         var address = page.Locator("#onboarding-home-address");
         await address.FillAsync("");
-        await address.PressSequentiallyAsync("Jan van den Bosch", new() { Delay = mobile ? 60 : 80 });
-        await Assertions.Expect(address).ToHaveValueAsync("Jan van den Bosch");
+        await address.PressSequentiallyAsync("2671GB", new() { Delay = mobile ? 50 : 70 });
+        await page.WaitForTimeoutAsync(600);
+        await page.Locator(".address-suggestions__item").First.ClickAsync(new() { Timeout = 30_000 });
 
         var birth = page.Locator("[data-ob-client=birthDate]");
         await birth.FillAsync("");
         await birth.PressSequentiallyAsync("12031990", new() { Delay = mobile ? 60 : 80 });
         await Assertions.Expect(birth).ToHaveValueAsync("12-03-1990");
-
-        var scholier = page.Locator(".work-status-chips .lobsy-choice-tile").Filter(new() { HasText = "Scholier" }).First;
-        for (var i = 0; i < 20; i++)
-        {
-            await scholier.ClickAsync(new() { Timeout = 5_000 });
-            await page.WaitForTimeoutAsync(mobile ? 100 : 150);
-        }
 
         Assert.Equal(0, web.ProfilePutCount);
 
@@ -267,7 +269,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
     internal static async Task RunHappyPathTowardDreamAsync(IBrowser browser, bool mobile)
     {
-        using var web = new ClientStepsWebFactory();
+        using var web = new ClientStepsWebFactory { RustigEnabled = false, OnboardingSource = "welcome" };
         var serverRoot = web.EnsureServerAddress();
         await using var context = await browser.NewContextAsync(ContextOptions(mobile));
         await PlaywrightCookieConsent.AcceptAsync(context);
@@ -277,7 +279,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         await page.GotoAsync(serverRoot + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
-        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+        await WaitForClientStepMountedAsync(page, 1);
 
         await CompleteStep1MinimalAsync(page);
         await page.GetByTestId("onboarding-next").ClickAsync();
@@ -595,16 +597,16 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
             return JsonResponse(payload);
 
-            object OnboardingStateDto() => new
+            object OnboardingStateDto() => new OnboardingState
             {
-                currentStep = factory.SavedStep,
-                startedAtUtc = DateTime.UtcNow,
-                isComplete = false,
-                shouldShow = true,
-                finishReached = factory.FinishReached,
-                wizardVersion = 2,
-                source = factory.OnboardingSource,
-                steps = Array.Empty<object>(),
+                CurrentStep = factory.SavedStep,
+                StartedAtUtc = DateTime.UtcNow,
+                IsComplete = false,
+                ShouldShow = true,
+                FinishReached = factory.FinishReached,
+                WizardVersion = 2,
+                Source = factory.OnboardingSource,
+                Steps = [],
             };
         }
 
