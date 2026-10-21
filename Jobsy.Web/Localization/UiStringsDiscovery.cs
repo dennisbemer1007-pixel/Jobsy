@@ -675,6 +675,40 @@ public static class UiStringsDiscovery
             "Nieuw · 1 min", "New · 1 min", "Nowe · 1 min", "Nou · 1 min", "جديد · دقيقة");
         Add("Discovery.Overview.View",
             "Bekijken", "View", "Zobacz", "Vezi", "عرض");
+        Add("Discovery.Overview.Adjust",
+            "Aanpassen", "Adjust", "Dostosuj", "Ajustează", "عدّل");
+        Add("Discovery.Overview.Continue",
+            "Ga verder", "Continue", "Idź dalej", "Continuă", "تابع");
+        Add("Discovery.Overview.RouteLead",
+            "Volg je route langs het strand, de kust en het licht. Tik op een stop om te zien wat je al invulde.",
+            "Follow your route along the beach, coast and light. Tap a stop to see what you filled in.",
+            "Podążaj trasą od plaży, brzegu do światła. Stuknij postój, by zobaczyć, co uzupełniłeś.",
+            "Urmează ruta de la plajă, coastă spre lumină. Atinge o oprire ca să vezi ce ai completat.",
+            "تابع مسارك من الشاطئ والساحل إلى النور. اضغط على محطة لترى ما أدخلته.");
+        Add("Discovery.Overview.StatusOpen",
+            "Open", "Open", "Otwarte", "Deschis", "مفتوح");
+        Add("Discovery.Overview.StatusOneStep",
+            "Nog 1 stap", "1 step left", "Jeszcze 1 krok", "Încă 1 pas", "خطوة واحدة متبقية");
+        Add("Discovery.Overview.TestTodo",
+            "Nog te doen", "Still to do", "Do zrobienia", "De făcut", "لم يُنجز بعد");
+        Add("Discovery.Overview.Start",
+            "Start", "Start", "Start", "Start", "ابدأ");
+        Add("Discovery.Overview.SummaryEmpty",
+            "Nog niet ingevuld.", "Not filled in yet.", "Jeszcze nie uzupełniono.", "Încă necompletat.", "لم يُملأ بعد.");
+        Add("Discovery.Overview.Phase.BeachLead",
+            "Start van je reis en toestemming.", "Start of your journey and consent.", "Start podróży i zgoda.", "Startul călătoriei și consimțământ.", "بداية رحلتك والموافقة.");
+        Add("Discovery.Overview.Phase.CoastLead",
+            "Over jou en wanneer je kunt werken.", "About you and when you can work.", "O Tobie i kiedy możesz pracować.", "Despre tine și când poți lucra.", "عنك ومتى يمكنك العمل.");
+        Add("Discovery.Overview.Phase.RocksLead",
+            "Werk, leren en wat je leuk vindt.", "Work, learning and what you like.", "Praca, nauka i to, co lubisz.", "Muncă, învățare și ce îți place.", "العمل والتعلم وما تحب.");
+        Add("Discovery.Overview.Phase.DeepLead",
+            "Vier tests in de reis.", "Four tests on the journey.", "Cztery testy w podróży.", "Patru teste în călătorie.", "أربعة اختبارات في الرحلة.");
+        Add("Discovery.Overview.Phase.LightLead",
+            "Afronden en je paspoort bekijken.", "Finish and view your passport.", "Zakończ i zobacz paszport.", "Finalizează și vezi pașaportul.", "أنهِ واطلع على جوازك.");
+        Add("Discovery.Overview.Section.Start",
+            "Start", "Start", "Start", "Start", "البداية");
+        Add("Discovery.Overview.Section.Passport",
+            "Paspoort", "Passport", "Paszport", "Pașaport", "الجواز");
         Add("Discovery.Overview.Save",
             "Opslaan", "Save", "Zapisz", "Salvează", "حفظ");
         Add("Discovery.Overview.Back",

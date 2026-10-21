@@ -48,7 +48,7 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "62ef50acd8000eede3e3b7e71e0ba3604b2dec3da999893724dcb7e87de94fcd",
+    "sha256": "5c678f4ac46aa22fcfb44e10921e2c71ff7c7f5f50f0f54e3e2a401aceb6b68d",
     "v": "20261020-r8"
   },
   "css/features/candidate-hub.css": {
@@ -188,7 +188,7 @@
     "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "dbb6eeb18ce67245e04439b3561c1502e87e2c9569bb720ad3e8754d9325a879",
+    "sha256": "d8e46b2670cd30eedd7a4bf559d3677a096cd450c14ffab06bddf4c512aa9973",
     "v": "20261015-21"
   },
   "css/features/proactive-matching.css": {

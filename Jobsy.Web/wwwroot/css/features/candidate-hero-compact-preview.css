@@ -717,6 +717,44 @@
     object-position: right bottom;
   }
 
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: clamp(150px, 9vw, 168px) !important;
+    height: clamp(150px, 9vw, 168px) !important;
+    max-height: clamp(150px, 9vw, 168px) !important;
+    padding-inline: 0 !important;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    min-height: clamp(150px, 9vw, 168px);
+    height: clamp(150px, 9vw, 168px);
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art img,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art img {
+    -webkit-mask-image: none;
+    mask-image: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 47%;
+    transform: none;
+  }
+
   .journey.journey--compact-preview-c .journey-stage {
     grid-template-columns: minmax(0, 16rem) minmax(0, 1fr) !important;
     max-width: min(100%, 82rem) !important;
@@ -806,6 +844,14 @@
 }
 
 @media (max-width: 767px) {
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art {
+    min-height: 90px !important;
+    height: 90px !important;
+    max-height: 90px !important;
+  }
+
   .cand-hero--compact-preview-a {
     --cand-hero-mobile-h: 7.5rem;
     max-height: 7.5rem;
