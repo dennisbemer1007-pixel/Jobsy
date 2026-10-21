@@ -48,7 +48,7 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "480e1e883f5ce9202353dd3b0043b79aa0351aa43a260ffaf4cf0a3c61a556d8",
+    "sha256": "fa752e0c9438f9540e5473f0deaa33aaf7adcf5fb3dba0529e412ddc08e816e3",
     "v": "20261021-r15"
   },
   "css/features/candidate-hub.css": {
@@ -64,7 +64,7 @@
     "v": "20261018-02"
   },
   "css/features/carriere.css": {
-    "sha256": "4763da056911303c965424e922ca17737655acb43ae58e5f310a21d4024cddd1",
+    "sha256": "69dc19ad5e0cd6572aa875e4a29eed0b3df469dccc2fbd6b67018bb9f2773dfd",
     "v": "20261018-03"
   },
   "css/features/choice-tiles.css": {
@@ -208,7 +208,7 @@
     "v": "20261004-10"
   },
   "css/features/reconnect.css": {
-    "sha256": "67ce9f6f80aad3add1eaf411dc65d4d0e23f14a44690ef498d83cbc8bda4e95a",
+    "sha256": "58ea9e8c18ac158640713490308d0114daf71fb5f6da976c67dad6ba25e01cca",
     "v": "20261021-02"
   },
   "css/features/sales.css": {
@@ -272,7 +272,7 @@
     "v": "20261021-02"
   },
   "js/app-extras.js": {
-    "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
+    "sha256": "a421390ae26ee7df684de26976d24681e365ceb729bf9826e6f643c6cabb6333",
     "v": "20261015-pdfdl"
   },
   "js/app-public.js": {
@@ -280,8 +280,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
-    "v": "20261021-15"
+    "sha256": "d45f4475e44f0ee0164c0c0e33b9c187d081d189f6b9d44097118203f033bf28",
+    "v": "20261021-16"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",

@@ -26,6 +26,7 @@ public static class UwvMockupCopy
             "Vul je voorkeuren aan, dan laten we routes zien die bij je passen.",
             "Fill in your preferences and we will show routes that fit you.",
             lang);
+        public static string LoadingTitle(string? lang) => T("Jouw carrière", "Your career", lang);
     }
 
     public static class Kansberoepen
@@ -268,6 +269,7 @@ public static class UwvMockupCopy
     public static class StrongMatches
     {
         public static string Title(string? lang) => T("Sterke matches voor jou", "Strong matches for you", lang);
+        public static string PendingTitle(string? lang) => T("Passende beroepen", "Matching occupations", lang);
     }
 
     public static class Adviseur

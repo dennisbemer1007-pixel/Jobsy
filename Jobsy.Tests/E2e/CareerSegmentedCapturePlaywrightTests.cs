@@ -176,7 +176,7 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
             new() { Timeout = 60_000 });
         var gap = await page.EvaluateAsync<double>("""
             () => {
-              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead');
+              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead:not(.carriere-showcase-hero__lead-skeleton)');
               const banner = document.querySelector('[data-testid=carriere-segmented-empty-profile]');
               const header = document.querySelector('header.uwv-carriere-showcase-hero');
               if (!lead || !banner || !header) return 999;
@@ -206,7 +206,7 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
         var page = await OpenCarriereAsync(context, baseUrl);
         var gap = await page.EvaluateAsync<double>("""
             () => {
-              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead');
+              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead:not(.carriere-showcase-hero__lead-skeleton)');
               const tabs = document.querySelector('.carriere-segmented__nav');
               if (!lead || !tabs) return 999;
               const lb = lead.getBoundingClientRect();
@@ -218,6 +218,58 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
         Directory.CreateDirectory(outDir);
         File.WriteAllText(Path.Combine(outDir, "carriere-mobile-lead-tabs-gap.txt"), $"{gap:F1}");
         Assert.InRange(gap, 0, 16);
+    }
+
+    [Fact]
+    public async Task Empty_profile_never_shows_filled_hero_while_profile_loads()
+    {
+        using (var web = new IllustratedPagesWebFactory(emptyAppsAndLikes: true, profileDelayMs: 2500))
+        {
+            _ = web.ServerAddress;
+            var baseUrl = web.ServerAddress.TrimEnd('/');
+            var outDir = Path.Combine(FindRepoRoot(), "artifacts");
+            Directory.CreateDirectory(outDir);
+            var loadingShot = Path.Combine(outDir, "carriere-segmented-product-390-empty-profile-loading-viewport.png");
+            var loadedShot = Path.Combine(outDir, "carriere-segmented-product-390-empty-profile-loaded-viewport.png");
+
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = 390, Height = 844 },
+                IsMobile = true,
+                HasTouch = true,
+                IgnoreHTTPSErrors = true,
+            });
+            var page = await context.NewPageAsync();
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            await page.GotoAsync($"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/carriere")}");
+            await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+            await page.Locator("[data-testid=uwv-carriere-sections]").WaitForAsync(new() { Timeout = 60_000 });
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+                null,
+                new() { Timeout = 60_000 });
+
+            await page.Locator("[data-testid=carriere-segmented-profile-loading]").WaitForAsync(new() { Timeout = 60_000 });
+            Assert.False(await HeroShowsFilledProfileCopyAsync(page));
+            await page.ScreenshotAsync(new() { Path = loadingShot, FullPage = false });
+
+            for (var i = 0; i < 30; i++)
+            {
+                Assert.False(await HeroShowsFilledProfileCopyAsync(page));
+                if (!await page.Locator("[data-testid=carriere-segmented-profile-loading]").IsVisibleAsync())
+                {
+                    break;
+                }
+
+                await Task.Delay(100);
+            }
+
+            await page.Locator("[data-testid=carriere-segmented-empty-profile]").WaitForAsync(new() { Timeout = 60_000 });
+            await page.GetByRole(AriaRole.Heading, new() { Name = "carrièrekansen" }).WaitForAsync(new() { Timeout = 60_000 });
+            Assert.False(await HeroShowsFilledProfileCopyAsync(page));
+            await WaitForAppHeaderChromeAsync(page);
+            await page.ScreenshotAsync(new() { Path = loadedShot, FullPage = false });
+        }
     }
 
     [Fact]
@@ -248,6 +300,21 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
         Assert.DoesNotContain("url(", metrics, StringComparison.OrdinalIgnoreCase);
     }
 
+    private static Task<bool> HeroShowsFilledProfileCopyAsync(IPage page)
+        => page.EvaluateAsync<bool>("""
+            () => {
+              const header = document.querySelector('header.uwv-carriere-showcase-hero');
+              if (!header) return false;
+              const h1 = header.querySelector('h1');
+              const lead = header.querySelector('.cand-hero__lead:not(.carriere-showcase-hero__lead-skeleton)');
+              const title = (h1 && h1.textContent) || '';
+              const leadText = (lead && lead.textContent) || '';
+              return title.includes('logistiek medewerker')
+                || leadText.includes('Op basis van je paspoort')
+                || leadText.includes('Haaglanden');
+            }
+            """);
+
     private static async Task<IPage> OpenCarriereAsync(IBrowserContext context, string baseUrl)
     {
         var page = await context.NewPageAsync();
@@ -261,6 +328,19 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 60_000 });
         await page.Locator("header.uwv-carriere-showcase-hero h1").First.WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const loading = document.querySelector('[data-testid=carriere-segmented-profile-loading]');
+              if (loading) return false;
+              const empty = document.querySelector('[data-testid=carriere-segmented-empty-profile]');
+              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead:not(.carriere-showcase-hero__lead-skeleton)');
+              if (empty) return true;
+              return lead && (lead.textContent || '').includes('Haaglanden');
+            }
+            """,
+            null,
+            new() { Timeout = 60_000 });
         return page;
     }
 

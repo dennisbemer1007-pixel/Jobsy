@@ -25,11 +25,16 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     private IHost? _kestrel;
     private readonly bool _emptyAppsAndLikes;
     private readonly bool _minimalPassportProfile;
+    private readonly int _profileDelayMs;
 
-    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false, bool minimalPassportProfile = false)
+    public IllustratedPagesWebFactory(
+        bool emptyAppsAndLikes = false,
+        bool minimalPassportProfile = false,
+        int profileDelayMs = 0)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
         _minimalPassportProfile = minimalPassportProfile;
+        _profileDelayMs = profileDelayMs;
         _ = CreateClient();
     }
 
@@ -57,10 +62,10 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
             services.RemoveAll<IHttpClientFactory>();
-            services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile));
+            services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile, _profileDelayMs));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
             services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
-                new HttpClient(new StubApiHandler(_emptyAppsAndLikes, _minimalPassportProfile), disposeHandler: false)
+                new HttpClient(new StubApiHandler(_emptyAppsAndLikes, _minimalPassportProfile, _profileDelayMs), disposeHandler: false)
                 {
                     BaseAddress = new Uri("http://api.test/")
                 }));
@@ -131,16 +136,16 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         }
     }
 
-    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes, bool minimalPassportProfile) : IHttpClientFactory
+    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes, bool minimalPassportProfile, int profileDelayMs) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
-            => new(new StubApiHandler(emptyAppsAndLikes, minimalPassportProfile), disposeHandler: true)
+            => new(new StubApiHandler(emptyAppsAndLikes, minimalPassportProfile, profileDelayMs), disposeHandler: true)
             {
                 BaseAddress = new Uri("http://api.test/")
             };
     }
 
-    private sealed class StubApiHandler(bool emptyAppsAndLikes, bool minimalPassportProfile) : HttpMessageHandler
+    private sealed class StubApiHandler(bool emptyAppsAndLikes, bool minimalPassportProfile, int profileDelayMs) : HttpMessageHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -156,6 +161,11 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 && !path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
             {
                 await Task.Delay(20_000, cancellationToken);
+            }
+
+            if (path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase) && profileDelayMs > 0)
+            {
+                await Task.Delay(profileDelayMs, cancellationToken);
             }
 
             var json = IllustratedPagesApiStub.BuildJson(path, emptyAppsAndLikes, minimalPassportProfile);
