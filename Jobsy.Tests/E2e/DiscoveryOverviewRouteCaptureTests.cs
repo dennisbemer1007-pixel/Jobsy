@@ -55,6 +55,25 @@ public sealed class DiscoveryOverviewRouteCaptureTests
 
         if (mobile)
         {
+            var heroImgPos = await page.EvaluateAsync<string>(
+                """
+                () => {
+                  const img = document.querySelector('.journey--overview-route header.cand-hero--discovery-overview-v8 img');
+                  return img ? getComputedStyle(img).objectPosition : '';
+                }
+                """);
+            Assert.Contains("27%", heroImgPos, StringComparison.Ordinal);
+            Assert.Contains("47%", heroImgPos, StringComparison.Ordinal);
+
+            var heroBandHeight = await page.EvaluateAsync<double>(
+                """
+                () => {
+                  const h = document.querySelector('.journey--overview-route header.cand-hero--discovery-overview-v8');
+                  return h ? h.getBoundingClientRect().height : 0;
+                }
+                """);
+            Assert.InRange(heroBandHeight, 88, 92);
+
             await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(ArtifactsDir, "ontdekkingsreis-route-product-390-viewport.png"),
