@@ -312,6 +312,12 @@ a {
     }
 }
 
+@media (min-width: 1024px) and (max-width: 1199px) {
+    .app-header:has(.candidate-header-nav) .pwa-entry-btn {
+        display: none;
+    }
+}
+
 .auth-header {
     display: flex;
     align-items: center;
