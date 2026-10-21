@@ -74,7 +74,7 @@
             return;
         }
         try {
-            fetch(href, { method: "GET", credentials: "same-origin", cache: "no-store" })
+            fetch(href, { method: "HEAD", credentials: "same-origin", cache: "no-store" })
                 .then(function (r) {
                     if (r.status >= 500 && r.status <= 599 && attempt + 1 < maxAttempts) {
                         window.setTimeout(function () {
@@ -115,8 +115,7 @@
         pendingAssignHref = null;
         pendingReloadReason = null;
         if (pendingHref) {
-            allowDocumentReload();
-            window.location.assign(pendingHref);
+            assignWithServerRetry(pendingHref, 0);
             return;
         }
         if (pendingReload) {

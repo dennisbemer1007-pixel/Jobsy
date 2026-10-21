@@ -85,6 +85,7 @@ public sealed class DeviceSessionRefreshMiddleware
             }
 
             var principal = AuthPrincipalFactory.FromDeviceRefresh(profile);
+            JobsyAuthCookieChunks.DeleteAll(http);
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
