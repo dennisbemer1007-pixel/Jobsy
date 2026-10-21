@@ -265,9 +265,6 @@ public sealed class ProactiveMatchingInstantTests
             return rows.Select(VacancyDiscoveryIndex.ToRecord).ToList();
         }
 
-        public async Task<VacancyDiscoveryRecord?> FindActiveByIdAsync(Guid id, CancellationToken cancellationToken = default)
-            => (await GetActiveAsync(cancellationToken)).FirstOrDefault(r => r.Id == id);
-
         public Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(new VacancyMapView(52.0, 4.3, 10, 1));
     }

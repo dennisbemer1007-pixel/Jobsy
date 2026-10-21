@@ -165,27 +165,6 @@
         }
     }
 
-    function sessionActivityOk(r) {
-        return r && r.status !== 401 && r.headers.get("X-Jobsy-Session") !== "expired";
-    }
-
-    function fetchSessionActivity(method) {
-        return fetch("/account/session-activity", {
-            method: method || "GET",
-            credentials: "same-origin",
-            headers: { "Accept": "application/json" }
-        });
-    }
-
-    /** Avoid logout on a single transient 401 (mobile reconnect / token refresh). */
-    function confirmSessionExpiredThenLogout() {
-        fetchSessionActivity("GET").then(function (r) {
-            if (!sessionActivityOk(r)) {
-                forceSessionExpiredLogout();
-            }
-        }).catch(function () { });
-    }
-
     function forceSessionExpiredLogout() {
         if (expiring) {
             return;
@@ -223,9 +202,14 @@
         lastActivityFlush = now;
         scheduleIdle();
         try {
-            fetchSessionActivity("POST").then(function (r) {
-                if (!sessionActivityOk(r)) {
-                    confirmSessionExpiredThenLogout();
+            fetch("/account/session-activity", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" },
+                keepalive: true
+            }).then(function (r) {
+                if (r.status === 401 || r.headers.get("X-Jobsy-Session") === "expired") {
+                    forceSessionExpiredLogout();
                 }
             }).catch(function () { });
         } catch (e) {
@@ -361,8 +345,12 @@
             if (document.visibilityState === "hidden") {
                 return Promise.resolve(true);
             }
-            return fetchSessionActivity("GET").then(function (r) {
-                if (!sessionActivityOk(r)) {
+            return fetch("/account/session-activity", {
+                method: "GET",
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" }
+            }).then(function (r) {
+                if (r.status === 401 || r.headers.get("X-Jobsy-Session") === "expired") {
                     forceSessionExpiredLogout();
                     return false;
                 }

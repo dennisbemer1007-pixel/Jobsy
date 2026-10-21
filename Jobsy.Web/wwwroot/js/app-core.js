@@ -1057,10 +1057,6 @@ window.jobsyMaps = (function () {
                 return;
             }
             var parsed = JSON.parse(node.textContent);
-            if (parsed && parsed.deferPinsWarmup) {
-                // Logged-in banenkaart: one MapLibre init from Blazor after profile/origin — skip prerender boot to avoid camera/pin jump.
-                return;
-            }
             if (parsed && parsed.pinsUrl) {
                 prefetchPins(String(parsed.pinsUrl));
             }
@@ -1090,7 +1086,7 @@ window.jobsyMaps = (function () {
 window.jobsyExtras = (function () {
     "use strict";
 
-    var extrasSrc = "/js/app-extras.js?v=20261021-idle";
+    var extrasSrc = "/js/app-extras.js?v=20261015-pdfdl";
     var feedbackSrc = "/js/feedback.js?v=20261002-ch10";
     var pending = {};
 
