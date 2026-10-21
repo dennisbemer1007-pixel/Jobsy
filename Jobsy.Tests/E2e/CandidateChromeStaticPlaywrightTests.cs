@@ -15,11 +15,12 @@ public sealed class CandidateChromeStaticPlaywrightTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        Environment.SetEnvironmentVariable("JOBSY_CSP_ALLOW_UNSAFE_EVAL", "0");
         Environment.SetEnvironmentVariable("JOBSY_UWV_FEATURES", "1");
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        _web = new IllustratedPagesWebFactory();
+        _web = new IllustratedPagesWebFactory(accLikeProductionCsp: true);
         _ = _web.ServerAddress;
     }
 
@@ -42,6 +43,8 @@ public sealed class CandidateChromeStaticPlaywrightTests : IAsyncLifetime
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(PlaywrightViewportContexts.ForSize(width, height));
         var page = await context.NewPageAsync();
+        var apiHostGuard = new PlaywrightAccLikeRegression.BrowserApiHostCounter();
+        apiHostGuard.Attach(page);
         await PlaywrightCookieConsent.AcceptAsync(context);
 
         var blazorPosts = 0;
@@ -89,5 +92,7 @@ public sealed class CandidateChromeStaticPlaywrightTests : IAsyncLifetime
         Assert.True(
             postsAfterNav <= 2,
             $"Expected at most 2 Blazor POSTs during menu/nav interaction at {width}px, saw {postsAfterNav}.");
+
+        apiHostGuard.AssertZero($"candidate chrome static nav at {width}px");
     }
 }
