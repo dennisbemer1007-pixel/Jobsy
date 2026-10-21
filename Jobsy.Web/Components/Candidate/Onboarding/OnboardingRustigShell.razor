@@ -14,7 +14,7 @@
                  decoding="async"
                  data-logo-fallback="off"
                  draggable="false" />
-            @foreach (var item in OnboardingRustigSidebarNav.Items(Step))
+            @foreach (var item in OnboardingRustigSidebarNav.Items(Step, SidebarActiveSection))
             {
                 <div class="ob-wizard__side-item @(item.Current ? "is-current" : null)">
                     <span>@item.Number</span>
@@ -125,6 +125,8 @@
 @code {
     [Parameter, EditorRequired] public string ScreenId { get; set; } = "";
     [Parameter] public int Step { get; set; } = 1;
+    /// <summary>When set (e.g. Kompas finale), overrides sidebar section highlight.</summary>
+    [Parameter] public int? SidebarActiveSection { get; set; }
     [Parameter] public string PhaseLabel { get; set; } = "";
     [Parameter] public int MinutesLeft { get; set; }
     [Parameter] public bool ShowSaved { get; set; } = true;

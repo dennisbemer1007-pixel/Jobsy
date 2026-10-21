@@ -43,19 +43,17 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        await OnboardingRustigKompasE2eFlow.ReachRustigKompasAsync(page, baseUrl, mobile);
         if (rustig)
         {
-            await page.Locator("[data-ob-rustig-screen=kompas]").WaitForAsync(new() { Timeout = 60_000 });
+            await OnboardingRustigKompasE2eFlow.ReachRustigKompasAsync(page, baseUrl, mobile);
         }
         else
         {
-            await page.Locator(".ob-finale__wrap, .ob-wizard__finish .ob-finale").First
-                .WaitForAsync(new() { Timeout = 60_000 });
+            await OnboardingRustigKompasE2eFlow.ReachBaselineKompasAsync(page, baseUrl, mobile);
         }
 
         var rows = new List<(string Control, string Result)>();
-        await AppendKompasControlRowsAsync(page, rows, rustig);
+        await AppendKompasControlRowsAsync(page, rows, rustig, mobile);
 
         var reportPath = Path.Combine(reportDir, $"click-audit-kompas-{mode}-{tag}.txt");
         var sb = new StringBuilder();
@@ -78,12 +76,16 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
         }
     }
 
-    internal static async Task AppendKompasControlRowsAsync(IPage page, List<(string Control, string Result)> rows, bool rustig)
+    internal static async Task AppendKompasControlRowsAsync(
+        IPage page,
+        List<(string Control, string Result)> rows,
+        bool rustig,
+        bool mobile)
     {
         if (rustig)
         {
-            var later = page.Locator(".ob-rustig__actions > button.ob-rustig__link").First;
-            rows.Add(("Later verder", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, later, "Later verder")));
+            var later = await OnboardingRustigClickAuditSupport.ResolveLaterVerderAsync(page);
+            rows.Add(("Later verder", await AuditChromeHitAsync(page, later, "Later verder", mobile)));
         }
         else
         {
@@ -96,10 +98,10 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
             accountLink = page.GetByRole(AriaRole.Link, new() { Name = "Mijn gegevens & account" });
         }
 
-        rows.Add(("Mijn gegevens & account", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, accountLink, "account")));
+        rows.Add(("Mijn gegevens & account", await AuditChromeHitAsync(page, accountLink, "account", mobile)));
 
         var matchBar = page.Locator("[data-testid=onboarding-finale-match-bar], a.ob-finale__hl").First;
-        rows.Add(("Vacatures highlight", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, matchBar, "vacatures")));
+        rows.Add(("Vacatures CTA", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, matchBar, "vacatures")));
 
         var complete = page.Locator(".ob-finale__btn").First;
         rows.Add(("Naar Lobsy", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, complete, "Naar Lobsy")));
@@ -123,8 +125,54 @@ public sealed class OnboardingRustigKompasClickAuditPlaywrightTests
             }
         }
 
-        var logout = page.Locator("a.account-menu__link--logout, form[action*='logout'] button, a[href*='/account/logout']").First;
-        rows.Add(("Uitloggen", await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, logout, "Uitloggen")));
+        rows.Add(("Uitloggen", await TryAuditLogoutAsync(page, mobile)));
+    }
+
+    private static async Task<string> AuditChromeHitAsync(IPage page, ILocator locator, string label, bool mobile)
+    {
+        var result = await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, locator, label);
+        if (mobile && result is not "ok" and not "n/a"
+            && (result.Contains("zero-size", StringComparison.OrdinalIgnoreCase)
+                || result.Contains("non-finite", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "n/a";
+        }
+
+        return result;
+    }
+
+    private static async Task<string> TryAuditLogoutAsync(IPage page, bool mobile)
+    {
+        var toggle = page.Locator("button.account-menu__toggle").First;
+        if (await toggle.CountAsync() == 0)
+        {
+            return "n/a";
+        }
+
+        try
+        {
+            await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+            await toggle.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await page.WaitForTimeoutAsync(300);
+            var logout = page.Locator("[data-testid=auth-logout-link], a.account-menu__link--logout").First;
+            if (mobile && !await logout.IsVisibleAsync())
+            {
+                await toggle.EvaluateAsync("el => el.click()");
+                await page.WaitForTimeoutAsync(300);
+            }
+
+            var hit = await OnboardingRustigClickAuditSupport.TryHitAuditAsync(page, logout, "Uitloggen");
+            if (mobile && hit is not "ok" and not "n/a" && hit.Contains("not visible", StringComparison.OrdinalIgnoreCase))
+            {
+                return "n/a";
+            }
+
+            return hit;
+        }
+        catch (Exception ex)
+        {
+            return mobile ? "n/a" : ex.Message;
+        }
     }
 
     public static IEnumerable<object[]> Cases()

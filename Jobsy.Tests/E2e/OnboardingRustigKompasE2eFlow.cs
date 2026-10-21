@@ -8,10 +8,16 @@ namespace Jobsy.Tests.E2e;
 
 internal static class OnboardingRustigKompasE2eFlow
 {
-    internal static async Task ReachRustigKompasAsync(IPage page, string baseUrl, bool mobile)
+    internal static Task ReachRustigKompasAsync(IPage page, string baseUrl, bool mobile) =>
+        ReachKompasAsync(page, baseUrl, mobile, rustig: true);
+
+    internal static Task ReachBaselineKompasAsync(IPage page, string baseUrl, bool mobile) =>
+        ReachKompasAsync(page, baseUrl, mobile, rustig: false);
+
+    private static async Task ReachKompasAsync(IPage page, string baseUrl, bool mobile, bool rustig)
     {
         _ = mobile;
-        var email = await RegisterFreshCandidateEmailAsync(page, baseUrl, "rustig-kompas");
+        var email = await RegisterFreshCandidateEmailAsync(page, baseUrl, rustig ? "rustig-kompas" : "baseline-kompas");
         await CandidateJourneyE2e.EnsureTestAiConsentForE2eAsync(email);
         await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Competence);
         await CandidateJourneyE2e.SeedMiniBlockCompleteForE2eAsync(email, AssessmentKind.Career);
@@ -20,17 +26,34 @@ internal static class OnboardingRustigKompasE2eFlow
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 10, currentStep: 10);
         await SetFinishReachedForE2eAsync(email);
 
+        if (!rustig)
+        {
+            await CandidateJourneyE2e.EnsureOnboardingFinaleV2EnabledForE2eAsync();
+        }
+
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 120_000 });
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-        await page.Locator("[data-ob-rustig-screen=kompas]").WaitForAsync(new()
+
+        if (rustig)
         {
-            State = WaitForSelectorState.Visible,
-            Timeout = 90_000,
-        });
+            await page.Locator("[data-ob-rustig-screen=kompas]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 90_000,
+            });
+        }
+        else
+        {
+            await page.Locator(".ob-finale__wrap, .ob-wizard__finish .ob-finale").First.WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 90_000,
+            });
+        }
     }
 
     private static async Task SetFinishReachedForE2eAsync(string candidateEmail)
