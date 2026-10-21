@@ -40,7 +40,7 @@ env JOBSY_E2E_CAPTURE_EMAIL_CODES=1 Localization__EnabledCultures="$CI_LOCALIZAT
 echo $! >/tmp/jobsy-ci-logs/api.pid
 
 echo "Starting Jobsy.Web on :5201 …"
-env Localization__EnabledCultures="$CI_LOCALIZATION" dotnet run --project Jobsy.Web/Jobsy.Web.csproj -c Release --no-build --urls http://127.0.0.1:5201 \
+env Onboarding__RustigEnabled="${Onboarding__RustigEnabled:-true}" Localization__EnabledCultures="$CI_LOCALIZATION" dotnet run --project Jobsy.Web/Jobsy.Web.csproj -c Release --no-build --urls http://127.0.0.1:5201 \
   >/tmp/jobsy-ci-logs/web.log 2>&1 &
 echo $! >/tmp/jobsy-ci-logs/web.pid
 

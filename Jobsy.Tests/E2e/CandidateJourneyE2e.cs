@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
@@ -440,6 +441,34 @@ public static class CandidateJourneyE2e
             db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
         }
 
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Enables onboarding finale v2 so rustig Kompas renders on /candidate/start (CI Playwright).</summary>
+    public static async Task EnsureOnboardingFinaleV2EnabledForE2eAsync()
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync();
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings { Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee") };
+            db.PlatformFeatureSettings.Add(row);
+        }
+
+        row.OnboardingFinaleV2Enabled = true;
+        row.AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(
+            row.AdminFlagOverridesJson,
+            nameof(PlatformFeatureSettings.OnboardingFinaleV2Enabled));
+        row.UpdatedAtUtc = DateTime.UtcNow;
         await db.SaveChangesAsync();
     }
 
