@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "0eb8f8430eec6ad7bc6c5a1f7d975436c75af38425d749222d06664f7ef7a6a7",
+    "sha256": "5b33f028ea7c535fb853da00b730c64b49a1d402871677d8a96fb724d0d8ff64",
     "v": "20261021-03"
   },
   "css/critical.css": {
@@ -208,8 +208,8 @@
     "v": "20261004-10"
   },
   "css/features/reconnect.css": {
-    "sha256": "da7ded34cb59e537eb145eb18df0379df697009aaf9a71b42280c3164f7830d9",
-    "v": "20261021-01"
+    "sha256": "67ce9f6f80aad3add1eaf411dc65d4d0e23f14a44690ef498d83cbc8bda4e95a",
+    "v": "20261021-02"
   },
   "css/features/sales.css": {
     "sha256": "1f17cd2984d474f41d5b5c5e752db44482ed32d27e9fe639393193cbaa0c4784",
@@ -280,8 +280,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "c9704f45e8c681efe28f5e59161d5b38b999e8724300ef2d49a74aaea7eb22f2",
-    "v": "20261021-04"
+    "sha256": "51bc33fa63886f654599e05839e1d256f77ce1a0214ef47904991d36547a74ff",
+    "v": "20261021-12"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",

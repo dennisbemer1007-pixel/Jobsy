@@ -274,13 +274,22 @@ a {
         display: none;
     }
 
+    .app-header:has(.candidate-header-nav) .candidate-header-nav-slot {
+        grid-column: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: var(--candidate-header-nav-slot-min, 30rem);
+        max-width: 100%;
+        min-height: 2.25rem;
+    }
+
     .app-header:has(.candidate-header-nav) .candidate-header-nav {
         display: flex;
         flex-wrap: nowrap;
         justify-content: center;
         align-items: center;
         gap: 0.2rem 0.15rem;
-        grid-column: 2;
         min-width: 0;
         padding: 0 0.25rem;
     }
@@ -298,6 +307,10 @@ a {
 
     .app-header:has(.candidate-header-nav) .app-header__brand {
         max-width: 7.25rem;
+    }
+
+    .app-header:has(.candidate-header-nav) .candidate-header-nav-slot {
+        --candidate-header-nav-slot-min: 25.75rem;
     }
 
     .app-header:has(.candidate-header-nav) .candidate-header-nav {
