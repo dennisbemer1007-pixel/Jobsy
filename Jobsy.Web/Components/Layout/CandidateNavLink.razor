@@ -42,8 +42,7 @@
         Navigation.NavigateTo(Href, forceLoad: false);
         try
         {
-            await Js.InvokeVoidAsync("lobsyCandidateNav.applyDocumentTitle", DocumentTitle);
-            await Js.InvokeVoidAsync("lobsyCandidateNav.scheduleSyncCheck", Href);
+            await Js.InvokeVoidAsync("lobsyCandidateNav.commitPrimaryNav", Href, DocumentTitle);
         }
         catch
         {
