@@ -826,6 +826,46 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Marks v3 discovery onboarding complete so /ontdekkingsreis opens the overview (IsComplete).</summary>
+    public static async Task MarkDiscoveryJourneyCompleteForOverviewE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL")))
+            {
+                throw new InvalidOperationException(
+                    $"E2E overview seed: user not found for '{normalized}' (ConnectionStrings__JobsyDb set).");
+            }
+
+            return;
+        }
+
+        var onboarding = await db.CandidateOnboardings.FirstOrDefaultAsync(o => o.UserId == user.Id);
+        if (onboarding is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        onboarding.FinishReached = true;
+        onboarding.CompletedAtUtc ??= now;
+        onboarding.CurrentStep = OnboardingWizardCatalog.V3StepCount;
+        onboarding.UpdatedAtUtc = now;
+        await db.SaveChangesAsync();
+    }
+
     /// <summary>Step 2 (Aan de kust): step 1 afgerond, rail toont ingeklapte fases.</summary>
     public static async Task PrepareDiscoveryCoastStepForE2eAsync(string candidateEmail)
     {
