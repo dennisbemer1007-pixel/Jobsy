@@ -3270,6 +3270,11 @@
     {
         _uwvKansLayerOn = on;
         await ApplyUwvKansPinsAsync();
+        if (!on)
+        {
+            await LoadVacanciesAsync(reloadMapPins: false);
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 
