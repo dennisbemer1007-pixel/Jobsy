@@ -58,7 +58,7 @@
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
     <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
     @* Outside LoadBlazorRuntime: NoBlazor pages (landing, legal) still ship the modal markup. *@
-    <link rel="stylesheet" href="css/features/reconnect.css?v=20261020-01" data-reconnect-css />
+    <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-reconnect" data-reconnect-css />
     @if (!LoadBlazorRuntime)
     {
         @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
@@ -97,7 +97,7 @@
             <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
             <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
             <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
-            <link rel="stylesheet" href="css/features/reconnect.css?v=20261020-01" />
+            <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-reconnect" />
         </noscript>
     }
     <script nonce="@Nonce">
@@ -313,7 +313,7 @@
         </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261020-01" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261021-reconnect" nonce="@Nonce" defer></script>
     }
 </body>
 

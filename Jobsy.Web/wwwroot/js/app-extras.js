@@ -177,8 +177,30 @@
         });
     }
 
+    function reconnectUiActive() {
+        try {
+            if (window.lobsyIsReconnectActive && window.lobsyIsReconnectActive()) {
+                return true;
+            }
+        } catch (e) { }
+        var m = document.getElementById("components-reconnect-modal");
+        if (!m || !m.classList) {
+            return false;
+        }
+        return (
+            m.classList.contains("components-reconnect-show")
+            || m.classList.contains("components-reconnect-retrying")
+            || m.classList.contains("components-reconnect-failed")
+            || m.classList.contains("components-reconnect-rejected")
+            || m.classList.contains("components-reconnect-paused")
+        );
+    }
+
     /** Avoid logout on a single transient 401 (mobile reconnect / token refresh). */
     function confirmSessionExpiredThenLogout() {
+        if (reconnectUiActive()) {
+            return;
+        }
         fetchSessionActivity("GET").then(function (r) {
             if (!sessionActivityOk(r)) {
                 forceSessionExpiredLogout();
@@ -187,6 +209,9 @@
     }
 
     function forceSessionExpiredLogout() {
+        if (reconnectUiActive()) {
+            return;
+        }
         if (expiring) {
             return;
         }
@@ -363,7 +388,10 @@
             }
             return fetchSessionActivity("GET").then(function (r) {
                 if (!sessionActivityOk(r)) {
-                    forceSessionExpiredLogout();
+                    if (reconnectUiActive()) {
+                        return true;
+                    }
+                    confirmSessionExpiredThenLogout();
                     return false;
                 }
                 return true;

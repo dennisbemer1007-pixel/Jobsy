@@ -8,6 +8,7 @@
     var reconnectAttempts = 0;
     var rejectedAuthCheck = null;
     var silentRetryTimer = null;
+    var activeReconnectionProcess = null;
 
     function allowDocumentReload() {
         window.__lobsyAllowDocumentReload = true;
@@ -65,6 +66,10 @@
             root.removeAttribute("data-lobsy-reconnect-active");
         }
     }
+
+    window.lobsyIsReconnectActive = function () {
+        return modalIsVisible(modal());
+    };
 
     function verifySession() {
         return fetch("/account/session-activity", {
@@ -125,14 +130,9 @@
         });
     }
 
-    function modalShowsReconnect() {
-        var m = modal();
-        if (!m || !m.classList) return false;
-        return m.classList.contains("components-reconnect-failed");
-    }
-
     async function tryReconnect(reason) {
-        if (!modalShowsReconnect()) return false;
+        var m = modal();
+        if (!m || !modalIsVisible(m)) return false;
         if (!window.Blazor || typeof Blazor.reconnect !== "function") return false;
         reconnectAttempts += 1;
         try {
@@ -145,6 +145,14 @@
                 syncReconnectReserve();
                 return true;
             }
+            if (typeof Blazor.resumeCircuit === "function") {
+                var resumed = await Blazor.resumeCircuit();
+                if (resumed === true) {
+                    stopSilentRetry();
+                    syncReconnectReserve();
+                    return true;
+                }
+            }
         } catch (e) { /* silent */ }
         return false;
     }
@@ -155,7 +163,7 @@
         }
         silentRetryTimer = window.setInterval(function () {
             var m = modal();
-            if (!m || !m.classList.contains("components-reconnect-failed")) {
+            if (!m || !modalIsVisible(m)) {
                 stopSilentRetry();
                 return;
             }
@@ -168,6 +176,183 @@
             window.clearInterval(silentRetryTimer);
             silentRetryTimer = null;
         }
+    }
+
+    function dispatchReconnectState(dialogEl, state, detail) {
+        if (!dialogEl || !dialogEl.dispatchEvent) {
+            return;
+        }
+        dialogEl.dispatchEvent(new CustomEvent("components-reconnect-state-changed", {
+            detail: detail || { state: state }
+        }));
+    }
+
+    function createReconnectDisplay(dialogEl) {
+        function clearStates() {
+            dialogEl.classList.remove(
+                "components-reconnect-show",
+                "components-reconnect-hide",
+                "components-reconnect-retrying",
+                "components-reconnect-failed",
+                "components-reconnect-rejected",
+                "components-reconnect-paused");
+        }
+
+        return {
+            show: function (state) {
+                clearStates();
+                dialogEl.classList.add("components-reconnect-show");
+                syncReconnectReserve();
+                dispatchReconnectState(dialogEl, "show", state);
+                scheduleSilentRetry();
+                tryReconnect("display-show");
+            },
+            update: function (state) {
+                if (state && state.type === "pause") {
+                    clearStates();
+                    dialogEl.classList.add("components-reconnect-paused");
+                } else {
+                    dialogEl.classList.add("components-reconnect-show");
+                    if (state && state.currentAttempt > 1 && state.secondsToNextAttempt > 0) {
+                        dialogEl.classList.add("components-reconnect-retrying");
+                    }
+                }
+                syncReconnectReserve();
+                dispatchReconnectState(dialogEl, "retrying", state);
+            },
+            hide: function () {
+                clearStates();
+                dialogEl.classList.add("components-reconnect-hide");
+                syncReconnectReserve();
+                stopSilentRetry();
+                dispatchReconnectState(dialogEl, "hide");
+            },
+            failed: function () {
+                clearStates();
+                dialogEl.classList.add("components-reconnect-failed");
+                syncReconnectReserve();
+                dispatchReconnectState(dialogEl, "failed");
+                scheduleSilentRetry();
+                tryReconnect("display-failed");
+            },
+            rejected: function () {
+                // Never full-page reload — keep silent retry instead of framework hard refresh.
+                clearStates();
+                dialogEl.classList.add("components-reconnect-failed");
+                syncReconnectReserve();
+                dispatchReconnectState(dialogEl, "rejected");
+                scheduleSilentRetry();
+                tryReconnect("display-rejected");
+            }
+        };
+    }
+
+    function runReconnectTimer(totalMs, display, attempt) {
+        return new Promise(function (resolve) {
+            if (!totalMs || totalMs <= 0) {
+                resolve();
+                return;
+            }
+            var step = 1000;
+            var remaining = totalMs;
+            var tick = function () {
+                display.update({
+                    type: "reconnect",
+                    currentAttempt: attempt + 1,
+                    secondsToNextAttempt: Math.max(0, Math.ceil(remaining / 1000))
+                });
+                remaining -= step;
+                if (remaining <= 0) {
+                    resolve();
+                    return;
+                }
+                window.setTimeout(tick, step);
+            };
+            tick();
+        });
+    }
+
+    function startReconnectionLoop(options, display, graceful, remote) {
+        var disposed = false;
+        var maxRetries = options.maxRetries != null ? options.maxRetries : 60;
+
+        display.show({ type: graceful ? "pause" : "reconnect", remote: remote });
+        if (graceful) {
+            display.update({ type: "pause", remote: remote });
+            return {
+                cancel: function () {
+                    disposed = true;
+                }
+            };
+        }
+
+        (async function loop() {
+            for (var attempt = 0; !disposed && attempt < maxRetries; attempt++) {
+                var delayMs = 500;
+                if (typeof options.retryIntervalMilliseconds === "function") {
+                    delayMs = options.retryIntervalMilliseconds(attempt);
+                    if (delayMs == null) {
+                        break;
+                    }
+                } else if (typeof options.retryIntervalMilliseconds === "number") {
+                    delayMs = attempt === 0 && options.retryIntervalMilliseconds > 3000
+                        ? 3000
+                        : options.retryIntervalMilliseconds;
+                } else {
+                    delayMs = attempt < 3 ? 500 : attempt < 10 ? 2000 : 5000;
+                }
+
+                await runReconnectTimer(delayMs, display, attempt);
+                if (disposed) {
+                    return;
+                }
+
+                if (await tryReconnect("loop-" + (attempt + 1))) {
+                    display.hide();
+                    return;
+                }
+            }
+            if (!disposed) {
+                display.failed();
+            }
+        })();
+
+        return {
+            cancel: function () {
+                disposed = true;
+            }
+        };
+    }
+
+    function createLobsyReconnectionHandler() {
+        var display = null;
+        return {
+            onConnectionDown: function (options, error, graceful, remote) {
+                var dialogEl = document.getElementById(options.dialogId || "components-reconnect-modal");
+                if (!dialogEl) {
+                    dialogEl = document.createElement("div");
+                    dialogEl.id = options.dialogId || "components-reconnect-modal";
+                    dialogEl.className = "reconnect-toast";
+                    document.body.appendChild(dialogEl);
+                }
+                if (!display) {
+                    display = createReconnectDisplay(dialogEl);
+                }
+                if (activeReconnectionProcess) {
+                    return;
+                }
+                activeReconnectionProcess = startReconnectionLoop(options, display, !!graceful, !!remote);
+            },
+            onConnectionUp: function () {
+                if (activeReconnectionProcess) {
+                    activeReconnectionProcess.cancel();
+                    activeReconnectionProcess = null;
+                }
+                if (display) {
+                    display.hide();
+                }
+            }
+        };
     }
 
     function watchReconnectModal() {
@@ -184,7 +369,7 @@
             syncReconnectReserve();
             if (m.classList.contains("components-reconnect-rejected")) {
                 handleRejectedState();
-            } else if (m.classList.contains("components-reconnect-failed")) {
+            } else if (modalIsVisible(m)) {
                 scheduleSilentRetry();
             } else {
                 m.classList.remove("reconnect-toast--auth-pending");
@@ -211,9 +396,7 @@
         if (ok) {
             return;
         }
-        if (window.Blazor && typeof Blazor.reconnect === "function") {
-            await tryReconnect("manual-retry");
-        }
+        await tryReconnect("manual-retry");
     }
 
     function goLoginAfterSessionExpired() {
@@ -251,7 +434,8 @@
     window.lobsyReconnect = {
         tryReconnect: tryReconnect,
         manualReconnect: manualReconnect,
-        allowDocumentReload: allowDocumentReload
+        allowDocumentReload: allowDocumentReload,
+        isActive: window.lobsyIsReconnectActive
     };
 
     bindReconnectUi();
@@ -266,6 +450,9 @@
         } else if (state === "failed" || state === "resume-failed") {
             scheduleSilentRetry();
             tryReconnect("state-failed");
+        } else if (state === "show" || state === "retrying") {
+            scheduleSilentRetry();
+            tryReconnect("state-" + state);
         }
     });
 
@@ -278,7 +465,9 @@
 
     Blazor.start({
         circuit: {
+            reconnectionHandler: createLobsyReconnectionHandler(),
             reconnectionOptions: {
+                dialogId: "components-reconnect-modal",
                 maxRetries: 60,
                 retryIntervalMilliseconds: function (n) {
                     return n < 3 ? 500 : n < 10 ? 2000 : 5000;
@@ -293,10 +482,31 @@
         document.documentElement.setAttribute("data-lobsy-circuit", "ready");
         watchReconnectModal();
         document.addEventListener("visibilitychange", onResume);
+        window.addEventListener("pageshow", function (ev) {
+            if (ev && ev.persisted) {
+                onResume();
+            }
+        });
         window.addEventListener("online", function () {
             onResume();
         });
 
+        try {
+            if (window.Blazor._internal && window.Blazor._internal.navigationManager
+                && typeof window.Blazor._internal.navigationManager.refresh === "function") {
+                var nav = window.Blazor._internal.navigationManager;
+                var nativeRefresh = nav.refresh.bind(nav);
+                nav.refresh = function (force) {
+                    if (!window.__lobsyAllowDocumentReload) {
+                        try {
+                            console.warn("[lobsy] blocked unprompted navigation refresh");
+                        } catch (e) { }
+                        return;
+                    }
+                    return nativeRefresh(force);
+                };
+            }
+        } catch (e) { }
     }).catch(function (err) {
         try { console.warn("[lobsy] Blazor.start failed", err); } catch (e) { }
     });

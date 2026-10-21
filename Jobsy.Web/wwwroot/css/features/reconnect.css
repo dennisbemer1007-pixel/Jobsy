@@ -18,7 +18,7 @@
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
-    transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
+    transition: opacity 0.2s ease, visibility 0s linear 0s;
 }
 
 .reconnect-toast.components-reconnect-failed,
@@ -90,6 +90,17 @@
 
 html[data-lobsy-reconnect-active] {
     --reconnect-toast-reserve: 3.25rem;
+}
+
+/* Keep the current page visible while the circuit reconnects (no full-screen blank). */
+html[data-lobsy-reconnect-active] body,
+html[data-lobsy-reconnect-active] .app-shell,
+html[data-lobsy-reconnect-active] .app-main,
+html[data-lobsy-reconnect-active] .jobsy-discovery,
+html[data-lobsy-reconnect-active] .map-pane,
+html[data-lobsy-reconnect-active] .map-stage {
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 html[data-lobsy-reconnect-active] .app-shell.has-bottom-nav {
