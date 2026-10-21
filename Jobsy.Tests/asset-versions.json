@@ -152,13 +152,8 @@
     "v": "20261019-r24"
   },
   "css/features/onboarding-rustig.css": {
-<<<<<<< HEAD
     "sha256": "2b7aea2bae2dbf2ef62de10ca98e8a72c0a9b5ed3fca46fbeb10abf318360e51",
-    "v": "20261020-14"
-=======
-    "sha256": "0534f823be35acb8582970186786f88d3516cf9bc9aa735baa0c8a0f3739e8e8",
-    "v": "20261020-13"
->>>>>>> 88a67a2a0 (Onboarding rustig step 10: Waarden mini-test (u10a panorama hero).)
+    "v": "20261020-15"
   },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
