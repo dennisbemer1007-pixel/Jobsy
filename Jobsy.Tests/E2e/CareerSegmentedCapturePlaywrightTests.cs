@@ -60,6 +60,75 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Desktop_lead_fully_visible_at_1280()
+    {
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 900 },
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await OpenCarriereAsync(context, baseUrl);
+        var ok = await page.EvaluateAsync<bool>("""
+            () => {
+              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead');
+              if (!lead) return false;
+              const text = (lead.textContent || '').trim();
+              if (!text.includes('Haaglanden')) return false;
+              return lead.scrollHeight <= lead.clientHeight + 2 && lead.clientHeight > 12;
+            }
+            """);
+        Assert.True(ok, "Desktop hero lead must show full copy including Haaglanden without bottom clip.");
+    }
+
+    [Fact]
+    public async Task Segmented_shows_when_uwv_feature_flag_off()
+    {
+        Environment.SetEnvironmentVariable("JOBSY_UWV_FEATURES", "0");
+        using var web = new IllustratedPagesWebFactory();
+        _ = web.ServerAddress;
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 900 },
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await context.NewPageAsync();
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var baseUrl = web.ServerAddress.TrimEnd('/');
+        await page.GotoAsync($"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/carriere")}");
+        await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+        await page.Locator("[data-testid=uwv-carriere-sections]").WaitForAsync(new() { Timeout = 60_000 });
+        Environment.SetEnvironmentVariable("JOBSY_UWV_FEATURES", "1");
+    }
+
+    [Fact]
+    public async Task Capture_empty_profile_candidate_voor_jou_390()
+    {
+        using var web = new IllustratedPagesWebFactory(emptyAppsAndLikes: true);
+        _ = web.ServerAddress;
+        var outDir = Path.Combine(FindRepoRoot(), "artifacts");
+        Directory.CreateDirectory(outDir);
+        var baseUrl = web.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await context.NewPageAsync();
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        await page.GotoAsync($"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/carriere")}");
+        await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+        await page.Locator("[data-testid=uwv-carriere-sections]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(outDir, "carriere-segmented-product-390-empty-profile-voor-jou-viewport.png"),
+            FullPage = false,
+        });
+    }
+
+    [Fact]
     public async Task Mobile_lead_not_overlapped_by_tabs()
     {
         var baseUrl = _web!.ServerAddress.TrimEnd('/');

@@ -125,23 +125,23 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
         await page.Locator("header.uwv-carriere-showcase-hero.cand-compact-hero--page").First
             .WaitForAsync(new() { Timeout = 60_000 });
 
-        var mobileArtOk = await page.EvaluateAsync<bool>("""
-            async () => {
+        var mobileOk = await page.EvaluateAsync<bool>("""
+            () => {
+              const segmented = document.querySelector('[data-testid="uwv-carriere-sections"]');
+              const showcase = document.querySelector('header.uwv-carriere-showcase-hero');
+              if (segmented && showcase) {
+                const lead = showcase.querySelector('.cand-hero__lead');
+                const img = document.querySelector('[data-testid="cand-compact-hero-mobile-art"]');
+                const artHidden = !img || getComputedStyle(img.closest('.cand-compact-hero__art') || img).display === 'none';
+                return lead && lead.getBoundingClientRect().height > 8 && artHidden;
+              }
               const img = document.querySelector('[data-testid="cand-compact-hero-mobile-art"]');
               if (!img) return false;
-              if (img.complete && img.naturalWidth > 0) {
-                const r = img.getBoundingClientRect();
-                return r.height >= 40 && r.width >= 120;
-              }
-              await new Promise((resolve, reject) => {
-                img.addEventListener('load', resolve, { once: true });
-                img.addEventListener('error', reject, { once: true });
-              });
               const r = img.getBoundingClientRect();
-              return img.naturalWidth > 0 && r.height >= 40 && r.width >= 120;
+              return r.height >= 40 && r.width >= 120;
             }
             """);
-        Assert.True(mobileArtOk, "Mobile Carrière hero must show watercolor figures in the art strip (no empty pale band).");
+        Assert.True(mobileOk, "Mobile Carrière: segmented showcase uses copy-only hero; other paths keep figure strip.");
     }
 
     private static async Task<IPage> OpenCarrierePageAsync(

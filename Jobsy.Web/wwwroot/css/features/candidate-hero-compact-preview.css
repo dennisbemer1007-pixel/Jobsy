@@ -372,6 +372,17 @@
     overflow: hidden;
   }
 
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero {
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+    align-items: start;
+  }
+
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero::after {
+    display: none;
+  }
+
   .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__copy,
   .career-page--compact-preview-c > header.cand-compact-hero--page.cand-hero--profession-band .cand-compact-hero__copy {
     grid-column: 1;
@@ -434,6 +445,24 @@
     min-height: 150px !important;
     height: auto !important;
     max-height: none !important;
+  }
+
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__copy,
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-hero__copy {
+    max-width: min(100%, 30rem) !important;
+    padding-block-end: 0.85rem !important;
+  }
+
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-hero__lead {
+    overflow: visible;
+    text-wrap: pretty;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+  }
+
+  .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__art {
+    align-self: stretch;
+    min-height: 150px;
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--page.uwv-carriere-showcase-hero .cand-compact-hero__art img {
@@ -997,8 +1026,23 @@
     display: block !important;
   }
 
+  /* Carrière showcase: copy-only on mobile (no cropped figure strip). */
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) {
+    grid-template-rows: auto !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-compact-hero__art,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-hero__compact-c-art {
+    display: none !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-compact-hero__copy,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-hero__copy {
+    grid-row: 1 !important;
+  }
+
   /* Carrière: full-width 90px watercolor strip (no empty cream band). */
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) {
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero) {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: 90px auto;
@@ -1015,14 +1059,14 @@
     background-image: none !important;
   }
 
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile)::before,
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile)::after {
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero)::before,
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero)::after {
     display: none !important;
     content: none !important;
   }
 
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-compact-hero__art,
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-hero__compact-c-art {
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero) .cand-compact-hero__art,
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero) .cand-hero__compact-c-art {
     grid-row: 1;
     grid-column: 1;
     position: relative !important;
@@ -1037,7 +1081,7 @@
     overflow: hidden;
   }
 
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-compact-hero__art-img--mobile {
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero) .cand-compact-hero__art-img--mobile {
     width: 100%;
     height: 100%;
     min-height: 90px;
@@ -1047,8 +1091,8 @@
     mask-image: none !important;
   }
 
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-compact-hero__copy,
-  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) .cand-hero__copy {
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero) .cand-compact-hero__copy,
+  .career-page--compact-preview-c > header.cand-compact-hero:has(.cand-compact-hero__art-img--mobile):not(.uwv-carriere-showcase-hero) .cand-hero__copy {
     grid-row: 2;
     grid-column: 1;
     position: relative !important;
@@ -2061,4 +2105,38 @@
     -webkit-mask-image: none !important;
     mask-image: none !important;
   }
+}
+
+/* Carrière segmented (showcase hero): never clip lead; row grows with copy. */
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero.cand-hero--compact-preview-c {
+  overflow: visible !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  align-items: start !important;
+}
+
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero::after {
+  display: none !important;
+  content: none !important;
+}
+
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-compact-hero__copy,
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-hero__copy {
+  overflow: visible !important;
+}
+
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-hero__lead {
+  overflow: visible !important;
+  text-wrap: pretty;
+}
+
+.career-page--compact-preview-c .uwv-carriere-showcase-hero.cand-hero--with-art::before,
+.career-page--compact-preview-c .uwv-carriere-showcase-hero.cand-hero--with-art::after {
+  display: none !important;
+  content: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
 }

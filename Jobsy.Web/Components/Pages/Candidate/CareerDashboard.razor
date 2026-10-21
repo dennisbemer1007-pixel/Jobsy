@@ -18,7 +18,6 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
-@inject IUwvFeaturesGate UwvGate
 @inject ICareerStepVacancyFit VacancyFit
 @inject NavigationManager Navigation
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
@@ -28,7 +27,7 @@
 <div class="journey-page career-page career-page--illustrated panel-page--cand-ill @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "career-page--compact-preview-c" : null)">
     <p class="career-live visually-hidden" role="status" aria-live="polite">@_announcement</p>
 
-    @if (_uwvShowcase)
+    @if (_carriereSegmented)
     {
         <CandidateIllustratedHero Eyebrow="@UwvMockupCopy.Career.Eyebrow(Culture.Language)"
                                   CoralEyebrow="true"
@@ -65,7 +64,7 @@
                                   CssClass="@($"{("cand-hero--profession-band")} {HeroCompactPreview.CandHeroCssClass}".Trim())" />
     }
 
-    @if (_proactiveMatchingOn && !_uwvShowcase)
+    @if (_proactiveMatchingOn && !_carriereSegmented)
     {
         <aside class="proactive-promo" data-testid="proactive-promo-carriere">
             <div class="proactive-promo__copy">
@@ -78,7 +77,7 @@
         </aside>
     }
 
-    @if (!_uwvShowcase && _bootstrapping)
+    @if (!_carriereSegmented && _bootstrapping)
     {
         <CandidateIllustratedHero Title="@Culture["Career.Title"]"
                                   Lead="@Culture["Career.Overview.Lead"]"
@@ -103,7 +102,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else if (!_uwvShowcase && !_plan.HasPlan)
+    else if (!_carriereSegmented && !_plan.HasPlan)
     {
         <CareerStage Variant="ClimbVariant.Listen"
                      DesktopStones="@SceneStones"
@@ -132,7 +131,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else if (!_uwvShowcase && _done is { } done)
+    else if (!_carriereSegmented && _done is { } done)
     {
         <CareerStage Variant="ClimbVariant.Climb"
                      DesktopStones="@SceneStones"
@@ -170,7 +169,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else if (!_uwvShowcase && _step is { } step)
+    else if (!_carriereSegmented && _step is { } step)
     {
         <CareerStage Variant="ClimbVariant.Climb"
                      DesktopStones="@SceneStones"
@@ -197,7 +196,7 @@
             </ChildContent>
         </CareerStage>
     }
-    else if (!_uwvShowcase)
+    else if (!_carriereSegmented)
     {
         <CareerStage Variant="ClimbVariant.Climb"
                      DesktopStones="@SceneStones"
@@ -246,10 +245,6 @@
                            OnCancel="CloseDreamDialog" />
     }
 
-    @if (!_uwvShowcase && _uwvBlocks)
-    {
-        <UwvCarriereSections />
-    }
 </div>
 
 @code {
@@ -289,9 +284,9 @@
     private bool _employersOn = true;
     private bool _passportOn;
     private bool _proactiveMatchingOn;
-    private bool _uwvBlocks;
-    private bool _uwvShowcase;
-    private bool _uwvFlagLoaded;
+    /// <summary>Default /carriere view (segmented werkmap). All logged-in candidates; not gated on UWV feature flag.</summary>
+    private bool _carriereSegmented = true;
+    private bool _carriereInitDone;
 
     private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
 
@@ -344,36 +339,28 @@
 
     protected override void OnParametersSet()
     {
-        if (_uwvFlagLoaded)
+        if (_carriereInitDone && _carriereSegmented)
         {
-            _uwvShowcase = _uwvBlocks;
-            if (_uwvShowcase)
-            {
-                _bootstrapping = false;
-                _planLoadStarted = true;
-            }
+            _bootstrapping = false;
+            _planLoadStarted = true;
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && RendererInfo.IsInteractive && !_uwvFlagLoaded)
+        if (firstRender && RendererInfo.IsInteractive && !_carriereInitDone)
         {
-            _uwvFlagLoaded = true;
-            _uwvBlocks = await UwvGate.IsEnabledAsync();
-            _uwvShowcase = _uwvBlocks;
-            if (_uwvShowcase)
-            {
-                _bootstrapping = false;
-                _planLoadStarted = true;
-                StateHasChanged();
-                return;
-            }
+            _carriereInitDone = true;
+            _carriereSegmented = true;
+            _bootstrapping = false;
+            _planLoadStarted = true;
+            StateHasChanged();
+            return;
         }
 
         // Prerender paints the skeleton. Load only after the interactive circuit
         // so the first HTML is not blank while the API responds.
-        if (_uwvShowcase || !firstRender || _planLoadStarted || !RendererInfo.IsInteractive)
+        if (_carriereSegmented || !firstRender || _planLoadStarted || !RendererInfo.IsInteractive)
         {
             return;
         }
