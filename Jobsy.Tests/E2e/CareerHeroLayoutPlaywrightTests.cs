@@ -158,9 +158,12 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
               const showcase = document.querySelector('header.uwv-carriere-showcase-hero');
               if (segmented && showcase) {
                 const lead = showcase.querySelector('.cand-hero__lead');
-                const img = document.querySelector('[data-testid="cand-compact-hero-mobile-art"]');
-                const artHidden = !img || getComputedStyle(img.closest('.cand-compact-hero__art') || img).display === 'none';
-                return lead && lead.getBoundingClientRect().height > 8 && artHidden;
+                const art = showcase.querySelector('.cand-compact-hero__art');
+                const artHidden = !art || getComputedStyle(art).display === 'none';
+                const tabs = document.querySelector('.carriere-segmented__nav');
+                if (!lead || !tabs) return false;
+                const gap = tabs.getBoundingClientRect().top - lead.getBoundingClientRect().bottom;
+                return lead.getBoundingClientRect().height > 8 && artHidden && gap >= 0 && gap <= 16;
               }
               const img = document.querySelector('[data-testid="cand-compact-hero-mobile-art"]');
               if (!img) return false;

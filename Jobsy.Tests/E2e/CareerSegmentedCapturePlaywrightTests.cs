@@ -138,6 +138,12 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
         await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
         await page.Locator("[data-testid=uwv-carriere-sections]").WaitForAsync(new() { Timeout = 60_000 });
         await page.Locator("[data-testid=carriere-segmented-empty-profile]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.GetByRole(AriaRole.Heading, new() { Name = "carrièrekansen" }).WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
+        await WaitForAppHeaderChromeAsync(page);
         await page.ScreenshotAsync(new() { Path = emptyPath, FullPage = false });
 
         Assert.False(
@@ -157,17 +163,48 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
             IgnoreHTTPSErrors = true,
         });
         var page = await OpenCarriereAsync(context, baseUrl);
-        var ok = await page.EvaluateAsync<bool>("""
+        var gap = await page.EvaluateAsync<double>("""
             () => {
               const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead');
               const tabs = document.querySelector('.carriere-segmented__nav');
-              if (!lead || !tabs) return false;
+              if (!lead || !tabs) return 999;
               const lb = lead.getBoundingClientRect();
               const tb = tabs.getBoundingClientRect();
-              return tb.top >= lb.bottom - 2;
+              return tb.top - lb.bottom;
             }
             """);
-        Assert.True(ok, "Hero lead must sit fully above segmented tabs on 390px.");
+        var outDir = Path.Combine(FindRepoRoot(), "artifacts");
+        Directory.CreateDirectory(outDir);
+        File.WriteAllText(Path.Combine(outDir, "carriere-mobile-lead-tabs-gap.txt"), $"{gap:F1}");
+        Assert.InRange(gap, 0, 16);
+    }
+
+    [Fact]
+    public async Task Desktop_showcase_uses_single_watercolor_art_at_1280()
+    {
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 900 },
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await OpenCarriereAsync(context, baseUrl);
+        var metrics = await page.EvaluateAsync<string>("""
+            () => {
+              const header = document.querySelector('header.uwv-carriere-showcase-hero');
+              if (!header) return 'no-header';
+              const imgs = Array.from(header.querySelectorAll('.cand-compact-hero__art img'));
+              const visible = imgs.filter(img => getComputedStyle(img).display !== 'none');
+              const after = getComputedStyle(header, '::after');
+              return JSON.stringify({
+                visible: visible.length,
+                afterDisplay: after.display,
+                afterBg: after.backgroundImage
+              });
+            }
+            """);
+        Assert.Contains("\"visible\":1", metrics, StringComparison.Ordinal);
+        Assert.DoesNotContain("url(", metrics, StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task<IPage> OpenCarriereAsync(IBrowserContext context, string baseUrl)
@@ -182,7 +219,24 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 60_000 });
+        await page.Locator("header.uwv-carriere-showcase-hero h1").First.WaitForAsync(new() { Timeout = 60_000 });
         return page;
+    }
+
+    private static async Task WaitForAppHeaderChromeAsync(IPage page)
+    {
+        await page.Locator("[data-testid=app-shell-header]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const logo = document.querySelector('.lobsy-logo__img');
+              const flag = document.querySelector('.language-selector__flag');
+              return logo && logo.complete && logo.naturalWidth > 0
+                && flag && flag.complete && flag.naturalWidth > 0;
+            }
+            """,
+            null,
+            new() { Timeout = 60_000 });
     }
 
     private static async Task ClickTabAsync(IPage page, string tab)

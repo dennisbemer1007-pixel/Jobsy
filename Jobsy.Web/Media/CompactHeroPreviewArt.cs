@@ -52,27 +52,11 @@ public static class CompactHeroPreviewArt
         return artUrl;
     }
 
-    /// <summary>Watercolor figures strip on phone; falls back to explicit mobile figures from the page.</summary>
+    /// <summary>Watercolor figures strip on phone when the page passes an explicit mobile art URL.</summary>
     public static string? CandHeroMobileArtForVariantC(string? artUrl, string? mobileFiguresUrl)
     {
-        if (!string.IsNullOrWhiteSpace(mobileFiguresUrl))
-        {
-            return mobileFiguresUrl;
-        }
-
-        if (string.IsNullOrWhiteSpace(artUrl))
-        {
-            return null;
-        }
-
-        if (artUrl.Contains("droombaan-profession-wide", StringComparison.OrdinalIgnoreCase)
-            || artUrl.Contains("leren-groeien", StringComparison.OrdinalIgnoreCase)
-            || artUrl.Contains("carriere", StringComparison.OrdinalIgnoreCase))
-        {
-            return CandidateIllustratedImages.MobFiguresOpleiding;
-        }
-
-        return null;
+        _ = artUrl;
+        return string.IsNullOrWhiteSpace(mobileFiguresUrl) ? null : mobileFiguresUrl;
     }
 
     public const string OnboardingKennismakenDesktop =

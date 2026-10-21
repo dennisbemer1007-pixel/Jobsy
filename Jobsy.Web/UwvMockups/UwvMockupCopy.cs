@@ -18,8 +18,13 @@ public static class UwvMockupCopy
         public static string Eyebrow(string? lang) => T("Carrière", "Career", lang);
         public static string Title(string? lang) => T("Jouw route naar logistiek medewerker", "Your path to logistics associate", lang);
         public static string Lead(string? lang) => T(
-            "Op basis van je profiel (voorbeelddata): huidige beroep administratief medewerker, regio Haaglanden.",
-            "Based on your profile (sample data): current role office administrator, Haaglanden region.",
+            "Op basis van je paspoort: huidige beroep administratief medewerker, regio Haaglanden.",
+            "Based on your passport: current role office administrator, Haaglanden region.",
+            lang);
+        public static string EmptyTitle(string? lang) => T("Jouw carrièrekansen", "Your career opportunities", lang);
+        public static string EmptyLead(string? lang) => T(
+            "Vul je voorkeuren aan, dan laten we routes zien die bij je passen.",
+            "Fill in your preferences and we will show routes that fit you.",
             lang);
     }
 

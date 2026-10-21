@@ -474,8 +474,16 @@
     max-height: 190px;
     object-fit: contain;
     object-position: right center;
-    -webkit-mask-image: none;
-    mask-image: none;
+    -webkit-mask-image: radial-gradient(ellipse 92% 88% at 68% 54%, #000 38%, transparent 78%);
+    mask-image: radial-gradient(ellipse 92% 88% at 68% 54%, #000 38%, transparent 78%);
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band::before,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    background-image: none !important;
   }
 
   /* Panel app pages: full-bleed #FAEBDB band, copy aligned to 1100px shell (paspoort r15 art fade). */
@@ -1114,8 +1122,30 @@
     text-wrap: pretty;
   }
 
-  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero:has(.cand-compact-hero__art-img--mobile) + .carriere-segmented {
-    margin-top: 0.35rem;
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero + .carriere-segmented {
+    margin-top: 0 !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero::before,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero .cand-compact-hero__art {
+    display: none !important;
   }
 
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero {

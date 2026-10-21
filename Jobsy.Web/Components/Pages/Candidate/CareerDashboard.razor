@@ -31,14 +31,15 @@
     {
         <CandidateIllustratedHero Eyebrow="@UwvMockupCopy.Career.Eyebrow(Culture.Language)"
                                   CoralEyebrow="true"
-                                  Title="@UwvMockupCopy.Career.Title(Culture.Language)"
-                                  Lead="@UwvMockupCopy.Career.Lead(Culture.Language)"
+                                  Title="@_showcaseHeroTitle"
+                                  Lead="@_showcaseHeroLead"
                                   ArtUrl="@DroombaanProfessionWide"
-                                  ArtUrlMobileFigures="@MobFiguresOpleiding"
                                   ArtPosition="right center"
                                   ArtPositionDesktop="right center"
-                                  CssClass="cand-hero--profession-band cand-hero--with-art uwv-carriere-showcase-hero" />
-        <UwvCarriereSections />
+                                  CssClass="cand-hero--profession-band uwv-carriere-showcase-hero" />
+        <CascadingValue Value="_showcaseEmptyProfile">
+            <UwvCarriereSections />
+        </CascadingValue>
     }
     else if (_plan.HasPlan)
     {
@@ -287,6 +288,9 @@
     /// <summary>Default /carriere view (segmented werkmap). All logged-in candidates; not gated on UWV feature flag.</summary>
     private bool _carriereSegmented = true;
     private bool _carriereInitDone;
+    private bool _showcaseEmptyProfile;
+    private string _showcaseHeroTitle = "";
+    private string _showcaseHeroLead = "";
 
     private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
 
@@ -339,6 +343,11 @@
 
     protected override void OnParametersSet()
     {
+        if (_carriereSegmented && string.IsNullOrEmpty(_showcaseHeroTitle))
+        {
+            ApplyShowcaseHeroCopy(emptyProfile: false);
+        }
+
         if (_carriereInitDone && _carriereSegmented)
         {
             _bootstrapping = false;
@@ -348,13 +357,13 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && RendererInfo.IsInteractive && !_carriereInitDone)
+        if (firstRender && RendererInfo.IsInteractive && !_carriereInitDone && _carriereSegmented)
         {
             _carriereInitDone = true;
             _carriereSegmented = true;
             _bootstrapping = false;
             _planLoadStarted = true;
-            StateHasChanged();
+            await LoadCarriereShowcaseProfileAsync();
             return;
         }
 
@@ -777,6 +786,37 @@
         finally
         {
             _busy = false;
+        }
+    }
+
+    private async Task LoadCarriereShowcaseProfileAsync()
+    {
+        try
+        {
+            var profile = await Api.GetMyProfileAsync();
+            _showcaseEmptyProfile = UwvCarriereProfileRules.PreferencesLookEmpty(profile?.Preferences);
+            ApplyShowcaseHeroCopy(_showcaseEmptyProfile);
+        }
+        catch (Exception)
+        {
+            _showcaseEmptyProfile = false;
+            ApplyShowcaseHeroCopy(emptyProfile: false);
+        }
+
+        StateHasChanged();
+    }
+
+    private void ApplyShowcaseHeroCopy(bool emptyProfile)
+    {
+        if (emptyProfile)
+        {
+            _showcaseHeroTitle = UwvMockupCopy.Career.EmptyTitle(Culture.Language);
+            _showcaseHeroLead = UwvMockupCopy.Career.EmptyLead(Culture.Language);
+        }
+        else
+        {
+            _showcaseHeroTitle = UwvMockupCopy.Career.Title(Culture.Language);
+            _showcaseHeroLead = UwvMockupCopy.Career.Lead(Culture.Language);
         }
     }
 

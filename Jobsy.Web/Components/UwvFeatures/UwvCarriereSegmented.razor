@@ -1,14 +1,12 @@
 @using Jobsy.Web.Components.UwvFeatures
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Models
 @using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
 @inject IUwvKansberoepenCatalog KansCatalog
-@inject JobsyApiClient Api
 
 <div class="carriere-segmented career-uwv-sections opl-wrap" data-testid="uwv-carriere-sections">
-    @if (_showEmptyProfileBanner)
+    @if (EmptyProfile)
     {
         <div class="carriere-segmented__empty-profile career-note career-note--soft"
              data-testid="carriere-segmented-empty-profile"
@@ -197,7 +195,8 @@
     private readonly HashSet<string> _expanded = [];
     private IReadOnlyList<Jobsy.Core.Uwv.UwvKansberoepEntry> _kansEntries = [];
     private Jobsy.Core.Uwv.UwvKansberoepenDataset? _dataset;
-    private bool _showEmptyProfileBanner;
+    [CascadingParameter]
+    public bool EmptyProfile { get; set; }
 
     private string Lang => Culture.Language;
     private string BaangarantieRouteLabel => UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee route" : "Baangarantie-route";
@@ -211,35 +210,10 @@
         ? UwvMockupCopy.Kansberoepen.Source(Lang)
         : (UwvMockupCopy.IsEnglish(Lang) ? _dataset.SourceLineEn : _dataset.SourceLineNl);
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _dataset = KansCatalog.GetDefault();
         _kansEntries = _dataset.Entries;
-        try
-        {
-            var profile = await Api.GetMyProfileAsync();
-            _showEmptyProfileBanner = PreferencesLookEmpty(profile?.Preferences);
-        }
-        catch (Exception)
-        {
-            _showEmptyProfileBanner = false;
-        }
-    }
-
-    private static bool PreferencesLookEmpty(CandidatePreferences? prefs)
-    {
-        if (prefs is null)
-        {
-            return true;
-        }
-
-        return prefs.Roles.Count == 0
-               && string.IsNullOrWhiteSpace(prefs.AboutMe)
-               && string.IsNullOrWhiteSpace(prefs.HomeAddress)
-               && string.IsNullOrWhiteSpace(prefs.WorkRegion)
-               && prefs.Employers.Count == 0
-               && prefs.Educations.Count == 0
-               && prefs.WorkStatuses.Count == 0;
     }
 
     private string En(string en, string nl) => UwvMockupCopy.IsEnglish(Lang) ? en : nl;
