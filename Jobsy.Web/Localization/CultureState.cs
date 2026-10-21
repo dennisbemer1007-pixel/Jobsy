@@ -133,9 +133,12 @@ public sealed class CultureState
 
         var accept = _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString();
         // An explicit language cookie wins over a stale profile, so the picker matches the page.
+        // Do not let Accept-Language override profile/default on signed-in circuits (avoids NL↔EN flips).
         var chosen = !string.IsNullOrWhiteSpace(cookie)
             ? JobsyLanguages.ResolveActive(cookie, accept)
-            : JobsyLanguages.ResolveActive(profileLanguage, accept);
+            : !string.IsNullOrWhiteSpace(profileLanguage)
+                ? JobsyLanguages.ResolveActive(profileLanguage, null)
+                : JobsyLanguages.Default;
         var previous = Language;
         Apply(chosen);
         if (!JobsyLanguages.AreSame(previous, Language))
@@ -166,6 +169,11 @@ public sealed class CultureState
             {
                 // Cookie still holds the choice.
             }
+        }
+
+        if (jsOk && string.IsNullOrWhiteSpace(cookie) && string.IsNullOrWhiteSpace(requestCookie))
+        {
+            await PersistCookieAsync(Language);
         }
     }
 
@@ -221,13 +229,16 @@ public sealed class CultureState
     /// <summary>Puts this circuit's language on the current thread only.</summary>
     public void Reapply() => Apply(Language);
 
-    private void Apply(string language)
+    private void Apply(string language, bool allowAcceptLanguageFallback = false)
     {
         // Bunit and other unit tests construct CultureState without IHttpContextAccessor; pin the
         // requested catalog code instead of launch EnabledCultures (typically nl,en only).
+        var accept = allowAcceptLanguageFallback
+            ? _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString()
+            : null;
         Language = _http is null
             ? JobsyLanguages.Normalize(language)
-            : JobsyLanguages.ResolveActive(language, _http.HttpContext?.Request.Headers.AcceptLanguage.ToString());
+            : JobsyLanguages.ResolveActive(language, accept);
         JobsyCultures.ApplyToCurrentThread(Language);
     }
 
