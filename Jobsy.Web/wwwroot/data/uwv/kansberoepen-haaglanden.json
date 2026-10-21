@@ -2,8 +2,8 @@
   "datasetId": "kansberoepen-haaglanden-2026",
   "regionKeyNl": "Regio Haaglanden",
   "regionKeyEn": "Haaglanden region",
-  "sourceLineNl": "Gebaseerd op open CBS arbeidsmarkt cijfers en UWV kansberoepen (voorbeeldset voor demo).",
-  "sourceLineEn": "Based on open CBS labour market figures and UWV opportunity occupations (sample set for demo).",
+  "sourceLineNl": "Gebaseerd op open arbeidsmarktcijfers van CBS en UWV-kansberoepen.",
+  "sourceLineEn": "Based on open labour market figures from CBS and UWV opportunity occupations.",
   "entries": [
     {
       "id": "logistiek-medewerker",
@@ -35,8 +35,8 @@
       "titleEn": "Care support worker",
       "prospectNl": "Groeiende sector, korte omscholingsroutes",
       "prospectEn": "Growing sector, short retraining paths",
-      "routeNl": "BBL zorg · baangarantie-route (voorbeeld)",
-      "routeEn": "Care apprenticeship · job-guarantee route (sample)",
+      "routeNl": "BBL zorg · baangarantie-route",
+      "routeEn": "Care apprenticeship · job guarantee route",
       "sectorIcon": "zorg",
       "baangarantie": true,
       "vacancyCount": 8

@@ -18,8 +18,13 @@ public static class UwvMockupCopy
         public static string Eyebrow(string? lang) => T("Carrière", "Career", lang);
         public static string Title(string? lang) => T("Jouw route naar logistiek medewerker", "Your path to logistics associate", lang);
         public static string Lead(string? lang) => T(
-            "Op basis van je profiel (voorbeelddata): huidige beroep administratief medewerker, regio Haaglanden.",
-            "Based on your profile (sample data): current role office administrator, Haaglanden region.",
+            "Op basis van je paspoort: huidige beroep administratief medewerker, regio Haaglanden.",
+            "Based on your passport: current role office administrator, Haaglanden region.",
+            lang);
+        public static string EmptyTitle(string? lang) => T("Jouw carrièrekansen", "Your career opportunities", lang);
+        public static string EmptyLead(string? lang) => T(
+            "Vul je voorkeuren aan, dan laten we routes zien die bij je passen.",
+            "Fill in your preferences and we will show routes that fit you.",
             lang);
     }
 
@@ -31,10 +36,10 @@ public static class UwvMockupCopy
             "Occupations with good prospects in your region, with matching training routes.",
             lang);
         public static string Source(string? lang) => T(
-            "Voorbeelddata · bron: UWV / CBS open data",
-            "Sample data · source: UWV / CBS open data",
+            "Gebaseerd op open arbeidsmarktcijfers van CBS en UWV-kansberoepen.",
+            "Based on open labour market figures from CBS and UWV opportunity occupations.",
             lang);
-        public static string Region(string? lang) => T("Regio Haaglanden (voorbeeld)", "Haaglanden region (sample)", lang);
+        public static string Region(string? lang) => T("Regio Haaglanden", "Haaglanden region", lang);
         public static string VacanciesLink(string? lang, int count) => IsEnglish(lang)
             ? $"{count} vacancies on job map"
             : $"{count} vacatures op banenkaart";
@@ -47,14 +52,18 @@ public static class UwvMockupCopy
             "Beroepen die lijken op je huidige beroep",
             "Occupations similar to your current role",
             lang);
+        public static string EmptyTitle(string? lang) => T(
+            "Beroepen om te verkennen",
+            "Occupations to explore",
+            lang);
         public static string Lead(string? lang) => T(
-            "Beroepen waar je met je huidige ervaring makkelijk naartoe kunt (voorbeelddata).",
-            "Roles you can move into fairly easily from your current experience (sample data).",
+            "Beroepen waar je met je huidige ervaring makkelijk naartoe kunt.",
+            "Roles you can move into fairly easily from your current experience.",
             lang);
         public static string RoutesToggle(string? lang) => T("Bekijk opleidingsroutes", "View training routes", lang);
         public static string RoutesHint(string? lang) => T(
-            "Voorbeeldroute · MBO of BBL, afhankelijk van je startniveau.",
-            "Sample route · vocational training or apprenticeship, depending on your starting level.",
+            "MBO of BBL, afhankelijk van je startniveau.",
+            "Vocational training or apprenticeship, depending on your starting level.",
             lang);
     }
 
@@ -82,8 +91,8 @@ public static class UwvMockupCopy
     {
         public static string Title(string? lang) => T("Workshops en opleidingen", "Workshops and training", lang);
         public static string Lead(string? lang) => T(
-            "Verder leren, passend bij je route (voorbeelddata).",
-            "Keep learning, aligned with your path (sample data).",
+            "Verder leren, passend bij je route.",
+            "Keep learning, aligned with your path.",
             lang);
         public static string PartnersTitle(string? lang) => T("Partners van UWV", "UWV partners", lang);
     }
@@ -230,6 +239,35 @@ public static class UwvMockupCopy
             "Bespreek dit met je adviseur werk",
             "Discuss this with your work adviser",
             lang);
+    }
+
+    public static class CarriereSegmented
+    {
+        public static string TabVoorJou(string? lang) => T("Voor jou", "For you", lang);
+        public static string TabOmscholen(string? lang) => T("Omscholen", "Retraining", lang);
+        public static string TabKansberoepen(string? lang) => T("Kansberoepen", "Opportunity occupations", lang);
+        public static string Meer(string? lang) => T("Meer", "More", lang);
+        public static string Footnote(string? lang) => T(
+            "Suggesties zijn gebaseerd op je paspoort en regionale arbeidsmarktinformatie (UWV, Werkcentrum Haaglanden). Routes en regelingen kunnen wijzigen; check altijd de actuele voorwaarden bij UWV of je werkcoach.",
+            "Suggestions are based on your passport and regional labour market information (UWV, Werkcentrum Haaglanden). Routes and rules can change; always check current terms with UWV or your work coach.",
+            lang);
+        public static string EmptyProfileTitle(string? lang) => T(
+            "Vul je voorkeuren aan",
+            "Complete your preferences",
+            lang);
+        public static string EmptyProfileLead(string? lang) => T(
+            "Met je voorkeuren en regio kunnen we passende routes en beroepen laten zien.",
+            "With your preferences and region we can show fitting routes and occupations.",
+            lang);
+        public static string EmptyProfileCta(string? lang) => T(
+            "Voorkeuren invullen",
+            "Fill in preferences",
+            lang);
+    }
+
+    public static class StrongMatches
+    {
+        public static string Title(string? lang) => T("Sterke matches voor jou", "Strong matches for you", lang);
     }
 
     public static class Adviseur

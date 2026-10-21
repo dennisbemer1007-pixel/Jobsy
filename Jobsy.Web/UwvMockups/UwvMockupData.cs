@@ -10,6 +10,16 @@ public sealed record UwvSimilarJob(
     string RouteNl,
     string RouteEn);
 
+public sealed record UwvStrongMatchJob(
+    string TitleNl,
+    string TitleEn,
+    string WhyNl,
+    string WhyEn,
+    string RouteNl,
+    string RouteEn,
+    bool Baangarantie,
+    bool MapLink);
+
 public sealed record UwvOmscholenSector(
     string NameNl,
     string NameEn,
@@ -91,8 +101,8 @@ public static class UwvMockupData
             "Care support worker",
             "Groeiende sector, korte omscholingsroutes",
             "Growing sector, short retraining paths",
-            "BBL zorg · baangarantie-route (voorbeeld)",
-            "Care apprenticeship · job-guarantee route (sample)",
+            "BBL zorg · baangarantie-route",
+            "Care apprenticeship · job guarantee route",
             "zorg",
             Baangarantie: true,
             VacancyCount: 8),
@@ -101,8 +111,8 @@ public static class UwvMockupData
     public static IReadOnlyList<UwvMapVacancy> MapVacancies { get; } =
     [
         new(
-            "Logistiek medewerker (voorbeeld)",
-            "Logistics associate (sample)",
+            "Logistiek medewerker",
+            "Logistics associate",
             "15 min fiets",
             "15 min bike",
             "Leerbedrijf West · erkend",
@@ -113,8 +123,8 @@ public static class UwvMockupData
             Kansberoep: true,
             Baangarantie: true),
         new(
-            "Installatiemonteur (voorbeeld)",
-            "Installation technician (sample)",
+            "Installatiemonteur",
+            "Installation technician",
             "22 min fiets",
             "22 min bike",
             "Technisch leerbedrijf Midden",
@@ -125,8 +135,8 @@ public static class UwvMockupData
             Kansberoep: true,
             Baangarantie: false),
         new(
-            "Zorgondersteuner BBL (voorbeeld)",
-            "Care support apprenticeship (sample)",
+            "Zorgondersteuner BBL",
+            "Care support apprenticeship",
             "18 min OV",
             "18 min transit",
             "Zorgorganisatie Midden",
@@ -136,6 +146,37 @@ public static class UwvMockupData
             CandidateIllustratedImages.SpotJobZorg,
             Kansberoep: true,
             Baangarantie: true),
+    ];
+
+    public static IReadOnlyList<UwvStrongMatchJob> StrongMatchJobs { get; } =
+    [
+        new(
+            "Logistiek planner",
+            "Logistics planner",
+            "Sluit aan op structuur en overzicht in je paspoort.",
+            "Fits the structure and overview in your passport.",
+            "MBO logistiek · BBL mogelijk",
+            "MBO logistics · apprenticeship available",
+            Baangarantie: true,
+            MapLink: false),
+        new(
+            "Magazijnmedewerker",
+            "Warehouse associate",
+            "Praktisch werk, dicht bij je route naar logistiek.",
+            "Hands-on work, close to your path into logistics.",
+            "Instap via erkend leerbedrijf",
+            "Entry via recognised learning company",
+            Baangarantie: false,
+            MapLink: true),
+        new(
+            "Orderpicker",
+            "Order picker",
+            "Overzichtelijk teamwerk met vaste roosters.",
+            "Clear teamwork with fixed schedules.",
+            "Korte inwerkperiode · doorgroeimogelijkheden",
+            "Short onboarding · room to grow",
+            Baangarantie: false,
+            MapLink: false),
     ];
 
     public static IReadOnlyList<UwvSimilarJob> SimilarJobs { get; } =
@@ -174,14 +215,14 @@ public static class UwvMockupData
     public static IReadOnlyList<UwvLeerbaan> Leerbanen { get; } =
     [
         new(
-            "BBL logistiek (voorbeeld)",
-            "Logistics apprenticeship (sample)",
+            "BBL logistiek",
+            "Logistics apprenticeship",
             "Leerbedrijf · gekoppeld aan kaartvacature",
             "Learning company · linked to map vacancy",
             "/banenkaart"),
         new(
-            "BBL techniek (voorbeeld)",
-            "Technical apprenticeship (sample)",
+            "BBL techniek",
+            "Technical apprenticeship",
             "Erkend leerbedrijf regio Haaglanden",
             "Recognised learning company Haaglanden",
             "/banenkaart"),

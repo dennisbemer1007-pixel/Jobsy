@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "5b33f028ea7c535fb853da00b730c64b49a1d402871677d8a96fb724d0d8ff64",
+    "sha256": "90a24341789e469f16dcce33f9d77b32dad01752e7fc5435cacd9df2847518dc",
     "v": "20261021-03"
   },
   "css/critical.css": {
@@ -48,7 +48,7 @@
     "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "9a4b09ded5c63c8fa13f36c6b3754151ed1a493ca0bce61e48d1c4ab7ed21952",
+    "sha256": "480e1e883f5ce9202353dd3b0043b79aa0351aa43a260ffaf4cf0a3c61a556d8",
     "v": "20261021-r15"
   },
   "css/features/candidate-hub.css": {
@@ -64,7 +64,7 @@
     "v": "20261018-02"
   },
   "css/features/carriere.css": {
-    "sha256": "c23b39281dc74f87a13714960bc33cb89fe4a285101ef4b1d74581c2a63b18a4",
+    "sha256": "4763da056911303c965424e922ca17737655acb43ae58e5f310a21d4024cddd1",
     "v": "20261018-03"
   },
   "css/features/choice-tiles.css": {
@@ -280,8 +280,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "51bc33fa63886f654599e05839e1d256f77ce1a0214ef47904991d36547a74ff",
-    "v": "20261021-12"
+    "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
+    "v": "20261021-15"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",

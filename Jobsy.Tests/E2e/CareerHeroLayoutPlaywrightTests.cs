@@ -108,6 +108,33 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
             }
             """);
         Assert.True(copyOk, $"UWV showcase hero title not visible at {width}px.");
+
+        if (width == 1280)
+        {
+            var heroHeight = await page.EvaluateAsync<double>("""
+                () => {
+                  const header = document.querySelector('header.uwv-carriere-showcase-hero.cand-compact-hero--page');
+                  return header ? header.getBoundingClientRect().height : 999;
+                }
+                """);
+            Assert.InRange(heroHeight, 110, 190);
+            if (width == 1280)
+            {
+                File.WriteAllText(
+                    Path.Combine(FindRepoRoot(), "artifacts", "carriere-showcase-hero-height-1280.txt"),
+                    $"{heroHeight:F1}");
+            }
+
+            var figuresComplete = await page.EvaluateAsync<bool>("""
+                () => {
+                  const img = document.querySelector('header.uwv-carriere-showcase-hero .cand-compact-hero__art img');
+                  if (!img) return false;
+                  const style = getComputedStyle(img);
+                  return style.objectFit === 'contain';
+                }
+                """);
+            Assert.True(figuresComplete, "Showcase hero art must use object-fit: contain at 1280px.");
+        }
     }
 
     [Fact]
@@ -125,23 +152,26 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
         await page.Locator("header.uwv-carriere-showcase-hero.cand-compact-hero--page").First
             .WaitForAsync(new() { Timeout = 60_000 });
 
-        var mobileArtOk = await page.EvaluateAsync<bool>("""
-            async () => {
+        var mobileOk = await page.EvaluateAsync<bool>("""
+            () => {
+              const segmented = document.querySelector('[data-testid="uwv-carriere-sections"]');
+              const showcase = document.querySelector('header.uwv-carriere-showcase-hero');
+              if (segmented && showcase) {
+                const lead = showcase.querySelector('.cand-hero__lead');
+                const art = showcase.querySelector('.cand-compact-hero__art');
+                const artHidden = !art || getComputedStyle(art).display === 'none';
+                const tabs = document.querySelector('.carriere-segmented__nav');
+                if (!lead || !tabs) return false;
+                const gap = tabs.getBoundingClientRect().top - lead.getBoundingClientRect().bottom;
+                return lead.getBoundingClientRect().height > 8 && artHidden && gap >= 0 && gap <= 16;
+              }
               const img = document.querySelector('[data-testid="cand-compact-hero-mobile-art"]');
               if (!img) return false;
-              if (img.complete && img.naturalWidth > 0) {
-                const r = img.getBoundingClientRect();
-                return r.height >= 40 && r.width >= 120;
-              }
-              await new Promise((resolve, reject) => {
-                img.addEventListener('load', resolve, { once: true });
-                img.addEventListener('error', reject, { once: true });
-              });
               const r = img.getBoundingClientRect();
-              return img.naturalWidth > 0 && r.height >= 40 && r.width >= 120;
+              return r.height >= 40 && r.width >= 120;
             }
             """);
-        Assert.True(mobileArtOk, "Mobile Carrière hero must show watercolor figures in the art strip (no empty pale band).");
+        Assert.True(mobileOk, "Mobile Carrière: segmented showcase uses copy-only hero; other paths keep figure strip.");
     }
 
     private static async Task<IPage> OpenCarrierePageAsync(
@@ -165,5 +195,21 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 60_000 });
         return page;
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (!string.IsNullOrEmpty(dir))
+        {
+            if (File.Exists(Path.Combine(dir, "Jobsy.sln")))
+            {
+                return dir;
+            }
+
+            dir = Directory.GetParent(dir)?.FullName ?? "";
+        }
+
+        return Directory.GetCurrentDirectory();
     }
 }
