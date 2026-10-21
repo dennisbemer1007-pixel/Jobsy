@@ -2505,7 +2505,7 @@
 
         try
         {
-            if (!(_uwvMockup && _uwvKansLayerOn))
+            if (!ShouldSkipServerPinBoot() && !(_uwvMockup && _uwvKansLayerOn))
             {
                 await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
             }
@@ -3083,6 +3083,7 @@
         var opening = ResolveOpeningView();
         // Prefer dedicated pins API payload so prerender never ships 0 pins when the index is warm.
         var pins = _bootPins.Count > 0 ? _bootPins : BuildCompactPins(_vacancies);
+        // Authenticated: defer pins + early jobMap.boot (app-core warmBootPins) until interactive init.
         var deferPinsWarmup = _authenticatedSession;
         var payload = new Dictionary<string, object?>
         {
