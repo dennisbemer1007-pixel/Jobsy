@@ -59,7 +59,7 @@ internal static class OnboardingRustigKompasE2eFlow
         }
 
         onboarding.FinishReached = true;
-        onboarding.CompletedAtUtc = DateTime.UtcNow;
+        onboarding.CompletedAtUtc = null;
         onboarding.CurrentStep = OnboardingWizardCatalog.V3StepCount;
         onboarding.UpdatedAtUtc = DateTime.UtcNow;
         await db.SaveChangesAsync();

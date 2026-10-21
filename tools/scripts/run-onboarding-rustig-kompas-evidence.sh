@@ -17,6 +17,7 @@ export JOBSY_E2E_BASE_URL="${JOBSY_E2E_BASE_URL:-http://127.0.0.1:5201}"
 export JOBSY_ONBOARDING_KOMPAS_CLICK_AUDIT=1
 export JOBSY_CAPTURE_ONBOARDING_RUSTIG=1
 export JOBSY_ONBOARDING_RUSTIG_ARTIFACTS="$ART"
+export Onboarding__RustigEnabled=true
 
 stop_port() {
   local port="$1"
@@ -52,14 +53,15 @@ if [[ "${SKIP_BUILD:-}" != "1" ]]; then
 fi
 
 capture_mockup_refs
+stop_port 5201
 bash "$ROOT/.github/scripts/start-ci-stack.sh"
 
 if [[ -f /tmp/jobsy-ci-logs/web.pid ]]; then
   kill "$(cat /tmp/jobsy-ci-logs/web.pid)" 2>/dev/null || true
 fi
-pkill -f "127.0.0.1:5201" 2>/dev/null || true
+stop_port 5201
 sleep 2
-bash "$ROOT/.github/scripts/start-ci-stack.sh"
+env Onboarding__RustigEnabled=true bash "$ROOT/.github/scripts/start-ci-stack.sh"
 
 echo "=== Rustig Kompas (enabled) ==="
 dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
