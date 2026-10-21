@@ -405,7 +405,8 @@ public class VacanciesController : ControllerBase
         if (CandidateOpenForWorkGate.HidesMatchScores(matchContext))
         {
             var blocked = MapRecordToDto(record, showWage: false, ageYears: null, includeDescription: false)
-                with { OpenForWorkRequired = true };
+                with
+            { OpenForWorkRequired = true };
             return Ok(blocked);
         }
 

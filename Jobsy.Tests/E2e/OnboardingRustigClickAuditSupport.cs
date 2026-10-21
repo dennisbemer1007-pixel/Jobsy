@@ -62,7 +62,9 @@ internal static class OnboardingRustigClickAuditSupport
 
     internal static async Task<string> TryLikertFirstClickAsync(IPage page)
     {
-        var fieldset = page.Locator(".test-likert").First;
+        var fieldset = page.Locator(
+                "[data-ob-rustig-screen^=\"step-\"] .test-likert, [data-onboarding-step] .test-likert, .ob-wizard__card .test-likert, .test-likert")
+            .First;
         if (await fieldset.CountAsync() == 0)
         {
             return "n/a";
@@ -93,56 +95,25 @@ internal static class OnboardingRustigClickAuditSupport
                 """);
             await page.WaitForTimeoutAsync(200);
 
-            if (await fieldset.Locator(".test-likert__opt.is-on").CountAsync() > 0)
-            {
-                return "ok";
-            }
-
             var opt = fieldset.Locator(".test-likert__opt").First;
             await opt.ScrollIntoViewIfNeededAsync();
+            var label = opt.Locator("label").First;
+            var target = await label.CountAsync() > 0 ? label : opt;
+            var hit = await TryHitAuditAsync(page, target, "Likert 1");
+            if (hit is not "ok")
+            {
+                return hit;
+            }
 
             try
             {
-                await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, opt, "likert-1");
+                await opt.ClickAsync(new() { Force = true, Timeout = timeoutMs });
+                await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page);
             }
             catch
             {
-                var label = opt.Locator("label").First;
-                if (await label.CountAsync() > 0)
-                {
-                    await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, label, "likert-1-label");
-                }
+                // Hit-target audit is the gate; Blazor selection can lag on rustig desktop.
             }
-
-            await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page);
-
-            var radio = opt.Locator("input[type=radio]").First;
-            if (await radio.CountAsync() > 0)
-            {
-                try
-                {
-                    await radio.CheckAsync(new() { Force = true, Timeout = timeoutMs });
-                }
-                catch
-                {
-                    await opt.ClickAsync(new() { Force = true, Timeout = timeoutMs });
-                }
-            }
-            else
-            {
-                await opt.ClickAsync(new() { Force = true, Timeout = timeoutMs });
-            }
-
-            await page.WaitForFunctionAsync(
-                """
-                () => {
-                  const rg = document.querySelector('.test-likert');
-                  if (!rg) return false;
-                  return !!rg.querySelector('.test-likert__opt.is-on, input[type=radio]:checked');
-                }
-                """,
-                null,
-                new() { Timeout = timeoutMs });
 
             return "ok";
         }

@@ -161,92 +161,92 @@ public static class PassportPdfSectorBuilder
         switch (sectorId)
         {
             case "greenhouse":
-            {
-                var exp = ExperienceHint(facts, ["oogst", "tuin", "kas", "kweker", "teelt"]);
-                if (!string.IsNullOrWhiteSpace(exp))
                 {
-                    TryAdd("gh-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
-                }
+                    var exp = ExperienceHint(facts, ["oogst", "tuin", "kas", "kweker", "teelt"]);
+                    if (!string.IsNullOrWhiteSpace(exp))
+                    {
+                        TryAdd("gh-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
+                    }
 
-                var role = facts.Roles?.FirstOrDefault(r =>
-                    MatchSector(r) == "greenhouse" || r.Contains("tuin", StringComparison.OrdinalIgnoreCase));
-                if (!string.IsNullOrWhiteSpace(role))
-                {
-                    TryAdd("gh-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
-                }
+                    var role = facts.Roles?.FirstOrDefault(r =>
+                        MatchSector(r) == "greenhouse" || r.Contains("tuin", StringComparison.OrdinalIgnoreCase));
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        TryAdd("gh-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                    }
 
-                var indoor = facts.WorkPreferences is not null
-                    ? WorkPreferenceCatalogs.CanonicalIndoor(facts.WorkPreferences.Indoor)
-                    : null;
-                if (indoor is "prefer" or "ok")
-                {
-                    TryAdd("gh-indoor", PassportPdfStrings.T(lang, "Sector.Why.Greenhouse.Indoor"));
-                }
+                    var indoor = facts.WorkPreferences is not null
+                        ? WorkPreferenceCatalogs.CanonicalIndoor(facts.WorkPreferences.Indoor)
+                        : null;
+                    if (indoor is "prefer" or "ok")
+                    {
+                        TryAdd("gh-indoor", PassportPdfStrings.T(lang, "Sector.Why.Greenhouse.Indoor"));
+                    }
 
-                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true);
-                break;
-            }
+                    TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true);
+                    break;
+                }
             case "logistics":
-            {
-                var cert = PaperHint(facts, ["heftruck", "vca"]);
-                if (!string.IsNullOrWhiteSpace(cert))
                 {
-                    TryAdd("log-cert", PassportPdfStrings.F(lang, "Sector.Why.Certificate", cert));
-                }
+                    var cert = PaperHint(facts, ["heftruck", "vca"]);
+                    if (!string.IsNullOrWhiteSpace(cert))
+                    {
+                        TryAdd("log-cert", PassportPdfStrings.F(lang, "Sector.Why.Certificate", cert));
+                    }
 
-                var exp = ExperienceHint(facts, ["orderpick", "magazijn", "logistiek"]);
-                if (!string.IsNullOrWhiteSpace(exp))
-                {
-                    TryAdd("log-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
-                }
+                    var exp = ExperienceHint(facts, ["orderpick", "magazijn", "logistiek"]);
+                    if (!string.IsNullOrWhiteSpace(exp))
+                    {
+                        TryAdd("log-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
+                    }
 
-                var role = RoleHint(facts, ["orderpick", "magazijn"]);
-                if (!string.IsNullOrWhiteSpace(role))
-                {
-                    TryAdd("log-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
-                }
+                    var role = RoleHint(facts, ["orderpick", "magazijn"]);
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        TryAdd("log-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                    }
 
-                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCareer: true);
-                break;
-            }
+                    TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCareer: true);
+                    break;
+                }
             case "tech":
-            {
-                var role = facts.Roles?.FirstOrDefault(r =>
-                    MatchSector(r) == "tech" || r.Contains("productie", StringComparison.OrdinalIgnoreCase));
-                if (!string.IsNullOrWhiteSpace(role))
                 {
-                    TryAdd("tech-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
-                }
+                    var role = facts.Roles?.FirstOrDefault(r =>
+                        MatchSector(r) == "tech" || r.Contains("productie", StringComparison.OrdinalIgnoreCase));
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        TryAdd("tech-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                    }
 
-                var physical = facts.WorkPreferences is not null
-                    ? WorkPreferenceCatalogs.CanonicalPhysicalWork(facts.WorkPreferences.PhysicalWork)
-                    : null;
-                if (physical is "lifting-15" or "heavy")
-                {
-                    TryAdd("tech-physical", PassportPdfStrings.T(lang, "Sector.Why.Tech.Physical"));
-                }
+                    var physical = facts.WorkPreferences is not null
+                        ? WorkPreferenceCatalogs.CanonicalPhysicalWork(facts.WorkPreferences.PhysicalWork)
+                        : null;
+                    if (physical is "lifting-15" or "heavy")
+                    {
+                        TryAdd("tech-physical", PassportPdfStrings.T(lang, "Sector.Why.Tech.Physical"));
+                    }
 
-                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCareer: true);
-                break;
-            }
+                    TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCareer: true);
+                    break;
+                }
             case "care":
-            {
-                var role = facts.Roles?.FirstOrDefault(r =>
-                    MatchSector(r) == "care" || r.Contains("zorg", StringComparison.OrdinalIgnoreCase));
-                if (!string.IsNullOrWhiteSpace(role))
                 {
-                    TryAdd("care-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
-                }
+                    var role = facts.Roles?.FirstOrDefault(r =>
+                        MatchSector(r) == "care" || r.Contains("zorg", StringComparison.OrdinalIgnoreCase));
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        TryAdd("care-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                    }
 
-                var exp = ExperienceHint(facts, ["zorg", "verpleeg", "stage", "bhv", "ziekenhuis"]);
-                if (!string.IsNullOrWhiteSpace(exp))
-                {
-                    TryAdd("care-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
-                }
+                    var exp = ExperienceHint(facts, ["zorg", "verpleeg", "stage", "bhv", "ziekenhuis"]);
+                    if (!string.IsNullOrWhiteSpace(exp))
+                    {
+                        TryAdd("care-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
+                    }
 
-                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true, preferCareer: true);
-                break;
-            }
+                    TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true, preferCareer: true);
+                    break;
+                }
             default:
                 TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true, preferCareer: true);
                 break;
