@@ -63,6 +63,7 @@ public class PassportCandidateFlowTests
         Assert.DoesNotContain("if (_dna is null)", source, StringComparison.Ordinal);
         Assert.DoesNotContain("if (_kompas is null)", source, StringComparison.Ordinal);
         Assert.Contains("GetMyKompasResultAsync", source, StringComparison.Ordinal);
+        Assert.Contains("LoadPassportSecondaryAsync", source, StringComparison.Ordinal);
         Assert.Contains("Passport.Fit.Soon", source, StringComparison.Ordinal);
         Assert.Contains("TestsComplete", source, StringComparison.Ordinal);
     }

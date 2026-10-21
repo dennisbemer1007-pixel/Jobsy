@@ -1,5 +1,5 @@
 @page "/candidate/paspoort"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/profile")]
@@ -379,19 +379,53 @@
                 return;
             }
 
-            var dnaResult = await Api.GetMyKompasDnaResultAsync();
+            if (!RendererInfo.IsInteractive)
+            {
+                return;
+            }
+
+            var dnaTask = Api.GetMyKompasDnaResultAsync();
+            var kompasTask = Api.GetMyKompasResultAsync();
+            await Task.WhenAll(dnaTask, kompasTask);
+
+            var dnaResult = await dnaTask;
             if (!dnaResult.TemporarilyUnavailable && dnaResult.Value is not null)
             {
                 _dna = dnaResult.Value;
             }
 
-            var kompasResult = await Api.GetMyKompasResultAsync();
+            var kompasResult = await kompasTask;
             if (!kompasResult.TemporarilyUnavailable && kompasResult.Value is not null)
             {
                 _kompas = kompasResult.Value;
             }
 
             ApplyModel();
+        }
+        catch (Exception)
+        {
+            _message = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            if (RendererInfo.IsInteractive)
+            {
+                _loading = false;
+            }
+        }
+
+        if (!RendererInfo.IsInteractive || _loading)
+        {
+            return;
+        }
+
+        _ = LoadPassportSecondaryAsync();
+    }
+
+    private async Task LoadPassportSecondaryAsync()
+    {
+        try
+        {
             _encourageContext = await ProfileEncouragementContextFactory.CreateAsync(Api, _profile);
             ApplyEncouragePreviewFromUri();
             try
@@ -406,14 +440,11 @@
 
             ApplyShells();
             await LoadReferenceVerificationAsync();
+            await InvokeAsync(StateHasChanged);
         }
-        catch (Exception)
+        catch
         {
-            _message = Culture["Panel.ErrorInline"];
-        }
-        finally
-        {
-            _loading = false;
+            // Secondary blocks can hydrate later; core paspoort is already visible.
         }
     }
 
