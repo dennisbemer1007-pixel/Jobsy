@@ -4,10 +4,12 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -18,6 +20,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<VacancyDiscoveryIndex> _logger;
+    private readonly IOptionsMonitor<VacancyIndexOptions> _indexOptions;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private bool _disposed;
 
@@ -31,10 +34,12 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
 
     public VacancyDiscoveryIndex(
         IServiceScopeFactory scopeFactory,
-        ILogger<VacancyDiscoveryIndex> logger)
+        ILogger<VacancyDiscoveryIndex> logger,
+        IOptionsMonitor<VacancyIndexOptions> indexOptions)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _indexOptions = indexOptions;
     }
 
     public DateTime? LastRefreshedAtUtc
@@ -127,7 +132,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
             _indexedForDate = todayAfterLoad;
             RebuildPublicActiveCache(records, todayAfterLoad);
             Interlocked.Exchange(ref _lastRefreshedTicks, DateTime.UtcNow.Ticks);
-            _logger.LogInformation("Banenkaart index refreshed with {Count} public vacancies.", records.Count);
+            _logger.LogInformation(
+                "Banenkaart index refreshed with {Count} indexed vacancies (includeTestData={IncludeTestData}).",
+                _publicActive?.Count ?? 0,
+                _indexOptions.CurrentValue.IncludeTestData);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -323,7 +331,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
         DateOnly today)
     {
         var visible = VisibleToday(snap, today);
-        var publicList = visible.Where(r => !r.IsTestData).ToList();
+        var includeTestData = _indexOptions.CurrentValue.IncludeTestData;
+        var publicList = includeTestData
+            ? visible.ToList()
+            : visible.Where(r => !r.IsTestData).ToList();
         _publicActive = publicList;
         _publicActiveById = publicList.Count == 0
             ? new Dictionary<Guid, VacancyDiscoveryRecord>()

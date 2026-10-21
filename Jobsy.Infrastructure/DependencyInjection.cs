@@ -737,6 +737,8 @@ public static class DependencyInjection
         services.AddScoped<IVacancyCategoryService, VacancyCategoryService>();
         services.AddScoped<IPartnerFlyerPdfService, PartnerFlyerPdfService>();
         services.AddScoped<IEmployerRaamflyerService, EmployerRaamflyerService>();
+        services.Configure<Jobsy.Core.Options.VacancyIndexOptions>(
+            configuration.GetSection(Jobsy.Core.Options.VacancyIndexOptions.SectionName));
         services.AddSingleton<IVacancyDiscoveryIndex, VacancyDiscoveryIndex>();
         services.AddHostedService<VacancyDiscoveryIndexHostedService>();
         services.AddHostedService<DashboardCacheRefreshHostedService>();

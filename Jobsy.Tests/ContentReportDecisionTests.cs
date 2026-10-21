@@ -180,12 +180,14 @@ internal sealed class ContentReportHarness
         var services = new ServiceCollection();
         services.AddDbContext<JobsyDbContext>(o => o.UseInMemoryDatabase(dbName));
         services.AddLogging();
+        services.Configure<Jobsy.Core.Options.VacancyIndexOptions>(_ => { });
         var provider = services.BuildServiceProvider();
         var db = provider.GetRequiredService<IServiceScopeFactory>()
             .CreateScope().ServiceProvider.GetRequiredService<JobsyDbContext>();
         var discovery = new VacancyDiscoveryIndex(
             provider.GetRequiredService<IServiceScopeFactory>(),
-            NullLogger<VacancyDiscoveryIndex>.Instance);
+            NullLogger<VacancyDiscoveryIndex>.Instance,
+            provider.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<Jobsy.Core.Options.VacancyIndexOptions>>());
         var mailer = new CapturingMailer();
         var audit = new RecordingAuditLog();
         var companyId = Guid.NewGuid();

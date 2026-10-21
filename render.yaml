@@ -250,6 +250,8 @@ projects:
                 value: "true"
               - key: Seed__Enabled
                 value: "true"
+              - key: VacancyIndex__IncludeTestData
+                value: "true"
               - key: Jobsy__PupilPassportV2Enabled
                 value: "true"
               - key: Jobsy__StudentPassportEnabled
