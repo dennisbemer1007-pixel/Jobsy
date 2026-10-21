@@ -14,8 +14,7 @@
 
 <nav class="app-header__nav candidate-header-nav"
      aria-label="@Culture["Nav.Main"]"
-     data-testid="candidate-header-nav"
-     data-nav-slots="@_items.Count">
+     data-testid="candidate-header-nav">
     @foreach (var item in _items)
     {
         var title = Culture[item.TitleKey];
