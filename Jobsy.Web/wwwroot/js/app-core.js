@@ -1065,10 +1065,10 @@ window.jobsyMaps = (function () {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {
+                // Start MapLibre + jobMap download early; defer boot() until after first paint.
+                ensure("discovery").catch(function () { });
                 whenAfterFirstPaint(function () {
-                    ensure("discovery").then(function () {
-                        bootDiscoveryMap();
-                    }).catch(function () { });
+                    bootDiscoveryMap();
                 });
             }
         } catch (e) { }
