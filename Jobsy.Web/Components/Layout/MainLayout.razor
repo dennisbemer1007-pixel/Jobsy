@@ -215,13 +215,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await Culture.InitializeAsync();
-            await Culture.SyncDocumentAsync();
-            StateHasChanged();
-        }
-
         if (RendererInfo.IsInteractive)
         {
             try

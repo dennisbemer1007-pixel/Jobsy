@@ -85,6 +85,21 @@ public class CultureStateRequestTests : IDisposable
     }
 
     [Fact]
+    public void InitializeFromLanguage_ignores_accept_language_on_apply()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers.AcceptLanguage = "en-US,en;q=0.9";
+        var accessor = new HttpContextAccessor { HttpContext = http };
+        var culture = new CultureState(
+            new NoJs(),
+            new ServiceCollection().BuildServiceProvider(),
+            new AnonAuth(),
+            accessor);
+        culture.InitializeFromLanguage("nl");
+        Assert.Equal("nl", culture.Language);
+    }
+
+    [Fact]
     public async Task Disabled_cookie_falls_back_to_accept_language_english()
     {
         var http = new DefaultHttpContext();
@@ -139,4 +154,5 @@ public class CultureStateRequestTests : IDisposable
             => Task.FromResult(new Microsoft.AspNetCore.Components.Authorization.AuthenticationState(
                 new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity())));
     }
+
 }
