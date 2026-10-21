@@ -628,6 +628,7 @@ app.UseMiddleware<PupilCircuitAuthenticationMiddleware>();
 app.UseRegisterOntdekRedirect();
 app.UseBanenRedirect();
 app.UseBewaardRedirect();
+app.UseInstellingenRedirect();
 app.UseBanenkaartGate();
 app.UseLandingRedirect();
 

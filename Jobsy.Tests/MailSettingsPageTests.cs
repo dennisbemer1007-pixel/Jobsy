@@ -1,4 +1,7 @@
 using System.Text.RegularExpressions;
+using Jobsy.Web.Auth;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 
 namespace Jobsy.Tests;
 
@@ -19,6 +22,22 @@ public class MailSettingsPageTests
         // Token only inside hidden form fields, not as GET navigation links.
         Assert.DoesNotContain("href=\"/mail/afmelden?t=", unsub, StringComparison.Ordinal);
         Assert.DoesNotContain("href=\"/account/mail-instellingen?t=", settings, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Mail_settings_post_from_candidate_hub_returns_to_settings_pane()
+    {
+        var form = new FormCollection(new Dictionary<string, StringValues>
+        {
+            ["return_to"] = "/candidate/settings?pane=mail"
+        });
+
+        Assert.Equal(
+            "/candidate/settings?pane=mail&saved=1",
+            MailSettingsEndpoints.MailSettingsRedirectTarget(form, saved: true));
+        Assert.Equal(
+            "/candidate/settings?pane=mail&error=1",
+            MailSettingsEndpoints.MailSettingsRedirectTarget(form, error: true));
     }
 
     [Fact]

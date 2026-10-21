@@ -42,6 +42,35 @@ public class ApiAuthRedirectGuardTests
     }
 
     [Fact]
+    public void Api_auth_handler_does_not_hijack_html_document_on_api_session_notify()
+    {
+        var source = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Services", "JobsyApiAuthHandler.cs"));
+        var start = source.IndexOf("private async Task NotifySessionExpiredAsync", StringComparison.Ordinal);
+        var end = source.IndexOf("public static bool ShouldRedirectHtmlNavigationToLogin", StringComparison.Ordinal);
+        Assert.True(start >= 0 && end > start);
+        var notify = source.Substring(start, end - start);
+        Assert.Contains("Never hijack the HTML document when an API call returns 401", notify, StringComparison.Ordinal);
+        Assert.DoesNotContain("AppendReturnUrl(\"/login?error=session-expired\"", notify, StringComparison.Ordinal);
+        Assert.DoesNotContain("/login?error=session-expired", notify, StringComparison.Ordinal);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+
+    [Fact]
     public void Json_api_calls_do_not_trigger_html_login_redirect()
     {
         var http = new DefaultHttpContext();

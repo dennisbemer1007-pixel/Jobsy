@@ -365,18 +365,10 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             return;
         }
 
-        // Interactive navigations for an authenticated session: send the browser to login.
-        // Anonymous SSR routinely gets 401 from optional layout chips (notifications, sales
-        // dashboard) — never hijack those into a /login redirect loop.
-        if (!ShouldRedirectHtmlNavigationToLogin(httpContext))
-        {
-            return;
-        }
-
-        var returnUrl = AuthRedirects.SafeLocalUrl(httpContext.Request.Path.Value);
-        httpContext.Response.Redirect(
-            AuthRedirects.AppendReturnUrl("/login?error=session-expired", returnUrl));
-
+        // Never hijack the HTML document when an API call returns 401 during Blazor SSR or
+        // circuit-backed HttpClient usage. The incoming request Accept is still text/html,
+        // which caused /login ↔ /candidate/settings reload loops while the cookie stayed valid.
+        // Interactive expiry remains: SessionInactivityMiddleware + lobsySessionIdle + reconnect UI.
         await Task.CompletedTask;
     }
 
