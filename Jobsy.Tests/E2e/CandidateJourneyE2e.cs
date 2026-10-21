@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
@@ -443,6 +444,34 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Enables onboarding finale v2 so rustig Kompas renders on /candidate/start (CI Playwright).</summary>
+    public static async Task EnsureOnboardingFinaleV2EnabledForE2eAsync()
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync();
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings { Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee") };
+            db.PlatformFeatureSettings.Add(row);
+        }
+
+        row.OnboardingFinaleV2Enabled = true;
+        row.AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(
+            row.AdminFlagOverridesJson,
+            nameof(PlatformFeatureSettings.OnboardingFinaleV2Enabled));
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+    }
+
     /// <summary>Ensures seeded demo users can open discovery mini-tests (Playwright / local screenshots).</summary>
     public static async Task EnsureTestAiConsentForE2eAsync(string candidateEmail)
     {
@@ -496,6 +525,80 @@ public static class CandidateJourneyE2e
 
         var adjustments = await db.CandidateAssessmentAdjustments
             .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Career)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears culture (step 9) Quick-Scan answers for open likert screenshots.</summary>
+    public static async Task ResetDemoCultureProfileForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateCulturePersonalityProfiles.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateCulturePersonalityProfiles.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Culture)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears values (step 10) Quick-Scan answers for open likert screenshots.</summary>
+    public static async Task ResetDemoValuesProfileForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateValuesProfiles.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateValuesProfiles.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Values)
             .ToListAsync();
         if (adjustments.Count > 0)
         {

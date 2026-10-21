@@ -282,7 +282,7 @@
                                          OnNext="@(() => NextAsync())"
                                          OnLater="LaterAsync" />
     }
-    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 8 && Draft.HasConsent)
+    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is 8 or 9 && Draft.HasConsent)
     {
         <OnboardingRustigMiniTestStep Step="_step"
                                       FlowEpoch="_miniFlowEpoch"
