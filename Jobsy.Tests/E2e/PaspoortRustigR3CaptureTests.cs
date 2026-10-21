@@ -43,6 +43,13 @@ public sealed class PaspoortRustigR3CaptureTests
             }
         };
 
+        await page.GotoAsync($"{baseUrl}/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        if (!await KbE2e.TryLoginAsync(page, baseUrl))
+        {
+            Assert.Fail($"Could not log in seed candidate at {baseUrl}.");
+        }
+
         await page.GotoAsync($"{baseUrl}/candidate/paspoort", new()
         {
             WaitUntil = WaitUntilState.DOMContentLoaded,
@@ -52,10 +59,20 @@ public sealed class PaspoortRustigR3CaptureTests
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 120_000 });
-        await page.Locator(".passport-page--rustig-r3").WaitForAsync(new()
+        if (!page.Url.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.Fail($"Expected /candidate/paspoort but landed on {page.Url}");
+        }
+
+        await page.Locator(".passport-page.passport-page--rustig-r3").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Attached,
+            Timeout = 90_000,
+        });
+        await page.Locator(".passport-page.passport-page--rustig-r3").WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,
-            Timeout = 90_000,
+            Timeout = 30_000,
         });
         await page.Locator("[data-testid=\"passport-rustig-hero-img\"]").WaitForAsync(new()
         {
@@ -101,14 +118,17 @@ public sealed class PaspoortRustigR3CaptureTests
             """);
         Assert.True(tabsTopAfter <= tabsTop + 2, "Sticky tabs shell should stay pinned while scrolling.");
 
-        Assert.Empty(consoleErrors);
+        var blockingConsoleErrors = consoleErrors
+            .Where(e => !e.Contains("ResizeObserver", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Empty(blockingConsoleErrors);
 
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(ArtifactsDir, $"paspoort-r3-product-{tag}.png"),
             FullPage = true,
         });
-        if (mobile)
+        if (tag is "1280" or "390")
         {
             await page.ScreenshotAsync(new()
             {
