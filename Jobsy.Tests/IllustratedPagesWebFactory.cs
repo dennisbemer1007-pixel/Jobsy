@@ -142,14 +142,35 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
 
     private sealed class StubApiHandler(bool emptyAppsAndLikes, bool minimalPassportProfile) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
+<<<<<<< HEAD
+<<<<<<< HEAD
             var json = IllustratedPagesApiStub.BuildJson(path, emptyAppsAndLikes, minimalPassportProfile);
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+=======
+=======
+            if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_CORE") == "1"
+                && path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
+            {
+                await Task.Delay(12_000, cancellationToken);
+            }
+
+>>>>>>> 621c156ce (Rework #824 walkthrough: slow-core skeleton before, fix skeleton selectors.)
+            if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_SECONDARY") == "1"
+                && path.Contains("/api/me/", StringComparison.OrdinalIgnoreCase)
+                && !path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
+            {
+                await Task.Delay(20_000, cancellationToken);
+            }
+
+            var json = IllustratedPagesApiStub.BuildJson(path, emptyAppsAndLikes);
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+>>>>>>> 631b795dc (Address #824 review: prerender:false, DNA tab fix, walkthrough captures.)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
-            });
+            };
         }
     }
 
