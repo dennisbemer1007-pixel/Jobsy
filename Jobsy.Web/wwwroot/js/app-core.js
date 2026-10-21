@@ -1057,7 +1057,9 @@ window.jobsyMaps = (function () {
                 return;
             }
             var parsed = JSON.parse(node.textContent);
-            if (parsed && parsed.pinsUrl) {
+            if (parsed && parsed.deferPinsWarmup) {
+                // Logged-in banenkaart: prerender skips server pins; prefetch after interactive boot URL is final.
+            } else if (parsed && parsed.pinsUrl) {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {

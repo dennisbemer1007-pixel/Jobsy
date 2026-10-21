@@ -1106,6 +1106,10 @@
     private string? _lastDiscoverViewportKey;
     private double? _lastSyncedOriginLat;
     private double? _lastSyncedOriginLng;
+    private bool _authenticatedSession;
+    private bool _deferDiscoverUntilMap;
+    private bool _initialDiscoverLoaded;
+    private bool _lastDiscoverUsedOrigin;
 
     private ElementReference _mapElement;
     private ElementReference _filterSheetPanel;
@@ -1734,45 +1738,53 @@
 
         if (!RendererInfo.IsInteractive)
         {
-            // Warm pins + camera only — never persist the full vacancy catalog into the
-            // HTML (that blew past the 2 MB Blazor hub limit and killed the circuit).
-            // Pins API is ~6 KB / ~370 ms; the interactive render loads the list.
             try
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                var viewTask = LoadMapViewAsync(cts.Token);
-                var pinsTask = LoadBootPinsAsync(cts.Token);
-                await Task.WhenAll(viewTask, pinsTask);
+                var auth = await AuthState.GetAuthenticationStateAsync();
+                _authenticatedSession = auth.User.Identity?.IsAuthenticated == true;
+            }
+            catch
+            {
+                _authenticatedSession = false;
+            }
+
+            // Logged-in sessions: skip anonymous prerender pins/map-view (wrong auth + triple fetch).
+            if (!_authenticatedSession)
+            {
                 try
                 {
-                    await regionHostTask.WaitAsync(cts.Token);
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    var viewTask = LoadMapViewAsync(cts.Token);
+                    var pinsTask = LoadBootPinsAsync(cts.Token);
+                    await Task.WhenAll(viewTask, pinsTask);
+                    try
+                    {
+                        await regionHostTask.WaitAsync(cts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
                 }
                 catch (OperationCanceledException)
                 {
                 }
+                catch
+                {
+                }
             }
-            catch (OperationCanceledException)
-            {
-            }
-            catch
-            {
-            }
+
             return;
         }
 
         _ = regionHostTask;
 
-        // Catalog + map-view + pins in parallel — do not wait on profile/masterdata before pins appear.
-        var viewTaskInteractive = LoadMapViewAsync();
-        var bootPinsTask = LoadBootPinsAsync();
-        var catalogTask = LoadVacanciesAsync();
-        var profileChangedFilters = false;
         try
         {
             await LoadBranchOptionsAsync();
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
             _isAuthenticated = user.Identity?.IsAuthenticated == true;
+            _authenticatedSession = _isAuthenticated;
             _isCandidate = user.IsInRole("Candidate");
             _canShowMyVacancies = user.IsInRole("EnterpriseManager")
                 || user.IsInRole("RegionalManager")
@@ -1780,17 +1792,13 @@
                 || user.IsInRole("Intermediary");
             if (_isCandidate)
             {
+                _deferDiscoverUntilMap = true;
                 var profile = await Api.GetMyProfileAsync();
                 if (profile is not null)
                 {
                     _openForWork = profile.OpenForWork;
                     _candidatePrefs = profile.Preferences;
-                    var beforeAge = _ageYears;
-                    var beforeMinHours = _minHoursPerWeek;
-                    var beforeMaxHours = _maxHoursPerWeek;
                     ApplyAgeFromProfile(profile);
-                    // D5: do NOT copy MaxTravelMinutes / PreferredTransport into map filters.
-                    // Match scoring still uses profile preferences elsewhere.
                     ApplyHoursFromProfile(profile.Preferences);
                     _profileMinHours = _minHoursPerWeek;
                     _profileMaxHours = _maxHoursPerWeek;
@@ -1801,13 +1809,8 @@
                         AgeYears: _profileAgeYears,
                         MinHoursPerWeek: _minHoursPerWeek,
                         MaxHoursPerWeek: _maxHoursPerWeek);
-                    // Keep map start defaults (Fiets / 20) even when profile has other travel prefs.
                     _maxTravelMinutes = KbMapStart.DefaultMaxTravelMinutes;
                     _selectedTransport = KbMapStart.DefaultTransport;
-
-                    profileChangedFilters = beforeAge != _ageYears
-                        || beforeMinHours != _minHoursPerWeek
-                        || beforeMaxHours != _maxHoursPerWeek;
                 }
             }
         }
@@ -1816,18 +1819,22 @@
             // anonymous or profile unavailable
         }
 
-        await catalogTask;
+        var viewTaskInteractive = LoadMapViewAsync();
+        var bootPinsTask = ShouldSkipServerPinBoot() ? Task.CompletedTask : LoadBootPinsAsync();
+        if (!_deferDiscoverUntilMap)
+        {
+            await LoadVacanciesAsync();
+        }
+
         await viewTaskInteractive;
         await bootPinsTask;
         if (_isCandidate && !_sortChosenByUser && ShowFitFilters)
         {
             _sortMode = "match";
         }
-        if (profileChangedFilters)
-        {
-            await LoadVacanciesAsync();
-        }
     }
+
+    private bool ShouldSkipServerPinBoot() => _authenticatedSession;
 
     private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
@@ -2288,12 +2295,17 @@
         if (firstRender)
         {
             _ = WarmDiscoveryScriptsAsync();
-            // Measure the viewport before MapLibre so desktop cards never wait on the map.
             await MeasureViewportAsync();
             await HydrateWeergaveAsync();
             if (!(_desktopListMode && _wideViewport))
             {
                 await TryInitJobMapAsync();
+            }
+
+            if (_deferDiscoverUntilMap && !_initialDiscoverLoaded)
+            {
+                _initialDiscoverLoaded = true;
+                _ = LoadVacanciesAsync();
             }
         }
 
@@ -2380,7 +2392,8 @@
                     await ResolveLaunchOriginAsync();
 
                     _launchHydrationDone = true;
-                    if (_origin is not null || _ageYears is not null)
+                    var useOrigin = _origin is not null && !HasCompanyMapFocus;
+                    if (useOrigin && !_lastDiscoverUsedOrigin)
                     {
                         await LoadVacanciesAsync();
                     }
@@ -2478,11 +2491,7 @@
     {
         try
         {
-            // Start pins HTTP immediately (no MapLibre required) so first pins beat the circuit.
-            if (!(_uwvMockup && _uwvKansLayerOn))
-            {
-                await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
-            }
+            await MapScripts.EnsureDiscoveryAsync(Js);
         }
         catch (JSException)
         {
@@ -2496,7 +2505,10 @@
 
         try
         {
-            await MapScripts.EnsureDiscoveryAsync(Js);
+            if (!(_uwvMockup && _uwvKansLayerOn))
+            {
+                await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
+            }
         }
         catch (JSException)
         {
@@ -2737,6 +2749,7 @@
             var companyFocus = _companyFocusIds is { Count: > 0 } || _myVacanciesOnly;
             var queryCompanyFocus = !_myVacanciesOnly && _queryCompanyFocusIds is { Count: > 0 };
             var useOrigin = _origin is not null && !companyFocus;
+            _lastDiscoverUsedOrigin = useOrigin;
             _discoverSkip = 0;
             var page = await Api.DiscoverVacanciesPageAsync(
                 useOrigin ? _origin!.Latitude : null,
@@ -3070,6 +3083,7 @@
         var opening = ResolveOpeningView();
         // Prefer dedicated pins API payload so prerender never ships 0 pins when the index is warm.
         var pins = _bootPins.Count > 0 ? _bootPins : BuildCompactPins(_vacancies);
+        var deferPinsWarmup = _authenticatedSession;
         var payload = new Dictionary<string, object?>
         {
             ["preferFilledLocation"] = !HasCompanyMapFocus,
@@ -3079,8 +3093,9 @@
                 ["lng"] = opening.CenterLng,
                 ["zoom"] = opening.Zoom
             },
-            ["pins"] = pins,
-            ["pinsUrl"] = BuildPinsApiUrl()
+            ["pins"] = deferPinsWarmup ? [] : pins,
+            ["pinsUrl"] = deferPinsWarmup ? "" : BuildPinsApiUrl(),
+            ["deferPinsWarmup"] = deferPinsWarmup
         };
         return JsonSerializer.Serialize(payload, BootPinJsonOptions)
             .Replace("<", "\\u003c", StringComparison.Ordinal);
