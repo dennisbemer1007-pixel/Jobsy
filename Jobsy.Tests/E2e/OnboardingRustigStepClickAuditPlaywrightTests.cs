@@ -31,11 +31,18 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
     public async Task Audit_step04_clicks(int width, int height, bool mobile, string tag)
         => await AuditStepAsync(4, width, height, mobile, tag);
 
+    [Theory]
+    [MemberData(nameof(Step05Cases))]
+    public async Task Audit_step05_clicks(int width, int height, bool mobile, string tag)
+        => await AuditStepAsync(5, width, height, mobile, tag);
+
     public static IEnumerable<object[]> Step02Cases() => ViewportCases();
 
     public static IEnumerable<object[]> Step03Cases() => ViewportCases();
 
     public static IEnumerable<object[]> Step04Cases() => ViewportCases();
+
+    public static IEnumerable<object[]> Step05Cases() => ViewportCases();
 
     private static IEnumerable<object[]> ViewportCases()
     {
@@ -73,7 +80,18 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (step == 4)
+        if (step == 5)
+        {
+            if (rustig)
+            {
+                await OnboardingRustigStep05E2eFlow.ReachRustigStep05Async(page, baseUrl, mobile);
+            }
+            else
+            {
+                await OnboardingRustigStep05E2eFlow.ReachBaselineStep05Async(page, baseUrl, mobile);
+            }
+        }
+        else if (step == 4)
         {
             if (rustig)
             {
@@ -94,11 +112,14 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         }
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(200);
-        var chromeRow = page.Locator(".ob-rustig__chrome-row").First;
-        await chromeRow.ScrollIntoViewIfNeededAsync();
-        if (!mobile)
+        if (rustig)
         {
-            await page.Locator(".ob-rustig__chrome").First.ScrollIntoViewIfNeededAsync();
+            var chromeRow = page.Locator(".ob-rustig__chrome-row").First;
+            await chromeRow.ScrollIntoViewIfNeededAsync();
+            if (!mobile)
+            {
+                await page.Locator(".ob-rustig__chrome").First.ScrollIntoViewIfNeededAsync();
+            }
         }
 
         var rows = new List<(string Control, string Result)>();
@@ -157,20 +178,21 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
             rows.Add(("Stap 3 van 10 (header)", await stepLine.CountAsync() > 0 ? "ok" : "n/a"));
         }
 
-        if (step == 4)
+        if (step is 4 or 5)
         {
             var skip = rustig
                 ? page.Locator(".ob-rustig__footer-actions [data-testid=onboarding-skip-optional]")
                 : page.GetByTestId("onboarding-skip-optional");
             await AuditButtonAsync(page, rows, "Overslaan", skip);
 
-            var stepLine = page.Locator(".ob-rustig__meta").GetByText("Stap 4 van 10", new() { Exact = false });
+            var stepText = $"Stap {step} van 10";
+            var stepLine = page.Locator(".ob-rustig__meta").GetByText(stepText, new() { Exact = false });
             if (await stepLine.CountAsync() == 0)
             {
-                stepLine = page.GetByText("Stap 4 van 10", new() { Exact = false });
+                stepLine = page.GetByText(stepText, new() { Exact = false });
             }
 
-            rows.Add(("Stap 4 van 10 (header)", await stepLine.CountAsync() > 0 ? "ok" : "n/a"));
+            rows.Add(($"{stepText} (header)", await stepLine.CountAsync() > 0 ? "ok" : "n/a"));
         }
 
         if (step == 1 && mobile && rustig)
