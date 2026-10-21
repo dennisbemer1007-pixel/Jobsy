@@ -76,7 +76,7 @@ public static class PageAssetCatalog
         "css/features/ontdekkingsreis.css?v=20261021-08",
         "css/features/tests.css?v=20261020-r8",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
-        "css/features/carriere.css?v=20261021-05",
+        "css/features/carriere.css?v=20261021-08",
         "css/features/opleidingen.css?v=20261018-r12",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",
@@ -295,7 +295,7 @@ public static class PageAssetCatalog
             var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-10" };
             if (RouteUsesCompactHeroCss(path))
             {
-                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261021-r23");
+                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261021-r24");
             }
 
             return appsCss;
@@ -324,7 +324,7 @@ public static class PageAssetCatalog
             || path.Equals("/banen", StringComparison.OrdinalIgnoreCase))
         {
             return RouteUsesCompactHeroCss(path)
-                ? ["css/features/candidate-hero-compact-preview.css?v=20261021-r23"]
+                ? ["css/features/candidate-hero-compact-preview.css?v=20261021-r24"]
                 : [];
         }
 
@@ -338,7 +338,7 @@ public static class PageAssetCatalog
             var uwvCss = new List<string>(UwvMockupRouteCss);
             if (RouteUsesCompactHeroCss(path))
             {
-                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261021-r23");
+                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261021-r24");
             }
 
             return uwvCss;
@@ -346,7 +346,7 @@ public static class PageAssetCatalog
 
         if (RouteUsesCompactHeroCss(path))
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261021-r23"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261021-r24"];
         }
 
         return [];

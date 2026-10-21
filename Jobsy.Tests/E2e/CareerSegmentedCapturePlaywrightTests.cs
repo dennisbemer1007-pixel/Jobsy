@@ -152,6 +152,47 @@ public sealed class CareerSegmentedCapturePlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Mobile_empty_profile_lead_to_banner_gap()
+    {
+        using var web = new IllustratedPagesWebFactory(emptyAppsAndLikes: true);
+        _ = web.ServerAddress;
+        var baseUrl = web.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await context.NewPageAsync();
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        await page.GotoAsync($"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/carriere")}");
+        await page.GotoAsync($"{baseUrl}/carriere", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+        await page.Locator("[data-testid=carriere-segmented-empty-profile]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.GetByRole(AriaRole.Heading, new() { Name = "carrièrekansen" }).WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
+        var gap = await page.EvaluateAsync<double>("""
+            () => {
+              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead');
+              const banner = document.querySelector('[data-testid=carriere-segmented-empty-profile]');
+              const header = document.querySelector('header.uwv-carriere-showcase-hero');
+              if (!lead || !banner || !header) return 999;
+              return banner.getBoundingClientRect().top - lead.getBoundingClientRect().bottom;
+            }
+            """);
+        var outDir = Path.Combine(FindRepoRoot(), "artifacts");
+        Directory.CreateDirectory(outDir);
+        File.WriteAllText(Path.Combine(outDir, "carriere-mobile-lead-empty-banner-gap.txt"), $"{gap:F1}");
+        Assert.InRange(gap, 0, 16);
+
+        var groupTitle = await page.Locator("#carriere-group-similar").InnerTextAsync();
+        Assert.Contains("verkennen", groupTitle, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Mobile_lead_not_overlapped_by_tabs()
     {
         var baseUrl = _web!.ServerAddress.TrimEnd('/');

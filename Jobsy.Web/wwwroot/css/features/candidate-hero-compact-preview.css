@@ -842,7 +842,7 @@
   }
 
   /* Desktop/tablet: fixed ~150px band on illustrated app pages (not onboarding wizard). */
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.uwv-carriere-showcase-hero),
   .career-page--compact-preview-c > header.cand-compact-hero--page.cand-hero--profession-band:not(.uwv-carriere-showcase-hero) {
     min-height: 150px !important;
     height: 150px !important;
@@ -1710,7 +1710,7 @@
 
   /* Default compact hero on illustrated app pages (sollicitaties, bewaard, …). */
   .panel-page--cand-ill:not(.bk-page):not(.candidate-hub):not(.kb-apps):not(.journey--overview-route)
-    > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.cand-hero--discovery-overview-v8) {
+    > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding):not(.cand-hero--discovery-overview-v8):not(.uwv-carriere-showcase-hero) {
     min-height: 150px !important;
     height: 150px !important;
     max-height: 150px !important;

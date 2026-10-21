@@ -55,7 +55,7 @@
         <div class="carriere-segmented__panel" role="tabpanel" id="carriere-panel-voor-jou" aria-labelledby="carriere-tab-voor-jou">
             <section class="carriere-segmented__group" aria-labelledby="carriere-group-similar">
                 <div class="carriere-segmented__group-head">
-                    <h2 id="carriere-group-similar" class="carriere-segmented__group-title">@UwvMockupCopy.Similar.Title(Lang)</h2>
+                    <h2 id="carriere-group-similar" class="carriere-segmented__group-title">@(EmptyProfile ? UwvMockupCopy.Similar.EmptyTitle(Lang) : UwvMockupCopy.Similar.Title(Lang))</h2>
                     @MeerButton("similar", UwvMockupData.SimilarJobs.Count)
                 </div>
                 <ul class="carriere-segmented__cards">

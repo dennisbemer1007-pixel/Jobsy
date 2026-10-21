@@ -1230,7 +1230,12 @@
   padding-top: 0 !important;
 }
 
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero + .carriere-segmented .carriere-segmented__empty-profile {
+  margin-top: 0.75rem;
+}
+
 .carriere-segmented__empty-profile {
+  margin-top: 0;
   margin-bottom: var(--space-3);
 }
 
@@ -1451,10 +1456,13 @@
 
   .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-hero__copy,
   .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-compact-hero__copy {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
+    height: auto !important;
     min-height: 0 !important;
     padding-inline: var(--space-4) !important;
     padding-block: 0.55rem 0.25rem !important;
@@ -1470,6 +1478,10 @@
     margin-top: 0 !important;
     padding-top: 0 !important;
     padding-bottom: var(--space-3) !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero + .carriere-segmented.career-uwv-sections {
+    margin-top: 0 !important;
   }
 
   .carriere-segmented__nav-wrap {

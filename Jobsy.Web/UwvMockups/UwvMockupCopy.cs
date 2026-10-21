@@ -36,10 +36,10 @@ public static class UwvMockupCopy
             "Occupations with good prospects in your region, with matching training routes.",
             lang);
         public static string Source(string? lang) => T(
-            "Voorbeelddata · bron: UWV / CBS open data",
-            "Sample data · source: UWV / CBS open data",
+            "Gebaseerd op open arbeidsmarktcijfers van CBS en UWV-kansberoepen.",
+            "Based on open labour market figures from CBS and UWV opportunity occupations.",
             lang);
-        public static string Region(string? lang) => T("Regio Haaglanden (voorbeeld)", "Haaglanden region (sample)", lang);
+        public static string Region(string? lang) => T("Regio Haaglanden", "Haaglanden region", lang);
         public static string VacanciesLink(string? lang, int count) => IsEnglish(lang)
             ? $"{count} vacancies on job map"
             : $"{count} vacatures op banenkaart";
@@ -52,14 +52,18 @@ public static class UwvMockupCopy
             "Beroepen die lijken op je huidige beroep",
             "Occupations similar to your current role",
             lang);
+        public static string EmptyTitle(string? lang) => T(
+            "Beroepen om te verkennen",
+            "Occupations to explore",
+            lang);
         public static string Lead(string? lang) => T(
-            "Beroepen waar je met je huidige ervaring makkelijk naartoe kunt (voorbeelddata).",
-            "Roles you can move into fairly easily from your current experience (sample data).",
+            "Beroepen waar je met je huidige ervaring makkelijk naartoe kunt.",
+            "Roles you can move into fairly easily from your current experience.",
             lang);
         public static string RoutesToggle(string? lang) => T("Bekijk opleidingsroutes", "View training routes", lang);
         public static string RoutesHint(string? lang) => T(
-            "Voorbeeldroute · MBO of BBL, afhankelijk van je startniveau.",
-            "Sample route · vocational training or apprenticeship, depending on your starting level.",
+            "MBO of BBL, afhankelijk van je startniveau.",
+            "Vocational training or apprenticeship, depending on your starting level.",
             lang);
     }
 
@@ -87,8 +91,8 @@ public static class UwvMockupCopy
     {
         public static string Title(string? lang) => T("Workshops en opleidingen", "Workshops and training", lang);
         public static string Lead(string? lang) => T(
-            "Verder leren, passend bij je route (voorbeelddata).",
-            "Keep learning, aligned with your path (sample data).",
+            "Verder leren, passend bij je route.",
+            "Keep learning, aligned with your path.",
             lang);
         public static string PartnersTitle(string? lang) => T("Partners van UWV", "UWV partners", lang);
     }
