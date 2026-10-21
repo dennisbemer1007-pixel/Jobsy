@@ -1,7 +1,7 @@
 @using Jobsy.Web.Onboarding
 
 <div class="ob-start-journey-route" data-testid="onboarding-start-journey-route">
-    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--horizontal" viewBox="0 0 1000 320" preserveAspectRatio="none" aria-hidden="true">
+    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--horizontal" viewBox="0 0 1000 280" preserveAspectRatio="none" aria-hidden="true">
         <defs>
             <linearGradient id="obStartJourneyStrokeH" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#c4a574" />
@@ -9,15 +9,15 @@
                 <stop offset="100%" stop-color="#d4b878" />
             </linearGradient>
         </defs>
-        <path d="M 40 250 C 120 250, 140 120, 220 130 S 380 240, 460 200 S 620 80, 700 110 S 860 220, 960 180"
+        <path d="M 40 92 C 140 92, 160 86, 260 88 S 420 94, 500 90 S 660 86, 760 88 S 900 92, 960 90"
               fill="none"
               stroke="url(#obStartJourneyStrokeH)"
-              stroke-width="14"
+              stroke-width="11"
               stroke-linecap="round"
               stroke-linejoin="round"
-              opacity="0.65" />
+              opacity="0.5" />
     </svg>
-    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--vertical" viewBox="0 0 120 520" preserveAspectRatio="none" aria-hidden="true">
+    <svg class="ob-start-journey-route__svg ob-start-journey-route__svg--vertical" viewBox="0 0 120 560" preserveAspectRatio="none" aria-hidden="true">
         <defs>
             <linearGradient id="obStartJourneyStrokeV" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stop-color="#c4a574" />
@@ -25,10 +25,10 @@
                 <stop offset="100%" stop-color="#d4b878" />
             </linearGradient>
         </defs>
-        <path d="M 60 16 C 60 72, 28 88, 28 148 S 92 208, 60 268 S 28 328, 28 388 S 92 448, 60 504"
+        <path d="M 60 24 C 60 72, 34 88, 34 136 S 86 192, 60 248 S 34 304, 34 352 S 86 408, 60 464 S 34 512, 34 536"
               fill="none"
               stroke="url(#obStartJourneyStrokeV)"
-              stroke-width="10"
+              stroke-width="9"
               stroke-linecap="round"
               stroke-linejoin="round"
               opacity="0.65" />
@@ -37,18 +37,23 @@
         @foreach (var stop in OnboardingStartJourneyMockCopy.Stops)
         {
             var isCurrent = stop.Number == "1";
-            <li class="ob-start-journey-route__stop ob-start-journey-route__stop--@stop.Number @(isCurrent ? "is-current" : null)">
+            var isSideA = int.Parse(stop.Number) % 2 == 1;
+            <li class="ob-start-journey-route__stop ob-start-journey-route__stop--@stop.Number @(isCurrent ? "is-current" : null) @(isSideA ? "is-side-a" : "is-side-b")">
                 <div class="ob-start-journey-route__stop-inner">
                     @if (isCurrent)
                     {
                         <span class="ob-start-journey-route__here">@OnboardingStartJourneyMockCopy.HereMarker</span>
                     }
-                    <div class="ob-start-journey-route__vignette @(isCurrent ? "is-current" : null)">
-                        <img src="@stop.VignettePath" alt="" width="96" height="96" loading="eager" decoding="async" />
+                    <div class="ob-start-journey-route__anchor">
+                        <div class="ob-start-journey-route__vignette @(isCurrent ? "is-current" : null)">
+                            <img src="@stop.VignettePath" alt="" width="96" height="96" loading="eager" decoding="async" />
+                        </div>
                     </div>
-                    <div class="ob-start-journey-route__label">
-                        <p class="ob-start-journey-route__title">@stop.Title</p>
-                        <p class="ob-start-journey-route__sub">@stop.Subtitle</p>
+                    <div class="ob-start-journey-route__copy">
+                        <div class="ob-start-journey-route__label">
+                            <p class="ob-start-journey-route__title">@stop.Title</p>
+                            <p class="ob-start-journey-route__sub">@stop.Subtitle</p>
+                        </div>
                     </div>
                 </div>
             </li>

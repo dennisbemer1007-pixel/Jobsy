@@ -46,6 +46,16 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
         });
         var page = await OpenMockAsync(context, baseUrl);
         await page.Locator("[data-testid=onboarding-begin]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator(".ob-start-journey-route__vignette img").First.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const imgs = document.querySelectorAll('.ob-start-journey-route__vignette img');
+              return imgs.length >= 5 && [...imgs].every(i => i.complete && i.naturalWidth > 0);
+            }
+            """,
+            null,
+            new() { Timeout = 60_000 });
 
         var ctaVisible = await page.EvaluateAsync<bool>("""
             () => {

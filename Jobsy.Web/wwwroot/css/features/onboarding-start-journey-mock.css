@@ -11,8 +11,8 @@
 }
 
 .ob-rustig--start-journey-mock {
-  --ob-rustig-hero-h: 64px;
-  --ob-start-journey-route-h: clamp(11.5rem, 25vh, 13.5rem);
+  --ob-rustig-hero-h: 56px;
+  --ob-start-journey-route-h: clamp(11.75rem, 26vh, 13.75rem);
 }
 
 .ob-rustig--start-journey-mock .ob-rustig__sidebar--no-logo .ob-rustig__logo-e {
@@ -39,15 +39,16 @@
   inline-size: 100%;
 }
 
+/* Landscape band: Welkom gate and hills, no hiker in frame. */
 @media (min-width: 1024px) {
   .ob-rustig--start-journey-mock .ob-rustig__hero-img--desk {
-    object-position: 50% 68%;
+    object-position: 6% 54%;
   }
 }
 
 @media (max-width: 1023px) {
   .ob-rustig--start-journey-mock .ob-rustig__hero-img--mob {
-    object-position: 42% 68%;
+    object-position: 18% 62%;
   }
 }
 
@@ -94,9 +95,9 @@
 .ob-start-journey-route {
   position: relative;
   block-size: var(--ob-start-journey-route-h);
-  min-block-size: 11rem;
+  min-block-size: 11.5rem;
   margin: 0.15rem 0 0;
-  padding-block-end: 0.35rem;
+  padding-block-end: 0.25rem;
   overflow: visible;
 }
 
@@ -111,10 +112,19 @@
   inline-size: 100%;
   block-size: 100%;
   pointer-events: none;
+  z-index: 0;
 }
 
 .ob-start-journey-route__svg--vertical {
   display: none;
+}
+
+@media (min-width: 1024px) {
+  .ob-start-journey-route__svg--horizontal {
+    block-size: 38%;
+    inset-block-start: 26%;
+    inset-block-end: auto;
+  }
 }
 
 .ob-start-journey-route__stops {
@@ -123,6 +133,7 @@
   padding: 0;
   position: relative;
   block-size: 100%;
+  z-index: 1;
 }
 
 .ob-start-journey-route__stop {
@@ -131,18 +142,18 @@
   padding: 0;
 }
 
-.ob-start-journey-route__stop--1 { left: 8%; top: 42%; transform: translate(-50%, -50%); z-index: 2; }
-.ob-start-journey-route__stop--2 { left: 26%; top: 24%; transform: translate(-50%, -50%); z-index: 1; }
-.ob-start-journey-route__stop--3 { left: 46%; top: 50%; transform: translate(-50%, -50%); z-index: 1; }
-.ob-start-journey-route__stop--4 { left: 66%; top: 20%; transform: translate(-50%, -50%); z-index: 1; }
-.ob-start-journey-route__stop--5 { left: 88%; top: 42%; transform: translate(-50%, -50%); z-index: 1; }
+.ob-start-journey-route__stop--1 { left: 8%; top: 34%; transform: translate(-50%, -72%); z-index: 3; }
+.ob-start-journey-route__stop--2 { left: 26%; top: 34%; transform: translate(-50%, -72%); z-index: 2; }
+.ob-start-journey-route__stop--3 { left: 46%; top: 34%; transform: translate(-50%, -72%); z-index: 2; }
+.ob-start-journey-route__stop--4 { left: 66%; top: 34%; transform: translate(-50%, -72%); z-index: 2; }
+.ob-start-journey-route__stop--5 { left: 88%; top: 34%; transform: translate(-50%, -72%); z-index: 2; }
 
 .ob-start-journey-route__stop-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  max-width: 6.75rem;
+  gap: 0.2rem;
+  max-width: 7rem;
   text-align: center;
 }
 
@@ -156,7 +167,13 @@
   padding: 0.15rem 0.45rem;
   line-height: 1.2;
   white-space: nowrap;
-  margin-block-end: 0.05rem;
+  position: relative;
+  z-index: 3;
+}
+
+.ob-start-journey-route__anchor {
+  position: relative;
+  z-index: 2;
 }
 
 .ob-start-journey-route__vignette {
@@ -182,11 +199,22 @@
   object-fit: cover;
 }
 
+.ob-start-journey-route__copy {
+  position: relative;
+  z-index: 3;
+  margin-block-start: 0.15rem;
+}
+
 .ob-start-journey-route__label {
   display: flex;
   flex-direction: column;
   gap: 0.05rem;
   min-width: 0;
+  padding: 0.22rem 0.5rem;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: 0 0 0 3px var(--bg);
+  isolation: isolate;
 }
 
 .ob-start-journey-route__title {
@@ -220,13 +248,28 @@
   }
 
   .ob-rustig--start-journey-mock {
-    --ob-rustig-hero-h: 52px;
-    --ob-start-journey-route-h: 14.25rem;
+    --ob-rustig-hero-h: 48px;
+    --ob-start-journey-route-h: auto;
+  }
+
+  .ob-rustig--start-journey-mock .ob-rustig__page-head--compact {
+    padding-inline: 1rem;
   }
 
   .ob-rustig--start-journey-mock .ob-rustig__page-head--compact .ob-rustig__lead {
-    font-size: 0.78rem;
-    line-height: 1.32;
+    font-size: 0.76rem;
+    line-height: 1.3;
+  }
+
+  .ob-rustig__body--journey-mock {
+    padding-inline: 0.85rem;
+    gap: 0.4rem;
+  }
+
+  .ob-start-journey-route {
+    block-size: auto;
+    min-block-size: 0;
+    padding: 0.25rem 0 0.35rem;
   }
 
   .ob-start-journey-route__svg--horizontal {
@@ -235,79 +278,126 @@
 
   .ob-start-journey-route__svg--vertical {
     display: block;
-    inline-size: 3.5rem;
+    inline-size: 2.75rem;
     inset-inline: 0;
     margin-inline: auto;
+    block-size: calc(100% - 0.5rem);
+    inset-block-start: 0.25rem;
+  }
+
+  .ob-start-journey-route__stops {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    block-size: auto;
   }
 
   .ob-start-journey-route__stop {
+    position: relative;
+    inset: auto;
     transform: none;
-    inline-size: calc(50% - 1.85rem);
-    max-inline-size: 9.5rem;
-  }
-
-  .ob-start-journey-route__stop--1 {
-    inset-block-start: 0;
-    inset-inline-start: 0.35rem;
-    inset-inline-end: auto;
-  }
-
-  .ob-start-journey-route__stop--2 {
-    inset-block-start: 21%;
-    inset-inline-end: 0.35rem;
-    inset-inline-start: auto;
-  }
-
-  .ob-start-journey-route__stop--3 {
-    inset-block-start: 42%;
-    inset-inline-start: 0.35rem;
-    inset-inline-end: auto;
-  }
-
-  .ob-start-journey-route__stop--4 {
-    inset-block-start: 63%;
-    inset-inline-end: 0.35rem;
-    inset-inline-start: auto;
-  }
-
-  .ob-start-journey-route__stop--5 {
-    inset-block-start: 84%;
-    inset-inline-start: 0.35rem;
-    inset-inline-end: auto;
+    inline-size: 100%;
+    max-inline-size: none;
   }
 
   .ob-start-journey-route__stop-inner {
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 3rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.35rem;
     max-width: none;
+    width: 100%;
     text-align: start;
-    gap: 0.2rem;
   }
 
-  .ob-start-journey-route__stop--2 .ob-start-journey-route__stop-inner,
-  .ob-start-journey-route__stop--4 .ob-start-journey-route__stop-inner {
-    align-items: flex-end;
-    text-align: end;
+  .ob-start-journey-route__here {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-block-end: -0.15rem;
+  }
+
+  .ob-start-journey-route__stop.is-side-a .ob-start-journey-route__here {
+    justify-self: start;
+    margin-inline-start: 0.15rem;
+  }
+
+  .ob-start-journey-route__stop.is-side-b .ob-start-journey-route__here {
+    justify-self: end;
+    margin-inline-end: 0.15rem;
+  }
+
+  .ob-start-journey-route__anchor {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: center;
+    align-self: center;
+  }
+
+  .ob-start-journey-route__copy {
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .ob-start-journey-route__stop.is-current .ob-start-journey-route__anchor,
+  .ob-start-journey-route__stop.is-current .ob-start-journey-route__copy {
+    grid-row: 2;
+  }
+
+  .ob-start-journey-route__stop.is-side-a .ob-start-journey-route__copy {
+    grid-column: 1;
+    justify-self: end;
+    padding-inline-end: 0.15rem;
+  }
+
+  .ob-start-journey-route__stop.is-side-b .ob-start-journey-route__copy {
+    grid-column: 3;
+    justify-self: start;
+    padding-inline-start: 0.15rem;
+  }
+
+  .ob-start-journey-route__stop.is-side-a .ob-start-journey-route__anchor {
+    grid-column: 2;
+  }
+
+  .ob-start-journey-route__stop.is-side-b .ob-start-journey-route__anchor {
+    grid-column: 2;
   }
 
   .ob-start-journey-route__vignette {
     inline-size: 3rem;
     block-size: 3rem;
-    border-radius: 0.85rem;
+    border-radius: 0.75rem;
   }
 
-  .ob-start-journey-route__here {
-    align-self: flex-start;
+  .ob-start-journey-route__label {
+    padding: 0.18rem 0.42rem;
   }
 
-  .ob-start-journey-route__stop--2 .ob-start-journey-route__here,
-  .ob-start-journey-route__stop--4 .ob-start-journey-route__here {
-    align-self: flex-end;
+  .ob-rustig__footer-actions--above-fold {
+    inline-size: 100%;
+  }
+
+  .ob-rustig--start-journey-mock .ob-rustig__footer-actions--above-fold .ob-rustig__btn {
+    inline-size: 100%;
+    justify-content: center;
   }
 }
 
 @media (min-width: 1024px) {
   .ob-start-journey-mock-shell .candidate-header-nav {
     display: flex;
+  }
+
+  /* Desktop: vignette above label stack */
+  .ob-start-journey-route__stop-inner .ob-start-journey-route__here {
+    order: 0;
+  }
+
+  .ob-start-journey-route__stop-inner .ob-start-journey-route__anchor {
+    order: 1;
+  }
+
+  .ob-start-journey-route__stop-inner .ob-start-journey-route__copy {
+    order: 2;
   }
 }
