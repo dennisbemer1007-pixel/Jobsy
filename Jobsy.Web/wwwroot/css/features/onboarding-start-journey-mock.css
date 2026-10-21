@@ -348,7 +348,7 @@
 
   .ob-start-journey-route__copy {
     position: absolute;
-    inset-block-start: calc(100% + 0.42rem);
+    inset-block-start: calc(100% + 0.55rem);
     z-index: 3;
     width: max-content;
     max-width: min(7.25rem, calc(100vw - 2rem));
