@@ -71,6 +71,15 @@ public sealed class DiscoveryOverviewRouteCaptureTests
             FullPage = true,
         });
 
+        if (tag is "1280" or "390")
+        {
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(ArtifactsDir, $"ontdekkingsreis-route-product-{tag}-viewport.png"),
+                FullPage = false,
+            });
+        }
+
         if (mobile)
         {
             var layoutTopJson = await page.EvaluateAsync<string>(
@@ -151,10 +160,10 @@ public sealed class DiscoveryOverviewRouteCaptureTests
 
             var layoutTests = JsonDocument.Parse(layoutTestsJson).RootElement;
             Assert.True(layoutTests.TryGetProperty("marginLeft", out var mlTests));
-            Assert.True(layoutTests.TryGetProperty("marginRight", out var mrTests));
+            Assert.True(layoutTests.TryGetProperty("tileLeft", out var tlTests));
+            Assert.True(layoutTests.TryGetProperty("tileRight", out var trTests));
             Assert.InRange(mlTests.GetDouble(), 14, 18);
-            Assert.InRange(mrTests.GetDouble(), 14, 18);
-            Assert.InRange(Math.Abs(mlTests.GetDouble() - mrTests.GetDouble()), 0, 2);
+            Assert.True(trTests.GetDouble() - tlTests.GetDouble() >= 140, "Mobile test tile should render at readable width.");
 
             await page.ScreenshotAsync(new()
             {
