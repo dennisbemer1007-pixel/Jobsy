@@ -236,8 +236,21 @@
         }
     }
 
+    function circuitReadyForSessionBeacons() {
+        try {
+            if (window.lobsyCircuit && typeof window.lobsyCircuit.isReadyForAction === "function") {
+                return window.lobsyCircuit.isReadyForAction();
+            }
+        } catch (e) { }
+        return !reconnectUiActive();
+    }
+
     function onActivity() {
         if (!started || expiring) {
+            return;
+        }
+        if (!circuitReadyForSessionBeacons()) {
+            scheduleIdle();
             return;
         }
         var now = Date.now();
@@ -264,6 +277,9 @@
 
     function refreshTimeout() {
         if (document.visibilityState === "hidden") {
+            return;
+        }
+        if (!circuitReadyForSessionBeacons()) {
             return;
         }
         var urls = ["/account/session-security"];
