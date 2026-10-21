@@ -619,6 +619,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl, string emailPrefix)
     {
+        _ = await RegisterFreshCandidateEmailAsync(page, baseUrl, emailPrefix);
+    }
+
+    internal static async Task<string> RegisterFreshCandidateEmailAsync(IPage page, string baseUrl, string emailPrefix)
+    {
         var email = $"{emailPrefix}.{Guid.NewGuid():N}@jobsy.local";
         await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
         await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
@@ -632,6 +637,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.Locator("input[name=code]").FillAsync(code!);
         await page.Locator("button.login-submit").ClickAsync();
         await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
+        return email;
     }
 
     internal static async Task AssertCandidateHeaderVisibleAsync(IPage page)

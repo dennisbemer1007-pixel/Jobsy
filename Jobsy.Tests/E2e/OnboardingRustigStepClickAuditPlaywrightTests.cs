@@ -73,11 +73,25 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(
-            page, baseUrl, $"step{step:D2}-audit-{mode}-{tag}");
-        await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
-        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
-        await FunctionalOnboardingInteractivityHelpers.ReachOnboardingRustigStepAsync(page, step, mobile);
+        if (step == 4)
+        {
+            if (rustig)
+            {
+                await OnboardingRustigStep04E2eFlow.ReachRustigStep04Async(page, baseUrl, mobile);
+            }
+            else
+            {
+                await OnboardingRustigStep04E2eFlow.ReachBaselineStep04Async(page, baseUrl, mobile);
+            }
+        }
+        else
+        {
+            await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(
+                page, baseUrl, $"step{step:D2}-audit-{mode}-{tag}");
+            await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
+            await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
+            await FunctionalOnboardingInteractivityHelpers.ReachOnboardingRustigStepAsync(page, step, mobile);
+        }
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(200);
         var chromeRow = page.Locator(".ob-rustig__chrome-row").First;
@@ -141,6 +155,22 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
             }
 
             rows.Add(("Stap 3 van 10 (header)", await stepLine.CountAsync() > 0 ? "ok" : "n/a"));
+        }
+
+        if (step == 4)
+        {
+            var skip = rustig
+                ? page.Locator(".ob-rustig__footer-actions [data-testid=onboarding-skip-optional]")
+                : page.GetByTestId("onboarding-skip-optional");
+            await AuditButtonAsync(page, rows, "Overslaan", skip);
+
+            var stepLine = page.Locator(".ob-rustig__meta").GetByText("Stap 4 van 10", new() { Exact = false });
+            if (await stepLine.CountAsync() == 0)
+            {
+                stepLine = page.GetByText("Stap 4 van 10", new() { Exact = false });
+            }
+
+            rows.Add(("Stap 4 van 10 (header)", await stepLine.CountAsync() > 0 ? "ok" : "n/a"));
         }
 
         if (step == 1 && mobile && rustig)

@@ -745,9 +745,26 @@ public static class CandidateJourneyE2e
             .Options;
         await using var db = new JobsyDbContext(options);
         var normalized = candidateEmail.Trim().ToLowerInvariant();
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        User? user = null;
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+            if (user is not null)
+            {
+                break;
+            }
+
+            await Task.Delay(250);
+        }
+
         if (user is null)
         {
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL")))
+            {
+                throw new InvalidOperationException(
+                    $"E2E onboarding seed: user not found for '{normalized}' (ConnectionStrings__JobsyDb set).");
+            }
+
             return;
         }
 

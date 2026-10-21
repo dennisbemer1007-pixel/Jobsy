@@ -34,10 +34,7 @@ public sealed class OnboardingRustigStep04CaptureTests
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, "rustig-u6x2");
-        await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
-        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
-        await FunctionalOnboardingInteractivityHelpers.ReachOnboardingRustigStepAsync(page, 4, mobile);
+        await OnboardingRustigStep04E2eFlow.ReachRustigStep04Async(page, baseUrl, mobile);
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(400);
 
