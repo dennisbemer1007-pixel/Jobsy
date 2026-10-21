@@ -9,6 +9,9 @@ public sealed class DiscoveryOverviewRouteCaptureTests
 {
     private const string ArtifactsDir = "/opt/cursor/artifacts";
 
+    private static string RouteScope(bool mobile) =>
+        mobile ? ".journey-route__mobile-only" : ".journey-route__desktop-only";
+
     [Theory]
     [InlineData(1280, 900, false, "1280")]
     [InlineData(1440, 900, false, "1440")]
@@ -74,7 +77,7 @@ public sealed class DiscoveryOverviewRouteCaptureTests
                 """
                 () => {
                   const card = document.querySelector('.journey-step:has(.journey-overview)');
-                  const intro = document.querySelector('.journey-route__intro');
+                  const intro = document.querySelector('.journey-route__mobile-only .journey-route__intro');
                   if (!card || !intro) return JSON.stringify({ error: 'missing nodes' });
                   const cr = card.getBoundingClientRect();
                   const ir = intro.getBoundingClientRect();
@@ -122,7 +125,7 @@ public sealed class DiscoveryOverviewRouteCaptureTests
                 FullPage = false,
             });
 
-            var testsRegion = page.Locator(".journey-route__tests").Last;
+            var testsRegion = page.Locator(".journey-route__mobile-only .journey-route__tests");
             await testsRegion.ScrollIntoViewIfNeededAsync();
             await page.WaitForTimeoutAsync(400);
 
@@ -130,7 +133,7 @@ public sealed class DiscoveryOverviewRouteCaptureTests
                 """
                 () => {
                   const card = document.querySelector('.journey-step:has(.journey-overview)');
-                  const tile = document.querySelector('.journey-route__test');
+                  const tile = document.querySelector('.journey-route__mobile-only .journey-route__test');
                   if (!card || !tile) return JSON.stringify({ error: 'missing nodes' });
                   const cr = card.getBoundingClientRect();
                   const tr = tile.getBoundingClientRect();
@@ -159,9 +162,9 @@ public sealed class DiscoveryOverviewRouteCaptureTests
                 FullPage = false,
             });
 
-            var lightStop = page.Locator(".journey-route__stop[data-phase=light]");
+            var lightStop = page.Locator($"{RouteScope(mobile)} .journey-route__stop[data-phase=light]");
             var lightVignetteDone = lightStop.Locator(".journey-route__vignette.is-done");
-            var lightStatusOpen = lightStop.Locator(".journey-route__status.is-open");
+            var lightStatusOpen = lightStop.Locator(".journey-route__status.is-open").First;
             if (await lightStatusOpen.IsVisibleAsync())
             {
                 Assert.Equal(0, await lightVignetteDone.CountAsync());
@@ -170,9 +173,9 @@ public sealed class DiscoveryOverviewRouteCaptureTests
 
         if (!mobile)
         {
-            var lightStop = page.Locator(".journey-route__stop[data-phase=light]");
+            var lightStop = page.Locator($"{RouteScope(mobile)} .journey-route__stop[data-phase=light]");
             var lightVignetteDone = lightStop.Locator(".journey-route__vignette.is-done");
-            var lightStatusOpen = lightStop.Locator(".journey-route__status.is-open");
+            var lightStatusOpen = lightStop.Locator(".journey-route__status.is-open").First;
             if (await lightStatusOpen.IsVisibleAsync())
             {
                 Assert.Equal(0, await lightVignetteDone.CountAsync());
@@ -226,22 +229,24 @@ public sealed class DiscoveryOverviewRouteCaptureTests
             audit.Add(new { action, url = page.Url });
         }
 
+        var routeRoot = RouteScope(mobile);
+
         await RecordAsync("toggle_stop_kust", async () =>
         {
-            await page.Locator(".journey-route__stop[data-phase=kust] .journey-route__stop-btn").ClickAsync();
+            await page.Locator($"{routeRoot} .journey-route__stop[data-phase=kust] .journey-route__stop-btn").ClickAsync();
         });
 
         await RecordAsync("toggle_stop_kust_close", async () =>
         {
-            await page.Locator(".journey-route__stop[data-phase=kust] .journey-route__stop-btn").ClickAsync();
+            await page.Locator($"{routeRoot} .journey-route__stop[data-phase=kust] .journey-route__stop-btn").ClickAsync();
         });
 
         await RecordAsync("open_stop_rots", async () =>
         {
-            await page.Locator(".journey-route__stop[data-phase=rots] .journey-route__stop-btn").ClickAsync();
+            await page.Locator($"{routeRoot} .journey-route__stop[data-phase=rots] .journey-route__stop-btn").ClickAsync();
         });
 
-        var adjust = page.Locator(".journey-route__panel .journey-route__adjust").First;
+        var adjust = page.Locator($"{routeRoot} .journey-route__panel .journey-route__adjust").First;
         await RecordAsync("aanpassen_first_section", async () => await adjust.ClickAsync());
 
         await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -250,10 +255,10 @@ public sealed class DiscoveryOverviewRouteCaptureTests
 
         await RecordAsync("open_stop_light", async () =>
         {
-            await page.Locator(".journey-route__stop[data-phase=light] .journey-route__stop-btn").ClickAsync();
+            await page.Locator($"{routeRoot} .journey-route__stop[data-phase=light] .journey-route__stop-btn").ClickAsync();
         });
 
-        var continueBtn = page.Locator(".journey-route__cta").First;
+        var continueBtn = page.Locator($"{routeRoot} .journey-route__cta").First;
         if (await continueBtn.IsVisibleAsync())
         {
             await RecordAsync("ga_verder", async () => await continueBtn.ClickAsync());
@@ -265,7 +270,7 @@ public sealed class DiscoveryOverviewRouteCaptureTests
             audit.Add(new { action = "ga_verder", url = "(no visible Ga verder CTA on current seed)" });
         }
 
-        var startValues = page.Locator(".journey-route__test.is-todo").Last.Locator(".journey-route__test-start");
+        var startValues = page.Locator($"{routeRoot} .journey-route__test.is-todo").Last.Locator(".journey-route__test-start");
         await RecordAsync("start_waarden_test", async () => await startValues.ClickAsync());
 
         var suffix = mobile ? "390" : "1440";
