@@ -3,17 +3,19 @@ using Microsoft.Playwright;
 namespace Jobsy.Tests.E2e;
 
 /// <summary>
-/// Primary nav must keep URL and @Body in sync (no enhanced-nav / circuit races on desktop).
+/// Primary nav must keep URL and @Body in sync (no enhanced-nav / circuit races on desktop and mobile).
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class CandidatePrimaryNavSyncPlaywrightTests : IAsyncLifetime
 {
-    private static readonly (string Href, string Probe, string WrongProbe)[] Targets =
+    /// <summary>Passport-ON candidate order: Reis · Paspoort · Zoeken · Sollicitaties · Carrière.</summary>
+    private static readonly (string Href, string Probe, string WrongProbe)[] PrimaryNavTargets =
     [
-        ("/carriere", ".career-page, .career-card", ".journey-overview"),
+        ("/candidate/ontdekkingsreis", ".journey-overview", ".passport-page"),
         ("/candidate/paspoort", ".passport-page", ".journey-overview"),
-        ("/banenkaart", ".jobsy-discovery, .bk-page", ".journey-overview"),
-        ("/candidate/ontdekkingsreis", ".journey-overview", ".career-page"),
+        ("/banenkaart", ".jobsy-discovery, .bk-page", ".passport-page"),
+        ("/candidate/applications", ".apps-page, .kb-apps", ".passport-page"),
+        ("/carriere", ".career-page, .career-card", ".passport-page"),
     ];
 
     private IllustratedPagesWebFactory? _web;
@@ -44,7 +46,7 @@ public sealed class CandidatePrimaryNavSyncPlaywrightTests : IAsyncLifetime
     [Theory]
     [InlineData(1280, 900, 10)]
     [InlineData(390, 844, 10)]
-    public async Task Reload_then_fast_header_nav_content_matches_url(int width, int height, int cycles)
+    public async Task Reload_then_cycle_all_primary_nav_without_document_reload(int width, int height, int cycles)
     {
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
         await using var context = await _browser!.NewContextAsync(new()
@@ -74,7 +76,7 @@ public sealed class CandidatePrimaryNavSyncPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 60_000 });
 
-        for (var i = 0; i < cycles; i++)
+        for (var cycle = 0; cycle < cycles; cycle++)
         {
             await page.EvaluateAsync("() => { window.__lobsyLoadCount = 0; }");
             await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
@@ -84,20 +86,27 @@ public sealed class CandidatePrimaryNavSyncPlaywrightTests : IAsyncLifetime
                 new() { Timeout = 60_000 });
             await page.EvaluateAsync("() => { window.__lobsyLoadCount = 0; }");
 
-            var (href, probe, wrongProbe) = Targets[i % Targets.Length];
-            var link = width >= 500
-                ? page.Locator($".candidate-header-nav a[href='{href}']").First
-                : page.Locator($"nav.bottom-nav a[href='{href}']").First;
-            await link.ClickAsync();
+            for (var navIndex = 0; navIndex < PrimaryNavTargets.Length; navIndex++)
+            {
+                var (href, probe, wrongProbe) = PrimaryNavTargets[navIndex];
+                var link = width >= 500
+                    ? page.Locator($".candidate-header-nav a[href='{href}']").First
+                    : page.Locator($"nav.bottom-nav a[href='{href}']").First;
+                await link.ClickAsync(new() { Timeout = 8_000 });
 
-            await page.WaitForURLAsync(
-                u => NormalizePath(u) == NormalizePath(href),
-                new() { Timeout = 8_000 });
+                await page.WaitForURLAsync(
+                    u => NormalizePath(u) == NormalizePath(href),
+                    new() { Timeout = 8_000 });
 
-            var contentOk = await WaitForRouteContentAsync(page, probe, wrongProbe, timeoutMs: 1_000);
-            Assert.True(contentOk, $"Cycle {i + 1}: content did not match {href} within 1s at {width}px.");
-            var loads = await page.EvaluateAsync<int>("() => window.__lobsyLoadCount || 0");
-            Assert.True(loads == 0, $"Cycle {i + 1}: unexpected full document reload after nav to {href} at {width}px.");
+                var contentOk = await WaitForRouteContentAsync(page, probe, wrongProbe, timeoutMs: 1_000);
+                Assert.True(
+                    contentOk,
+                    $"Cycle {cycle + 1}, nav {navIndex + 1}: content did not match {href} within 1s at {width}px.");
+                var loads = await page.EvaluateAsync<int>("() => window.__lobsyLoadCount || 0");
+                Assert.True(
+                    loads == 0,
+                    $"Cycle {cycle + 1}, nav {navIndex + 1}: unexpected full document reload after nav to {href} at {width}px.");
+            }
         }
     }
 

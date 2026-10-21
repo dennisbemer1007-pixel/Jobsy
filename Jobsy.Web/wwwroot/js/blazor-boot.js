@@ -96,6 +96,24 @@
             },
             true
         );
+
+        /* Block Blazor enhanced navigation on primary candidate nav once the circuit is ready. */
+        document.addEventListener(
+            "click",
+            function (ev) {
+                if (!circuitReady()) {
+                    return;
+                }
+                var anchor = ev.target && ev.target.closest
+                    ? ev.target.closest("[data-lobsy-candidate-nav=\"true\"]")
+                    : null;
+                if (!anchor) {
+                    return;
+                }
+                ev.preventDefault();
+            },
+            true
+        );
     })();
 
     function modal() {

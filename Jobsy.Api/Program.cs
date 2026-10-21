@@ -138,6 +138,8 @@ builder.Services.AddRateLimiter(options =>
     var isProduction = builder.Environment.IsProduction();
     var publicReadLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicReadPermitLimit")
         ?? (isProduction ? 120 : 10_000);
+    var authenticatedMapReadLimit = builder.Configuration.GetValue<int?>("RateLimiting:AuthenticatedMapReadPermitLimit")
+        ?? (isProduction ? 600 : 10_000);
     var publicTravelLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicTravelPermitLimit")
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
@@ -274,6 +276,31 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Banenkaart pins/cards/map-view: generous bucket per signed-in candidate (normal nav refetches pins).
+    options.AddPolicy("map-read", httpContext =>
+    {
+        var userId = RateLimitPartitioning.ResolveUserId(httpContext.User);
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            return RateLimitPartition.GetFixedWindowLimiter(
+                "map-read:uid:" + userId,
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = authenticatedMapReadLimit,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0
+                });
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicReadLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+    });
     options.AddPolicy("public-travel", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),

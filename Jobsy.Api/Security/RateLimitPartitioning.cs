@@ -247,7 +247,7 @@ public static class RateLimitPartitioning
         };
     }
 
-    private static string? ResolveUserId(ClaimsPrincipal user)
+    public static string? ResolveUserId(ClaimsPrincipal user)
     {
         if (user.Identity?.IsAuthenticated != true)
         {

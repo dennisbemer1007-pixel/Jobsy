@@ -125,7 +125,7 @@ public class VacanciesController : ControllerBase
     /// </summary>
     [HttpGet("map-view")]
     [AllowAnonymous]
-    [EnableRateLimiting("public-read")]
+    [EnableRateLimiting("map-read")]
     public async Task<ActionResult<VacancyMapViewDto>> GetMapView(CancellationToken cancellationToken)
     {
         var view = await _discoveryIndex.GetMapViewAsync(cancellationToken);
@@ -139,7 +139,7 @@ public class VacanciesController : ControllerBase
     /// </summary>
     [HttpGet("pins")]
     [AllowAnonymous]
-    [EnableRateLimiting("public-read")]
+    [EnableRateLimiting("map-read")]
     public async Task<ActionResult<IEnumerable<VacancyPinDto>>> GetPins(
         [FromQuery] double? originLat,
         [FromQuery] double? originLng,
@@ -438,7 +438,7 @@ public class VacanciesController : ControllerBase
     /// </summary>
     [HttpGet("cards")]
     [AllowAnonymous]
-    [EnableRateLimiting("public-read")]
+    [EnableRateLimiting("map-read")]
     public async Task<ActionResult<IEnumerable<VacancyCardDto>>> GetCards(
         [FromQuery] string? ids,
         [FromQuery] double? originLat,

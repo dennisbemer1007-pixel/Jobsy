@@ -14,7 +14,9 @@ public sealed class CandidatePrimaryNavEnhancedNavTests
         Assert.DoesNotContain("data-enhance-nav=\"false\"", header, StringComparison.Ordinal);
         Assert.DoesNotContain("data-enhance-nav=\"false\"", bottom, StringComparison.Ordinal);
         Assert.Contains("NavigateTo(Href, forceLoad: false)", link, StringComparison.Ordinal);
-        Assert.Contains("@onclick:preventDefault=\"@RendererInfo.IsInteractive\"", link, StringComparison.Ordinal);
+        Assert.Contains("data-lobsy-candidate-nav=\"true\"", link, StringComparison.Ordinal);
+        Assert.Contains("@onclick:preventDefault=\"true\"", link, StringComparison.Ordinal);
+        Assert.Contains("InteractiveServerRenderMode(prerender: false)", link, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
