@@ -116,6 +116,26 @@
                 };
             }
             try {
+                if (!window.__lobsyEarlyNavGuard) {
+                    window.__lobsyEarlyNavGuard = true;
+                    document.addEventListener("click", function (ev) {
+                        if (document.documentElement.getAttribute("data-lobsy-circuit") === "ready") return;
+                        var a = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
+                        if (!a || a.target === "_blank" || a.getAttribute("data-enhance-nav") === "false") return;
+                        var href = a.getAttribute("href");
+                        if (!href || href.charAt(0) === "#") return;
+                        try {
+                            var url = new URL(a.href, location.href);
+                            if (url.origin !== location.origin) return;
+                            if (url.pathname === location.pathname && url.search === location.search && url.hash === location.hash) return;
+                        } catch (eNav) { return; }
+                        ev.preventDefault();
+                        ev.stopImmediatePropagation();
+                        location.assign(a.href);
+                    }, true);
+                }
+            } catch (eNavGuard) { }
+            try {
                 // Idempotent: enhanced navigation re-runs this inline script; never wrap twice.
                 if (!window.__jobsyPagehideShim) {
                     window.__jobsyPagehideShim = true;
@@ -313,7 +333,7 @@
         </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261020-01" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261021-02" nonce="@Nonce" defer></script>
     }
 </body>
 

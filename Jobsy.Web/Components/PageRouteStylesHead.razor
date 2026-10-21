@@ -5,30 +5,45 @@
 
 @* Route bundles live in App.razor for the first full document only; Blazor enhanced navigation
    does not re-run App.razor, so HeadContent must publish the current route's stylesheets. *@
-<HeadContent>
-    @foreach (var href in Stylesheets)
-    {
-        if (href.StartsWith("css/app.min.css", StringComparison.Ordinal))
+@if (_injectRouteStyles)
+{
+    <HeadContent>
+        @foreach (var href in Stylesheets)
         {
-            <link rel="stylesheet" href="@href" data-app-css data-page-route-css="true" />
+            if (href.StartsWith("css/app.min.css", StringComparison.Ordinal))
+            {
+                <link rel="stylesheet" href="@href" data-app-css data-page-route-css="true" />
+            }
+            else
+            {
+                <link rel="stylesheet" href="@href" data-page-route-css="true" />
+            }
         }
-        else
-        {
-            <link rel="stylesheet" href="@href" data-page-route-css="true" />
-        }
-    }
-</HeadContent>
+    </HeadContent>
+}
 
 @code {
     private IReadOnlyList<string> Stylesheets => ResolveStylesheets();
+    private bool _injectRouteStyles;
+    private string _lastUri = "";
 
     protected override void OnInitialized()
     {
+        _lastUri = Navigation.Uri;
         Navigation.LocationChanged += OnLocationChanged;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => _ = InvokeAsync(StateHasChanged);
+    {
+        if (string.Equals(e.Location, _lastUri, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastUri = e.Location;
+        _injectRouteStyles = true;
+        _ = InvokeAsync(StateHasChanged);
+    }
 
     private IReadOnlyList<string> ResolveStylesheets()
     {
