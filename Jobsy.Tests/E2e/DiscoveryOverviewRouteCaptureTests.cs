@@ -53,6 +53,43 @@ public sealed class DiscoveryOverviewRouteCaptureTests
             FullPage = true,
         });
 
+        if (mobile)
+        {
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(ArtifactsDir, "ontdekkingsreis-route-product-390-viewport.png"),
+                FullPage = false,
+            });
+
+            var testsRegion = page.Locator(".journey-route__tests").Last;
+            await testsRegion.ScrollIntoViewIfNeededAsync();
+            await page.WaitForTimeoutAsync(400);
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(ArtifactsDir, "ontdekkingsreis-route-product-390-tests.png"),
+                FullPage = false,
+            });
+
+            var lightStop = page.Locator(".journey-route__stop[data-phase=light]");
+            var lightVignetteDone = lightStop.Locator(".journey-route__vignette.is-done");
+            var lightStatusOpen = lightStop.Locator(".journey-route__status.is-open");
+            if (await lightStatusOpen.IsVisibleAsync())
+            {
+                Assert.Equal(0, await lightVignetteDone.CountAsync());
+            }
+        }
+
+        if (!mobile)
+        {
+            var lightStop = page.Locator(".journey-route__stop[data-phase=light]");
+            var lightVignetteDone = lightStop.Locator(".journey-route__vignette.is-done");
+            var lightStatusOpen = lightStop.Locator(".journey-route__status.is-open");
+            if (await lightStatusOpen.IsVisibleAsync())
+            {
+                Assert.Equal(0, await lightVignetteDone.CountAsync());
+            }
+        }
+
         Assert.True(
             fontFamily.Contains("Rubik", StringComparison.OrdinalIgnoreCase)
             || fontFamily.Contains("Fraunces", StringComparison.OrdinalIgnoreCase)

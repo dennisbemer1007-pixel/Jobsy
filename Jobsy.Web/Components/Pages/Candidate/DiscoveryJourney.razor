@@ -2263,7 +2263,7 @@
         if (phaseId == "light")
         {
             return JourneyFinished || phaseId == openPhaseId
-                ? (Culture["Discovery.Overview.StatusOpen"], "is-open", JourneyFinished, true, false)
+                ? (Culture["Discovery.Overview.StatusOpen"], "is-open", false, true, false)
                 : (Culture["Discovery.Overview.TestTodo"], "is-progress", false, false, false);
         }
 

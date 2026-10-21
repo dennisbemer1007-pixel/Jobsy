@@ -844,6 +844,30 @@
 }
 
 @media (max-width: 767px) {
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-block-end: 0 !important;
+    padding-inline: 0 !important;
+    min-height: 90px !important;
+    height: 90px !important;
+    max-height: 90px !important;
+    overflow: hidden;
+    background-color: var(--cand-compact-hero-band) !important;
+    background-image: none !important;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero::before,
+  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero::after {
+    display: none !important;
+    content: none !important;
+  }
+
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__copy {
     position: absolute;
     width: 1px;
@@ -852,20 +876,32 @@
     clip: rect(0, 0, 0, 0);
   }
 
-  .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8.cand-compact-hero,
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art,
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100% !important;
+    max-width: 100% !important;
     min-height: 90px !important;
     height: 90px !important;
     max-height: 90px !important;
+    padding: 0;
+    margin: 0;
+    justify-content: stretch;
+    align-items: stretch;
   }
 
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-compact-hero__art img,
   .journey.journey--compact-preview-c > header.cand-hero--discovery-overview-v8 .cand-hero__compact-c-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
     -webkit-mask-image: none;
     mask-image: none;
     object-fit: cover;
-    object-position: 50% 47%;
+    object-position: 27% 47%;
+    transform: none;
   }
 
   .cand-hero--compact-preview-a {
