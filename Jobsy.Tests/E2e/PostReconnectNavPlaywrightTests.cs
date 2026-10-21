@@ -49,6 +49,26 @@ public sealed class PostReconnectNavPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 60_000 });
 
+        if (string.Equals(Environment.GetEnvironmentVariable("LOBSY_PR_EVIDENCE"), "1", StringComparison.Ordinal))
+        {
+            Directory.CreateDirectory(ArtifactsDir);
+            await page.EvaluateAsync(
+                """
+                () => {
+                  const m = document.getElementById('components-reconnect-modal');
+                  if (!m) throw new Error('no modal');
+                  m.classList.add('components-reconnect-failed');
+                  m.classList.remove('components-reconnect-hide');
+                  document.documentElement.setAttribute('data-lobsy-reconnect-active', '');
+                }
+                """);
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(ArtifactsDir, "post-reconnect-toast-before-dismiss-390.png"),
+                FullPage = false,
+            });
+        }
+
         var hidden = await page.EvaluateAsync<bool>(
             """
             async () => {
@@ -72,12 +92,22 @@ public sealed class PostReconnectNavPlaywrightTests : IAsyncLifetime
 
         Assert.True(hidden);
 
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const m = document.getElementById('components-reconnect-modal');
+              return !!m && m.classList.contains('components-reconnect-hide');
+            }
+            """,
+            null,
+            new() { Timeout = 5_000 });
+
         if (string.Equals(Environment.GetEnvironmentVariable("LOBSY_PR_EVIDENCE"), "1", StringComparison.Ordinal))
         {
-            Directory.CreateDirectory(ArtifactsDir);
-            await page.Locator("#components-reconnect-modal").ScreenshotAsync(new()
+            await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(ArtifactsDir, "post-reconnect-toast-after-dismiss-390.png"),
+                FullPage = false,
             });
         }
     }
