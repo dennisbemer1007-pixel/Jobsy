@@ -100,16 +100,8 @@
     @if (Compact)
     {
         <div class="passport-card__actions passport-card__actions--compact">
-            <button type="button"
-                    class="btn btn-secondary passport-card__pdf-btn"
-                    disabled="@CvBusy"
-                    data-testid="@PdfDownloadTestId"
-                    @onclick="OnDownloadCv">
-                @(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])
-            </button>
-            <button type="button" class="btn btn-primary" @onclick="OnEdit">
-                @Culture["Passport.Edit"]
-            </button>
+            @if (!string.IsNullOrWhiteSpace(CvDownloadHref) && !CvBusy) { <a class="btn btn-secondary passport-card__pdf-btn" href="@CvDownloadHref" data-testid="@PdfDownloadTestId">@Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"]</a> } else { <button type="button" class="btn btn-secondary passport-card__pdf-btn" disabled="@CvBusy" data-testid="@PdfDownloadTestId" @onclick="OnDownloadCv">@(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])</button> }
+            @if (!string.IsNullOrWhiteSpace(EditHref)) { <a class="btn btn-primary" href="@EditHref">@Culture["Passport.Edit"]</a> } else { <button type="button" class="btn btn-primary" @onclick="OnEdit">@Culture["Passport.Edit"]</button> }
         </div>
     }
 
@@ -170,12 +162,8 @@
         </div>
 
         <div class="passport-card__actions">
-            <button type="button" class="btn btn-secondary" disabled="@CvBusy" data-testid="@PdfDownloadTestId" @onclick="OnDownloadCv">
-                @(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])
-            </button>
-            <button type="button" class="btn btn-primary" @onclick="OnEdit">
-                @Culture["Passport.Edit"]
-            </button>
+            @if (!string.IsNullOrWhiteSpace(CvDownloadHref) && !CvBusy) { <a class="btn btn-secondary" href="@CvDownloadHref" data-testid="@PdfDownloadTestId">@Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"]</a> } else { <button type="button" class="btn btn-secondary" disabled="@CvBusy" data-testid="@PdfDownloadTestId" @onclick="OnDownloadCv">@(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])</button> }
+            @if (!string.IsNullOrWhiteSpace(EditHref)) { <a class="btn btn-primary" href="@EditHref">@Culture["Passport.Edit"]</a> } else { <button type="button" class="btn btn-primary" @onclick="OnEdit">@Culture["Passport.Edit"]</button> }
         </div>
 
         <p class="passport-card__tagline">
@@ -209,6 +197,8 @@
     [Parameter] public bool DnaPassport { get; set; }
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback OnDownloadCv { get; set; }
+    [Parameter] public string? EditHref { get; set; }
+    [Parameter] public string? CvDownloadHref { get; set; }
     [Parameter] public string PdfDownloadTestId { get; set; } = "passport-download-pdf";
 
     private int LayerTotal => KompasProfileCompleteness.StepCount;

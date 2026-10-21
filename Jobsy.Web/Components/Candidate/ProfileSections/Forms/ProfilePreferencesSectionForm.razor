@@ -1,0 +1,16 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections.Forms
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Antiforgery
+@inject CultureState Culture
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+<div data-profile-bff data-bff-url="@CandidateProfileBffEndpoints.PreferencesPath">
+<input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+<p data-bff-error class="form-error" role="alert" hidden></p>
+<label>@Culture["Profile.MaxTravel"]<input type="number" name="max_travel" value="@MaxTravel" /></label>
+</div>
+<ProfileSectionFormChrome Saved="Saved" Error="Error" />
+@code { [Parameter] public int? MaxTravel { get; set; } [Parameter] public bool Saved { get; set; } [Parameter] public bool Error { get; set; }
+private string _antiforgeryFieldName = ""; private string _antiforgeryToken = "";
+protected override void OnInitialized() { var http = HttpContextAccessor.HttpContext; if (http is null) return; var t = Antiforgery.GetAndStoreTokens(http); _antiforgeryFieldName = t.FormFieldName; _antiforgeryToken = t.RequestToken ?? ""; } }

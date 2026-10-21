@@ -51,6 +51,7 @@
     [Parameter] public string? Important { get; set; }
     [Parameter] public string? ImportantStatus { get; set; }
     [Parameter] public EventCallback OnGoTests { get; set; }
+    [Parameter] public string? TestsHref { get; set; }
 
     private RenderFragment StatCard(string tone, string icon, string labelKey, string? value, string? status) => __builder =>
     {
@@ -60,7 +61,14 @@
             @if (string.IsNullOrWhiteSpace(value))
             {
                 <p class="passport-stat__value">@Culture["Passport.Stat.NotYet"]</p>
-                <button type="button" class="passport-stat__link" @onclick="OnGoTests">@Culture["Passport.Stat.DoTest"]</button>
+                @if (!string.IsNullOrWhiteSpace(TestsHref))
+                {
+                    <a class="passport-stat__link" href="@TestsHref">@Culture["Passport.Stat.DoTest"]</a>
+                }
+                else
+                {
+                    <button type="button" class="passport-stat__link" @onclick="OnGoTests">@Culture["Passport.Stat.DoTest"]</button>
+                }
             }
             else
             {

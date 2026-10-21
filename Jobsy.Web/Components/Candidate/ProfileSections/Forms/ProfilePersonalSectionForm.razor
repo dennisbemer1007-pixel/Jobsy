@@ -1,0 +1,21 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections.Forms
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Antiforgery
+@inject CultureState Culture
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+<div data-profile-bff data-bff-url="@CandidateProfileBffEndpoints.PersonalPath" data-profile-section-form="personal">
+<input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+<p data-bff-error class="form-error" role="alert" hidden></p>
+<label>@Culture["Profile.FirstName"]<input type="text" name="first_name" value="@FirstName" data-testid="profile-first-name" /></label>
+<label>@Culture["Profile.LastName"]<input type="text" name="last_name" value="@LastName" /></label>
+<label>@Culture["Profile.HomeAddress"]<input type="text" name="home_address" value="@HomeAddress" /></label>
+</div>
+<ProfileSectionFormChrome Saved="Saved" Error="Error" />
+@code {
+[Parameter] public string FirstName { get; set; } = ""; [Parameter] public string LastName { get; set; } = ""; [Parameter] public string HomeAddress { get; set; } = "";
+[Parameter] public bool Saved { get; set; } [Parameter] public bool Error { get; set; }
+private string _antiforgeryFieldName = ""; private string _antiforgeryToken = "";
+protected override void OnInitialized() { var http = HttpContextAccessor.HttpContext; if (http is null) return; var t = Antiforgery.GetAndStoreTokens(http); _antiforgeryFieldName = t.FormFieldName; _antiforgeryToken = t.RequestToken ?? ""; }
+}

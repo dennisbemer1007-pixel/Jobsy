@@ -54,11 +54,11 @@ public class ProfileSectionsExtractionTests
     {
         var root = FindRepoRoot();
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
-        Assert.Contains("<PersonalSection", profile);
+        Assert.Contains("<ProfilePersonalSectionForm", profile);
         Assert.Contains("<DevicesSection", profile);
-        Assert.Contains("<PreferencesSection", profile);
-        Assert.Contains("<AvailabilitySection", profile);
-        Assert.Contains("<MotivationSection", profile);
+        Assert.Contains("<ProfilePreferencesSectionForm", profile);
+        Assert.Contains("<ProfileAvailabilitySectionForm", profile);
+        Assert.Contains("<ProfileExperienceSectionForm", profile);
         Assert.Contains("<CvSection", profile);
         Assert.Contains("<ExperienceSection", profile);
         Assert.Contains("<EducationSection", profile);
@@ -66,7 +66,7 @@ public class ProfileSectionsExtractionTests
         Assert.Contains("<ReferencesSection", profile);
         Assert.Contains("<ConsentSection", profile);
         Assert.Contains("<ProfileDangerZoneSection", profile);
-        Assert.Contains("<ProfileSaveBar", profile);
+        Assert.DoesNotContain("<ProfileSaveBar", profile);
         Assert.Contains("CandidateProfileEditor", profile);
         Assert.Contains("profile-accordion", profile);
         Assert.Contains("UnsubscribeDialog", profile);

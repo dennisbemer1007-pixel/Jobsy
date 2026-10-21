@@ -161,7 +161,11 @@ public class MobileSaasUxTests
         Assert.Contains("application-card--hired", razor);
         Assert.Contains("Kb.Apps.FilterRunning", razor);
         Assert.Contains("Apps.WithdrawConfirm", razor);
-        Assert.Contains("LobsyFriendlyDialog", razor);
+        Assert.Contains("data-apps-withdraw-dialog", razor);
+        Assert.Contains("data-filter-btn", razor);
+        Assert.Contains("ExcludeFromInteractiveRouting", razor);
+        Assert.DoesNotContain("LobsyFriendlyDialog", razor);
+        Assert.DoesNotContain("InteractiveServerRenderMode", razor);
         Assert.Contains("aria-haspopup=\"menu\"", razor);
         Assert.DoesNotContain("apps-tabs", razor);
         Assert.DoesNotContain("application-stepper", razor);
@@ -231,10 +235,9 @@ public class MobileSaasUxTests
         var blob = razor + sections + availabilityMatrix;
         Assert.Contains("profile-page--candidate", razor);
         Assert.Contains("profile-accordion", razor);
-        Assert.Contains("ToggleSection(\"personal\")", razor);
-        Assert.Contains("ToggleSection(\"preferences\")", razor);
-        Assert.Contains("ToggleSection(\"availability\")", razor);
-        Assert.Contains("ToggleSection(\"experience\")", razor);
+        Assert.Contains("CandidateProfileSectionUrls.NavHref(\"personal\"", razor);
+        Assert.Contains("data-candidate-profile", razor);
+        Assert.Contains("ProfilePersonalSectionForm", razor);
         Assert.Contains("competency-profile-card", razor);
         Assert.Contains("CandidateKompas", razor);
         Assert.Contains("profile-layout__matches", razor);
@@ -245,7 +248,8 @@ public class MobileSaasUxTests
         Assert.Contains("profile-save-bar", blob);
         Assert.Contains("Profile.ReturnHint", razor);
         Assert.Contains("profile-return-hint", razor);
-        Assert.Contains("aria-expanded=\"@(IsSectionOpen(\"personal\") ? \"true\" : \"false\")\"", razor);
+        Assert.Contains("profile-section-nav", razor);
+        Assert.Contains("admin-sublink--active", razor);
         Assert.DoesNotContain("vacancy-schedule__table", razor);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));

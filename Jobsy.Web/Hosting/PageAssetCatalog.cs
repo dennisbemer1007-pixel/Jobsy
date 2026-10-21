@@ -390,7 +390,8 @@ public static class PageAssetCatalog
     public static bool IncludeOnboardingClientScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
-        return path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal);
+        return path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool IncludeVacancyWizardScript(string? rawPath)
@@ -398,6 +399,51 @@ public static class PageAssetCatalog
         var path = PageSeoCatalog.Normalize(rawPath);
         return path.StartsWith("/werkgever/vacatures", StringComparison.Ordinal);
     }
+
+    public static bool IncludeCandidateApplicationsScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeCandidatePassportScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return string.Equals(path, PassportRedirects.PassportPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeDiscoveryClientScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeCandidateProfileScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return string.Equals(path, "/candidate/profile", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeCandidateSettingsMailScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeCandidateCareerScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/carriere/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IncludeJobsyBffClientScript(string? rawPath)
+        => IncludeCandidateProfileScript(rawPath)
+           || IncludeCandidateApplicationsScript(rawPath)
+           || IncludeCandidatePassportScript(rawPath)
+           || IncludeCandidateSettingsMailScript(rawPath)
+           || IncludeCandidateCareerScript(rawPath)
+           || IncludeDiscoveryClientScript(rawPath);
 
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
     {
@@ -415,3 +461,4 @@ public static class PageAssetCatalog
         }
     }
 }
+

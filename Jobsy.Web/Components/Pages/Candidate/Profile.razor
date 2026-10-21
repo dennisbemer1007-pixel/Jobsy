@@ -4,6 +4,8 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Web.Components.Candidate.ProfileSections.Forms
+@using Jobsy.Web.Profile
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
 @inject NavigationManager Navigation
@@ -65,32 +67,19 @@
         }
         else
         {
-            <div class="profile-form competency-profile-card">
+            <div class="profile-form competency-profile-card" data-candidate-profile>
                 <nav class="profile-section-nav pill-scroller" aria-label="@Culture["Profile.Lead"]">
-                    <button type="button"
-                            class="admin-sublink @(IsSectionOpen("personal") ? "admin-sublink--active" : null)"
-                            aria-expanded="@(IsSectionOpen("personal") ? "true" : "false")"
-                            aria-controls="profile-section-personal"
-                            @onclick='() => ToggleSection("personal")'>@Culture["Profile.Section.Personal"]</button>
-                    <button type="button"
-                            class="admin-sublink @(IsSectionOpen("preferences") ? "admin-sublink--active" : null)"
-                            aria-expanded="@(IsSectionOpen("preferences") ? "true" : "false")"
-                            @onclick='() => ToggleSection("preferences")'>@Culture["Profile.Section.Preferences"]</button>
-                    <button type="button"
-                            class="admin-sublink @(IsSectionOpen("availability") ? "admin-sublink--active" : null)"
-                            aria-expanded="@(IsSectionOpen("availability") ? "true" : "false")"
-                            @onclick='() => ToggleSection("availability")'>@Culture["Profile.Section.Availability"]</button>
-                    <button type="button"
-                            class="admin-sublink @(IsSectionOpen("experience") ? "admin-sublink--active" : null)"
-                            aria-expanded="@(IsSectionOpen("experience") ? "true" : "false")"
-                            @onclick='() => ToggleSection("experience")'>@Culture["Profile.Section.Experience"]</button>
+                    <a class="admin-sublink @(IsSectionOpen("personal") ? "admin-sublink--active" : null)" href="@CandidateProfileSectionUrls.NavHref("personal", _returnUrl)">@Culture["Profile.Section.Personal"]</a>
+                    <a class="admin-sublink @(IsSectionOpen("preferences") ? "admin-sublink--active" : null)" href="@CandidateProfileSectionUrls.NavHref("preferences", _returnUrl)">@Culture["Profile.Section.Preferences"]</a>
+                    <a class="admin-sublink @(IsSectionOpen("availability") ? "admin-sublink--active" : null)" href="@CandidateProfileSectionUrls.NavHref("availability", _returnUrl)">@Culture["Profile.Section.Availability"]</a>
+                    <a class="admin-sublink @(IsSectionOpen("experience") ? "admin-sublink--active" : null)" href="@CandidateProfileSectionUrls.NavHref("experience", _returnUrl)">@Culture["Profile.Section.Experience"]</a>
                 </nav>
                 <div class="profile-accordion">
                     <h2 class="visually-hidden" id="profile-section-personal-btn">@Culture["Profile.Section.Personal"]</h2>
                     @if (IsSectionOpen("personal"))
                     {
                         <div class="profile-accordion__body" id="profile-section-personal" role="region" aria-labelledby="profile-section-personal-btn">
-                            <PersonalSection />
+                            <ProfilePersonalSectionForm FirstName="@Editor.FirstName" LastName="@Editor.LastName" HomeAddress="@Editor.HomeAddress" Saved="@SectionSaved("personal")" Error="@SectionError("personal")" />
                             <DevicesSection />
                         </div>
                     }
@@ -99,7 +88,7 @@
                     @if (IsSectionOpen("preferences"))
                     {
                         <div class="profile-accordion__body" id="profile-section-preferences" role="region" aria-labelledby="profile-section-preferences-btn">
-                            <PreferencesSection />
+                            <ProfilePreferencesSectionForm MaxTravel="Editor.MaxTravel" Saved="@SectionSaved("preferences")" Error="@SectionError("preferences")" />
                         </div>
                     }
 
@@ -107,7 +96,7 @@
                     @if (IsSectionOpen("availability"))
                     {
                         <div class="profile-accordion__body" id="profile-section-availability" role="region" aria-labelledby="profile-section-availability-btn">
-                            <AvailabilitySection />
+                            <ProfileAvailabilitySectionForm StartImmediately="Editor.StartImmediately" MinHours="Editor.MinHours" Saved="@SectionSaved("availability")" Error="@SectionError("availability")" />
                         </div>
                     }
 
@@ -115,7 +104,7 @@
                     @if (IsSectionOpen("experience"))
                     {
                         <div class="profile-accordion__body" id="profile-section-experience" role="region" aria-labelledby="profile-section-experience-btn">
-                            <MotivationSection />
+                            <ProfileExperienceSectionForm AboutMe="@Editor.AboutMe" Saved="@SectionSaved("experience")" Error="@SectionError("experience")" />
                             <CvSection />
                             <ExperienceSection />
                             <EducationSection />
@@ -125,7 +114,6 @@
                     }
                 </div>
 
-                <ProfileSaveBar />
             </div>
         }
 
@@ -177,6 +165,15 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery(Name = CandidateProfileSectionUrls.SectionQueryKey)]
+    public string? ProfileSection { get; set; }
+
+    [SupplyParameterFromQuery(Name = "profileSaved")]
+    public string? ProfileSaved { get; set; }
+
+    [SupplyParameterFromQuery(Name = "profileError")]
+    public string? ProfileError { get; set; }
+
     private bool _loading = true;
     private string? _returnUrl;
     private string _openSection = "personal";
@@ -204,8 +201,11 @@
     private bool IsSectionOpen(string id)
         => string.Equals(_openSection, id, StringComparison.Ordinal);
 
-    private void ToggleSection(string id)
-        => _openSection = id;
+    private bool SectionSaved(string section)
+        => string.Equals(_openSection, section, StringComparison.Ordinal) && ProfileSaved == "1";
+
+    private bool SectionError(string section)
+        => string.Equals(_openSection, section, StringComparison.Ordinal) && ProfileError == "1";
 
     protected override void OnInitialized()
     {
@@ -238,6 +238,10 @@
         ApiCalls.SetPath("/candidate/profile");
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         Editor.ReturnUrl = _returnUrl;
+        if (!string.IsNullOrWhiteSpace(ProfileSection))
+        {
+            _openSection = ProfileSection.Trim().ToLowerInvariant();
+        }
 
         try
         {

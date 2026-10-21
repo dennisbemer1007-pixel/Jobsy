@@ -1,0 +1,6 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections.Forms
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@if (Saved) { <p class="state-message profile-save-bar__message" role="status">@Culture["Profile.Saved"]</p> }
+else if (Error) { <p class="state-message error" role="alert">@Culture["Panel.ErrorInline"]</p> }
+@code { [Parameter] public bool Saved { get; set; } [Parameter] public bool Error { get; set; } }

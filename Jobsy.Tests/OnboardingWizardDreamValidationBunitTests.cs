@@ -141,7 +141,8 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
 
     private sealed class FixedTestJourneyGate : ITestJourneyIllustrationGate
     {
-        public bool Enabled => false;
+        public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
     }
 
     private sealed class FixedFinaleGate : IOnboardingFinaleV2Gate
