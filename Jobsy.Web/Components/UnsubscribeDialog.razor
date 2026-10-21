@@ -1,6 +1,8 @@
+@using Jobsy.Web.Hosting
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject IJSRuntime Js
 
 @if (IsOpen)
 {
@@ -173,12 +175,22 @@
         _info = null;
         try
         {
+            if (!await DangerZoneConnectionHelper.IsReadyForServerActionAsync(Js))
+            {
+                await HandleConnectionLostAsync();
+                return;
+            }
+
             await Api.RequestUnsubscribeAsync(
                 _reasonCode,
                 SelectedRequiresOther ? _reasonOther.Trim() : null);
             _awaitingVerification = true;
             _verificationCode = "";
             _info = "Controleer je e-mail voor de verificatiecode.";
+        }
+        catch (Exception ex) when (DangerZoneConnectionHelper.IsTransportOrCircuitFailure(ex))
+        {
+            await HandleConnectionLostAsync();
         }
         catch (Exception)
         {
@@ -217,6 +229,12 @@
         _info = null;
         try
         {
+            if (!await DangerZoneConnectionHelper.IsReadyForServerActionAsync(Js))
+            {
+                await HandleConnectionLostAsync();
+                return;
+            }
+
             await Api.ConfirmUnsubscribeAsync(_verificationCode.Trim());
             _completed = true;
             await OnCompleted.InvokeAsync();
@@ -226,6 +244,10 @@
                 Navigation.NavigateTo("/account/logout", forceLoad: true);
             }
         }
+        catch (Exception ex) when (DangerZoneConnectionHelper.IsTransportOrCircuitFailure(ex))
+        {
+            await HandleConnectionLostAsync();
+        }
         catch (Exception)
         {
             _error = Culture["Common.Error.TryAgain"];
@@ -234,6 +256,14 @@
         {
             _busy = false;
         }
+    }
+
+    private async Task HandleConnectionLostAsync()
+    {
+        _error = Culture["Common.Error.ConnectionLost"];
+        StateHasChanged();
+        await Task.Delay(600);
+        await DangerZoneConnectionHelper.ScheduleReloadOnceAsync(Js, "account-delete");
     }
 
     private async Task CloseAsync()

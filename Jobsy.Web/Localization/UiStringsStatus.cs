@@ -509,6 +509,13 @@ public static class UiStringsStatus
             "Reîncarcă",
             "إعادة التحميل");
 
+        Add("Common.Error.ConnectionLost",
+            "Verbinding verbroken. De pagina wordt opnieuw geladen…",
+            "Connection lost. Reloading the page…",
+            "Połączenie przerwane. Strona zostanie odświeżona…",
+            "Conexiune pierdută. Pagina se reîncarcă…",
+            "انقطع الاتصال. جارٍ إعادة تحميل الصفحة…");
+
         // —— Inline block error (errors 04) ——
         Add("Status.Inline.Title",
             "Dit stukje laadt nu niet.",
