@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-test-blocks.css?v=20261018-r2" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-r4" />
-    @if (TestJourneyIllustration.Enabled)
+    @if (_testJourneyIllustration)
     {
         <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
     }
@@ -793,6 +793,7 @@
     private WizardPhase _phase;
     private OnboardingState? _state;
     private bool _finaleV2;
+    private bool _testJourneyIllustration;
     private OnboardingFinaleCardsInput _finaleCardsInput = new(false, false, false, false, false, false);
     private int _finaleMaxTravel = 30;
     private string? _finaleHomeLabel;
@@ -906,7 +907,7 @@
     };
 
     private bool ShowJourneyConsent =>
-        TestJourneyIllustration.Enabled
+        _testJourneyIllustration
         && !OnboardingRustig.Enabled
         && _step == 7
         && !Draft.HasConsent
@@ -973,7 +974,7 @@
 
     private async Task RefreshJourneyCompletionAsync()
     {
-        if (!TestJourneyIllustration.Enabled || Draft.HasConsent || _step != 7)
+        if (!_testJourneyIllustration || Draft.HasConsent || _step != 7)
         {
             return;
         }
@@ -1063,6 +1064,7 @@
     protected override async Task OnInitializedAsync()
     {
         _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
+        _testJourneyIllustration = await TestJourneyIllustration.IsEnabledAsync();
         Culture.Changed += CultureChanged;
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         _profileAutosave = new OnboardingWizardProfileAutosave(
@@ -1089,6 +1091,7 @@
 
             var passportOn = await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport);
             _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
+            _testJourneyIllustration = await TestJourneyIllustration.IsEnabledAsync();
             if (_state.IsComplete)
             {
                 if (await ShouldInstallAsync())

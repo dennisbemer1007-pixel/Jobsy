@@ -7,22 +7,11 @@ namespace Jobsy.Web.Features;
 /// </summary>
 public interface ITestJourneyIllustrationGate
 {
-    bool Enabled { get; }
+    ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class TestJourneyIllustrationGate(IFeatureFlags featureFlags) : ITestJourneyIllustrationGate
 {
-    public bool Enabled
-    {
-        get
-        {
-            var pending = featureFlags.GetAsync();
-            if (pending.IsCompletedSuccessfully)
-            {
-                return pending.Result.TestJourneyIllustrationEnabled;
-            }
-
-            return pending.AsTask().GetAwaiter().GetResult().TestJourneyIllustrationEnabled;
-        }
-    }
+    public async ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+        => (await featureFlags.GetAsync(cancellationToken)).TestJourneyIllustrationEnabled;
 }

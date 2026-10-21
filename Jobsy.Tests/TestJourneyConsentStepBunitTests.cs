@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Bunit;
 using Jobsy.Web.Components.Candidate.Onboarding;
+using Jobsy.Core.Features;
 using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -26,6 +27,7 @@ public class TestJourneyConsentStepBunitTests : BunitContext
     public void Flag_off_renders_classic_test_consent_step()
     {
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+        Services.AddSingleton<IFeatureFlags>(new FixedFeatureFlags(testJourneyIllustration: false));
         Services.AddSingleton<ITestJourneyIllustrationGate, TestJourneyIllustrationGate>();
 
         var cut = Render<TestConsentStep>(p => p
@@ -39,9 +41,8 @@ public class TestJourneyConsentStepBunitTests : BunitContext
     [Fact]
     public void Flag_on_renders_journey_headline_and_station_checks()
     {
-        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["TestJourneyIllustrationEnabled"] = "true" })
-            .Build());
+        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+        Services.AddSingleton<IFeatureFlags>(new FixedFeatureFlags(testJourneyIllustration: true));
         Services.AddSingleton<ITestJourneyIllustrationGate, TestJourneyIllustrationGate>();
 
         var cut = Render<TestJourneyConsentStep>(p => p
@@ -92,5 +93,21 @@ public class TestJourneyConsentStepBunitTests : BunitContext
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
             => Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
+    }
+
+    private sealed class FixedFeatureFlags(bool testJourneyIllustration) : IFeatureFlags
+    {
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+        {
+            var snap = FeatureFlagSnapshot.Defaults with { TestJourneyIllustrationEnabled = testJourneyIllustration };
+            return ValueTask.FromResult(snap);
+        }
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
+
+        public void Invalidate()
+        {
+        }
     }
 }
