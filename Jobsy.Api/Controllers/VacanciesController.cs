@@ -682,11 +682,6 @@ public class VacanciesController : ControllerBase
                         return fit is not null && fit.Percent >= floor;
                     })
                     .ToList();
-
-                dislikeReasons = await LoadDislikeReasonsAsync(
-                    matchContext.UserId,
-                    candidates.Select(c => c.Record.Id),
-                    cancellationToken);
             }
         }
 
@@ -738,40 +733,39 @@ public class VacanciesController : ControllerBase
                 skip + pageFast.Count < totalFast));
         }
 
-        var results = new List<VacancyListItemDto>(candidates.Count);
+        var ranked = new List<(VacancyDiscoveryRecord Record, int? TravelMinutes, double? DistanceKm)>(candidates.Count);
         foreach (var c in candidates)
         {
-            var dto = MapRecordToDto(c.Record, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
-            if (age is not null && (minHourlyWage is not null || maxHourlyWage is not null)
-                && !VacancyDiscoveryQuery.MatchesWageFilter(dto.HourlyWage, minHourlyWage, maxHourlyWage))
+            if (matches is not null && matches.TryGetValue(c.Record.Id, out var match)
+                && match.Core.LegalAgeKnown && !match.Core.LegalEligible)
             {
                 continue;
             }
 
-            if (matchContext is not null && CandidateOpenForWorkGate.HidesMatchScores(matchContext))
+            if (age is not null && (minHourlyWage is not null || maxHourlyWage is not null))
             {
-                dto = dto with { OpenForWorkRequired = true };
-            }
-            else if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
-            {
-                string? rankLower = null;
-                dislikeReasons?.TryGetValue(c.Record.Id, out rankLower);
-                dto = WithCandidateMatchSummary(dto, match, fitGate, rankLower);
+                var probe = MapRecordToDto(c.Record, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
+                if (!VacancyDiscoveryQuery.MatchesWageFilter(probe.HourlyWage, minHourlyWage, maxHourlyWage))
+                {
+                    continue;
+                }
             }
 
-            results.Add(dto);
+            ranked.Add(c);
         }
+
+        var orderedCandidates = KbRanking.OrderByFitThenTitle(
+                ranked,
+                c => matches is not null && matches.TryGetValue(c.Record.Id, out var m)
+                    ? CandidateFitDisplay.Build(m, fitGate)?.Percent
+                    : null,
+                c => dislikeReasons is not null && dislikeReasons.ContainsKey(c.Record.Id),
+                c => c.Record.Title,
+                c => c.Record.Id)
+            .ToList();
 
         if (matches is not null && fitGate.IsOpen)
         {
-            results = KbRanking.OrderByFitThenTitle(
-                    results,
-                    r => r.FitPercent ?? r.MatchPercent,
-                    r => !string.IsNullOrWhiteSpace(r.RankLowerReason),
-                    r => r.Title,
-                    r => r.Id)
-                .ToList();
-
             var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
             if (lookup is not null)
             {
@@ -784,23 +778,48 @@ public class VacanciesController : ControllerBase
                 {
                     try
                     {
-                        dislikeCodes = System.Text.Json.JsonSerializer.Deserialize<List<string>>(dislikeJson) ?? [];
+                        dislikeCodes = JsonSerializer.Deserialize<List<string>>(dislikeJson) ?? [];
                     }
-                    catch (System.Text.Json.JsonException)
+                    catch (JsonException)
                     {
                         dislikeCodes = [];
                     }
                 }
 
-                results = DislikeMatchRules.DownRankNightShifts(
-                    results,
+                orderedCandidates = DislikeMatchRules.DownRankNightShifts(
+                    orderedCandidates,
                     dislikeCodes,
-                    r => r.LegalNightShift23To06 == true).ToList();
+                    c => c.Record.LegalNightShift23To06 == true).ToList();
             }
         }
 
-        var total = results.Count;
-        var page = results.Skip(skip).Take(takeResolved).ToList();
+        var total = orderedCandidates.Count;
+        var pageSlice = orderedCandidates.Skip(skip).Take(takeResolved).ToList();
+        if (matchContext is not null && dislikeReasons is null)
+        {
+            dislikeReasons = await LoadDislikeReasonsAsync(
+                matchContext.UserId,
+                pageSlice.Select(c => c.Record.Id),
+                cancellationToken);
+        }
+
+        var page = new List<VacancyListItemDto>(pageSlice.Count);
+        foreach (var c in pageSlice)
+        {
+            var dto = MapRecordToDto(c.Record, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
+            if (matchContext is not null && CandidateOpenForWorkGate.HidesMatchScores(matchContext))
+            {
+                dto = dto with { OpenForWorkRequired = true };
+            }
+            else if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
+            {
+                string? rankLower = null;
+                dislikeReasons?.TryGetValue(c.Record.Id, out rankLower);
+                dto = WithCandidateMatchSummary(dto, match, fitGate, rankLower);
+            }
+
+            page.Add(dto);
+        }
 
         ApplyPublicListCacheHeaders();
         // Banenkaart list stays on the indexed snapshot — no OpenAI wait on open.

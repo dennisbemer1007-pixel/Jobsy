@@ -370,6 +370,14 @@ public static class PageAssetCatalog
                || (path.Length == 8 && path.All(char.IsDigit));
     }
 
+    /// <summary>Discovery map scripts — keep versions aligned with app-core.js maps-loader.</summary>
+    public static readonly string[] MapDiscoveryPreloadScripts =
+    [
+        "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
+        "/js/jobsyMapLibre.min.js?v=20261002-ch01",
+        "/js/jobMap.min.js?v=20261019-uwv5"
+    ];
+
     public static bool IncludeLandingScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);

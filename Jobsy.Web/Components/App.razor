@@ -34,6 +34,14 @@
     {
         <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
         <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+        @if (LoadBlazorRuntime)
+        {
+            <link rel="preload" href="/lib/maplibre/maplibre-gl.css?v=20260820-r166" as="style" />
+            @foreach (var mapScript in PageAssetCatalog.MapDiscoveryPreloadScripts)
+            {
+                <link rel="preload" href="@mapScript" as="script" crossorigin />
+            }
+        }
     }
     @if (LoadBlazorRuntime)
     {
@@ -46,13 +54,22 @@
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
     }
     <link rel="stylesheet" href="css/critical.css?v=20261019-12" />
-    <link rel="stylesheet" href="css/tokens.css?v=20261018-06" />
+    @if (!LoadBlazorRuntime)
+    {
+        <link rel="stylesheet" href="css/tokens.css?v=20261018-06" />
+    }
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
-    <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
+    @if (!LoadBlazorRuntime)
+    {
+        <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
+    }
     <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
-    <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
+    @if (!LoadBlazorRuntime)
+    {
+        <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
+    }
     <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
