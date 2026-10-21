@@ -302,11 +302,13 @@
                                          OnNext="@(() => NextAsync())"
                                          OnLater="LaterAsync" />
     }
-    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 8 and <= 10 && Draft.HasConsent)
+    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 7 and <= 10 && Draft.HasConsent)
     {
         <OnboardingRustigMiniTestStep Step="_step"
                                       Draft="Draft"
                                       ClientSeed="ClientStepSeed"
+                                      Busy="@_busy"
+                                      OnNext="@(() => NextAsync())"
                                       FlowEpoch="_miniFlowEpoch"
                                       CurrentQuestion="_currentQuestion"
                                       TestTabs="MiniTestTabs"
@@ -635,6 +637,7 @@
                                                         Seed="ClientStepSeed" />
                             break;
 
+                        case 7 when Draft.HasConsent:
                         case >= 8 and <= 10:
                             <OnboardingClientStepIsland Step="_step"
                                                         Draft="Draft"
@@ -920,12 +923,8 @@
         : Draft.FineTune && _step == 2 ? Culture["Onboarding.Done"]
         : Culture["Onboarding.Next"];
 
-    /// <summary>Mini-test uses a single primary in <see cref="TestQuestionFlow"/> (no duplicate wizard CTA).</summary>
-    private bool ShowMiniTestFooter =>
-        _earlyMoment == EarlyRewardMoment.None
-        && _step is >= 7 and <= 10
-        && Draft.HasConsent
-        && _miniQuestions.Count > 0;
+    /// <summary>Client mini islands use the wizard footer (no embedded TestQuestionFlow CTA).</summary>
+    private bool ShowMiniTestFooter => false;
 
     private bool ShowTestsLaterOffer =>
         _earlyMoment == EarlyRewardMoment.FirstInsight
@@ -1338,6 +1337,14 @@
                 await AcceptConsentAsync();
                 return;
             }
+
+            if (_step == 7 && Draft.HasConsent && _miniQuestions.Count > 0
+                && OnboardingMiniBlockCompletion.IsMiniBlockComplete(_step, _miniQuickScanVersion, MiniVisibleAnswers))
+            {
+                await FinishMiniAsync();
+                return;
+            }
+
             await FlushBeforeLeavingStepAsync();
             if (_step == 10)
             {
@@ -2288,11 +2295,11 @@
             {
                 OnboardingClientStepBridge.Apply(_step, Draft, json);
             }
-            else if (_step == 7)
+            else if (_step == 7 && !Draft.HasConsent)
             {
                 Draft.ConsentRequested = OnboardingClientStepBridge.ParseStep7Consent(json);
             }
-            else if (_step is >= 8 and <= 10)
+            else if (_step is >= 7 and <= 10 && Draft.HasConsent)
             {
                 foreach (var (id, value) in OnboardingClientStepBridge.ParseMiniAnswers(json))
                 {

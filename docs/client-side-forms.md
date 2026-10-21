@@ -86,6 +86,8 @@ Flow in `OnboardingWizard.NextAsync`:
 5. On success: `FlushBeforeLeavingStepAsync()` → single profile PUT and/or mini block flush / dream save / consent accept.
 6. Advance step via `SaveMyOnboardingProgressAsync`.
 
+**Step 7 split:** consent checkbox (`!HasConsent`) vs competency mini block (`HasConsent`) — same step number, different island payload and import path (consent JSON vs mini `answers` map). Step 7 mini completion still runs `FinishMiniAsync()` (early insight) before advancing to step 8.
+
 Autosave is **disabled** while `_step <= 10` on client steps (`ScheduleProfileSave` early return; mini answers not sent per click).
 
 Errors from API persist as today (`_error`, `_saveError`, rustig save status).

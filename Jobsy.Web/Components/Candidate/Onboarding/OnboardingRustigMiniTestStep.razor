@@ -21,6 +21,22 @@
             <OnboardingClientStepIsland Step="@Step"
                                         Draft="Draft"
                                         Seed="ClientSeed" />
+            <div class="ob-rustig__footer-actions">
+                <button type="button"
+                        class="ob-rustig__btn"
+                        data-testid="onboarding-back"
+                        disabled="@Busy"
+                        @onclick="OnLeave">
+                    @Culture["Onboarding.Back"]
+                </button>
+                <button type="button"
+                        class="ob-rustig__btn ob-rustig__btn--primary"
+                        data-testid="onboarding-next"
+                        disabled="@Busy"
+                        @onclick="OnNext">
+                    @Culture["Onboarding.Next"]
+                </button>
+            </div>
         </div>
     </ChildContent>
 </OnboardingRustigShell>
@@ -42,6 +58,8 @@
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
     [Parameter] public EventCallback OnLeave { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+    [Parameter] public bool Busy { get; set; }
     [Parameter] public EventCallback OnLater { get; set; }
     [Parameter] public EventCallback OnTestsLater { get; set; }
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
