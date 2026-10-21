@@ -687,6 +687,10 @@ public static class UiStringsDiscovery
             "Podążaj trasą od plaży, brzegu do światła. Stuknij postój, by zobaczyć, co uzupełniłeś.",
             "Urmează ruta de la plajă, coastă spre lumină. Atinge o oprire ca să vezi ce ai completat.",
             "تابع مسارك من الشاطئ والساحل إلى النور. اضغط على محطة لترى ما أدخلته.");
+        Add("Discovery.Overview.YouAreHere",
+            "Je bent hier", "You are here", "Jesteś tutaj", "Ești aici", "أنت هنا");
+        Add("Discovery.Overview.Destination",
+            "Bestemming", "Destination", "Cel", "Destinație", "الوجهة");
         Add("Discovery.Overview.StatusOpen",
             "Open", "Open", "Otwarte", "Deschis", "مفتوح");
         Add("Discovery.Overview.StatusOneStep",

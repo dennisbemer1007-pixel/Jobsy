@@ -579,8 +579,11 @@
                                      HideTitle="false"
                                      PhaseStops="_phaseStops"
                                      ActivePhaseId="_activePhaseId"
+                                     YouAreHerePhaseId="_youAreHerePhaseId"
+                                     YouAreHereProgressFrac="_youAreHereProgressFrac"
                                      PanelOpen="_overviewPanelOpen"
                                      ActivePanel="_activePhasePanel"
+                                     PhasePanels="_overviewPhasePanels"
                                      Tests="_overviewTests"
                                      OnSectionAction="OnOverviewSectionAsync"
                                      OnContinue="OnOverviewContinueAsync"
@@ -776,6 +779,9 @@
     private List<JourneyOverview.PhaseStop> _phaseStops = [];
     private List<JourneyOverview.TestRow> _overviewTests = [];
     private string _activePhaseId = "light";
+    private string _youAreHerePhaseId = "kust";
+    private double _youAreHereProgressFrac = 0.45;
+    private Dictionary<string, JourneyOverview.PhasePanel> _overviewPhasePanels = new(StringComparer.Ordinal);
     private bool _overviewPanelOpen = true;
     private JourneyOverview.PhasePanel? _activePhasePanel;
     private static readonly JourneyShedMoment.TestTab[] ShedTabs =
@@ -2171,8 +2177,18 @@
         await LoadEndPresentationAsync();
         _overviewPanel = await OverviewCache.GetPanelAsync();
         var continuePhase = ResolveOpenPhaseId();
+        _youAreHerePhaseId = continuePhase;
+        _youAreHereProgressFrac = ComputeYouAreHereProgressFrac(continuePhase);
         _activePhaseId = continuePhase;
         _phaseStops = BuildPhaseStops(continuePhase);
+        _overviewPhasePanels = new Dictionary<string, JourneyOverview.PhasePanel>(StringComparer.Ordinal)
+        {
+            ["beach"] = BuildPhasePanel("beach"),
+            ["kust"] = BuildPhasePanel("kust"),
+            ["rots"] = BuildPhasePanel("rots"),
+            ["diep"] = BuildPhasePanel("diep"),
+            ["light"] = BuildPhasePanel("light")
+        };
         _overviewPanelOpen = true;
         _activePhasePanel = BuildPhasePanel(_activePhaseId);
 
@@ -2321,6 +2337,28 @@
         }
 
         return "light";
+    }
+
+    private double ComputeYouAreHereProgressFrac(string phaseId)
+    {
+        if (phaseId is "beach" or "light")
+        {
+            return 0.45;
+        }
+
+        var steps = StepsInOverviewPhase(phaseId).ToList();
+        if (steps.Count == 0)
+        {
+            return 0.45;
+        }
+
+        var done = steps.Count(s => CompletedStepNumbers.Contains(s));
+        if (done >= steps.Count)
+        {
+            return 1;
+        }
+
+        return 0.25 + 0.55 * (done / (double)steps.Count);
     }
 
     private JourneyOverview.PhasePanel BuildPhasePanel(string phaseId) => phaseId switch

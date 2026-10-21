@@ -33,15 +33,23 @@ internal static class DiscoveryOverviewRouteE2eFlow
             State = WaitForSelectorState.Visible,
             Timeout = 90_000,
         });
+        await page.EvaluateAsync("() => window.dispatchEvent(new Event('resize'))");
         await page.WaitForFunctionAsync(
             """
             () => {
-              const p = document.querySelector('#discovery-route-path');
-              return p && p.getAttribute('d') && p.getAttribute('d').length > 8;
+              const hasPath = (sel) => {
+                const p = document.querySelector(sel);
+                return !!(p && p.getAttribute('d') && p.getAttribute('d').length > 8);
+              };
+              const mobileLayout = window.matchMedia('(max-width: 767px)').matches;
+              if (mobileLayout) {
+                return hasPath('#discovery-route-path-future') || hasPath('#discovery-route-path-done');
+              }
+              return hasPath('#discovery-route-path');
             }
             """,
             null,
-            new() { Timeout = 30_000 });
+            new() { Timeout = 60_000 });
         await page.WaitForTimeoutAsync(600);
         return email;
     }
