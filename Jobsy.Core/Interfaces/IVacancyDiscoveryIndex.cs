@@ -29,6 +29,11 @@ public interface IVacancyDiscoveryIndex
     Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Lookup one public vacancy from the warm index (O(1) when the snapshot exposes an id map).
+    /// </summary>
+    Task<VacancyDiscoveryRecord?> FindActiveByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Centroid + zoom of the current public snapshot, for MapLibre first paint.
     /// </summary>
     Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default);
