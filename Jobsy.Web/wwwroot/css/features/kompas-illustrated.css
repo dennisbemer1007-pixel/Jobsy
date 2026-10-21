@@ -221,6 +221,42 @@
   }
 }
 
+@media (max-width: 1023px) {
+  /* Mobile: header scrolls away — stick tabs flush to viewport top with opaque band (no bleed-through). */
+  .passport-page--illustrated .passport-tabs-shell {
+    inset-block-start: 0;
+    margin-block: 0;
+    padding-block: var(--space-2);
+    padding-inline: max(var(--passport-layout-pad, 1.25rem), env(safe-area-inset-left, 0px))
+      max(var(--passport-layout-pad, 1.25rem), env(safe-area-inset-right, 0px));
+    background: var(--bg);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--border) 88%, transparent),
+      0 6px 14px -10px color-mix(in srgb, var(--text) 16%, transparent);
+  }
+
+  .passport-page--illustrated .passport-tabs-shell::before,
+  .passport-page--illustrated .passport-tabs-shell::after {
+    display: none;
+  }
+
+  .passport-page--illustrated .passport-tabs {
+    border-color: color-mix(in srgb, var(--border) 92%, var(--bg));
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
+  }
+
+  .passport-page--illustrated .passport-tabs::after {
+    background: linear-gradient(90deg, transparent, var(--surface) 78%);
+  }
+
+  .passport-page--illustrated .passport-tab:first-child {
+    margin-inline-start: 0;
+    border-inline-start-color: transparent;
+  }
+}
+
 @media (min-width: 1024px) {
   .passport-page--illustrated .passport-tabs {
     flex-wrap: nowrap;
