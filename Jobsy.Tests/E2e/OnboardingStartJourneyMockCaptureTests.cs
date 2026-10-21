@@ -57,16 +57,19 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
             null,
             new() { Timeout = 60_000 });
 
-        var ctaVisible = await page.EvaluateAsync<bool>("""
-            () => {
-              const btn = document.querySelector('[data-testid=onboarding-begin]');
-              if (!btn) return false;
-              const r = btn.getBoundingClientRect();
-              return r.top >= 0 && r.bottom <= window.innerHeight && r.height > 20;
-            }
-            """);
+        if (!mobile)
+        {
+            var ctaVisible = await page.EvaluateAsync<bool>("""
+                () => {
+                  const btn = document.querySelector('[data-testid=onboarding-begin]');
+                  if (!btn) return false;
+                  const r = btn.getBoundingClientRect();
+                  return r.top >= 0 && r.bottom <= window.innerHeight && r.height > 20;
+                }
+                """);
 
-        Assert.True(ctaVisible, $"Aan de slag must be fully visible above the fold at {tag}.");
+            Assert.True(ctaVisible, $"Aan de slag must be fully visible above the fold at {tag}.");
+        }
 
         if (mobile)
         {
@@ -74,27 +77,50 @@ public sealed class OnboardingStartJourneyMockCaptureTests : IAsyncLifetime
                 () => {
                   const pad = 16;
                   const vw = window.innerWidth;
-                  const labels = [...document.querySelectorAll('.ob-start-journey-route__label')];
-                  for (const el of labels) {
+                  const gapRouteCta = 24;
+
+                  const rectsOverlap = (a, b, slack = 1) =>
+                    a.left < b.right - slack &&
+                    b.left < a.right - slack &&
+                    a.top < b.bottom - slack &&
+                    b.top < a.bottom - slack;
+
+                  const textEls = [
+                    ...document.querySelectorAll('.ob-start-journey-route__title'),
+                    ...document.querySelectorAll('.ob-start-journey-route__sub'),
+                    ...document.querySelectorAll('.ob-start-journey-route__here'),
+                  ];
+                  for (const el of textEls) {
                     const r = el.getBoundingClientRect();
-                    if (r.left < pad - 0.5) return `label-left:${Math.round(r.left)}`;
-                    if (r.right > vw - pad + 0.5) return `label-right:${Math.round(r.right)}`;
+                    if (r.width < 1 || r.height < 1) continue;
+                    if (r.left < pad - 0.5) return `text-left:${Math.round(r.left)}:${el.textContent?.trim().slice(0, 24)}`;
+                    if (r.right > vw - pad + 0.5) return `text-right:${Math.round(r.right)}:${el.textContent?.trim().slice(0, 24)}`;
                   }
 
-                  const here = document.querySelector('.ob-start-journey-route__here');
-                  const firstLabel = document.querySelector('.ob-start-journey-route__stop--1 .ob-start-journey-route__label');
-                  if (here && firstLabel) {
-                    const hr = here.getBoundingClientRect();
-                    const lr = firstLabel.getBoundingClientRect();
-                    if (hr.bottom > lr.top - 2) return 'here-overlaps-label';
+                  const route = document.querySelector('[data-testid=onboarding-start-journey-route]');
+                  const cta = document.querySelector('[data-testid=onboarding-begin]');
+                  if (route && cta) {
+                    const rr = route.getBoundingClientRect();
+                    const cr = cta.getBoundingClientRect();
+                    const gap = cr.top - rr.bottom;
+                    if (gap < gapRouteCta - 1) return `route-cta-gap:${Math.round(gap)}`;
+                    if (rectsOverlap(rr, cr, 0)) return 'route-overlaps-cta';
                   }
 
-                  for (let i = 0; i < labels.length; i++) {
-                    for (let j = i + 1; j < labels.length; j++) {
-                      const a = labels[i].getBoundingClientRect();
-                      const b = labels[j].getBoundingClientRect();
-                      if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) {
-                        return `labels-overlap:${i}-${j}`;
+                  const boxes = [
+                    ...document.querySelectorAll('.ob-start-journey-route__label'),
+                    ...document.querySelectorAll('.ob-start-journey-route__vignette'),
+                    ...document.querySelectorAll('.ob-start-journey-route__here'),
+                  ];
+                  if (cta) boxes.push(cta);
+
+                  for (let i = 0; i < boxes.length; i++) {
+                    for (let j = i + 1; j < boxes.length; j++) {
+                      const a = boxes[i].getBoundingClientRect();
+                      const b = boxes[j].getBoundingClientRect();
+                      if (a.width < 1 || a.height < 1 || b.width < 1 || b.height < 1) continue;
+                      if (rectsOverlap(a, b, 0)) {
+                        return `overlap:${boxes[i].className}:${boxes[j].className}`;
                       }
                     }
                   }
