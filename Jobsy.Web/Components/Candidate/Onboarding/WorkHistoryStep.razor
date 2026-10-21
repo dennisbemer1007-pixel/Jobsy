@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
     <link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-16" />
 }
-@if (ShowHeading && !Illustrated)
+@if (ShowStepTitle && ShowHeading && !Illustrated)
 {
     <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
     <h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
@@ -133,6 +133,7 @@
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
     [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public bool ShowStepTitle { get; set; } = true;
     [Parameter] public bool Illustrated { get; set; }
     [Parameter] public EventCallback AddJob { get; set; }
     [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }

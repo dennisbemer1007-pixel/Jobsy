@@ -90,76 +90,76 @@ internal sealed class E2eFlowRunner
 
         if (!chainOnly)
         {
-        // —— 1–2 Mobile fresh candidate ——
-        var swMobileOnb = Stopwatch.StartNew();
-        await using (var ctx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
-        {
-            var page = await PrepPageAsync(ctx);
-            await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, mobileEmail, "E2eMob");
-            await Shot(page, "mobile-390", "01-signup-done");
-            await E2eFlowOnboarding.CompleteOnboardingWizardWithScreenshotsAsync(
-                page, _baseUrl, "mobile-390", Shot);
-            swMobileOnb.Stop();
-            _report.TimingMs["onboarding_mobile"] = swMobileOnb.ElapsedMilliseconds;
-
-            var swDisc = Stopwatch.StartNew();
-            await E2eFlowOnboarding.CompleteDiscoveryMaxDepthAsync(page, _baseUrl, "mobile-390", Shot);
-            swDisc.Stop();
-            _report.TimingMs["discovery_mobile"] = swDisc.ElapsedMilliseconds;
-        }
-
-        // —— 1–2 Desktop fresh + chain candidate ——
-        noTestsUserPathClock = Stopwatch.StartNew();
-        var swSignup = Stopwatch.StartNew();
-        var swDeskOnb = Stopwatch.StartNew();
-        await using (var ctx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
-        {
-            var page = await PrepPageAsync(ctx);
-            await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, chainEmail, "E2eDesk");
-            swSignup.Stop();
-            _report.TimingMs["no_tests_signup"] = swSignup.ElapsedMilliseconds;
-            await Shot(page, "desktop-1440", "01-signup-done");
-            await E2eFlowOnboarding.CompleteOnboardingWizardWithScreenshotsAsync(
-                page, _baseUrl, "desktop-1440", Shot);
-            swDeskOnb.Stop();
-            _report.TimingMs["onboarding_desktop"] = swDeskOnb.ElapsedMilliseconds;
-
-            var preDiscoveryPdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
-            if (preDiscoveryPdf is { Length: > 5000 })
+            // —— 1–2 Mobile fresh candidate ——
+            var swMobileOnb = Stopwatch.StartNew();
+            await using (var ctx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
             {
-                var noTestsPdf = Path.Combine(PdfDir, "lobsy-cv-no-tests-desktop-1440.pdf");
-                await File.WriteAllBytesAsync(noTestsPdf, preDiscoveryPdf);
-                RenderAllPdfPages(noTestsPdf, "lobsy-cv-no-tests-desktop-1440");
+                var page = await PrepPageAsync(ctx);
+                await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, mobileEmail, "E2eMob");
+                await Shot(page, "mobile-390", "01-signup-done");
+                await E2eFlowOnboarding.CompleteOnboardingWizardWithScreenshotsAsync(
+                    page, _baseUrl, "mobile-390", Shot);
+                swMobileOnb.Stop();
+                _report.TimingMs["onboarding_mobile"] = swMobileOnb.ElapsedMilliseconds;
+
+                var swDisc = Stopwatch.StartNew();
+                await E2eFlowOnboarding.CompleteDiscoveryMaxDepthAsync(page, _baseUrl, "mobile-390", Shot);
+                swDisc.Stop();
+                _report.TimingMs["discovery_mobile"] = swDisc.ElapsedMilliseconds;
             }
 
-            var swDisc = Stopwatch.StartNew();
-            await E2eFlowOnboarding.CompleteDiscoveryMaxDepthAsync(page, _baseUrl, "desktop-1440", Shot);
-            swDisc.Stop();
-            _report.TimingMs["discovery_desktop"] = swDisc.ElapsedMilliseconds;
-            _report.TimingMs["onboarding_plus_discovery_desktop"] = swDeskOnb.ElapsedMilliseconds + swDisc.ElapsedMilliseconds;
-            _report.TimingMs["no_tests_through_discovery"] = swSignup.ElapsedMilliseconds
-                                                             + swDeskOnb.ElapsedMilliseconds
-                                                             + swDisc.ElapsedMilliseconds;
-            noTestsUserPathClock.Stop();
+            // —— 1–2 Desktop fresh + chain candidate ——
+            noTestsUserPathClock = Stopwatch.StartNew();
+            var swSignup = Stopwatch.StartNew();
+            var swDeskOnb = Stopwatch.StartNew();
+            await using (var ctx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
+            {
+                var page = await PrepPageAsync(ctx);
+                await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, chainEmail, "E2eDesk");
+                swSignup.Stop();
+                _report.TimingMs["no_tests_signup"] = swSignup.ElapsedMilliseconds;
+                await Shot(page, "desktop-1440", "01-signup-done");
+                await E2eFlowOnboarding.CompleteOnboardingWizardWithScreenshotsAsync(
+                    page, _baseUrl, "desktop-1440", Shot);
+                swDeskOnb.Stop();
+                _report.TimingMs["onboarding_desktop"] = swDeskOnb.ElapsedMilliseconds;
 
-            await RunPaspoortChecksAsync(page, "desktop-1440", chainEmail);
-            await VerifyAboutMeMotivationNotAutoFilledAsync(chainEmail);
-            await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "chain-email.txt"), chainEmail);
-            FixEvidencePublisher.PublishItem(
-                "06-paspoort-inline-editing",
-                "04-paspoort-proof-experience-saved",
-                "04-paspoort-data-edit-personal",
-                "04-paspoort-data-edit-preferences",
-                "04-paspoort-data-edit-availability");
-            FixEvidencePublisher.CopyFileToItem(
-                "06-paspoort-inline-editing",
-                Path.Combine(Root, "evidence", "paspoort-field-table.md"),
-                "paspoort-field-table.md");
-            FixEvidencePublisher.CopyFileToItem(
-                "09-notification-lists-dedupe",
-                Path.Combine(Root, "evidence", "about-me-revert.txt"),
-                "about-me-revert.txt");
-        }
+                var preDiscoveryPdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+                if (preDiscoveryPdf is { Length: > 5000 })
+                {
+                    var noTestsPdf = Path.Combine(PdfDir, "lobsy-cv-no-tests-desktop-1440.pdf");
+                    await File.WriteAllBytesAsync(noTestsPdf, preDiscoveryPdf);
+                    RenderAllPdfPages(noTestsPdf, "lobsy-cv-no-tests-desktop-1440");
+                }
+
+                var swDisc = Stopwatch.StartNew();
+                await E2eFlowOnboarding.CompleteDiscoveryMaxDepthAsync(page, _baseUrl, "desktop-1440", Shot);
+                swDisc.Stop();
+                _report.TimingMs["discovery_desktop"] = swDisc.ElapsedMilliseconds;
+                _report.TimingMs["onboarding_plus_discovery_desktop"] = swDeskOnb.ElapsedMilliseconds + swDisc.ElapsedMilliseconds;
+                _report.TimingMs["no_tests_through_discovery"] = swSignup.ElapsedMilliseconds
+                                                                 + swDeskOnb.ElapsedMilliseconds
+                                                                 + swDisc.ElapsedMilliseconds;
+                noTestsUserPathClock.Stop();
+
+                await RunPaspoortChecksAsync(page, "desktop-1440", chainEmail);
+                await VerifyAboutMeMotivationNotAutoFilledAsync(chainEmail);
+                await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "chain-email.txt"), chainEmail);
+                FixEvidencePublisher.PublishItem(
+                    "06-paspoort-inline-editing",
+                    "04-paspoort-proof-experience-saved",
+                    "04-paspoort-data-edit-personal",
+                    "04-paspoort-data-edit-preferences",
+                    "04-paspoort-data-edit-availability");
+                FixEvidencePublisher.CopyFileToItem(
+                    "06-paspoort-inline-editing",
+                    Path.Combine(Root, "evidence", "paspoort-field-table.md"),
+                    "paspoort-field-table.md");
+                FixEvidencePublisher.CopyFileToItem(
+                    "09-notification-lists-dedupe",
+                    Path.Combine(Root, "evidence", "about-me-revert.txt"),
+                    "about-me-revert.txt");
+            }
         }
 
         if (Guid.TryParse(Environment.GetEnvironmentVariable("JOBSY_E2E_FLOW_VACANCY_ID"), out var reuseVacancyId))
@@ -201,78 +201,78 @@ internal sealed class E2eFlowRunner
 
         if (!skipBanenkaart)
         {
-        // —— 5 Employer mobile wizard (screens only, no sidebar assert) ——
-        await using (var ctx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
-        {
-            var page = await PrepPageAsync(ctx);
-            Assert.True(await KbE2e.TryLoginAsync(page, _baseUrl, VacancyWizardE2e.EmployerEmail, VacancyWizardE2e.EmployerPassword));
-            await page.GotoAsync(_baseUrl + "/werkgever/vacatures/nieuw");
-            await page.Locator("[data-testid='vacancy-wizard']").WaitForAsync();
-            await Shot(page, "mobile-390", "05-vacancy-wizard-start");
-        }
-
-        // —— 6 Banenkaart ——
-        foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
-        {
-            await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
-            var page = await PrepPageAsync(ctx);
-            await page.GotoAsync($"{_baseUrl}{E2eRoutes.Banenkaart}?weergave=lijst&q={Uri.EscapeDataString(vacancyTitle)}");
-            await KbE2e.WaitForStyledAppAsync(page);
-            await page.WaitForTimeoutAsync(2500);
-            await Shot(page, tag, "06-banenkaart-guest");
-
-            try
+            // —— 5 Employer mobile wizard (screens only, no sidebar assert) ——
+            await using (var ctx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
             {
-                if (mobile)
+                var page = await PrepPageAsync(ctx);
+                Assert.True(await KbE2e.TryLoginAsync(page, _baseUrl, VacancyWizardE2e.EmployerEmail, VacancyWizardE2e.EmployerPassword));
+                await page.GotoAsync(_baseUrl + "/werkgever/vacatures/nieuw");
+                await page.Locator("[data-testid='vacancy-wizard']").WaitForAsync();
+                await Shot(page, "mobile-390", "05-vacancy-wizard-start");
+            }
+
+            // —— 6 Banenkaart ——
+            foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
+            {
+                await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+                var page = await PrepPageAsync(ctx);
+                await page.GotoAsync($"{_baseUrl}{E2eRoutes.Banenkaart}?weergave=lijst&q={Uri.EscapeDataString(vacancyTitle)}");
+                await KbE2e.WaitForStyledAppAsync(page);
+                await page.WaitForTimeoutAsync(2500);
+                await Shot(page, tag, "06-banenkaart-guest");
+
+                try
                 {
-                    var open = page.Locator("[data-testid=kb-filter-open], [data-testid=kb-filters-button], button:has-text('Filter')").First;
-                    if (await open.CountAsync() > 0)
+                    if (mobile)
                     {
-                        await open.ClickAsync(new() { Force = true, Timeout = 15_000 });
-                        await page.WaitForTimeoutAsync(600);
-                        await Shot(page, tag, "06-banenkaart-filter-sheet");
-                    }
-                }
-                else
-                {
-                    var filters = page.Locator(
-                        "[data-testid=kb-filter-drawer-toggle], [data-testid=kb-filters-button], button:has-text('Filters')").First;
-                    if (await filters.CountAsync() > 0)
-                    {
-                        try
+                        var open = page.Locator("[data-testid=kb-filter-open], [data-testid=kb-filters-button], button:has-text('Filter')").First;
+                        if (await open.CountAsync() > 0)
                         {
-                            await filters.ClickAsync(new() { Force = true, Timeout = 15_000 });
+                            await open.ClickAsync(new() { Force = true, Timeout = 15_000 });
+                            await page.WaitForTimeoutAsync(600);
+                            await Shot(page, tag, "06-banenkaart-filter-sheet");
                         }
-                        catch (PlaywrightException)
+                    }
+                    else
+                    {
+                        var filters = page.Locator(
+                            "[data-testid=kb-filter-drawer-toggle], [data-testid=kb-filters-button], button:has-text('Filters')").First;
+                        if (await filters.CountAsync() > 0)
                         {
-                            await page.EvaluateAsync(
-                                """
+                            try
+                            {
+                                await filters.ClickAsync(new() { Force = true, Timeout = 15_000 });
+                            }
+                            catch (PlaywrightException)
+                            {
+                                await page.EvaluateAsync(
+                                    """
                                 () => {
                                   const el = document.querySelector(
                                     '[data-testid=kb-filter-drawer-toggle], [data-testid=kb-filters-button]');
                                   el?.click();
                                 }
                                 """);
-                        }
+                            }
 
-                        await page.WaitForTimeoutAsync(600);
-                        await Shot(page, tag, "06-banenkaart-filter-drawer");
+                            await page.WaitForTimeoutAsync(600);
+                            await Shot(page, tag, "06-banenkaart-filter-drawer");
+                        }
                     }
                 }
-            }
-            catch (PlaywrightException)
-            {
-                await Shot(page, tag, "06-banenkaart-filter-skipped");
+                catch (PlaywrightException)
+                {
+                    await Shot(page, tag, "06-banenkaart-filter-skipped");
+                }
+
+                await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
+                await page.GotoAsync($"{_baseUrl}{E2eRoutes.Banenkaart}?weergave=lijst&q={Uri.EscapeDataString(vacancyTitle)}");
+                await KbE2e.WaitForStyledAppAsync(page);
+                await page.WaitForTimeoutAsync(1500);
+                await Shot(page, tag, "06-banenkaart-logged-in");
             }
 
-            await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
-            await page.GotoAsync($"{_baseUrl}{E2eRoutes.Banenkaart}?weergave=lijst&q={Uri.EscapeDataString(vacancyTitle)}");
-            await KbE2e.WaitForStyledAppAsync(page);
-            await page.WaitForTimeoutAsync(1500);
-            await Shot(page, tag, "06-banenkaart-logged-in");
-        }
-
-        FixEvidencePublisher.PublishItem("08-banenkaart-filter-drawer-desktop", "06-banenkaart-filter-drawer");
+            FixEvidencePublisher.PublishItem("08-banenkaart-filter-drawer-desktop", "06-banenkaart-filter-drawer");
         }
 
         // —— 7–9 Chain candidate vacancy + apply ——
@@ -283,35 +283,35 @@ internal sealed class E2eFlowRunner
 
         if (!skipApply)
         {
-        if (!chainOnly && vacancyId is Guid blockedVacancyId)
-        {
-            var emptyEmail = $"e2e-empty-{Guid.NewGuid():N}@jobsy.local";
-            await using (var seedCtx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
+            if (!chainOnly && vacancyId is Guid blockedVacancyId)
             {
-                var seedPage = await PrepPageAsync(seedCtx);
-                await E2eFlowOnboarding.SignUpFreshAsync(seedPage, _baseUrl, emptyEmail, "E2eEmpty");
-            }
-
-            await EnsureCandidateBirthDateAsync(emptyEmail, new DateOnly(2000, 6, 15));
-            foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
-            {
-                await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
-                var page = await PrepPageAsync(ctx);
-                await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, emptyEmail);
-                await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
-                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-                var dobInput = page.Locator("[data-testid=vacancy-dob-date] input[type=date]").First;
-                if (await dobInput.CountAsync() > 0 && string.IsNullOrWhiteSpace(await dobInput.InputValueAsync()))
+                var emptyEmail = $"e2e-empty-{Guid.NewGuid():N}@jobsy.local";
+                await using (var seedCtx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
                 {
-                    await dobInput.FillAsync("2000-06-15");
-                    var saveDob = page.Locator("#dob button.login-submit, #dob button[type=button]").First;
-                    if (await saveDob.CountAsync() > 0)
+                    var seedPage = await PrepPageAsync(seedCtx);
+                    await E2eFlowOnboarding.SignUpFreshAsync(seedPage, _baseUrl, emptyEmail, "E2eEmpty");
+                }
+
+                await EnsureCandidateBirthDateAsync(emptyEmail, new DateOnly(2000, 6, 15));
+                foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
+                {
+                    await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+                    var page = await PrepPageAsync(ctx);
+                    await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, emptyEmail);
+                    await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
+                    await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                    var dobInput = page.Locator("[data-testid=vacancy-dob-date] input[type=date]").First;
+                    if (await dobInput.CountAsync() > 0 && string.IsNullOrWhiteSpace(await dobInput.InputValueAsync()))
                     {
-                        await saveDob.ClickAsync();
-                        try
+                        await dobInput.FillAsync("2000-06-15");
+                        var saveDob = page.Locator("#dob button.login-submit, #dob button[type=button]").First;
+                        if (await saveDob.CountAsync() > 0)
                         {
-                            await page.WaitForFunctionAsync(
-                                """
+                            await saveDob.ClickAsync();
+                            try
+                            {
+                                await page.WaitForFunctionAsync(
+                                    """
                                 () => {
                                   const dob = document.getElementById('dob');
                                   if (!dob) return true;
@@ -319,24 +319,24 @@ internal sealed class E2eFlowRunner
                                   return style.display === 'none' || style.visibility === 'hidden' || style.height === '0px';
                                 }
                                 """,
-                                null,
-                                new() { Timeout = 20_000 });
-                        }
-                        catch (TimeoutException)
-                        {
-                            // wage gate may stay visible in CI; continue to #apply evidence either way
+                                    null,
+                                    new() { Timeout = 20_000 });
+                            }
+                            catch (TimeoutException)
+                            {
+                                // wage gate may stay visible in CI; continue to #apply evidence either way
+                            }
                         }
                     }
-                }
 
-                await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
-                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-                await OpenVacancyApplyPanelAsync(page);
-                try
-                {
-                    await page.Locator("#apply").ScrollIntoViewIfNeededAsync();
-                    await page.WaitForFunctionAsync(
-                        """
+                    await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
+                    await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                    await OpenVacancyApplyPanelAsync(page);
+                    try
+                    {
+                        await page.Locator("#apply").ScrollIntoViewIfNeededAsync();
+                        await page.WaitForFunctionAsync(
+                            """
                         () => {
                           const apply = document.getElementById('apply');
                           if (!apply || apply.getAttribute('data-apply-interactive') !== 'true') {
@@ -346,240 +346,240 @@ internal sealed class E2eFlowRunner
                           return !!document.querySelector('[data-testid=apply-profile-blocked]');
                         }
                         """,
-                        null,
-                        new() { Timeout = 90_000 });
-                    _report.EmptyProfileBlockedCaptured = true;
-                    await page.WaitForFunctionAsync(
-                        """
+                            null,
+                            new() { Timeout = 90_000 });
+                        _report.EmptyProfileBlockedCaptured = true;
+                        await page.WaitForFunctionAsync(
+                            """
                         () => {
                           const btn = document.querySelector('[data-testid=kb-detail-apply]');
                           return !!btn?.textContent?.includes('Profiel afronden');
                         }
                         """,
-                        null,
-                        new() { Timeout = 30_000 });
-                }
-                catch (TimeoutException)
-                {
-                    _report.SmtpNote = (_report.SmtpNote ?? "") + " empty-profile-blocked not visible;";
+                            null,
+                            new() { Timeout = 30_000 });
+                    }
+                    catch (TimeoutException)
+                    {
+                        _report.SmtpNote = (_report.SmtpNote ?? "") + " empty-profile-blocked not visible;";
+                    }
+
+                    var applyText = await page.Locator("#apply").InnerTextAsync();
+                    if (applyText.Contains("profiel", StringComparison.OrdinalIgnoreCase)
+                        || applyText.Contains("Solliciteer", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _report.EmptyProfileBlockedCaptured |= applyText.Contains(
+                            "compleet",
+                            StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    await Shot(page, tag, "04-apply-profile-blocked");
                 }
 
-                var applyText = await page.Locator("#apply").InnerTextAsync();
-                if (applyText.Contains("profiel", StringComparison.OrdinalIgnoreCase)
-                    || applyText.Contains("Solliciteer", StringComparison.OrdinalIgnoreCase))
-                {
-                    _report.EmptyProfileBlockedCaptured |= applyText.Contains(
-                        "compleet",
-                        StringComparison.OrdinalIgnoreCase);
-                }
-
-                await Shot(page, tag, "04-apply-profile-blocked");
+                FixEvidencePublisher.PublishItem("04-empty-profile-blocked", "04-apply-profile-blocked");
             }
 
-            FixEvidencePublisher.PublishItem("04-empty-profile-blocked", "04-apply-profile-blocked");
-        }
+            await CandidateJourneyE2e.EnsureDemoApplyProfileReadyAsync(chainEmail);
 
-        await CandidateJourneyE2e.EnsureDemoApplyProfileReadyAsync(chainEmail);
-
-        var swApply = Stopwatch.StartNew();
-        foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
-        {
-            await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
-            var page = await PrepPageAsync(ctx);
-            await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
-            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
-            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            await ClearEncourageDismissStorageAsync(page, chainEmail, "vacancy-pre-apply");
-            await page.ReloadAsync();
-            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
-            await OpenVacancyApplyPanelAsync(page);
-            await page.EvaluateAsync(
-                """
+            var swApply = Stopwatch.StartNew();
+            foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
+            {
+                await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+                var page = await PrepPageAsync(ctx);
+                await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                await ClearEncourageDismissStorageAsync(page, chainEmail, "vacancy-pre-apply");
+                await page.ReloadAsync();
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
+                await OpenVacancyApplyPanelAsync(page);
+                await page.EvaluateAsync(
+                    """
                 () => {
                   const apply = document.getElementById('apply');
                   apply?.scrollIntoView({ block: 'start', behavior: 'instant' });
                   window.scrollBy(0, -8);
                 }
                 """);
-            await page.WaitForTimeoutAsync(mobile ? 700 : 450);
+                await page.WaitForTimeoutAsync(mobile ? 700 : 450);
 
-            try
-            {
-                await page.Locator(".profile-encourage[data-encourage-tip]")
-                    .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
-                await Shot(page, tag, "07-vacancy-encourage-tip");
+                try
+                {
+                    await page.Locator(".profile-encourage[data-encourage-tip]")
+                        .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
+                    await Shot(page, tag, "07-vacancy-encourage-tip");
+                }
+                catch (TimeoutException)
+                {
+                    await Shot(page, tag, "07-vacancy-encourage-tip-missing");
+                }
             }
-            catch (TimeoutException)
-            {
-                await Shot(page, tag, "07-vacancy-encourage-tip-missing");
-            }
-        }
 
-        foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
-        {
-            await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
-            var page = await PrepPageAsync(ctx);
-            await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
-            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
-            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            await page.WaitForTimeoutAsync(1500);
-            await Shot(page, tag, "07-vacancy-match-before-availability");
-            await EnableAvailableForWorkIfPromptedAsync(page);
-            await page.WaitForTimeoutAsync(2000);
-            await Shot(page, tag, "07-vacancy-match");
-            if (await page.GetByText("Je hebt gesolliciteerd", new() { Exact = false }).CountAsync() > 0)
+            foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
             {
+                await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+                var page = await PrepPageAsync(ctx);
+                await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                await page.WaitForTimeoutAsync(1500);
+                await Shot(page, tag, "07-vacancy-match-before-availability");
+                await EnableAvailableForWorkIfPromptedAsync(page);
+                await page.WaitForTimeoutAsync(2000);
+                await Shot(page, tag, "07-vacancy-match");
+                if (await page.GetByText("Je hebt gesolliciteerd", new() { Exact = false }).CountAsync() > 0)
+                {
+                    if (mobile)
+                    {
+                        await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
+                    }
+
+                    await Shot(page, tag, "09-applied");
+                    continue;
+                }
+
+                var body = await page.InnerTextAsync("body");
+                var hasFit = await page.Locator("[data-testid=kb-fit-panel], .kb-fit-panel").CountAsync() > 0;
+                var hasPct = Regex.IsMatch(body, @"\d+\s*%")
+                    || body.Contains("match", StringComparison.OrdinalIgnoreCase)
+                    || body.Contains("Waar je matcht", StringComparison.OrdinalIgnoreCase);
+                _report.Step7HasFitPanel |= hasFit;
+                _report.Step7HasPercent |= hasPct;
+
+                var day = page.Locator(".day-in-life-link a, a:has-text('dag in het leven')").First;
+                if (await day.CountAsync() > 0)
+                {
+                    await day.ClickAsync();
+                    await page.WaitForTimeoutAsync(1200);
+                    await Shot(page, tag, "08-day-in-life");
+                    _report.Step8DayInLife = true;
+                }
+                else
+                {
+                    await Shot(page, tag, "08-day-in-life-missing");
+                    _report.Step8DayInLife = false;
+                }
+
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
+                {
+                    if (mobile)
+                    {
+                        await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
+                    }
+
+                    await Shot(page, tag, "09-applied");
+                    continue;
+                }
+
+                await OpenVacancyApplyPanelAsync(page);
+                if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
+                {
+                    if (mobile)
+                    {
+                        await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
+                    }
+
+                    await Shot(page, tag, "09-applied");
+                    continue;
+                }
+
+                try
+                {
+                    if (tag == "desktop-1440")
+                    {
+                        var swSubmit = Stopwatch.StartNew();
+                        await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
+                        swSubmit.Stop();
+                        _report.TimingMs["no_tests_apply_submit"] = swSubmit.ElapsedMilliseconds;
+                        _report.TimingMs["no_tests_vacancy_apply_ui"] = swApply.ElapsedMilliseconds;
+                        _report.TimingMs["no_tests_user_facing_total_ms"] =
+                            _report.TimingMs.GetValueOrDefault("no_tests_through_discovery")
+                            + _report.TimingMs.GetValueOrDefault("no_tests_apply_submit");
+                        _report.NoTestsSignupToAppliedMs = _report.TimingMs["no_tests_user_facing_total_ms"];
+                        await WriteNoTestsTimingReportAsync();
+                    }
+
+                    await Shot(page, tag, "09-applied");
+                    if (tag == "desktop-1440"
+                        && await page.Locator(".apply-panel--success .profile-encourage").CountAsync() > 0)
+                    {
+                        await Shot(page, tag, "09-applied-encourage-tip");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _report.SmtpNote = (_report.SmtpNote ?? "") + $" apply-{tag}: {ex.Message};";
+                    await Shot(page, tag, "09-apply-failed");
+                }
+
                 if (mobile)
                 {
                     await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
                 }
-
-                await Shot(page, tag, "09-applied");
-                continue;
             }
 
-            var body = await page.InnerTextAsync("body");
-            var hasFit = await page.Locator("[data-testid=kb-fit-panel], .kb-fit-panel").CountAsync() > 0;
-            var hasPct = Regex.IsMatch(body, @"\d+\s*%")
-                || body.Contains("match", StringComparison.OrdinalIgnoreCase)
-                || body.Contains("Waar je matcht", StringComparison.OrdinalIgnoreCase);
-            _report.Step7HasFitPanel |= hasFit;
-            _report.Step7HasPercent |= hasPct;
-
-            var day = page.Locator(".day-in-life-link a, a:has-text('dag in het leven')").First;
-            if (await day.CountAsync() > 0)
+            foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
             {
-                await day.ClickAsync();
-                await page.WaitForTimeoutAsync(1200);
-                await Shot(page, tag, "08-day-in-life");
-                _report.Step8DayInLife = true;
-            }
-            else
-            {
-                await Shot(page, tag, "08-day-in-life-missing");
-                _report.Step8DayInLife = false;
-            }
-
-            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
-            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
-            {
-                if (mobile)
-                {
-                    await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
-                }
-
-                await Shot(page, tag, "09-applied");
-                continue;
-            }
-
-            await OpenVacancyApplyPanelAsync(page);
-            if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
-            {
-                if (mobile)
-                {
-                    await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
-                }
-
-                await Shot(page, tag, "09-applied");
-                continue;
-            }
-
-            try
-            {
-                if (tag == "desktop-1440")
-                {
-                    var swSubmit = Stopwatch.StartNew();
-                    await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
-                    swSubmit.Stop();
-                    _report.TimingMs["no_tests_apply_submit"] = swSubmit.ElapsedMilliseconds;
-                    _report.TimingMs["no_tests_vacancy_apply_ui"] = swApply.ElapsedMilliseconds;
-                    _report.TimingMs["no_tests_user_facing_total_ms"] =
-                        _report.TimingMs.GetValueOrDefault("no_tests_through_discovery")
-                        + _report.TimingMs.GetValueOrDefault("no_tests_apply_submit");
-                    _report.NoTestsSignupToAppliedMs = _report.TimingMs["no_tests_user_facing_total_ms"];
-                    await WriteNoTestsTimingReportAsync();
-                }
-
-                await Shot(page, tag, "09-applied");
-                if (tag == "desktop-1440"
-                    && await page.Locator(".apply-panel--success .profile-encourage").CountAsync() > 0)
-                {
-                    await Shot(page, tag, "09-applied-encourage-tip");
-                }
-            }
-            catch (Exception ex)
-            {
-                _report.SmtpNote = (_report.SmtpNote ?? "") + $" apply-{tag}: {ex.Message};";
-                await Shot(page, tag, "09-apply-failed");
-            }
-
-            if (mobile)
-            {
-                await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
-            }
-        }
-
-        foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
-        {
-            await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
-            var page = await PrepPageAsync(ctx);
-            await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
-            await ClearEncourageDismissStorageAsync(page, chainEmail, "apply-sent");
-            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
-            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            await OpenVacancyApplyPanelAsync(page);
-            try
-            {
-                await page.Locator(".apply-panel--success, .kb-detail-applied").WaitForAsync(new() { Timeout = 20_000 });
-            }
-            catch (TimeoutException)
-            {
-                await page.ReloadAsync();
+                await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+                var page = await PrepPageAsync(ctx);
+                await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
+                await ClearEncourageDismissStorageAsync(page, chainEmail, "apply-sent");
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
                 await OpenVacancyApplyPanelAsync(page);
-            }
+                try
+                {
+                    await page.Locator(".apply-panel--success, .kb-detail-applied").WaitForAsync(new() { Timeout = 20_000 });
+                }
+                catch (TimeoutException)
+                {
+                    await page.ReloadAsync();
+                    await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                    await OpenVacancyApplyPanelAsync(page);
+                }
 
-            if (await page.Locator(".apply-panel--success, .kb-detail-applied").CountAsync() == 0)
-            {
-                continue;
-            }
+                if (await page.Locator(".apply-panel--success, .kb-detail-applied").CountAsync() == 0)
+                {
+                    continue;
+                }
 
-            await page.EvaluateAsync(
-                """
+                await page.EvaluateAsync(
+                    """
                 () => {
                   const panel = document.querySelector('.apply-panel--success') || document.getElementById('apply');
                   panel?.scrollIntoView({ block: 'center', behavior: 'instant' });
                 }
                 """);
-            await page.WaitForTimeoutAsync(mobile ? 800 : 500);
-            try
-            {
-                await page.Locator(".profile-encourage[data-encourage-tip]")
-                    .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
-            }
-            catch (TimeoutException)
-            {
-                // capture panel anyway for review
+                await page.WaitForTimeoutAsync(mobile ? 800 : 500);
+                try
+                {
+                    await page.Locator(".profile-encourage[data-encourage-tip]")
+                        .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
+                }
+                catch (TimeoutException)
+                {
+                    // capture panel anyway for review
+                }
+
+                if (await page.Locator(".apply-panel--success").CountAsync() > 0)
+                {
+                    await Shot(page, tag, "09-applied-encourage-tip");
+                }
             }
 
-            if (await page.Locator(".apply-panel--success").CountAsync() > 0)
-            {
-                await Shot(page, tag, "09-applied-encourage-tip");
-            }
-        }
-
-        swApply.Stop();
-        _report.TimingMs["apply_flow"] = swApply.ElapsedMilliseconds;
-        FixEvidencePublisher.PublishItem(
-            "03-no-tests-apply-and-tip",
-            "07-vacancy-match",
-            "07-vacancy-encourage-tip",
-            "09-applied",
-            "09-applied-encourage-tip",
-            "08-day-in-life");
-        FixEvidencePublisher.CopyFileToItem("03-no-tests-apply-and-tip", Path.Combine(Root, "metrics.json"), "metrics.json");
+            swApply.Stop();
+            _report.TimingMs["apply_flow"] = swApply.ElapsedMilliseconds;
+            FixEvidencePublisher.PublishItem(
+                "03-no-tests-apply-and-tip",
+                "07-vacancy-match",
+                "07-vacancy-encourage-tip",
+                "09-applied",
+                "09-applied-encourage-tip",
+                "08-day-in-life");
+            FixEvidencePublisher.CopyFileToItem("03-no-tests-apply-and-tip", Path.Combine(Root, "metrics.json"), "metrics.json");
         }
 
         await Task.Delay(3_000);
