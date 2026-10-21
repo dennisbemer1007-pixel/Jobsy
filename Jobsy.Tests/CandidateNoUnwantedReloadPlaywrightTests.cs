@@ -152,6 +152,10 @@ public class CandidateNoUnwantedReloadPlaywrightTests
         Assert.Contains("Nieuwe versie beschikbaar", core, StringComparison.Ordinal);
         Assert.Contains("userRequestedReload", core, StringComparison.Ordinal);
 
+        var extras = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-extras.js"));
+        Assert.Contains("confirmSessionExpiredThenLogout", extras, StringComparison.Ordinal);
+        Assert.Contains("fetchSessionActivity(\"POST\").then(function (r) {\n                if (!sessionActivityOk(r)) {\n                    confirmSessionExpiredThenLogout();", extras, StringComparison.Ordinal);
+
         var sw = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/service-worker.published.js"));
         Assert.DoesNotContain("return self.skipWaiting();", sw, StringComparison.Ordinal);
 

@@ -31,14 +31,43 @@ public class ApiAuthRedirectGuardTests
     }
 
     [Fact]
-    public void Authenticated_html_navigation_may_redirect_to_login_on_api_401()
+    public void Authenticated_html_navigation_must_not_hijack_document_on_api_401()
     {
         var http = new DefaultHttpContext();
         http.Request.Headers.Accept = "text/html";
         http.Request.Path = "/employer/vacancies";
         http.User = Authed();
 
-        Assert.True(JobsyApiAuthHandler.ShouldRedirectHtmlNavigationToLogin(http));
+        Assert.False(JobsyApiAuthHandler.ShouldRedirectHtmlNavigationToLogin(http));
+    }
+
+    [Fact]
+    public void Api_auth_handler_does_not_hijack_html_document_on_api_session_notify()
+    {
+        var source = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Services", "JobsyApiAuthHandler.cs"));
+        var start = source.IndexOf("private async Task NotifySessionExpiredAsync", StringComparison.Ordinal);
+        var end = source.IndexOf("public static bool ShouldRedirectHtmlNavigationToLogin", StringComparison.Ordinal);
+        Assert.True(start >= 0 && end > start);
+        var notify = source.Substring(start, end - start);
+        Assert.Contains("Never hijack the HTML document when an API call returns 401", notify, StringComparison.Ordinal);
+        Assert.DoesNotContain("AppendReturnUrl(\"/login?error=session-expired\"", notify, StringComparison.Ordinal);
+        Assert.DoesNotContain("/login?error=session-expired", notify, StringComparison.Ordinal);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
     }
 
     [Fact]
@@ -67,7 +96,7 @@ public class ApiAuthRedirectGuardTests
     }
 
     [Fact]
-    public void Staff_html_401_still_goes_to_the_staff_login()
+    public void Staff_html_401_does_not_hijack_document_on_leerling_paths()
     {
         var http = new DefaultHttpContext();
         http.Request.Headers.Accept = "text/html";
@@ -75,7 +104,7 @@ public class ApiAuthRedirectGuardTests
         http.User = Authed();
 
         Assert.False(JobsyApiAuthHandler.IsPupilPrincipal(http.User));
-        Assert.True(JobsyApiAuthHandler.ShouldRedirectHtmlNavigationToLogin(http));
+        Assert.False(JobsyApiAuthHandler.ShouldRedirectHtmlNavigationToLogin(http));
     }
 
     private static ClaimsPrincipal Authed()
