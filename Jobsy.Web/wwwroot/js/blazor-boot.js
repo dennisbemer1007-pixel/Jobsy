@@ -15,6 +15,7 @@
     var reconnectMutating = false;
     var reconnectObsFrame = 0;
     var pendingReloadReason = null;
+    var pendingAssignHref = null;
 
     function isBrowserOnline() {
         try {
@@ -22,6 +23,22 @@
         } catch (e) {
             return true;
         }
+    }
+
+    function reconnectPendingOffline() {
+        try {
+            if (document.documentElement.hasAttribute("data-lobsy-reconnect-active")) {
+                return true;
+            }
+            if (reconnectModalVisible()) {
+                return true;
+            }
+        } catch (e) { }
+        return false;
+    }
+
+    function shouldDeferDocumentNavigation() {
+        return !isBrowserOnline() || reconnectPendingOffline();
     }
 
     function deferReloadUntilOnline(reason) {
@@ -32,13 +49,41 @@
         return false;
     }
 
-    function flushPendingReloadAfterOnline() {
-        if (!isBrowserOnline() || !pendingReloadReason) {
+    function deferAssignUntilOnline(href, reason) {
+        pendingAssignHref = href;
+        try {
+            console.info(
+                "[lobsy] navigation deferred until online (" + (reason || "offline") + "): " + href
+            );
+        } catch (e) { }
+        return false;
+    }
+
+    function safeLocationAssign(href, reason) {
+        if (shouldDeferDocumentNavigation()) {
+            return deferAssignUntilOnline(href, reason);
+        }
+        allowDocumentReload();
+        window.location.assign(href);
+        return true;
+    }
+
+    function flushPendingAfterOnline() {
+        if (shouldDeferDocumentNavigation()) {
             return;
         }
-        var reason = pendingReloadReason;
+        var pendingHref = pendingAssignHref;
+        var pendingReload = pendingReloadReason;
+        pendingAssignHref = null;
         pendingReloadReason = null;
-        reloadPageThrottled(reason);
+        if (pendingHref) {
+            allowDocumentReload();
+            window.location.assign(pendingHref);
+            return;
+        }
+        if (pendingReload) {
+            reloadPageThrottled(pendingReload);
+        }
     }
 
     function allowDocumentReload() {
@@ -105,7 +150,7 @@
     };
 
     function reloadPageThrottled(reason) {
-        if (!isBrowserOnline()) {
+        if (shouldDeferDocumentNavigation()) {
             return deferReloadUntilOnline(reason);
         }
         var key = "lobsy:reload-ts";
@@ -203,8 +248,12 @@
             handleRejectedState();
             return;
         }
-        if (!circuitInteractive() && isBrowserOnline()) {
+        if (!circuitInteractive() && isBrowserOnline() && !reconnectPendingOffline()) {
             reloadPageThrottled("mobile-suspend-" + source);
+            return;
+        }
+        if (isBrowserOnline() && !circuitInteractive()) {
+            tryReconnect("suspend-" + source);
         }
     }
 
@@ -368,14 +417,13 @@
                 try {
                     console.warn("[lobsy] nav URL lag — assigning", expected);
                 } catch (e) { }
-                allowDocumentReload();
                 try {
                     var url = typeof href === "string" && href.indexOf("http") === 0
                         ? href
                         : expected + location.search + location.hash;
-                    window.location.assign(url);
+                    safeLocationAssign(url, "nav-url-lag");
                 } catch (e2) {
-                    window.location.assign(expected);
+                    safeLocationAssign(expected, "nav-url-lag");
                 }
             }
             requestAnimationFrame(function () {
@@ -393,8 +441,10 @@
                         try {
                             console.warn("[lobsy] candidate nav URL stuck — assigning", expected);
                         } catch (e) { }
-                        allowDocumentReload();
-                        window.location.assign(expected + location.search + location.hash);
+                        safeLocationAssign(
+                            expected + location.search + location.hash,
+                            "nav-url-stuck"
+                        );
                     } else {
                         requestAnimationFrame(tick);
                     }
@@ -405,7 +455,7 @@
                     return;
                 }
                 if (Date.now() >= deadline) {
-                    if (!isBrowserOnline()) {
+                    if (shouldDeferDocumentNavigation()) {
                         deferReloadUntilOnline("nav-desync-" + expected);
                         return;
                     }
@@ -474,7 +524,7 @@
                 }
                 ev.preventDefault();
                 ev.stopImmediatePropagation();
-                window.location.assign(anchor.href);
+                safeLocationAssign(anchor.href, "pre-circuit-nav");
             },
             true
         );
@@ -499,8 +549,7 @@
                 if (!navInteractive) {
                     ev.preventDefault();
                     ev.stopImmediatePropagation();
-                    allowDocumentReload();
-                    window.location.assign(href);
+                    safeLocationAssign(href, "nav-not-interactive");
                     return;
                 }
                 ev.preventDefault();
@@ -775,7 +824,7 @@
         if (path && path !== "/login") {
             target += "&returnUrl=" + encodeURIComponent(path);
         }
-        window.location.assign(target);
+        safeLocationAssign(target, "session-expired-login");
     }
 
     function bindReconnectUi() {
@@ -859,7 +908,9 @@
         window.addEventListener("pageshow", onPageShow);
         window.addEventListener("online", function () {
             onResume();
-            flushPendingReloadAfterOnline();
+            tryReconnect("online").finally(function () {
+                flushPendingAfterOnline();
+            });
         });
         window.setInterval(function () {
             noteTryingState();

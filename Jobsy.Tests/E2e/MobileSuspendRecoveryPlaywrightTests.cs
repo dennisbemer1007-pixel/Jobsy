@@ -77,6 +77,73 @@ public sealed class MobileSuspendRecoveryPlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Sixty_seconds_offline_does_not_document_navigate_to_paspoort_then_recovers_online()
+    {
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        });
+
+        var page = await context.NewPageAsync();
+        var failedPaspoortNavigations = 0;
+        page.RequestFailed += (_, req) =>
+        {
+            if (req.IsNavigationRequest
+                && req.Url.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase))
+            {
+                failedPaspoortNavigations++;
+            }
+        };
+
+        var signIn = $"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/candidate/ontdekkingsreis")}";
+        await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.Load });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
+
+        await context.SetOfflineAsync(true);
+        await page.WaitForTimeoutAsync(60_000);
+
+        await page.EvaluateAsync(
+            """
+            async () => {
+              if (window.lobsyCircuit && typeof window.lobsyCircuit.recoverAfterSuspend === 'function') {
+                await window.lobsyCircuit.recoverAfterSuspend('playwright-offline-60s');
+              }
+            }
+            """);
+
+        Assert.Contains("/candidate/ontdekkingsreis", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, failedPaspoortNavigations);
+
+        await context.SetOfflineAsync(false);
+        await page.WaitForFunctionAsync("() => navigator.onLine === true", null, new() { Timeout = 10_000 });
+
+        var recovered = await page.EvaluateAsync<bool>(
+            """
+            async () => {
+              if (!window.lobsyCircuit || typeof window.lobsyCircuit.recoverAfterSuspend !== 'function') {
+                return false;
+              }
+              await window.lobsyCircuit.recoverAfterSuspend('playwright-online');
+              return document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'
+                && !document.documentElement.hasAttribute('data-lobsy-reconnect-active');
+            }
+            """);
+        Assert.True(recovered);
+
+        await page.Locator("nav.bottom-nav a[href='/candidate/paspoort']").First.ClickAsync(new() { Timeout = 15_000 });
+        await page.WaitForURLAsync(
+            u => u.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 30_000 });
+    }
+
+    [Fact]
     public async Task Stuck_reconnect_trying_is_demoted_to_failed_with_visible_actions()
     {
         var baseUrl = _web!.ServerAddress.TrimEnd('/');
