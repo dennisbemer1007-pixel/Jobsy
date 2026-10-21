@@ -50,6 +50,7 @@
     @if (OnboardingRustig.Enabled)
     {
         <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
+        <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261021-prod1" />
     }
 </HeadContent>
 
@@ -168,14 +169,8 @@
     {
         @if (OnboardingRustig.Enabled)
         {
-            <OnboardingRustigWelcome Title="@WelcomeTitle"
-                                     Lead="@Culture["Onboarding.Rustig.WelcomeLead"]"
-                                     Hint="@Culture["Onboarding.Welcome.Hint"]"
-                                     Cta="@Culture["Onboarding.Welcome.CtaRustig"]"
-                                     Error="@_error"
-                                     Busy="@(_busy || _loading)"
-                                     OnBegin="BeginAsync"
-                                     OnLater="LaterAsync" />
+            <OnboardingStartJourneyWelcome Title="@WelcomeTitle"
+                                           Error="@_error" />
         }
         else
         {

@@ -304,6 +304,20 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.DreamOwnLabel"] = english ? "Or type your own dream job" : "Of typ je eigen droombaan";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.CtaRustig"] = english ? "Get started" : "Aan de slag";
+        map["Onboarding.StartJourney.Here"] = english ? "You are here" : "Je bent hier";
+        map["Onboarding.StartJourney.Hint"] = english
+            ? "Your answers are saved when you click Next. You can stop anytime and continue later where you left off."
+            : "Je antwoorden worden bewaard als je op Volgende klikt. Stoppen mag, je gaat later verder waar je was.";
+        map["Onboarding.StartJourney.Stop1Sub"] = english ? "Where and when" : "Waar en wanneer";
+        map["Onboarding.StartJourney.Stop2Sub"] = english ? "Optional" : "Optioneel";
+        map["Onboarding.StartJourney.Stop3Sub"] = english ? "1 step" : "1 stap";
+        map["Onboarding.StartJourney.Stop4Sub"] = english ? "4 short tests" : "4 korte tests";
+        map["Onboarding.StartJourney.Stop5Sub"] = english ? "Your result" : "Je resultaat";
+        map["Onboarding.StartJourney.Sidebar1"] = english ? "3 steps" : "3 stappen";
+        map["Onboarding.StartJourney.Sidebar2"] = english ? "optional" : "optioneel";
+        map["Onboarding.StartJourney.Sidebar3"] = english ? "1 step" : "1 stap";
+        map["Onboarding.StartJourney.Sidebar4"] = english ? "4 short tests" : "4 korte tests";
+        map["Onboarding.StartJourney.Sidebar5"] = english ? "your result" : "je resultaat";
         map["Onboarding.Welcome.OverJou"] = english ? "Where you live and when you can work" : "Waar je woont en wanneer je kunt"; map["Onboarding.Welcome.Background"] = english ? "Your background" : "Je achtergrond"; map["Onboarding.Welcome.BackgroundLead"] = english ? "Work and education, you can skip it" : "Werk en opleiding, mag je overslaan"; map["Onboarding.Welcome.Dream"] = english ? "Your dream job" : "Je droombaan"; map["Onboarding.Welcome.DreamLead"] = english ? "Where do you want to go?" : "Waar wil je naartoe?"; map["Onboarding.Welcome.TestsLead"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Welcome.Time2"] = "2 min"; map["Onboarding.Welcome.Time1"] = "1 min"; map["Onboarding.Welcome.TimeHalf"] = "½ min";
         map["Onboarding.IllustratedSidebarTitle"] = english ? "Tip for this step" : "Tip bij deze stap";
         map["Onboarding.IllustratedSidebar.SubstepsAria"] = english ? "Steps in this onboarding flow" : "Stappen in deze onboarding";

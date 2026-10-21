@@ -202,6 +202,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
     {
         private IHost? _kestrel;
         internal int SavedStep { get; set; } = 1;
+        internal string? OnboardingSource;
         internal int ProfilePutCount;
 
         public string ServerAddress { get; private set; } = "";
@@ -361,7 +362,18 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     factory.SavedStep = stepProp.GetInt32();
                 }
 
-                return JsonResponse(new { currentStep = factory.SavedStep, shouldShow = true, steps = Array.Empty<object>() });
+                if (doc.RootElement.TryGetProperty("source", out var sourceProp) && sourceProp.ValueKind == JsonValueKind.String)
+                {
+                    factory.OnboardingSource = sourceProp.GetString();
+                }
+
+                return JsonResponse(new
+                {
+                    currentStep = factory.SavedStep,
+                    shouldShow = true,
+                    source = factory.OnboardingSource,
+                    steps = Array.Empty<object>(),
+                });
             }
 
             if (path.Contains("/profile", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
@@ -376,6 +388,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 {
                     currentStep = factory.SavedStep,
                     shouldShow = true,
+                    source = factory.OnboardingSource,
                     steps = Array.Empty<object>(),
                 },
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => new MeProfile

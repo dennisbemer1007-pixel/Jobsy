@@ -56,6 +56,8 @@ The fix is not “more debouncing on the server” but **no server round-trip pe
 
 Assets: `Jobsy.Web/wwwroot/js/onboarding-client-form.js`, registered on `/candidate/start` via `PageAssetCatalog`.
 
+The **start journey welcome** (`/candidate/start` when step 1 welcome shows) is static markup plus CSS (`onboarding-start-journey.css`): no `@onclick` on the screen. **Aan de slag** posts to `POST /api/onboarding-client/dismiss-welcome` (antiforgery), then redirects back to step 1.
+
 ## Shared JS helper (`jobsyOnboardingClient`)
 
 ```javascript

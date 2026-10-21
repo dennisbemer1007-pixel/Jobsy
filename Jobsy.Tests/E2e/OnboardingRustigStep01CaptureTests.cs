@@ -36,7 +36,7 @@ public sealed class OnboardingRustigStep01CaptureTests
 
         await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, "rustig-u1b");
         await FunctionalOnboardingInteractivityHelpers.OpenStartWelcomeAsync(page, baseUrl);
-        await page.Locator("[data-ob-rustig-screen=start]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator("[data-ob-rustig-screen=start-journey]").WaitForAsync(new() { Timeout = 60_000 });
         await page.GetByTestId("onboarding-begin").ClickAsync(new() { Force = mobile });
         await page.Locator("[data-ob-rustig-screen=step-01]").WaitForAsync(new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(800);
