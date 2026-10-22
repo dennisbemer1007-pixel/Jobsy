@@ -85,10 +85,11 @@
         };
     }
 
-    function putOnboardingStep(root, step, collectFn, advance, skipOptional) {
+    function putOnboardingStep(root, step, collectFn, advance, skipOptional, goBack) {
         var body = collectFn();
         body.advance = !!advance;
         body.skipOptional = !!skipOptional;
+        body.back = !!goBack;
         var af = readAntiforgery(root);
         var headers = { "Content-Type": "application/json" };
         if (af.token) headers[af.header] = af.token;
@@ -113,7 +114,7 @@
             if (saveTimer) clearTimeout(saveTimer);
             saveTimer = setTimeout(function () {
                 saveTimer = null;
-                putOnboardingStep(root, step, collectFn, false, false).catch(function () { });
+                putOnboardingStep(root, step, collectFn, false, false, false).catch(function () { });
             }, 500);
         }
 
@@ -128,7 +129,7 @@
                 clearTimeout(saveTimer);
                 saveTimer = null;
             }
-            putOnboardingStep(root, step, collectFn, true, !!skipOptional)
+            putOnboardingStep(root, step, collectFn, true, !!skipOptional, false)
                 .then(function (res) {
                     return res.json().then(function (body) {
                         return { ok: res.ok, body: body };
@@ -172,6 +173,8 @@
             skipBtn.__obStepSkipBound = true;
             skipBtn.addEventListener("click", function () { runAdvance(true); });
         }
+
+        root.__obRunAdvance = runAdvance;
 
         return { scheduleSave: scheduleSave };
     }
@@ -252,26 +255,50 @@
         bindSaveEvents(birth);
         bindSaveEvents(phone);
 
+        function syncWorkStatusUi() {
+            if (!grid) return;
+            grid.querySelectorAll(".work-status-chip[data-ob-code]").forEach(function (btn) {
+                var code = btn.getAttribute("data-ob-code");
+                var selected = state.workStatuses.has(code);
+                btn.classList.toggle("is-selected", selected);
+                btn.setAttribute("aria-pressed", selected ? "true" : "false");
+                var check = btn.querySelector(".lobsy-choice-tile__check");
+                if (selected && !check) {
+                    btn.insertAdjacentHTML("beforeend", '<span class="lobsy-choice-tile__check" aria-hidden="true">✓</span>');
+                } else if (!selected && check) {
+                    check.remove();
+                }
+            });
+        }
+
         function renderWorkStatus() {
             if (!grid) return;
+            if (grid.getAttribute("data-ob-work-bound") === "1") {
+                syncWorkStatusUi();
+                return;
+            }
+            grid.setAttribute("data-ob-work-bound", "1");
             grid.innerHTML = "";
             (initial.workStatusOptions || []).forEach(function (opt) {
                 var btn = document.createElement("button");
                 btn.type = "button";
-                var selected = state.workStatuses.has(opt.code);
-                btn.className = "lobsy-choice-tile work-status-chip" + (selected ? " is-selected" : "");
-                btn.setAttribute("aria-pressed", selected ? "true" : "false");
+                btn.className = "lobsy-choice-tile work-status-chip";
+                btn.setAttribute("data-ob-code", opt.code);
+                btn.setAttribute("aria-pressed", "false");
                 var iconHtml = opt.icon ? ('<span class="lobsy-choice-tile__icon" aria-hidden="true">' + opt.icon + "</span>") : "";
-                var checkHtml = selected ? ('<span class="lobsy-choice-tile__check" aria-hidden="true">✓</span>') : "";
-                btn.innerHTML = iconHtml + '<span class="lobsy-choice-tile__label">' + escapeHtml(opt.label) + "</span>" + checkHtml;
-                btn.addEventListener("click", function () {
-                    if (state.workStatuses.has(opt.code)) state.workStatuses.delete(opt.code);
-                    else state.workStatuses.add(opt.code);
-                    renderWorkStatus();
-                    scheduleSave();
-                });
+                btn.innerHTML = iconHtml + '<span class="lobsy-choice-tile__label">' + escapeHtml(opt.label) + "</span>";
                 grid.appendChild(btn);
             });
+            grid.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".work-status-chip[data-ob-code]");
+                if (!btn || !grid.contains(btn)) return;
+                var code = btn.getAttribute("data-ob-code");
+                if (state.workStatuses.has(code)) state.workStatuses.delete(code);
+                else state.workStatuses.add(code);
+                syncWorkStatusUi();
+                scheduleSave();
+            });
+            syncWorkStatusUi();
         }
         renderWorkStatus();
 
@@ -567,7 +594,7 @@
         return state;
     }
 
-    function mountChoiceGrid(container, options, selectedSet, multi, onChange) {
+    function paintChoiceGrid(container, options, selectedSet, multi) {
         if (!container) return;
         container.innerHTML = "";
         (options || []).forEach(function (opt) {
@@ -576,22 +603,51 @@
             var btn = document.createElement("button");
             btn.type = "button";
             btn.className = "lobsy-choice-tile";
+            btn.setAttribute("data-ob-code", code);
             var on = selectedSet.has(code);
             btn.setAttribute("aria-pressed", on ? "true" : "false");
             btn.textContent = label;
-            btn.addEventListener("click", function () {
-                if (multi) {
-                    if (selectedSet.has(code)) selectedSet.delete(code);
-                    else selectedSet.add(code);
-                } else {
-                    selectedSet.clear();
-                    selectedSet.add(code);
-                }
-                onChange();
-                mountChoiceGrid(container, options, selectedSet, multi, onChange);
-            });
             container.appendChild(btn);
         });
+    }
+
+    function syncChoiceGridPressed(container, selectedSet, multi) {
+        if (!container) return;
+        container.querySelectorAll(".lobsy-choice-tile[data-ob-code]").forEach(function (btn) {
+            var code = btn.getAttribute("data-ob-code");
+            var on = selectedSet.has(code);
+            btn.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+    }
+
+    function mountChoiceGrid(container, options, selectedSet, multi, onChange) {
+        if (!container || container.getAttribute("data-ob-choice-bound") === "1") return;
+        container.setAttribute("data-ob-choice-bound", "1");
+        paintChoiceGrid(container, options, selectedSet, multi);
+        container.addEventListener("click", function (ev) {
+            var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
+            if (!btn || !container.contains(btn)) return;
+            var code = btn.getAttribute("data-ob-code");
+            if (multi) {
+                if (selectedSet.has(code)) selectedSet.delete(code);
+                else selectedSet.add(code);
+            } else {
+                selectedSet.clear();
+                selectedSet.add(code);
+            }
+            syncChoiceGridPressed(container, selectedSet, multi);
+            if (onChange) onChange();
+        });
+    }
+
+    function readChoiceCodes(container) {
+        var codes = [];
+        if (!container) return codes;
+        container.querySelectorAll('.lobsy-choice-tile[aria-pressed="true"]').forEach(function (btn) {
+            var code = btn.getAttribute("data-ob-code");
+            if (code) codes.push(code);
+        });
+        return codes;
     }
 
     function mountStep3(root, initial) {
@@ -603,21 +659,27 @@
         var customInput = root.querySelector("[data-ob-client=customTravel]");
 
         function paintTravel() {
-            if (!vGrid) return;
+            if (!vGrid || vGrid.getAttribute("data-ob-travel-bound") === "1") return;
+            vGrid.setAttribute("data-ob-travel-bound", "1");
             vGrid.innerHTML = "";
             (initial.travelChoices || [10, 20, 30, 45]).forEach(function (m) {
                 var btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "lobsy-choice-tile";
+                btn.setAttribute("data-ob-travel", String(m));
                 btn.setAttribute("aria-pressed", (!custom && travel === m) ? "true" : "false");
                 btn.textContent = String(m);
-                btn.addEventListener("click", function () {
-                    custom = false;
-                    travel = m;
-                    if (customInput) customInput.hidden = true;
-                    paintTravel();
-                });
                 vGrid.appendChild(btn);
+            });
+            vGrid.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".lobsy-choice-tile[data-ob-travel]");
+                if (!btn) return;
+                custom = false;
+                travel = parseInt(btn.getAttribute("data-ob-travel"), 10) || travel;
+                if (customInput) customInput.hidden = true;
+                vGrid.querySelectorAll(".lobsy-choice-tile[data-ob-travel]").forEach(function (b) {
+                    b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+                });
             });
         }
 
@@ -625,24 +687,38 @@
         paintTravel();
         if (customInput) {
             customInput.hidden = !custom;
-            customInput.value = travel;
-            customInput.addEventListener("input", function () {
+            customInput.value = custom ? travel : travel;
+            customInput.addEventListener("change", function () {
                 custom = true;
                 travel = parseInt(customInput.value, 10) || travel;
             });
         }
 
-        var state = {
+        return {
             collect: function () {
+                var transport = readChoiceCodes(tGrid);
+                var pickedTravel = null;
+                var isCustom = custom;
+                if (vGrid) {
+                    var pressed = vGrid.querySelector('.lobsy-choice-tile[aria-pressed="true"]');
+                    if (pressed) {
+                        isCustom = false;
+                        pickedTravel = parseInt(pressed.getAttribute("data-ob-travel"), 10);
+                    }
+                }
+                if (customInput && !customInput.hidden && customInput.value) {
+                    isCustom = true;
+                    pickedTravel = parseInt(customInput.value, 10) || pickedTravel || travel;
+                }
+                var maxT = pickedTravel || travel;
                 return {
-                    transport: Array.from(selected),
-                    maxTravel: travel,
-                    selectedTravel: custom ? null : travel,
-                    customTravel: custom
+                    transport: transport,
+                    maxTravel: maxT,
+                    selectedTravel: isCustom ? null : maxT,
+                    customTravel: isCustom
                 };
             }
         };
-        return state;
     }
 
     function mountStep4(root, initial) {
@@ -687,93 +763,135 @@
         mountChoiceGrid(grid, initial.levels || [], selected, false, function () { });
         return {
             collect: function () {
-                var code = selected.size ? Array.from(selected)[0] : "";
-                return { education: code };
+                var codes = readChoiceCodes(grid);
+                return { education: codes.length ? codes[0] : "" };
             }
         };
     }
 
     function mountStep6(root, initial) {
-        var dream = initial.dream || "";
         var input = root.querySelector("[data-ob-client=dreamInput]");
         var grid = root.querySelector("[data-ob-client=dreamGrid]");
-        if (input) input.value = initial.dreamSearch || dream;
+        if (input) input.value = initial.dreamSearch || initial.dream || "";
 
-        function pick(title) {
-            dream = title;
-            if (input) input.value = title;
-            paint();
+        function syncDreamTiles(active) {
+            if (!grid) return;
+            grid.querySelectorAll(".ob-rustig__dream").forEach(function (btn) {
+                var title = btn.getAttribute("data-ob-dream") || btn.textContent;
+                var on = title === active;
+                btn.classList.toggle("is-on", on);
+                btn.setAttribute("aria-pressed", on ? "true" : "false");
+            });
         }
 
-        function paint() {
-            if (!grid) return;
+        function paintDreamGrid() {
+            if (!grid || grid.getAttribute("data-ob-dream-bound") === "1") return;
+            grid.setAttribute("data-ob-dream-bound", "1");
             grid.innerHTML = "";
             (initial.dreamTitles || []).forEach(function (title) {
                 var btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = "ob-rustig__dream" + (dream === title ? " is-on" : "");
-                btn.setAttribute("aria-pressed", dream === title ? "true" : "false");
+                btn.className = "ob-rustig__dream";
+                btn.setAttribute("data-ob-dream", title);
+                btn.setAttribute("aria-pressed", "false");
                 btn.textContent = title;
-                btn.addEventListener("click", function () { pick(title); });
                 grid.appendChild(btn);
             });
+            grid.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".ob-rustig__dream[data-ob-dream]");
+                if (!btn) return;
+                var title = btn.getAttribute("data-ob-dream");
+                if (input) input.value = title;
+                syncDreamTiles(title);
+            });
+            syncDreamTiles(input ? input.value.trim() : "");
         }
-        paint();
-        if (input) input.addEventListener("input", function () { dream = input.value; paint(); });
+        paintDreamGrid();
+        if (input) {
+            input.addEventListener("input", function () {
+                syncDreamTiles(input.value.trim());
+            });
+        }
 
         return {
             collect: function () {
-                var val = input ? input.value.trim() : dream;
+                var val = input ? input.value.trim() : "";
                 return { dream: val, dreamSearch: val };
             }
         };
     }
 
-    function mountStep7(root, initial) {
+    function readMiniAnswersFromDom(host) {
+        var map = {};
+        if (!host) return map;
+        host.querySelectorAll(".ob-client-mini-q").forEach(function (card) {
+            var qid = parseInt(card.getAttribute("data-ob-qid"), 10);
+            if (!qid) return;
+            var pressed = card.querySelector('.ob-client-mini-likert .lobsy-choice-tile[aria-pressed="true"]');
+            if (pressed) {
+                map[qid] = parseInt(pressed.textContent, 10);
+            }
+        });
+        return map;
+    }
+
+    function mountMiniHost(host, initial) {
+        if (!host || host.getAttribute("data-ob-mini-bound") === "1") return;
+        host.setAttribute("data-ob-mini-bound", "1");
+        host.innerHTML = "";
+        (initial.questions || []).forEach(function (q) {
+            var card = document.createElement("div");
+            card.className = "ob-client-mini-q";
+            card.setAttribute("data-ob-qid", String(q.id));
+            card.innerHTML = "<p>" + escapeHtml(q.text) + "</p>";
+            var row = document.createElement("div");
+            row.className = "ob-client-mini-likert";
+            var saved = (initial.answers || {})[q.id];
+            for (var v = 1; v <= 5; v++) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "lobsy-choice-tile";
+                btn.setAttribute("data-ob-likert", String(v));
+                btn.setAttribute("aria-pressed", saved === v ? "true" : "false");
+                btn.textContent = String(v);
+                row.appendChild(btn);
+            }
+            card.appendChild(row);
+            host.appendChild(card);
+        });
+        host.addEventListener("click", function (ev) {
+            var btn = ev.target.closest(".lobsy-choice-tile[data-ob-likert]");
+            if (!btn) return;
+            var card = btn.closest(".ob-client-mini-q");
+            if (!card) return;
+            card.querySelectorAll(".lobsy-choice-tile[data-ob-likert]").forEach(function (b) {
+                b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+            });
+        });
+    }
+
+    function mountStep7Combined(root, initial) {
         var box = root.querySelector("[data-ob-client=consent]");
         if (box) box.checked = !!initial.consentRequested;
+        var host = root.querySelector("[data-ob-client=miniRoot]");
+        mountMiniHost(host, initial);
         return {
             collect: function () {
-                return { consentRequested: box ? box.checked : false };
+                var payload = { consentRequested: box ? box.checked : false };
+                var answers = readMiniAnswersFromDom(host);
+                if (Object.keys(answers).length) payload.answers = answers;
+                return payload;
             }
         };
     }
 
     function mountMini(root, initial) {
-        var answers = Object.assign({}, initial.answers || {});
         var host = root.querySelector("[data-ob-client=miniRoot]");
         if (!host) host = root;
-
-        function render() {
-            host.innerHTML = "";
-            (initial.questions || []).forEach(function (q) {
-                var card = document.createElement("div");
-                card.className = "ob-client-mini-q";
-                card.innerHTML = "<p>" + escapeHtml(q.text) + "</p>";
-                var row = document.createElement("div");
-                row.className = "ob-client-mini-likert";
-                for (var v = 1; v <= 5; v++) {
-                    (function (value) {
-                        var btn = document.createElement("button");
-                        btn.type = "button";
-                        btn.className = "lobsy-choice-tile";
-                        btn.setAttribute("aria-pressed", answers[q.id] === value ? "true" : "false");
-                        btn.textContent = String(value);
-                        btn.addEventListener("click", function () {
-                            answers[q.id] = value;
-                            render();
-                        });
-                        row.appendChild(btn);
-                    })(v);
-                }
-                card.appendChild(row);
-                host.appendChild(card);
-            });
-        }
-        render();
+        mountMiniHost(host, initial);
         return {
             collect: function () {
-                return { answers: answers };
+                return { answers: readMiniAnswersFromDom(host) };
             }
         };
     }
@@ -785,8 +903,8 @@
         if (step === 5) return mountStep5(root, initial);
         if (step === 6) return mountStep6(root, initial);
         if (step === 7) {
-            if (initial.questions && initial.questions.length) return mountMini(root, initial);
-            return mountStep7(root, initial);
+            if (initial.hasConsent) return mountMini(root, initial);
+            return mountStep7Combined(root, initial);
         }
         if (step >= 8 && step <= 10) return mountMini(root, initial);
         return mountStep1(root, initial);
@@ -842,6 +960,106 @@
             window.__jobsyKompasCompleteRef = null;
         }
     };
+
+    function activeClientStepRoot() {
+        return document.querySelector("[data-ob-client-step]");
+    }
+
+    function activeClientStepNumber() {
+        var root = activeClientStepRoot();
+        if (!root) return 0;
+        return parseInt(root.getAttribute("data-ob-client-step"), 10) || 0;
+    }
+
+    function collectForRoot(root, step, state) {
+        if (state && typeof state.collect === "function") {
+            return state.collect();
+        }
+        if (roots && root) {
+            var st = roots.get(root);
+            if (st && typeof st.collect === "function") {
+                return st.collect();
+            }
+        }
+        return {};
+    }
+
+    function runStepBack(root, step, collectFn) {
+        var errEl = root ? root.querySelector("[data-ob-step-error]") : null;
+        if (errEl) {
+            errEl.hidden = true;
+            errEl.textContent = "";
+        }
+        return putOnboardingStep(root, step, collectFn, false, false, true)
+            .then(function (res) {
+                return res.json().then(function (body) {
+                    return { ok: res.ok, body: body };
+                }).catch(function () {
+                    return { ok: res.ok, body: {} };
+                });
+            })
+            .then(function (result) {
+                if (result.ok && result.body && result.body.redirectUrl) {
+                    window.location.assign(result.body.redirectUrl);
+                    return;
+                }
+                if (result.ok) {
+                    window.location.reload();
+                    return;
+                }
+                var msg = (result.body && result.body.message) || "Terug gaan mislukt. Probeer het opnieuw.";
+                if (errEl) {
+                    errEl.textContent = msg;
+                    errEl.hidden = false;
+                }
+            })
+            .catch(function () {
+                if (errEl) {
+                    errEl.textContent = "Verbinding mislukt. Probeer het opnieuw.";
+                    errEl.hidden = false;
+                }
+            });
+    }
+
+    function suppressRustigDuplicateNav() {
+        document.querySelectorAll(".ob-rustig__canvas .ob-step-actions").forEach(function (nav) {
+            nav.setAttribute("hidden", "hidden");
+            nav.setAttribute("aria-hidden", "true");
+            nav.setAttribute("inert", "");
+        });
+    }
+
+    function bindWizardChromeNav() {
+        suppressRustigDuplicateNav();
+        document.querySelectorAll('[data-testid="onboarding-next"]').forEach(function (btn) {
+            if (btn.__obChromeNextBound) return;
+            btn.__obChromeNextBound = true;
+            btn.addEventListener("click", function (ev) {
+                var root = activeClientStepRoot();
+                if (!root || typeof root.__obRunAdvance !== "function") return;
+                ev.preventDefault();
+                ev.stopImmediatePropagation();
+                root.__obRunAdvance(false);
+            }, true);
+        });
+        document.querySelectorAll('[data-testid="onboarding-back"], .ob-wizard__back-footer, .ob-wizard__back').forEach(function (btn) {
+            if (btn.__obChromeBackBound) return;
+            btn.__obChromeBackBound = true;
+            btn.addEventListener("click", function (ev) {
+                var step = activeClientStepNumber();
+                if (!step || step <= 1) return;
+                var root = activeClientStepRoot();
+                if (!root) return;
+                ev.preventDefault();
+                ev.stopImmediatePropagation();
+                if (btn.disabled) return;
+                btn.disabled = true;
+                var st = roots ? roots.get(root) : null;
+                runStepBack(root, step, function () { return collectForRoot(root, step, st); })
+                    .finally(function () { btn.disabled = false; });
+            }, true);
+        });
+    }
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
@@ -937,6 +1155,7 @@
         autoMountClientSteps();
         bindWelcomeBegin();
         bindKompasComplete();
+        bindWizardChromeNav();
     }
 
     if (document.readyState === "loading") {
@@ -951,6 +1170,7 @@
             autoMountClientSteps();
             bindWelcomeBegin();
             bindKompasComplete();
+            bindWizardChromeNav();
         });
         domObs.observe(document.documentElement, { childList: true, subtree: true });
     }
