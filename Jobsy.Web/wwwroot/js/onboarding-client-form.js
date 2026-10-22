@@ -840,18 +840,36 @@
             btn.setAttribute("data-ob-code", code);
             var on = selectedSet.has(code);
             btn.setAttribute("aria-pressed", on ? "true" : "false");
+            if (on) btn.classList.add("is-selected");
             btn.textContent = label;
             container.appendChild(btn);
         });
+    }
+
+    function syncChoiceTileVisual(btn, on) {
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        btn.classList.toggle("is-selected", on);
+        if (!btn.querySelector(".lobsy-choice-tile__label")) return;
+        var check = btn.querySelector(".lobsy-choice-tile__check");
+        if (on && !check) {
+            btn.insertAdjacentHTML("beforeend", '<span class="lobsy-choice-tile__check" aria-hidden="true">✓</span>');
+        } else if (!on && check) {
+            check.remove();
+        }
     }
 
     function syncChoiceGridPressed(container, selectedSet, multi) {
         if (!container) return;
         container.querySelectorAll(".lobsy-choice-tile[data-ob-code]").forEach(function (btn) {
             var code = btn.getAttribute("data-ob-code");
-            var on = selectedSet.has(code);
-            btn.setAttribute("aria-pressed", on ? "true" : "false");
+            syncChoiceTileVisual(btn, selectedSet.has(code));
         });
+    }
+
+    function updateTravelLegend(root, minutes) {
+        if (!root) return;
+        var el = root.querySelector("[data-ob-client=travelLegendValue]");
+        if (el) el.textContent = String(minutes);
     }
 
     function mountChoiceGrid(container, options, selectedSet, multi, onChange) {
@@ -941,7 +959,6 @@
                 if (selected.has(code)) selected.delete(code);
                 else selected.add(code);
                 syncChoiceGridPressed(tGrid, selected, true);
-                btn.classList.toggle("is-selected", selected.has(code));
                 saveNow();
             }, true);
         }
@@ -970,20 +987,31 @@
                 travel = parseInt(btn.getAttribute("data-ob-travel"), 10) || travel;
                 if (customInput) customInput.hidden = true;
                 vGrid.querySelectorAll(".lobsy-choice-tile[data-ob-travel]").forEach(function (b) {
-                    b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+                    var on = b === btn;
+                    b.setAttribute("aria-pressed", on ? "true" : "false");
+                    b.classList.toggle("is-selected", on);
                 });
+                updateTravelLegend(root, travel);
                 saveNow();
             }, true);
         }
 
         bindTransportGrid();
         bindTravelGrid();
+        updateTravelLegend(root, travel);
         if (customInput) {
             customInput.hidden = !custom;
             customInput.value = String(travel);
+            customInput.addEventListener("input", function () {
+                custom = true;
+                travel = parseInt(customInput.value, 10) || travel;
+                updateTravelLegend(root, travel);
+                saveNow();
+            });
             customInput.addEventListener("change", function () {
                 custom = true;
                 travel = parseInt(customInput.value, 10) || travel;
+                updateTravelLegend(root, travel);
                 saveNow();
             });
         }
@@ -995,12 +1023,15 @@
                 if (customInput) {
                     customInput.hidden = false;
                     customInput.focus();
+                    travel = parseInt(customInput.value, 10) || travel;
                 }
                 if (vGrid) {
                     vGrid.querySelectorAll(".lobsy-choice-tile[data-ob-travel]").forEach(function (b) {
                         b.setAttribute("aria-pressed", "false");
+                        b.classList.remove("is-selected");
                     });
                 }
+                updateTravelLegend(root, travel);
                 saveNow();
             });
         }
@@ -1013,12 +1044,65 @@
     }
 
     function mountStep4(root, initial) {
+        var ssrForm = root.closest("form[data-ob-ssr-form]");
+        var ssrValues = root.getAttribute("data-ob-ssr-values") === "1";
         var noWorkEl = root.querySelector("[data-ob-client=noWork]");
         var jobs = (initial.jobs || []).slice();
         var list = root.querySelector("[data-ob-client=jobsList]");
         var addBtn = root.querySelector("[data-ob-client=addJob]");
 
-        function render() {
+        function readJobsFromDom() {
+            var out = [];
+            if (!list) return out;
+            list.querySelectorAll("input[data-field=employer]").forEach(function (inp) {
+                out.push({
+                    employer: inp.value || "",
+                    startMonth: null,
+                    endMonth: null,
+                    isCurrent: false
+                });
+            });
+            return out;
+        }
+
+        function collectPayload() {
+            var noWork = noWorkEl ? noWorkEl.checked : false;
+            return { noWork: noWork, jobs: noWork ? [] : readJobsFromDom() };
+        }
+
+        function saveNow() {
+            if (ssrForm) {
+                putOnboardingStep(root, 4, collectPayload, false, false, false).catch(function () { });
+            }
+        }
+
+        function bindJobInput(inp) {
+            if (!inp || inp.__obJobInputBound) return;
+            inp.__obJobInputBound = true;
+            inp.addEventListener("input", saveNow);
+            inp.addEventListener("change", saveNow);
+        }
+
+        function appendJobRow(employer) {
+            if (!list) return;
+            var template = list.querySelector(".ob-client-job");
+            var row;
+            if (template) {
+                row = template.cloneNode(true);
+                var inp = row.querySelector("input[data-field=employer]");
+                if (inp) inp.value = employer || "";
+            } else {
+                row = document.createElement("div");
+                row.className = "ob-client-job ob-wizard__job ob-job-card";
+                row.innerHTML = "<label><input type=\"text\" data-field=\"employer\" data-ob-client=\"jobEmployer\" value=\""
+                    + escapeHtml(employer || "") + "\" autocomplete=\"organization\" /></label>";
+            }
+            row.setAttribute("data-job-index", String(list.querySelectorAll(".ob-client-job").length));
+            list.appendChild(row);
+            bindJobInput(row.querySelector("input[data-field=employer]"));
+        }
+
+        function renderWizardJobs() {
             if (!list) return;
             list.innerHTML = "";
             jobs.forEach(function (job, idx) {
@@ -1032,19 +1116,51 @@
             });
         }
 
-        if (noWorkEl) noWorkEl.checked = !!initial.noWork;
-        render();
-        if (addBtn) addBtn.addEventListener("click", function () {
-            jobs.push({ employer: "", startMonth: null, endMonth: null, isCurrent: false });
-            render();
-        });
-
-        return {
-            collect: function () {
-                var noWork = noWorkEl ? noWorkEl.checked : false;
-                return { noWork: noWork, jobs: noWork ? [] : jobs };
+        if (ssrValues) {
+            if (list) {
+                list.querySelectorAll("input[data-field=employer]").forEach(bindJobInput);
             }
-        };
+        } else {
+            if (noWorkEl) noWorkEl.checked = !!initial.noWork;
+            renderWizardJobs();
+            if (addBtn) addBtn.addEventListener("click", function () {
+                jobs.push({ employer: "", startMonth: null, endMonth: null, isCurrent: false });
+                renderWizardJobs();
+            });
+        }
+
+        if (noWorkEl && !noWorkEl.__obNoWorkBound) {
+            noWorkEl.__obNoWorkBound = true;
+            noWorkEl.addEventListener("change", function () {
+                if (noWorkEl.checked && list) {
+                    list.innerHTML = "";
+                } else if (!noWorkEl.checked && list && !list.querySelector(".ob-client-job")) {
+                    appendJobRow("");
+                }
+                saveNow();
+            });
+        }
+
+        if (addBtn && !addBtn.__obAddJobBound) {
+            addBtn.__obAddJobBound = true;
+            addBtn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                if (noWorkEl && noWorkEl.checked) return;
+                if (ssrValues) {
+                    appendJobRow("");
+                    saveNow();
+                } else {
+                    jobs.push({ employer: "", startMonth: null, endMonth: null, isCurrent: false });
+                    renderWizardJobs();
+                }
+            });
+        }
+
+        if (!ssrForm) {
+            wireObStepBff(root, 4, collectPayload);
+        }
+
+        return { collect: collectPayload, scheduleSave: saveNow };
     }
 
     function mountStep5(root, initial) {
@@ -1426,6 +1542,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
+        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 4) return;
         if (step === 1 || step === 2 || step === 3) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {

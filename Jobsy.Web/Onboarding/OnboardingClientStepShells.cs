@@ -4,6 +4,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Components.Shared;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Models;
 
 namespace Jobsy.Web.Onboarding;
 
@@ -17,7 +18,7 @@ internal static class OnboardingClientStepShells
             1 => BuildStep1(culture, draft),
             2 => BuildStep2(culture, draft),
             3 => BuildStep3(culture, draft),
-            4 => BuildStep4(culture),
+            4 => BuildStep4(culture, draft),
             5 => BuildStep5(culture),
             6 => BuildStep6(culture),
             7 when draft?.HasConsent == true => BuildMiniStep(culture),
@@ -167,16 +168,22 @@ internal static class OnboardingClientStepShells
         sb.Append("<fieldset>");
         sb.Append("<legend>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.MaxTravel"]));
-        sb.Append(" <strong>");
+        sb.Append(" <strong data-ob-client=\"travelLegendValue\">");
         sb.Append(maxTravel);
-        sb.Append(' ');
+        sb.Append("</strong> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Minutes"]));
-        sb.Append("</strong></legend>");
+        sb.Append("</legend>");
         sb.Append("<div data-ob-client=\"travelGrid\" class=\"ob-wizard__transport ob-wizard__travel-times lobsy-choice-grid\">");
         foreach (var minutes in travelPresets)
         {
             var on = !customTravel && maxTravel == minutes;
-            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile\" data-ob-travel=\"");
+            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile");
+            if (on)
+            {
+                sb.Append(" is-selected");
+            }
+
+            sb.Append("\" data-ob-travel=\"");
             sb.Append(minutes);
             sb.Append("\" aria-pressed=\"");
             sb.Append(on ? "true" : "false");
@@ -203,18 +210,40 @@ internal static class OnboardingClientStepShells
         return sb.ToString();
     }
 
-    private static string BuildStep4(CultureState culture)
+    private static string BuildStep4(CultureState culture, OnboardingProfileDraft? draft)
     {
+        draft ??= new OnboardingProfileDraft();
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
-        sb.Append("<label class=\"ob-wizard__check\"><input type=\"checkbox\" data-ob-client=\"noWork\" /> ");
+        sb.Append("<label class=\"ob-wizard__check\"><input type=\"checkbox\" data-ob-client=\"noWork\"");
+        if (draft.NoWork)
+        {
+            sb.Append(" checked");
+        }
+
+        sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.NoWorkExperience"]));
-        sb.Append("</label><div data-ob-client=\"jobsList\"></div>");
-        sb.Append("<button type=\"button\" class=\"btn btn-secondary\" data-ob-client=\"addJob\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AddJob"]));
-        sb.Append("</button>");
-        AppendStepNav(sb, culture, optionalSkip: true);
+        sb.Append("</label><div data-ob-client=\"jobsList\">");
+        if (!draft.NoWork)
+        {
+            var jobs = draft.Jobs.Count > 0 ? draft.Jobs : [new CandidateEmployerHistory()];
+            for (var i = 0; i < jobs.Count; i++)
+            {
+                var job = jobs[i];
+                sb.Append("<div class=\"ob-client-job ob-wizard__job ob-job-card\" data-job-index=\"");
+                sb.Append(i);
+                sb.Append("\"><label>");
+                sb.Append(WebUtility.HtmlEncode(culture["Profile.Employer"]));
+                sb.Append("<input type=\"text\" data-field=\"employer\" data-ob-client=\"jobEmployer\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(job.EmployerName ?? string.Empty));
+                sb.Append("\" autocomplete=\"organization\" /></label></div>");
+            }
+        }
+
         sb.Append("</div>");
+        sb.Append("<button type=\"button\" class=\"ob-wizard__add-job\" data-ob-client=\"addJob\" data-testid=\"onboarding-add-job\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AddJob"]));
+        sb.Append("</button></div>");
         return sb.ToString();
     }
 

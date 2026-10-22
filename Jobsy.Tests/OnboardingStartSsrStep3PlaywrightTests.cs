@@ -30,7 +30,7 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Ssr_step3_transport_persists_and_advances_to_wizard_step4(bool mobile)
+    public async Task Ssr_step3_tiles_legend_and_step4_ssr(bool mobile)
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
@@ -58,7 +58,11 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
 
         var bikeTile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=Fiets]");
         await bikeTile.ClickAsync(new() { Force = true });
-        await page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"30\"]").ClickAsync(new() { Force = true });
+        var travel20 = page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"20\"]");
+        await travel20.ClickAsync(new() { Force = true });
+        await Assertions.Expect(travel20).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        await Assertions.Expect(page.Locator("[data-ob-client=travelLegendValue]")).ToHaveTextAsync("20");
+        await Assertions.Expect(bikeTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         await page.WaitForTimeoutAsync(500);
 
         await page.GetByTestId("onboarding-back").ClickAsync();
@@ -70,11 +74,19 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
 
         bikeTile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=Fiets]");
         await Assertions.Expect(bikeTile).ToHaveAttributeAsync("aria-pressed", "true");
-        await Assertions.Expect(page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"30\"]"))
+        await Assertions.Expect(page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"20\"]"))
             .ToHaveAttributeAsync("aria-pressed", "true");
 
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=4**");
+        await page.WaitForURLAsync("**/candidate/start?step=4**");
+        await page.Locator("[data-ob-client-step=\"4\"]").WaitForAsync();
+        Assert.Equal(0, await page.Locator("script[src*='blazor.web.js']").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-skip").CountAsync());
+
+        await page.GetByTestId("onboarding-skip").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=5**");
     }
 
     private static async Task FillStep1AndGoToStep2Async(IPage page)

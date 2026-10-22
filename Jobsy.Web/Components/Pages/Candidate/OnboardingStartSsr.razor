@@ -35,14 +35,14 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-ssr" />
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step34" />
 </HeadContent>
 
 @if (_loading)
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
-else if (_step is >= 1 and <= 3)
+else if (_step is >= 1 and <= 4)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
     <form method="post"
@@ -139,6 +139,10 @@ else if (_step is >= 1 and <= 3)
                                           MobileUrl="@(OnboardingRustigPanoramaAssets.Mobile(_step) ?? OnboardingRustigPanoramaAssets.Desktop(_step))" />
 
                     <div class="ob-rustig__page-head">
+                        @if (_step is 4 or 5)
+                        {
+                            <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+                        }
                         <h1 tabindex="-1">@Culture[$"Onboarding.Step{_step}.Title"]</h1>
                         <p class="ob-rustig__lead">@Culture[$"Onboarding.Step{_step}.Lead"]</p>
                     </div>
@@ -163,6 +167,14 @@ else if (_step is >= 1 and <= 3)
                                         name="obNav"
                                         value="back"
                                         data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
+                            }
+                            @if (_step is 4 or 5)
+                            {
+                                <button type="submit"
+                                        class="ob-rustig__btn"
+                                        name="obNav"
+                                        value="skip"
+                                        data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
                             }
                             <button type="submit"
                                     class="ob-rustig__btn ob-rustig__btn--primary"
@@ -248,7 +260,7 @@ else if (_step is >= 1 and <= 3)
                 return;
             }
 
-            if (_step is < 1 or > 3)
+            if (_step is < 1 or > 4)
             {
                 RedirectTo(WizardUrl(_step));
                 return;
