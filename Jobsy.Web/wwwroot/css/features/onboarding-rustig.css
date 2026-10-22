@@ -2490,12 +2490,6 @@
     max-inline-size: none;
   }
 
-  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-rustig__hero-band {
-    inline-size: 100vw;
-    max-inline-size: 100vw;
-    margin-inline: calc(50% - 50vw);
-  }
-
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-rustig__chrome {
     position: relative;
     z-index: 3;

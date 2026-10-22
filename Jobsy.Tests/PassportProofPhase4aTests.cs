@@ -125,9 +125,9 @@ public class ProfileSectionsExtractionTests
         Assert.Contains("filter-sheet", tab);
         Assert.Contains("CandidateProfileEditor.MaxReferences", tab);
 
-        var passport = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Passport.razor"));
-        Assert.Contains("<PassportProofTab", passport);
-        Assert.DoesNotContain("Passport.Transitional.OpenData", passport.Split("passport-panel-proof")[1].Split("passport-panel-data")[0]);
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        Assert.Contains("AppendProofPanel", shells);
+        Assert.DoesNotContain("Passport.Transitional.OpenData", shells);
     }
 
     [Fact]
@@ -154,9 +154,10 @@ public class ProfileSectionsExtractionTests
         Assert.Contains("OpenUnsubscribe", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/ProfileDangerZoneSection.razor")));
         Assert.Contains("OpenProfileReset", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/ProfileDangerZoneSection.razor")));
 
-        var passport = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Passport.razor"));
-        Assert.Contains("<PassportDataTab", passport);
-        Assert.DoesNotContain("Passport.Transitional.OpenData", passport);
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        Assert.Contains("AppendDataPanel", shells);
+        Assert.Contains("passport-data-save", shells);
+        Assert.DoesNotContain("Passport.Transitional.OpenData", shells);
         Assert.DoesNotContain("ClassicTabsUntilPhase4", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/PassportRedirects.cs")));
     }
 

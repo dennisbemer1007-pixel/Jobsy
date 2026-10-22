@@ -19,7 +19,6 @@
 @inject CultureState Culture
 @inject IOnboardingRustigGate OnboardingRustig
 @inject IFeatureFlags FeatureFlags
-@inject IOnboardingFinaleV2Gate OnboardingFinaleV2
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
@@ -34,7 +33,7 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-step910" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-acc-onb" />
     <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step910" />
 </HeadContent>
 
@@ -268,25 +267,14 @@ else
             await Task.WhenAll(onboardingTask, profileTask, flagsTask);
             var state = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true };
             _draft = OnboardingProfileDraftHydrator.FromProfile(await profileTask);
-            var flags = await flagsTask;
+            _ = await flagsTask;
 
-            var passportOn = flags.CandidatePassportEnabled;
-            var finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
             var revisitingStep = TryParseStepQuery(out var requested) && requested is >= 1 and <= 10;
 
-            if (!revisitingStep)
+            if (!revisitingStep && (state.IsComplete || state.FinishReached))
             {
-                if (state.IsComplete)
-                {
-                    RedirectTo(passportOn ? FeatureRoutes.CandidatePassportPath : "/candidate/profile");
-                    return;
-                }
-
-                if (passportOn && state.FinishReached && !finaleV2)
-                {
-                    RedirectTo(FeatureRoutes.CandidateDiscoveryPath);
-                    return;
-                }
+                RedirectTo(OnboardingRoutes.KompasReadyPath);
+                return;
             }
 
             var ceiling = revisitingStep ? 10 : Math.Clamp(state.CurrentStep, 1, 10);
@@ -305,12 +293,6 @@ else
             if (_step is < 1 or > 10)
             {
                 RedirectTo(OnboardingRoutes.ResolveStartEntryPath(state));
-                return;
-            }
-
-            if (state.FinishReached && !revisitingStep)
-            {
-                RedirectTo(OnboardingRoutes.KompasReadyPath);
                 return;
             }
 
