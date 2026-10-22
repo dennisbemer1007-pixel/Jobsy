@@ -221,6 +221,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal int ProfilePutCount;
         internal bool WelcomeDismissed;
         internal MeProfile StoredProfile = new() { FirstName = "Onboarding", LastName = "Tester" };
+        internal string? StoredDreamTitle { get; set; }
 
         public string ServerAddress { get; private set; } = "";
 
@@ -371,6 +372,20 @@ internal static class OnboardingClientStepsPlaywrightSupport
         {
             await Task.Delay(80, cancellationToken);
             var path = request.RequestUri?.AbsolutePath ?? "";
+            if (path.Contains("/onboarding/dream-job", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
+            {
+                using var dreamDoc = await JsonDocument.ParseAsync(
+                    await request.Content!.ReadAsStreamAsync(cancellationToken),
+                    cancellationToken: cancellationToken);
+                if (dreamDoc.RootElement.TryGetProperty("dreamTitle", out var dreamTitleProp)
+                    && dreamTitleProp.ValueKind == JsonValueKind.String)
+                {
+                    factory.StoredDreamTitle = dreamTitleProp.GetString();
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+            }
+
             if (path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
             {
                 using var doc = await JsonDocument.ParseAsync(await request.Content!.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
@@ -392,6 +407,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     source = factory.WelcomeDismissed ? "welcome" : null,
                     steps = Array.Empty<object>(),
                 });
+            }
+
+            if (path.Contains("/career-path", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Get)
+            {
+                return JsonResponse(new { dreamTitle = factory.StoredDreamTitle ?? "" });
             }
 
             if (path.Contains("/profile", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)

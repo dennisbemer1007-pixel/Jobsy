@@ -57,6 +57,11 @@ else if (_step is >= 1 and <= 6)
           data-ob-active-step="@_step">
         <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
+        @if (_step == 6)
+        {
+            <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
+            <script src="js/onboarding-step6-ssr.js?v=20261022-step6plain" defer></script>
+        }
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
             <p class="state-message error ob-wizard__nav-error" role="alert">@_errorMessage</p>
@@ -281,6 +286,13 @@ else if (_step is >= 1 and <= 6)
                 .ToList();
             if (_step == 6)
             {
+                var careerPlan = await Api.GetCareerPathAsync();
+                if (!string.IsNullOrWhiteSpace(careerPlan?.DreamTitle))
+                {
+                    _draft.Dream = careerPlan.DreamTitle.Trim();
+                    _draft.DreamSearch = _draft.Dream;
+                }
+
                 _dreamTitles = OnboardingDreamSuggestionPicker.BuildFromProfile(_draft, [], max: 8)
                     .Select(item => item.Title)
                     .Where(title => !string.IsNullOrWhiteSpace(title))

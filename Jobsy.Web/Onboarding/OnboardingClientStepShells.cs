@@ -271,7 +271,7 @@ internal static class OnboardingClientStepShells
         activeDream = activeDream?.Trim() ?? "";
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-dream\">");
-        sb.Append("<div data-ob-client=\"dreamGrid\" class=\"ob-rustig__dream-grid lobsy-choice-grid\" role=\"listbox\">");
+        sb.Append("<div class=\"ob-rustig__dream-grid lobsy-choice-grid\" data-ob-ssr-dream-grid role=\"listbox\">");
         foreach (var title in dreamTitles ?? [])
         {
             if (string.IsNullOrWhiteSpace(title))
@@ -279,20 +279,21 @@ internal static class OnboardingClientStepShells
                 continue;
             }
 
+            var trimmed = title.Trim();
             var on = !string.IsNullOrEmpty(activeDream)
-                && string.Equals(title.Trim(), activeDream, StringComparison.OrdinalIgnoreCase);
-            sb.Append("<button type=\"button\" class=\"ob-rustig__dream lobsy-choice-tile");
+                && string.Equals(trimmed, activeDream, StringComparison.OrdinalIgnoreCase);
+            sb.Append("<button type=\"submit\" name=\"obDreamPick\" class=\"ob-rustig__dream lobsy-choice-tile");
             if (on)
             {
                 sb.Append(" is-on is-selected");
             }
 
-            sb.Append("\" data-ob-dream=\"");
-            sb.Append(WebUtility.HtmlEncode(title.Trim()));
-            sb.Append("\" aria-pressed=\"");
+            sb.Append("\" value=\"");
+            sb.Append(WebUtility.HtmlEncode(trimmed));
+            sb.Append("\" data-testid=\"onboarding-dream-tile\" aria-pressed=\"");
             sb.Append(on ? "true" : "false");
             sb.Append("\">");
-            sb.Append(WebUtility.HtmlEncode(title.Trim()));
+            sb.Append(WebUtility.HtmlEncode(trimmed));
             sb.Append("</button>");
         }
 
@@ -301,7 +302,7 @@ internal static class OnboardingClientStepShells
         sb.Append("<label for=\"onboarding-rustig-dream-input\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.DreamOwnLabel"]));
         sb.Append("</label>");
-        sb.Append("<input id=\"onboarding-rustig-dream-input\" data-ob-client=\"dreamInput\" type=\"text\" autocomplete=\"off\" placeholder=\"");
+        sb.Append("<input id=\"onboarding-rustig-dream-input\" name=\"dream\" type=\"text\" autocomplete=\"off\" data-testid=\"onboarding-dream-input\" placeholder=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
         sb.Append("\" value=\"");
         sb.Append(WebUtility.HtmlEncode(activeDream));
