@@ -434,7 +434,7 @@ internal static class UiStringsOnboardingV2
     private static void AddWorkStatuses(Dictionary<string, string> map, bool english)
     {
         map["WorkStatus.Legend"] = english ? "What is your current work status?" : "Wat is je huidige werkstatus?";
-        map["WorkStatus.Hint"] = english ? "Optional. You can pick more than one." : "Optioneel. Je mag er meer dan één kiezen.";
+        map["WorkStatus.Hint"] = english ? "Optional. You can choose more than one." : "Optioneel. Je mag er meer dan één kiezen.";
         foreach (var (code, nl, en) in WorkStatusLabelRows())
         {
             map[$"WorkStatus.{code}"] = english ? en : nl;
@@ -446,8 +446,8 @@ internal static class UiStringsOnboardingV2
         yield return ("scholier", "Scholier", "School pupil");
         yield return ("student", "Student (mbo/hbo/wo)", "Student (vocational / university)");
         yield return ("stagiair", "Stagiair / afstudeerder", "Intern / graduate");
-        yield return ("loondienst-fulltime", "In loondienst – fulltime", "Employed – full-time");
-        yield return ("loondienst-parttime", "In loondienst – parttime", "Employed – part-time");
+        yield return ("loondienst-fulltime", "In loondienst, fulltime", "Employed, full-time");
+        yield return ("loondienst-parttime", "In loondienst, parttime", "Employed, part-time");
         yield return ("flex", "Flexwerker / uitzendkracht / oproepkracht", "Flexible / temp / on-call worker");
         yield return ("zzp", "Zzp'er / freelancer", "Self-employed / freelancer");
         yield return ("zoekend", "Op dit moment geen baan (zoekend)", "Currently unemployed (looking)");
@@ -509,7 +509,7 @@ internal static class UiStringsOnboardingV2
 
     private static void AddPresets(Dictionary<string, string> map, bool english)
     {
-        var values = new[] { ("Direct", "Per direct", "Ik kan meteen beginnen", "Immediately", "I can start right away"), ("School", "Bijbaan naast school", "Na school en in het weekend", "Job alongside school", "After school and weekends"), ("Weekend", "Weekenden", "Za en zo", "Weekends", "Saturday and Sunday"), ("Evening", "Avonden", "Ma–vr na 18:00", "Evenings", "Weekdays after 18:00"), ("Office", "Kantoordagen", "Ma–vr, 9–17 uur", "Office days", "Weekdays, 9–17"), ("Holiday", "Vakantiewerk", "In de schoolvakanties", "Holiday work", "During school holidays"), ("Parttime", "Parttime", "12–32 uur per week", "Part-time", "12–32 hours a week"), ("Fulltime", "Fulltime", "36–40 uur per week", "Full-time", "36–40 hours a week"), ("Custom", "Zelf aangeven", "Kies zelf je dagen en dagdelen", "Specify yourself", "Pick your own days and times") };
+        var values = new[] { ("Direct", "Per direct", "Ik kan meteen beginnen", "Immediately", "I can start right away"), ("School", "Bijbaan naast school", "Na school en in het weekend", "Job alongside school", "After school and weekends"), ("Weekend", "Weekenden", "Za en zo", "Weekends", "Saturday and Sunday"), ("Evening", "Avonden", "Ma t/m vr na 18:00", "Evenings", "Weekdays after 18:00"), ("Office", "Kantoordagen", "Ma t/m vr, 9 tot 17 uur", "Office days", "Weekdays, 9 to 17"), ("Holiday", "Vakantiewerk", "In de schoolvakanties", "Holiday work", "During school holidays"), ("Parttime", "Parttime", "12 tot 32 uur per week", "Part-time", "12 to 32 hours a week"), ("Fulltime", "Fulltime", "36 tot 40 uur per week", "Full-time", "36 to 40 hours a week"), ("Custom", "Zelf aangeven", "Kies zelf je dagen en dagdelen", "Specify yourself", "Pick your own days and times") };
         foreach (var item in values) { map[$"Onboarding.Preset.{item.Item1}"] = english ? item.Item4 : item.Item2; map[$"Onboarding.Preset.{item.Item1}.Lead"] = english ? item.Item5 : item.Item3; }
     }
 
