@@ -34,15 +34,15 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step7ssr" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-step910" />
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step910" />
 </HeadContent>
 
 @if (_loading)
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
-else if (_step is >= 1 and <= 8)
+else if (_step is >= 1 and <= 10)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
     var step7Consent = _step == 7 && !_draft.HasConsent;
@@ -64,19 +64,19 @@ else if (_step is >= 1 and <= 8)
           data-ob-active-step="@_step">
         <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
-        @if (_step is 6 or 7 or 8)
+        @if (_step is 6 or (>= 7 and <= 10))
         {
-            <script src="js/onboarding-ssr-fetch-save.js?v=20261022-step78" defer></script>
+            <script src="js/onboarding-ssr-fetch-save.js?v=20261022-step910" defer></script>
         }
         @if (_step == 6)
         {
             <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
             <script src="js/onboarding-step6-ssr.js?v=20261022-step78" defer></script>
         }
-        @if (_step is 7 or 8)
+        @if (_step is >= 7 and <= 10)
         {
             <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
-            <script src="js/onboarding-ssr-mini-tiles.js?v=20261022-step78" defer></script>
+            <script src="js/onboarding-ssr-mini-tiles.js?v=20261022-step910" defer></script>
         }
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
@@ -289,9 +289,15 @@ else if (_step is >= 1 and <= 8)
                 return;
             }
 
-            if (_step is < 1 or > 8)
+            if (_step is < 1 or > 10)
             {
                 RedirectTo(WizardUrl(_step));
+                return;
+            }
+
+            if (state.FinishReached)
+            {
+                RedirectTo(WizardUrl(Math.Clamp(_step, 1, 10)));
                 return;
             }
 
@@ -316,7 +322,7 @@ else if (_step is >= 1 and <= 8)
                     .ToList();
             }
 
-            if (_step is 7 or 8)
+            if (_step is >= 7 and <= 10)
             {
                 var mini = await OnboardingSsrMiniStepLoader.LoadAsync(_step, Api, FeatureFlags, Culture, CancellationToken.None);
                 _seed = new OnboardingClientStepSeed

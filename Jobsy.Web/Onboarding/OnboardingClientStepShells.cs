@@ -28,7 +28,8 @@ internal static class OnboardingClientStepShells
             6 => BuildStep6(culture, draft, dreamTitles),
             7 => BuildStep7Ssr(culture, draft, seed),
             8 => BuildStep8Ssr(seed),
-            >= 9 and <= 10 => BuildMiniStep(culture),
+            9 => BuildStep9Ssr(seed),
+            10 => BuildStep10Ssr(seed),
             _ => "",
         };
     }
@@ -341,11 +342,20 @@ internal static class OnboardingClientStepShells
     }
 
     private static string BuildStep8Ssr(OnboardingClientStepSeed? seed)
+        => BuildMiniBlockSsr(seed, "onboarding-step-8-mini");
+
+    private static string BuildStep9Ssr(OnboardingClientStepSeed? seed)
+        => BuildMiniBlockSsr(seed, "onboarding-step-9-mini");
+
+    private static string BuildStep10Ssr(OnboardingClientStepSeed? seed)
+        => BuildMiniBlockSsr(seed, "onboarding-step-10-mini");
+
+    private static string BuildMiniBlockSsr(OnboardingClientStepSeed? seed, string miniTestId)
     {
         seed ??= new OnboardingClientStepSeed();
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
-        AppendMiniQuestionsSsr(sb, seed.MiniQuestions, seed.MiniAnswers, "onboarding-step-8-mini");
+        AppendMiniQuestionsSsr(sb, seed.MiniQuestions, seed.MiniAnswers, miniTestId);
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -401,16 +411,6 @@ internal static class OnboardingClientStepShells
         }
 
         sb.Append("</div>");
-    }
-
-    private static string BuildMiniStep(CultureState culture)
-    {
-        var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
-        sb.Append("<div class=\"ob-client-mini\" data-ob-client=\"miniRoot\"></div>");
-        AppendStepNav(sb, culture);
-        sb.Append("</div>");
-        return sb.ToString();
     }
 
     private static void AppendEducationTiles(StringBuilder sb, CultureState culture, string? selected)
@@ -587,29 +587,6 @@ internal static class OnboardingClientStepShells
 
             sb.Append("</button>");
         }
-    }
-
-    private static void AppendStepNav(StringBuilder sb, CultureState culture, bool optionalSkip = false, bool plainJsNav = false)
-    {
-        sb.Append("<div class=\"ob-step-actions\">");
-        if (optionalSkip)
-        {
-            sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-step-skip\" data-ob-step-skip data-testid=\"onboarding-skip-optional\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Skip"]));
-            sb.Append("</button>");
-        }
-
-        sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step-next\" data-ob-step-next");
-        if (plainJsNav)
-        {
-            sb.Append(" data-ob-nav-next");
-        }
-
-        sb.Append(" data-testid=\"onboarding-next\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Next"]));
-        sb.Append("</button>");
-        sb.Append("<p class=\"state-message error ob-step-next-error\" data-ob-step-error hidden aria-live=\"polite\"></p>");
-        sb.Append("</div>");
     }
 
     private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete, string? value = null)

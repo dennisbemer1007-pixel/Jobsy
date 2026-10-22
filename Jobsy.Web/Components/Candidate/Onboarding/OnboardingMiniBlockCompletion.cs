@@ -8,6 +8,17 @@ namespace Jobsy.Web.Components.Candidate.Onboarding;
 /// </summary>
 internal static class OnboardingMiniBlockCompletion
 {
+    /// <summary>Matches wizard SSR/BFF: stored version when set, else V3 when TestsV2 is on.</summary>
+    public static int ResolveQuickScanVersion(int? storedVersion, bool testsV2Enabled)
+    {
+        if (storedVersion is int v && v > 0)
+        {
+            return AssessmentTestVersions.Normalize(v);
+        }
+
+        return testsV2Enabled ? AssessmentTestVersions.V3 : AssessmentTestVersions.V1;
+    }
+
     public static AssessmentKind AssessmentKindForWizardStep(int step) => step switch
     {
         8 => AssessmentKind.Career,

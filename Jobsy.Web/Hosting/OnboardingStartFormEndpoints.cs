@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Full-page POST for onboarding steps 1–8 (303 redirect, no Blazor circuit).</summary>
+/// <summary>Full-page POST for onboarding steps 1–10 (303 redirect, no Blazor circuit).</summary>
 public static class OnboardingStartFormEndpoints
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
@@ -45,7 +45,7 @@ public static class OnboardingStartFormEndpoints
             return SeeOther(WithError(OnboardingRoutes.StepUrl(step ?? 1), culture["Common.Error.TryAgain"]));
         }
 
-        var currentStep = step is >= 1 and <= 8 ? step.Value : 1;
+        var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
 
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
@@ -61,7 +61,7 @@ public static class OnboardingStartFormEndpoints
             goBack = false;
         }
 
-        if (!string.IsNullOrWhiteSpace(obMiniPick) && currentStep is 7 or 8)
+        if (!string.IsNullOrWhiteSpace(obMiniPick) && currentStep is >= 7 and <= 10)
         {
             persist = true;
             advance = false;
@@ -84,7 +84,7 @@ public static class OnboardingStartFormEndpoints
         {
             body = BuildStep6Body(dream, obPayload);
         }
-        else if (currentStep is 7 or 8)
+        else if (currentStep is >= 7 and <= 10)
         {
             body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
         }

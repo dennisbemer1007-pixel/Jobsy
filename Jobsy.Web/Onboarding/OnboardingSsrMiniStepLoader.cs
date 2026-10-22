@@ -24,6 +24,8 @@ internal static class OnboardingSsrMiniStepLoader
         {
             7 => await LoadCompetenceAsync(api, featureFlags, culture, cancellationToken),
             8 => await LoadCareerAsync(api, featureFlags, culture, cancellationToken),
+            9 => await LoadCultureAsync(api, featureFlags, culture, cancellationToken),
+            10 => await LoadValuesAsync(api, featureFlags, culture, cancellationToken),
             _ => new MiniStepData([], new Dictionary<int, int>(), AssessmentTestVersions.V1),
         };
 
@@ -35,7 +37,7 @@ internal static class OnboardingSsrMiniStepLoader
     {
         var testsV2 = await featureFlags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
         var competency = await api.GetMyCompetenciesAsync(cancellationToken);
-        var version = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2);
+        var version = OnboardingMiniBlockCompletion.ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2);
         return Build(
             competency?.Answers,
             version,
@@ -52,12 +54,46 @@ internal static class OnboardingSsrMiniStepLoader
     {
         var testsV2 = await featureFlags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
         var career = await api.GetMyCareerInterestsAsync(cancellationToken);
-        var version = ResolveQuickScanVersion(career?.QuickScanVersion, testsV2);
+        var version = OnboardingMiniBlockCompletion.ResolveQuickScanVersion(career?.QuickScanVersion, testsV2);
         return Build(
             career?.Answers,
             version,
             8,
             AssessmentQuickScanCatalog.CareerQuestions(version).Select(q => (q.Id, q.TextKey)),
+            culture);
+    }
+
+    private static async Task<MiniStepData> LoadCultureAsync(
+        JobsyApiClient api,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        var testsV2 = await featureFlags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
+        var cultureState = await api.GetMyCultureAsync(cancellationToken);
+        var version = OnboardingMiniBlockCompletion.ResolveQuickScanVersion(cultureState?.QuickScanVersion, testsV2);
+        return Build(
+            cultureState?.Answers,
+            version,
+            9,
+            AssessmentQuickScanCatalog.CultureQuestions(version).Select(q => (q.Id, q.TextKey)),
+            culture);
+    }
+
+    private static async Task<MiniStepData> LoadValuesAsync(
+        JobsyApiClient api,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        var testsV2 = await featureFlags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
+        var values = await api.GetMyValuesAsync(cancellationToken);
+        var version = OnboardingMiniBlockCompletion.ResolveQuickScanVersion(values?.QuickScanVersion, testsV2);
+        return Build(
+            values?.Answers,
+            version,
+            10,
+            AssessmentQuickScanCatalog.ValuesQuestions(version).Select(q => (q.Id, q.TextKey)),
             culture);
     }
 
@@ -74,21 +110,18 @@ internal static class OnboardingSsrMiniStepLoader
         foreach (var answer in answers ?? [])
         {
             if (int.TryParse(answer.Key, out var id)
-                && questionIds.Contains(id)
                 && answer.Value is >= 1 and <= 5)
             {
                 serverAnswers[id] = answer.Value;
             }
         }
 
+        var visible = OnboardingMiniBlockCompletion.MergeVisible(step, version, serverAnswers, serverAnswers);
         var questions = questionIds
             .Where(catalogById.ContainsKey)
             .Select(id => new OnboardingClientStepSeed.MiniQuestionSeed(id, culture[catalogById[id]]))
             .ToList();
 
-        return new MiniStepData(questions, serverAnswers, version);
+        return new MiniStepData(questions, visible, version);
     }
-
-    private static int ResolveQuickScanVersion(int? version, bool testsV2)
-        => version is > 0 ? version.Value : testsV2 ? AssessmentTestVersions.V2 : AssessmentTestVersions.V1;
 }
