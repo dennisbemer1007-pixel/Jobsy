@@ -1,7 +1,6 @@
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
-using Jobsy.Web.Models;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Http;
@@ -55,20 +54,7 @@ public static class OnboardingClientStep1Saver
 
         try
         {
-            await api.UpdateMyProfileAsync(
-                dateOfBirth: draft.BirthDate,
-                preferences: new CandidatePreferences
-                {
-                    HomeAddress = BuildHomeAddress(draft),
-                    WorkStatuses = draft.WorkStatuses.OrderBy(x => x).ToList(),
-                },
-                homeLatitude: draft.HomeLat,
-                homeLongitude: draft.HomeLng,
-                clearHomeLocation: string.IsNullOrWhiteSpace(BuildHomeAddress(draft)),
-                firstName: draft.FirstName.Trim(),
-                lastName: draft.LastName.Trim(),
-                phoneNumber: string.IsNullOrWhiteSpace(draft.Phone) ? null : draft.Phone.Trim(),
-                ct: cancellationToken);
+            await OnboardingProfileDraftPersistence.SaveProfileAsync(draft, api, cancellationToken);
         }
         catch (ApiErrorException ex)
         {
@@ -96,7 +82,4 @@ public static class OnboardingClientStep1Saver
 
         return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(2) });
     }
-
-    private static string BuildHomeAddress(OnboardingProfileDraft draft)
-        => CandidateHomeAddressLookup.BuildHomeAddressForSave(draft);
 }

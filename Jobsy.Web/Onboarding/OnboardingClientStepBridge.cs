@@ -111,21 +111,26 @@ public static class OnboardingClientStepBridge
             }
         }
 
-        draft.AddressQuery = (p.AddressQuery ?? string.Empty).Trim();
+        var nextAddress = (p.AddressQuery ?? string.Empty).Trim();
+        var addressChanged = !string.Equals(nextAddress, draft.AddressQuery ?? string.Empty, StringComparison.Ordinal);
+        draft.AddressQuery = nextAddress;
         if (p.HomeLat is double lat && p.HomeLng is double lng)
         {
             draft.HomeLat = lat;
             draft.HomeLng = lng;
         }
-        else
+        else if (addressChanged)
         {
             draft.HomeLat = null;
             draft.HomeLng = null;
         }
 
-        draft.Postcode = string.Empty;
-        draft.City = string.Empty;
-        draft.PostcodeResolved = false;
+        if (addressChanged)
+        {
+            draft.Postcode = string.Empty;
+            draft.City = string.Empty;
+            draft.PostcodeResolved = false;
+        }
         draft.GeolocationPendingConfirm = false;
 
         if (TryParseBirthDate(p.BirthDateText, out var dob))

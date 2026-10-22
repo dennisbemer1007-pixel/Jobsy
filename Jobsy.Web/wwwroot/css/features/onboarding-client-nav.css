@@ -19,3 +19,17 @@
   color: inherit;
   display: flex;
 }
+
+/* SSR steps 1–2: sidebar must not steal clicks from footer Terug (desktop). */
+form[data-ob-ssr-form] .ob-rustig__sidebar.ob-wizard__sidebar {
+  pointer-events: none;
+}
+
+form[data-ob-ssr-form] .ob-rustig__sidebar.ob-wizard__sidebar a.ob-wizard__side-item {
+  pointer-events: auto;
+}
+
+form[data-ob-ssr-form] .ob-rustig__footer-actions {
+  position: relative;
+  z-index: 5;
+}

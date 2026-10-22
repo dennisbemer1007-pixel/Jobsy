@@ -26,6 +26,11 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
+    <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
+    <link rel="stylesheet" href="css/features/form-fields.css?v=20261019-01" />
+    <link rel="stylesheet" href="css/features/choice-tiles.css?v=20261015-06" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261018-02" />
+    <link rel="stylesheet" href="css/features/candidate-illustrated-app.css?v=20261018-91" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
@@ -102,18 +107,7 @@ else if (_step is >= 1 and <= 2)
                                  draggable="false" />
                         </div>
                         <div class="ob-rustig__chrome-row">
-                            @if (_step > 1)
-                            {
-                                <button type="submit"
-                                        class="ob-rustig__link"
-                                        name="obNav"
-                                        value="back"
-                                        aria-label="@Culture["Onboarding.BackAria"]">‹</button>
-                            }
-                            else
-                            {
-                                <span class="ob-rustig__link" aria-hidden="true">‹</span>
-                            }
+                            <span class="ob-rustig__link ob-rustig__link--spacer" aria-hidden="true">‹</span>
                             <div class="ob-rustig__segments"
                                  role="progressbar"
                                  aria-valuemin="1"
@@ -162,12 +156,14 @@ else if (_step is >= 1 and <= 2)
                             </div>
                         </div>
                         <div class="ob-rustig__footer-actions">
-                            <button type="submit"
-                                    class="ob-rustig__btn"
-                                    name="obNav"
-                                    value="back"
-                                    data-testid="onboarding-back"
-                                    disabled="@(_step == 1)">@Culture["Onboarding.Back"]</button>
+                            @if (_step > 1)
+                            {
+                                <button type="submit"
+                                        class="ob-rustig__btn"
+                                        name="obNav"
+                                        value="back"
+                                        data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
+                            }
                             <button type="submit"
                                     class="ob-rustig__btn ob-rustig__btn--primary"
                                     name="obNav"
