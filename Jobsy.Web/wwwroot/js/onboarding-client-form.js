@@ -858,11 +858,68 @@
         }
     }
 
+    function choiceCodeMatches(a, b) {
+        return String(a || "") === String(b || "");
+    }
+
+    function choiceSetHas(selectedSet, code) {
+        if (!code) return false;
+        var found = false;
+        selectedSet.forEach(function (c) {
+            if (choiceCodeMatches(c, code)) found = true;
+        });
+        return found;
+    }
+
+    function choiceSetToggle(selectedSet, code) {
+        if (!code) return;
+        var existing = null;
+        selectedSet.forEach(function (c) {
+            if (choiceCodeMatches(c, code)) existing = c;
+        });
+        if (existing !== null) selectedSet.delete(existing);
+        else selectedSet.add(String(code));
+    }
+
+    function readSelectedCodesFromGrid(container) {
+        var codes = [];
+        if (!container) return codes;
+        container.querySelectorAll(".lobsy-choice-tile[data-ob-code]").forEach(function (btn) {
+            var code = btn.getAttribute("data-ob-code");
+            if (!code) return;
+            var on = btn.getAttribute("aria-pressed") === "true" || btn.classList.contains("is-selected");
+            if (on) codes.push(code);
+        });
+        return codes;
+    }
+
+    function bindChoiceTileActivation(container, tileSelector, handler) {
+        if (!container || container.__obTileActivationBound) return;
+        container.__obTileActivationBound = true;
+        var lastAt = 0;
+        var lastCode = "";
+        function run(ev) {
+            if (ev.type === "pointerup" && ev.pointerType === "mouse" && ev.button !== 0) return;
+            var btn = ev.target.closest(tileSelector);
+            if (!btn || !container.contains(btn)) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            var code = btn.getAttribute("data-ob-code") || btn.getAttribute("data-ob-travel") || "";
+            var now = Date.now();
+            if (code === lastCode && now - lastAt < 400) return;
+            lastAt = now;
+            lastCode = code;
+            handler(btn, ev);
+        }
+        container.addEventListener("pointerup", run, true);
+        container.addEventListener("click", run, true);
+    }
+
     function syncChoiceGridPressed(container, selectedSet, multi) {
         if (!container) return;
         container.querySelectorAll(".lobsy-choice-tile[data-ob-code]").forEach(function (btn) {
             var code = btn.getAttribute("data-ob-code");
-            syncChoiceTileVisual(btn, selectedSet.has(code));
+            syncChoiceTileVisual(btn, choiceSetHas(selectedSet, code));
         });
     }
 
@@ -876,16 +933,13 @@
         if (!container || container.getAttribute("data-ob-choice-bound") === "1") return;
         container.setAttribute("data-ob-choice-bound", "1");
         paintChoiceGrid(container, options, selectedSet, multi);
-        container.addEventListener("click", function (ev) {
-            var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
-            if (!btn || !container.contains(btn)) return;
+        bindChoiceTileActivation(container, ".lobsy-choice-tile[data-ob-code]", function (btn) {
             var code = btn.getAttribute("data-ob-code");
             if (multi) {
-                if (selectedSet.has(code)) selectedSet.delete(code);
-                else selectedSet.add(code);
+                choiceSetToggle(selectedSet, code);
             } else {
                 selectedSet.clear();
-                selectedSet.add(code);
+                selectedSet.add(String(code));
             }
             syncChoiceGridPressed(container, selectedSet, multi);
             if (onChange) onChange();
@@ -893,17 +947,14 @@
     }
 
     function readChoiceCodes(container) {
-        var codes = [];
-        if (!container) return codes;
-        container.querySelectorAll('.lobsy-choice-tile[aria-pressed="true"]').forEach(function (btn) {
-            var code = btn.getAttribute("data-ob-code");
-            if (code) codes.push(code);
-        });
-        return codes;
+        return readSelectedCodesFromGrid(container);
     }
 
     function mountStep3(root, initial) {
-        var selected = new Set(initial.transport || []);
+        var tGridEarly = root.querySelector("[data-ob-client=transportGrid]");
+        var domTransport = readSelectedCodesFromGrid(tGridEarly);
+        var initialTransport = initial.transport || [];
+        var selected = new Set(domTransport.length ? domTransport : initialTransport);
         var travel = initial.maxTravel || 30;
         var custom = !!initial.customTravel;
         var tGrid = root.querySelector("[data-ob-client=transportGrid]");
@@ -917,7 +968,8 @@
             var pickedTravel = null;
             var isCustom = custom;
             if (vGrid) {
-                var pressed = vGrid.querySelector('.lobsy-choice-tile[data-ob-travel][aria-pressed="true"]');
+                var pressed = vGrid.querySelector('.lobsy-choice-tile[data-ob-travel].is-selected')
+                    || vGrid.querySelector('.lobsy-choice-tile[data-ob-travel][aria-pressed="true"]');
                 if (pressed) {
                     isCustom = false;
                     pickedTravel = parseInt(pressed.getAttribute("data-ob-travel"), 10);
@@ -950,17 +1002,12 @@
                 return;
             }
             syncChoiceGridPressed(tGrid, selected, true);
-            tGrid.addEventListener("click", function (ev) {
-                var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
-                if (!btn || !tGrid.contains(btn)) return;
-                ev.preventDefault();
-                ev.stopPropagation();
+            bindChoiceTileActivation(tGrid, ".lobsy-choice-tile[data-ob-code]", function (btn) {
                 var code = btn.getAttribute("data-ob-code");
-                if (selected.has(code)) selected.delete(code);
-                else selected.add(code);
+                choiceSetToggle(selected, code);
                 syncChoiceGridPressed(tGrid, selected, true);
                 saveNow();
-            }, true);
+            });
         }
 
         function bindTravelGrid() {
@@ -978,11 +1025,7 @@
                     vGrid.appendChild(btn);
                 });
             }
-            vGrid.addEventListener("click", function (ev) {
-                var btn = ev.target.closest(".lobsy-choice-tile[data-ob-travel]");
-                if (!btn || !vGrid.contains(btn)) return;
-                ev.preventDefault();
-                ev.stopPropagation();
+            bindChoiceTileActivation(vGrid, ".lobsy-choice-tile[data-ob-travel]", function (btn) {
                 custom = false;
                 travel = parseInt(btn.getAttribute("data-ob-travel"), 10) || travel;
                 if (customInput) customInput.hidden = true;
@@ -993,7 +1036,7 @@
                 });
                 updateTravelLegend(root, travel);
                 saveNow();
-            }, true);
+            });
         }
 
         bindTransportGrid();
@@ -1164,16 +1207,50 @@
     }
 
     function mountStep5(root, initial) {
+        var ssrForm = root.closest("form[data-ob-ssr-form]");
         var selected = new Set();
         if (initial.education) selected.add(initial.education);
         var grid = root.querySelector("[data-ob-client=educationGrid]");
-        mountChoiceGrid(grid, initial.levels || [], selected, false, function () { });
-        return {
-            collect: function () {
-                var codes = readChoiceCodes(grid);
-                return { education: codes.length ? codes[0] : "" };
+
+        function collectPayload() {
+            var codes = readChoiceCodes(grid);
+            return { education: codes.length ? codes[0] : "" };
+        }
+
+        function saveNow() {
+            if (ssrForm) {
+                putOnboardingStep(root, 5, collectPayload, false, false, false).catch(function () { });
             }
-        };
+        }
+
+        function bindEducationGrid() {
+            if (!grid || grid.__obEducationBound) return;
+            grid.__obEducationBound = true;
+            var domCodes = readSelectedCodesFromGrid(grid);
+            if (domCodes.length) {
+                selected.clear();
+                domCodes.forEach(function (c) { selected.add(c); });
+            }
+            if (!grid.querySelector(".lobsy-choice-tile[data-ob-code]")) {
+                mountChoiceGrid(grid, initial.levels || [], selected, false, saveNow);
+                return;
+            }
+            syncChoiceGridPressed(grid, selected, false);
+            bindChoiceTileActivation(grid, ".lobsy-choice-tile[data-ob-code]", function (btn) {
+                selected.clear();
+                selected.add(btn.getAttribute("data-ob-code"));
+                syncChoiceGridPressed(grid, selected, false);
+                saveNow();
+            });
+        }
+
+        bindEducationGrid();
+
+        if (!ssrForm) {
+            wireObStepBff(root, 5, collectPayload);
+        }
+
+        return { collect: collectPayload, scheduleSave: saveNow };
     }
 
     function mountStep6(root, initial) {
@@ -1458,7 +1535,10 @@
 
     function reconcileRustigFooterNav() {
         document.querySelectorAll(".ob-rustig").forEach(function (shell) {
-            if (!shell.querySelector(".ob-rustig__footer-actions [data-ob-nav-next]")) return;
+            var footer = shell.querySelector(".ob-rustig__footer-actions");
+            if (!footer) return;
+            var hasFooterNext = footer.querySelector("[data-ob-nav-next],[data-testid=onboarding-next]");
+            if (!hasFooterNext) return;
             shell.querySelectorAll(".ob-step-actions").forEach(function (nav) {
                 nav.setAttribute("hidden", "hidden");
                 nav.setAttribute("aria-hidden", "true");
@@ -1542,7 +1622,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
-        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 4) return;
+        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 5) return;
         if (step === 1 || step === 2 || step === 3) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {

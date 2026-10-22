@@ -35,14 +35,14 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step34" />
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step3touch" />
 </HeadContent>
 
 @if (_loading)
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
-else if (_step is >= 1 and <= 4)
+else if (_step is >= 1 and <= 5)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
     <form method="post"
@@ -260,7 +260,7 @@ else if (_step is >= 1 and <= 4)
                 return;
             }
 
-            if (_step is < 1 or > 4)
+            if (_step is < 1 or > 5)
             {
                 RedirectTo(WizardUrl(_step));
                 return;

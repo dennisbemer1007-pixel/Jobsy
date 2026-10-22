@@ -52,3 +52,16 @@ form[data-ob-ssr-form] .ob-rustig__footer-actions {
     order: 3;
   }
 }
+
+.ob-wizard--rustig .ob-wizard__travel-times.lobsy-choice-grid .lobsy-choice-tile.is-selected,
+.ob-wizard--rustig .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile.is-selected {
+  border: 2px solid var(--brand);
+  background: var(--accent-soft);
+  color: var(--brand);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 25%, transparent);
+}
+
+.ob-wizard--rustig .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile.is-selected .lobsy-choice-tile__check {
+  opacity: 1;
+}

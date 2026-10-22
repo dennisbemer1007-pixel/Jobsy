@@ -39,6 +39,14 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
+        var consoleErrors = new List<string>();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
 
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=1"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
@@ -56,10 +64,45 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
 
+        if (mobile)
+        {
+            foreach (var code in new[] { "Fiets", "Auto", "OV", "Lopend" })
+            {
+                var tile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=" + code + "]");
+                await tile.TapAsync();
+                await Assertions.Expect(tile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+                await Assertions.Expect(tile).ToHaveAttributeAsync("aria-pressed", "true");
+                await Assertions.Expect(tile.Locator(".lobsy-choice-tile__check")).ToHaveCountAsync(1);
+            }
+
+            await page.WaitForTimeoutAsync(700);
+            await page.ReloadAsync();
+            await page.Locator("[data-ob-client-step=\"3\"]").WaitForAsync();
+            await page.WaitForFunctionAsync(
+                "() => document.querySelector('[data-ob-client-step=\"3\"]')?.getAttribute('data-ob-client-mounted') === '1'");
+            foreach (var code in new[] { "Fiets", "Auto", "OV", "Lopend" })
+            {
+                var tile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=" + code + "]");
+                await Assertions.Expect(tile).ToHaveAttributeAsync("aria-pressed", "true");
+                await Assertions.Expect(tile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+            }
+        }
+
         var bikeTile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=Fiets]");
-        await bikeTile.ClickAsync(new() { Force = true });
+        if (!mobile)
+        {
+            await bikeTile.ClickAsync(new() { Force = true });
+        }
+
         var travel20 = page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"20\"]");
-        await travel20.ClickAsync(new() { Force = true });
+        if (mobile)
+        {
+            await travel20.TapAsync();
+        }
+        else
+        {
+            await travel20.ClickAsync(new() { Force = true });
+        }
         await Assertions.Expect(travel20).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         await Assertions.Expect(page.Locator("[data-ob-client=travelLegendValue]")).ToHaveTextAsync("20");
         await Assertions.Expect(bikeTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
@@ -74,8 +117,17 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
 
         bikeTile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=Fiets]");
         await Assertions.Expect(bikeTile).ToHaveAttributeAsync("aria-pressed", "true");
+        await Assertions.Expect(bikeTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         await Assertions.Expect(page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"20\"]"))
             .ToHaveAttributeAsync("aria-pressed", "true");
+        if (mobile)
+        {
+            foreach (var code in new[] { "Auto", "OV", "Lopend" })
+            {
+                var tile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=" + code + "]");
+                await Assertions.Expect(tile).ToHaveAttributeAsync("aria-pressed", "true");
+            }
+        }
 
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=4**");
@@ -86,7 +138,21 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-skip").CountAsync());
 
         await page.GetByTestId("onboarding-skip").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=5**");
+        await page.WaitForURLAsync("**/candidate/start?step=5**");
+        await page.Locator("[data-ob-client-step=\"5\"]").WaitForAsync();
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-ob-client-step=\"5\"]')?.getAttribute('data-ob-client-mounted') === '1'");
+        Assert.Equal(0, await page.Locator("script[src*='blazor.web.js']").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-skip").CountAsync());
+
+        var eduTile = page.Locator("[data-ob-client=educationGrid] .lobsy-choice-tile").First;
+        await eduTile.ClickAsync(new() { Force = true });
+        await Assertions.Expect(eduTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=6**");
+        Assert.Empty(consoleErrors);
     }
 
     private static async Task FillStep1AndGoToStep2Async(IPage page)
