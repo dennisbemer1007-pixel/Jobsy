@@ -11,7 +11,7 @@ namespace Jobsy.Web.Onboarding;
 /// <summary>Static HTML for client onboarding steps (rendered once; JS attaches behavior).</summary>
 internal static class OnboardingClientStepShells
 {
-    public static string Build(int step, CultureState culture, OnboardingProfileDraft? draft = null)
+    public static string Build(int step, CultureState culture, OnboardingProfileDraft? draft = null, IReadOnlyList<string>? dreamTitles = null)
     {
         return step switch
         {
@@ -20,7 +20,7 @@ internal static class OnboardingClientStepShells
             3 => BuildStep3(culture, draft),
             4 => BuildStep4(culture, draft),
             5 => BuildStep5(culture, draft),
-            6 => BuildStep6(culture),
+            6 => BuildStep6(culture, draft, dreamTitles),
             7 when draft?.HasConsent == true => BuildMiniStep(culture),
             7 => BuildStep7ConsentAndMini(culture),
             >= 8 and <= 10 => BuildMiniStep(culture),
@@ -264,16 +264,48 @@ internal static class OnboardingClientStepShells
         return sb.ToString();
     }
 
-    private static string BuildStep6(CultureState culture)
+    private static string BuildStep6(CultureState culture, OnboardingProfileDraft? draft, IReadOnlyList<string>? dreamTitles)
     {
+        draft ??= new OnboardingProfileDraft();
+        var activeDream = string.IsNullOrWhiteSpace(draft.DreamSearch) ? draft.Dream : draft.DreamSearch;
+        activeDream = activeDream?.Trim() ?? "";
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-dream\">");
-        sb.Append("<div data-ob-client=\"dreamGrid\" class=\"ob-rustig__dream-grid\"></div>");
+        sb.Append("<div data-ob-client=\"dreamGrid\" class=\"ob-rustig__dream-grid lobsy-choice-grid\" role=\"listbox\">");
+        foreach (var title in dreamTitles ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                continue;
+            }
+
+            var on = !string.IsNullOrEmpty(activeDream)
+                && string.Equals(title.Trim(), activeDream, StringComparison.OrdinalIgnoreCase);
+            sb.Append("<button type=\"button\" class=\"ob-rustig__dream lobsy-choice-tile");
+            if (on)
+            {
+                sb.Append(" is-on is-selected");
+            }
+
+            sb.Append("\" data-ob-dream=\"");
+            sb.Append(WebUtility.HtmlEncode(title.Trim()));
+            sb.Append("\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\">");
+            sb.Append(WebUtility.HtmlEncode(title.Trim()));
+            sb.Append("</button>");
+        }
+
+        sb.Append("</div>");
+        sb.Append("<div class=\"ob-rustig__field ob-rustig__field--dream\" style=\"margin-top:1rem\">");
+        sb.Append("<label for=\"onboarding-rustig-dream-input\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.DreamOwnLabel"]));
+        sb.Append("</label>");
         sb.Append("<input id=\"onboarding-rustig-dream-input\" data-ob-client=\"dreamInput\" type=\"text\" autocomplete=\"off\" placeholder=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
-        sb.Append("\" />");
-        AppendStepNav(sb, culture);
-        sb.Append("</div>");
+        sb.Append("\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(activeDream));
+        sb.Append("\" /></div></div>");
         return sb.ToString();
     }
 

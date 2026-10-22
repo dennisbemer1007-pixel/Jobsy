@@ -34,6 +34,36 @@ form[data-ob-ssr-form] .ob-rustig__footer-actions {
   z-index: 5;
 }
 
+/* SSR: one footer only — hide legacy in-card step nav (skip/next duplicates on mobile). */
+form[data-ob-ssr-form] .ob-step-actions,
+form[data-ob-ssr-form] .ob-step-actions .ob-step-skip,
+form[data-ob-ssr-form] .ob-step-actions .ob-step-next,
+form[data-ob-ssr-form] [data-testid="onboarding-skip-optional"] {
+  display: none !important;
+}
+
+form[data-ob-ssr-form] .ob-rustig__footer-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-back"] {
+  order: 1;
+}
+
+form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-skip"],
+form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-dream-unknown"] {
+  order: 2;
+}
+
+form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-next"] {
+  order: 3;
+  margin-inline-start: auto;
+}
+
 @media (max-width: 1023px) {
   form[data-ob-ssr-form] .ob-rustig__footer-actions {
     flex-direction: column;
@@ -48,7 +78,7 @@ form[data-ob-ssr-form] .ob-rustig__footer-actions {
     min-block-size: 3rem;
   }
 
-  form[data-ob-ssr-form] .ob-rustig__footer-actions .ob-rustig__btn--primary {
+  form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-next"] {
     order: 3;
   }
 }

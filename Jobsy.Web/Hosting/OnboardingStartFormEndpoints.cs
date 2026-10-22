@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Full-page POST for onboarding steps 1–5 (303 redirect, no Blazor circuit).</summary>
+/// <summary>Full-page POST for onboarding steps 1–6 (303 redirect, no Blazor circuit).</summary>
 public static class OnboardingStartFormEndpoints
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
@@ -41,7 +41,7 @@ public static class OnboardingStartFormEndpoints
             return SeeOther(WithError(OnboardingRoutes.StepUrl(step ?? 1), culture["Common.Error.TryAgain"]));
         }
 
-        var currentStep = step is >= 1 and <= 5 ? step.Value : 1;
+        var currentStep = step is >= 1 and <= 6 ? step.Value : 1;
         if (string.IsNullOrWhiteSpace(obPayload))
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
@@ -61,14 +61,21 @@ public static class OnboardingStartFormEndpoints
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
         var skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
-        if (skipOptional)
+        var dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
+        if (skipOptional || dreamUnknown)
         {
             advance = true;
+            skipOptional = true;
         }
 
         if (!advance && !goBack)
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
+        }
+
+        if (dreamUnknown && currentStep == 6)
+        {
+            body = ForceEmptyDreamPayload(body);
         }
 
         var merged = MergeNavFlags(body, advance, goBack, skipOptional);
@@ -91,6 +98,52 @@ public static class OnboardingStartFormEndpoints
             culture,
             cancellationToken);
         return ToRedirect(stepStatus, stepPayload, currentStep, advance, goBack, culture);
+    }
+
+    private static JsonElement ForceEmptyDreamPayload(JsonElement body)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            var wroteDream = false;
+            var wroteSearch = false;
+            foreach (var prop in body.EnumerateObject())
+            {
+                if (prop.NameEquals("dream"))
+                {
+                    writer.WriteString("dream", "");
+                    wroteDream = true;
+                    continue;
+                }
+
+                if (prop.NameEquals("dreamSearch"))
+                {
+                    writer.WriteString("dreamSearch", "");
+                    wroteSearch = true;
+                    continue;
+                }
+
+                writer.WritePropertyName(prop.Name);
+                prop.Value.WriteTo(writer);
+            }
+
+            if (!wroteDream)
+            {
+                writer.WriteString("dream", "");
+            }
+
+            if (!wroteSearch)
+            {
+                writer.WriteString("dreamSearch", "");
+            }
+
+            writer.WriteEndObject();
+        }
+
+        stream.Position = 0;
+        using var doc = JsonDocument.Parse(stream);
+        return doc.RootElement.Clone();
     }
 
     private static JsonElement MergeNavFlags(JsonElement body, bool advance, bool goBack, bool skipOptional)

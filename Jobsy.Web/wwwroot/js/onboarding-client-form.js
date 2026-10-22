@@ -1254,55 +1254,80 @@
     }
 
     function mountStep6(root, initial) {
+        var ssrForm = root.closest("form[data-ob-ssr-form]");
+        var ssrValues = root.getAttribute("data-ob-ssr-values") === "1";
         var input = root.querySelector("[data-ob-client=dreamInput]");
         var grid = root.querySelector("[data-ob-client=dreamGrid]");
-        if (input) input.value = initial.dreamSearch || initial.dream || "";
+
+        function collectPayload() {
+            var val = input ? input.value.trim() : "";
+            return { dream: val, dreamSearch: val };
+        }
+
+        function saveNow() {
+            if (ssrForm) {
+                putOnboardingStep(root, 6, collectPayload, false, false, false).catch(function () { });
+            }
+        }
 
         function syncDreamTiles(active) {
             if (!grid) return;
-            grid.querySelectorAll(".ob-rustig__dream").forEach(function (btn) {
-                var title = btn.getAttribute("data-ob-dream") || btn.textContent;
-                var on = title === active;
+            var needle = String(active || "").trim();
+            grid.querySelectorAll(".ob-rustig__dream[data-ob-dream]").forEach(function (btn) {
+                var title = btn.getAttribute("data-ob-dream") || btn.textContent || "";
+                var on = needle.length > 0 && String(title).trim().toLowerCase() === needle.toLowerCase();
                 btn.classList.toggle("is-on", on);
+                btn.classList.toggle("is-selected", on);
                 btn.setAttribute("aria-pressed", on ? "true" : "false");
             });
         }
 
-        function paintDreamGrid() {
-            if (!grid || grid.getAttribute("data-ob-dream-bound") === "1") return;
-            grid.setAttribute("data-ob-dream-bound", "1");
-            grid.innerHTML = "";
-            (initial.dreamTitles || []).forEach(function (title) {
-                var btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "ob-rustig__dream";
-                btn.setAttribute("data-ob-dream", title);
-                btn.setAttribute("aria-pressed", "false");
-                btn.textContent = title;
-                grid.appendChild(btn);
-            });
-            grid.addEventListener("click", function (ev) {
-                var btn = ev.target.closest(".ob-rustig__dream[data-ob-dream]");
-                if (!btn) return;
-                var title = btn.getAttribute("data-ob-dream");
-                if (input) input.value = title;
-                syncDreamTiles(title);
-            });
+        function bindDreamGrid() {
+            if (!grid || grid.__obDreamGridBound) return;
+            grid.__obDreamGridBound = true;
+            if (!grid.querySelector(".ob-rustig__dream[data-ob-dream]")) {
+                grid.innerHTML = "";
+                (initial.dreamTitles || []).forEach(function (title) {
+                    var btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "ob-rustig__dream lobsy-choice-tile";
+                    btn.setAttribute("data-ob-dream", title);
+                    btn.setAttribute("aria-pressed", "false");
+                    btn.textContent = title;
+                    grid.appendChild(btn);
+                });
+            }
+
             syncDreamTiles(input ? input.value.trim() : "");
-        }
-        paintDreamGrid();
-        if (input) {
-            input.addEventListener("input", function () {
-                syncDreamTiles(input.value.trim());
+            bindChoiceTileActivation(grid, ".ob-rustig__dream[data-ob-dream]", function (btn) {
+                var title = btn.getAttribute("data-ob-dream") || "";
+                if (input) {
+                    input.value = title;
+                }
+                syncDreamTiles(title);
+                saveNow();
             });
         }
 
-        return {
-            collect: function () {
-                var val = input ? input.value.trim() : "";
-                return { dream: val, dreamSearch: val };
+        bindDreamGrid();
+
+        if (input && !input.__obDreamInputBound) {
+            input.__obDreamInputBound = true;
+            if (!ssrValues) {
+                input.value = initial.dreamSearch || initial.dream || "";
             }
-        };
+
+            input.addEventListener("input", function () {
+                syncDreamTiles(input.value.trim());
+                saveNow();
+            });
+        }
+
+        if (!ssrForm) {
+            wireObStepBff(root, 6, collectPayload);
+        }
+
+        return { collect: collectPayload, scheduleSave: saveNow };
     }
 
     function readMiniAnswersFromDom(host) {
@@ -1622,7 +1647,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
-        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 5) return;
+        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 6) return;
         if (step === 1 || step === 2 || step === 3) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {

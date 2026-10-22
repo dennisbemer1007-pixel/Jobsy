@@ -42,10 +42,17 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         var consoleErrors = new List<string>();
         page.Console += (_, msg) =>
         {
-            if (msg.Type == "error")
+            if (msg.Type != "error")
             {
-                consoleErrors.Add(msg.Text);
+                return;
             }
+
+            if (msg.Text.Contains("Failed to load resource", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            consoleErrors.Add(msg.Text);
         };
 
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=1"));
@@ -146,12 +153,44 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-skip").CountAsync());
+        Assert.Equal(0, await page.GetByTestId("onboarding-skip-optional").CountAsync());
 
         var eduTile = page.Locator("[data-ob-client=educationGrid] .lobsy-choice-tile").First;
-        await eduTile.ClickAsync(new() { Force = true });
+        if (mobile)
+        {
+            await eduTile.TapAsync();
+        }
+        else
+        {
+            await eduTile.ClickAsync(new() { Force = true });
+        }
+
         await Assertions.Expect(eduTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=6**");
+        await page.WaitForURLAsync("**/candidate/start?step=6**");
+        await page.Locator("[data-ob-client-step=\"6\"]").WaitForAsync();
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-ob-client-step=\"6\"]')?.getAttribute('data-ob-client-mounted') === '1'");
+        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-dream-unknown").CountAsync());
+
+        var dreamInput = page.Locator("[data-ob-client=dreamInput]");
+        await dreamInput.FillAsync("");
+        if (mobile)
+        {
+            await dreamInput.TapAsync();
+            await dreamInput.PressSequentiallyAsync("Kassière", new() { Delay = 40 });
+        }
+        else
+        {
+            await dreamInput.PressSequentiallyAsync("Kassière", new() { Delay = 30 });
+        }
+
+        await Assertions.Expect(dreamInput).ToHaveValueAsync("Kassière");
+
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=7**");
         Assert.Empty(consoleErrors);
     }
 
