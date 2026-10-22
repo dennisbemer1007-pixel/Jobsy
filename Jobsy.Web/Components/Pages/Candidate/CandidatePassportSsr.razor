@@ -1,0 +1,94 @@
+@page "/candidate/paspoort"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/profile")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Passport
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/candidate/paspoort"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+    <link rel="stylesheet" href="css/features/candidate-hero-compact-preview.css?v=20261018-01" />
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="profile" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("tab", out var tabValues);
+            query.TryGetValue("error", out var errorValues);
+            query.TryGetValue("saved", out var savedValues);
+            var error = errorValues.FirstOrDefault();
+            var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
+
+            var data = await PassportSsrData.LoadAsync(
+                Api,
+                FeatureFlags,
+                Culture,
+                tabValues.FirstOrDefault(),
+                string.IsNullOrWhiteSpace(error) ? null : error,
+                saved);
+
+            if (data is null)
+            {
+                http.Response.Redirect(PassportRedirects.ToClassicProfileUrl(http.Request.Path + http.Request.QueryString));
+                return;
+            }
+
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _bodyHtml = PassportSsrShells.BuildBody(Culture, data, tokens.RequestToken ?? "");
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

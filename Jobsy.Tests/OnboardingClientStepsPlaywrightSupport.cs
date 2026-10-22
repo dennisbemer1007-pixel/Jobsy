@@ -245,6 +245,12 @@ internal static class OnboardingClientStepsPlaywrightSupport
             return ServerAddress;
         }
 
+        internal JobsyApiClient CreateStubApiClient()
+            => new(new HttpClient(new StubApiHandler(this), disposeHandler: false)
+            {
+                BaseAddress = new Uri("http://api.test/"),
+            });
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
@@ -630,12 +636,16 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 factory.StoredProfile.HasDateOfBirth = true;
             }
 
-            if (root.TryGetProperty("homeLatitude", out var lat) && lat.TryGetDouble(out var latV))
+            if (root.TryGetProperty("homeLatitude", out var lat)
+                && lat.ValueKind == JsonValueKind.Number
+                && lat.TryGetDouble(out var latV))
             {
                 factory.StoredProfile.HomeLatitude = latV;
             }
 
-            if (root.TryGetProperty("homeLongitude", out var lng) && lng.TryGetDouble(out var lngV))
+            if (root.TryGetProperty("homeLongitude", out var lng)
+                && lng.ValueKind == JsonValueKind.Number
+                && lng.TryGetDouble(out var lngV))
             {
                 factory.StoredProfile.HomeLongitude = lngV;
             }
@@ -669,12 +679,21 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     .ToList();
             }
 
-            if (prefs.TryGetProperty("minHoursPerWeek", out var minH) && minH.TryGetDecimal(out var minVal))
+            if (prefs.TryGetProperty("aboutMe", out var about) && about.ValueKind == JsonValueKind.String)
+            {
+                factory.StoredProfile.Preferences.AboutMe = about.GetString();
+            }
+
+            if (prefs.TryGetProperty("minHoursPerWeek", out var minH)
+                && minH.ValueKind == JsonValueKind.Number
+                && minH.TryGetDecimal(out var minVal))
             {
                 factory.StoredProfile.Preferences.MinHoursPerWeek = minVal;
             }
 
-            if (prefs.TryGetProperty("maxHoursPerWeek", out var maxH) && maxH.TryGetDecimal(out var maxVal))
+            if (prefs.TryGetProperty("maxHoursPerWeek", out var maxH)
+                && maxH.ValueKind == JsonValueKind.Number
+                && maxH.TryGetDecimal(out var maxVal))
             {
                 factory.StoredProfile.Preferences.MaxHoursPerWeek = maxVal;
             }
@@ -684,7 +703,9 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 factory.StoredProfile.Preferences.PreferredTransport = transport.GetString();
             }
 
-            if (prefs.TryGetProperty("maxTravelMinutes", out var travel) && travel.TryGetInt32(out var travelVal))
+            if (prefs.TryGetProperty("maxTravelMinutes", out var travel)
+                && travel.ValueKind == JsonValueKind.Number
+                && travel.TryGetInt32(out var travelVal))
             {
                 factory.StoredProfile.Preferences.MaxTravelMinutes = travelVal;
             }

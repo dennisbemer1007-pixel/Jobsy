@@ -8,11 +8,12 @@ public class MijnPaspoortPlaywrightTests
     [Fact]
     public void Passport_fit_and_career_tabs_replace_phase1_placeholders()
     {
-        var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "Passport.razor"));
-        Assert.Contains("PassportFitTab", page, StringComparison.Ordinal);
-        Assert.Contains("PassportCareerTab", page, StringComparison.Ordinal);
+        var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidatePassportSsr.razor"));
+        var shells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Passport", "PassportSsrShells.cs"));
+        Assert.Contains("[NoBlazorRuntime]", page, StringComparison.Ordinal);
+        Assert.Contains("AppendFitPanel", shells, StringComparison.Ordinal);
+        Assert.Contains("AppendCareerPanel", shells, StringComparison.Ordinal);
         Assert.DoesNotContain("<RoleFitCheckPanel", page, StringComparison.Ordinal);
-        Assert.DoesNotContain("Passport.Career.Lead", page, StringComparison.Ordinal);
 
         var fit = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Candidate", "Passport", "PassportFitTab.razor"));
         Assert.Contains("RoleFitCheckSession", fit, StringComparison.Ordinal);
@@ -86,9 +87,9 @@ public class MijnPaspoortPlaywrightTests
     [Fact]
     public void Passport_tests_tab_replaces_phase1_placeholder()
     {
-        var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "Passport.razor"));
-        Assert.Contains("PassportTestsTab", page, StringComparison.Ordinal);
-        Assert.DoesNotContain("<TestsOverviewPanel", page, StringComparison.Ordinal);
+        var shells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Passport", "PassportSsrShells.cs"));
+        Assert.Contains("AppendTestsPanel", shells, StringComparison.Ordinal);
+        Assert.Contains("/profiel/tests/competence", shells, StringComparison.Ordinal);
         var tab = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Candidate", "Passport", "PassportTestsTab.razor"));
         Assert.Contains("TestsOverviewBuilder", tab, StringComparison.Ordinal);
         Assert.Contains("CourseSuggestionBlock", tab, StringComparison.Ordinal);
@@ -112,7 +113,7 @@ public class MijnPaspoortPlaywrightTests
     [Fact]
     public void Passport_page_uses_requires_feature_and_candidate_role()
     {
-        var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "Passport.razor"));
+        var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidatePassportSsr.razor"));
         Assert.Contains("Authorize(Roles = \"Candidate\")", page, StringComparison.Ordinal);
         Assert.Contains("RequiresFeature(PlatformFeature.CandidatePassport", page, StringComparison.Ordinal);
         Assert.Contains("FallbackPath = \"/candidate/profile\"", page, StringComparison.Ordinal);
