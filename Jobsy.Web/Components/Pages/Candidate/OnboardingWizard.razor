@@ -1,5 +1,5 @@
 @page "/candidate/start"
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Features
@@ -28,6 +28,7 @@
 @using Jobsy.Web.Onboarding
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Features
+@using Microsoft.AspNetCore.WebUtilities
 @using Jobsy.Web.Media
 @using Jobsy.Web.KandidaatBanen
 @implements IAsyncDisposable
@@ -53,11 +54,17 @@
     {
         <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
     }
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-nav" />
 </HeadContent>
 
 <div class="ob-wizard ob-wizard--richting-a @(OnboardingRustig.Enabled ? "ob-wizard--rustig" : null) @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)"
      data-ob-antiforgery-header="@_antiforgeryHeader"
-     data-ob-antiforgery-token="@_antiforgeryToken">
+     data-ob-antiforgery-token="@_antiforgeryToken"
+     data-ob-active-step="@(_loading ? null : _step.ToString())">
+    @if (!_loading)
+    {
+        <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
+    }
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -278,7 +285,15 @@
                                 disabled="@_busy"
                                 @onclick="SkipOptionalAsync">@Culture["Onboarding.Skip"]</button>
                     }
-                    @if (_step > 10)
+                    @if (_step == 1)
+                    {
+                        <button type="button"
+                                class="ob-rustig__btn ob-rustig__btn--primary"
+                                data-ob-nav-next
+                                data-ob-nav-step="1"
+                                data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
+                    }
+                    else if (_step > 10)
                     {
                         <button type="button"
                                 class="ob-rustig__btn ob-rustig__btn--primary"
@@ -1055,6 +1070,18 @@
         _pendingStepScroll = true;
     }
 
+    private bool TryParseStepQuery(out int step)
+    {
+        step = 0;
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("step", out var raw))
+        {
+            return false;
+        }
+
+        return int.TryParse(raw.FirstOrDefault(), out step);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!_pendingStepScroll)
@@ -1135,6 +1162,12 @@
             }
 
             _step = Math.Clamp(_state.CurrentStep, 1, 10);
+            if (TryParseStepQuery(out var requestedStep))
+            {
+                var ceiling = Math.Clamp(_state.CurrentStep, 1, 10);
+                _step = Math.Clamp(requestedStep, 1, ceiling);
+            }
+
             _finish = _state.FinishReached;
             if (_finish && _finaleV2)
             {

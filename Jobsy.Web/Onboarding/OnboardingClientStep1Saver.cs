@@ -2,6 +2,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
+using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Http;
 
@@ -93,7 +94,7 @@ public static class OnboardingClientStep1Saver
             return (StatusCodes.Status502BadGateway, new { message = culture["Onboarding.NotSaved"] });
         }
 
-        return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+        return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(2) });
     }
 
     private static string BuildHomeAddress(OnboardingProfileDraft draft)

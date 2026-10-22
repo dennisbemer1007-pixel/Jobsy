@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
+using Jobsy.Web.Components.Shared;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Web.Onboarding;
@@ -59,11 +60,13 @@ internal static class OnboardingClientStepShells
         sb.Append("<p class=\"ob-wizard__hint ob-wizard__section-hint\">");
         sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Hint"]));
         sb.Append("</p>");
-        sb.Append("<div class=\"work-status-chips lobsy-choice-grid lobsy-choice-grid--desktop-3\" data-ob-client=\"workStatusGrid\" role=\"group\"></div>");
+        sb.Append("<div class=\"work-status-chips lobsy-choice-grid lobsy-choice-grid--desktop-3\" data-ob-client=\"workStatusGrid\" role=\"group\">");
+        AppendWorkStatusChips(sb, culture, draft);
+        sb.Append("</div>");
         sb.Append("</fieldset>");
         sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel", draft.Phone));
-        AppendStepNav(sb, culture);
         sb.Append("</div>");
+        AppendStepNav(sb, culture, step1PlainNav: true);
         return sb.ToString();
     }
 
@@ -172,7 +175,45 @@ internal static class OnboardingClientStepShells
         return sb.ToString();
     }
 
-    private static void AppendStepNav(StringBuilder sb, CultureState culture, bool optionalSkip = false)
+    private static void AppendWorkStatusChips(StringBuilder sb, CultureState culture, OnboardingProfileDraft draft)
+    {
+        var selected = new HashSet<string>(draft.WorkStatuses, StringComparer.OrdinalIgnoreCase);
+        foreach (var code in WorkStatusCatalog.AllCodes)
+        {
+            var on = selected.Contains(code);
+            var label = culture[WorkStatusCatalog.LabelKey(code)];
+            var icon = ChoiceTileIcons.ForWorkStatus(code);
+            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile work-status-chip");
+            if (on)
+            {
+                sb.Append(" is-selected");
+            }
+
+            sb.Append("\" data-ob-code=\"");
+            sb.Append(WebUtility.HtmlEncode(code));
+            sb.Append("\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\">");
+            if (!string.IsNullOrEmpty(icon))
+            {
+                sb.Append("<span class=\"lobsy-choice-tile__icon\" aria-hidden=\"true\">");
+                sb.Append(icon);
+                sb.Append("</span>");
+            }
+
+            sb.Append("<span class=\"lobsy-choice-tile__label\">");
+            sb.Append(WebUtility.HtmlEncode(label));
+            sb.Append("</span>");
+            if (on)
+            {
+                sb.Append("<span class=\"lobsy-choice-tile__check\" aria-hidden=\"true\">✓</span>");
+            }
+
+            sb.Append("</button>");
+        }
+    }
+
+    private static void AppendStepNav(StringBuilder sb, CultureState culture, bool optionalSkip = false, bool step1PlainNav = false)
     {
         sb.Append("<div class=\"ob-step-actions\">");
         if (optionalSkip)
@@ -182,7 +223,13 @@ internal static class OnboardingClientStepShells
             sb.Append("</button>");
         }
 
-        sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step-next\" data-ob-step-next data-testid=\"onboarding-next\">");
+        sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step-next\" data-ob-step-next");
+        if (step1PlainNav)
+        {
+            sb.Append(" data-ob-nav-next");
+        }
+
+        sb.Append(" data-testid=\"onboarding-next\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Next"]));
         sb.Append("</button>");
         sb.Append("<p class=\"state-message error ob-step-next-error\" data-ob-step-error hidden aria-live=\"polite\"></p>");

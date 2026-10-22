@@ -11,6 +11,11 @@ public static class OnboardingRoutes
     public const string ClassicStartPath = "/candidate/start";
     public const string DiscoveryPath = "/candidate/ontdekkingsreis";
 
+    public static string StepUrl(int step) =>
+        step is >= 1 and <= 10
+            ? $"{ClassicStartPath}?step={step}"
+            : ClassicStartPath;
+
     public static string StartPath(FeatureFlagSnapshot flags)
     {
         _ = flags;

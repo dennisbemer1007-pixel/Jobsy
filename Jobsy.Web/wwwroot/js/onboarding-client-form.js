@@ -165,7 +165,7 @@
                 });
         }
 
-        if (nextBtn && !nextBtn.__obStepNextBound) {
+        if (nextBtn && !nextBtn.__obStepNextBound && !nextBtn.hasAttribute("data-ob-nav-next")) {
             nextBtn.__obStepNextBound = true;
             nextBtn.addEventListener("click", function () { runAdvance(false); });
         }
@@ -179,10 +179,55 @@
         return { scheduleSave: scheduleSave };
     }
 
+    function findNavErrorEl(root) {
+        if (root) {
+            var local = root.querySelector("[data-ob-step-error]");
+            if (local) return local;
+        }
+        return document.querySelector(".ob-wizard [data-ob-wizard-nav-error]");
+    }
+
+    function runStepAdvance(root, step, collectFn, skipOptional) {
+        var errEl = findNavErrorEl(root);
+        if (errEl) {
+            errEl.hidden = true;
+            errEl.textContent = "";
+        }
+        putOnboardingStep(root, step, collectFn, true, !!skipOptional, false)
+            .then(function (res) {
+                return res.json().then(function (body) {
+                    return { ok: res.ok, body: body };
+                }).catch(function () {
+                    return { ok: res.ok, body: {} };
+                });
+            })
+            .then(function (result) {
+                if (result.ok && result.body && result.body.redirectUrl) {
+                    window.location.assign(result.body.redirectUrl);
+                    return;
+                }
+                if (result.ok) {
+                    window.location.reload();
+                    return;
+                }
+                var msg = (result.body && result.body.message)
+                    || "Opslaan mislukt. Controleer je gegevens en probeer opnieuw.";
+                if (errEl) {
+                    errEl.textContent = msg;
+                    errEl.hidden = false;
+                }
+            })
+            .catch(function () {
+                if (errEl) {
+                    errEl.textContent = "Verbinding mislukt. Probeer het opnieuw.";
+                    errEl.hidden = false;
+                }
+            });
+    }
+
     function mountStep1(root, initial) {
         var ssrValues = root.getAttribute("data-ob-ssr-values") === "1";
         var state = {
-            workStatuses: new Set(initial.workStatusesSelected || []),
             homeLat: initial.homeLat,
             homeLng: initial.homeLng,
             suggestGen: 0,
@@ -229,7 +274,7 @@
                 lastName: last ? last.value : "",
                 phone: phone ? phone.value : "",
                 whatsAppAllowed: false,
-                workStatuses: Array.from(state.workStatuses),
+                workStatuses: readWorkStatusesFromDom(),
                 addressQuery: address ? address.value : "",
                 homeLat: state.homeLat,
                 homeLng: state.homeLng,
@@ -255,52 +300,68 @@
         bindSaveEvents(birth);
         bindSaveEvents(phone);
 
-        function syncWorkStatusUi() {
-            if (!grid) return;
+        function readWorkStatusesFromDom() {
+            if (!grid) return [];
+            var codes = [];
             grid.querySelectorAll(".work-status-chip[data-ob-code]").forEach(function (btn) {
-                var code = btn.getAttribute("data-ob-code");
-                var selected = state.workStatuses.has(code);
-                btn.classList.toggle("is-selected", selected);
-                btn.setAttribute("aria-pressed", selected ? "true" : "false");
-                var check = btn.querySelector(".lobsy-choice-tile__check");
-                if (selected && !check) {
-                    btn.insertAdjacentHTML("beforeend", '<span class="lobsy-choice-tile__check" aria-hidden="true">✓</span>');
-                } else if (!selected && check) {
-                    check.remove();
+                if (btn.getAttribute("aria-pressed") === "true") {
+                    codes.push(btn.getAttribute("data-ob-code"));
                 }
             });
+            return codes;
         }
 
-        function renderWorkStatus() {
-            if (!grid) return;
-            if (grid.getAttribute("data-ob-work-bound") === "1") {
-                syncWorkStatusUi();
-                return;
+        function setWorkStatusPressed(btn, selected) {
+            btn.classList.toggle("is-selected", selected);
+            btn.setAttribute("aria-pressed", selected ? "true" : "false");
+            var check = btn.querySelector(".lobsy-choice-tile__check");
+            if (selected && !check) {
+                btn.insertAdjacentHTML("beforeend", '<span class="lobsy-choice-tile__check" aria-hidden="true">✓</span>');
+            } else if (!selected && check) {
+                check.remove();
             }
-            grid.setAttribute("data-ob-work-bound", "1");
-            grid.innerHTML = "";
-            (initial.workStatusOptions || []).forEach(function (opt) {
-                var btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "lobsy-choice-tile work-status-chip";
-                btn.setAttribute("data-ob-code", opt.code);
-                btn.setAttribute("aria-pressed", "false");
-                var iconHtml = opt.icon ? ('<span class="lobsy-choice-tile__icon" aria-hidden="true">' + opt.icon + "</span>") : "";
-                btn.innerHTML = iconHtml + '<span class="lobsy-choice-tile__label">' + escapeHtml(opt.label) + "</span>";
-                grid.appendChild(btn);
-            });
-            grid.addEventListener("click", function (ev) {
-                var btn = ev.target.closest(".work-status-chip[data-ob-code]");
-                if (!btn || !grid.contains(btn)) return;
-                var code = btn.getAttribute("data-ob-code");
-                if (state.workStatuses.has(code)) state.workStatuses.delete(code);
-                else state.workStatuses.add(code);
-                syncWorkStatusUi();
-                scheduleSave();
-            });
-            syncWorkStatusUi();
         }
-        renderWorkStatus();
+
+        function saveWorkStatusNow() {
+            putOnboardingStep(root, 1, collectPayload, false, false, false).catch(function () { });
+        }
+
+        function bindWorkStatusChip(btn) {
+            if (!btn || btn.__obWorkChipBound) return;
+            btn.__obWorkChipBound = true;
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                var selected = btn.getAttribute("aria-pressed") === "true";
+                setWorkStatusPressed(btn, !selected);
+                saveWorkStatusNow();
+            }, true);
+        }
+
+        function ensureWorkStatusGrid() {
+            if (!grid) return;
+            var chips = grid.querySelectorAll(".work-status-chip[data-ob-code]");
+            if (chips.length === 0) {
+                (initial.workStatusOptions || []).forEach(function (opt) {
+                    var btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "lobsy-choice-tile work-status-chip";
+                    btn.setAttribute("data-ob-code", opt.code);
+                    var selected = (initial.workStatusesSelected || []).indexOf(opt.code) >= 0;
+                    btn.setAttribute("aria-pressed", selected ? "true" : "false");
+                    if (selected) btn.classList.add("is-selected");
+                    var iconHtml = opt.icon ? ('<span class="lobsy-choice-tile__icon" aria-hidden="true">' + opt.icon + "</span>") : "";
+                    var checkHtml = selected ? '<span class="lobsy-choice-tile__check" aria-hidden="true">✓</span>' : "";
+                    btn.innerHTML = iconHtml + '<span class="lobsy-choice-tile__label">' + escapeHtml(opt.label) + "</span>" + checkHtml;
+                    grid.appendChild(btn);
+                });
+                chips = grid.querySelectorAll(".work-status-chip[data-ob-code]");
+            }
+
+            chips.forEach(bindWorkStatusChip);
+        }
+
+        ensureWorkStatusGrid();
 
         if (birth && !birth.__obBirthMask) {
             birth.__obBirthMask = true;
@@ -1021,44 +1082,97 @@
             });
     }
 
-    function suppressRustigDuplicateNav() {
-        document.querySelectorAll(".ob-rustig__canvas .ob-step-actions").forEach(function (nav) {
-            nav.setAttribute("hidden", "hidden");
-            nav.setAttribute("aria-hidden", "true");
-            nav.setAttribute("inert", "");
+    function resolveClientRoot(fromBtn) {
+        if (fromBtn) {
+            var canvas = fromBtn.closest(".ob-rustig__canvas,.ob-client-step,.ob-wizard__content");
+            if (canvas) {
+                var inCanvas = canvas.querySelector("[data-ob-client-step]");
+                if (inCanvas) return inCanvas;
+            }
+        }
+        return activeClientStepRoot();
+    }
+
+    function resolveNavStep(root, btn) {
+        if (root) {
+            var fromRoot = parseInt(root.getAttribute("data-ob-client-step"), 10);
+            if (fromRoot) return fromRoot;
+        }
+        if (btn) {
+            var fromBtn = parseInt(btn.getAttribute("data-ob-nav-step") || "", 10);
+            if (fromBtn) return fromBtn;
+        }
+        var wiz = document.querySelector(".ob-wizard[data-ob-active-step]");
+        if (wiz) {
+            var fromWiz = parseInt(wiz.getAttribute("data-ob-active-step"), 10);
+            if (fromWiz) return fromWiz;
+        }
+        return activeClientStepNumber();
+    }
+
+    function reconcileRustigFooterNav() {
+        document.querySelectorAll(".ob-rustig__canvas").forEach(function (canvas) {
+            var footerNext = canvas.querySelector(".ob-rustig__footer-actions [data-ob-nav-next]");
+            if (!footerNext) return;
+            canvas.querySelectorAll(".ob-step-actions").forEach(function (nav) {
+                nav.setAttribute("hidden", "hidden");
+                nav.setAttribute("aria-hidden", "true");
+            });
         });
     }
 
-    function bindWizardChromeNav() {
-        suppressRustigDuplicateNav();
-        document.querySelectorAll('[data-testid="onboarding-next"]').forEach(function (btn) {
-            if (btn.__obChromeNextBound) return;
-            btn.__obChromeNextBound = true;
-            btn.addEventListener("click", function (ev) {
-                var root = activeClientStepRoot();
-                if (!root || typeof root.__obRunAdvance !== "function") return;
-                ev.preventDefault();
-                ev.stopImmediatePropagation();
+    function triggerWizardAdvance(skipOptional) {
+        var root = activeClientStepRoot();
+        var step = resolveNavStep(root, null);
+        if (!root || !step) return;
+        if (typeof root.__obRunAdvance === "function") {
+            root.__obRunAdvance(!!skipOptional);
+            return;
+        }
+        var st = roots ? roots.get(root) : null;
+        runStepAdvance(root, step, function () {
+            return collectForRoot(root, step, st);
+        }, !!skipOptional);
+    }
+
+    function bindObWizardNav() {
+        if (window.__obWizardNavBound) return;
+        window.__obWizardNavBound = true;
+        document.addEventListener("keydown", function (ev) {
+            if (ev.key !== "Enter" || ev.defaultPrevented || ev.isComposing) return;
+            if (!ev.target || !ev.target.closest(".ob-wizard")) return;
+            if (ev.target.closest(".address-suggestions:not([hidden])")) return;
+            if (ev.target.closest("textarea")) return;
+            if (ev.target.closest("button,[data-ob-nav-next],[data-ob-step-next]")) return;
+            var wiz = document.querySelector(".ob-wizard[data-ob-active-step]");
+            if (!wiz) return;
+            var step = parseInt(wiz.getAttribute("data-ob-active-step") || "", 10);
+            if (step !== 1) return;
+            ev.preventDefault();
+            triggerWizardAdvance(false);
+        }, true);
+        document.addEventListener("click", function (ev) {
+            if (!ev.target.closest(".ob-wizard")) return;
+
+            var nextBtn = ev.target.closest("[data-ob-nav-next]");
+            if (!nextBtn) return;
+            if (nextBtn.disabled) return;
+
+            var root = resolveClientRoot(nextBtn);
+            var step = resolveNavStep(root, nextBtn);
+            if (!root || step !== 1) return;
+
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (typeof root.__obRunAdvance === "function") {
                 root.__obRunAdvance(false);
-            }, true);
-        });
-        document.querySelectorAll('[data-testid="onboarding-back"], .ob-wizard__back-footer, .ob-wizard__back').forEach(function (btn) {
-            if (btn.__obChromeBackBound) return;
-            btn.__obChromeBackBound = true;
-            btn.addEventListener("click", function (ev) {
-                var step = activeClientStepNumber();
-                if (!step || step <= 1) return;
-                var root = activeClientStepRoot();
-                if (!root) return;
-                ev.preventDefault();
-                ev.stopImmediatePropagation();
-                if (btn.disabled) return;
-                btn.disabled = true;
-                var st = roots ? roots.get(root) : null;
-                runStepBack(root, step, function () { return collectForRoot(root, step, st); })
-                    .finally(function () { btn.disabled = false; });
-            }, true);
-        });
+            } else {
+                var stNext = roots ? roots.get(root) : null;
+                runStepAdvance(root, step, function () {
+                    return collectForRoot(root, step, stNext);
+                }, false);
+            }
+        }, true);
     }
 
     function attachStepBff(root, step, state) {
@@ -1155,7 +1269,8 @@
         autoMountClientSteps();
         bindWelcomeBegin();
         bindKompasComplete();
-        bindWizardChromeNav();
+        reconcileRustigFooterNav();
+        bindObWizardNav();
     }
 
     if (document.readyState === "loading") {
@@ -1170,7 +1285,7 @@
             autoMountClientSteps();
             bindWelcomeBegin();
             bindKompasComplete();
-            bindWizardChromeNav();
+            reconcileRustigFooterNav();
         });
         domObs.observe(document.documentElement, { childList: true, subtree: true });
     }
