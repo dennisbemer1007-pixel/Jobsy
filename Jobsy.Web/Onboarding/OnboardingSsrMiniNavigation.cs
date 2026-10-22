@@ -29,7 +29,7 @@ internal static class OnboardingSsrMiniNavigation
             }
         }
 
-        return questions.Count - 1;
+        return 0;
     }
 
     public static string StepQuestionUrl(int step, int q1Based)

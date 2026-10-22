@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-step2opslaan44" />
     <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261022-r6c" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step910" />
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-mini-footer" />
 </HeadContent>
 
 @if (_loading)
@@ -68,6 +68,7 @@ else if (_step is >= 1 and <= 10)
           data-enhance="false"
           data-enhance-nav="false"
           data-ob-ssr-form="1"
+          onsubmit="var f=this;if(f.getAttribute('data-ob-submitting')==='1'){return false;}f.setAttribute('data-ob-submitting','1');f.querySelectorAll('button[type=submit]').forEach(function(b){b.disabled=true;});return true;"
           data-ob-ssr-post-tiles="@(_step is >= 2 and <= 4 ? "1" : null)"
           data-ob-ssr-step="@_step"
           data-ob-antiforgery-header="@_antiforgeryHeader"
@@ -194,43 +195,63 @@ else if (_step is >= 1 and <= 10)
                                 </div>
                             </div>
                         </div>
-                        <div class="ob-rustig__footer-actions">
-                            @if (_step > 1)
-                            {
+                        @if (_step is >= 7 and <= 10)
+                        {
+                            <div class="ob-rustig__footer-actions ob-rustig__footer-actions--mini-ssr">
+                                <div class="ob-rustig__footer-start">
+                                    @if (_step > 1)
+                                    {
+                                        <button type="submit"
+                                                class="ob-rustig__btn"
+                                                name="obNav"
+                                                value="back"
+                                                data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
+                                    }
+                                    <a class="ob-rustig__btn"
+                                       href="/candidate/profile"
+                                       data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
+                                </div>
                                 <button type="submit"
-                                        class="ob-rustig__btn"
+                                        class="ob-rustig__btn ob-rustig__btn--primary"
                                         name="obNav"
-                                        value="back"
-                                        data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
-                            }
-                            @if (_step is >= 7 and <= 10)
-                            {
-                                <a class="ob-rustig__btn"
-                                   href="/candidate/profile"
-                                   data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
-                            }
-                            else if (_step is 4 or 5)
-                            {
+                                        value="next"
+                                        data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="ob-rustig__footer-actions">
+                                @if (_step > 1)
+                                {
+                                    <button type="submit"
+                                            class="ob-rustig__btn"
+                                            name="obNav"
+                                            value="back"
+                                            data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
+                                }
+                                @if (_step is 4 or 5)
+                                {
+                                    <button type="submit"
+                                            class="ob-rustig__btn"
+                                            name="obNav"
+                                            value="skip"
+                                            data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
+                                }
+                                @if (_step == 6)
+                                {
+                                    <button type="submit"
+                                            class="ob-rustig__btn"
+                                            name="obNav"
+                                            value="dreamUnknown"
+                                            data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
+                                }
                                 <button type="submit"
-                                        class="ob-rustig__btn"
+                                        class="ob-rustig__btn ob-rustig__btn--primary"
                                         name="obNav"
-                                        value="skip"
-                                        data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
-                            }
-                            @if (_step == 6)
-                            {
-                                <button type="submit"
-                                        class="ob-rustig__btn"
-                                        name="obNav"
-                                        value="dreamUnknown"
-                                        data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
-                            }
-                            <button type="submit"
-                                    class="ob-rustig__btn ob-rustig__btn--primary"
-                                    name="obNav"
-                                    value="next"
-                                    data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
-                        </div>
+                                        value="next"
+                                        data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
+                            </div>
+                        }
                     </div>
                 </div>
                 @if (_showJobsRail && _nearbySignal is not null)

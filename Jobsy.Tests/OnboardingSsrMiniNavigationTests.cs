@@ -37,4 +37,19 @@ public sealed class OnboardingSsrMiniNavigationTests
     {
         Assert.Equal("/candidate/start?step=7&q=3", OnboardingSsrMiniNavigation.StepQuestionUrl(7, 3));
     }
+
+    [Fact]
+    public void Without_q_when_all_answered_opens_question_one()
+    {
+        var questions = new List<OnboardingClientStepSeed.MiniQuestionSeed>
+        {
+            new(1, "A"),
+            new(2, "B"),
+            new(3, "C"),
+        };
+        var answers = new Dictionary<int, int> { [1] = 3, [2] = 4, [3] = 5 };
+
+        var index = OnboardingSsrMiniNavigation.ResolveActiveQuestionIndex(questions, answers, qQuery: null);
+        Assert.Equal(0, index);
+    }
 }

@@ -206,27 +206,17 @@ public static class OnboardingStartFormEndpoints
             body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
             if (advance)
             {
+                var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
                 var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
                     currentStep,
                     api,
                     featureFlags,
                     culture,
                     cancellationToken);
-                var testsV2 = await featureFlags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
-                var version = OnboardingMiniBlockCompletion.ResolveQuickScanVersion(mini.QuickScanVersion, testsV2);
-                var answers = OnboardingClientStepBridge.ParseMiniAnswers(body.GetRawText());
-                foreach (var pair in mini.Answers)
+                var total = mini.Questions.Count;
+                if (total > 0 && q < total)
                 {
-                    answers.TryAdd(pair.Key, pair.Value);
-                }
-
-                if (!OnboardingMiniBlockCompletion.IsMiniBlockComplete(currentStep, version, answers))
-                {
-                    var nextQ = OnboardingSsrMiniNavigation.ResolveActiveQuestionIndex(
-                        mini.Questions,
-                        answers,
-                        qQuery: null) + 1;
-                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, nextQ));
+                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q + 1));
                 }
             }
         }
