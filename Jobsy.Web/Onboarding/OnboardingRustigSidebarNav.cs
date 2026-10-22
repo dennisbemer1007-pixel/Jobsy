@@ -1,3 +1,5 @@
+using Jobsy.Web.Navigation;
+
 namespace Jobsy.Web.Onboarding;
 
 public static class OnboardingRustigSidebarNav
@@ -13,6 +15,21 @@ public static class OnboardingRustigSidebarNav
             <= 10 => 4,
             _ => 5,
         };
+
+    /// <summary>First wizard step for a sidebar section (1–5).</summary>
+    public static int LinkWizardStep(int sectionNumber) =>
+        sectionNumber switch
+        {
+            1 => 1,
+            2 => 4,
+            3 => 6,
+            4 => 7,
+            5 => 10,
+            _ => 1,
+        };
+
+    public static string LinkHref(int sectionNumber) =>
+        OnboardingRoutes.StepUrl(LinkWizardStep(sectionNumber));
 
     public static IReadOnlyList<NavItem> Items(int wizardStep, int? activeSectionOverride = null)
     {

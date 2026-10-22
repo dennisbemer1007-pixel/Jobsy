@@ -17,7 +17,7 @@
     display: block;
     visibility: visible;
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: none;
     transition: opacity 0.2s ease, visibility 0s linear 0s;
 }
 

@@ -16,7 +16,9 @@
                  draggable="false" />
             @foreach (var item in OnboardingRustigSidebarNav.Items(Step, SidebarActiveSection))
             {
-                <div class="ob-wizard__side-item @(item.Current ? "is-current" : null)">
+                var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
+                <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"
+                   href="@OnboardingRustigSidebarNav.LinkHref(section)">
                     <span>@item.Number</span>
                     <div>
                         <strong>@item.Title</strong>
@@ -25,7 +27,7 @@
                             <small>@item.Sub</small>
                         }
                     </div>
-                </div>
+                </a>
             }
         </aside>
 

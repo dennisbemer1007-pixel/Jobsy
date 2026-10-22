@@ -1,0 +1,21 @@
+/* Functional only: keep illustrated card from intercepting clicks on step nav below the card. */
+.ob-client-step .ob-wizard__card--illustrated {
+  pointer-events: none;
+}
+
+.ob-client-step .ob-wizard__card--illustrated * {
+  pointer-events: auto;
+}
+
+.ob-client-step .ob-step-actions,
+.ob-client-step .ob-rustig__footer-actions {
+  pointer-events: auto;
+  position: relative;
+  z-index: 3;
+}
+
+.ob-wizard__sidebar a.ob-wizard__side-item {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+}
