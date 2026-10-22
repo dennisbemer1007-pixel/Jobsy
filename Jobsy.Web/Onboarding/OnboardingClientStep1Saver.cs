@@ -1,6 +1,7 @@
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Models;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Http;
