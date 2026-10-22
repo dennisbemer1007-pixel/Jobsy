@@ -674,8 +674,8 @@
 
         if (path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase))
         {
-            // Focus only while a journey screen is active (?stap=…).
-            return HasJourneyStepQuery(relativeUri);
+            // Static SSR keeps normal nav on all discovery screens (no focus trap).
+            return false;
         }
 
         return false;
