@@ -9,6 +9,8 @@ Alleen afbeeldingen ter referentie. Bouw deze pagina's op dezelfde manier als de
 | Carrière | `carriere/desktop/`, `carriere/mobile/` | r2, tabs Voor jou, Omscholen, Kansberoepen | 21 oktober 2026, 17:21 |
 | Banenkaart | `banenkaart/desktop/`, `banenkaart/mobile/` | filterlade (desktop), paneel (mobiel); alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:54 |
 | Paspoort | `paspoort/desktop/`, `paspoort/mobile/` | r3; alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:57 |
+| Bewaard | `bewaard/desktop/`, `bewaard/mobile/` | alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:58 |
+| Match | `match/desktop/`, `match/mobile/` | alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:58 |
 
 Desktop van Carrière bestaat alleen voor het tabblad Voor jou; de andere tabs volgen dezelfde opbouw.
 
