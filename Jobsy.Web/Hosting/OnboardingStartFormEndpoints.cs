@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Jobsy.Core.Features;
+using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Models;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Onboarding;
 using Jobsy.Web.Services;
@@ -86,6 +88,47 @@ public static class OnboardingStartFormEndpoints
             skipOptional = true;
         }
 
+        if (OnboardingSsrStepFormInteract.HasInteract(currentStep, http.Request.Form))
+        {
+            MeProfile profile;
+            try
+            {
+                profile = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            }
+            catch (Exception)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Common.Error.TryAgain"]));
+            }
+
+            var draft = OnboardingProfileDraftHydrator.FromProfile(profile);
+            if (!OnboardingSsrStepFormInteract.TryApply(
+                    currentStep,
+                    http.Request.Form,
+                    draft,
+                    culture,
+                    out var interactError))
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
+            }
+
+            if (interactError is not null)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), interactError));
+            }
+
+            var interactBody = OnboardingSsrStepFormInteract.BuildPersistBody(currentStep, draft);
+            var interactMerged = MergeNavFlags(interactBody, advance: false, goBack: false, skipOptional: false);
+            var (interactStatus, interactPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+                currentStep,
+                interactMerged,
+                api,
+                geocoder,
+                featureFlags,
+                culture,
+                cancellationToken);
+            return ToRedirect(interactStatus, interactPayload, currentStep, advance: false, goBack: false, culture);
+        }
+
         if (!advance && !goBack && !persist)
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
@@ -99,6 +142,21 @@ public static class OnboardingStartFormEndpoints
         else if (currentStep is >= 7 and <= 10)
         {
             body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
+        }
+        else if (string.IsNullOrWhiteSpace(obPayload) && currentStep is >= 2 and <= 4)
+        {
+            MeProfile profileFromStore;
+            try
+            {
+                profileFromStore = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            }
+            catch (Exception)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Common.Error.TryAgain"]));
+            }
+
+            var draftFromStore = OnboardingProfileDraftHydrator.FromProfile(profileFromStore);
+            body = OnboardingSsrStepFormInteract.BuildPersistBody(currentStep, draftFromStore);
         }
         else if (string.IsNullOrWhiteSpace(obPayload))
         {

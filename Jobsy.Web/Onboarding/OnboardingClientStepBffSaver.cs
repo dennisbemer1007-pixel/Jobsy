@@ -65,6 +65,7 @@ public static class OnboardingClientStepBffSaver
             try
             {
                 await OnboardingProfileDraftPersistence.SaveProfileAsync(draft, api, cancellationToken);
+                api.InvalidateMeCache();
                 if (step == 6)
                 {
                     await api.SaveOnboardingDreamJobAsync(
