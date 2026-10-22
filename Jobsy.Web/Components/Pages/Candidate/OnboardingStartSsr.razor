@@ -35,14 +35,14 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step3touch" />
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step6footer" />
 </HeadContent>
 
 @if (_loading)
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
-else if (_step is >= 1 and <= 5)
+else if (_step is >= 1 and <= 6)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
     <form method="post"
@@ -155,7 +155,7 @@ else if (_step is >= 1 and <= 5)
                                      data-initial="@_initialJson"
                                      data-ob-ssr-values="1"
                                      data-testid="@($"onboarding-step-{_step}-illustrated")">
-                                    @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft))
+                                    @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft, _dreamTitles))
                                 </div>
                             </div>
                         </div>
@@ -175,6 +175,14 @@ else if (_step is >= 1 and <= 5)
                                         name="obNav"
                                         value="skip"
                                         data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
+                            }
+                            @if (_step == 6)
+                            {
+                                <button type="submit"
+                                        class="ob-rustig__btn"
+                                        name="obNav"
+                                        value="dreamUnknown"
+                                        data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
                             }
                             <button type="submit"
                                     class="ob-rustig__btn ob-rustig__btn--primary"
@@ -198,6 +206,7 @@ else if (_step is >= 1 and <= 5)
     private bool _showJobsRail;
     private OnboardingProfileDraft _draft = new();
     private string _initialJson = "{}";
+    private IReadOnlyList<string> _dreamTitles = [];
     private string _antiforgeryHeader = "RequestVerificationToken";
     private string _antiforgeryToken = "";
     private string? _errorMessage;
@@ -260,7 +269,7 @@ else if (_step is >= 1 and <= 5)
                 return;
             }
 
-            if (_step is < 1 or > 5)
+            if (_step is < 1 or > 6)
             {
                 RedirectTo(WizardUrl(_step));
                 return;
@@ -270,7 +279,18 @@ else if (_step is >= 1 and <= 5)
             var presets = OnboardingPresetCatalog.Items
                 .Select(p => (p.Code, p.TitleKey, p.LeadKey))
                 .ToList();
-            _initialJson = OnboardingClientStepInitialState.Build(_step, _draft, Culture, presets);
+            if (_step == 6)
+            {
+                _dreamTitles = OnboardingDreamSuggestionPicker.BuildFromProfile(_draft, [], max: 8)
+                    .Select(item => item.Title)
+                    .Where(title => !string.IsNullOrWhiteSpace(title))
+                    .ToList();
+            }
+
+            var seed = _step == 6
+                ? new OnboardingClientStepSeed { DreamTitles = _dreamTitles.ToList() }
+                : null;
+            _initialJson = OnboardingClientStepInitialState.Build(_step, _draft, Culture, presets, seed);
         }
         catch
         {
