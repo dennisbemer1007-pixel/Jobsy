@@ -304,6 +304,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.Kompas.Dir.Team.Body"] = english
             ? "Structure, overview and contact with a team."
             : "Structuur, overzicht en contact met een team.";
+        map["Kompas.Ssr.Lead"] = english
+            ? "Open your profile for the full Compass experience, or go straight to your passport."
+            : "Open je profiel voor het volledige Kompas, of ga direct naar je paspoort.";
+        map["Kompas.Ssr.OpenProfile"] = english ? "Open my profile" : "Open mijn profiel";
         map["Onboarding.Rustig.DreamOwnLabel"] = english ? "Or type your own dream job" : "Of typ je eigen droombaan";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.CtaRustig"] = english ? "Get started" : "Aan de slag";

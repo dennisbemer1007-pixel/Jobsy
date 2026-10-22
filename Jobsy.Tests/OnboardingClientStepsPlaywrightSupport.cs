@@ -228,6 +228,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal Dictionary<string, int> ValuesAnswers { get; } = new(StringComparer.Ordinal);
         internal bool FinishReached;
         internal bool OnboardingComplete;
+        internal bool CandidatePassportEnabled;
 
         public string ServerAddress { get; private set; } = "";
 
@@ -259,7 +260,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
                 services.AddSingleton<IStartupFilter>(new SignInFilter());
                 services.RemoveAll<IFeatureFlags>();
-                services.AddSingleton<IFeatureFlags>(new StubFlags());
+                services.AddSingleton<IFeatureFlags>(new StubFlags(this));
                 services.RemoveAll<IGeocodingClient>();
                 services.AddSingleton<IGeocodingClient>(new StubGeocoder());
                 services.RemoveAll<IHttpClientFactory>();
@@ -312,12 +313,12 @@ internal static class OnboardingClientStepsPlaywrightSupport
             => Task.FromResult<string?>("2671GB Den Haag");
     }
 
-    private sealed class StubFlags : IFeatureFlags
+    private sealed class StubFlags(ClientStepsWebFactory factory) : IFeatureFlags
     {
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult(new FeatureFlagSnapshot(
                 EmployersEnabled: true,
-                CandidatePassportEnabled: false,
+                CandidatePassportEnabled: factory.CandidatePassportEnabled,
                 TestsV2Enabled: true,
                 OnboardingFinaleV2Enabled: true));
 
@@ -509,6 +510,16 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     answers = factory.ValuesAnswers,
                     quickScanVersion = factory.ValuesAnswers.Count > 0 ? 3 : 0,
                 });
+            }
+
+            if (path.Contains("kompas", StringComparison.OrdinalIgnoreCase)
+                && request.Method == HttpMethod.Get)
+            {
+                var json = IllustratedPagesApiStub.BuildJson(path, minimalPassportProfile: true);
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+                };
             }
 
             object payload = path switch

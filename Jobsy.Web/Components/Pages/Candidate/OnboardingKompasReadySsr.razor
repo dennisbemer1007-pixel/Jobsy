@@ -1,0 +1,144 @@
+@page "/candidate/start/kompas"
+@layout OnboardingStartSsrLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Onboarding
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IOnboardingRustigGate OnboardingRustig
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261018-02" />
+    <link rel="stylesheet" href="css/features/candidate-illustrated-app.css?v=20261018-91" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
+    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasssr" />
+    <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
+</HeadContent>
+
+@if (_loading)
+{
+    <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+}
+else
+{
+    var pageTitle = Culture.Format("Onboarding.Finish.Title", _firstName);
+    var pageLead = Culture["Onboarding.Rustig.Kompas.ShellLead"];
+    <div class="ob-wizard ob-wizard--richting-a ob-wizard--rustig">
+        <div class="ob-rustig" data-ob-rustig-screen="kompas">
+            <div class="ob-rustig__layout">
+                <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
+                    <img class="ob-rustig__logo-e"
+                         src="@BrandImages.AppIconSvg"
+                         width="56"
+                         height="56"
+                         alt="Lobsy"
+                         decoding="async"
+                         data-logo-fallback="off"
+                         draggable="false" />
+                    @foreach (var item in OnboardingRustigSidebarNav.Items(10, activeSectionOverride: 5))
+                    {
+                        var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
+                        <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"
+                           href="@OnboardingRustigSidebarNav.LinkHref(section)">
+                            <span>@item.Number</span>
+                            <div>
+                                <strong>@item.Title</strong>
+                                @if (!string.IsNullOrWhiteSpace(item.Sub))
+                                {
+                                    <small>@item.Sub</small>
+                                }
+                            </div>
+                        </a>
+                    }
+                </aside>
+
+                <div class="ob-rustig__main">
+                    <header class="ob-rustig__chrome">
+                        <div class="ob-rustig__meta">
+                            <span><strong>@Culture["Onboarding.Rustig.Phase.Kompas"]</strong></span>
+                        </div>
+                    </header>
+
+                    <OnboardingRustigIllustratedHero DesktopUrl="@OnboardingRustigKompasIllustrationAssets.DesktopJpg"
+                                                      MobileUrl="@OnboardingRustigKompasIllustrationAssets.MobileJpg" />
+
+                    <div class="ob-rustig__page-head">
+                        <h1 tabindex="-1">@pageTitle</h1>
+                        <p class="ob-rustig__lead">@pageLead</p>
+                    </div>
+
+                    <div class="ob-rustig__body">
+                        @((MarkupString)_bodyHtml)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private string _firstName = "";
+    private string _bodyHtml = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!OnboardingRustig.Enabled)
+        {
+            RedirectTo(OnboardingRoutes.WizardStartPath);
+            return;
+        }
+
+        try
+        {
+            var state = await Api.GetMyOnboardingAsync() ?? new OnboardingState();
+            if (!state.FinishReached)
+            {
+                RedirectTo(OnboardingRoutes.StepUrl(Math.Clamp(state.CurrentStep, 1, 10)));
+                return;
+            }
+
+            var profile = await Api.GetMyProfileAsync();
+            _firstName = string.IsNullOrWhiteSpace(profile?.FirstName) ? "" : profile!.FirstName.Trim();
+            var model = new OnboardingKompasSsrShells.ReadyModel(
+                _firstName,
+                state.Impression,
+                OnboardingRoutes.KompasHubPath,
+                "/home?tab=tests");
+            _bodyHtml = OnboardingKompasSsrShells.BuildReadyBody(Culture, model);
+        }
+        catch
+        {
+            RedirectTo(OnboardingRoutes.ClassicStartPath);
+            return;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void RedirectTo(string url)
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Redirect(url);
+    }
+}

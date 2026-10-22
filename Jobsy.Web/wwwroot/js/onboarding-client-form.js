@@ -1475,6 +1475,11 @@
         mount: function (root, step) {
             if (!root) return;
             if (root.getAttribute("data-ob-client-mounted") === "1") return;
+            var ssrForm = root.closest("form[data-ob-ssr-form]");
+            if (ssrForm && step >= 7 && step <= 10) {
+                root.setAttribute("data-ob-client-mounted", "1");
+                return;
+            }
             var initial = {};
             try {
                 initial = JSON.parse(root.getAttribute("data-initial") || "{}");
@@ -1692,7 +1697,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
-        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 8) return;
+        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 10) return;
         if (step === 1 || step === 2 || step === 3) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {
@@ -1775,6 +1780,11 @@
             if (root.getAttribute("data-ob-client-mounted") === "1") return;
             var step = parseInt(root.getAttribute("data-ob-client-step"), 10);
             if (!step) return;
+            var ssrForm = root.closest("form[data-ob-ssr-form]");
+            if (ssrForm && step >= 7 && step <= 10) {
+                root.setAttribute("data-ob-client-mounted", "1");
+                return;
+            }
             window.jobsyOnboardingClient.mount(root, step);
         });
         bindWelcomeBegin();

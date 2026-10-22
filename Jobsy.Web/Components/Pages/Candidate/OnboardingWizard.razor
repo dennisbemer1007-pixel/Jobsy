@@ -1115,6 +1115,12 @@
             }
 
             _finish = _state.FinishReached;
+            if (_finish && OnboardingRustig.Enabled)
+            {
+                Navigation.NavigateTo(OnboardingRoutes.KompasReadyPath, forceLoad: true);
+                return;
+            }
+
             if (_finish && _finaleV2)
             {
                 await LoadFinaleContextAsync();
