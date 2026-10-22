@@ -224,7 +224,7 @@ public static class OnboardingClientStepBffSaver
                         // Kompas unlock must not fail if open-for-work sync hiccups; user can fix in profile.
                     }
 
-                    return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+                    return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.WizardStartPath });
                 }
 
                 await api.SaveMyOnboardingProgressAsync(step + 1, stepCompleted: true, ct: cancellationToken);

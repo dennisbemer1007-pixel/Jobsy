@@ -227,6 +227,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal Dictionary<string, int> CultureAnswers { get; } = new(StringComparer.Ordinal);
         internal Dictionary<string, int> ValuesAnswers { get; } = new(StringComparer.Ordinal);
         internal bool FinishReached;
+        internal bool OnboardingComplete;
 
         public string ServerAddress { get; private set; } = "";
 
@@ -427,6 +428,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     currentStep = factory.SavedStep,
                     shouldShow = true,
                     finishReached = factory.FinishReached,
+                    isComplete = factory.OnboardingComplete,
                     source = factory.WelcomeDismissed ? "welcome" : null,
                     steps = Array.Empty<object>(),
                 });
@@ -460,7 +462,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     await MergeCompetencyPutAsync(request, factory, cancellationToken);
                 }
 
-                return JsonResponse(new { answers = factory.CompetencyAnswers, quickScanVersion = 3 });
+                return JsonResponse(new
+                {
+                    answers = factory.CompetencyAnswers,
+                    quickScanVersion = factory.CompetencyAnswers.Count > 0 ? 3 : 0,
+                });
             }
 
             if (path.Contains("/career-interests", StringComparison.OrdinalIgnoreCase))
@@ -470,7 +476,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     await MergeAssessmentPutAsync(request, factory.CareerAnswers, cancellationToken);
                 }
 
-                return JsonResponse(new { answers = factory.CareerAnswers, quickScanVersion = 3 });
+                return JsonResponse(new
+                {
+                    answers = factory.CareerAnswers,
+                    quickScanVersion = factory.CareerAnswers.Count > 0 ? 3 : 0,
+                });
             }
 
             if (path.Contains("/culture", StringComparison.OrdinalIgnoreCase))
@@ -480,7 +490,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     await MergeAssessmentPutAsync(request, factory.CultureAnswers, cancellationToken);
                 }
 
-                return JsonResponse(new { answers = factory.CultureAnswers, quickScanVersion = 3 });
+                return JsonResponse(new
+                {
+                    answers = factory.CultureAnswers,
+                    quickScanVersion = factory.CultureAnswers.Count > 0 ? 3 : 0,
+                });
             }
 
             if (path.Contains("/values", StringComparison.OrdinalIgnoreCase))
@@ -490,7 +504,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     await MergeAssessmentPutAsync(request, factory.ValuesAnswers, cancellationToken);
                 }
 
-                return JsonResponse(new { answers = factory.ValuesAnswers, quickScanVersion = 3 });
+                return JsonResponse(new
+                {
+                    answers = factory.ValuesAnswers,
+                    quickScanVersion = factory.ValuesAnswers.Count > 0 ? 3 : 0,
+                });
             }
 
             object payload = path switch
@@ -500,6 +518,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     currentStep = factory.SavedStep,
                     shouldShow = true,
                     finishReached = factory.FinishReached,
+                    isComplete = factory.OnboardingComplete,
                     source = factory.WelcomeDismissed ? "welcome" : null,
                     steps = Array.Empty<object>(),
                 },

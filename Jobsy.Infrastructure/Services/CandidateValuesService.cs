@@ -228,7 +228,9 @@ public sealed class CandidateValuesService : ICandidateValuesService
                 null,
                 [],
                 null,
-                price);
+                price,
+                PreviewScores: null,
+                QuickScanVersion: 0);
         }
 
         var version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
