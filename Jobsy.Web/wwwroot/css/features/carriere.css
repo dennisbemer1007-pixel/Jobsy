@@ -1514,3 +1514,15 @@
     animation: none;
   }
 }
+
+/* SSR carrière tabs are full-page links, not Blazor buttons. */
+a.carriere-segmented__tab {
+  text-decoration: none;
+  color: inherit;
+}
+
+.carriere-segmented__nav {
+  overflow-x: auto;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}

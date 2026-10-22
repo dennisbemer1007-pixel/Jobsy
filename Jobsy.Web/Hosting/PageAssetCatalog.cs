@@ -70,7 +70,7 @@ public static class PageAssetCatalog
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261019-r5billus",
         "css/features/mijn-paspoort.css?v=20261018-06",
-        "css/features/kompas-illustrated.css?v=20261021-06",
+        "css/features/kompas-illustrated.css?v=20261022-passport-mobile",
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261021-08",

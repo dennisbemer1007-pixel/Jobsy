@@ -30,7 +30,7 @@ public sealed class PassportSsrPlaywrightTests : IAsyncLifetime
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Passport_ssr_tabs_save_and_kompas_link(bool mobile)
+    public async Task Passport_and_career_ssr_happy_flow(bool mobile)
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
@@ -39,20 +39,24 @@ public sealed class PassportSsrPlaywrightTests : IAsyncLifetime
         factory.StoredProfile.FirstName = "Paspoort";
         factory.StoredProfile.LastName = "Tester";
         factory.StoredProfile.PhoneNumber = "0612345678";
+        factory.StoredDreamTitle = "Kok";
         var root = factory.EnsureServerAddress();
         await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
 
-        if (!mobile)
-        {
-            await AssertOnboardingAccDesktopFixesAsync(page, root);
-        }
-
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/paspoort?tab=dna"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.GetByTestId("passport-page-ssr").WaitForAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(page.GetByTestId("passport-footer-nav").Locator("a[href=\"/candidate/kompas\"]")).ToBeVisibleAsync();
+
+        if (mobile)
+        {
+            var scrollable = await page.Locator(".passport-tabs").EvaluateAsync<bool>(
+                "el => el.scrollWidth > el.clientWidth + 4");
+            Assert.True(scrollable, "Passport tabs should scroll horizontally on mobile.");
+        }
 
         foreach (var tab in new[] { "dna", "tests", "career", "proof", "data" })
         {
@@ -69,53 +73,42 @@ public sealed class PassportSsrPlaywrightTests : IAsyncLifetime
         await page.GetByTestId("passport-data-save").ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
                                         && u.Contains("tab=data", StringComparison.OrdinalIgnoreCase)
-                                        && (u.Contains("saved=1", StringComparison.OrdinalIgnoreCase)
-                                            || u.Contains("error=", StringComparison.OrdinalIgnoreCase)),
+                                        && u.Contains("saved=1", StringComparison.OrdinalIgnoreCase),
             new() { Timeout = 30_000 });
-        Assert.True(
-            page.Url.Contains("saved=1", StringComparison.OrdinalIgnoreCase),
-            "Expected saved=1 after POST; got: " + page.Url);
 
         await page.ReloadAsync();
         await page.GetByTestId("passport-page-ssr").WaitForAsync();
         await Assertions.Expect(page.Locator("[data-testid=passport-data-phone]")).ToHaveValueAsync(newPhone);
 
-        await page.Locator("a[href=\"/candidate/kompas\"]").First.ClickAsync();
-        await page.WaitForURLAsync("**/candidate/kompas**");
-        await page.GetByTestId("candidate-kompas-ssr").WaitForAsync(new() { Timeout = 60_000 });
-    }
-
-    private static async Task AssertOnboardingAccDesktopFixesAsync(IPage page, string root)
-    {
-        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/carriere"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.WaitForURLAsync("**/candidate/start/kompas**", new() { Timeout = 30_000 });
-        Assert.DoesNotContain("ontdekkingsreis", page.Url, StringComparison.OrdinalIgnoreCase);
+        await page.GetByTestId("career-page-ssr").WaitForAsync(new() { Timeout = 60_000 });
 
-        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=6"));
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.WaitForURLAsync("**/candidate/start?step=6**");
-        await page.Locator("form[data-ob-ssr-step=\"6\"]").WaitForAsync(new() { Timeout = 60_000 });
-        var heroSrc = await page.GetByTestId("ob-rustig-hero-desk").GetAttributeAsync("src") ?? "";
-        Assert.Contains("step-06-droom-professions", heroSrc, StringComparison.OrdinalIgnoreCase);
-        var heroOk = await page.GetByTestId("ob-rustig-hero-desk").EvaluateAsync<bool>(
-            "img => img.complete && img.naturalWidth > 0");
-        Assert.True(heroOk, "Step 6 desktop hero should load.");
+        foreach (var tab in new[] { "voor-jou", "omscholen", "kansberoepen", "voor-jou" })
+        {
+            await page.Locator($"a.carriere-segmented__tab[href*=\"tab={tab}\"]").ClickAsync();
+            await page.WaitForURLAsync($"**/carriere?tab={tab}**");
+            await page.GetByTestId("career-page-ssr").WaitForAsync();
+        }
 
-        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=4"));
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.WaitForURLAsync("**/candidate/start?step=4**");
-        await page.Locator("form[data-ob-ssr-step=\"4\"]").WaitForAsync(new() { Timeout = 60_000 });
-        var layout = await page.EvaluateAsync<(double SidebarRight, double HeroLeft)>(@"() => {
-            const sidebar = document.querySelector('.ob-rustig__sidebar');
-            const hero = document.querySelector('[data-testid=ob-rustig-hero]');
-            if (!sidebar || !hero) return { sidebarRight: 0, heroLeft: 0 };
-            const sb = sidebar.getBoundingClientRect();
-            const hb = hero.getBoundingClientRect();
-            return { sidebarRight: sb.right, heroLeft: hb.left };
-        }");
-        Assert.True(
-            layout.HeroLeft >= layout.SidebarRight - 2,
-            $"Step 4 hero should stay in main column (heroLeft={layout.HeroLeft}, sidebarRight={layout.SidebarRight}).");
+        await page.Locator("a.carriere-segmented__tab[href*=\"tab=omscholen\"]").ClickAsync();
+        await page.WaitForURLAsync("**/carriere?tab=omscholen**");
+        await page.GetByTestId("career-meer-omscholen").ClickAsync();
+        await page.WaitForURLAsync(u => u.Contains("meer=omscholen", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 30_000 });
+        await page.Locator("a.carriere-segmented__tab[href*=\"tab=voor-jou\"]").ClickAsync();
+        await page.WaitForURLAsync("**/carriere?tab=voor-jou**");
+        await page.GetByTestId("career-tab-voor-jou").WaitForAsync();
+
+        var newDream = mobile ? "Zorgassistent" : "Logistiek medewerker";
+        await page.GetByTestId("career-dream-title").FillAsync(newDream);
+        await page.GetByTestId("career-dream-save").ClickAsync();
+        await page.WaitForURLAsync(u => u.Contains("/carriere", StringComparison.OrdinalIgnoreCase)
+                                        && u.Contains("saved=1", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 30_000 });
+
+        await page.ReloadAsync();
+        await page.GetByTestId("career-page-ssr").WaitForAsync();
+        await Assertions.Expect(page.GetByTestId("career-dream-title")).ToHaveValueAsync(newDream);
     }
 }

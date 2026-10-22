@@ -270,9 +270,16 @@
 
   .passport-page--illustrated .passport-tabs {
     border-color: color-mix(in srgb, var(--border) 92%, var(--bg));
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
     mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
     -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
+  }
+
+  .passport-page--illustrated .passport-tabs-shell {
+    touch-action: pan-x;
   }
 
   .passport-page--illustrated .passport-tabs::after {
@@ -458,6 +465,22 @@
 .passport-page--illustrated .passport-proof__card,
 .passport-page--illustrated .passport-tests__layout {
   background: color-mix(in srgb, var(--gold) 5%, var(--surface));
+}
+
+.passport-page--illustrated .passport-ssr-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-block: 1.25rem 0.5rem;
+  padding-block: 0.75rem;
+  border-block-start: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.passport-page--illustrated .passport-ssr-footer-nav a {
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .passport-page--illustrated .passport-tab--active {

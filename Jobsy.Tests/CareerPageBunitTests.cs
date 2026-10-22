@@ -287,7 +287,7 @@ public class CareerPageBunitTests : BunitContext
         Assert.DoesNotContain("career-mobile-bar", cut.Markup, StringComparison.Ordinal);
 
         var dashboard = File.ReadAllText(Path.Combine(
-            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor"));
+            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateCareerSsr.razor"));
         Assert.DoesNotContain("career-mobile-bar", dashboard, StringComparison.Ordinal);
     }
 

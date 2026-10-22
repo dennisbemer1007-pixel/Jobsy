@@ -140,7 +140,7 @@ public class CareerDesignGuardTests
     }
 
     private static string PagePath()
-        => Path.Combine(Repo(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor");
+        => Path.Combine(Repo(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateCareerSsr.razor");
 
     /// <summary>04: the contact-request page joins the same guards.</summary>
     private static string ContactsPagePath()
