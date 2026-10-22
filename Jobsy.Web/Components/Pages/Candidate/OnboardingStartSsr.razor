@@ -304,7 +304,7 @@ else if (_step is >= 1 and <= 10)
 
             if (state.FinishReached && !revisitingStep)
             {
-                RedirectTo(WizardUrl(Math.Clamp(_step, 1, 10)));
+                RedirectTo(OnboardingRoutes.KompasReadyPath);
                 return;
             }
 

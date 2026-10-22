@@ -224,7 +224,7 @@ public static class OnboardingClientStepBffSaver
                         // Kompas unlock must not fail if open-for-work sync hiccups; user can fix in profile.
                     }
 
-                    return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.WizardStartPath });
+                    return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.KompasReadyPath });
                 }
 
                 await api.SaveMyOnboardingProgressAsync(step + 1, stepCompleted: true, ct: cancellationToken);
@@ -270,12 +270,12 @@ public static class OnboardingClientStepBffSaver
             var passportOn = await featureFlags.IsEnabledAsync(PlatformFeature.CandidatePassport, cancellationToken);
             if (passportOn)
             {
-                await api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true, ct: cancellationToken);
-                return (StatusCodes.Status200OK, new { redirectUrl = FeatureRoutes.CandidateDiscoveryPath });
+                await api.CompleteMyOnboardingAsync(cancellationToken);
+                return (StatusCodes.Status200OK, new { redirectUrl = FeatureRoutes.CandidatePassportPath });
             }
 
             await api.CompleteMyOnboardingAsync(cancellationToken);
-            return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/profile" });
+            return (StatusCodes.Status200OK, new { redirectUrl = FeatureRoutes.CandidateKompasHubPath });
         }
         catch (Exception)
         {

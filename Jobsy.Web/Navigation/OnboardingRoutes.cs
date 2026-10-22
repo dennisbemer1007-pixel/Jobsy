@@ -13,6 +13,10 @@ public static class OnboardingRoutes
 
     public const string WizardStartPath = ClassicStartPath + "/wizard";
 
+    public const string KompasReadyPath = ClassicStartPath + "/kompas";
+
+    public const string KompasHubPath = "/candidate/kompas";
+
     /// <summary>Steps 1–10: static SSR on classic start. Step 11+: classic entry.</summary>
     public static string StepUrl(int step) =>
         step switch

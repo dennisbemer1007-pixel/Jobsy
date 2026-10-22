@@ -11,6 +11,7 @@ public static class FeatureRoutes
     /// <summary>Step-by-step onboarding wizard (<c>/candidate/start</c>).</summary>
     public const string CandidateWizardStartPath = "/candidate/start";
     public const string CandidatePassportPath = "/candidate/paspoort";
+    public const string CandidateKompasHubPath = "/candidate/kompas";
     /// <summary>De ontdekkingsreis entry (same path as <c>OnboardingRoutes.DiscoveryPath</c>).</summary>
     public const string CandidateDiscoveryPath = "/candidate/ontdekkingsreis";
     public const string AdminHomePath = "/home";

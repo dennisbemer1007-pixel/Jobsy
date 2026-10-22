@@ -34,6 +34,7 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
+        factory.CandidatePassportEnabled = true;
         var root = factory.EnsureServerAddress();
         await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile));
         await PlaywrightCookieConsent.AcceptAsync(context);
@@ -269,6 +270,19 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
 
+        var step9InstantTile = page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert]").Nth(3);
+        if (mobile)
+        {
+            await step9InstantTile.TapAsync();
+        }
+        else
+        {
+            await step9InstantTile.ClickAsync(new() { Force = true });
+        }
+
+        await page.WaitForTimeoutAsync(2000);
+        await Assertions.Expect(step9InstantTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+
         var step9Ids = await ReadMiniQuestionIdsAsync(page);
         Assert.Equal(5, step9Ids.Length);
         await ClickFirstMiniLikertAsync(page, mobile);
@@ -285,6 +299,21 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await page.WaitForURLAsync("**/candidate/start?step=9**");
         await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
 
+        var step9OverrideTile = page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert]").Nth(4);
+        if (mobile)
+        {
+            await step9OverrideTile.TapAsync();
+        }
+        else
+        {
+            await step9OverrideTile.ClickAsync(new() { Force = true });
+        }
+
+        await page.WaitForTimeoutAsync(2000);
+        await Assertions.Expect(step9OverrideTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected"))
+            .ToHaveCountAsync(1);
+
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=10**");
         await page.GetByTestId("onboarding-step-10-mini").WaitForAsync();
@@ -300,8 +329,15 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
 
         await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard**");
+        await page.WaitForURLAsync("**/candidate/start/kompas**");
         await page.Locator("[data-ob-rustig-screen=kompas]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.GetByTestId("onboarding-kompas-complete").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/kompas**");
+        await page.GetByTestId("candidate-kompas-ssr").WaitForAsync(new() { Timeout = 60_000 });
+        await page.GetByTestId("kompas-go-passport").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/paspoort**");
+        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
+        await page.Locator(".passport-page").WaitForAsync(new() { Timeout = 60_000 });
         Assert.Empty(consoleErrors);
     }
 
