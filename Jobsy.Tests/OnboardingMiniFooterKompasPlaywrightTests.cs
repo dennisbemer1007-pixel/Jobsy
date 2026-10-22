@@ -96,6 +96,7 @@ public sealed class OnboardingMiniFooterKompasPlaywrightTests : IAsyncLifetime
             await Assertions.Expect(page.GetByTestId("onboarding-finale-match-bar")).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByTestId("onboarding-finale-now-cards")).ToBeVisibleAsync();
 
+            await Assertions.Expect(page.GetByTestId("onboarding-kompas-go-passport")).ToBeVisibleAsync();
             await page.GetByTestId("onboarding-kompas-complete").ClickAsync();
             await page.WaitForURLAsync("**/candidate/kompas**");
             await page.GetByTestId("candidate-kompas-ssr").WaitForAsync();
