@@ -11,6 +11,8 @@ namespace Jobsy.Web.Onboarding;
 /// <summary>Static HTML for client onboarding steps (rendered once; JS attaches behavior).</summary>
 internal static class OnboardingClientStepShells
 {
+    private static readonly int[] TravelPresetMinutes = [15, 30, 45, 60];
+
     public static string Build(
         int step,
         CultureState culture,
@@ -90,9 +92,15 @@ internal static class OnboardingClientStepShells
         var availability = new HashSet<string>(draft.Availability, StringComparer.Ordinal);
 
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated ob-wizard__presets\">");
-        sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets\">");
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated ob-wizard__presets ob-rustig__step2-card\">");
+        sb.Append("<div class=\"ob-wizard__section-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityPresetsLegend"]));
+        sb.Append("</div>");
+        sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets lobsy-choice-grid\">");
         AppendPresetTiles(sb, culture, selectedPresets);
+        sb.Append("</div>");
+        sb.Append("<div class=\"ob-wizard__section-title ob-rustig__step2-hours-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Vacancy.HoursPerWeek"]));
         sb.Append("</div>");
         sb.Append("<div class=\"hours-range\" data-ob-client=\"hoursRail\">");
         sb.Append("<label>");
@@ -109,13 +117,19 @@ internal static class OnboardingClientStepShells
         sb.Append(maxH);
         sb.Append("\" />");
         sb.Append("</label></div>");
-        sb.Append("<div class=\"availability-matrix availability-matrix--touch\" data-ob-client=\"matrix\">");
+        sb.Append("<div class=\"ob-wizard__section-title ob-rustig__step2-matrix-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Preset.Custom.GridLegend"]));
+        sb.Append("</div>");
+        sb.Append("<p class=\"ob-wizard__hint ob-wizard__section-hint ob-rustig__step2-matrix-hint\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Preset.Custom.GridHint"]));
+        sb.Append("</p>");
+        sb.Append("<div class=\"availability-matrix availability-matrix--touch ob-rustig__step2-matrix\" data-ob-client=\"matrix\">");
         AppendAvailabilityMatrix(sb, culture, availability);
         sb.Append("</div>");
-        sb.Append("<fieldset><legend>");
+        sb.Append("<fieldset class=\"ob-rustig__step2-start\"><legend>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityStartSummary"]));
         sb.Append("</legend>");
-        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startImmediate\"");
+        sb.Append("<label class=\"ob-rustig__step2-start-option\"><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startImmediate\"");
         if (immediate)
         {
             sb.Append(" checked");
@@ -124,7 +138,7 @@ internal static class OnboardingClientStepShells
         sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableImmediate"]));
         sb.Append("</label>");
-        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startFromDate\"");
+        sb.Append("<label class=\"ob-rustig__step2-start-option\"><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startFromDate\"");
         if (!immediate)
         {
             sb.Append(" checked");
@@ -153,7 +167,7 @@ internal static class OnboardingClientStepShells
         draft ??= new OnboardingProfileDraft();
         var selectedTransport = new HashSet<string>(TransportLabels.SplitMany(draft.Transport), StringComparer.OrdinalIgnoreCase);
         var maxTravel = draft.MaxTravel > 0 ? draft.MaxTravel : 30;
-        var travelPresets = new[] { 10, 20, 30, 45 };
+        var travelPresets = TravelPresetMinutes;
         var customTravel = draft.CustomTravel || !travelPresets.Contains(maxTravel);
 
         var sb = new StringBuilder();
@@ -195,6 +209,8 @@ internal static class OnboardingClientStepShells
             sb.Append(on ? "true" : "false");
             sb.Append("\">");
             sb.Append(minutes);
+            sb.Append(' ');
+            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Minutes"]));
             sb.Append("</button>");
         }
 
@@ -497,7 +513,7 @@ internal static class OnboardingClientStepShells
         foreach (var preset in OnboardingPresetCatalog.Items)
         {
             var on = selected.Contains(preset.Code);
-            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile");
+            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile lobsy-choice-tile--tall");
             if (on)
             {
                 sb.Append(" is-selected");
@@ -507,11 +523,19 @@ internal static class OnboardingClientStepShells
             sb.Append(WebUtility.HtmlEncode(preset.Code));
             sb.Append("\" aria-pressed=\"");
             sb.Append(on ? "true" : "false");
-            sb.Append("\"><strong>");
+            sb.Append("\">");
+            sb.Append("<span class=\"lobsy-choice-tile__stack\">");
+            sb.Append("<strong>");
             sb.Append(WebUtility.HtmlEncode(culture[preset.TitleKey]));
             sb.Append("</strong><small>");
             sb.Append(WebUtility.HtmlEncode(culture[preset.LeadKey]));
-            sb.Append("</small></button>");
+            sb.Append("</small></span>");
+            if (on)
+            {
+                sb.Append("<span class=\"lobsy-choice-tile__check\" aria-hidden=\"true\">✓</span>");
+            }
+
+            sb.Append("</button>");
         }
     }
 

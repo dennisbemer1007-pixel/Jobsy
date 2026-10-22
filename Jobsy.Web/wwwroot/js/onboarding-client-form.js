@@ -696,7 +696,8 @@
                 btn.className = "lobsy-choice-tile";
                 btn.setAttribute("data-ob-code", tile.code);
                 btn.setAttribute("aria-pressed", state.presets.has(tile.code) ? "true" : "false");
-                btn.innerHTML = "<strong>" + escapeHtml(tile.title) + "</strong><small>" + escapeHtml(tile.lead) + "</small>";
+                btn.className = "lobsy-choice-tile lobsy-choice-tile--tall";
+                btn.innerHTML = "<span class=\"lobsy-choice-tile__stack\"><strong>" + escapeHtml(tile.title) + "</strong><small>" + escapeHtml(tile.lead) + "</small></span>";
                 presetGrid.appendChild(btn);
             });
             bindPresetGridClicks();
@@ -898,8 +899,10 @@
         container.__obTileActivationBound = true;
         var lastAt = 0;
         var lastCode = "";
+        var lastPointerAt = 0;
         function run(ev) {
             if (ev.type === "pointerup" && ev.pointerType === "mouse" && ev.button !== 0) return;
+            if (ev.type === "click" && Date.now() - lastPointerAt < 450) return;
             var btn = ev.target.closest(tileSelector);
             if (!btn || !container.contains(btn)) return;
             ev.preventDefault();
@@ -909,10 +912,23 @@
             if (code === lastCode && now - lastAt < 400) return;
             lastAt = now;
             lastCode = code;
+            if (ev.type === "pointerup") lastPointerAt = now;
             handler(btn, ev);
         }
         container.addEventListener("pointerup", run, true);
         container.addEventListener("click", run, true);
+    }
+
+    function bindChoiceTileClickOnly(container, tileSelector, handler) {
+        if (!container || container.__obTileClickBound) return;
+        container.__obTileClickBound = true;
+        container.addEventListener("click", function (ev) {
+            var btn = ev.target.closest(tileSelector);
+            if (!btn || !container.contains(btn)) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            handler(btn, ev);
+        }, true);
     }
 
     function syncChoiceGridPressed(container, selectedSet, multi) {
@@ -990,7 +1006,10 @@
 
         function saveNow() {
             if (ssrForm) {
-                putOnboardingStep(root, 3, collectPayload, false, false, false).catch(function () { });
+                var pending = putOnboardingStep(root, 3, collectPayload, false, false, false);
+                root.__obStep3SaveInflight = pending;
+                pending.catch(function () { });
+                return pending;
             }
         }
 
@@ -1002,7 +1021,8 @@
                 return;
             }
             syncChoiceGridPressed(tGrid, selected, true);
-            bindChoiceTileActivation(tGrid, ".lobsy-choice-tile[data-ob-code]", function (btn) {
+            var bindTiles = ssrForm ? bindChoiceTileClickOnly : bindChoiceTileActivation;
+            bindTiles(tGrid, ".lobsy-choice-tile[data-ob-code]", function (btn) {
                 var code = btn.getAttribute("data-ob-code");
                 choiceSetToggle(selected, code);
                 syncChoiceGridPressed(tGrid, selected, true);
@@ -1015,17 +1035,18 @@
             vGrid.__obTravelBound = true;
             if (!vGrid.querySelector(".lobsy-choice-tile[data-ob-travel]")) {
                 vGrid.innerHTML = "";
-                (initial.travelChoices || [10, 20, 30, 45]).forEach(function (m) {
+                (initial.travelChoices || [15, 30, 45, 60]).forEach(function (m) {
                     var btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "lobsy-choice-tile";
                     btn.setAttribute("data-ob-travel", String(m));
                     btn.setAttribute("aria-pressed", (!custom && travel === m) ? "true" : "false");
-                    btn.textContent = String(m);
+                    btn.textContent = String(m) + " min";
                     vGrid.appendChild(btn);
                 });
             }
-            bindChoiceTileActivation(vGrid, ".lobsy-choice-tile[data-ob-travel]", function (btn) {
+            var bindTravel = ssrForm ? bindChoiceTileClickOnly : bindChoiceTileActivation;
+            bindTravel(vGrid, ".lobsy-choice-tile[data-ob-travel]", function (btn) {
                 custom = false;
                 travel = parseInt(btn.getAttribute("data-ob-travel"), 10) || travel;
                 if (customInput) customInput.hidden = true;
