@@ -511,6 +511,29 @@
         var startFromDate = root.querySelector("[data-ob-client=startFromDate]");
         var availFrom = root.querySelector("[data-ob-client=availableFrom]");
 
+        function collectPayload() {
+            var fromIso = null;
+            if (!state.immediate && availFrom) {
+                var p = parseFlexibleDate(availFrom.value);
+                if (p) fromIso = p.y + "-" + String(p.m).padStart(2, "0") + "-" + String(p.d).padStart(2, "0");
+            }
+            return {
+                presets: Array.from(state.presets),
+                presetsOverridden: state.presetsOverridden,
+                fineTune: state.fineTune,
+                minHours: state.minHours,
+                maxHours: state.maxHours,
+                availability: Array.from(state.availability),
+                immediate: state.immediate,
+                availableFrom: fromIso
+            };
+        }
+
+        var bff = wireObStepBff(root, 2, collectPayload);
+        function saveNow() {
+            if (bff && bff.scheduleSave) bff.scheduleSave();
+        }
+
         function syncHoursUi() {
             if (minR) minR.value = state.minHours;
             if (maxR) maxR.value = state.maxHours;
@@ -522,6 +545,24 @@
             if (rail) rail.style.cssText = "--hours-low:" + lowPct + "%;--hours-high:" + highPct + "%;";
         }
 
+        function syncMatrixUi() {
+            if (!matrix) return;
+            matrix.querySelectorAll(".availability-matrix__cell--btn[data-ob-key]").forEach(function (btn) {
+                var key = btn.getAttribute("data-ob-key");
+                var on = state.availability.has(key);
+                btn.classList.toggle("is-on", on);
+                btn.setAttribute("aria-pressed", on ? "true" : "false");
+            });
+        }
+
+        function syncPresetUi() {
+            if (!presetGrid) return;
+            presetGrid.querySelectorAll(".lobsy-choice-tile[data-ob-code]").forEach(function (btn) {
+                var code = btn.getAttribute("data-ob-code");
+                btn.setAttribute("aria-pressed", state.presets.has(code) ? "true" : "false");
+            });
+        }
+
         function applyPresetCompute() {
             if (state.presets.has("custom") || state.presetsOverridden) return;
             var c = computePresets(state.presets);
@@ -529,43 +570,60 @@
             if (c.max != null) state.maxHours = c.max;
             state.availability = new Set(c.availability);
             syncHoursUi();
-            renderMatrix();
+            syncMatrixUi();
         }
 
-        function renderPresets() {
-            if (!presetGrid) return;
+        function togglePresetCode(code) {
+            if (code === "custom") {
+                if (state.presets.has("custom")) state.presets.delete("custom");
+                else {
+                    state.presets.clear();
+                    state.presets.add("custom");
+                    state.fineTune = true;
+                    state.presetsOverridden = true;
+                }
+            } else {
+                state.presets.delete("custom");
+                if (state.presets.has(code)) state.presets.delete(code);
+                else state.presets.add(code);
+                state.presetsOverridden = false;
+            }
+            applyPresetCompute();
+            syncPresetUi();
+            saveNow();
+        }
+
+        function ensurePresets() {
+            if (!presetGrid || presetGrid.getAttribute("data-ob-preset-bound") === "1") {
+                syncPresetUi();
+                return;
+            }
+            presetGrid.setAttribute("data-ob-preset-bound", "1");
             presetGrid.innerHTML = "";
             (initial.presetTiles || []).forEach(function (tile) {
                 var btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "lobsy-choice-tile";
+                btn.setAttribute("data-ob-code", tile.code);
                 btn.setAttribute("aria-pressed", state.presets.has(tile.code) ? "true" : "false");
                 btn.innerHTML = "<strong>" + escapeHtml(tile.title) + "</strong><small>" + escapeHtml(tile.lead) + "</small>";
-                btn.addEventListener("click", function () {
-                    var code = tile.code;
-                    if (code === "custom") {
-                        if (state.presets.has("custom")) state.presets.delete("custom");
-                        else {
-                            state.presets.clear();
-                            state.presets.add("custom");
-                            state.fineTune = true;
-                            state.presetsOverridden = true;
-                        }
-                    } else {
-                        state.presets.delete("custom");
-                        if (state.presets.has(code)) state.presets.delete(code);
-                        else state.presets.add(code);
-                        state.presetsOverridden = false;
-                    }
-                    applyPresetCompute();
-                    renderPresets();
-                });
                 presetGrid.appendChild(btn);
             });
+            presetGrid.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
+                if (!btn || !presetGrid.contains(btn)) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                togglePresetCode(btn.getAttribute("data-ob-code"));
+            }, true);
         }
 
-        function renderMatrix() {
-            if (!matrix) return;
+        function ensureMatrix() {
+            if (!matrix || matrix.getAttribute("data-ob-matrix-bound") === "1") {
+                syncMatrixUi();
+                return;
+            }
+            matrix.setAttribute("data-ob-matrix-bound", "1");
             matrix.innerHTML = "";
             var days = initial.days || [];
             var slots = initial.slots || [];
@@ -591,24 +649,31 @@
                     var btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "availability-matrix__cell availability-matrix__cell--btn" + (on ? " is-on" : "");
+                    btn.setAttribute("data-ob-key", key);
                     btn.setAttribute("aria-pressed", on ? "true" : "false");
-                    btn.addEventListener("click", function () {
-                        if (state.availability.has(key)) state.availability.delete(key);
-                        else state.availability.add(key);
-                        state.presetsOverridden = true;
-                        state.presets.clear();
-                        state.presets.add("custom");
-                        state.fineTune = true;
-                        renderPresets();
-                        renderMatrix();
-                    });
                     matrix.appendChild(btn);
                 });
             });
+            matrix.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".availability-matrix__cell--btn[data-ob-key]");
+                if (!btn || !matrix.contains(btn)) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                var key = btn.getAttribute("data-ob-key");
+                if (state.availability.has(key)) state.availability.delete(key);
+                else state.availability.add(key);
+                state.presetsOverridden = true;
+                state.presets.clear();
+                state.presets.add("custom");
+                state.fineTune = true;
+                syncPresetUi();
+                syncMatrixUi();
+                saveNow();
+            }, true);
         }
 
-        renderPresets();
-        renderMatrix();
+        ensurePresets();
+        ensureMatrix();
         syncHoursUi();
 
         function onHoursInput() {
@@ -619,40 +684,34 @@
             state.presets.clear();
             state.presets.add("custom");
             syncHoursUi();
-            renderPresets();
+            syncPresetUi();
+            saveNow();
         }
         if (minR) minR.addEventListener("input", onHoursInput);
         if (maxR) maxR.addEventListener("input", onHoursInput);
 
-        if (startImmediate) startImmediate.addEventListener("change", function () { state.immediate = true; if (availFrom) availFrom.hidden = true; });
-        if (startFromDate) startFromDate.addEventListener("change", function () {
-            state.immediate = false;
-            if (availFrom) availFrom.hidden = false;
-        });
+        if (startImmediate) {
+            startImmediate.addEventListener("change", function () {
+                state.immediate = true;
+                if (availFrom) availFrom.hidden = true;
+                saveNow();
+            });
+        }
+        if (startFromDate) {
+            startFromDate.addEventListener("change", function () {
+                state.immediate = false;
+                if (availFrom) availFrom.hidden = false;
+                saveNow();
+            });
+        }
         if (availFrom) {
             availFrom.addEventListener("input", function () {
                 availFrom.value = applyDateMask(availFrom.value);
             });
+            availFrom.addEventListener("change", saveNow);
         }
 
-        state.collect = function () {
-            var fromIso = null;
-            if (!state.immediate && availFrom) {
-                var p = parseFlexibleDate(availFrom.value);
-                if (p) fromIso = p.y + "-" + String(p.m).padStart(2, "0") + "-" + String(p.d).padStart(2, "0");
-            }
-            return {
-                presets: Array.from(state.presets),
-                presetsOverridden: state.presetsOverridden,
-                fineTune: state.fineTune,
-                minHours: state.minHours,
-                maxHours: state.maxHours,
-                availability: Array.from(state.availability),
-                immediate: state.immediate,
-                availableFrom: fromIso
-            };
-        };
-        return state;
+        return { collect: collectPayload, scheduleSave: saveNow };
     }
 
     function paintChoiceGrid(container, options, selectedSet, multi) {
@@ -1111,10 +1170,9 @@
     }
 
     function reconcileRustigFooterNav() {
-        document.querySelectorAll(".ob-rustig__canvas").forEach(function (canvas) {
-            var footerNext = canvas.querySelector(".ob-rustig__footer-actions [data-ob-nav-next]");
-            if (!footerNext) return;
-            canvas.querySelectorAll(".ob-step-actions").forEach(function (nav) {
+        document.querySelectorAll(".ob-rustig").forEach(function (shell) {
+            if (!shell.querySelector(".ob-rustig__footer-actions [data-ob-nav-next]")) return;
+            shell.querySelectorAll(".ob-step-actions").forEach(function (nav) {
                 nav.setAttribute("hidden", "hidden");
                 nav.setAttribute("aria-hidden", "true");
             });
@@ -1147,12 +1205,31 @@
             var wiz = document.querySelector(".ob-wizard[data-ob-active-step]");
             if (!wiz) return;
             var step = parseInt(wiz.getAttribute("data-ob-active-step") || "", 10);
-            if (step !== 1) return;
+            if (step !== 1 && step !== 2) return;
             ev.preventDefault();
             triggerWizardAdvance(false);
         }, true);
         document.addEventListener("click", function (ev) {
             if (!ev.target.closest(".ob-wizard")) return;
+
+            var backBtn = ev.target.closest("[data-ob-nav-back]");
+            if (backBtn) {
+                if (backBtn.disabled) return;
+                var rootBack = resolveClientRoot(backBtn);
+                var stepBack = resolveNavStep(rootBack, backBtn);
+                if (!rootBack || (stepBack !== 1 && stepBack !== 2)) return;
+                if (stepBack <= 1) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                backBtn.disabled = true;
+                var stBack = roots ? roots.get(rootBack) : null;
+                runStepBack(rootBack, stepBack, function () {
+                    return collectForRoot(rootBack, stepBack, stBack);
+                }).finally(function () {
+                    backBtn.disabled = false;
+                });
+                return;
+            }
 
             var nextBtn = ev.target.closest("[data-ob-nav-next]");
             if (!nextBtn) return;
@@ -1160,7 +1237,7 @@
 
             var root = resolveClientRoot(nextBtn);
             var step = resolveNavStep(root, nextBtn);
-            if (!root || step !== 1) return;
+            if (!root || (step !== 1 && step !== 2)) return;
 
             ev.preventDefault();
             ev.stopPropagation();
@@ -1177,7 +1254,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
-        if (step === 1) return;
+        if (step === 1 || step === 2) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {
             if (bff && bff.scheduleSave) bff.scheduleSave();
