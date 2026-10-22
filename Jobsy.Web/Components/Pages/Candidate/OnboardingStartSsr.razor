@@ -68,6 +68,10 @@ else if (_step is >= 1 and <= 10)
           data-ob-antiforgery-token="@_antiforgeryToken"
           data-ob-active-step="@_step">
         <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+        @if (_step is >= 2 and <= 4)
+        {
+            <button type="submit" name="obAction" value="noop" hidden tabindex="-1" aria-hidden="true" data-ob-ssr-enter-guard></button>
+        }
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
         @if (_step is 6 or (>= 7 and <= 10))
         {

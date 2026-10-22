@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
@@ -37,8 +38,7 @@ internal static class OnboardingSsrStepFormInteract
         {
             return Has(form, "obPreset")
                    || Has(form, "obMatrix")
-                   || Has(form, "obStart")
-                   || Has(form, "obAvailableFromSave");
+                   || IsSaveStart(form);
         }
 
         if (step == 3)
@@ -148,38 +148,84 @@ internal static class OnboardingSsrStepFormInteract
             changed = true;
         }
 
-        if (Has(form, "obStart"))
+        if (IsSaveStart(form))
         {
-            var start = form["obStart"].ToString();
-            if (string.Equals(start, "immediate", StringComparison.OrdinalIgnoreCase))
+            if (!TryApplyStartBlock(form, draft, culture, out errorMessage))
             {
-                draft.Immediate = true;
-                changed = true;
+                return false;
             }
-            else if (string.Equals(start, "from", StringComparison.OrdinalIgnoreCase))
-            {
-                draft.Immediate = false;
-                changed = true;
-            }
-        }
 
-        if (Has(form, "obAvailableFromSave") || (Has(form, "obAvailableFrom") && !draft.Immediate))
-        {
-            var raw = form["obAvailableFrom"].ToString();
-            if (JobsyDateInputRules.TryParseFlexibleDate(raw, out var fromDate))
-            {
-                draft.Immediate = false;
-                draft.AvailableFrom = fromDate;
-                changed = true;
-            }
-            else if (!string.IsNullOrWhiteSpace(raw))
-            {
-                errorMessage = culture["Onboarding.NotSaved"];
-                return true;
-            }
+            return true;
         }
 
         return changed;
+    }
+
+    internal static bool TryApplyStartBlock(
+        IFormCollection form,
+        OnboardingProfileDraft draft,
+        CultureState culture,
+        out string? errorMessage)
+    {
+        errorMessage = null;
+        var mode = form["obStartMode"].ToString();
+        if (string.Equals(mode, "now", StringComparison.OrdinalIgnoreCase))
+        {
+            draft.Immediate = true;
+            return true;
+        }
+
+        if (string.Equals(mode, "from", StringComparison.OrdinalIgnoreCase))
+        {
+            var raw = form["obAvailableFrom"].ToString();
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                errorMessage = culture["Onboarding.AvailabilityStartDateInvalid"];
+                return true;
+            }
+
+            if (!TryParseAvailableFrom(raw, out var fromDate))
+            {
+                errorMessage = culture["Onboarding.AvailabilityStartDateInvalid"];
+                return true;
+            }
+
+            draft.Immediate = false;
+            draft.AvailableFrom = fromDate;
+            return true;
+        }
+
+        errorMessage = culture["Onboarding.NotSaved"];
+        return true;
+    }
+
+    internal static void ApplyStartFromPayload(OnboardingProfileDraft draft, bool immediate, string? availableFromIso)
+    {
+        draft.Immediate = immediate;
+        if (immediate)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(availableFromIso)
+            && TryParseAvailableFrom(availableFromIso, out var fromDate))
+        {
+            draft.AvailableFrom = fromDate;
+        }
+    }
+
+    private static bool IsSaveStart(IFormCollection form)
+        => form.TryGetValue("obAction", out var action)
+           && string.Equals(action.ToString(), "saveStart", StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryParseAvailableFrom(string raw, out DateOnly date)
+    {
+        if (DateOnly.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+        {
+            return true;
+        }
+
+        return JobsyDateInputRules.TryParseFlexibleDate(raw, out date);
     }
 
     private static bool TryApplyStep3(IFormCollection form, OnboardingProfileDraft draft, out string? errorMessage)
