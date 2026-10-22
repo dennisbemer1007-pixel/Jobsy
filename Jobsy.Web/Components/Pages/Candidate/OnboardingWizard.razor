@@ -2348,8 +2348,9 @@
 
             return true;
         }
-        catch (JSException)
+        catch (JSException ex)
         {
+            _error = ex.Message;
             return false;
         }
     }

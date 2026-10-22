@@ -1086,7 +1086,7 @@ window.jobsyMaps = (function () {
 window.jobsyExtras = (function () {
     "use strict";
 
-    var extrasSrc = "/js/app-extras.js?v=20261021-reconnect";
+    var extrasSrc = "/js/app-extras.js?v=20261022-onboarding-bff";
     var feedbackSrc = "/js/feedback.js?v=20261002-ch10";
     var pending = {};
 
