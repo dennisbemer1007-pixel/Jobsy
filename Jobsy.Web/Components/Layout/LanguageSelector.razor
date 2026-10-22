@@ -3,61 +3,34 @@
 @inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
 
-<div class="language-selector @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="language" @onfocusout="OnFocusOut" @onkeydown="OnKeyDown">
+<div class="language-selector" data-menu-id="language">
     <button type="button"
             data-menu-trigger
             class="language-selector__toggle"
             aria-haspopup="listbox"
-            aria-expanded="@(_open ? "true" : "false")"
+            aria-expanded="false"
             aria-label="@Culture["Language.Choose"]"
-            title="@Culture["Language.Label"]"
-            @onclick="Toggle">
+            title="@Culture["Language.Label"]">
         <img class="language-selector__flag" src="@Culture.Current.FlagImage" alt="" width="18" height="13" />
         <span class="language-selector__code">@Culture.Language.ToUpperInvariant()</span>
         <span class="language-selector__caret" aria-hidden="true">▾</span>
     </button>
-        <ul class="language-selector__menu" role="listbox" aria-label="@Culture["Language.Label"]">
-            @foreach (var lang in JobsyLanguages.Enabled)
-            {
-                <li role="option" aria-selected="@(lang.Code == Culture.Language ? "true" : "false")">
-                    <a class="language-selector__option @(lang.Code == Culture.Language ? "is-active" : null)"
-                       href="@LanguageHref(lang.Code)">
-                        <img class="language-selector__flag" src="@lang.FlagImage" alt="" width="18" height="13" />
-                        <span class="language-selector__name">@lang.NativeName</span>
-                        <span class="language-selector__code">@lang.Code.ToUpperInvariant()</span>
-                    </a>
-                </li>
-            }
-        </ul>
+    <ul class="language-selector__menu" role="listbox" aria-label="@Culture["Language.Label"]">
+        @foreach (var lang in JobsyLanguages.Enabled)
+        {
+            <li role="option" aria-selected="@(lang.Code == Culture.Language ? "true" : "false")">
+                <a class="language-selector__option @(lang.Code == Culture.Language ? "is-active" : null)"
+                   href="@LanguageHref(lang.Code)">
+                    <img class="language-selector__flag" src="@lang.FlagImage" alt="" width="18" height="13" />
+                    <span class="language-selector__name">@lang.NativeName</span>
+                    <span class="language-selector__code">@lang.Code.ToUpperInvariant()</span>
+                </a>
+            </li>
+        }
+    </ul>
 </div>
 
 @code {
-    private bool _open;
-    private bool _forceClosed;
-
-    private void Toggle()
-    {
-        _open = !_open;
-        _forceClosed = !_open;
-    }
-
-    private void OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Escape")
-        {
-            _open = false;
-            _forceClosed = true;
-        }
-    }
-
-    private async Task OnFocusOut(FocusEventArgs _)
-    {
-        await Task.Delay(150);
-        _open = false;
-        _forceClosed = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
     private string LanguageHref(string code)
     {
         var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);

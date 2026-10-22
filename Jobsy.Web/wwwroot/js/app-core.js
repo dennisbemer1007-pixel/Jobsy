@@ -2138,6 +2138,196 @@ window.lobsyPwaInstall = (function () {
 })();
 
 (function () {
+  if (window.__lobsyAuthLogout) return;
+  window.__lobsyAuthLogout = true;
+  document.addEventListener("click", function (event) {
+    var link = event.target.closest("[data-lobsy-logout=\"true\"]");
+    if (!link) return;
+    event.preventDefault();
+    try {
+      if (window.lobsyPush && typeof window.lobsyPush.dropSubscription === "function") {
+        window.lobsyPush.dropSubscription();
+      }
+    } catch (e) { }
+    window.location.href = link.getAttribute("href") || "/account/logout";
+  }, true);
+})();
+
+(function () {
+  if (window.__lobsyBottomNavCoach) return;
+  window.__lobsyBottomNavCoach = true;
+  function syncBottomNavCoach() {
+    try {
+      var nav = document.querySelector(".bottom-nav");
+      if (nav && nav.offsetParent !== null) {
+        window.jobsyCoachDock.bind(nav, "--bottom-nav-h");
+      } else if (window.jobsyCoachDock && typeof window.jobsyCoachDock.clear === "function") {
+        window.jobsyCoachDock.clear("--bottom-nav-h");
+      }
+    } catch (e) { }
+  }
+  document.addEventListener("DOMContentLoaded", syncBottomNavCoach);
+  document.addEventListener("lobby:enhancedload", syncBottomNavCoach);
+  window.addEventListener("pageshow", syncBottomNavCoach);
+})();
+
+(function () {
+  if (window.__lobsyNotificationBellBff) return;
+  window.__lobsyNotificationBellBff = true;
+
+  function bellRoot() {
+    return document.querySelector('.notification-bell[data-menu-id="notifications"]');
+  }
+
+  function i18n(root, key, fallback) {
+    if (!root) return fallback || "";
+    var v = root.getAttribute(key);
+    return v || fallback || "";
+  }
+
+  function formatRelative(iso, justNowLabel) {
+    try {
+      var utc = new Date(iso);
+      var local = utc;
+      var delta = Date.now() - local.getTime();
+      if (delta < 60000) return justNowLabel;
+      if (delta < 3600000) return Math.floor(delta / 60000) + " min";
+      if (delta < 86400000) return Math.floor(delta / 3600000) + " h";
+      return local.toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    } catch (e) {
+      return justNowLabel;
+    }
+  }
+
+  function setUnread(root, count) {
+    var toggle = root.querySelector(".notification-bell__toggle");
+    var badge = root.querySelector("[data-notifications-badge]");
+    var subtitle = root.querySelector("[data-notifications-subtitle]");
+    var upToDate = i18n(root, "data-n-i18n-up-to-date", "All up to date");
+    if (count > 0) {
+      toggle && toggle.classList.add("notification-bell__toggle--unread");
+      var text = count > 99 ? "99+" : String(count);
+      if (badge) {
+        badge.textContent = text;
+      } else if (toggle) {
+        var span = document.createElement("span");
+        span.className = "notification-bell__badge";
+        span.setAttribute("data-notifications-badge", "");
+        span.textContent = text;
+        toggle.appendChild(span);
+      }
+      if (subtitle) subtitle.textContent = count + " unread";
+    } else {
+      toggle && toggle.classList.remove("notification-bell__toggle--unread");
+      if (badge) badge.remove();
+      if (subtitle) subtitle.textContent = upToDate;
+    }
+  }
+
+  function renderList(root, items) {
+    var host = root.querySelector("[data-notifications-list]");
+    if (!host) return;
+    host.innerHTML = "";
+    if (!items || !items.length) {
+      var empty = document.createElement("div");
+      empty.className = "notification-bell__empty-state";
+      empty.innerHTML =
+        "<p class=\"notification-bell__empty-title\">" + i18n(root, "data-n-i18n-empty-title", "") +
+        "</p><p class=\"muted\">" + i18n(root, "data-n-i18n-empty-body", "") + "</p>";
+      host.appendChild(empty);
+      return;
+    }
+    var ul = document.createElement("ul");
+    ul.className = "notification-bell__list";
+    items.forEach(function (n) {
+      var isRead = !!(n.isRead || n.IsRead);
+      var li = document.createElement("li");
+      li.className = "notification-bell__item" + (isRead ? "" : " is-unread");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "notification-bell__item-btn";
+      btn.innerHTML =
+        "<span class=\"notification-bell__item-top\"><span class=\"notification-bell__item-title\">" +
+        (n.title || n.Title || i18n(root, "data-n-i18n-default-title", "")) +
+        "</span></span><span class=\"notification-bell__item-body\">" +
+        (n.body || n.Body || i18n(root, "data-n-i18n-default-body", "")) +
+        "</span><span class=\"notification-bell__item-meta\">" +
+        formatRelative(n.createdAtUtc || n.CreatedAtUtc, i18n(root, "data-n-i18n-just-now", "")) +
+        "</span>";
+      btn.addEventListener("click", function () {
+        var deep = n.deepLink || n.DeepLink;
+        if (deep) window.location.href = deep;
+      });
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+    host.appendChild(ul);
+    var unread = items.filter(function (x) { return !(x.isRead || x.IsRead); }).length;
+    setUnread(root, unread);
+  }
+
+  var loadPromise = null;
+  function loadList(force) {
+    var root = bellRoot();
+    if (!root) return Promise.resolve();
+    if (loadPromise && !force) return loadPromise;
+    var host = root.querySelector("[data-notifications-list]");
+    if (host) {
+      host.innerHTML = "<p class=\"muted notification-bell__empty\">" + i18n(root, "data-n-i18n-loading", "") + "</p>";
+    }
+    loadPromise = fetch("/bff/candidate/notifications?take=20", { credentials: "same-origin" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("http");
+        return res.json();
+      })
+      .then(function (items) {
+        renderList(root, items);
+      })
+      .catch(function () {
+        if (!host) return;
+        host.innerHTML =
+          "<div class=\"notification-bell__empty-state\"><p class=\"notification-bell__empty-title\">" +
+          i18n(root, "data-n-i18n-error-title", "") +
+          "</p><p class=\"muted\">" + i18n(root, "data-n-i18n-error-body", "") +
+          "</p><button type=\"button\" class=\"btn-compact\" data-notifications-retry>" +
+          i18n(root, "data-n-i18n-retry", "") + "</button></div>";
+        var retry = host.querySelector("[data-notifications-retry]");
+        if (retry) {
+          retry.addEventListener("click", function () {
+            loadPromise = null;
+            loadList(true);
+          });
+        }
+      });
+    return loadPromise;
+  }
+
+  document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-notifications-mark-all]")) {
+      event.preventDefault();
+      fetch("/bff/candidate/notifications/read-all", { method: "POST", credentials: "same-origin" }).then(function () {
+        loadPromise = null;
+        loadList(true);
+      });
+      return;
+    }
+    var trigger = event.target.closest('.notification-bell[data-menu-id="notifications"] [data-menu-trigger]');
+    if (trigger) {
+      setTimeout(function () { loadList(false); }, 0);
+    }
+  }, true);
+
+  try {
+    var menuObs = new MutationObserver(function () {
+      if (document.documentElement.getAttribute("data-header-menu") === "notifications") {
+        loadList(false);
+      }
+    });
+    menuObs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-header-menu"] });
+  } catch (e) { }
+})();
+
+(function () {
   if (window.__jobsyInputMode) return;
   window.__jobsyInputMode = true;
   document.addEventListener("keydown", function (e) {
