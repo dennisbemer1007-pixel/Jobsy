@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-step24fix" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-step2opslaan44" />
     <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261022-r6c" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step910" />
@@ -53,12 +53,17 @@ else if (_step is >= 1 and <= 10)
     var step7Consent = _step == 7 && !_draft.HasConsent;
     var pageTitle = step7Consent ? Culture["Onboarding.Consent.Title"] : Culture[$"Onboarding.Step{_step}.Title"];
     var pageLead = step7Consent ? Culture["Onboarding.Consent.Lead"] : Culture[$"Onboarding.Step{_step}.Lead"];
-    var canvasClass = step7Consent ? "ob-rustig__canvas ob-rustig__canvas--consent" : "ob-rustig__canvas";
+    var canvasClass = _step is >= 7 and <= 10
+        ? "ob-rustig__canvas ob-rustig__canvas--mini-test"
+        : step7Consent ? "ob-rustig__canvas ob-rustig__canvas--consent" : "ob-rustig__canvas";
+    var formAction = _step is >= 7 and <= 10
+        ? OnboardingSsrMiniNavigation.StepQuestionUrl(_step, _miniQuestionQ)
+        : $"/candidate/start?step={_step}";
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
     var heroDesktop = OnboardingRustigPanoramaAssets.DesktopForStep(_step);
     var heroMobile = OnboardingRustigPanoramaAssets.MobileForStep(_step) ?? heroDesktop;
     <form method="post"
-          action="@($"/candidate/start?step={_step}")"
+          action="@formAction"
           class="ob-wizard ob-wizard--richting-a ob-wizard--rustig"
           data-enhance="false"
           data-enhance-nav="false"
@@ -74,7 +79,7 @@ else if (_step is >= 1 and <= 10)
             <button type="submit" name="obAction" value="noop" hidden tabindex="-1" aria-hidden="true" data-ob-ssr-enter-guard></button>
         }
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
-        @if (_step is 6 or (>= 7 and <= 10))
+        @if (_step == 6)
         {
             <script src="js/onboarding-ssr-fetch-save.js?v=20261022-step910" defer></script>
         }
@@ -86,7 +91,6 @@ else if (_step is >= 1 and <= 10)
         @if (_step is >= 7 and <= 10)
         {
             <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
-            <script src="js/onboarding-ssr-mini-tiles.js?v=20261022-step910" defer></script>
         }
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
@@ -199,7 +203,13 @@ else if (_step is >= 1 and <= 10)
                                         value="back"
                                         data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
                             }
-                            @if (_step is 4 or 5)
+                            @if (_step is >= 7 and <= 10)
+                            {
+                                <a class="ob-rustig__btn"
+                                   href="/candidate/profile"
+                                   data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
+                            }
+                            else if (_step is 4 or 5)
                             {
                                 <button type="submit"
                                         class="ob-rustig__btn"
@@ -257,6 +267,7 @@ else
     private string _antiforgeryHeader = "RequestVerificationToken";
     private string _antiforgeryToken = "";
     private string? _errorMessage;
+    private int _miniQuestionQ = 1;
 
     protected override void OnInitialized()
     {
@@ -377,12 +388,25 @@ else
             if (_step is >= 7 and <= 10)
             {
                 var mini = await OnboardingSsrMiniStepLoader.LoadAsync(_step, Api, FeatureFlags, Culture, CancellationToken.None);
+                int? qQuery = null;
+                if (HttpContextAccessor.HttpContext?.Request.Query.TryGetValue("q", out var qRaw) == true
+                    && int.TryParse(qRaw.ToString(), out var qParsed))
+                {
+                    qQuery = qParsed;
+                }
+
+                var activeIndex = OnboardingSsrMiniNavigation.ResolveActiveQuestionIndex(
+                    mini.Questions,
+                    mini.Answers,
+                    qQuery);
+                _miniQuestionQ = activeIndex + 1;
                 _seed = new OnboardingClientStepSeed
                 {
                     MiniQuestions = mini.Questions.ToList(),
                     MiniAnswers = mini.Answers,
                     HasConsent = _draft.HasConsent,
                     ConsentRequested = _draft.ConsentRequested,
+                    MiniActiveQuestion = _miniQuestionQ,
                 };
             }
             else

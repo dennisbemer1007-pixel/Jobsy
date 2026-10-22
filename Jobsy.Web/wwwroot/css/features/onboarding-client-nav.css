@@ -55,8 +55,17 @@ form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-back"
 }
 
 form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-skip"],
-form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-dream-unknown"] {
+form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-dream-unknown"],
+form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-tests-later"] {
   order: 2;
+}
+
+form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-tests-later"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 form[data-ob-ssr-form] .ob-rustig__footer-actions [data-testid="onboarding-next"] {

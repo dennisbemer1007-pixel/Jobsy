@@ -13,6 +13,9 @@ public sealed class OnboardingClientStepSeed
     public string? Education { get; init; }
     public IReadOnlyDictionary<int, int> MiniAnswers { get; init; } = new Dictionary<int, int>();
 
+    /// <summary>1-based index of the single mini question shown on SSR steps 7–10.</summary>
+    public int MiniActiveQuestion { get; init; } = 1;
+
     public sealed record MiniQuestionSeed(int Id, string Text);
 
     public sealed record JobSeed(string Employer, string? StartMonth, string? EndMonth, bool IsCurrent);
