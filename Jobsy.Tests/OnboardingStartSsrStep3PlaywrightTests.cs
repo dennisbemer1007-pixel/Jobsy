@@ -102,17 +102,17 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
             await bikeTile.ClickAsync(new() { Force = true });
         }
 
-        var travel20 = page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"20\"]");
+        var travel30 = page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"30\"]");
         if (mobile)
         {
-            await travel20.TapAsync();
+            await travel30.TapAsync();
         }
         else
         {
-            await travel20.ClickAsync(new() { Force = true });
+            await travel30.ClickAsync(new() { Force = true });
         }
-        await Assertions.Expect(travel20).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
-        await Assertions.Expect(page.Locator("[data-ob-client=travelLegendValue]")).ToHaveTextAsync("20");
+        await Assertions.Expect(travel30).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        await Assertions.Expect(page.Locator("[data-ob-client=travelLegendValue]")).ToHaveTextAsync("30");
         await Assertions.Expect(bikeTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         await page.WaitForTimeoutAsync(500);
 

@@ -2751,3 +2751,149 @@
     text-align: start;
   }
 }
+
+/* Mockup alignment: steps 2–4 (u6s / u3c / u10a) — desktop 1024+ */
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  inline-size: 100%;
+  max-inline-size: none;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] [data-ob-client=presetGrid].lobsy-choice-grid {
+  inline-size: 100%;
+  max-inline-size: none;
+  gap: 0.65rem;
+}
+
+@media (min-width: 768px) {
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] [data-ob-client=presetGrid].lobsy-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-wizard__presets .lobsy-choice-tile--tall {
+  min-block-size: 4.75rem;
+  block-size: auto;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  text-align: start;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-wizard__presets .lobsy-choice-tile__stack strong {
+  display: block;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-wizard__presets .lobsy-choice-tile__stack small {
+  display: block;
+  margin-block-start: 0.2rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .hours-range,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-matrix {
+  inline-size: 100%;
+  max-inline-size: none;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-block: 0.35rem;
+  font-weight: 600;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option input[type="radio"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option [data-ob-client=availableFrom] {
+  min-inline-size: 8.5rem;
+  flex: 1 1 8rem;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] #onboarding-field-transport {
+  inline-size: 100%;
+  max-inline-size: none;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] [data-ob-client="showCustomTravel"],
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__custom-travel {
+  display: none !important;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile__icon,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile__check {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid:not(.ob-wizard__travel-times) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__travel-times.lobsy-choice-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile {
+  min-block-size: 2.85rem;
+  justify-content: flex-start;
+  text-align: start;
+  padding: 0.65rem 0.85rem;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile.is-selected,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  border-color: var(--brand);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__travel-times .lobsy-choice-tile.is-selected,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__travel-times .lobsy-choice-tile[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-wizard__check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  text-align: start;
+  inline-size: 100%;
+  box-sizing: border-box;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-wizard__check input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-wizard__presets,
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .hours-range,
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .availability-matrix,
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] #onboarding-field-transport {
+    max-inline-size: none;
+  }
+}

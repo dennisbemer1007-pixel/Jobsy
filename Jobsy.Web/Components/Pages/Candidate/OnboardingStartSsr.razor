@@ -33,7 +33,8 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-steps123" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-steps234" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step910" />
 </HeadContent>
 
@@ -216,6 +217,14 @@ else if (_step is >= 1 and <= 10)
                         </div>
                     </div>
                 </div>
+                @if (_showJobsRail && _nearbySignal is not null)
+                {
+                    <aside class="ob-rustig__rail" aria-label="@Culture["Onboarding.Panel.Nearby.RailAria"]">
+                        <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Desktop"
+                                               Signal="_nearbySignal"
+                                               RefinedHeadline="_step >= 3" />
+                    </aside>
+                }
             </div>
         </div>
     </form>
@@ -234,6 +243,7 @@ else
     private string? _welcomeHtml;
     private int _step = 1;
     private bool _showJobsRail;
+    private OnboardingNearbySignal? _nearbySignal;
     private OnboardingProfileDraft _draft = new();
     private string _initialJson = "{}";
     private IReadOnlyList<string> _dreamTitles = [];
@@ -316,7 +326,20 @@ else
 
             _draft.ConsentRequested = _draft.HasConsent || _draft.ConsentRequested;
 
-            _showJobsRail = _step is 2 or 3;
+            _nearbySignal = null;
+            if (_step is 2 or 3)
+            {
+                try
+                {
+                    _nearbySignal = await Api.GetOnboardingNearbySignalAsync(CancellationToken.None);
+                }
+                catch
+                {
+                    _nearbySignal = null;
+                }
+            }
+
+            _showJobsRail = _nearbySignal is { Count: > 0 };
             var presets = OnboardingPresetCatalog.Items
                 .Select(p => (p.Code, p.TitleKey, p.LeadKey))
                 .ToList();

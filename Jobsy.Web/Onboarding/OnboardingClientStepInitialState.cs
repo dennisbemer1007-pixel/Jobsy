@@ -114,7 +114,7 @@ internal static class OnboardingClientStepInitialState
         var transportOptions = TransportLabels.Selectable
             .Select(code => new { code, label = TransportLabel(culture, code) })
             .ToList();
-        var travelChoices = new[] { 10, 20, 30, 45 };
+        var travelChoices = new[] { 15, 30, 45, 60 };
 
         return new
         {
