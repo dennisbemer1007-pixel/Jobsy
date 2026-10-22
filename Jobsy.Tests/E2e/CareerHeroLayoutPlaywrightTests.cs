@@ -157,7 +157,7 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
               const segmented = document.querySelector('[data-testid="uwv-carriere-sections"]');
               const showcase = document.querySelector('header.uwv-carriere-showcase-hero');
               if (segmented && showcase) {
-                const lead = showcase.querySelector('.cand-hero__lead');
+                const lead = showcase.querySelector('.cand-hero__lead:not(.carriere-showcase-hero__lead-skeleton)');
                 const art = showcase.querySelector('.cand-compact-hero__art');
                 const artHidden = !art || getComputedStyle(art).display === 'none';
                 const tabs = document.querySelector('.carriere-segmented__nav');
@@ -192,6 +192,19 @@ public sealed class CareerHeroLayoutPlaywrightTests : IAsyncLifetime
 
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const loading = document.querySelector('[data-testid=carriere-segmented-profile-loading]');
+              if (loading) return false;
+              const empty = document.querySelector('[data-testid=carriere-segmented-empty-profile]');
+              const lead = document.querySelector('header.uwv-carriere-showcase-hero .cand-hero__lead:not(.carriere-showcase-hero__lead-skeleton)');
+              if (empty) return true;
+              return lead && (lead.textContent || '').includes('Haaglanden');
+            }
+            """,
             null,
             new() { Timeout = 60_000 });
         return page;

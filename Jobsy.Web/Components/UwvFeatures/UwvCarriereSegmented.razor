@@ -6,7 +6,16 @@
 @inject IUwvKansberoepenCatalog KansCatalog
 
 <div class="carriere-segmented career-uwv-sections opl-wrap" data-testid="uwv-carriere-sections">
-    @if (EmptyProfile)
+    @if (!ShowcaseProfileLoaded)
+    {
+        <div class="carriere-segmented__profile-reserve"
+             data-testid="carriere-segmented-profile-loading"
+             aria-busy="true"
+             aria-label="@UwvMockupCopy.Career.LoadingTitle(Lang)">
+            <span class="career-skeleton career-skeleton--empty-banner"></span>
+        </div>
+    }
+    else if (EmptyProfile)
     {
         <div class="carriere-segmented__empty-profile career-note career-note--soft"
              data-testid="carriere-segmented-empty-profile"
@@ -55,7 +64,7 @@
         <div class="carriere-segmented__panel" role="tabpanel" id="carriere-panel-voor-jou" aria-labelledby="carriere-tab-voor-jou">
             <section class="carriere-segmented__group" aria-labelledby="carriere-group-similar">
                 <div class="carriere-segmented__group-head">
-                    <h2 id="carriere-group-similar" class="carriere-segmented__group-title">@(EmptyProfile ? UwvMockupCopy.Similar.EmptyTitle(Lang) : UwvMockupCopy.Similar.Title(Lang))</h2>
+                    <h2 id="carriere-group-similar" class="carriere-segmented__group-title">@SimilarGroupTitle</h2>
                     @MeerButton("similar", UwvMockupData.SimilarJobs.Count)
                 </div>
                 <ul class="carriere-segmented__cards">
@@ -72,7 +81,7 @@
 
             <section class="carriere-segmented__group" aria-labelledby="carriere-group-strong">
                 <div class="carriere-segmented__group-head">
-                    <h2 id="carriere-group-strong" class="carriere-segmented__group-title">@UwvMockupCopy.StrongMatches.Title(Lang)</h2>
+                    <h2 id="carriere-group-strong" class="carriere-segmented__group-title">@StrongGroupTitle</h2>
                     @MeerButton("strong", UwvMockupData.StrongMatchJobs.Count)
                 </div>
                 <ul class="carriere-segmented__cards">
@@ -198,7 +207,16 @@
     [CascadingParameter]
     public bool EmptyProfile { get; set; }
 
+    [CascadingParameter(Name = "ShowcaseProfileLoaded")]
+    public bool ShowcaseProfileLoaded { get; set; }
+
     private string Lang => Culture.Language;
+    private string SimilarGroupTitle => !ShowcaseProfileLoaded || EmptyProfile
+        ? UwvMockupCopy.Similar.EmptyTitle(Lang)
+        : UwvMockupCopy.Similar.Title(Lang);
+    private string StrongGroupTitle => ShowcaseProfileLoaded && !EmptyProfile
+        ? UwvMockupCopy.StrongMatches.Title(Lang)
+        : UwvMockupCopy.StrongMatches.PendingTitle(Lang);
     private string BaangarantieRouteLabel => UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee route" : "Baangarantie-route";
     private string LeerbanenTitle => UwvMockupCopy.IsEnglish(Lang) ? "Apprenticeships (BBL)" : "Leerbanen BBL";
 

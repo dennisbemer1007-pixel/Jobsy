@@ -415,6 +415,34 @@
 
 .career-skeleton--title { height: 26px; width: 60%; }
 
+.career-skeleton--showcase-lead {
+  display: block;
+  width: min(100%, 18rem);
+  height: 14px;
+  margin-block: 0.35rem 0;
+}
+
+.career-skeleton--empty-banner {
+  display: block;
+  width: 100%;
+  height: 5.75rem;
+  margin: 0;
+  border-radius: 12px;
+}
+
+.carriere-showcase-hero__lead-skeleton {
+  margin: 0.35rem 0 0;
+}
+
+.carriere-segmented__profile-reserve {
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+}
+
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero + .carriere-segmented .carriere-segmented__profile-reserve {
+  margin-top: 0.75rem;
+}
+
 .career-note {
   display: flex;
   flex-wrap: wrap;

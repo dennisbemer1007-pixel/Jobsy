@@ -32,13 +32,22 @@
         <CandidateIllustratedHero Eyebrow="@UwvMockupCopy.Career.Eyebrow(Culture.Language)"
                                   CoralEyebrow="true"
                                   Title="@_showcaseHeroTitle"
-                                  Lead="@_showcaseHeroLead"
+                                  Lead="@(_showcaseProfileLoaded ? _showcaseHeroLead : null)"
                                   ArtUrl="@DroombaanProfessionWide"
                                   ArtPosition="right center"
                                   ArtPositionDesktop="right center"
-                                  CssClass="cand-hero--profession-band uwv-carriere-showcase-hero" />
-        <CascadingValue Value="_showcaseEmptyProfile">
-            <UwvCarriereSections />
+                                  CssClass="cand-hero--profession-band uwv-carriere-showcase-hero">
+            @if (!_showcaseProfileLoaded)
+            {
+                <p class="cand-hero__lead carriere-showcase-hero__lead-skeleton" aria-hidden="true">
+                    <span class="career-skeleton career-skeleton--showcase-lead"></span>
+                </p>
+            }
+        </CandidateIllustratedHero>
+        <CascadingValue Value="_showcaseProfileLoaded" Name="ShowcaseProfileLoaded">
+            <CascadingValue Value="_showcaseEmptyProfile">
+                <UwvCarriereSections />
+            </CascadingValue>
         </CascadingValue>
     }
     else if (_plan.HasPlan)
@@ -288,6 +297,7 @@
     /// <summary>Default /carriere view (segmented werkmap). All logged-in candidates; not gated on UWV feature flag.</summary>
     private bool _carriereSegmented = true;
     private bool _carriereInitDone;
+    private bool _showcaseProfileLoaded;
     private bool _showcaseEmptyProfile;
     private string _showcaseHeroTitle = "";
     private string _showcaseHeroLead = "";
@@ -343,9 +353,9 @@
 
     protected override void OnParametersSet()
     {
-        if (_carriereSegmented && string.IsNullOrEmpty(_showcaseHeroTitle))
+        if (_carriereSegmented && !_showcaseProfileLoaded && string.IsNullOrEmpty(_showcaseHeroTitle))
         {
-            ApplyShowcaseHeroCopy(emptyProfile: false);
+            ApplyShowcaseLoadingCopy();
         }
 
         if (_carriereInitDone && _carriereSegmented)
@@ -799,11 +809,21 @@
         }
         catch (Exception)
         {
-            _showcaseEmptyProfile = false;
-            ApplyShowcaseHeroCopy(emptyProfile: false);
+            _showcaseEmptyProfile = true;
+            ApplyShowcaseHeroCopy(emptyProfile: true);
+        }
+        finally
+        {
+            _showcaseProfileLoaded = true;
         }
 
         StateHasChanged();
+    }
+
+    private void ApplyShowcaseLoadingCopy()
+    {
+        _showcaseHeroTitle = UwvMockupCopy.Career.LoadingTitle(Culture.Language);
+        _showcaseHeroLead = "";
     }
 
     private void ApplyShowcaseHeroCopy(bool emptyProfile)
