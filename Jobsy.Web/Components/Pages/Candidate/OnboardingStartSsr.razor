@@ -42,7 +42,7 @@
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
-else if (_step is >= 1 and <= 2)
+else if (_step is >= 1 and <= 3)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
     <form method="post"
@@ -248,13 +248,13 @@ else if (_step is >= 1 and <= 2)
                 return;
             }
 
-            if (_step is < 1 or > 2)
+            if (_step is < 1 or > 3)
             {
                 RedirectTo(WizardUrl(_step));
                 return;
             }
 
-            _showJobsRail = _step is 2;
+            _showJobsRail = _step is 2 or 3;
             var presets = OnboardingPresetCatalog.Items
                 .Select(p => (p.Code, p.TitleKey, p.LeadKey))
                 .ToList();

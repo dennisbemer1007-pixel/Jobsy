@@ -552,31 +552,6 @@
                             </OnboardingIllustratedStep>
                             break;
 
-                        case 3:
-                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.VervoerWebp"
-                                                       JpgSrc="@OnboardingIllustrationAssets.VervoerJpg"
-                                                       MobileHeroWebp="@OnboardingIllustrationAssets.MobileHeroWebp("vervoer")"
-                                                       MobileHeroJpg="@OnboardingIllustrationAssets.MobileHeroJpg("vervoer")"
-                                                       MobileHeroSlug="vervoer"
-                                                       Eyebrow="@MobileStepBadge"
-                                                       HeroTitle="@Culture["Onboarding.Step3.Title"]"
-                                                       HeroLead="@Culture["Onboarding.Step3.Lead"]"
-                                                       TestId="onboarding-step-3-illustrated">
-                                <HeadContent>
-                                    <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1>
-                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step3.Lead"]</p>
-                                </HeadContent>
-                                <ChildContent>
-                                    <div class="ob-illustrated-step__form">
-                                        <OnboardingClientStepIsland Step="3"
-                                                                    Draft="Draft"
-                                                                    Presets="IllustratedPresetTuples"
-                                                                    Seed="ClientStepSeed" />
-                                    </div>
-                                </ChildContent>
-                            </OnboardingIllustratedStep>
-                            break;
-
                         case 4:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.WerkervaringWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.WerkervaringJpg"
@@ -1187,7 +1162,7 @@
             }
 
             _welcome = ShouldShowWelcomeScreen(_state, _step);
-            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 2)
+            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 3)
             {
                 Navigation.NavigateTo(OnboardingRoutes.StepUrl(_step), forceLoad: true);
                 return;

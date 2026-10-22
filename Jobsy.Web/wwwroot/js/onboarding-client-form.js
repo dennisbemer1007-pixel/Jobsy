@@ -891,68 +891,125 @@
         var tGrid = root.querySelector("[data-ob-client=transportGrid]");
         var vGrid = root.querySelector("[data-ob-client=travelGrid]");
         var customInput = root.querySelector("[data-ob-client=customTravel]");
+        var showCustomBtn = root.querySelector("[data-ob-client=showCustomTravel]");
+        var ssrForm = root.closest("form[data-ob-ssr-form]");
 
-        function paintTravel() {
-            if (!vGrid || vGrid.getAttribute("data-ob-travel-bound") === "1") return;
-            vGrid.setAttribute("data-ob-travel-bound", "1");
-            vGrid.innerHTML = "";
-            (initial.travelChoices || [10, 20, 30, 45]).forEach(function (m) {
-                var btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "lobsy-choice-tile";
-                btn.setAttribute("data-ob-travel", String(m));
-                btn.setAttribute("aria-pressed", (!custom && travel === m) ? "true" : "false");
-                btn.textContent = String(m);
-                vGrid.appendChild(btn);
-            });
+        function collectPayload() {
+            var transport = readChoiceCodes(tGrid);
+            var pickedTravel = null;
+            var isCustom = custom;
+            if (vGrid) {
+                var pressed = vGrid.querySelector('.lobsy-choice-tile[data-ob-travel][aria-pressed="true"]');
+                if (pressed) {
+                    isCustom = false;
+                    pickedTravel = parseInt(pressed.getAttribute("data-ob-travel"), 10);
+                }
+            }
+            if (customInput && !customInput.hidden && customInput.value) {
+                isCustom = true;
+                pickedTravel = parseInt(customInput.value, 10) || pickedTravel || travel;
+            }
+            var maxT = pickedTravel || travel;
+            return {
+                transport: transport,
+                maxTravel: maxT,
+                selectedTravel: isCustom ? null : maxT,
+                customTravel: isCustom
+            };
+        }
+
+        function saveNow() {
+            if (ssrForm) {
+                putOnboardingStep(root, 3, collectPayload, false, false, false).catch(function () { });
+            }
+        }
+
+        function bindTransportGrid() {
+            if (!tGrid || tGrid.__obTransportBound) return;
+            tGrid.__obTransportBound = true;
+            if (!tGrid.querySelector(".lobsy-choice-tile[data-ob-code]")) {
+                mountChoiceGrid(tGrid, initial.transportOptions || [], selected, true, saveNow);
+                return;
+            }
+            syncChoiceGridPressed(tGrid, selected, true);
+            tGrid.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
+                if (!btn || !tGrid.contains(btn)) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                var code = btn.getAttribute("data-ob-code");
+                if (selected.has(code)) selected.delete(code);
+                else selected.add(code);
+                syncChoiceGridPressed(tGrid, selected, true);
+                btn.classList.toggle("is-selected", selected.has(code));
+                saveNow();
+            }, true);
+        }
+
+        function bindTravelGrid() {
+            if (!vGrid || vGrid.__obTravelBound) return;
+            vGrid.__obTravelBound = true;
+            if (!vGrid.querySelector(".lobsy-choice-tile[data-ob-travel]")) {
+                vGrid.innerHTML = "";
+                (initial.travelChoices || [10, 20, 30, 45]).forEach(function (m) {
+                    var btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "lobsy-choice-tile";
+                    btn.setAttribute("data-ob-travel", String(m));
+                    btn.setAttribute("aria-pressed", (!custom && travel === m) ? "true" : "false");
+                    btn.textContent = String(m);
+                    vGrid.appendChild(btn);
+                });
+            }
             vGrid.addEventListener("click", function (ev) {
                 var btn = ev.target.closest(".lobsy-choice-tile[data-ob-travel]");
-                if (!btn) return;
+                if (!btn || !vGrid.contains(btn)) return;
+                ev.preventDefault();
+                ev.stopPropagation();
                 custom = false;
                 travel = parseInt(btn.getAttribute("data-ob-travel"), 10) || travel;
                 if (customInput) customInput.hidden = true;
                 vGrid.querySelectorAll(".lobsy-choice-tile[data-ob-travel]").forEach(function (b) {
                     b.setAttribute("aria-pressed", b === btn ? "true" : "false");
                 });
-            });
+                saveNow();
+            }, true);
         }
 
-        mountChoiceGrid(tGrid, initial.transportOptions || [], selected, true, function () { });
-        paintTravel();
+        bindTransportGrid();
+        bindTravelGrid();
         if (customInput) {
             customInput.hidden = !custom;
-            customInput.value = custom ? travel : travel;
+            customInput.value = String(travel);
             customInput.addEventListener("change", function () {
                 custom = true;
                 travel = parseInt(customInput.value, 10) || travel;
+                saveNow();
+            });
+        }
+        if (showCustomBtn && !showCustomBtn.__obShowCustomBound) {
+            showCustomBtn.__obShowCustomBound = true;
+            showCustomBtn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                custom = true;
+                if (customInput) {
+                    customInput.hidden = false;
+                    customInput.focus();
+                }
+                if (vGrid) {
+                    vGrid.querySelectorAll(".lobsy-choice-tile[data-ob-travel]").forEach(function (b) {
+                        b.setAttribute("aria-pressed", "false");
+                    });
+                }
+                saveNow();
             });
         }
 
-        return {
-            collect: function () {
-                var transport = readChoiceCodes(tGrid);
-                var pickedTravel = null;
-                var isCustom = custom;
-                if (vGrid) {
-                    var pressed = vGrid.querySelector('.lobsy-choice-tile[aria-pressed="true"]');
-                    if (pressed) {
-                        isCustom = false;
-                        pickedTravel = parseInt(pressed.getAttribute("data-ob-travel"), 10);
-                    }
-                }
-                if (customInput && !customInput.hidden && customInput.value) {
-                    isCustom = true;
-                    pickedTravel = parseInt(customInput.value, 10) || pickedTravel || travel;
-                }
-                var maxT = pickedTravel || travel;
-                return {
-                    transport: transport,
-                    maxTravel: maxT,
-                    selectedTravel: isCustom ? null : maxT,
-                    customTravel: isCustom
-                };
-            }
-        };
+        if (!ssrForm) {
+            wireObStepBff(root, 3, collectPayload);
+        }
+
+        return { collect: collectPayload, scheduleSave: saveNow };
     }
 
     function mountStep4(root, initial) {
@@ -1369,7 +1426,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
-        if (step === 1 || step === 2) return;
+        if (step === 1 || step === 2 || step === 3) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {
             if (bff && bff.scheduleSave) bff.scheduleSave();

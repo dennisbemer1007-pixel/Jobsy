@@ -85,7 +85,7 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         await Assertions.Expect(dateInput).ToHaveValueAsync("15-03-2027");
 
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=3**");
+        await page.WaitForURLAsync("**/candidate/start?step=3**");
     }
 
     private static async Task FillStep1AndGoToStep2Async(IPage page)

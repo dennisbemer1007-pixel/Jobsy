@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Full-page POST for onboarding steps 1–2 (303 redirect, no Blazor circuit).</summary>
+/// <summary>Full-page POST for onboarding steps 1–3 (303 redirect, no Blazor circuit).</summary>
 public static class OnboardingStartFormEndpoints
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
@@ -41,7 +41,7 @@ public static class OnboardingStartFormEndpoints
             return SeeOther(WithError(OnboardingRoutes.StepUrl(step ?? 1), culture["Common.Error.TryAgain"]));
         }
 
-        var currentStep = step is >= 1 and <= 2 ? step.Value : 1;
+        var currentStep = step is >= 1 and <= 3 ? step.Value : 1;
         if (string.IsNullOrWhiteSpace(obPayload))
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));

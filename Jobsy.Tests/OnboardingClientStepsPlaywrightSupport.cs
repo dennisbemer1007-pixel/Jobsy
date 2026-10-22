@@ -496,6 +496,16 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 factory.StoredProfile.Preferences.MaxHoursPerWeek = maxVal;
             }
 
+            if (prefs.TryGetProperty("preferredTransport", out var transport) && transport.ValueKind == JsonValueKind.String)
+            {
+                factory.StoredProfile.Preferences.PreferredTransport = transport.GetString();
+            }
+
+            if (prefs.TryGetProperty("maxTravelMinutes", out var travel) && travel.TryGetInt32(out var travelVal))
+            {
+                factory.StoredProfile.Preferences.MaxTravelMinutes = travelVal;
+            }
+
             if (prefs.TryGetProperty("availabilityPresets", out var presetArr) && presetArr.ValueKind == JsonValueKind.Array)
             {
                 factory.StoredProfile.Preferences.AvailabilityPresets = presetArr.EnumerateArray()
