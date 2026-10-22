@@ -305,6 +305,14 @@
                                 data-ob-nav-step="@_step"
                                 data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
                     }
+                    else if (_step is >= 3 and <= MaxRustigPersonalStep)
+                    {
+                        <button type="button"
+                                class="ob-rustig__btn ob-rustig__btn--primary"
+                                data-testid="onboarding-next"
+                                disabled="@_busy"
+                                @onclick="@(() => NextAsync())">@Culture["Onboarding.Next"]</button>
+                    }
                     else if (_step > 10)
                     {
                         <button type="button"
@@ -1133,7 +1141,7 @@
             }
 
             _welcome = ShouldShowWelcomeScreen(_state, _step);
-            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 4)
+            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 5)
             {
                 Navigation.NavigateTo(OnboardingRoutes.StepUrl(_step), forceLoad: true);
                 return;

@@ -144,7 +144,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
         Assert.Equal(0, await page.Locator("script[src*='blazor.web.js']").CountAsync());
 
         await page.GetByTestId("onboarding-next").ClickAsync(new() { Timeout = 15_000 });
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=5**", new() { Timeout = 90_000 });
+        await page.WaitForURLAsync("**/candidate/start?step=5**", new() { Timeout = 90_000 });
+        Assert.Equal(0, await page.Locator("script[src*='blazor.web.js']").CountAsync());
+
+        await page.GetByTestId("onboarding-next").ClickAsync(new() { Timeout = 15_000 });
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=6**", new() { Timeout = 90_000 });
         Assert.Equal("ready", await page.EvaluateAsync<string>(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') || ''"));
     }
@@ -179,9 +183,10 @@ internal static class OnboardingClientStepsPlaywrightSupport
         await page.Locator("[data-ob-client-step=\"4\"]").WaitForAsync(new() { Timeout = 90_000 });
 
         await page.GetByTestId("onboarding-next").ClickAsync(new() { Force = true });
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=5**", new() { Timeout = 90_000 });
+        await page.WaitForURLAsync("**/candidate/start?step=5**", new() { Timeout = 90_000 });
         await page.Locator("[data-ob-client-step=\"5\"]").WaitForAsync(new() { Timeout = 90_000 });
         await page.GetByTestId("onboarding-next").ClickAsync(new() { Force = true });
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=6**", new() { Timeout = 90_000 });
         await page.Locator("[data-ob-client-step=\"6\"]").WaitForAsync(new() { Timeout = 90_000 });
 
         var dream = page.Locator("[data-ob-client=dreamInput]");

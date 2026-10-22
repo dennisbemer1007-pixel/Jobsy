@@ -19,7 +19,7 @@ internal static class OnboardingClientStepShells
             2 => BuildStep2(culture, draft),
             3 => BuildStep3(culture, draft),
             4 => BuildStep4(culture, draft),
-            5 => BuildStep5(culture),
+            5 => BuildStep5(culture, draft),
             6 => BuildStep6(culture),
             7 when draft?.HasConsent == true => BuildMiniStep(culture),
             7 => BuildStep7ConsentAndMini(culture),
@@ -247,13 +247,20 @@ internal static class OnboardingClientStepShells
         return sb.ToString();
     }
 
-    private static string BuildStep5(CultureState culture)
+    private static string BuildStep5(CultureState culture, OnboardingProfileDraft? draft)
     {
+        draft ??= new OnboardingProfileDraft();
+        var selected = string.IsNullOrWhiteSpace(draft.Education)
+            ? null
+            : draft.Education.Trim();
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
-        sb.Append("<div data-ob-client=\"educationGrid\" class=\"ob-wizard__education-grid\"></div>");
-        AppendStepNav(sb, culture, optionalSkip: true);
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-education\">");
+        sb.Append("<div class=\"ob-wizard__section-title ob-illustrated-step__field-label\" id=\"onboarding-education-label\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.EducationPickLevel"]));
         sb.Append("</div>");
+        sb.Append("<div data-ob-client=\"educationGrid\" class=\"ob-wizard__education-grid lobsy-choice-grid\" role=\"radiogroup\" aria-labelledby=\"onboarding-education-label\">");
+        AppendEducationTiles(sb, culture, selected);
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 
@@ -291,6 +298,38 @@ internal static class OnboardingClientStepShells
         AppendStepNav(sb, culture);
         sb.Append("</div>");
         return sb.ToString();
+    }
+
+    private static void AppendEducationTiles(StringBuilder sb, CultureState culture, string? selected)
+    {
+        foreach (var level in OnboardingWizardCatalog.EducationRadioLevels)
+        {
+            var on = !string.IsNullOrEmpty(selected)
+                && string.Equals(level, selected, StringComparison.OrdinalIgnoreCase);
+            var label = level == EducationLevelLabels.None
+                ? culture["Education.None"]
+                : level;
+            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile");
+            if (on)
+            {
+                sb.Append(" is-selected");
+            }
+
+            sb.Append("\" data-ob-code=\"");
+            sb.Append(WebUtility.HtmlEncode(level));
+            sb.Append("\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\" role=\"radio\">");
+            sb.Append("<span class=\"lobsy-choice-tile__label\">");
+            sb.Append(WebUtility.HtmlEncode(label));
+            sb.Append("</span>");
+            if (on)
+            {
+                sb.Append("<span class=\"lobsy-choice-tile__check\" aria-hidden=\"true\">✓</span>");
+            }
+
+            sb.Append("</button>");
+        }
     }
 
     private static void AppendTransportTiles(StringBuilder sb, CultureState culture, HashSet<string> selected)
