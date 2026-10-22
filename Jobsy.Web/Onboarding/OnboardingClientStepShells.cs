@@ -78,6 +78,7 @@ internal static class OnboardingClientStepShells
         var fromText = draft.AvailableFrom is { } d
             ? JobsyDateInputRules.FormatDisplayDate(d, culture.Language)
             : string.Empty;
+        var fromPlaceholder = JobsyDateInputRules.Placeholder(culture.Language);
         var selectedPresets = new HashSet<string>(draft.Presets, StringComparer.OrdinalIgnoreCase);
         var availability = new HashSet<string>(draft.Availability, StringComparer.Ordinal);
 
@@ -124,7 +125,9 @@ internal static class OnboardingClientStepShells
 
         sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableFrom"]));
-        sb.Append(" <input data-ob-client=\"availableFrom\" type=\"text\" inputmode=\"numeric\" autocomplete=\"off\"");
+        sb.Append(" <input id=\"onboarding-available-from\" data-ob-client=\"availableFrom\" type=\"text\" inputmode=\"numeric\" autocomplete=\"off\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(fromPlaceholder));
+        sb.Append('"');
         if (immediate)
         {
             sb.Append(" hidden");

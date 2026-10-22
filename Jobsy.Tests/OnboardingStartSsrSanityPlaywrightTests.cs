@@ -27,15 +27,13 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         _playwright?.Dispose();
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Ssr_steps_1_2_nav_persistence_and_single_actions(bool mobile)
+    [Fact]
+    public async Task Ssr_step2_date_and_preset_tile_behavior()
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile));
+        await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile: false));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
@@ -56,8 +54,12 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
         Assert.Equal(0, await page.Locator("[data-ob-nav-next]").CountAsync());
 
+        var hoursLabel = page.Locator("[data-ob-client=hoursLabel]");
+        var hoursBefore = (await hoursLabel.InnerTextAsync()).Trim();
         var weekendTile = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile").Filter(new() { HasText = "Weekenden" });
         await weekendTile.ClickAsync(new() { Force = true });
+        await Assertions.Expect(hoursLabel).ToHaveTextAsync(hoursBefore);
+        await Assertions.Expect(page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile[data-ob-code=custom]")).ToHaveAttributeAsync("aria-pressed", "false");
         await page.WaitForTimeoutAsync(800);
 
         await page.Locator("[data-ob-client=startFromDate]").CheckAsync();

@@ -34,6 +34,15 @@
         var raw = text.trim();
         if (!raw) return null;
         var digits = raw.replace(/\D/g, "");
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            var iso = raw.split("-");
+            var yi = parseInt(iso[0], 10);
+            var mi = parseInt(iso[1], 10);
+            var di = parseInt(iso[2], 10);
+            if (di && mi && yi) {
+                return { d: di, m: mi, y: yi, text: raw };
+            }
+        }
         if (digits.length === 8) {
             var d8 = parseInt(digits.slice(0, 2), 10);
             var m8 = parseInt(digits.slice(2, 4), 10);
@@ -528,14 +537,39 @@
         var hoursLabel = root.querySelector("[data-ob-client=hoursLabel]");
         var startImmediate = root.querySelector("[data-ob-client=startImmediate]");
         var startFromDate = root.querySelector("[data-ob-client=startFromDate]");
-        var availFrom = root.querySelector("[data-ob-client=availableFrom]");
+        var availFrom = root.querySelector("[data-ob-client=availableFrom]")
+            || root.querySelector("#onboarding-available-from");
+
+        function isoFromParsed(p) {
+            if (!p) return null;
+            return p.y + "-" + String(p.m).padStart(2, "0") + "-" + String(p.d).padStart(2, "0");
+        }
+
+        function parsedFromAvailInput() {
+            if (!availFrom) return null;
+            return parseFlexibleDate(availFrom.value);
+        }
+
+        function activateFromDateMode() {
+            state.immediate = false;
+            if (startImmediate) startImmediate.checked = false;
+            if (startFromDate) startFromDate.checked = true;
+            if (availFrom) availFrom.hidden = false;
+        }
+
+        function normalizeAvailFromField() {
+            if (!availFrom) return null;
+            var p = parseFlexibleDate(availFrom.value);
+            if (!p) return null;
+            availFrom.value = formatDisplayDateParts(p);
+            activateFromDateMode();
+            return p;
+        }
 
         function collectPayload() {
-            var fromIso = null;
-            if (!state.immediate && availFrom) {
-                var p = parseFlexibleDate(availFrom.value);
-                if (p) fromIso = p.y + "-" + String(p.m).padStart(2, "0") + "-" + String(p.d).padStart(2, "0");
-            }
+            var p = normalizeAvailFromField() || parsedFromAvailInput();
+            var fromIso = isoFromParsed(p);
+            var immediate = fromIso ? false : state.immediate;
             return {
                 presets: Array.from(state.presets),
                 presetsOverridden: state.presetsOverridden,
@@ -543,7 +577,7 @@
                 minHours: state.minHours,
                 maxHours: state.maxHours,
                 availability: Array.from(state.availability),
-                immediate: state.immediate,
+                immediate: immediate,
                 availableFrom: fromIso
             };
         }
@@ -599,6 +633,13 @@
             syncMatrixUi();
         }
 
+        function applyPresetAvailabilityOnly() {
+            if (state.presets.has("custom") || state.presetsOverridden) return;
+            var c = computePresets(state.presets);
+            state.availability = new Set(c.availability);
+            syncMatrixUi();
+        }
+
         function togglePresetCode(code) {
             if (code === "custom") {
                 if (state.presets.has("custom")) state.presets.delete("custom");
@@ -608,13 +649,18 @@
                     state.fineTune = true;
                     state.presetsOverridden = true;
                 }
+                if (!ssrForm) applyPresetCompute();
             } else {
                 state.presets.delete("custom");
                 if (state.presets.has(code)) state.presets.delete(code);
                 else state.presets.add(code);
-                state.presetsOverridden = false;
+                if (ssrForm) {
+                    applyPresetAvailabilityOnly();
+                } else {
+                    state.presetsOverridden = false;
+                    applyPresetCompute();
+                }
             }
-            applyPresetCompute();
             syncPresetUi();
             saveNow();
         }
@@ -722,6 +768,16 @@
             bindMatrixClicks();
         }
 
+        if (initial.availableFrom && availFrom) {
+            var initP = parseFlexibleDate(String(initial.availableFrom));
+            if (initP) {
+                availFrom.value = formatDisplayDateParts(initP);
+                activateFromDateMode();
+            }
+        } else if (availFrom && availFrom.value) {
+            normalizeAvailFromField();
+        }
+
         ensurePresets();
         ensureMatrix();
         syncHoursUi();
@@ -754,16 +810,18 @@
                 saveNow();
             });
         }
+        function onAvailFromEdited() {
+            if (normalizeAvailFromField()) saveNow();
+        }
+
         if (availFrom) {
-            availFrom.addEventListener("change", function () {
-                var p = parseFlexibleDate(availFrom.value);
-                if (p) availFrom.value = formatDisplayDateParts(p);
-                saveNow();
+            availFrom.addEventListener("change", onAvailFromEdited);
+            availFrom.addEventListener("blur", onAvailFromEdited);
+            availFrom.addEventListener("keydown", function (ev) {
+                if (ev.key === "Tab" || ev.key === "Enter") onAvailFromEdited();
             });
-            availFrom.addEventListener("blur", function () {
-                var p = parseFlexibleDate(availFrom.value);
-                if (p) availFrom.value = formatDisplayDateParts(p);
-                saveNow();
+            availFrom.addEventListener("input", function () {
+                if (availFrom.value && availFrom.value.trim().length >= 8) activateFromDateMode();
             });
         }
 
