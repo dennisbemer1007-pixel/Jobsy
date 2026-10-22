@@ -269,6 +269,15 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
 
+        var step9Ids = await ReadMiniQuestionIdsAsync(page);
+        Assert.Equal(5, step9Ids.Length);
+        await ClickFirstMiniLikertAsync(page, mobile);
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=8**");
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=9**");
+        Assert.Equal(step9Ids, await ReadMiniQuestionIdsAsync(page));
+
         await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
         await page.GetByTestId("onboarding-back").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=8**");
@@ -280,11 +289,77 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await page.WaitForURLAsync("**/candidate/start?step=10**");
         await page.GetByTestId("onboarding-step-10-mini").WaitForAsync();
 
+        var step10Ids = await ReadMiniQuestionIdsAsync(page);
+        Assert.Equal(5, step10Ids.Length);
+        await ClickFirstMiniLikertAsync(page, mobile);
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=9**");
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=10**");
+        Assert.Equal(step10Ids, await ReadMiniQuestionIdsAsync(page));
+
         await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start**");
+        await page.WaitForURLAsync("**/candidate/start/wizard**");
         await page.Locator("[data-ob-rustig-screen=kompas]").WaitForAsync(new() { Timeout = 60_000 });
         Assert.Empty(consoleErrors);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Ssr_revisit_step_8_after_onboarding_complete(bool mobile)
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        factory.FinishReached = true;
+        factory.OnboardingComplete = true;
+        factory.SavedStep = 10;
+        foreach (var id in new[] { 1, 9, 17, 25, 33 })
+        {
+            factory.CompetencyAnswers[id.ToString()] = 3;
+        }
+        factory.CareerAnswers["1"] = 3;
+        factory.CareerAnswers["9"] = 3;
+        factory.CareerAnswers["25"] = 3;
+        factory.CareerAnswers["33"] = 3;
+        factory.CareerAnswers["41"] = 3;
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile));
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=8"));
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForURLAsync("**/candidate/start?step=8**");
+        await page.GetByTestId("onboarding-step-8-mini").WaitForAsync();
+        Assert.DoesNotContain("obError", page.Url, StringComparison.OrdinalIgnoreCase);
+        await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
+    }
+
+    private static async Task<int[]> ReadMiniQuestionIdsAsync(IPage page)
+    {
+        var raw = await page.Locator(".ob-client-mini-q").EvaluateAllAsync<string>(
+            "els => els.map(e => e.getAttribute('data-ob-qid')).join(',')");
+        return raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(int.Parse)
+            .ToArray();
+    }
+
+    private static async Task ClickFirstMiniLikertAsync(IPage page, bool mobile)
+    {
+        var tile = page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert]").Nth(2);
+        if (mobile)
+        {
+            await tile.TapAsync();
+        }
+        else
+        {
+            await tile.ClickAsync(new() { Force = true });
+        }
+
+        await page.WaitForTimeoutAsync(400);
     }
 
     private static async Task AnswerStep7MiniBlockAsync(IPage page, bool mobile)

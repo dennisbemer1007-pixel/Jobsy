@@ -49,6 +49,16 @@ public sealed class OnboardingFourBlockMiniCompletionTests : BunitContext
     }
 
     [Fact]
+    public void Unset_quick_scan_version_uses_v3_mini_ids_when_tests_v2()
+    {
+        var version = OnboardingMiniBlockCompletion.ResolveQuickScanVersion(0, testsV2Enabled: true);
+        Assert.Equal(Version, version);
+        Assert.Equal(
+            TestDepthRules.MiniIds(AssessmentKind.Culture, Version),
+            OnboardingMiniBlockCompletion.MiniQuestionIds(9, version));
+    }
+
+    [Fact]
     public void Completing_all_four_blocks_from_scratch_records_twenty_answers()
     {
         var total = 0;

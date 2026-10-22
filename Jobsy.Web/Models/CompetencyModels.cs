@@ -52,7 +52,7 @@ public sealed class CandidateCompetencyState
     public List<CompetencyQuestionItem> Questions { get; set; } = [];
     public List<string> MatchTags { get; set; } = [];
     public string DeepAnalysisUpsellCopy { get; set; } = "";
-    public int QuickScanVersion { get; set; } = 1;
+    public int QuickScanVersion { get; set; }
     public int QuickScanFullCount { get; set; }
     public bool IsIndicativeDepth { get; set; }
 }
@@ -75,7 +75,7 @@ public sealed class CandidateCareerInterestState
     public string DeepAnalysisUpsellCopy { get; set; } = "";
     public List<CandidateMatchedVacancy> TopVacancies { get; set; } = [];
     public string InsightsStatus { get; set; } = "Ready";
-    public int QuickScanVersion { get; set; } = 1;
+    public int QuickScanVersion { get; set; }
     public int QuickScanFullCount { get; set; }
     public bool IsIndicativeDepth { get; set; }
 }
@@ -135,7 +135,7 @@ public sealed class CandidateCultureState
 
     public int AnsweredCount => Answers.Count;
     public int QuestionCount => 18;
-    public int QuickScanVersion { get; set; } = 1;
+    public int QuickScanVersion { get; set; }
     public int QuickScanFullCount { get; set; }
     public bool IsIndicativeDepth { get; set; }
 }
@@ -152,7 +152,7 @@ public sealed class CandidateValuesState
 
     public int AnsweredCount => Answers.Count;
     public int QuestionCount => 25;
-    public int QuickScanVersion { get; set; } = 1;
+    public int QuickScanVersion { get; set; }
     public int QuickScanFullCount { get; set; }
     public bool IsIndicativeDepth { get; set; }
 }

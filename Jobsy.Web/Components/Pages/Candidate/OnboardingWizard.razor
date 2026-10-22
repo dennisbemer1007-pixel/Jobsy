@@ -1107,12 +1107,6 @@
                 return;
             }
 
-            if (passportOn && _state.FinishReached && !_finaleV2)
-            {
-                Navigation.NavigateTo(FeatureRoutes.CandidateDiscoveryPath, true);
-                return;
-            }
-
             _step = Math.Clamp(_state.CurrentStep, 1, 10);
             if (TryParseStepQuery(out var requestedStep))
             {

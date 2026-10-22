@@ -1796,7 +1796,7 @@
                     }
                     return;
                 }
-                if (step === 7 || step === 8) {
+                if (step >= 7 && step <= 10) {
                     var consentBox = form.querySelector('input[name="consentRequested"]');
                     var payloadMini = { answers: readMiniAnswersFromForm(form) };
                     if (step === 7 && consentBox) {

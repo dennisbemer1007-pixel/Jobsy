@@ -298,7 +298,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         string insightsStatus,
         RiasecScores? scoreOverride = null)
     {
-        var version = AssessmentTestVersions.Normalize(row?.QuickScanVersion);
+        var version = row is null ? 0 : AssessmentTestVersions.Normalize(row.QuickScanVersion);
         var fullCount = QuickScanAssessmentBridge.FullCount(AssessmentKind.Career, version);
         var answers = QuickScanAssessmentBridge.ParseAnswers(
             AssessmentKind.Career, row?.AnswersJson, version);

@@ -266,24 +266,31 @@ else if (_step is >= 1 and <= 10)
 
             var passportOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.CandidatePassport);
             var finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
-            if (state.IsComplete)
+            var revisitingStep = TryParseStepQuery(out var requested) && requested is >= 1 and <= 10;
+
+            if (!revisitingStep)
             {
-                RedirectTo(passportOn ? FeatureRoutes.CandidatePassportPath : "/candidate/profile");
-                return;
+                if (state.IsComplete)
+                {
+                    RedirectTo(passportOn ? FeatureRoutes.CandidatePassportPath : "/candidate/profile");
+                    return;
+                }
+
+                if (passportOn && state.FinishReached && !finaleV2)
+                {
+                    RedirectTo(FeatureRoutes.CandidateDiscoveryPath);
+                    return;
+                }
             }
 
-            if (passportOn && state.FinishReached && !finaleV2)
-            {
-                RedirectTo(FeatureRoutes.CandidateDiscoveryPath);
-                return;
-            }
+            var ceiling = revisitingStep ? 10 : Math.Clamp(state.CurrentStep, 1, 10);
+            _step = revisitingStep
+                ? requested
+                : TryParseStepQuery(out var fallbackRequested)
+                    ? Math.Clamp(fallbackRequested, 1, ceiling)
+                    : ceiling;
 
-            var ceiling = Math.Clamp(state.CurrentStep, 1, 10);
-            _step = TryParseStepQuery(out var requested)
-                ? Math.Clamp(requested, 1, ceiling)
-                : ceiling;
-
-            if (ShouldShowWelcomeScreen(state, _step))
+            if (ShouldShowWelcomeScreen(state, _step) && !revisitingStep)
             {
                 RedirectTo(WizardUrl(_step));
                 return;
@@ -295,7 +302,7 @@ else if (_step is >= 1 and <= 10)
                 return;
             }
 
-            if (state.FinishReached)
+            if (state.FinishReached && !revisitingStep)
             {
                 RedirectTo(WizardUrl(Math.Clamp(_step, 1, 10)));
                 return;
