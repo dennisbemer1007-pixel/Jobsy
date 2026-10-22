@@ -224,7 +224,7 @@ fieldset > .lobsy-choice-grid {
 }.ob-wizard__presets.lobsy-choice-grid .lobsy-choice-tile__stack {
   overflow: visible;
   white-space: normal;
-}.ob-wizard__presets.lobsy-choice-grid > button.lobsy-choice-tile--tall > span:first-child {
+}.ob-wizard__presets.lobsy-choice-grid > button.lobsy-choice-tile--tall > .lobsy-choice-tile__icon {
   display: none;
 }.ob-wizard__start-grid > button.lobsy-choice-tile--tall {
   height: auto;

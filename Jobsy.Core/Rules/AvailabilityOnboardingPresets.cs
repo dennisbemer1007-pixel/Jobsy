@@ -29,7 +29,6 @@ public static class AvailabilityOnboardingPresets
         if (presets.Remove(AvailabilityPresetRules.Custom))
         {
             fineTune = false;
-            presetsOverridden = false;
         }
 
         if (!presets.Add(normalized))
@@ -110,7 +109,7 @@ public static class AvailabilityOnboardingPresets
 
     private static void ToggleCustom(
         HashSet<string> presets,
-        HashSet<string> availability,
+        HashSet<string> _,
         ref bool presetsOverridden,
         ref bool fineTune)
     {
@@ -128,6 +127,5 @@ public static class AvailabilityOnboardingPresets
         presets.Add(AvailabilityPresetRules.Custom);
         presetsOverridden = true;
         fineTune = true;
-        availability.Clear();
     }
 }

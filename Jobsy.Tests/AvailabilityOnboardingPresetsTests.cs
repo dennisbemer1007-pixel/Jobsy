@@ -27,11 +27,11 @@ public class AvailabilityOnboardingPresetsTests
         Assert.Contains(AvailabilityPresetRules.Custom, presets);
         Assert.True(overridden);
         Assert.True(fineTune);
-        Assert.Empty(availability);
+        Assert.Contains("Za:Ochtend", availability);
     }
 
     [Fact]
-    public void Selecting_weekend_removes_custom_and_reapplies_slots()
+    public void Selecting_weekend_from_custom_manual_keeps_matrix_when_overridden()
     {
         var presets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { AvailabilityPresetRules.Custom };
         var availability = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Ma:Nacht" };
@@ -44,10 +44,27 @@ public class AvailabilityOnboardingPresetsTests
 
         Assert.DoesNotContain(AvailabilityPresetRules.Custom, presets);
         Assert.Contains("weekend", presets);
-        Assert.False(overridden);
+        Assert.True(overridden);
         Assert.False(fineTune);
-        Assert.Contains("Za:Ochtend", availability);
-        Assert.DoesNotContain("Ma:Nacht", availability);
+        Assert.Contains("Ma:Nacht", availability);
+    }
+
+    [Fact]
+    public void Multiple_named_presets_can_be_selected_together()
+    {
+        var presets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var availability = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var overridden = false;
+        var fineTune = false;
+        decimal? min = 12;
+        decimal? max = 40;
+
+        AvailabilityOnboardingPresets.Toggle("weekend", presets, availability, ref overridden, ref fineTune, ref min, ref max);
+        AvailabilityOnboardingPresets.Toggle("evening", presets, availability, ref overridden, ref fineTune, ref min, ref max);
+
+        Assert.Contains("weekend", presets);
+        Assert.Contains("evening", presets);
+        Assert.True(availability.Count > 0);
     }
 
     [Fact]
