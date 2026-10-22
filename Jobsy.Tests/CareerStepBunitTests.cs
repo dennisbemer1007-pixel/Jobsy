@@ -389,8 +389,8 @@ public class CareerStepBunitTests : BunitContext
         Assert.Equal("Stap 2 staat weer open.", culture.Format("Career.Undo.Announce", 2));
 
         var page = File.ReadAllText(Path.Combine(
-            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor"));
-        Assert.Contains("aria-live=\"polite\"", page, StringComparison.Ordinal);
+            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateCareerSsr.razor"));
+        Assert.Contains("[NoBlazorRuntime]", page, StringComparison.Ordinal);
         Assert.DoesNotContain("LobsyToast", page, StringComparison.Ordinal);
     }
 
@@ -421,10 +421,12 @@ public class CareerStepBunitTests : BunitContext
     public void Step_detail_is_a_query_on_the_carriere_page_not_a_route_of_its_own()
     {
         var page = File.ReadAllText(Path.Combine(
-            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor"));
+            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateCareerSsr.razor"));
+        var shells = File.ReadAllText(Path.Combine(RepoRoot(), "Jobsy.Web", "Career", "CareerSsrShells.cs"));
 
-        Assert.Contains("SupplyParameterFromQuery(Name = \"stap\")", page, StringComparison.Ordinal);
-        Assert.DoesNotContain("/carriere/stap", page, StringComparison.Ordinal);
+        Assert.Contains("@page \"/carriere\"", page, StringComparison.Ordinal);
+        Assert.Contains("?tab=", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("/carriere/stap", shells, StringComparison.Ordinal);
         Assert.Equal(1, Occurrences(page, "@page \""));
     }
 

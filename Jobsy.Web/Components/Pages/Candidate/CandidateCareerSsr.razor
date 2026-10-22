@@ -1,0 +1,87 @@
+@page "/carriere"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Career
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Jobsy.Web.UwvFeatures
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IUwvKansberoepenCatalog KansCatalog
+
+<PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/carriere"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="profile" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("tab", out var tabValues);
+            query.TryGetValue("meer", out var meerValues);
+            query.TryGetValue("error", out var errorValues);
+            query.TryGetValue("saved", out var savedValues);
+            var error = errorValues.FirstOrDefault();
+            var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
+
+            var data = await CareerSsrData.LoadAsync(
+                Api,
+                Culture,
+                tabValues.FirstOrDefault(),
+                meerValues.FirstOrDefault(),
+                string.IsNullOrWhiteSpace(error) ? null : error,
+                saved,
+                KansCatalog);
+
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _bodyHtml = CareerSsrShells.BuildBody(Culture, data, tokens.RequestToken ?? "");
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -142,22 +142,18 @@ public class CareerPathServiceTests
     }
 
     [Fact]
-    public void Career_dashboard_page_is_the_journey_style_climb()
+    public void Career_page_is_static_ssr_with_segmented_sections()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerDashboard.razor"));
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateCareerSsr.razor"));
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Career/CareerSsrShells.cs"));
         Assert.Contains("@page \"/carriere\"", page);
-        Assert.Contains("journey-page career-page", page);
-        Assert.Contains("CareerStage", page);
-        Assert.Contains("CareerRail", page);
-        Assert.Contains("CareerEmptyCard", page);
-        Assert.Contains("CareerOverviewCard", page);
-        Assert.Contains("CareerDreamDialog", page);
-        Assert.Contains("CareerArchivedPlans", page);
-        Assert.Contains("CareerPlanViewBuilder.BuildPage", page);
-        Assert.Contains("GetCareerPathAsync", page);
-        Assert.Contains("GenerateCareerPathAsync", page);
-        Assert.Contains("RestoreArchivedCareerPlanAsync", page);
+        Assert.Contains("[NoBlazorRuntime]", page);
+        Assert.Contains("journey-page career-page", shells);
+        Assert.Contains("uwv-carriere-sections", shells);
+        var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Career/CareerSsrData.cs"));
+        Assert.Contains("GetCareerPathAsync", data);
+        Assert.Contains("save-dream", shells);
 
         // B2/B3/B6/B10/B11/B12: the old horizon hero, confirm interop and % are gone.
         Assert.DoesNotContain("horizon-hero", page);

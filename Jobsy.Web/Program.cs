@@ -653,6 +653,7 @@ app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();
 app.MapOnboardingClientEndpoints();
 app.MapPassportClientEndpoints();
+app.MapCareerClientEndpoints();
 app.MapOnboardingStartFormEndpoints();
 app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();

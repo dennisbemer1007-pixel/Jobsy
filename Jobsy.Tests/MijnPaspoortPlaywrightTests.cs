@@ -35,9 +35,10 @@ public class MijnPaspoortPlaywrightTests
         Assert.Contains("role-fit-funnel", panel, StringComparison.Ordinal);
         Assert.Contains("fit-hero", panel, StringComparison.Ordinal);
 
-        var dash = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor"));
-        Assert.Contains("CareerPlanViewBuilder.BuildPage", dash, StringComparison.Ordinal);
-        Assert.Contains("CareerOverviewCard", dash, StringComparison.Ordinal);
+        var dash = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateCareerSsr.razor"));
+        Assert.Contains("[NoBlazorRuntime]", dash, StringComparison.Ordinal);
+        var careerShells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Career", "CareerSsrShells.cs"));
+        Assert.Contains("uwv-carriere-sections", careerShells, StringComparison.Ordinal);
 
         var overview = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Candidate", "Career", "CareerOverviewCard.razor"));
         Assert.Contains("GrowingShellsStepper", overview, StringComparison.Ordinal);

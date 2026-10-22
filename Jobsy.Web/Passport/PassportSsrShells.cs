@@ -4,6 +4,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Dna;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Media;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Passport;
@@ -22,6 +23,7 @@ internal static class PassportSsrShells
         AppendOverview(sb, culture, data);
         AppendTabs(sb, culture, data);
         AppendActivePanel(sb, culture, data, antiforgeryToken);
+        AppendFooterNav(sb, culture);
         sb.Append("</div></div></div>");
         return sb.ToString();
     }
@@ -50,14 +52,34 @@ internal static class PassportSsrShells
             greeting = culture.Format(key, firstName.Trim());
         }
 
+        var art = CandidateIllustratedImages.KompasHeroWide;
         var sb = new StringBuilder();
-        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--kompas-band\">");
-        sb.Append("<h2 class=\"cand-hero__title\">");
+        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--kompas-band cand-hero--with-art\" style=\"");
+        sb.Append("--cand-hero-art:url('");
+        sb.Append(WebUtility.HtmlEncode(art));
+        sb.Append("');--cand-hero-pos:right center;\"><div class=\"cand-hero__copy\"><h2 class=\"cand-hero__title\">");
         sb.Append(WebUtility.HtmlEncode(greeting));
         sb.Append("</h2><p class=\"cand-hero__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Greeting.Lead"]));
-        sb.Append("</p></header>");
+        sb.Append("</p></div><div class=\"cand-hero__media\" style=\"--cand-hero-art:url('");
+        sb.Append(WebUtility.HtmlEncode(art));
+        sb.Append("');--cand-hero-pos:right center;\" aria-hidden=\"true\"></div></header>");
         return sb.ToString();
+    }
+
+    private static void AppendFooterNav(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<nav class=\"passport-ssr-footer-nav\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Title"]));
+        sb.Append("\" data-testid=\"passport-footer-nav\"><a href=\"");
+        sb.Append(OnboardingRoutes.KompasHubPath);
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Title"]));
+        sb.Append("</a><a href=\"/carriere\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Nav.CareerPath"]));
+        sb.Append("</a><a href=\"/candidate/applications\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Nav.Applications"]));
+        sb.Append("</a></nav>");
     }
 
     private static void AppendSidebarCard(StringBuilder sb, CultureState culture, PassportSsrData.PageData data, bool compact)
@@ -374,17 +396,17 @@ internal static class PassportSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["Profile.FirstName"]));
         sb.Append("</span><input name=\"firstName\" type=\"text\" autocomplete=\"given-name\" value=\"");
         sb.Append(WebUtility.HtmlEncode(profile.FirstName ?? ""));
-        sb.Append("\" data-testid=\"passport-data-first-name\" /></label>");
+        sb.Append("\" data-testid=\"passport-data-first-name\" data-passport-static-field=\"1\" autocomplete=\"given-name\" /></label>");
         sb.Append("<label><span>");
         sb.Append(WebUtility.HtmlEncode(culture["Profile.LastName"]));
         sb.Append("</span><input name=\"lastName\" type=\"text\" autocomplete=\"family-name\" value=\"");
         sb.Append(WebUtility.HtmlEncode(profile.LastName ?? ""));
-        sb.Append("\" data-testid=\"passport-data-last-name\" /></label>");
+        sb.Append("\" data-testid=\"passport-data-last-name\" data-passport-static-field=\"1\" autocomplete=\"family-name\" /></label>");
         sb.Append("<label><span>");
         sb.Append(WebUtility.HtmlEncode(culture["Profile.Phone"]));
         sb.Append("</span><input name=\"phoneNumber\" type=\"tel\" autocomplete=\"tel\" value=\"");
         sb.Append(WebUtility.HtmlEncode(profile.PhoneNumber ?? ""));
-        sb.Append("\" data-testid=\"passport-data-phone\" /></label>");
+        sb.Append("\" data-testid=\"passport-data-phone\" data-passport-static-field=\"1\" autocomplete=\"tel\" inputmode=\"tel\" /></label>");
         sb.Append("<label><span>");
         sb.Append(WebUtility.HtmlEncode(culture["Profile.AboutMe"]));
         sb.Append("</span><textarea name=\"aboutMe\" rows=\"4\" data-testid=\"passport-data-about\">");
