@@ -1497,6 +1497,10 @@
             if (!root) return;
             if (root.getAttribute("data-ob-client-mounted") === "1") return;
             var ssrForm = root.closest("form[data-ob-ssr-form]");
+            if (ssrForm && step >= 2 && step <= 4) {
+                root.setAttribute("data-ob-client-mounted", "1");
+                return;
+            }
             if (ssrForm && step >= 7 && step <= 10) {
                 root.setAttribute("data-ob-client-mounted", "1");
                 return;
@@ -1549,6 +1553,96 @@
         var root = activeClientStepRoot();
         if (!root) return 0;
         return parseInt(root.getAttribute("data-ob-client-step"), 10) || 0;
+    }
+
+    function readInitialFromRoot(root) {
+        try {
+            return JSON.parse(root.getAttribute("data-initial") || "{}");
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function collectSsrPostStep2FromDom(root) {
+        var initial = readInitialFromRoot(root);
+        var presets = [];
+        root.querySelectorAll('button[name="obPreset"]').forEach(function (b) {
+            if (b.classList.contains("is-selected") || b.getAttribute("aria-pressed") === "true") {
+                var v = b.getAttribute("value");
+                if (v) presets.push(v);
+            }
+        });
+        var availability = [];
+        root.querySelectorAll('button[name="obMatrix"]').forEach(function (b) {
+            if (b.classList.contains("is-on") || b.getAttribute("aria-pressed") === "true") {
+                var key = b.getAttribute("value");
+                if (key) availability.push(key);
+            }
+        });
+        var immediateBtn = root.querySelector('button[name="obStart"][value="immediate"].is-selected');
+        var fromSelected = root.querySelector(".ob-rustig__step2-start-option--from.is-selected");
+        var immediate = !!immediateBtn || !fromSelected;
+        var availFromInput = root.querySelector('input[name="obAvailableFrom"]');
+        var availText = availFromInput ? availFromInput.value.trim() : "";
+        var availableFrom = null;
+        if (!immediate && availText) {
+            var p = parseFlexibleDate(availText);
+            if (p) {
+                availableFrom = p.y + "-" + String(p.m).padStart(2, "0") + "-" + String(p.d).padStart(2, "0");
+            }
+        }
+        return {
+            presets: presets,
+            presetsOverridden: initial.presetsOverridden || presets.indexOf("custom") >= 0,
+            fineTune: initial.fineTune || presets.indexOf("custom") >= 0,
+            minHours: initial.minHours || 12,
+            maxHours: initial.maxHours || 40,
+            availability: availability,
+            immediate: immediate,
+            availableFrom: availableFrom
+        };
+    }
+
+    function collectSsrPostStep3FromDom(root) {
+        var initial = readInitialFromRoot(root);
+        var transport = [];
+        root.querySelectorAll('button[name="obTransport"]').forEach(function (b) {
+            if (b.classList.contains("is-selected") || b.getAttribute("aria-pressed") === "true") {
+                var code = b.getAttribute("value");
+                if (code) transport.push(code);
+            }
+        });
+        var travel = initial.maxTravel || 30;
+        root.querySelectorAll('button[name="obTravel"]').forEach(function (b) {
+            if (b.classList.contains("is-selected") || b.getAttribute("aria-pressed") === "true") {
+                travel = parseInt(b.getAttribute("value"), 10) || travel;
+            }
+        });
+        return {
+            transport: transport,
+            maxTravel: travel,
+            selectedTravel: travel,
+            customTravel: false
+        };
+    }
+
+    function collectSsrPostStep4FromDom(root) {
+        var noWorkEl = root.querySelector("[data-ob-client=noWork]");
+        var noWork = noWorkEl ? noWorkEl.checked : false;
+        var jobs = [];
+        if (!noWork) {
+            root.querySelectorAll("input[data-field=employer]").forEach(function (inp) {
+                jobs.push({ employer: inp.value || "", startMonth: null, endMonth: null, isCurrent: false });
+            });
+        }
+        return { noWork: noWork, jobs: jobs };
+    }
+
+    function collectSsrPostStepFromDom(root, step) {
+        if (step === 2) return collectSsrPostStep2FromDom(root);
+        if (step === 3) return collectSsrPostStep3FromDom(root);
+        if (step === 4) return collectSsrPostStep4FromDom(root);
+        return {};
     }
 
     function collectForRoot(root, step, state) {
@@ -1802,6 +1896,14 @@
             var step = parseInt(root.getAttribute("data-ob-client-step"), 10);
             if (!step) return;
             var ssrForm = root.closest("form[data-ob-ssr-form]");
+            if (ssrForm && step >= 2 && step <= 4) {
+                root.setAttribute("data-ob-client-mounted", "1");
+                return;
+            }
+            if (ssrForm && step >= 2 && step <= 4) {
+                root.setAttribute("data-ob-client-mounted", "1");
+                return;
+            }
             if (ssrForm && step >= 7 && step <= 10) {
                 root.setAttribute("data-ob-client-mounted", "1");
                 return;
@@ -1840,6 +1942,12 @@
                 }
                 var root = form.querySelector("[data-ob-client-step]");
                 if (!root || !step) return;
+                if (form.getAttribute("data-ob-ssr-post-tiles") === "1" && step >= 2 && step <= 4) {
+                    if (hidden) {
+                        hidden.value = JSON.stringify(collectSsrPostStepFromDom(root, step));
+                    }
+                    return;
+                }
                 var st = roots ? roots.get(root) : null;
                 var payload = collectForRoot(root, step, st) || {};
                 if (hidden) hidden.value = JSON.stringify(payload);

@@ -2648,13 +2648,12 @@
   }
 
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-wizard__presets,
-  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .hours-range,
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .availability-matrix {
-    max-inline-size: 36rem;
+    max-inline-size: none;
   }
 
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] #onboarding-field-transport {
-    max-inline-size: 36rem;
+    max-inline-size: none;
   }
 
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__transport.lobsy-choice-grid .lobsy-choice-tile {
@@ -2896,4 +2895,73 @@
   .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] #onboarding-field-transport {
     max-inline-size: none;
   }
+}
+
+/* SSR POST steps 2–4: fix global choice-tiles hiding preset stack; full width at 1024–1279 */
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-wizard__presets.lobsy-choice-grid > button.lobsy-choice-tile--tall > .lobsy-choice-tile__stack {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option.lobsy-choice-tile,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-trigger {
+  inline-size: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option.is-selected,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option--from.is-selected .ob-rustig__step2-start-trigger {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  color: var(--brand);
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option--from {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option--from .ob-rustig__step2-start-trigger {
+  flex: 0 0 auto;
+  inline-size: auto;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option--from input[name="obAvailableFrom"] {
+  flex: 1 1 8rem;
+  min-inline-size: 8.5rem;
+  min-block-size: 44px;
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-card,
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] [data-ob-client=presetGrid].lobsy-choice-grid,
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-matrix,
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] #onboarding-field-transport,
+  .ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-03"] .ob-wizard__travel-times {
+    max-inline-size: none !important;
+    inline-size: 100%;
+  }
+}
+
+.ob-wizard--rustig.ob-wizard--richting-a .ob-rustig[data-ob-rustig-screen="step-04"] .ob-fields label.ob-wizard__check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.65rem !important;
+  text-align: start !important;
 }

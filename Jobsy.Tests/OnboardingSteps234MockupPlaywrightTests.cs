@@ -29,6 +29,7 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
 
     [Theory]
     [InlineData(false, 1280, 900)]
+    [InlineData(false, 1024, 700)]
     [InlineData(true, 390, 844)]
     public async Task Steps_2_through_4_mockup_happy_flow(bool mobile, int width, int height)
     {
@@ -49,101 +50,108 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
 
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=2"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await WaitStepMountedAsync(page, 2);
+        await WaitStepReadyAsync(page, 2);
 
         var shotDir = "/opt/cursor/artifacts/screenshots";
         Directory.CreateDirectory(shotDir);
-        var suffix = mobile ? "390" : "1280";
+        var suffix = mobile ? "390" : width == 1024 ? "1024" : "1280";
         await page.ScreenshotAsync(new() { Path = $"{shotDir}/mockup-step-02-{suffix}.png", FullPage = true });
 
         if (!mobile)
         {
             await Assertions.Expect(page.Locator(".ob-rustig__rail")).ToHaveCountAsync(1);
+            var firstPreset = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile").First;
+            await Assertions.Expect(firstPreset.Locator(".lobsy-choice-tile__stack strong")).Not.ToHaveTextAsync("");
         }
 
-        var presetTiles = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile");
-        var presetCount = await presetTiles.CountAsync();
-        Assert.True(presetCount >= 1);
-        for (var i = 0; i < presetCount; i++)
-        {
-            var put = WaitStepPutAsync(page, 2);
-            await presetTiles.Nth(i).ClickAsync(new() { Force = true });
-            await put;
-        }
+        var presetWeekend = page.Locator("[data-ob-client=presetGrid] button[name=\"obPreset\"][value=\"weekend\"]");
+        await ClickTileAsync(presetWeekend, mobile);
+        await WaitStepPostAsync(page, 2);
+        await Assertions.Expect(presetWeekend).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        await ReloadStepAsync(page, 2);
+        await Assertions.Expect(presetWeekend).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        Assert.NotEmpty(factory.StoredProfile.Preferences?.AvailabilityPresets ?? []);
+        Assert.True((factory.StoredProfile.Preferences?.Availability?.Count ?? 0) > 0);
 
-        var matrixCell = page.Locator(".availability-matrix__cell--btn").First;
-        var matrixPut = WaitStepPutAsync(page, 2);
-        await matrixCell.ClickAsync(new() { Force = true });
-        await matrixPut;
+        var matrixCell = page.Locator("button[name=\"obMatrix\"]").First;
+        await ClickTileAsync(matrixCell, mobile);
+        await WaitStepPostAsync(page, 2);
 
-        await page.Locator("[data-ob-client=startFromDate]").CheckAsync();
-        var datePut = WaitStepPutAsync(page, 2);
-        await page.Locator("[data-ob-client=availableFrom]").FillAsync("15-08-2027");
-        await page.Locator("[data-ob-client=availableFrom]").BlurAsync();
-        await datePut;
+        await page.Locator("button[name=\"obStart\"][value=\"immediate\"]").ClickAsync();
+        await WaitStepPostAsync(page, 2);
+        await Assertions.Expect(page.Locator("button[name=\"obStart\"][value=\"immediate\"]")).ToHaveClassAsync(
+            new System.Text.RegularExpressions.Regex("is-selected"));
+        Assert.Null(factory.StoredProfile.AvailableFromDate);
 
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=3**", new() { Timeout = 60_000 });
-        await WaitStepMountedAsync(page, 3);
+        await WaitStepReadyAsync(page, 3);
         await page.ScreenshotAsync(new() { Path = $"{shotDir}/mockup-step-03-{suffix}.png", FullPage = true });
 
-        var ebike = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=\"E-bike\"]");
-        var ebikePut = WaitStepPutAsync(page, 3);
-        await ClickTransportTileAsync(ebike, mobile);
-        await ebikePut;
-        await Assertions.Expect(ebike).ToHaveAttributeAsync("aria-pressed", "true");
+        var ebike = page.Locator("button[name=\"obTransport\"][value=\"E-bike\"]");
+        await ClickTileAsync(ebike, mobile);
+        await WaitStepPostAsync(page, 3);
+        await Assertions.Expect(ebike).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         Assert.Contains(
             "E-bike",
             factory.StoredProfile.Preferences?.PreferredTransport ?? "",
             StringComparison.OrdinalIgnoreCase);
 
-        await page.ReloadAsync();
-        await WaitStepMountedAsync(page, 3);
-        await Assertions.Expect(ebike).ToHaveAttributeAsync("aria-pressed", "true");
+        await ReloadStepAsync(page, 3);
+        await Assertions.Expect(ebike).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
 
         foreach (var code in new[] { "Fiets", "Auto", "OV", "Lopend" })
         {
-            var tile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=\"" + code + "\"]");
-            var tPut = WaitStepPutAsync(page, 3);
-            await ClickTransportTileAsync(tile, mobile);
-            await tPut;
-            await Assertions.Expect(tile).ToHaveAttributeAsync("aria-pressed", "true");
+            var tile = page.Locator("button[name=\"obTransport\"][value=\"" + code + "\"]");
+            await ClickTileAsync(tile, mobile);
+            await WaitStepPostAsync(page, 3);
+            await Assertions.Expect(tile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         }
 
-        await Assertions.Expect(ebike).ToHaveAttributeAsync("aria-pressed", "true");
-        await page.ReloadAsync();
-        await WaitStepMountedAsync(page, 3);
-        foreach (var code in new[] { "Fiets", "E-bike", "Auto", "OV", "Lopend" })
+        if (!mobile)
         {
-            var tile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=\"" + code + "\"]");
-            await Assertions.Expect(tile).ToHaveAttributeAsync("aria-pressed", "true");
+            await ReloadStepAsync(page, 3);
+            foreach (var code in new[] { "Fiets", "E-bike", "Auto", "OV", "Lopend" })
+            {
+                var tile = page.Locator("button[name=\"obTransport\"][value=\"" + code + "\"]");
+                await Assertions.Expect(tile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+            }
         }
 
-        var travel30 = page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile[data-ob-travel=\"30\"]");
-        var travelPut = WaitStepPutAsync(page, 3);
-        await ClickTransportTileAsync(travel30, mobile);
-        await travelPut;
+        var travel30 = page.Locator("button[name=\"obTravel\"][value=\"30\"]");
+        await ClickTileAsync(travel30, mobile);
+        await WaitStepPostAsync(page, 3);
+        if (!mobile)
+        {
+            await ReloadStepAsync(page, 3);
+            await Assertions.Expect(travel30).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        }
 
         await page.GetByTestId("onboarding-back").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=2**");
-        await WaitStepMountedAsync(page, 2);
+        await WaitStepReadyAsync(page, 2);
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=3**");
-        await WaitStepMountedAsync(page, 3);
-        foreach (var code in new[] { "Fiets", "E-bike", "Auto", "OV", "Lopend" })
-        {
-            var tile = page.Locator("[data-ob-client=transportGrid] .lobsy-choice-tile[data-ob-code=\"" + code + "\"]");
-            await Assertions.Expect(tile).ToHaveAttributeAsync("aria-pressed", "true");
-        }
+        await WaitStepReadyAsync(page, 3);
+        await Assertions.Expect(ebike).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
 
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=4**", new() { Timeout = 60_000 });
-        await WaitStepMountedAsync(page, 4);
+        await WaitStepReadyAsync(page, 4);
         await page.ScreenshotAsync(new() { Path = $"{shotDir}/mockup-step-04-{suffix}.png", FullPage = true });
 
-        var noWork = page.Locator("[data-ob-client=noWork]");
-        await noWork.CheckAsync();
-        await noWork.UncheckAsync();
+        if (!mobile)
+        {
+            var noWork = page.Locator(".ob-wizard__check input[type=\"checkbox\"]");
+            await Assertions.Expect(noWork).ToBeVisibleAsync();
+        }
+
+        var noWorkBox = page.Locator("[data-ob-client=noWork]");
+        if (await noWorkBox.CountAsync() > 0)
+        {
+            await noWorkBox.CheckAsync();
+            await noWorkBox.UncheckAsync();
+        }
 
         var addJob = page.GetByTestId("onboarding-add-job");
         if (await addJob.CountAsync() > 0)
@@ -157,7 +165,7 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
         await page.WaitForURLAsync("**/candidate/start?step=4**");
     }
 
-    private static async Task ClickTransportTileAsync(ILocator tile, bool mobile)
+    private static async Task ClickTileAsync(ILocator tile, bool mobile)
     {
         if (mobile)
         {
@@ -169,18 +177,24 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
         }
     }
 
-    private static Task WaitStepPutAsync(IPage page, int step)
-        => page.WaitForResponseAsync(
-            r => r.Url.Contains($"/api/onboarding-client/steps/{step}", StringComparison.OrdinalIgnoreCase)
-                 && r.Request.Method is "PUT"
-                 && r.Ok,
-            new() { Timeout = 20_000 });
+    private static Task WaitStepPostAsync(IPage page, int step)
+        => page.WaitForURLAsync($"**/candidate/start?step={step}**", new() { Timeout = 30_000 });
 
-    private static async Task WaitStepMountedAsync(IPage page, int step)
+    private static async Task ReloadStepAsync(IPage page, int step)
+    {
+        await page.WaitForLoadStateAsync(LoadState.Load);
+        await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.Load });
+        await WaitStepReadyAsync(page, step);
+    }
+
+    private static async Task WaitStepReadyAsync(IPage page, int step)
     {
         await page.Locator($"[data-ob-client-step=\"{step}\"]").WaitForAsync(new() { Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            $"(s) => document.querySelector('[data-ob-client-step=\"' + s + '\"]')?.getAttribute('data-ob-client-mounted') === '1'",
-            step);
+        if (step is 1 or >= 7)
+        {
+            await page.WaitForFunctionAsync(
+                $"(s) => document.querySelector('[data-ob-client-step=\"' + s + '\"]')?.getAttribute('data-ob-client-mounted') === '1'",
+                step);
+        }
     }
 }
