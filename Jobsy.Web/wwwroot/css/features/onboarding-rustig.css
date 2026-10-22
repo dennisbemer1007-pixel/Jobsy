@@ -2593,6 +2593,23 @@
   margin-block-start: 1.25rem;
 }
 
+.kompas--ssr .kompas__ssr-actions .ob-rustig__btn {
+  box-sizing: border-box;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .kompas--ssr .kompas__ssr-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .kompas--ssr .kompas__ssr-actions .ob-rustig__btn {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 .kompas--ssr .kompas__intro {
   margin-block-end: 1rem;
 }
