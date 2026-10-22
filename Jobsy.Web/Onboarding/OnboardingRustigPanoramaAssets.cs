@@ -34,12 +34,14 @@ public static class OnboardingRustigPanoramaAssets
 
     public static string DesktopForStep(int step) => step switch
     {
+        6 => OnboardingRustigDreamIllustrationAssets.DesktopJpg,
         7 => OnboardingRustigStep07IllustrationAssets.DesktopJpg,
         _ => Desktop(step),
     };
 
     public static string MobileForStep(int step) => step switch
     {
+        6 => OnboardingRustigDreamIllustrationAssets.MobileJpg,
         7 => OnboardingRustigStep07IllustrationAssets.MobileJpg,
         _ => Mobile(step),
     };

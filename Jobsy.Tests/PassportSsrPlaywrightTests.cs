@@ -45,6 +45,11 @@ public sealed class PassportSsrPlaywrightTests : IAsyncLifetime
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
 
+        if (!mobile)
+        {
+            await AssertOnboardingAccDesktopFixesAsync(page, root);
+        }
+
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/paspoort?tab=dna"));
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.GetByTestId("passport-page-ssr").WaitForAsync(new() { Timeout = 60_000 });
@@ -78,5 +83,39 @@ public sealed class PassportSsrPlaywrightTests : IAsyncLifetime
         await page.Locator("a[href=\"/candidate/kompas\"]").First.ClickAsync();
         await page.WaitForURLAsync("**/candidate/kompas**");
         await page.GetByTestId("candidate-kompas-ssr").WaitForAsync(new() { Timeout = 60_000 });
+    }
+
+    private static async Task AssertOnboardingAccDesktopFixesAsync(IPage page, string root)
+    {
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForURLAsync("**/candidate/start/kompas**", new() { Timeout = 30_000 });
+        Assert.DoesNotContain("ontdekkingsreis", page.Url, StringComparison.OrdinalIgnoreCase);
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=6"));
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForURLAsync("**/candidate/start?step=6**");
+        await page.Locator("form[data-ob-ssr-step=\"6\"]").WaitForAsync(new() { Timeout = 60_000 });
+        var heroSrc = await page.GetByTestId("ob-rustig-hero-desk").GetAttributeAsync("src") ?? "";
+        Assert.Contains("step-06-droom-professions", heroSrc, StringComparison.OrdinalIgnoreCase);
+        var heroOk = await page.GetByTestId("ob-rustig-hero-desk").EvaluateAsync<bool>(
+            "img => img.complete && img.naturalWidth > 0");
+        Assert.True(heroOk, "Step 6 desktop hero should load.");
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=4"));
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForURLAsync("**/candidate/start?step=4**");
+        await page.Locator("form[data-ob-ssr-step=\"4\"]").WaitForAsync(new() { Timeout = 60_000 });
+        var layout = await page.EvaluateAsync<(double SidebarRight, double HeroLeft)>(@"() => {
+            const sidebar = document.querySelector('.ob-rustig__sidebar');
+            const hero = document.querySelector('[data-testid=ob-rustig-hero]');
+            if (!sidebar || !hero) return { sidebarRight: 0, heroLeft: 0 };
+            const sb = sidebar.getBoundingClientRect();
+            const hb = hero.getBoundingClientRect();
+            return { sidebarRight: sb.right, heroLeft: hb.left };
+        }");
+        Assert.True(
+            layout.HeroLeft >= layout.SidebarRight - 2,
+            $"Step 4 hero should stay in main column (heroLeft={layout.HeroLeft}, sidebarRight={layout.SidebarRight}).");
     }
 }

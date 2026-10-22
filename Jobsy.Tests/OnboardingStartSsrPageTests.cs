@@ -15,6 +15,8 @@ public sealed class OnboardingStartSsrPageTests
         Assert.Contains("method=\"post\"", source, StringComparison.Ordinal);
         Assert.Contains("data-enhance-nav=\"false\"", source, StringComparison.Ordinal);
         Assert.Contains("data-ob-ssr-form", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ontdekkingsreis", source, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("CandidateDiscoveryPath", source, StringComparison.Ordinal);
     }
 
     [Fact]
