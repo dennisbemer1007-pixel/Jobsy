@@ -11,10 +11,10 @@
      data-initial="@_initialJson"
      data-ob-antiforgery-header="@_antiforgeryHeader"
      data-ob-antiforgery-token="@_antiforgeryToken"
-     data-ob-ssr-values="@(Step == 1 ? "1" : null)"
+     data-ob-ssr-values="1"
      data-testid="@($"onboarding-step-{Step}-illustrated")"
      @ref="_root">
-    @((MarkupString)OnboardingClientStepShells.Build(Step, Culture, Step == 1 ? Draft : null))
+    @((MarkupString)OnboardingClientStepShells.Build(Step, Culture, Draft))
 </div>
 
 @code {

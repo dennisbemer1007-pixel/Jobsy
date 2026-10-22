@@ -19,6 +19,7 @@ internal static class OnboardingClientStepShells
             4 => BuildStep4(culture),
             5 => BuildStep5(culture),
             6 => BuildStep6(culture),
+            7 when draft?.HasConsent == true => BuildMiniStep(culture),
             7 => BuildStep7(culture),
             >= 8 and <= 10 => BuildMiniStep(culture),
             _ => "",
@@ -61,12 +62,8 @@ internal static class OnboardingClientStepShells
         sb.Append("<div class=\"work-status-chips lobsy-choice-grid lobsy-choice-grid--desktop-3\" data-ob-client=\"workStatusGrid\" role=\"group\"></div>");
         sb.Append("</fieldset>");
         sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel", draft.Phone));
-        sb.Append("<div class=\"ob-step1-actions\">");
-        sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step1-next\" data-ob-step1-next data-testid=\"onboarding-next\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Next"]));
-        sb.Append("</button>");
-        sb.Append("<p class=\"state-message error ob-step1-next-error\" data-ob-step1-error hidden aria-live=\"polite\"></p>");
-        sb.Append("</div></div>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
         return sb.ToString();
     }
 
@@ -93,7 +90,9 @@ internal static class OnboardingClientStepShells
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableFrom"]));
         sb.Append("</label>");
         sb.Append("<input data-ob-client=\"availableFrom\" hidden />");
-        sb.Append("</fieldset></div>");
+        sb.Append("</fieldset>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
         return sb.ToString();
     }
 
@@ -106,54 +105,87 @@ internal static class OnboardingClientStepShells
         sb.Append("<label>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Other"]));
         sb.Append("<input type=\"number\" min=\"1\" max=\"180\" data-ob-client=\"customTravel\" hidden />");
-        sb.Append("</label></div>");
+        sb.Append("</label>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
         return sb.ToString();
     }
 
     private static string BuildStep4(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card ob-wizard__card--illustrated">
-<label class="ob-wizard__check"><input type="checkbox" data-ob-client="noWork" /> {WebUtility.HtmlEncode(culture["Onboarding.NoWorkExperience"])}</label>
-<div data-ob-client="jobsList"></div>
-<button type="button" class="btn btn-secondary" data-ob-client="addJob">{WebUtility.HtmlEncode(culture["Onboarding.AddJob"])}</button>
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        sb.Append("<label class=\"ob-wizard__check\"><input type=\"checkbox\" data-ob-client=\"noWork\" /> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.NoWorkExperience"]));
+        sb.Append("</label><div data-ob-client=\"jobsList\"></div>");
+        sb.Append("<button type=\"button\" class=\"btn btn-secondary\" data-ob-client=\"addJob\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AddJob"]));
+        sb.Append("</button>");
+        AppendStepNav(sb, culture, optionalSkip: true);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
-    private static string BuildStep5(CultureState _)
+    private static string BuildStep5(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card ob-wizard__card--illustrated">
-<div data-ob-client="educationGrid" class="ob-wizard__education-grid"></div>
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        sb.Append("<div data-ob-client=\"educationGrid\" class=\"ob-wizard__education-grid\"></div>");
+        AppendStepNav(sb, culture, optionalSkip: true);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
     private static string BuildStep6(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card ob-wizard__card--illustrated" id="onboarding-field-dream">
-<div data-ob-client="dreamGrid" class="ob-rustig__dream-grid"></div>
-<input id="onboarding-rustig-dream-input" data-ob-client="dreamInput" type="text" autocomplete="off" placeholder="{WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"])}" />
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-dream\">");
+        sb.Append("<div data-ob-client=\"dreamGrid\" class=\"ob-rustig__dream-grid\"></div>");
+        sb.Append("<input id=\"onboarding-rustig-dream-input\" data-ob-client=\"dreamInput\" type=\"text\" autocomplete=\"off\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
+        sb.Append("\" />");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
     private static string BuildStep7(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card" id="onboarding-field-consent">
-<label class="ob-wizard__consent"><input type="checkbox" data-ob-client="consent" /> {WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"])}</label>
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card\" id=\"onboarding-field-consent\">");
+        sb.Append("<label class=\"ob-wizard__consent\"><input type=\"checkbox\" data-ob-client=\"consent\" /> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"]));
+        sb.Append("</label>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
-    private static string BuildMiniStep(CultureState _)
+    private static string BuildMiniStep(CultureState culture)
     {
-        return """
-<div class="ob-wizard__card ob-client-mini" data-ob-client="miniRoot"></div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        sb.Append("<div class=\"ob-client-mini\" data-ob-client=\"miniRoot\"></div>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+
+    private static void AppendStepNav(StringBuilder sb, CultureState culture, bool optionalSkip = false)
+    {
+        sb.Append("<div class=\"ob-step-actions\">");
+        if (optionalSkip)
+        {
+            sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-step-skip\" data-ob-step-skip data-testid=\"onboarding-skip-optional\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Skip"]));
+            sb.Append("</button>");
+        }
+
+        sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step-next\" data-ob-step-next data-testid=\"onboarding-next\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Next"]));
+        sb.Append("</button>");
+        sb.Append("<p class=\"state-message error ob-step-next-error\" data-ob-step-error hidden aria-live=\"polite\"></p>");
+        sb.Append("</div>");
     }
 
     private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete, string? value = null)

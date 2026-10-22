@@ -17,7 +17,17 @@ public static class OnboardingClientStep1Saver
         CultureState culture,
         CancellationToken cancellationToken)
     {
-        var draft = new OnboardingProfileDraft();
+        MeProfile profile;
+        try
+        {
+            profile = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+        }
+        catch (Exception)
+        {
+            return (StatusCodes.Status502BadGateway, new { message = culture["Common.Error.TryAgain"] });
+        }
+
+        var draft = OnboardingProfileDraftHydrator.FromProfile(profile);
         OnboardingClientStepBridge.ApplyStep1(draft, request);
 
         await CandidateHomeAddressLookup.TryResolveTypedAddressAsync(draft, geocoder, cancellationToken);
@@ -76,6 +86,7 @@ public static class OnboardingClientStep1Saver
         try
         {
             await api.SaveMyOnboardingProgressAsync(2, stepCompleted: true, ct: cancellationToken);
+            api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
         }
         catch (Exception)
         {

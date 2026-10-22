@@ -18,7 +18,7 @@
                     <h1>@Culture.Format("Onboarding.Finish.Title", FirstName)</h1>
                     <p class="ob-finale__lead">@Culture["Onboarding.FinaleV2.Lead"]</p>
                     <div class="ob-finale__ctas">
-                        <button type="button" class="ob-finale__btn" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+                        <button type="button" class="ob-finale__btn" data-ob-kompas-complete data-testid="onboarding-kompas-complete" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
                         <a class="ob-finale__link" href="/home?tab=tests">@Culture["Onboarding.FinaleV2.FullTests"]</a>
                     </div>
                 </div>
@@ -35,7 +35,7 @@
         @if (HideHero && ShowHerolessPrimaryCtas)
         {
             <div class="ob-finale__ctas ob-finale__ctas--heroless" data-testid="onboarding-finale-heroless-ctas">
-                <button type="button" class="ob-finale__btn" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+                <button type="button" class="ob-finale__btn" data-ob-kompas-complete data-testid="onboarding-kompas-complete" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
                 <a class="ob-finale__link" href="/home?tab=tests">@Culture["Onboarding.FinaleV2.FullTests"]</a>
             </div>
         }
@@ -130,7 +130,7 @@
         {
             <div class="ob-finale__end">
                 <p><b>@Culture["Onboarding.FinaleV2.End.Title"]</b>@Culture["Onboarding.FinaleV2.End.Lead"]</p>
-                <button type="button" class="ob-finale__btn" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+                <button type="button" class="ob-finale__btn" data-ob-kompas-complete data-testid="onboarding-kompas-complete" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
             </div>
         }
     </div>

@@ -219,7 +219,7 @@ public sealed class OnboardingClientStep1OnlyPlaywrightTests : IAsyncLifetime
         Assert.True(web.ProfilePutCount >= 1, "Debounced step-1 saves should persist profile before Volgende.");
         Assert.True(step1BffPuts >= 1);
 
-        await page.Locator("[data-ob-step1-next]").ClickAsync(new() { Timeout = 15_000 });
+        await page.Locator("[data-ob-step-next]").ClickAsync(new() { Timeout = 15_000 });
         await page.WaitForURLAsync("**/candidate/start**", new() { Timeout = 90_000 });
         await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync(new() { Timeout = 90_000 });
         Assert.True(web.ProfilePutCount >= 1);

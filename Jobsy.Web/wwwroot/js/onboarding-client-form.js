@@ -76,24 +76,104 @@
     }
 
     function readAntiforgery(root) {
+        var host = (root && root.closest) ? root.closest("[data-ob-antiforgery-token]") : null;
+        if (!host && root) host = root;
+        if (!host) host = document.querySelector(".ob-wizard") || document.body;
         return {
-            header: root.getAttribute("data-ob-antiforgery-header") || "RequestVerificationToken",
-            token: root.getAttribute("data-ob-antiforgery-token") || ""
+            header: host.getAttribute("data-ob-antiforgery-header") || "RequestVerificationToken",
+            token: host.getAttribute("data-ob-antiforgery-token") || ""
         };
     }
 
-    function putStep1(root, collectFn, advance) {
+    function putOnboardingStep(root, step, collectFn, advance, skipOptional) {
         var body = collectFn();
         body.advance = !!advance;
+        body.skipOptional = !!skipOptional;
         var af = readAntiforgery(root);
         var headers = { "Content-Type": "application/json" };
         if (af.token) headers[af.header] = af.token;
-        return fetch("/api/onboarding-client/step1", {
+        var url = step === 1
+            ? "/api/onboarding-client/step1"
+            : ("/api/onboarding-client/steps/" + step);
+        return fetch(url, {
             method: "PUT",
             credentials: "same-origin",
             headers: headers,
             body: JSON.stringify(body)
         });
+    }
+
+    function wireObStepBff(root, step, collectFn) {
+        var nextBtn = root.querySelector("[data-ob-step-next]");
+        var skipBtn = root.querySelector("[data-ob-step-skip]");
+        var errEl = root.querySelector("[data-ob-step-error]");
+        var saveTimer = null;
+
+        function scheduleSave() {
+            if (saveTimer) clearTimeout(saveTimer);
+            saveTimer = setTimeout(function () {
+                saveTimer = null;
+                putOnboardingStep(root, step, collectFn, false, false).catch(function () { });
+            }, 500);
+        }
+
+        function runAdvance(skipOptional) {
+            if (errEl) {
+                errEl.hidden = true;
+                errEl.textContent = "";
+            }
+            if (nextBtn) nextBtn.disabled = true;
+            if (skipBtn) skipBtn.disabled = true;
+            if (saveTimer) {
+                clearTimeout(saveTimer);
+                saveTimer = null;
+            }
+            putOnboardingStep(root, step, collectFn, true, !!skipOptional)
+                .then(function (res) {
+                    return res.json().then(function (body) {
+                        return { ok: res.ok, body: body };
+                    }).catch(function () {
+                        return { ok: res.ok, body: {} };
+                    });
+                })
+                .then(function (result) {
+                    if (result.ok && result.body && result.body.redirectUrl) {
+                        window.location.assign(result.body.redirectUrl);
+                        return;
+                    }
+                    if (result.ok) {
+                        window.location.reload();
+                        return;
+                    }
+                    var msg = (result.body && result.body.message)
+                        || "Opslaan mislukt. Controleer je gegevens en probeer opnieuw.";
+                    if (errEl) {
+                        errEl.textContent = msg;
+                        errEl.hidden = false;
+                    }
+                    if (nextBtn) nextBtn.disabled = false;
+                    if (skipBtn) skipBtn.disabled = false;
+                })
+                .catch(function () {
+                    if (errEl) {
+                        errEl.textContent = "Verbinding mislukt. Probeer het opnieuw.";
+                        errEl.hidden = false;
+                    }
+                    if (nextBtn) nextBtn.disabled = false;
+                    if (skipBtn) skipBtn.disabled = false;
+                });
+        }
+
+        if (nextBtn && !nextBtn.__obStepNextBound) {
+            nextBtn.__obStepNextBound = true;
+            nextBtn.addEventListener("click", function () { runAdvance(false); });
+        }
+        if (skipBtn && !skipBtn.__obStepSkipBound) {
+            skipBtn.__obStepSkipBound = true;
+            skipBtn.addEventListener("click", function () { runAdvance(true); });
+        }
+
+        return { scheduleSave: scheduleSave };
     }
 
     function mountStep1(root, initial) {
@@ -154,16 +234,9 @@
             };
         }
 
+        var bff = wireObStepBff(root, 1, collectPayload);
         function scheduleSave() {
-            if (state.saveTimer) clearTimeout(state.saveTimer);
-            state.saveTimer = setTimeout(function () {
-                state.saveTimer = null;
-                if (state.saveInFlight) return;
-                state.saveInFlight = true;
-                putStep1(root, collectPayload, false)
-                    .catch(function () { })
-                    .finally(function () { state.saveInFlight = false; });
-            }, 500);
+            if (bff && bff.scheduleSave) bff.scheduleSave();
         }
 
         function bindSaveEvents(input) {
@@ -318,55 +391,6 @@
                     if (gen !== state.suggestGen) return;
                     showSuggest("<li class=\"address-suggestions__status\" role=\"option\">" + fallback + "</li>");
                 });
-        }
-
-        var nextBtn = root.querySelector("[data-ob-step1-next]");
-        var errEl = root.querySelector("[data-ob-step1-error]");
-        if (nextBtn && !nextBtn.__obStep1NextBound) {
-            nextBtn.__obStep1NextBound = true;
-            nextBtn.addEventListener("click", function () {
-                if (errEl) {
-                    errEl.hidden = true;
-                    errEl.textContent = "";
-                }
-                nextBtn.disabled = true;
-                if (state.saveTimer) {
-                    clearTimeout(state.saveTimer);
-                    state.saveTimer = null;
-                }
-                putStep1(root, collectPayload, true)
-                    .then(function (res) {
-                        return res.json().then(function (body) {
-                            return { ok: res.ok, status: res.status, body: body };
-                        }).catch(function () {
-                            return { ok: res.ok, status: res.status, body: {} };
-                        });
-                    })
-                    .then(function (result) {
-                        if (result.ok && result.body && result.body.redirectUrl) {
-                            window.location.assign(result.body.redirectUrl);
-                            return;
-                        }
-                        if (result.ok) {
-                            window.location.reload();
-                            return;
-                        }
-                        var msg = (result.body && result.body.message)
-                            || "Opslaan mislukt. Controleer je gegevens en probeer opnieuw.";
-                        if (errEl) {
-                            errEl.textContent = msg;
-                            errEl.hidden = false;
-                        }
-                        nextBtn.disabled = false;
-                    })
-                    .catch(function () {
-                        if (errEl) {
-                            errEl.textContent = "Verbinding mislukt. Probeer het opnieuw.";
-                            errEl.hidden = false;
-                        }
-                        nextBtn.disabled = false;
-                    });
-            });
         }
 
         state.collect = collectPayload;
@@ -760,7 +784,10 @@
         if (step === 4) return mountStep4(root, initial);
         if (step === 5) return mountStep5(root, initial);
         if (step === 6) return mountStep6(root, initial);
-        if (step === 7) return mountStep7(root, initial);
+        if (step === 7) {
+            if (initial.questions && initial.questions.length) return mountMini(root, initial);
+            return mountStep7(root, initial);
+        }
         if (step >= 8 && step <= 10) return mountMini(root, initial);
         return mountStep1(root, initial);
     }
@@ -781,6 +808,7 @@
                 initial = JSON.parse(root.getAttribute("data-initial") || "{}");
             } catch (e) { }
             var st = mountForStep(root, step, initial);
+            attachStepBff(root, step, st);
             if (roots) roots.set(root, st);
             else fallbackMap = fallbackMap || {};
             if (!roots) fallbackMap[root.id || "x"] = st;
@@ -815,6 +843,85 @@
         }
     };
 
+    function attachStepBff(root, step, state) {
+        if (!state || typeof state.collect !== "function") return;
+        if (step === 1) return;
+        var bff = wireObStepBff(root, step, function () { return state.collect(); });
+        var touch = function () {
+            if (bff && bff.scheduleSave) bff.scheduleSave();
+        };
+        state.scheduleSave = touch;
+        root.addEventListener("change", touch);
+        root.addEventListener("blur", touch, true);
+        root.addEventListener("click", function (ev) {
+            if (ev.target.closest("[data-ob-step-next],[data-ob-step-skip]")) return;
+            touch();
+        });
+    }
+
+    function bindWelcomeBegin() {
+        document.querySelectorAll("[data-ob-welcome-begin]").forEach(function (btn) {
+            if (btn.__obWelcomeBound) return;
+            btn.__obWelcomeBound = true;
+            btn.addEventListener("click", function (ev) {
+                if (btn.disabled) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                btn.disabled = true;
+                var af = readAntiforgery(document.querySelector(".ob-wizard") || document.body);
+                var headers = { "Content-Type": "application/json" };
+                if (af.token) headers[af.header] = af.token;
+                fetch("/api/onboarding-client/begin", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: headers,
+                    body: "{}"
+                }).then(function (res) {
+                    return res.json().then(function (body) {
+                        return { ok: res.ok, body: body };
+                    }).catch(function () { return { ok: res.ok, body: {} }; });
+                }).then(function (result) {
+                    if (result.ok && result.body && result.body.redirectUrl) {
+                        window.location.assign(result.body.redirectUrl);
+                        return;
+                    }
+                    btn.disabled = false;
+                }).catch(function () { btn.disabled = false; });
+            }, true);
+        });
+    }
+
+    function bindKompasComplete() {
+        document.querySelectorAll("[data-ob-kompas-complete]").forEach(function (btn) {
+            if (btn.__obKompasBound) return;
+            btn.__obKompasBound = true;
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                btn.disabled = true;
+                var af = readAntiforgery(document.querySelector(".ob-wizard") || document.body);
+                var headers = { "Content-Type": "application/json" };
+                if (af.token) headers[af.header] = af.token;
+                fetch("/api/onboarding-client/kompas/complete", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: headers,
+                    body: "{}"
+                }).then(function (res) {
+                    return res.json().then(function (body) {
+                        return { ok: res.ok, body: body };
+                    }).catch(function () { return { ok: res.ok, body: {} }; });
+                }).then(function (result) {
+                    if (result.ok && result.body && result.body.redirectUrl) {
+                        window.location.assign(result.body.redirectUrl);
+                        return;
+                    }
+                    btn.disabled = false;
+                }).catch(function () { btn.disabled = false; });
+            }, true);
+        });
+    }
+
     function autoMountClientSteps() {
         document.querySelectorAll("[data-ob-client-step]").forEach(function (root) {
             if (root.getAttribute("data-ob-client-mounted") === "1") return;
@@ -822,11 +929,29 @@
             if (!step) return;
             window.jobsyOnboardingClient.mount(root, step);
         });
+        bindWelcomeBegin();
+        bindKompasComplete();
+    }
+
+    function bootOnboardingClient() {
+        autoMountClientSteps();
+        bindWelcomeBegin();
+        bindKompasComplete();
     }
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", autoMountClientSteps);
+        document.addEventListener("DOMContentLoaded", bootOnboardingClient);
     } else {
-        autoMountClientSteps();
+        bootOnboardingClient();
+    }
+
+    if (!window.__obOnboardingDomObserver) {
+        window.__obOnboardingDomObserver = true;
+        var domObs = new MutationObserver(function () {
+            autoMountClientSteps();
+            bindWelcomeBegin();
+            bindKompasComplete();
+        });
+        domObs.observe(document.documentElement, { childList: true, subtree: true });
     }
 })();

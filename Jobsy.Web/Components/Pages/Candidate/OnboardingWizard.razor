@@ -22,6 +22,8 @@
 @inject UserFacingError UserFacing
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @inject IOnboardingRustigGate OnboardingRustig
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Onboarding
 @using Jobsy.Web.Components.Shared.Questionnaire
@@ -53,7 +55,9 @@
     }
 </HeadContent>
 
-<div class="ob-wizard ob-wizard--richting-a @(OnboardingRustig.Enabled ? "ob-wizard--rustig" : null) @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)">
+<div class="ob-wizard ob-wizard--richting-a @(OnboardingRustig.Enabled ? "ob-wizard--rustig" : null) @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)"
+     data-ob-antiforgery-header="@_antiforgeryHeader"
+     data-ob-antiforgery-token="@_antiforgeryToken">
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -157,7 +161,7 @@
                     </p>
                 }
             }
-            <button type="button" class="btn btn-primary ob-wizard__cta" @onclick="CompleteAsync">
+            <button type="button" class="btn btn-primary ob-wizard__cta" data-ob-kompas-complete data-testid="onboarding-kompas-complete" @onclick="CompleteAsync">
                 @Culture["Onboarding.Finish.Cta"]
             </button>
             <a class="ob-wizard__ghost" href="/home?tab=tests">@Culture["Onboarding.Finish.FullTests"]</a>
@@ -203,6 +207,7 @@
                 <p class="ob-wizard__hint">@Culture["Onboarding.Welcome.Hint"]</p>
                 <button type="button"
                         class="btn btn-primary ob-wizard__cta"
+                        data-ob-welcome-begin
                         data-testid="onboarding-begin"
                         disabled="@(_busy || _loading)"
                         @onclick="BeginAsync">
@@ -273,7 +278,7 @@
                                 disabled="@_busy"
                                 @onclick="SkipOptionalAsync">@Culture["Onboarding.Skip"]</button>
                     }
-                    @if (_step != 1)
+                    @if (_step > 10)
                     {
                         <button type="button"
                                 class="ob-rustig__btn ob-rustig__btn--primary"
@@ -694,7 +699,7 @@
                                     data-testid="onboarding-back"
                                     disabled="@(_busy || (_step == 1 && _earlyMoment == EarlyRewardMoment.None))"
                                     @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
-                            @if (_step != 1)
+                            @if (_step > 10)
                             {
                                 <button type="button"
                                         class="btn btn-primary ob-wizard__cta"
@@ -736,6 +741,8 @@
     private sealed record WelcomePhase(int Number, string Title, string Lead, string Time);
     
 
+    private string _antiforgeryHeader = "RequestVerificationToken";
+    private string _antiforgeryToken = "";
     private bool _loading = true;
     private bool _busy;
     private bool _welcome;
@@ -1066,6 +1073,17 @@
         }
     }
 
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryHeader = tokens.HeaderName ?? "RequestVerificationToken";
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
@@ -1286,16 +1304,7 @@
 
         if (!fromMiniTestFinish)
         {
-            if (_step is >= 2 and <= 10)
-            {
-                if (!await TryImportClientStepAsync())
-                {
-                    await SafeStateHasChangedAsync();
-                    return;
-                }
-            }
-
-            if (_step == 1)
+            if (_step is >= 1 and <= 10)
             {
                 return;
             }
