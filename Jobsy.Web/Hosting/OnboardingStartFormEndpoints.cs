@@ -42,7 +42,19 @@ public static class OnboardingStartFormEndpoints
     {
         if (!await antiforgery.IsRequestValidAsync(http))
         {
-            return SeeOther(WithError(OnboardingRoutes.StepUrl(step ?? 1), culture["Common.Error.TryAgain"]));
+            var fallback = step is >= 1 and <= 10 ? step.Value : 1;
+            if (string.Equals(obNav, "begin", StringComparison.OrdinalIgnoreCase))
+            {
+                return SeeOther(WithError(OnboardingRoutes.ClassicStartPath, culture["Common.Error.TryAgain"]));
+            }
+
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(fallback), culture["Common.Error.TryAgain"]));
+        }
+
+        if (string.Equals(obNav, "begin", StringComparison.OrdinalIgnoreCase))
+        {
+            var (beginStatus, beginPayload) = await OnboardingClientStepBffSaver.BeginWelcomeAsync(api, culture, cancellationToken);
+            return ToRedirect(beginStatus, beginPayload, 1, advance: true, goBack: false, culture);
         }
 
         var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
