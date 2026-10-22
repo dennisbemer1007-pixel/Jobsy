@@ -230,11 +230,8 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
         Assert.Equal(0, await page.GetByTestId("onboarding-skip").CountAsync());
 
-        await page.WaitForFunctionAsync("() => !!window.jobsyOnboardingSsrSave");
         await page.GetByTestId("onboarding-consent").CheckAsync();
         await AnswerStep7MiniBlockAsync(page, mobile);
-        await page.WaitForFunctionAsync(
-            """() => document.querySelectorAll('.ob-client-mini-q').length > 0 && document.querySelectorAll('input[name^="miniAnswers["]').length >= document.querySelectorAll('.ob-client-mini-q').length""");
 
         await page.GetByTestId("onboarding-back").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=6**");
@@ -270,18 +267,8 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
 
-        var step9InstantTile = page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert]").Nth(3);
-        if (mobile)
-        {
-            await step9InstantTile.TapAsync();
-        }
-        else
-        {
-            await step9InstantTile.ClickAsync(new() { Force = true });
-        }
-
-        await page.WaitForTimeoutAsync(2000);
-        await Assertions.Expect(step9InstantTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        await ClickMiniLikertSubmitAsync(page, mobile, likertIndex: 3);
+        await page.WaitForURLAsync("**/candidate/start?step=9&q=2**");
 
         var step9Ids = await ReadMiniQuestionIdsAsync(page);
         Assert.Equal(5, step9Ids.Length);
@@ -299,20 +286,14 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await page.WaitForURLAsync("**/candidate/start?step=9**");
         await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
 
-        var step9OverrideTile = page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert]").Nth(4);
-        if (mobile)
-        {
-            await step9OverrideTile.TapAsync();
-        }
-        else
-        {
-            await step9OverrideTile.ClickAsync(new() { Force = true });
-        }
-
-        await page.WaitForTimeoutAsync(2000);
-        await Assertions.Expect(step9OverrideTile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
-        await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected"))
-            .ToHaveCountAsync(1);
+        await page.GotoAsync(page.Url.Split('?')[0] + "?step=9&q=1");
+        await page.GetByTestId("onboarding-step-9-mini").WaitForAsync();
+        await ClickMiniLikertSubmitAsync(page, mobile, likertIndex: 4);
+        await page.WaitForURLAsync("**/candidate/start?step=9&q=2**");
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=9&q=1**");
+        await Assertions.Expect(page.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
+        await Assertions.Expect(page.Locator("[data-testid=onboarding-mini-likert].is-selected").Nth(0)).ToHaveAttributeAsync("aria-pressed", "true");
 
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=10**");
@@ -428,8 +409,8 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
 
     private static async Task<int[]> ReadMiniQuestionIdsAsync(IPage page)
     {
-        var raw = await page.Locator(".ob-client-mini-q").EvaluateAllAsync<string>(
-            "els => els.map(e => e.getAttribute('data-ob-qid')).join(',')");
+        var raw = await page.Locator("[data-initial]").EvaluateAsync<string>(
+            """el => { const j = JSON.parse(el.getAttribute('data-initial') || '{}'); return (j.questions || []).map(q => q.id).join(','); }""");
         return raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(int.Parse)
             .ToArray();
@@ -437,17 +418,35 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
 
     private static async Task ClickFirstMiniLikertAsync(IPage page, bool mobile)
     {
-        var tile = page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert]").Nth(2);
+        var step = ParseOnboardingStepFromUrl(page.Url);
+        var uri = new Uri(page.Url);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        var q = query.TryGetValue("q", out var qs) && int.TryParse(qs, out var qn) ? qn : 1;
+        await ClickMiniLikertSubmitAsync(page, mobile, likertIndex: 2);
+        if (q < 5)
+        {
+            await page.WaitForURLAsync($"**/candidate/start?step={step}&q={q + 1}**");
+        }
+    }
+
+    private static async Task ClickMiniLikertSubmitAsync(IPage page, bool mobile, int likertIndex)
+    {
+        var tile = page.Locator("button[name=\"obMiniPick\"]").Nth(likertIndex);
         if (mobile)
         {
             await tile.TapAsync();
         }
         else
         {
-            await tile.ClickAsync(new() { Force = true });
+            await tile.ClickAsync();
         }
+    }
 
-        await page.WaitForTimeoutAsync(400);
+    private static int ParseOnboardingStepFromUrl(string url)
+    {
+        var uri = new Uri(url);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        return query.TryGetValue("step", out var step) && int.TryParse(step, out var n) ? n : 1;
     }
 
     private static async Task AnswerStep7MiniBlockAsync(IPage page, bool mobile)
@@ -455,24 +454,15 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
 
     private static async Task AnswerMiniBlockAsync(IPage page, bool mobile, string? expectUrl)
     {
-        var cards = page.Locator(".ob-client-mini-q");
-        var count = await cards.CountAsync();
-        for (var i = 0; i < count; i++)
+        for (var q = 1; q <= 5; q++)
         {
-            var urlBefore = page.Url;
-            var tile = cards.Nth(i).Locator("[data-testid=onboarding-mini-likert]").Nth(2);
-            if (mobile)
+            await Assertions.Expect(page.Locator(".ob-client-mini-q")).ToHaveCountAsync(1);
+            var step = ParseOnboardingStepFromUrl(page.Url);
+            await ClickMiniLikertSubmitAsync(page, mobile, likertIndex: 2);
+            if (q < 5)
             {
-                await tile.TapAsync();
+                await page.WaitForURLAsync($"**/candidate/start?step={step}&q={q + 1}**");
             }
-            else
-            {
-                await tile.ClickAsync(new() { Force = true });
-            }
-
-            await page.WaitForTimeoutAsync(400);
-            Assert.Equal(urlBefore, page.Url);
-            await Assertions.Expect(tile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
         }
 
         if (!string.IsNullOrEmpty(expectUrl))

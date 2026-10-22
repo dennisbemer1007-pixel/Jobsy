@@ -67,16 +67,63 @@ public static class OnboardingStartFormEndpoints
         var dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
         var persist = string.Equals(obNav, "save", StringComparison.OrdinalIgnoreCase);
 
-        if (!string.IsNullOrWhiteSpace(obDreamPick) && currentStep == 6)
+        if (goBack && currentStep is >= 7 and <= 10)
         {
-            dream = obDreamPick.Trim();
-            persist = true;
-            advance = false;
-            goBack = false;
+            var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
+            if (q > 1)
+            {
+                return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q - 1));
+            }
+
+            if (currentStep > 1)
+            {
+                return SeeOther(OnboardingRoutes.StepUrl(currentStep - 1));
+            }
+
+            return SeeOther(OnboardingRoutes.StepUrl(1));
         }
 
         if (!string.IsNullOrWhiteSpace(obMiniPick) && currentStep is >= 7 and <= 10)
         {
+            var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
+            var pickBody = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
+            var pickMerged = MergeNavFlags(pickBody, advance: false, goBack: false, skipOptional: false);
+            var (pickStatus, pickPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+                currentStep,
+                pickMerged,
+                api,
+                geocoder,
+                featureFlags,
+                culture,
+                cancellationToken);
+            if (pickStatus is >= 400)
+            {
+                return ToRedirect(pickStatus, pickPayload, currentStep, false, false, culture);
+            }
+
+            var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
+                currentStep,
+                api,
+                featureFlags,
+                culture,
+                cancellationToken);
+            var total = mini.Questions.Count;
+            if (total > 0 && q < total)
+            {
+                return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q + 1));
+            }
+
+            if (currentStep < 10)
+            {
+                return SeeOther(OnboardingRoutes.StepUrl(currentStep + 1));
+            }
+
+            return SeeOther(OnboardingRoutes.KompasReadyPath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(obDreamPick) && currentStep == 6)
+        {
+            dream = obDreamPick.Trim();
             persist = true;
             advance = false;
             goBack = false;
@@ -157,6 +204,31 @@ public static class OnboardingStartFormEndpoints
         else if (currentStep is >= 7 and <= 10)
         {
             body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
+            if (advance)
+            {
+                var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
+                    currentStep,
+                    api,
+                    featureFlags,
+                    culture,
+                    cancellationToken);
+                var testsV2 = await featureFlags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
+                var version = OnboardingMiniBlockCompletion.ResolveQuickScanVersion(mini.QuickScanVersion, testsV2);
+                var answers = OnboardingClientStepBridge.ParseMiniAnswers(body.GetRawText());
+                foreach (var pair in mini.Answers)
+                {
+                    answers.TryAdd(pair.Key, pair.Value);
+                }
+
+                if (!OnboardingMiniBlockCompletion.IsMiniBlockComplete(currentStep, version, answers))
+                {
+                    var nextQ = OnboardingSsrMiniNavigation.ResolveActiveQuestionIndex(
+                        mini.Questions,
+                        answers,
+                        qQuery: null) + 1;
+                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, nextQ));
+                }
+            }
         }
         else if (string.IsNullOrWhiteSpace(obPayload) && currentStep is >= 2 and <= 4)
         {

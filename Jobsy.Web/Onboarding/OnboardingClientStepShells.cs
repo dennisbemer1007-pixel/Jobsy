@@ -89,7 +89,7 @@ internal static class OnboardingClientStepShells
             "display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px;width:auto;text-align:left;font-weight:600";
         const string radioInputStyle = "width:18px;height:18px;margin:0;flex:0 0 auto";
         const string saveBtnStyle =
-            "white-space:nowrap;padding:0 20px;min-width:max-content;min-width:5.75rem;text-align:center;flex:0 0 auto;min-height:44px;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:#fff;font:inherit;font-weight:600;cursor:pointer;box-sizing:border-box";
+            "white-space:nowrap;padding:0 20px;min-width:max-content;text-align:center;height:44px;min-height:44px;max-height:44px;display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:0 0 auto;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:#fff;font:inherit;font-weight:600;cursor:pointer;box-sizing:border-box;overflow:hidden";
         const string step2StackStyle =
             "display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:none;box-sizing:border-box;gap:12px";
         const string step2GridStyle =
@@ -116,7 +116,7 @@ internal static class OnboardingClientStepShells
         sb.Append("<div id=\"ob-matrix\" class=\"availability-matrix availability-matrix--touch ob-rustig__step2-matrix\" data-ob-client=\"matrix\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
         AppendAvailabilityMatrix(sb, culture, availability);
         sb.Append("</div>");
-        sb.Append("<fieldset id=\"ob-start\" class=\"ob-rustig__step2-start\" style=\"width:100%;max-width:none;border:0;padding:0;margin:0;box-sizing:border-box\"><legend class=\"ob-wizard__section-title\">");
+        sb.Append("<fieldset id=\"ob-start\" class=\"ob-rustig__step2-start\" style=\"width:100%;max-width:none;border:0;padding:0;margin:0 0 24px 0;box-sizing:border-box\"><legend class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityStartSummary"]));
         sb.Append("</legend>");
         sb.Append("<div style=\"display:flex;flex-direction:column;gap:10px;width:100%\">");
@@ -150,7 +150,7 @@ internal static class OnboardingClientStepShells
         sb.Append("<div style=\"display:grid;grid-template-columns:minmax(0,1fr) max-content;align-items:center;gap:8px;width:100%;max-width:100%;box-sizing:border-box\">");
         sb.Append("<input id=\"onboarding-available-from\" name=\"obAvailableFrom\" type=\"date\" autocomplete=\"off\" value=\"");
         sb.Append(WebUtility.HtmlEncode(fromIso));
-        sb.Append("\" style=\"min-height:44px;flex:1 1 auto;min-width:0;box-sizing:border-box\" data-testid=\"onboarding-available-from\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();var b=this.form.querySelector('[data-testid=&quot;onboarding-start-save&quot;]');if(b)b.click();}\" />");
+        sb.Append("\" style=\"height:44px;min-height:44px;flex:1 1 auto;min-width:0;box-sizing:border-box\" data-testid=\"onboarding-available-from\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();var b=this.form.querySelector('[data-testid=&quot;onboarding-start-save&quot;]');if(b)b.click();}\" />");
         sb.Append("<button type=\"submit\" name=\"obAction\" value=\"saveStart\" style=\"");
         sb.Append(saveBtnStyle);
         sb.Append("\" data-testid=\"onboarding-start-save\">");
@@ -344,7 +344,7 @@ internal static class OnboardingClientStepShells
             sb.Append("</label>");
         }
 
-        AppendMiniQuestionsSsr(sb, culture, 7, seed.MiniQuestions, seed.MiniAnswers, "onboarding-step-7-mini");
+        AppendMiniQuestionsSsr(sb, culture, 7, seed.MiniQuestions, seed.MiniAnswers, "onboarding-step-7-mini", seed.MiniActiveQuestion);
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -363,7 +363,7 @@ internal static class OnboardingClientStepShells
         seed ??= new OnboardingClientStepSeed();
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
-        AppendMiniQuestionsSsr(sb, culture, wizardStep, seed.MiniQuestions, seed.MiniAnswers, miniTestId);
+        AppendMiniQuestionsSsr(sb, culture, wizardStep, seed.MiniQuestions, seed.MiniAnswers, miniTestId, seed.MiniActiveQuestion);
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -382,12 +382,13 @@ internal static class OnboardingClientStepShells
         int wizardStep,
         IReadOnlyList<OnboardingClientStepSeed.MiniQuestionSeed> questions,
         IReadOnlyDictionary<int, int> answers,
-        string miniTestId)
+        string miniTestId,
+        int activeQuestion1Based)
     {
         const string tabRowStyle =
             "display:flex;flex-wrap:wrap;gap:0.45rem;margin:0 0 0.85rem;width:100%;box-sizing:border-box";
         const string tabBaseStyle =
-            "padding:0.35rem 0.75rem;border-radius:999px;font-size:0.78rem;font-weight:600;border:1px solid color-mix(in srgb,var(--border) 80%,var(--brand) 20%);color:var(--muted);background:var(--surface);box-sizing:border-box";
+            "padding:0.35rem 0.75rem;border-radius:999px;font-size:0.78rem;font-weight:600;border:1px solid color-mix(in srgb,var(--border) 80%,var(--brand) 20%);color:var(--muted);background:var(--surface);box-sizing:border-box;cursor:default;pointer-events:none;user-select:none";
         const string tabDoneStyle =
             ";border-color:color-mix(in srgb,var(--success,#2d6a4f) 35%,var(--border));color:var(--success,#2d6a4f)";
         const string tabCurrentStyle = ";background:var(--brand);border-color:var(--brand);color:#fff";
@@ -402,11 +403,11 @@ internal static class OnboardingClientStepShells
         const string likertRowStyle =
             "display:flex;flex-wrap:nowrap;gap:8px;width:100%;max-width:40rem;box-sizing:border-box;margin:0 0 1.5rem";
         const string likertBtnStyle =
-            "flex:1 1 0;min-width:0;min-height:56px;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--pearl,#f7f4f0);border-radius:8px;background:var(--surface);font:inherit;font-weight:600;cursor:pointer;box-sizing:border-box";
+            "flex:1 1 0;min-width:0;min-height:56px;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--pearl,#f7f4f0);border-radius:8px;background:var(--surface);font:inherit;font-weight:600;cursor:pointer;box-sizing:border-box;width:100%";
         const string likertBtnOnStyle =
             ";border-color:var(--brand);background:var(--accent-soft);color:var(--brand-deep,var(--brand))";
 
-        sb.Append("<div class=\"ob-client-mini\" data-ob-ssr-mini data-testid=\"");
+        sb.Append("<div class=\"ob-client-mini\" data-testid=\"");
         sb.Append(WebUtility.HtmlEncode(miniTestId));
         sb.Append("\" style=\"width:100%;max-width:min(52rem,100%);box-sizing:border-box\">");
         if (wizardStep is >= 7 and <= 10)
@@ -460,94 +461,92 @@ internal static class OnboardingClientStepShells
         }
 
         var total = questions.Count;
-        for (var qi = 0; qi < questions.Count; qi++)
+        if (total == 0)
         {
-            var question = questions[qi];
-            answers.TryGetValue(question.Id, out var selected);
-            sb.Append("<div class=\"ob-client-mini-q\" data-ob-qid=\"");
-            sb.Append(question.Id);
-            sb.Append("\" style=\"width:100%;box-sizing:border-box\">");
-            if (total > 0)
-            {
-                sb.Append("<p class=\"test-flow__counter\" style=\"");
-                sb.Append(counterStyle);
-                sb.Append("\">");
-                sb.Append(WebUtility.HtmlEncode(culture.Format("TestFlow.QuestionOf", qi + 1, total)));
-                sb.Append("</p>");
-                sb.Append("<div class=\"test-flow__bar\" role=\"group\" aria-hidden=\"true\" style=\"display:flex;gap:4px;margin:0 0 0.75rem;width:100%;max-width:40rem\">");
-                for (var seg = 0; seg < total; seg++)
-                {
-                    var segAnswered = seg < qi || (seg == qi && selected is >= 1 and <= 5);
-                    var segCurrent = seg == qi;
-                    var segStyle = segAnswered
-                        ? "background:var(--brand)"
-                        : segCurrent
-                            ? "background:color-mix(in srgb,var(--brand) 45%,var(--border))"
-                            : "background:color-mix(in srgb,var(--border) 70%,transparent)";
-                    sb.Append("<span style=\"flex:1 1 0;height:4px;border-radius:2px;");
-                    sb.Append(segStyle);
-                    sb.Append("\"></span>");
-                }
-
-                sb.Append("</div>");
-            }
-
-            sb.Append("<blockquote class=\"test-flow__statement\" style=\"");
-            sb.Append(statementStyle);
-            sb.Append("\">“");
-            sb.Append(WebUtility.HtmlEncode(question.Text));
-            sb.Append("”</blockquote>");
-            sb.Append("<div class=\"test-likert__labels\" style=\"");
-            sb.Append(scaleLabelsStyle);
-            sb.Append("\"><span>");
-            sb.Append(WebUtility.HtmlEncode(culture["TestFlow.Scale.Low"]));
-            sb.Append("</span><span>");
-            sb.Append(WebUtility.HtmlEncode(culture["TestFlow.Scale.High"]));
-            sb.Append("</span></div>");
-            sb.Append("<div class=\"ob-client-mini-likert\" role=\"group\" style=\"");
-            sb.Append(likertRowStyle);
-            sb.Append("\">");
-            for (var score = 1; score <= 5; score++)
-            {
-                var on = selected == score;
-                sb.Append("<button type=\"button\"");
-                if (on)
-                {
-                    sb.Append(" class=\"is-selected\"");
-                }
-
-                sb.Append(" style=\"");
-                sb.Append(likertBtnStyle);
-                if (on)
-                {
-                    sb.Append(likertBtnOnStyle);
-                }
-
-                sb.Append("\" data-ob-mini-qid=\"");
-                sb.Append(question.Id);
-                sb.Append("\" data-ob-mini-score=\"");
-                sb.Append(score);
-                sb.Append("\" data-testid=\"onboarding-mini-likert\" aria-pressed=\"");
-                sb.Append(on ? "true" : "false");
-                sb.Append("\">");
-                sb.Append(score);
-                sb.Append("</button>");
-            }
-
             sb.Append("</div>");
-            if (selected is >= 1 and <= 5)
-            {
-                sb.Append("<input type=\"hidden\" name=\"miniAnswers[");
-                sb.Append(question.Id);
-                sb.Append("]\" value=\"");
-                sb.Append(selected);
-                sb.Append("\" />");
-            }
+            return;
+        }
 
-            sb.Append("</div>");
+        var activeIndex = Math.Clamp(activeQuestion1Based - 1, 0, total - 1);
+
+        var question = questions[activeIndex];
+        answers.TryGetValue(question.Id, out var selected);
+        var q1 = activeIndex + 1;
+
+        sb.Append("<input type=\"hidden\" name=\"obMiniQ\" value=\"");
+        sb.Append(q1);
+        sb.Append("\" />");
+
+        sb.Append("<div class=\"ob-client-mini-q\" data-ob-qid=\"");
+        sb.Append(question.Id);
+        sb.Append("\" style=\"width:100%;box-sizing:border-box\">");
+        sb.Append("<p class=\"test-flow__counter\" style=\"");
+        sb.Append(counterStyle);
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(culture.Format("TestFlow.QuestionOf", q1, total)));
+        sb.Append("</p>");
+        sb.Append("<div class=\"test-flow__bar\" role=\"group\" aria-hidden=\"true\" style=\"display:flex;gap:4px;margin:0 0 0.75rem;width:100%;max-width:40rem\">");
+        for (var seg = 0; seg < total; seg++)
+        {
+            var segQuestion = questions[seg];
+            answers.TryGetValue(segQuestion.Id, out var segScore);
+            var segAnswered = segScore is >= 1 and <= 5;
+            var segCurrent = seg == activeIndex;
+            var segStyle = segAnswered
+                ? "background:var(--brand)"
+                : segCurrent
+                    ? "background:color-mix(in srgb,var(--brand) 45%,var(--border))"
+                    : "background:color-mix(in srgb,var(--border) 70%,transparent)";
+            sb.Append("<span style=\"flex:1 1 0;height:4px;border-radius:2px;");
+            sb.Append(segStyle);
+            sb.Append("\"></span>");
         }
 
         sb.Append("</div>");
+
+        sb.Append("<blockquote class=\"test-flow__statement\" style=\"");
+        sb.Append(statementStyle);
+        sb.Append("\">“");
+        sb.Append(WebUtility.HtmlEncode(question.Text));
+        sb.Append("”</blockquote>");
+        sb.Append("<div class=\"test-likert__labels\" style=\"");
+        sb.Append(scaleLabelsStyle);
+        sb.Append("\"><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["TestFlow.Scale.Low"]));
+        sb.Append("</span><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["TestFlow.Scale.High"]));
+        sb.Append("</span></div>");
+        sb.Append("<div class=\"ob-client-mini-likert\" role=\"group\" style=\"");
+        sb.Append(likertRowStyle);
+        sb.Append("\">");
+        for (var score = 1; score <= 5; score++)
+        {
+            var on = selected == score;
+            sb.Append("<button type=\"submit\" name=\"obMiniPick\" value=\"");
+            sb.Append(question.Id);
+            sb.Append(':');
+            sb.Append(score);
+            sb.Append('"');
+            if (on)
+            {
+                sb.Append(" class=\"is-selected\"");
+            }
+
+            sb.Append(" style=\"");
+            sb.Append(likertBtnStyle);
+            if (on)
+            {
+                sb.Append(likertBtnOnStyle);
+            }
+
+            sb.Append("\" data-testid=\"onboarding-mini-likert\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\">");
+            sb.Append(score);
+            sb.Append("</button>");
+        }
+
+        sb.Append("</div></div></div>");
     }
 
     private static void AppendEducationTiles(StringBuilder sb, CultureState culture, string? selected)

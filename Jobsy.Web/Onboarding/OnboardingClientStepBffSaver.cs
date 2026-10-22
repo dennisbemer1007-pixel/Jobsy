@@ -161,7 +161,7 @@ public static class OnboardingClientStepBffSaver
             var version = await ResolveQuickScanVersionAsync(step, api, testsV2, cancellationToken);
             var merged = await MergeMiniAnswersAsync(step, api, answers, cancellationToken);
 
-            if (draft.HasConsent || step > 7)
+            if (merged.Count > 0 || draft.HasConsent || step > 7)
             {
                 try
                 {
