@@ -16,7 +16,7 @@ internal static class OnboardingClientStepShells
         {
             1 => BuildStep1(culture, draft),
             2 => BuildStep2(culture, draft),
-            3 => BuildStep3(culture),
+            3 => BuildStep3(culture, draft),
             4 => BuildStep4(culture),
             5 => BuildStep5(culture),
             6 => BuildStep6(culture),
@@ -141,18 +141,65 @@ internal static class OnboardingClientStepShells
         return sb.ToString();
     }
 
-    private static string BuildStep3(CultureState culture)
+    private static string BuildStep3(CultureState culture, OnboardingProfileDraft? draft)
     {
+        draft ??= new OnboardingProfileDraft();
+        var selectedTransport = new HashSet<string>(TransportLabels.SplitMany(draft.Transport), StringComparer.OrdinalIgnoreCase);
+        var maxTravel = draft.MaxTravel > 0 ? draft.MaxTravel : 30;
+        var travelPresets = new[] { 10, 20, 30, 45 };
+        var customTravel = draft.CustomTravel || !travelPresets.Contains(maxTravel);
+
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-transport\">");
-        sb.Append("<div data-ob-client=\"transportGrid\" class=\"ob-wizard__transport\"></div>");
-        sb.Append("<div data-ob-client=\"travelGrid\" class=\"ob-wizard__travel-times\"></div>");
-        sb.Append("<label>");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Other"]));
-        sb.Append("<input type=\"number\" min=\"1\" max=\"180\" data-ob-client=\"customTravel\" hidden />");
-        sb.Append("</label>");
-        AppendStepNav(sb, culture);
+        sb.Append("<div class=\"ob-wizard__section-title ob-illustrated-step__field-label\" id=\"onboarding-transport-label\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Transport"]));
         sb.Append("</div>");
+        sb.Append("<fieldset aria-labelledby=\"onboarding-transport-label\">");
+        sb.Append("<legend class=\"visually-hidden\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Transport"]));
+        sb.Append("</legend>");
+        sb.Append("<p class=\"ob-wizard__hint ob-wizard__section-hint\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.TransportMulti"]));
+        sb.Append("</p>");
+        sb.Append("<div data-ob-client=\"transportGrid\" class=\"ob-wizard__transport lobsy-choice-grid\">");
+        AppendTransportTiles(sb, culture, selectedTransport);
+        sb.Append("</div></fieldset>");
+        sb.Append("<fieldset>");
+        sb.Append("<legend>");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.MaxTravel"]));
+        sb.Append(" <strong>");
+        sb.Append(maxTravel);
+        sb.Append(' ');
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Minutes"]));
+        sb.Append("</strong></legend>");
+        sb.Append("<div data-ob-client=\"travelGrid\" class=\"ob-wizard__transport ob-wizard__travel-times lobsy-choice-grid\">");
+        foreach (var minutes in travelPresets)
+        {
+            var on = !customTravel && maxTravel == minutes;
+            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile\" data-ob-travel=\"");
+            sb.Append(minutes);
+            sb.Append("\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\">");
+            sb.Append(minutes);
+            sb.Append("</button>");
+        }
+
+        sb.Append("</div>");
+        sb.Append("<button type=\"button\" class=\"ob-wizard__inline-link\" data-ob-client=\"showCustomTravel\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Other"]));
+        sb.Append("</button>");
+        sb.Append("<label class=\"ob-wizard__custom-travel\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Other"]));
+        sb.Append(" <input type=\"number\" min=\"1\" max=\"180\" data-ob-client=\"customTravel\"");
+        if (!customTravel)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append(" value=\"");
+        sb.Append(maxTravel);
+        sb.Append("\" /></label></fieldset></div>");
         return sb.ToString();
     }
 
@@ -216,6 +263,53 @@ internal static class OnboardingClientStepShells
         sb.Append("</div>");
         return sb.ToString();
     }
+
+    private static void AppendTransportTiles(StringBuilder sb, CultureState culture, HashSet<string> selected)
+    {
+        foreach (var code in TransportLabels.Selectable)
+        {
+            var on = selected.Contains(code);
+            var label = TransportTileLabel(culture, code);
+            var icon = ChoiceTileIcons.ForTransport(code);
+            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile");
+            if (on)
+            {
+                sb.Append(" is-selected");
+            }
+
+            sb.Append("\" data-ob-code=\"");
+            sb.Append(WebUtility.HtmlEncode(code));
+            sb.Append("\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\">");
+            if (!string.IsNullOrEmpty(icon))
+            {
+                sb.Append("<span class=\"lobsy-choice-tile__icon\" aria-hidden=\"true\">");
+                sb.Append(icon);
+                sb.Append("</span>");
+            }
+
+            sb.Append("<span class=\"lobsy-choice-tile__label\">");
+            sb.Append(WebUtility.HtmlEncode(label));
+            sb.Append("</span>");
+            if (on)
+            {
+                sb.Append("<span class=\"lobsy-choice-tile__check\" aria-hidden=\"true\">✓</span>");
+            }
+
+            sb.Append("</button>");
+        }
+    }
+
+    private static string TransportTileLabel(CultureState culture, string code) => code switch
+    {
+        TransportLabels.Bike => culture["Transport.Bike"],
+        TransportLabels.EBike => culture["Transport.EBike"],
+        TransportLabels.Car => culture["Transport.Car"],
+        TransportLabels.PublicTransport => culture["Transport.Transit"],
+        TransportLabels.Walking => culture["Transport.Walk"],
+        _ => code,
+    };
 
     private static void AppendPresetTiles(StringBuilder sb, CultureState culture, HashSet<string> selected)
     {
