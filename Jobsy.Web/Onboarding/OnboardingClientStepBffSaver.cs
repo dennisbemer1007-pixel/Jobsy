@@ -27,6 +27,7 @@ public static class OnboardingClientStepBffSaver
     {
         var advance = body.TryGetProperty("advance", out var adv) && adv.GetBoolean();
         var skipOptional = body.TryGetProperty("skipOptional", out var sk) && sk.GetBoolean();
+        var goBack = body.TryGetProperty("back", out var backProp) && backProp.GetBoolean();
 
         MeProfile profile;
         try
@@ -80,6 +81,25 @@ public static class OnboardingClientStepBffSaver
                 return (StatusCodes.Status502BadGateway, new { message = culture["Common.Error.TryAgain"] });
             }
 
+            if (goBack)
+            {
+                if (step <= 1)
+                {
+                    return (StatusCodes.Status400BadRequest, new { message = culture["Onboarding.NotSaved"] });
+                }
+
+                try
+                {
+                    await api.SaveMyOnboardingProgressAsync(step - 1, ct: cancellationToken);
+                    api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+                    return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+                }
+                catch (Exception)
+                {
+                    return (StatusCodes.Status502BadGateway, new { message = culture["Onboarding.NotSaved"] });
+                }
+            }
+
             if (!advance)
             {
                 return (StatusCodes.Status200OK, new { saved = true });
@@ -103,51 +123,77 @@ public static class OnboardingClientStepBffSaver
             return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
         }
 
-        if (step == 7 && !draft.HasConsent)
+        if (step is >= 7 and <= 10)
         {
-            draft.ConsentRequested = OnboardingClientStepBridge.ParseStep7Consent(payloadJson);
-            if (advance)
+            if (step == 7 && !draft.HasConsent)
             {
-                var issues = OnboardingWizardValidation.ValidateConsent(draft.ConsentRequested);
-                if (issues.Count > 0)
+                draft.ConsentRequested = OnboardingClientStepBridge.ParseStep7Consent(payloadJson);
+                if (advance)
                 {
-                    return (StatusCodes.Status400BadRequest, new { message = culture[issues[0].MessageKey] });
-                }
+                    var consentIssues = OnboardingWizardValidation.ValidateConsent(draft.ConsentRequested);
+                    if (consentIssues.Count > 0)
+                    {
+                        return (StatusCodes.Status400BadRequest, new { message = culture[consentIssues[0].MessageKey] });
+                    }
 
-                try
-                {
-                    var updated = await api.AcceptTestAiConsentAsync(cancellationToken);
-                    draft.HasConsent = updated?.TestAiConsentAt is not null;
-                    if (!draft.HasConsent)
+                    try
+                    {
+                        var updated = await api.AcceptTestAiConsentAsync(cancellationToken);
+                        draft.HasConsent = updated?.TestAiConsentAt is not null;
+                        if (!draft.HasConsent)
+                        {
+                            return (StatusCodes.Status502BadGateway, new { message = culture["Onboarding.Consent.Failed"] });
+                        }
+                    }
+                    catch (Exception)
                     {
                         return (StatusCodes.Status502BadGateway, new { message = culture["Onboarding.Consent.Failed"] });
                     }
                 }
-                catch (Exception)
-                {
-                    return (StatusCodes.Status502BadGateway, new { message = culture["Onboarding.Consent.Failed"] });
-                }
-
-                return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
             }
 
-            return (StatusCodes.Status200OK, new { saved = true });
-        }
-
-        if (step is >= 7 and <= 10)
-        {
             var testsV2 = await featureFlags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
             var answers = OnboardingClientStepBridge.ParseMiniAnswers(payloadJson);
             var version = await ResolveQuickScanVersionAsync(step, api, testsV2, cancellationToken);
             var merged = await MergeMiniAnswersAsync(step, api, answers, cancellationToken);
 
-            try
+            if (draft.HasConsent || step > 7)
             {
-                await PersistMiniAnswersAsync(step, merged, version, api, cancellationToken);
+                try
+                {
+                    await PersistMiniAnswersAsync(step, merged, version, api, cancellationToken);
+                }
+                catch (TestSaveClientException ex)
+                {
+                    return (StatusCodes.Status502BadGateway, new { message = ex.Message });
+                }
+                catch (ApiErrorException ex)
+                {
+                    return (StatusCodes.Status502BadGateway, new { message = ex.Message });
+                }
+                catch (Exception)
+                {
+                    return (StatusCodes.Status502BadGateway, new { message = culture["Common.Error.TryAgain"] });
+                }
             }
-            catch (Exception)
+
+            if (goBack)
             {
-                return (StatusCodes.Status502BadGateway, new { message = culture["Common.Error.TryAgain"] });
+                if (step <= 1)
+                {
+                    return (StatusCodes.Status400BadRequest, new { message = culture["Onboarding.NotSaved"] });
+                }
+
+                try
+                {
+                    await api.SaveMyOnboardingProgressAsync(step - 1, ct: cancellationToken);
+                    api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+                    return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+                }
+                catch (Exception)
+                {
+                    return (StatusCodes.Status502BadGateway, new { message = culture["Onboarding.NotSaved"] });
+                }
             }
 
             if (!advance)

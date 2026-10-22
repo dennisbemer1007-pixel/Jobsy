@@ -128,8 +128,12 @@ public sealed class OnboardingClientFullPathPlaywrightTests : IAsyncLifetime
         {
             await page.Locator("[data-ob-client=dreamInput]").FillAsync("Kassière");
         });
-        await CompleteStep7ConsentAsync(page);
         await page.Locator("[data-ob-client-step=\"7\"]").WaitForAsync();
+        await page.WaitForFunctionAsync(
+            """() => document.querySelector('[data-ob-client-step="7"]')?.getAttribute('data-ob-client-mounted') === '1'""",
+            null,
+            new() { Timeout = 90_000 });
+        await page.Locator("[data-ob-client=consent]").CheckAsync();
         await AnswerMiniBlockAsync(page);
         if (capture)
         {
@@ -169,7 +173,7 @@ public sealed class OnboardingClientFullPathPlaywrightTests : IAsyncLifetime
 
     private static async Task ClickObStepAdvanceAsync(IPage page, int step, bool skip = false)
     {
-        var selector = skip ? "[data-ob-step-skip]" : "[data-ob-step-next]";
+        var selector = skip ? "[data-ob-step-skip]" : "[data-testid=onboarding-next], [data-ob-step-next]";
         var advanceResponse = page.WaitForResponseAsync(r =>
         {
             if (r.Request.Method != "PUT"
@@ -188,32 +192,6 @@ public sealed class OnboardingClientFullPathPlaywrightTests : IAsyncLifetime
         var responseBody = response.Ok ? "" : await response.TextAsync();
         Assert.True(response.Ok, $"Step {step} BFF {(skip ? "skip" : "advance")} HTTP {(int)response.Status}. {responseBody}");
         await page.WaitForLoadStateAsync(LoadState.Load, new() { Timeout = 90_000 });
-    }
-
-    private static async Task CompleteStep7ConsentAsync(IPage page)
-    {
-        await page.Locator("[data-ob-client-step=\"7\"]").WaitForAsync(new() { Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            """() => document.querySelector('[data-ob-client-step="7"]')?.getAttribute('data-ob-client-mounted') === '1'""",
-            null,
-            new() { Timeout = 90_000 });
-        await page.Locator("[data-ob-client=consent]").CheckAsync();
-        var consentResponse = page.WaitForResponseAsync(r =>
-            r.Request.Method == "PUT"
-            && r.Url.Contains("/api/onboarding-client/steps/7", StringComparison.OrdinalIgnoreCase)
-            && (r.Request.PostData ?? "").Contains("\"advance\":true", StringComparison.Ordinal));
-        await page.Locator("[data-ob-step-next]").ClickAsync();
-        var consentHttp = await consentResponse;
-        Assert.True(consentHttp.Ok, $"Step 7 consent HTTP {(int)consentHttp.Status}.");
-        await page.WaitForLoadStateAsync(LoadState.Load, new() { Timeout = 90_000 });
-        var err = page.Locator("[data-ob-step-error]");
-        if (await err.IsVisibleAsync())
-        {
-            Assert.Fail("Step 7 consent error: " + await err.InnerTextAsync());
-        }
-
-        await page.Locator(".ob-wizard__loading").WaitForAsync(new() { State = WaitForSelectorState.Detached, Timeout = 120_000 });
-        await page.WaitForFunctionAsync("() => typeof window.jobsyOnboardingClient !== 'undefined'", null, new() { Timeout = 60_000 });
     }
 
     private static async Task AdvanceFromStepAsync(
@@ -317,7 +295,8 @@ public sealed class OnboardingClientFullPathPlaywrightTests : IAsyncLifetime
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.UseEnvironment("Production");
+            // Development host + Production-like BFF (separate ApiBaseUrl stub); avoids Postgres data-protection in test VMs.
+            builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>

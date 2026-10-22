@@ -29,7 +29,7 @@ internal static class OnboardingClientStepInitialState
             5 => BuildStep5(draft, culture, seed),
             6 => BuildStep6(draft, seed),
             7 when draft.HasConsent => BuildMiniStep(draft, seed),
-            7 => BuildStep7(draft, seed),
+            7 => BuildStep7WithMini(draft, seed),
             >= 8 and <= 10 => BuildMiniStep(draft, seed),
             _ => new { },
         };
@@ -168,12 +168,14 @@ internal static class OnboardingClientStepInitialState
         };
     }
 
-    private static object BuildStep7(OnboardingProfileDraft draft, OnboardingClientStepSeed seed)
+    private static object BuildStep7WithMini(OnboardingProfileDraft draft, OnboardingClientStepSeed seed)
     {
         return new
         {
             consentRequested = draft.ConsentRequested || seed.ConsentRequested,
             hasConsent = draft.HasConsent || seed.HasConsent,
+            questions = seed.MiniQuestions.Select(q => new { id = q.Id, text = q.Text }).ToList(),
+            answers = seed.MiniAnswers,
         };
     }
 

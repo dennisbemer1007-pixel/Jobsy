@@ -20,7 +20,7 @@ internal static class OnboardingClientStepShells
             5 => BuildStep5(culture),
             6 => BuildStep6(culture),
             7 when draft?.HasConsent == true => BuildMiniStep(culture),
-            7 => BuildStep7(culture),
+            7 => BuildStep7ConsentAndMini(culture),
             >= 8 and <= 10 => BuildMiniStep(culture),
             _ => "",
         };
@@ -149,13 +149,14 @@ internal static class OnboardingClientStepShells
         return sb.ToString();
     }
 
-    private static string BuildStep7(CultureState culture)
+    private static string BuildStep7ConsentAndMini(CultureState culture)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-wizard__card\" id=\"onboarding-field-consent\">");
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-consent\">");
         sb.Append("<label class=\"ob-wizard__consent\"><input type=\"checkbox\" data-ob-client=\"consent\" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"]));
         sb.Append("</label>");
+        sb.Append("<div class=\"ob-client-mini\" data-ob-client=\"miniRoot\"></div>");
         AppendStepNav(sb, culture);
         sb.Append("</div>");
         return sb.ToString();

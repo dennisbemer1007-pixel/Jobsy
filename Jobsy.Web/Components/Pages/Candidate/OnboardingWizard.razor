@@ -1758,7 +1758,18 @@
         _miniBlockQuestionIds = [];
         _miniQuestions = [];
         _currentQuestion = 0;
-        if (_step is < 7 or > 10 || !Draft.HasConsent)
+        if (_step is < 7 or > 10)
+        {
+            _preparedMiniStep = 0;
+            return;
+        }
+
+        var miniAutosaveEnabled = Draft.HasConsent;
+        if (_step == 7 && !Draft.HasConsent)
+        {
+            miniAutosaveEnabled = false;
+        }
+        else if (!Draft.HasConsent)
         {
             _preparedMiniStep = 0;
             return;
@@ -1843,16 +1854,23 @@
         {
             _currentQuestion = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(_step, _miniQuickScanVersion, visible);
         }
-        var kind = OnboardingMiniBlockCompletion.AssessmentKindForWizardStep(_step);
-        var autosaveContext = new MiniBlockAutosaveContext(
-            _step,
-            kind,
-            _miniQuickScanVersion,
-            new Dictionary<int, int>(_serverAnswers));
-        _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
+        if (miniAutosaveEnabled)
         {
-            await PersistMiniBlockAnswersAsync(autosaveContext, draft, cancellationToken);
-        }, onChanged: null, debounceMs: QuestionnaireAutosave.DefaultDebounceMs);
+            var kind = OnboardingMiniBlockCompletion.AssessmentKindForWizardStep(_step);
+            var autosaveContext = new MiniBlockAutosaveContext(
+                _step,
+                kind,
+                _miniQuickScanVersion,
+                new Dictionary<int, int>(_serverAnswers));
+            _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
+            {
+                await PersistMiniBlockAnswersAsync(autosaveContext, draft, cancellationToken);
+            }, onChanged: null, debounceMs: QuestionnaireAutosave.DefaultDebounceMs);
+        }
+        else
+        {
+            _autosave = null;
+        }
     }
 
     private async Task DisposeMiniAutosaveAsync()

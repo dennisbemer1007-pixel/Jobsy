@@ -32,9 +32,17 @@ public static class OnboardingRustigPanoramaAssets
 
     public static string Mobile(int step) => Mobile(ForStep(step));
 
-    public static string DesktopForStep(int step) => Desktop(step);
+    public static string DesktopForStep(int step) => step switch
+    {
+        7 => OnboardingRustigStep07IllustrationAssets.DesktopJpg,
+        _ => Desktop(step),
+    };
 
-    public static string MobileForStep(int step) => Mobile(step);
+    public static string MobileForStep(int step) => step switch
+    {
+        7 => OnboardingRustigStep07IllustrationAssets.MobileJpg,
+        _ => Mobile(step),
+    };
 
     public static string Desktop(string slug) =>
         $"/images/onboarding/rustig-panorama/{slug}-desktop.jpg?v={CacheVersion(slug)}";
