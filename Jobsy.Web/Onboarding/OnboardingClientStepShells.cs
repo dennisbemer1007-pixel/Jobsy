@@ -15,7 +15,7 @@ internal static class OnboardingClientStepShells
         return step switch
         {
             1 => BuildStep1(culture, draft),
-            2 => BuildStep2(culture),
+            2 => BuildStep2(culture, draft),
             3 => BuildStep3(culture),
             4 => BuildStep4(culture),
             5 => BuildStep5(culture),
@@ -66,33 +66,73 @@ internal static class OnboardingClientStepShells
         sb.Append("</fieldset>");
         sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel", draft.Phone));
         sb.Append("</div>");
-        AppendStepNav(sb, culture, plainJsNav: true);
         return sb.ToString();
     }
 
-    private static string BuildStep2(CultureState culture)
+    private static string BuildStep2(CultureState culture, OnboardingProfileDraft? draft)
     {
+        draft ??= new OnboardingProfileDraft();
+        var minH = (int)(draft.MinHours ?? 12);
+        var maxH = (int)(draft.MaxHours ?? 40);
+        var immediate = draft.Immediate;
+        var fromText = draft.AvailableFrom is { } d
+            ? JobsyDateInputRules.FormatDisplayDate(d, culture.Language)
+            : string.Empty;
+        var selectedPresets = new HashSet<string>(draft.Presets, StringComparer.OrdinalIgnoreCase);
+        var availability = new HashSet<string>(draft.Availability, StringComparer.Ordinal);
+
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated ob-wizard__presets\">");
-        sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets\"></div>");
+        sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets\">");
+        AppendPresetTiles(sb, culture, selectedPresets);
+        sb.Append("</div>");
         sb.Append("<div class=\"hours-range\" data-ob-client=\"hoursRail\">");
         sb.Append("<label>");
         sb.Append(WebUtility.HtmlEncode(culture["Vacancy.HoursPerWeek"]));
-        sb.Append(" <span data-ob-client=\"hoursLabel\">12 – 40</span>");
-        sb.Append("<input type=\"range\" min=\"1\" max=\"60\" data-ob-client=\"hoursMin\" />");
-        sb.Append("<input type=\"range\" min=\"1\" max=\"60\" data-ob-client=\"hoursMax\" />");
+        sb.Append(" <span data-ob-client=\"hoursLabel\">");
+        sb.Append(minH);
+        sb.Append(" – ");
+        sb.Append(maxH);
+        sb.Append("</span>");
+        sb.Append("<input type=\"range\" min=\"1\" max=\"60\" data-ob-client=\"hoursMin\" value=\"");
+        sb.Append(minH);
+        sb.Append("\" />");
+        sb.Append("<input type=\"range\" min=\"1\" max=\"60\" data-ob-client=\"hoursMax\" value=\"");
+        sb.Append(maxH);
+        sb.Append("\" />");
         sb.Append("</label></div>");
-        sb.Append("<div class=\"availability-matrix availability-matrix--touch\" data-ob-client=\"matrix\"></div>");
+        sb.Append("<div class=\"availability-matrix availability-matrix--touch\" data-ob-client=\"matrix\">");
+        AppendAvailabilityMatrix(sb, culture, availability);
+        sb.Append("</div>");
         sb.Append("<fieldset><legend>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityStartSummary"]));
         sb.Append("</legend>");
-        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startImmediate\" checked /> ");
+        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startImmediate\"");
+        if (immediate)
+        {
+            sb.Append(" checked");
+        }
+
+        sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableImmediate"]));
         sb.Append("</label>");
-        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startFromDate\" /> ");
+        sb.Append("<label><input type=\"radio\" name=\"ob-start\" data-ob-client=\"startFromDate\"");
+        if (!immediate)
+        {
+            sb.Append(" checked");
+        }
+
+        sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableFrom"]));
-        sb.Append("</label>");
-        sb.Append("<input data-ob-client=\"availableFrom\" hidden />");
+        sb.Append(" <input data-ob-client=\"availableFrom\" type=\"text\" inputmode=\"numeric\" autocomplete=\"off\"");
+        if (immediate)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append(" value=\"");
+        sb.Append(WebUtility.HtmlEncode(fromText));
+        sb.Append("\" /></label>");
         sb.Append("</fieldset>");
         sb.Append("</div>");
         AppendStepNav(sb, culture, plainJsNav: true);
@@ -173,6 +213,65 @@ internal static class OnboardingClientStepShells
         AppendStepNav(sb, culture);
         sb.Append("</div>");
         return sb.ToString();
+    }
+
+    private static void AppendPresetTiles(StringBuilder sb, CultureState culture, HashSet<string> selected)
+    {
+        foreach (var preset in OnboardingPresetCatalog.Items)
+        {
+            var on = selected.Contains(preset.Code);
+            sb.Append("<button type=\"button\" class=\"lobsy-choice-tile");
+            if (on)
+            {
+                sb.Append(" is-selected");
+            }
+
+            sb.Append("\" data-ob-code=\"");
+            sb.Append(WebUtility.HtmlEncode(preset.Code));
+            sb.Append("\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\"><strong>");
+            sb.Append(WebUtility.HtmlEncode(culture[preset.TitleKey]));
+            sb.Append("</strong><small>");
+            sb.Append(WebUtility.HtmlEncode(culture[preset.LeadKey]));
+            sb.Append("</small></button>");
+        }
+    }
+
+    private static void AppendAvailabilityMatrix(StringBuilder sb, CultureState culture, HashSet<string> selected)
+    {
+        var days = AvailabilityDayPartMatrixExport.Days;
+        var slots = AvailabilityDayPartMatrixExport.Slots;
+        sb.Append("<div class=\"availability-matrix__corner\"></div>");
+        foreach (var slot in slots)
+        {
+            sb.Append("<div class=\"availability-matrix__slot\">");
+            sb.Append(WebUtility.HtmlEncode(UiLabels.AvailabilitySlot(culture, slot)));
+            sb.Append("</div>");
+        }
+
+        foreach (var day in days)
+        {
+            sb.Append("<div class=\"availability-matrix__day\">");
+            sb.Append(WebUtility.HtmlEncode(UiLabels.Weekday(culture, day)));
+            sb.Append("</div>");
+            foreach (var slot in slots)
+            {
+                var key = day + ":" + slot;
+                var on = selected.Contains(key);
+                sb.Append("<button type=\"button\" class=\"availability-matrix__cell availability-matrix__cell--btn");
+                if (on)
+                {
+                    sb.Append(" is-on");
+                }
+
+                sb.Append("\" data-ob-key=\"");
+                sb.Append(WebUtility.HtmlEncode(key));
+                sb.Append("\" aria-pressed=\"");
+                sb.Append(on ? "true" : "false");
+                sb.Append("\"></button>");
+            }
+        }
     }
 
     private static void AppendWorkStatusChips(StringBuilder sb, CultureState culture, OnboardingProfileDraft draft)

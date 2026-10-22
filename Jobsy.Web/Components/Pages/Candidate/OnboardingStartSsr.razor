@@ -1,0 +1,319 @@
+@page "/candidate/start"
+@layout OnboardingStartSsrLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Onboarding
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IOnboardingRustigGate OnboardingRustig
+@inject IFeatureFlags FeatureFlags
+@inject IOnboardingFinaleV2Gate OnboardingFinaleV2
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
+    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-ssr" />
+</HeadContent>
+
+@if (_loading)
+{
+    <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+}
+else if (_step is >= 1 and <= 2)
+{
+    var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
+    <form method="post"
+          action="@($"/candidate/start?step={_step}")"
+          class="ob-wizard ob-wizard--richting-a ob-wizard--rustig"
+          data-enhance="false"
+          data-enhance-nav="false"
+          data-ob-ssr-form="1"
+          data-ob-ssr-step="@_step"
+          data-ob-antiforgery-header="@_antiforgeryHeader"
+          data-ob-antiforgery-token="@_antiforgeryToken"
+          data-ob-active-step="@_step">
+        <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+        <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <p class="state-message error ob-wizard__nav-error" role="alert">@_errorMessage</p>
+        }
+        else
+        {
+            <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
+        }
+        <div class="ob-rustig" data-ob-rustig-screen="@($"step-{_step:D2}")">
+            <div class="ob-rustig__layout @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
+                <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
+                    <img class="ob-rustig__logo-e"
+                         src="@BrandImages.AppIconSvg"
+                         width="56"
+                         height="56"
+                         alt="Lobsy"
+                         decoding="async"
+                         data-logo-fallback="off"
+                         draggable="false" />
+                    @foreach (var item in OnboardingRustigSidebarNav.Items(_step))
+                    {
+                        var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
+                        <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"
+                           href="@OnboardingRustigSidebarNav.LinkHref(section)"
+                           data-enhance-nav="false">
+                            <span>@item.Number</span>
+                            <div>
+                                <strong>@item.Title</strong>
+                                @if (!string.IsNullOrWhiteSpace(item.Sub))
+                                {
+                                    <small>@item.Sub</small>
+                                }
+                            </div>
+                        </a>
+                    }
+                </aside>
+
+                <div class="ob-rustig__main">
+                    <header class="ob-rustig__chrome">
+                        <div class="ob-rustig__mobile-brand">
+                            <img class="ob-rustig__logo-e"
+                                 src="@BrandImages.AppIconSvg"
+                                 width="40"
+                                 height="40"
+                                 alt=""
+                                 decoding="async"
+                                 data-logo-fallback="off"
+                                 draggable="false" />
+                        </div>
+                        <div class="ob-rustig__chrome-row">
+                            @if (_step > 1)
+                            {
+                                <button type="submit"
+                                        class="ob-rustig__link"
+                                        name="obNav"
+                                        value="back"
+                                        aria-label="@Culture["Onboarding.BackAria"]">‹</button>
+                            }
+                            else
+                            {
+                                <span class="ob-rustig__link" aria-hidden="true">‹</span>
+                            }
+                            <div class="ob-rustig__segments"
+                                 role="progressbar"
+                                 aria-valuemin="1"
+                                 aria-valuemax="10"
+                                 aria-valuenow="@_step"
+                                 aria-label="@Culture.Format("Onboarding.ProgressAria", _step, 10)">
+                                @foreach (var phase in OnboardingWizardCatalog.Phases)
+                                {
+                                    <span><i style="--w:@(OnboardingWizardCatalog.PhaseFill(phase, _step) * 100)%"></i></span>
+                                }
+                            </div>
+                            <div class="ob-rustig__actions">
+                                <a class="ob-rustig__link" href="/candidate/profile">@Culture["Onboarding.Later"]</a>
+                                <a class="ob-rustig__link ob-rustig__link--underline"
+                                   href="/privacy/data"
+                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                            </div>
+                        </div>
+                        <div class="ob-rustig__meta">
+                            <span>
+                                <strong>@Culture[rustigPhase.NameKey]</strong>
+                                <text> · @Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.V3RemainingMinutes(_step))</text>
+                            </span>
+                            <span class="ob-rustig__saved" aria-live="polite">@Culture["Onboarding.Rustig.Saved"]</span>
+                        </div>
+                    </header>
+
+                    <OnboardingRustigHero DesktopUrl="@OnboardingRustigPanoramaAssets.Desktop(_step)"
+                                          MobileUrl="@(OnboardingRustigPanoramaAssets.Mobile(_step) ?? OnboardingRustigPanoramaAssets.Desktop(_step))" />
+
+                    <div class="ob-rustig__page-head">
+                        <h1 tabindex="-1">@Culture[$"Onboarding.Step{_step}.Title"]</h1>
+                        <p class="ob-rustig__lead">@Culture[$"Onboarding.Step{_step}.Lead"]</p>
+                    </div>
+
+                    <div class="ob-rustig__body">
+                        <div class="ob-rustig__canvas" data-testid="@($"onboarding-step-{_step}-illustrated")">
+                            <div class="ob-rustig__form-grid">
+                                <div class="ob-client-step ob-fields ob-fields--illustrated"
+                                     data-ob-client-step="@_step"
+                                     data-initial="@_initialJson"
+                                     data-ob-ssr-values="1"
+                                     data-testid="@($"onboarding-step-{_step}-illustrated")">
+                                    @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft))
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ob-rustig__footer-actions">
+                            <button type="submit"
+                                    class="ob-rustig__btn"
+                                    name="obNav"
+                                    value="back"
+                                    data-testid="onboarding-back"
+                                    disabled="@(_step == 1)">@Culture["Onboarding.Back"]</button>
+                            <button type="submit"
+                                    class="ob-rustig__btn ob-rustig__btn--primary"
+                                    name="obNav"
+                                    value="next"
+                                    data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+}
+
+@code {
+    private const string WelcomeDismissedSource = "welcome";
+
+    private bool _loading = true;
+    private bool _redirecting;
+    private int _step = 1;
+    private bool _showJobsRail;
+    private OnboardingProfileDraft _draft = new();
+    private string _initialJson = "{}";
+    private string _antiforgeryHeader = "RequestVerificationToken";
+    private string _antiforgeryToken = "";
+    private string? _errorMessage;
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryHeader = tokens.HeaderName ?? "RequestVerificationToken";
+            _antiforgeryToken = tokens.RequestToken ?? "";
+            if (http.Request.Query.TryGetValue("obError", out var err) && !string.IsNullOrWhiteSpace(err))
+            {
+                _errorMessage = err.ToString();
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!OnboardingRustig.Enabled)
+        {
+            RedirectTo(WizardUrl(_step));
+            return;
+        }
+
+        try
+        {
+            var onboardingTask = Api.GetMyOnboardingAsync();
+            var profileTask = Api.GetMyProfileAsync();
+            await Task.WhenAll(onboardingTask, profileTask);
+            var state = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true };
+            _draft = OnboardingProfileDraftHydrator.FromProfile(await profileTask);
+
+            var passportOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.CandidatePassport);
+            var finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
+            if (state.IsComplete)
+            {
+                RedirectTo(passportOn ? FeatureRoutes.CandidatePassportPath : "/candidate/profile");
+                return;
+            }
+
+            if (passportOn && state.FinishReached && !finaleV2)
+            {
+                RedirectTo(FeatureRoutes.CandidateDiscoveryPath);
+                return;
+            }
+
+            _step = Math.Clamp(state.CurrentStep, 1, 10);
+            if (TryParseStepQuery(out var requested))
+            {
+                var ceiling = Math.Clamp(state.CurrentStep, 1, 10);
+                _step = Math.Clamp(requested, 1, ceiling);
+            }
+
+            if (ShouldShowWelcomeScreen(state, _step))
+            {
+                RedirectTo(WizardUrl(_step));
+                return;
+            }
+
+            if (_step is < 1 or > 2)
+            {
+                RedirectTo(WizardUrl(_step));
+                return;
+            }
+
+            _showJobsRail = _step is 2;
+            var presets = OnboardingPresetCatalog.Items
+                .Select(p => (p.Code, p.TitleKey, p.LeadKey))
+                .ToList();
+            _initialJson = OnboardingClientStepInitialState.Build(_step, _draft, Culture, presets);
+        }
+        catch
+        {
+            RedirectTo(WizardUrl(1));
+            return;
+        }
+        finally
+        {
+            if (!_redirecting)
+            {
+                _loading = false;
+            }
+        }
+    }
+
+    private void RedirectTo(string url)
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        _redirecting = true;
+        http.Response.Redirect(url);
+    }
+
+    private static string WizardUrl(int step) =>
+        $"{OnboardingRoutes.WizardStartPath}?step={step}";
+
+    private bool TryParseStepQuery(out int step)
+    {
+        step = 1;
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return false;
+        }
+
+        var query = http.Request.Query;
+        if (!query.TryGetValue("step", out var raw) || string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        return int.TryParse(raw, out step);
+    }
+
+    private static bool ShouldShowWelcomeScreen(OnboardingState state, int step)
+        => step == 1
+           && !string.Equals(state.Source, WelcomeDismissedSource, StringComparison.OrdinalIgnoreCase)
+           && (state.Steps.Count == 0
+               || state.Steps.All(item => item.Step == 1 && item.CompletedAtUtc is null));
+}

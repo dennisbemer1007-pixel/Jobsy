@@ -559,7 +559,9 @@
             if (!presetGrid) return;
             presetGrid.querySelectorAll(".lobsy-choice-tile[data-ob-code]").forEach(function (btn) {
                 var code = btn.getAttribute("data-ob-code");
-                btn.setAttribute("aria-pressed", state.presets.has(code) ? "true" : "false");
+                var on = state.presets.has(code);
+                btn.setAttribute("aria-pressed", on ? "true" : "false");
+                btn.classList.toggle("is-selected", on);
             });
         }
 
@@ -593,8 +595,26 @@
             saveNow();
         }
 
+        function bindPresetGridClicks() {
+            if (!presetGrid || presetGrid.__obPresetClick) return;
+            presetGrid.__obPresetClick = true;
+            presetGrid.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
+                if (!btn || !presetGrid.contains(btn)) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                togglePresetCode(btn.getAttribute("data-ob-code"));
+            }, true);
+        }
+
         function ensurePresets() {
-            if (!presetGrid || presetGrid.getAttribute("data-ob-preset-bound") === "1") {
+            if (!presetGrid) return;
+            if (presetGrid.children.length > 0) {
+                bindPresetGridClicks();
+                syncPresetUi();
+                return;
+            }
+            if (presetGrid.getAttribute("data-ob-preset-bound") === "1") {
                 syncPresetUi();
                 return;
             }
@@ -609,17 +629,38 @@
                 btn.innerHTML = "<strong>" + escapeHtml(tile.title) + "</strong><small>" + escapeHtml(tile.lead) + "</small>";
                 presetGrid.appendChild(btn);
             });
-            presetGrid.addEventListener("click", function (ev) {
-                var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
-                if (!btn || !presetGrid.contains(btn)) return;
+            bindPresetGridClicks();
+        }
+
+        function bindMatrixClicks() {
+            if (!matrix || matrix.__obMatrixClick) return;
+            matrix.__obMatrixClick = true;
+            matrix.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".availability-matrix__cell--btn[data-ob-key]");
+                if (!btn || !matrix.contains(btn)) return;
                 ev.preventDefault();
                 ev.stopPropagation();
-                togglePresetCode(btn.getAttribute("data-ob-code"));
+                var key = btn.getAttribute("data-ob-key");
+                if (state.availability.has(key)) state.availability.delete(key);
+                else state.availability.add(key);
+                state.presetsOverridden = true;
+                state.presets.clear();
+                state.presets.add("custom");
+                state.fineTune = true;
+                syncPresetUi();
+                syncMatrixUi();
+                saveNow();
             }, true);
         }
 
         function ensureMatrix() {
-            if (!matrix || matrix.getAttribute("data-ob-matrix-bound") === "1") {
+            if (!matrix) return;
+            if (matrix.querySelector(".availability-matrix__cell--btn")) {
+                bindMatrixClicks();
+                syncMatrixUi();
+                return;
+            }
+            if (matrix.getAttribute("data-ob-matrix-bound") === "1") {
                 syncMatrixUi();
                 return;
             }
@@ -654,22 +695,7 @@
                     matrix.appendChild(btn);
                 });
             });
-            matrix.addEventListener("click", function (ev) {
-                var btn = ev.target.closest(".availability-matrix__cell--btn[data-ob-key]");
-                if (!btn || !matrix.contains(btn)) return;
-                ev.preventDefault();
-                ev.stopPropagation();
-                var key = btn.getAttribute("data-ob-key");
-                if (state.availability.has(key)) state.availability.delete(key);
-                else state.availability.add(key);
-                state.presetsOverridden = true;
-                state.presets.clear();
-                state.presets.add("custom");
-                state.fineTune = true;
-                syncPresetUi();
-                syncMatrixUi();
-                saveNow();
-            }, true);
+            bindMatrixClicks();
         }
 
         ensurePresets();
@@ -705,10 +731,8 @@
             });
         }
         if (availFrom) {
-            availFrom.addEventListener("input", function () {
-                availFrom.value = applyDateMask(availFrom.value);
-            });
             availFrom.addEventListener("change", saveNow);
+            availFrom.addEventListener("blur", saveNow);
         }
 
         return { collect: collectPayload, scheduleSave: saveNow };
@@ -1195,6 +1219,7 @@
 
     function bindObWizardNav() {
         if (window.__obWizardNavBound) return;
+        if (document.querySelector("form[data-ob-ssr-form]")) return;
         window.__obWizardNavBound = true;
         document.addEventListener("keydown", function (ev) {
             if (ev.key !== "Enter" || ev.defaultPrevented || ev.isComposing) return;
@@ -1342,7 +1367,24 @@
         bindKompasComplete();
     }
 
+    function bindSsrOnboardingForm() {
+        document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
+            if (form.__obSsrFormBound) return;
+            form.__obSsrFormBound = true;
+            form.addEventListener("submit", function () {
+                var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
+                var root = form.querySelector("[data-ob-client-step]");
+                if (!root || !step) return;
+                var st = roots ? roots.get(root) : null;
+                var payload = collectForRoot(root, step, st) || {};
+                var hidden = form.querySelector("[data-ob-ssr-payload]");
+                if (hidden) hidden.value = JSON.stringify(payload);
+            }, true);
+        });
+    }
+
     function bootOnboardingClient() {
+        bindSsrOnboardingForm();
         autoMountClientSteps();
         bindWelcomeBegin();
         bindKompasComplete();

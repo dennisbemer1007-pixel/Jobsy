@@ -1,4 +1,4 @@
-@page "/candidate/start"
+@page "/candidate/start/wizard"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
@@ -1187,6 +1187,12 @@
             }
 
             _welcome = ShouldShowWelcomeScreen(_state, _step);
+            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 2)
+            {
+                Navigation.NavigateTo(OnboardingRoutes.StepUrl(_step), forceLoad: true);
+                return;
+            }
+
             if (!_welcome && !_finish)
             {
                 await MarkStartedAsync();
@@ -1296,6 +1302,12 @@
             _state = await Api.SaveMyOnboardingProgressAsync(_step, source: WelcomeDismissedSource);
             Api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
             _welcome = false;
+            if (OnboardingRustig.Enabled)
+            {
+                Navigation.NavigateTo(OnboardingRoutes.StepUrl(_step), forceLoad: true);
+                return;
+            }
+
             RequestStepScrollReset();
             await InvokeAsync(StateHasChanged);
             await RefreshJourneyCompletionAsync();

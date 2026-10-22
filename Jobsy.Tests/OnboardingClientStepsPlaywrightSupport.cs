@@ -203,6 +203,8 @@ internal static class OnboardingClientStepsPlaywrightSupport
         private IHost? _kestrel;
         internal int SavedStep { get; set; } = 1;
         internal int ProfilePutCount;
+        internal bool WelcomeDismissed;
+        internal MeProfile StoredProfile = new() { FirstName = "Onboarding", LastName = "Tester" };
 
         public string ServerAddress { get; private set; } = "";
 
@@ -361,13 +363,54 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     factory.SavedStep = stepProp.GetInt32();
                 }
 
-                return JsonResponse(new { currentStep = factory.SavedStep, shouldShow = true, steps = Array.Empty<object>() });
+                if (doc.RootElement.TryGetProperty("source", out var sourceProp)
+                    && string.Equals(sourceProp.GetString(), "welcome", StringComparison.OrdinalIgnoreCase))
+                {
+                    factory.WelcomeDismissed = true;
+                }
+
+                return JsonResponse(new
+                {
+                    currentStep = factory.SavedStep,
+                    shouldShow = true,
+                    source = factory.WelcomeDismissed ? "welcome" : null,
+                    steps = Array.Empty<object>(),
+                });
             }
 
             if (path.Contains("/profile", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
             {
                 Interlocked.Increment(ref factory.ProfilePutCount);
-                return JsonResponse(new MeProfile { FirstName = "T", LastName = "E" });
+                try
+                {
+                    var body = await request.Content!.ReadAsStringAsync(cancellationToken);
+                    using var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("firstName", out var fn))
+                    {
+                        factory.StoredProfile.FirstName = fn.GetString() ?? factory.StoredProfile.FirstName;
+                    }
+
+                    if (doc.RootElement.TryGetProperty("lastName", out var ln))
+                    {
+                        factory.StoredProfile.LastName = ln.GetString() ?? factory.StoredProfile.LastName;
+                    }
+
+                    if (doc.RootElement.TryGetProperty("homeLatitude", out var lat) && lat.TryGetDouble(out var latV))
+                    {
+                        factory.StoredProfile.HomeLatitude = latV;
+                    }
+
+                    if (doc.RootElement.TryGetProperty("homeLongitude", out var lng) && lng.TryGetDouble(out var lngV))
+                    {
+                        factory.StoredProfile.HomeLongitude = lngV;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Best-effort stub persistence.
+                }
+
+                return JsonResponse(factory.StoredProfile);
             }
 
             object payload = path switch
@@ -376,13 +419,10 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 {
                     currentStep = factory.SavedStep,
                     shouldShow = true,
+                    source = factory.WelcomeDismissed ? "welcome" : null,
                     steps = Array.Empty<object>(),
                 },
-                var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => new MeProfile
-                {
-                    FirstName = "Onboarding",
-                    LastName = "Tester",
-                },
+                var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => factory.StoredProfile,
                 var p when p.Contains("/competencies", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/career-interests", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/culture", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
