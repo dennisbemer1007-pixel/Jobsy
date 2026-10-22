@@ -2596,3 +2596,22 @@
 .kompas--ssr .kompas__intro {
   margin-block-end: 1rem;
 }
+
+.kompas--ssr-body {
+  margin-block-start: 1rem;
+}
+
+.kompas--ssr .ob-rustig__kompas-full-tests {
+  margin-block-start: 2rem;
+  padding-block-start: 1.5rem;
+  border-block-start: 1px solid var(--border, #ddd5cc);
+}
+
+.kompas--ssr .ob-rustig__kompas-full-tests .ob-rustig__btn {
+  margin-block-start: 0.75rem;
+}
+
+.ob-rustig__kompas-finale .ob-finale__badge.ob-rustig__kompas-badge {
+  display: inline-flex;
+  margin-block-end: 1rem;
+}

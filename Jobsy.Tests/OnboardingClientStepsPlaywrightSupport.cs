@@ -229,6 +229,8 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal bool FinishReached;
         internal bool OnboardingComplete;
         internal bool CandidatePassportEnabled;
+        internal bool KandidatenkaartEnabled = true;
+        internal int StubMatchingVacancyCount { get; set; }
 
         public string ServerAddress { get; private set; } = "";
 
@@ -320,7 +322,8 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 EmployersEnabled: true,
                 CandidatePassportEnabled: factory.CandidatePassportEnabled,
                 TestsV2Enabled: true,
-                OnboardingFinaleV2Enabled: true));
+                OnboardingFinaleV2Enabled: true,
+                KandidatenkaartEnabled: factory.KandidatenkaartEnabled));
 
         public async ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
             => (await GetAsync(cancellationToken)).IsEnabled(feature);
@@ -424,15 +427,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     factory.FinishReached = true;
                 }
 
-                return JsonResponse(new
-                {
-                    currentStep = factory.SavedStep,
-                    shouldShow = true,
-                    finishReached = factory.FinishReached,
-                    isComplete = factory.OnboardingComplete,
-                    source = factory.WelcomeDismissed ? "welcome" : null,
-                    steps = Array.Empty<object>(),
-                });
+                return JsonResponse(BuildStubOnboardingPayload(factory));
             }
 
             if (path.Contains("/career-path", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Get)
@@ -524,15 +519,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
             object payload = path switch
             {
-                var p when p.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) => new
-                {
-                    currentStep = factory.SavedStep,
-                    shouldShow = true,
-                    finishReached = factory.FinishReached,
-                    isComplete = factory.OnboardingComplete,
-                    source = factory.WelcomeDismissed ? "welcome" : null,
-                    steps = Array.Empty<object>(),
-                },
+                var p when p.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) => BuildStubOnboardingPayload(factory),
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => factory.StoredProfile,
                 var p when p.Contains("/site/status", StringComparison.OrdinalIgnoreCase) => new { maintenance = false },
                 _ => new { },
@@ -546,6 +533,37 @@ internal static class OnboardingClientStepsPlaywrightSupport
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload, Json), System.Text.Encoding.UTF8, "application/json"),
             };
+
+        private static object BuildStubOnboardingPayload(ClientStepsWebFactory factory)
+        {
+            object? impression = factory.FinishReached || factory.StubMatchingVacancyCount > 0
+                ? new
+                {
+                    strengths = new[]
+                    {
+                        new { label = "Samen en aardig", sentence = "Je werkt graag samen en houdt rekening met anderen." },
+                    },
+                    riasec = new[]
+                    {
+                        new { label = "Praktisch bezig", sentence = "Je krijgt energie van doen, maken en aanpakken." },
+                    },
+                    cultureHighlight = new { label = "Informeel en warm", sentence = "Je voelt je op je gemak in een relaxte werksfeer." },
+                    topValue = new { label = "Zinvol en betrokken", sentence = "Je wilt dat je werk ertoe doet voor anderen of de wereld." },
+                    matchingVacancyCount = factory.StubMatchingVacancyCount,
+                }
+                : null;
+
+            return new
+            {
+                currentStep = factory.SavedStep,
+                shouldShow = true,
+                finishReached = factory.FinishReached,
+                isComplete = factory.OnboardingComplete,
+                source = factory.WelcomeDismissed ? "welcome" : null,
+                steps = Array.Empty<object>(),
+                impression,
+            };
+        }
 
         private static async Task MergeCompetencyPutAsync(
             HttpRequestMessage request,

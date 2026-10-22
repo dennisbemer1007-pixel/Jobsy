@@ -4,6 +4,7 @@
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
 @using Jobsy.Core.Features
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
@@ -13,6 +14,7 @@
 @using Jobsy.Web.Onboarding
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 @inject IOnboardingRustigGate OnboardingRustig
 @inject IHttpContextAccessor HttpContextAccessor
 
@@ -24,7 +26,7 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasssr" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasc" />
     <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
 </HeadContent>
 
@@ -35,7 +37,7 @@
 else
 {
     var pageTitle = Culture.Format("Onboarding.Finish.Title", _firstName);
-    var pageLead = Culture["Onboarding.Rustig.Kompas.ShellLead"];
+    var pageLead = Culture["Onboarding.FinaleV2.Lead"];
     <div class="ob-wizard ob-wizard--richting-a ob-wizard--rustig">
         <div class="ob-rustig" data-ob-rustig-screen="kompas">
             <div class="ob-rustig__layout">
@@ -67,8 +69,42 @@ else
 
                 <div class="ob-rustig__main">
                     <header class="ob-rustig__chrome">
+                        <div class="ob-rustig__mobile-brand">
+                            <img class="ob-rustig__logo-e"
+                                 src="@BrandImages.AppIconSvg"
+                                 width="40"
+                                 height="40"
+                                 alt=""
+                                 decoding="async"
+                                 data-logo-fallback="off"
+                                 draggable="false" />
+                        </div>
+                        <div class="ob-rustig__chrome-row">
+                            <span class="ob-rustig__link ob-rustig__link--spacer" aria-hidden="true">‹</span>
+                            <div class="ob-rustig__segments"
+                                 role="progressbar"
+                                 aria-valuemin="1"
+                                 aria-valuemax="10"
+                                 aria-valuenow="10"
+                                 aria-label="@Culture.Format("Onboarding.ProgressAria", 10, 10)">
+                                @foreach (var phase in OnboardingWizardCatalog.Phases)
+                                {
+                                    <span><i style="--w:@(OnboardingWizardCatalog.PhaseFill(phase, 10) * 100)%"></i></span>
+                                }
+                            </div>
+                            <div class="ob-rustig__actions">
+                                <a class="ob-rustig__link" href="/candidate/profile">@Culture["Onboarding.Later"]</a>
+                                <a class="ob-rustig__link ob-rustig__link--underline"
+                                   href="/privacy/data"
+                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                            </div>
+                        </div>
                         <div class="ob-rustig__meta">
-                            <span><strong>@Culture["Onboarding.Rustig.Phase.Kompas"]</strong></span>
+                            <span>
+                                <strong>@Culture["Onboarding.Rustig.Phase.Kompas"]</strong>
+                                <text> · @Culture.Format("Onboarding.StepLine", 10, OnboardingWizardCatalog.V3RemainingMinutes(10))</text>
+                            </span>
+                            <span class="ob-rustig__saved" aria-live="polite">@Culture["Onboarding.Rustig.Saved"]</span>
                         </div>
                     </header>
 
@@ -104,20 +140,29 @@ else
 
         try
         {
-            var state = await Api.GetMyOnboardingAsync() ?? new OnboardingState();
-            if (!state.FinishReached)
+            var data = await OnboardingKompasSsrData.LoadAsync(Api, FeatureFlags);
+            if (data is null)
             {
-                RedirectTo(OnboardingRoutes.StepUrl(Math.Clamp(state.CurrentStep, 1, 10)));
+                RedirectTo(OnboardingRoutes.ClassicStartPath);
                 return;
             }
 
-            var profile = await Api.GetMyProfileAsync();
-            _firstName = string.IsNullOrWhiteSpace(profile?.FirstName) ? "" : profile!.FirstName.Trim();
+            if (!data.State.FinishReached)
+            {
+                RedirectTo(OnboardingRoutes.StepUrl(Math.Clamp(data.State.CurrentStep, 1, 10)));
+                return;
+            }
+
+            _firstName = data.FirstName;
             var model = new OnboardingKompasSsrShells.ReadyModel(
                 _firstName,
-                state.Impression,
+                data.Impression,
+                data.MatchCount,
+                data.MaxTravelMinutes,
+                data.HomeLabel,
+                data.CardsInput,
                 OnboardingRoutes.KompasHubPath,
-                "/home?tab=tests");
+                OnboardingKompasSsrData.FullTestsUrl);
             _bodyHtml = OnboardingKompasSsrShells.BuildReadyBody(Culture, model);
         }
         catch

@@ -331,9 +331,14 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start/kompas**");
         await page.Locator("[data-ob-rustig-screen=kompas]").WaitForAsync(new() { Timeout = 60_000 });
-        await page.GetByTestId("onboarding-kompas-complete").ClickAsync();
+        await page.Locator("#kompas-tests").WaitForAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(page.Locator(".ob-rustig__kompas-test-card")).ToHaveCountAsync(4);
+        await page.GetByTestId("onboarding-kompas-full-tests").ClickAsync();
         await page.WaitForURLAsync("**/candidate/kompas**");
+        await page.Locator("#kompas-full-tests").WaitForAsync(new() { Timeout = 60_000 });
         await page.GetByTestId("candidate-kompas-ssr").WaitForAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(page.Locator("#kompas-directions")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("a.admin-sublink[href=\"#kompas-tests\"]")).ToBeVisibleAsync();
         await page.GetByTestId("kompas-go-passport").ClickAsync();
         await page.WaitForURLAsync("**/candidate/paspoort**");
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
