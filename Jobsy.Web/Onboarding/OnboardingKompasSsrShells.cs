@@ -36,13 +36,12 @@ internal static class OnboardingKompasSsrShells
     public static string BuildReadyBody(CultureState culture, ReadyModel model)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-rustig__canvas ob-rustig__kompas\">");
+        sb.Append("<div class=\"ob-rustig__canvas ob-rustig__kompas ob-rustig__kompas--ready\">");
         sb.Append("<div class=\"ob-rustig__kompas-finale\" data-testid=\"onboarding-rustig-kompas\">");
-        sb.Append("<section class=\"ob-finale ob-finale--no-hero\" data-testid=\"onboarding-finale-v2\">");
+        sb.Append("<section class=\"ob-finale ob-finale--no-hero ob-finale--kompas-ready\" data-testid=\"onboarding-finale-v2\">");
         sb.Append("<div class=\"ob-finale__wrap\">");
-        AppendBadge(sb, culture);
-        AppendPrimaryCtas(sb, culture, model.HubUrl, model.FullTestsUrl, readyScreen: true);
         AppendKompasContent(sb, culture, model.Impression, model.MatchCount, model.MaxTravelMinutes, model.HomeLabel, model.CardsInput, includeFullTestsSection: false);
+        AppendPrimaryCtas(sb, culture, model.HubUrl, model.FullTestsUrl, readyScreen: true);
         sb.Append("</div></section></div></div>");
         return sb.ToString();
     }
@@ -115,13 +114,6 @@ internal static class OnboardingKompasSsrShells
         {
             AppendFullTestsSection(sb, culture);
         }
-    }
-
-    private static void AppendBadge(StringBuilder sb, CultureState culture)
-    {
-        sb.Append("<span class=\"ob-rustig__kompas-badge ob-finale__badge\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.FinaleV2.Badge"]));
-        sb.Append("</span>");
     }
 
     private static void AppendPrimaryCtas(StringBuilder sb, CultureState culture, string hubUrl, string fullTestsUrl, bool readyScreen)

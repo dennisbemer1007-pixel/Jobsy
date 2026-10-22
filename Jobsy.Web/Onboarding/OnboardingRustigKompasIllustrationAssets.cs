@@ -2,10 +2,10 @@ namespace Jobsy.Web.Onboarding;
 
 public static class OnboardingRustigKompasIllustrationAssets
 {
-    public const string Version = "20261020-18";
+    public const string Version = "20261022-kompasc";
 
     public static string DesktopJpg =>
-        $"/images/onboarding/rustig-mockup/kompas-a-hero-desktop.jpg?v={Version}";
+        $"/images/candidate-illustrated/kompas-hero-band-c.jpg?v={Version}";
 
     public static string MobileJpg =>
         $"/images/onboarding/rustig-mockup/kompas-c-hero-mobile.jpg?v={Version}";

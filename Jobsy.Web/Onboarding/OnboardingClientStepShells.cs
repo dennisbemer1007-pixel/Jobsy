@@ -401,7 +401,7 @@ internal static class OnboardingClientStepShells
         const string scaleLabelsStyle =
             "display:flex;justify-content:space-between;margin:0 0 0.35rem;color:var(--muted);font-size:0.85rem;width:100%";
         const string likertRowStyle =
-            "display:flex;flex-wrap:nowrap;gap:8px;width:100%;max-width:40rem;box-sizing:border-box;margin:0 0 1.5rem";
+            "display:flex;flex-wrap:nowrap;gap:8px;width:100%;max-width:100%;box-sizing:border-box;margin:0 0 1.5rem";
         const string likertBtnStyle =
             "flex:1 1 0;min-width:0;min-height:56px;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--pearl,#f7f4f0);border-radius:8px;background:var(--surface);font:inherit;font-weight:600;cursor:pointer;box-sizing:border-box;width:100%";
         const string likertBtnOnStyle =
@@ -485,7 +485,7 @@ internal static class OnboardingClientStepShells
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture.Format("TestFlow.QuestionOf", q1, total)));
         sb.Append("</p>");
-        sb.Append("<div class=\"test-flow__bar\" role=\"group\" aria-hidden=\"true\" style=\"display:flex;gap:4px;margin:0 0 0.75rem;width:100%;max-width:40rem\">");
+        sb.Append("<div class=\"test-flow__bar\" role=\"group\" aria-hidden=\"true\" style=\"display:flex;gap:4px;margin:0 0 0.75rem;width:100%;max-width:100%\">");
         for (var seg = 0; seg < total; seg++)
         {
             var segQuestion = questions[seg];
