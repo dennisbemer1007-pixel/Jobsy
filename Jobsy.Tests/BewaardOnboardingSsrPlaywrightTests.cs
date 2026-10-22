@@ -62,6 +62,7 @@ public sealed class BewaardOnboardingSsrPlaywrightTests : IAsyncLifetime
 
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start"));
         await page.GetByTestId("onboarding-start-screen").WaitForAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(page.GetByTestId("onboarding-start-journey-route")).ToBeVisibleAsync();
         var shotDir = "/opt/cursor/artifacts/screenshots";
         Directory.CreateDirectory(shotDir);
         var suffix = mobile ? "390" : "1440";

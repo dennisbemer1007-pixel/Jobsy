@@ -89,7 +89,7 @@ internal static class OnboardingClientStepShells
             "display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px;width:auto;text-align:left;font-weight:600";
         const string radioInputStyle = "width:18px;height:18px;margin:0;flex:0 0 auto";
         const string saveBtnStyle =
-            "padding:10px 20px;min-width:120px;min-height:44px;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:#fff;font:inherit;font-weight:600;cursor:pointer;flex:1 1 120px;box-sizing:border-box";
+            "padding:10px 20px;min-width:auto;width:auto;flex:0 0 auto;min-height:44px;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:#fff;font:inherit;font-weight:600;cursor:pointer;text-align:center;box-sizing:border-box";
         const string step2StackStyle =
             "display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:none;box-sizing:border-box;gap:12px";
         const string step2GridStyle =
@@ -262,11 +262,11 @@ internal static class OnboardingClientStepShells
             ? null
             : draft.Education.Trim();
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-education\">");
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-education\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
         sb.Append("<div class=\"ob-wizard__section-title ob-illustrated-step__field-label\" id=\"onboarding-education-label\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.EducationPickLevel"]));
         sb.Append("</div>");
-        sb.Append("<div data-ob-client=\"educationGrid\" class=\"ob-wizard__education-grid lobsy-choice-grid\" role=\"radiogroup\" aria-labelledby=\"onboarding-education-label\">");
+        sb.Append("<div data-ob-client=\"educationGrid\" class=\"ob-wizard__education-grid lobsy-choice-grid\" role=\"radiogroup\" aria-labelledby=\"onboarding-education-label\" style=\"display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;max-width:none;box-sizing:border-box\">");
         AppendEducationTiles(sb, culture, selected);
         sb.Append("</div></div>");
         return sb.ToString();
@@ -278,8 +278,8 @@ internal static class OnboardingClientStepShells
         var activeDream = string.IsNullOrWhiteSpace(draft.DreamSearch) ? draft.Dream : draft.DreamSearch;
         activeDream = activeDream?.Trim() ?? "";
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-dream\">");
-        sb.Append("<div class=\"ob-rustig__dream-grid lobsy-choice-grid\" data-ob-ssr-dream-grid role=\"listbox\">");
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-dream\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
+        sb.Append("<div class=\"ob-rustig__dream-grid lobsy-choice-grid\" data-ob-ssr-dream-grid role=\"listbox\" style=\"display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:none;box-sizing:border-box\">");
         foreach (var title in dreamTitles ?? [])
         {
             if (string.IsNullOrWhiteSpace(title))
@@ -296,6 +296,12 @@ internal static class OnboardingClientStepShells
                 sb.Append(" is-on is-selected");
             }
 
+            sb.Append("\" style=\"flex:0 1 auto;min-height:48px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font:inherit;font-weight:600;text-align:center;box-sizing:border-box");
+            if (on)
+            {
+                sb.Append(";border-color:var(--brand);background:color-mix(in srgb, var(--brand) 12%, var(--surface));color:var(--brand)");
+            }
+
             sb.Append("\" data-ob-dream-title=\"");
             sb.Append(WebUtility.HtmlEncode(trimmed));
             sb.Append("\" data-testid=\"onboarding-dream-tile\" aria-pressed=\"");
@@ -306,7 +312,7 @@ internal static class OnboardingClientStepShells
         }
 
         sb.Append("</div>");
-        sb.Append("<div class=\"ob-rustig__field ob-rustig__field--dream\" style=\"margin-top:1rem\">");
+        sb.Append("<div class=\"ob-rustig__field ob-rustig__field--dream\" style=\"margin-top:1rem;width:100%;max-width:none;box-sizing:border-box\">");
         sb.Append("<label for=\"onboarding-rustig-dream-input\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.DreamOwnLabel"]));
         sb.Append("</label>");
@@ -314,7 +320,7 @@ internal static class OnboardingClientStepShells
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
         sb.Append("\" value=\"");
         sb.Append(WebUtility.HtmlEncode(activeDream));
-        sb.Append("\" /></div></div>");
+        sb.Append("\" style=\"width:100%;min-height:44px;box-sizing:border-box\" /></div></div>");
         return sb.ToString();
     }
 
@@ -430,6 +436,12 @@ internal static class OnboardingClientStepShells
                 sb.Append(" is-selected");
             }
 
+            sb.Append("\" style=\"min-height:52px;width:100%;box-sizing:border-box;justify-content:flex-start;text-align:start;padding:12px 14px;border-radius:8px");
+            if (on)
+            {
+                sb.Append(";border-color:var(--brand);background:color-mix(in srgb, var(--brand) 12%, var(--surface));color:var(--brand);font-weight:600");
+            }
+
             sb.Append("\" data-ob-code=\"");
             sb.Append(WebUtility.HtmlEncode(level));
             sb.Append("\" aria-pressed=\"");
@@ -543,8 +555,8 @@ internal static class OnboardingClientStepShells
 
                 sb.Append("\" style=\"");
                 sb.Append(on
-                    ? "background:color-mix(in srgb, var(--brand) 20%, var(--surface));border:2px solid var(--brand);min-height:44px;box-sizing:border-box"
-                    : "background:var(--surface);border:1px solid var(--border);min-height:44px;box-sizing:border-box");
+                    ? "background:color-mix(in srgb, var(--brand) 20%, var(--surface));border:2px solid var(--brand);min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:var(--brand)"
+                    : "background:var(--surface);border:1px solid var(--border);min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:transparent");
                 sb.Append("\" value=\"");
                 sb.Append(WebUtility.HtmlEncode(key));
                 sb.Append("\" data-ob-key=\"");
@@ -555,7 +567,13 @@ internal static class OnboardingClientStepShells
                 sb.Append(WebUtility.HtmlEncode(UiLabels.Weekday(culture, day)));
                 sb.Append(' ');
                 sb.Append(WebUtility.HtmlEncode(UiLabels.AvailabilitySlot(culture, slot)));
-                sb.Append("\"></button>");
+                sb.Append("\">");
+                if (on)
+                {
+                    sb.Append("<span class=\"availability-matrix__mark\" style=\"font-weight:700;font-size:1.125rem;line-height:1\" aria-hidden=\"true\">✓</span>");
+                }
+
+                sb.Append("</button>");
             }
         }
     }
