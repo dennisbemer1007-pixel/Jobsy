@@ -652,6 +652,7 @@ app.MapAdminFrameEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();
 app.MapOnboardingClientEndpoints();
+app.MapOnboardingStartFormEndpoints();
 app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.

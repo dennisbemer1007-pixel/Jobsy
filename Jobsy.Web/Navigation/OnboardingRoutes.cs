@@ -11,10 +11,16 @@ public static class OnboardingRoutes
     public const string ClassicStartPath = "/candidate/start";
     public const string DiscoveryPath = "/candidate/ontdekkingsreis";
 
+    public const string WizardStartPath = ClassicStartPath + "/wizard";
+
+    /// <summary>Steps 1–2: static SSR. Step 3+: interactive wizard (own route, no Blazor on 1–2).</summary>
     public static string StepUrl(int step) =>
-        step is >= 1 and <= 10
-            ? $"{ClassicStartPath}?step={step}"
-            : ClassicStartPath;
+        step switch
+        {
+            >= 1 and <= 2 => $"{ClassicStartPath}?step={step}",
+            >= 3 and <= 10 => $"{WizardStartPath}?step={step}",
+            _ => ClassicStartPath,
+        };
 
     public static string StartPath(FeatureFlagSnapshot flags)
     {

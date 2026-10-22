@@ -1,0 +1,12 @@
+@inherits LayoutComponentBase
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="app-shell app-shell--candidate">
+    <main class="app-main">
+        <div class="app-main__content">
+            @Body
+        </div>
+    </main>
+</div>
