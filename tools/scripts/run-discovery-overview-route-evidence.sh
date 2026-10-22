@@ -12,7 +12,7 @@ export ConnectionStrings__JobsyDb="${ConnectionStrings__JobsyDb:-Host=127.0.0.1;
 export VerificationCodes__Pepper="${VerificationCodes__Pepper:-ci-verification-otp-pepper-32chars!!}"
 export JOBSY_E2E_BASE_URL="${JOBSY_E2E_BASE_URL:-http://127.0.0.1:5201}"
 export JOBSY_CAPTURE_DISCOVERY_OVERVIEW_ROUTE=1
-export JOBSY_DISCOVERY_OVERVIEW_ROUTE_CLICK_AUDIT=1
+export JOBSY_DISCOVERY_OVERVIEW_ROUTE_CLICK_AUDIT="${JOBSY_DISCOVERY_OVERVIEW_ROUTE_CLICK_AUDIT:-0}"
 
 if [[ "${SKIP_BUILD:-}" != "1" ]]; then
   dotnet build Jobsy.sln -c Release -v q

@@ -232,6 +232,10 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal bool KandidatenkaartEnabled = true;
         internal int StubMatchingVacancyCount { get; set; }
         internal int StubNearbyVacancyCount { get; set; }
+        internal int DiscoveryOverviewCompetencyAnswered { get; set; } = 25;
+        internal int DiscoveryOverviewCareerAnswered { get; set; } = 25;
+        internal int DiscoveryOverviewCultureAnswered { get; set; } = 25;
+        internal int DiscoveryOverviewValuesAnswered { get; set; }
         internal HashSet<Guid> StubLikedVacancyIds { get; } =
         [
             IllustratedPagesApiStub.SampleVacancyId,
@@ -564,6 +568,18 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 };
             }
 
+            if (JourneyBunitMiniResponses.IsDiscoveryOverviewPath(path))
+            {
+                return JsonResponse(new
+                {
+                    profileRevision = "playwright-stub",
+                    competencyAnswered = factory.DiscoveryOverviewCompetencyAnswered,
+                    careerAnswered = factory.DiscoveryOverviewCareerAnswered,
+                    cultureAnswered = factory.DiscoveryOverviewCultureAnswered,
+                    valuesAnswered = factory.DiscoveryOverviewValuesAnswered,
+                });
+            }
+
             if (path.Contains("nearby-signal", StringComparison.OrdinalIgnoreCase)
                 && request.Method == HttpMethod.Get)
             {
@@ -578,7 +594,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
             object payload = path switch
             {
-                var p when p.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) => BuildStubOnboardingPayload(factory),
+                var p when JourneyBunitMiniResponses.IsOnboardingStatePath(p) => BuildStubOnboardingPayload(factory),
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => factory.StoredProfile,
                 var p when p.Contains("/site/status", StringComparison.OrdinalIgnoreCase) => new { maintenance = false },
                 _ => new { },
