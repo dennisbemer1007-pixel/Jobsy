@@ -12,9 +12,9 @@ Dit zijn alleen afbeeldingen ter referentie. Er is geen code gewijzigd.
 
 | Bestand | Scherm | Variant |
 |---|---|---|
-| `00-start.png` | Start: Hoi Sam, fijn dat je er bent | start-g |
+| `desktop/00-start-r6c-desktop-*.png`, `mobile/00-start-r8c-mobiel-390.png` | Start (goedgekeurd 21 oktober 2026, 21:12) | desktop r6c, mobiel r8c |
 | `01-step-01.png` | Stap 1: Even kennismaken | u1b |
-| `02-step-02.png` | Stap 2: Wanneer kun je werken? | u10a |
+| `02-step-02.png` | Stap 2: Wanneer kun je werken? | u6s |
 | `03-step-03.png` | Stap 3: Hoe kom je op je werk? | u3c |
 | `04-step-04.png` | Stap 4: Heb je al gewerkt? | u10a |
 | `05-step-05.png` | Stap 5: Wat is je opleiding? | u10a |
@@ -31,3 +31,8 @@ Dit zijn alleen afbeeldingen ter referentie. Er is geen code gewijzigd.
 
 `11-step-11.png` is geen eigen stap. Het is een alternatieve hero-afbeelding voor stap 10 Waarden.
 De goedgekeurde versie van stap 10 is de u10a-panorama in `10-step-10.png`.
+
+## Startscherm
+
+Het startscherm is op 21 oktober 2026 opnieuw goedgekeurd: desktop r6c en mobiel r8c (branch `cursor/onboarding-start-journey-mock-dc9c`).
+De oudere versie start-g is verwijderd en mag niet meer gebouwd worden.
