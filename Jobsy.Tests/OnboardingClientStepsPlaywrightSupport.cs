@@ -222,6 +222,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal bool WelcomeDismissed;
         internal MeProfile StoredProfile = new() { FirstName = "Onboarding", LastName = "Tester" };
         internal string? StoredDreamTitle { get; set; }
+        internal Dictionary<string, int> CompetencyAnswers { get; } = new(StringComparer.Ordinal);
 
         public string ServerAddress { get; private set; } = "";
 
@@ -372,6 +373,13 @@ internal static class OnboardingClientStepsPlaywrightSupport
         {
             await Task.Delay(80, cancellationToken);
             var path = request.RequestUri?.AbsolutePath ?? "";
+            if (path.Contains("/test-ai-consent", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Post)
+            {
+                factory.StoredProfile.TestAiConsentAt = DateTime.UtcNow;
+                factory.StoredProfile.TestAiConsentVersion = "2024-01";
+                return JsonResponse(factory.StoredProfile);
+            }
+
             if (path.Contains("/onboarding/dream-job", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
             {
                 using var dreamDoc = await JsonDocument.ParseAsync(
@@ -430,6 +438,16 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 return JsonResponse(factory.StoredProfile);
             }
 
+            if (path.Contains("/competencies", StringComparison.OrdinalIgnoreCase))
+            {
+                if (request.Method == HttpMethod.Put)
+                {
+                    await MergeCompetencyPutAsync(request, factory, cancellationToken);
+                }
+
+                return JsonResponse(new { answers = factory.CompetencyAnswers, quickScanVersion = 1 });
+            }
+
             object payload = path switch
             {
                 var p when p.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) => new
@@ -440,7 +458,6 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     steps = Array.Empty<object>(),
                 },
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => factory.StoredProfile,
-                var p when p.Contains("/competencies", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/career-interests", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/culture", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/values", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
@@ -456,6 +473,26 @@ internal static class OnboardingClientStepsPlaywrightSupport
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload, Json), System.Text.Encoding.UTF8, "application/json"),
             };
+
+        private static async Task MergeCompetencyPutAsync(
+            HttpRequestMessage request,
+            ClientStepsWebFactory factory,
+            CancellationToken cancellationToken)
+        {
+            using var doc = await JsonDocument.ParseAsync(await request.Content!.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+            if (!doc.RootElement.TryGetProperty("answers", out var answers) || answers.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            foreach (var prop in answers.EnumerateObject())
+            {
+                if (prop.Value.TryGetInt32(out var score) && score is >= 1 and <= 5)
+                {
+                    factory.CompetencyAnswers[prop.Name] = score;
+                }
+            }
+        }
 
         private static void MergeStubProfilePut(ClientStepsWebFactory factory, string body)
         {

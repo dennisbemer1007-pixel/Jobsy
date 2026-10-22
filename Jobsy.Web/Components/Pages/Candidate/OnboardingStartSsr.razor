@@ -35,16 +35,21 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step6footer" />
+    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-step7ssr" />
 </HeadContent>
 
 @if (_loading)
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
-else if (_step is >= 1 and <= 6)
+else if (_step is >= 1 and <= 7)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
+    var step7Consent = _step == 7 && !_draft.HasConsent;
+    var pageTitle = step7Consent ? Culture["Onboarding.Consent.Title"] : Culture[$"Onboarding.Step{_step}.Title"];
+    var pageLead = step7Consent ? Culture["Onboarding.Consent.Lead"] : Culture[$"Onboarding.Step{_step}.Lead"];
+    var canvasClass = step7Consent ? "ob-rustig__canvas ob-rustig__canvas--consent" : "ob-rustig__canvas";
+    var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
     <form method="post"
           action="@($"/candidate/start?step={_step}")"
           class="ob-wizard ob-wizard--richting-a ob-wizard--rustig"
@@ -61,6 +66,10 @@ else if (_step is >= 1 and <= 6)
         {
             <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
             <script src="js/onboarding-step6-ssr.js?v=20261022-step6plain" defer></script>
+        }
+        @if (_step == 7)
+        {
+            <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
         }
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
@@ -148,19 +157,19 @@ else if (_step is >= 1 and <= 6)
                         {
                             <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
                         }
-                        <h1 tabindex="-1">@Culture[$"Onboarding.Step{_step}.Title"]</h1>
-                        <p class="ob-rustig__lead">@Culture[$"Onboarding.Step{_step}.Lead"]</p>
+                        <h1 tabindex="-1">@pageTitle</h1>
+                        <p class="ob-rustig__lead">@pageLead</p>
                     </div>
 
                     <div class="ob-rustig__body">
-                        <div class="ob-rustig__canvas" data-testid="@($"onboarding-step-{_step}-illustrated")">
+                        <div class="@canvasClass" data-testid="@canvasTestId">
                             <div class="ob-rustig__form-grid">
                                 <div class="ob-client-step ob-fields ob-fields--illustrated"
                                      data-ob-client-step="@_step"
                                      data-initial="@_initialJson"
                                      data-ob-ssr-values="1"
                                      data-testid="@($"onboarding-step-{_step}-illustrated")">
-                                    @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft, _dreamTitles))
+                                    @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft, _dreamTitles, _seed))
                                 </div>
                             </div>
                         </div>
@@ -212,6 +221,7 @@ else if (_step is >= 1 and <= 6)
     private OnboardingProfileDraft _draft = new();
     private string _initialJson = "{}";
     private IReadOnlyList<string> _dreamTitles = [];
+    private OnboardingClientStepSeed? _seed;
     private string _antiforgeryHeader = "RequestVerificationToken";
     private string _antiforgeryToken = "";
     private string? _errorMessage;
@@ -274,11 +284,13 @@ else if (_step is >= 1 and <= 6)
                 return;
             }
 
-            if (_step is < 1 or > 6)
+            if (_step is < 1 or > 7)
             {
                 RedirectTo(WizardUrl(_step));
                 return;
             }
+
+            _draft.ConsentRequested = _draft.HasConsent || _draft.ConsentRequested;
 
             _showJobsRail = _step is 2 or 3;
             var presets = OnboardingPresetCatalog.Items
@@ -299,10 +311,25 @@ else if (_step is >= 1 and <= 6)
                     .ToList();
             }
 
-            var seed = _step == 6
-                ? new OnboardingClientStepSeed { DreamTitles = _dreamTitles.ToList() }
-                : null;
-            _initialJson = OnboardingClientStepInitialState.Build(_step, _draft, Culture, presets, seed);
+            if (_step == 7)
+            {
+                var step7 = await OnboardingSsrStep7Loader.LoadAsync(Api, FeatureFlags, Culture, CancellationToken.None);
+                _seed = new OnboardingClientStepSeed
+                {
+                    MiniQuestions = step7.Questions.ToList(),
+                    MiniAnswers = step7.Answers,
+                    HasConsent = _draft.HasConsent,
+                    ConsentRequested = _draft.ConsentRequested,
+                };
+            }
+            else
+            {
+                _seed = _step == 6
+                    ? new OnboardingClientStepSeed { DreamTitles = _dreamTitles.ToList() }
+                    : null;
+            }
+
+            _initialJson = OnboardingClientStepInitialState.Build(_step, _draft, Culture, presets, _seed);
         }
         catch
         {

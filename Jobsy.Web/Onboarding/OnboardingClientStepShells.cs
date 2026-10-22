@@ -11,7 +11,12 @@ namespace Jobsy.Web.Onboarding;
 /// <summary>Static HTML for client onboarding steps (rendered once; JS attaches behavior).</summary>
 internal static class OnboardingClientStepShells
 {
-    public static string Build(int step, CultureState culture, OnboardingProfileDraft? draft = null, IReadOnlyList<string>? dreamTitles = null)
+    public static string Build(
+        int step,
+        CultureState culture,
+        OnboardingProfileDraft? draft = null,
+        IReadOnlyList<string>? dreamTitles = null,
+        OnboardingClientStepSeed? seed = null)
     {
         return step switch
         {
@@ -21,8 +26,7 @@ internal static class OnboardingClientStepShells
             4 => BuildStep4(culture, draft),
             5 => BuildStep5(culture, draft),
             6 => BuildStep6(culture, draft, dreamTitles),
-            7 when draft?.HasConsent == true => BuildMiniStep(culture),
-            7 => BuildStep7ConsentAndMini(culture),
+            7 => BuildStep7Ssr(culture, draft, seed),
             >= 8 and <= 10 => BuildMiniStep(culture),
             _ => "",
         };
@@ -310,17 +314,79 @@ internal static class OnboardingClientStepShells
         return sb.ToString();
     }
 
-    private static string BuildStep7ConsentAndMini(CultureState culture)
+    private static string BuildStep7Ssr(CultureState culture, OnboardingProfileDraft? draft, OnboardingClientStepSeed? seed)
     {
+        draft ??= new OnboardingProfileDraft();
+        seed ??= new OnboardingClientStepSeed();
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-consent\">");
-        sb.Append("<label class=\"ob-wizard__consent\"><input type=\"checkbox\" data-ob-client=\"consent\" /> ");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"]));
-        sb.Append("</label>");
-        sb.Append("<div class=\"ob-client-mini\" data-ob-client=\"miniRoot\"></div>");
-        AppendStepNav(sb, culture);
+        if (!draft.HasConsent)
+        {
+            var consentOn = draft.ConsentRequested;
+            sb.Append("<label class=\"ob-wizard__consent\"><input type=\"checkbox\" name=\"consentRequested\" value=\"true\" data-testid=\"onboarding-consent\"");
+            if (consentOn)
+            {
+                sb.Append(" checked");
+            }
+
+            sb.Append(" /> ");
+            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"]));
+            sb.Append("</label>");
+        }
+
+        AppendMiniQuestionsSsr(sb, seed.MiniQuestions, seed.MiniAnswers);
         sb.Append("</div>");
         return sb.ToString();
+    }
+
+    private static void AppendMiniQuestionsSsr(
+        StringBuilder sb,
+        IReadOnlyList<OnboardingClientStepSeed.MiniQuestionSeed> questions,
+        IReadOnlyDictionary<int, int> answers)
+    {
+        sb.Append("<div class=\"ob-client-mini\" data-ob-ssr-mini data-testid=\"onboarding-step-7-mini\">");
+        foreach (var question in questions)
+        {
+            answers.TryGetValue(question.Id, out var selected);
+            sb.Append("<div class=\"ob-client-mini-q\" data-ob-qid=\"");
+            sb.Append(question.Id);
+            sb.Append("\"><p>");
+            sb.Append(WebUtility.HtmlEncode(question.Text));
+            sb.Append("</p><div class=\"ob-client-mini-likert lobsy-choice-grid\" role=\"group\">");
+            for (var score = 1; score <= 5; score++)
+            {
+                var on = selected == score;
+                sb.Append("<button type=\"submit\" name=\"obMiniPick\" class=\"lobsy-choice-tile");
+                if (on)
+                {
+                    sb.Append(" is-selected");
+                }
+
+                sb.Append("\" value=\"");
+                sb.Append(question.Id);
+                sb.Append(':');
+                sb.Append(score);
+                sb.Append("\" data-testid=\"onboarding-mini-likert\" aria-pressed=\"");
+                sb.Append(on ? "true" : "false");
+                sb.Append("\">");
+                sb.Append(score);
+                sb.Append("</button>");
+            }
+
+            sb.Append("</div>");
+            if (selected is >= 1 and <= 5)
+            {
+                sb.Append("<input type=\"hidden\" name=\"miniAnswers[");
+                sb.Append(question.Id);
+                sb.Append("]\" value=\"");
+                sb.Append(selected);
+                sb.Append("\" />");
+            }
+
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>");
     }
 
     private static string BuildMiniStep(CultureState culture)

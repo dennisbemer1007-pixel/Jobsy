@@ -135,7 +135,10 @@ public static class OnboardingClientStepBffSaver
                     {
                         return (StatusCodes.Status400BadRequest, new { message = culture[consentIssues[0].MessageKey] });
                     }
+                }
 
+                if (draft.ConsentRequested)
+                {
                     try
                     {
                         var updated = await api.AcceptTestAiConsentAsync(cancellationToken);
@@ -188,7 +191,7 @@ public static class OnboardingClientStepBffSaver
                 {
                     await api.SaveMyOnboardingProgressAsync(step - 1, ct: cancellationToken);
                     api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-                    return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+                    return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(step - 1) });
                 }
                 catch (Exception)
                 {

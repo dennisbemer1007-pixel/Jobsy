@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Full-page POST for onboarding steps 1–6 (303 redirect, no Blazor circuit).</summary>
+/// <summary>Full-page POST for onboarding steps 1–7 (303 redirect, no Blazor circuit).</summary>
 public static class OnboardingStartFormEndpoints
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
@@ -30,6 +30,8 @@ public static class OnboardingStartFormEndpoints
         [FromForm] string? obPayload,
         [FromForm] string? dream,
         [FromForm] string? obDreamPick,
+        [FromForm] string? obMiniPick,
+        [FromForm] string? consentRequested,
         [FromQuery] int? step,
         IAntiforgery antiforgery,
         JobsyApiClient api,
@@ -43,7 +45,7 @@ public static class OnboardingStartFormEndpoints
             return SeeOther(WithError(OnboardingRoutes.StepUrl(step ?? 1), culture["Common.Error.TryAgain"]));
         }
 
-        var currentStep = step is >= 1 and <= 6 ? step.Value : 1;
+        var currentStep = step is >= 1 and <= 7 ? step.Value : 1;
 
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
@@ -54,6 +56,13 @@ public static class OnboardingStartFormEndpoints
         if (!string.IsNullOrWhiteSpace(obDreamPick) && currentStep == 6)
         {
             dream = obDreamPick.Trim();
+            persist = true;
+            advance = false;
+            goBack = false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(obMiniPick) && currentStep == 7)
+        {
             persist = true;
             advance = false;
             goBack = false;
@@ -74,6 +83,10 @@ public static class OnboardingStartFormEndpoints
         if (currentStep == 6)
         {
             body = BuildStep6Body(dream, obPayload);
+        }
+        else if (currentStep == 7)
+        {
+            body = BuildStep7Body(http, consentRequested, obMiniPick, obPayload);
         }
         else if (string.IsNullOrWhiteSpace(obPayload))
         {
@@ -117,6 +130,98 @@ public static class OnboardingStartFormEndpoints
             culture,
             cancellationToken);
         return ToRedirect(stepStatus, stepPayload, currentStep, advance, goBack, culture);
+    }
+
+    private static JsonElement BuildStep7Body(
+        HttpContext http,
+        string? consentRequested,
+        string? obMiniPick,
+        string? obPayload)
+    {
+        var answers = ReadMiniAnswersFromForm(http.Request.Form);
+        if (!string.IsNullOrWhiteSpace(obMiniPick))
+        {
+            var parts = obMiniPick.Split(':', 2);
+            if (parts.Length == 2
+                && int.TryParse(parts[0], out var qid)
+                && int.TryParse(parts[1], out var score)
+                && score is >= 1 and <= 5)
+            {
+                answers[qid] = score;
+            }
+        }
+
+        if (answers.Count == 0 && !string.IsNullOrWhiteSpace(obPayload))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(obPayload);
+                foreach (var pair in OnboardingClientStepBridge.ParseMiniAnswers(doc.RootElement.GetRawText()))
+                {
+                    answers[pair.Key] = pair.Value;
+                }
+
+                if (doc.RootElement.TryGetProperty("consentRequested", out var consentProp)
+                    && (consentProp.ValueKind == JsonValueKind.True || consentProp.ValueKind == JsonValueKind.False))
+                {
+                    consentRequested = consentProp.GetBoolean() ? "true" : "false";
+                }
+            }
+            catch (JsonException)
+            {
+                // fall through
+            }
+        }
+
+        var consent = string.Equals(consentRequested, "true", StringComparison.OrdinalIgnoreCase)
+                      || string.Equals(consentRequested, "on", StringComparison.OrdinalIgnoreCase);
+
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WriteBoolean("consentRequested", consent);
+            writer.WriteStartObject("answers");
+            foreach (var (id, value) in answers.OrderBy(static p => p.Key))
+            {
+                writer.WriteNumber(id.ToString(), value);
+            }
+
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+
+        stream.Position = 0;
+        using var outDoc = JsonDocument.Parse(stream);
+        return outDoc.RootElement.Clone();
+    }
+
+    private static Dictionary<int, int> ReadMiniAnswersFromForm(IFormCollection form)
+    {
+        var answers = new Dictionary<int, int>();
+        foreach (var key in form.Keys)
+        {
+            if (string.IsNullOrEmpty(key)
+                || !key.StartsWith("miniAnswers[", StringComparison.Ordinal)
+                || !key.EndsWith(']'))
+            {
+                continue;
+            }
+
+            var idText = key["miniAnswers[".Length..^1];
+            if (!int.TryParse(idText, out var qid))
+            {
+                continue;
+            }
+
+            var raw = form[key].ToString();
+            if (int.TryParse(raw, out var score) && score is >= 1 and <= 5)
+            {
+                answers[qid] = score;
+            }
+        }
+
+        return answers;
     }
 
     private static JsonElement BuildStep6Body(string? dream, string? obPayload)
