@@ -135,6 +135,7 @@ internal static class OnboardingClientStepShells
         sb.Append("\" /></label>");
         sb.Append("</fieldset>");
         sb.Append("</div>");
+        AppendStepNav(sb, culture, plainJsNav: true);
         return sb.ToString();
     }
 
