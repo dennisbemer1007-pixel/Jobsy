@@ -2957,11 +2957,31 @@
   }
 }
 
-.ob-wizard--rustig.ob-wizard--richting-a .ob-rustig[data-ob-rustig-screen="step-04"] .ob-fields label.ob-wizard__check {
+.ob-wizard--rustig.ob-wizard--richting-a .ob-rustig[data-ob-rustig-screen="step-04"] .ob-fields label.ob-wizard__check,
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-04"] .ob-wizard__card > label.ob-wizard__check {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: flex-start !important;
   gap: 0.65rem !important;
   text-align: start !important;
+  inline-size: 100%;
+  box-sizing: border-box;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] button[data-ob-available-from-save] {
+  display: none !important;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.ob-wizard--rustig .ob-rustig[data-ob-rustig-screen="step-02"] .ob-rustig__step2-start-option.lobsy-choice-tile {
+  min-block-size: 44px;
 }

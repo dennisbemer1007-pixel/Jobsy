@@ -154,7 +154,6 @@ internal static class OnboardingSsrStepFormInteract
             if (string.Equals(start, "immediate", StringComparison.OrdinalIgnoreCase))
             {
                 draft.Immediate = true;
-                draft.AvailableFrom = null;
                 changed = true;
             }
             else if (string.Equals(start, "from", StringComparison.OrdinalIgnoreCase))
