@@ -1410,11 +1410,15 @@
 }
 
 .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
+  display: block;
+  inline-size: 100%;
   block-size: auto;
   min-block-size: 0;
-  max-block-size: none;
-  aspect-ratio: 390 / 240;
+  max-block-size: 200px;
+  aspect-ratio: 390 / 140;
+  overflow: hidden;
   border-block-end: none;
+  background: color-mix(in srgb, var(--accent-soft) 40%, var(--bg));
 }
 
 .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame::before {
@@ -1443,15 +1447,15 @@
 
 @media (min-width: 1024px) {
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
-    aspect-ratio: auto;
-    block-size: clamp(360px, 28vw, 440px);
-    min-block-size: 360px;
-    max-block-size: 440px;
+    aspect-ratio: 1280 / 280;
+    max-block-size: 280px;
+    min-block-size: 0;
+    block-size: auto;
   }
 
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
-    object-fit: contain;
-    object-position: center 40%;
+    object-fit: cover;
+    object-position: center 42%;
   }
 }
 
@@ -1564,6 +1568,12 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
   background: var(--surface);
+}
+
+@media (max-width: 639px) {
+  .ob-rustig__kompas-directions .ob-rustig__kompas-dir-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 .ob-rustig__kompas-dir-card img {

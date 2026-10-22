@@ -121,6 +121,11 @@ internal static class OnboardingKompasSsrShells
         sb.Append("<div class=\"ob-finale__ctas ob-finale__ctas--heroless\" data-testid=\"onboarding-finale-heroless-ctas\">");
         if (readyScreen)
         {
+            sb.Append("<a class=\"ob-finale__btn ob-finale__btn--primary\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(PassportRedirects.PassportPath));
+            sb.Append("\" data-enhance-nav=\"false\" data-testid=\"onboarding-kompas-go-passport\">");
+            sb.Append(WebUtility.HtmlEncode(culture["HowLobsy.SignedIn.PassportCta"]));
+            sb.Append("</a>");
             sb.Append("<a class=\"ob-finale__btn\" href=\"");
             sb.Append(WebUtility.HtmlEncode(hubUrl));
             sb.Append("\" data-testid=\"onboarding-kompas-complete\">");
@@ -300,14 +305,14 @@ internal static class OnboardingKompasSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.Kompas.DirectionsTitle"]));
         sb.Append("</h2><p class=\"ob-rustig__kompas-lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.Kompas.DirectionsLead"]));
-        sb.Append("</p><div class=\"ob-rustig__kompas-dir-grid\">");
+        sb.Append("</p><div class=\"ob-rustig__kompas-dir-grid\" style=\"display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0.75rem;width:100%;max-width:100%;box-sizing:border-box\">");
         foreach (var card in OnboardingRustigKompasContent.Directions)
         {
-            sb.Append("<article class=\"ob-rustig__kompas-dir-card\"><img src=\"");
+            sb.Append("<article class=\"ob-rustig__kompas-dir-card\" style=\"display:flex;flex-direction:column;gap:0.45rem;width:100%;min-width:0;box-sizing:border-box;padding:0.65rem 0.75rem;border:1px solid color-mix(in srgb,var(--border) 75%,var(--brand) 25%);border-radius:var(--radius-sm);background:var(--surface)\"><img src=\"");
             sb.Append(WebUtility.HtmlEncode(card.ImageUrl));
-            sb.Append("\" alt=\"\" width=\"480\" height=\"360\" decoding=\"async\" /><div><h3>");
+            sb.Append("\" alt=\"\" width=\"320\" height=\"240\" loading=\"lazy\" decoding=\"async\" style=\"width:100%;max-width:100%;aspect-ratio:4/3;max-height:180px;object-fit:cover;border-radius:6px;display:block\" /><div style=\"min-width:0\"><h3 style=\"margin:0 0 0.25rem;font-size:0.95rem;line-height:1.25;color:var(--brand)\">");
             sb.Append(WebUtility.HtmlEncode(culture[card.TitleKey]));
-            sb.Append("</h3><p>");
+            sb.Append("</h3><p style=\"margin:0;font-size:0.8125rem;line-height:1.35;color:var(--muted)\">");
             sb.Append(WebUtility.HtmlEncode(culture[card.BodyKey]));
             sb.Append("</p></div></article>");
         }

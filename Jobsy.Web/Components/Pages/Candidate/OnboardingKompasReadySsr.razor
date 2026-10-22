@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasc-ready" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasc-hero" />
     <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
 </HeadContent>
 
@@ -109,7 +109,12 @@ else
                     </header>
 
                     <OnboardingRustigIllustratedHero DesktopUrl="@OnboardingRustigKompasIllustrationAssets.DesktopJpg"
-                                                      MobileUrl="@OnboardingRustigKompasIllustrationAssets.MobileJpg" />
+                                                      MobileUrl="@OnboardingRustigKompasIllustrationAssets.MobileJpg"
+                                                      ImgLoading="eager"
+                                                      ImgDecoding="sync"
+                                                      FetchPriority="high"
+                                                      ImgWidth="1280"
+                                                      ImgHeight="280" />
 
                     <div class="ob-rustig__page-head">
                         <h1 tabindex="-1">@pageTitle</h1>

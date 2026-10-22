@@ -6,10 +6,11 @@
         <source media="(min-width: 1024px)" srcset="@DesktopUrl" />
         <img src="@DesktopUrl"
              alt=""
-             width="3500"
-             height="1000"
-             decoding="async"
-             fetchpriority="high"
+             width="@ImgWidth"
+             height="@ImgHeight"
+             loading="@ImgLoading"
+             decoding="@ImgDecoding"
+             fetchpriority="@FetchPriority"
              data-testid="ob-rustig-hero-img" />
     </picture>
 </div>
@@ -17,4 +18,9 @@
 @code {
     [Parameter, EditorRequired] public string DesktopUrl { get; set; } = "";
     [Parameter, EditorRequired] public string MobileUrl { get; set; } = "";
+    [Parameter] public string ImgLoading { get; set; } = "lazy";
+    [Parameter] public string ImgDecoding { get; set; } = "async";
+    [Parameter] public string FetchPriority { get; set; } = "high";
+    [Parameter] public int ImgWidth { get; set; } = 3500;
+    [Parameter] public int ImgHeight { get; set; } = 1000;
 }
