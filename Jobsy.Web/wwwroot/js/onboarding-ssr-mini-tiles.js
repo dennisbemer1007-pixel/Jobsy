@@ -72,7 +72,10 @@
     }
 
     function boot() {
-        document.querySelectorAll('form[data-ob-ssr-form][data-ob-ssr-step="7"], form[data-ob-ssr-form][data-ob-ssr-step="8"]').forEach(bindMiniForm);
+        document.querySelectorAll('form[data-ob-ssr-form][data-ob-ssr-step]').forEach(function (form) {
+            var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
+            if (step >= 7 && step <= 10) bindMiniForm(form);
+        });
     }
 
     if (document.readyState === "loading") {

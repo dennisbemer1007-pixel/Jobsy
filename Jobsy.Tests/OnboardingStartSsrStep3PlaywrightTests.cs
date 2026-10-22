@@ -255,14 +255,35 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
 
         await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
+        var step8FirstQuestion = await page.Locator(".ob-client-mini-q").First.Locator("p").InnerTextAsync();
         await page.GetByTestId("onboarding-back").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=7**");
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=8**");
+        await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("p")).ToHaveTextAsync(step8FirstQuestion);
         await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
 
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=9**");
+        await page.WaitForURLAsync("**/candidate/start?step=9**");
+        await page.GetByTestId("onboarding-step-9-mini").WaitForAsync();
+        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
+
+        await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=8**");
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=9**");
+        await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
+
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=10**");
+        await page.GetByTestId("onboarding-step-10-mini").WaitForAsync();
+
+        await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start**");
+        await page.Locator("[data-ob-rustig-screen=kompas]").WaitForAsync(new() { Timeout = 60_000 });
         Assert.Empty(consoleErrors);
     }
 

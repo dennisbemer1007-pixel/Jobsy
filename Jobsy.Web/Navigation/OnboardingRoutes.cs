@@ -13,12 +13,11 @@ public static class OnboardingRoutes
 
     public const string WizardStartPath = ClassicStartPath + "/wizard";
 
-    /// <summary>Steps 1–8: static SSR. Step 9+: interactive wizard.</summary>
+    /// <summary>Steps 1–10: static SSR on classic start. Step 11+: classic entry.</summary>
     public static string StepUrl(int step) =>
         step switch
         {
-            >= 1 and <= 8 => $"{ClassicStartPath}?step={step}",
-            >= 9 and <= 10 => $"{WizardStartPath}?step={step}",
+            >= 1 and <= 10 => $"{ClassicStartPath}?step={step}",
             _ => ClassicStartPath,
         };
 

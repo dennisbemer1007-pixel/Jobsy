@@ -313,12 +313,7 @@ public static class OnboardingClientStepBffSaver
             _ => null,
         };
 
-        if (version is > 0)
-        {
-            return version.Value;
-        }
-
-        return testsV2 ? AssessmentTestVersions.V2 : AssessmentTestVersions.V1;
+        return OnboardingMiniBlockCompletion.ResolveQuickScanVersion(version, testsV2);
     }
 
     private static async Task<Dictionary<int, int>> MergeMiniAnswersAsync(

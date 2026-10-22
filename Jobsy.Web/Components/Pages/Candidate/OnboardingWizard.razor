@@ -1127,7 +1127,7 @@
             }
 
             _welcome = ShouldShowWelcomeScreen(_state, _step);
-            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 8)
+            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 10)
             {
                 Navigation.NavigateTo(OnboardingRoutes.StepUrl(_step), forceLoad: true);
                 return;

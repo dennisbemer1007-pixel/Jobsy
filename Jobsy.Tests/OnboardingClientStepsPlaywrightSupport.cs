@@ -224,6 +224,9 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal string? StoredDreamTitle { get; set; }
         internal Dictionary<string, int> CompetencyAnswers { get; } = new(StringComparer.Ordinal);
         internal Dictionary<string, int> CareerAnswers { get; } = new(StringComparer.Ordinal);
+        internal Dictionary<string, int> CultureAnswers { get; } = new(StringComparer.Ordinal);
+        internal Dictionary<string, int> ValuesAnswers { get; } = new(StringComparer.Ordinal);
+        internal bool FinishReached;
 
         public string ServerAddress { get; private set; } = "";
 
@@ -311,7 +314,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
     private sealed class StubFlags : IFeatureFlags
     {
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: false));
+            => ValueTask.FromResult(new FeatureFlagSnapshot(
+                EmployersEnabled: true,
+                CandidatePassportEnabled: false,
+                TestsV2Enabled: true,
+                OnboardingFinaleV2Enabled: true));
 
         public async ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
             => (await GetAsync(cancellationToken)).IsEnabled(feature);
@@ -409,10 +416,17 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     factory.WelcomeDismissed = true;
                 }
 
+                if (doc.RootElement.TryGetProperty("finishReached", out var finishProp)
+                    && finishProp.ValueKind == JsonValueKind.True)
+                {
+                    factory.FinishReached = true;
+                }
+
                 return JsonResponse(new
                 {
                     currentStep = factory.SavedStep,
                     shouldShow = true,
+                    finishReached = factory.FinishReached,
                     source = factory.WelcomeDismissed ? "welcome" : null,
                     steps = Array.Empty<object>(),
                 });
@@ -446,7 +460,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     await MergeCompetencyPutAsync(request, factory, cancellationToken);
                 }
 
-                return JsonResponse(new { answers = factory.CompetencyAnswers, quickScanVersion = 1 });
+                return JsonResponse(new { answers = factory.CompetencyAnswers, quickScanVersion = 3 });
             }
 
             if (path.Contains("/career-interests", StringComparison.OrdinalIgnoreCase))
@@ -456,7 +470,27 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     await MergeAssessmentPutAsync(request, factory.CareerAnswers, cancellationToken);
                 }
 
-                return JsonResponse(new { answers = factory.CareerAnswers, quickScanVersion = 1 });
+                return JsonResponse(new { answers = factory.CareerAnswers, quickScanVersion = 3 });
+            }
+
+            if (path.Contains("/culture", StringComparison.OrdinalIgnoreCase))
+            {
+                if (request.Method == HttpMethod.Put)
+                {
+                    await MergeAssessmentPutAsync(request, factory.CultureAnswers, cancellationToken);
+                }
+
+                return JsonResponse(new { answers = factory.CultureAnswers, quickScanVersion = 3 });
+            }
+
+            if (path.Contains("/values", StringComparison.OrdinalIgnoreCase))
+            {
+                if (request.Method == HttpMethod.Put)
+                {
+                    await MergeAssessmentPutAsync(request, factory.ValuesAnswers, cancellationToken);
+                }
+
+                return JsonResponse(new { answers = factory.ValuesAnswers, quickScanVersion = 3 });
             }
 
             object payload = path switch
@@ -465,12 +499,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 {
                     currentStep = factory.SavedStep,
                     shouldShow = true,
+                    finishReached = factory.FinishReached,
                     source = factory.WelcomeDismissed ? "welcome" : null,
                     steps = Array.Empty<object>(),
                 },
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => factory.StoredProfile,
-                var p when p.Contains("/culture", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
-                var p when p.Contains("/values", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/site/status", StringComparison.OrdinalIgnoreCase) => new { maintenance = false },
                 _ => new { },
             };
