@@ -7,7 +7,8 @@ Alleen afbeeldingen ter referentie. Bouw deze pagina's op dezelfde manier als de
 | Ontdekkingsreis (desktop) | `ontdekkingsreis/desktop/` | r2 | 21 oktober 2026, 07:23 |
 | Ontdekkingsreis (mobiel) | `ontdekkingsreis/mobile/` | r7 (branch `cursor/ontdekkingsreis-mobile-r7-0b41`) | 21 oktober 2026, 12:10 |
 | Carrière | `carriere/desktop/`, `carriere/mobile/` | r2, tabs Voor jou, Omscholen, Kansberoepen | 21 oktober 2026, 17:21 |
+| Banenkaart | `banenkaart/desktop/`, `banenkaart/mobile/` | filterlade (desktop), paneel (mobiel); alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:54 |
 
 Desktop van Carrière bestaat alleen voor het tabblad Voor jou; de andere tabs volgen dezelfde opbouw.
 
-Nog geen goedgekeurde mockup: Paspoort, Mijn Lobsy (home), Sollicitaties, Instellingen, Zoeken/Banenkaart, Profiel.
+Nog geen goedgekeurde mockup: Paspoort, Mijn Lobsy (home), Sollicitaties, Instellingen, Profiel.
