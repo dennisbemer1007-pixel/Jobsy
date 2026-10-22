@@ -66,7 +66,7 @@ internal static class OnboardingClientStepShells
         sb.Append("</fieldset>");
         sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel", draft.Phone));
         sb.Append("</div>");
-        AppendStepNav(sb, culture, step1PlainNav: true);
+        AppendStepNav(sb, culture, plainJsNav: true);
         return sb.ToString();
     }
 
@@ -94,8 +94,8 @@ internal static class OnboardingClientStepShells
         sb.Append("</label>");
         sb.Append("<input data-ob-client=\"availableFrom\" hidden />");
         sb.Append("</fieldset>");
-        AppendStepNav(sb, culture);
         sb.Append("</div>");
+        AppendStepNav(sb, culture, plainJsNav: true);
         return sb.ToString();
     }
 
@@ -213,7 +213,7 @@ internal static class OnboardingClientStepShells
         }
     }
 
-    private static void AppendStepNav(StringBuilder sb, CultureState culture, bool optionalSkip = false, bool step1PlainNav = false)
+    private static void AppendStepNav(StringBuilder sb, CultureState culture, bool optionalSkip = false, bool plainJsNav = false)
     {
         sb.Append("<div class=\"ob-step-actions\">");
         if (optionalSkip)
@@ -224,7 +224,7 @@ internal static class OnboardingClientStepShells
         }
 
         sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step-next\" data-ob-step-next");
-        if (step1PlainNav)
+        if (plainJsNav)
         {
             sb.Append(" data-ob-nav-next");
         }

@@ -92,7 +92,7 @@ public static class OnboardingClientStepBffSaver
                 {
                     await api.SaveMyOnboardingProgressAsync(step - 1, ct: cancellationToken);
                     api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-                    return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+                    return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(step - 1) });
                 }
                 catch (Exception)
                 {
@@ -120,7 +120,7 @@ public static class OnboardingClientStepBffSaver
                 return (StatusCodes.Status502BadGateway, new { message = culture["Onboarding.NotSaved"] });
             }
 
-            return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+            return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(nextStep) });
         }
 
         if (step is >= 7 and <= 10)

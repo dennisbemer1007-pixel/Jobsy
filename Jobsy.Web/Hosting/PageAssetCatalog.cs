@@ -344,6 +344,16 @@ public static class PageAssetCatalog
             return uwvCss;
         }
 
+        if (path == OnboardingRoutes.ClassicStartPath)
+        {
+            return
+            [
+                "css/features/candidate-hero-compact-preview.css?v=20261021-r24",
+                "css/features/onboarding-rustig.css?v=20261020-21",
+                "css/features/onboarding-client-nav.css?v=20261022-nav",
+            ];
+        }
+
         if (RouteUsesCompactHeroCss(path))
         {
             return ["css/features/candidate-hero-compact-preview.css?v=20261021-r24"];
