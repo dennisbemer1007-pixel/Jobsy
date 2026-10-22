@@ -41,6 +41,10 @@
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
+else if (_showWelcome && _welcomeHtml is not null)
+{
+    @((MarkupString)_welcomeHtml)
+}
 else if (_step is >= 1 and <= 10)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
@@ -226,6 +230,8 @@ else
 
     private bool _loading = true;
     private bool _redirecting;
+    private bool _showWelcome;
+    private string? _welcomeHtml;
     private int _step = 1;
     private bool _showJobsRail;
     private OnboardingProfileDraft _draft = new();
@@ -269,7 +275,8 @@ else
             _draft = OnboardingProfileDraftHydrator.FromProfile(await profileTask);
             _ = await flagsTask;
 
-            var revisitingStep = TryParseStepQuery(out var requested) && requested is >= 1 and <= 10;
+            var hasStepQuery = TryParseStepQuery(out var requested);
+            var revisitingStep = hasStepQuery && requested is >= 1 and <= 10;
 
             if (!revisitingStep && (state.IsComplete || state.FinishReached))
             {
@@ -277,18 +284,23 @@ else
                 return;
             }
 
+            if (!revisitingStep && ShouldShowWelcomeScreen(state, 1))
+            {
+                _showWelcome = true;
+                _welcomeHtml = OnboardingStartWelcomeSsrShell.Build(
+                    Culture,
+                    _draft.FirstName,
+                    _antiforgeryToken,
+                    _errorMessage);
+                return;
+            }
+
             var ceiling = revisitingStep ? 10 : Math.Clamp(state.CurrentStep, 1, 10);
             _step = revisitingStep
                 ? requested
-                : TryParseStepQuery(out var fallbackRequested)
-                    ? Math.Clamp(fallbackRequested, 1, ceiling)
+                : hasStepQuery
+                    ? Math.Clamp(requested, 1, ceiling)
                     : ceiling;
-
-            if (ShouldShowWelcomeScreen(state, _step) && !revisitingStep)
-            {
-                RedirectTo(WizardUrl(_step));
-                return;
-            }
 
             if (_step is < 1 or > 10)
             {

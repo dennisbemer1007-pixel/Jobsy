@@ -996,6 +996,37 @@
   color: var(--danger);
 }
 
+.kb-saved__inline-form {
+  display: contents;
+}
+
+.kb-saved__sort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.kb-saved__sort-link {
+  font-size: 0.8125rem;
+  text-decoration: none;
+  color: var(--muted);
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+}
+
+.kb-saved__sort-link.is-active {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.cand-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
 /* Bewaard grid + shared rail */
 .kb-saved--illustrated .kb-saved__body {
   display: grid;

@@ -232,6 +232,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal bool KandidatenkaartEnabled = true;
         internal int StubMatchingVacancyCount { get; set; }
         internal int StubNearbyVacancyCount { get; set; }
+        internal HashSet<Guid> StubLikedVacancyIds { get; } =
+        [
+            IllustratedPagesApiStub.SampleVacancyId,
+            IllustratedPagesApiStub.PhotoVacancyId,
+        ];
 
         public string ServerAddress { get; private set; } = "";
 
@@ -400,6 +405,41 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 return JsonResponse(factory.StoredProfile);
             }
 
+            if (path.Contains("/me/likes", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Get)
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(BuildStubLikesJson(factory), System.Text.Encoding.UTF8, "application/json"),
+                };
+            }
+
+            if (path.Contains("/me/shares", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Get)
+            {
+                return JsonResponse(Array.Empty<object>());
+            }
+
+            const string vacancyLikePrefix = "/api/vacancies/";
+            if (path.StartsWith(vacancyLikePrefix, StringComparison.OrdinalIgnoreCase)
+                && path.EndsWith("/like", StringComparison.OrdinalIgnoreCase))
+            {
+                var idPart = path[vacancyLikePrefix.Length..^"/like".Length].Trim('/');
+                _ = Guid.TryParse(idPart, out var vacancyId);
+                if (vacancyId != Guid.Empty)
+                {
+                    if (request.Method == HttpMethod.Delete)
+                    {
+                        factory.StubLikedVacancyIds.Remove(vacancyId);
+                    }
+                    else if (request.Method == HttpMethod.Post)
+                    {
+                        factory.StubLikedVacancyIds.Add(vacancyId);
+                    }
+                }
+
+                var liked = vacancyId != Guid.Empty && factory.StubLikedVacancyIds.Contains(vacancyId);
+                return JsonResponse(new { liked });
+            }
+
             if (path.Contains("/onboarding/dream-job", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Put)
             {
                 using var dreamDoc = await JsonDocument.ParseAsync(
@@ -552,6 +592,28 @@ internal static class OnboardingClientStepsPlaywrightSupport
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload, Json), System.Text.Encoding.UTF8, "application/json"),
             };
+
+        private static string BuildStubLikesJson(ClientStepsWebFactory factory)
+        {
+            var items = new List<object>();
+            foreach (var id in factory.StubLikedVacancyIds)
+            {
+                items.Add(new
+                {
+                    vacancyId = id,
+                    vacancyTitle = id == IllustratedPagesApiStub.PhotoVacancyId
+                        ? "Horeca medewerker"
+                        : "Medewerker dierenpension",
+                    companyName = "De Kooger Dierenopvang",
+                    locationLabel = "Zaandam",
+                    fitBand = "Strong",
+                    createdAt = "2026-10-10T10:00:00Z",
+                    savedStateKind = "Open",
+                });
+            }
+
+            return JsonSerializer.Serialize(items, Json);
+        }
 
         private static object BuildStubOnboardingPayload(ClientStepsWebFactory factory)
         {

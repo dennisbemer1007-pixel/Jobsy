@@ -251,7 +251,7 @@ public static class OnboardingClientStepBffSaver
             var step = Math.Clamp(state?.CurrentStep ?? 1, 1, 10);
             await api.SaveMyOnboardingProgressAsync(step, source: WelcomeDismissedSource, ct: cancellationToken);
             api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-            return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+            return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(1) });
         }
         catch (Exception)
         {

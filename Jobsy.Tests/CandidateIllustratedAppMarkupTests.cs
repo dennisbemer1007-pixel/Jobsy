@@ -39,10 +39,13 @@ public class CandidateIllustratedAppMarkupTests
     [Fact]
     public void Bewaard_has_shared_rail_and_illustrated_placeholder()
     {
-        var liked = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/Liked.razor"));
-        Assert.Contains("kb-saved-rail", liked, StringComparison.Ordinal);
-        Assert.Contains("kb-saved-card__media--illustrated", liked, StringComparison.Ordinal);
-        Assert.Contains("SavedNoPhotoArt", liked, StringComparison.Ordinal);
+        var liked = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/CandidateLikedSsr.razor"));
+        var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Saved/SavedSsrShells.cs"));
+        Assert.Contains("[NoBlazorRuntime]", liked, StringComparison.Ordinal);
+        Assert.Contains("saved-page-ssr", liked, StringComparison.Ordinal);
+        Assert.Contains("kb-saved-rail", shells, StringComparison.Ordinal);
+        Assert.Contains("kb-saved-card__media--illustrated", shells, StringComparison.Ordinal);
+        Assert.Contains("SavedNoPhotoArt", shells, StringComparison.Ordinal);
     }
 
     [Fact]
