@@ -274,6 +274,20 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.WelcomeLead"] = english
             ? "In about 12 minutes we go through ten short steps together. Then your Compass is ready and you see which work fits you."
             : "In ongeveer 12 minuten doorlopen we samen tien korte stappen. Daarna staat je Kompas klaar en zie je welk werk bij je past.";
+        map["Onboarding.StartJourney.Here"] = english ? "You are here" : "Je bent hier";
+        map["Onboarding.StartJourney.Hint"] = english
+            ? "Your answers are saved when you click Next. You can stop anytime and continue later where you left off."
+            : "Je antwoorden worden bewaard als je op Volgende klikt. Stoppen mag, je gaat later verder waar je was.";
+        map["Onboarding.StartJourney.Stop1Sub"] = english ? "Where and when" : "Waar en wanneer";
+        map["Onboarding.StartJourney.Stop2Sub"] = english ? "Optional" : "Optioneel";
+        map["Onboarding.StartJourney.Stop3Sub"] = english ? "1 step" : "1 stap";
+        map["Onboarding.StartJourney.Stop4Sub"] = english ? "4 short tests" : "4 korte tests";
+        map["Onboarding.StartJourney.Stop5Sub"] = english ? "Your result" : "Je resultaat";
+        map["Onboarding.StartJourney.Sidebar1"] = english ? "3 steps" : "3 stappen";
+        map["Onboarding.StartJourney.Sidebar2"] = english ? "optional" : "optioneel";
+        map["Onboarding.StartJourney.Sidebar3"] = english ? "1 step" : "1 stap";
+        map["Onboarding.StartJourney.Sidebar4"] = english ? "4 short tests" : "4 korte tests";
+        map["Onboarding.StartJourney.Sidebar5"] = english ? "your result" : "je resultaat";
         map["Onboarding.Rustig.StartMeta"] = english ? "Getting started" : "Start";
         map["Onboarding.Rustig.MinutesShort"] = english ? "minutes" : "minuten";
         map["Onboarding.Rustig.Phase.Droom"] = english ? "Dream job" : "Droom";
