@@ -28,6 +28,7 @@ internal static class OnboardingClientStepInitialState
             4 => BuildStep4(draft, culture, seed),
             5 => BuildStep5(draft, culture, seed),
             6 => BuildStep6(draft, seed),
+            7 when draft.HasConsent => BuildMiniStep(draft, seed),
             7 => BuildStep7(draft, seed),
             >= 8 and <= 10 => BuildMiniStep(draft, seed),
             _ => new { },

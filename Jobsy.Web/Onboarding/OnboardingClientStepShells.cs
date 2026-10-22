@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text;
+using Jobsy.Core.Rules;
+using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Web.Onboarding;
@@ -7,39 +9,49 @@ namespace Jobsy.Web.Onboarding;
 /// <summary>Static HTML for client onboarding steps (rendered once; JS attaches behavior).</summary>
 internal static class OnboardingClientStepShells
 {
-    public static string Build(int step, CultureState culture)
+    public static string Build(int step, CultureState culture, OnboardingProfileDraft? draft = null)
     {
         return step switch
         {
-            1 => BuildStep1(culture),
+            1 => BuildStep1(culture, draft),
             2 => BuildStep2(culture),
             3 => BuildStep3(culture),
             4 => BuildStep4(culture),
             5 => BuildStep5(culture),
             6 => BuildStep6(culture),
+            7 when draft?.HasConsent == true => BuildMiniStep(culture),
             7 => BuildStep7(culture),
             >= 8 and <= 10 => BuildMiniStep(culture),
             _ => "",
         };
     }
 
-    private static string BuildStep1(CultureState culture)
+    private static string BuildStep1(CultureState culture, OnboardingProfileDraft? draft)
     {
+        draft ??= new OnboardingProfileDraft();
+        var birthText = draft.BirthDate is { } d
+            ? JobsyDateInputRules.FormatDisplayDate(d, culture.Language)
+            : string.Empty;
+
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
         sb.Append("<div class=\"ob-wizard__field-row\">");
-        sb.Append(LabelInput("onboarding-field-firstname", culture["Profile.FirstName"], "firstName", "given-name"));
-        sb.Append(LabelInput("onboarding-field-lastname", culture["Profile.LastName"], "lastName", "family-name"));
+        sb.Append(LabelInput("onboarding-field-firstname", culture["Profile.FirstName"], "firstName", "given-name", draft.FirstName));
+        sb.Append(LabelInput("onboarding-field-lastname", culture["Profile.LastName"], "lastName", "family-name", draft.LastName));
         sb.Append("</div>");
         sb.Append("<div id=\"onboarding-field-location\" class=\"ob-fields__address\">");
         sb.Append("<label>");
         sb.Append(WebUtility.HtmlEncode(culture["Discovery.Address"]));
-        sb.Append("<input id=\"onboarding-home-address\" type=\"text\" autocomplete=\"street-address\" data-ob-client=\"address\" />");
+        sb.Append("<input id=\"onboarding-home-address\" type=\"text\" autocomplete=\"street-address\" data-ob-client=\"address\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(draft.AddressQuery ?? string.Empty));
+        sb.Append("\" /></label>");
         sb.Append("<ul class=\"address-suggestions ob-client-suggest\" role=\"listbox\" hidden></ul>");
-        sb.Append("</label></div>");
+        sb.Append("</div>");
         sb.Append("<fieldset id=\"onboarding-field-birthdate\"><legend>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.BirthDate"]));
-        sb.Append("</legend><input data-ob-client=\"birthDate\" inputmode=\"numeric\" autocomplete=\"bday\" /></fieldset>");
+        sb.Append("</legend><input data-ob-client=\"birthDate\" inputmode=\"numeric\" autocomplete=\"bday\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(birthText));
+        sb.Append("\" /></fieldset>");
         sb.Append("<fieldset class=\"work-status-field\" id=\"onboarding-field-work-status\">");
         sb.Append("<legend class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Legend"]));
@@ -49,7 +61,8 @@ internal static class OnboardingClientStepShells
         sb.Append("</p>");
         sb.Append("<div class=\"work-status-chips lobsy-choice-grid lobsy-choice-grid--desktop-3\" data-ob-client=\"workStatusGrid\" role=\"group\"></div>");
         sb.Append("</fieldset>");
-        sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel"));
+        sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel", draft.Phone));
+        AppendStepNav(sb, culture);
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -77,7 +90,9 @@ internal static class OnboardingClientStepShells
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableFrom"]));
         sb.Append("</label>");
         sb.Append("<input data-ob-client=\"availableFrom\" hidden />");
-        sb.Append("</fieldset></div>");
+        sb.Append("</fieldset>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
         return sb.ToString();
     }
 
@@ -90,61 +105,97 @@ internal static class OnboardingClientStepShells
         sb.Append("<label>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Other"]));
         sb.Append("<input type=\"number\" min=\"1\" max=\"180\" data-ob-client=\"customTravel\" hidden />");
-        sb.Append("</label></div>");
+        sb.Append("</label>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
         return sb.ToString();
     }
 
     private static string BuildStep4(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card ob-wizard__card--illustrated">
-<label class="ob-wizard__check"><input type="checkbox" data-ob-client="noWork" /> {WebUtility.HtmlEncode(culture["Onboarding.NoWorkExperience"])}</label>
-<div data-ob-client="jobsList"></div>
-<button type="button" class="btn btn-secondary" data-ob-client="addJob">{WebUtility.HtmlEncode(culture["Onboarding.AddJob"])}</button>
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        sb.Append("<label class=\"ob-wizard__check\"><input type=\"checkbox\" data-ob-client=\"noWork\" /> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.NoWorkExperience"]));
+        sb.Append("</label><div data-ob-client=\"jobsList\"></div>");
+        sb.Append("<button type=\"button\" class=\"btn btn-secondary\" data-ob-client=\"addJob\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AddJob"]));
+        sb.Append("</button>");
+        AppendStepNav(sb, culture, optionalSkip: true);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
-    private static string BuildStep5(CultureState _)
+    private static string BuildStep5(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card ob-wizard__card--illustrated">
-<div data-ob-client="educationGrid" class="ob-wizard__education-grid"></div>
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        sb.Append("<div data-ob-client=\"educationGrid\" class=\"ob-wizard__education-grid\"></div>");
+        AppendStepNav(sb, culture, optionalSkip: true);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
     private static string BuildStep6(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card ob-wizard__card--illustrated" id="onboarding-field-dream">
-<div data-ob-client="dreamGrid" class="ob-rustig__dream-grid"></div>
-<input id="onboarding-rustig-dream-input" data-ob-client="dreamInput" type="text" autocomplete="off" placeholder="{WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"])}" />
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-dream\">");
+        sb.Append("<div data-ob-client=\"dreamGrid\" class=\"ob-rustig__dream-grid\"></div>");
+        sb.Append("<input id=\"onboarding-rustig-dream-input\" data-ob-client=\"dreamInput\" type=\"text\" autocomplete=\"off\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
+        sb.Append("\" />");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
     private static string BuildStep7(CultureState culture)
     {
-        return $"""
-<div class="ob-wizard__card" id="onboarding-field-consent">
-<label class="ob-wizard__consent"><input type="checkbox" data-ob-client="consent" /> {WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"])}</label>
-</div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card\" id=\"onboarding-field-consent\">");
+        sb.Append("<label class=\"ob-wizard__consent\"><input type=\"checkbox\" data-ob-client=\"consent\" /> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"]));
+        sb.Append("</label>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
-    private static string BuildMiniStep(CultureState _)
+    private static string BuildMiniStep(CultureState culture)
     {
-        return """
-<div class="ob-wizard__card ob-client-mini" data-ob-client="miniRoot"></div>
-""";
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        sb.Append("<div class=\"ob-client-mini\" data-ob-client=\"miniRoot\"></div>");
+        AppendStepNav(sb, culture);
+        sb.Append("</div>");
+        return sb.ToString();
     }
 
-    private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete)
+    private static void AppendStepNav(StringBuilder sb, CultureState culture, bool optionalSkip = false)
+    {
+        sb.Append("<div class=\"ob-step-actions\">");
+        if (optionalSkip)
+        {
+            sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-step-skip\" data-ob-step-skip data-testid=\"onboarding-skip-optional\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Skip"]));
+            sb.Append("</button>");
+        }
+
+        sb.Append("<button type=\"button\" class=\"ob-rustig__btn ob-rustig__btn--primary ob-step-next\" data-ob-step-next data-testid=\"onboarding-next\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Next"]));
+        sb.Append("</button>");
+        sb.Append("<p class=\"state-message error ob-step-next-error\" data-ob-step-error hidden aria-live=\"polite\"></p>");
+        sb.Append("</div>");
+    }
+
+    private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete, string? value = null)
     {
         var idAttr = wrapId is null ? "" : $" id=\"{wrapId}\"";
+        var valueAttr = string.IsNullOrEmpty(value)
+            ? string.Empty
+            : $" value=\"{WebUtility.HtmlEncode(value)}\"";
         return $"""
-<label{idAttr}>{WebUtility.HtmlEncode(label)}<input autocomplete="{autocomplete}" maxlength="128" data-ob-client="{clientKey}" /></label>
+<label{idAttr}>{WebUtility.HtmlEncode(label)}<input autocomplete="{autocomplete}" maxlength="128" data-ob-client="{clientKey}"{valueAttr} /></label>
 """;
     }
 }

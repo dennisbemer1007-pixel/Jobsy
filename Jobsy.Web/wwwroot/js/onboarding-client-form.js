@@ -75,14 +75,118 @@
         return { min: min, max: max, availability: Object.keys(dayParts) };
     }
 
+    function readAntiforgery(root) {
+        var host = (root && root.closest) ? root.closest("[data-ob-antiforgery-token]") : null;
+        if (!host && root) host = root;
+        if (!host) host = document.querySelector(".ob-wizard") || document.body;
+        return {
+            header: host.getAttribute("data-ob-antiforgery-header") || "RequestVerificationToken",
+            token: host.getAttribute("data-ob-antiforgery-token") || ""
+        };
+    }
+
+    function putOnboardingStep(root, step, collectFn, advance, skipOptional) {
+        var body = collectFn();
+        body.advance = !!advance;
+        body.skipOptional = !!skipOptional;
+        var af = readAntiforgery(root);
+        var headers = { "Content-Type": "application/json" };
+        if (af.token) headers[af.header] = af.token;
+        var url = step === 1
+            ? "/api/onboarding-client/step1"
+            : ("/api/onboarding-client/steps/" + step);
+        return fetch(url, {
+            method: "PUT",
+            credentials: "same-origin",
+            headers: headers,
+            body: JSON.stringify(body)
+        });
+    }
+
+    function wireObStepBff(root, step, collectFn) {
+        var nextBtn = root.querySelector("[data-ob-step-next]");
+        var skipBtn = root.querySelector("[data-ob-step-skip]");
+        var errEl = root.querySelector("[data-ob-step-error]");
+        var saveTimer = null;
+
+        function scheduleSave() {
+            if (saveTimer) clearTimeout(saveTimer);
+            saveTimer = setTimeout(function () {
+                saveTimer = null;
+                putOnboardingStep(root, step, collectFn, false, false).catch(function () { });
+            }, 500);
+        }
+
+        function runAdvance(skipOptional) {
+            if (errEl) {
+                errEl.hidden = true;
+                errEl.textContent = "";
+            }
+            if (nextBtn) nextBtn.disabled = true;
+            if (skipBtn) skipBtn.disabled = true;
+            if (saveTimer) {
+                clearTimeout(saveTimer);
+                saveTimer = null;
+            }
+            putOnboardingStep(root, step, collectFn, true, !!skipOptional)
+                .then(function (res) {
+                    return res.json().then(function (body) {
+                        return { ok: res.ok, body: body };
+                    }).catch(function () {
+                        return { ok: res.ok, body: {} };
+                    });
+                })
+                .then(function (result) {
+                    if (result.ok && result.body && result.body.redirectUrl) {
+                        window.location.assign(result.body.redirectUrl);
+                        return;
+                    }
+                    if (result.ok) {
+                        window.location.reload();
+                        return;
+                    }
+                    var msg = (result.body && result.body.message)
+                        || "Opslaan mislukt. Controleer je gegevens en probeer opnieuw.";
+                    if (errEl) {
+                        errEl.textContent = msg;
+                        errEl.hidden = false;
+                    }
+                    if (nextBtn) nextBtn.disabled = false;
+                    if (skipBtn) skipBtn.disabled = false;
+                })
+                .catch(function () {
+                    if (errEl) {
+                        errEl.textContent = "Verbinding mislukt. Probeer het opnieuw.";
+                        errEl.hidden = false;
+                    }
+                    if (nextBtn) nextBtn.disabled = false;
+                    if (skipBtn) skipBtn.disabled = false;
+                });
+        }
+
+        if (nextBtn && !nextBtn.__obStepNextBound) {
+            nextBtn.__obStepNextBound = true;
+            nextBtn.addEventListener("click", function () { runAdvance(false); });
+        }
+        if (skipBtn && !skipBtn.__obStepSkipBound) {
+            skipBtn.__obStepSkipBound = true;
+            skipBtn.addEventListener("click", function () { runAdvance(true); });
+        }
+
+        return { scheduleSave: scheduleSave };
+    }
+
     function mountStep1(root, initial) {
+        var ssrValues = root.getAttribute("data-ob-ssr-values") === "1";
         var state = {
             workStatuses: new Set(initial.workStatusesSelected || []),
             homeLat: initial.homeLat,
             homeLng: initial.homeLng,
             suggestGen: 0,
             strings: initial.strings || {},
-            dirty: { first: false, last: false, address: false, birth: false, phone: false }
+            dirty: { first: false, last: false, address: false, birth: false, phone: false },
+            saveTimer: null,
+            saveInFlight: false
         };
 
         var first = root.querySelector("[data-ob-client=firstName]");
@@ -108,11 +212,45 @@
         bindDirty(birth, "birth");
         bindDirty(phone, "phone");
 
-        if (first && !state.dirty.first) first.value = initial.firstName || "";
-        if (last && !state.dirty.last) last.value = initial.lastName || "";
-        if (address && !state.dirty.address) address.value = initial.addressQuery || "";
-        if (birth && !state.dirty.birth) birth.value = initial.birthDateText || "";
-        if (phone && !state.dirty.phone) phone.value = initial.phone || "";
+        if (!ssrValues) {
+            if (first && !state.dirty.first) first.value = initial.firstName || "";
+            if (last && !state.dirty.last) last.value = initial.lastName || "";
+            if (address && !state.dirty.address) address.value = initial.addressQuery || "";
+            if (birth && !state.dirty.birth) birth.value = initial.birthDateText || "";
+            if (phone && !state.dirty.phone) phone.value = initial.phone || "";
+        }
+
+        function collectPayload() {
+            return {
+                firstName: first ? first.value : "",
+                lastName: last ? last.value : "",
+                phone: phone ? phone.value : "",
+                whatsAppAllowed: false,
+                workStatuses: Array.from(state.workStatuses),
+                addressQuery: address ? address.value : "",
+                homeLat: state.homeLat,
+                homeLng: state.homeLng,
+                birthDateText: birth ? birth.value : ""
+            };
+        }
+
+        var bff = wireObStepBff(root, 1, collectPayload);
+        function scheduleSave() {
+            if (bff && bff.scheduleSave) bff.scheduleSave();
+        }
+
+        function bindSaveEvents(input) {
+            if (!input || input.__obStep1SaveBound) return;
+            input.__obStep1SaveBound = true;
+            input.addEventListener("change", scheduleSave);
+            input.addEventListener("blur", scheduleSave);
+        }
+
+        bindSaveEvents(first);
+        bindSaveEvents(last);
+        bindSaveEvents(address);
+        bindSaveEvents(birth);
+        bindSaveEvents(phone);
 
         function renderWorkStatus() {
             if (!grid) return;
@@ -130,6 +268,7 @@
                     if (state.workStatuses.has(opt.code)) state.workStatuses.delete(opt.code);
                     else state.workStatuses.add(opt.code);
                     renderWorkStatus();
+                    scheduleSave();
                 });
                 grid.appendChild(btn);
             });
@@ -243,6 +382,7 @@
                             state.homeLat = pick.latitude;
                             state.homeLng = pick.longitude;
                             hideSuggest();
+                            scheduleSave();
                         });
                     });
                 })
@@ -253,19 +393,7 @@
                 });
         }
 
-        state.collect = function () {
-            return {
-                firstName: first ? first.value : "",
-                lastName: last ? last.value : "",
-                phone: phone ? phone.value : "",
-                whatsAppAllowed: false,
-                workStatuses: Array.from(state.workStatuses),
-                addressQuery: address ? address.value : "",
-                homeLat: state.homeLat,
-                homeLng: state.homeLng,
-                birthDateText: birth ? birth.value : ""
-            };
-        };
+        state.collect = collectPayload;
 
         return state;
     }
@@ -656,7 +784,10 @@
         if (step === 4) return mountStep4(root, initial);
         if (step === 5) return mountStep5(root, initial);
         if (step === 6) return mountStep6(root, initial);
-        if (step === 7) return mountStep7(root, initial);
+        if (step === 7) {
+            if (initial.questions && initial.questions.length) return mountMini(root, initial);
+            return mountStep7(root, initial);
+        }
         if (step >= 8 && step <= 10) return mountMini(root, initial);
         return mountStep1(root, initial);
     }
@@ -677,6 +808,7 @@
                 initial = JSON.parse(root.getAttribute("data-initial") || "{}");
             } catch (e) { }
             var st = mountForStep(root, step, initial);
+            attachStepBff(root, step, st);
             if (roots) roots.set(root, st);
             else fallbackMap = fallbackMap || {};
             if (!roots) fallbackMap[root.id || "x"] = st;
@@ -710,4 +842,116 @@
             window.__jobsyKompasCompleteRef = null;
         }
     };
+
+    function attachStepBff(root, step, state) {
+        if (!state || typeof state.collect !== "function") return;
+        if (step === 1) return;
+        var bff = wireObStepBff(root, step, function () { return state.collect(); });
+        var touch = function () {
+            if (bff && bff.scheduleSave) bff.scheduleSave();
+        };
+        state.scheduleSave = touch;
+        root.addEventListener("change", touch);
+        root.addEventListener("blur", touch, true);
+        root.addEventListener("click", function (ev) {
+            if (ev.target.closest("[data-ob-step-next],[data-ob-step-skip]")) return;
+            touch();
+        });
+    }
+
+    function bindWelcomeBegin() {
+        document.querySelectorAll("[data-ob-welcome-begin]").forEach(function (btn) {
+            if (btn.__obWelcomeBound) return;
+            btn.__obWelcomeBound = true;
+            btn.addEventListener("click", function (ev) {
+                if (btn.disabled) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                btn.disabled = true;
+                var af = readAntiforgery(document.querySelector(".ob-wizard") || document.body);
+                var headers = { "Content-Type": "application/json" };
+                if (af.token) headers[af.header] = af.token;
+                fetch("/api/onboarding-client/begin", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: headers,
+                    body: "{}"
+                }).then(function (res) {
+                    return res.json().then(function (body) {
+                        return { ok: res.ok, body: body };
+                    }).catch(function () { return { ok: res.ok, body: {} }; });
+                }).then(function (result) {
+                    if (result.ok && result.body && result.body.redirectUrl) {
+                        window.location.assign(result.body.redirectUrl);
+                        return;
+                    }
+                    btn.disabled = false;
+                }).catch(function () { btn.disabled = false; });
+            }, true);
+        });
+    }
+
+    function bindKompasComplete() {
+        document.querySelectorAll("[data-ob-kompas-complete]").forEach(function (btn) {
+            if (btn.__obKompasBound) return;
+            btn.__obKompasBound = true;
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                btn.disabled = true;
+                var af = readAntiforgery(document.querySelector(".ob-wizard") || document.body);
+                var headers = { "Content-Type": "application/json" };
+                if (af.token) headers[af.header] = af.token;
+                fetch("/api/onboarding-client/kompas/complete", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: headers,
+                    body: "{}"
+                }).then(function (res) {
+                    return res.json().then(function (body) {
+                        return { ok: res.ok, body: body };
+                    }).catch(function () { return { ok: res.ok, body: {} }; });
+                }).then(function (result) {
+                    if (result.ok && result.body && result.body.redirectUrl) {
+                        window.location.assign(result.body.redirectUrl);
+                        return;
+                    }
+                    btn.disabled = false;
+                }).catch(function () { btn.disabled = false; });
+            }, true);
+        });
+    }
+
+    function autoMountClientSteps() {
+        document.querySelectorAll("[data-ob-client-step]").forEach(function (root) {
+            if (root.getAttribute("data-ob-client-mounted") === "1") return;
+            var step = parseInt(root.getAttribute("data-ob-client-step"), 10);
+            if (!step) return;
+            window.jobsyOnboardingClient.mount(root, step);
+        });
+        bindWelcomeBegin();
+        bindKompasComplete();
+    }
+
+    function bootOnboardingClient() {
+        autoMountClientSteps();
+        bindWelcomeBegin();
+        bindKompasComplete();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bootOnboardingClient);
+    } else {
+        bootOnboardingClient();
+    }
+
+    if (!window.__obOnboardingDomObserver) {
+        window.__obOnboardingDomObserver = true;
+        var domObs = new MutationObserver(function () {
+            autoMountClientSteps();
+            bindWelcomeBegin();
+            bindKompasComplete();
+        });
+        domObs.observe(document.documentElement, { childList: true, subtree: true });
+    }
 })();

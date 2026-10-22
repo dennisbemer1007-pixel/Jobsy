@@ -50,8 +50,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
             client.Timeout = TimeSpan.FromSeconds(5);
 
             var dto = await client.GetFromJsonAsync<FeatureFlagsResponse>(
-                "api/settings/feature-flags",
-                cancellationToken);
+                    "api/settings/feature-flags",
+                    cancellationToken)
+                .ConfigureAwait(false);
             var flags = new FeatureFlagSnapshot(
                 dto?.EmployersEnabled ?? false,
                 dto?.CandidatePassportEnabled ?? true,
