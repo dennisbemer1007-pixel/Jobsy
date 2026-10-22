@@ -84,7 +84,12 @@ internal static class OnboardingClientStepShells
         var immediate = draft.Immediate;
         var fromIso = draft.AvailableFrom is { } d ? d.ToString("yyyy-MM-dd") : string.Empty;
         var selectedPresets = new HashSet<string>(draft.Presets, StringComparer.OrdinalIgnoreCase);
-        var availability = new HashSet<string>(draft.Availability, StringComparer.Ordinal);
+        var availability = draft.Availability;
+        const string radioLabelStyle =
+            "display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px;width:auto;text-align:left;font-weight:600";
+        const string radioInputStyle = "width:18px;height:18px;margin:0;flex:0 0 auto";
+        const string saveBtnStyle =
+            "padding:10px 20px;min-width:120px;min-height:44px;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:#fff;font:inherit;font-weight:600;cursor:pointer;flex:1 1 120px;box-sizing:border-box";
         const string step2StackStyle =
             "display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:none;box-sizing:border-box;gap:12px";
         const string step2GridStyle =
@@ -94,7 +99,7 @@ internal static class OnboardingClientStepShells
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated ob-wizard__presets ob-rustig__step2-card\" style=\"");
         sb.Append(step2StackStyle);
         sb.Append("\">");
-        sb.Append("<div class=\"ob-wizard__section-title\">");
+        sb.Append("<div class=\"ob-wizard__section-title\" id=\"ob-presets\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityPresetsLegend"]));
         sb.Append("</div>");
         sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets lobsy-choice-grid ob-rustig__step2-presets\" style=\"");
@@ -108,15 +113,18 @@ internal static class OnboardingClientStepShells
         sb.Append("<p class=\"ob-wizard__hint ob-wizard__section-hint ob-rustig__step2-matrix-hint\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Preset.Custom.GridHint"]));
         sb.Append("</p>");
-        sb.Append("<div class=\"availability-matrix availability-matrix--touch ob-rustig__step2-matrix\" data-ob-client=\"matrix\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
+        sb.Append("<div id=\"ob-matrix\" class=\"availability-matrix availability-matrix--touch ob-rustig__step2-matrix\" data-ob-client=\"matrix\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
         AppendAvailabilityMatrix(sb, culture, availability);
         sb.Append("</div>");
-        sb.Append("<fieldset class=\"ob-rustig__step2-start\" style=\"width:100%;max-width:none;border:0;padding:0;margin:0;box-sizing:border-box\"><legend class=\"ob-wizard__section-title\">");
+        sb.Append("<fieldset id=\"ob-start\" class=\"ob-rustig__step2-start\" style=\"width:100%;max-width:none;border:0;padding:0;margin:0;box-sizing:border-box\"><legend class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityStartSummary"]));
         sb.Append("</legend>");
         sb.Append("<div style=\"display:flex;flex-direction:column;gap:10px;width:100%\">");
-        sb.Append("<label style=\"display:flex;flex-direction:row;align-items:center;gap:8px;font-weight:600\">");
-        sb.Append("<input type=\"radio\" name=\"obStartMode\" value=\"now\"");
+        sb.Append("<label style=\"");
+        sb.Append(radioLabelStyle);
+        sb.Append("\"><input type=\"radio\" name=\"obStartMode\" value=\"now\" style=\"");
+        sb.Append(radioInputStyle);
+        sb.Append("\" data-testid=\"onboarding-start-now\"");
         if (immediate)
         {
             sb.Append(" checked");
@@ -126,8 +134,11 @@ internal static class OnboardingClientStepShells
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableImmediate"]));
         sb.Append("</label>");
         sb.Append("<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%\">");
-        sb.Append("<label style=\"display:flex;flex-direction:row;align-items:center;gap:8px;font-weight:600;flex:0 0 auto\">");
-        sb.Append("<input type=\"radio\" name=\"obStartMode\" value=\"from\"");
+        sb.Append("<label style=\"");
+        sb.Append(radioLabelStyle);
+        sb.Append(";flex:0 0 auto\"><input type=\"radio\" name=\"obStartMode\" value=\"from\" style=\"");
+        sb.Append(radioInputStyle);
+        sb.Append("\" data-testid=\"onboarding-start-from\"");
         if (!immediate)
         {
             sb.Append(" checked");
@@ -136,12 +147,15 @@ internal static class OnboardingClientStepShells
         sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableFrom"]));
         sb.Append("</label>");
+        sb.Append("<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex:1 1 100%;min-width:0\">");
         sb.Append("<input id=\"onboarding-available-from\" name=\"obAvailableFrom\" type=\"date\" autocomplete=\"off\" value=\"");
         sb.Append(WebUtility.HtmlEncode(fromIso));
-        sb.Append("\" style=\"min-height:44px;flex:1 1 10rem\" data-testid=\"onboarding-available-from\" />");
-        sb.Append("<button type=\"submit\" name=\"obAction\" value=\"saveStart\" class=\"ob-rustig__btn\" data-testid=\"onboarding-start-save\">");
+        sb.Append("\" style=\"min-height:44px;flex:1 1 12rem;min-width:0;box-sizing:border-box\" data-testid=\"onboarding-available-from\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();var b=this.form.querySelector('[data-testid=&quot;onboarding-start-save&quot;]');if(b)b.click();}\" />");
+        sb.Append("<button type=\"submit\" name=\"obAction\" value=\"saveStart\" style=\"");
+        sb.Append(saveBtnStyle);
+        sb.Append("\" data-testid=\"onboarding-start-save\">");
         sb.Append(WebUtility.HtmlEncode(culture["Common.Save"]));
-        sb.Append("</button></div></div></fieldset>");
+        sb.Append("</button></div></div></div></fieldset>");
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -527,6 +541,10 @@ internal static class OnboardingClientStepShells
                     sb.Append(" is-on");
                 }
 
+                sb.Append("\" style=\"");
+                sb.Append(on
+                    ? "background:color-mix(in srgb, var(--brand) 20%, var(--surface));border:2px solid var(--brand);min-height:44px;box-sizing:border-box"
+                    : "background:var(--surface);border:1px solid var(--border);min-height:44px;box-sizing:border-box");
                 sb.Append("\" value=\"");
                 sb.Append(WebUtility.HtmlEncode(key));
                 sb.Append("\" data-ob-key=\"");

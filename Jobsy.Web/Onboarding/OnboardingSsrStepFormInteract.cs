@@ -32,6 +32,31 @@ internal static class OnboardingSsrStepFormInteract
         return false;
     }
 
+    public static string? ScrollAnchorFor(int step, IFormCollection form)
+    {
+        if (step != 2)
+        {
+            return null;
+        }
+
+        if (IsSaveStart(form))
+        {
+            return "#ob-start";
+        }
+
+        if (Has(form, "obMatrix"))
+        {
+            return "#ob-matrix";
+        }
+
+        if (Has(form, "obPreset"))
+        {
+            return "#ob-presets";
+        }
+
+        return null;
+    }
+
     public static bool HasInteract(int step, IFormCollection form)
     {
         if (step == 2)

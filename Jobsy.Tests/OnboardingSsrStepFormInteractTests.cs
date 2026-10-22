@@ -131,4 +131,21 @@ public sealed class OnboardingSsrStepFormInteractTests
         Assert.True(OnboardingSsrStepFormInteract.TryApply(2, form, draft, NlCulture(), out var err));
         Assert.NotNull(err);
     }
+
+    [Fact]
+    public void Scroll_anchor_for_matrix_and_start()
+    {
+        var matrixForm = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+        {
+            ["obMatrix"] = "Do:Middag",
+        });
+        Assert.Equal("#ob-matrix", OnboardingSsrStepFormInteract.ScrollAnchorFor(2, matrixForm));
+
+        var startForm = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+        {
+            ["obAction"] = "saveStart",
+            ["obStartMode"] = "now",
+        });
+        Assert.Equal("#ob-start", OnboardingSsrStepFormInteract.ScrollAnchorFor(2, startForm));
+    }
 }
