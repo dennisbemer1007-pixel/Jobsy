@@ -82,19 +82,24 @@ internal static class OnboardingClientStepShells
     {
         draft ??= new OnboardingProfileDraft();
         var immediate = draft.Immediate;
-        var fromText = draft.AvailableFrom is { } d
-            ? JobsyDateInputRules.FormatDisplayDate(d, culture.Language)
-            : string.Empty;
-        var fromPlaceholder = JobsyDateInputRules.Placeholder(culture.Language);
+        var fromIso = draft.AvailableFrom is { } d ? d.ToString("yyyy-MM-dd") : string.Empty;
         var selectedPresets = new HashSet<string>(draft.Presets, StringComparer.OrdinalIgnoreCase);
         var availability = new HashSet<string>(draft.Availability, StringComparer.Ordinal);
+        const string step2StackStyle =
+            "display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:none;box-sizing:border-box;gap:12px";
+        const string step2GridStyle =
+            "display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;max-width:none;box-sizing:border-box";
 
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated ob-wizard__presets ob-rustig__step2-card\">");
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated ob-wizard__presets ob-rustig__step2-card\" style=\"");
+        sb.Append(step2StackStyle);
+        sb.Append("\">");
         sb.Append("<div class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityPresetsLegend"]));
         sb.Append("</div>");
-        sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets lobsy-choice-grid ob-rustig__step2-presets\">");
+        sb.Append("<div data-ob-client=\"presetGrid\" class=\"ob-wizard__presets lobsy-choice-grid ob-rustig__step2-presets\" style=\"");
+        sb.Append(step2GridStyle);
+        sb.Append("\">");
         AppendPresetTiles(sb, culture, selectedPresets);
         sb.Append("</div>");
         sb.Append("<div class=\"ob-wizard__section-title ob-rustig__step2-matrix-title\">");
@@ -103,37 +108,40 @@ internal static class OnboardingClientStepShells
         sb.Append("<p class=\"ob-wizard__hint ob-wizard__section-hint ob-rustig__step2-matrix-hint\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Preset.Custom.GridHint"]));
         sb.Append("</p>");
-        sb.Append("<div class=\"availability-matrix availability-matrix--touch ob-rustig__step2-matrix\" data-ob-client=\"matrix\">");
+        sb.Append("<div class=\"availability-matrix availability-matrix--touch ob-rustig__step2-matrix\" data-ob-client=\"matrix\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
         AppendAvailabilityMatrix(sb, culture, availability);
         sb.Append("</div>");
-        sb.Append("<fieldset class=\"ob-rustig__step2-start\"><legend>");
+        sb.Append("<fieldset class=\"ob-rustig__step2-start\" style=\"width:100%;max-width:none;border:0;padding:0;margin:0;box-sizing:border-box\"><legend class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityStartSummary"]));
         sb.Append("</legend>");
-        sb.Append("<button type=\"submit\" name=\"obStart\" value=\"immediate\" class=\"ob-rustig__step2-start-option lobsy-choice-tile");
+        sb.Append("<div style=\"display:flex;flex-direction:column;gap:10px;width:100%\">");
+        sb.Append("<label style=\"display:flex;flex-direction:row;align-items:center;gap:8px;font-weight:600\">");
+        sb.Append("<input type=\"radio\" name=\"obStartMode\" value=\"now\"");
         if (immediate)
         {
-            sb.Append(" is-selected");
+            sb.Append(" checked");
         }
 
-        sb.Append("\">");
+        sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableImmediate"]));
-        sb.Append("</button>");
-        sb.Append("<div class=\"ob-rustig__step2-start-option ob-rustig__step2-start-option--from");
+        sb.Append("</label>");
+        sb.Append("<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%\">");
+        sb.Append("<label style=\"display:flex;flex-direction:row;align-items:center;gap:8px;font-weight:600;flex:0 0 auto\">");
+        sb.Append("<input type=\"radio\" name=\"obStartMode\" value=\"from\"");
         if (!immediate)
         {
-            sb.Append(" is-selected");
+            sb.Append(" checked");
         }
 
-        sb.Append("\"><button type=\"submit\" name=\"obStart\" value=\"from\" class=\"ob-rustig__step2-start-trigger\">");
+        sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailableFrom"]));
-        sb.Append("</button>");
-        sb.Append("<input id=\"onboarding-available-from\" name=\"obAvailableFrom\" type=\"text\" inputmode=\"numeric\" autocomplete=\"off\" placeholder=\"");
-        sb.Append(WebUtility.HtmlEncode(fromPlaceholder));
-        sb.Append("\" value=\"");
-        sb.Append(WebUtility.HtmlEncode(fromText));
-        sb.Append("\" onchange=\"var b=this.form.querySelector('[data-ob-available-from-save]');if(b)b.click();\" />");
-        sb.Append("<button type=\"submit\" name=\"obAvailableFromSave\" value=\"1\" hidden tabindex=\"-1\" aria-hidden=\"true\" data-ob-available-from-save></button>");
-        sb.Append("</div></fieldset>");
+        sb.Append("</label>");
+        sb.Append("<input id=\"onboarding-available-from\" name=\"obAvailableFrom\" type=\"date\" autocomplete=\"off\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(fromIso));
+        sb.Append("\" style=\"min-height:44px;flex:1 1 10rem\" data-testid=\"onboarding-available-from\" />");
+        sb.Append("<button type=\"submit\" name=\"obAction\" value=\"saveStart\" class=\"ob-rustig__btn\" data-testid=\"onboarding-start-save\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Save"]));
+        sb.Append("</button></div></div></fieldset>");
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -201,7 +209,7 @@ internal static class OnboardingClientStepShells
         draft ??= new OnboardingProfileDraft();
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
-        sb.Append("<label class=\"ob-wizard__check\"><input type=\"checkbox\" data-ob-client=\"noWork\"");
+        sb.Append("<label class=\"ob-wizard__check\" style=\"display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px;width:auto;text-align:left\"><input type=\"checkbox\" data-ob-client=\"noWork\" style=\"width:auto;margin:0;flex:0 0 auto\" data-testid=\"onboarding-no-work\"");
         if (draft.NoWork)
         {
             sb.Append(" checked");

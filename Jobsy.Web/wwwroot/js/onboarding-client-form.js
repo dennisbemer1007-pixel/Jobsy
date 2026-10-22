@@ -1579,17 +1579,12 @@
                 if (key) availability.push(key);
             }
         });
-        var immediateBtn = root.querySelector('button[name="obStart"][value="immediate"].is-selected');
-        var fromSelected = root.querySelector(".ob-rustig__step2-start-option--from.is-selected");
-        var immediate = !!immediateBtn || !fromSelected;
+        var modeNow = root.querySelector('input[name="obStartMode"][value="now"]');
+        var immediate = !modeNow || modeNow.checked;
         var availFromInput = root.querySelector('input[name="obAvailableFrom"]');
-        var availText = availFromInput ? availFromInput.value.trim() : "";
         var availableFrom = null;
-        if (!immediate && availText) {
-            var p = parseFlexibleDate(availText);
-            if (p) {
-                availableFrom = p.y + "-" + String(p.m).padStart(2, "0") + "-" + String(p.d).padStart(2, "0");
-            }
+        if (!immediate && availFromInput && availFromInput.value) {
+            availableFrom = availFromInput.value.trim();
         }
         return {
             presets: presets,

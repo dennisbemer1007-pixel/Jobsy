@@ -1,5 +1,6 @@
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
+using Jobsy.Web.Localization;
 using Jobsy.Web.Onboarding;
 using Microsoft.AspNetCore.Http;
 
@@ -7,6 +8,12 @@ namespace Jobsy.Tests;
 
 public sealed class OnboardingSsrStepFormInteractTests
 {
+    private static CultureState NlCulture()
+    {
+        var culture = new CultureState(null!, null!, null!);
+        culture.InitializeFromLanguage("nl");
+        return culture;
+    }
     [Fact]
     public void Preset_post_toggle_fills_availability_for_validation()
     {
@@ -86,7 +93,8 @@ public sealed class OnboardingSsrStepFormInteractTests
 
         var form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
         {
-            ["obStart"] = "immediate",
+            ["obAction"] = "saveStart",
+            ["obStartMode"] = "now",
         });
 
         Assert.True(OnboardingSsrStepFormInteract.TryApply(2, form, draft, null!, out _));
@@ -95,22 +103,32 @@ public sealed class OnboardingSsrStepFormInteractTests
     }
 
     [Fact]
-    public void From_start_and_date_post_persist()
+    public void SaveStart_from_mode_persists_iso_date()
     {
         var draft = new OnboardingProfileDraft { Immediate = true };
         var form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
         {
-            ["obStart"] = "from",
+            ["obAction"] = "saveStart",
+            ["obStartMode"] = "from",
+            ["obAvailableFrom"] = "2027-04-20",
         });
-        Assert.True(OnboardingSsrStepFormInteract.TryApply(2, form, draft, null!, out _));
+        Assert.True(OnboardingSsrStepFormInteract.TryApply(2, form, draft, NlCulture(), out var err));
+        Assert.Null(err);
         Assert.False(draft.Immediate);
-
-        form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
-        {
-            ["obAvailableFromSave"] = "1",
-            ["obAvailableFrom"] = "20-04-2027",
-        });
-        Assert.True(OnboardingSsrStepFormInteract.TryApply(2, form, draft, null!, out _));
         Assert.Equal(new DateOnly(2027, 4, 20), draft.AvailableFrom);
+    }
+
+    [Fact]
+    public void SaveStart_from_mode_rejects_invalid_date()
+    {
+        var draft = new OnboardingProfileDraft();
+        var form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+        {
+            ["obAction"] = "saveStart",
+            ["obStartMode"] = "from",
+            ["obAvailableFrom"] = "not-a-date",
+        });
+        Assert.True(OnboardingSsrStepFormInteract.TryApply(2, form, draft, NlCulture(), out var err));
+        Assert.NotNull(err);
     }
 }
