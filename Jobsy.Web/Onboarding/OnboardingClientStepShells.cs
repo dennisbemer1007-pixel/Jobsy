@@ -27,7 +27,8 @@ internal static class OnboardingClientStepShells
             5 => BuildStep5(culture, draft),
             6 => BuildStep6(culture, draft, dreamTitles),
             7 => BuildStep7Ssr(culture, draft, seed),
-            >= 8 and <= 10 => BuildMiniStep(culture),
+            8 => BuildStep8Ssr(seed),
+            >= 9 and <= 10 => BuildMiniStep(culture),
             _ => "",
         };
     }
@@ -286,13 +287,13 @@ internal static class OnboardingClientStepShells
             var trimmed = title.Trim();
             var on = !string.IsNullOrEmpty(activeDream)
                 && string.Equals(trimmed, activeDream, StringComparison.OrdinalIgnoreCase);
-            sb.Append("<button type=\"submit\" name=\"obDreamPick\" class=\"ob-rustig__dream lobsy-choice-tile");
+            sb.Append("<button type=\"button\" class=\"ob-rustig__dream lobsy-choice-tile");
             if (on)
             {
                 sb.Append(" is-on is-selected");
             }
 
-            sb.Append("\" value=\"");
+            sb.Append("\" data-ob-dream-title=\"");
             sb.Append(WebUtility.HtmlEncode(trimmed));
             sb.Append("\" data-testid=\"onboarding-dream-tile\" aria-pressed=\"");
             sb.Append(on ? "true" : "false");
@@ -334,7 +335,17 @@ internal static class OnboardingClientStepShells
             sb.Append("</label>");
         }
 
-        AppendMiniQuestionsSsr(sb, seed.MiniQuestions, seed.MiniAnswers);
+        AppendMiniQuestionsSsr(sb, seed.MiniQuestions, seed.MiniAnswers, "onboarding-step-7-mini");
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+
+    private static string BuildStep8Ssr(OnboardingClientStepSeed? seed)
+    {
+        seed ??= new OnboardingClientStepSeed();
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
+        AppendMiniQuestionsSsr(sb, seed.MiniQuestions, seed.MiniAnswers, "onboarding-step-8-mini");
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -342,9 +353,12 @@ internal static class OnboardingClientStepShells
     private static void AppendMiniQuestionsSsr(
         StringBuilder sb,
         IReadOnlyList<OnboardingClientStepSeed.MiniQuestionSeed> questions,
-        IReadOnlyDictionary<int, int> answers)
+        IReadOnlyDictionary<int, int> answers,
+        string miniTestId)
     {
-        sb.Append("<div class=\"ob-client-mini\" data-ob-ssr-mini data-testid=\"onboarding-step-7-mini\">");
+        sb.Append("<div class=\"ob-client-mini\" data-ob-ssr-mini data-testid=\"");
+        sb.Append(WebUtility.HtmlEncode(miniTestId));
+        sb.Append("\">");
         foreach (var question in questions)
         {
             answers.TryGetValue(question.Id, out var selected);
@@ -356,15 +370,15 @@ internal static class OnboardingClientStepShells
             for (var score = 1; score <= 5; score++)
             {
                 var on = selected == score;
-                sb.Append("<button type=\"submit\" name=\"obMiniPick\" class=\"lobsy-choice-tile");
+                sb.Append("<button type=\"button\" class=\"lobsy-choice-tile");
                 if (on)
                 {
                     sb.Append(" is-selected");
                 }
 
-                sb.Append("\" value=\"");
+                sb.Append("\" data-ob-mini-qid=\"");
                 sb.Append(question.Id);
-                sb.Append(':');
+                sb.Append("\" data-ob-mini-score=\"");
                 sb.Append(score);
                 sb.Append("\" data-testid=\"onboarding-mini-likert\" aria-pressed=\"");
                 sb.Append(on ? "true" : "false");
