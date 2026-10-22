@@ -384,26 +384,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 try
                 {
                     var body = await request.Content!.ReadAsStringAsync(cancellationToken);
-                    using var doc = JsonDocument.Parse(body);
-                    if (doc.RootElement.TryGetProperty("firstName", out var fn))
-                    {
-                        factory.StoredProfile.FirstName = fn.GetString() ?? factory.StoredProfile.FirstName;
-                    }
-
-                    if (doc.RootElement.TryGetProperty("lastName", out var ln))
-                    {
-                        factory.StoredProfile.LastName = ln.GetString() ?? factory.StoredProfile.LastName;
-                    }
-
-                    if (doc.RootElement.TryGetProperty("homeLatitude", out var lat) && lat.TryGetDouble(out var latV))
-                    {
-                        factory.StoredProfile.HomeLatitude = latV;
-                    }
-
-                    if (doc.RootElement.TryGetProperty("homeLongitude", out var lng) && lng.TryGetDouble(out var lngV))
-                    {
-                        factory.StoredProfile.HomeLongitude = lngV;
-                    }
+                    MergeStubProfilePut(factory, body);
                 }
                 catch (JsonException)
                 {
@@ -439,5 +420,114 @@ internal static class OnboardingClientStepsPlaywrightSupport
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload, Json), System.Text.Encoding.UTF8, "application/json"),
             };
+
+        private static void MergeStubProfilePut(ClientStepsWebFactory factory, string body)
+        {
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("firstName", out var fn) && fn.ValueKind == JsonValueKind.String)
+            {
+                factory.StoredProfile.FirstName = fn.GetString();
+            }
+
+            if (root.TryGetProperty("lastName", out var ln) && ln.ValueKind == JsonValueKind.String)
+            {
+                factory.StoredProfile.LastName = ln.GetString();
+            }
+
+            if (root.TryGetProperty("phoneNumber", out var phone) && phone.ValueKind == JsonValueKind.String)
+            {
+                factory.StoredProfile.PhoneNumber = phone.GetString();
+            }
+
+            if (root.TryGetProperty("dateOfBirth", out var dob) && dob.ValueKind == JsonValueKind.String
+                && DateOnly.TryParse(dob.GetString(), out var dobVal))
+            {
+                factory.StoredProfile.DateOfBirth = dobVal;
+                factory.StoredProfile.HasDateOfBirth = true;
+            }
+
+            if (root.TryGetProperty("homeLatitude", out var lat) && lat.TryGetDouble(out var latV))
+            {
+                factory.StoredProfile.HomeLatitude = latV;
+            }
+
+            if (root.TryGetProperty("homeLongitude", out var lng) && lng.TryGetDouble(out var lngV))
+            {
+                factory.StoredProfile.HomeLongitude = lngV;
+            }
+
+            if (root.TryGetProperty("clearAvailableFromDate", out var clearFrom) && clearFrom.ValueKind == JsonValueKind.True)
+            {
+                factory.StoredProfile.AvailableFromDate = null;
+            }
+
+            if (root.TryGetProperty("availableFromDate", out var fromDate) && fromDate.ValueKind == JsonValueKind.String
+                && DateOnly.TryParse(fromDate.GetString(), out var fromVal))
+            {
+                factory.StoredProfile.AvailableFromDate = fromVal;
+            }
+
+            if (!root.TryGetProperty("preferences", out var prefs) || prefs.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (prefs.TryGetProperty("homeAddress", out var home) && home.ValueKind == JsonValueKind.String)
+            {
+                factory.StoredProfile.Preferences.HomeAddress = home.GetString();
+            }
+
+            if (prefs.TryGetProperty("workStatuses", out var workStatuses) && workStatuses.ValueKind == JsonValueKind.Array)
+            {
+                factory.StoredProfile.Preferences.WorkStatuses = workStatuses.EnumerateArray()
+                    .Select(e => e.GetString() ?? "")
+                    .Where(s => s.Length > 0)
+                    .ToList();
+            }
+
+            if (prefs.TryGetProperty("minHoursPerWeek", out var minH) && minH.TryGetDecimal(out var minVal))
+            {
+                factory.StoredProfile.Preferences.MinHoursPerWeek = minVal;
+            }
+
+            if (prefs.TryGetProperty("maxHoursPerWeek", out var maxH) && maxH.TryGetDecimal(out var maxVal))
+            {
+                factory.StoredProfile.Preferences.MaxHoursPerWeek = maxVal;
+            }
+
+            if (prefs.TryGetProperty("availabilityPresets", out var presetArr) && presetArr.ValueKind == JsonValueKind.Array)
+            {
+                factory.StoredProfile.Preferences.AvailabilityPresets = presetArr.EnumerateArray()
+                    .Select(e => e.GetString() ?? "")
+                    .Where(s => s.Length > 0)
+                    .ToList();
+            }
+
+            if (prefs.TryGetProperty("availabilityPresetsOverridden", out var overridden)
+                && (overridden.ValueKind == JsonValueKind.True || overridden.ValueKind == JsonValueKind.False))
+            {
+                factory.StoredProfile.Preferences.AvailabilityPresetsOverridden = overridden.GetBoolean();
+            }
+
+            if (prefs.TryGetProperty("availability", out var availability) && availability.ValueKind == JsonValueKind.Object)
+            {
+                var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var day in availability.EnumerateObject())
+                {
+                    if (day.Value.ValueKind != JsonValueKind.Array)
+                    {
+                        continue;
+                    }
+
+                    map[day.Name] = day.Value.EnumerateArray()
+                        .Select(e => e.GetString() ?? "")
+                        .Where(s => s.Length > 0)
+                        .ToList();
+                }
+
+                factory.StoredProfile.Preferences.Availability = map;
+            }
+        }
     }
 }

@@ -30,15 +30,32 @@
     }
 
     function parseFlexibleDate(text) {
-        if (!text || text.trim().length < 8) return null;
-        var parts = text.trim().replace(/\./g, "-").replace(/\//g, "-").split("-");
+        if (!text) return null;
+        var raw = text.trim();
+        if (!raw) return null;
+        var digits = raw.replace(/\D/g, "");
+        if (digits.length === 8) {
+            var d8 = parseInt(digits.slice(0, 2), 10);
+            var m8 = parseInt(digits.slice(2, 4), 10);
+            var y8 = parseInt(digits.slice(4, 8), 10);
+            if (d8 && m8 && y8) {
+                return { d: d8, m: m8, y: y8, text: raw };
+            }
+        }
+        if (raw.length < 8) return null;
+        var parts = raw.replace(/\./g, "-").replace(/\//g, "-").split("-");
         if (parts.length !== 3) return null;
         var d = parseInt(parts[0], 10);
         var m = parseInt(parts[1], 10);
         var y = parseInt(parts[2], 10);
         if (y < 100) y += y >= 50 ? 1900 : 2000;
         if (!d || !m || !y) return null;
-        return { d: d, m: m, y: y, text: text.trim() };
+        return { d: d, m: m, y: y, text: raw };
+    }
+
+    function formatDisplayDateParts(p) {
+        if (!p) return "";
+        return String(p.d).padStart(2, "0") + "-" + String(p.m).padStart(2, "0") + "-" + String(p.y);
     }
 
     var presetDefs = {
@@ -269,6 +286,8 @@
         }
 
         function collectPayload() {
+            var lat = state.homeLat != null ? state.homeLat : initial.homeLat;
+            var lng = state.homeLng != null ? state.homeLng : initial.homeLng;
             return {
                 firstName: first ? first.value : "",
                 lastName: last ? last.value : "",
@@ -276,8 +295,8 @@
                 whatsAppAllowed: false,
                 workStatuses: readWorkStatusesFromDom(),
                 addressQuery: address ? address.value : "",
-                homeLat: state.homeLat,
-                homeLng: state.homeLng,
+                homeLat: lat,
+                homeLng: lng,
                 birthDateText: birth ? birth.value : ""
             };
         }
@@ -530,7 +549,12 @@
         }
 
         var bff = wireObStepBff(root, 2, collectPayload);
+        var ssrForm = root.closest("form[data-ob-ssr-form]");
         function saveNow() {
+            if (ssrForm) {
+                putOnboardingStep(root, 2, collectPayload, false, false, false).catch(function () { });
+                return;
+            }
             if (bff && bff.scheduleSave) bff.scheduleSave();
         }
 
@@ -731,8 +755,16 @@
             });
         }
         if (availFrom) {
-            availFrom.addEventListener("change", saveNow);
-            availFrom.addEventListener("blur", saveNow);
+            availFrom.addEventListener("change", function () {
+                var p = parseFlexibleDate(availFrom.value);
+                if (p) availFrom.value = formatDisplayDateParts(p);
+                saveNow();
+            });
+            availFrom.addEventListener("blur", function () {
+                var p = parseFlexibleDate(availFrom.value);
+                if (p) availFrom.value = formatDisplayDateParts(p);
+                saveNow();
+            });
         }
 
         return { collect: collectPayload, scheduleSave: saveNow };

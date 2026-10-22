@@ -27,13 +27,15 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         _playwright?.Dispose();
     }
 
-    [Fact]
-    public async Task Ssr_steps_1_2_3_and_back_use_form_post_without_blazor()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Ssr_steps_1_2_nav_persistence_and_single_actions(bool mobile)
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile: false));
+        await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
@@ -44,8 +46,48 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         await page.WaitForFunctionAsync(
             "() => document.querySelector('[data-ob-client-step=\"1\"]')?.getAttribute('data-ob-client-mounted') === '1'");
         Assert.Equal(0, await page.Locator("script[src*='blazor.web.js']").CountAsync());
-        Assert.Equal(0, await page.Locator("#components-reconnect-modal").CountAsync());
+        Assert.Equal(0, await page.GetByTestId("onboarding-back").CountAsync());
+        Assert.Equal(0, await page.Locator("[data-ob-nav-next]").CountAsync());
 
+        await FillStep1AndGoToStep2Async(page);
+
+        await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync();
+        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
+        Assert.Equal(0, await page.Locator("[data-ob-nav-next]").CountAsync());
+
+        var weekendTile = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile").Filter(new() { HasText = "Weekenden" });
+        await weekendTile.ClickAsync(new() { Force = true });
+        await page.WaitForTimeoutAsync(800);
+
+        await page.Locator("[data-ob-client=startFromDate]").CheckAsync();
+        var dateInput = page.Locator("[data-ob-client=availableFrom]");
+        await dateInput.FillAsync("15032027");
+        await dateInput.BlurAsync();
+        await page.WaitForTimeoutAsync(400);
+        await Assertions.Expect(dateInput).ToHaveValueAsync("15-03-2027");
+
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=1**");
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-ob-client-step=\"1\"]')?.getAttribute('data-ob-client-mounted') === '1'");
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=2**");
+        await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync();
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-ob-client-step=\"2\"]')?.getAttribute('data-ob-client-mounted') === '1'");
+
+        weekendTile = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile").Filter(new() { HasText = "Weekenden" });
+        dateInput = page.Locator("[data-ob-client=availableFrom]");
+        await Assertions.Expect(weekendTile).ToHaveAttributeAsync("aria-pressed", "true");
+        await Assertions.Expect(dateInput).ToHaveValueAsync("15-03-2027");
+
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=3**");
+    }
+
+    private static async Task FillStep1AndGoToStep2Async(IPage page)
+    {
         await page.Locator("[data-ob-client=firstName]").FillAsync("Onboarding");
         await page.Locator("[data-ob-client=lastName]").FillAsync("Tester");
         await page.Locator("#onboarding-home-address").FillAsync("2671GB");
@@ -54,21 +96,5 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         await page.Locator(".work-status-chip[data-ob-code=scholier]").ClickAsync();
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=2**");
-
-        await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync();
-        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
-        await page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile").Filter(new() { HasText = "Weekenden" }).ClickAsync(new() { Force = true });
-        await page.WaitForTimeoutAsync(15_000);
-
-        await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=3**");
-
-        await page.GotoAsync(root + "/candidate/start?step=2");
-        await page.Locator("[data-ob-client-step=\"2\"]").WaitForAsync();
-        Assert.Contains("step=2", page.Url);
-
-        await page.GetByTestId("onboarding-back").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start?step=1**");
     }
-
 }
