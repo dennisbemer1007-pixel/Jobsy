@@ -203,6 +203,7 @@ builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.MeGetCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.DiscoveryOverviewCache>();
+builder.Services.AddScoped<Jobsy.Web.Discovery.DiscoverySsrDepthStore>();
 builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
 builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
@@ -656,6 +657,7 @@ app.MapPassportClientEndpoints();
 app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
 app.MapOnboardingStartFormEndpoints();
+app.MapDiscoveryClientFormEndpoints();
 app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.

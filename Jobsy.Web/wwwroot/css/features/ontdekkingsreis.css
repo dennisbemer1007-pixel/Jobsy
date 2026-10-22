@@ -2305,3 +2305,40 @@
     pointer-events: auto;
   }
 }
+
+/* Static SSR: scrollable overview + mobile trail; depth options as submit forms */
+.journey.journey-root--ssr {
+  min-height: auto;
+  overflow: visible;
+}
+
+.journey.journey-root--ssr.journey--overview-route {
+  overflow-y: visible;
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+}
+
+.journey.journey-root--ssr .journey-route__stop-btn {
+  text-decoration: none;
+  color: inherit;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+  width: 100%;
+  cursor: pointer;
+}
+
+.journey.journey-root--ssr .journey-dive__form {
+  display: contents;
+}
+
+@media (max-width: 767px) {
+  .journey.journey-root--ssr.journey--overview-route .journey-route__mobile-only {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .journey.journey-root--ssr .journey-route-mobile__map {
+    overflow: visible;
+  }
+}

@@ -358,6 +358,24 @@ internal static class OnboardingClientStepShells
     private static string BuildStep10Ssr(CultureState culture, OnboardingClientStepSeed? seed)
         => BuildMiniBlockSsr(culture, 10, seed, "onboarding-step-10-mini");
 
+    /// <summary>Mini test block for De ontdekkingsreis SSR (steps 7–10).</summary>
+    public static string BuildDiscoveryMiniBlock(
+        CultureState culture,
+        int step,
+        OnboardingClientStepSeed seed,
+        int activeQuestion1Based,
+        string titleKey,
+        string hintKey)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"journey-body\">");
+        AppendMiniQuestionsSsr(sb, culture, step, seed.MiniQuestions, seed.MiniAnswers, $"discovery-step-{step}-mini", activeQuestion1Based);
+        sb.Append("</div>");
+        _ = titleKey;
+        _ = hintKey;
+        return sb.ToString();
+    }
+
     private static string BuildMiniBlockSsr(CultureState culture, int wizardStep, OnboardingClientStepSeed? seed, string miniTestId)
     {
         seed ??= new OnboardingClientStepSeed();

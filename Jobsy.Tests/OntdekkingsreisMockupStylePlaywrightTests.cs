@@ -52,32 +52,18 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
+        var t0 = DateTime.UtcNow;
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/ontdekkingsreis"));
-        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
         await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            """
-            () => {
-              const mobileLayout = window.matchMedia('(max-width: 767px)').matches;
-              const hasPath = (sel) => {
-                const p = document.querySelector(sel);
-                return !!(p && p.getAttribute('d') && p.getAttribute('d').length > 8);
-              };
-              return mobileLayout
-                ? hasPath('#discovery-route-path-future') || hasPath('#discovery-route-path-done')
-                : hasPath('#discovery-route-path');
-            }
-            """,
-            null,
-            new() { Timeout = 60_000 });
+        await page.Locator("[data-discovery-ssr=\"1\"]").WaitForAsync(new() { Timeout = 30_000 });
+        var elapsedMs = (DateTime.UtcNow - t0).TotalMilliseconds;
+        Assert.True(elapsedMs < 8000, $"Discovery overview SSR took {elapsedMs}ms.");
 
         var routeRoot = mobile ? ".journey-route__mobile-only" : ".journey-route__desktop-only";
         await AssertButtonsWithinViewportAsync(page, width, routeRoot);
 
         await page.Locator($"{routeRoot} .journey-route__stop[data-phase=kust] .journey-route__stop-btn").ClickAsync();
         await AssertButtonsWithinViewportAsync(page, width, routeRoot);
-
-        await page.Locator($"{routeRoot} .journey-route__stop[data-phase=kust] .journey-route__stop-btn").ClickAsync();
 
         await page.Locator($"{routeRoot} .journey-route__stop[data-phase=light] .journey-route__stop-btn").ClickAsync();
         await AssertButtonsWithinViewportAsync(page, width, routeRoot);
@@ -91,30 +77,20 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
             await adjust.ClickAsync(new() { Force = mobile });
         }
 
-        await page.GotoAsync(root + "/candidate/ontdekkingsreis");
-        await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync();
-        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
-
-        var continueBtn = page.Locator($"{routeRoot} .journey-route__cta").First;
-        if (await continueBtn.IsVisibleAsync())
-        {
-            await continueBtn.ClickAsync();
-        }
-
-        await page.GotoAsync(root + "/candidate/ontdekkingsreis");
+        await page.GotoAsync(root + "/candidate/ontdekkingsreis?stap=overview&fase=diep");
         await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync();
 
-        var startValues = page.Locator($"{routeRoot} .journey-route__test.is-todo button.journey-route__test-start").First;
-        if (await startValues.IsVisibleAsync())
+        var stepLink = page.Locator($"{routeRoot} .journey-route__adjust").First;
+        if (await stepLink.CountAsync() > 0)
         {
-            await startValues.ClickAsync();
+            await stepLink.ClickAsync();
             await page.WaitForURLAsync(u => u.Contains("stap=", StringComparison.OrdinalIgnoreCase), new() { Timeout = 60_000 });
         }
     }
 
     private static async Task AssertButtonsWithinViewportAsync(IPage page, int viewportWidth, string routeRoot)
     {
-        var buttons = page.Locator($"{routeRoot} button");
+        var buttons = page.Locator($"{routeRoot} button, {routeRoot} a.journey-route__stop-btn");
         var count = await buttons.CountAsync();
         for (var i = 0; i < count; i++)
         {

@@ -1,0 +1,82 @@
+@page "/candidate/ontdekkingsreis"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/start")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Discovery
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject DiscoveryOverviewCache OverviewCache
+@inject DiscoverySsrDepthStore DepthStore
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/candidate/ontdekkingsreis"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+</HeadContent>
+
+@if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+        query.TryGetValue("stap", out var stapValues);
+        query.TryGetValue("diepte", out var diepteValues);
+        query.TryGetValue("fase", out var faseValues);
+        query.TryGetValue("q", out var qValues);
+        query.TryGetValue("error", out var errorValues);
+
+        var userId = http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        var tokens = Antiforgery.GetAndStoreTokens(http);
+        var token = tokens.RequestToken ?? "";
+
+        var load = await DiscoverySsrData.LoadAsync(
+            Api,
+            FeatureFlags,
+            Culture,
+            OverviewCache,
+            DepthStore,
+            userId,
+            stapValues.FirstOrDefault(),
+            diepteValues.FirstOrDefault(),
+            faseValues.FirstOrDefault(),
+            qValues.FirstOrDefault(),
+            errorValues.FirstOrDefault(),
+            http.RequestAborted);
+
+        _bodyHtml = DiscoverySsrShells.BuildPage(
+            Culture,
+            token,
+            load.Screen,
+            load.Overview,
+            load.Shed,
+            load.Test,
+            load.ErrorMessage);
+    }
+}
