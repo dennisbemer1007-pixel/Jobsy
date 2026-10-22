@@ -338,7 +338,7 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await page.Locator("#kompas-full-tests").WaitForAsync(new() { Timeout = 60_000 });
         await page.GetByTestId("candidate-kompas-ssr").WaitForAsync(new() { Timeout = 60_000 });
         await Assertions.Expect(page.Locator("#kompas-directions")).ToBeVisibleAsync();
-        await Assertions.Expect(page.Locator("a.admin-sublink[href=\"#kompas-tests\"]")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("a.admin-sublink[href=\"/candidate/kompas#kompas-tests\"]")).ToBeVisibleAsync();
         await page.GetByTestId("kompas-go-passport").ClickAsync();
         await page.WaitForURLAsync("**/candidate/paspoort**");
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
@@ -377,6 +377,53 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await page.GetByTestId("onboarding-step-8-mini").WaitForAsync();
         Assert.DoesNotContain("obError", page.Url, StringComparison.OrdinalIgnoreCase);
         await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Kompas_hub_ssr_chip_anchors_and_passport(bool mobile)
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        factory.FinishReached = true;
+        factory.OnboardingComplete = true;
+        factory.CandidatePassportEnabled = true;
+        factory.KandidatenkaartEnabled = false;
+        factory.StoredProfile.FirstName = "Kompas";
+        factory.StoredProfile.Preferences = new Jobsy.Web.Models.CandidatePreferences
+        {
+            HomeAddress = "Kalverstraat 1, 1012NX Amsterdam",
+            MaxTravelMinutes = 30,
+        };
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(OnboardingClientStepsPlaywrightSupport.ContextOptions(mobile));
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/kompas"));
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.GetByTestId("candidate-kompas-ssr").WaitForAsync(new() { Timeout = 60_000 });
+
+        var hubPath = "/candidate/kompas";
+        foreach (var hash in new[] { "#kompas-tests", "#kompas-full-tests", "#kompas-directions" })
+        {
+            await page.Locator($"a.admin-sublink[href=\"{hubPath}{hash}\"]").ClickAsync();
+            await page.WaitForURLAsync($"**{hubPath}{hash}**");
+            await Assertions.Expect(page.Locator(hash)).ToBeVisibleAsync();
+            Assert.DoesNotContain("ontdekkingsreis", page.Url, StringComparison.OrdinalIgnoreCase);
+        }
+
+        await page.Locator("a.admin-sublink[href=\"/candidate/paspoort\"]").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/paspoort**");
+        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
+        await page.Locator(".passport-page").WaitForAsync(new() { Timeout = 60_000 });
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/kompas"));
+        await page.GetByTestId("candidate-kompas-ssr").WaitForAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(page.GetByTestId("onboarding-finale-now-cards").Locator("article").Nth(2))
+            .ToContainTextAsync("Werkgevers");
     }
 
     private static async Task<int[]> ReadMiniQuestionIdsAsync(IPage page)

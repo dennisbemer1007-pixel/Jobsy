@@ -62,10 +62,12 @@ internal static class OnboardingKompasSsrShells
         sb.Append("<nav class=\"kompas-tabs admin-sublinks\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.TabsLabel"]));
         sb.Append("\">");
-        AppendTabLink(sb, culture["Kompas.TabDna"], "#kompas-tests");
-        AppendTabLink(sb, culture["Kompas.TabProfile"], model.ProfileUrl + "?tab=" + CandidateKompasTabs.Profile);
-        AppendTabLink(sb, culture["Kompas.TabTests"], "#kompas-full-tests");
-        AppendTabLink(sb, culture["Kompas.TabFit"], "#kompas-directions");
+        var hubPath = OnboardingRoutes.KompasHubPath;
+        var profileTabUrl = model.PassportEnabled ? model.PassportUrl : model.ProfileUrl;
+        AppendTabLink(sb, culture["Kompas.TabDna"], hubPath + "#kompas-tests", samePageAnchor: true);
+        AppendTabLink(sb, culture["Kompas.TabProfile"], profileTabUrl);
+        AppendTabLink(sb, culture["Kompas.TabTests"], hubPath + "#kompas-full-tests", samePageAnchor: true);
+        AppendTabLink(sb, culture["Kompas.TabFit"], hubPath + "#kompas-directions", samePageAnchor: true);
         sb.Append("</nav>");
 
         sb.Append("<div class=\"ob-rustig__canvas ob-rustig__kompas kompas--ssr-body\">");
@@ -75,8 +77,9 @@ internal static class OnboardingKompasSsrShells
         sb.Append("</div></section></div>");
 
         sb.Append("<div class=\"kompas__ssr-actions\">");
+        var openProfileUrl = model.PassportEnabled ? model.PassportUrl : model.ProfileUrl;
         sb.Append("<a class=\"ob-rustig__btn ob-rustig__btn--primary\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(model.ProfileUrl));
+        sb.Append(WebUtility.HtmlEncode(openProfileUrl));
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.OpenProfile"]));
         sb.Append("</a>");
@@ -212,45 +215,16 @@ internal static class OnboardingKompasSsrShells
 
     private static IReadOnlyList<OnboardingFinaleCard> PickNowCards(OnboardingFinaleCardsInput input)
     {
-        var available = OnboardingFinaleCards.BuildNow(input)
-            .Where(c => c.Id is not (OnboardingFinaleCardId.DreamRoute or OnboardingFinaleCardId.KompasWords))
-            .ToList();
-
-        var preferred = new[]
-        {
-            OnboardingFinaleCardId.Matching,
-            OnboardingFinaleCardId.Banenkaart,
+        var available = OnboardingFinaleCards.BuildNow(input);
+        var matching = available.First(c => c.Id == OnboardingFinaleCardId.Matching);
+        var banenkaart = available.First(c => c.Id == OnboardingFinaleCardId.Banenkaart);
+        var employers = new OnboardingFinaleCard(
             OnboardingFinaleCardId.EmployerDiscovery,
-        };
+            "Onboarding.FinaleV2.Do.Employers.Title",
+            "Onboarding.FinaleV2.Do.Employers.Body",
+            ComingSoon: false);
 
-        var picked = new List<OnboardingFinaleCard>();
-        foreach (var id in preferred)
-        {
-            var card = available.FirstOrDefault(c => c.Id == id);
-            if (card is not null)
-            {
-                picked.Add(card);
-            }
-        }
-
-        if (picked.Count < 3)
-        {
-            foreach (var card in available)
-            {
-                if (picked.Any(p => p.Id == card.Id))
-                {
-                    continue;
-                }
-
-                picked.Add(card);
-                if (picked.Count >= 3)
-                {
-                    break;
-                }
-            }
-        }
-
-        return picked;
+        return [matching, banenkaart, employers];
     }
 
     private static string FormatCardBody(CultureState culture, OnboardingFinaleCard card, string? homeLabel)
@@ -273,11 +247,17 @@ internal static class OnboardingKompasSsrShells
         _ => OnboardingFinaleIcons.Match,
     };
 
-    private static void AppendTabLink(StringBuilder sb, string label, string href)
+    private static void AppendTabLink(StringBuilder sb, string label, string href, bool samePageAnchor = false)
     {
         sb.Append("<a class=\"admin-sublink\" href=\"");
         sb.Append(WebUtility.HtmlEncode(href));
-        sb.Append("\">");
+        sb.Append('"');
+        if (samePageAnchor)
+        {
+            sb.Append(" data-enhance-nav=\"false\"");
+        }
+
+        sb.Append('>');
         sb.Append(WebUtility.HtmlEncode(label));
         sb.Append("</a>");
     }

@@ -231,6 +231,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal bool CandidatePassportEnabled;
         internal bool KandidatenkaartEnabled = true;
         internal int StubMatchingVacancyCount { get; set; }
+        internal int StubNearbyVacancyCount { get; set; }
 
         public string ServerAddress { get; private set; } = "";
 
@@ -515,6 +516,18 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 {
                     Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
                 };
+            }
+
+            if (path.Contains("nearby-signal", StringComparison.OrdinalIgnoreCase)
+                && request.Method == HttpMethod.Get)
+            {
+                return JsonResponse(new
+                {
+                    count = factory.StubNearbyVacancyCount,
+                    maxTravelMinutes = 30,
+                    employersFeatureOff = false,
+                    missingHomeLocation = false,
+                });
             }
 
             object payload = path switch
