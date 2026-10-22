@@ -78,6 +78,50 @@ public sealed class CandidateCookieBarCompactPlaywrightTests : IAsyncLifetime
         Assert.True(await page.EvaluateAsync<bool>("() => document.documentElement.classList.contains('cookie-consent-known')"));
     }
 
+    [Fact]
+    public async Task Http_cookie_alone_hides_bar_until_jobsyCookieConsent_clear()
+    {
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        });
+
+        var page = await context.NewPageAsync();
+        var signIn = $"{baseUrl}/__test/sign-in?role=candidate&return={Uri.EscapeDataString("/candidate/ontdekkingsreis")}";
+        await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        await page.EvaluateAsync("""
+            () => {
+              try { localStorage.removeItem('Jobsy.CookieConsent'); } catch (e) {}
+              document.cookie = 'Jobsy.CookieConsent=' + encodeURIComponent('necessary')
+                + '; Path=/; Max-Age=' + (60 * 60 * 24 * 365) + '; SameSite=Lax';
+            }
+            """);
+
+        await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.Load });
+        await page.WaitForTimeoutAsync(500);
+
+        var hiddenWithCookieOnly = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const bar = document.querySelector('.cookie-consent');
+              if (!bar) return true;
+              const style = window.getComputedStyle(bar);
+              return style.display === 'none' || bar.offsetParent === null;
+            }
+            """);
+        Assert.True(hiddenWithCookieOnly, "Banner should stay hidden when only the HTTP cookie is set.");
+
+        await page.EvaluateAsync("() => window.jobsyCookieConsent.clear()");
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+
+        await page.Locator(".cookie-consent").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+    }
+
     private sealed class CookieBarMetrics
     {
         public double BarHeight { get; set; }

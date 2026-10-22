@@ -30,15 +30,26 @@ window.jobsyCulture = {
 
     var KEY = "Jobsy.CookieConsent";
 
+    function readCookieValue() {
+        var escaped = KEY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        var match = document.cookie.match(new RegExp("(?:^|; )" + escaped + "=([^;]*)"));
+        if (!match || !match[1]) {
+            return "";
+        }
+        try {
+            return decodeURIComponent(match[1]);
+        } catch (e2) {
+            return match[1];
+        }
+    }
+
     function consentStored() {
         try {
             if (localStorage.getItem(KEY)) {
                 return true;
             }
         } catch (e) { }
-        var escaped = KEY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        var match = document.cookie.match(new RegExp("(?:^|; )" + escaped + "=([^;]*)"));
-        return !!(match && match[1]);
+        return !!readCookieValue();
     }
 
     function applyKnownClass() {
@@ -56,23 +67,36 @@ window.jobsyCulture = {
     window.jobsyCookieConsent = {
         get: function () {
             try {
-                return localStorage.getItem(KEY) || "";
-            } catch (e) {
-                return "";
-            }
+                var ls = localStorage.getItem(KEY);
+                if (ls) {
+                    return ls;
+                }
+            } catch (e) { }
+            return readCookieValue();
         },
         set: function (value) {
             try {
                 localStorage.setItem(KEY, value || "necessary");
                 var maxAge = 60 * 60 * 24 * 365;
                 document.cookie = KEY + "=" + encodeURIComponent(value || "necessary")
-                    + "; Path=/; SameSite=Lax; Max-Age=" + maxAge
+                    + "; Path=/; Max-Age=" + maxAge
+                    + "; SameSite=Lax"
                     + (location.protocol === "https:" ? "; Secure" : "");
                 applyKnownClass();
                 return true;
             } catch (e) {
                 return false;
             }
+        },
+        clear: function () {
+            try {
+                localStorage.removeItem(KEY);
+            } catch (e) { }
+            try {
+                document.cookie = KEY + "=; Path=/; Max-Age=0; SameSite=Lax"
+                    + (location.protocol === "https:" ? "; Secure" : "");
+            } catch (e2) { }
+            applyKnownClass();
         },
         allowsAnalytics: function () {
             var value = (window.jobsyCookieConsent.get() || "").toLowerCase();

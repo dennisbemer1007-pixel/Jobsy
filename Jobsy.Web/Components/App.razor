@@ -37,7 +37,7 @@
     }
     @if (LoadBlazorRuntime)
     {
-        <link rel="preload" href="js/app-core.js?v=20261021-02" as="script" crossorigin />
+        <link rel="preload" href="js/app-core.js?v=20261021-07" as="script" crossorigin />
         <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
     }
     @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
@@ -170,9 +170,21 @@
                 }
             } catch (e) { }
             try {
-                if (localStorage.getItem("Jobsy.CookieConsent")) {
-                    document.documentElement.classList.add("cookie-consent-known");
-                }
+                (function () {
+                    var key = "Jobsy.CookieConsent";
+                    var stored = false;
+                    try {
+                        stored = !!localStorage.getItem(key);
+                    } catch (e) { }
+                    if (!stored) {
+                        try {
+                            stored = document.cookie.indexOf(key + "=") !== -1;
+                        } catch (e2) { }
+                    }
+                    if (stored) {
+                        document.documentElement.classList.add("cookie-consent-known");
+                    }
+                })();
             } catch (e) { }
             /* Banenkaart needs isWide before deferred app-core.js; do not wait on MapLibre or SW-cached bundles. */
             window.jobsyViewport = window.jobsyViewport || {
@@ -288,7 +300,7 @@
     }
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261021-02" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+            <script src="js/app-core.js?v=20261021-07" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
             <script src="js/lobsyPush.js?v=20261021-02" nonce="@Nonce" defer></script>
             <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
