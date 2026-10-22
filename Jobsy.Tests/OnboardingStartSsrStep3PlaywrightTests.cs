@@ -175,6 +175,7 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-dream-unknown").CountAsync());
 
+        var urlBeforeDreamTile = page.Url;
         var monteurTile = page.GetByTestId("onboarding-dream-tile").Filter(new() { HasText = "Monteur" });
         if (await monteurTile.CountAsync() == 0)
         {
@@ -190,7 +191,9 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
             await monteurTile.ClickAsync(new() { Force = true });
         }
 
-        await page.WaitForURLAsync("**/candidate/start?step=6**");
+        await page.WaitForTimeoutAsync(300);
+        Assert.Equal(urlBeforeDreamTile, page.Url);
+
         var dreamInput = page.GetByTestId("onboarding-dream-input");
         await dreamInput.WaitForAsync();
 
@@ -226,8 +229,11 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
         Assert.Equal(0, await page.GetByTestId("onboarding-skip").CountAsync());
 
+        await page.WaitForFunctionAsync("() => !!window.jobsyOnboardingSsrSave");
         await page.GetByTestId("onboarding-consent").CheckAsync();
         await AnswerStep7MiniBlockAsync(page, mobile);
+        await page.WaitForFunctionAsync(
+            """() => document.querySelectorAll('.ob-client-mini-q').length > 0 && document.querySelectorAll('input[name^="miniAnswers["]').length >= document.querySelectorAll('.ob-client-mini-q').length""");
 
         await page.GetByTestId("onboarding-back").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=6**");
@@ -243,16 +249,33 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await Assertions.Expect(firstLikert).ToHaveCountAsync(1);
 
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=8**");
+        await page.WaitForURLAsync("**/candidate/start?step=8**");
+        await page.GetByTestId("onboarding-step-8-mini").WaitForAsync();
+        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
+
+        await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=7**");
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=8**");
+        await Assertions.Expect(page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected")).ToHaveCountAsync(1);
+
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=9**");
         Assert.Empty(consoleErrors);
     }
 
     private static async Task AnswerStep7MiniBlockAsync(IPage page, bool mobile)
+        => await AnswerMiniBlockAsync(page, mobile, expectUrl: null);
+
+    private static async Task AnswerMiniBlockAsync(IPage page, bool mobile, string? expectUrl)
     {
         var cards = page.Locator(".ob-client-mini-q");
         var count = await cards.CountAsync();
         for (var i = 0; i < count; i++)
         {
+            var urlBefore = page.Url;
             var tile = cards.Nth(i).Locator("[data-testid=onboarding-mini-likert]").Nth(2);
             if (mobile)
             {
@@ -263,7 +286,14 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
                 await tile.ClickAsync(new() { Force = true });
             }
 
-            await page.WaitForURLAsync("**/candidate/start?step=7**");
+            await page.WaitForTimeoutAsync(400);
+            Assert.Equal(urlBefore, page.Url);
+            await Assertions.Expect(tile).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+        }
+
+        if (!string.IsNullOrEmpty(expectUrl))
+        {
+            await page.WaitForURLAsync(expectUrl);
         }
     }
 

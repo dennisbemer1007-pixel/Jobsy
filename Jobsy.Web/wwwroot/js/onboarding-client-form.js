@@ -1423,6 +1423,23 @@
     }
 
     function mountMini(root, initial) {
+        if (root.closest("form[data-ob-ssr-form]")) {
+            var form = root.closest("form[data-ob-ssr-form]");
+            var step = parseInt(root.getAttribute("data-ob-client-step") || "0", 10);
+            return {
+                collect: function () {
+                    if (step === 7) {
+                        var consentBox = form ? form.querySelector('input[name="consentRequested"]') : null;
+                        return {
+                            consentRequested: !!(consentBox && consentBox.checked),
+                            answers: readMiniAnswersFromForm(form)
+                        };
+                    }
+                    return { answers: readMiniAnswersFromForm(form) };
+                }
+            };
+        }
+
         var host = root.querySelector("[data-ob-client=miniRoot]");
         if (!host) host = root;
         mountMiniHost(host, initial);
@@ -1675,7 +1692,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
-        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 7) return;
+        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 8) return;
         if (step === 1 || step === 2 || step === 3) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {
@@ -1779,14 +1796,14 @@
                     }
                     return;
                 }
-                if (step === 7) {
+                if (step === 7 || step === 8) {
                     var consentBox = form.querySelector('input[name="consentRequested"]');
-                    var payload7 = {
-                        consentRequested: !!(consentBox && consentBox.checked),
-                        answers: readMiniAnswersFromForm(form)
-                    };
+                    var payloadMini = { answers: readMiniAnswersFromForm(form) };
+                    if (step === 7 && consentBox) {
+                        payloadMini.consentRequested = !!consentBox.checked;
+                    }
                     if (hidden) {
-                        hidden.value = JSON.stringify(payload7);
+                        hidden.value = JSON.stringify(payloadMini);
                     }
                     return;
                 }

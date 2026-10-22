@@ -229,7 +229,7 @@ public static class OnboardingClientStepBffSaver
 
                 await api.SaveMyOnboardingProgressAsync(step + 1, stepCompleted: true, ct: cancellationToken);
                 api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-                return (StatusCodes.Status200OK, new { redirectUrl = "/candidate/start" });
+                return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(step + 1) });
             }
             catch (Exception)
             {

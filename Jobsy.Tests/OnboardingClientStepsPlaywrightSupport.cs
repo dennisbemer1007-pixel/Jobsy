@@ -223,6 +223,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal MeProfile StoredProfile = new() { FirstName = "Onboarding", LastName = "Tester" };
         internal string? StoredDreamTitle { get; set; }
         internal Dictionary<string, int> CompetencyAnswers { get; } = new(StringComparer.Ordinal);
+        internal Dictionary<string, int> CareerAnswers { get; } = new(StringComparer.Ordinal);
 
         public string ServerAddress { get; private set; } = "";
 
@@ -448,6 +449,16 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 return JsonResponse(new { answers = factory.CompetencyAnswers, quickScanVersion = 1 });
             }
 
+            if (path.Contains("/career-interests", StringComparison.OrdinalIgnoreCase))
+            {
+                if (request.Method == HttpMethod.Put)
+                {
+                    await MergeAssessmentPutAsync(request, factory.CareerAnswers, cancellationToken);
+                }
+
+                return JsonResponse(new { answers = factory.CareerAnswers, quickScanVersion = 1 });
+            }
+
             object payload = path switch
             {
                 var p when p.Contains("/onboarding", StringComparison.OrdinalIgnoreCase) => new
@@ -458,7 +469,6 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     steps = Array.Empty<object>(),
                 },
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => factory.StoredProfile,
-                var p when p.Contains("/career-interests", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/culture", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/values", StringComparison.OrdinalIgnoreCase) => new { answers = new Dictionary<string, int>(), quickScanVersion = 1 },
                 var p when p.Contains("/site/status", StringComparison.OrdinalIgnoreCase) => new { maintenance = false },
@@ -478,6 +488,12 @@ internal static class OnboardingClientStepsPlaywrightSupport
             HttpRequestMessage request,
             ClientStepsWebFactory factory,
             CancellationToken cancellationToken)
+            => await MergeAssessmentPutAsync(request, factory.CompetencyAnswers, cancellationToken);
+
+        private static async Task MergeAssessmentPutAsync(
+            HttpRequestMessage request,
+            Dictionary<string, int> target,
+            CancellationToken cancellationToken)
         {
             using var doc = await JsonDocument.ParseAsync(await request.Content!.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
             if (!doc.RootElement.TryGetProperty("answers", out var answers) || answers.ValueKind != JsonValueKind.Object)
@@ -489,7 +505,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
             {
                 if (prop.Value.TryGetInt32(out var score) && score is >= 1 and <= 5)
                 {
-                    factory.CompetencyAnswers[prop.Name] = score;
+                    target[prop.Name] = score;
                 }
             }
         }

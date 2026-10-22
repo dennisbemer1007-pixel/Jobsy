@@ -17,6 +17,21 @@
             });
         }
 
+        function selectDreamTile(btn) {
+            var title = btn.getAttribute("data-ob-dream-title") || "";
+            if (input) input.value = title;
+            deselectTiles();
+            btn.classList.add("is-on", "is-selected");
+            btn.setAttribute("aria-pressed", "true");
+            return title.trim();
+        }
+
+        function saveDream() {
+            if (!window.jobsyOnboardingSsrSave || !input) return;
+            var val = input.value.trim();
+            window.jobsyOnboardingSsrSave.putStep(form, 6, { dream: val, dreamSearch: val }).catch(function () { });
+        }
+
         form.addEventListener(
             "submit",
             function () {
@@ -25,25 +40,27 @@
             true
         );
 
+        if (grid) {
+            grid.addEventListener("click", function (ev) {
+                var btn = ev.target.closest("[data-ob-dream-title]");
+                if (!btn || !grid.contains(btn)) return;
+                ev.preventDefault();
+                selectDreamTile(btn);
+                saveDream();
+            });
+        }
+
         if (input) {
             input.addEventListener("input", deselectTiles);
-
-            function requestSave() {
-                if (form.getAttribute("data-ob-step6-submitting") === "1") return;
-                if (!saveBtn) return;
-                saveBtn.click();
-            }
-
             input.addEventListener("blur", function () {
                 if (form.getAttribute("data-ob-step6-submitting") === "1") return;
-                requestSave();
+                if (saveBtn) saveBtn.click();
+                else saveDream();
             });
         }
 
         var root = form.querySelector('[data-ob-client-step="6"]');
-        if (root) {
-            root.setAttribute("data-ob-client-mounted", "1");
-        }
+        if (root) root.setAttribute("data-ob-client-mounted", "1");
     }
 
     function boot() {

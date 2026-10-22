@@ -42,7 +42,7 @@
 {
     <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
 }
-else if (_step is >= 1 and <= 7)
+else if (_step is >= 1 and <= 8)
 {
     var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
     var step7Consent = _step == 7 && !_draft.HasConsent;
@@ -50,6 +50,8 @@ else if (_step is >= 1 and <= 7)
     var pageLead = step7Consent ? Culture["Onboarding.Consent.Lead"] : Culture[$"Onboarding.Step{_step}.Lead"];
     var canvasClass = step7Consent ? "ob-rustig__canvas ob-rustig__canvas--consent" : "ob-rustig__canvas";
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
+    var heroDesktop = OnboardingRustigPanoramaAssets.DesktopForStep(_step);
+    var heroMobile = OnboardingRustigPanoramaAssets.MobileForStep(_step) ?? heroDesktop;
     <form method="post"
           action="@($"/candidate/start?step={_step}")"
           class="ob-wizard ob-wizard--richting-a ob-wizard--rustig"
@@ -62,14 +64,19 @@ else if (_step is >= 1 and <= 7)
           data-ob-active-step="@_step">
         <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
+        @if (_step is 6 or 7 or 8)
+        {
+            <script src="js/onboarding-ssr-fetch-save.js?v=20261022-step78" defer></script>
+        }
         @if (_step == 6)
         {
             <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
-            <script src="js/onboarding-step6-ssr.js?v=20261022-step6plain" defer></script>
+            <script src="js/onboarding-step6-ssr.js?v=20261022-step78" defer></script>
         }
-        @if (_step == 7)
+        @if (_step is 7 or 8)
         {
             <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
+            <script src="js/onboarding-ssr-mini-tiles.js?v=20261022-step78" defer></script>
         }
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
@@ -149,8 +156,8 @@ else if (_step is >= 1 and <= 7)
                         </div>
                     </header>
 
-                    <OnboardingRustigHero DesktopUrl="@OnboardingRustigPanoramaAssets.Desktop(_step)"
-                                          MobileUrl="@(OnboardingRustigPanoramaAssets.Mobile(_step) ?? OnboardingRustigPanoramaAssets.Desktop(_step))" />
+                    <OnboardingRustigHero DesktopUrl="@heroDesktop"
+                                          MobileUrl="@heroMobile" />
 
                     <div class="ob-rustig__page-head">
                         @if (_step is 4 or 5)
@@ -271,12 +278,10 @@ else if (_step is >= 1 and <= 7)
                 return;
             }
 
-            _step = Math.Clamp(state.CurrentStep, 1, 10);
-            if (TryParseStepQuery(out var requested))
-            {
-                var ceiling = Math.Clamp(state.CurrentStep, 1, 10);
-                _step = Math.Clamp(requested, 1, ceiling);
-            }
+            var ceiling = Math.Clamp(state.CurrentStep, 1, 10);
+            _step = TryParseStepQuery(out var requested)
+                ? Math.Clamp(requested, 1, ceiling)
+                : ceiling;
 
             if (ShouldShowWelcomeScreen(state, _step))
             {
@@ -284,7 +289,7 @@ else if (_step is >= 1 and <= 7)
                 return;
             }
 
-            if (_step is < 1 or > 7)
+            if (_step is < 1 or > 8)
             {
                 RedirectTo(WizardUrl(_step));
                 return;
@@ -311,13 +316,13 @@ else if (_step is >= 1 and <= 7)
                     .ToList();
             }
 
-            if (_step == 7)
+            if (_step is 7 or 8)
             {
-                var step7 = await OnboardingSsrStep7Loader.LoadAsync(Api, FeatureFlags, Culture, CancellationToken.None);
+                var mini = await OnboardingSsrMiniStepLoader.LoadAsync(_step, Api, FeatureFlags, Culture, CancellationToken.None);
                 _seed = new OnboardingClientStepSeed
                 {
-                    MiniQuestions = step7.Questions.ToList(),
-                    MiniAnswers = step7.Answers,
+                    MiniQuestions = mini.Questions.ToList(),
+                    MiniAnswers = mini.Answers,
                     HasConsent = _draft.HasConsent,
                     ConsentRequested = _draft.ConsentRequested,
                 };

@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Full-page POST for onboarding steps 1–7 (303 redirect, no Blazor circuit).</summary>
+/// <summary>Full-page POST for onboarding steps 1–8 (303 redirect, no Blazor circuit).</summary>
 public static class OnboardingStartFormEndpoints
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
@@ -45,7 +45,7 @@ public static class OnboardingStartFormEndpoints
             return SeeOther(WithError(OnboardingRoutes.StepUrl(step ?? 1), culture["Common.Error.TryAgain"]));
         }
 
-        var currentStep = step is >= 1 and <= 7 ? step.Value : 1;
+        var currentStep = step is >= 1 and <= 8 ? step.Value : 1;
 
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
@@ -61,7 +61,7 @@ public static class OnboardingStartFormEndpoints
             goBack = false;
         }
 
-        if (!string.IsNullOrWhiteSpace(obMiniPick) && currentStep == 7)
+        if (!string.IsNullOrWhiteSpace(obMiniPick) && currentStep is 7 or 8)
         {
             persist = true;
             advance = false;
@@ -84,9 +84,9 @@ public static class OnboardingStartFormEndpoints
         {
             body = BuildStep6Body(dream, obPayload);
         }
-        else if (currentStep == 7)
+        else if (currentStep is 7 or 8)
         {
-            body = BuildStep7Body(http, consentRequested, obMiniPick, obPayload);
+            body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
         }
         else if (string.IsNullOrWhiteSpace(obPayload))
         {
@@ -132,8 +132,9 @@ public static class OnboardingStartFormEndpoints
         return ToRedirect(stepStatus, stepPayload, currentStep, advance, goBack, culture);
     }
 
-    private static JsonElement BuildStep7Body(
+    private static JsonElement BuildMiniBlockBody(
         HttpContext http,
+        int step,
         string? consentRequested,
         string? obMiniPick,
         string? obPayload)
@@ -173,14 +174,19 @@ public static class OnboardingStartFormEndpoints
             }
         }
 
-        var consent = string.Equals(consentRequested, "true", StringComparison.OrdinalIgnoreCase)
-                      || string.Equals(consentRequested, "on", StringComparison.OrdinalIgnoreCase);
+        var consent = step == 7
+                      && (string.Equals(consentRequested, "true", StringComparison.OrdinalIgnoreCase)
+                          || string.Equals(consentRequested, "on", StringComparison.OrdinalIgnoreCase));
 
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
         {
             writer.WriteStartObject();
-            writer.WriteBoolean("consentRequested", consent);
+            if (step == 7)
+            {
+                writer.WriteBoolean("consentRequested", consent);
+            }
+
             writer.WriteStartObject("answers");
             foreach (var (id, value) in answers.OrderBy(static p => p.Key))
             {
