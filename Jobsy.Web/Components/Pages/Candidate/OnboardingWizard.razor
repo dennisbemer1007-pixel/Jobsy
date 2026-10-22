@@ -552,35 +552,6 @@
                             </OnboardingIllustratedStep>
                             break;
 
-                        case 4:
-                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.WerkervaringWebp"
-                                                       JpgSrc="@OnboardingIllustrationAssets.WerkervaringJpg"
-                                                       MobileHeroWebp="@OnboardingIllustrationAssets.MobileHeroWebp("werkervaring")"
-                                                       MobileHeroJpg="@OnboardingIllustrationAssets.MobileHeroJpg("werkervaring")"
-                                                       MobileHeroSlug="werkervaring"
-                                                       Eyebrow="@MobileStepBadge"
-                                                       HeroTitle="@Culture["Onboarding.Step4.Title"]"
-                                                       HeroLead="@Culture["Onboarding.Step4.Lead"]"
-                                                       TestId="onboarding-step-4-illustrated">
-                                <HeroExtra>
-                                    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-                                </HeroExtra>
-                                <HeadContent>
-                                    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-                                    <h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
-                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step4.Lead"]</p>
-                                </HeadContent>
-                                <ChildContent>
-                                    <div class="ob-illustrated-step__form">
-                                        <OnboardingClientStepIsland Step="4"
-                                                                    Draft="Draft"
-                                                                    Presets="IllustratedPresetTuples"
-                                                                    Seed="ClientStepSeed" />
-                                    </div>
-                                </ChildContent>
-                            </OnboardingIllustratedStep>
-                            break;
-
                         case 5:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.OpleidingWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.OpleidingJpg"
@@ -1162,7 +1133,7 @@
             }
 
             _welcome = ShouldShowWelcomeScreen(_state, _step);
-            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 3)
+            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 4)
             {
                 Navigation.NavigateTo(OnboardingRoutes.StepUrl(_step), forceLoad: true);
                 return;

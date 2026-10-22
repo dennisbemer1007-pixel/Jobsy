@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Full-page POST for onboarding steps 1–3 (303 redirect, no Blazor circuit).</summary>
+/// <summary>Full-page POST for onboarding steps 1–4 (303 redirect, no Blazor circuit).</summary>
 public static class OnboardingStartFormEndpoints
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
@@ -41,7 +41,7 @@ public static class OnboardingStartFormEndpoints
             return SeeOther(WithError(OnboardingRoutes.StepUrl(step ?? 1), culture["Common.Error.TryAgain"]));
         }
 
-        var currentStep = step is >= 1 and <= 3 ? step.Value : 1;
+        var currentStep = step is >= 1 and <= 4 ? step.Value : 1;
         if (string.IsNullOrWhiteSpace(obPayload))
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
@@ -60,12 +60,18 @@ public static class OnboardingStartFormEndpoints
 
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
+        var skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
+        if (skipOptional)
+        {
+            advance = true;
+        }
+
         if (!advance && !goBack)
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
         }
 
-        var merged = MergeNavFlags(body, advance, goBack);
+        var merged = MergeNavFlags(body, advance, goBack, skipOptional);
 
         if (currentStep == 1)
         {
@@ -87,7 +93,7 @@ public static class OnboardingStartFormEndpoints
         return ToRedirect(stepStatus, stepPayload, currentStep, advance, goBack, culture);
     }
 
-    private static JsonElement MergeNavFlags(JsonElement body, bool advance, bool goBack)
+    private static JsonElement MergeNavFlags(JsonElement body, bool advance, bool goBack, bool skipOptional)
     {
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
@@ -101,7 +107,7 @@ public static class OnboardingStartFormEndpoints
 
             writer.WriteBoolean("advance", advance);
             writer.WriteBoolean("back", goBack);
-            writer.WriteBoolean("skipOptional", false);
+            writer.WriteBoolean("skipOptional", skipOptional);
             writer.WriteEndObject();
         }
 

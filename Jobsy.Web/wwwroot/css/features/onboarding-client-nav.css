@@ -33,3 +33,22 @@ form[data-ob-ssr-form] .ob-rustig__footer-actions {
   position: relative;
   z-index: 5;
 }
+
+@media (max-width: 1023px) {
+  form[data-ob-ssr-form] .ob-rustig__footer-actions {
+    flex-direction: column;
+    align-items: stretch;
+    inline-size: 100%;
+    padding-inline: 1rem;
+  }
+
+  form[data-ob-ssr-form] .ob-rustig__footer-actions .ob-rustig__btn {
+    inline-size: 100%;
+    margin-inline-start: 0 !important;
+    min-block-size: 3rem;
+  }
+
+  form[data-ob-ssr-form] .ob-rustig__footer-actions .ob-rustig__btn--primary {
+    order: 3;
+  }
+}
