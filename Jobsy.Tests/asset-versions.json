@@ -49,7 +49,7 @@
   },
   "css/features/candidate-hero-compact-preview.css": {
     "sha256": "480e1e883f5ce9202353dd3b0043b79aa0351aa43a260ffaf4cf0a3c61a556d8",
-    "v": "20261021-r15"
+    "v": "20261022-reis-r7"
   },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
@@ -188,8 +188,8 @@
     "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "63f705c8ae4dc32582d24d40121d05cc60f60307e18aeeb1ba76c3ac558ee0ce",
-    "v": "20261015-21"
+    "sha256": "6eca31dcb742de94d32bb3c3f6bf0a8b4973199739f91156ab088d1a7bb76a01",
+    "v": "20261022-reis-r2-r7"
   },
   "css/features/proactive-matching.css": {
     "sha256": "8cdcd71b660f4aacf62188dc8f4a3ae0e61c47dbd0e01b7e5564edc965b1ba3c",
