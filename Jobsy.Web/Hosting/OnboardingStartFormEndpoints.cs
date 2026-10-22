@@ -88,6 +88,13 @@ public static class OnboardingStartFormEndpoints
             skipOptional = true;
         }
 
+        if (IsSilentNoop(http.Request.Form, advance, goBack, persist, skipOptional, dreamUnknown))
+        {
+            var noopAnchor = OnboardingSsrStepFormInteract.ScrollAnchorFor(currentStep, http.Request.Form)
+                             ?? (currentStep == 2 ? "#ob-start" : null);
+            return SeeOther(StepUrlWithFragment(currentStep, noopAnchor));
+        }
+
         if (OnboardingSsrStepFormInteract.HasInteract(currentStep, http.Request.Form))
         {
             MeProfile profile;
@@ -126,7 +133,15 @@ public static class OnboardingStartFormEndpoints
                 featureFlags,
                 culture,
                 cancellationToken);
-            return ToRedirect(interactStatus, interactPayload, currentStep, advance: false, goBack: false, culture);
+            var scrollAnchor = OnboardingSsrStepFormInteract.ScrollAnchorFor(currentStep, http.Request.Form);
+            return ToRedirect(
+                interactStatus,
+                interactPayload,
+                currentStep,
+                advance: false,
+                goBack: false,
+                culture,
+                scrollAnchor);
         }
 
         if (!advance && !goBack && !persist)
@@ -416,7 +431,8 @@ public static class OnboardingStartFormEndpoints
         int currentStep,
         bool advance,
         bool goBack,
-        CultureState culture)
+        CultureState culture,
+        string? scrollAnchor = null)
     {
         if (status is >= 400)
         {
@@ -440,7 +456,35 @@ public static class OnboardingStartFormEndpoints
             return SeeOther(OnboardingRoutes.StepUrl(currentStep + 1));
         }
 
-        return SeeOther(OnboardingRoutes.StepUrl(currentStep));
+        return SeeOther(StepUrlWithFragment(currentStep, scrollAnchor));
+    }
+
+    private static bool IsSilentNoop(
+        IFormCollection form,
+        bool advance,
+        bool goBack,
+        bool persist,
+        bool skipOptional,
+        bool dreamUnknown)
+    {
+        if (advance || goBack || persist || skipOptional || dreamUnknown)
+        {
+            return false;
+        }
+
+        return form.TryGetValue("obAction", out var action)
+               && string.Equals(action.ToString(), "noop", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string StepUrlWithFragment(int step, string? fragment)
+    {
+        var url = OnboardingRoutes.StepUrl(step);
+        if (string.IsNullOrWhiteSpace(fragment))
+        {
+            return url;
+        }
+
+        return fragment.StartsWith('#') ? url + fragment : url + "#" + fragment;
     }
 
     private static RedirectHttpResult SeeOther(string url)

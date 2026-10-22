@@ -235,8 +235,53 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
 
         await dateInput.FocusAsync();
         await page.Keyboard.PressAsync("Enter");
-        await page.WaitForTimeoutAsync(500);
+        await WaitStepPostAsync(page, 2);
+        Assert.DoesNotContain("obError=", page.Url, StringComparison.OrdinalIgnoreCase);
         await Assertions.Expect(firstPreset).Not.ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-selected"));
+
+        var nowRadio = page.GetByTestId("onboarding-start-now");
+        var nowLabel = page.Locator("label:has([data-testid=\"onboarding-start-now\"])");
+        var radioBox = await nowRadio.BoundingBoxAsync();
+        var labelBox = await nowLabel.BoundingBoxAsync();
+        Assert.NotNull(radioBox);
+        Assert.NotNull(labelBox);
+        Assert.True(radioBox!.X - labelBox!.X < 40, $"Radio should sit near label start (delta={radioBox.X - labelBox.X})");
+    }
+
+    [Theory]
+    [InlineData(false, 1024, 700)]
+    [InlineData(true, 390, 844)]
+    public async Task Step2_matrix_toggle_persists(bool mobile, int width, int height)
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            HasTouch = mobile,
+            IsMobile = mobile,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout( 90_000);
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=2"));
+        await WaitStepReadyAsync(page, 2);
+
+        var cell = page.Locator("button[name=\"obMatrix\"][value=\"Do:Middag\"]");
+        await ClickTileAsync(cell, mobile);
+        await WaitStepPostAsync(page, 2);
+        await Assertions.Expect(cell).ToHaveAttributeAsync("aria-pressed", "true");
+        await Assertions.Expect(cell).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("is-on"));
+
+        await ReloadStepAsync(page, 2);
+        await Assertions.Expect(cell).ToHaveAttributeAsync("aria-pressed", "true");
+
+        await ClickTileAsync(cell, mobile);
+        await WaitStepPostAsync(page, 2);
+        await Assertions.Expect(cell).ToHaveAttributeAsync("aria-pressed", "false");
     }
 
     [Fact]
