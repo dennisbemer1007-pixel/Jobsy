@@ -175,19 +175,48 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
         Assert.Equal(1, await page.GetByTestId("onboarding-dream-unknown").CountAsync());
 
-        var dreamInput = page.Locator("[data-ob-client=dreamInput]");
-        await dreamInput.FillAsync("");
+        var monteurTile = page.GetByTestId("onboarding-dream-tile").Filter(new() { HasText = "Monteur" });
+        if (await monteurTile.CountAsync() == 0)
+        {
+            monteurTile = page.GetByTestId("onboarding-dream-tile").First;
+        }
+
         if (mobile)
         {
-            await dreamInput.TapAsync();
-            await dreamInput.PressSequentiallyAsync("Kassière", new() { Delay = 40 });
+            await monteurTile.TapAsync();
         }
         else
         {
-            await dreamInput.PressSequentiallyAsync("Kassière", new() { Delay = 30 });
+            await monteurTile.ClickAsync(new() { Force = true });
         }
 
-        await Assertions.Expect(dreamInput).ToHaveValueAsync("Kassière");
+        await page.WaitForURLAsync("**/candidate/start?step=6**");
+        var dreamInput = page.GetByTestId("onboarding-dream-input");
+        await dreamInput.WaitForAsync();
+
+        if (mobile)
+        {
+            await dreamInput.TapAsync();
+        }
+        else
+        {
+            await dreamInput.ClickAsync();
+        }
+
+        await page.Keyboard.PressAsync("Control+A");
+        await dreamInput.PressSequentiallyAsync("Bakker", new() { Delay = mobile ? 40 : 30 });
+
+        await Assertions.Expect(dreamInput).ToHaveValueAsync("Bakker");
+        await dreamInput.BlurAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=6**");
+        await Assertions.Expect(dreamInput).ToHaveValueAsync("Bakker");
+
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=5**");
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=6**");
+        dreamInput = page.GetByTestId("onboarding-dream-input");
+        await Assertions.Expect(dreamInput).ToHaveValueAsync("Bakker");
 
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start/wizard?step=7**");

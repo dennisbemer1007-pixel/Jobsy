@@ -28,6 +28,8 @@ public static class OnboardingStartFormEndpoints
         HttpContext http,
         [FromForm] string? obNav,
         [FromForm] string? obPayload,
+        [FromForm] string? dream,
+        [FromForm] string? obDreamPick,
         [FromQuery] int? step,
         IAntiforgery antiforgery,
         JobsyApiClient api,
@@ -42,35 +44,52 @@ public static class OnboardingStartFormEndpoints
         }
 
         var currentStep = step is >= 1 and <= 6 ? step.Value : 1;
-        if (string.IsNullOrWhiteSpace(obPayload))
-        {
-            return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
-        }
-
-        JsonElement body;
-        try
-        {
-            using var doc = JsonDocument.Parse(obPayload);
-            body = doc.RootElement.Clone();
-        }
-        catch (JsonException)
-        {
-            return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
-        }
 
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
         var skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
         var dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
+        var persist = string.Equals(obNav, "save", StringComparison.OrdinalIgnoreCase);
+
+        if (!string.IsNullOrWhiteSpace(obDreamPick) && currentStep == 6)
+        {
+            dream = obDreamPick.Trim();
+            persist = true;
+            advance = false;
+            goBack = false;
+        }
+
         if (skipOptional || dreamUnknown)
         {
             advance = true;
             skipOptional = true;
         }
 
-        if (!advance && !goBack)
+        if (!advance && !goBack && !persist)
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
+        }
+
+        JsonElement body;
+        if (currentStep == 6)
+        {
+            body = BuildStep6Body(dream, obPayload);
+        }
+        else if (string.IsNullOrWhiteSpace(obPayload))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
+        }
+        else
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(obPayload);
+                body = doc.RootElement.Clone();
+            }
+            catch (JsonException)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
+            }
         }
 
         if (dreamUnknown && currentStep == 6)
@@ -98,6 +117,47 @@ public static class OnboardingStartFormEndpoints
             culture,
             cancellationToken);
         return ToRedirect(stepStatus, stepPayload, currentStep, advance, goBack, culture);
+    }
+
+    private static JsonElement BuildStep6Body(string? dream, string? obPayload)
+    {
+        var trimmed = dream?.Trim() ?? "";
+        if (string.IsNullOrEmpty(trimmed) && !string.IsNullOrWhiteSpace(obPayload))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(obPayload);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("dream", out var d) && d.ValueKind == JsonValueKind.String)
+                {
+                    trimmed = d.GetString()?.Trim() ?? "";
+                }
+
+                if (string.IsNullOrEmpty(trimmed)
+                    && root.TryGetProperty("dreamSearch", out var ds)
+                    && ds.ValueKind == JsonValueKind.String)
+                {
+                    trimmed = ds.GetString()?.Trim() ?? "";
+                }
+            }
+            catch (JsonException)
+            {
+                // fall through with empty dream
+            }
+        }
+
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("dream", trimmed);
+            writer.WriteString("dreamSearch", trimmed);
+            writer.WriteEndObject();
+        }
+
+        stream.Position = 0;
+        using var outDoc = JsonDocument.Parse(stream);
+        return outDoc.RootElement.Clone();
     }
 
     private static JsonElement ForceEmptyDreamPayload(JsonElement body)

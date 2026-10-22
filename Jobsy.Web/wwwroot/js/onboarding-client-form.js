@@ -1254,8 +1254,16 @@
     }
 
     function mountStep6(root, initial) {
-        var ssrForm = root.closest("form[data-ob-ssr-form]");
-        var ssrValues = root.getAttribute("data-ob-ssr-values") === "1";
+        if (root.closest("form[data-ob-ssr-form]")) {
+            var ssrInput = root.querySelector('input[name="dream"]');
+            return {
+                collect: function () {
+                    var val = ssrInput ? ssrInput.value.trim() : "";
+                    return { dream: val, dreamSearch: val };
+                }
+            };
+        }
+
         var input = root.querySelector("[data-ob-client=dreamInput]");
         var grid = root.querySelector("[data-ob-client=dreamGrid]");
 
@@ -1265,9 +1273,7 @@
         }
 
         function saveNow() {
-            if (ssrForm) {
-                putOnboardingStep(root, 6, collectPayload, false, false, false).catch(function () { });
-            }
+            putOnboardingStep(root, 6, collectPayload, false, false, false).catch(function () { });
         }
 
         function syncDreamTiles(active) {
@@ -1313,19 +1319,14 @@
 
         if (input && !input.__obDreamInputBound) {
             input.__obDreamInputBound = true;
-            if (!ssrValues) {
-                input.value = initial.dreamSearch || initial.dream || "";
-            }
-
+            input.value = initial.dreamSearch || initial.dream || "";
             input.addEventListener("input", function () {
                 syncDreamTiles(input.value.trim());
                 saveNow();
             });
         }
 
-        if (!ssrForm) {
-            wireObStepBff(root, 6, collectPayload);
-        }
+        wireObStepBff(root, 6, collectPayload);
 
         return { collect: collectPayload, scheduleSave: saveNow };
     }
@@ -1742,11 +1743,19 @@
             form.__obSsrFormBound = true;
             form.addEventListener("submit", function () {
                 var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
+                var hidden = form.querySelector("[data-ob-ssr-payload]");
+                if (step === 6) {
+                    var dreamInput = form.querySelector('input[name="dream"]');
+                    var dreamVal = dreamInput ? dreamInput.value.trim() : "";
+                    if (hidden) {
+                        hidden.value = JSON.stringify({ dream: dreamVal, dreamSearch: dreamVal });
+                    }
+                    return;
+                }
                 var root = form.querySelector("[data-ob-client-step]");
                 if (!root || !step) return;
                 var st = roots ? roots.get(root) : null;
                 var payload = collectForRoot(root, step, st) || {};
-                var hidden = form.querySelector("[data-ob-ssr-payload]");
                 if (hidden) hidden.value = JSON.stringify(payload);
             }, true);
         });
