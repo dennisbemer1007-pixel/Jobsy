@@ -358,10 +358,20 @@ else
                     _draft.DreamSearch = _draft.Dream;
                 }
 
-                _dreamTitles = OnboardingDreamSuggestionPicker.BuildFromProfile(_draft, [], max: 8)
-                    .Select(item => item.Title)
-                    .Where(title => !string.IsNullOrWhiteSpace(title))
-                    .ToList();
+                if (OnboardingSsrE2eOverrides.DreamTitles is { Count: > 0 } e2eDreams)
+                {
+                    _dreamTitles = e2eDreams
+                        .Where(title => !string.IsNullOrWhiteSpace(title))
+                        .Select(title => title.Trim())
+                        .ToList();
+                }
+                else
+                {
+                    _dreamTitles = OnboardingDreamSuggestionPicker.BuildFromProfile(_draft, [], max: 10)
+                        .Select(item => item.Title)
+                        .Where(title => !string.IsNullOrWhiteSpace(title))
+                        .ToList();
+                }
             }
 
             if (_step is >= 7 and <= 10)

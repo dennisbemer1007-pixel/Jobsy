@@ -15,6 +15,16 @@ public sealed class OnboardingSsrStepFormInteractTests
         return culture;
     }
     [Fact]
+    public void Step2_save_button_uses_mockup_inline_styles()
+    {
+        var html = OnboardingClientStepShells.Build(2, NlCulture(), new OnboardingProfileDraft());
+        Assert.Contains("white-space:nowrap", html, StringComparison.Ordinal);
+        Assert.Contains("min-width:max-content", html, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"onboarding-start-save\"", html, StringComparison.Ordinal);
+        Assert.Contains("flex-direction:column", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Preset_post_toggle_fills_availability_for_validation()
     {
         var draft = new OnboardingProfileDraft();
