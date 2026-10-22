@@ -1,4 +1,5 @@
 using Jobsy.Core.Features;
+using Jobsy.Web.Models;
 
 namespace Jobsy.Web.Navigation;
 
@@ -22,8 +23,19 @@ public static class OnboardingRoutes
         step switch
         {
             >= 1 and <= 10 => $"{ClassicStartPath}?step={step}",
-            _ => ClassicStartPath,
+            _ => KompasReadyPath,
         };
+
+    public static string ResolveStartEntryPath(OnboardingState state)
+    {
+        if (state.FinishReached)
+        {
+            return KompasReadyPath;
+        }
+
+        var step = Math.Clamp(state.CurrentStep, 1, 10);
+        return StepUrl(step);
+    }
 
     public static string StartPath(FeatureFlagSnapshot flags)
     {

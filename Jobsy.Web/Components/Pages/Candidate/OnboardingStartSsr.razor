@@ -217,6 +217,10 @@ else if (_step is >= 1 and <= 10)
         </div>
     </form>
 }
+else
+{
+    <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+}
 
 @code {
     private const string WelcomeDismissedSource = "welcome";
@@ -260,11 +264,13 @@ else if (_step is >= 1 and <= 10)
         {
             var onboardingTask = Api.GetMyOnboardingAsync();
             var profileTask = Api.GetMyProfileAsync();
-            await Task.WhenAll(onboardingTask, profileTask);
+            var flagsTask = FeatureFlags.GetAsync().AsTask();
+            await Task.WhenAll(onboardingTask, profileTask, flagsTask);
             var state = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true };
             _draft = OnboardingProfileDraftHydrator.FromProfile(await profileTask);
+            var flags = await flagsTask;
 
-            var passportOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.CandidatePassport);
+            var passportOn = flags.CandidatePassportEnabled;
             var finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
             var revisitingStep = TryParseStepQuery(out var requested) && requested is >= 1 and <= 10;
 
@@ -298,13 +304,19 @@ else if (_step is >= 1 and <= 10)
 
             if (_step is < 1 or > 10)
             {
-                RedirectTo(WizardUrl(_step));
+                RedirectTo(OnboardingRoutes.ResolveStartEntryPath(state));
                 return;
             }
 
             if (state.FinishReached && !revisitingStep)
             {
                 RedirectTo(OnboardingRoutes.KompasReadyPath);
+                return;
+            }
+
+            if (!TryParseStepQuery(out _) && !revisitingStep)
+            {
+                RedirectTo(OnboardingRoutes.StepUrl(_step));
                 return;
             }
 

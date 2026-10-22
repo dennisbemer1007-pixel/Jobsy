@@ -16,7 +16,8 @@
 <HeadContent>
     <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
     <link rel="stylesheet" href="css/features/candidate-illustrated-app.css?v=20261018-91" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasssr" />
+    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasc" />
+    <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
 </HeadContent>
 
 @if (_loading)
@@ -38,18 +39,23 @@ else
     {
         try
         {
-            var flags = await FeatureFlags.GetAsync();
-            var profile = await Api.GetMyProfileAsync();
-            var firstName = string.IsNullOrWhiteSpace(profile?.FirstName) ? "" : profile!.FirstName.Trim();
-            var profileUrl = FeatureRoutes.CandidateProfilePath;
+            var data = await OnboardingKompasSsrData.LoadAsync(Api, FeatureFlags);
+            if (data is null)
+            {
+                RedirectTo(FeatureRoutes.CandidateProfilePath);
+                return;
+            }
+
             var model = new OnboardingKompasSsrShells.HubModel(
-                firstName,
-                flags.CandidatePassportEnabled,
-                profileUrl,
-                FeatureRoutes.CandidatePassportPath,
-                profileUrl + "?tab=" + CandidateKompasTabs.Dna,
-                profileUrl + "?tab=" + CandidateKompasTabs.Tests,
-                profileUrl + "?tab=" + CandidateKompasTabs.Fit);
+                data.FirstName,
+                data.Impression,
+                data.MatchCount,
+                data.MaxTravelMinutes,
+                data.HomeLabel,
+                data.CardsInput,
+                data.Flags.CandidatePassportEnabled,
+                FeatureRoutes.CandidateProfilePath,
+                FeatureRoutes.CandidatePassportPath);
             _bodyHtml = OnboardingKompasSsrShells.BuildHubBody(Culture, model);
         }
         catch
