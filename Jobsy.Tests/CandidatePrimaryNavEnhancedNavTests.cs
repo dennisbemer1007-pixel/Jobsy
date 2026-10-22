@@ -3,7 +3,7 @@ namespace Jobsy.Tests;
 public sealed class CandidatePrimaryNavEnhancedNavTests
 {
     [Fact]
-    public void Candidate_primary_nav_uses_interactive_nav_link_without_enhance_nav_false()
+    public void Candidate_primary_nav_links_are_plain_anchors_without_blazor_click_handlers()
     {
         var root = FindRepoRoot();
         var header = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "CandidateHeaderNav.razor"));
@@ -11,15 +11,12 @@ public sealed class CandidatePrimaryNavEnhancedNavTests
         var link = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "CandidateNavLink.razor"));
         Assert.Contains("<CandidateNavLink", header, StringComparison.Ordinal);
         Assert.Contains("<CandidateNavLink", bottom, StringComparison.Ordinal);
-        Assert.DoesNotContain("data-enhance-nav=\"false\"", header, StringComparison.Ordinal);
-        Assert.DoesNotContain("data-enhance-nav=\"false\"", bottom, StringComparison.Ordinal);
-        Assert.Contains("NavigateTo(Href, forceLoad: false)", link, StringComparison.Ordinal);
         Assert.Contains("data-lobsy-candidate-nav=\"true\"", link, StringComparison.Ordinal);
         Assert.Contains("data-lobsy-document-title=\"", link, StringComparison.Ordinal);
-        Assert.Contains("data-enhance-nav=\"false\"", link, StringComparison.Ordinal);
-        Assert.Contains("@onclick:preventDefault=\"true\"", link, StringComparison.Ordinal);
-        Assert.Contains("lobsyCandidateNav.markInteractive", link, StringComparison.Ordinal);
-        Assert.Contains("InteractiveServerRenderMode(prerender: false)", link, StringComparison.Ordinal);
+        Assert.DoesNotContain("@onclick", link, StringComparison.Ordinal);
+        Assert.DoesNotContain("InteractiveServerRenderMode", header, StringComparison.Ordinal);
+        Assert.DoesNotContain("InteractiveServerRenderMode", bottom, StringComparison.Ordinal);
+        Assert.DoesNotContain("InteractiveServerRenderMode", link, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

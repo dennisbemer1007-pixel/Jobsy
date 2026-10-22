@@ -1,16 +1,9 @@
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@using Jobsy.Core.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
-@using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Navigation
 @inject CultureState Culture
 @inject RoleNavItemsState NavItems
-@inject AuthenticationStateProvider AuthState
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IFeatureFlags FeatureFlags
-@implements IAsyncDisposable
 
 <nav class="app-header__nav candidate-header-nav"
      aria-label="@Culture["Nav.Main"]"
@@ -21,7 +14,7 @@
         var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
             ? Culture[item.ShortTitleKey!]
             : title;
-        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
+        var active = RoleNavCatalog.IsActive(item, _relativePath, _items);
         <CandidateNavLink Class="@($"candidate-header-nav__link {(active ? "is-active" : null)}")"
                           Href="@item.Href"
                           Title="@title"
@@ -33,73 +26,27 @@
 </nav>
 
 @code {
-    private IReadOnlyList<NavItem> _items = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
-
-    protected override void OnInitialized()
-    {
-        var httpUser = HttpContextAccessor.HttpContext?.User;
-        if (httpUser?.Identity?.IsAuthenticated == true)
-        {
-            _items = RoleNavCatalog.ForUser(httpUser, FeatureFlagSnapshot.Defaults);
-            if (_items.Count == 0)
-            {
-                _items = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
-            }
-        }
-    }
+    private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
+    private string _relativePath = "";
 
     protected override async Task OnInitializedAsync()
     {
-        FeatureFlagSnapshot flags;
-        try
-        {
-            flags = await FeatureFlags.GetAsync();
-        }
-        catch
-        {
-            flags = FeatureFlagSnapshot.Defaults;
-        }
-
+        _relativePath = ResolveRelativePath();
         await NavItems.EnsureInitializedAsync();
-        ApplyItemsIfHrefLayoutChanged(NavItems.Items.Count > 0
-            ? NavItems.Items
-            : RoleNavCatalog.ForUser((await AuthState.GetAuthenticationStateAsync()).User, flags));
-
-        NavItems.Changed += OnNavItemsChanged;
-        Navigation.LocationChanged += OnLocationChanged;
+        _items = NavItems.Items;
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => _ = InvokeAsync(StateHasChanged);
-
-    private void OnNavItemsChanged()
+    private string ResolveRelativePath()
     {
-        if (NavItems.Items.Count == 0)
+        var request = HttpContextAccessor.HttpContext?.Request;
+        if (request is null)
         {
-            return;
+            return "";
         }
 
-        ApplyItemsIfHrefLayoutChanged(NavItems.Items);
+        var path = request.Path.Value ?? "/";
+        return path.TrimStart('/');
     }
-
-    private void ApplyItemsIfHrefLayoutChanged(IReadOnlyList<NavItem> next)
-    {
-        if (next.Count == 0)
-        {
-            return;
-        }
-
-        if (NavHrefFingerprint(_items) == NavHrefFingerprint(next))
-        {
-            return;
-        }
-
-        _items = next;
-        _ = InvokeAsync(StateHasChanged);
-    }
-
-    private static string NavHrefFingerprint(IReadOnlyList<NavItem> items)
-        => string.Join("|", items.Select(i => i.Href));
 
     private static string? HeaderNavTestId(NavItem item)
     {
@@ -119,12 +66,5 @@
         }
 
         return null;
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        NavItems.Changed -= OnNavItemsChanged;
-        Navigation.LocationChanged -= OnLocationChanged;
-        return ValueTask.CompletedTask;
     }
 }

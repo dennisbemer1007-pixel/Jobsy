@@ -52,14 +52,14 @@ public sealed class CandidateSettingsDangerPlaywrightTests : IAsyncLifetime
         await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.GotoAsync($"{baseUrl}/candidate/settings?pane=mail", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
-        await page.GetByRole(AriaRole.Button, new() { Name = "Begin opnieuw" }).ClickAsync();
+        await page.GetByRole(AriaRole.Link, new() { Name = "Begin opnieuw" }).ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
         await page.Locator(".profile-reset-modal").WaitForAsync(new() { Timeout = 15_000 });
         await page.Locator(".profile-reset-modal button").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
         await page.Locator(".profile-reset-modal").WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 10_000 });
 
         await page.GotoAsync($"{baseUrl}/candidate/settings?pane=mail", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.GetByRole(AriaRole.Button, new() { Name = "Account verwijderen" }).ClickAsync();
+        await page.GetByRole(AriaRole.Link, new() { Name = "Account verwijderen" }).ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
         await page.Locator(".unsubscribe-modal").WaitForAsync(new() { Timeout = 15_000 });
     }

@@ -1303,6 +1303,10 @@
   background: var(--brand);
 }
 
+.cand-settings__whatsapp-block:not(:has(input[name="whatsapp_optin"]:checked)) .cand-settings__whatsapp-phone {
+    display: none;
+}
+
 .cand-toggle__switch:has(input:checked)::after {
   transform: translateX(1.05rem);
 }
