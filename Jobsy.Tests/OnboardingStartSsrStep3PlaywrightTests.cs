@@ -219,8 +219,52 @@ public sealed class OnboardingStartSsrStep3PlaywrightTests : IAsyncLifetime
         await Assertions.Expect(dreamInput).ToHaveValueAsync("Bakker");
 
         await page.GetByTestId("onboarding-next").ClickAsync();
-        await page.WaitForURLAsync("**/candidate/start/wizard?step=7**");
+        await page.WaitForURLAsync("**/candidate/start?step=7**");
+        await page.Locator("[data-ob-client-step=\"7\"]").WaitForAsync();
+        await page.GetByTestId("onboarding-step-7-mini").WaitForAsync();
+        Assert.Equal(1, await page.GetByTestId("onboarding-next").CountAsync());
+        Assert.Equal(1, await page.GetByTestId("onboarding-back").CountAsync());
+        Assert.Equal(0, await page.GetByTestId("onboarding-skip").CountAsync());
+
+        await page.GetByTestId("onboarding-consent").CheckAsync();
+        await AnswerStep7MiniBlockAsync(page, mobile);
+
+        await page.GetByTestId("onboarding-back").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=6**");
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start?step=7**");
+        await page.GetByTestId("onboarding-step-7-mini").WaitForAsync();
+        if (await page.GetByTestId("onboarding-consent").CountAsync() > 0)
+        {
+            await Assertions.Expect(page.GetByTestId("onboarding-consent")).ToBeCheckedAsync();
+        }
+
+        var firstLikert = page.Locator(".ob-client-mini-q").First.Locator("[data-testid=onboarding-mini-likert].is-selected");
+        await Assertions.Expect(firstLikert).ToHaveCountAsync(1);
+
+        await page.GetByTestId("onboarding-next").ClickAsync();
+        await page.WaitForURLAsync("**/candidate/start/wizard?step=8**");
         Assert.Empty(consoleErrors);
+    }
+
+    private static async Task AnswerStep7MiniBlockAsync(IPage page, bool mobile)
+    {
+        var cards = page.Locator(".ob-client-mini-q");
+        var count = await cards.CountAsync();
+        for (var i = 0; i < count; i++)
+        {
+            var tile = cards.Nth(i).Locator("[data-testid=onboarding-mini-likert]").Nth(2);
+            if (mobile)
+            {
+                await tile.TapAsync();
+            }
+            else
+            {
+                await tile.ClickAsync(new() { Force = true });
+            }
+
+            await page.WaitForURLAsync("**/candidate/start?step=7**");
+        }
     }
 
     private static async Task FillStep1AndGoToStep2Async(IPage page)

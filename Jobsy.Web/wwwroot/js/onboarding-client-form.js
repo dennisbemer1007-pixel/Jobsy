@@ -1380,7 +1380,34 @@
         });
     }
 
+    function readMiniAnswersFromForm(form) {
+        var map = {};
+        if (!form) return map;
+        form.querySelectorAll('input[name^="miniAnswers["]').forEach(function (input) {
+            var name = input.getAttribute("name") || "";
+            var m = name.match(/^miniAnswers\[(\d+)\]$/);
+            if (!m) return;
+            var qid = parseInt(m[1], 10);
+            var val = parseInt(input.value, 10);
+            if (qid && val >= 1 && val <= 5) map[qid] = val;
+        });
+        return map;
+    }
+
     function mountStep7Combined(root, initial) {
+        if (root.closest("form[data-ob-ssr-form]")) {
+            var form = root.closest("form[data-ob-ssr-form]");
+            return {
+                collect: function () {
+                    var consentBox = form ? form.querySelector('input[name="consentRequested"]') : null;
+                    return {
+                        consentRequested: !!(consentBox && consentBox.checked),
+                        answers: readMiniAnswersFromForm(form)
+                    };
+                }
+            };
+        }
+
         var box = root.querySelector("[data-ob-client=consent]");
         if (box) box.checked = !!initial.consentRequested;
         var host = root.querySelector("[data-ob-client=miniRoot]");
@@ -1648,7 +1675,7 @@
 
     function attachStepBff(root, step, state) {
         if (!state || typeof state.collect !== "function") return;
-        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 6) return;
+        if (root.closest("form[data-ob-ssr-form]") && step >= 1 && step <= 7) return;
         if (step === 1 || step === 2 || step === 3) return;
         var bff = wireObStepBff(root, step, function () { return state.collect(); });
         var touch = function () {
@@ -1749,6 +1776,17 @@
                     var dreamVal = dreamInput ? dreamInput.value.trim() : "";
                     if (hidden) {
                         hidden.value = JSON.stringify({ dream: dreamVal, dreamSearch: dreamVal });
+                    }
+                    return;
+                }
+                if (step === 7) {
+                    var consentBox = form.querySelector('input[name="consentRequested"]');
+                    var payload7 = {
+                        consentRequested: !!(consentBox && consentBox.checked),
+                        answers: readMiniAnswersFromForm(form)
+                    };
+                    if (hidden) {
+                        hidden.value = JSON.stringify(payload7);
                     }
                     return;
                 }

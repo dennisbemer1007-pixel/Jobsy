@@ -331,21 +331,7 @@
             </JobsRail>
         </OnboardingRustigShell>
     }
-    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step == 7 && !Draft.HasConsent)
-    {
-        <OnboardingRustigTestConsentStep Draft="Draft"
-                                         ShowValidation="_showValidation"
-                                         TestTabs="ConsentTabs"
-                                         ConsentChanged="OnConsentChanged"
-                                         ClientSeed="ClientStepSeed"
-                                         Error="@_error"
-                                         Busy="@_busy"
-                                         SaveStatus="@RustigSaveStatus"
-                                         OnBack="BackAsync"
-                                         OnNext="@(() => NextAsync())"
-                                         OnLater="LaterAsync" />
-    }
-    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 7 and <= 10 && Draft.HasConsent)
+    else if (OnboardingRustig.Enabled && _earlyMoment == EarlyRewardMoment.None && _step is >= 8 and <= 10 && Draft.HasConsent)
     {
         <OnboardingRustigMiniTestStep Step="_step"
                                       Draft="Draft"
@@ -1141,7 +1127,7 @@
             }
 
             _welcome = ShouldShowWelcomeScreen(_state, _step);
-            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 6)
+            if (OnboardingRustig.Enabled && !_welcome && !_finish && _phase != WizardPhase.Install && _step is >= 1 and <= 7)
             {
                 Navigation.NavigateTo(OnboardingRoutes.StepUrl(_step), forceLoad: true);
                 return;
