@@ -940,7 +940,9 @@ window.jobMap = (function () {
         const bike = ic && ic.bikeSvg ? ic.bikeSvg : "";
         const mins = escapeHtml(String(v.travelMinutes)) + " min";
         if (lagenLayout) {
-            return "<div class=\"rt kb-popup__travel\">" + bike + "<span>" + mins + "</span></div>";
+            const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+            return "<div class=\"rt kb-popup__travel\">" + bike + "<span>"
+                + escapeHtml(String(v.travelMinutes)) + " min " + escapeHtml(mode) + "</span></div>";
         }
         const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
         return (
@@ -952,7 +954,7 @@ window.jobMap = (function () {
     }
 
     function lagenDescriptionLine(v) {
-        const raw = v && (v.summary || v.shortDescription || v.descriptionLine || v.whyLine || "");
+        const raw = v && (v.summary || v.shortDescription || v.descriptionLine || v.whyLine || v.categoryName || "");
         const text = String(raw || "").trim();
         if (!text) {
             return "";
@@ -978,9 +980,12 @@ window.jobMap = (function () {
             ? travel.replace(/class=\"kb-popup__travel[^\"]*\"/, "class=\"rt\"")
                 .replace(/<p /, "<div ").replace(/<\/p>/, "</div>")
             : "";
+        const typeBlock = typeLabel
+            ? "<div class=\"kb-popup__type\">" + typeLabel + "</div>"
+            : "";
         if (sheetMode) {
             return (
-                (typeLabel || "") +
+                typeBlock +
                 "<h3 class=\"map-popup__title map-popup__title--lagen\">" + title + "</h3>" +
                 (orgInner ? "<div class=\"org\">" + orgInner + "</div>" : "") +
                 travelInner +
@@ -992,7 +997,7 @@ window.jobMap = (function () {
             escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>";
         return (
             closeX +
-            (typeLabel || "") +
+            typeBlock +
             "<h3>" + title + "</h3>" +
             (orgInner ? "<div class=\"org\">" + orgInner + "</div>" : "") +
             travelInner +
@@ -2825,8 +2830,24 @@ window.jobMap = (function () {
         if (!map || !record) {
             return;
         }
+        const viewLock = lagenLayout && isNarrowViewport()
+            ? { zoom: map.getZoom(), center: map.getCenter() }
+            : null;
         if (lagenLayout && catalogModeActive && !isNarrowViewport()) {
             openLagenDesktopPop(record);
+            return;
+        }
+        if (lagenLayout && catalogModeActive && isNarrowViewport()) {
+            openClusterList([record], [record.lng, record.lat]);
+            if (viewLock) {
+                try {
+                    map.jumpTo({
+                        center: viewLock.center,
+                        zoom: viewLock.zoom,
+                        duration: 0
+                    });
+                } catch (eLock) { }
+            }
             return;
         }
         openClusterList([record], [record.lng, record.lat]);
@@ -3288,8 +3309,8 @@ window.jobMap = (function () {
     function labelBearingForMinutes(mins, index) {
         if (lagenLayout) {
             if (mins <= 10) return 180;
-            if (mins <= 20) return 120;
-            return 300;
+            if (mins <= 20) return 135;
+            return 315;
         }
         // Mockup bearings ≈ 30° (10), 190° (20), 160° (30).
         if (mins <= 10) return 30;
@@ -3300,6 +3321,9 @@ window.jobMap = (function () {
 
     function pointOnRingEdge(lat, lng, mins, index, feature) {
         const bearing = labelBearingForMinutes(mins, index);
+        if (lagenLayout) {
+            return destinationLngLat(lat, lng, ringRadiusForMinutes(mins), bearing);
+        }
         if (feature && feature.geometry && feature.geometry.type === "Polygon") {
             const ring = feature.geometry.coordinates && feature.geometry.coordinates[0];
             if (ring && ring.length > 8) {
@@ -3765,6 +3789,9 @@ window.jobMap = (function () {
     }
 
     function fitToOriginRings(animate) {
+        if (lagenLayout && document.body && document.body.classList.contains("s-popup")) {
+            return;
+        }
         if (window.__jobsyBkRestoringView) {
             return;
         }
@@ -4572,8 +4599,8 @@ window.jobMap = (function () {
                 type: "geojson",
                 data: pinsGeoJson(),
                 cluster: true,
-                clusterRadius: lagenLayout ? 45 : CLUSTER_OPTS.clusterRadius,
-                clusterMaxZoom: lagenLayout ? 11 : CLUSTER_OPTS.clusterMaxZoom,
+                clusterRadius: lagenLayout ? 30 : CLUSTER_OPTS.clusterRadius,
+                clusterMaxZoom: lagenLayout ? 9 : CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
                     agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },
@@ -5180,6 +5207,12 @@ window.jobMap = (function () {
                     markersByCoordKey = {};
                 },
                 zoomToShowLayer: function (record, cb) {
+                    if (lagenLayout && catalogModeActive) {
+                        if (typeof cb === "function") {
+                            cb();
+                        }
+                        return;
+                    }
                     map.easeTo({
                         center: [record.lng, record.lat],
                         zoom: clampBanenZoom(Math.max(map.getZoom(), CLUSTER_OPTS.disableClusteringAtZoom)),

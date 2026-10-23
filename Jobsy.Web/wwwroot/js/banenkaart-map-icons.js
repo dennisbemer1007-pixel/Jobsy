@@ -95,11 +95,13 @@
     }
 
     function typeMarkerHtml(row, mini) {
+        var wScale = mini ? 0.44 : 0.48;
+        var iScale = mini ? 0.44 : 0.48;
         if (isIntermediaryRow(row)) {
-            return "<span class=\"kb-tm kb-tm--i\">" + (mini ? pinI(0.5, false, false) : pinI(0.55, false, true))
+            return "<span class=\"tm i\">" + pinI(iScale, false, false)
                 + "<span>Via intermediair</span></span>";
         }
-        return "<span class=\"kb-tm kb-tm--w\">" + (mini ? pinW(0.5) : pinW(0.55))
+        return "<span class=\"tm w\">" + pinW(wScale)
             + "<span>Bij werkgever</span></span>";
     }
 

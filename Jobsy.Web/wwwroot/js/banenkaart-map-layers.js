@@ -23,7 +23,7 @@
             + "<div class=\"lgr\"><span><i class=\"ln\"></i>10</span><span><i class=\"ln d\"></i>20</span>"
             + "<span><i class=\"ln dt\"></i>30 min fietsen</span></div>";
         return rings
-            + "<div class=\"lg\"><span class=\"sym\"><span class=\"cl\">5</span></span>"
+            + "<div class=\"lg\"><span class=\"sym\"><span class=\"cl cl--flat\">5</span></span>"
             + "<div>Groep vacatures<small>" + tap + " om in te zoomen</small></div></div>"
             + "<div class=\"lg\"><span class=\"sym\">" + pinW + "</span><div>Vacature bij werkgever</div></div>"
             + "<div class=\"lg\"><span class=\"sym\">" + pinI + "</span>"

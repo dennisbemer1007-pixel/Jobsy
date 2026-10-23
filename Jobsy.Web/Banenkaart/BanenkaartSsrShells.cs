@@ -96,7 +96,7 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(q.SearchQuery ?? ""))
             .Append("\" name=\"q\" form=\"kb-filter-form\" /></div>");
         sb.Append("<button type=\"button\" class=\"btn sec kb-filters-button\" data-testid=\"kb-filters-button\" aria-expanded=\"false\" aria-controls=\"discovery-filters\">")
-            .Append(NavIcons.Filters)
+            .Append(NavIcons.Filters.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]));
         if (model.ActiveFilterCount > 0)
         {

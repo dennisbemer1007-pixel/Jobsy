@@ -337,13 +337,42 @@
         return sortRows(out, filters);
     }
 
-    function toPin(row) {
-        var pin = { id: row.id, lat: row.lat, lng: row.lng };
+    function toPin(row, filters) {
+        filters = filters || currentListFilters;
+        var pin = {
+            id: row.id,
+            lat: row.lat,
+            lng: row.lng,
+            title: row.title,
+            company: row.company,
+            offeredBy: row.offeredBy || "",
+            place: row.place || "",
+            imageUrl: row.imageUrl || "",
+            categoryName: row.categoryName || "",
+            workTypes: row.workTypes
+        };
         if (row.colour) {
             pin.colour = row.colour;
+            pin.categoryColor = row.colour;
         }
         if (row.publicMapRadiusKm > 0) {
             pin.publicMapRadiusKm = row.publicMapRadiusKm;
+        }
+        if (filters && filters.originLat != null && filters.originLng != null) {
+            var mins = travelMinutes(
+                { lat: filters.originLat, lng: filters.originLng },
+                row.lat,
+                row.lng,
+                filters.transport);
+            if (mins != null) {
+                pin.travelMinutes = mins;
+            }
+            pin.transport = filters.transport;
+            pin.transportLabel = transportVerbNl(filters.transport);
+        }
+        if (row.offeredBy && String(row.offeredBy).trim().toLowerCase()
+            !== String(row.company || "").trim().toLowerCase()) {
+            pin.isIntermediary = true;
         }
         return pin;
     }
@@ -460,8 +489,9 @@
             ? travelPins
             : (allowOutside ? filterRows(rows, filters, true) : []);
         var dimmed = travelPins.length === 0 && mapPins.length > 0;
+        currentListFilters = filters;
         var pins = mapPins.map(function (row) {
-            var pin = toPin(row);
+            var pin = toPin(row, filters);
             if (dimmed) {
                 pin.outsideTravel = true;
             }

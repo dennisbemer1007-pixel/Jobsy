@@ -572,6 +572,23 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             }));
         }
 
+        foreach (var jsName in new[] { "banenkaart-catalog.js", "banenkaart-map-layers.js", "banenkaart-map-icons.js" })
+        {
+            var jsPath = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", jsName);
+            if (!File.Exists(jsPath))
+            {
+                continue;
+            }
+
+            var body = await File.ReadAllTextAsync(jsPath);
+            await context.RouteAsync("**/" + jsName + "**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/javascript; charset=utf-8",
+                Body = body,
+            }));
+        }
+
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(30_000);
