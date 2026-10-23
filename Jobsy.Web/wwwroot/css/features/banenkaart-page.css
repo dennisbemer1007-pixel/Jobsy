@@ -764,6 +764,15 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
 
     .app-shell--banenkaart-shell .map-cluster-sheet {
         z-index: 8;
+        max-height: min(
+            52dvh,
+            calc(100dvh - var(--app-header-height, 3.75rem) - 10rem - env(safe-area-inset-bottom, 0px)));
+    }
+
+    .app-shell--banenkaart-shell .map-cluster-card__body,
+    .app-shell--banenkaart-shell .map-cluster-card__viewport {
+        overflow-y: visible;
+        max-height: none;
     }
 
     .app-shell--banenkaart-shell .app-footer {

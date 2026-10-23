@@ -28,6 +28,16 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_ssr_scripts_include_csp_nonce()
+    {
+        var root = FindRepoRoot();
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
+        Assert.Contains("scriptNonce", shells, StringComparison.Ordinal);
+        Assert.Contains("nonceAttr", shells, StringComparison.Ordinal);
+        Assert.Contains("banenkaart-ssr.js", shells, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_ssr_closes_filters_and_defers_map_boot_until_ui_ready()
     {
         var root = FindRepoRoot();

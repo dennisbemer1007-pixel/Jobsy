@@ -391,7 +391,13 @@
                         lastLoadedAt = Date.now();
                         return expand(readCachedRaw());
                     }
-                    throw new Error("catalog " + res.status);
+                    return idbRead().then(function (rec) {
+                        if (rec && rec.body) {
+                            saveData(rec.body, rec.etag || null);
+                            return expand(rec.body);
+                        }
+                        throw new Error("catalog " + res.status);
+                    });
                 }
                 var etag = res.headers.get("ETag");
                 return res.text().then(function (body) {

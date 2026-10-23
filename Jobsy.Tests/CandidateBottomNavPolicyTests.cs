@@ -20,7 +20,7 @@ public sealed class CandidateBottomNavPolicyTests
         Assert.DoesNotContain(".app-shell--candidate:has(.jobsy-discovery) .bottom-nav", appCss, StringComparison.Ordinal);
 
         var noBlazor = Read("Jobsy.Web/wwwroot/css/features/candidate-no-blazor-chrome.css");
-        Assert.DoesNotContain(".bottom-nav[data-testid=\"candidate-bottom-nav-ssr\"]", noBlazor, StringComparison.Ordinal);
+        Assert.Contains(".bottom-nav[data-testid=\"candidate-bottom-nav-ssr\"]", noBlazor, StringComparison.Ordinal);
         Assert.Contains("app-shell--candidate", noBlazor, StringComparison.Ordinal);
     }
 

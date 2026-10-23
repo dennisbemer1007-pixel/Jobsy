@@ -12,7 +12,8 @@ internal static class BanenkaartSsrShells
     internal static string BuildPage(
         CultureState culture,
         string antiforgeryToken,
-        BanenkaartSsrData.PageModel model)
+        BanenkaartSsrData.PageModel model,
+        string? scriptNonce = null)
     {
         var sb = new StringBuilder();
         var q = model.Query;
@@ -66,10 +67,21 @@ internal static class BanenkaartSsrShells
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
         AppendMapFab(sb, culture);
 
-        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-24\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-24\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-24\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-24\" crossorigin=\"anonymous\" defer></script>");
+        var nonceAttr = string.IsNullOrWhiteSpace(scriptNonce)
+            ? ""
+            : " nonce=\"" + WebUtility.HtmlEncode(scriptNonce.Trim()) + "\"";
+        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
+        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
         sb.Append("</div>");
         return sb.ToString();
     }
