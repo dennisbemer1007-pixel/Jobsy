@@ -40,8 +40,8 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart.css": {
-    "sha256": "36beb65f1f748a1771d8d932fcf3065f1fd1492b504f08f9ba4899ccffa6402d",
-    "v": "20261019-01"
+    "sha256": "038c7b454b43267c9e85e4f5ea51bd621a4a215846f5ddb4423d204b84acb23b",
+    "v": "20261023-19"
   },
   "css/features/bedrijvenkaart.css": {
     "sha256": "7ffdb5503fe02cd7ce703cdd3f7c9b2ae55c0ae91f1d61adfedc3e2ddcd7271c",
@@ -268,8 +268,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "9ccc3b6beba1e2d22954693dd65216527daf03edc3193c6967323f99ea4730ab",
-    "v": "20261021-02"
+    "sha256": "9d9c43376c6f9c666661c6a290538db513a934f7f8a01eab2c559d53b2409ec0",
+    "v": "20261023-bkssr2"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "eba66cdee991acf4c33bf6595d241dd01f981d3dc0e553d2d3ee1e40a36c3a2f",
-    "v": "20261023-demo1"
+    "sha256": "5cae987fe6b1c793155810b20a899594a3e1393705c65fcde7285418a1dc5f35",
+    "v": "20261023-19"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "dad2c3ee186da0f803f343df7a36e4dfb962f478790d05a58472ee403b0fee7c",
@@ -358,5 +358,29 @@
   "service-worker.published.js": {
     "sha256": "cc830574b95ef0d5668c280f0f0e7ad615ae7187871da416dd1b9293e3d70bf4",
     "v": "20261021-01"
+  },
+  "css/features/banenkaart-page.css": {
+    "sha256": "4d65b5c74a7ee1b83abf49c857b607726bfdcf64a242ade688f15217ee64cec7",
+    "v": "20261023-19"
+  },
+  "css/features/banenkaart-illustrated.css": {
+    "sha256": "3e005d1556789eaec9ed2d387e8b43ca796070184f12ef70e97f117eff9840c8",
+    "v": "20261023-19"
+  },
+  "js/banenkaart-catalog.js": {
+    "sha256": "74bd230387656a3c3111493dc647218d3a151018f49b282c26163e535ff304fa",
+    "v": "20261023-19"
+  },
+  "js/banenkaart-prefetch.js": {
+    "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
+    "v": "20261023-19"
+  },
+  "js/jobsy-basemap-warm.js": {
+    "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
+    "v": "20261023-19"
+  },
+  "js/banenkaart-maps-boot.js": {
+    "v": "20261023-19",
+    "sha256": "913a1db08040802e38e82f7450924b459d8693d5fb3f47a0ab3c24cba92ae823"
   }
 }

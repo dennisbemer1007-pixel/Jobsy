@@ -379,20 +379,27 @@
             return;
         }
         syncMapTravel(filters);
-        var mapPins = filterRows(rows, filters, false);
-        var pins = mapPins.map(toPin);
+        var travelPins = filterRows(rows, filters, false);
+        var mapPins = travelPins.length > 0 ? travelPins : filterRows(rows, filters, true);
+        var dimmed = travelPins.length === 0 && mapPins.length > 0;
+        var pins = mapPins.map(function (row) {
+            var pin = toPin(row);
+            if (dimmed) {
+                pin.outsideTravel = true;
+            }
+            return pin;
+        });
+        var meta = {
+            zoomOutsideTravel: dimmed && mapPins.length > 0,
+            skipAutoFit: !!window.__jobsyBkRestoringView
+        };
         if (window.jobMap && typeof window.jobMap.setVacanciesFromCatalog === "function") {
-            window.jobMap.setVacanciesFromCatalog(pins, {
-                zoomOutsideTravel: false
-            });
+            window.jobMap.setVacanciesFromCatalog(pins, meta);
         } else {
-            var travelPins = filterRows(rows, filters, false);
             document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-pins", {
                 detail: {
                     pins: pins,
-                    meta: {
-                        zoomOutsideTravel: travelPins.length === 0 && mapPins.length > 0
-                    }
+                    meta: meta
                 }
             }));
         }
@@ -450,6 +457,16 @@
         if (keyword != null) {
             data.q = keyword;
         }
+        var formLat = parseFloat(data.originLat);
+        var formLng = parseFloat(data.originLng);
+        var originLat = isFinite(formLat) ? formLat
+            : (origin.originLat != null ? origin.originLat : boot.originLat);
+        var originLng = isFinite(formLng) ? formLng
+            : (origin.originLng != null ? origin.originLng : boot.originLng);
+        var originLabel = (data.originLabel && String(data.originLabel).trim())
+            || origin.originLabel
+            || boot.originLabel
+            || null;
         return {
             q: data.q || null,
             maxMinutes: parseInt(data.maxMinutes, 10) || boot.maxMinutes || 20,
@@ -460,9 +477,9 @@
             maxWageCents: data.maxWage != null && data.maxWage !== "" ? Math.round(parseFloat(data.maxWage) * 100) : null,
             categoryIds: categoryIds,
             workTypes: workTypes,
-            originLat: origin.originLat != null ? origin.originLat : boot.originLat,
-            originLng: origin.originLng != null ? origin.originLng : boot.originLng,
-            originLabel: origin.originLabel || boot.originLabel || null
+            originLat: originLat,
+            originLng: originLng,
+            originLabel: originLabel
         };
     }
 
@@ -590,7 +607,7 @@
             listRoot.insertAdjacentHTML(
                 "afterbegin",
                 "<p class=\"state-message\" data-testid=\"kb-empty-travel\">Geen vacatures binnen je reistijd</p>"
-                + "<button type=\"button\" class=\"vacancy-list__more\" data-testid=\"kb-widen-filters\">Filters verruimen</button>"
+                + "<button type=\"button\" class=\"filter-sheet__cancel kb-widen-filters-btn\" data-testid=\"kb-widen-filters\">Filters verruimen</button>"
             );
             updateResultChrome(filters, 0);
             return 0;

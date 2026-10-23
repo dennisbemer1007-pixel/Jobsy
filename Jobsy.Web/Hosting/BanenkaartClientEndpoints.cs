@@ -14,6 +14,7 @@ public static class BanenkaartClientEndpoints
     {
         app.MapGet(BanenkaartClientCatalog.AllPath, BanenkaartClientCatalog.GetAllAsync).AllowAnonymous();
         app.MapGet(BanenkaartClientPins.Path, BanenkaartClientPins.GetAsync).AllowAnonymous();
+        app.MapGet("/api/banenkaart-client/address-suggest", AddressSuggestAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.ApplyPath, ApplyFiltersAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.ResetPath, ResetFiltersAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.SavePath, SaveVacancyAsync)
@@ -139,6 +140,39 @@ public static class BanenkaartClientEndpoints
             return SeeOther(BanenkaartSsrQuery.BuildUrl(state, error: culture["Common.Error.TryAgain"]));
         }
     }
+
+    private static async Task<IResult> AddressSuggestAsync(
+        string? q,
+        IGeocodingClient geocoder,
+        CancellationToken cancellationToken)
+    {
+        var query = (q ?? string.Empty).Trim();
+        if (query.Length < 3)
+        {
+            return Results.Json(Array.Empty<AddressSuggestDto>());
+        }
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(4));
+        try
+        {
+            var results = await geocoder.SuggestAsync(query, timeout.Token);
+            var payload = results
+                .Select(s => new AddressSuggestDto(s.Label, s.Latitude, s.Longitude))
+                .ToList();
+            return Results.Json(payload);
+        }
+        catch (OperationCanceledException)
+        {
+            return Results.Json(Array.Empty<AddressSuggestDto>());
+        }
+        catch
+        {
+            return Results.Json(Array.Empty<AddressSuggestDto>());
+        }
+    }
+
+    private sealed record AddressSuggestDto(string Label, double Latitude, double Longitude);
 
     private static RedirectHttpResult SeeOther(string url)
         => TypedResults.Redirect(url, permanent: false, preserveMethod: false);

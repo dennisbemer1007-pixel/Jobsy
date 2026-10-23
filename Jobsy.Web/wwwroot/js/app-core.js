@@ -717,7 +717,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261023-maxzoom1"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261023-demo1"
+        "/js/jobMap.min.js?v=20261023-19"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -1074,7 +1074,7 @@ window.jobsyMaps = (function () {
             }
             var parsed = JSON.parse(node.textContent);
             var inlinePins = parsed && Array.isArray(parsed.pins) && parsed.pins.length > 0;
-            if (!inlinePins && parsed && parsed.pinsUrl && !parsed.catalogMode) {
+            if (!inlinePins && parsed && parsed.pinsUrl && !parsed.catalogMode && !isBanenkaartSsrPage()) {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {

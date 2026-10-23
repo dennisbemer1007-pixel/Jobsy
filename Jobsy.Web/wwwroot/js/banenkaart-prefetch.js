@@ -5,7 +5,7 @@
     var CATALOG_URL = "/api/banenkaart-client/all";
     var MAP_LIBRE_CSS = "/lib/maplibre/maplibre-gl.css?v=20260820-r166";
     var MAP_LIBRE_JS = "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180";
-    var JOBSY_MAP_JS = "/js/jobsyMapLibre.min.js?v=20261023-acc5";
+    var JOBSY_MAP_JS = "/js/jobsyMapLibre.min.js?v=20261023-maxzoom1";
 
     function saveDataEnabled() {
         try {

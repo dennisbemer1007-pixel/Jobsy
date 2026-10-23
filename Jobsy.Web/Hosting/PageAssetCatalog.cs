@@ -38,7 +38,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidatePublicCss =
     [
         "css/features/banenkaart.css?v=20261019-01",
-        "css/features/banenkaart-illustrated.css?v=20261018-14",
+        "css/features/banenkaart-illustrated.css?v=20261023-19",
         "css/features/bedrijvenkaart.css?v=20261019-10",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
@@ -51,7 +51,7 @@ public static class PageAssetCatalog
     [
         "css/features/uwv-mockups.css?v=20261019-r8",
         "css/features/banenkaart.css?v=20261018-02",
-        "css/features/banenkaart-illustrated.css?v=20261018-14",
+        "css/features/banenkaart-illustrated.css?v=20261023-19",
     ];
 
     public static readonly string[] CandidateAppCss =
@@ -419,10 +419,10 @@ public static class PageAssetCatalog
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
-        "/css/features/banenkaart-page.css?v=20261023-demo1",
+        "/css/features/banenkaart-page.css?v=20261023-19",
         "/css/features/kandidaat-banen.css?v=20261019-01",
-        "/css/features/banenkaart.css?v=20261023-acc-layout",
-        "/css/features/banenkaart-illustrated.css?v=20261018-14",
+        "/css/features/banenkaart.css?v=20261023-19",
+        "/css/features/banenkaart-illustrated.css?v=20261023-19",
     ];
 
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>

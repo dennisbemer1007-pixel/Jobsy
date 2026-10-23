@@ -1,6 +1,97 @@
 /* Banenkaart illustrated list header + compact cards */
 
-.kb-nearby-banner {
+/* Full-width hero strip above list + map (SSR + Blazor discovery). */
+.kb-nearby-banner--strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+  height: clamp(120px, 11vw, 150px);
+  max-height: 150px;
+}
+
+.kb-nearby-banner--strip .kb-nearby-banner__art {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+}
+
+.kb-nearby-banner--strip .kb-nearby-banner__art picture,
+.kb-nearby-banner--strip .kb-nearby-banner__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+}
+
+.kb-nearby-banner--strip .kb-nearby-banner__copy {
+  grid-area: 1 / 1;
+  z-index: 1;
+  align-self: center;
+  justify-self: start;
+  max-width: min(540px, 58%);
+  padding: 0.65rem 1rem 0.7rem 1.15rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--surface) 92%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 72%, transparent) 55%,
+    transparent 100%
+  );
+}
+
+.kb-nearby-banner--strip .kb-nearby-banner__title {
+  margin: 0;
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1.25;
+}
+
+.kb-nearby-banner--strip .kb-nearby-banner__sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+@media (max-width: 899px) {
+  .kb-nearby-banner--strip {
+    height: clamp(80px, 22vw, 90px);
+    max-height: 90px;
+  }
+
+  .kb-nearby-banner--strip .kb-nearby-banner__copy {
+    max-width: min(72%, 20rem);
+    padding: 0.45rem 0.65rem 0.5rem 0.75rem;
+  }
+
+  .kb-nearby-banner--strip .kb-nearby-banner__title {
+    font-size: 0.92rem;
+  }
+
+  .kb-nearby-banner--strip .kb-nearby-banner__sub {
+    font-size: 0.78rem;
+  }
+
+  /* On mobile map view, preserve vertical space for the map. */
+  .jobsy-discovery[data-banenkaart-ssr="1"].show-map:not(.show-list) .kb-nearby-banner--strip {
+    display: none;
+  }
+}
+
+/* Legacy in-pane banner (Blazor discovery until aligned). */
+.kb-nearby-banner:not(.kb-nearby-banner--strip) {
   margin: 0 0 0.75rem;
   border-radius: 16px;
   overflow: hidden;
@@ -8,20 +99,20 @@
   background: color-mix(in srgb, var(--gold) 8%, var(--surface));
 }
 
-.kb-nearby-banner__art {
+.kb-nearby-banner:not(.kb-nearby-banner--strip) .kb-nearby-banner__art {
   height: 104px;
   background-size: cover;
   background-position: center 12%;
 }
 
 @media (min-width: 900px) {
-  .kb-nearby-banner {
+  .kb-nearby-banner:not(.kb-nearby-banner--strip) {
     display: grid;
     grid-template-columns: minmax(112px, 38%) minmax(0, 1fr);
     align-items: stretch;
   }
 
-  .kb-nearby-banner__art {
+  .kb-nearby-banner:not(.kb-nearby-banner--strip) .kb-nearby-banner__art {
     height: auto;
     min-height: 108px;
     background-size: contain;
@@ -30,35 +121,36 @@
     z-index: 0;
   }
 
-  .kb-nearby-banner__copy {
+  .kb-nearby-banner:not(.kb-nearby-banner--strip) .kb-nearby-banner__copy {
     display: flex;
     flex-direction: column;
     justify-content: center;
     min-height: 108px;
     position: relative;
     z-index: 1;
+    padding: 0.75rem 1rem 0.85rem;
   }
 }
 
-.kb-nearby-banner__copy {
+.kb-nearby-banner:not(.kb-nearby-banner--strip) .kb-nearby-banner__copy {
   padding: 0.75rem 1rem 0.85rem;
 }
 
-.kb-nearby-banner__title {
+.kb-nearby-banner:not(.kb-nearby-banner--strip) .kb-nearby-banner__title {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--brand);
 }
 
-.kb-nearby-banner__sub {
+.kb-nearby-banner:not(.kb-nearby-banner--strip) .kb-nearby-banner__sub {
   margin: 0.2rem 0 0;
   font-size: 0.88rem;
   color: var(--muted);
 }
 
 @media (min-width: 900px) {
-  .vacancy-pane .kb-nearby-banner {
+  .vacancy-pane .kb-nearby-banner:not(.kb-nearby-banner--strip) {
     margin-inline: 0.5rem;
   }
 }
@@ -78,46 +170,25 @@
 /* —— Illustrated vacancy popup / docked sheet (photo on top) —— */
 .jobsy-discovery .map-cluster-card,
 .jobsy-discovery .map-cluster-sheet {
-  background: color-mix(in srgb, var(--gold) 7%, var(--pearl));
+  overflow: visible;
 }
 
 .jobsy-discovery .map-cluster-card:has(.map-popup--illustrated) {
-  background: var(--map-popup-illustrated-bg, color-mix(in srgb, var(--gold-soft) 55%, var(--pearl)));
+  overflow: visible;
 }
 
-.jobsy-discovery .map-popup--illustrated {
-  --map-popup-illustrated-bg: color-mix(in srgb, var(--gold-soft) 55%, var(--pearl));
-  background: var(--map-popup-illustrated-bg);
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--gold) 28%, var(--border));
-  overflow: hidden;
-  box-shadow: 0 14px 36px color-mix(in srgb, var(--brand) 14%, transparent);
-  max-height: min(68vh, 440px);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+.map-cluster-card__viewport:has(.map-popup--illustrated) {
+  overflow: visible;
+  touch-action: auto;
 }
 
-@media (min-width: 900px) {
-  .jobsy-discovery .map-popup--illustrated {
-    max-height: none;
-  }
-
-  .jobsy-discovery .map-popup--illustrated .map-popup__main {
-    overflow-y: visible;
-    flex: 0 1 auto;
-  }
-
-  .jobsy-discovery .map-popup--illustrated .map-popup__media,
-  .jobsy-discovery .map-popup--illustrated .map-popup__media--figure {
-    height: clamp(96px, 16vh, 120px) !important;
-    min-height: clamp(96px, 16vh, 120px) !important;
-    max-height: clamp(96px, 16vh, 120px) !important;
-  }
+.jobsy-discovery .map-popup--illustrated .map-popup__heart {
+  position: relative;
+  z-index: 2;
 }
 
-.jobsy-discovery .map-popup--illustrated .map-popup__main,
-.jobsy-discovery .map-cluster-card .map-popup--illustrated .map-popup__main {
+.jobsy-discovery .map-cluster-card .map-popup--illustrated .map-popup__main,
+.jobsy-discovery .map-popup--illustrated .map-popup__main {
   display: flex !important;
   flex-direction: column !important;
   grid-template-columns: none !important;
@@ -212,33 +283,16 @@
   font-size: 0.8125rem;
   border-radius: 999px;
   padding: 0.25rem 0.65rem;
-  background: color-mix(in srgb, var(--gold-soft) 65%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--gold) 30%, var(--border));
-  color: var(--brand);
 }
 
-.jobsy-discovery .map-popup--illustrated .map-popup__actions,
 .map-cluster-card .map-popup--illustrated .map-popup__actions,
-.map-popup.map-popup--illustrated .map-popup__actions {
-  flex: 0 0 auto !important;
-  margin: 0 !important;
-  margin-top: 0 !important;
-  padding: 0.5rem 0.85rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  gap: 0.55rem;
-  background: var(--map-popup-illustrated-bg);
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-.jobsy-discovery .map-popup--illustrated .map-popup__view {
-  border-radius: 10px;
-  background: var(--brand);
-  border-color: var(--brand);
-  font-weight: 650;
-}
-
-.jobsy-discovery .map-popup--illustrated .map-popup__heart {
-  border-radius: 10px;
-  border-color: color-mix(in srgb, var(--border) 90%, transparent);
+.jobsy-discovery .map-popup--illustrated .map-popup__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.35rem 0.95rem 0.85rem;
+  margin: 0;
 }
 
 .jobsy-discovery .map-popup--illustrated.map-popup--skeleton .map-popup__media {
@@ -293,6 +347,7 @@
   .jobsy-discovery .map-cluster-card:has(.map-popup--illustrated) .map-cluster-card__viewport {
     height: auto;
     min-height: 0;
+    overflow: visible;
   }
 
   .jobsy-discovery .map-cluster-card:has(.map-popup--illustrated) .map-cluster-card__slide,
@@ -326,19 +381,14 @@
   .jobsy-discovery .map-cluster-card:has(.map-popup--illustrated) .map-cluster-card__body {
     padding-bottom: 0;
   }
-
-  .jobsy-discovery .map-cluster-sheet:has(.map-popup--illustrated) .map-cluster-card {
-    flex: 0 0 auto !important;
-    height: auto;
-  }
 }
 
 @media (min-width: 900px) {
-  .job-map-popup--cluster:has(.map-popup--illustrated) .maplibregl-popup-content {
-    max-height: min(72vh, 460px);
+  .jobsy-discovery .map-cluster-card:has(.map-popup--illustrated) .map-cluster-card__viewport {
+    overflow: visible;
   }
 
   .map-cluster-card:has(.map-popup--illustrated) {
-    max-height: min(72vh, 460px);
+    overflow: visible;
   }
 }
