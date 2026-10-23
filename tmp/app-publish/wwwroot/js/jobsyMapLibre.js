@@ -1,0 +1,482 @@
+window.jobsyMapLibre = (function () {
+    "use strict";
+
+    /** OpenFreeMap planet vector tiles (liberty style source maxzoom). */
+    var BASEMAP_MAX_ZOOM = 14;
+
+    var LIBERTY_URL = "https://tiles.openfreemap.org/styles/liberty";
+    var LIBERTY_SAME_ORIGIN_URL = "/map/basemap/liberty/style.json";
+    var STORAGE_KEY = "jobsy.mapStyle";
+    var BUILDINGS_LAYER = "jobsy-3d-buildings";
+
+    function styleSpec(key) {
+        // One basemap (liberty). "bright"/3D only tilts and extrudes buildings — no second style download.
+        if (key === "bright") {
+            return {
+                key: "bright",
+                url: LIBERTY_URL,
+                pitch: 50,
+                maxPitch: 60,
+                minPitch: 0,
+                threeD: true
+            };
+        }
+        return {
+            key: "liberty",
+            url: LIBERTY_URL,
+            pitch: 0,
+            maxPitch: 60,
+            minPitch: 0,
+            threeD: false
+        };
+    }
+
+    function readStoredStyle() {
+        try {
+            var stored = localStorage.getItem(STORAGE_KEY);
+            if (stored === "bright" || stored === "liberty") {
+                return stored;
+            }
+        } catch (e) { }
+        return "liberty";
+    }
+
+    function storeStyle(key) {
+        try {
+            localStorage.setItem(STORAGE_KEY, key);
+        } catch (e) { }
+    }
+
+    function lockTouch(container) {
+        if (!container) {
+            return;
+        }
+        container.style.touchAction = "none";
+        container.style.overscrollBehavior = "contain";
+        container.classList.add("job-map--one-finger");
+        if (container.dataset.jobsyTouchLock) {
+            return;
+        }
+        container.dataset.jobsyTouchLock = "1";
+        container.addEventListener("touchmove", function (ev) {
+            if (ev.cancelable) {
+                ev.preventDefault();
+            }
+        }, { passive: false });
+    }
+
+    function rewriteBasemapTextFonts(map) {
+        if (!map || typeof map.getStyle !== "function") {
+            return;
+        }
+        var style;
+        try {
+            style = map.getStyle();
+        } catch (e) {
+            return;
+        }
+        if (!style || !Array.isArray(style.layers)) {
+            return;
+        }
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || layer.type !== "symbol" || !layer.layout) {
+                continue;
+            }
+            var fonts = layer.layout["text-font"];
+            if (!fonts) {
+                continue;
+            }
+            var next = rewriteFontStack(fonts);
+            if (next) {
+                try {
+                    map.setLayoutProperty(layer.id, "text-font", next);
+                } catch (e) { }
+            }
+        }
+    }
+
+    /** Map Open Sans* glyph requests (404 on OpenFreeMap) onto Noto Sans stacks the server serves. */
+    function rewriteFontStack(fonts) {
+        var list = null;
+        if (Array.isArray(fonts)) {
+            list = fonts.slice();
+        } else if (typeof fonts === "string") {
+            list = [fonts];
+        } else {
+            return null;
+        }
+        var changed = false;
+        for (var i = 0; i < list.length; i++) {
+            var name = String(list[i] || "");
+            if (/open\s*sans/i.test(name)) {
+                changed = true;
+                if (/bold|black|semi|heavy/i.test(name)) {
+                    list[i] = "Noto Sans Bold";
+                } else {
+                    list[i] = "Noto Sans Regular";
+                }
+            } else if (/noto\s*sans/i.test(name) && /italic|oblique/i.test(name)) {
+                changed = true;
+                list[i] = /bold|black|semi|heavy/i.test(name) ? "Noto Sans Bold" : "Noto Sans Regular";
+            } else if (/arial unicode/i.test(name)) {
+                changed = true;
+                list[i] = "Noto Sans Regular";
+            }
+        }
+        return changed ? list : null;
+    }
+
+    function rewriteGlyphUrl(url) {
+        if (!url || url.indexOf("tiles.openfreemap.org/fonts/") === -1) {
+            return url;
+        }
+        var next = url;
+        if (/Open%20Sans|Open\+Sans|Open%20Sans%20Regular/i.test(next)) {
+            next = next.replace(/Open%20Sans[^/]*/gi, "Noto%20Sans%20Regular");
+        }
+        if (/Arial%20Unicode/i.test(next)) {
+            next = next.replace(/Arial%20Unicode%20MS%20Regular,?\/?/gi, "");
+            next = next.replace(/,,/g, ",").replace(/fonts\/,/g, "fonts/Noto%20Sans%20Regular/");
+        }
+        return next;
+    }
+
+    var OSM_ATTRIBUTION =
+        '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+
+    /** Desktop (≥1025px): expanded credit always visible. Mobile: compact "i" toggle. */
+    function preferCompactAttribution() {
+        try {
+            return !(window.matchMedia && window.matchMedia("(min-width: 1025px)").matches);
+        } catch (e) {
+            return true;
+        }
+    }
+
+    function syncAttributionCompact(map) {
+        if (!map || typeof map.getContainer !== "function") {
+            return;
+        }
+        var el = map.getContainer();
+        var attrib = el.querySelector(".maplibregl-ctrl-attrib");
+        if (!attrib) {
+            return;
+        }
+        var compact = preferCompactAttribution();
+        if (compact) {
+            attrib.classList.add("maplibregl-compact");
+            attrib.classList.remove("maplibregl-compact-show");
+        } else {
+            attrib.classList.remove("maplibregl-compact");
+            attrib.classList.add("maplibregl-compact-show");
+        }
+    }
+
+    function hideChrome(map) {
+        if (!map) {
+            return;
+        }
+        var el = map.getContainer();
+        el.classList.add("job-map--minimal");
+        // ODbL requires visible OSM attribution — only remove the MapLibre logo.
+        var junk = el.querySelectorAll(
+            ".maplibregl-ctrl-logo, a.maplibregl-ctrl-logo"
+        );
+        for (var i = 0; i < junk.length; i++) {
+            junk[i].remove();
+        }
+        syncAttributionCompact(map);
+    }
+
+    function findBuildingSourceLayer(map) {
+        if (!map || typeof map.getStyle !== "function") {
+            return null;
+        }
+        var style = map.getStyle();
+        if (!style || !style.layers) {
+            return null;
+        }
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || layer.type !== "fill" || !layer["source-layer"]) {
+                continue;
+            }
+            var id = String(layer.id || "").toLowerCase();
+            var sourceLayer = String(layer["source-layer"] || "").toLowerCase();
+            if (id.indexOf("building") >= 0 || sourceLayer.indexOf("building") >= 0) {
+                return { source: layer.source, sourceLayer: layer["source-layer"] };
+            }
+        }
+        return null;
+    }
+
+    function ensureBuildingsLayer(map) {
+        if (!map || map.getLayer(BUILDINGS_LAYER)) {
+            return;
+        }
+        var found = findBuildingSourceLayer(map);
+        if (!found) {
+            return;
+        }
+        try {
+            map.addLayer({
+                id: BUILDINGS_LAYER,
+                source: found.source,
+                "source-layer": found.sourceLayer,
+                type: "fill-extrusion",
+                minzoom: 14,
+                paint: {
+                    "fill-extrusion-color": "#d6d2cc",
+                    "fill-extrusion-height": [
+                        "coalesce",
+                        ["to-number", ["get", "render_height"]],
+                        ["to-number", ["get", "height"]],
+                        12
+                    ],
+                    "fill-extrusion-base": [
+                        "coalesce",
+                        ["to-number", ["get", "render_min_height"]],
+                        ["to-number", ["get", "min_height"]],
+                        0
+                    ],
+                    "fill-extrusion-opacity": 0.72
+                }
+            });
+        } catch (e) { }
+    }
+
+    function removeBuildingsLayer(map) {
+        if (!map || !map.getLayer(BUILDINGS_LAYER)) {
+            return;
+        }
+        try {
+            map.removeLayer(BUILDINGS_LAYER);
+        } catch (e) { }
+    }
+
+    function applyCameraForStyle(map, spec) {
+        if (!map || !spec) {
+            return;
+        }
+        if (typeof map.setMinPitch === "function") {
+            map.setMinPitch(spec.minPitch);
+        }
+        if (typeof map.setMaxPitch === "function") {
+            map.setMaxPitch(spec.maxPitch);
+        }
+        if (spec.threeD) {
+            if (map.dragRotate && typeof map.dragRotate.enable === "function") {
+                map.dragRotate.enable();
+            }
+            if (map.touchPitch && typeof map.touchPitch.enable === "function") {
+                map.touchPitch.enable();
+            }
+            ensureBuildingsLayer(map);
+            map.easeTo({ pitch: spec.pitch, duration: 450 });
+        } else {
+            if (map.dragRotate && typeof map.dragRotate.disable === "function") {
+                map.dragRotate.disable();
+            }
+            if (map.touchPitch && typeof map.touchPitch.disable === "function") {
+                map.touchPitch.disable();
+            }
+            removeBuildingsLayer(map);
+            if (typeof map.resetNorthPitch === "function") {
+                map.resetNorthPitch({ duration: 450 });
+            } else {
+                map.easeTo({ pitch: 0, bearing: 0, duration: 450 });
+            }
+        }
+    }
+
+    function syncStyleToggle(ctrl, key) {
+        if (!ctrl) {
+            return;
+        }
+        var btn = ctrl.querySelector(".job-map-style-switch__btn");
+        if (!btn) {
+            return;
+        }
+        var on = key === "bright";
+        btn.classList.toggle("is-on", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        btn.title = on ? "3D uitzetten" : "3D aanzetten";
+    }
+
+    function StyleSwitchControl() { }
+
+    StyleSwitchControl.prototype.onAdd = function (map) {
+        var ctrl = document.createElement("div");
+        ctrl.className = "maplibregl-ctrl maplibregl-ctrl-group job-map-style-switch";
+        ctrl.innerHTML =
+            "<button type=\"button\" class=\"job-map-style-switch__btn\" " +
+            "aria-label=\"3D-kaart\" aria-pressed=\"false\" title=\"3D aanzetten\">3D</button>";
+        syncStyleToggle(ctrl, map._jobsyStyleKey || "liberty");
+        ctrl.addEventListener("click", function (ev) {
+            var btn = ev.target && ev.target.closest
+                ? ev.target.closest(".job-map-style-switch__btn")
+                : null;
+            if (!btn) {
+                return;
+            }
+            ev.preventDefault();
+            ev.stopPropagation();
+            var next = (map._jobsyStyleKey === "bright") ? "liberty" : "bright";
+            setStyle(map, next);
+        });
+        map._jobsyStyleSwitch = ctrl;
+        return ctrl;
+    };
+
+    StyleSwitchControl.prototype.onRemove = function () { };
+
+    function attachStyleSwitch(map, position) {
+        var host = map.getContainer();
+        if (host.querySelector(".job-map-style-switch")) {
+            return host.querySelector(".job-map-style-switch");
+        }
+        map.addControl(new StyleSwitchControl(), position || "top-right");
+        return map._jobsyStyleSwitch;
+    }
+
+    function setStyle(map, key) {
+        if (!map) {
+            return;
+        }
+        var spec = styleSpec(key);
+        if (map._jobsyStyleKey === spec.key) {
+            applyCameraForStyle(map, spec);
+            return;
+        }
+        map._jobsyStyleKey = spec.key;
+        storeStyle(spec.key);
+        syncStyleToggle(map._jobsyStyleSwitch, spec.key);
+        // Same liberty tiles — only pitch + extrusion change (no setStyle download).
+        applyCameraForStyle(map, spec);
+        hideChrome(map);
+        lockTouch(map.getContainer());
+        var onRestore = map._jobsyOnStyleRestored;
+        if (typeof onRestore === "function") {
+            onRestore(spec);
+        }
+    }
+
+    function resolveInitialStyle(spec) {
+        if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.getCachedStyle === "function") {
+            var cached = window.jobsyBasemapWarm.getCachedStyle();
+            if (cached && cached.version) {
+                return cached;
+            }
+        }
+        return spec.url;
+    }
+
+    function createMap(container, options) {
+        if (typeof maplibregl === "undefined") {
+            throw new Error("MapLibre GL JS (maplibregl) is not loaded");
+        }
+        options = options || {};
+        var styleKey = options.styleKey || readStoredStyle();
+        var spec = styleSpec(styleKey);
+        var dpr = 1;
+        try {
+            dpr = Math.min(2, window.devicePixelRatio || 1);
+        } catch (eDpr) { }
+
+        var map = new maplibregl.Map({
+            container: container,
+            style: options.style || resolveInitialStyle(spec),
+            center: options.center,
+            zoom: options.zoom,
+            pixelRatio: dpr,
+            transformRequest: function (url, resourceType) {
+                if (resourceType === "Glyphs") {
+                    return { url: rewriteGlyphUrl(url) };
+                }
+                return { url: url };
+            },
+            attributionControl: {
+                compact: preferCompactAttribution(),
+                customAttribution: OSM_ATTRIBUTION
+            },
+            maplibreLogo: false,
+            cooperativeGestures: false,
+            fadeDuration: 0,
+            pitch: spec.pitch,
+            maxPitch: spec.maxPitch,
+            minPitch: spec.minPitch,
+            dragRotate: !!spec.threeD,
+            touchPitch: !!spec.threeD,
+            pitchWithRotate: !!spec.threeD,
+            scrollZoom: options.scrollZoom !== false,
+            dragPan: true,
+            touchZoomRotate: options.touchZoomRotate !== false,
+            renderWorldCopies: false,
+            maxZoom: options.maxZoom != null ? options.maxZoom : BASEMAP_MAX_ZOOM,
+            minZoom: options.minZoom != null ? options.minZoom : 4,
+            locale: {
+                "AttributionControl.ToggleAttribution": "Kaartbronnen tonen",
+                "Map.Title": "Kaart"
+            }
+        });
+
+        map._jobsyStyleKey = spec.key;
+        map._jobsyBasemapMaxZoom = BASEMAP_MAX_ZOOM;
+        lockTouch(map.getContainer());
+        hideChrome(map);
+        if (options.controls !== false) {
+            var controlsPosition = options.controlsPosition === "bottom-right"
+                ? "bottom-right"
+                : "top-right";
+            map.addControl(new maplibregl.NavigationControl({
+                showCompass: false,
+                showZoom: true,
+                visualizePitch: false
+            }), controlsPosition);
+            attachStyleSwitch(map, controlsPosition);
+        }
+
+        map.on("load", function () {
+            hideChrome(map);
+            rewriteBasemapTextFonts(map);
+            if (spec.threeD) {
+                ensureBuildingsLayer(map);
+            }
+        });
+        map.on("styledata", function () {
+            hideChrome(map);
+            rewriteBasemapTextFonts(map);
+        });
+
+        if (!map._jobsyAttribResizeBound) {
+            map._jobsyAttribResizeBound = true;
+            var onViewportChange = function () {
+                syncAttributionCompact(map);
+            };
+            window.addEventListener("resize", onViewportChange);
+            window.addEventListener("orientationchange", onViewportChange);
+            map.on("remove", function () {
+                window.removeEventListener("resize", onViewportChange);
+                window.removeEventListener("orientationchange", onViewportChange);
+            });
+        }
+
+        return map;
+    }
+
+    return {
+        BASEMAP_MAX_ZOOM: BASEMAP_MAX_ZOOM,
+        STYLES: {
+            liberty: LIBERTY_URL,
+            bright: LIBERTY_URL
+        },
+        styleSpec: styleSpec,
+        readStoredStyle: readStoredStyle,
+        createMap: createMap,
+        setStyle: setStyle,
+        hideChrome: hideChrome,
+        lockTouch: lockTouch,
+        rewriteBasemapTextFonts: rewriteBasemapTextFonts
+    };
+})();

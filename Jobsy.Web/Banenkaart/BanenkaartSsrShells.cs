@@ -18,7 +18,7 @@ internal static class BanenkaartSsrShells
         var sb = new StringBuilder();
         var q = model.Query;
         var listModeClass = model.Query.DesktopListMode ? " jobsy-discovery--list" : "";
-        sb.Append("<div class=\"jobsy-discovery show-map").Append(listModeClass);
+        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen show-map").Append(listModeClass);
         if (!string.IsNullOrWhiteSpace(q.Error))
         {
             sb.Append(" kb-ssr-has-error");
@@ -70,16 +70,22 @@ internal static class BanenkaartSsrShells
         var nonceAttr = string.IsNullOrWhiteSpace(scriptNonce)
             ? ""
             : " nonce=\"" + WebUtility.HtmlEncode(scriptNonce.Trim()) + "\"";
-        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-map-icons.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-25\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
+        sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("</div>");
@@ -382,7 +388,13 @@ internal static class BanenkaartSsrShells
         sb.Append("<div class=\"map-pane__top-chrome\" data-testid=\"kb-map-top-chrome\"></div>");
         sb.Append("<div class=\"map-stage is-live\"><div id=\"jobsy-map-boot\" hidden>")
             .Append(model.MapBootJson)
-            .Append("</div><div class=\"job-map-placeholder\" aria-hidden=\"true\"></div><div id=\"job-map\" class=\"job-map\" data-testid=\"job-map\"></div></div></section>");
+            .Append("</div><div class=\"job-map-placeholder\" aria-hidden=\"true\"></div><div id=\"job-map\" class=\"job-map\" data-testid=\"job-map\"></div>");
+        sb.Append("<div class=\"kb-map-legend-host\" data-testid=\"kb-map-legend-root\"></div>");
+        sb.Append("<button type=\"button\" class=\"legbtn mobonly kb-map-legbtn\" data-testid=\"kb-map-legbtn\" aria-expanded=\"false\">");
+        sb.Append("<b aria-hidden=\"true\">?</b>Uitleg kaart</button>");
+        sb.Append("<div class=\"scrim mobonly kb-map-legend-scrim\" data-testid=\"kb-map-legend-scrim\" hidden aria-hidden=\"true\"></div>");
+        sb.Append("<div class=\"sheet mobonly kb-map-legend-sheet\" data-testid=\"kb-map-legend-sheet\" role=\"dialog\" aria-labelledby=\"kb-legend-sheet-title\" hidden aria-hidden=\"true\"></div>");
+        sb.Append("</div></section>");
     }
 
     private static void AppendFilterSheet(StringBuilder sb, CultureState culture, string token, BanenkaartSsrData.PageModel model)

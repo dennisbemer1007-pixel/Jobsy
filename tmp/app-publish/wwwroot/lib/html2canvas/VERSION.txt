@@ -1,0 +1,5 @@
+html2canvas-pro 2.5.0 (MIT)
+Source: https://www.npmjs.com/package/html2canvas-pro/v/2.5.0
+Vendored file: dist/html2canvas-pro.min.js → html2canvas.min.js
+Global: window.html2canvas (drop-in for legacy html2canvas 1.4.1)
+Replaces unmaintained niklasvh/html2canvas@1.4.1

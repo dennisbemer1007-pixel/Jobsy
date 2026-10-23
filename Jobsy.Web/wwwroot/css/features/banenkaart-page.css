@@ -258,12 +258,20 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     z-index: 6;
 }
 
+.app-shell--banenkaart-shell.has-bottom-nav .job-map .maplibregl-ctrl-bottom-right {
+    bottom: calc(var(--bottom-nav-h, 4.25rem) + 58px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
 .app-shell--banenkaart-shell .job-map-locate {
     position: absolute;
     right: 10px;
     bottom: 10px;
     z-index: 5;
     pointer-events: auto;
+}
+
+.app-shell--banenkaart-shell.has-bottom-nav .job-map-locate {
+    bottom: calc(var(--bottom-nav-h, 4.25rem) + 10px + env(safe-area-inset-bottom, 0px));
 }
 
 .app-shell--banenkaart-shell .job-map-locate__btn {
@@ -465,9 +473,19 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     flex-direction: column;
 }
 
-@media (min-width: 1024px) {
-    .app-shell--banenkaart-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
-        padding-bottom: 0 !important;
+.app-shell--banenkaart-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
+    padding-bottom: calc(var(--bottom-nav-clearance, 4.25rem) + env(safe-area-inset-bottom, 0px));
+}
+
+.app-shell--banenkaart-shell .candidate-header-nav,
+.app-shell--banenkaart-shell .candidate-header-nav-slot {
+    display: none !important;
+}
+
+@media (min-width: 900px) {
+    .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery[data-banenkaart-ssr="1"] {
+        max-height: calc(
+            100dvh - var(--app-header-height, 4.25rem) - var(--bottom-nav-h, 4.25rem) - env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -784,8 +802,9 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
         padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane .maplibregl-ctrl-bottom-right {
-        bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+    .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery.show-map .map-pane .maplibregl-ctrl-bottom-right,
+    .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery.show-map .map-pane .job-map-locate {
+        bottom: calc(var(--bottom-nav-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
     }
 
     .app-shell--banenkaart-shell .map-pane:has(.maplibregl-popup) .map-cluster-chip,

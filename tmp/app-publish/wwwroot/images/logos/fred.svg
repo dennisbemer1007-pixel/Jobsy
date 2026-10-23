@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Supermarkt De Fred">
+  <rect width="64" height="64" rx="12" fill="#1F4B99"/>
+  <rect x="16" y="22" width="32" height="22" rx="3" fill="#FFFFFF"/>
+  <path d="M20 22v-3a12 12 0 0 1 24 0v3" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="24" cy="48" r="3" fill="#FFFFFF"/>
+  <circle cx="40" cy="48" r="3" fill="#FFFFFF"/>
+  <text x="32" y="36" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" font-weight="700" fill="#1F4B99">FRED</text>
+</svg>
