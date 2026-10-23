@@ -52,6 +52,8 @@ window.jobMap = (function () {
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
     let catalogModeActive = false;
+    let lagenLayout = false;
+    let catalogMapReadySent = false;
     let bootZoomOutsideTravel = false;
     let pendingCatalogPins = null;
     let pendingCatalogMeta = null;
@@ -215,7 +217,9 @@ window.jobMap = (function () {
     const PIN_LAYER_CLUSTER_COUNT = "jobsy-pins-cluster-count";
     const PIN_LAYER_UNCLUSTERED = "jobsy-pins-unclustered";
     const PIN_LAYER_UNCLUSTERED_GLYPH = "jobsy-pins-unclustered-glyph";
+    const PIN_LAYER_UNCLUSTERED_SYMBOL = "jobsy-pins-unclustered-symbol";
     const PIN_LAYER_SELECTED = "jobsy-pins-selected";
+    const LAGEN_CLUSTER_GREEN = "#1E7A4C";
     const PIN_SOURCE_AGENCY_AREAS = "jobsy-agency-areas";
     const PIN_LAYER_AGENCY_AREAS_FILL = "jobsy-agency-areas-fill";
     const PIN_LAYER_AGENCY_AREAS_LINE = "jobsy-agency-areas-line";
@@ -785,6 +789,9 @@ window.jobMap = (function () {
     }
 
     function metaRowHtml(v) {
+        if (lagenLayout) {
+            return "";
+        }
         const parts = [];
         if (v.travelMinutes != null && v.travelMinutes !== "") {
             const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
@@ -907,7 +914,68 @@ window.jobMap = (function () {
         );
     }
 
+    function lagenOrgLineHtml(v) {
+        if (v.offeredBy) {
+            return (
+                "<p class=\"map-popup__company map-popup__company--via kb-popup__org\">" +
+                    escapeHtml(String(v.offeredBy)) +
+                "</p>"
+            );
+        }
+        if (v.company) {
+            return (
+                "<p class=\"map-popup__company kb-popup__org\">" +
+                    escapeHtml(String(v.company)) +
+                "</p>"
+            );
+        }
+        return "";
+    }
+
+    function lagenTravelLineHtml(v) {
+        if (v.travelMinutes == null || v.travelMinutes === "") {
+            return "";
+        }
+        const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+        const ic = window.jobsyBanenkaartMapIcons;
+        const bike = ic && ic.bikeSvg ? ic.bikeSvg : "";
+        return (
+            "<p class=\"map-popup__meta kb-popup__travel\">" +
+                bike +
+                "<span>" + escapeHtml(String(v.travelMinutes)) + " min " + escapeHtml(mode) + "</span>" +
+            "</p>"
+        );
+    }
+
+    function buildLagenCatalogPopupHtml(v) {
+        const ic = window.jobsyBanenkaartMapIcons;
+        const typeLabel = ic && typeof ic.typeMarkerHtml === "function"
+            ? ic.typeMarkerHtml(v, true)
+            : "";
+        const detailHref = detailHrefForVacancy(v.id);
+        return (
+            "<div class=\"" + popupRootClass("kb-popup-lagen") + "\">" +
+                (typeLabel ? "<div class=\"kb-popup__type\">" + typeLabel + "</div>" : "") +
+                "<h3 class=\"map-popup__title map-popup__title--lagen\">" +
+                    escapeHtml(v.title || vacancyFallbackTitle()) +
+                "</h3>" +
+                lagenOrgLineHtml(v) +
+                lagenTravelLineHtml(v) +
+                "<div class=\"map-popup__actions\">" +
+                    "<a class=\"map-popup__view map-popup__cta map-popup__view--primary\" href=\"" +
+                        escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                        "Bekijk vacature" +
+                    "</a>" +
+                    heartButtonHtml(v) +
+                "</div>" +
+            "</div>"
+        );
+    }
+
     function buildPopupHtml(v) {
+        if (lagenLayout && catalogModeActive) {
+            return buildLagenCatalogPopupHtml(v);
+        }
         let mediaInner = "";
         let mediaClassFinal = "map-popup__media";
         const photoSrc = v.imageUrl ? String(v.imageUrl) : "";
@@ -979,6 +1047,9 @@ window.jobMap = (function () {
     }
 
     function matchLineHtml(v) {
+        if (lagenLayout) {
+            return "";
+        }
         if (v.fitGate === "closed") {
             const href = String(uiLabels.passportHref || "/profiel");
             const label = String(v.fitGateLabel || uiLabels.fitGate || "Maak je paspoort af");
@@ -2814,6 +2885,39 @@ window.jobMap = (function () {
         return Math.max(5, Number(travelOptions.maxMinutes) || 30);
     }
 
+    function readLagenLayoutFromOptions(options) {
+        if (!options) {
+            return false;
+        }
+        if (options.lagenLayout === true) {
+            return true;
+        }
+        const mi = options.mapInit;
+        return !!(mi && mi.lagenLayout === true);
+    }
+
+    function lagenTravelRingMinutes() {
+        return [10, 20, 30];
+    }
+
+    function travelRingLineDashPaint() {
+        if (lagenLayout) {
+            return [
+                "match", ["coalesce", ["get", "minutes"], 0],
+                10, ["literal", [1, 0]],
+                20, ["literal", [3, 1.6]],
+                30, ["literal", [0.6, 1.4]],
+                ["literal", [1, 0]]
+            ];
+        }
+        return [
+            "case",
+            [">=", ["coalesce", ["get", "minutes"], 0], 30],
+            ["literal", [2, 2]],
+            ["literal", [1, 0]]
+        ];
+    }
+
     function metersPerMinute(transport) {
         const mode = canonicalTransport(transport);
         const cruise = CRUISE_KM_H[mode] || CRUISE_KM_H.Fiets;
@@ -2880,7 +2984,10 @@ window.jobMap = (function () {
 
     function maxRingRadiusMeters() {
         const speed = metersPerMinute(travelOptions.transport || "Fiets");
-        const travelMeters = (Number(travelOptions.maxMinutes) || 30) * speed;
+        const maxMin = lagenLayout
+            ? Math.max(30, Number(travelOptions.maxMinutes) || 30)
+            : (Number(travelOptions.maxMinutes) || 30);
+        const travelMeters = maxMin * speed;
         const radiusKm = Number(travelOptions.radiusKm);
         if (Number.isFinite(radiusKm) && radiusKm > 0) {
             return Math.min(travelMeters, radiusKm * 1000);
@@ -2932,6 +3039,16 @@ window.jobMap = (function () {
     }
 
     function eachTravelRing(lat, lng, fn) {
+        if (lagenLayout) {
+            const chosen = chosenRingMinutes();
+            lagenTravelRingMinutes().forEach(function (mins, index) {
+                const radius = ringRadiusForMinutes(mins);
+                if (radius >= 40) {
+                    fn(mins, index, radius, mins === chosen);
+                }
+            });
+            return;
+        }
         const mins = chosenRingMinutes();
         const radius = ringRadiusForMinutes(mins);
         if (radius >= 40) {
@@ -2967,7 +3084,7 @@ window.jobMap = (function () {
 
     function fetchIsochrones(lat, lng) {
         const mode = canonicalTransport(travelOptions.transport || "Fiets");
-        const minutes = [chosenRingMinutes()];
+        const minutes = lagenLayout ? lagenTravelRingMinutes() : [chosenRingMinutes()];
         const key = isochroneCacheKey(lat, lng, mode, minutes);
         if (isochroneCache[key]) {
             return Promise.resolve(isochroneCache[key]);
@@ -3087,14 +3204,25 @@ window.jobMap = (function () {
             const isChosen = !!feature.properties.chosen || mins === chosen;
             const ll = pointOnRingEdge(lat, lng, mins, index, feature);
             const el = document.createElement("div");
-            el.className = "map-iso-label" + (isChosen ? " map-iso-label--chosen" : "");
-            el.setAttribute("title", mins + " min " + labelVerb);
-            el.setAttribute("aria-label", mins + " min " + labelVerb);
-            if (isChosen) {
-                el.innerHTML = "<span class=\"map-iso-label__icon\" aria-hidden=\"true\">" +
-                    transportIconChar(transport) + "</span>" + mins + " min";
+            const labelText = mins + " min " + labelVerb;
+            if (lagenLayout) {
+                const ic = window.jobsyBanenkaartMapIcons;
+                const bike = ic && ic.bikeSvg ? ic.bikeSvg : "";
+                el.className = "map-iso-label kb-rl";
+                el.setAttribute("title", labelText);
+                el.setAttribute("aria-label", labelText);
+                el.innerHTML = bike + "<span>" + escapeHtml(String(mins)) + " min " +
+                    escapeHtml(labelVerb) + "</span>";
             } else {
-                el.textContent = mins + " min";
+                el.className = "map-iso-label" + (isChosen ? " map-iso-label--chosen" : "");
+                el.setAttribute("title", labelText);
+                el.setAttribute("aria-label", labelText);
+                if (isChosen) {
+                    el.innerHTML = "<span class=\"map-iso-label__icon\" aria-hidden=\"true\">" +
+                        transportIconChar(transport) + "</span>" + mins + " min";
+                } else {
+                    el.textContent = mins + " min";
+                }
             }
             try {
                 const marker = new maplibregl.Marker({ element: el, anchor: "center" })
@@ -3240,17 +3368,13 @@ window.jobMap = (function () {
                         1.5
                     ],
                     "line-opacity": 1,
-                    "line-dasharray": [
-                        "case",
-                        [">=", ["coalesce", ["get", "minutes"], 0], 30],
-                        ["literal", [2, 2]],
-                        ["literal", [1, 0]]
-                    ]
+                    "line-dasharray": travelRingLineDashPaint()
                 }
             }, beforeId);
         } else {
             try {
                 map.setPaintProperty(lineId, "line-color", colors.line);
+                map.setPaintProperty(lineId, "line-dasharray", travelRingLineDashPaint());
                 map.setPaintProperty(fillId, "fill-color", colors.fill);
             } catch (e) { }
         }
@@ -3310,7 +3434,8 @@ window.jobMap = (function () {
         }
 
         const ringKey = String(lat) + "," + String(lng) + "|"
-            + String(travelOptions.maxMinutes) + "|" + String(travelOptions.transport || "");
+            + (lagenLayout ? "lagen:10,20,30" : String(travelOptions.maxMinutes)) + "|"
+            + String(travelOptions.transport || "");
         if (ringKey === lastRingDrawKey && travelRingGeo) {
             return;
         }
@@ -3702,6 +3827,38 @@ window.jobMap = (function () {
         setVacanciesFromCatalog(pins, meta);
     }
 
+    function emitCatalogMapReady() {
+        if (catalogMapReadySent || !catalogModeActive) {
+            return;
+        }
+        catalogMapReadySent = true;
+        try {
+            document.dispatchEvent(new CustomEvent("jobsy-bk-map-ready", { bubbles: true }));
+        } catch (eReady) { }
+        try {
+            const root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+            if (root) {
+                root.dataset.banenkaartMapReady = "1";
+            }
+        } catch (eDom) { }
+    }
+
+    function scheduleCatalogMapReadyAfterIdle() {
+        if (!catalogModeActive || catalogMapReadySent || !map) {
+            return;
+        }
+        const onIdle = function () {
+            emitCatalogMapReady();
+        };
+        if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()) {
+            map.once("idle", onIdle);
+        } else if (typeof map.once === "function") {
+            map.once("load", function () {
+                map.once("idle", onIdle);
+            });
+        }
+    }
+
     function setVacanciesFromCatalog(pins, meta) {
         meta = meta || {};
         if (!clusterGroup || !map) {
@@ -3713,6 +3870,7 @@ window.jobMap = (function () {
             bootZoomOutsideTravel = true;
         }
         setVacancies(pins || []);
+        scheduleCatalogMapReadyAfterIdle();
         if (window.__jobsyBkRestoringView) {
             return;
         }
@@ -3847,6 +4005,20 @@ window.jobMap = (function () {
         }
     }
 
+    function pinKindForVacancy(v) {
+        if (!lagenLayout) {
+            return "";
+        }
+        const ic = window.jobsyBanenkaartMapIcons;
+        if (ic && typeof ic.isIntermediaryRow === "function" && ic.isIntermediaryRow(v)) {
+            return "intermediary";
+        }
+        if (isAgencyPin(v) || v.isIntermediary === true || v.agency === 1 || v.agency === true) {
+            return "intermediary";
+        }
+        return "employer";
+    }
+
     function pinsGeoJson() {
         const origin = lastOrigin;
         const outerM = origin ? maxRingRadiusMeters() : 0;
@@ -3856,6 +4028,7 @@ window.jobMap = (function () {
                 const record = markersById[id];
                 const v = record.options.jobData || {};
                 const agency = (isAgencyPin(v) || (companyMapMode && v.isIntermediary === true)) ? 1 : 0;
+                const pinKind = pinKindForVacancy(v);
                 const openInit = companyMapMode && v.openForInitiative === true;
                 const kansberoep = v.kansberoep === true || v.kansberoep === 1 ? 1 : 0;
                 let outside = 0;
@@ -3882,7 +4055,8 @@ window.jobMap = (function () {
                         colour: kansberoep ? "#c9a227" : (openInit ? COMPANY_OPEN_PIN_COLOR : (agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""))),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
-                        outside: outside ? 1 : 0
+                        outside: outside ? 1 : 0,
+                        pinKind: pinKind
                     }
                 };
             })
@@ -3916,6 +4090,23 @@ window.jobMap = (function () {
     }
 
     function refreshAgencyAreas() {
+        if (lagenLayout) {
+            if (!map || !map.getSource(PIN_SOURCE_AGENCY_AREAS)) {
+                return;
+            }
+            const source = map.getSource(PIN_SOURCE_AGENCY_AREAS);
+            if (source && typeof source.setData === "function") {
+                source.setData({ type: "FeatureCollection", features: [] });
+            }
+            [PIN_LAYER_AGENCY_AREAS_FILL, PIN_LAYER_AGENCY_AREAS_LINE].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setLayoutProperty(layerId, "visibility", "none");
+                    }
+                } catch (eHide) { }
+            });
+            return;
+        }
         if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) {
             return;
         }
@@ -3965,6 +4156,175 @@ window.jobMap = (function () {
                     "line-opacity": 0.55
                 }
             }, beforeId);
+        }
+    }
+
+    function loadSvgAsMapImage(imageId, svgString, width, height, done) {
+        if (!map || map.hasImage(imageId)) {
+            if (done) {
+                done();
+            }
+            return;
+        }
+        const img = new Image();
+        const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+        img.onload = function () {
+            try {
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                if (!map.hasImage(imageId)) {
+                    map.addImage(imageId, {
+                        width: width,
+                        height: height,
+                        data: new Uint8Array(ctx.getImageData(0, 0, width, height).data.buffer),
+                        sdf: false
+                    });
+                }
+            } catch (eImg) { }
+            if (done) {
+                done();
+            }
+        };
+        img.onerror = function () {
+            if (done) {
+                done();
+            }
+        };
+        img.src = url;
+    }
+
+    function ensureLagenPinImages(done) {
+        if (!map || !lagenLayout) {
+            if (done) {
+                done();
+            }
+            return;
+        }
+        if (map._jobsyLagenPinImagesReady) {
+            if (done) {
+                done();
+            }
+            return;
+        }
+        const ic = window.jobsyBanenkaartMapIcons;
+        if (!ic || typeof ic.pinW !== "function" || typeof ic.pinI !== "function") {
+            if (done) {
+                done();
+            }
+            return;
+        }
+        const specs = [
+            { id: "jobsy-pin-w", svg: ic.pinW(1), w: 40, h: 50 },
+            { id: "jobsy-pin-w-selected", svg: ic.pinW(1, true), w: 40, h: 50 },
+            { id: "jobsy-pin-i", svg: ic.pinI(1, false, true), w: 46, h: 50 },
+            { id: "jobsy-pin-i-selected", svg: ic.pinI(1, true, true), w: 46, h: 50 }
+        ];
+        let pending = specs.length;
+        specs.forEach(function (spec) {
+            loadSvgAsMapImage(spec.id, spec.svg, spec.w, spec.h, function () {
+                pending -= 1;
+                if (pending <= 0) {
+                    map._jobsyLagenPinImagesReady = true;
+                    if (done) {
+                        done();
+                    }
+                }
+            });
+        });
+    }
+
+    function lagenUnclusteredIconLayout() {
+        return {
+            "icon-image": [
+                "case",
+                ["==", ["coalesce", ["get", "pinKind"], ""], "intermediary"],
+                [
+                    "case",
+                    ["==", ["coalesce", ["feature-state", "selected"], false], true],
+                    "jobsy-pin-i-selected",
+                    "jobsy-pin-i"
+                ],
+                [
+                    "case",
+                    ["==", ["coalesce", ["feature-state", "selected"], false], true],
+                    "jobsy-pin-w-selected",
+                    "jobsy-pin-w"
+                ]
+            ],
+            "icon-size": [
+                "case",
+                ["==", ["coalesce", ["feature-state", "selected"], false], true],
+                1.18,
+                1
+            ],
+            "icon-anchor": "bottom",
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": false
+        };
+    }
+
+    function applyLagenPinLayerStyles() {
+        if (!map || !lagenLayout) {
+            return;
+        }
+        const clusterLayers = [PIN_LAYER_CLUSTERS, PIN_LAYER_CLUSTERS + "-halo"];
+        clusterLayers.forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.setPaintProperty(layerId, "circle-color", LAGEN_CLUSTER_GREEN);
+                }
+            } catch (eCl) { }
+        });
+        try {
+            if (map.getLayer(PIN_LAYER_CLUSTER_AGENCY_BADGE)) {
+                map.setLayoutProperty(PIN_LAYER_CLUSTER_AGENCY_BADGE, "visibility", "none");
+            }
+        } catch (eBadge) { }
+        [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.setLayoutProperty(layerId, "visibility", "none");
+                }
+            } catch (ePin) { }
+        });
+        [PIN_LAYER_AGENCY_AREAS_FILL, PIN_LAYER_AGENCY_AREAS_LINE].forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.setLayoutProperty(layerId, "visibility", "none");
+                }
+            } catch (eArea) { }
+        });
+        if (!map.getLayer(PIN_LAYER_UNCLUSTERED_SYMBOL)) {
+            map.addLayer({
+                id: PIN_LAYER_UNCLUSTERED_SYMBOL,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: UNCLUSTERED_PIN_FILTER,
+                layout: lagenUnclusteredIconLayout()
+            });
+            if (!map._jobsyLagenPinClicksBound) {
+                map._jobsyLagenPinClicksBound = true;
+                map.on("click", PIN_LAYER_UNCLUSTERED_SYMBOL, onPinClick);
+                map.on("mouseenter", PIN_LAYER_UNCLUSTERED_SYMBOL, function () {
+                    map.getCanvas().style.cursor = "pointer";
+                });
+                map.on("mouseleave", PIN_LAYER_UNCLUSTERED_SYMBOL, function () {
+                    map.getCanvas().style.cursor = "";
+                });
+            }
+        } else {
+            const layout = lagenUnclusteredIconLayout();
+            Object.keys(layout).forEach(function (key) {
+                try {
+                    map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, key, layout[key]);
+                } catch (eLay) { }
+            });
+            try {
+                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", "visible");
+            } catch (eVis) { }
         }
     }
 
@@ -4214,6 +4574,20 @@ window.jobMap = (function () {
                 } catch (ePaint) { }
             });
         }
+        if (lagenLayout) {
+            applyLagenPinLayerStyles();
+        } else if (map.getLayer(PIN_LAYER_UNCLUSTERED_SYMBOL)) {
+            try {
+                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", "none");
+            } catch (eSymHide) { }
+            [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setLayoutProperty(layerId, "visibility", "visible");
+                    }
+                } catch (eShow) { }
+            });
+        }
         if (!map._jobsyPinClicksBound) {
             map._jobsyPinClicksBound = true;
             map.on("click", PIN_LAYER_CLUSTER_HIT, onClusterClick);
@@ -4412,15 +4786,25 @@ window.jobMap = (function () {
             map.once("load", refreshClusters);
             return;
         }
-        ensurePinLayers();
-        const source = map.getSource(PIN_SOURCE);
-        if (source && typeof source.setData === "function") {
-            source.setData(pinsGeoJson());
+        function pushPinData() {
+            ensurePinLayers();
+            if (lagenLayout) {
+                applyLagenPinLayerStyles();
+            }
+            const source = map.getSource(PIN_SOURCE);
+            if (source && typeof source.setData === "function") {
+                source.setData(pinsGeoJson());
+            }
+            refreshAgencyAreas();
+            if (selectedId != null) {
+                highlight(selectedId);
+            }
         }
-        refreshAgencyAreas();
-        if (selectedId != null) {
-            highlight(selectedId);
+        if (lagenLayout) {
+            ensureLagenPinImages(pushPinData);
+            return;
         }
+        pushPinData();
     }
 
     function restoreOverlays() {
@@ -4685,6 +5069,10 @@ window.jobMap = (function () {
             clearPinsFetchState();
         }
         const mapInit = bootPayload.mapInit || null;
+        lagenLayout = !!(mapInit && mapInit.lagenLayout);
+        if (lagenLayout) {
+            illustratedPopup = false;
+        }
         let travel = null;
         if (mapInit && mapInit.travel) {
             travel = mapInit.travel;
@@ -5367,7 +5755,12 @@ window.jobMap = (function () {
             pinsBaseUrl = stripViewportParams(nextPinsUrl);
             pinsUrl = pinsBaseUrl + viewportQueryString();
         }
-        illustratedPopup = !!(options && options.illustratedPopup);
+        lagenLayout = readLagenLayoutFromOptions(options);
+        if (lagenLayout) {
+            illustratedPopup = false;
+        } else {
+            illustratedPopup = !!(options && options.illustratedPopup);
+        }
         illustratedTravelSpot = options && options.illustratedTravelSpot
             ? String(options.illustratedTravelSpot)
             : "";
