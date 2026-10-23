@@ -1,10 +1,11 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
-using Jobsy.Core.Rules;
 using Jobsy.Core.Features;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Discovery;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Media;
 using Jobsy.Web.Models;
 using Jobsy.Web.Onboarding;
 using Jobsy.Web.Services;
@@ -13,12 +14,35 @@ namespace Jobsy.Web.Discovery;
 
 internal static class DiscoverySsrData
 {
+    private static readonly int[] DiepTestSteps = [7, 8, 9, 10];
     internal sealed record PageLoad(
         string Screen,
         DiscoverySsrShells.OverviewModel? Overview,
         DiscoverySsrShells.ShedModel? Shed,
         DiscoverySsrShells.TestModel? Test,
         string? ErrorMessage);
+
+    internal sealed record Bootstrap(
+        OnboardingState? State,
+        MeProfile Profile,
+        OnboardingProfileDraft Draft);
+
+    public static async Task<Bootstrap?> LoadBootstrapAsync(
+        JobsyApiClient api,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var state = await api.GetMyOnboardingAsync(cancellationToken);
+            var profile = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            var draft = OnboardingProfileDraftHydrator.FromProfile(profile);
+            return new Bootstrap(state, profile, draft);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     public static async Task<PageLoad> LoadAsync(
         JobsyApiClient api,
@@ -27,6 +51,7 @@ internal static class DiscoverySsrData
         DiscoveryOverviewCache overviewCache,
         DiscoverySsrDepthStore depthStore,
         string? userId,
+        Bootstrap bootstrap,
         string? stapRaw,
         string? diepteRaw,
         string? faseRaw,
@@ -35,23 +60,12 @@ internal static class DiscoverySsrData
         CancellationToken cancellationToken = default)
     {
         var error = string.IsNullOrWhiteSpace(errorRaw) ? null : errorRaw;
-        OnboardingState? state;
-        MeProfile profile;
-        try
-        {
-            state = await api.GetMyOnboardingAsync(cancellationToken);
-            profile = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
-        }
-        catch
-        {
-            return new PageLoad("error", null, null, null, culture["Common.Error.TryAgain"]);
-        }
-
-        var draft = OnboardingProfileDraftHydrator.FromProfile(profile);
-        var screen = ResolveScreen(stapRaw, state);
+        var state = bootstrap.State;
+        var draft = bootstrap.Draft;
+        var screen = DiscoverySsrJourneyState.ResolveScreen(stapRaw, state);
 
         if (string.Equals(screen, "overview", StringComparison.OrdinalIgnoreCase)
-            || (string.IsNullOrWhiteSpace(stapRaw) && IsJourneyComplete(state, draft)))
+            || (string.IsNullOrWhiteSpace(stapRaw) && DiscoverySsrJourneyState.IsJourneyComplete(state, draft)))
         {
             var overview = await BuildOverviewAsync(
                 overviewCache,
@@ -115,30 +129,6 @@ internal static class DiscoverySsrData
         return new PageLoad("start", null, null, null, error);
     }
 
-    private static bool IsJourneyComplete(OnboardingState? state, OnboardingProfileDraft draft)
-    {
-        if (state?.Steps.Any(s => s.Step == 10 && s.CompletedAtUtc is not null) == true)
-        {
-            return true;
-        }
-
-        return draft.HasConsent && (state?.CurrentStep ?? 0) >= 10;
-    }
-
-    private static string ResolveScreen(string? stapRaw, OnboardingState? state)
-    {
-        if (!string.IsNullOrWhiteSpace(stapRaw))
-        {
-            return stapRaw.Trim().ToLowerInvariant();
-        }
-
-        var step = Math.Clamp(state?.CurrentStep ?? 1, 1, 10);
-        var showStart = step == 1
-            && (state?.Steps.Count == 0
-                || state!.Steps.All(item => item.Step == 1 && item.CompletedAtUtc is null));
-        return showStart ? "start" : "overview";
-    }
-
     private static async Task<DiscoverySsrShells.OverviewModel> BuildOverviewAsync(
         DiscoveryOverviewCache overviewCache,
         CultureState culture,
@@ -149,10 +139,15 @@ internal static class DiscoverySsrData
         CancellationToken cancellationToken)
     {
         var panel = await overviewCache.GetPanelAsync(cancellationToken);
-        var activePhase = string.IsNullOrWhiteSpace(faseRaw) ? ResolveOpenPhaseId(draft, state) : faseRaw.Trim().ToLowerInvariant();
-        var youPhase = activePhase;
-        var stops = BuildPhaseStops(culture, draft, state, activePhase);
-        var sections = BuildPanelSections(culture, draft, activePhase);
+        var openPhase = DiscoverySsrJourneyState.ResolveOpenPhaseId(draft, state, panel);
+        var activePhase = string.IsNullOrWhiteSpace(faseRaw)
+            ? openPhase
+            : faseRaw.Trim().ToLowerInvariant();
+        var youPhase = openPhase;
+        var progress = ComputeYouAreHereProgressFrac(activePhase, state, panel);
+        var stops = BuildPhaseStops(culture, draft, state, panel, openPhase);
+        var sections = BuildPanelSections(culture, draft, state, panel, activePhase);
+        var tests = BuildTestRows(culture, panel);
         var phaseMeta = activePhase switch
         {
             "beach" => ("Discovery.Zone.Beach", "Discovery.Overview.Phase.BeachLead", DiscoverySsrShells.Halte("strand")),
@@ -162,56 +157,127 @@ internal static class DiscoverySsrData
             _ => ("Discovery.Zone.Light", "Discovery.Overview.Phase.LightLead", DiscoverySsrShells.Halte("licht"))
         };
 
-        _ = panel;
         return new DiscoverySsrShells.OverviewModel(
             stops,
             activePhase,
             youPhase,
-            0.45,
+            progress,
             phaseMeta.Item1,
             phaseMeta.Item2,
             phaseMeta.Item3,
             sections,
+            tests,
             error);
     }
 
-    private static List<(string TitleKey, string Summary, int? StepHref)> BuildPanelSections(
+    private static List<DiscoverySsrShells.OverviewPanelSection> BuildPanelSections(
         CultureState culture,
         OnboardingProfileDraft draft,
+        OnboardingState? state,
+        CandidateDiscoveryOverviewPanelDto? panel,
         string phaseId)
     {
-        var list = new List<(string, string, int?)>();
+        var completed = DiscoverySsrJourneyState.CompletedStepNumbers(state);
+        var list = new List<DiscoverySsrShells.OverviewPanelSection>();
+
         if (phaseId == "kust")
         {
-            list.Add(("Discovery.Overview.Section.Start", culture["Discovery.Overview.SummaryEmpty"], 1));
-            list.Add(("Discovery.Overview.Section.Passport", culture["Discovery.Overview.SummaryEmpty"], 2));
+            foreach (var step in new[] { 1, 2 })
+            {
+                var info = JourneyCatalog.Steps.First(s => s.Number == step);
+                list.Add(new DiscoverySsrShells.OverviewPanelSection(
+                    culture[info.TitleKey],
+                    DiscoverySsrOverviewSummaries.StepOverviewSummary(step, culture, draft, panel),
+                    DiscoverySsrUrls.Step(step),
+                    completed.Contains(step)));
+            }
         }
         else if (phaseId == "rots")
         {
-            for (var s = 3; s <= 6; s++)
+            foreach (var step in new[] { 3, 4, 5, 6 })
             {
-                list.Add(($"Discovery.Step{s}.Title", culture["Discovery.Overview.SummaryEmpty"], s));
+                var info = JourneyCatalog.Steps.First(s => s.Number == step);
+                list.Add(new DiscoverySsrShells.OverviewPanelSection(
+                    culture[info.TitleKey],
+                    DiscoverySsrOverviewSummaries.StepOverviewSummary(step, culture, draft, panel),
+                    DiscoverySsrUrls.Step(step),
+                    completed.Contains(step)));
             }
         }
         else if (phaseId == "diep")
         {
-            for (var s = 7; s <= 10; s++)
+            foreach (var step in new[] { 7, 8, 9, 10 })
             {
-                list.Add((JourneyTestFlow.TestTitleKey(s), culture["Discovery.Overview.TestTodo"], s));
+                var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+                list.Add(new DiscoverySsrShells.OverviewPanelSection(
+                    culture[DiscoverySsrOverviewSummaries.OverviewRouteTestTitleKey(kind)],
+                    DiscoverySsrOverviewSummaries.StepOverviewSummary(step, culture, draft, panel),
+                    ResolveTestAdjustHref(step, panel),
+                    DiscoverySsrJourneyState.IsTestMiniDone(step, panel) || completed.Contains(step)));
             }
         }
         else if (phaseId == "beach" && !draft.HasConsent)
         {
-            list.Add(("Discovery.Overview.Consent", culture["Discovery.Overview.SummaryEmpty"], null));
+            list.Add(new DiscoverySsrShells.OverviewPanelSection(
+                culture["Discovery.Overview.Consent"],
+                culture["Discovery.Overview.New"],
+                null,
+                true));
         }
 
         return list;
+    }
+
+    private static string ResolveTestAdjustHref(int step, CandidateDiscoveryOverviewPanelDto? panel)
+        => DiscoverySsrJourneyState.IsTestMiniDone(step, panel)
+            ? DiscoverySsrUrls.Shed(step)
+            : DiscoverySsrUrls.Step(step);
+
+    private static List<DiscoverySsrShells.OverviewTestRow> BuildTestRows(
+        CultureState culture,
+        CandidateDiscoveryOverviewPanelDto? panel)
+    {
+        var rows = new List<DiscoverySsrShells.OverviewTestRow>();
+        foreach (var step in new[] { 7, 8, 9, 10 })
+        {
+            var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+            var answered = DiscoverySsrJourneyState.AnsweredCount(kind, panel);
+            var full = OnboardingWizardCatalog.FullLevelCount(kind);
+            var mini = OnboardingWizardCatalog.MiniLevelCount;
+            var complete = answered >= full;
+            var progressText = complete
+                ? null
+                : answered >= mini
+                    ? culture.Format("Discovery.Overview.TestAnsweredCount", answered, full)
+                    : answered > 0
+                        ? culture.Format("Discovery.Overview.TestAnsweredCount", answered, full)
+                        : null;
+            var accent = kind switch
+            {
+                OnboardingWizardCatalog.OnboardingTestKind.Competency => DiscoveryOverviewIllustrationAssets.TestAccent("competency"),
+                OnboardingWizardCatalog.OnboardingTestKind.Career => DiscoveryOverviewIllustrationAssets.TestAccent("career"),
+                OnboardingWizardCatalog.OnboardingTestKind.Culture => DiscoveryOverviewIllustrationAssets.TestAccent("culture"),
+                _ => DiscoveryOverviewIllustrationAssets.TestAccent("values")
+            };
+            rows.Add(new DiscoverySsrShells.OverviewTestRow(
+                step,
+                DiscoverySsrOverviewSummaries.OverviewRouteTestTitleKey(kind),
+                accent,
+                complete || answered >= mini,
+                progressText,
+                "/candidate/paspoort?tab=tests",
+                complete ? null : DiscoverySsrUrls.Step(step),
+                answered >= mini ? DiscoverySsrUrls.Shed(step) : null));
+        }
+
+        return rows;
     }
 
     private static List<DiscoverySsrShells.OverviewStop> BuildPhaseStops(
         CultureState culture,
         OnboardingProfileDraft draft,
         OnboardingState? state,
+        CandidateDiscoveryOverviewPanelDto? panel,
         string openPhaseId)
     {
         string PhaseStatus(string phaseId)
@@ -221,7 +287,7 @@ internal static class DiscoverySsrData
                 return draft.HasConsent ? culture["Discovery.Overview.Done"] : culture["Discovery.Overview.StatusOneStep"];
             }
 
-            var remaining = RemainingStepsInPhase(phaseId, draft, state);
+            var remaining = DiscoverySsrJourneyState.RemainingStepsInPhase(phaseId, draft, state, panel);
             if (remaining == 0)
             {
                 return culture["Discovery.Overview.Done"];
@@ -242,11 +308,11 @@ internal static class DiscoverySsrData
                 return "is-open";
             }
 
-            var remaining = RemainingStepsInPhase(phaseId, draft, state);
+            var remaining = DiscoverySsrJourneyState.RemainingStepsInPhase(phaseId, draft, state, panel);
             return remaining == 0 ? "is-done" : "is-progress";
         }
 
-        bool done(string phaseId) => RemainingStepsInPhase(phaseId, draft, state) == 0;
+        bool done(string phaseId) => DiscoverySsrJourneyState.RemainingStepsInPhase(phaseId, draft, state, panel) == 0;
         var phases = new[] { ("beach", "Discovery.Zone.Beach", "strand"), ("kust", "Discovery.Zone.Coast", "kust"), ("rots", "Discovery.Zone.Rocks", "rotsen"), ("diep", "Discovery.Zone.Deep", "diepte"), ("light", "Discovery.Zone.Light", "licht") };
         return phases.Select(p => new DiscoverySsrShells.OverviewStop(
             p.Item1,
@@ -258,19 +324,16 @@ internal static class DiscoverySsrData
             p.Item1 == openPhaseId && !done(p.Item1))).ToList();
     }
 
-    private static int RemainingStepsInPhase(string phaseId, OnboardingProfileDraft draft, OnboardingState? state)
+    private static double ComputeYouAreHereProgressFrac(
+        string phaseId,
+        OnboardingState? state,
+        CandidateDiscoveryOverviewPanelDto? panel)
     {
-        if (phaseId == "beach")
+        if (phaseId is "beach" or "light")
         {
-            return draft.HasConsent ? 0 : 1;
+            return 0.45;
         }
 
-        if (phaseId == "light")
-        {
-            return 0;
-        }
-
-        var completed = state?.Steps.Where(s => s.CompletedAtUtc is not null).Select(s => s.Step).ToHashSet() ?? [];
         var steps = phaseId switch
         {
             "kust" => new[] { 1, 2 },
@@ -278,32 +341,24 @@ internal static class DiscoverySsrData
             "diep" => new[] { 7, 8, 9, 10 },
             _ => Array.Empty<int>()
         };
-        return steps.Count(s => !completed.Contains(s));
-    }
-
-    private static string ResolveOpenPhaseId(OnboardingProfileDraft draft, OnboardingState? state)
-    {
-        if (!draft.HasConsent)
+        if (steps.Length == 0)
         {
-            return "beach";
+            return 0.45;
         }
 
-        if (RemainingStepsInPhase("kust", draft, state) > 0)
+        var completed = DiscoverySsrJourneyState.CompletedStepNumbers(state);
+        var done = steps.Count(completed.Contains);
+        if (phaseId == "diep" && panel is not null)
         {
-            return "kust";
+            done = DiepTestSteps.Count(s => DiscoverySsrJourneyState.IsTestMiniDone(s, panel));
         }
 
-        if (RemainingStepsInPhase("rots", draft, state) > 0)
+        if (done >= steps.Length)
         {
-            return "rots";
+            return 1;
         }
 
-        if (RemainingStepsInPhase("diep", draft, state) > 0)
-        {
-            return "diep";
-        }
-
-        return "light";
+        return 0.25 + 0.55 * (done / (double)steps.Length);
     }
 
     private static async Task<DiscoverySsrShells.ShedModel> BuildShedAsync(

@@ -45,12 +45,48 @@
             return;
         }
 
+        http.Response.Headers.CacheControl = "no-store";
+
         var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
         query.TryGetValue("stap", out var stapValues);
         query.TryGetValue("diepte", out var diepteValues);
         query.TryGetValue("fase", out var faseValues);
         query.TryGetValue("q", out var qValues);
         query.TryGetValue("error", out var errorValues);
+
+        var bootstrap = await DiscoverySsrData.LoadBootstrapAsync(Api, http.RequestAborted);
+        if (bootstrap is null)
+        {
+            _bodyHtml = DiscoverySsrShells.BuildPage(
+                Culture,
+                "",
+                "error",
+                null,
+                null,
+                null,
+                Culture["Common.Error.TryAgain"]);
+            return;
+        }
+
+        var redirectUrl = await DiscoverySsrRedirect.TryGetRedirectUrlAsync(
+            http.Request,
+            Api,
+            FeatureFlags,
+            Culture,
+            OverviewCache,
+            bootstrap.State,
+            bootstrap.Draft,
+            stapValues.FirstOrDefault(),
+            faseValues.FirstOrDefault(),
+            diepteValues.FirstOrDefault(),
+            http.RequestAborted);
+
+        if (!string.IsNullOrEmpty(redirectUrl)
+            && !DiscoverySsrRedirect.IsSameLocation(http.Request, redirectUrl))
+        {
+            http.Response.Redirect(redirectUrl);
+            return;
+        }
 
         var userId = http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
         var tokens = Antiforgery.GetAndStoreTokens(http);
@@ -63,6 +99,7 @@
             OverviewCache,
             DepthStore,
             userId,
+            bootstrap,
             stapValues.FirstOrDefault(),
             diepteValues.FirstOrDefault(),
             faseValues.FirstOrDefault(),

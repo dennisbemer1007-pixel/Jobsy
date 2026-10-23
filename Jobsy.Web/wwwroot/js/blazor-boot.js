@@ -451,7 +451,7 @@
         contentMatchesPath: function (path) {
             var p = this.normalizePath(path);
             var routes = [
-                ["/candidate/ontdekkingsreis", [".journey-overview"]],
+                ["/candidate/ontdekkingsreis", [".journey-overview", "[data-discovery-ssr=\"1\"]"]],
                 ["/candidate/paspoort", [".passport-page"]],
                 ["/banenkaart", [".jobsy-discovery", ".bk-page"]],
                 ["/candidate/applications", [".apps-page", ".kb-apps"]],

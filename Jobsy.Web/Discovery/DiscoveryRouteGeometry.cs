@@ -13,4 +13,8 @@ internal static class DiscoveryRouteGeometry
 
     public const string MobileDonePathD =
         "M 180 40 C 220 120, 120 200, 180 280 S 240 420, 180 520";
+
+    /// <summary>SSR mobile: trail ends above the destination label plate.</summary>
+    public const string MobileFuturePathSsrD =
+        "M 180 40 C 220 120, 120 200, 180 280 S 240 420, 180 520 S 120 660, 180 710";
 }

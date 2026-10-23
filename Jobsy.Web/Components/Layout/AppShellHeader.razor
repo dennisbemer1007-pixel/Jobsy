@@ -8,7 +8,21 @@
 <header class="app-header" data-testid="app-shell-header">
     <div class="app-header__brand">
         <a class="brand" href="@HomeHref" aria-label="Lobsy">
-            <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
+            @if (_useOnboardingBrandMark)
+            {
+                <img class="brand__logo brand__logo--app-icon"
+                     src="@BrandImages.AppIconSvg"
+                     width="48"
+                     height="48"
+                     alt=""
+                     decoding="async"
+                     data-logo-fallback="off"
+                     draggable="false" />
+            }
+            else
+            {
+                <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
+            }
             <span class="brand__text">
                 <span class="brand-tagline">@HeaderTagline</span>
             </span>
@@ -42,12 +56,16 @@
 
 @code {
     private bool _showCandidateHeaderNav;
+    private bool _useOnboardingBrandMark;
 
     protected override void OnInitialized()
     {
-        var user = HttpContextAccessor.HttpContext?.User;
+        var http = HttpContextAccessor.HttpContext;
+        var user = http?.User;
         _showCandidateHeaderNav = user?.Identity?.IsAuthenticated == true
             && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+        var path = http?.Request.Path.Value ?? "";
+        _useOnboardingBrandMark = path.Contains("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase);
     }
 
     [Parameter, EditorRequired]
