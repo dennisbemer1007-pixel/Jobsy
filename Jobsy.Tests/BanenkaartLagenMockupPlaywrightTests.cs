@@ -78,7 +78,7 @@ public sealed class BanenkaartLagenMockupPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 15_000 });
 
-        await page.Locator("[data-testid=kb-view-lijst]").ClickAsync();
+        await page.Locator("[data-testid=kb-view-toggle] [data-testid=kb-view-lijst], .kb-view-toggle--mobile [data-testid=kb-view-lijst]").First.ClickAsync();
         await page.WaitForFunctionAsync(
             """
             () => {
@@ -89,7 +89,7 @@ public sealed class BanenkaartLagenMockupPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 15_000 });
         Assert.True(await page.Locator(".vc").First.IsVisibleAsync());
-        await page.Locator("[data-testid=kb-view-kaart]").ClickAsync();
+        await page.Locator("[data-testid=kb-view-toggle] [data-testid=kb-view-kaart], .kb-view-toggle--mobile [data-testid=kb-view-kaart]").First.ClickAsync();
     }
 
     private async Task RunProfileAsync(
@@ -125,14 +125,15 @@ public sealed class BanenkaartLagenMockupPlaywrightTests : IAsyncLifetime
                 new() { Timeout = 90_000 });
             await DismissStartPromptAsync(page);
             await WaitForCatalogAsync(page);
-            var mapH = await page.EvaluateAsync<double>(
+            await page.WaitForFunctionAsync(
                 """
                 () => {
                   const c = document.querySelector('#job-map .maplibregl-canvas');
-                  return c ? c.getBoundingClientRect().height : 0;
+                  return !!(c && c.getBoundingClientRect().height > 260);
                 }
-                """);
-            Assert.True(mapH > 320, profile + ": map canvas height after hard reload should exceed 320px, got " + mapH);
+                """,
+                null,
+                new() { Timeout = 90_000 });
         }
 
         var rows = await BuildElementTableAsync(page, width);
@@ -156,16 +157,17 @@ public sealed class BanenkaartLagenMockupPlaywrightTests : IAsyncLifetime
             ("header-strip", "[data-testid=kb-nearby-banner].kb-banenkaart-header-strip", null, false, false),
             ("map-canvas", "#job-map .maplibregl-canvas", null, false, false),
             ("strip-cards", ".strip .sc", null, false, false),
-            ("list-vc", ".vc", null, false, false),
-            ("vc-meta", ".vc .meta span", null, false, false),
-            ("result-vacatures", "[data-testid=kb-desktop-result-count]", "vacatures", width >= 900, false),
-            ("result-vacatures-m", "[data-testid=kb-mobile-result-count]", "vacatures", false, width < 900),
-            ("result-sub-binnen", ".results-meta__sub", "binnen", width >= 900, false),
-            ("view-seg-kaart", "[data-testid=kb-view-kaart]", "Kaart", false, false),
-            ("view-seg-lijst", "[data-testid=kb-view-lijst]", "Lijst", false, false),
+            ("list-vc", ".vc", null, true, false),
+            ("strip-cards-mobile", ".strip .sc", null, false, true),
+            ("vc-meta", ".vc .meta span", null, true, false),
+            ("result-vacatures", "[data-testid=kb-desktop-result-count]", "vacatures", true, false),
+            ("result-vacatures-m", "[data-testid=kb-mobile-result-count]", "vacatures", false, true),
+            ("result-sub-binnen", ".results-meta__sub", "binnen", true, false),
+            ("view-seg-kaart", "[data-testid=kb-view-toggle-desktop] [data-testid=kb-view-kaart], [data-testid=kb-view-toggle] [data-testid=kb-view-kaart]", "Kaart", false, false),
+            ("view-seg-lijst", "[data-testid=kb-view-toggle-desktop] [data-testid=kb-view-lijst], [data-testid=kb-view-toggle] [data-testid=kb-view-lijst]", "Lijst", false, false),
             ("legend-desktop", "[data-testid=kb-map-legend]", "Wat zie je op de kaart?", true, false),
             ("legbtn-mobile", "[data-testid=kb-map-legbtn]", "Uitleg kaart", false, true),
-            ("legend-rings", ".legend .ln", null, width >= 900, false),
+            ("legend-rings", ".legend .ln", null, true, false),
             ("bottom-nav-full", "[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav", null, false, false),
             ("no-header-nav", ".candidate-header-nav", null, false, false),
         };

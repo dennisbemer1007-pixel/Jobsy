@@ -6489,7 +6489,9 @@ window.jobMap = (function () {
             const rec = key ? markersById[key] : null;
             if (rec) {
                 openVacancyPopup(rec);
+                return true;
             }
+            return false;
         },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },

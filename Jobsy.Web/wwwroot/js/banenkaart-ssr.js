@@ -428,6 +428,12 @@
         } catch (eLegacy) { }
     }
 
+    function scheduleMapRelayout() {
+        [0, 80, 250, 600].forEach(function (ms) {
+            setTimeout(resumeMapLayout, ms);
+        });
+    }
+
     function setDefaultBanenkaartView(root) {
         root.classList.remove("jobsy-discovery--list");
         root.classList.add("show-map");
@@ -441,6 +447,7 @@
             btn.classList.remove("is-active");
             btn.setAttribute("aria-checked", "false");
         });
+        scheduleMapRelayout();
     }
 
     /** Fresh GET / hard reload: filters closed; desktop always shows map + list rail. */

@@ -1,4 +1,12 @@
 /* Binding mockup PR #878 dd7cb7ce — kaartlagen (+ header C strip). Values from lagen/src/style.css. */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .bk-map-toggle--banen {
+    display: none !important;
+}
+
+.app-shell--banenkaart-shell:has(.jobsy-discovery--lagen) .app-footer {
+    display: none !important;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen {
     --kb-navy: #1f2f55;
     --kb-ink: #1b2440;
@@ -46,6 +54,10 @@
         gap: 16px;
         align-content: start;
         grid-auto-rows: max-content;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .vacancy-list .kb-list-rows {
+        display: contents;
     }
 }
 
@@ -188,6 +200,7 @@
     height: 16px;
 }
 
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-pane,
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-stage.is-live {
     position: relative;
 }
@@ -306,7 +319,9 @@
     border-radius: 16px;
     padding: 14px 16px 12px;
     box-shadow: 0 10px 30px -12px rgba(31, 47, 85, 0.35);
-    width: 282px;
+    width: min(282px, calc(100% - 200px));
+    max-height: calc(100% - 88px);
+    overflow: auto;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .legend h4 {
@@ -670,7 +685,60 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 /* Panel + results header (mockup .panel / .rh / .seg / .sel) */
 @media (min-width: 900px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
-        grid-template-columns: 600px minmax(0, 1fr);
+        grid-template-columns: minmax(320px, 42%) minmax(0, 58%);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+        max-height: calc(
+            100dvh - var(--app-header-height, 4.25rem) - var(--bottom-nav-h, 4.25rem) - env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    /* Mockup: toolbar in left column only; map is full height beside toolbar + list. */
+    .app-shell--banenkaart-shell .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"] > .jobsy-chrome {
+        grid-column: 1 !important;
+        grid-row: 2;
+        min-width: 0;
+        z-index: 3;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map .vacancy-pane {
+        grid-column: 1;
+        grid-row: 3;
+        display: flex !important;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.jobsy-discovery--lagen.show-map .map-pane {
+        grid-column: 2 !important;
+        grid-row: 2 / 4 !important;
+        min-height: 0;
+        height: 100%;
+        max-height: none;
+        overflow: hidden;
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen.show-map .map-pane {
+        padding-bottom: 0;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map .map-pane .map-stage,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map .map-pane #job-map,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map .map-pane .job-map {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .vacancy-pane {
@@ -873,11 +941,56 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     }
 }
 
-/* List rail scroll area ends above fixed bottom nav (desktop + mobile list mode). */
+/* Mobile map sits above fixed bottom nav; desktop map height comes from grid row span. */
+@media (max-width: 899px) {
+    .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen .map-pane {
+        box-sizing: border-box;
+        padding-bottom: calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen .vacancy-list {
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen.show-list .vacancy-pane {
     padding-bottom: calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 899px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto minmax(0, 1fr);
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
+        grid-row: 1;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen > .jobsy-chrome {
+        grid-row: 2;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map:not(.show-list) .map-pane {
+        grid-column: 1;
+        grid-row: 3;
+        min-height: 0;
+        height: 100%;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map:not(.show-list) .vacancy-pane {
+        display: none !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vacancy-pane {
+        grid-column: 1;
+        grid-row: 3;
+        display: flex !important;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .map-pane {
+        display: none !important;
+    }
 }

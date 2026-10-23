@@ -45,21 +45,6 @@ internal static class BanenkaartSsrShells
                 .Append("</p>");
         }
 
-        if (model.CompanyMapEnabled)
-        {
-            sb.Append("<div class=\"bk-map-toggle bk-map-toggle--banen\" role=\"tablist\" aria-label=\"")
-                .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Jobs"]))
-                .Append("\"><a href=\"")
-                .Append(KbRoutes.Map)
-                .Append("\" class=\"is-active\" role=\"tab\" aria-selected=\"true\">")
-                .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Jobs"]))
-                .Append("</a><a href=\"")
-                .Append(KbRoutes.CompanyMap)
-                .Append("\" role=\"tab\">")
-                .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Companies"]))
-                .Append("</a></div>");
-        }
-
         AppendNearbyHeroStrip(sb, culture);
         AppendChrome(sb, culture, model);
         AppendVacancyPane(sb, culture, model);
@@ -85,7 +70,7 @@ internal static class BanenkaartSsrShells
         sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc10\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("</div>");

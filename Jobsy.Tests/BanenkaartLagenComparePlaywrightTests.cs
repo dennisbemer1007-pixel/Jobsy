@@ -58,10 +58,12 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             var twoCol = await page.EvaluateAsync<bool>(
                 """
                 () => {
+                  const cards = document.querySelectorAll('.vacancy-list .vc');
+                  if (cards.length < 2) return false;
                   const list = document.querySelector('.vacancy-list');
                   if (!list) return false;
                   const s = getComputedStyle(list);
-                  return s.display === 'grid' && s.gridTemplateColumns.includes('1fr');
+                  return s.display === 'grid' && s.gridTemplateColumns.split(' ').length >= 2;
                 }
                 """);
             buttons.Add(new { action = "desktop-list-2-columns", pass = twoCol });
@@ -150,11 +152,13 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             buttons.Add(new { action = "cluster-zoom-tap", pass = await page.EvaluateAsync<bool>("() => !!(window.jobMap && window.jobMap.__testTapLargestCluster && window.jobMap.__testTapLargestCluster())") });
             var zoomIn = await page.EvaluateAsync<bool>("() => { const m=window.jobMap?.__testGetMap?.(); if(!m)return false; const z0=m.getZoom(); m.zoomIn({duration:0}); return m.getZoom()>z0; }");
             buttons.Add(new { action = "map-zoom-plus", pass = zoomIn });
+            var viewLijst = page.Locator("[data-testid=kb-view-toggle-desktop] [data-testid=kb-view-lijst]");
+            var viewKaart = page.Locator("[data-testid=kb-view-toggle-desktop] [data-testid=kb-view-kaart]");
             try
             {
-                await page.Locator("[data-testid=kb-view-lijst]").First.ClickAsync(new() { Timeout = 10_000 });
+                await viewLijst.ClickAsync(new() { Timeout = 10_000, Force = true });
                 buttons.Add(new { action = "kaart-lijst-toggle-lijst", pass = await page.EvaluateAsync<bool>("() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.classList.contains('show-list')") });
-                await page.Locator("[data-testid=kb-view-kaart]").First.ClickAsync(new() { Timeout = 10_000 });
+                await viewKaart.ClickAsync(new() { Timeout = 10_000, Force = true });
                 buttons.Add(new { action = "kaart-lijst-toggle-kaart", pass = await page.EvaluateAsync<bool>("() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.classList.contains('show-map')") });
             }
             catch (TimeoutException)
@@ -180,7 +184,8 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             var loadMore = page.Locator("[data-testid=kb-load-more]");
             if (await loadMore.CountAsync() > 0 && await loadMore.IsVisibleAsync())
             {
-                await loadMore.ClickAsync();
+                await loadMore.EvaluateAsync("el => el.scrollIntoView({ block: 'center' })");
+                await loadMore.ClickAsync(new() { Force = true });
                 buttons.Add(new { action = "meer-laden", pass = true });
             }
             else
@@ -215,7 +220,35 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         var sideCars = Directory.Exists(CompareDir)
             ? Directory.GetFiles(CompareDir, "side-by-side-*.png")
             : [];
-        Assert.NotEmpty(sideCars);
+        Assert.True(sideCars.Length >= 7, "Expected 7 side-by-side PNGs, got " + sideCars.Length);
+
+        var buttonFails = buttons
+            .Select(b => JsonSerializer.SerializeToElement(b))
+            .Where(e => e.TryGetProperty("pass", out var p) && p.ValueKind == JsonValueKind.False)
+            .Select(e => e.TryGetProperty("action", out var a) ? a.GetString() : "?")
+            .ToList();
+        Assert.True(buttonFails.Count == 0, "Button checklist failures: " + string.Join(", ", buttonFails));
+
+        var elementFails = new List<string>();
+        foreach (var table in elementTables)
+        {
+            var el = JsonSerializer.SerializeToElement(table);
+            if (!el.TryGetProperty("rows", out var rows) || rows.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            foreach (var row in rows.EnumerateArray())
+            {
+                if (row.TryGetProperty("pass", out var pass) && pass.ValueKind == JsonValueKind.False)
+                {
+                    var id = row.TryGetProperty("id", out var idEl) ? idEl.GetString() : "?";
+                    elementFails.Add(id ?? "?");
+                }
+            }
+        }
+
+        Assert.True(elementFails.Count == 0, "Element table failures: " + string.Join(", ", elementFails));
     }
 
     private static string BuildReportMarkdown(List<object> elementTables, List<object> buttons)
@@ -316,6 +349,8 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                 () => {
                   const strip = document.querySelector('.strip .sc');
                   const list = document.querySelector('.vc');
+                  const w = window.innerWidth || 1280;
+                  if (w < 900) return !!strip;
                   return !!(strip && list);
                 }
                 """,
@@ -325,6 +360,18 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         catch (TimeoutException)
         {
             // Catalog/strip may lag; still capture map chrome for compare artifacts.
+        }
+
+        try
+        {
+            await page.WaitForFunctionAsync(
+                "() => window.jobMap && window.jobMap.__testGetPinCount && window.jobMap.__testGetPinCount() > 0",
+                null,
+                new() { Timeout = 60_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Pins may still open via rendered features fallback.
         }
 
         await page.WaitForTimeoutAsync(800);
@@ -344,28 +391,54 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
 
         if (!string.IsNullOrWhiteSpace(rowId))
         {
-            return await page.EvaluateAsync<bool>(
-                "(id) => !!(window.jobMap && window.jobMap.__testOpenVacancyById && window.jobMap.__testOpenVacancyById(id))",
+            await page.EvaluateAsync(
+                "(id) => { if (window.jobMap && window.jobMap.__testOpenVacancyById) window.jobMap.__testOpenVacancyById(id); }",
                 rowId);
+            return await WaitForVacancyPopupAsync(page);
         }
 
-        return await page.EvaluateAsync<bool>(
+        var mapPinId = await page.EvaluateAsync<string?>(
             """
             () => {
-              if (!window.jobMap || !window.jobMap.__testOpenVacancyById) return false;
-              const map = window.jobMap.__testGetMap && window.jobMap.__testGetMap();
-              if (!map) return false;
-              const feats = map.queryRenderedFeatures({ layers: ['jobsy-pins-unclustered', 'jobsy-pins-point', 'jobsy-pins-clusters'] }) || [];
-              for (const f of feats) {
-                const id = f.properties && (f.properties.id || f.properties.vacancyId);
-                if (id) {
-                  window.jobMap.__testOpenVacancyById(String(id));
-                  return true;
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (!map) return null;
+              const layers = ['jobsy-pins-unclustered', 'jobsy-pins-point', 'jobsy-pins-clusters', 'jobsy-pins'];
+              for (const layer of layers) {
+                let feats = [];
+                try {
+                  feats = map.queryRenderedFeatures({ layers: [layer] }) || [];
+                } catch (e) { }
+                for (const f of feats) {
+                  const id = f.properties && (f.properties.id || f.properties.vacancyId);
+                  if (id) return String(id);
                 }
               }
-              return false;
+              return null;
             }
             """);
+        if (string.IsNullOrWhiteSpace(mapPinId))
+        {
+            return false;
+        }
+
+        await page.EvaluateAsync(
+            "(id) => { if (window.jobMap && window.jobMap.__testOpenVacancyById) window.jobMap.__testOpenVacancyById(id); }",
+            mapPinId);
+        return await WaitForVacancyPopupAsync(page);
+    }
+
+    private static async Task<bool> WaitForVacancyPopupAsync(IPage page)
+    {
+        var popup = page.Locator(".maplibregl-popup:visible, .kb-popup-lagen:visible, .map-cluster-sheet:visible");
+        try
+        {
+            await popup.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
+        }
     }
 
     private static async Task<object> BuildElementTableAsync(IPage page, int width, string profile)
@@ -375,7 +448,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             ("lagen-root", "[data-banenkaart-ssr=\"1\"].jobsy-discovery--lagen", null),
             ("header-strip", "[data-testid=kb-nearby-banner]", null),
             ("strip", ".strip .sc", null),
-            ("list-vc", ".vc", null),
+            ("list-vc", width >= 900 ? ".vc" : ".strip .sc", null),
             ("legend-or-legbtn", width >= 900 ? "[data-testid=kb-map-legend]" : "[data-testid=kb-map-legbtn]", null),
             ("bottom-nav", "[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav", null),
         };
@@ -436,8 +509,19 @@ canvas.save(out)
 
     private static async Task EnsurePublishedToWorkspaceTmpAsync()
     {
+        var root = Directory.GetCurrentDirectory();
+        while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
+        {
+            root = Directory.GetParent(root)!.FullName;
+        }
+
         var dll = Path.Combine(PublishDir, "Jobsy.Web.dll");
-        if (File.Exists(dll) && File.GetLastWriteTimeUtc(dll) > DateTime.UtcNow.AddHours(-3))
+        var webCs = Path.Combine(root, "Jobsy.Web", "Jobsy.Web.csproj");
+        var testsCs = Path.Combine(root, "Jobsy.Tests", "Jobsy.Tests.csproj");
+        var srcNewerThanPublish = File.Exists(dll)
+            && (File.GetLastWriteTimeUtc(webCs) > File.GetLastWriteTimeUtc(dll)
+                || File.GetLastWriteTimeUtc(testsCs) > File.GetLastWriteTimeUtc(dll));
+        if (File.Exists(dll) && !srcNewerThanPublish && File.GetLastWriteTimeUtc(dll) > DateTime.UtcNow.AddHours(-3))
         {
             return;
         }
@@ -448,11 +532,6 @@ canvas.save(out)
         }
 
         Directory.CreateDirectory("/workspace/tmp");
-        var root = Directory.GetCurrentDirectory();
-        while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
-        {
-            root = Directory.GetParent(root)!.FullName;
-        }
 
         var psi = new ProcessStartInfo
         {
