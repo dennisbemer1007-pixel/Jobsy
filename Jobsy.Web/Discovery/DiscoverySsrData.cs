@@ -153,27 +153,54 @@ internal static class DiscoverySsrData
         var progress = ComputeYouAreHereProgressFrac(activePhase, state, panel);
         var stops = BuildPhaseStops(culture, draft, panel, openPhase);
         var sections = BuildPanelSections(culture, draft, state, panel, activePhase);
+        var phasePanels = BuildAllPhasePanels(culture, draft, state, panel);
         var tests = BuildTestRows(culture, panel);
-        var phaseMeta = activePhase switch
-        {
-            "beach" => ("Discovery.Zone.Beach", "Discovery.Overview.Phase.BeachLead", DiscoverySsrShells.Halte("strand")),
-            "kust" => ("Discovery.Zone.Coast", "Discovery.Overview.Phase.CoastLead", DiscoverySsrShells.Halte("kust")),
-            "rots" => ("Discovery.Zone.Rocks", "Discovery.Overview.Phase.RocksLead", DiscoverySsrShells.Halte("rotsen")),
-            "diep" => ("Discovery.Zone.Deep", "Discovery.Overview.Phase.DeepLead", DiscoverySsrShells.Halte("diepte")),
-            _ => ("Discovery.Zone.Light", "Discovery.Overview.Phase.LightLead", DiscoverySsrShells.Halte("licht"))
-        };
+        var phaseMeta = PhasePresentationMeta(activePhase);
 
         return new DiscoverySsrShells.OverviewModel(
             stops,
             activePhase,
             youPhase,
             progress,
-            phaseMeta.Item1,
-            phaseMeta.Item2,
-            phaseMeta.Item3,
+            phaseMeta.TitleKey,
+            phaseMeta.LeadKey,
+            phaseMeta.VignetteUrl,
             sections,
+            phasePanels,
             tests,
             error);
+    }
+
+    private static (string TitleKey, string LeadKey, string VignetteUrl) PhasePresentationMeta(string phaseId)
+        => phaseId switch
+        {
+            "beach" => ("Discovery.Zone.Beach", "Discovery.Overview.Phase.BeachLead", DiscoverySsrShells.Halte("strand")),
+            "kust" => ("Discovery.Zone.Coast", "Discovery.Overview.Phase.CoastLead", DiscoverySsrShells.Halte("kust")),
+            "rots" => ("Discovery.Zone.Rocks", "Discovery.Overview.Phase.RocksLead", DiscoverySsrShells.Halte("rotsen")),
+            "diep" => ("Discovery.Zone.Deep", "Discovery.Overview.Phase.DeepLead", DiscoverySsrShells.Halte("diepte")),
+            _ => ("Discovery.Zone.Light", "Discovery.Overview.Phase.LightLead", DiscoverySsrShells.Halte("licht")),
+        };
+
+    private static IReadOnlyDictionary<string, DiscoverySsrShells.OverviewPhasePanel> BuildAllPhasePanels(
+        CultureState culture,
+        OnboardingProfileDraft draft,
+        OnboardingState? state,
+        CandidateDiscoveryOverviewPanelDto? panel)
+    {
+        var phases = new[] { "beach", "kust", "rots", "diep", "light" };
+        var dict = new Dictionary<string, DiscoverySsrShells.OverviewPhasePanel>(StringComparer.OrdinalIgnoreCase);
+        foreach (var phase in phases)
+        {
+            var meta = PhasePresentationMeta(phase);
+            dict[phase] = new DiscoverySsrShells.OverviewPhasePanel(
+                phase,
+                meta.TitleKey,
+                meta.LeadKey,
+                meta.VignetteUrl,
+                BuildPanelSections(culture, draft, state, panel, phase));
+        }
+
+        return dict;
     }
 
     private static List<DiscoverySsrShells.OverviewPanelSection> BuildPanelSections(
