@@ -69,11 +69,23 @@
             btn.setAttribute("aria-expanded", open ? "true" : "false");
         });
         if (sheet) {
-            sheet.setAttribute("aria-hidden", open ? "false" : "true");
             sheet.setAttribute("aria-modal", open ? "true" : "false");
+            if (open) {
+                sheet.removeAttribute("inert");
+                sheet.setAttribute("aria-hidden", "false");
+            } else {
+                sheet.setAttribute("inert", "");
+                sheet.setAttribute("aria-hidden", "true");
+            }
         }
         if (backdrop) {
-            backdrop.setAttribute("aria-hidden", open ? "false" : "true");
+            if (open) {
+                backdrop.removeAttribute("inert");
+                backdrop.setAttribute("aria-hidden", "false");
+            } else {
+                backdrop.setAttribute("inert", "");
+                backdrop.setAttribute("aria-hidden", "true");
+            }
         }
     }
 
@@ -277,6 +289,7 @@
             var action = form.getAttribute("action") || "";
             if (action.indexOf("/api/banenkaart-client/apply-filters") !== -1) {
                 persistGuestFilters(form);
+                writeUiState({ filtersOpen: false });
             }
             if (action.indexOf("/api/banenkaart-client/reset-filters") !== -1) {
                 try { localStorage.removeItem(GUEST_FILTER_KEY); } catch (eReset) { }

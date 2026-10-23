@@ -20,6 +20,8 @@
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject AuthenticationStateProvider AuthState
+@using Microsoft.Extensions.Logging
+@inject ILogger<BanenkaartSsr> Logger
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
 <HeadContent>
@@ -86,6 +88,19 @@ else if (_bodyHtml is not null)
             http.Response.StatusCode = StatusCodes.Status302Found;
             http.Response.Headers.Location = "/";
             return;
+        }
+
+        if (query.OriginLat is double oLat && query.OriginLng is double oLng)
+        {
+            Logger.LogInformation(
+                "Banenkaart discover SSR origin=({OriginLat},{OriginLng}) transport={Transport} maxMinutes={MaxMinutes} listRows={RowCount} total={Total} outsideTravelFallback={OutsideFallback}",
+                oLat,
+                oLng,
+                query.Transport,
+                query.MaxTravelMinutes,
+                model.Vacancies.Count,
+                model.ListTotalCount,
+                model.OutsideTravelFallback);
         }
 
         var tokens = Antiforgery.GetAndStoreTokens(http);

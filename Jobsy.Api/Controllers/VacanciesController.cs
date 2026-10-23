@@ -626,6 +626,7 @@ public class VacanciesController : ControllerBase
             minHoursPerWeek: filterMinHours,
             maxHoursPerWeek: filterMaxHours);
 
+        var outsideTravelFallback = false;
         List<(VacancyDiscoveryRecord Record, int? TravelMinutes, double? DistanceKm)> candidates;
         if (originLat is null || originLng is null)
         {
@@ -639,21 +640,29 @@ public class VacanciesController : ControllerBase
         {
             var lat = originLat.Value;
             var lng = originLng.Value;
-            var reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
-            candidates = records
-                .Where(v => VacancyDiscoveryQuery.CandidateCanReach(v, transport))
-                .Select(v =>
-                {
-                    var (travelMinutes, distanceKm) = TravelReach.Estimate(
-                        lat, lng, v.Latitude, v.Longitude, mode);
-                    return (Record: v, TravelMinutes: (int?)travelMinutes, DistanceKm: (double?)distanceKm);
-                })
-                .Where(r => r.TravelMinutes is int minutes && minutes <= maxMinutes)
-                .Where(r => r.DistanceKm is double km && km <= reachKm)
-                .Where(r => !(radiusKm is > 0 && r.DistanceKm > radiusKm.Value))
-                .OrderBy(r => r.TravelMinutes)
-                .ThenBy(r => r.Record.Title, StringComparer.CurrentCultureIgnoreCase)
-                .ToList();
+            var withinTravel = TravelDiscoverCandidates.WithinTravelMinutes(
+                records,
+                lat,
+                lng,
+                mode,
+                transport,
+                maxMinutes,
+                radiusKm);
+            if (withinTravel.Count == 0)
+            {
+                outsideTravelFallback = true;
+                candidates = TravelDiscoverCandidates.NearestReachable(records, lat, lng, mode, transport)
+                    .Select(r => (Record: r.Record, TravelMinutes: (int?)r.TravelMinutes, DistanceKm: (double?)r.DistanceKm))
+                    .ToList();
+            }
+            else
+            {
+                candidates = withinTravel
+                    .OrderBy(r => r.TravelMinutes)
+                    .ThenBy(r => r.Record.Title, StringComparer.CurrentCultureIgnoreCase)
+                    .Select(r => (Record: r.Record, TravelMinutes: (int?)r.TravelMinutes, DistanceKm: (double?)r.DistanceKm))
+                    .ToList();
+            }
         }
 
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
@@ -780,7 +789,8 @@ public class VacanciesController : ControllerBase
             skip,
             takeResolved,
             total,
-            skip + page.Count < total));
+            skip + page.Count < total,
+            outsideTravelFallback));
     }
 
     /// <summary>

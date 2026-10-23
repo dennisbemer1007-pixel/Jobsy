@@ -461,6 +461,28 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
+@media (max-width: 899px) {
+    .app-shell--banenkaart-shell .app-footer {
+        position: relative;
+        z-index: 1;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane {
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane .maplibregl-ctrl-bottom-right {
+        bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell--banenkaart-shell .map-pane:has(.maplibregl-popup) .map-cluster-chip,
+    .app-shell--banenkaart-shell .map-pane:has(.map-cluster-sheet) .map-cluster-chip {
+        top: auto;
+        bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+        z-index: 3;
+    }
+}
+
 @media (min-width: 900px) {
     .jobsy-discovery {
         grid-template-columns: minmax(0, 1fr);

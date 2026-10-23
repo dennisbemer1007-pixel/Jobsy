@@ -116,9 +116,27 @@ window.jobsyMapLibre = (function () {
             } else if (/noto\s*sans/i.test(name) && /italic|oblique/i.test(name)) {
                 changed = true;
                 list[i] = /bold|black|semi|heavy/i.test(name) ? "Noto Sans Bold" : "Noto Sans Regular";
+            } else if (/arial unicode/i.test(name)) {
+                changed = true;
+                list[i] = "Noto Sans Regular";
             }
         }
         return changed ? list : null;
+    }
+
+    function rewriteGlyphUrl(url) {
+        if (!url || url.indexOf("tiles.openfreemap.org/fonts/") === -1) {
+            return url;
+        }
+        var next = url;
+        if (/Open%20Sans|Open\+Sans|Open%20Sans%20Regular/i.test(next)) {
+            next = next.replace(/Open%20Sans[^/]*/gi, "Noto%20Sans%20Regular");
+        }
+        if (/Arial%20Unicode/i.test(next)) {
+            next = next.replace(/Arial%20Unicode%20MS%20Regular,?\/?/gi, "");
+            next = next.replace(/,,/g, ",").replace(/fonts\/,/g, "fonts/Noto%20Sans%20Regular/");
+        }
+        return next;
     }
 
     var OSM_ATTRIBUTION =
@@ -369,6 +387,12 @@ window.jobsyMapLibre = (function () {
             center: options.center,
             zoom: options.zoom,
             pixelRatio: dpr,
+            transformRequest: function (url, resourceType) {
+                if (resourceType === "Glyphs") {
+                    return { url: rewriteGlyphUrl(url) };
+                }
+                return { url: url };
+            },
             attributionControl: {
                 compact: preferCompactAttribution(),
                 customAttribution: OSM_ATTRIBUTION

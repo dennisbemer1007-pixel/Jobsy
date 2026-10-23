@@ -33,7 +33,8 @@ internal static class BanenkaartSsrData
         string? ResultCountSubtitle,
         uint HighlightSeed,
         bool HasMoreList,
-        int ListTotalCount);
+        int ListTotalCount,
+        bool OutsideTravelFallback);
 
     internal static async Task<PageModel?> LoadAsync(
         JobsyApiClient api,
@@ -227,8 +228,9 @@ internal static class BanenkaartSsrData
         vacancies = discoverPage.Items;
         hasMoreList = discoverPage.HasMore;
         discoverTotal = discoverPage.TotalCount;
+        var outsideTravelFallback = discoverPage.OutsideTravelFallback;
 
-        if (vacancies.Count == 0 && useOrigin)
+        if (outsideTravelFallback || (vacancies.Count == 0 && useOrigin))
         {
             zoomOutsideTravel = true;
         }
@@ -296,7 +298,7 @@ internal static class BanenkaartSsrData
                 originLat is not null),
             defaults);
 
-        var showEmptyTravel = zoomOutsideTravel && vacancies.Count == 0;
+        var showEmptyTravel = useOrigin && (outsideTravelFallback || (zoomOutsideTravel && vacancies.Count == 0));
         var count = discoverTotal > 0 ? discoverTotal : vacancies.Count;
         var heading = showEmptyTravel
             ? culture["Kb.Map.NoVacanciesInTravel"]
@@ -334,7 +336,8 @@ internal static class BanenkaartSsrData
             subtitle,
             highlightSeed,
             hasMoreList,
-            discoverTotal);
+            discoverTotal,
+            outsideTravelFallback);
     }
 
     private static uint HashVacancyIds(IEnumerable<Guid> ids)

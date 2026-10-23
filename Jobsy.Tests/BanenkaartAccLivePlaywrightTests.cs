@@ -1,4 +1,5 @@
 using Jobsy.Tests.E2e;
+using Jobsy.Web.Banenkaart;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -13,6 +14,45 @@ public sealed class BanenkaartAccLivePlaywrightTests
     private const string DefaultAccUrl = "https://acceptatie.lobsy.nl";
     private const string DefaultEmail = "kandidaat@jobsy.local";
     private const string DefaultPassword = "Jobsy123!";
+
+    [Theory]
+    [InlineData(390)]
+    [InlineData(1280)]
+    public async Task Banenkaart_amsterdam_auto_60_direct_url_shows_discover_list(int width)
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        var touch = width < 900;
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = touch ? 844 : 720 },
+            HasTouch = touch,
+            IsMobile = touch,
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await context.NewPageAsync();
+        var url = baseUrl
+            + "/banenkaart?maxMinutes=60&transport=Auto&originLat=52.3725&originLng=4.8921&originLabel=Amsterdam";
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+
+        var emptyTravel = await page.Locator("[data-testid=kb-empty-travel]").CountAsync();
+        var listRows = await page.Locator("[data-testid=kb-list-row]").CountAsync();
+        Assert.True(listRows >= 1,
+            "Amsterdam + Auto + 60 min should show at least one SSR list row (emptyTravel=" + emptyTravel + ").");
+        if (listRows >= BanenkaartSsrData.ListPageSize)
+        {
+            var loadMore = await page.Locator("[data-testid=kb-load-more]").CountAsync();
+            Assert.True(loadMore > 0, "Full discover page should expose Meer laden.");
+        }
+    }
 
     [Theory]
     [InlineData(1280, 720, false, false)]
@@ -176,6 +216,9 @@ public sealed class BanenkaartAccLivePlaywrightTests
 
             await ApplyTravelFiltersAsync(page, 60, "Auto");
             await page.WaitForLoadStateAsync(LoadState.Load);
+            var filtersOpen = await page.EvaluateAsync<bool>(
+                "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.classList.contains('filters-open') === true");
+            Assert.False(filtersOpen, "Filter drawer should close after Toon banen apply.");
 
             var emptyTravel = await page.Locator("[data-testid=kb-empty-travel]").CountAsync();
             Assert.Equal(0, emptyTravel);
