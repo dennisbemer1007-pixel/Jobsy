@@ -13,7 +13,8 @@ internal static class BanenkaartSsrShells
         CultureState culture,
         string antiforgeryToken,
         BanenkaartSsrData.PageModel model,
-        string? scriptNonce = null)
+        string? scriptNonce = null,
+        string? candidateDisplayName = null)
     {
         var sb = new StringBuilder();
         var q = model.Query;
@@ -45,6 +46,7 @@ internal static class BanenkaartSsrShells
                 .Append("</p>");
         }
 
+        AppendMockupTopBar(sb, culture, model, candidateDisplayName);
         AppendNearbyHeroStrip(sb, culture);
         AppendChrome(sb, culture, model);
         AppendVacancyPane(sb, culture, model);
@@ -147,7 +149,7 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Kb.View.Map"]))
             .Append("</button><button type=\"button\" class=\"kb-view-toggle__btn\" role=\"radio\" aria-checked=\"false\" data-testid=\"kb-view-lijst\">")
             .Append(WebUtility.HtmlEncode(culture["Kb.View.List"]))
-            .Append("</button></div></div></div>");
+            .Append("</button></div></div></div></div>");
 
         sb.Append("<div class=\"ph kb-panel-head discovery-toolbar--desktop\" role=\"toolbar\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
@@ -230,6 +232,36 @@ internal static class BanenkaartSsrShells
         }
 
         sb.Append("</div><ul class=\"address-suggestions\" role=\"listbox\" data-kb-address-suggest=\"1\" hidden></ul></div>");
+    }
+
+    private static void AppendMockupTopBar(
+        StringBuilder sb,
+        CultureState culture,
+        BanenkaartSsrData.PageModel model,
+        string? candidateDisplayName)
+    {
+        var tagline = culture["Brand.Tagline"];
+        var userLabel = !string.IsNullOrWhiteSpace(candidateDisplayName)
+            ? candidateDisplayName.Trim()
+            : culture["Auth.Login"];
+        var notificationsHref = model.IsAuthenticated ? "/candidate/notifications" : "/login?returnUrl=%2Fbanenkaart";
+        var accountHref = model.IsAuthenticated ? "/candidate/profile" : "/login?returnUrl=%2Fbanenkaart";
+
+        sb.Append("<header class=\"top kb-mockup-top\" data-testid=\"kb-mockup-top\">");
+        sb.Append("<a class=\"brand\" href=\"/\" aria-label=\"Lobsy\">");
+        sb.Append("<img src=\"").Append(WebUtility.HtmlEncode(BrandImages.AppIconSvg)).Append("\" width=\"40\" height=\"40\" alt=\"\" decoding=\"async\" />");
+        sb.Append("<b>Lobsy</b><small>").Append(WebUtility.HtmlEncode(tagline)).Append("</small></a>");
+        sb.Append("<div class=\"tr\">");
+        sb.Append("<a class=\"round\" href=\"").Append(WebUtility.HtmlEncode(notificationsHref))
+            .Append("\" aria-label=\"").Append(WebUtility.HtmlEncode(culture["Nav.Notifications"])).Append("\">");
+        sb.Append("<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5h4\"/></svg></a>");
+        sb.Append("<span class=\"ctl lang\" lang=\"nl\"><i class=\"flag\" aria-hidden=\"true\"></i>NL");
+        sb.Append("<svg class=\"ic s\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 10l5 5 5-5\"/></svg></span>");
+        sb.Append("<a class=\"user\" href=\"").Append(WebUtility.HtmlEncode(accountHref)).Append("\">");
+        sb.Append("<span class=\"un\">").Append(WebUtility.HtmlEncode(userLabel)).Append("</span>");
+        sb.Append("<span class=\"round\" aria-hidden=\"true\">");
+        sb.Append("<svg class=\"ic\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"8.5\" r=\"3.5\"/><path d=\"M5 20c1-4 4-6 7-6s6 2 7 6\"/></svg>");
+        sb.Append("</span></a></div></header>");
     }
 
     private static void AppendNearbyHeroStrip(StringBuilder sb, CultureState culture)

@@ -116,7 +116,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                     """
                     () => {
                       const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
-                      const pane = document.querySelector('.map-pane.show-map');
+                      const pane = document.querySelector('.jobsy-discovery.show-map .map-pane');
                       if (!nav || !pane) return false;
                       const gap = nav.getBoundingClientRect().top - pane.getBoundingClientRect().bottom;
                       return Math.abs(gap) <= 14;
@@ -371,7 +371,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             """
             () => {
               const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
-              const pane = document.querySelector('.map-pane.show-map');
+              const pane = document.querySelector('.jobsy-discovery.show-map .map-pane');
               if (!nav || !pane) return false;
               const gap = nav.getBoundingClientRect().top - pane.getBoundingClientRect().bottom;
               return Math.abs(gap) <= 14;
@@ -396,24 +396,18 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
               return !!(grab && title);
             }
             """);
-        var heartNearClose = await page.EvaluateAsync<bool>(
+        var noHeart = await page.EvaluateAsync<bool>(
             """
             () => {
               const root = document.querySelector('.map-cluster-sheet--lagen, .kb-popup-lagen--sheet, .maplibregl-popup');
               if (!root) return false;
-              const heart = root.querySelector('.map-popup__heart');
-              const close = root.querySelector('.map-cluster-sheet__close, .map-cluster-card__close, .maplibregl-popup-close-button');
-              if (!heart || !close) return false;
-              const hr = heart.getBoundingClientRect();
-              const cr = close.getBoundingClientRect();
-              const heartSmall = hr.width <= 44 && hr.height <= 44;
-              return heartSmall && Math.abs(hr.top - cr.top) < 28 && hr.left < cr.left;
+              return root.querySelector('.map-popup__heart') === null;
             }
             """);
         return
         [
             new { id = "7-vacancy-sheet-mockup", pass = sheetMockup },
-            new { id = "8-heart-small-next-to-close", pass = heartNearClose },
+            new { id = "8-no-extra-heart-in-sheet", pass = noHeart },
         ];
     }
 

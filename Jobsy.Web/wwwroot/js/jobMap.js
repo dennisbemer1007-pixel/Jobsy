@@ -970,12 +970,8 @@ window.jobMap = (function () {
             orgBlock = "<p class=\"map-popup__company kb-popup__org\">" + desc + "</p>";
         }
         const rootClass = popupRootClass("kb-popup-lagen" + (sheetMode ? " kb-popup-lagen--sheet" : ""));
-        const heartInHeader = sheetMode
-            ? heartButtonHtml(v)
-            : "";
         return (
             "<div class=\"" + rootClass + "\">" +
-                heartInHeader +
                 (typeLabel ? "<div class=\"kb-popup__type\">" + typeLabel + "</div>" : "") +
                 "<h3 class=\"map-popup__title map-popup__title--lagen\">" +
                     escapeHtml(v.title || vacancyFallbackTitle()) +
@@ -987,7 +983,6 @@ window.jobMap = (function () {
                         escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         "Bekijk vacature" +
                     "</a>" +
-                    (sheetMode ? "" : heartButtonHtml(v)) +
                 "</div>" +
             "</div>"
         );

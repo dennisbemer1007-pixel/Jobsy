@@ -106,6 +106,9 @@ else if (_bodyHtml is not null)
 
         var tokens = Antiforgery.GetAndStoreTokens(http);
         var scriptNonce = CspNonce.GetOrCreate(http);
-        _bodyHtml = BanenkaartSsrShells.BuildPage(Culture, tokens.RequestToken ?? "", model, scriptNonce);
+        var displayName = isAuthenticated
+            ? auth.User.Identity?.Name
+            : null;
+        _bodyHtml = BanenkaartSsrShells.BuildPage(Culture, tokens.RequestToken ?? "", model, scriptNonce, displayName);
     }
 }

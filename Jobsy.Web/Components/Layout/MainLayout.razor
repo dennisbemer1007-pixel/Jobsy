@@ -26,7 +26,7 @@
     <PageSeoHead />
     <PageRouteStylesHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    @if (!_isMatchPage && !_isQuestionnairePage)
+    @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartMockupTopBar)
     {
         <AppShellHeader HomeHref="@_homeHref"
                         HeaderTagline="@HeaderTagline"
@@ -110,6 +110,8 @@
     private bool _banenkaartImmersive;
     /// <summary>Logged-in candidate on banenkaart: app header + bottom nav; suppress duplicate discovery chrome header.</summary>
     private bool _banenkaartCandidateShell;
+    /// <summary>Lagen mockup supplies its own <c>.top</c> bar; hide the app shell header on /banenkaart.</summary>
+    private bool _banenkaartMockupTopBar;
     private bool _isQuestionnairePage;
     private bool _isOnboardingWizardFocus;
     private bool _hideCoachDock;
@@ -482,6 +484,7 @@
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
         var immersive = onRoute && !_isCandidate;
         var candidateShell = onRoute && _isCandidate;
+        var mockupTop = onRoute;
         var changed = false;
         if (_banenkaartImmersive != immersive)
         {
@@ -492,6 +495,12 @@
         if (_banenkaartCandidateShell != candidateShell)
         {
             _banenkaartCandidateShell = candidateShell;
+            changed = true;
+        }
+
+        if (_banenkaartMockupTopBar != mockupTop)
+        {
+            _banenkaartMockupTopBar = mockupTop;
             changed = true;
         }
 
