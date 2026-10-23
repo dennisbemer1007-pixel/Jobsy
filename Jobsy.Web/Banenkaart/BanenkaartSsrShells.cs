@@ -321,7 +321,9 @@ internal static class BanenkaartSsrShells
         {
             sb.Append("<p class=\"state-message\" data-testid=\"kb-empty-travel\">")
                 .Append(WebUtility.HtmlEncode(culture["Kb.Map.NoVacanciesInTravel"]))
-                .Append("</p>");
+                .Append("</p><button type=\"button\" class=\"filter-sheet__cancel kb-widen-filters-btn\" data-testid=\"kb-widen-filters\">")
+                .Append(WebUtility.HtmlEncode("Filters verruimen"))
+                .Append("</button>");
         }
 
         if (model.Vacancies.Count == 0 && !model.ShowEmptyTravelMessage)

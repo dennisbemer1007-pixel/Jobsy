@@ -430,13 +430,29 @@
         }
     }
 
+    function readBootZoomOutsideTravel() {
+        var node = document.getElementById("jobsy-map-boot");
+        if (!node || !node.textContent) {
+            return false;
+        }
+        try {
+            var parsed = JSON.parse(node.textContent);
+            return parsed && parsed.zoomToPinsOutsideTravel === true;
+        } catch (eBoot) {
+            return false;
+        }
+    }
+
     function applyToMap(filters) {
         if (!rows) {
             return;
         }
         syncMapTravel(filters);
         var travelPins = filterRows(rows, filters, false);
-        var mapPins = travelPins.length > 0 ? travelPins : filterRows(rows, filters, true);
+        var allowOutside = readBootZoomOutsideTravel();
+        var mapPins = travelPins.length > 0
+            ? travelPins
+            : (allowOutside ? filterRows(rows, filters, true) : []);
         var dimmed = travelPins.length === 0 && mapPins.length > 0;
         var pins = mapPins.map(function (row) {
             var pin = toPin(row);

@@ -461,6 +461,11 @@
 
     function captureBanenkaartViewState() {
         var state = { savedAt: Date.now() };
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (root) {
+            state.showMap = root.classList.contains("show-map");
+            state.desktopList = root.classList.contains("jobsy-discovery--list");
+        }
         try {
             var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
             if (map && typeof map.getCenter === "function") {
@@ -494,7 +499,25 @@
         } catch (eParse) {
             return;
         }
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (root && typeof state.showMap === "boolean") {
+            if (isDesktopBanenkaart()) {
+                var listMode = state.desktopList === true || state.showMap === false;
+                root.classList.toggle("jobsy-discovery--list", listMode);
+                root.classList.toggle("show-map", !listMode);
+                root.classList.toggle("show-list", listMode);
+            } else {
+                root.classList.toggle("show-map", state.showMap);
+                root.classList.toggle("show-list", !state.showMap);
+            }
+        }
         if (!state || !state.center || state.zoom == null) {
+            if (root && typeof state.listScrollTop === "number") {
+                var scrollerOnly = listScroller();
+                if (scrollerOnly) {
+                    scrollerOnly.scrollTop = state.listScrollTop;
+                }
+            }
             return;
         }
         window.__jobsyBkRestoringView = true;

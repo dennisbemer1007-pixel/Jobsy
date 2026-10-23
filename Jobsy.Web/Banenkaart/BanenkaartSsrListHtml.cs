@@ -100,17 +100,14 @@ internal static class BanenkaartSsrListHtml
     {
         var href = "/vacancies/" + id;
         var q = new List<string>();
-        if (!string.IsNullOrWhiteSpace(query.Transport) && !string.Equals(query.Transport, "Fiets", StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(query.Transport))
         {
             q.Add("transport=" + Uri.EscapeDataString(query.Transport));
         }
 
-        if (query.MaxTravelMinutes is not 20)
-        {
-            q.Add("maxMinutes=" + query.MaxTravelMinutes);
-        }
+        q.Add("maxMinutes=" + query.MaxTravelMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
-        return q.Count == 0 ? href : href + "?" + string.Join("&", q);
+        return href + "?" + string.Join("&", q);
     }
 
     private static string? SectorLabel(CultureState culture, VacancyListItem vacancy)
