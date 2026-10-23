@@ -180,10 +180,13 @@ public class VacanciesController : ControllerBase
         [FromQuery] double? minLng = null,
         [FromQuery] double? maxLat = null,
         [FromQuery] double? maxLng = null,
-        [FromQuery] int? zoom = null,
+        [FromQuery] double? zoom = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
+        int? zoomLevel = zoom is double zRaw && double.IsFinite(zRaw)
+            ? Math.Clamp((int)Math.Round(zRaw, MidpointRounding.AwayFromZero), 0, 22)
+            : null;
         var mode = TransportLabels.Parse(transport);
         GeoBbox? bbox = GeoBbox.TryParse(minLat, minLng, maxLat, maxLng, out var parsedBbox)
             ? parsedBbox
@@ -227,7 +230,7 @@ public class VacanciesController : ControllerBase
                 .ToList();
         }
 
-        candidates = VacancyMatchScoreCap.LimitCandidates(candidates, bbox, zoom, c => c.Record);
+        candidates = VacancyMatchScoreCap.LimitCandidates(candidates, bbox, zoomLevel, c => c.Record);
 
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
         CandidateFitGate fitGate = CandidateFitGate.Closed;
@@ -280,7 +283,7 @@ public class VacanciesController : ControllerBase
         }
 
         // Content hash (not a 60s clock) so Cloudflare can cache stable pin sets.
-        var contentHash = ComputePinsContentHash(candidates, matches, bbox, zoom);
+        var contentHash = ComputePinsContentHash(candidates, matches, bbox, zoomLevel);
         var etag = $"\"pins-{contentHash}-{(isCandidate ? "c" : "a")}\"";
         if (Request.Headers.IfNoneMatch.ToString().Contains(etag, StringComparison.Ordinal))
         {

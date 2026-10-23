@@ -291,6 +291,52 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     }
 }
 
+/* SSR discover fallback rows: mirror kb-list-row--compact when list CSS is late/missing. */
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.25rem 0 1rem;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row.kb-list-row--compact {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__media {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    max-height: 140px;
+    border-radius: 12px 12px 0 0;
+    background: var(--hover);
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__body {
+    padding: 0.75rem;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__title {
+    font-size: 1rem;
+    line-height: 1.25;
+    margin: 0;
+}
+
 /* Banenkaart shell: map/list split (desktop list rail + mobile toggles). */
 .app-shell--banenkaart-shell {
     min-height: 100dvh;
