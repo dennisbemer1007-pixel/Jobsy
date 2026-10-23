@@ -84,7 +84,8 @@
         if (!string.IsNullOrEmpty(redirectUrl)
             && !DiscoverySsrRedirect.IsSameLocation(http.Request, redirectUrl))
         {
-            http.Response.Redirect(redirectUrl);
+            http.Response.StatusCode = StatusCodes.Status303SeeOther;
+            http.Response.Headers.Location = redirectUrl;
             return;
         }
 
@@ -106,6 +107,13 @@
             qValues.FirstOrDefault(),
             errorValues.FirstOrDefault(),
             http.RequestAborted);
+
+        if (string.Equals(load.Screen, "redirect-start", StringComparison.OrdinalIgnoreCase))
+        {
+            http.Response.StatusCode = StatusCodes.Status303SeeOther;
+            http.Response.Headers.Location = DiscoverySsrUrls.Overview();
+            return;
+        }
 
         _bodyHtml = DiscoverySsrShells.BuildPage(
             Culture,

@@ -16,13 +16,36 @@ public static class DiscoveryClientFormEndpoints
 {
     public static IEndpointRouteBuilder MapDiscoveryClientFormEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost(DiscoverySsrUrls.Path, PostAsync)
+        app.MapPost(DiscoverySsrUrls.DieptePostPath, PostDiepteAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+        app.MapPost(DiscoverySsrUrls.DuikPostPath, PostDuikAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+        app.MapPost(DiscoverySsrUrls.Path, PostLegacyAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
 
         return app;
     }
 
-    private static async Task<IResult> PostAsync(
+    private static async Task<IResult> PostDiepteAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        DiscoverySsrDepthStore depthStore,
+        CultureState culture,
+        CancellationToken cancellationToken)
+        => await HandlePickDepthAsync(http, antiforgery, depthStore, culture, cancellationToken);
+
+    private static async Task<IResult> PostDuikAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IFeatureFlags featureFlags,
+        DiscoveryOverviewCache overviewCache,
+        DiscoverySsrDepthStore depthStore,
+        CultureState culture,
+        CancellationToken cancellationToken)
+        => await HandleDiveDeeperAsync(http, antiforgery, api, featureFlags, overviewCache, depthStore, culture, cancellationToken);
+
+    private static async Task<IResult> PostLegacyAsync(
         HttpContext http,
         IAntiforgery antiforgery,
         JobsyApiClient api,
@@ -45,67 +68,14 @@ public static class DiscoveryClientFormEndpoints
         }
 
         var action = form["discoveryAction"].ToString();
-        var userId = http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
-
         if (string.Equals(action, "pick-depth", StringComparison.OrdinalIgnoreCase))
         {
-            if (!int.TryParse(form["shedStep"].ToString(), out var shedStep) || shedStep is < 7 or > 10)
-            {
-                return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Path, culture["Onboarding.NotSaved"]));
-            }
-
-            if (!int.TryParse(form["level"].ToString(), out var level)
-                || !JourneyTestFlow.TryParseDepth(level.ToString(System.Globalization.CultureInfo.InvariantCulture), out level))
-            {
-                return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Shed(shedStep), culture["Onboarding.NotSaved"]));
-            }
-
-            depthStore.Set(userId, shedStep, level);
-            return SeeOther(DiscoverySsrUrls.Shed(shedStep));
+            return await HandlePickDepthAsync(http, antiforgery, depthStore, culture, cancellationToken);
         }
 
         if (string.Equals(action, "dive-deeper", StringComparison.OrdinalIgnoreCase))
         {
-            if (!int.TryParse(form["shedStep"].ToString(), out var shedStep) || shedStep is < 7 or > 10)
-            {
-                shedStep = 7;
-            }
-
-            var kind = OnboardingWizardCatalog.TestKindForStep(shedStep)!.Value;
-            var answered = await CountAnsweredAsync(api, overviewCache, kind, cancellationToken);
-            var band = await DiscoverySsrMiniLoader.LoadBandAsync(
-                shedStep,
-                OnboardingWizardCatalog.MiniLevelCount,
-                api,
-                featureFlags,
-                culture,
-                cancellationToken);
-            var reached = JourneyTestFlow.ReachedLevel(answered, kind, band.QuickScanVersion);
-            var selected = depthStore.GetOrDefault(
-                userId,
-                shedStep,
-                JourneyTestFlow.DefaultSelectedLevel(answered, kind, band.QuickScanVersion));
-
-            if (selected > reached)
-            {
-                return SeeOther(DiscoverySsrUrls.Step(shedStep, selected, 1));
-            }
-
-            try
-            {
-                _ = await api.SaveMyOnboardingProgressAsync(shedStep, stepCompleted: true, ct: cancellationToken);
-            }
-            catch
-            {
-                return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Shed(shedStep), culture["Common.Error.TryAgain"]));
-            }
-
-            if (shedStep >= 10)
-            {
-                return SeeOther(DiscoverySsrUrls.WithStap("klaar"));
-            }
-
-            return SeeOther(DiscoverySsrUrls.Step(shedStep + 1));
+            return await HandleDiveDeeperAsync(http, antiforgery, api, featureFlags, overviewCache, depthStore, culture, cancellationToken);
         }
 
         if (string.Equals(action, "mini-continue", StringComparison.OrdinalIgnoreCase))
@@ -138,19 +108,19 @@ public static class DiscoveryClientFormEndpoints
             }
 
             var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
-            var obMiniPick = form["obMiniPick"].ToString();
-            if (string.IsNullOrWhiteSpace(obMiniPick))
+            form.TryGetValue("consentRequested", out var consentRequested);
+            form.TryGetValue("obMiniPick", out var obMiniPick);
+            if (string.IsNullOrWhiteSpace(obMiniPick.ToString()))
             {
                 return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Step(step, targetLevel, q), culture["Onboarding.NotSaved"]));
             }
 
-            form.TryGetValue("consentRequested", out var consentRequested);
             form.TryGetValue("obPayload", out var obPayload);
             var pickBody = OnboardingMiniPostBody.BuildMiniBlockBody(
                 http,
                 step,
                 consentRequested.ToString(),
-                obMiniPick,
+                obMiniPick.ToString(),
                 obPayload.ToString());
             var pickMerged = OnboardingMiniPostBody.MergeNavFlags(pickBody, advance: false, goBack: false, skipOptional: false);
             var (pickStatus, _) = await OnboardingClientStepBffSaver.SaveStepAsync(
@@ -185,6 +155,106 @@ public static class DiscoveryClientFormEndpoints
         return SeeOther(DiscoverySsrUrls.Overview());
     }
 
+    private static async Task<IResult> HandlePickDepthAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        DiscoverySsrDepthStore depthStore,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!http.Request.HasFormContentType)
+        {
+            return Results.BadRequest();
+        }
+
+        await http.Request.ReadFormAsync(cancellationToken);
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Path, culture["Common.Error.TryAgain"]));
+        }
+
+        var form = http.Request.Form;
+        if (!int.TryParse(form["shedStep"].ToString(), out var shedStep) || shedStep is < 7 or > 10)
+        {
+            return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Path, culture["Onboarding.NotSaved"]));
+        }
+
+        if (!int.TryParse(form["level"].ToString(), out var level)
+            || !JourneyTestFlow.TryParseDepth(level.ToString(System.Globalization.CultureInfo.InvariantCulture), out level))
+        {
+            return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Shed(shedStep), culture["Onboarding.NotSaved"]));
+        }
+
+        var userId = http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        depthStore.Set(userId, shedStep, level);
+        return SeeOther(DiscoverySsrUrls.Shed(shedStep));
+    }
+
+    private static async Task<IResult> HandleDiveDeeperAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IFeatureFlags featureFlags,
+        DiscoveryOverviewCache overviewCache,
+        DiscoverySsrDepthStore depthStore,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!http.Request.HasFormContentType)
+        {
+            return Results.BadRequest();
+        }
+
+        await http.Request.ReadFormAsync(cancellationToken);
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Path, culture["Common.Error.TryAgain"]));
+        }
+
+        var form = http.Request.Form;
+        if (!int.TryParse(form["shedStep"].ToString(), out var shedStep) || shedStep is < 7 or > 10)
+        {
+            shedStep = 7;
+        }
+
+        var kind = OnboardingWizardCatalog.TestKindForStep(shedStep)!.Value;
+        var answered = await CountAnsweredAsync(api, overviewCache, kind, cancellationToken);
+        var band = await DiscoverySsrMiniLoader.LoadBandAsync(
+            shedStep,
+            OnboardingWizardCatalog.MiniLevelCount,
+            api,
+            featureFlags,
+            culture,
+            cancellationToken);
+        var reached = JourneyTestFlow.ReachedLevel(answered, kind, band.QuickScanVersion);
+        var userId = http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        var selected = depthStore.GetOrDefault(
+            userId,
+            shedStep,
+            JourneyTestFlow.DefaultSelectedLevel(answered, kind, band.QuickScanVersion));
+
+        if (selected > reached)
+        {
+            return SeeOther(DiscoverySsrUrls.Step(shedStep, selected, 1));
+        }
+
+        try
+        {
+            _ = await api.SaveMyOnboardingProgressAsync(shedStep, stepCompleted: true, ct: cancellationToken);
+        }
+        catch
+        {
+            return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Shed(shedStep), culture["Common.Error.TryAgain"]));
+        }
+
+        if (shedStep >= 10)
+        {
+            return SeeOther(DiscoverySsrUrls.WithStap("klaar"));
+        }
+
+        return SeeOther(DiscoverySsrUrls.Step(shedStep + 1));
+    }
+
     private static async Task<int> CountAnsweredAsync(
         JobsyApiClient api,
         DiscoveryOverviewCache overviewCache,
@@ -213,5 +283,15 @@ public static class DiscoveryClientFormEndpoints
         return answers?.Count(a => a.Value is >= 1 and <= 5) ?? 0;
     }
 
-    private static IResult SeeOther(string url) => Results.Redirect(url, permanent: false);
+    private static IResult SeeOther(string url) => new SeeOtherRedirectResult(url);
+
+    private sealed class SeeOtherRedirectResult(string url) : IResult
+    {
+        public Task ExecuteAsync(HttpContext httpContext)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status303SeeOther;
+            httpContext.Response.Headers.Location = url;
+            return Task.CompletedTask;
+        }
+    }
 }

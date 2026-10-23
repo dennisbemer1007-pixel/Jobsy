@@ -219,10 +219,22 @@ public static class JourneyTestFlow
             return false;
         }
 
-        if (parsed is not (OnboardingWizardCatalog.MiniLevelCount
-            or OnboardingWizardCatalog.DeeperLevelCount
-            or 18
-            or 25))
+        if (parsed is OnboardingWizardCatalog.MiniLevelCount or OnboardingWizardCatalog.DeeperLevelCount)
+        {
+            level = parsed;
+            return true;
+        }
+
+        foreach (var kind in Enum.GetValues<OnboardingWizardCatalog.OnboardingTestKind>())
+        {
+            if (parsed == OnboardingWizardCatalog.FullLevelCount(kind))
+            {
+                level = parsed;
+                return true;
+            }
+        }
+
+        if (parsed is not (18 or 25))
         {
             return false;
         }

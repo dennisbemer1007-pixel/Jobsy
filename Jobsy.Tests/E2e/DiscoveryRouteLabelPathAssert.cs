@@ -78,23 +78,17 @@ internal static class DiscoveryRouteLabelPathAssert
 
               const problems = [];
               labels.forEach((el, index) => {
-                const textParts = mobile
-                  ? el.querySelectorAll('.journey-route__title, .journey-route__status, .journey-route__cta, .journey-route-mobile__dest-flag')
-                  : el.querySelectorAll('.journey-route__title, .journey-route__status, .journey-route__cta');
-                const targets = textParts.length > 0 ? textParts : [el];
-                targets.forEach((part, partIndex) => {
-                  const r = part.getBoundingClientRect();
-                  if (r.width < 1 || r.height < 1) {
-                    return;
+                const r = el.getBoundingClientRect();
+                if (r.width < 1 || r.height < 1) {
+                  return;
+                }
+                for (let s = 0; s < pathRects.length; s++) {
+                  if (intersects(r, pathRects[s])) {
+                    problems.push(
+                      `stop-label ${index} intersects path segment ${s} at ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`);
+                    break;
                   }
-                  for (let s = 0; s < pathRects.length; s++) {
-                    if (intersects(r, pathRects[s])) {
-                      problems.push(
-                        `stop-label ${index}.${partIndex} intersects path segment ${s} at ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`);
-                      break;
-                    }
-                  }
-                });
+                }
               });
               return problems;
             }
