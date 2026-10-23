@@ -52,11 +52,7 @@ public sealed class BanenkaartPrimaryNavUrlPlaywrightTests : IAsyncLifetime
         await PlaywrightCookieConsent.AcceptAsync(context);
         await page.GotoAsync($"{baseUrl}/__test/sign-in?role=candidate&return=/banenkaart");
         await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
-        await page.Locator(".jobsy-discovery, .bk-page").First.WaitForAsync(new() { Timeout = 60_000 });
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 60_000 });
+        await page.Locator("[data-banenkaart-ssr=\"1\"]").WaitForAsync(new() { Timeout = 60_000 });
         await page.WaitForTimeoutAsync(1500);
 
         foreach (var (href, probe, titleFragment) in Targets)

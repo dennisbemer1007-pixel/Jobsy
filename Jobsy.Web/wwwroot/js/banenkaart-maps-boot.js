@@ -1,0 +1,239 @@
+/* banenkaart-maps-boot.js — MapLibre loader for NoBlazor SSR banenkaart only (not full app-core). */
+window.jobsyMaps = (function () {
+    "use strict";
+
+    var pending = {};
+    var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r166";
+    var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
+    var mapLibreScripts = [
+        "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
+        "/js/jobsyMapLibre.min.js?v=20261002-ch01"
+    ];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-bkssr1"];
+
+    function pathOnly(url) {
+        var q = url.indexOf("?");
+        var hash = url.indexOf("#");
+        var end = url.length;
+        if (q !== -1) end = q;
+        if (hash !== -1 && hash < end) end = hash;
+        return url.slice(0, end);
+    }
+
+    function hrefMatches(node, href) {
+        var current = pathOnly(node.getAttribute("href") || node.getAttribute("src") || "");
+        var want = pathOnly(href);
+        return current === want || current === want.replace(/^\//, "") || ("/" + current) === want;
+    }
+
+    function loadCss(href) {
+        if (document.querySelector('link[data-jobsy-map="' + href + '"]')) {
+            return Promise.resolve();
+        }
+        var links = document.querySelectorAll("link[rel=\"stylesheet\"]");
+        for (var i = 0; i < links.length; i++) {
+            if (hrefMatches(links[i], href)) {
+                links[i].setAttribute("data-jobsy-map", href);
+                return Promise.resolve();
+            }
+        }
+        return new Promise(function (resolve, reject) {
+            var link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = href;
+            link.media = "print";
+            link.setAttribute("data-jobsy-map", href);
+            link.onload = function () {
+                link.media = "all";
+                resolve();
+            };
+            link.onerror = reject;
+            document.head.appendChild(link);
+        });
+    }
+
+    function isMapLibreMain(src) {
+        return src.indexOf("maplibre-gl-csp.js") !== -1;
+    }
+
+    function configureMapLibreWorker() {
+        if (!window.maplibregl) {
+            return;
+        }
+        var url = mapLibreWorker;
+        try {
+            url = new URL(mapLibreWorker, document.baseURI).href;
+        } catch (e) { }
+        if (typeof window.maplibregl.setWorkerUrl === "function") {
+            window.maplibregl.setWorkerUrl(url);
+        } else {
+            window.maplibregl.workerUrl = url;
+        }
+    }
+
+    function preloadScripts(urls) {
+        urls.forEach(function (href) {
+            if (document.querySelector('link[data-jobsy-map-preload="' + href + '"]')) {
+                return;
+            }
+            var link = document.createElement("link");
+            link.rel = "preload";
+            link.as = "script";
+            link.href = href;
+            link.setAttribute("data-jobsy-map-preload", href);
+            document.head.appendChild(link);
+        });
+    }
+
+    function loadScript(src) {
+        if (document.querySelector('script[data-jobsy-map="' + src + '"]')) {
+            if (isMapLibreMain(src)) {
+                configureMapLibreWorker();
+            }
+            return Promise.resolve();
+        }
+        if (isMapLibreMain(src) && window.maplibregl) {
+            configureMapLibreWorker();
+            return Promise.resolve();
+        }
+        if (src.indexOf("jobsyMapLibre") !== -1 && window.jobsyMapLibre) {
+            return Promise.resolve();
+        }
+        if (src.indexOf("jobMap") !== -1 && window.jobMap) {
+            return Promise.resolve();
+        }
+        return new Promise(function (resolve, reject) {
+            var script = document.createElement("script");
+            script.src = src;
+            script.defer = true;
+            script.setAttribute("data-jobsy-map", src);
+            if (!isMapLibreMain(src)) {
+                script.setAttribute("fetchpriority", "high");
+            }
+            script.onload = function () {
+                if (isMapLibreMain(src)) {
+                    configureMapLibreWorker();
+                }
+                resolve();
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    function loadScriptsParallel(urls) {
+        return Promise.all(urls.map(loadScript));
+    }
+
+    function isReady() {
+        return !!(window.maplibregl && window.jobsyMapLibre && window.jobMap);
+    }
+
+    function ensure(kind) {
+        kind = kind === "discovery" ? "discovery" : "discovery";
+        if (isReady()) {
+            return Promise.resolve();
+        }
+        if (pending[kind]) {
+            return pending[kind];
+        }
+        var urls = mapLibreScripts.concat(discoveryScripts);
+        preloadScripts(urls);
+        pending[kind] = Promise.all([
+            Promise.all(css.map(loadCss)),
+            loadScriptsParallel(urls)
+        ]).catch(function (err) {
+            pending[kind] = null;
+            throw err;
+        });
+        return pending[kind];
+    }
+
+    function readBootPayload() {
+        try {
+            var node = document.getElementById("jobsy-map-boot");
+            if (!node || !node.textContent) {
+                return null;
+            }
+            return JSON.parse(node.textContent);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function hasInlinePins(parsed) {
+        return !!(parsed && Array.isArray(parsed.pins) && parsed.pins.length > 0);
+    }
+
+    /** After FCP: start MapLibre on the next frame (no requestIdleCallback delay). */
+    function afterFirstContentfulPaint(cb) {
+        var done = false;
+        function run() {
+            if (done) {
+                return;
+            }
+            done = true;
+            try { cb(); } catch (e) { }
+        }
+        function scheduleSoon() {
+            if (typeof requestAnimationFrame === "function") {
+                requestAnimationFrame(function () { requestAnimationFrame(run); });
+            } else {
+                setTimeout(run, 0);
+            }
+        }
+        if (typeof PerformanceObserver !== "undefined") {
+            try {
+                var po = new PerformanceObserver(function (list) {
+                    var fcp = list.getEntriesByName("first-contentful-paint");
+                    if (fcp && fcp.length) {
+                        po.disconnect();
+                        scheduleSoon();
+                    }
+                });
+                po.observe({ type: "paint", buffered: true });
+                setTimeout(function () {
+                    try { po.disconnect(); } catch (ePo) { }
+                    scheduleSoon();
+                }, 1200);
+                return;
+            } catch (eObs) { }
+        }
+        scheduleSoon();
+    }
+
+    function bootDiscoveryMap() {
+        if (window.jobMap && typeof window.jobMap.boot === "function") {
+            window.jobMap.boot("job-map");
+        }
+    }
+
+    function warmBoot() {
+        var parsed = readBootPayload();
+        if (!parsed) {
+            return;
+        }
+        if (!hasInlinePins(parsed) && parsed.pinsUrl && typeof fetch === "function") {
+            fetch(String(parsed.pinsUrl), {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" }
+            }).catch(function () { });
+        }
+        function kickMapLoad() {
+            ensure("discovery").then(bootDiscoveryMap).catch(function () { });
+        }
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () { requestAnimationFrame(kickMapLoad); });
+        } else {
+            kickMapLoad();
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", warmBoot);
+    } else {
+        warmBoot();
+    }
+
+    return { ensure: ensure };
+})();

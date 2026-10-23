@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Jobsy.Core.Security;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Web.Hosting;
@@ -39,6 +40,49 @@ public static class VacancyMapProxyEndpoints
         // Travel-time polygons for banenkaart rings (Valhalla; client falls back to circles).
         app.MapGet("/api/travel/isochrones", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, "api/travel/isochrones", ct));
+
+        app.MapGet("/api/vacancies/{id:guid}/like", GetLikeAsync).RequireAuthorization();
+        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization();
+        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization();
+    }
+
+    private static async Task<IResult> GetLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)
+    {
+        try
+        {
+            var liked = await api.GetLikedAsync(id, ct);
+            return Results.Json(new { liked, Liked = liked });
+        }
+        catch
+        {
+            return Results.Json(new { liked = false, Liked = false });
+        }
+    }
+
+    private static async Task<IResult> PostLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)
+    {
+        try
+        {
+            var liked = await api.SetLikedAsync(id, true, ct);
+            return Results.Json(new { liked, Liked = liked });
+        }
+        catch
+        {
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> DeleteLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)
+    {
+        try
+        {
+            var liked = await api.SetLikedAsync(id, false, ct);
+            return Results.Json(new { liked, Liked = liked });
+        }
+        catch
+        {
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 }
 

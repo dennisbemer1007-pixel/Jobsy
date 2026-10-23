@@ -403,6 +403,21 @@ public static class PageAssetCatalog
         return path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal);
     }
 
+    public static bool IncludeBanenkaartClientScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path is "/banenkaart" or "/banen";
+    }
+
+    /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
+    public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
+    [
+        "css/features/kandidaat-banen.css?v=20261019-01",
+        "css/features/banenkaart.css?v=20261023-ssr-perf",
+        "css/features/banenkaart-illustrated.css?v=20261018-14",
+        "css/features/candidate-header-tablet.css?v=20261021-01",
+    ];
+
     public static bool IncludeVacancyWizardScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);

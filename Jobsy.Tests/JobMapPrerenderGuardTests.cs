@@ -9,8 +9,9 @@ public class JobMapPrerenderGuardTests
     [Fact]
     public void Home_does_not_chain_map_assets_from_the_document()
     {
-        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
-        Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "BanenkaartSsr.razor"));
+        Assert.Contains("ExcludeFromInteractiveRouting", home);
+        Assert.Contains("NoBlazorRuntime", home);
         Assert.DoesNotContain("images/maps/nl-preview.webp", home);
         Assert.DoesNotContain("prerender: false", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);

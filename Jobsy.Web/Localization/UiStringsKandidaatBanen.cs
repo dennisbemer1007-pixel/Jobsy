@@ -534,6 +534,12 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Map.NoVacancies",
             "Geen vacatures", "No vacancies",
             "Brak ofert", "Nicio ofertă", "لا وظائف");
+        Add("Kb.Map.NoVacanciesInTravel",
+            "Geen vacatures binnen je reistijd. De kaart zoomt naar waar banen wel staan.",
+            "No vacancies within your travel time. The map zooms to where jobs are available.",
+            "Brak ofert w czasie dojazdu. Mapa pokazuje, gdzie są oferty.",
+            "Nicio ofertă în timpul tău de călătorie. Harta se focusează unde sunt joburi.",
+            "لا وظائف ضمن وقت التنقل. تتمركز الخريطة حيث توجد الوظائف.");
         Add("Kb.Map.VacancyFallback",
             "Vacature", "Vacancy",
             "Oferta", "Ofertă", "وظيفة");
