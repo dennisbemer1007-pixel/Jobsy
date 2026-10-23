@@ -201,3 +201,72 @@ window.jobsyCulture = {
         }
     } catch (e) { }
 })();
+
+/* Header menus on NoBlazorRuntime pages (banenkaart SSR): same contract as app-core.js. */
+(function () {
+    "use strict";
+    if (window.__jobsyHeaderMenus) {
+        return;
+    }
+    window.__jobsyHeaderMenus = true;
+
+    function syncAria() {
+        var open = document.documentElement.getAttribute("data-header-menu");
+        document.querySelectorAll("[data-menu-id]").forEach(function (root) {
+            var id = root.getAttribute("data-menu-id");
+            var on = open === id;
+            var trigger = root.querySelector("[data-menu-trigger]");
+            if (trigger) {
+                trigger.setAttribute("aria-expanded", on ? "true" : "false");
+            }
+            root.classList.toggle("is-open", on);
+            root.classList.toggle("is-closed", !on);
+        });
+    }
+
+    function setOpen(id) {
+        if (id) {
+            document.documentElement.setAttribute("data-header-menu", id);
+        } else {
+            document.documentElement.removeAttribute("data-header-menu");
+        }
+        syncAria();
+    }
+
+    document.addEventListener("click", function (event) {
+        if (event.target.closest("[data-menu-close]")) {
+            setOpen(null);
+            return;
+        }
+        var trigger = event.target.closest("[data-menu-trigger]");
+        if (trigger) {
+            var root = trigger.closest("[data-menu-id]");
+            if (!root) {
+                return;
+            }
+            var id = root.getAttribute("data-menu-id");
+            var current = document.documentElement.getAttribute("data-header-menu");
+            setOpen(current === id ? null : id);
+            return;
+        }
+        if (event.target.closest(".header-dropdown-backdrop")) {
+            setOpen(null);
+            return;
+        }
+        if (!event.target.closest("[data-menu-id]")) {
+            if (document.documentElement.hasAttribute("data-header-menu")) {
+                setOpen(null);
+            }
+        }
+    }, true);
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") {
+            return;
+        }
+        if (!document.documentElement.hasAttribute("data-header-menu")) {
+            return;
+        }
+        setOpen(null);
+    });
+})();
