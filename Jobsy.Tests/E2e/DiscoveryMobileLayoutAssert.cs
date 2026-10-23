@@ -56,18 +56,30 @@ internal static class DiscoveryMobileLayoutAssert
                 }
               }
 
-              list.querySelectorAll('.discovery-mobile-stop__circle .journey-route__vignette').forEach((vig, index) => {
-                const style = getComputedStyle(vig);
-                if (style.animationName && style.animationName !== 'none') {
-                  problems.push(`stop ${index}: vignette still animated (${style.animationName})`);
+              list.querySelectorAll('.discovery-mobile-stop__circle').forEach((circle, index) => {
+                const img = circle.querySelector('img');
+                if (!img) {
+                  problems.push(`stop ${index}: circle img missing`);
+                  return;
                 }
-                const before = getComputedStyle(vig, '::before');
-                if (before.content && before.content !== 'none' && before.display !== 'none') {
-                  problems.push(`stop ${index}: vignette ::before visible`);
+                const circleRect = circle.getBoundingClientRect();
+                const imgRect = img.getBoundingClientRect();
+                const circleCx = circleRect.left + circleRect.width / 2;
+                const circleCy = circleRect.top + circleRect.height / 2;
+                const imgCx = imgRect.left + imgRect.width / 2;
+                const imgCy = imgRect.top + imgRect.height / 2;
+                if (Math.abs(circleCx - imgCx) > 1 || Math.abs(circleCy - imgCy) > 1) {
+                  problems.push(`stop ${index}: circle/img center mismatch (${Math.abs(circleCx - imgCx)}, ${Math.abs(circleCy - imgCy)}px)`);
                 }
-                const shadow = style.boxShadow || '';
-                if (/\\b(1[0-4]|10|12|14)px\\b/.test(shadow)) {
-                  problems.push(`stop ${index}: desktop-style multi ring shadow`);
+                if (Math.abs(circleRect.width - 44) > 1 || Math.abs(circleRect.height - 44) > 1) {
+                  problems.push(`stop ${index}: circle not 44px (${circleRect.width}x${circleRect.height})`);
+                }
+                const vig = circle.querySelector('.journey-route__vignette');
+                if (vig) {
+                  const vigStyle = getComputedStyle(vig);
+                  if (vigStyle.boxShadow && vigStyle.boxShadow !== 'none') {
+                    problems.push(`stop ${index}: vignette still has box-shadow`);
+                  }
                 }
               });
 
@@ -97,35 +109,22 @@ internal static class DiscoveryMobileLayoutAssert
                 }
               });
               list.querySelectorAll('.discovery-mobile-stop').forEach((stop, index) => {
-                const circle = stop.querySelector('.discovery-mobile-stop__circle .journey-route__vignette');
+                const rail = stop.querySelector('.discovery-mobile-stop__rail');
                 const text = stop.querySelector('.discovery-mobile-stop__text');
                 const line = stop.querySelector('.discovery-mobile-stop__line');
-                if (!circle || !text) {
+                if (!rail || !text) {
                   return;
                 }
 
-                const circleRect = circle.getBoundingClientRect();
+                const railRect = rail.getBoundingClientRect();
                 const textRect = text.getBoundingClientRect();
-                if (textRect.left < circleRect.right - 2) {
-                  problems.push(`stop ${index}: text overlaps circle`);
+                if (textRect.left < railRect.right - 2) {
+                  problems.push(`stop ${index}: text overlaps rail column (${textRect.left} < ${railRect.right})`);
                 }
 
                 if (line) {
                   const lineRect = line.getBoundingClientRect();
-                  const pad = 2;
-                  const lineBox = {
-                    left: lineRect.left - pad,
-                    right: lineRect.right + pad,
-                    top: lineRect.top - pad,
-                    bottom: lineRect.bottom + pad,
-                  };
-                  const intersects = !(
-                    textRect.right <= lineBox.left
-                    || textRect.left >= lineBox.right
-                    || textRect.bottom <= lineBox.top
-                    || textRect.top >= lineBox.bottom
-                  );
-                  if (intersects) {
+                  if (textRect.left < lineRect.right + 2) {
                     problems.push(`stop ${index}: text overlaps connector line`);
                   }
                 }
@@ -135,6 +134,6 @@ internal static class DiscoveryMobileLayoutAssert
             }
             """);
 
-        Assert.Null(reason);
+        Assert.True(string.IsNullOrEmpty(reason), reason ?? "unknown mobile layout problem");
     }
 }
