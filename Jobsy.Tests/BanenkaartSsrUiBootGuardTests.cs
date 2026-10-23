@@ -14,6 +14,8 @@ public sealed class BanenkaartSsrUiBootGuardTests
         Assert.DoesNotContain("if (state.filtersOpen)", ssr, StringComparison.Ordinal);
         Assert.Contains("scheduleWarmBoot", boot, StringComparison.Ordinal);
         Assert.Contains("jobsy-bk-ssr-ui-ready", boot, StringComparison.Ordinal);
+        Assert.Contains("bindViewportLayout", ssr, StringComparison.Ordinal);
+        Assert.Contains("syncLayoutForViewport", ssr, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

@@ -116,9 +116,9 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         var onClusterEnd = js.IndexOf("\n    function onPinClick", onClusterStart, StringComparison.Ordinal);
         Assert.True(onClusterEnd > onClusterStart);
         var onCluster = js.Substring(onClusterStart, onClusterEnd - onClusterStart);
-        Assert.Contains("getClusterExpansionZoom", onCluster, StringComparison.Ordinal);
-        Assert.Contains("clampBanenZoom", onCluster, StringComparison.Ordinal);
-        Assert.Contains("easeTo", onCluster, StringComparison.Ordinal);
+        Assert.Contains("getClusterLeaves", onCluster, StringComparison.Ordinal);
+        Assert.Contains("openClusterList", onCluster, StringComparison.Ordinal);
+        Assert.Contains("stubMarkersForCluster", onCluster, StringComparison.Ordinal);
         Assert.Contains("fetchJsonWithOneRetry", js);
         Assert.Contains("retryAfterMs", js);
         // Cluster paging uses pin/card HTML in a fixed frame — never the shimmer skeleton.

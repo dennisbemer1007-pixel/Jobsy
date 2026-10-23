@@ -338,9 +338,142 @@ public sealed class BanenkaartAccLivePlaywrightTests
             "Compact list row height should be under 200px (got " + listRowHeight + ").");
 
         var badConsole = consoleErrors.Where(e =>
-            !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)
-            && !e.Contains("9472-9727", StringComparison.OrdinalIgnoreCase)).ToList();
+            !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)).ToList();
         Assert.True(badConsole.Count == 0, "Console errors: " + string.Join("; ", badConsole));
+    }
+
+    [Theory]
+    [InlineData(390, 844, true)]
+    [InlineData(1280, 720, false)]
+    public async Task Banenkaart_polish_footer_minus_and_clean_console_on_acc(int width, int height, bool touch)
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            HasTouch = touch,
+            IsMobile = touch,
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Allow,
+        });
+
+        var consoleErrors = new List<string>();
+        var font404 = 0;
+        var page = await context.NewPageAsync();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        page.Response += (_, resp) =>
+        {
+            if (resp.Status == 404 && resp.Url.Contains("/fonts/", StringComparison.OrdinalIgnoreCase))
+            {
+                Interlocked.Increment(ref font404);
+            }
+        };
+
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await WaitForBanenkaartMapReadyAsync(page);
+
+        if (touch)
+        {
+            var footerOk = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const map = document.querySelector('#job-map');
+                  const footer = document.querySelector('.app-footer');
+                  if (!map) return false;
+                  const mr = map.getBoundingClientRect();
+                  if (!footer) return true;
+                  const fs = getComputedStyle(footer);
+                  if (fs.display === 'none' || fs.visibility === 'hidden' || footer.getClientRects().length === 0) {
+                    return true;
+                  }
+                  const fr = footer.getBoundingClientRect();
+                  if (fr.height < 1) return true;
+                  return fr.top >= mr.bottom - 2;
+                }
+                """);
+            Assert.True(footerOk, "Mobile site footer must not overlap the map on acceptatie.");
+        }
+        else
+        {
+            var minusVisible = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const el = document.querySelector('.job-map .maplibregl-ctrl-zoom-out');
+                  if (!el) return false;
+                  const r = el.getBoundingClientRect();
+                  const s = getComputedStyle(el);
+                  return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
+                }
+                """);
+            Assert.True(minusVisible, "Desktop map must show zoom-out (−) on acceptatie.");
+        }
+
+        Assert.Equal(0, font404);
+        var badConsole = consoleErrors.Where(e =>
+            !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.True(badConsole.Count == 0, "Console errors: " + string.Join("; ", badConsole));
+    }
+
+    [Fact]
+    public async Task Banenkaart_map_survives_viewport_resize_on_acc()
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Allow,
+        });
+
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await WaitForBanenkaartMapReadyAsync(page);
+        await page.EvaluateAsync(
+            """
+            () => {
+              sessionStorage.setItem('jobsy.bk.ui.v1', JSON.stringify({ filtersOpen: false, showMap: false }));
+            }
+            """);
+        await page.SetViewportSizeAsync(1280, 720);
+        await page.WaitForTimeoutAsync(500);
+
+        var mapOk = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const root = document.querySelector('[data-banenkaart-ssr="1"]');
+              if (root && !root.classList.contains('show-map')) return false;
+              const canvas = document.querySelector('#job-map canvas, #job-map .maplibregl-canvas');
+              if (!canvas) return false;
+              return canvas.getBoundingClientRect().height > 300;
+            }
+            """);
+        Assert.True(mapOk, "Map should remain visible after mobile→desktop resize on acceptatie.");
     }
 
     [Fact]
