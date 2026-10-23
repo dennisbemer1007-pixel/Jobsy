@@ -936,13 +936,17 @@ window.jobMap = (function () {
         if (v.travelMinutes == null || v.travelMinutes === "") {
             return "";
         }
-        const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
         const ic = window.jobsyBanenkaartMapIcons;
         const bike = ic && ic.bikeSvg ? ic.bikeSvg : "";
+        const mins = escapeHtml(String(v.travelMinutes)) + " min";
+        if (lagenLayout) {
+            return "<div class=\"rt kb-popup__travel\">" + bike + "<span>" + mins + "</span></div>";
+        }
+        const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
         return (
             "<p class=\"map-popup__meta kb-popup__travel\">" +
                 bike +
-                "<span>" + escapeHtml(String(v.travelMinutes)) + " min " + escapeHtml(mode) + "</span>" +
+                "<span>" + mins + " " + escapeHtml(mode) + "</span>" +
             "</p>"
         );
     }
@@ -963,28 +967,37 @@ window.jobMap = (function () {
             : "";
         const detailHref = detailHrefForVacancy(v.id);
         const desc = lagenDescriptionLine(v);
-        let orgBlock = lagenOrgLineHtml(v);
-        if (desc && orgBlock.indexOf("kb-popup__org") >= 0) {
-            orgBlock = orgBlock.replace(/<\/p>\s*$/, "<br>" + desc + "</p>");
-        } else if (desc) {
-            orgBlock = "<p class=\"map-popup__company kb-popup__org\">" + desc + "</p>";
+        const title = escapeHtml(v.title || vacancyFallbackTitle());
+        const company = escapeHtml(v.company || "");
+        let orgInner = company;
+        if (desc) {
+            orgInner += (orgInner ? "<br>" : "") + desc;
         }
-        const rootClass = popupRootClass("kb-popup-lagen" + (sheetMode ? " kb-popup-lagen--sheet" : ""));
+        const travel = lagenTravelLineHtml(v);
+        const travelInner = travel
+            ? travel.replace(/class=\"kb-popup__travel[^\"]*\"/, "class=\"rt\"")
+                .replace(/<p /, "<div ").replace(/<\/p>/, "</div>")
+            : "";
+        if (sheetMode) {
+            return (
+                (typeLabel || "") +
+                "<h3 class=\"map-popup__title map-popup__title--lagen\">" + title + "</h3>" +
+                (orgInner ? "<div class=\"org\">" + orgInner + "</div>" : "") +
+                travelInner +
+                "<a class=\"go map-popup__view map-popup__cta map-popup__view--primary\" href=\"" +
+                    escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>"
+            );
+        }
+        const closeX = "<button type=\"button\" class=\"x map-cluster-sheet__close\" data-cluster-close aria-label=\"" +
+            escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>";
         return (
-            "<div class=\"" + rootClass + "\">" +
-                (typeLabel ? "<div class=\"kb-popup__type\">" + typeLabel + "</div>" : "") +
-                "<h3 class=\"map-popup__title map-popup__title--lagen\">" +
-                    escapeHtml(v.title || vacancyFallbackTitle()) +
-                "</h3>" +
-                orgBlock +
-                lagenTravelLineHtml(v) +
-                "<div class=\"map-popup__actions\">" +
-                    "<a class=\"map-popup__view map-popup__cta map-popup__view--primary\" href=\"" +
-                        escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                        "Bekijk vacature" +
-                    "</a>" +
-                "</div>" +
-            "</div>"
+            closeX +
+            (typeLabel || "") +
+            "<h3>" + title + "</h3>" +
+            (orgInner ? "<div class=\"org\">" + orgInner + "</div>" : "") +
+            travelInner +
+            "<a class=\"go map-popup__view map-popup__cta map-popup__view--primary\" href=\"" +
+                escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>"
         );
     }
 
@@ -2812,8 +2825,55 @@ window.jobMap = (function () {
         if (!map || !record) {
             return;
         }
-        // Same docked card as a cluster (one item, no pager) — file 03.
+        if (lagenLayout && catalogModeActive && !isNarrowViewport()) {
+            openLagenDesktopPop(record);
+            return;
+        }
         openClusterList([record], [record.lng, record.lat]);
+    }
+
+    function openLagenDesktopPop(record) {
+        closeActivePopup();
+        highlight(record.id);
+        const ll = [record.lng, record.lat];
+        const job = record.jobData || record.options && record.options.jobData || record;
+        const pinId = record.id != null ? record.id : job.id;
+        let html = buildLagenCatalogPopupHtml(job, false);
+        activeClusterPopup = popupFromOpts({
+            className: "maplibregl-popup pop kb-popup-lagen-pop",
+            closeButton: false,
+            closeOnClick: false,
+            maxWidth: "320px",
+            offset: 12,
+            anchor: "bottom"
+        }, ll, html);
+        const root = activeClusterPopup.getElement();
+        if (root) {
+            root.querySelectorAll("[data-cluster-close], .x").forEach(function (btn) {
+                btn.addEventListener("click", function (ev) {
+                    stopEvent(ev);
+                    closeActivePopup();
+                });
+            });
+        }
+        if (pinId && typeof fetchVacancyCard === "function") {
+            fetchVacancyCard(pinId).then(function (card) {
+                if (!activeClusterPopup || !card) {
+                    return;
+                }
+                const full = mapCardToPopup(card, job);
+                html = buildLagenCatalogPopupHtml(full, false);
+                try {
+                    activeClusterPopup.setHTML(html);
+                    root.querySelectorAll("[data-cluster-close], .x").forEach(function (btn) {
+                        btn.addEventListener("click", function (ev) {
+                            stopEvent(ev);
+                            closeActivePopup();
+                        });
+                    });
+                } catch (eHtml) { }
+            });
+        }
     }
 
     function openClusterList(childMarkers, lngLat) {
@@ -2827,6 +2887,40 @@ window.jobMap = (function () {
         const pageCount = Math.max(1, jobs.length);
         const firstJob = jobs[0];
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
+        if (lagenLayout && catalogModeActive && pageCount === 1 && isNarrowViewport()) {
+            const inner = buildLagenCatalogPopupHtml(firstJob || {}, true);
+            const sheetHtml = buildLagenMobileSheetShell(inner);
+            setSelectedCluster(ll, 1);
+            setClusterOpenChrome(true, Object.keys(markersById).length);
+            bindClusterEscape();
+            activeClusterPopup = createDockedClusterController(sheetHtml);
+            clusterUiState = {
+                jobs: jobs,
+                page: 1,
+                pageCount: 1,
+                childMarkers: childMarkers,
+                root: activeClusterPopup.getElement().querySelector("[data-cluster-card]") ||
+                    activeClusterPopup.getElement(),
+                viewport: activeClusterPopup.getElement().querySelector("[data-cluster-viewport]"),
+                docked: true,
+                lngLat: ll
+            };
+            bindClusterPopupInteractions(activeClusterPopup, childMarkers);
+            document.body.classList.add("s-popup");
+            if (firstJob && firstJob.id) {
+                fetchVacancyCard(firstJob.id).then(function (card) {
+                    if (!clusterUiState || !card) {
+                        return;
+                    }
+                    const full = mapCardToPopup(card, firstJob);
+                    const vp = clusterUiState.viewport;
+                    if (vp) {
+                        vp.innerHTML = buildLagenCatalogPopupHtml(full, true);
+                    }
+                });
+            }
+            return;
+        }
         // Fixed-size chrome + skeleton card so the sheet appears on the same tap frame.
         const chromeHtml = buildClusterChromeHtml(pageCount, clusterPlaceLabel(jobs));
         const skeletonCard = skeletonPopupHtml(firstJob || {});
@@ -4479,7 +4573,7 @@ window.jobMap = (function () {
                 data: pinsGeoJson(),
                 cluster: true,
                 clusterRadius: lagenLayout ? 45 : CLUSTER_OPTS.clusterRadius,
-                clusterMaxZoom: lagenLayout ? 10 : CLUSTER_OPTS.clusterMaxZoom,
+                clusterMaxZoom: lagenLayout ? 11 : CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
                     agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },

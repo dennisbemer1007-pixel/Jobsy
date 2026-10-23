@@ -527,6 +527,10 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     display: none;
 }
 
+.jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"] .ph.kb-panel-head.discovery-toolbar--desktop {
+    display: flex !important;
+}
+
 .jobsy-discovery[data-banenkaart-ssr="1"] .kb-chrome-search.kb-filter-search .kb-filter-search__icon {
     display: none;
 }
@@ -705,6 +709,16 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     }
 
     .jobsy-discovery[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane {
+        display: none !important;
+    }
+
+    .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane.panel {
+        display: flex !important;
+        flex-direction: column;
+        flex: none;
+    }
+
+    .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane .list.vacancy-list {
         display: none !important;
     }
 

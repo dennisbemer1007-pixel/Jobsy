@@ -25,6 +25,12 @@
     }
 }
 
+/* Mockup .ph must stay visible — banenkaart-page hides .discovery-toolbar--desktop globally. */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .ph.kb-panel-head.discovery-toolbar--desktop {
+    display: flex !important;
+    flex-direction: column;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen > .main.kb-lagen-main {
     flex: 1 1 auto;
     min-height: 0;
@@ -581,10 +587,12 @@
     border-radius: 16px;
     padding: 14px 16px 12px;
     box-shadow: 0 10px 30px -12px rgba(31, 47, 85, 0.35);
-    width: 282px;
-    max-width: calc(100% - 120px);
-    max-height: min(240px, calc(100% - 96px));
-    overflow: auto;
+    width: 282px !important;
+    max-width: 282px !important;
+    max-height: none;
+    overflow: visible;
+    padding: 14px 16px 12px;
+    font-size: 14.5px;
     transform: none !important;
 }
 
@@ -874,6 +882,54 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 }
 
 /* Lagen popup (mockup .pop) */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop .maplibregl-popup-content {
+    padding: 16px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--kb-line);
+    box-shadow: 0 18px 40px -14px rgba(31, 47, 85, 0.5);
+    width: 300px;
+    max-width: 300px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop .maplibregl-popup-content .x {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--kb-muted);
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop .maplibregl-popup-content h3 {
+    font-size: 19px;
+    line-height: 1.25;
+    margin: 10px 44px 4px 0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop .maplibregl-popup-content .org {
+    font-size: 15px;
+    color: var(--kb-muted);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop .maplibregl-popup-content .go {
+    margin-top: 14px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--kb-navy);
+    color: #fff;
+    font-weight: 800;
+    font-size: 16.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup-content .kb-popup-lagen,
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-sheet .kb-popup-lagen {
     width: 100%;
@@ -1775,13 +1831,16 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         display: none !important;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map:not(.show-list) .map-pane {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map:not(.show-list) .map-pane.mapw {
+        display: flex !important;
+        flex-direction: column;
         grid-column: 1;
         grid-row: 4;
-        min-height: 0;
+        min-height: 120px;
         height: 100%;
         max-height: 100%;
         overflow: hidden;
+        flex: 1 1 auto;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vacancy-pane {
@@ -1876,6 +1935,33 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     max-width: none;
     width: 100%;
     background: transparent;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-popup__heart,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-card__heading,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-card__pager {
+    display: none !important;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-sheet--lagen .go {
+    margin-top: 14px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--kb-navy);
+    color: #fff;
+    font-weight: 800;
+    font-size: 16.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    width: 100%;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-sheet--lagen .org {
+    font-size: 15px;
+    color: var(--kb-muted);
+    margin-top: 4px;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-popup__type {
