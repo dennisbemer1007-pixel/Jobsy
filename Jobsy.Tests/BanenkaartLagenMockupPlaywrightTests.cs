@@ -15,7 +15,7 @@ public sealed class BanenkaartLagenMockupPlaywrightTests : IAsyncLifetime
     private string _baseUrl = "";
     private static readonly string ArtifactDir = "/opt/cursor/artifacts/banenkaart-lagen-mockup";
     private static readonly string ElementTablePath = "/opt/cursor/artifacts/banenkaart-lagen-element-table.json";
-    private static readonly string MockupRoot = "/workspace/docs/mockups/kandidaat/banenkaart/lagen";
+    private static readonly string MockupRoot = BanenkaartLagenComparePlaywrightTests.MockupRefRoot + "/lagen";
 
     public async ValueTask InitializeAsync()
     {
@@ -26,7 +26,7 @@ public sealed class BanenkaartLagenMockupPlaywrightTests : IAsyncLifetime
         Directory.CreateDirectory(ArtifactDir);
         _web = new IllustratedPagesWebFactory();
         _baseUrl = _web.ServerAddress.TrimEnd('/');
-        await BanenkaartDemoUatPlaywrightTests_EnsurePublished.EnsurePublishedAsync();
+        await BanenkaartLagenComparePlaywrightTests_EnsurePublished.EnsurePublishedAsync();
     }
 
     public async ValueTask DisposeAsync()
@@ -341,40 +341,54 @@ public sealed class BanenkaartLagenMockupPlaywrightTests : IAsyncLifetime
     private sealed record ElementRow(string Id, string Selector, bool Pass, string? Note);
 }
 
-/// <summary>Shared publish helper (same paths as demo UAT suite).</summary>
-internal static class BanenkaartDemoUatPlaywrightTests_EnsurePublished
+internal static class BanenkaartLagenComparePlaywrightTests_EnsurePublished
 {
-    internal static async Task EnsurePublishedAsync()
+    internal static Task EnsurePublishedAsync() =>
+        BanenkaartLagenComparePlaywrightTests_EnsurePublishedCore.EnsureAsync();
+
+    private static class BanenkaartLagenComparePlaywrightTests_EnsurePublishedCore
     {
-        const string publishDir = "/tmp/pub";
-        var dll = Path.Combine(publishDir, "Jobsy.Web.dll");
-        if (File.Exists(dll) && File.GetLastWriteTimeUtc(dll) > DateTime.UtcNow.AddHours(-2))
+        internal static async Task EnsureAsync()
         {
-            return;
-        }
+            var dll = Path.Combine(BanenkaartLagenComparePlaywrightTests.PublishDir, "Jobsy.Web.dll");
+            if (File.Exists(dll) && File.GetLastWriteTimeUtc(dll) > DateTime.UtcNow.AddHours(-3))
+            {
+                return;
+            }
 
-        if (Directory.Exists(publishDir))
-        {
-            Directory.Delete(publishDir, recursive: true);
-        }
+            if (Directory.Exists(BanenkaartLagenComparePlaywrightTests.PublishDir))
+            {
+                Directory.Delete(BanenkaartLagenComparePlaywrightTests.PublishDir, recursive: true);
+            }
 
-        var root = Directory.GetCurrentDirectory();
-        while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
-        {
-            root = Directory.GetParent(root)!.FullName;
-        }
+            Directory.CreateDirectory("/workspace/tmp");
+            var root = Directory.GetCurrentDirectory();
+            while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
+            {
+                root = Directory.GetParent(root)!.FullName;
+            }
 
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "dotnet",
-            WorkingDirectory = root,
-            ArgumentList = { "publish", "Jobsy.Web/Jobsy.Web.csproj", "-c", "Release", "-o", publishDir, "/p:UseAppHost=false" },
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-        using var pub = System.Diagnostics.Process.Start(psi)!;
-        var stderr = await pub.StandardError.ReadToEndAsync();
-        await pub.WaitForExitAsync();
-        Assert.True(pub.ExitCode == 0, "publish failed: " + stderr);
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                WorkingDirectory = root,
+                ArgumentList =
+                {
+                    "publish",
+                    "Jobsy.Web/Jobsy.Web.csproj",
+                    "-c",
+                    "Release",
+                    "-o",
+                    BanenkaartLagenComparePlaywrightTests.PublishDir,
+                    "/p:UseAppHost=false",
+                },
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            using var pub = System.Diagnostics.Process.Start(psi)!;
+            var stderr = await pub.StandardError.ReadToEndAsync();
+            await pub.WaitForExitAsync();
+            Assert.True(pub.ExitCode == 0, "publish failed: " + stderr);
+        }
     }
 }
