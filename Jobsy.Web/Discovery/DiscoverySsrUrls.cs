@@ -6,6 +6,10 @@ internal static class DiscoverySsrUrls
 {
     public const string Path = "/candidate/ontdekkingsreis";
 
+    public const string DieptePostPath = Path + "/diepte";
+
+    public const string DuikPostPath = Path + "/duik";
+
     public static string Overview(string? fase = null, string? error = null)
     {
         var q = new List<string> { "stap=overview" };

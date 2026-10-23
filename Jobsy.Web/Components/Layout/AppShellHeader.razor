@@ -65,7 +65,8 @@
         _showCandidateHeaderNav = user?.Identity?.IsAuthenticated == true
             && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
         var path = http?.Request.Path.Value ?? "";
-        _useOnboardingBrandMark = path.Contains("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase);
+        _useOnboardingBrandMark = path.Contains("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/paspoort", StringComparison.OrdinalIgnoreCase);
     }
 
     [Parameter, EditorRequired]

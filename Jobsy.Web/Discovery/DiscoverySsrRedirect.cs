@@ -35,6 +35,16 @@ internal static class DiscoverySsrRedirect
         var openFase = DiscoverySsrJourneyState.ResolveOpenPhaseId(draft, state, panel);
         var stap = NormalizeStap(stapRaw);
 
+        if (int.TryParse(stap, out var legacyProfileStep) && legacyProfileStep is >= 1 and <= 6)
+        {
+            if (journeyComplete)
+            {
+                return CanonicalOverview(openFase);
+            }
+
+            return $"/candidate/start?step={legacyProfileStep}";
+        }
+
         if (journeyComplete)
         {
             if (string.IsNullOrEmpty(stap)

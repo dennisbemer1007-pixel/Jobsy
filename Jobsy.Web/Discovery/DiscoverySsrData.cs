@@ -118,15 +118,15 @@ internal static class DiscoverySsrData
 
         if (int.TryParse(screen, out var profileStep) && profileStep is >= 1 and <= 6)
         {
-            return new PageLoad(
-                profileStep.ToString(),
-                null,
-                null,
-                null,
-                culture["Discovery.Overview.Start"]);
+            return new PageLoad("redirect-start", null, null, null, null);
         }
 
-        return new PageLoad("start", null, null, null, error);
+        if (string.Equals(screen, "start", StringComparison.OrdinalIgnoreCase))
+        {
+            return new PageLoad("redirect-start", null, null, null, null);
+        }
+
+        return new PageLoad("error", null, null, null, culture["Common.Error.TryAgain"]);
     }
 
     private static async Task<DiscoverySsrShells.OverviewModel> BuildOverviewAsync(
@@ -212,8 +212,8 @@ internal static class DiscoverySsrData
                 list.Add(new DiscoverySsrShells.OverviewPanelSection(
                     culture[DiscoverySsrOverviewSummaries.OverviewRouteTestTitleKey(kind)],
                     DiscoverySsrOverviewSummaries.StepOverviewSummary(step, culture, draft, panel),
-                    ResolveTestAdjustHref(step, panel),
-                    DiscoverySsrJourneyState.IsTestMiniDone(step, panel) || completed.Contains(step)));
+                    DiscoverySsrUrls.Step(step),
+                    true));
             }
         }
         else if (phaseId == "beach" && !draft.HasConsent)
@@ -227,11 +227,6 @@ internal static class DiscoverySsrData
 
         return list;
     }
-
-    private static string ResolveTestAdjustHref(int step, CandidateDiscoveryOverviewPanelDto? panel)
-        => DiscoverySsrJourneyState.IsTestMiniDone(step, panel)
-            ? DiscoverySsrUrls.Shed(step)
-            : DiscoverySsrUrls.Step(step);
 
     private static List<DiscoverySsrShells.OverviewTestRow> BuildTestRows(
         CultureState culture,

@@ -7,6 +7,7 @@ using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
+using Jobsy.Web.Discovery;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Middleware;
@@ -619,6 +620,7 @@ app.UseMiddleware<SchoolsFeatureMiddleware>();
 // Authentication has already run, so the pupil principal is available.
 app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseAuthorization();
+app.UseDiscoverySsrRedirect();
 // After auth so the admin bypass reads the cookie principal (errors 05).
 app.UseMiddleware<MaintenanceMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
