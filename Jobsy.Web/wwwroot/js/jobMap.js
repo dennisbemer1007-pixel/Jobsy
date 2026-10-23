@@ -149,7 +149,7 @@ window.jobMap = (function () {
     // On-road cruise km/h. Keep in sync with TravelReach.SpeedKmPerHour.
     const CRUISE_KM_H = {
         Fiets: 18.0,
-        Auto: 40.0,
+        Auto: 80.0,
         OV: 25.0,
         Lopend: 5.0
     };
@@ -4172,6 +4172,23 @@ window.jobMap = (function () {
         });
         cameraLocked = opening.locked;
         firstSizedFit = true;
+        var banenMinZoom = 7;
+        try {
+            if (typeof map.setMinZoom === "function") {
+                map.setMinZoom(banenMinZoom);
+            }
+        } catch (eMinZ) { /* ignore */ }
+        map.on("zoomend", function () {
+            if (!map) {
+                return;
+            }
+            try {
+                var z = map.getZoom();
+                if (z < banenMinZoom) {
+                    map.setZoom(banenMinZoom);
+                }
+            } catch (eZ) { /* ignore */ }
+        });
         map._jobsyOnStyleRestored = restoreOverlays;
         map.on("load", function () {
             restoreOverlays();

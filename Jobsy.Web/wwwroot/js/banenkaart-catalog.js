@@ -144,7 +144,7 @@
 
     function crowFliesKmPerHour(mode) {
         if (mode === "car") {
-            return 40 / 1.35;
+            return 80 / 1.35;
         }
         if (mode === "transit") {
             return 25 / 1.5;

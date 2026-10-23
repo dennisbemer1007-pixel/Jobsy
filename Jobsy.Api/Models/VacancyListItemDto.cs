@@ -7,7 +7,8 @@ public sealed record VacancyListPageDto(
     int Skip,
     int Take,
     int TotalCount,
-    bool HasMore);
+    bool HasMore,
+    bool OutsideTravelFallback = false);
 
 public record VacancyListItemDto(
     Guid Id,

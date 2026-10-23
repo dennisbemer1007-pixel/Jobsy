@@ -7,4 +7,5 @@ public sealed class VacancyListPage
     public int Take { get; set; }
     public int TotalCount { get; set; }
     public bool HasMore { get; set; }
+    public bool OutsideTravelFallback { get; set; }
 }
