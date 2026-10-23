@@ -7,9 +7,9 @@ window.jobsyMaps = (function () {
     var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261023-cat2"
+        "/js/jobsyMapLibre.min.js?v=20261023-acc3"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-cat2"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-acc3"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -212,7 +212,7 @@ window.jobsyMaps = (function () {
         if (!parsed) {
             return;
         }
-        var warmUrl = parsed.catalogUrl || parsed.pinsUrl;
+        var warmUrl = parsed.catalogMode ? parsed.catalogUrl : (parsed.catalogUrl || parsed.pinsUrl);
         if (!hasInlinePins(parsed) && warmUrl && typeof fetch === "function") {
             fetch(String(warmUrl), {
                 credentials: "same-origin",
