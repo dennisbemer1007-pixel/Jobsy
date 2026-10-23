@@ -47,10 +47,11 @@ internal static class BanenkaartSsrShells
         }
 
         AppendMockupTopBar(sb, culture, model, candidateDisplayName);
-        AppendNearbyHeroStrip(sb, culture);
-        AppendChrome(sb, culture, model);
+        AppendNearbyHeroStrip(sb);
+        sb.Append("<div class=\"main kb-lagen-main\">");
         AppendVacancyPane(sb, culture, model);
         AppendMapPane(sb, culture, model);
+        sb.Append("</div>");
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
         AppendMapFab(sb, culture);
 
@@ -72,39 +73,31 @@ internal static class BanenkaartSsrShells
         sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc11\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc12\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("</div>");
         return sb.ToString();
     }
 
-    private static void AppendChrome(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
+    private static void AppendMockupPanelHead(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
     {
         var q = model.Query;
-        sb.Append("<div class=\"jobsy-chrome\"><h1 class=\"visually-hidden\">")
-            .Append(WebUtility.HtmlEncode(culture["Seo.HomeHeading"]))
-            .Append("</h1>");
-
-        sb.Append("<div class=\"ph kb-filter-bar\" role=\"toolbar\" aria-label=\"")
+        sb.Append("<div class=\"ph kb-panel-head discovery-toolbar--desktop\" role=\"toolbar\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
-            .Append("\" data-testid=\"kb-panel-head-mobile\"><div class=\"srow mobfirst kb-filter-bar__row kb-panel-head__search-row\">");
-        sb.Append("<div class=\"field grow kb-chrome-search kb-filter-search kb-filter-search--bar\">")
+            .Append("\" data-testid=\"kb-panel-head\"><div class=\"srow mobfirst kb-panel-head__filters-row\">");
+        sb.Append("<div class=\"field grow\">")
             .Append(NavIcons.Search.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
-            .Append("<label class=\"visually-hidden\" for=\"discovery-keyword-mobile\">")
+            .Append("<label class=\"visually-hidden\" for=\"discovery-keyword\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Keyword"]))
-            .Append("</label><input id=\"discovery-keyword-mobile\" type=\"text\" inputmode=\"search\" autocomplete=\"off\" data-testid=\"kb-keyword-search\" placeholder=\"")
+            .Append("</label><input id=\"discovery-keyword\" type=\"search\" inputmode=\"search\" autocomplete=\"off\" data-testid=\"kb-keyword-search\" placeholder=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.Filter.KeywordPlaceholder"]))
             .Append("\" value=\"")
             .Append(WebUtility.HtmlEncode(q.SearchQuery ?? ""))
             .Append("\" name=\"q\" form=\"kb-filter-form\" /></div>");
-        sb.Append("<button type=\"button\" class=\"btn sec kb-filters-button\" data-testid=\"kb-filters-button\" aria-expanded=\"false\" aria-controls=\"discovery-filters\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Kb.Filter.FiltersAria"]))
-            .Append("\"><span class=\"kb-filters-button__icon\" aria-hidden=\"true\">")
+        sb.Append("<button type=\"button\" class=\"btn sec kb-filters-button\" data-testid=\"kb-filters-button\" aria-expanded=\"false\" aria-controls=\"discovery-filters\">")
             .Append(NavIcons.Filters)
-            .Append("</span><span>")
-            .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
-            .Append("</span>");
+            .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]));
         if (model.ActiveFilterCount > 0)
         {
             sb.Append("<span class=\"jobsy-action__badge\" data-testid=\"kb-filters-badge\">")
@@ -112,76 +105,86 @@ internal static class BanenkaartSsrShells
                 .Append("</span>");
         }
 
-        sb.Append("</button></div>");
-
-        AppendAddressField(sb, culture, "discovery-address", model.AddressLabel, "addr kb-panel-head__address-row kb-panel-head__address");
-        BanenkaartSsrActiveFilters.Append(sb, culture, model);
-
-        sb.Append("<div class=\"rh kb-filter-bar__row kb-filter-bar__summary\"><div><b class=\"kb-filter-bar__count\" data-testid=\"kb-mobile-result-count\">")
-            .Append(WebUtility.HtmlEncode(model.ResultCountHeading))
-            .Append("</b>");
-        if (!string.IsNullOrWhiteSpace(model.ResultCountSubtitle))
-        {
-            sb.Append("<small class=\"kb-filter-bar__count-sub muted\">")
-                .Append(WebUtility.HtmlEncode(model.ResultCountSubtitle))
-                .Append("</small>");
-        }
-
-        sb.Append("</div><div class=\"srow\">");
+        sb.Append("</button>");
         if (!model.IsCandidate || model.OpenForWork)
         {
             var matchHref = model.IsAuthenticated ? "/candidate/match" : "/login?returnUrl=%2Fcandidate%2Fmatch";
-            sb.Append("<a class=\"btn match mobonly kb-match-button kb-match-button--icon jobsy-action--match kb-filter-bar__match\" data-testid=\"kb-match-button\" href=\"")
+            sb.Append("<a class=\"btn match deskonly kb-match-button\" data-testid=\"kb-match-button\" href=\"")
                 .Append(matchHref)
-                .Append("\" aria-label=\"")
-                .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
-                .Append("\"><span class=\"kb-match-button__icon\" aria-hidden=\"true\">")
+                .Append("\">")
                 .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
-                .Append("</span><span class=\"kb-match-button__label\">")
-                .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
-                .Append("</span></a>");
-        }
-
-        sb.Append("<div class=\"seg kb-view-toggle kb-view-toggle--mobile\" role=\"radiogroup\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Kb.View.ToggleAria"]))
-            .Append("\" data-testid=\"kb-view-toggle\">");
-        sb.Append("<button type=\"button\" class=\"kb-view-toggle__btn on is-active\" role=\"radio\" aria-checked=\"true\" data-testid=\"kb-view-kaart\">")
-            .Append(WebUtility.HtmlEncode(culture["Kb.View.Map"]))
-            .Append("</button><button type=\"button\" class=\"kb-view-toggle__btn\" role=\"radio\" aria-checked=\"false\" data-testid=\"kb-view-lijst\">")
-            .Append(WebUtility.HtmlEncode(culture["Kb.View.List"]))
-            .Append("</button></div></div></div></div>");
-
-        sb.Append("<div class=\"ph kb-panel-head discovery-toolbar--desktop\" role=\"toolbar\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
-            .Append("\" data-testid=\"kb-panel-head\">");
-        AppendAddressField(sb, culture, "discovery-address-desktop", model.AddressLabel, "addr kb-panel-head__address", labeled: true);
-        sb.Append("<div class=\"srow mobfirst kb-panel-head__filters-row\">");
-        sb.Append("<div class=\"grow kb-chrome-search kb-filter-search kb-filter-search--single\">")
-            .Append(NavIcons.Search.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
-            .Append("<input id=\"discovery-keyword-desktop\" type=\"search\" data-testid=\"kb-keyword-search\" placeholder=\"")
-            .Append(WebUtility.HtmlEncode(culture["Kb.Filter.KeywordPlaceholder"]))
-            .Append("\" value=\"")
-            .Append(WebUtility.HtmlEncode(q.SearchQuery ?? ""))
-            .Append("\" name=\"q\" form=\"kb-filter-form\" /></div>");
-        sb.Append("<button type=\"button\" class=\"btn sec kb-filters-button kb-panel-head__filters\" data-testid=\"kb-filters-button\" aria-expanded=\"false\" aria-controls=\"discovery-filters\">")
-            .Append(NavIcons.Filters)
-            .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
-            .Append("</button>");
-        if (!model.IsCandidate || model.OpenForWork)
-        {
-            var matchHref = model.IsAuthenticated ? "/candidate/match" : "/login?returnUrl=%2Fcandidate%2Fmatch";
-            sb.Append("<a class=\"btn match deskonly kb-match-button kb-match-button--icon kb-match-button--lagen jobsy-action--match\" data-testid=\"kb-match-button\" href=\"")
-                .Append(matchHref)
-                .Append("\"><span class=\"kb-match-button__icon\" aria-hidden=\"true\">")
-                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
-                .Append("</span><span class=\"kb-match-button__label\">")
+                .Append("<span class=\"kb-match-button__label\">")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("</span></a>");
         }
 
         sb.Append("</div>");
+        AppendAddressField(sb, culture, "discovery-address", model.AddressLabel, "addr", labeled: true);
         BanenkaartSsrActiveFilters.Append(sb, culture, model);
-        sb.Append("</div></div>");
+        sb.Append("</div>");
+    }
+
+    private static void AppendMockupResultsRow(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
+    {
+        sb.Append("<div class=\"rh results-meta results-meta--ssr\" data-testid=\"kb-results-meta\"><div><b class=\"mobonly\" data-testid=\"kb-mobile-result-count\">")
+            .Append(WebUtility.HtmlEncode(model.ResultCountHeading))
+            .Append("</b><b class=\"deskonly results-meta__count\" data-testid=\"kb-desktop-result-count\">")
+            .Append(WebUtility.HtmlEncode(model.ResultCountHeading))
+            .Append("</b>");
+        if (!string.IsNullOrWhiteSpace(model.ResultCountSubtitle))
+        {
+            sb.Append("<small class=\"results-meta__sub muted\">")
+                .Append(WebUtility.HtmlEncode(model.ResultCountSubtitle))
+                .Append("</small>");
+        }
+
+        sb.Append("</div><div class=\"srow\">");
+        sb.Append("<label class=\"sel deskonly results-meta__sort\"><span class=\"visually-hidden\">")
+            .Append(WebUtility.HtmlEncode(culture["Discovery.Sort"]))
+            .Append("</span><select class=\"results-meta__sort-select\" data-testid=\"kb-list-sort\" form=\"kb-filter-form\" name=\"sort\">");
+        var sort = model.Query.SortMode;
+        if (model.Query.OriginLat is not null)
+        {
+            sb.Append("<option value=\"distance\"")
+                .Append(string.Equals(sort, "distance", StringComparison.OrdinalIgnoreCase) ? " selected" : "")
+                .Append('>')
+                .Append(WebUtility.HtmlEncode(culture["Kb.List.SortNear"]))
+                .Append("</option>");
+        }
+
+        sb.Append("<option value=\"title\"")
+            .Append(string.Equals(sort, "title", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(sort) ? " selected" : "")
+            .Append('>')
+            .Append(WebUtility.HtmlEncode(culture["Discovery.SortAlphaAsc"]))
+            .Append("</option></select></label>");
+        if (!model.IsCandidate || model.OpenForWork)
+        {
+            var matchHref = model.IsAuthenticated ? "/candidate/match" : "/login?returnUrl=%2Fcandidate%2Fmatch";
+            sb.Append("<a class=\"btn match mobonly\" data-testid=\"kb-match-button\" href=\"")
+                .Append(matchHref)
+                .Append("\" aria-label=\"")
+                .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
+                .Append("\">")
+                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+                .Append("</a>");
+        }
+
+        sb.Append("<div class=\"seg kb-view-toggle\" role=\"radiogroup\" aria-label=\"")
+            .Append(WebUtility.HtmlEncode(culture["Kb.View.ToggleAria"]))
+            .Append("\" data-testid=\"kb-view-toggle\" data-kb-view-toggle-desktop=\"1\">");
+        sb.Append("<button type=\"button\" class=\"kb-view-toggle__btn")
+            .Append(model.Query.DesktopListMode ? "" : " on is-active")
+            .Append("\" role=\"radio\" aria-checked=\"")
+            .Append(model.Query.DesktopListMode ? "false" : "true")
+            .Append("\" data-testid=\"kb-view-kaart\">")
+            .Append(WebUtility.HtmlEncode(culture["Kb.View.Map"]))
+            .Append("</button><button type=\"button\" class=\"kb-view-toggle__btn")
+            .Append(model.Query.DesktopListMode ? " is-active" : "")
+            .Append("\" role=\"radio\" aria-checked=\"")
+            .Append(model.Query.DesktopListMode ? "true" : "false")
+            .Append("\" data-testid=\"kb-view-lijst\">")
+            .Append(WebUtility.HtmlEncode(culture["Kb.View.List"]))
+            .Append("</button></div></div></div>");
     }
 
     private static void AppendAddressField(
@@ -193,12 +196,11 @@ internal static class BanenkaartSsrShells
         bool labeled = false)
     {
         var hasOrigin = !string.IsNullOrWhiteSpace(value);
-        sb.Append("<div class=\"kb-address");
-        if (!string.IsNullOrWhiteSpace(cssClass))
+        sb.Append("<div class=\"addr kb-panel-head__address kb-address");
+        if (!string.IsNullOrWhiteSpace(cssClass) && cssClass != "addr")
         {
             sb.Append(' ').Append(cssClass);
         }
-
         if (hasOrigin)
         {
             sb.Append(" kb-address--with-clear");
@@ -207,14 +209,20 @@ internal static class BanenkaartSsrShells
         sb.Append("\">");
         if (labeled)
         {
-            sb.Append("<label class=\"kb-address__label\" for=\"")
+            sb.Append("<label for=\"")
                 .Append(inputId)
                 .Append("\">")
                 .Append(WebUtility.HtmlEncode(culture["Discovery.Address"]))
                 .Append("</label>");
         }
 
-        sb.Append("<div class=\"srow kb-address__srow\"><div class=\"field grow kb-address__field\"><input id=\"")
+        sb.Append("<div class=\"srow\"><div class=\"field grow");
+        if (hasOrigin)
+        {
+            sb.Append(" val");
+        }
+
+        sb.Append(" kb-address__field\"><input id=\"")
             .Append(inputId)
             .Append("\" type=\"text\" role=\"combobox\" autocomplete=\"off\" aria-autocomplete=\"list\" data-testid=\"kb-address-input\" placeholder=\"")
             .Append(WebUtility.HtmlEncode(culture["Discovery.AddressPlaceholder"]))
@@ -223,12 +231,13 @@ internal static class BanenkaartSsrShells
             .Append("\" data-kb-address=\"1\" /></div>");
         sb.Append("<button type=\"button\" class=\"sq kb-address__geo\" data-testid=\"kb-address-locate\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Discovery.UseMyLocation"]))
-            .Append("\"><span class=\"kb-address__geo-icon\" aria-hidden=\"true\"><svg class=\"ic\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/></svg></span></button>");
+            .Append("\">")
+            .Append("<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/></svg></button>");
         if (hasOrigin)
         {
             sb.Append("<button type=\"button\" class=\"sq deskonly kb-address__clear\" data-testid=\"kb-address-clear\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Common.Clear"]))
-                .Append("\"><svg class=\"kb-address__clear-icon ic\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\" /></svg></button>");
+                .Append("\"><svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\" /></svg></button>");
         }
 
         sb.Append("</div><ul class=\"address-suggestions\" role=\"listbox\" data-kb-address-suggest=\"1\" hidden></ul></div>");
@@ -249,7 +258,7 @@ internal static class BanenkaartSsrShells
 
         sb.Append("<header class=\"top kb-mockup-top\" data-testid=\"kb-mockup-top\">");
         sb.Append("<a class=\"brand\" href=\"/\" aria-label=\"Lobsy\">");
-        sb.Append("<img src=\"").Append(WebUtility.HtmlEncode(BrandImages.AppIconSvg)).Append("\" width=\"40\" height=\"40\" alt=\"\" decoding=\"async\" />");
+        sb.Append("<img src=\"/images/brand/banenkaart-lagen-logo.png\" width=\"40\" height=\"40\" alt=\"\" decoding=\"async\" />");
         sb.Append("<b>Lobsy</b><small>").Append(WebUtility.HtmlEncode(tagline)).Append("</small></a>");
         sb.Append("<div class=\"tr\">");
         sb.Append("<a class=\"round\" href=\"").Append(WebUtility.HtmlEncode(notificationsHref))
@@ -264,92 +273,23 @@ internal static class BanenkaartSsrShells
         sb.Append("</span></a></div></header>");
     }
 
-    private static void AppendNearbyHeroStrip(StringBuilder sb, CultureState culture)
+    private static void AppendNearbyHeroStrip(StringBuilder sb)
     {
-        sb.Append("<header class=\"kb-nearby-banner kb-nearby-banner--strip kb-nearby-banner--strip-wide kb-banenkaart-header-strip\" data-testid=\"kb-nearby-banner\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Discovery.NearbyTitle"]))
-            .Append("\">");
-        sb.Append("<div class=\"kb-banenkaart-header-strip__inner\" aria-hidden=\"true\">");
-        AppendHeroStripPicture(sb);
-        sb.Append("</div></header>");
-    }
-
-    private static void AppendHeroStripPicture(StringBuilder sb)
-    {
-        sb.Append("<picture>");
-        sb.Append("<source media=\"(max-width: 600px)\" type=\"image/webp\" srcset=\"")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripMobileWebp))
-            .Append(" 390w, ")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripMobileWebp2x))
-            .Append(" 780w\" />");
-        sb.Append("<source media=\"(min-width: 601px)\" type=\"image/webp\" srcset=\"")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripDesktopWebp))
-            .Append(" 1440w, ")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripDesktopWebp2x))
-            .Append(" 2880w\" />");
-        sb.Append("<source media=\"(max-width: 600px)\" srcset=\"")
+        sb.Append("<div class=\"rustig-hero kb-nearby-banner kb-nearby-banner--strip kb-banenkaart-header-strip\" data-testid=\"kb-nearby-banner\" aria-hidden=\"true\">");
+        sb.Append("<img class=\"desk\" src=\"")
+            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripDesktopJpg))
+            .Append("\" alt=\"\" width=\"1440\" height=\"150\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
+        sb.Append("<img class=\"mob\" src=\"")
             .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripMobileJpg))
-            .Append(" 390w, ")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripMobileJpg2x))
-            .Append(" 780w\" />");
-        sb.Append("<img class=\"kb-banenkaart-header-strip__img\" src=\"")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripDesktopJpg))
-            .Append("\" srcset=\"")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripDesktopJpg))
-            .Append(" 1440w, ")
-            .Append(WebUtility.HtmlEncode(CandidateIllustratedImages.BanenkaartHeroStripDesktopJpg2x))
-            .Append(" 2880w\" sizes=\"100vw\" alt=\"\" width=\"1440\" height=\"150\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
-        sb.Append("</picture>");
+            .Append("\" alt=\"\" width=\"390\" height=\"90\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
+        sb.Append("</div>");
     }
 
     private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
     {
-        sb.Append("<aside class=\"vacancy-pane\"><div class=\"rh results-meta results-meta--ssr\" data-testid=\"kb-results-meta\">");
-        sb.Append("<div class=\"results-meta__text\"><b class=\"results-meta__count\" data-testid=\"kb-desktop-result-count\">")
-            .Append(WebUtility.HtmlEncode(model.ResultCountHeading))
-            .Append("</b>");
-        if (!string.IsNullOrWhiteSpace(model.ResultCountSubtitle))
-        {
-            sb.Append("<small class=\"results-meta__sub muted\">")
-                .Append(WebUtility.HtmlEncode(model.ResultCountSubtitle))
-                .Append("</small>");
-        }
-
-        sb.Append("</div><div class=\"srow results-meta__actions\">");
-        sb.Append("<label class=\"results-meta__sort sel\"><span class=\"visually-hidden\">")
-            .Append(WebUtility.HtmlEncode(culture["Discovery.Sort"]))
-            .Append("</span><select class=\"results-meta__sort-select\" data-testid=\"kb-list-sort\" form=\"kb-filter-form\" name=\"sort\">");
-        var sort = model.Query.SortMode;
-        if (model.Query.OriginLat is not null)
-        {
-            sb.Append("<option value=\"distance\"")
-                .Append(string.Equals(sort, "distance", StringComparison.OrdinalIgnoreCase) ? " selected" : "")
-                .Append('>')
-                .Append(WebUtility.HtmlEncode(culture["Kb.List.SortNear"]))
-                .Append("</option>");
-        }
-
-        sb.Append("<option value=\"title\"")
-            .Append(string.Equals(sort, "title", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(sort) ? " selected" : "")
-            .Append('>')
-            .Append(WebUtility.HtmlEncode(culture["Discovery.SortAlphaAsc"]))
-            .Append("</option></select></label>");
-        sb.Append("<div class=\"seg kb-view-toggle kb-view-toggle--desktop\" role=\"radiogroup\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Kb.View.ToggleAria"]))
-            .Append("\" data-testid=\"kb-view-toggle-desktop\">");
-        sb.Append("<button type=\"button\" class=\"kb-view-toggle__btn")
-            .Append(model.Query.DesktopListMode ? "" : " on is-active")
-            .Append("\" role=\"radio\" aria-checked=\"")
-            .Append(model.Query.DesktopListMode ? "false" : "true")
-            .Append("\" data-testid=\"kb-view-kaart\">")
-            .Append(WebUtility.HtmlEncode(culture["Kb.View.Map"]))
-            .Append("</button><button type=\"button\" class=\"kb-view-toggle__btn")
-            .Append(model.Query.DesktopListMode ? " is-active" : "")
-            .Append("\" role=\"radio\" aria-checked=\"")
-            .Append(model.Query.DesktopListMode ? "true" : "false")
-            .Append("\" data-testid=\"kb-view-lijst\">")
-            .Append(WebUtility.HtmlEncode(culture["Kb.View.List"]))
-            .Append("</button></div></div></div>");
+        sb.Append("<aside class=\"vacancy-pane panel\">");
+        AppendMockupPanelHead(sb, culture, model);
+        AppendMockupResultsRow(sb, culture, model);
         sb.Append("<div class=\"list vacancy-list\" data-testid=\"vacancy-list\">");
         if (model.ShowEmptyTravelMessage)
         {
@@ -383,7 +323,7 @@ internal static class BanenkaartSsrShells
 
     private static void AppendMapPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
     {
-        sb.Append("<section class=\"map-pane\" aria-label=\"")
+        sb.Append("<section class=\"map-pane mapw\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Page.JobMapTitle"]))
             .Append("\">");
         if (model.ShowStartPrompt)

@@ -3257,8 +3257,7 @@ window.jobMap = (function () {
                 el.className = "map-iso-label kb-rl";
                 el.setAttribute("title", labelText);
                 el.setAttribute("aria-label", labelText);
-                el.innerHTML = bike + "<span>" + escapeHtml(String(mins)) + " min " +
-                    escapeHtml(labelVerb) + "</span>";
+                el.innerHTML = bike + "<span>" + escapeHtml(String(mins)) + " min</span>";
             } else {
                 el.className = "map-iso-label" + (isChosen ? " map-iso-label--chosen" : "");
                 el.setAttribute("title", labelText);
@@ -4479,8 +4478,8 @@ window.jobMap = (function () {
                 type: "geojson",
                 data: pinsGeoJson(),
                 cluster: true,
-                clusterRadius: CLUSTER_OPTS.clusterRadius,
-                clusterMaxZoom: CLUSTER_OPTS.clusterMaxZoom,
+                clusterRadius: lagenLayout ? 45 : CLUSTER_OPTS.clusterRadius,
+                clusterMaxZoom: lagenLayout ? 10 : CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
                     agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },
