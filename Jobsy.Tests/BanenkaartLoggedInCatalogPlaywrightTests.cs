@@ -69,6 +69,26 @@ public sealed class BanenkaartLoggedInCatalogPlaywrightTests : IAsyncLifetime
         var emptyTravelMsg = await page.Locator("[data-testid=kb-empty-travel]").CountAsync();
         Assert.True(emptyTravelMsg > 0, "Expected travel empty-state when list has zero in-range vacancies.");
 
+        var mapHeight = await page.Locator("#job-map").EvaluateAsync<double>(
+            "el => el.getBoundingClientRect().height");
+        Assert.True(mapHeight >= 300, $"#job-map height {mapHeight}px should be at least 300px.");
+
+        var visibleToolbars = await page.EvaluateAsync<int>(
+            """
+            () => {
+              const vis = (el) => {
+                if (!el) return false;
+                const s = getComputedStyle(el);
+                return s.display !== 'none' && s.visibility !== 'hidden' && el.getClientRects().length > 0;
+              };
+              let n = 0;
+              if (vis(document.querySelector('[data-testid=kb-panel-head-mobile]'))) n++;
+              if (vis(document.querySelector('[data-testid=kb-panel-head]'))) n++;
+              return n;
+            }
+            """);
+        Assert.Equal(1, visibleToolbars);
+
         await page.WaitForFunctionAsync(
             """
             () => {
@@ -98,12 +118,16 @@ public sealed class BanenkaartLoggedInCatalogPlaywrightTests : IAsyncLifetime
             "el => getComputedStyle(el).width");
         Assert.NotEqual("100%", filterBtnWidth.Trim());
 
-        var appMinCss = await page.EvaluateAsync<bool>(
+        var authChromeCss = await page.EvaluateAsync<bool>(
             """
-            () => Array.from(document.querySelectorAll('link[rel=stylesheet]'))
-              .some(l => (l.href || '').indexOf('app.min.css') !== -1)
+            () => {
+              const links = Array.from(document.querySelectorAll('link[rel=stylesheet]'));
+              const hasAuth = links.some(l => (l.href || '').indexOf('banenkaart-auth-chrome.css') !== -1);
+              const hasAppMin = links.some(l => (l.href || '').indexOf('app.min.css') !== -1);
+              return hasAuth && !hasAppMin;
+            }
             """);
-        Assert.True(appMinCss, "Logged-in banenkaart should load app.min.css for header/toolbar chrome.");
+        Assert.True(authChromeCss, "Logged-in banenkaart should load scoped auth chrome CSS, not app.min.css.");
 
         Assert.True(consoleErrors.Count == 0, "Console errors: " + string.Join("; ", consoleErrors));
     }

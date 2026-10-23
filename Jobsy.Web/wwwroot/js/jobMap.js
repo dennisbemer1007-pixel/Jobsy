@@ -3015,7 +3015,7 @@ window.jobMap = (function () {
                 paint: {
                     "fill-color": colors.fill,
                     "fill-opacity": [
-                        "match", ["get", "minutes"],
+                        "match", ["coalesce", ["get", "minutes"], 0],
                         10, 0.12,
                         20, 0.09,
                         30, 0.06,
@@ -3034,7 +3034,7 @@ window.jobMap = (function () {
                     "line-color": "#ffffff",
                     "line-width": [
                         "case",
-                        ["==", ["get", "chosen"], 1],
+                        ["==", ["coalesce", ["get", "chosen"], 0], 1],
                         4.5,
                         3
                     ],
@@ -3051,14 +3051,14 @@ window.jobMap = (function () {
                     "line-color": colors.line,
                     "line-width": [
                         "case",
-                        ["==", ["get", "chosen"], 1],
+                        ["==", ["coalesce", ["get", "chosen"], 0], 1],
                         2.5,
                         1.5
                     ],
                     "line-opacity": 1,
                     "line-dasharray": [
                         "case",
-                        [">=", ["get", "minutes"], 30],
+                        [">=", ["coalesce", ["get", "minutes"], 0], 30],
                         ["literal", [2, 2]],
                         ["literal", [1, 0]]
                     ]
@@ -3621,13 +3621,13 @@ window.jobMap = (function () {
                         featured: (kansberoep || isFeaturedVacancy(v)) ? 1 : 0,
                         kansberoep: kansberoep,
                         agency: agency,
-                        radiusKm: agency ? agencyRadiusKm(v) : 0,
+                        radiusKm: agency ? Number(agencyRadiusKm(v) || 0) : 0,
                         workType: workTypeOf(v) || "",
                         glyph: kansberoep ? "★" : (agency ? "◆" : workTypeGlyph(workTypeOf(v))),
                         colour: kansberoep ? "#c9a227" : (openInit ? COMPANY_OPEN_PIN_COLOR : (agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""))),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
-                        outside: outside
+                        outside: outside ? 1 : 0
                     }
                 };
             })
@@ -3751,7 +3751,7 @@ window.jobMap = (function () {
                 clusterRadius: CLUSTER_OPTS.clusterRadius,
                 clusterMaxZoom: CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
-                    agency_sum: ["+", ["get", "agency"]]
+                    agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },
                 promoteId: "id"
             });
@@ -3893,7 +3893,7 @@ window.jobMap = (function () {
                     ],
                     "circle-opacity": [
                         "case",
-                        ["==", ["get", "outside"], 1],
+                        ["==", ["coalesce", ["get", "outside"], 0], 1],
                         0.35,
                         0.95
                     ]
@@ -3913,7 +3913,7 @@ window.jobMap = (function () {
                 paint: {
                     "text-opacity": [
                         "case",
-                        ["==", ["get", "outside"], 1],
+                        ["==", ["coalesce", ["get", "outside"], 0], 1],
                         0.35,
                         1
                     ]

@@ -41,7 +41,9 @@ public static class BanenkaartClientEndpoints
                 error: culture["Common.Error.TryAgain"]));
         }
 
-        var state = BanenkaartSsrQuery.FromForm(form);
+        var fromQuery = BanenkaartSsrQuery.Parse(http.Request.Query);
+        var merged = BanenkaartFilterCookie.Merge(http, fromQuery);
+        var state = BanenkaartSsrQuery.FromForm(form, merged);
         BanenkaartFilterCookie.Persist(http.Response, state);
         return SeeOther(BanenkaartSsrQuery.BuildUrl(state));
     }
