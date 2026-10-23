@@ -1112,15 +1112,91 @@ window.jobMap = (function () {
             "</b>" + body + "</div>";
     }
 
-    function lagenWorkplacePhotoHtml(v) {
-        const src = v.imageUrl ? String(v.imageUrl) : "";
-        const fallback = workTypeFallbackPhoto(v);
-        const photo = src || fallback;
-        if (!photo) {
+    let lastLagenPopupPhotoMetrics = null;
+
+    function lagenMapPopupPhotoUrl(vacancyId, mobile) {
+        if (vacancyId == null || vacancyId === "") {
+            return "";
+        }
+        const variant = mobile ? "mobile" : "desktop";
+        return "/api/vacancies/" + encodeURIComponent(String(vacancyId)) +
+            "/map-popup-photo?variant=" + variant;
+    }
+
+    function lagenWorkplacePhotoShell(v) {
+        if (!v || v.id == null) {
             return "<div class=\"fph fph--empty\" aria-hidden=\"true\"></div>";
         }
-        return "<div class=\"fph\"><img src=\"" + escapeAttr(photo) +
-            "\" alt=\"\" width=\"400\" height=\"180\" loading=\"lazy\" decoding=\"async\" /></div>";
+        return "<div class=\"fph fph--await\" data-lagen-photo-slot=\"1\" data-lagen-photo-id=\"" +
+            escapeAttr(String(v.id)) + "\"></div>";
+    }
+
+    function loadLagenPopupPhoto(root, job, opts) {
+        opts = opts || {};
+        if (!root || !job || job.id == null) {
+            return;
+        }
+        const slot = root.querySelector("[data-lagen-photo-slot]");
+        if (!slot) {
+            return;
+        }
+        slot.replaceChildren();
+        const mobile = opts.mobile != null ? !!opts.mobile : isNarrowViewport();
+        const url = lagenMapPopupPhotoUrl(job.id, mobile);
+        if (!url) {
+            slot.classList.add("fph--empty");
+            return;
+        }
+        const started = typeof performance !== "undefined" && performance.now
+            ? performance.now()
+            : Date.now();
+        slot.classList.remove("fph--await", "fph--empty");
+        slot.classList.add("fph--loading");
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.setAttribute("width", mobile ? "248" : "640");
+        img.setAttribute("height", mobile ? "248" : "360");
+        fetch(url, { credentials: "same-origin" })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error("photo-http");
+                }
+                return res.blob();
+            })
+            .then(function (blob) {
+                const ms = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - started);
+                lastLagenPopupPhotoMetrics = {
+                    vacancyId: String(job.id),
+                    variant: mobile ? "mobile" : "desktop",
+                    bytes: blob.size,
+                    kb: Math.round(blob.size / 102.4) / 10,
+                    ms: ms,
+                    url: url
+                };
+                img.onload = function () {
+                    slot.classList.remove("fph--loading");
+                };
+                img.src = URL.createObjectURL(blob);
+                slot.appendChild(img);
+            })
+            .catch(function () {
+                slot.classList.remove("fph--loading");
+                slot.classList.add("fph--empty");
+            });
+    }
+
+    function prefetchLagenPopupPhoto(job, mobile) {
+        if (!job || job.id == null) {
+            return;
+        }
+        const url = lagenMapPopupPhotoUrl(job.id, mobile);
+        if (!url) {
+            return;
+        }
+        try {
+            fetch(url, { credentials: "same-origin", priority: "low" }).catch(function () { });
+        } catch (eFetch) { }
     }
 
     function lagenContractText(v) {
@@ -1201,7 +1277,7 @@ window.jobMap = (function () {
                 (wageOpen ? "true" : "false") + "\" aria-label=\"" +
                 escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" + tip + "</button>"
             : "<span class=\"fb euro is-disabled\" aria-hidden=\"true\">€</span>";
-        const photoBlock = lagenWorkplacePhotoHtml(v);
+        const photoBlock = lagenWorkplacePhotoShell(v);
         const bodyInner = mobile
             ? "<div class=\"fbody\"><div class=\"fbody-media\">" + photoBlock + "</div><div class=\"finfo\">" +
                 "<div class=\"flrow\">" + lagenTypeLabelHtml(v) + lagenHeartHtml(v) + "</div>" +
@@ -1607,6 +1683,14 @@ window.jobMap = (function () {
     }
 
     function preloadClusterImages(jobs, fromPage) {
+        if (lagenLayout && catalogModeActive) {
+            const page = Math.max(1, fromPage || 1);
+            const next = jobs && jobs[page];
+            if (next) {
+                prefetchLagenPopupPhoto(next, isNarrowViewport());
+            }
+            return;
+        }
         const start = Math.max(0, (fromPage || 1) - 1);
         for (let i = start; i < Math.min(jobs.length, start + 3); i++) {
             const j = jobs[i];
@@ -1967,6 +2051,10 @@ window.jobMap = (function () {
                     state.root = parent && parent.querySelector("[data-lagen-fcw]");
                     const host = activeClusterPopup && activeClusterPopup.getElement();
                     bindLagenFundaInteractions(host || parent, childMarkers);
+                    const nextJob = jobs[current];
+                    if (nextJob) {
+                        prefetchLagenPopupPhoto(nextJob, isNarrowViewport());
+                    }
                 }
             } else {
                 const html = buildClusterPinHtml(resolved || job);
@@ -2418,6 +2506,12 @@ window.jobMap = (function () {
             });
         });
         bindSaveJobButtons(fcw, childMarkers || []);
+        const job = clusterUiState && clusterUiState.jobs
+            ? clusterUiState.jobs[(clusterUiState.page || 1) - 1]
+            : null;
+        if (job) {
+            loadLagenPopupPhoto(fcw, job, { mobile: isNarrowViewport() });
+        }
     }
 
     function openLagenFundaPopup(childMarkers, lngLat) {
@@ -7296,6 +7390,9 @@ window.jobMap = (function () {
         },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
+        __testGetLastPopupPhotoMetrics: function () {
+            return lastLagenPopupPhotoMetrics ? Object.assign({}, lastLagenPopupPhotoMetrics) : null;
+        },
         __testGetRenderedPinCount: function () {
             if (!map) {
                 return 0;

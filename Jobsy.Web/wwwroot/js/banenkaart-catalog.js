@@ -347,7 +347,6 @@
             company: row.company,
             offeredBy: row.offeredBy || "",
             place: row.place || "",
-            imageUrl: row.imageUrl || "",
             categoryName: row.categoryName || "",
             workTypes: row.workTypes
         };

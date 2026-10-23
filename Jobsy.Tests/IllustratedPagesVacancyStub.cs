@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Infrastructure.Media;
 using Jobsy.Web.Models;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -37,6 +38,46 @@ internal static class IllustratedPagesVacancyStub
 
         var seed = Seeds.FirstOrDefault(s => s.Id == id);
         return seed?.Image;
+    }
+
+    public static byte[]? MapPopupPhotoBytes(string path, string? queryString)
+    {
+        var id = TryParseVacancyId(path);
+        if (id is null)
+        {
+            return null;
+        }
+
+        var q = string.IsNullOrEmpty(queryString)
+            ? new Dictionary<string, string>()
+            : ParseQuery("?" + queryString.TrimStart('?'));
+        var variant = q.GetValueOrDefault("variant") ?? "desktop";
+        var width = VacancyMapPopupPhotoEncoder.WidthForVariant(variant);
+        var seed = Seeds.FirstOrDefault(s => s.Id == id);
+        var webPath = seed?.Image ?? "/images/vacancies/tuinbouw.webp";
+        var repoRoot = Directory.GetCurrentDirectory();
+        while (!string.IsNullOrEmpty(repoRoot) && !File.Exists(Path.Combine(repoRoot, "Jobsy.sln")))
+        {
+            repoRoot = Directory.GetParent(repoRoot)?.FullName ?? "";
+        }
+
+        if (string.IsNullOrEmpty(repoRoot))
+        {
+            return null;
+        }
+
+        var full = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", webPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(full))
+        {
+            full = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "images", "vacancies", "tuinbouw.webp");
+        }
+
+        if (!File.Exists(full))
+        {
+            return null;
+        }
+
+        return VacancyMapPopupPhotoEncoder.ToWebp(File.ReadAllBytes(full), width);
     }
 
     public static string JsonForPath(string path)

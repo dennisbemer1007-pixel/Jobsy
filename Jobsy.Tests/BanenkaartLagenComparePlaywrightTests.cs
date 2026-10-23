@@ -67,6 +67,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         var buttons = new List<object>();
         var elementTables = new List<object>();
         var eightPoint = new List<object>();
+        var popupPhotoMetrics = new List<object>();
         try
         {
         await CaptureViewportAsync(1280, 800, false, "desktop-1280-map-list", async (page, dir) =>
@@ -105,7 +106,12 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             buttons.Add(new { action = "employer-pin-popup", pass = opened });
             if (opened)
             {
-                await page.WaitForTimeoutAsync(500);
+                var deskPhoto = await WaitForPopupPhotoMetricsAsync(page);
+                if (deskPhoto is not null)
+                {
+                    popupPhotoMetrics.Add(new { profile = "desktop-1280-popup", metrics = deskPhoto });
+                }
+                await page.WaitForTimeoutAsync(300);
                 await ShotAsync(page, dir, "02-popup.png");
                 await SideBySideAsync(
                     Path.Combine(MockupRefRoot, "lagen/desktop/03-banenkaart-lagen-desktop-1440-enkel.png"),
@@ -174,7 +180,12 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             buttons.Add(new { action = "mobile-pin-popup-sheet", pass = opened });
             if (opened)
             {
-                await page.WaitForTimeoutAsync(400);
+                var mobPhoto = await WaitForPopupPhotoMetricsAsync(page);
+                if (mobPhoto is not null)
+                {
+                    popupPhotoMetrics.Add(new { profile = "mobile-390-vacature", metrics = mobPhoto });
+                }
+                await page.WaitForTimeoutAsync(300);
                 eightPoint.AddRange(await EvaluateEightPointVacancySheetAsync(page));
                 await ShotAsync(page, dir, "03-vacature.png");
                 await SideBySideAsync(
@@ -258,8 +269,11 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                 Path.Combine(CompareDir, "buttons-tested.json"),
                 JsonSerializer.Serialize(buttons, new JsonSerializerOptions { WriteIndented = true }));
             await File.WriteAllTextAsync(
+                Path.Combine(CompareDir, "popup-photo-metrics.json"),
+                JsonSerializer.Serialize(popupPhotoMetrics, new JsonSerializerOptions { WriteIndented = true }));
+            await File.WriteAllTextAsync(
                 Path.Combine(CompareDir, "REPORT.md"),
-                BuildReportMarkdown(elementTables, buttons));
+                BuildReportMarkdown(elementTables, buttons, popupPhotoMetrics));
             await File.WriteAllTextAsync(
                 Path.Combine(CompareDir, "eight-point-checklist.json"),
                 JsonSerializer.Serialize(eightPoint, new JsonSerializerOptions { WriteIndented = true }));
@@ -540,10 +554,14 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         Assert.True(p.ExitCode == 0, "report images failed: " + err);
     }
 
-    private static string BuildReportMarkdown(List<object> elementTables, List<object> buttons)
+    private static string BuildReportMarkdown(
+        List<object> elementTables,
+        List<object> buttons,
+        List<object> popupPhotoMetrics)
     {
         var elementJson = JsonSerializer.Serialize(elementTables, new JsonSerializerOptions { WriteIndented = true });
         var buttonsJson = JsonSerializer.Serialize(buttons, new JsonSerializerOptions { WriteIndented = true });
+        var photoJson = JsonSerializer.Serialize(popupPhotoMetrics, new JsonSerializerOptions { WriteIndented = true });
         return $"""
             # Banenkaart lagen compare (PR #923)
 
@@ -581,6 +599,14 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
 
             ```json
             {buttonsJson}
+            ```
+
+            ## Map popup photo (lazy WebP)
+
+            Loaded only when the popup opens (`/api/vacancies/` + id + `/map-popup-photo`). See `{CompareDir}/popup-photo-metrics.json`.
+
+            ```json
+            {photoJson}
             ```
 
             Generated: {DateTime.UtcNow:O}
@@ -875,6 +901,30 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             "(id) => { if (window.jobMap && window.jobMap.__testOpenVacancyById) window.jobMap.__testOpenVacancyById(id); }",
             mapPinId);
         return await WaitForVacancyPopupAsync(page);
+    }
+
+    private static async Task<object?> WaitForPopupPhotoMetricsAsync(IPage page)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const m = window.jobMap && window.jobMap.__testGetLastPopupPhotoMetrics
+                    && window.jobMap.__testGetLastPopupPhotoMetrics();
+                  return m && m.bytes > 0 && m.ms >= 0;
+                }
+                """,
+                null,
+                new() { Timeout = 20_000 });
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+
+        return await page.EvaluateAsync<object?>(
+            "() => window.jobMap && window.jobMap.__testGetLastPopupPhotoMetrics && window.jobMap.__testGetLastPopupPhotoMetrics()");
     }
 
     private static async Task<bool> WaitForVacancyPopupAsync(IPage page)

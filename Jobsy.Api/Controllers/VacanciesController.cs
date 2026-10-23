@@ -15,6 +15,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Media;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -827,6 +828,103 @@ public class VacanciesController : ControllerBase
         }
 
         return Redirect(target);
+    }
+
+    /// <summary>
+    /// Small WebP for map popups only (lazy-loaded when a popup opens). Not used in pin/list JSON.
+    /// </summary>
+    [HttpGet("{id:guid}/map-popup-photo")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<IActionResult> GetMapPopupPhoto(
+        Guid id,
+        [FromQuery] string variant = "desktop",
+        CancellationToken cancellationToken = default)
+    {
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var record = records.FirstOrDefault(r => r.Id == id);
+        if (record is null)
+        {
+            return NotFound();
+        }
+
+        var workType = record.WorkTypeLabelList.FirstOrDefault();
+        var width = VacancyMapPopupPhotoEncoder.WidthForVariant(variant);
+        var sourceBytes = await TryLoadVacancyPhotoBytesAsync(record, id, workType, cancellationToken);
+        if (sourceBytes is null || sourceBytes.Length == 0)
+        {
+            return NotFound();
+        }
+
+        var webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width);
+        Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+        return File(webp, "image/webp");
+    }
+
+    private static async Task<byte[]?> TryLoadVacancyPhotoBytesAsync(
+        VacancyDiscoveryRecord record,
+        Guid id,
+        string? workType,
+        CancellationToken cancellationToken)
+    {
+        if (VacancyImageUrls.TryDecodeInlineImage(record.ImageUrl, out var inline, out _))
+        {
+            return inline;
+        }
+
+        var display = VacancyImageUrls.ForCard(record.ImageUrl, record.CompanyLogoUrl, id, workType);
+        if (display.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+        {
+            display = VacancyImageUrls.Placeholder(id, workType);
+        }
+
+        var fromDisk = await TryReadWwwrootFileAsync(display, cancellationToken);
+        if (fromDisk is not null)
+        {
+            return fromDisk;
+        }
+
+        var fallback = VacancyImageUrls.Placeholder(id, workType);
+        return await TryReadWwwrootFileAsync(fallback, cancellationToken);
+    }
+
+    private static async Task<byte[]?> TryReadWwwrootFileAsync(string webPath, CancellationToken cancellationToken)
+    {
+        if (!VacancyImageUrls.IsSafeSameOriginPath(webPath))
+        {
+            return null;
+        }
+
+        var relative = webPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var roots =
+            new[]
+            {
+                Path.Combine(AppContext.BaseDirectory, "wwwroot"),
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Jobsy.Web", "wwwroot")),
+                Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")),
+                Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "Jobsy.Web", "wwwroot"))
+            };
+
+        foreach (var root in roots)
+        {
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                continue;
+            }
+
+            var full = Path.GetFullPath(Path.Combine(root, relative));
+            if (!full.StartsWith(Path.GetFullPath(root), StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (System.IO.File.Exists(full))
+            {
+                return await System.IO.File.ReadAllBytesAsync(full, cancellationToken);
+            }
+        }
+
+        return null;
     }
 
     [HttpGet("{id:guid}")]
