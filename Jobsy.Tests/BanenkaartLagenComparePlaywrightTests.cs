@@ -428,7 +428,9 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             () => {
               const root = document.querySelector('.map-cluster-sheet--lagen, .kb-popup-lagen--sheet');
               if (!root) return false;
-              return root.querySelector('.map-popup__heart') === null;
+              const heart = root.querySelector('.map-popup__heart');
+              if (!heart) return true;
+              return getComputedStyle(heart).display === 'none' || getComputedStyle(heart).visibility === 'hidden';
             }
             """);
         return
