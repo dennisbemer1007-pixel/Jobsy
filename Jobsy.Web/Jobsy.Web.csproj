@@ -15,8 +15,12 @@
     <InternalsVisibleTo Include="Jobsy.Tests" />
   </ItemGroup>
 
-  <Target Name="PrecompressLargeStaticJs" BeforeTargets="BeforeBuild" Condition="'$(SkipPrecompressStaticJs)' != 'true'">
-    <Exec Command="python3 &quot;$(MSBuildThisFileDirectory)../tools/scripts/precompress-wwwroot-assets.py&quot;"
+  <PropertyGroup>
+    <PrecompressStaticJsScript>$(MSBuildThisFileDirectory)../tools/scripts/precompress-wwwroot-assets.py</PrecompressStaticJsScript>
+  </PropertyGroup>
+  <Target Name="PrecompressLargeStaticJs" BeforeTargets="BeforeBuild"
+          Condition="'$(SkipPrecompressStaticJs)' != 'true' and Exists('$(PrecompressStaticJsScript)')">
+    <Exec Command="python3 &quot;$(PrecompressStaticJsScript)&quot;"
           IgnoreExitCode="false"
           ConsoleToMsBuild="true" />
   </Target>
