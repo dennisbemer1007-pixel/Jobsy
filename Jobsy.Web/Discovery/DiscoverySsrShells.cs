@@ -248,68 +248,77 @@ internal static class DiscoverySsrShells
 
         sb.Append("</div>");
 
-        sb.Append("<div class=\"journey-route__mobile-only\"><p class=\"journey-route-mobile__label\" id=\"discovery-route-mobile-label\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Discovery.Eyebrow"]));
-        sb.Append("</p><div class=\"journey-route-mobile__map\" id=\"discovery-route-canvas-mobile\" data-route-layout=\"mobile\" data-you-at-phase=\"");
-        sb.Append(WebUtility.HtmlEncode(model.YouAreHerePhaseId));
-        sb.Append("\" data-progress-frac=\"");
-        sb.Append(model.YouAreHereProgressFrac.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        sb.Append("\"><div class=\"journey-route-mobile__trail\" aria-hidden=\"true\"><svg class=\"journey-route-mobile__svg\" preserveAspectRatio=\"none\" viewBox=\"0 0 360 900\">");
-        sb.Append("<path id=\"discovery-route-path-future\" d=\"");
-        sb.Append(DiscoveryRouteGeometry.MobileFuturePathSsrD);
-        sb.Append("\" fill=\"none\" stroke=\"#c9bfb0\" stroke-width=\"8\" stroke-dasharray=\"5 8\" stroke-linecap=\"round\" opacity=\"0.45\" />");
-        sb.Append("<path id=\"discovery-route-path-done\" d=\"");
-        sb.Append(DiscoveryRouteGeometry.MobileDonePathD);
-        sb.Append("\" fill=\"none\" stroke=\"#8fb8a8\" stroke-width=\"9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.9\" />");
-        sb.Append("</svg></div><ol class=\"journey-route-mobile__stops\" role=\"list\">");
+        sb.Append("<div class=\"journey-route__mobile-only discovery-mobile-route\" id=\"discovery-route-canvas-mobile\" data-route-layout=\"mobile-list\"><ol class=\"discovery-mobile-stops\" role=\"list\">");
         for (var i = 0; i < model.Stops.Count; i++)
         {
             var stop = model.Stops[i];
             var isActive = stop.PhaseId == model.ActivePhaseId;
-            var side = i switch { 0 => "is-left", 1 => "is-right", 2 => "is-left", 3 => "is-right", _ => "is-dest" };
+            var isLast = i == model.Stops.Count - 1;
             var href = DiscoverySsrUrls.Overview(stop.PhaseId);
-            sb.Append("<li class=\"journey-route__stop journey-route-mobile__stop ");
-            sb.Append(side);
-            if (stop.PhaseId == model.YouAreHerePhaseId)
-            {
-                sb.Append(" is-you");
-            }
-
+            sb.Append("<li class=\"discovery-mobile-stop");
             if (isActive)
             {
                 sb.Append(" is-open");
             }
 
+            if (stop.PhaseId == model.YouAreHerePhaseId)
+            {
+                sb.Append(" is-you");
+            }
+
             sb.Append("\" data-phase=\"");
             sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
-            sb.Append("\"><div class=\"journey-route-mobile__row\"><a class=\"journey-route-mobile__hit journey-route__stop-link\" href=\"");
+            sb.Append("\"><div class=\"discovery-mobile-stop__row\"><div class=\"discovery-mobile-stop__rail\" aria-hidden=\"true\">");
+            if (!isLast)
+            {
+                sb.Append("<span class=\"discovery-mobile-stop__line\"></span>");
+            }
+
+            sb.Append("<a class=\"discovery-mobile-stop__circle journey-route__stop-link\" href=\"");
             sb.Append(WebUtility.HtmlEncode(href));
-            sb.Append("\" data-enhance-nav=\"false\" aria-controls=\"");
-            sb.Append(WebUtility.HtmlEncode($"discovery-panel-{stop.PhaseId}"));
-            sb.Append("\"><span class=\"journey-route-mobile__horiz\"><span class=\"journey-route-mobile__vig-slot\"><span class=\"journey-route__vignette");
+            sb.Append("\" data-enhance-nav=\"false\" aria-label=\"");
+            sb.Append(WebUtility.HtmlEncode(culture[stop.TitleKey]));
+            sb.Append("\"><span class=\"journey-route__vignette");
             if (stop.ShowCheck)
             {
                 sb.Append(" is-done");
             }
 
+            if (isActive)
+            {
+                sb.Append(" is-current");
+            }
+
             sb.Append("\"><img src=\"");
             sb.Append(WebUtility.HtmlEncode(stop.VignetteUrl));
-            sb.Append("\" alt=\"\" width=\"72\" height=\"72\" loading=\"eager\" /></span></span><span class=\"journey-route-mobile__meta\"><span class=\"journey-route__title\">");
+            sb.Append("\" alt=\"\" width=\"56\" height=\"56\" loading=\"eager\" decoding=\"async\" /></span></a></div><div class=\"discovery-mobile-stop__body\"><a class=\"discovery-mobile-stop__text journey-route__stop-link\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(href));
+            sb.Append("\" data-enhance-nav=\"false\" aria-controls=\"");
+            sb.Append(WebUtility.HtmlEncode($"discovery-panel-{stop.PhaseId}"));
+            sb.Append("\"><span class=\"journey-route__title\">");
             sb.Append(WebUtility.HtmlEncode(culture[stop.TitleKey]));
             sb.Append("</span><span class=\"journey-route__status ");
             sb.Append(WebUtility.HtmlEncode(stop.StatusClass));
             sb.Append("\">");
             sb.Append(WebUtility.HtmlEncode(stop.StatusText));
-            sb.Append("</span></span></span></a></div>");
+            sb.Append("</span>");
+            if (isActive && stop.ShowContinue)
+            {
+                sb.Append("<span class=\"btn btn-primary btn-sm journey-route__cta\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Continue"]));
+                sb.Append("</span>");
+            }
+
+            sb.Append("</a>");
             if (isActive && model.PanelTitleKey is not null)
             {
                 AppendMobileInlinePanel(sb, culture, stop, model);
             }
 
-            sb.Append("</li>");
+            sb.Append("</div></div></li>");
         }
 
-        sb.Append("</ol></div></div></div>");
+        sb.Append("</ol></div>");
 
         sb.Append("<h2 class=\"journey-q\">");
         sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.TestsHeading"]));

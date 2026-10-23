@@ -45,13 +45,26 @@ internal static class DiscoverySsrRedirect
             return $"/candidate/start?step={legacyProfileStep}";
         }
 
+        if (JourneyTestFlow.TryParseShedStep(stap, out _))
+        {
+            return null;
+        }
+
         if (journeyComplete)
         {
-            if (string.IsNullOrEmpty(stap)
-                || stap is "start"
-                || (int.TryParse(stap, out var n) && n is >= 1 and <= 10))
+            if (string.IsNullOrEmpty(stap) || stap is "start")
             {
                 return CanonicalOverview(openFase);
+            }
+
+            if (int.TryParse(stap, out var legacyBasics) && legacyBasics is >= 1 and <= 6)
+            {
+                return CanonicalOverview(openFase);
+            }
+
+            if (int.TryParse(stap, out var testEntry) && testEntry is >= 7 and <= 10)
+            {
+                return null;
             }
 
             if (string.Equals(stap, "overview", StringComparison.OrdinalIgnoreCase)
@@ -96,11 +109,6 @@ internal static class DiscoverySsrRedirect
                 cancellationToken);
             if (band.BandComplete || band.Questions.Count == 0)
             {
-                if (journeyComplete)
-                {
-                    return DiscoverySsrUrls.Overview(openFase);
-                }
-
                 return DiscoverySsrUrls.Shed(testStep);
             }
         }

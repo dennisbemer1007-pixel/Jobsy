@@ -145,7 +145,7 @@ internal static class DiscoverySsrData
             : faseRaw.Trim().ToLowerInvariant();
         var youPhase = openPhase;
         var progress = ComputeYouAreHereProgressFrac(activePhase, state, panel);
-        var stops = BuildPhaseStops(culture, draft, state, panel, openPhase);
+        var stops = BuildPhaseStops(culture, draft, panel, openPhase);
         var sections = BuildPanelSections(culture, draft, state, panel, activePhase);
         var tests = BuildTestRows(culture, panel);
         var phaseMeta = activePhase switch
@@ -260,7 +260,7 @@ internal static class DiscoverySsrData
                 accent,
                 complete || answered >= mini,
                 progressText,
-                "/candidate/paspoort?tab=tests",
+                "/candidate/paspoort?tab=tests&from=reis",
                 complete ? null : DiscoverySsrUrls.Step(step),
                 answered >= mini ? DiscoverySsrUrls.Shed(step) : null));
         }
@@ -271,7 +271,6 @@ internal static class DiscoverySsrData
     private static List<DiscoverySsrShells.OverviewStop> BuildPhaseStops(
         CultureState culture,
         OnboardingProfileDraft draft,
-        OnboardingState? state,
         CandidateDiscoveryOverviewPanelDto? panel,
         string openPhaseId)
     {
@@ -282,7 +281,7 @@ internal static class DiscoverySsrData
                 return draft.HasConsent ? culture["Discovery.Overview.Done"] : culture["Discovery.Overview.StatusOneStep"];
             }
 
-            var remaining = DiscoverySsrJourneyState.RemainingStepsInPhase(phaseId, draft, state, panel);
+            var remaining = RemainingInPhase(phaseId);
             if (remaining == 0)
             {
                 return culture["Discovery.Overview.Done"];
@@ -303,11 +302,36 @@ internal static class DiscoverySsrData
                 return "is-open";
             }
 
-            var remaining = DiscoverySsrJourneyState.RemainingStepsInPhase(phaseId, draft, state, panel);
-            return remaining == 0 ? "is-done" : "is-progress";
+            return RemainingInPhase(phaseId) == 0 ? "is-done" : "is-progress";
         }
 
-        bool done(string phaseId) => DiscoverySsrJourneyState.RemainingStepsInPhase(phaseId, draft, state, panel) == 0;
+        bool done(string phaseId) => RemainingInPhase(phaseId) == 0;
+
+        int RemainingInPhase(string phaseId)
+        {
+            if (phaseId is "beach")
+            {
+                return draft.HasConsent ? 0 : 1;
+            }
+
+            if (phaseId is "light")
+            {
+                return 0;
+            }
+
+            if (phaseId is "diep" && panel is not null)
+            {
+                return DiepTestSteps.Count(s => !DiscoverySsrOverviewSummaries.IsBasicsStepFilled(s, culture, draft, panel));
+            }
+
+            var steps = phaseId switch
+            {
+                "kust" => new[] { 1, 2 },
+                "rots" => new[] { 3, 4, 5, 6 },
+                _ => Array.Empty<int>()
+            };
+            return steps.Count(s => !DiscoverySsrOverviewSummaries.IsBasicsStepFilled(s, culture, draft, panel));
+        }
         var phases = new[] { ("beach", "Discovery.Zone.Beach", "strand"), ("kust", "Discovery.Zone.Coast", "kust"), ("rots", "Discovery.Zone.Rocks", "rotsen"), ("diep", "Discovery.Zone.Deep", "diepte"), ("light", "Discovery.Zone.Light", "licht") };
         return phases.Select(p => new DiscoverySsrShells.OverviewStop(
             p.Item1,

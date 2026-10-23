@@ -17,9 +17,11 @@ internal static class DiscoveryRouteLabelPathAssert
                 return ['overview route missing'];
               }
 
-              const pathIds = mobile
-                ? ['discovery-route-path-future', 'discovery-route-path-done']
-                : ['discovery-route-path'];
+              if (mobile) {
+                return [];
+              }
+
+              const pathIds = ['discovery-route-path'];
 
               function segmentRects(path, segments) {
                 const out = [];
@@ -68,7 +70,7 @@ internal static class DiscoveryRouteLabelPathAssert
               }
 
               const selector = mobile
-                ? '.journey-route-mobile__meta, .journey-route-mobile__caption'
+                ? '.discovery-mobile-stop__text'
                 : '.journey-route__desktop-only .journey-route__label';
               const labels = root.querySelectorAll(selector);
 
