@@ -73,7 +73,11 @@ public static class OnboardingClientStep1Saver
 
         try
         {
-            await api.SaveMyOnboardingProgressAsync(2, stepCompleted: true, ct: cancellationToken);
+            await OnboardingClientProgressSaver.SaveStickyAsync(
+                api,
+                2,
+                stepCompleted: true,
+                ct: cancellationToken);
             api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
         }
         catch (Exception)

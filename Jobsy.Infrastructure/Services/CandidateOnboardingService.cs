@@ -39,6 +39,14 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
         await AlignWizardVersionOnReadAsync(row, persist: true, cancellationToken);
+        var finishBeforeReadHeal = row.FinishReached;
+        OnboardingWizardCompletion.ApplyStickyFinish(row);
+        if (row.FinishReached && !finishBeforeReadHeal)
+        {
+            row.UpdatedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
         var shouldShow = await ShouldShowWizardAsync(userId, cancellationToken);
         CandidateOnboardingImpressionDto? impression = null;
         if (row.FinishReached
@@ -89,6 +97,7 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             }
         }
 
+        OnboardingWizardCompletion.ApplyStickyFinish(row);
         row.UpdatedAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
         CandidateOnboardingImpressionDto? impression = null;

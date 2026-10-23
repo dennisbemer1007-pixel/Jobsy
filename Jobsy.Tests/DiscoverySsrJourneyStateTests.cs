@@ -31,4 +31,26 @@ public sealed class DiscoverySsrJourneyStateTests
             new OnboardingState { CompletedAtUtc = DateTime.UtcNow, CurrentStep = 1 },
             draft));
     }
+
+    [Fact]
+    public void IsJourneyComplete_honours_all_ten_steps_when_finish_flag_missing()
+    {
+        var steps = Enumerable.Range(1, 10)
+            .Select(s => new OnboardingStepEvent
+            {
+                Step = s,
+                CompletedAtUtc = DateTime.UtcNow,
+            })
+            .ToList();
+        var state = new OnboardingState
+        {
+            CurrentStep = 2,
+            FinishReached = false,
+            IsComplete = false,
+            Steps = steps,
+        };
+        var draft = new OnboardingProfileDraft { HasConsent = true };
+
+        Assert.True(DiscoverySsrJourneyState.IsJourneyComplete(state, draft));
+    }
 }
