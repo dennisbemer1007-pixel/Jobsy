@@ -228,26 +228,7 @@ internal static class BanenkaartSsrData
 
         if (vacancies.Count == 0 && useOrigin)
         {
-            try
-            {
-                var mapPins = await api.GetVacancyPinsAsync(
-                    effectiveQuery.Transport,
-                    effectiveQuery.MaxTravelMinutes,
-                    null,
-                    null,
-                    null,
-                    effectiveQuery.WorkTypes.Count > 0 ? effectiveQuery.WorkTypes : null,
-                    effectiveQuery.SearchQuery,
-                    effectiveQuery.CategoryIds.Count > 0 ? effectiveQuery.CategoryIds : null,
-                    effectiveQuery.CompanyIds.Count > 0 ? effectiveQuery.CompanyIds : null,
-                    isCandidate && effectiveQuery.MinMatchPercent > 0 ? effectiveQuery.MinMatchPercent : null,
-                    ct: cancellationToken);
-                zoomOutsideTravel = mapPins.Count > 0;
-            }
-            catch
-            {
-                zoomOutsideTravel = false;
-            }
+            zoomOutsideTravel = true;
         }
 
         var pinCentroid = VacancyMapViewCalculator.FromPoints(
@@ -274,14 +255,14 @@ internal static class BanenkaartSsrData
 
         bootPins = [];
 
-        var pinsUrl = BanenkaartMapBoot.BuildPinsApiUrl(effectiveQuery, isCandidate);
+        var catalogUrl = BanenkaartClientCatalog.AllPath;
         var highlightSeed = HashVacancyIds(vacancies.Select(v => v.Id));
         var bootJson = BanenkaartMapBoot.BuildJson(
             culture,
             effectiveQuery,
             opening,
             bootPins,
-            pinsUrl,
+            catalogUrl,
             preferFilledLocation: !companyFocus,
             isAuthenticated,
             originLat,

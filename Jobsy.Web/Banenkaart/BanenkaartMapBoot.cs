@@ -22,7 +22,7 @@ internal static class BanenkaartMapBoot
         BanenkaartSsrQuery.State query,
         VacancyMapView opening,
         IReadOnlyList<Dictionary<string, object?>> pins,
-        string pinsUrl,
+        string catalogUrl,
         bool preferFilledLocation,
         bool isAuthenticated,
         double? originLat,
@@ -42,12 +42,14 @@ internal static class BanenkaartMapBoot
                 ["zoom"] = opening.Zoom
             },
             ["pins"] = pins,
-            ["pinsUrl"] = pinsUrl,
+            ["catalogUrl"] = catalogUrl,
+            ["catalogMode"] = true,
             ["mapInit"] = new Dictionary<string, object?>
             {
                 ["illustratedPopup"] = true,
                 ["preferFilledLocation"] = preferFilledLocation,
-                ["pinsUrl"] = pinsUrl,
+                ["catalogUrl"] = catalogUrl,
+                ["catalogMode"] = true,
                 ["highlightSeed"] = highlightSeed,
                 ["travel"] = new Dictionary<string, object?>
                 {
@@ -55,6 +57,7 @@ internal static class BanenkaartMapBoot
                     ["transport"] = query.Transport,
                     ["radiusKm"] = query.RadiusKm
                 },
+                ["filters"] = BuildFilterState(query),
                 ["labels"] = BuildLabels(culture, isAuthenticated),
                 ["illustratedTravelSpot"] = CandidateIllustratedImages.PopupTravelAccent,
                 ["illustratedVacancySpots"] = CandidateIllustratedImages.BanenkaartIllustratedSpots
@@ -86,6 +89,26 @@ internal static class BanenkaartMapBoot
         return JsonSerializer.Serialize(payload, JsonOptions)
             .Replace("<", "\\u003c", StringComparison.Ordinal);
     }
+
+    internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query) => new()
+    {
+        ["q"] = query.SearchQuery,
+        ["workTypes"] = query.WorkTypes,
+        ["maxMinutes"] = query.MaxTravelMinutes,
+        ["transport"] = query.Transport,
+        ["radiusKm"] = query.RadiusKm,
+        ["minHours"] = query.MinHoursPerWeek,
+        ["maxHours"] = query.MaxHoursPerWeek,
+        ["minWageCents"] = query.MinHourlyWageCents,
+        ["maxWageCents"] = query.MaxHourlyWageCents,
+        ["age"] = query.AgeYears,
+        ["minMatchPercent"] = query.MinMatchPercent,
+        ["categoryIds"] = query.CategoryIds.Select(id => id.ToString("D")).ToList(),
+        ["companyIds"] = query.CompanyIds.Select(id => id.ToString("D")).ToList(),
+        ["originLat"] = query.OriginLat,
+        ["originLng"] = query.OriginLng,
+        ["originLabel"] = query.OriginLabel,
+    };
 
     internal static string BuildPinsApiUrl(BanenkaartSsrQuery.State query, bool isCandidate)
     {
@@ -127,8 +150,7 @@ internal static class BanenkaartMapBoot
             qs.Add($"minMatchPercent={query.MinMatchPercent}");
         }
 
-        qs.Add("scope=map");
-        return BanenkaartClientPins.Path + "?" + string.Join("&", qs);
+        return "/api/vacancies/pins?" + string.Join("&", qs);
     }
 
     internal static List<Dictionary<string, object?>> ToBootPins(IEnumerable<VacancyPinBootItem> pins) =>

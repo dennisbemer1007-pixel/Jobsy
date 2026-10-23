@@ -2,6 +2,7 @@ window.jobsyMapLibre = (function () {
     "use strict";
 
     var LIBERTY_URL = "https://tiles.openfreemap.org/styles/liberty";
+    var LIBERTY_SAME_ORIGIN_URL = "/map/basemap/liberty/style.json";
     var STORAGE_KEY = "jobsy.mapStyle";
     var BUILDINGS_LAYER = "jobsy-3d-buildings";
 

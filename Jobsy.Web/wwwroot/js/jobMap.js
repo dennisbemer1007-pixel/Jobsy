@@ -51,7 +51,7 @@ window.jobMap = (function () {
     let illustratedVacancySpots = {};
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
-    let filterScopedPinsActive = false;
+    let catalogModeActive = false;
     let bootZoomOutsideTravel = false;
     let viewportListDotNet = null;
     /** Suppress moveend-driven pin/discover churn during programmatic camera moves / resize. */
@@ -2437,17 +2437,12 @@ window.jobMap = (function () {
         };
     }
 
-    function isFilterScopedPinsUrl(url) {
-        return url && String(url).indexOf("/api/banenkaart-client/pins") !== -1;
-    }
-
     function fetchPins(url) {
         if (!url) {
             return Promise.resolve([]);
         }
         pinsBaseUrl = stripViewportParams(String(url));
-        filterScopedPinsActive = isFilterScopedPinsUrl(pinsBaseUrl);
-        const viewportQs = filterScopedPinsActive ? "" : viewportQueryString();
+        const viewportQs = viewportQueryString();
         pinsUrl = pinsBaseUrl + viewportQs;
         const filterKey = pinsFilterKey(pinsUrl);
         const cached = !viewportQs && filterKey ? pinsByFilterKey[filterKey] : null;
@@ -2506,9 +2501,6 @@ window.jobMap = (function () {
                     rememberPinsFilter(pinsUrl, data, pinsEtag);
                 }
                 setVacancies(pins);
-                if (bootZoomOutsideTravel && lastOrigin) {
-                    fitOriginWithPinsOutsideTravel();
-                }
             })
             .catch(function (err) {
                 if (err && err.name === "AbortError") {
@@ -2516,34 +2508,6 @@ window.jobMap = (function () {
                 }
                 /* keep boot/circuit pins */
             });
-    }
-
-    function fitOriginWithPinsOutsideTravel() {
-        if (!map || !lastOrigin) {
-            return;
-        }
-        var points = vacancyPoints();
-        var ringRadius = maxRingRadiusMeters() * 1.12;
-        var bounds = ringBounds(lastOrigin.lat, lastOrigin.lng, ringRadius);
-        if (points.length) {
-            points.forEach(function (p) {
-                bounds.extend([p[1], p[0]]);
-            });
-        }
-        runWithViewportNotifySuppressed(function () {
-            try {
-                map.fitBounds(bounds, {
-                    padding: overlayFitPadding(),
-                    maxZoom: 11,
-                    animate: !prefersReducedMotion(),
-                    duration: prefersReducedMotion() ? 0 : 450
-                });
-                originHasBeenFramed = true;
-                finishOpeningFrame();
-            } catch (eFit) {
-                fitToOriginRings(true);
-            }
-        });
     }
 
     function bindSinglePopupEl(popup, full) {
@@ -3176,25 +3140,47 @@ window.jobMap = (function () {
         setIsoMode("approx");
 
         const drawGen = ++ringRedrawTries;
-        fetchIsochrones(lat, lng).then(function (fc) {
-            if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
-                Math.abs(lastOrigin.lng - lng) > 1e-7) {
-                return;
+        function loadIsochronesWhenIdle() {
+            fetchIsochrones(lat, lng).then(function (fc) {
+                if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
+                    Math.abs(lastOrigin.lng - lng) > 1e-7) {
+                    return;
+                }
+                if (!fc) {
+                    try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
+                    setIsoMode("approx");
+                    return;
+                }
+                const isoFeatures = featuresFromIsochroneFc(fc);
+                if (!isoFeatures.length) {
+                    setIsoMode("approx");
+                    return;
+                }
+                applyTravelRingData(isoFeatures, lat, lng);
+                setIsoMode("real");
+                ringRedrawTries = Math.min(ringRedrawTries, drawGen);
+            });
+        }
+        if (map && typeof map.once === "function") {
+            if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()
+                && map.areTilesLoaded && map.areTilesLoaded()) {
+                if (typeof requestIdleCallback === "function") {
+                    requestIdleCallback(loadIsochronesWhenIdle, { timeout: 5000 });
+                } else {
+                    setTimeout(loadIsochronesWhenIdle, 32);
+                }
+            } else {
+                map.once("idle", function () {
+                    if (typeof requestIdleCallback === "function") {
+                        requestIdleCallback(loadIsochronesWhenIdle, { timeout: 5000 });
+                    } else {
+                        setTimeout(loadIsochronesWhenIdle, 32);
+                    }
+                });
             }
-            if (!fc) {
-                try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
-                setIsoMode("approx");
-                return;
-            }
-            const isoFeatures = featuresFromIsochroneFc(fc);
-            if (!isoFeatures.length) {
-                setIsoMode("approx");
-                return;
-            }
-            applyTravelRingData(isoFeatures, lat, lng);
-            setIsoMode("real");
-            ringRedrawTries = Math.min(ringRedrawTries, drawGen);
-        });
+        } else {
+            loadIsochronesWhenIdle();
+        }
     }
 
     function ringBounds(lat, lng, radiusM) {
@@ -3485,6 +3471,47 @@ window.jobMap = (function () {
     function finishOpeningFrame() {
         deferMapReveal = false;
         revealMapStage();
+    }
+
+    function fitOriginWithPinsOutsideTravel() {
+        if (!map || !lastOrigin) {
+            return;
+        }
+        var points = vacancyPoints();
+        var ringRadius = maxRingRadiusMeters() * 1.12;
+        var bounds = ringBounds(lastOrigin.lat, lastOrigin.lng, ringRadius);
+        if (points.length) {
+            points.forEach(function (p) {
+                bounds.extend([p[1], p[0]]);
+            });
+        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.fitBounds(bounds, {
+                    padding: overlayFitPadding(),
+                    maxZoom: 11,
+                    animate: !prefersReducedMotion(),
+                    duration: prefersReducedMotion() ? 0 : 450
+                });
+                originHasBeenFramed = true;
+                finishOpeningFrame();
+            } catch (eFit) {
+                fitToOriginRings(true);
+            }
+        });
+    }
+
+    function setVacanciesFromCatalog(pins, meta) {
+        meta = meta || {};
+        if (meta.zoomOutsideTravel) {
+            bootZoomOutsideTravel = true;
+        }
+        setVacancies(pins || []);
+        if (bootZoomOutsideTravel && lastOrigin) {
+            fitOriginWithPinsOutsideTravel();
+        } else if (lastOrigin) {
+            fitToOriginRings(true);
+        }
     }
 
     function mapHasUsableSize() {
@@ -4248,11 +4275,14 @@ window.jobMap = (function () {
                 }
             }
             const bootPinsUrl = parsed && parsed.pinsUrl ? String(parsed.pinsUrl) : null;
+            const catalogUrl = parsed && parsed.catalogUrl ? String(parsed.catalogUrl) : null;
             return {
                 pins: pins,
                 view: view,
                 preferFilledLocation: preferFilledLocation,
                 pinsUrl: bootPinsUrl,
+                catalogUrl: catalogUrl,
+                catalogMode: !!(parsed && parsed.catalogMode),
                 illustratedPopup: !!(parsed && parsed.illustratedPopup),
                 zoomToPinsOutsideTravel: !!(parsed && parsed.zoomToPinsOutsideTravel),
                 mapInit: parsed && parsed.mapInit ? parsed.mapInit : null,
@@ -4292,6 +4322,8 @@ window.jobMap = (function () {
                 view: bootPayload.view,
                 preferFilledLocation: bootPayload.preferFilledLocation !== false,
                 pinsUrl: bootPayload.pinsUrl || null,
+                catalogUrl: bootPayload.catalogUrl || null,
+                catalogMode: bootPayload.catalogMode === true,
                 illustratedPopup: bootPayload.illustratedPopup,
                 mapInit: bootPayload.mapInit,
                 zoomToPinsOutsideTravel: bootPayload.zoomToPinsOutsideTravel
@@ -4876,10 +4908,11 @@ window.jobMap = (function () {
             ? options.illustratedVacancySpots
             : {};
 
-        bindMapRuntime();
-        filterScopedPinsActive = isFilterScopedPinsUrl(pinsBaseUrl || pinsUrl);
+        catalogModeActive = !!(options && options.catalogMode);
         bootZoomOutsideTravel = !!(options && options.zoomToPinsOutsideTravel);
-        if (!filterScopedPinsActive && (!live || !viewportPinsBound)) {
+
+        bindMapRuntime();
+        if (!catalogModeActive && (!live || !viewportPinsBound)) {
             bindViewportPinsReload();
         }
 
@@ -4925,7 +4958,7 @@ window.jobMap = (function () {
                         fetchPins(pinsUrl);
                     }
                 });
-            } else if (pinsUrl) {
+            } else if (pinsUrl && !catalogModeActive) {
                 fetchPins(pinsUrl);
             }
         } else if (!pinsUrl) {
@@ -5162,9 +5195,6 @@ window.jobMap = (function () {
         viewportPinsBound = true;
         var debounce = null;
         function schedule() {
-            if (filterScopedPinsActive) {
-                return;
-            }
             if (viewportNotifySuppressed > 0) {
                 return;
             }
@@ -5173,7 +5203,7 @@ window.jobMap = (function () {
             }
             debounce = setTimeout(function () {
                 debounce = null;
-                if (filterScopedPinsActive || viewportNotifySuppressed > 0) {
+                if (viewportNotifySuppressed > 0) {
                     return;
                 }
                 const user = viewportUserIntent();
@@ -5521,6 +5551,7 @@ window.jobMap = (function () {
         boot,
         init,
         setVacancies,
+        setVacanciesFromCatalog,
         reloadPins,
         setOrigin,
         panTo,

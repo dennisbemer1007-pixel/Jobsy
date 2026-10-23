@@ -130,6 +130,63 @@ public sealed class BanenkaartShowcasePerfPlaywrightTests : IAsyncLifetime
         await AppendReportAsync(width, row);
     }
 
+    [Theory]
+    [InlineData(390, 844, true)]
+    [InlineData(1280, 720, false)]
+    public async Task Banenkaart_after_paspoort_visit_no_console_errors_and_map_budget(int width, int height, bool touch)
+    {
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            HasTouch = touch,
+            IsMobile = touch,
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var consoleErrors = new List<string>();
+        var page = await context.NewPageAsync();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+
+        var cdp = await context.NewCDPSessionAsync(page);
+        await cdp.SendAsync("Emulation.setCPUThrottlingRate", new Dictionary<string, object> { ["rate"] = 4 });
+        await cdp.SendAsync("Network.emulateNetworkConditions", new Dictionary<string, object>
+        {
+            ["offline"] = false,
+            ["latency"] = 150,
+            ["downloadThroughput"] = (1.6 * 1024 * 1024) / 8,
+            ["uploadThroughput"] = (750 * 1024) / 8,
+        });
+
+        await page.GotoAsync(_baseUrl + "/__test/sign-in?role=candidate&return=/candidate/paspoort", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForTimeoutAsync(3500);
+
+        await page.GotoAsync(_baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Commit, Timeout = 120_000 });
+        var metrics = await page.EvaluateAsync<JsonElement>(BanenkaartPerfMeasureScript(width));
+        var mapTilesMs = metrics.GetProperty("mapTilesMs").GetDouble();
+
+        await page.WaitForFunctionAsync(
+            "() => !!(window.jobMap && document.querySelector('#job-map canvas'))",
+            null,
+            new() { Timeout = 60_000 });
+
+        Assert.True(consoleErrors.Count == 0, "Console errors: " + string.Join("; ", consoleErrors));
+        var afterPaspoort = new Dictionary<string, object?>
+        {
+            ["scenario"] = "after-paspoort",
+            ["viewport"] = $"{width}x{height}",
+            ["mapTilesMs"] = mapTilesMs,
+            ["targetMapTilesMs"] = MapTilesBudgetMs,
+        };
+        await AppendReportAsync(width + 10000, afterPaspoort);
+        Assert.True(mapTilesMs < MapTilesBudgetMs, $"map+tiles {mapTilesMs:0} ms (budget {MapTilesBudgetMs} ms) after paspoort prefetch, viewport {width}");
+    }
+
     private static async Task AppendReportAsync(int widthKey, Dictionary<string, object?> row)
     {
         using var doc = File.Exists(ReportPath)

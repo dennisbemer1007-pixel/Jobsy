@@ -409,6 +409,13 @@ public static class PageAssetCatalog
         return path is "/banenkaart" or "/banen";
     }
 
+    /// <summary>Idle prefetch of banenkaart catalog + map assets (candidate paspoort home).</summary>
+    public static bool IncludeBanenkaartPrefetch(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path is "/candidate/paspoort";
+    }
+
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [

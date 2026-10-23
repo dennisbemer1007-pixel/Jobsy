@@ -62,6 +62,11 @@ internal static class IllustratedPagesVacancyStub
             });
         }
 
+        if (path.Contains("/banenkaart-catalog", StringComparison.OrdinalIgnoreCase))
+        {
+            return BuildCatalogColumnarJson();
+        }
+
         if (path.Contains("/pins", StringComparison.OrdinalIgnoreCase))
         {
             return Serialize(BuildPins());
@@ -129,6 +134,18 @@ internal static class IllustratedPagesVacancyStub
             TotalCount = items.Count,
             HasMore = false
         };
+    }
+
+    private static string BuildCatalogColumnarJson()
+    {
+        var ids = Seeds.Select(s => s.Id.ToString("D")).ToArray();
+        var lats = Seeds.Select(s => s.Lat).ToArray();
+        var lngs = Seeds.Select(s => s.Lng).ToArray();
+        var titles = Seeds.Select(s => s.Title).ToArray();
+        var companies = Seeds.Select(s => s.Company).ToArray();
+        return $$"""
+            {"v":1,"n":{{Seeds.Length}},"id":{{JsonSerializer.Serialize(ids)}},"lat":{{JsonSerializer.Serialize(lats)}},"lng":{{JsonSerializer.Serialize(lngs)}},"t":{{JsonSerializer.Serialize(titles)}},"c":{{JsonSerializer.Serialize(companies)}},"ob":{{JsonSerializer.Serialize(Enumerable.Repeat("", Seeds.Length).ToArray())}},"w":{{JsonSerializer.Serialize(Enumerable.Repeat(1450, Seeds.Length).ToArray())}},"h0":{{JsonSerializer.Serialize(Enumerable.Repeat(16, Seeds.Length).ToArray())}},"h1":{{JsonSerializer.Serialize(Enumerable.Repeat(32, Seeds.Length).ToArray())}},"cat":{{JsonSerializer.Serialize(Enumerable.Repeat("", Seeds.Length).ToArray())}},"co":{{JsonSerializer.Serialize(Enumerable.Repeat(CompanyId.ToString("D"), Seeds.Length).ToArray())}},"wt":{{JsonSerializer.Serialize(Enumerable.Repeat(1, Seeds.Length).ToArray())}},"tr":{{JsonSerializer.Serialize(Enumerable.Repeat(1, Seeds.Length).ToArray())}},"col":{{JsonSerializer.Serialize(Enumerable.Repeat("#3366cc", Seeds.Length).ToArray())}},"s65":{{JsonSerializer.Serialize(Enumerable.Repeat(0, Seeds.Length).ToArray())}},"pm":{{JsonSerializer.Serialize(Enumerable.Repeat(0, Seeds.Length).ToArray())}},"iu":{{JsonSerializer.Serialize(Enumerable.Repeat("", Seeds.Length).ToArray())}}}
+            """;
     }
 
     private static List<VacancyPinBootItem> BuildPins()
