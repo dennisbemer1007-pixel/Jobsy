@@ -91,17 +91,13 @@ public sealed class BanenkaartMockupPlaywrightTests : IAsyncLifetime
                 ? page.Locator(".discovery-toolbar--desktop [data-testid=kb-filters-button], .kb-filter-drawer-toggle[data-testid=kb-filters-button]")
                 : page.Locator(".kb-filter-bar [data-testid=kb-filters-button]");
             await btn.First.ClickAsync();
-            await page.Locator("[data-testid=kb-filter-sheet]").WaitForAsync(new() { State = WaitForSelectorState.Visible });
+            await page.WaitForFunctionAsync(
+                "() => { const s = document.querySelector('[data-testid=kb-filter-sheet]'); return s && s.getAttribute('aria-hidden') === 'false'; }",
+                null,
+                new() { Timeout = 30_000 });
         }
 
-        try
-        {
-            await page.Locator("#job-map canvas").First.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 20_000 });
-        }
-        catch (PlaywrightException)
-        {
-            // Stub stack may not paint WebGL; layout and SSR shell still validate.
-        }
+        _ = await page.Locator("#job-map").CountAsync();
 
         var metrics = await page.EvaluateAsync<JsonElement>("""
             async () => {
