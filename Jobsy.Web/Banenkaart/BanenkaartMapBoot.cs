@@ -127,7 +127,8 @@ internal static class BanenkaartMapBoot
             qs.Add($"minMatchPercent={query.MinMatchPercent}");
         }
 
-        return "/api/vacancies/pins?" + string.Join("&", qs);
+        qs.Add("scope=map");
+        return BanenkaartClientPins.Path + "?" + string.Join("&", qs);
     }
 
     internal static List<Dictionary<string, object?>> ToBootPins(IEnumerable<VacancyPinBootItem> pins) =>

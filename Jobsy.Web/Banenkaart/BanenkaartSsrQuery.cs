@@ -31,7 +31,8 @@ internal static class BanenkaartSsrQuery
         double? OriginLng,
         string? OriginLabel,
         string? Error,
-        bool Saved);
+        bool Saved,
+        int Page = 1);
 
     internal static State Parse(IQueryCollection query)
     {
@@ -175,6 +176,13 @@ internal static class BanenkaartSsrQuery
 
         var saved = string.Equals(query["saved"].FirstOrDefault(), "1", StringComparison.Ordinal);
 
+        var page = 1;
+        if (query.TryGetValue("page", out var pageValues)
+            && int.TryParse(pageValues.FirstOrDefault(), out var parsedPage))
+        {
+            page = Math.Max(1, parsedPage);
+        }
+
         return new State(
             search,
             workTypes,
@@ -195,7 +203,8 @@ internal static class BanenkaartSsrQuery
             originLng,
             originLabel,
             error,
-            saved);
+            saved,
+            page);
     }
 
     internal static string BuildUrl(State state, string? error = null, bool? saved = null)
@@ -297,12 +306,17 @@ internal static class BanenkaartSsrQuery
             q.Add("saved=1");
         }
 
+        if (state.Page > 1)
+        {
+            q.Add($"page={state.Page}");
+        }
+
         return q.Count == 0 ? "/banenkaart" : "/banenkaart?" + string.Join("&", q);
     }
 
     internal static State FromForm(IFormCollection form, State? fallback = null)
     {
-        fallback ??= new State(null, [], KbMapStart.DefaultMaxTravelMinutes, KbMapStart.DefaultTransport, 15, 0, 40, null, null, null, 0, [], [], "distance", false, null, null, null, null, false);
+        fallback ??= new State(null, [], KbMapStart.DefaultMaxTravelMinutes, KbMapStart.DefaultTransport, 15, 0, 40, null, null, null, 0, [], [], "distance", false, null, null, null, null, false, 1);
 
         var search = form["q"].ToString().Trim();
         if (string.IsNullOrWhiteSpace(search))
@@ -383,7 +397,8 @@ internal static class BanenkaartSsrQuery
             originLng,
             originLabel,
             null,
-            false);
+            false,
+            1);
     }
 
     private static string? NormalizeTransport(string? raw)

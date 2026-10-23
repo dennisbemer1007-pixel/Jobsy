@@ -210,6 +210,17 @@ internal static class BanenkaartSsrShells
             BanenkaartSsrListHtml.AppendListRows(sb, culture, model.Query, model.Vacancies, compact: true);
         }
 
+        if (model.HasMoreList)
+        {
+            var next = BanenkaartSsrQuery.BuildUrl(model.Query with { Page = model.Query.Page + 1 });
+            var remaining = Math.Max(0, model.ListTotalCount - (model.Query.Page * BanenkaartSsrData.ListPageSize));
+            sb.Append("<a class=\"vacancy-list__more\" href=\"")
+                .Append(WebUtility.HtmlEncode(next))
+                .Append("\" data-testid=\"kb-load-more\">")
+                .Append(WebUtility.HtmlEncode(culture.Format("Discovery.ShowResults", Math.Max(remaining, BanenkaartSsrData.ListPageSize))))
+                .Append("</a>");
+        }
+
         sb.Append("</div></aside>");
     }
 

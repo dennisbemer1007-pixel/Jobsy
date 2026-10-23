@@ -51,6 +51,8 @@ window.jobMap = (function () {
     let illustratedVacancySpots = {};
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
+    let filterScopedPinsActive = false;
+    let bootZoomOutsideTravel = false;
     let viewportListDotNet = null;
     /** Suppress moveend-driven pin/discover churn during programmatic camera moves / resize. */
     let viewportNotifySuppressed = 0;
@@ -2435,12 +2437,17 @@ window.jobMap = (function () {
         };
     }
 
+    function isFilterScopedPinsUrl(url) {
+        return url && String(url).indexOf("/api/banenkaart-client/pins") !== -1;
+    }
+
     function fetchPins(url) {
         if (!url) {
             return Promise.resolve([]);
         }
         pinsBaseUrl = stripViewportParams(String(url));
-        const viewportQs = viewportQueryString();
+        filterScopedPinsActive = isFilterScopedPinsUrl(pinsBaseUrl);
+        const viewportQs = filterScopedPinsActive ? "" : viewportQueryString();
         pinsUrl = pinsBaseUrl + viewportQs;
         const filterKey = pinsFilterKey(pinsUrl);
         const cached = !viewportQs && filterKey ? pinsByFilterKey[filterKey] : null;
@@ -2499,6 +2506,9 @@ window.jobMap = (function () {
                     rememberPinsFilter(pinsUrl, data, pinsEtag);
                 }
                 setVacancies(pins);
+                if (bootZoomOutsideTravel && lastOrigin) {
+                    fitOriginWithPinsOutsideTravel();
+                }
             })
             .catch(function (err) {
                 if (err && err.name === "AbortError") {
@@ -2506,6 +2516,34 @@ window.jobMap = (function () {
                 }
                 /* keep boot/circuit pins */
             });
+    }
+
+    function fitOriginWithPinsOutsideTravel() {
+        if (!map || !lastOrigin) {
+            return;
+        }
+        var points = vacancyPoints();
+        var ringRadius = maxRingRadiusMeters() * 1.12;
+        var bounds = ringBounds(lastOrigin.lat, lastOrigin.lng, ringRadius);
+        if (points.length) {
+            points.forEach(function (p) {
+                bounds.extend([p[1], p[0]]);
+            });
+        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.fitBounds(bounds, {
+                    padding: overlayFitPadding(),
+                    maxZoom: 11,
+                    animate: !prefersReducedMotion(),
+                    duration: prefersReducedMotion() ? 0 : 450
+                });
+                originHasBeenFramed = true;
+                finishOpeningFrame();
+            } catch (eFit) {
+                fitToOriginRings(true);
+            }
+        });
     }
 
     function bindSinglePopupEl(popup, full) {
@@ -4255,7 +4293,8 @@ window.jobMap = (function () {
                 preferFilledLocation: bootPayload.preferFilledLocation !== false,
                 pinsUrl: bootPayload.pinsUrl || null,
                 illustratedPopup: bootPayload.illustratedPopup,
-                mapInit: bootPayload.mapInit
+                mapInit: bootPayload.mapInit,
+                zoomToPinsOutsideTravel: bootPayload.zoomToPinsOutsideTravel
             });
         } catch (_err) {
             // Circuit init will retry.
@@ -4838,7 +4877,9 @@ window.jobMap = (function () {
             : {};
 
         bindMapRuntime();
-        if (!live || !viewportPinsBound) {
+        filterScopedPinsActive = isFilterScopedPinsUrl(pinsBaseUrl || pinsUrl);
+        bootZoomOutsideTravel = !!(options && options.zoomToPinsOutsideTravel);
+        if (!filterScopedPinsActive && (!live || !viewportPinsBound)) {
             bindViewportPinsReload();
         }
 
@@ -5121,6 +5162,9 @@ window.jobMap = (function () {
         viewportPinsBound = true;
         var debounce = null;
         function schedule() {
+            if (filterScopedPinsActive) {
+                return;
+            }
             if (viewportNotifySuppressed > 0) {
                 return;
             }
@@ -5129,7 +5173,7 @@ window.jobMap = (function () {
             }
             debounce = setTimeout(function () {
                 debounce = null;
-                if (viewportNotifySuppressed > 0) {
+                if (filterScopedPinsActive || viewportNotifySuppressed > 0) {
                     return;
                 }
                 const user = viewportUserIntent();
