@@ -115,7 +115,8 @@ svg.ic.s{width:16px;height:16px}
  .ctrls{right:12px;bottom:12px}.ctrls>span:first-child{display:none}
  .scrim{position:fixed;inset:0;background:rgba(27,36,64,.38);z-index:20;display:none!important}
  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--paper);border-radius:22px 22px 0 0;padding:10px 20px 24px;flex-direction:column;box-shadow:0 -10px 30px rgba(0,0,0,.18);display:none!important}
- body.s-legend .scrim,body.s-legend .sheet,body.s-popup .sheet{display:flex!important}
+ body.s-legend .scrim,body.s-legend .sheet,body.s-anypop .sheet{display:flex!important}
+ body.s-emp .strip,body.s-empeur .strip,body.s-clus .strip,body.s-int .strip{display:none!important}
  .sheet .grab{width:44px;height:5px;border-radius:3px;background:#D5CBBB;align-self:center;margin-bottom:10px}
  .sheet h2{font-size:20px;margin:4px 0 8px}
  .sheet .lg{min-height:52px;font-size:16px;border-bottom:1px solid #EFE8DD}.sheet .lg:last-of-type{border:0}
@@ -125,3 +126,52 @@ svg.ic.s{width:16px;height:16px}
  .hint{font-size:14px;padding:9px 12px}
 }
 .hint.below:after{left:26px;top:-7px;margin-top:0;border:7px solid transparent;border-top:0;border-bottom-color:var(--ink)}
+
+/* Funda-stijl vacaturekaart: schone kaart, knoppen zweven erboven */
+.cl.sel{width:64px;height:64px;font-size:20px;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--navy),0 6px 14px rgba(0,0,0,.3)}
+.pop.fpop{width:380px;padding:0;background:transparent;border:0;box-shadow:none;border-radius:0}
+.fctl{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fctl .sp{flex:1}
+.fb{position:relative;width:44px;height:44px;flex:none;border-radius:10px;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:21px;box-shadow:0 4px 14px -4px rgba(31,47,85,.45);border:1px solid var(--line)}
+.fb svg{width:22px;height:22px}
+.fb.fx{background:var(--navy);color:#fff;border-color:var(--navy)}
+.fb.euro.on{outline:3px solid #D9B65A;outline-offset:1px}
+.fnav{display:flex;align-items:center;gap:6px}
+.fcount{height:44px;display:flex;align-items:center;padding:0 12px;border-radius:10px;background:#fff;font-weight:800;font-size:15px;color:var(--ink);box-shadow:0 4px 14px -4px rgba(31,47,85,.45);border:1px solid var(--line)}
+.fc{background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:0 18px 40px -14px rgba(31,47,85,.5)}
+.fph{position:relative;margin:14px 14px 0;border-radius:8px;overflow:hidden;height:180px;background:#ddd}
+.fph img{width:100%;height:100%;object-fit:cover;display:block}
+.flrow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;margin-top:-6px}
+.hrt{width:44px;height:44px;margin-right:-10px;border-radius:10px;color:var(--navy);display:flex;align-items:center;justify-content:center;flex:none}
+.hrt svg{width:24px;height:24px;stroke-width:1.8}
+.finfo{padding:12px 16px 0}
+.flab{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px 0 5px;border-radius:5px;font-size:13px;font-weight:800;color:#fff}
+.flab.w{background:var(--navy)}.flab.i{background:#B4500F}
+.flab svg{width:17px;height:20px}
+.fc h3{font-size:22px;line-height:1.25;margin:8px 0 3px;color:var(--ink);font-weight:800}
+.femp{font-size:16px;font-weight:600;color:#2A5BA8}
+.fpl{font-size:15px;color:var(--ink);margin-top:2px}
+.ffacts{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:14.5px;font-weight:600;color:var(--ink)}
+.ffacts span{display:inline-flex;align-items:center;gap:6px}
+.fgo{margin:14px 16px 0;border-top:1px solid #EFE8DD;min-height:52px;display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:16px;color:#2A5BA8}
+.fgo svg{width:22px;height:22px}
+/* tooltip uurloon: klein en licht */
+.tip{position:absolute;top:52px;right:-4px;width:196px;background:#FFFDF9;color:#3A3F4B;border:1px solid #E3DACB;border-radius:10px;padding:9px 11px 8px;z-index:30;box-shadow:0 6px 16px -8px rgba(31,47,85,.3);font-size:13px;font-weight:500;text-align:left;line-height:1.3}
+.tip:before{content:"";position:absolute;top:-6px;right:19px;width:10px;height:10px;background:#FFFDF9;border-left:1px solid #E3DACB;border-top:1px solid #E3DACB;transform:rotate(45deg)}
+.tip b{display:block;font-size:13px;font-weight:700;margin-bottom:4px;color:#3A3F4B}
+.tr2{display:flex;justify-content:space-between;padding:2px 6px;margin:0 -6px;border-radius:5px}
+.tr2.me{background:#EAF3E6;font-weight:700;color:#1F2A37}
+/* mobiel: compacte horizontale kaart onderaan */
+.fcwrap{position:fixed;left:10px;right:10px;bottom:12px;z-index:21}
+.fcw.m .fctl{margin-bottom:8px}
+.fc.m .fbody{display:flex;gap:12px;padding:12px 12px 0}
+.fc.m .fph{margin:0;width:124px;height:124px;flex:none}
+.fc.m .flrow{margin-top:-10px}
+.fc.m h3{margin-top:0!important}
+.fc.m .finfo{padding:0;min-width:0;flex:1}
+.fc.m h3{font-size:18px;margin:6px 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc.m .femp{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fc.m .fpl{font-size:14px}
+.fc.m .ffacts{font-size:13.5px;gap:4px 10px;margin-top:6px}
+.fc.m .fgo{margin:10px 12px 0;min-height:48px;font-size:15.5px}
+.fcw.m .tip{top:auto;bottom:52px}.fcw.m .tip:before{top:auto;bottom:-6px;transform:rotate(225deg)}
+.fcw.m .tip{font-size:12.5px;padding:7px 10px 6px}.fcw.m .tip b{margin-bottom:2px}.fcw.m .tr2{padding:1px 6px}

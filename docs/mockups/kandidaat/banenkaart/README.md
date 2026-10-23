@@ -10,3 +10,5 @@ Eisen van Dennis:
 Header-illustratie: variant C (getekende landkaart met stippelroute en kompasroos), goedgekeurd door Dennis op 23-10-2026, zie header/. Dunne strip over de volle breedte: desktop 150 px, mobiel 90 px, dezelfde stripstyling als de bedrijvenkaart r21.
 
 Kaartlagen: reistijdlijnen, clusters, vacatures bij werkgever en via intermediair, plus legenda en popup. Goedgekeurd door Dennis op 23-10-2026, zie lagen/. Dit is de leidende versie voor de kaart, met de header uit header/.
+
+Popups in Funda-stijl (enkele vacature en cluster met navigatie, uurloon-tooltip vanaf 14 jaar via de euroknop): goedgekeurd door Dennis op 23-10-2026, zie lagen/README.md.

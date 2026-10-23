@@ -1,5 +1,5 @@
 const Q=new URLSearchParams(location.search);const MOB=innerWidth<700;const STATE=Q.get('s')||'none';
-document.body.classList.add('s-'+STATE);
+document.body.classList.add('s-'+STATE);const POPS=['popup'];const ISPOP=POPS.includes(STATE);if(ISPOP)document.body.classList.add('s-anypop');
 const C=[4.2085,51.9935];const K=(dx,dy)=>[C[0]+dx/68.55,C[1]+dy/111.2];
 const BIKE='<svg class="ic" viewBox="0 0 24 24"><circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9 8.5 6H7M12.5 16 15 9"/></svg>';
 // pin shapes (zelfde vorm in kaart, lijst en legenda)
@@ -26,15 +26,34 @@ const POP={t:'Orderpicker',org:'Uitzendbureau Voorbeeld',rt:'12 min fietsen',ll:
 const popHTML=`<span class="x">${X}</span>${TMI}<h3>${POP.t}</h3><div class="org">${POP.org}<br>Werk bij een kwekerij in Honselersdijk</div><div class="rt">${BIKE}${POP.rt}</div><div class="go">Bekijk vacature</div>`;
 const sheet=document.getElementById('sheet');
 if(STATE=='legend')sheet.innerHTML=`<div class="grab"></div><span class="x">${X}</span><h2>Uitleg kaart</h2>${LEG(1)}<div class="close">Sluiten</div>`;
-if(STATE=='popup')sheet.innerHTML=`<div class="grab"></div><span class="x">${X}</span>${popHTML.replace(/^<span class="x">.*?<\/span>/,'')}`;
+const HEART='<svg class="ic" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/></svg>';
+const CHEV='<svg class="ic s" viewBox="0 0 24 24"><path d="M10 7l5 5-5 5"/></svg>';
+const CHL='<svg class="ic" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6"/></svg>',CHR='<svg class="ic" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></svg>';
+const CLOCK='<svg class="ic s" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 2"/></svg>',DOC='<svg class="ic s" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20H7z"/><path d="M14 3.5V8h4M10 12h5M10 15.5h5"/></svg>';
+const FV={emp:{ll:K(1.2,0.9),img:'foto-kas.jpg',t:'Teeltmedewerker kas',org:'Kwekerij De Voorbeeldkas',pl:'Naaldwijk',rt:'9 min',hr:'36 tot 40 uur',ct:'Vast contract',i:0},
+ int:{ll:K(2.5,-0.7),img:'foto-magazijn.jpg',t:'Orderpicker',org:'Uitzendbureau Voorbeeld',pl:'Honselersdijk',rt:'12 min',hr:'32 tot 40 uur',ct:'Uitzendcontract',i:1},
+ clus:{ll:K(-1.5,2.2),img:'foto-zorg.jpg',t:'Verzorgende IG',org:'Zorgcentrum Het Voorbeeld',pl:'Monster',rt:'11 min',hr:'24 tot 32 uur',ct:'Tijdelijk contract',i:0}};
+const FK=STATE=='empeur'?'emp':STATE;const EUR=STATE=='empeur';const FD=FV[FK];
+const WAGE=[['14 jaar','€ 4,62'],['15 jaar','€ 4,62'],['16 jaar','€ 5,31'],['17 jaar','€ 6,08'],['18 jaar','€ 7,70'],['19 jaar','€ 9,24'],['20 jaar','€ 12,32'],['21 jaar en ouder','€ 15,40',1]];
+function fcard(d,clus,eur){const lab=d.i?`<span class="flab i">${pinI(.46,0,false)}Via intermediair</span>`:`<span class="flab w">${pinW(.46)}Bij werkgever</span>`;
+ const nav=clus?`<div class="fnav"><span class="fb" aria-label="Vorige vacature">${CHL}</span><span class="fcount">3 van 15</span><span class="fb" aria-label="Volgende vacature">${CHR}</span></div>`:'';
+ const tip=eur?`<div class="tip" role="tooltip"><b>Uurloon (bruto)</b>${WAGE.map(w=>`<div class="tr2${w[2]?' me':''}"><span>${w[0]}</span><span>${w[1]}</span></div>`).join('')}</div>`:'';
+ return `<div class="fcw${MOB?' m':''}"><div class="fctl">${nav}<span class="sp"></span><span class="fb euro${eur?' on':''}" aria-label="Uurloon bekijken">€${tip}</span><span class="fb fx" aria-label="Sluiten">${X}</span></div>
+ <div class="fc${MOB?' m':''}"><div class="fbody"><div class="fph"><img src="${d.img}" alt=""></div>
+ <div class="finfo"><div class="flrow">${lab}<span class="hrt" aria-label="Bewaren">${HEART}</span></div><h3>${d.t}</h3><div class="femp">${d.i?'via ':''}${d.org}</div><div class="fpl">${d.pl}</div>
+ <div class="ffacts"><span>${BIKE.replace('class="ic"','class="ic s"')}${d.rt}</span><span>${CLOCK}${d.hr}</span><span>${DOC}${d.ct}</span></div></div></div>
+ <div class="fgo"><span>Bekijk vacature</span>${CHR}</div></div></div>`}
+const NEWST=['emp','empeur','int','clus'].includes(STATE);
+if(NEWST&&MOB){const w=document.createElement('div');w.className='fcwrap';w.innerHTML=fcard(FD,STATE=='clus',EUR);document.body.appendChild(w)}
 // isochronen (nepdata, onregelmatige ringen)
 function ring(R,seed){const p=[];for(let i=0;i<=120;i++){const a=i/120*2*Math.PI;const r=R*(1+.11*Math.sin(3*a+seed)+.06*Math.sin(7*a+seed*2)+.035*Math.sin(13*a+seed*3));p.push(K(r*Math.cos(a),r*Math.sin(a)))}return p}
 function ringPt(R,seed,a){const r=R*(1+.11*Math.sin(3*a+seed)+.06*Math.sin(7*a+seed*2)+.035*Math.sin(13*a+seed*3));return K(r*Math.cos(a),r*Math.sin(a))}
 const RINGS=[[1.8,.4],[3.6,1.3],[5.4,2.1]];
-const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/positron',center:(MOB&&STATE=='popup')?K(1.6,0.2):C,zoom:MOB?10.9:11.8,attributionControl:{compact:false},preserveDrawingBuffer:true,
- padding:MOB?{top:STATE=='popup'?80:70,bottom:STATE=='popup'?280:20,left:0,right:0}:{top:80,left:150,right:0,bottom:0}});
+const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/positron',center:(MOB&&ISPOP)?K(1.6,0.2):C,zoom:MOB?10.9:11.8,attributionControl:{compact:false},preserveDrawingBuffer:true,
+ padding:MOB?{top:ISPOP?80:70,bottom:ISPOP?280:20,left:0,right:0}:{top:80,left:150,right:0,bottom:0}});
 map.on('style.load',()=>{for(const l of map.getStyle().layers){if(l.type=='symbol'&&/poi|housenumber|transit/.test(l.id))map.setLayoutProperty(l.id,'visibility','none')}});
 map.on('load',()=>{
+ if(NEWST){const H0=map.getContainer().clientHeight;if(MOB){const ch=document.querySelector('.fcwrap').offsetHeight;map.jumpTo({center:FD.ll,padding:{top:0,bottom:Math.max(0,ch+24-(innerHeight-map.getContainer().getBoundingClientRect().bottom))+(STATE=='clus'?10:STATE=='empeur'?30:30),left:0,right:0}})}else{map.jumpTo({center:FD.ll,padding:{top:Math.max(0,2*(H0-(STATE=='clus'?44:60))-H0),left:150,right:0,bottom:0}})}}
  const fc={type:'FeatureCollection',features:RINGS.map(([R,s],i)=>({type:'Feature',properties:{i},geometry:{type:'Polygon',coordinates:[ring(R,s)]}}))};
  map.addSource('iso',{type:'geojson',data:fc});
  map.addLayer({id:'isof',type:'fill',source:'iso',paint:{'fill-color':'#1F2F55','fill-opacity':['match',['get','i'],0,.10,1,.06,.035]}});
@@ -50,13 +69,14 @@ map.on('load',()=>{
  let EMP=[[1.2,0.9],[-0.9,-1.5],[-4.2,2.0],[3.6,-1.9]];
  let INT=[[2.5,-0.7],[-0.6,1.2],[-3.1,3.0],[4.2,0.6]];
  if(MOB){EMP=[[1.2,0.9],[-1.7,-3.3],[3.6,-1.9],[-4.2,2.0]];INT=[[2.5,-0.7],[-3.1,3.0],[1.9,-3.0]];}
- CL.forEach(([x,y,n])=>add(mk('',`<span class="cl${n>12?' big':''}">${n}</span>`),K(x,y)));
- EMP.forEach(([x,y])=>add(mk('pinw',pinW()),K(x,y),'bottom'));
- INT.forEach(([x,y],j)=>{const sel=j==0&&STATE!='none';add(mk('pini',pinI(sel?1.2:1,sel)),K(x,y),'bottom')});
+ CL.forEach(([x,y,n],j)=>add(mk('',`<span class="cl${n>12?' big':''}${j==0&&STATE=='clus'?' sel':''}">${n}</span>`),K(x,y)));
+ EMP.forEach(([x,y],j)=>{const sel=j==0&&FK=='emp';add(mk('pinw',pinW(sel?1.2:1,sel)),K(x,y),'bottom')});
+ INT.forEach(([x,y],j)=>{const sel=j==0&&(STATE=='popup'||STATE=='int');add(mk('pini',pinI(sel?1.2:1,sel)),K(x,y),'bottom')});
  const mw=map.getContainer();
  // hint bij eerste bezoek
- if(STATE!='legend'||true){const p=map.project(K(...CL[0].slice(0,2)));const h=document.createElement('div');h.className='hint';h.innerHTML=`<svg class="ic" viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11M12 10V8.5a1.5 1.5 0 0 1 3 0V11M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4 15a1.6 1.6 0 0 1 2.5-2L9 15"/></svg>${MOB?'Tik':'Klik'} om in te zoomen`;if(MOB){h.classList.add('below');h.style.left=(p.x-34)+'px';h.style.top=(p.y+38)+'px'}else{h.style.left=(p.x+40)+'px';h.style.top=(p.y-21)+'px'}mw.parentNode.appendChild(h);if(STATE=='popup')h.remove()}
+ if(STATE!='legend'||true){const p=map.project(K(...CL[0].slice(0,2)));const h=document.createElement('div');h.className='hint';h.innerHTML=`<svg class="ic" viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11M12 10V8.5a1.5 1.5 0 0 1 3 0V11M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4 15a1.6 1.6 0 0 1 2.5-2L9 15"/></svg>${MOB?'Tik':'Klik'} om in te zoomen`;if(MOB){h.classList.add('below');h.style.left=(p.x-34)+'px';h.style.top=(p.y+38)+'px'}else{h.style.left=(p.x+40)+'px';h.style.top=(p.y-21)+'px'}mw.parentNode.appendChild(h);if(ISPOP||NEWST)h.remove()}
  if(STATE=='popup'&&!MOB){const p=map.project(POP.ll);const e=document.createElement('div');e.className='pop';e.innerHTML=popHTML;mw.parentNode.appendChild(e);const ph=e.offsetHeight;let left=p.x-150;left=Math.min(Math.max(left,12),W-312);e.style.left=left+'px';e.style.setProperty('--ax',(p.x-left)+'px');e.style.top=(p.y-62-ph-12)+'px'}
+ if(NEWST&&!MOB){const p=map.project(FD.ll);const e=document.createElement('div');e.className='pop fpop';e.innerHTML=fcard(FD,STATE=='clus',EUR);mw.parentNode.appendChild(e);const ph=e.offsetHeight;const cw=e.offsetWidth;let left=p.x-cw/2;left=Math.min(Math.max(left,12),W-cw-12);e.style.left=left+'px';e.style.setProperty('--ax',(p.x-left)+'px');e.style.top=(p.y-(STATE=='clus'?44:72)-ph-12)+'px'}
  if(MOB&&STATE=='popup')map.jumpTo({center:POP.ll,padding:{top:0,bottom:70,left:0,right:0}});
  map.once('idle',()=>document.body.dataset.ready=1);
 });
