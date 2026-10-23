@@ -279,6 +279,18 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     color: #fff !important;
 }
 
+/* Desktop empty travel: compact list rail (mockup 01), no tall illustration header. */
+@media (min-width: 900px) {
+    .jobsy-discovery.kb-ssr-travel-empty .kb-nearby-banner {
+        display: none;
+    }
+
+    .jobsy-discovery.kb-ssr-travel-empty .vacancy-list [data-testid="kb-empty-travel"] {
+        margin: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+}
+
 /* Banenkaart shell: map/list split (desktop list rail + mobile toggles). */
 .app-shell--banenkaart-shell {
     min-height: 100dvh;

@@ -1,3 +1,4 @@
+@using Jobsy.Core.Authorization
 @using Jobsy.Web.Hosting
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
@@ -76,8 +77,10 @@
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
     <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
-    @* Outside LoadBlazorRuntime: NoBlazor pages (landing, legal) still ship the modal markup. *@
-    <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-02" data-reconnect-css />
+    @if (LoadBlazorRuntime)
+    {
+        <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-02" data-reconnect-css />
+    }
     @if (!LoadBlazorRuntime)
     {
         @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
@@ -96,6 +99,13 @@
         @if (BanenkaartAuthenticatedShell)
         {
             @foreach (var href in PageAssetCatalog.BanenkaartAuthenticatedShellCss())
+            {
+                <link rel="stylesheet" href="@href" />
+            }
+        }
+        @if (IncludeCandidateNoBlazorChromeCss)
+        {
+            @foreach (var href in PageAssetCatalog.CandidateNoBlazorChromeCss())
             {
                 <link rel="stylesheet" href="@href" />
             }
@@ -328,10 +338,10 @@
         }
         else
         {
-            <script src="/js/app-public.js?v=20261023-acc1" nonce="@Nonce" defer></script>
+            <script src="/js/app-public.js?v=20261023-acc8" nonce="@Nonce" defer></script>
             @if (IncludeBanenkaartClientScript)
             {
-                <script src="/js/banenkaart-maps-boot.js?v=20261023-acc6" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+                <script src="/js/banenkaart-maps-boot.js?v=20261023-acc8" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             }
         }
         @if (!IncludeBanenkaartClientScript)
@@ -472,6 +482,11 @@
     private bool BanenkaartAuthenticatedShell =>
         IncludeBanenkaartClientScript
         && HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
+
+    private bool IncludeCandidateNoBlazorChromeCss =>
+        SkipBlazorForPage
+        && HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true
+        && RoleClaimMatching.HasRole(HttpContextAccessor.HttpContext!.User, JobsyRoles.Candidate);
 
     private bool SkipBlazorForPage =>
         HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;

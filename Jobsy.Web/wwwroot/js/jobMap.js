@@ -53,6 +53,8 @@ window.jobMap = (function () {
     let viewportPinsBound = false;
     let catalogModeActive = false;
     let bootZoomOutsideTravel = false;
+    let pendingCatalogPins = null;
+    let pendingCatalogMeta = null;
     let viewportListDotNet = null;
     /** Suppress moveend-driven pin/discover churn during programmatic camera moves / resize. */
     let viewportNotifySuppressed = 0;
@@ -3513,8 +3515,24 @@ window.jobMap = (function () {
         });
     }
 
+    function flushPendingCatalogPins() {
+        if (!pendingCatalogPins || !clusterGroup || !map) {
+            return;
+        }
+        const pins = pendingCatalogPins;
+        const meta = pendingCatalogMeta || {};
+        pendingCatalogPins = null;
+        pendingCatalogMeta = null;
+        setVacanciesFromCatalog(pins, meta);
+    }
+
     function setVacanciesFromCatalog(pins, meta) {
         meta = meta || {};
+        if (!clusterGroup || !map) {
+            pendingCatalogPins = pins || [];
+            pendingCatalogMeta = meta;
+            return;
+        }
         if (meta.zoomOutsideTravel) {
             bootZoomOutsideTravel = true;
         }
@@ -4021,24 +4039,37 @@ window.jobMap = (function () {
      * MapLibre GL JS 5.x is promise-only for getClusterLeaves.
      * Pre-#316 behaviour: cluster tap opens the pager immediately — no zoom.
      */
-    async function onClusterClick(ev) {
-        if (!map || !ev.features || !ev.features.length) return;
+    function onClusterClick(ev) {
+        if (!map || !ev.features || !ev.features.length) {
+            return;
+        }
         const feature = ev.features[0];
         const props = feature.properties || {};
         const source = map.getSource(PIN_SOURCE);
-        if (!source || typeof source.getClusterLeaves !== "function") return;
+        if (!source) {
+            return;
+        }
         if (ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
             ev.originalEvent.stopPropagation();
         }
         lastClusterTapAt = Date.now();
-        try {
-            const total = Math.max(Number(props.point_count) || 0, 2);
-            const leaves = await source.getClusterLeaves(props.cluster_id, total, 0);
-            const childMarkers = (leaves || [])
-                .map(function (leaf) { return markerByLeafId(leaf.properties && leaf.properties.id); })
-                .filter(Boolean);
-            if (childMarkers.length) openClusterList(childMarkers, feature.geometry.coordinates);
-        } catch (_e) { }
+        const clusterId = props.cluster_id;
+        if (clusterId == null || typeof source.getClusterExpansionZoom !== "function") {
+            return;
+        }
+        const coords = feature.geometry && feature.geometry.coordinates;
+        Promise.resolve(source.getClusterExpansionZoom(clusterId))
+            .then(function (zoom) {
+                if (!map || !coords) {
+                    return;
+                }
+                map.easeTo({
+                    center: coords,
+                    zoom: Math.min(Number(zoom) || map.getZoom() + 2, CLUSTER_OPTS.disableClusteringAtZoom + 1),
+                    duration: 320
+                });
+            })
+            .catch(function () { });
     }
 
     function onPinClick(ev) {
@@ -4106,6 +4137,7 @@ window.jobMap = (function () {
             return;
         }
         refreshClusters();
+        flushPendingCatalogPins();
         if (lastOrigin) {
             ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
             drawTravelRings(lastOrigin.lat, lastOrigin.lng);
@@ -4161,9 +4193,21 @@ window.jobMap = (function () {
                         kkResizeMapAndFit(false);
                     } else {
                         invalidate();
+                        if (map && Object.keys(markersById).length > 0) {
+                            refreshClusters();
+                        }
+                        flushPendingCatalogPins();
                     }
                 });
                 map._resizeObserver.observe(el);
+                const mapStage = el.closest && el.closest(".map-stage");
+                if (mapStage && mapStage !== el) {
+                    map._resizeObserver.observe(mapStage);
+                }
+                const mapPane = el.closest && el.closest(".map-pane");
+                if (mapPane && mapPane !== el && mapPane !== mapStage) {
+                    map._resizeObserver.observe(mapPane);
+                }
             } catch (eRo) { /* ignore */ }
         }
         // First layout pass after Blazor attach may still be mid-reflow.
@@ -4207,11 +4251,21 @@ window.jobMap = (function () {
             if (map._resizeObserver) {
                 try { map._resizeObserver.unobserve(old); } catch (e1) { }
                 try { map._resizeObserver.observe(host); } catch (e2) { }
+                const mapStage = host.closest && host.closest(".map-stage");
+                if (mapStage && mapStage !== host) {
+                    try { map._resizeObserver.observe(mapStage); } catch (e3) { }
+                }
+                const mapPane = host.closest && host.closest(".map-pane");
+                if (mapPane && mapPane !== host && mapPane !== mapStage) {
+                    try { map._resizeObserver.observe(mapPane); } catch (e4) { }
+                }
             }
             map._container = host;
             if (typeof map.resize === "function") {
                 map.resize();
             }
+            refreshClusters();
+            flushPendingCatalogPins();
             return !!(host.isConnected && map.getContainer() === host);
         } catch (err) {
             return false;
@@ -4265,6 +4319,7 @@ window.jobMap = (function () {
         addLocateControl();
         bindOutsideClickCloser();
         bindTravelRingStyleGuard();
+        flushPendingCatalogPins();
     }
 
     function readBootPayload() {
@@ -5670,6 +5725,23 @@ window.jobMap = (function () {
             syncCatalogToMap();
         }
     });
+
+    (function bindMapLifecycleResume() {
+        if (window.__jobsyMapLifecycleBound) {
+            return;
+        }
+        window.__jobsyMapLifecycleBound = true;
+        function onVisible() {
+            if (document.visibilityState && document.visibilityState !== "visible") {
+                return;
+            }
+            invalidate();
+        }
+        document.addEventListener("visibilitychange", onVisible);
+        window.addEventListener("pageshow", function () {
+            onVisible();
+        });
+    })();
 
     return {
         boot,

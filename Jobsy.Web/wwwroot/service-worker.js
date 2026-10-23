@@ -1,17 +1,14 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-v20261018-23";
+var CACHE_VERSION = "lobsy-shell-v20261023-acc8";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 
 var PRECACHE = [
-    "/",
     "/manifest.webmanifest?v=20261004-14",
     "/css/tokens.css?v=20261018-06",
     "/css/critical.css?v=20261019-12",
-    "/css/app.min.css?v=20261021-03",
     "/css/features/stijl-a.css?v=20261018-03",
-    "/js/app-core.js?v=20261021-02",
     "/icons/icon-192.png?v=20261018-23",
     "/icons/icon-512.png?v=20261018-23",
     "/favicon.ico?v=20261018-23",
@@ -19,6 +16,7 @@ var PRECACHE = [
 ];
 
 self.addEventListener("install", function (event) {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(SHELL_CACHE).then(function (cache) {
             return cache.addAll(PRECACHE.map(function (url) {
@@ -90,6 +88,7 @@ self.addEventListener("fetch", function (event) {
         return;
     }
 
+    /* HTML: always network — never serve a stale document from cache. */
     if (request.mode === "navigate") {
         return;
     }
@@ -125,22 +124,6 @@ function cacheFirst(cacheName, request) {
                 }
                 return response;
             });
-        });
-    });
-}
-
-function staleWhileRevalidate(cacheName, request) {
-    return caches.open(cacheName).then(function (cache) {
-        return cache.match(request).then(function (hit) {
-            var network = fetch(request).then(function (response) {
-                if (response && response.ok) {
-                    cache.put(request, response.clone());
-                }
-                return response;
-            }).catch(function () {
-                return hit;
-            });
-            return hit || network;
         });
     });
 }

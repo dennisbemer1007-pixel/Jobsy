@@ -213,7 +213,7 @@ public class VacanciesController : ControllerBase
             var lng = originLng.Value;
             var reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
             candidates = records
-                .Where(v => VacancyDiscoveryQuery.MatchesTransport(v, transport))
+                .Where(v => VacancyDiscoveryQuery.CandidateCanReach(v, transport))
                 .Select(v =>
                 {
                     var (travelMinutes, distanceKm) = TravelReach.Estimate(
@@ -641,7 +641,7 @@ public class VacanciesController : ControllerBase
             var lng = originLng.Value;
             var reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
             candidates = records
-                .Where(v => VacancyDiscoveryQuery.MatchesTransport(v, transport))
+                .Where(v => VacancyDiscoveryQuery.CandidateCanReach(v, transport))
                 .Select(v =>
                 {
                     var (travelMinutes, distanceKm) = TravelReach.Estimate(

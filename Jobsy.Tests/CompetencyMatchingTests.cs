@@ -299,6 +299,8 @@ public class CompetencyMatchingTests
         Assert.Equal(TransportLabels.EBike, TransportLabels.Canonical("ebike"));
         Assert.True(TransportLabels.MatchesRequired([TransportLabels.Bike], TransportLabels.EBike));
         Assert.False(TransportLabels.MatchesRequired([TransportLabels.Car], TransportLabels.EBike));
+        Assert.True(TransportLabels.CandidateCanReach([TransportLabels.Bike], TransportLabels.Car));
+        Assert.False(TransportLabels.CandidateCanReach([TransportLabels.Car], TransportLabels.Bike));
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Pwa
@@ -31,7 +32,14 @@
     @if (_showCandidateHeaderNav)
     {
         <div class="candidate-header-nav-slot">
-            <CandidateHeaderNav />
+            @if (_noBlazorRuntime)
+            {
+                <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Header" />
+            }
+            else
+            {
+                <CandidateHeaderNav />
+            }
         </div>
     }
     <div class="app-header__actions">
@@ -57,11 +65,13 @@
 @code {
     private bool _showCandidateHeaderNav;
     private bool _useOnboardingBrandMark;
+    private bool _noBlazorRuntime;
 
     protected override void OnInitialized()
     {
         var http = HttpContextAccessor.HttpContext;
         var user = http?.User;
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
         _showCandidateHeaderNav = user?.Identity?.IsAuthenticated == true
             && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
         var path = http?.Request.Path.Value ?? "";

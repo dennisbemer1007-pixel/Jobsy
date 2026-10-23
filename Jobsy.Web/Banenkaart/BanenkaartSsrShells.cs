@@ -23,6 +23,11 @@ internal static class BanenkaartSsrShells
             sb.Append(" kb-ssr-has-error");
         }
 
+        if (model.ShowEmptyTravelMessage)
+        {
+            sb.Append(" kb-ssr-travel-empty");
+        }
+
         sb.Append("\" data-banenkaart-ssr=\"1\" data-testid=\"banenkaart-ssr-root\">");
 
         if (!string.IsNullOrWhiteSpace(q.Error))
@@ -60,10 +65,10 @@ internal static class BanenkaartSsrShells
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
         AppendMapFab(sb, culture);
 
-        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-acc6\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-acc6\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-acc6\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc6\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
         sb.Append("</div>");
         return sb.ToString();
     }

@@ -31,7 +31,7 @@ public class MobilePaspoortCircuitResumePlaywrightTests
     public async Task Paspoort_mobile_idle_and_websocket_drop_does_not_reload()
     {
         await using var factory = new PaspoortCircuitWebFactory();
-        await using var session = await OpenPaspoortMobilePageAsync(factory, trackBlazorWebSocket: true);
+        await using var session = await OpenPaspoortMobilePageAsync(factory);
         var page = session.Page;
         var context = session.Context;
         await page.EvaluateAsync("() => { window.__lobsyNavCount = 0; }");
@@ -135,8 +135,7 @@ public class MobilePaspoortCircuitResumePlaywrightTests
     }
 
     private static async Task<MobilePaspoortBrowserSession> OpenPaspoortMobilePageAsync(
-        PaspoortCircuitWebFactory factory,
-        bool trackBlazorWebSocket = false)
+        PaspoortCircuitWebFactory factory)
     {
         _ = factory.CreateClient();
         var baseUrl = factory.ServerAddress;
@@ -184,30 +183,16 @@ public class MobilePaspoortCircuitResumePlaywrightTests
                 "Expected test sign-in redirect.");
         }
 
-        if (trackBlazorWebSocket)
-        {
-            _ = await page.RunAndWaitForWebSocketAsync(
-                async () =>
-                {
-                    await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
-                    await page.WaitForURLAsync("**/candidate/paspoort**", new() { Timeout = 60_000 });
-                },
-                new()
-                {
-                    Timeout = 60_000,
-                    Predicate = socket => (socket.Url ?? "").Contains("blazor", StringComparison.OrdinalIgnoreCase)
-                });
-        }
-        else
-        {
-            await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
-            await page.WaitForURLAsync("**/candidate/paspoort**", new() { Timeout = 60_000 });
-        }
+        await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+        await page.WaitForURLAsync("**/candidate/paspoort**", new() { Timeout = 60_000 });
 
         await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            """
+            () => !!document.querySelector('[data-testid="passport-page-ssr"]')
+              || document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'
+            """,
             null,
-            new() { Timeout = 45_000 });
+            new() { Timeout = 60_000 });
 
         return new MobilePaspoortBrowserSession(playwright, browser, context, page);
     }

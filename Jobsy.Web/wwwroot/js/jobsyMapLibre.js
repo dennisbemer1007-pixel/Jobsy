@@ -209,14 +209,14 @@ window.jobsyMapLibre = (function () {
                     "fill-extrusion-color": "#d6d2cc",
                     "fill-extrusion-height": [
                         "coalesce",
-                        ["get", "render_height"],
-                        ["get", "height"],
+                        ["to-number", ["get", "render_height"]],
+                        ["to-number", ["get", "height"]],
                         12
                     ],
                     "fill-extrusion-base": [
                         "coalesce",
-                        ["get", "render_min_height"],
-                        ["get", "min_height"],
+                        ["to-number", ["get", "render_min_height"]],
+                        ["to-number", ["get", "min_height"]],
                         0
                     ],
                     "fill-extrusion-opacity": 0.72
@@ -358,11 +358,17 @@ window.jobsyMapLibre = (function () {
         options = options || {};
         var styleKey = options.styleKey || readStoredStyle();
         var spec = styleSpec(styleKey);
+        var dpr = 1;
+        try {
+            dpr = Math.min(2, window.devicePixelRatio || 1);
+        } catch (eDpr) { }
+
         var map = new maplibregl.Map({
             container: container,
             style: options.style || resolveInitialStyle(spec),
             center: options.center,
             zoom: options.zoom,
+            pixelRatio: dpr,
             attributionControl: {
                 compact: preferCompactAttribution(),
                 customAttribution: OSM_ATTRIBUTION
