@@ -41,9 +41,9 @@
     min-width: 0;
 }
 
-/* Banenkaart uses the shared bottom nav only (same as paspoort / ontdekkingsreis). */
-.candidate-header-nav,
-.candidate-header-nav-slot {
+.app-shell--candidate .app-header .brand-tagline,
+.app-shell--candidate .candidate-header-nav-slot,
+.app-shell--candidate .candidate-header-nav {
     display: none !important;
 }
 

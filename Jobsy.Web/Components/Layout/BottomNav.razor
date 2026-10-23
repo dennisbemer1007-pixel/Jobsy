@@ -7,6 +7,7 @@
 @inject NavigationManager Navigation
 @inject CultureState Culture
 @inject RoleNavItemsState NavItems
+@inject AuthenticationStateProvider AuthState
 @inject IJSRuntime Js
 @implements IAsyncDisposable
 
@@ -39,8 +40,9 @@
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
     private ElementReference _nav;
-    /// <summary>≥1024px: header nav only; bottom bar is mobile/PWA.</summary>
+    /// <summary>≥1024px: hide bottom bar for non-candidates (employer/admin). Candidates always use bottom nav.</summary>
     private bool _hideForDesktopViewport;
+    private bool _isCandidate;
     private DotNetObjectReference<BottomNav>? _dotNetRef;
     private IJSObjectReference? _viewportWatch;
 
@@ -53,6 +55,16 @@
         _items = NavItems.Items;
         NavItems.Changed += OnNavItemsChanged;
         Navigation.LocationChanged += OnLocationChanged;
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            _isCandidate = auth.User.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate);
+        }
+        catch
+        {
+            _isCandidate = false;
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -91,6 +103,13 @@
 
     private async Task RefreshDesktopViewportAsync()
     {
+        if (_isCandidate)
+        {
+            _hideForDesktopViewport = false;
+            await NotifyHasBottomNavAsync();
+            return;
+        }
+
         try
         {
             _hideForDesktopViewport = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");
@@ -108,6 +127,11 @@
     [JSInvokable]
     public async Task SetDesktopViewportHidden(bool isWide)
     {
+        if (_isCandidate)
+        {
+            return;
+        }
+
         if (_hideForDesktopViewport == isWide)
         {
             return;

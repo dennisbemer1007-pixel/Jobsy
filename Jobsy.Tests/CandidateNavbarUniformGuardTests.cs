@@ -16,19 +16,19 @@ public sealed class CandidateNavbarUniformGuardTests
         File.ReadAllText(Path.Combine(RepoRoot, relativePath));
 
     [Fact]
-    public void MainLayout_uses_shared_AppShellHeader_with_candidate_nav()
+    public void MainLayout_uses_shared_AppShellHeader_with_bottom_nav_only()
     {
         var layout = Read("Jobsy.Web/Components/Layout/MainLayout.razor");
         var header = Read("Jobsy.Web/Components/Layout/AppShellHeader.razor");
-        var nav = Read("Jobsy.Web/Components/Layout/CandidateHeaderNav.razor");
+        var bottom = Read("Jobsy.Web/Components/Layout/BottomNav.razor");
 
         Assert.Contains("<AppShellHeader", layout, StringComparison.Ordinal);
+        Assert.Contains("NoBlazorCandidateNav", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("jobsy-chrome__header", layout, StringComparison.Ordinal);
-        Assert.Contains("CandidateHeaderNav", header, StringComparison.Ordinal);
+        Assert.DoesNotContain("CandidateHeaderNav", header, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"app-shell-header\"", header, StringComparison.Ordinal);
-        Assert.Contains("data-testid=\"candidate-header-nav\"", nav, StringComparison.Ordinal);
+        Assert.Contains("bottom-nav", bottom, StringComparison.Ordinal);
         Assert.Contains("<PageHelp />", header, StringComparison.Ordinal);
-        Assert.Contains("CandidatePwaInstallEntry", header, StringComparison.Ordinal);
     }
 
     [Fact]

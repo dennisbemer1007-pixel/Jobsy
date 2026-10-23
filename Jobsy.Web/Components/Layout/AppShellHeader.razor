@@ -25,24 +25,14 @@
             {
                 <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
             }
-            <span class="brand__text">
-                <span class="brand-tagline">@HeaderTagline</span>
-            </span>
+            @if (!_hideCandidateBrandTagline)
+            {
+                <span class="brand__text">
+                    <span class="brand-tagline">@HeaderTagline</span>
+                </span>
+            }
         </a>
     </div>
-    @if (_showCandidateHeaderNav)
-    {
-        <div class="candidate-header-nav-slot">
-            @if (_noBlazorRuntime)
-            {
-                <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Header" />
-            }
-            else
-            {
-                <CandidateHeaderNav />
-            }
-        </div>
-    }
     <div class="app-header__actions">
         @if (ShowCandidatePwaInstall)
         {
@@ -64,20 +54,16 @@
 </header>
 
 @code {
-    private bool _showCandidateHeaderNav;
     private bool _useOnboardingBrandMark;
-    private bool _noBlazorRuntime;
+    private bool _hideCandidateBrandTagline;
 
     protected override void OnInitialized()
     {
         var http = HttpContextAccessor.HttpContext;
         var user = http?.User;
-        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
         var path = http?.Request.Path.Value ?? "";
-        var relativePath = path.TrimStart('/');
-        _showCandidateHeaderNav = user?.Identity?.IsAuthenticated == true
-            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
-            && !MainLayout.IsBanenkaartPath(relativePath);
+        _hideCandidateBrandTagline = user?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
         _useOnboardingBrandMark = path.Contains("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)

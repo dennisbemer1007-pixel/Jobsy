@@ -291,36 +291,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     color: #fff !important;
 }
 
-/* Desktop empty travel: compact list rail (mockup 01), no tall illustration header. */
 @media (min-width: 900px) {
-    /* Beat kandidaat-banen.css .kb-list-row--compact { grid-template-columns: 1fr } on SSR banenkaart. */
-    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row.kb-list-row--compact {
-        display: grid;
-        grid-template-columns: 9.375rem minmax(0, 1fr);
-        gap: 0.65rem;
-        padding: 0.5rem 0.6rem;
-        align-items: center;
-        overflow: hidden;
-    }
-
-    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__media {
-        width: 9.375rem;
-        height: 5.8125rem;
-        max-width: 9.375rem;
-        max-height: 5.8125rem;
-        aspect-ratio: auto;
-        border-radius: 8px;
-    }
-
-    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__photo {
-        max-width: 9.375rem;
-        max-height: 5.8125rem;
-    }
-
-    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__body {
-        padding: 0;
-    }
-
     .jobsy-discovery.kb-ssr-travel-empty .kb-nearby-banner--strip {
         display: none;
     }
@@ -331,80 +302,160 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     }
 }
 
-/* SSR discover fallback rows: mirror kb-list-row--compact when list CSS is late/missing. */
+/* SSR list: mockup desktop-kaart 01 — 2-col card grid; mobile 1 col. */
+.jobsy-discovery[data-banenkaart-ssr="1"] .results-meta--ssr {
+    display: none;
+}
+
+@media (min-width: 900px) {
+    .jobsy-discovery[data-banenkaart-ssr="1"] .results-meta--ssr {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.35rem 0.75rem 0.25rem;
+    }
+}
+
 .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-rows {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.25rem 0 1rem;
+    gap: 0.625rem;
+    padding: 0.25rem 0.65rem 1rem;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
-.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row.kb-list-row--compact {
-    display: grid;
-    grid-template-columns: 9.375rem minmax(0, 1fr);
-    gap: 0.65rem;
-    padding: 0.5rem 0.6rem;
-    align-items: center;
+@media (min-width: 900px) {
+    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-rows {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.625rem;
+        align-items: stretch;
+    }
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row.kb-list-row--card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    min-height: 17.5rem;
+    padding: 0;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--surface);
 }
 
-.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__media {
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--card .kb-list-row__media {
     position: relative;
     display: block;
+    flex: 0 0 auto;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    max-height: 9.5rem;
     overflow: hidden;
-    width: 9.375rem;
-    height: 5.8125rem;
-    max-width: 9.375rem;
-    max-height: 5.8125rem;
-    aspect-ratio: auto;
-    border-radius: 8px;
+    border-radius: 12px 12px 0 0;
     background: var(--hover);
-    flex-shrink: 0;
+    text-decoration: none;
+    color: inherit;
 }
 
 .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__photo {
     width: 100%;
     height: 100%;
-    max-width: 9.375rem;
-    max-height: 5.8125rem;
+    max-width: none;
+    max-height: none;
     object-fit: cover;
     display: block;
 }
 
-@media (max-width: 899px) {
-    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row.kb-list-row--compact {
-        grid-template-columns: 1fr;
-        gap: 0;
-        padding: 0;
-        align-items: stretch;
-    }
-
-    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__media {
-        width: 100%;
-        max-width: none;
-        height: auto;
-        max-height: 140px;
-        aspect-ratio: 16 / 10;
-        border-radius: 12px 12px 0 0;
-    }
-
-    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__photo {
-        max-width: none;
-        max-height: 140px;
-    }
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__sector {
+    position: absolute;
+    top: 0.45rem;
+    left: 0.45rem;
+    z-index: 2;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    background: rgba(255, 252, 250, 0.92);
+    color: var(--brand);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.2;
+    max-width: calc(100% - 0.9rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__body {
-    padding: 0.75rem;
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__overlay {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 1;
+    padding: 1.75rem 0.55rem 0.45rem;
+    background: linear-gradient(180deg, transparent 0%, rgba(15, 45, 92, 0.82) 68%);
+    color: #fff;
+    pointer-events: none;
 }
 
-.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__title {
-    font-size: 1rem;
-    line-height: 1.25;
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__overlay .kb-list-row__title {
     margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__overlay-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    margin: 0.2rem 0 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0.95;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__footer {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.1rem;
+    padding: 0.45rem 0.55rem 0.55rem;
+    min-height: 0;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__company {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--brand);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__place {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* Banenkaart shell: map/list split (desktop list rail + mobile toggles). */
@@ -414,14 +465,9 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     flex-direction: column;
 }
 
-/* Logged-in banenkaart: bottom nav at all breakpoints (override NoBlazor desktop hide). */
-.app-shell--banenkaart-shell.has-bottom-nav .bottom-nav[data-testid="candidate-bottom-nav-ssr"] {
-    display: flex !important;
-}
-
 @media (min-width: 1024px) {
-    .app-shell--banenkaart-shell.has-bottom-nav .app-main {
-        padding-bottom: calc(var(--bottom-nav-clearance, 4.25rem) + env(safe-area-inset-bottom, 0px));
+    .app-shell--banenkaart-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
+        padding-bottom: 0 !important;
     }
 }
 

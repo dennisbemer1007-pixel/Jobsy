@@ -14,15 +14,17 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
-    public void Banenkaart_shell_hides_header_nav_and_keeps_bottom_nav()
+    public void Banenkaart_desktop_list_uses_two_column_card_grid()
     {
         var root = FindRepoRoot();
-        var header = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "AppShellHeader.razor"));
-        Assert.Contains("!MainLayout.IsBanenkaartPath", header, StringComparison.Ordinal);
-
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-page.css"));
-        Assert.Contains("candidate-bottom-nav-ssr", css, StringComparison.Ordinal);
-        Assert.Contains("display: flex !important", css, StringComparison.Ordinal);
+        Assert.Contains("grid-template-columns: repeat(2, minmax(0, 1fr))", css, StringComparison.Ordinal);
+        Assert.Contains("kb-list-row--card", css, StringComparison.Ordinal);
+
+        var listHtml = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrListHtml.cs"));
+        Assert.Contains("kb-list-row__sector", listHtml, StringComparison.Ordinal);
+        Assert.Contains("kb-list-row__overlay", listHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("kb-why-line", listHtml, StringComparison.Ordinal);
     }
 
     [Fact]

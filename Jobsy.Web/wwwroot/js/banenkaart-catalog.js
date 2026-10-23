@@ -131,7 +131,9 @@
                 colour: data.col[i],
                 suitable65: data.s65[i] === 1,
                 publicMapRadiusKm: data.pm[i],
-                imageUrl: data.iu[i]
+                imageUrl: data.iu[i],
+                categoryName: data.cn ? data.cn[i] : "",
+                place: data.pl ? data.pl[i] : ""
             });
         }
         return rows;
@@ -266,6 +268,60 @@
         return mins <= maxM && km <= reachKm;
     }
 
+    function highlightRank(id, seed) {
+        var h = (seed >>> 0) || 0;
+        var s = String(id || "");
+        for (var i = 0; i < s.length; i++) {
+            h ^= s.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+    }
+
+    function readHighlightSeed() {
+        var node = document.getElementById("jobsy-map-boot");
+        if (!node || !node.textContent) {
+            return 0;
+        }
+        try {
+            var parsed = JSON.parse(node.textContent);
+            var seed = parsed && parsed.mapInit ? parsed.mapInit.highlightSeed : 0;
+            return Number(seed) >>> 0;
+        } catch (eSeed) {
+            return 0;
+        }
+    }
+
+    function sortRows(list, filters) {
+        var sort = filters && filters.sort ? String(filters.sort) : "distance";
+        var copy = list.slice();
+        if (sort === "title") {
+            copy.sort(function (a, b) {
+                return String(a.title || "").localeCompare(String(b.title || ""), "nl");
+            });
+            return copy;
+        }
+        if (filters && filters.originLat != null && filters.originLng != null) {
+            copy.sort(function (a, b) {
+                var ma = travelMinutes(
+                    { lat: filters.originLat, lng: filters.originLng },
+                    a.lat,
+                    a.lng,
+                    filters.transport) || 9999;
+                var mb = travelMinutes(
+                    { lat: filters.originLat, lng: filters.originLng },
+                    b.lat,
+                    b.lng,
+                    filters.transport) || 9999;
+                if (ma !== mb) {
+                    return ma - mb;
+                }
+                return String(a.title || "").localeCompare(String(b.title || ""), "nl");
+            });
+        }
+        return copy;
+    }
+
     function filterRows(all, filters, mapAllPins) {
         var out = [];
         for (var i = 0; i < all.length; i++) {
@@ -278,7 +334,7 @@
             }
             out.push(row);
         }
-        return out;
+        return sortRows(out, filters);
     }
 
     function toPin(row) {
@@ -467,6 +523,8 @@
             || origin.originLabel
             || boot.originLabel
             || null;
+        var sortSel = document.querySelector("[data-testid=kb-list-sort]");
+        var sortVal = (sortSel && sortSel.value) || data.sort || boot.sort || null;
         return {
             q: data.q || null,
             maxMinutes: parseInt(data.maxMinutes, 10) || boot.maxMinutes || 20,
@@ -479,8 +537,101 @@
             workTypes: workTypes,
             originLat: originLat,
             originLng: originLng,
-            originLabel: originLabel
+            originLabel: originLabel,
+            sort: sortVal
         };
+    }
+
+    function renderMapTopChrome(filters, travelRows) {
+        var host = document.querySelector("[data-testid=kb-map-top-chrome]");
+        if (!host || !travelRows || !travelRows.length) {
+            if (host) {
+                host.innerHTML = "";
+            }
+            return;
+        }
+        var seed = readHighlightSeed();
+        var featured = travelRows.slice().sort(function (a, b) {
+            return highlightRank(a.id, seed) - highlightRank(b.id, seed);
+        }).slice(0, 12);
+        var cards = featured.map(function (row) {
+            var mins = travelMinutes(
+                filters.originLat != null ? { lat: filters.originLat, lng: filters.originLng } : null,
+                row.lat,
+                row.lng,
+                filters.transport);
+            var travel = mins != null
+                ? "± " + mins + " min · " + String(filters.transport || "Fiets").toLowerCase()
+                : "";
+            var img = row.imageUrl
+                ? "<img class=\"highlight-carousel__media vacancy-photo\" src=\"" + escapeHtml(row.imageUrl)
+                + "\" alt=\"\" width=\"160\" height=\"107\" loading=\"lazy\" decoding=\"async\" />"
+                : "";
+            return "<button type=\"button\" class=\"highlight-carousel__card\" role=\"listitem\" data-vacancy-id=\""
+                + escapeHtml(row.id) + "\">" + img
+                + "<span class=\"highlight-carousel__body\"><span class=\"highlight-carousel__title-text\">"
+                + escapeHtml(row.title) + "</span><span class=\"highlight-carousel__meta\">"
+                + escapeHtml(row.company) + "</span>"
+                + (travel ? "<span class=\"highlight-carousel__travel\">" + escapeHtml(travel) + "</span>" : "")
+                + "</span></button>";
+        }).join("");
+        var legendMap = {};
+        travelRows.forEach(function (row) {
+            var name = row.categoryName || "";
+            if (!name || legendMap[name]) {
+                return;
+            }
+            legendMap[name] = row.colour || "#0f2d5c";
+        });
+        var legendNames = Object.keys(legendMap);
+        var legendHtml = "";
+        if (legendNames.length) {
+            var dots = legendNames.slice(0, 4).map(function (name) {
+                return "<i style=\"background:" + escapeHtml(legendMap[name]) + "\"></i>";
+            }).join("");
+            var items = legendNames.map(function (name) {
+                return "<li class=\"map-legend__item\"><span class=\"map-legend__swatch\" style=\"background:"
+                    + escapeHtml(legendMap[name]) + "\" aria-hidden=\"true\"></span><span>"
+                    + escapeHtml(name) + "</span></li>";
+            }).join("");
+            legendHtml = "<div class=\"map-legend\" data-testid=\"kb-map-legend\">"
+                + "<button type=\"button\" class=\"map-legend__toggle\" aria-expanded=\"false\" aria-controls=\"map-legend-panel-ssr\">"
+                + "<span class=\"map-legend__toggle-dots\" aria-hidden=\"true\">" + dots + "</span>"
+                + "<span class=\"visually-hidden\">Legenda</span></button>"
+                + "<aside id=\"map-legend-panel-ssr\" class=\"map-legend__panel\" hidden aria-hidden=\"true\">"
+                + "<ul class=\"map-legend__list\">" + items + "</ul></aside></div>";
+        }
+        host.innerHTML = "<aside class=\"highlight-carousel highlight-carousel--map\" aria-label=\"Uitgelicht\">"
+            + "<div class=\"highlight-carousel__track\" role=\"list\">" + cards + "</div></aside>" + legendHtml;
+        host.querySelectorAll(".highlight-carousel__card").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var id = btn.getAttribute("data-vacancy-id");
+                if (id && window.jobMap) {
+                    if (typeof window.jobMap.focus === "function") {
+                        window.jobMap.focus(id);
+                    } else if (typeof window.jobMap.highlight === "function") {
+                        window.jobMap.highlight(id);
+                    }
+                }
+            });
+        });
+        var legend = host.querySelector(".map-legend");
+        if (legend) {
+            var toggle = legend.querySelector(".map-legend__toggle");
+            var panel = legend.querySelector(".map-legend__panel");
+            if (toggle && panel) {
+                toggle.addEventListener("click", function (ev) {
+                    ev.stopPropagation();
+                    var open = legend.classList.toggle("is-open");
+                    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+                    panel.hidden = !open;
+                    panel.setAttribute("aria-hidden", open ? "false" : "true");
+                });
+            }
+        }
+        if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+            window.jobMap.invalidate();
+        }
     }
 
     function readKeywordFromUi() {
@@ -620,25 +771,43 @@
                 row.lat,
                 row.lng,
                 filters.transport);
-            html += "<article class=\"kb-list-row kb-list-row--compact\" data-vacancy-id=\""
+            var wage = row.wageCents != null && row.wageCents > 0
+                ? "€ " + (row.wageCents / 100).toFixed(2).replace(".", ",") + "/u"
+                : "";
+            var travel = mins != null
+                ? "± " + mins + " min · " + String(filters.transport || "Fiets").toLowerCase()
+                : "";
+            html += "<article class=\"kb-list-row kb-list-row--compact kb-list-row--card\" data-vacancy-id=\""
                 + escapeHtml(row.id)
                 + "\" data-testid=\"kb-list-row\">";
             html += "<a class=\"kb-list-row__media\" href=\"" + escapeHtml(href) + "\">";
             if (row.imageUrl) {
                 html += "<img class=\"kb-list-row__photo\" src=\"" + escapeHtml(row.imageUrl)
-                    + "\" alt=\"\" width=\"150\" height=\"93\" loading=\"" + (index === 0 ? "eager" : "lazy")
+                    + "\" alt=\"\" width=\"400\" height=\"250\" loading=\"" + (index === 0 ? "eager" : "lazy")
                     + "\" decoding=\"async\" />";
             }
-            if (mins != null) {
-                html += "<span class=\"kb-list-row__travel-badge\">± " + mins + " min</span>";
+            if (row.categoryName) {
+                html += "<span class=\"kb-list-row__sector\">" + escapeHtml(row.categoryName) + "</span>";
             }
-            html += "</a><div class=\"kb-list-row__body\"><div class=\"kb-list-row__top\"><div class=\"kb-list-row__titles\">";
-            html += "<h2 class=\"kb-list-row__title\"><a href=\"" + escapeHtml(href) + "\">" + escapeHtml(row.title) + "</a></h2>";
-            html += "<p class=\"kb-list-row__company\">" + escapeHtml(row.company) + "</p></div></div></div></article>";
+            html += "<div class=\"kb-list-row__overlay\"><h2 class=\"kb-list-row__title\">"
+                + escapeHtml(row.title) + "</h2><p class=\"kb-list-row__overlay-meta\">";
+            if (travel) {
+                html += "<span class=\"kb-list-row__travel\">" + escapeHtml(travel) + "</span>";
+            }
+            if (wage) {
+                html += "<span class=\"kb-list-row__wage\">" + escapeHtml(wage) + "</span>";
+            }
+            html += "</p></div></a><div class=\"kb-list-row__footer\">";
+            html += "<p class=\"kb-list-row__company\">" + escapeHtml(row.company) + "</p>";
+            if (row.place) {
+                html += "<p class=\"kb-list-row__place\">" + escapeHtml(row.place) + "</p>";
+            }
+            html += "</div></article>";
         });
         html += "</div>";
         listRoot.insertAdjacentHTML("afterbegin", html);
         updateResultChrome(filters, travelRows.length);
+        renderMapTopChrome(filters, travelRows);
         return travelRows.length;
     }
 
@@ -680,9 +849,12 @@
     }
 
     function bootAndApply() {
-        var filters = readBootFilters();
+        var filters = readBootFilters() || {};
         return fetchCatalog(false).then(function () {
             applyToMap(filters);
+            if (rows) {
+                renderListRows(rows, filters);
+            }
             document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", { detail: { count: rows ? rows.length : 0 } }));
             if (!window.jobMap || typeof window.jobMap.setVacanciesFromCatalog !== "function") {
                 setTimeout(function () { applyToMap(filters); }, 400);

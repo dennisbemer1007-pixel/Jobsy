@@ -136,7 +136,7 @@ public sealed class BanenkaartDemoUatPlaywrightTests : IAsyncLifetime
         Assert.True(box!.Width >= rootBox!.Width * 0.92, "Hero strip should span the discovery width.");
         Assert.True(box.Y + box.Height <= chromeBox!.Y + 2,
             "Strip must sit above filter bar (strip bottom=" + (box.Y + box.Height) + ", chrome top=" + chromeBox.Y + ").");
-        Assert.InRange(box.Height, touch ? 50 : 52, touch ? 70 : 80);
+        Assert.InRange(box.Height, touch ? 86 : 146, touch ? 94 : 154);
     }
 
     [Fact]

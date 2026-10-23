@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261019-15";
+    public const string Version = "20261023-24";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -16,10 +16,22 @@ public static class CandidateIllustratedImages
     public const string KompasMedallions = $"{Base}/spots/dna.jpg?v={Version}";
     public const string BanenkaartCyclists = $"{Base}/spots/banen.jpg?v={Version}";
 
-    /// <summary>Full-width banenkaart header strip (webp preferred, jpg fallback).</summary>
-    public const string BanenkaartHeroStripWebp = $"{Base}/spots/banen.webp?v={Version}";
+    /// <summary>Banenkaart header strip (Dennis variant C, PR #878 @ 211fff91).</summary>
+    public const string BanenkaartHeroStripDesktopWebp = $"{Base}/banenkaart-hero-strip-desktop.webp?v={Version}";
 
-    public const string BanenkaartHeroStripJpg = BanenkaartCyclists;
+    public const string BanenkaartHeroStripDesktopWebp2x = $"{Base}/banenkaart-hero-strip-desktop-2x.webp?v={Version}";
+
+    public const string BanenkaartHeroStripMobileWebp = $"{Base}/banenkaart-hero-strip-mobile.webp?v={Version}";
+
+    public const string BanenkaartHeroStripMobileWebp2x = $"{Base}/banenkaart-hero-strip-mobile-2x.webp?v={Version}";
+
+    public const string BanenkaartHeroStripDesktopJpg = $"{Base}/banenkaart-hero-strip-desktop.jpg?v={Version}";
+
+    public const string BanenkaartHeroStripDesktopJpg2x = $"{Base}/banenkaart-hero-strip-desktop-2x.jpg?v={Version}";
+
+    public const string BanenkaartHeroStripMobileJpg = $"{Base}/banenkaart-hero-strip-mobile.jpg?v={Version}";
+
+    public const string BanenkaartHeroStripMobileJpg2x = $"{Base}/banenkaart-hero-strip-mobile-2x.jpg?v={Version}";
     public const string PopupTravelAccent = $"{Base}/spots/vervoer-blok.jpg?v={Version}";
 
     /// <summary>Kompas tip card — zorg + logistiek, incl. hijab.</summary>

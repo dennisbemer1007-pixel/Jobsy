@@ -45,6 +45,11 @@ public static class BanenkaartCatalogSerializer
             WriteIntArray(writer, "s65", visible, r => r.SuitableFor65Plus ? 1 : 0);
             WriteIntArray(writer, "pm", visible, r => r.PublicMapRadiusKm ?? 0);
             WriteStringArray(writer, "iu", visible, r => r.ImageUrl ?? "");
+            WriteStringArray(writer, "cn", visible, r =>
+                !string.IsNullOrWhiteSpace(r.CategoryName)
+                    ? r.CategoryName!
+                    : r.WorkTypeLabelList.Length > 0 ? r.WorkTypeLabelList[0] : "");
+            WriteStringArray(writer, "pl", visible, r => r.CompanyAddress ?? "");
 
             writer.WriteEndObject();
         }
