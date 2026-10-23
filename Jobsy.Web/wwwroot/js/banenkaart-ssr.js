@@ -204,11 +204,56 @@
         }
     }
 
+    var GUEST_FILTER_KEY = "jobsy.bk.filters.guest.v1";
+
+    function persistGuestFilters(form) {
+        if (!form || !form.elements) {
+            return;
+        }
+        try {
+            var data = {};
+            Array.prototype.forEach.call(form.elements, function (el) {
+                if (!el.name || el.disabled) {
+                    return;
+                }
+                if (el.type === "checkbox" || el.type === "radio") {
+                    if (el.checked) {
+                        data[el.name] = data[el.name] || [];
+                        data[el.name].push(el.value);
+                    }
+                    return;
+                }
+                if (el.type === "submit" || el.type === "button") {
+                    return;
+                }
+                data[el.name] = el.value;
+            });
+            localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(data));
+        } catch (eGuest) { }
+    }
+
+    function bindGuestFilterPersistence() {
+        document.addEventListener("submit", function (ev) {
+            var form = ev.target;
+            if (!form || !form.getAttribute) {
+                return;
+            }
+            var action = form.getAttribute("action") || "";
+            if (action.indexOf("/api/banenkaart-client/apply-filters") !== -1) {
+                persistGuestFilters(form);
+            }
+            if (action.indexOf("/api/banenkaart-client/reset-filters") !== -1) {
+                try { localStorage.removeItem(GUEST_FILTER_KEY); } catch (eReset) { }
+            }
+        }, true);
+    }
+
     function onReady() {
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (!root) {
             return;
         }
+        bindGuestFilterPersistence();
         bindFilters();
         markFilterReady();
         if (root.dataset.banenkaartSsrEnhance === "1") {

@@ -11,7 +11,7 @@ namespace Jobsy.Web.Banenkaart;
 
 internal static class BanenkaartSsrData
 {
-    private const int DiscoverTake = 100;
+    internal const int ListPageSize = 20;
 
     internal sealed record PageModel(
         BanenkaartSsrQuery.State Query,
@@ -31,7 +31,9 @@ internal static class BanenkaartSsrData
         int ActiveFilterCount,
         string ResultCountHeading,
         string? ResultCountSubtitle,
-        uint HighlightSeed);
+        uint HighlightSeed,
+        bool HasMoreList,
+        int ListTotalCount);
 
     internal static async Task<PageModel?> LoadAsync(
         JobsyApiClient api,
@@ -183,12 +185,16 @@ internal static class BanenkaartSsrData
         List<Dictionary<string, object?>> bootPins = [];
         VacancyMapView? mapView = prefetchedMapView;
         var zoomOutsideTravel = false;
+        var hasMoreList = false;
+        var discoverTotal = 0;
 
-        async Task<IReadOnlyList<VacancyListItem>> DiscoverAsync()
+        var listSkip = (Math.Max(1, effectiveQuery.Page) - 1) * ListPageSize;
+
+        async Task<VacancyListPage> DiscoverAsync()
         {
             try
             {
-                var page = await api.DiscoverVacanciesPageAsync(
+                return await api.DiscoverVacanciesPageAsync(
                     useOrigin ? originLat : null,
                     useOrigin ? originLng : null,
                     effectiveQuery.Transport,
@@ -204,80 +210,43 @@ internal static class BanenkaartSsrData
                     companyFocus || effectiveQuery.CategoryIds.Count == 0 ? null : effectiveQuery.CategoryIds,
                     suitableFor65Plus: null,
                     companyIds: effectiveQuery.CompanyIds.Count == 0 ? null : effectiveQuery.CompanyIds,
-                    skip: 0,
-                    take: DiscoverTake,
+                    skip: listSkip,
+                    take: ListPageSize,
                     minMatchPercent: isCandidate && effectiveQuery.MinMatchPercent > 0 ? effectiveQuery.MinMatchPercent : null,
                     ct: cancellationToken);
-                return page.Items;
             }
             catch
             {
-                return [];
+                return new VacancyListPage();
             }
         }
 
-        async Task<List<Dictionary<string, object?>>> LoadPinsAsync()
+        var discoverPage = await DiscoverAsync();
+        vacancies = discoverPage.Items;
+        hasMoreList = discoverPage.HasMore;
+        discoverTotal = discoverPage.TotalCount;
+
+        if (vacancies.Count == 0 && useOrigin)
         {
             try
             {
-                var pins = await api.GetVacancyPinsAsync(
+                var mapPins = await api.GetVacancyPinsAsync(
                     effectiveQuery.Transport,
                     effectiveQuery.MaxTravelMinutes,
-                    originLat,
-                    originLng,
-                    originLat is null ? null : effectiveQuery.RadiusKm,
+                    null,
+                    null,
+                    null,
                     effectiveQuery.WorkTypes.Count > 0 ? effectiveQuery.WorkTypes : null,
                     effectiveQuery.SearchQuery,
                     effectiveQuery.CategoryIds.Count > 0 ? effectiveQuery.CategoryIds : null,
                     effectiveQuery.CompanyIds.Count > 0 ? effectiveQuery.CompanyIds : null,
                     isCandidate && effectiveQuery.MinMatchPercent > 0 ? effectiveQuery.MinMatchPercent : null,
                     ct: cancellationToken);
-                return BanenkaartMapBoot.ToBootPins(pins);
+                zoomOutsideTravel = mapPins.Count > 0;
             }
             catch
             {
-                return [];
-            }
-        }
-
-        var discoverTask = DiscoverAsync();
-        var pinsTask = LoadPinsAsync();
-        await Task.WhenAll(discoverTask, pinsTask);
-        vacancies = await discoverTask;
-        bootPins = await pinsTask;
-
-        try
-        {
-            if (vacancies.Count == 0 && bootPins.Count == 0 && useOrigin)
-            {
-                var widePins = await api.GetVacancyPinsAsync(
-                    effectiveQuery.Transport,
-                    effectiveQuery.MaxTravelMinutes,
-                    null,
-                    null,
-                    null,
-                    effectiveQuery.WorkTypes.Count > 0 ? effectiveQuery.WorkTypes : null,
-                    effectiveQuery.SearchQuery,
-                    effectiveQuery.CategoryIds.Count > 0 ? effectiveQuery.CategoryIds : null,
-                    effectiveQuery.CompanyIds.Count > 0 ? effectiveQuery.CompanyIds : null,
-                    isCandidate && effectiveQuery.MinMatchPercent > 0 ? effectiveQuery.MinMatchPercent : null,
-                    ct: cancellationToken);
-                if (widePins.Count > 0)
-                {
-                    bootPins = BanenkaartMapBoot.ToBootPins(widePins);
-                    zoomOutsideTravel = true;
-                }
-            }
-            else if (vacancies.Count == 0 && bootPins.Count > 0 && useOrigin)
-            {
-                zoomOutsideTravel = true;
-            }
-        }
-        catch
-        {
-            if (bootPins.Count == 0)
-            {
-                bootPins = BanenkaartMapBoot.ToBootPinsFromList(vacancies);
+                zoomOutsideTravel = false;
             }
         }
 
@@ -303,10 +272,7 @@ internal static class BanenkaartSsrData
             effectiveQuery.Transport,
             effectiveQuery.RadiusKm);
 
-        if (bootPins.Count == 0)
-        {
-            bootPins = BanenkaartMapBoot.ToBootPinsFromList(vacancies);
-        }
+        bootPins = [];
 
         var pinsUrl = BanenkaartMapBoot.BuildPinsApiUrl(effectiveQuery, isCandidate);
         var highlightSeed = HashVacancyIds(vacancies.Select(v => v.Id));
@@ -346,7 +312,7 @@ internal static class BanenkaartSsrData
                 originLat is not null),
             defaults);
 
-        var count = vacancies.Count;
+        var count = discoverTotal > 0 ? discoverTotal : vacancies.Count;
         var heading = culture.Format("Kb.Filter.ResultCount", count);
 
         string? subtitle = originLat is not null
@@ -374,7 +340,9 @@ internal static class BanenkaartSsrData
             activeFilters,
             heading,
             subtitle,
-            highlightSeed);
+            highlightSeed,
+            hasMoreList,
+            discoverTotal);
     }
 
     private static uint HashVacancyIds(IEnumerable<Guid> ids)
