@@ -118,6 +118,8 @@ window.jobMap = (function () {
             && lng >= NL_BOUNDS[0][1] && lng <= NL_BOUNDS[1][1];
     }
 
+    let locateMessageTimer = null;
+
     function showLocateMessage(text) {
         if (!map) {
             return;
@@ -133,8 +135,19 @@ window.jobMap = (function () {
             note.setAttribute("role", "status");
             host.appendChild(note);
         }
+        if (locateMessageTimer) {
+            clearTimeout(locateMessageTimer);
+            locateMessageTimer = null;
+        }
         note.textContent = text || "";
         note.hidden = !text;
+        if (text) {
+            locateMessageTimer = setTimeout(function () {
+                note.hidden = true;
+                note.textContent = "";
+                locateMessageTimer = null;
+            }, 4000);
+        }
     }
 
     function detailHrefForVacancy(id) {
@@ -1445,6 +1458,9 @@ window.jobMap = (function () {
                     rememberJobLiked(id, liked, childMarkers);
                 });
             }
+            btn.addEventListener("mousedown", function (ev) {
+                stopEvent(ev);
+            }, true);
             btn.addEventListener("click", function (ev) {
                 stopEvent(ev);
                 if (!uiLabels.canSave) {
@@ -1469,7 +1485,7 @@ window.jobMap = (function () {
                 }).finally(function () {
                     delete btn.dataset.saveBusy;
                 });
-            });
+            }, true);
         });
     }
 
@@ -2292,6 +2308,8 @@ window.jobMap = (function () {
             minHoursPerWeek: card.minHoursPerWeek != null ? card.minHoursPerWeek : pin.minHoursPerWeek,
             maxHoursPerWeek: card.maxHoursPerWeek != null ? card.maxHoursPerWeek : pin.maxHoursPerWeek,
             liked: pin.liked === true,
+            transport: travelOptions.transport || pin.transport,
+            transportLabel: transportVerb(travelOptions.transport) || pin.transportLabel,
             _detailLoaded: true
         });
     }
@@ -2348,6 +2366,21 @@ window.jobMap = (function () {
         });
     }
 
+    function cardQueryString() {
+        const q = [];
+        if (travelOptions.transport) {
+            q.push("transport=" + encodeURIComponent(String(travelOptions.transport)));
+        }
+        if (travelOptions.maxMinutes != null) {
+            q.push("maxMinutes=" + encodeURIComponent(String(travelOptions.maxMinutes)));
+        }
+        if (lastOrigin && Number.isFinite(lastOrigin.lat) && Number.isFinite(lastOrigin.lng)) {
+            q.push("originLat=" + encodeURIComponent(String(lastOrigin.lat)));
+            q.push("originLng=" + encodeURIComponent(String(lastOrigin.lng)));
+        }
+        return q.length ? "?" + q.join("&") : "";
+    }
+
     function fetchVacancyCard(id) {
         const key = String(id || "");
         if (!key) {
@@ -2357,7 +2390,7 @@ window.jobMap = (function () {
             return detailCache[key];
         }
         detailCache[key] = fetchJsonWithOneRetry(
-            "/api/vacancies/" + encodeURIComponent(key) + "/card"
+            "/api/vacancies/" + encodeURIComponent(key) + "/card" + cardQueryString()
         )
             .then(function (card) {
                 return card;
@@ -2379,7 +2412,7 @@ window.jobMap = (function () {
         const batch = missing.length === 0
             ? Promise.resolve([])
             : fetchJsonWithOneRetry(
-                "/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(",")
+                "/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(",") + cardQueryString()
             )
                 .then(function (rows) {
                     (Array.isArray(rows) ? rows : []).forEach(function (card) {
@@ -3055,6 +3088,45 @@ window.jobMap = (function () {
                 isochroneLabelMarkers.push(marker);
             } catch (e) { }
         });
+        clampIsoLabelMarkersToMap();
+    }
+
+    function clampIsoLabelMarkersToMap() {
+        if (!map || !isochroneLabelMarkers.length) {
+            return;
+        }
+        const container = map.getContainer();
+        if (!container) {
+            return;
+        }
+        const cr = container.getBoundingClientRect();
+        const padBottom = 88;
+        isochroneLabelMarkers.forEach(function (marker) {
+            const el = marker.getElement();
+            if (!el) {
+                return;
+            }
+            let r = el.getBoundingClientRect();
+            let dx = 0;
+            let dy = 0;
+            if (r.bottom > cr.bottom - padBottom) {
+                dy = r.bottom - (cr.bottom - padBottom);
+            }
+            if (r.top < cr.top + 8) {
+                dy = r.top - (cr.top + 8);
+            }
+            if (r.right > cr.right - 12) {
+                dx = r.right - (cr.right - 12);
+            }
+            if (r.left < cr.left + 12) {
+                dx = r.left - (cr.left + 12);
+            }
+            if (!dx && !dy) {
+                return;
+            }
+            const pt = map.project(marker.getLngLat());
+            marker.setLngLat(map.unproject([pt.x - dx, pt.y - dy]));
+        });
     }
 
     function readCssToken(name, fallback) {
@@ -3346,6 +3418,9 @@ window.jobMap = (function () {
     }
 
     function fitToOriginRings(animate) {
+        if (window.__jobsyBkRestoringView) {
+            return;
+        }
         if (!map || !lastOrigin) {
             return;
         }
@@ -3623,9 +3698,12 @@ window.jobMap = (function () {
             bootZoomOutsideTravel = true;
         }
         setVacancies(pins || []);
+        if (window.__jobsyBkRestoringView) {
+            return;
+        }
         if (bootZoomOutsideTravel && lastOrigin) {
             fitOriginWithPinsOutsideTravel();
-        } else if (lastOrigin) {
+        } else if (lastOrigin && !meta.skipAutoFit) {
             fitToOriginRings(true);
         }
     }
@@ -3766,7 +3844,9 @@ window.jobMap = (function () {
                 const openInit = companyMapMode && v.openForInitiative === true;
                 const kansberoep = v.kansberoep === true || v.kansberoep === 1 ? 1 : 0;
                 let outside = 0;
-                if (origin && outerM > 0) {
+                if (v.outsideTravel || v.dimmed) {
+                    outside = 1;
+                } else if (origin && outerM > 0) {
                     const d = haversineMeters(origin.lat, origin.lng, record.lat, record.lng);
                     if (d > outerM * 1.02) {
                         outside = 1;
@@ -4526,6 +4606,19 @@ window.jobMap = (function () {
         addLocateControl();
         bindOutsideClickCloser();
         bindTravelRingStyleGuard();
+        if (!map._jobsyIsoClampBound) {
+            map._jobsyIsoClampBound = true;
+            map.on("moveend", function () {
+                if (isochroneLabelMarkers.length) {
+                    clampIsoLabelMarkersToMap();
+                }
+            });
+            map.on("zoomend", function () {
+                if (isochroneLabelMarkers.length) {
+                    clampIsoLabelMarkersToMap();
+                }
+            });
+        }
         flushPendingCatalogPins();
     }
 

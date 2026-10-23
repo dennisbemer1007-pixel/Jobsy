@@ -60,15 +60,16 @@ internal static class BanenkaartSsrShells
         }
 
         AppendChrome(sb, culture, model);
+        AppendNearbyHeroStrip(sb, culture, model);
         AppendVacancyPane(sb, culture, model);
         AppendMapPane(sb, culture, model);
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
         AppendMapFab(sb, culture);
 
-        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-demo1\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-demo1\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-19\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-19\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-19\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-19\" crossorigin=\"anonymous\" defer></script>");
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -185,11 +186,17 @@ internal static class BanenkaartSsrShells
             .Append("\" data-kb-address=\"1\" /></div>");
     }
 
-    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
+    private static void AppendNearbyHeroStrip(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
     {
-        sb.Append("<aside class=\"vacancy-pane\"><div class=\"kb-nearby-banner\" data-testid=\"kb-nearby-banner\"><div class=\"kb-nearby-banner__art\" style=\"background-image:url('")
-            .Append(CandidateIllustratedImages.BanenkaartCyclists)
-            .Append("')\" aria-hidden=\"true\"></div><div class=\"kb-nearby-banner__copy\"><h2 class=\"kb-nearby-banner__title\">")
+        sb.Append("<header class=\"kb-nearby-banner kb-nearby-banner--strip\" data-testid=\"kb-nearby-banner\">");
+        sb.Append("<div class=\"kb-nearby-banner__art\" aria-hidden=\"true\"><picture>");
+        sb.Append("<source srcset=\"")
+            .Append(CandidateIllustratedImages.BanenkaartHeroStripWebp)
+            .Append("\" type=\"image/webp\" />");
+        sb.Append("<img src=\"")
+            .Append(CandidateIllustratedImages.BanenkaartHeroStripJpg)
+            .Append("\" alt=\"\" width=\"1440\" height=\"150\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
+        sb.Append("</picture></div><div class=\"kb-nearby-banner__copy\"><h2 class=\"kb-nearby-banner__title\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.NearbyTitle"]))
             .Append("</h2>");
         if (!string.IsNullOrWhiteSpace(model.ResultCountSubtitle))
@@ -199,7 +206,12 @@ internal static class BanenkaartSsrShells
                 .Append("</p>");
         }
 
-        sb.Append("</div></div><div class=\"vacancy-list\" data-testid=\"vacancy-list\">");
+        sb.Append("</div></header>");
+    }
+
+    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
+    {
+        sb.Append("<aside class=\"vacancy-pane\"><div class=\"vacancy-list\" data-testid=\"vacancy-list\">");
         if (model.ShowEmptyTravelMessage)
         {
             sb.Append("<p class=\"state-message\" data-testid=\"kb-empty-travel\">")

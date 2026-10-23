@@ -23,9 +23,11 @@ def collect_sources() -> list[Path]:
     files.extend((ROOT / "Jobsy.Web" / "Components").rglob("*.razor"))
     files.extend(
         [
+            ROOT / "Jobsy.Web" / "Banenkaart" / "BanenkaartSsrShells.cs",
             WWW / "js" / "app-core.js",
             WWW / "js" / "app-public.js",
             WWW / "js" / "lobsyPush.js",
+            WWW / "js" / "banenkaart-maps-boot.js",
             ROOT / "Jobsy.Web" / "Hosting" / "PageAssetCatalog.cs",
             WWW / "service-worker.js",
             WWW / "service-worker.published.js",

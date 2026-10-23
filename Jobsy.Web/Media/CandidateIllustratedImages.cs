@@ -15,6 +15,11 @@ public static class CandidateIllustratedImages
     public const string VervoerBlok = $"{Base}/spots/vervoer-blok.jpg?v={Version}";
     public const string KompasMedallions = $"{Base}/spots/dna.jpg?v={Version}";
     public const string BanenkaartCyclists = $"{Base}/spots/banen.jpg?v={Version}";
+
+    /// <summary>Full-width banenkaart header strip (webp preferred, jpg fallback).</summary>
+    public const string BanenkaartHeroStripWebp = $"{Base}/spots/banen.webp?v={Version}";
+
+    public const string BanenkaartHeroStripJpg = BanenkaartCyclists;
     public const string PopupTravelAccent = $"{Base}/spots/vervoer-blok.jpg?v={Version}";
 
     /// <summary>Kompas tip card — zorg + logistiek, incl. hijab.</summary>

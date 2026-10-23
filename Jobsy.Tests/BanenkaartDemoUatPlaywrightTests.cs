@@ -100,6 +100,38 @@ public sealed class BanenkaartDemoUatPlaywrightTests : IAsyncLifetime
         Assert.Equal("Den Haag", synced);
     }
 
+    [Theory]
+    [InlineData(1280, 720, false)]
+    [InlineData(390, 844, true)]
+    public async Task Uat18_nearby_hero_is_full_width_strip_above_panes(int width, int height, bool touch)
+    {
+        await using var ctx = await NewContextAsync(width, height, touch);
+        var page = await OpenBanenkaartAsync(ctx);
+        var strip = page.Locator("[data-testid=kb-nearby-banner].kb-nearby-banner--strip");
+        await strip.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
+
+        if (touch)
+        {
+            Assert.False(await strip.IsVisibleAsync(), "Mobile map view hides the strip to preserve map space.");
+            await page.Locator("[data-testid=kb-view-lijst]").ClickAsync();
+            await strip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        }
+        else
+        {
+            await strip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        }
+
+        var inPane = await page.Locator(".vacancy-pane [data-testid=kb-nearby-banner]").CountAsync();
+        Assert.Equal(0, inPane);
+        var box = await strip.BoundingBoxAsync();
+        var root = page.Locator("[data-testid=banenkaart-ssr-root]");
+        var rootBox = await root.BoundingBoxAsync();
+        Assert.NotNull(box);
+        Assert.NotNull(rootBox);
+        Assert.True(box!.Width >= rootBox!.Width * 0.92, "Hero strip should span the discovery width.");
+        Assert.InRange(box.Height, touch ? 70 : 110, touch ? 100 : 160);
+    }
+
     [Fact]
     public async Task Uat06_load_more_is_client_button_not_page_link()
     {
