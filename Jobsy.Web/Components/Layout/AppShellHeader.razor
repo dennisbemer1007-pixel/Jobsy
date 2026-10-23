@@ -1,4 +1,5 @@
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
@@ -72,9 +73,11 @@
         var http = HttpContextAccessor.HttpContext;
         var user = http?.User;
         _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
-        _showCandidateHeaderNav = user?.Identity?.IsAuthenticated == true
-            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
         var path = http?.Request.Path.Value ?? "";
+        var relativePath = path.TrimStart('/');
+        _showCandidateHeaderNav = user?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
+            && !MainLayout.IsBanenkaartPath(relativePath);
         _useOnboardingBrandMark = path.Contains("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)

@@ -110,26 +110,33 @@ public sealed class BanenkaartDemoUatPlaywrightTests : IAsyncLifetime
         var strip = page.Locator("[data-testid=kb-nearby-banner].kb-nearby-banner--strip");
         await strip.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
 
-        if (touch)
-        {
-            Assert.False(await strip.IsVisibleAsync(), "Mobile map view hides the strip to preserve map space.");
-            await page.Locator("[data-testid=kb-view-lijst]").ClickAsync();
-            await strip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
-        }
-        else
-        {
-            await strip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
-        }
+        await strip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+
+        var stripAboveChrome = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const root = document.querySelector('[data-banenkaart-ssr="1"]');
+              const strip = root && root.querySelector(':scope > [data-testid=kb-nearby-banner].kb-nearby-banner--strip');
+              const chrome = root && root.querySelector(':scope > .jobsy-chrome');
+              if (!strip || !chrome) return false;
+              return !!(strip.compareDocumentPosition(chrome) & Node.DOCUMENT_POSITION_FOLLOWING);
+            }
+            """);
+        Assert.True(stripAboveChrome, "Illustration strip must sit above the filter/search chrome.");
 
         var inPane = await page.Locator(".vacancy-pane [data-testid=kb-nearby-banner]").CountAsync();
         Assert.Equal(0, inPane);
         var box = await strip.BoundingBoxAsync();
         var root = page.Locator("[data-testid=banenkaart-ssr-root]");
         var rootBox = await root.BoundingBoxAsync();
+        var chromeBox = await page.Locator("[data-banenkaart-ssr=\"1\"] > .jobsy-chrome").BoundingBoxAsync();
         Assert.NotNull(box);
         Assert.NotNull(rootBox);
+        Assert.NotNull(chromeBox);
         Assert.True(box!.Width >= rootBox!.Width * 0.92, "Hero strip should span the discovery width.");
-        Assert.InRange(box.Height, touch ? 70 : 110, touch ? 100 : 160);
+        Assert.True(box.Y + box.Height <= chromeBox!.Y + 2,
+            "Strip must sit above filter bar (strip bottom=" + (box.Y + box.Height) + ", chrome top=" + chromeBox.Y + ").");
+        Assert.InRange(box.Height, touch ? 50 : 52, touch ? 70 : 80);
     }
 
     [Fact]
