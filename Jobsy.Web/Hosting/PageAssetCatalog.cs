@@ -403,6 +403,12 @@ public static class PageAssetCatalog
         return path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal);
     }
 
+    public static bool IncludeBanenkaartClientScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path is "/banenkaart" or "/banen";
+    }
+
     public static bool IncludeVacancyWizardScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);

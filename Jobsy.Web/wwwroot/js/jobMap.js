@@ -4214,7 +4214,11 @@ window.jobMap = (function () {
                 pins: pins,
                 view: view,
                 preferFilledLocation: preferFilledLocation,
-                pinsUrl: bootPinsUrl
+                pinsUrl: bootPinsUrl,
+                illustratedPopup: !!(parsed && parsed.illustratedPopup),
+                zoomToPinsOutsideTravel: !!(parsed && parsed.zoomToPinsOutsideTravel),
+                mapInit: parsed && parsed.mapInit ? parsed.mapInit : null,
+                origin: parsed && parsed.origin ? parsed.origin : null
             };
         } catch (e) {
             return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
@@ -4249,7 +4253,9 @@ window.jobMap = (function () {
             init(id, bootPayload.pins || [], {
                 view: bootPayload.view,
                 preferFilledLocation: bootPayload.preferFilledLocation !== false,
-                pinsUrl: bootPayload.pinsUrl || null
+                pinsUrl: bootPayload.pinsUrl || null,
+                illustratedPopup: bootPayload.illustratedPopup,
+                mapInit: bootPayload.mapInit
             });
         } catch (_err) {
             // Circuit init will retry.
@@ -5537,6 +5543,18 @@ window.jobMap = (function () {
         __testGetViewportNotifyCount: function () { return viewportNotifyCount; },
         __testResetViewportNotifyCount: function () { viewportNotifyCount = 0; },
         __testGetTravelRingDrawCount: function () { return travelRingDrawCount; },
+        __testFitAllPins: function () {
+            if (!map) {
+                return;
+            }
+            var points = collectVacancyPoints(Object.keys(markersById).map(function (id) {
+                return markersById[id] && markersById[id].vacancy;
+            }).filter(Boolean));
+            if (!points.length) {
+                return;
+            }
+            fitMapToVacancies(points);
+        },
         /** @internal Open the densest visible cluster for v3 popup tests. */
         debugOpenLargestCluster: async function () {
             if (!map || typeof map.queryRenderedFeatures !== "function") {

@@ -22,7 +22,7 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.DoesNotContain("onload=", appCssLink);
         Assert.Contains("?v=", appCssLink);
 
-        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "BanenkaartSsr.razor"));
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
         Assert.DoesNotContain("rel=\"preload\"", home);
 
@@ -40,7 +40,8 @@ public class BanenkaartPagePerformanceGuardTests
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("ShouldRenderVacancyCards", discovery);
-        Assert.Contains("_wideViewport || (_mapPainted && !showMapOnMobile)", discovery);
+        Assert.Contains("_mapPainted && !showMapOnMobile", discovery);
+        Assert.Contains("_wideViewport", discovery);
         Assert.Contains("!_wideViewport && !showMapOnMobile", discovery);
         Assert.Contains("VisibleVacancies", discovery);
         Assert.Contains("RendererInfo.IsInteractive", discovery);
@@ -245,10 +246,11 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.Contains("css/app.min.css", appRazor);
         Assert.DoesNotContain("href=\"css/app.css?", appRazor);
 
-        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
+        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "BanenkaartSsr.razor"));
         Assert.DoesNotContain("rel=\"preload\"", home);
         Assert.DoesNotContain("lib/maplibre/", home);
         Assert.DoesNotContain("jobMap.min.js", home);
+        Assert.Contains("data-banenkaart-ssr", File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs")));
 
         Assert.False(Directory.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "lib", "leaflet")));
     }
