@@ -449,7 +449,8 @@ internal static class IllustratedPagesApiStub
                || path.Contains("/pins", StringComparison.OrdinalIgnoreCase)
                || path.Contains("/map-view", StringComparison.OrdinalIgnoreCase)
                || path.Contains("/cards", StringComparison.OrdinalIgnoreCase)
-               || path.Contains("/banenkaart-catalog", StringComparison.OrdinalIgnoreCase);
+               || path.Contains("/banenkaart-catalog", StringComparison.OrdinalIgnoreCase)
+               || path.Contains("/map-popup-photo", StringComparison.OrdinalIgnoreCase);
     }
 
     private static CareerPathPlanApiModel SampleCareerPlan()
