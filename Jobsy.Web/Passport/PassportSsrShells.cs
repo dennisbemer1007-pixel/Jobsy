@@ -301,8 +301,15 @@ internal static class PassportSsrShells
         }
     }
 
-    private static void AppendTestsPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData _)
+    private static void AppendTestsPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
     {
+        if (data.FromDiscovery)
+        {
+            sb.Append("<p class=\"passport-ssr-back\"><a href=\"/candidate/ontdekkingsreis?stap=overview\" data-enhance-nav=\"false\" data-testid=\"passport-back-to-discovery\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Discovery.Passport.BackToJourney"]));
+            sb.Append("</a></p>");
+        }
+
         sb.Append("<p class=\"login-lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Tests"]));
         sb.Append("</p><ul class=\"passport-ssr-links\">");

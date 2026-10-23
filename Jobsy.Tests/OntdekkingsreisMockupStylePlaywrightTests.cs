@@ -65,7 +65,7 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
         page.FrameNavigated += (_, _) => navigations++;
 
         var t0 = DateTime.UtcNow;
-        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/ontdekkingsreis?stap=9"));
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/ontdekkingsreis?stap=overview"));
         await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 90_000 });
         await page.Locator("[data-discovery-ssr=\"1\"]").WaitForAsync(new() { Timeout = 30_000 });
         var elapsedMs = (DateTime.UtcNow - t0).TotalMilliseconds;
@@ -82,9 +82,9 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
             "el => parseFloat(getComputedStyle(el).paddingLeft)");
         Assert.True(padLeft >= 12, $"Overview container padding-left should be >= 12px, got {padLeft}");
 
-        var routeRoot = mobile ? ".journey-route__mobile-only" : ".journey-route__desktop-only";
+        var routeRoot = mobile ? ".discovery-mobile-route" : ".journey-route__desktop-only";
         var kustLink = mobile
-            ? page.Locator($"{routeRoot} .journey-route-mobile__stop[data-phase=kust] a.journey-route__stop-link")
+            ? page.Locator(".discovery-mobile-stop[data-phase=kust] a.discovery-mobile-stop__text")
             : page.Locator($"{routeRoot} a.journey-route__stop-link[data-phase=kust]");
         await kustLink.ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("fase=kust", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
@@ -97,13 +97,13 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
         }
 
         var rotsLink = mobile
-            ? page.Locator($"{routeRoot} .journey-route-mobile__stop[data-phase=rots] a.journey-route__stop-link")
+            ? page.Locator(".discovery-mobile-stop[data-phase=rots] a.discovery-mobile-stop__text")
             : page.Locator($"{routeRoot} a.journey-route__stop-link[data-phase=rots]");
         await rotsLink.ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("fase=rots", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
 
         var lightLink = mobile
-            ? page.Locator($"{routeRoot} .journey-route-mobile__stop[data-phase=light] a.journey-route__stop-link")
+            ? page.Locator(".discovery-mobile-stop[data-phase=light] a.discovery-mobile-stop__text")
             : page.Locator($"{routeRoot} a.journey-route__stop-link[data-phase=light]");
         await lightLink.ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("fase=light", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });

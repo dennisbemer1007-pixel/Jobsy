@@ -23,7 +23,8 @@ internal static class PassportSsrData
         PassportSsrDisplay.OverviewModel Overview,
         string? FirstName,
         int TestsNextStepCount,
-        string? DreamTitle);
+        string? DreamTitle,
+        bool FromDiscovery);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
@@ -32,6 +33,7 @@ internal static class PassportSsrData
         string? tabRaw,
         string? errorMessage,
         bool saved,
+        bool fromDiscovery = false,
         CancellationToken cancellationToken = default)
     {
         var flags = await featureFlags.GetAsync(cancellationToken);
@@ -87,6 +89,7 @@ internal static class PassportSsrData
             overview,
             firstName,
             testsNext,
-            string.IsNullOrWhiteSpace(career?.DreamTitle) ? null : career!.DreamTitle.Trim());
+            string.IsNullOrWhiteSpace(career?.DreamTitle) ? null : career!.DreamTitle.Trim(),
+            fromDiscovery);
     }
 }

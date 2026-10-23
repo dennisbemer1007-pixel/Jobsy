@@ -233,26 +233,16 @@ public static class DiscoveryClientFormEndpoints
             shedStep,
             JourneyTestFlow.DefaultSelectedLevel(answered, kind, band.QuickScanVersion));
 
-        if (selected > reached)
+        var depth = selected > 0
+            ? selected
+            : JourneyTestFlow.DefaultSelectedLevel(answered, kind, band.QuickScanVersion);
+
+        if (depth > reached)
         {
-            return SeeOther(DiscoverySsrUrls.Step(shedStep, selected, 1));
+            return SeeOther(DiscoverySsrUrls.Step(shedStep, depth, 1));
         }
 
-        try
-        {
-            _ = await api.SaveMyOnboardingProgressAsync(shedStep, stepCompleted: true, ct: cancellationToken);
-        }
-        catch
-        {
-            return SeeOther(DiscoverySsrUrls.WithError(DiscoverySsrUrls.Shed(shedStep), culture["Common.Error.TryAgain"]));
-        }
-
-        if (shedStep >= 10)
-        {
-            return SeeOther(DiscoverySsrUrls.WithStap("klaar"));
-        }
-
-        return SeeOther(DiscoverySsrUrls.Step(shedStep + 1));
+        return SeeOther(DiscoverySsrUrls.Shed(shedStep));
     }
 
     private static async Task<int> CountAnsweredAsync(

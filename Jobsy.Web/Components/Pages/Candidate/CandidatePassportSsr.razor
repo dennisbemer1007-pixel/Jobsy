@@ -61,9 +61,11 @@ else if (_bodyHtml is not null)
             var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
             query.TryGetValue("tab", out var tabValues);
             query.TryGetValue("error", out var errorValues);
-            query.TryGetValue("saved", out var savedValues);
-            var error = errorValues.FirstOrDefault();
-            var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
+        query.TryGetValue("saved", out var savedValues);
+        query.TryGetValue("from", out var fromValues);
+        var error = errorValues.FirstOrDefault();
+        var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
+        var fromDiscovery = string.Equals(fromValues.FirstOrDefault(), "reis", StringComparison.OrdinalIgnoreCase);
 
             var data = await PassportSsrData.LoadAsync(
                 Api,
@@ -71,7 +73,8 @@ else if (_bodyHtml is not null)
                 Culture,
                 tabValues.FirstOrDefault(),
                 string.IsNullOrWhiteSpace(error) ? null : error,
-                saved);
+                saved,
+                fromDiscovery);
 
             if (data is null)
             {

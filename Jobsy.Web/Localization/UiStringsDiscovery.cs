@@ -703,6 +703,12 @@ public static class UiStringsDiscovery
             "Start", "Start", "Start", "Start", "ابدأ");
         Add("Discovery.Overview.SummaryEmpty",
             "Nog niet ingevuld.", "Not filled in yet.", "Jeszcze nie uzupełniono.", "Încă necompletat.", "لم يُملأ بعد.");
+        Add("Discovery.Overview.WhenFromDate",
+            "Vanaf {0}", "From {0}", "Od {0}", "Din {0}", "من {0}");
+        Add("Discovery.Overview.WhenMaxTravel",
+            "reistijd max {0} min", "travel time up to {0} min", "dojazd do {0} min", "deplasare max. {0} min", "وقت السفر حتى {0} د");
+        Add("Discovery.Passport.BackToJourney",
+            "Terug naar je reis", "Back to your journey", "Wróć do podróży", "Înapoi la călătorie", "العودة إلى رحلتك");
         Add("Discovery.Overview.Phase.BeachLead",
             "Start van je reis en toestemming.", "Start of your journey and consent.", "Start podróży i zgoda.", "Startul călătoriei și consimțământ.", "بداية رحلتك والموافقة.");
         Add("Discovery.Overview.Phase.CoastLead",

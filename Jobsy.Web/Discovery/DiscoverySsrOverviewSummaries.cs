@@ -1,5 +1,7 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
+using System.Globalization;
 using Jobsy.Web.Components.Candidate.Discovery;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
@@ -18,7 +20,7 @@ internal static class DiscoverySsrOverviewSummaries
         var text = step switch
         {
             1 => OverviewAboutSummary(culture, draft),
-            2 => OverviewWhenSummary(draft),
+            2 => OverviewWhenSummary(culture, draft),
             3 => OverviewWorkSummary(culture, draft),
             4 => OverviewLearnSummary(culture, draft),
             5 => OverviewLikesSummary(draft),
@@ -78,25 +80,68 @@ internal static class DiscoverySsrOverviewSummaries
         return string.Join(", ", parts);
     }
 
-    public static string OverviewWhenSummary(OnboardingProfileDraft draft)
+    public static bool IsBasicsStepFilled(
+        int step,
+        CultureState culture,
+        OnboardingProfileDraft draft,
+        CandidateDiscoveryOverviewPanelDto? panel)
     {
-        var parts = new List<string>();
-        if (draft.Presets.Count > 0)
+        if (step is >= 7 and <= 10)
         {
-            parts.Add(string.Join(", ", draft.Presets.Take(2)));
+            return DiscoverySsrJourneyState.IsTestMiniDone(step, panel);
         }
 
-        if (!draft.Immediate && draft.AvailableFrom is { } from)
+        var summary = StepOverviewSummary(step, culture, draft, panel);
+        return !string.IsNullOrWhiteSpace(summary)
+               && !string.Equals(summary, culture["Discovery.Overview.SummaryEmpty"], StringComparison.Ordinal);
+    }
+
+    public static string OverviewWhenSummary(CultureState culture, OnboardingProfileDraft draft)
+    {
+        var parts = new List<string>();
+        foreach (var code in draft.Presets.OrderBy(static c => c, StringComparer.OrdinalIgnoreCase))
         {
-            parts.Add(from.ToString("dd-MM-yyyy", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")));
+            if (string.Equals(code, AvailabilityPresetRules.Custom, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var key = PresetTitleKey(code);
+            var label = culture[key];
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                parts.Add(label);
+            }
+        }
+
+        if (draft.Immediate)
+        {
+            parts.Add(culture["Onboarding.AvailabilityStartImmediate"]);
+        }
+        else if (draft.AvailableFrom is { } from)
+        {
+            parts.Add(culture.Format(
+                "Discovery.Overview.WhenFromDate",
+                from.ToString("d MMMM yyyy", JobsyCultures.For(culture.Language))));
         }
 
         if (draft.MaxTravel > 0)
         {
-            parts.Add($"{draft.MaxTravel} min");
+            parts.Add(culture.Format("Discovery.Overview.WhenMaxTravel", draft.MaxTravel));
         }
 
         return string.Join(", ", parts);
+    }
+
+    private static string PresetTitleKey(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return "Onboarding.Preset.Custom";
+        }
+
+        var normalized = code.Trim().ToLowerInvariant();
+        return "Onboarding.Preset." + char.ToUpper(normalized[0], CultureInfo.InvariantCulture) + normalized[1..];
     }
 
     public static string OverviewWorkSummary(CultureState culture, OnboardingProfileDraft draft)
