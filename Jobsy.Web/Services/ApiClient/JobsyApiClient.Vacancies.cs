@@ -217,6 +217,44 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<BanenkaartCatalogHttpResult?> GetBanenkaartCatalogAsync(CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/vacancies/banenkaart-catalog");
+        HttpResponseMessage response;
+        try
+        {
+            response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        }
+        catch
+        {
+            return null;
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotModified)
+            {
+                return new BanenkaartCatalogHttpResult(null, response.Headers.ETag?.Tag, NotModified: true);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var body = await response.Content.ReadAsByteArrayAsync(ct);
+            if (body.Length == 0)
+            {
+                return null;
+            }
+
+            var etag = response.Headers.ETag?.Tag ?? response.Headers.ETag?.ToString();
+            return new BanenkaartCatalogHttpResult(body, etag, NotModified: false);
+        }
+    }
+
+    public readonly record struct BanenkaartCatalogHttpResult(byte[]? Body, string? ETag, bool NotModified);
+
     public async Task<IReadOnlyList<VacancyPinBootItem>> GetVacancyPinsAsync(
         string transport,
         int maxMinutes,

@@ -2393,7 +2393,7 @@ window.jobMap = (function () {
             + "&minLng=" + encodeURIComponent(String(box.minLng))
             + "&maxLat=" + encodeURIComponent(String(box.maxLat))
             + "&maxLng=" + encodeURIComponent(String(box.maxLng))
-            + "&zoom=" + encodeURIComponent(String(box.zoom));
+            + "&zoom=" + encodeURIComponent(String(Math.round(box.zoom)));
     }
 
     /** Filter cache key: filter state only (no transport, no viewport bbox). */
@@ -2438,6 +2438,9 @@ window.jobMap = (function () {
     }
 
     function fetchPins(url) {
+        if (catalogModeActive) {
+            return Promise.resolve([]);
+        }
         if (!url) {
             return Promise.resolve([]);
         }
@@ -5126,6 +5129,9 @@ window.jobMap = (function () {
     }
 
     function reloadPins(url) {
+        if (catalogModeActive) {
+            return Promise.resolve([]);
+        }
         if (url) {
             pinsBaseUrl = stripViewportParams(String(url));
         }
@@ -5170,7 +5176,7 @@ window.jobMap = (function () {
     }
 
     function bindViewportPinsReload() {
-        if (!map) {
+        if (catalogModeActive || !map) {
             return;
         }
         if (map._jobsyViewportPinsSchedule) {

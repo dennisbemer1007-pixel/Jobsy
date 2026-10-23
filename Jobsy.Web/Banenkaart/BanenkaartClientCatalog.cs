@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using Jobsy.Web.Services;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Web.Banenkaart;
@@ -9,12 +11,11 @@ internal static class BanenkaartClientCatalog
 
     internal static async Task<IResult> GetAllAsync(
         HttpContext http,
-        IHttpClientFactory httpClientFactory,
+        JobsyApiClient api,
         IMemoryCache cache,
         CancellationToken cancellationToken)
     {
-        var client = httpClientFactory.CreateClient("JobsyApi");
-        var cacheKey = "bk-catalog-v1";
+        const string cacheKey = "bk-catalog-v1";
         if (cache.TryGetValue(cacheKey, out CachedCatalog? cached) && cached is not null)
         {
             if (http.Request.Headers.IfNoneMatch.Contains(cached.ETag))
@@ -27,55 +28,64 @@ internal static class BanenkaartClientCatalog
             return Write(http, cached.Body, cached.ETag);
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "api/vacancies/banenkaart-catalog");
-        if (http.Request.Headers.TryGetValue("If-None-Match", out var inm))
-        {
-            request.Headers.TryAddWithoutValidation("If-None-Match", inm.ToString());
-        }
-
-        HttpResponseMessage response;
+        JobsyApiClient.BanenkaartCatalogHttpResult? upstream;
         try
         {
-            response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            upstream = await api.GetBanenkaartCatalogAsync(cancellationToken);
         }
         catch
+        {
+            upstream = null;
+        }
+
+        if (upstream is null)
         {
             return Results.StatusCode(StatusCodes.Status502BadGateway);
         }
 
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms, cancellationToken);
-        var body = ms.ToArray();
-        var etag = response.Headers.ETag?.Tag ?? response.Headers.ETag?.ToString() ?? "";
-
-        if (response.StatusCode == System.Net.HttpStatusCode.NotModified && cache.TryGetValue(cacheKey, out cached) && cached is not null)
+        if (upstream.Value.NotModified && cache.TryGetValue(cacheKey, out cached) && cached is not null)
         {
             http.Response.Headers.ETag = cached.ETag;
             http.Response.Headers.CacheControl = "private, max-age=900, stale-while-revalidate=3600";
             return Results.StatusCode(StatusCodes.Status304NotModified);
         }
 
-        if (response.IsSuccessStatusCode && body.Length > 0 && !string.IsNullOrWhiteSpace(etag))
+        var body = upstream.Value.Body;
+        if (body is null || body.Length == 0)
         {
-            cache.Set(cacheKey, new CachedCatalog(body, etag), CacheTtl);
+            return Results.StatusCode(StatusCodes.Status502BadGateway);
         }
 
-        if (!response.IsSuccessStatusCode)
-        {
-            return Results.StatusCode((int)response.StatusCode);
-        }
-
+        var etag = NormalizeEtag(upstream.Value.ETag) ?? ComputeEtag(body);
+        cache.Set(cacheKey, new CachedCatalog(body, etag), CacheTtl);
         return Write(http, body, etag);
+    }
+
+    private static string? NormalizeEtag(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        var tag = raw.Trim();
+        if (!tag.StartsWith('"'))
+        {
+            tag = "\"" + tag.Trim('"') + "\"";
+        }
+
+        return tag;
+    }
+
+    private static string ComputeEtag(byte[] body)
+    {
+        var hash = SHA256.HashData(body);
+        return "\"" + Convert.ToHexString(hash.AsSpan(0, 16)).ToLowerInvariant() + "\"";
     }
 
     private static IResult Write(HttpContext http, byte[] body, string etag)
     {
-        if (!string.IsNullOrWhiteSpace(etag))
-        {
-            http.Response.Headers.ETag = etag;
-        }
-
+        http.Response.Headers.ETag = etag;
         http.Response.Headers.CacheControl = "private, max-age=900, stale-while-revalidate=3600";
         return Results.Bytes(body, "application/json");
     }
