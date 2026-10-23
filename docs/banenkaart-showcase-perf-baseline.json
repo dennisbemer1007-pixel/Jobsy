@@ -1,0 +1,15 @@
+{
+  "note": "Pre-903 showcase perf (NoBlazor loaded full app-core.js, requestIdleCallback map boot, full app.min.css, extra pins API prefetch). Measured profile: Playwright Chromium, CPU 4×, Fast 4G CDP, Release publish host.",
+  "390": {
+    "firstPaintMs": 1840,
+    "lcpMs": 2100,
+    "mapTilesMs": 8500,
+    "preMapJsTransferBytes": 38400
+  },
+  "1280": {
+    "firstPaintMs": 1620,
+    "lcpMs": 1950,
+    "mapTilesMs": 7800,
+    "preMapJsTransferBytes": 37200
+  }
+}

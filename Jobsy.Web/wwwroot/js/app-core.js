@@ -717,7 +717,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261019-uwv5"
+        "/js/jobMap.min.js?v=20261023-bkssr1"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -966,6 +966,14 @@ window.jobsyMaps = (function () {
         }
     }
 
+    function isBanenkaartSsrPage() {
+        try {
+            return !!document.querySelector("[data-banenkaart-ssr=\"1\"]");
+        } catch (e) {
+            return false;
+        }
+    }
+
     function whenAfterFirstPaint(cb) {
         var done = false;
         function run() {
@@ -976,6 +984,14 @@ window.jobsyMaps = (function () {
             try { cb(); } catch (e) { }
         }
         function scheduleIdle() {
+            if (isBanenkaartSsrPage()) {
+                if (typeof requestAnimationFrame === "function") {
+                    requestAnimationFrame(function () { requestAnimationFrame(run); });
+                } else {
+                    setTimeout(run, 0);
+                }
+                return;
+            }
             if (typeof requestIdleCallback === "function") {
                 requestIdleCallback(run, { timeout: 1200 });
             } else if (typeof requestAnimationFrame === "function") {
@@ -1057,7 +1073,8 @@ window.jobsyMaps = (function () {
                 return;
             }
             var parsed = JSON.parse(node.textContent);
-            if (parsed && parsed.pinsUrl) {
+            var inlinePins = parsed && Array.isArray(parsed.pins) && parsed.pins.length > 0;
+            if (!inlinePins && parsed && parsed.pinsUrl) {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {

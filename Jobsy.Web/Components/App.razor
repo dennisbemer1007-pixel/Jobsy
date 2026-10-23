@@ -37,8 +37,16 @@
     }
     @if (LoadBlazorRuntime)
     {
-        <link rel="preload" href="js/app-core.js?v=20261021-02" as="script" crossorigin />
+        <link rel="preload" href="js/app-core.js?v=20261023-bkssr2" as="script" crossorigin />
         <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
+    }
+    else if (IncludeBanenkaartClientScript)
+    {
+        <link rel="preload" href="js/banenkaart-maps-boot.js?v=20261023-perf1" as="script" crossorigin />
+        <link rel="preload" href="/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180" as="script" crossorigin />
+        <link rel="preload" href="/js/jobsyMapLibre.min.js?v=20261002-ch01" as="script" crossorigin />
+        <link rel="preload" href="/js/jobMap.min.js?v=20261023-bkssr1" as="script" crossorigin />
+        <link rel="preload" href="https://tiles.openfreemap.org/styles/liberty" as="fetch" crossorigin />
     }
     @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
     {
@@ -288,7 +296,7 @@
     }
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261021-02" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+            <script src="js/app-core.js?v=20261023-bkssr2" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
             <script src="js/lobsyPush.js?v=20261021-02" nonce="@Nonce" defer></script>
             <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
@@ -296,8 +304,15 @@
         else
         {
             <script src="js/app-public.js?v=20261016-04" nonce="@Nonce" defer></script>
+            @if (IncludeBanenkaartClientScript)
+            {
+                <script src="js/banenkaart-maps-boot.js?v=20261023-perf1" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+            }
         }
-        <script src="js/public-pages.js?v=20261004-13" nonce="@Nonce" defer></script>
+        @if (!IncludeBanenkaartClientScript)
+        {
+            <script src="js/public-pages.js?v=20261004-13" nonce="@Nonce" defer></script>
+        }
         @if (IncludeLandingScript)
         {
             <script src="js/landing.js?v=20261018-02" nonce="@Nonce" defer></script>
@@ -422,6 +437,9 @@
 
     private bool IncludeMapPreconnect =>
         PageAssetCatalog.IncludeMapPreconnect(RequestPath);
+
+    private bool IncludeBanenkaartClientScript =>
+        PageAssetCatalog.IncludeBanenkaartClientScript(RequestPath);
 
     private bool SkipBlazorForPage =>
         HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;

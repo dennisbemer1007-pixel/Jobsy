@@ -43,13 +43,27 @@
     }
 
     function bindFilters() {
-        qsa("[data-testid=kb-filters-button]").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                var root = qs("[data-banenkaart-ssr=\"1\"]");
-                var open = root && !root.classList.contains("filters-open");
-                setFiltersOpen(!!open);
-            });
-        });
+        if (document.documentElement.dataset.banenkaartFilterDelegation === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartFilterDelegation = "1";
+        document.addEventListener("click", function (ev) {
+            var target = ev.target;
+            if (!target || !target.closest) {
+                return;
+            }
+            var btn = target.closest("[data-testid=kb-filters-button]");
+            if (!btn) {
+                return;
+            }
+            var root = qs("[data-banenkaart-ssr=\"1\"]");
+            if (!root) {
+                return;
+            }
+            ev.preventDefault();
+            var open = !root.classList.contains("filters-open");
+            setFiltersOpen(open);
+        }, true);
         var close = qs("[data-testid=kb-filter-close]");
         if (close) {
             close.addEventListener("click", function () { setFiltersOpen(false); });
@@ -139,36 +153,55 @@
         }
     }
 
-    function enhanceMap() {
-        var boot = readBootNode();
-        if (!boot || !window.jobsyMaps) {
+    function markMapReady() {
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (root) {
+            root.dataset.banenkaartMapReady = "1";
+        }
+    }
+
+    function whenMapIdle(cb) {
+        if (!window.jobMap || typeof window.jobMap.__testGetMap !== "function") {
+            cb();
             return;
         }
-        window.jobsyMaps.ensure("discovery").then(function () {
-            if (!window.jobMap || typeof window.jobMap.init !== "function") {
-                return;
+        var m = window.jobMap.__testGetMap();
+        if (!m || typeof m.once !== "function") {
+            cb();
+            return;
+        }
+        if (typeof m.isStyleLoaded === "function" && m.isStyleLoaded()) {
+            m.once("idle", cb);
+            return;
+        }
+        m.once("load", function () {
+            m.once("idle", cb);
+        });
+    }
+
+    function enhanceMap() {
+        function watchMapReady() {
+            if (window.jobMap && typeof window.jobMap.__testGetMap === "function") {
+                whenMapIdle(markMapReady);
+                return true;
             }
-            var pins = Array.isArray(boot.pins) ? boot.pins : [];
-            var opts = boot.mapInit && typeof boot.mapInit === "object" ? boot.mapInit : {};
-            opts.pinsUrl = boot.pinsUrl || opts.pinsUrl;
-            opts.view = boot.view || opts.view;
-            opts.preferFilledLocation = boot.preferFilledLocation !== false;
-            opts.illustratedPopup = true;
-            opts.syncViewportList = false;
-            try {
-                window.jobMap.init("job-map", pins, opts);
-            } catch (e) { }
-            if (boot.origin && typeof window.jobMap.setOrigin === "function") {
-                try {
-                    window.jobMap.setOrigin(boot.origin.lat, boot.origin.lng, opts.travel || {});
-                } catch (e2) { }
-            }
-            if (boot.zoomToPinsOutsideTravel && typeof window.jobMap.__testFitAllPins === "function") {
-                try {
-                    window.jobMap.__testFitAllPins();
-                } catch (e3) { }
-            }
-        }).catch(function () { });
+            return false;
+        }
+        if (!watchMapReady()) {
+            var attempts = 0;
+            var iv = setInterval(function () {
+                if (watchMapReady() || ++attempts > 240) {
+                    clearInterval(iv);
+                }
+            }, 50);
+        }
+    }
+
+    function markFilterReady() {
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (root) {
+            root.dataset.banenkaartSsrBound = "1";
+        }
     }
 
     function onReady() {
@@ -176,13 +209,19 @@
         if (!root) {
             return;
         }
-        root.dataset.banenkaartSsrBound = "1";
         bindFilters();
+        markFilterReady();
+        if (root.dataset.banenkaartSsrEnhance === "1") {
+            return;
+        }
         bindMobileView();
         bindStartPrompt();
+        root.dataset.banenkaartSsrEnhance = "1";
         enhanceMap();
     }
 
+    bindFilters();
+    markFilterReady();
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", onReady);
     } else {

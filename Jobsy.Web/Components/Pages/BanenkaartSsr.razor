@@ -23,14 +23,13 @@
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic,
-                  "/banenkaart"))
+    @foreach (var href in PageAssetCatalog.BanenkaartSsrStylesheets())
     {
         <link rel="stylesheet" href="@href" />
     }
     @if (PageAssetCatalog.IncludeMapPreconnect("/banenkaart"))
     {
+        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
         <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
     }
 </HeadContent>
