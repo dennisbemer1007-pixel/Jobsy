@@ -7,9 +7,9 @@ window.jobsyMaps = (function () {
     var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261023-acc8"
+        "/js/jobsyMapLibre.min.js?v=20261023-maxzoom1"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-travel1"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-maxzoom1"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");

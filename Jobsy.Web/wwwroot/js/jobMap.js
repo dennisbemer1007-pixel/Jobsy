@@ -113,16 +113,49 @@ window.jobMap = (function () {
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
     // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom (fits default 30-min fiets ring).
     const FILLED_LOCATION_ZOOM = 12;
+    const BASEMAP_MAX_ZOOM = (window.jobsyMapLibre && window.jobsyMapLibre.BASEMAP_MAX_ZOOM) || 14;
+    const BANEN_MIN_ZOOM = 7;
 
     const CLUSTER_OPTS = {
         cluster: true,
         clusterRadius: 50,
-        clusterMaxZoom: 14,
-        // Kept for focus/zoom helpers (expand until unclustered).
-        disableClusteringAtZoom: 15,
+        clusterMaxZoom: BASEMAP_MAX_ZOOM - 1,
+        // Must not exceed OpenFreeMap planet maxzoom (tiles vanish above source max).
+        disableClusteringAtZoom: BASEMAP_MAX_ZOOM,
         maxClusterRadius: 50,
         removeOutsideVisibleBounds: false
     };
+
+    function clampBanenZoom(z) {
+        var n = Number(z);
+        if (!Number.isFinite(n)) {
+            return BANEN_MIN_ZOOM;
+        }
+        return Math.min(BASEMAP_MAX_ZOOM, Math.max(BANEN_MIN_ZOOM, n));
+    }
+
+    function applyBasemapZoomLimits() {
+        if (!map || typeof map.setMaxZoom !== "function") {
+            return;
+        }
+        try {
+            map.setMinZoom(BANEN_MIN_ZOOM);
+            map.setMaxZoom(BASEMAP_MAX_ZOOM);
+        } catch (eLimits) { /* ignore */ }
+    }
+
+    function enforceBanenZoomClamp() {
+        if (!map) {
+            return;
+        }
+        try {
+            var z = map.getZoom();
+            var clamped = clampBanenZoom(z);
+            if (Math.abs(clamped - z) > 0.001) {
+                map.setZoom(clamped);
+            }
+        } catch (eClamp) { /* ignore */ }
+    }
     const PIN_SOURCE = "jobsy-pins";
     const PIN_LAYER_CLUSTERS = "jobsy-pins-clusters";
     const PIN_LAYER_CLUSTER_COUNT = "jobsy-pins-cluster-count";
@@ -3271,7 +3304,7 @@ window.jobMap = (function () {
         const opening = deferMapReveal || originHasBeenFramed !== true;
         const opts = {
             padding: overlayFitPadding(),
-            maxZoom: 13,
+            maxZoom: Math.min(13, BASEMAP_MAX_ZOOM),
             animate: animate === true && !opening && !prefersReducedMotion(),
             duration: animate === true && !opening && !prefersReducedMotion() ? 450 : 0
         };
@@ -4065,7 +4098,9 @@ window.jobMap = (function () {
                 }
                 map.easeTo({
                     center: coords,
-                    zoom: Math.min(Number(zoom) || map.getZoom() + 2, CLUSTER_OPTS.disableClusteringAtZoom + 1),
+                    zoom: clampBanenZoom(Math.min(
+                        Number(zoom) || map.getZoom() + 2,
+                        CLUSTER_OPTS.disableClusteringAtZoom)),
                     duration: 320
                 });
             })
@@ -4172,23 +4207,9 @@ window.jobMap = (function () {
         });
         cameraLocked = opening.locked;
         firstSizedFit = true;
-        var banenMinZoom = 7;
-        try {
-            if (typeof map.setMinZoom === "function") {
-                map.setMinZoom(banenMinZoom);
-            }
-        } catch (eMinZ) { /* ignore */ }
-        map.on("zoomend", function () {
-            if (!map) {
-                return;
-            }
-            try {
-                var z = map.getZoom();
-                if (z < banenMinZoom) {
-                    map.setZoom(banenMinZoom);
-                }
-            } catch (eZ) { /* ignore */ }
-        });
+        applyBasemapZoomLimits();
+        map.on("zoomend", enforceBanenZoomClamp);
+        map.on("moveend", enforceBanenZoomClamp);
         map._jobsyOnStyleRestored = restoreOverlays;
         map.on("load", function () {
             restoreOverlays();
@@ -4304,7 +4325,7 @@ window.jobMap = (function () {
                 zoomToShowLayer: function (record, cb) {
                     map.easeTo({
                         center: [record.lng, record.lat],
-                        zoom: Math.max(map.getZoom(), CLUSTER_OPTS.disableClusteringAtZoom),
+                        zoom: clampBanenZoom(Math.max(map.getZoom(), CLUSTER_OPTS.disableClusteringAtZoom)),
                         duration: 280
                     });
                     map.once("idle", function () {
@@ -5660,7 +5681,12 @@ window.jobMap = (function () {
 
         invalidate();
         const points = markers.map(function (m) { return [m.lat, m.lng]; });
-        map.fitBounds(boundsFromPoints(points), { padding: 64, maxZoom: 16, animate: true, duration: 450 });
+        map.fitBounds(boundsFromPoints(points), {
+            padding: 64,
+            maxZoom: BASEMAP_MAX_ZOOM,
+            animate: true,
+            duration: 450
+        });
         setTimeout(function () {
             invalidate();
             openCompanyClusterPopup(markers);
