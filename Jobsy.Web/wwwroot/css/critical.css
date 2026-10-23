@@ -46,8 +46,8 @@ html.cookie-consent-known .cookie-consent { display: none; }
     .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row.kb-list-row--compact { grid-template-columns: 1fr; padding: 0; }
     .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__media { width: 100% !important; max-width: none !important; height: auto !important; max-height: 140px !important; aspect-ratio: 16 / 10 !important; }
     .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row__photo { max-width: none !important; max-height: 140px !important; }
-    .jobsy-discovery[data-banenkaart-ssr="1"] { grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
-    .jobsy-discovery[data-banenkaart-ssr="1"].show-list .vacancy-pane { display: flex !important; flex-direction: column; overflow: hidden; min-height: 0; flex: 1 1 auto; grid-row: 2; }
+    .jobsy-discovery[data-banenkaart-ssr="1"] { grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; }
+    .jobsy-discovery[data-banenkaart-ssr="1"].show-list .vacancy-pane { display: flex !important; flex-direction: column; overflow: hidden; min-height: 0; flex: 1 1 auto; grid-row: 3; }
     .jobsy-discovery[data-banenkaart-ssr="1"].show-list .vacancy-list { overflow-y: auto !important; -webkit-overflow-scrolling: touch; min-height: 0; flex: 1 1 auto; }
     .jobsy-discovery[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane { display: none !important; }
 }

@@ -148,12 +148,12 @@ public sealed class BanenkaartAccLivePlaywrightTests
 
         if (loggedIn)
         {
+            var headerNavLinks = await page.Locator("[data-testid=candidate-header-nav] .candidate-header-nav__link").CountAsync();
+            Assert.Equal(0, headerNavLinks);
+
             var bottomNavLinks = await page.Locator("[data-testid=candidate-bottom-nav-ssr] a.bottom-nav__item").CountAsync();
-            if (touch && width < 900)
-            {
-                Assert.True(bottomNavLinks >= 3,
-                    "Logged-in mobile NoBlazor banenkaart should render static bottom nav links.");
-            }
+            Assert.True(bottomNavLinks >= 3,
+                "Logged-in banenkaart should use the shared bottom nav (same as paspoort), not header tabs.");
 
             var hasAuthChrome = await page.EvaluateAsync<bool>(
                 """

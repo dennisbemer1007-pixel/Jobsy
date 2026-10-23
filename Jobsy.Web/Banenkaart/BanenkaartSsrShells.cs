@@ -59,8 +59,8 @@ internal static class BanenkaartSsrShells
                 .Append("</a></div>");
         }
 
-        AppendChrome(sb, culture, model);
         AppendNearbyHeroStrip(sb, culture, model);
+        AppendChrome(sb, culture, model);
         AppendVacancyPane(sb, culture, model);
         AppendMapPane(sb, culture, model);
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
@@ -195,7 +195,7 @@ internal static class BanenkaartSsrShells
             .Append("\" type=\"image/webp\" />");
         sb.Append("<img src=\"")
             .Append(CandidateIllustratedImages.BanenkaartHeroStripJpg)
-            .Append("\" alt=\"\" width=\"1440\" height=\"150\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
+            .Append("\" alt=\"\" width=\"1440\" height=\"72\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
         sb.Append("</picture></div><div class=\"kb-nearby-banner__copy\"><h2 class=\"kb-nearby-banner__title\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.NearbyTitle"]))
             .Append("</h2>");

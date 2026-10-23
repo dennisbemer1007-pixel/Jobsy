@@ -40,8 +40,8 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart.css": {
-    "sha256": "038c7b454b43267c9e85e4f5ea51bd621a4a215846f5ddb4423d204b84acb23b",
-    "v": "20261023-19"
+    "v": "20261023-21",
+    "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
   },
   "css/features/bedrijvenkaart.css": {
     "sha256": "7ffdb5503fe02cd7ce703cdd3f7c9b2ae55c0ae91f1d61adfedc3e2ddcd7271c",
@@ -360,12 +360,12 @@
     "v": "20261021-01"
   },
   "css/features/banenkaart-page.css": {
-    "sha256": "4d65b5c74a7ee1b83abf49c857b607726bfdcf64a242ade688f15217ee64cec7",
-    "v": "20261023-19"
+    "v": "20261023-21",
+    "sha256": "5b74df3f1bf389faf381d96a78bb6f610f6487653a3abf9213acb5fd2c4c112a"
   },
   "css/features/banenkaart-illustrated.css": {
-    "sha256": "3e005d1556789eaec9ed2d387e8b43ca796070184f12ef70e97f117eff9840c8",
-    "v": "20261023-19"
+    "v": "20261023-21",
+    "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
     "sha256": "74bd230387656a3c3111493dc647218d3a151018f49b282c26163e535ff304fa",

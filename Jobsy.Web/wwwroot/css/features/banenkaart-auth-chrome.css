@@ -41,19 +41,10 @@
     min-width: 0;
 }
 
-.candidate-header-nav {
-    display: none;
-}
-
-@media (min-width: 900px) {
-    .candidate-header-nav {
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
-        flex: 1 1 auto;
-        min-width: 0;
-        justify-content: center;
-    }
+/* Banenkaart uses the shared bottom nav only (same as paspoort / ontdekkingsreis). */
+.candidate-header-nav,
+.candidate-header-nav-slot {
+    display: none !important;
 }
 
 .account-menu {

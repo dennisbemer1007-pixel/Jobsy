@@ -794,12 +794,17 @@
     }
 }
 
-/* SSR banenkaart: desktop filter toolbar lives in .jobsy-chrome (hidden globally above 768px). */
+/* SSR banenkaart: hero strip row 1, filter toolbar row 2 (see banenkaart-page.css). */
 @media (min-width: 900px) {
+    .jobsy-discovery[data-banenkaart-ssr="1"] > .kb-nearby-banner--strip {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
     .jobsy-discovery[data-banenkaart-ssr="1"] > .jobsy-chrome {
         display: block;
         grid-column: 1 / -1;
-        grid-row: 1;
+        grid-row: 2;
         min-width: 0;
     }
 }
