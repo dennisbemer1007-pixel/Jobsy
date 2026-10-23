@@ -419,10 +419,19 @@ public static class PageAssetCatalog
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
-        "/css/features/banenkaart-page.css?v=20261023-acc1",
+        "/css/features/banenkaart-page.css?v=20261023-acc4",
         "/css/features/kandidaat-banen.css?v=20261019-01",
         "/css/features/banenkaart.css?v=20261023-acc-layout",
         "/css/features/banenkaart-illustrated.css?v=20261018-14",
+    ];
+
+    /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>
+    public static IReadOnlyList<string> BanenkaartAuthenticatedShellCss() =>
+    [
+        "css/app.min.css?v=20261021-14",
+        "css/features/form-fields.css?v=20261019-01",
+        "css/features/nav-feedback.css?v=20261017-01",
+        "css/features/candidate-header-tablet.css?v=20261021-01",
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

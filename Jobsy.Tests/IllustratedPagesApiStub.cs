@@ -323,13 +323,15 @@ internal static class IllustratedPagesApiStub
                 : string.Empty;
             return $$"""
                 {
-                  "fullName": "Sanne de Vries",
-                  "firstName": "Sanne",
-                  "lastName": "de Vries",{{testConsentLine}}
+                  "fullName": "Test Kandidaat",
+                  "firstName": "Test",
+                  "lastName": "Kandidaat",{{testConsentLine}}
                   "role": "Candidate",
                   "openForWork": true,
+                  "homeLatitude": 52.3725,
+                  "homeLongitude": 4.8921,
                   "preferences": {
-                    "homeAddress": "1506 AB Zaandam",
+                    "homeAddress": "Amsterdam",
                     "workRegion": null,
                     "aboutMe": "Ik werk graag in teamverband en houd van duidelijke afspraken."
                   }
