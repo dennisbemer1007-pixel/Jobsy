@@ -1,89 +1,69 @@
 /* Banenkaart illustrated list header + compact cards */
 
-/* Full-width strip under site nav, above filters (mockup #878 art + copy, narrow). */
-.kb-nearby-banner--strip {
-  display: grid;
-  grid-template-columns: minmax(112px, 22rem) minmax(0, 1fr);
-  align-items: stretch;
+/* Dennis variant C — full-width strip above filters (PR #878 @ 211fff91, header-c.html). */
+.kb-banenkaart-header-strip,
+.kb-nearby-banner--strip-wide.kb-banenkaart-header-strip {
+  --kb-header-strip-bg: #faf6ef;
+  --kb-header-strip-h: 150px;
+  display: block;
   width: 100%;
   min-width: 0;
   margin: 0;
-  border-radius: 0;
+  padding: 0;
   border: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 0;
   overflow: hidden;
-  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
-  height: 72px;
-  max-height: 72px;
-  min-height: 56px;
+  background: var(--kb-header-strip-bg);
+  height: var(--kb-header-strip-h);
+  max-height: var(--kb-header-strip-h);
+  min-height: var(--kb-header-strip-h);
 }
 
-.kb-nearby-banner--strip .kb-nearby-banner__art {
-  min-height: 0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0.15rem 0 0.15rem 0.35rem;
+.kb-banenkaart-header-strip__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-.kb-nearby-banner--strip .kb-nearby-banner__art picture,
-.kb-nearby-banner--strip .kb-nearby-banner__art img {
+.kb-banenkaart-header-strip__inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--kb-header-strip-bg) 0%, transparent 14%);
+}
+
+.kb-banenkaart-header-strip__inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 70%,
+    color-mix(in srgb, var(--kb-header-strip-bg) 55%, transparent) 88%,
+    var(--kb-header-strip-bg) 100%
+  );
+}
+
+.kb-banenkaart-header-strip__inner picture,
+.kb-banenkaart-header-strip__img {
   display: block;
   width: 100%;
   height: 100%;
-  max-height: 68px;
-  object-fit: contain;
-  object-position: left center;
+  object-fit: cover;
+  object-position: center center;
 }
 
-.kb-nearby-banner--strip .kb-nearby-banner__copy {
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  padding: 0.35rem 0.85rem 0.4rem 0.5rem;
-  background: transparent;
-}
-
-.kb-nearby-banner--strip .kb-nearby-banner__title {
-  margin: 0;
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: var(--brand);
-  line-height: 1.2;
-}
-
-.kb-nearby-banner--strip .kb-nearby-banner__sub {
-  margin: 0.1rem 0 0;
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.3;
-}
-
-@media (max-width: 899px) {
-  .kb-nearby-banner--strip {
-    grid-template-columns: minmax(88px, 38%) minmax(0, 1fr);
-    height: clamp(52px, 14vw, 64px);
-    max-height: 64px;
-    min-height: 52px;
-  }
-
-  .kb-nearby-banner--strip .kb-nearby-banner__art img {
-    max-height: 58px;
-  }
-
-  .kb-nearby-banner--strip .kb-nearby-banner__copy {
-    padding: 0.25rem 0.55rem 0.3rem 0.35rem;
-  }
-
-  .kb-nearby-banner--strip .kb-nearby-banner__title {
-    font-size: 0.88rem;
-  }
-
-  .kb-nearby-banner--strip .kb-nearby-banner__sub {
-    font-size: 0.74rem;
+@media (max-width: 600px) {
+  .kb-banenkaart-header-strip,
+  .kb-nearby-banner--strip-wide.kb-banenkaart-header-strip {
+    --kb-header-strip-h: 90px;
   }
 }
 

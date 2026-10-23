@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text;
-using Jobsy.Core.Rules;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
+using Jobsy.Web.Services;
 
 namespace Jobsy.Web.Banenkaart;
 
@@ -36,18 +36,20 @@ internal static class BanenkaartSsrListHtml
         bool eager)
     {
         var id = vacancy.Id.ToString("D");
-        var href = "/vacancies/" + id;
+        var href = DetailHref(id, query);
         var title = WebUtility.HtmlEncode(vacancy.Title);
         var company = WebUtility.HtmlEncode(KbIntermediaryDisplay.CompanyLine(culture, vacancy));
+        var place = WebUtility.HtmlEncode(PlaceLine(vacancy));
         var wage = FormatWage(culture, vacancy);
         var travel = vacancy.TravelMinutes is int mins and > 0
             ? $"± {mins} {culture["Discovery.Minutes"]} · {UiLabels.TransportVerb(culture, query.Transport)}"
             : null;
+        var sector = WebUtility.HtmlEncode(SectorLabel(culture, vacancy));
 
         sb.Append("<article class=\"kb-list-row");
         if (compact)
         {
-            sb.Append(" kb-list-row--compact");
+            sb.Append(" kb-list-row--compact kb-list-row--card");
         }
 
         sb.Append("\" data-vacancy-id=\"").Append(id).Append("\" data-testid=\"kb-list-row\">");
@@ -56,52 +58,89 @@ internal static class BanenkaartSsrListHtml
         {
             sb.Append("<img class=\"kb-list-row__photo\" src=\"")
                 .Append(WebUtility.HtmlEncode(vacancy.ImageUrl))
-                .Append("\" alt=\"\" width=\"150\" height=\"93\" loading=\"")
+                .Append("\" alt=\"\" width=\"400\" height=\"250\" loading=\"")
                 .Append(eager ? "eager" : "lazy")
                 .Append("\" decoding=\"async\" />");
         }
 
-        if (compact && travel is not null)
+        if (!string.IsNullOrWhiteSpace(sector))
         {
-            sb.Append("<span class=\"kb-list-row__travel-badge\">")
+            sb.Append("<span class=\"kb-list-row__sector\">").Append(sector).Append("</span>");
+        }
+
+        sb.Append("<div class=\"kb-list-row__overlay\">");
+        sb.Append("<h2 class=\"kb-list-row__title\">").Append(title).Append("</h2>");
+        sb.Append("<p class=\"kb-list-row__overlay-meta\">");
+        if (travel is not null)
+        {
+            sb.Append("<span class=\"kb-list-row__travel\">")
                 .Append(WebUtility.HtmlEncode(travel))
                 .Append("</span>");
         }
 
-        sb.Append("</a><div class=\"kb-list-row__body\"><div class=\"kb-list-row__top\">");
-        sb.Append("<div class=\"kb-list-row__titles\"><h2 class=\"kb-list-row__title\"><a href=\"")
-            .Append(href)
-            .Append("\">")
-            .Append(title)
-            .Append("</a></h2><p class=\"kb-list-row__company\">")
-            .Append(company)
-            .Append("</p></div>");
-        if (!compact && travel is not null)
-        {
-            sb.Append("<div class=\"kb-list-row__travel\"><span>")
-                .Append(WebUtility.HtmlEncode(travel))
-                .Append("</span></div>");
-        }
-
-        sb.Append("</div>");
-        var why = KbFitMapping.WhyLine(vacancy, culture);
-        if (!string.IsNullOrWhiteSpace(why))
-        {
-            sb.Append("<p class=\"kb-why-line\">").Append(WebUtility.HtmlEncode(why)).Append("</p>");
-        }
-
         if (!string.IsNullOrWhiteSpace(wage))
         {
-            sb.Append("<div class=\"kb-list-row__meta\"><span class=\"kb-list-row__meta-item\">")
+            sb.Append("<span class=\"kb-list-row__wage\">")
                 .Append(WebUtility.HtmlEncode(wage))
-                .Append("</span></div>");
+                .Append("</span>");
         }
 
-        sb.Append("<div class=\"kb-list-row__actions\"><a class=\"kb-list-row__view\" href=\"")
-            .Append(href)
-            .Append("\">")
-            .Append(WebUtility.HtmlEncode(culture["Kb.List.View"]))
-            .Append("</a></div></div></article>");
+        sb.Append("</p></div></a>");
+        sb.Append("<div class=\"kb-list-row__footer\">");
+        sb.Append("<p class=\"kb-list-row__company\">").Append(company).Append("</p>");
+        if (!string.IsNullOrWhiteSpace(place))
+        {
+            sb.Append("<p class=\"kb-list-row__place\">").Append(place).Append("</p>");
+        }
+
+        sb.Append("</div></article>");
+    }
+
+    private static string DetailHref(string id, BanenkaartSsrQuery.State query)
+    {
+        var href = "/vacancies/" + id;
+        var q = new List<string>();
+        if (!string.IsNullOrWhiteSpace(query.Transport))
+        {
+            q.Add("transport=" + Uri.EscapeDataString(query.Transport));
+        }
+
+        q.Add("maxMinutes=" + query.MaxTravelMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        return href + "?" + string.Join("&", q);
+    }
+
+    private static string? SectorLabel(CultureState culture, VacancyListItem vacancy)
+    {
+        if (vacancy.IsHighlighted)
+        {
+            return culture["WgVac.Visibility.Highlighted"];
+        }
+
+        if (!string.IsNullOrWhiteSpace(vacancy.CategoryName))
+        {
+            return vacancy.CategoryName;
+        }
+
+        foreach (var wt in vacancy.WorkTypes)
+        {
+            if (!string.IsNullOrWhiteSpace(wt))
+            {
+                return UiLabels.WorkType(culture, wt);
+            }
+        }
+
+        return null;
+    }
+
+    private static string? PlaceLine(VacancyListItem vacancy)
+    {
+        if (!string.IsNullOrWhiteSpace(vacancy.CompanyAddress))
+        {
+            return vacancy.CompanyAddress.Trim();
+        }
+
+        return null;
     }
 
     private static string? FormatWage(CultureState culture, VacancyListItem vacancy)

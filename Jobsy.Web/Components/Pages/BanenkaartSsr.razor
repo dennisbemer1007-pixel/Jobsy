@@ -9,6 +9,7 @@
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
 @using Jobsy.Web.RegionHosting
+@using Jobsy.Web.Security
 @using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Components.Authorization
@@ -104,6 +105,7 @@ else if (_bodyHtml is not null)
         }
 
         var tokens = Antiforgery.GetAndStoreTokens(http);
-        _bodyHtml = BanenkaartSsrShells.BuildPage(Culture, tokens.RequestToken ?? "", model);
+        var scriptNonce = CspNonce.GetOrCreate(http);
+        _bodyHtml = BanenkaartSsrShells.BuildPage(Culture, tokens.RequestToken ?? "", model, scriptNonce);
     }
 }

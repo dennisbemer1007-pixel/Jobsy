@@ -4092,15 +4092,6 @@ html[dir="rtl"] .account-menu__panel {
         max-height: calc(100dvh - var(--app-header-height, 4.25rem) - var(--cookie-bar-h, 3.75rem));
     }
 
-    .app-shell--candidate:has(.jobsy-discovery) .bottom-nav {
-        display: none !important;
-    }
-
-    .app-shell--candidate:has(.jobsy-discovery) .app-main,
-    .app-shell--candidate.has-bottom-nav:has(.jobsy-discovery) .app-main {
-        padding-bottom: 0 !important;
-    }
-
     .app-shell:has(.jobsy-discovery) .lobsy-coach-dock {
         display: none !important;
     }
@@ -4129,14 +4120,6 @@ html[dir="rtl"] .account-menu__panel {
 
     html:not(.cookie-consent-known) .job-map .maplibregl-ctrl-bottom-right {
         bottom: calc(var(--cookie-bar-h, 3.75rem) + 58px);
-    }
-}
-
-@media (min-width: 1024px) {
-    .app-shell--candidate:has(.jobsy-discovery) .bottom-nav {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
     }
 }
 
@@ -8528,15 +8511,37 @@ button.bottom-nav__item {
 }
 
 @media (min-width: 1024px) {
-    .app-shell .bottom-nav {
+    .app-shell:not(.app-shell--candidate) .bottom-nav {
         display: none !important;
     }
 
-    .app-shell.has-bottom-nav .app-main,
-    .app-shell:has(.bottom-nav) .app-main,
-    .app-shell.has-bottom-nav .app-footer,
-    .app-shell:has(.bottom-nav) .app-footer {
+    .app-shell:not(.app-shell--candidate).has-bottom-nav .app-main,
+    .app-shell:not(.app-shell--candidate):has(.bottom-nav) .app-main,
+    .app-shell:not(.app-shell--candidate).has-bottom-nav .app-footer,
+    .app-shell:not(.app-shell--candidate):has(.bottom-nav) .app-footer {
         padding-bottom: 0;
+    }
+
+    .app-shell--candidate .bottom-nav {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: min(100%, 40rem);
+        max-width: 40rem;
+        border-radius: 14px 14px 0 0;
+    }
+
+    .app-shell--candidate .bottom-nav__label--full {
+        display: none !important;
+    }
+
+    .app-shell--candidate .bottom-nav__label--short {
+        display: block !important;
+    }
+
+    .app-shell--candidate.has-bottom-nav .app-main,
+    .app-shell--candidate:has(.bottom-nav) .app-main {
+        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant.has-bottom-nav {

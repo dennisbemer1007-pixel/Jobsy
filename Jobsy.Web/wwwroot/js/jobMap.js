@@ -159,6 +159,10 @@ window.jobMap = (function () {
         if (travelOptions.maxMinutes != null) {
             q.push("maxMinutes=" + encodeURIComponent(String(travelOptions.maxMinutes)));
         }
+        if (lastOrigin && Number.isFinite(lastOrigin.lat) && Number.isFinite(lastOrigin.lng)) {
+            q.push("originLat=" + encodeURIComponent(String(lastOrigin.lat)));
+            q.push("originLng=" + encodeURIComponent(String(lastOrigin.lng)));
+        }
         return q.length ? base + "?" + q.join("&") : base;
     }
     // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom (fits default 30-min fiets ring).
@@ -1406,6 +1410,59 @@ window.jobMap = (function () {
         });
     }
 
+    function bindSaveJobButtons(root, childMarkers) {
+        if (!root) {
+            return;
+        }
+        root.querySelectorAll("[data-save-job]").forEach(function (btn) {
+            if (btn.dataset.boundSave) {
+                return;
+            }
+            btn.dataset.boundSave = "1";
+            const id = btn.getAttribute("data-save-job");
+            if (uiLabels.canSave) {
+                fetchLikedStatus(id).then(function (liked) {
+                    if (!btn.isConnected) {
+                        return;
+                    }
+                    setHeartButtonState(btn, liked);
+                    rememberJobLiked(id, liked, childMarkers);
+                });
+            }
+            btn.addEventListener("mousedown", function (ev) {
+                stopEvent(ev);
+            }, true);
+            btn.addEventListener("touchstart", function (ev) {
+                stopEvent(ev);
+            }, { capture: true, passive: false });
+            btn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                if (!uiLabels.canSave) {
+                    window.location.href = "/login?returnUrl=" +
+                        encodeURIComponent("/vacancies/" + String(id || ""));
+                    return;
+                }
+                if (btn.dataset.saveBusy === "1") {
+                    return;
+                }
+                const next = btn.getAttribute("aria-pressed") !== "true";
+                btn.dataset.saveBusy = "1";
+                setHeartButtonState(btn, next);
+                toggleLiked(id, next).then(function (liked) {
+                    if (liked == null) {
+                        return;
+                    }
+                    setHeartButtonState(btn, liked);
+                    rememberJobLiked(id, liked, childMarkers);
+                }).catch(function () {
+                    setHeartButtonState(btn, !next);
+                }).finally(function () {
+                    delete btn.dataset.saveBusy;
+                });
+            }, true);
+        });
+    }
+
     function bindClusterSlideInteractions(root, childMarkers) {
         if (!root) {
             return;
@@ -1443,50 +1500,7 @@ window.jobMap = (function () {
                 }
             });
         });
-        root.querySelectorAll("[data-save-job]").forEach(function (btn) {
-            if (btn.dataset.boundSave) {
-                return;
-            }
-            btn.dataset.boundSave = "1";
-            const id = btn.getAttribute("data-save-job");
-            if (uiLabels.canSave) {
-                fetchLikedStatus(id).then(function (liked) {
-                    if (!btn.isConnected) {
-                        return;
-                    }
-                    setHeartButtonState(btn, liked);
-                    rememberJobLiked(id, liked, childMarkers);
-                });
-            }
-            btn.addEventListener("mousedown", function (ev) {
-                stopEvent(ev);
-            }, true);
-            btn.addEventListener("click", function (ev) {
-                stopEvent(ev);
-                if (!uiLabels.canSave) {
-                    window.location.href = "/login?returnUrl=" +
-                        encodeURIComponent("/vacancies/" + String(id || ""));
-                    return;
-                }
-                if (btn.dataset.saveBusy === "1") {
-                    return;
-                }
-                const next = btn.getAttribute("aria-pressed") !== "true";
-                btn.dataset.saveBusy = "1";
-                setHeartButtonState(btn, next);
-                toggleLiked(id, next).then(function (liked) {
-                    if (liked == null) {
-                        return;
-                    }
-                    setHeartButtonState(btn, liked);
-                    rememberJobLiked(id, liked, childMarkers);
-                }).catch(function () {
-                    setHeartButtonState(btn, !next);
-                }).finally(function () {
-                    delete btn.dataset.saveBusy;
-                });
-            }, true);
-        });
+        bindSaveJobButtons(root, childMarkers);
     }
 
     function setClusterSlideHtml(viewport, html, direction, replaceInPlace) {
@@ -2671,6 +2685,7 @@ window.jobMap = (function () {
                 }
             });
         });
+        bindSaveJobButtons(el, full ? [full] : []);
         centerPopupInView(popup);
     }
 

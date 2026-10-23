@@ -220,10 +220,12 @@ public sealed partial class JobsyApiClient
     public async Task<BanenkaartCatalogHttpResult?> GetBanenkaartCatalogAsync(CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "api/vacancies/banenkaart-catalog");
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(90));
         HttpResponseMessage response;
         try
         {
-            response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
         }
         catch
         {
@@ -270,7 +272,7 @@ public sealed partial class JobsyApiClient
         double? minLng = null,
         double? maxLat = null,
         double? maxLng = null,
-        int? zoom = null,
+        double? zoom = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -327,9 +329,10 @@ public sealed partial class JobsyApiClient
             qs += $"&maxLng={maxLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
         }
 
-        if (zoom is int z)
+        if (zoom is double zRaw && double.IsFinite(zRaw))
         {
-            qs += $"&zoom={z}";
+            var z = Math.Clamp((int)Math.Round(zRaw, MidpointRounding.AwayFromZero), 0, 22);
+            qs += $"&zoom={z.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
         }
 
         try

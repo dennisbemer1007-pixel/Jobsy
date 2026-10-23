@@ -148,12 +148,27 @@ public sealed class BanenkaartAccLivePlaywrightTests
 
         if (loggedIn)
         {
-            var headerNavLinks = await page.Locator("[data-testid=candidate-header-nav] .candidate-header-nav__link").CountAsync();
-            Assert.Equal(0, headerNavLinks);
+            var headerNav = await page.Locator("[data-testid=candidate-header-nav] .candidate-header-nav__link").CountAsync();
+            Assert.Equal(0, headerNav);
 
-            var bottomNavLinks = await page.Locator("[data-testid=candidate-bottom-nav-ssr] a.bottom-nav__item").CountAsync();
-            Assert.True(bottomNavLinks >= 3,
-                "Logged-in banenkaart should use the shared bottom nav (same as paspoort), not header tabs.");
+            var bottomVisible = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr]');
+                  if (!nav) return false;
+                  const s = getComputedStyle(nav);
+                  return s.display !== 'none' && nav.getClientRects().length > 0;
+                }
+                """);
+            Assert.True(bottomVisible, "Logged-in banenkaart should show candidate bottom nav at all widths.");
+
+            if (width >= 1024)
+            {
+                var zoekenActive = await page.Locator(
+                    "[data-testid=candidate-bottom-nav-ssr] a.bottom-nav__item.is-active[href*=\"banenkaart\"]")
+                    .CountAsync();
+                Assert.True(zoekenActive > 0, "Desktop banenkaart should mark Zoeken active in bottom nav.");
+            }
 
             var hasAuthChrome = await page.EvaluateAsync<bool>(
                 """

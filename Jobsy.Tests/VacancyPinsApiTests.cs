@@ -39,6 +39,15 @@ public class VacancyPinsApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Pins_accepts_fractional_zoom_query()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync(
+            "api/vacancies/pins?transport=Fiets&maxMinutes=30&minLat=52&minLng=4&maxLat=52.5&maxLng=5&zoom=12.5");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Pins_supports_etag_304()
     {
         var client = _factory.CreateClient();

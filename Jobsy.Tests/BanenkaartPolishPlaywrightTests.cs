@@ -179,10 +179,30 @@ public sealed class BanenkaartPolishPlaywrightTests : IAsyncLifetime
             new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
 
         await page.Locator("[data-testid=kb-list-row]").First.WaitForAsync(new() { Timeout = 60_000 });
-        var mediaWidth = await page.Locator("[data-testid=kb-list-row]").First
-            .Locator(".kb-list-row__media").EvaluateAsync<double>("el => el.getBoundingClientRect().width");
-        Assert.True(mediaWidth >= 130 && mediaWidth < 170,
-            "Desktop list thumbnail should be ~150px wide (width=" + mediaWidth + ").");
+        var gridCols = await page.EvaluateAsync<int>(
+            """
+            () => {
+              const grid = document.querySelector('[data-testid=kb-list-rows]');
+              if (!grid) return 0;
+              return getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length;
+            }
+            """);
+        Assert.Equal(2, gridCols);
+
+        var rowHeights = await page.EvaluateAsync<double[]>(
+            """
+            () => Array.from(document.querySelectorAll('[data-testid=kb-list-row]'))
+              .slice(0, 4)
+              .map(el => el.getBoundingClientRect().height)
+            """
+        );
+        Assert.True(rowHeights.Length >= 2);
+        Assert.True(Math.Abs(rowHeights[0] - rowHeights[1]) < 4,
+            "First row cards should share equal height (h0=" + rowHeights[0] + ", h1=" + rowHeights[1] + ").");
+
+        var docWidth = await page.EvaluateAsync<double>("() => document.documentElement.scrollWidth");
+        var viewWidth = await page.EvaluateAsync<double>("() => document.documentElement.clientWidth");
+        Assert.True(docWidth <= viewWidth + 2, "Desktop list should not horizontal-scroll (doc=" + docWidth + ", view=" + viewWidth + ").");
     }
 
     [Fact]

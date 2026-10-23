@@ -8,6 +8,7 @@ internal static class BanenkaartClientCatalog
 {
     internal const string AllPath = "/api/banenkaart-client/all";
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(15);
+    private const string StaleCacheKey = "bk-catalog-stale-v1";
 
     internal static async Task<IResult> GetAllAsync(
         HttpContext http,
@@ -40,9 +41,9 @@ internal static class BanenkaartClientCatalog
 
         if (upstream is null)
         {
-            if (cache.TryGetValue(cacheKey, out cached) && cached is not null)
+            if (TryReadStale(cache, cacheKey, out cached) && cached is not null)
             {
-                return Write(http, cached.Body, cached.ETag);
+                return WriteStale(http, cached.Body, cached.ETag);
             }
 
             return Results.StatusCode(StatusCodes.Status502BadGateway);
@@ -58,17 +59,29 @@ internal static class BanenkaartClientCatalog
         var body = upstream.Value.Body;
         if (body is null || body.Length == 0)
         {
-            if (cache.TryGetValue(cacheKey, out cached) && cached is not null)
+            if (TryReadStale(cache, cacheKey, out cached) && cached is not null)
             {
-                return Write(http, cached.Body, cached.ETag);
+                return WriteStale(http, cached.Body, cached.ETag);
             }
 
             return Results.StatusCode(StatusCodes.Status502BadGateway);
         }
 
         var etag = NormalizeEtag(upstream.Value.ETag) ?? ComputeEtag(body);
-        cache.Set(cacheKey, new CachedCatalog(body, etag), CacheTtl);
+        var entry = new CachedCatalog(body, etag);
+        cache.Set(cacheKey, entry, CacheTtl);
+        cache.Set(StaleCacheKey, entry);
         return Write(http, body, etag);
+    }
+
+    private static bool TryReadStale(IMemoryCache cache, string cacheKey, out CachedCatalog? cached)
+    {
+        if (cache.TryGetValue(cacheKey, out cached) && cached is not null)
+        {
+            return true;
+        }
+
+        return cache.TryGetValue(StaleCacheKey, out cached) && cached is not null;
     }
 
     private static string? NormalizeEtag(string? raw)
@@ -97,6 +110,13 @@ internal static class BanenkaartClientCatalog
     {
         http.Response.Headers.ETag = etag;
         http.Response.Headers.CacheControl = "private, max-age=900, stale-while-revalidate=3600";
+        return Results.Bytes(body, "application/json");
+    }
+
+    private static IResult WriteStale(HttpContext http, byte[] body, string etag)
+    {
+        http.Response.Headers.ETag = etag;
+        http.Response.Headers.CacheControl = "private, max-age=60, stale-while-revalidate=86400";
         return Results.Bytes(body, "application/json");
     }
 

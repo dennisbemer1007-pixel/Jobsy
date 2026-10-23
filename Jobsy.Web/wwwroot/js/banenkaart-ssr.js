@@ -219,36 +219,49 @@
         if (!root) {
             return;
         }
-        var mapBtn = qs("[data-testid=kb-view-kaart]");
-        var listBtn = qs("[data-testid=kb-view-lijst]");
         var fab = qs("[data-testid=kb-map-fab]");
-        function setMap(on) {
-            root.classList.toggle("show-map", on);
-            root.classList.toggle("show-list", !on);
-            writeUiState({ showMap: !!on });
+        function setViewMode(onMap) {
+            root.classList.toggle("show-map", onMap);
+            root.classList.toggle("show-list", !onMap);
+            if (isDesktopBanenkaart()) {
+                root.classList.toggle("jobsy-discovery--list", !onMap);
+            } else {
+                root.classList.remove("jobsy-discovery--list");
+            }
+            writeUiState({ showMap: !!onMap, desktopList: isDesktopBanenkaart() && !onMap });
             ensureBodyScrollUnlocked();
-            if (on && window.jobMap && typeof window.jobMap.invalidate === "function") {
+            if (onMap && window.jobMap && typeof window.jobMap.invalidate === "function") {
                 requestAnimationFrame(function () {
                     window.jobMap.invalidate();
                 });
             }
-            if (mapBtn) {
-                mapBtn.classList.toggle("is-active", on);
-                mapBtn.setAttribute("aria-checked", on ? "true" : "false");
+            qsa("[data-testid=kb-view-kaart]").forEach(function (btn) {
+                btn.classList.toggle("is-active", onMap);
+                btn.setAttribute("aria-checked", onMap ? "true" : "false");
+            });
+            qsa("[data-testid=kb-view-lijst]").forEach(function (btn) {
+                btn.classList.toggle("is-active", !onMap);
+                btn.setAttribute("aria-checked", onMap ? "false" : "true");
+            });
+        }
+        document.addEventListener("click", function (ev) {
+            var target = ev.target;
+            if (!target || !target.closest) {
+                return;
             }
-            if (listBtn) {
-                listBtn.classList.toggle("is-active", !on);
-                listBtn.setAttribute("aria-checked", on ? "true" : "false");
+            if (!target.closest("[data-banenkaart-ssr=\"1\"]")) {
+                return;
             }
-        }
-        if (mapBtn) {
-            mapBtn.addEventListener("click", function () { setMap(true); });
-        }
-        if (listBtn) {
-            listBtn.addEventListener("click", function () { setMap(false); });
-        }
+            if (target.closest("[data-testid=kb-view-kaart]")) {
+                ev.preventDefault();
+                setViewMode(true);
+            } else if (target.closest("[data-testid=kb-view-lijst]")) {
+                ev.preventDefault();
+                setViewMode(false);
+            }
+        });
         if (fab) {
-            fab.addEventListener("click", function () { setMap(true); });
+            fab.addEventListener("click", function () { setViewMode(true); });
         }
     }
 
@@ -408,18 +421,19 @@
         setFiltersOpen(false);
         writeUiState({ filtersOpen: false });
         if (isDesktopBanenkaart()) {
-            root.classList.add("show-map");
-            root.classList.remove("show-list");
-            var mapBtn = qs("[data-testid=kb-view-kaart]");
-            var listBtn = qs("[data-testid=kb-view-lijst]");
-            if (mapBtn) {
-                mapBtn.classList.add("is-active");
-                mapBtn.setAttribute("aria-checked", "true");
-            }
-            if (listBtn) {
-                listBtn.classList.remove("is-active");
-                listBtn.setAttribute("aria-checked", "false");
-            }
+            var deskState = readUiState();
+            var listMode = deskState.desktopList === true;
+            root.classList.toggle("jobsy-discovery--list", listMode);
+            root.classList.toggle("show-map", !listMode);
+            root.classList.toggle("show-list", listMode);
+            qsa("[data-testid=kb-view-kaart]").forEach(function (btn) {
+                btn.classList.toggle("is-active", !listMode);
+                btn.setAttribute("aria-checked", listMode ? "false" : "true");
+            });
+            qsa("[data-testid=kb-view-lijst]").forEach(function (btn) {
+                btn.classList.toggle("is-active", listMode);
+                btn.setAttribute("aria-checked", listMode ? "true" : "false");
+            });
             return;
         }
         var state = readUiState();
@@ -447,6 +461,11 @@
 
     function captureBanenkaartViewState() {
         var state = { savedAt: Date.now() };
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (root) {
+            state.showMap = root.classList.contains("show-map");
+            state.desktopList = root.classList.contains("jobsy-discovery--list");
+        }
         try {
             var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
             if (map && typeof map.getCenter === "function") {
@@ -480,7 +499,25 @@
         } catch (eParse) {
             return;
         }
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (root && typeof state.showMap === "boolean") {
+            if (isDesktopBanenkaart()) {
+                var listMode = state.desktopList === true || state.showMap === false;
+                root.classList.toggle("jobsy-discovery--list", listMode);
+                root.classList.toggle("show-map", !listMode);
+                root.classList.toggle("show-list", listMode);
+            } else {
+                root.classList.toggle("show-map", state.showMap);
+                root.classList.toggle("show-list", !state.showMap);
+            }
+        }
         if (!state || !state.center || state.zoom == null) {
+            if (root && typeof state.listScrollTop === "number") {
+                var scrollerOnly = listScroller();
+                if (scrollerOnly) {
+                    scrollerOnly.scrollTop = state.listScrollTop;
+                }
+            }
             return;
         }
         window.__jobsyBkRestoringView = true;
@@ -528,8 +565,64 @@
         });
     }
 
+    function toggleAddressClearButtons(show) {
+        qsa("[data-banenkaart-ssr=\"1\"] .kb-address").forEach(function (wrap) {
+            wrap.classList.toggle("kb-address--with-clear", !!show);
+            var clearBtn = wrap.querySelector("[data-testid=kb-address-clear]");
+            if (show && !clearBtn) {
+                var field = wrap.querySelector(".kb-address__field");
+                if (field) {
+                    field.insertAdjacentHTML(
+                        "beforeend",
+                        "<button type=\"button\" class=\"kb-address__clear\" data-testid=\"kb-address-clear\" aria-label=\"Wissen\">"
+                        + "<svg class=\"kb-address__clear-icon\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\">"
+                        + "<path d=\"M18 6 6 18\" /><path d=\"m6 6 12 12\" /></svg></button>"
+                    );
+                }
+            } else if (!show && clearBtn) {
+                clearBtn.remove();
+            }
+        });
+    }
+
+    function clearOrigin() {
+        var latEl = qs("#kb-filter-origin-lat");
+        var lngEl = qs("#kb-filter-origin-lng");
+        var labelEl = qs("#kb-filter-origin-label");
+        if (latEl) {
+            latEl.value = "";
+        }
+        if (lngEl) {
+            lngEl.value = "";
+        }
+        if (labelEl) {
+            labelEl.value = "";
+        }
+        qsa("[data-kb-address]").forEach(function (input) {
+            input.value = "";
+        });
+        toggleAddressClearButtons(false);
+        if (window.jobMap && typeof window.jobMap.clearOrigin === "function") {
+            window.jobMap.clearOrigin();
+        }
+        var form = qs("#kb-filter-form");
+        if (form && window.jobsyBanenkaartCatalog
+            && typeof window.jobsyBanenkaartCatalog.applyClientFilters === "function") {
+            var filters = window.jobsyBanenkaartCatalog.filtersFromForm(form);
+            filters.originLat = null;
+            filters.originLng = null;
+            filters.originLabel = null;
+            window.jobsyBanenkaartCatalog.applyClientFilters(filters);
+            return;
+        }
+        try {
+            history.replaceState(null, "", "/banenkaart");
+        } catch (eClear) { }
+    }
+
     function applyOriginFromGeocode(label, lat, lng) {
         syncOriginFields(lat, lng, label);
+        toggleAddressClearButtons(true);
         if (window.jobMap && typeof window.jobMap.setOrigin === "function") {
             window.jobMap.setOrigin(lat, lng);
         }
@@ -557,11 +650,145 @@
         } catch (eUrl) { }
     }
 
+    function addressWrapForInput(input) {
+        return input && input.closest ? input.closest(".kb-address") : null;
+    }
+
+    function hideAddressSuggest(wrap) {
+        if (!wrap) {
+            qsa("[data-kb-address-suggest]").forEach(function (list) {
+                list.hidden = true;
+            });
+            return;
+        }
+        var list = wrap.querySelector("[data-kb-address-suggest]");
+        if (list) {
+            list.hidden = true;
+        }
+        var input = wrap.querySelector("[data-kb-address]");
+        if (input) {
+            input.setAttribute("aria-expanded", "false");
+        }
+    }
+
+    function pickSuggestion(row, fallback) {
+        var lat = Number(row.latitude != null ? row.latitude : row.Latitude);
+        var lng = Number(row.longitude != null ? row.longitude : row.Longitude);
+        var label = row.label || row.Label || fallback;
+        if (!isFinite(lat) || !isFinite(lng)) {
+            return null;
+        }
+        return { lat: lat, lng: lng, label: label };
+    }
+
+    function showAddressSuggest(wrap, html) {
+        var list = wrap && wrap.querySelector("[data-kb-address-suggest]");
+        var input = wrap && wrap.querySelector("[data-kb-address]");
+        if (!list || !input) {
+            return;
+        }
+        list.innerHTML = html;
+        list.hidden = !html;
+        input.setAttribute("aria-expanded", html ? "true" : "false");
+        list.querySelectorAll(".address-suggestions__item").forEach(function (btn) {
+            btn.addEventListener("mousedown", function (ev) {
+                ev.preventDefault();
+            });
+            btn.addEventListener("click", function () {
+                var idx = parseInt(btn.getAttribute("data-idx"), 10);
+                var hit = btn.__suggestion || null;
+                if (!hit && btn.dataset.lat) {
+                    hit = {
+                        lat: parseFloat(btn.dataset.lat),
+                        lng: parseFloat(btn.dataset.lng),
+                        label: btn.textContent || ""
+                    };
+                }
+                if (hit) {
+                    applyOriginFromGeocode(hit.label, hit.lat, hit.lng);
+                }
+                hideAddressSuggest(wrap);
+            });
+        });
+    }
+
+    function fetchAddressSuggestions(query, wrap) {
+        if (!query || query.length < 3) {
+            hideAddressSuggest(wrap);
+            return;
+        }
+        showAddressSuggest(wrap, "<li class=\"address-suggestions__status\" role=\"option\">…</li>");
+        fetch("/api/banenkaart-client/address-suggest?q=" + encodeURIComponent(query), {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        }).then(function (res) {
+            return res.ok ? res.json() : [];
+        }).then(function (rows) {
+            if (!Array.isArray(rows) || !rows.length) {
+                showAddressSuggest(wrap, "<li class=\"address-suggestions__status\" role=\"option\">Geen adressen gevonden</li>");
+                return;
+            }
+            var html = rows.slice(0, 8).map(function (row, i) {
+                var hit = pickSuggestion(row, query);
+                if (!hit) {
+                    return "";
+                }
+                return "<li role=\"option\"><button type=\"button\" class=\"address-suggestions__item\" data-idx=\"" + i
+                    + "\" data-lat=\"" + hit.lat + "\" data-lng=\"" + hit.lng + "\">"
+                    + String(hit.label).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</button></li>";
+            }).join("");
+            showAddressSuggest(wrap, html || "<li class=\"address-suggestions__status\" role=\"option\">Geen adressen gevonden</li>");
+            var buttons = wrap.querySelectorAll(".address-suggestions__item");
+            rows.slice(0, buttons.length).forEach(function (row, i) {
+                var hit = pickSuggestion(row, query);
+                if (hit && buttons[i]) {
+                    buttons[i].__suggestion = hit;
+                }
+            });
+        }).catch(function () {
+            hideAddressSuggest(wrap);
+        });
+    }
+
+    var addressSuggestTimer = null;
+
     function bindAddressGeocode() {
         if (document.documentElement.dataset.banenkaartAddressGeocode === "1") {
             return;
         }
         document.documentElement.dataset.banenkaartAddressGeocode = "1";
+        document.addEventListener("input", function (ev) {
+            var input = ev.target && ev.target.closest ? ev.target.closest("[data-kb-address]") : null;
+            if (!input || !qs("[data-banenkaart-ssr=\"1\"]")) {
+                return;
+            }
+            var wrap = addressWrapForInput(input);
+            if (addressSuggestTimer) {
+                clearTimeout(addressSuggestTimer);
+            }
+            addressSuggestTimer = setTimeout(function () {
+                fetchAddressSuggestions(String(input.value || "").trim(), wrap);
+            }, 220);
+        }, true);
+        document.addEventListener("focusin", function (ev) {
+            var input = ev.target && ev.target.closest ? ev.target.closest("[data-kb-address]") : null;
+            if (!input) {
+                return;
+            }
+            var q = String(input.value || "").trim();
+            if (q.length >= 3) {
+                fetchAddressSuggestions(q, addressWrapForInput(input));
+            }
+        });
+        document.addEventListener("focusout", function (ev) {
+            var input = ev.target && ev.target.closest ? ev.target.closest("[data-kb-address]") : null;
+            if (!input) {
+                return;
+            }
+            setTimeout(function () {
+                hideAddressSuggest(addressWrapForInput(input));
+            }, 150);
+        });
         document.addEventListener("keydown", function (ev) {
             if (ev.key !== "Enter") {
                 return;
@@ -586,16 +813,114 @@
                 if (!Array.isArray(rows) || !rows.length) {
                     return;
                 }
-                var hit = rows[0];
-                var lat = Number(hit.latitude != null ? hit.latitude : hit.Latitude);
-                var lng = Number(hit.longitude != null ? hit.longitude : hit.Longitude);
-                var label = hit.label || hit.Label || q;
-                if (!isFinite(lat) || !isFinite(lng)) {
+                var hit = pickSuggestion(rows[0], q);
+                if (!hit) {
                     return;
                 }
-                applyOriginFromGeocode(label, lat, lng);
+                applyOriginFromGeocode(hit.label, hit.lat, hit.lng);
+                hideAddressSuggest(addressWrapForInput(input));
             }).catch(function () { });
         }, true);
+        document.addEventListener("click", function (ev) {
+            var target = ev.target;
+            if (!target || !target.closest) {
+                return;
+            }
+            if (target.closest("[data-testid=kb-address-locate]")) {
+                ev.preventDefault();
+                if (!window.jobsyGeo || typeof window.jobsyGeo.requestLocation !== "function") {
+                    return;
+                }
+                window.jobsyGeo.requestLocation().then(function (pos) {
+                    var lat = Number(pos.lat != null ? pos.lat : pos.Lat);
+                    var lng = Number(pos.lng != null ? pos.lng : pos.Lng);
+                    if (!isFinite(lat) || !isFinite(lng)) {
+                        return;
+                    }
+                    applyOriginFromGeocode("Huidige locatie", lat, lng);
+                }).catch(function () { });
+                return;
+            }
+            if (target.closest("[data-testid=kb-address-clear]")) {
+                ev.preventDefault();
+                clearOrigin();
+                return;
+            }
+            if (target.closest("[data-testid=kb-start-locate]")) {
+                ev.preventDefault();
+                if (window.jobsyGeo && typeof window.jobsyGeo.requestLocation === "function") {
+                    window.jobsyGeo.requestLocation().then(function (pos) {
+                        var lat = Number(pos.lat != null ? pos.lat : pos.Lat);
+                        var lng = Number(pos.lng != null ? pos.lng : pos.Lng);
+                        if (isFinite(lat) && isFinite(lng)) {
+                            applyOriginFromGeocode("Huidige locatie", lat, lng);
+                        }
+                    }).catch(function () { });
+                }
+            }
+        }, true);
+    }
+
+    function bindActiveFiltersBar() {
+        if (document.documentElement.dataset.banenkaartActiveFilters === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartActiveFilters = "1";
+        document.addEventListener("click", function (ev) {
+            var target = ev.target;
+            if (!target || !target.closest) {
+                return;
+            }
+            if (!target.closest("[data-banenkaart-ssr=\"1\"]")) {
+                return;
+            }
+            if (target.closest("[data-testid=kb-active-filters-clear]")) {
+                ev.preventDefault();
+                var resetForm = qs("form[action*=\"reset-filters\"], form[action*=\"banenkaart-client/reset-filters\"]");
+                if (resetForm && typeof resetForm.requestSubmit === "function") {
+                    resetForm.requestSubmit();
+                    return;
+                }
+                clearOrigin();
+                var form = qs("#kb-filter-form");
+                if (form && window.jobsyBanenkaartCatalog
+                    && typeof window.jobsyBanenkaartCatalog.applyClientFilters === "function") {
+                    window.jobsyBanenkaartCatalog.applyClientFilters({
+                        q: null,
+                        maxMinutes: 20,
+                        transport: "Fiets",
+                        minHours: 0,
+                        maxHours: 40,
+                        categoryIds: [],
+                        workTypes: [],
+                        originLat: null,
+                        originLng: null,
+                        originLabel: null
+                    });
+                }
+            }
+        }, true);
+    }
+
+    function bindListSort() {
+        if (document.documentElement.dataset.banenkaartListSort === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartListSort = "1";
+        document.addEventListener("change", function (ev) {
+            var sel = ev.target;
+            if (!sel || sel.getAttribute("data-testid") !== "kb-list-sort") {
+                return;
+            }
+            var form = qs("#kb-filter-form");
+            if (!form || !window.jobsyBanenkaartCatalog
+                || typeof window.jobsyBanenkaartCatalog.applyClientFilters !== "function") {
+                return;
+            }
+            var filters = window.jobsyBanenkaartCatalog.filtersFromForm(form);
+            filters.sort = sel.value;
+            window.jobsyBanenkaartCatalog.applyClientFilters(filters);
+        });
     }
 
     function bindKeywordApplyEnter() {
@@ -738,6 +1063,8 @@
         bindLifecycleResume();
         bindVacancyBackRestore();
         bindAddressGeocode();
+        bindActiveFiltersBar();
+        bindListSort();
         bindKeywordApplyEnter();
         bindKeywordFields();
         bindListActions();
