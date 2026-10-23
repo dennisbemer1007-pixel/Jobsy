@@ -55,7 +55,14 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Generate_lagen_compare_artifacts_and_button_checklist()
+    public Task Generate_lagen_compare_captures_only() =>
+        RunCompareCapturesAsync(captureOnly: true);
+
+    [Fact]
+    public Task Generate_lagen_compare_artifacts_and_button_checklist() =>
+        RunCompareCapturesAsync(captureOnly: false);
+
+    private async Task RunCompareCapturesAsync(bool captureOnly)
     {
         var buttons = new List<object>();
         var elementTables = new List<object>();
@@ -104,6 +111,8 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                     Path.Combine(MockupRefRoot, "lagen/desktop/01-banenkaart-lagen-desktop-1440-popup.png"),
                     Path.Combine(dir, "02-popup.png"),
                     Path.Combine(CompareDir, "side-by-side-desktop-1280-popup.png"));
+                var anchoredPop = await page.Locator(".maplibregl-popup.pop.kb-popup-lagen-pop").CountAsync() > 0;
+                buttons.Add(new { action = "desktop-anchored-pop", pass = anchoredPop });
                 var cta = page.Locator(".maplibregl-popup, .kb-popup-lagen").Filter(new() { HasText = "Bekijk vacature" });
                 buttons.Add(new { action = "popup-bekijk-vacature-visible", pass = await cta.CountAsync() > 0 });
             }
@@ -117,6 +126,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         {
             await WaitReadyAsync(page);
             await WaitForRealIsochronesAsync(page);
+            await AssertMobile390LayoutBeforeCaptureAsync(page);
             eightPoint.AddRange(await EvaluateEightPointMobileAsync(page));
             buttons.Add(new
             {
@@ -218,6 +228,11 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             ? Directory.GetFiles(CompareDir, "side-by-side-*.png")
             : [];
         Assert.True(sideCars.Length >= 7, "Expected 7 side-by-side PNGs, got " + sideCars.Length);
+
+        if (captureOnly)
+        {
+            return;
+        }
 
         var buttonFails = buttons
             .Select(b => JsonSerializer.SerializeToElement(b))
@@ -524,13 +539,39 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
 
     private async Task CaptureViewportAsync(int width, int height, bool touch, string slug, Func<IPage, string, Task> work)
     {
+        var repoRoot = FindRepoRoot();
+        var localJobMap = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", "jobMap.min.js");
+        var localLagenCss = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css");
         await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
         {
             ViewportSize = new() { Width = width, Height = height },
             HasTouch = touch,
             IsMobile = touch,
             IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Block,
         });
+        if (File.Exists(localJobMap))
+        {
+            var jobMapJs = await File.ReadAllTextAsync(localJobMap);
+            await context.RouteAsync("**/jobMap.min.js**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/javascript; charset=utf-8",
+                Body = jobMapJs,
+            }));
+        }
+
+        if (File.Exists(localLagenCss))
+        {
+            var lagenCss = await File.ReadAllTextAsync(localLagenCss);
+            await context.RouteAsync("**/banenkaart-lagen.css**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "text/css; charset=utf-8",
+                Body = lagenCss,
+            }));
+        }
+
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(30_000);
@@ -546,9 +587,66 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             await later.First.ClickAsync();
         }
 
+        await page.EvaluateAsync(
+            """
+            async () => {
+              try {
+                if (window.caches && caches.keys) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map(k => caches.delete(k)));
+                }
+              } catch (e) { }
+            }
+            """);
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        if (await later.CountAsync() > 0)
+        {
+            await later.First.ClickAsync();
+        }
+
         var capDir = Path.Combine(CompareDir, "captures", slug);
         Directory.CreateDirectory(capDir);
         await work(page, capDir);
+    }
+
+    private static async Task AssertMobile390LayoutBeforeCaptureAsync(IPage page)
+    {
+        var problem = await page.EvaluateAsync<string?>(
+            """
+            () => {
+              const maxW = Math.max(document.documentElement.scrollWidth, document.body?.scrollWidth || 0);
+              if (maxW > 390) return 'scrollWidth=' + maxW;
+              const mapw = document.querySelector('.map-pane.mapw, .jobsy-discovery--lagen .map-pane');
+              if (!mapw) return 'missing .map-pane.mapw';
+              const mh = mapw.getBoundingClientRect().height;
+              if (mh <= 300) return '.mapw height=' + mh;
+              const canvas = document.querySelector('#job-map .maplibregl-canvas');
+              if (!canvas) return 'missing map canvas';
+              const cr = canvas.getBoundingClientRect();
+              if (cr.width < 32 || cr.height < 32) return 'canvas not visible';
+              const strip = document.querySelector('.strip .sc');
+              if (!strip) return 'missing strip .sc';
+              const sr = strip.getBoundingClientRect();
+              if (sr.height < 8 || sr.width < 8) return 'strip not visible';
+              return null;
+            }
+            """);
+        Assert.True(string.IsNullOrEmpty(problem), "Mobile 390 pre-capture layout: " + problem);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var root = Directory.GetCurrentDirectory();
+        while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
+        {
+            root = Directory.GetParent(root)!.FullName;
+        }
+
+        return root;
     }
 
     private static async Task WaitReadyAsync(IPage page)

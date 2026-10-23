@@ -31,13 +31,6 @@
     flex-direction: column;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen > .main.kb-lagen-main {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    min-width: 0;
-}
-
 @media (min-width: 900px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen > .main.kb-lagen-main {
         display: contents;
@@ -207,6 +200,47 @@
 }
 
 @media (max-width: 700px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .ph {
+        padding: 12px;
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: clip;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .rh {
+        padding: 10px 12px;
+        min-width: 0;
+        max-width: 100%;
+        gap: 8px;
+        overflow-x: clip;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .srow {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .btn.sec {
+        padding: 0 12px;
+        flex-shrink: 0;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .seg .kb-view-toggle__btn,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .seg span {
+        padding: 0 12px;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .results-meta__count,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .rh > div:first-child {
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .seg {
+        flex-shrink: 0;
+    }
+
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top.top {
         height: 62px;
         padding: 0 12px;
@@ -1781,13 +1815,22 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 
 @media (max-width: 899px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
-        grid-template-columns: 1fr;
-        grid-template-rows: 62px 90px auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: 62px 90px auto minmax(0, 1fr) !important;
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
+        overflow-x: clip;
+        max-width: 100%;
+        width: 100%;
         max-height: 100%;
         height: 100%;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen > .main.kb-lagen-main {
+        display: contents !important;
+        min-height: 0;
+        min-width: 0;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-mockup-top {
