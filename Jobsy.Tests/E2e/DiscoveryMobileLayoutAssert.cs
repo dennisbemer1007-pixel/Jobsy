@@ -56,6 +56,30 @@ internal static class DiscoveryMobileLayoutAssert
                 }
               }
 
+              list.querySelectorAll('.discovery-mobile-stop__circle .journey-route__vignette').forEach((vig, index) => {
+                const style = getComputedStyle(vig);
+                if (style.animationName && style.animationName !== 'none') {
+                  problems.push(`stop ${index}: vignette still animated (${style.animationName})`);
+                }
+                const before = getComputedStyle(vig, '::before');
+                if (before.content && before.content !== 'none' && before.display !== 'none') {
+                  problems.push(`stop ${index}: vignette ::before visible`);
+                }
+                const shadow = style.boxShadow || '';
+                if (/\\b(1[0-4]|10|12|14)px\\b/.test(shadow)) {
+                  problems.push(`stop ${index}: desktop-style multi ring shadow`);
+                }
+              });
+
+              const testsBlock = document.querySelector('.journey-route__tests');
+              if (testsBlock && footer) {
+                const testsBottom = testsBlock.getBoundingClientRect().bottom + scrollY;
+                const footerTopGap = footerTop - testsBottom;
+                if (footerTopGap > 96) {
+                  problems.push(`large empty gap before footer (${Math.round(footerTopGap)}px after Je tests)`);
+                }
+              }
+
               list.querySelectorAll('.discovery-mobile-stop .discovery-mobile-stop__circle').forEach((circle, index) => {
                 const rect = circle.getBoundingClientRect();
                 if (rect.left < -1) {
