@@ -122,9 +122,14 @@
             return;
         }
         wrap.appendChild(hint);
+        var wrapRect = wrap.getBoundingClientRect();
+        var hintW = 220;
         if (isMobile()) {
-            hint.style.left = "12px";
-            hint.style.bottom = "96px";
+            var left = Math.max(8, Math.min(pt.x - 24, wrapRect.width - hintW - 8));
+            var top = Math.max(72, pt.y - 48);
+            hint.style.left = left + "px";
+            hint.style.top = top + "px";
+            hint.style.bottom = "auto";
         } else {
             hint.style.left = Math.max(12, pt.x + 40) + "px";
             hint.style.top = Math.max(80, pt.y - 21) + "px";

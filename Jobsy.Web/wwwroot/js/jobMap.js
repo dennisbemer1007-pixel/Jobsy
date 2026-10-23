@@ -3732,8 +3732,8 @@ window.jobMap = (function () {
             if (isNarrowViewport()) {
                 const pane = map.getContainer().closest(".map-pane");
                 const sheet = pane ? pane.querySelector(".map-cluster-sheet--lagen") : null;
-                const bottom = sheet && sheet.offsetHeight > 0 ? sheet.offsetHeight + 16 : 20;
-                return { top: 70, right: 0, bottom: bottom, left: 0 };
+                const bottom = sheet && sheet.offsetHeight > 0 ? sheet.offsetHeight + 16 : 48;
+                return { top: 22, right: 4, bottom: bottom, left: 4 };
             }
             return { top: 80, left: 150, right: 0, bottom: 0 };
         }
@@ -3800,9 +3800,15 @@ window.jobMap = (function () {
         if (!map || !lastOrigin) {
             return;
         }
-        const radius = lagenLayout
-            ? ringRadiusForMinutes(30) * 1.05
-            : maxRingRadiusMeters() * 1.12;
+        let radius = maxRingRadiusMeters() * 1.12;
+        if (lagenLayout) {
+            const chosenM = chosenRingMinutes();
+            if (isNarrowViewport()) {
+                radius = ringRadiusForMinutes(chosenM) * 0.965;
+            } else {
+                radius = ringRadiusForMinutes(Math.max(chosenM, 30)) * 1.05;
+            }
+        }
         if (!(radius > 40)) {
             finishOpeningFrame();
             return;
@@ -4617,7 +4623,7 @@ window.jobMap = (function () {
     }
 
     function resetLagenPinSourceIfNeeded() {
-        if (!map || !lagenLayout || map._jobsyLagenPinClusterVer === 5) {
+        if (!map || !lagenLayout || map._jobsyLagenPinClusterVer === 7) {
             return;
         }
         const layerIds = [
@@ -4644,7 +4650,7 @@ window.jobMap = (function () {
                 map.removeSource(PIN_SOURCE);
             }
         } catch (eSrc) { }
-        map._jobsyLagenPinClusterVer = 5;
+        map._jobsyLagenPinClusterVer = 7;
         map._jobsyLagenPinClicksBound = false;
     }
 
@@ -4686,8 +4692,8 @@ window.jobMap = (function () {
                 type: "geojson",
                 data: pinsGeoJson(),
                 cluster: true,
-                clusterRadius: lagenLayout ? 30 : CLUSTER_OPTS.clusterRadius,
-                clusterMaxZoom: lagenLayout ? 11 : CLUSTER_OPTS.clusterMaxZoom,
+                clusterRadius: lagenLayout ? 16 : CLUSTER_OPTS.clusterRadius,
+                clusterMaxZoom: lagenLayout ? 10 : CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
                     agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },
@@ -5152,6 +5158,11 @@ window.jobMap = (function () {
             window.jobsyMapLibre.hideChrome(map);
         }
         syncLagenAttributionCompact();
+        if (lagenLayout && map && !map._jobsyLagenAttribSyncBound) {
+            map._jobsyLagenAttribSyncBound = true;
+            map.on("idle", syncLagenAttributionCompact);
+            map.on("resize", syncLagenAttributionCompact);
+        }
         if (lagenLayout) {
             scheduleLagenLayoutResize();
         }
@@ -5178,7 +5189,8 @@ window.jobMap = (function () {
         map = window.jobsyMapLibre.createMap(el, {
             center: opening.center,
             zoom: opening.zoom,
-            controlsPosition: "bottom-right"
+            controlsPosition: "bottom-right",
+            compactAttribution: !!(lagenLayout || catalogModeActive)
         });
         cameraLocked = opening.locked;
         firstSizedFit = true;

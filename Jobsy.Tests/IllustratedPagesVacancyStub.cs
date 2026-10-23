@@ -230,9 +230,12 @@ internal static class IllustratedPagesVacancyStub
 
         for (var i = 0; i < 42; i++)
         {
-            var angle = i * (Math.PI * 2 / 42);
-            var km = 0.35 + (i % 12) * 0.42;
+            var angle = i * (Math.PI * 2 / 42) * 1.31 + (i % 7) * 0.09;
+            var km = 0.38 + i * 0.152;
             var (lat, lng) = OffsetKm(OriginLat, OriginLng, km, angle);
+            // Playwright catalog only: spread coords so initial view shows mockup pins, not one mega-cluster.
+            lat += Math.Sin(i * 2.17) * 0.00042;
+            lng += Math.Cos(i * 1.93) * 0.00048;
             var isIntermediary = i % 3 == 1;
             var company = companies[i % companies.Length];
             var offeredBy = isIntermediary ? "FlexPlus Westland" : "";

@@ -308,12 +308,12 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "e6d28f3d67d29f5195fd24ed2701a9f352528a610ff86b784fb8328fb915c033",
-    "v": "20261023-acc15"
+    "sha256": "982d48157b6d01f04c007ea55557845497e089ee5a72ff34f8c2e0fe3470fe91",
+    "v": "20261023-acc17"
   },
   "js/jobsyMapLibre.min.js": {
-    "sha256": "dad2c3ee186da0f803f343df7a36e4dfb962f478790d05a58472ee403b0fee7c",
-    "v": "20261023-maxzoom1"
+    "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
+    "v": "20261023-lagen-compact1"
   },
   "js/landing.js": {
     "sha256": "cd942514333ce9c3dbb100475127d528220b67555a53ce2c6d1d28f44c1a043f",

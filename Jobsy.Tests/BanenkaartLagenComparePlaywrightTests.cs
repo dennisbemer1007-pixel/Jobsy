@@ -589,6 +589,18 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             }));
         }
 
+        var mapLibreMin = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.min.js");
+        if (File.Exists(mapLibreMin))
+        {
+            var mlBody = await File.ReadAllTextAsync(mapLibreMin);
+            await context.RouteAsync("**/jobsyMapLibre.min.js**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/javascript; charset=utf-8",
+                Body = mlBody,
+            }));
+        }
+
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(30_000);
