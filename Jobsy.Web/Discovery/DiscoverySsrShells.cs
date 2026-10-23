@@ -19,6 +19,22 @@ internal static class DiscoverySsrShells
         bool ShowCheck,
         bool ShowContinue);
 
+    internal sealed record OverviewPanelSection(
+        string Title,
+        string Summary,
+        string? AdjustHref,
+        bool ShowAdjust);
+
+    internal sealed record OverviewTestRow(
+        int Step,
+        string TitleKey,
+        string AccentUrl,
+        bool IsComplete,
+        string? ProgressText,
+        string ReportHref,
+        string? StartHref,
+        string? ShedHref);
+
     internal sealed record OverviewModel(
         IReadOnlyList<OverviewStop> Stops,
         string ActivePhaseId,
@@ -27,8 +43,12 @@ internal static class DiscoverySsrShells
         string? PanelTitleKey,
         string? PanelLeadKey,
         string? PanelVignette,
-        IReadOnlyList<(string TitleKey, string Summary, int? StepHref)> PanelSections,
+        IReadOnlyList<OverviewPanelSection> PanelSections,
+        IReadOnlyList<OverviewTestRow> TestRows,
         string? ErrorMessage);
+
+    private const string ContainerStyle =
+        "max-width:72rem;margin-inline:auto;padding-inline:clamp(1rem,4vw,2rem);box-sizing:border-box;width:100%;";
 
     internal sealed record ShedModel(
         int ShedStep,
@@ -115,7 +135,9 @@ internal static class DiscoverySsrShells
 
     private static void AppendOverview(StringBuilder sb, CultureState culture, OverviewModel model, string _)
     {
-        sb.Append("<div class=\"journey-overview\" data-testid=\"discovery-overview-route\">");
+        sb.Append("<div class=\"journey-overview discovery-ssr-container\" data-testid=\"discovery-overview-route\" style=\"");
+        sb.Append(ContainerStyle);
+        sb.Append("\">");
         sb.Append("<p class=\"journey-step__eyebrow\">");
         sb.Append(WebUtility.HtmlEncode(culture["Discovery.Eyebrow"]));
         sb.Append("</p><h1 tabindex=\"-1\">");
@@ -138,7 +160,7 @@ internal static class DiscoverySsrShells
         {
             var isActive = stop.PhaseId == model.ActivePhaseId;
             var href = DiscoverySsrUrls.Overview(stop.PhaseId);
-            sb.Append("<div class=\"journey-route__stop");
+            sb.Append("<a class=\"journey-route__stop journey-route__stop-link");
             if (isActive)
             {
                 sb.Append(" is-current");
@@ -146,9 +168,9 @@ internal static class DiscoverySsrShells
 
             sb.Append("\" role=\"listitem\" data-phase=\"");
             sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
-            sb.Append("\"><a class=\"journey-route__stop-btn\" href=\"");
+            sb.Append("\" href=\"");
             sb.Append(WebUtility.HtmlEncode(href));
-            sb.Append("\"><div class=\"journey-route__vignette");
+            sb.Append("\" data-enhance-nav=\"false\"><span class=\"journey-route__stop-btn\"><span class=\"journey-route__vignette");
             if (stop.ShowCheck)
             {
                 sb.Append(" is-done");
@@ -161,9 +183,9 @@ internal static class DiscoverySsrShells
 
             sb.Append("\" data-discovery-vignette><img src=\"");
             sb.Append(WebUtility.HtmlEncode(stop.VignetteUrl));
-            sb.Append("\" alt=\"\" width=\"120\" height=\"120\" loading=\"eager\" decoding=\"async\" /></div><div class=\"journey-route__label\"><p class=\"journey-route__title\">");
+            sb.Append("\" alt=\"\" width=\"120\" height=\"120\" loading=\"eager\" decoding=\"async\" /></span><span class=\"journey-route__label\"><span class=\"journey-route__title\">");
             sb.Append(WebUtility.HtmlEncode(culture[stop.TitleKey]));
-            sb.Append("</p><span class=\"journey-route__status ");
+            sb.Append("</span><span class=\"journey-route__status ");
             sb.Append(WebUtility.HtmlEncode(stop.StatusClass));
             sb.Append("\">");
             sb.Append(WebUtility.HtmlEncode(stop.StatusText));
@@ -175,7 +197,7 @@ internal static class DiscoverySsrShells
                 sb.Append("</span>");
             }
 
-            sb.Append("</div></a></div>");
+            sb.Append("</span></span></a>");
         }
 
         sb.Append("</div></div>");
@@ -205,15 +227,15 @@ internal static class DiscoverySsrShells
             foreach (var section in model.PanelSections)
             {
                 sb.Append("<li><div><h4>");
-                sb.Append(WebUtility.HtmlEncode(culture[section.TitleKey]));
+                sb.Append(WebUtility.HtmlEncode(section.Title));
                 sb.Append("</h4><p>");
                 sb.Append(WebUtility.HtmlEncode(section.Summary));
                 sb.Append("</p></div>");
-                if (section.StepHref is int step)
+                if (section.ShowAdjust && !string.IsNullOrWhiteSpace(section.AdjustHref))
                 {
                     sb.Append("<a class=\"journey-route__adjust\" href=\"");
-                    sb.Append(WebUtility.HtmlEncode(DiscoverySsrUrls.Step(step)));
-                    sb.Append("\">");
+                    sb.Append(WebUtility.HtmlEncode(section.AdjustHref));
+                    sb.Append("\" data-enhance-nav=\"false\">");
                     sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Adjust"]));
                     sb.Append("</a>");
                 }
@@ -226,6 +248,76 @@ internal static class DiscoverySsrShells
 
         sb.Append("</div>");
 
+        sb.Append("<h2 class=\"journey-q\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.TestsHeading"]));
+        sb.Append("</h2><div class=\"journey-route__tests\">");
+        foreach (var test in model.TestRows)
+        {
+            sb.Append("<div class=\"journey-route__test");
+            if (!test.IsComplete)
+            {
+                sb.Append(" is-todo");
+            }
+
+            sb.Append("\"><img class=\"journey-route__test-art\" src=\"");
+            sb.Append(WebUtility.HtmlEncode(test.AccentUrl));
+            sb.Append("\" alt=\"\" width=\"64\" height=\"64\" loading=\"lazy\" /><p class=\"journey-route__test-title\">");
+            sb.Append(WebUtility.HtmlEncode(culture[test.TitleKey]));
+            sb.Append("</p><div class=\"journey-route__test-meta\">");
+            if (test.IsComplete)
+            {
+                sb.Append("<span class=\"status-pill status-pill--success journey-route__test-status\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Done"]));
+                sb.Append("</span><a class=\"btn btn-secondary journey-route__test-report\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(test.ReportHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.FullReport"]));
+                sb.Append("</a>");
+                if (!string.IsNullOrWhiteSpace(test.ShedHref))
+                {
+                    sb.Append("<a class=\"btn btn-secondary journey-route__test-report\" href=\"");
+                    sb.Append(WebUtility.HtmlEncode(test.ShedHref));
+                    sb.Append("\" data-enhance-nav=\"false\">");
+                    sb.Append(WebUtility.HtmlEncode(culture["Discovery.Shed.DiveDeeper"]));
+                    sb.Append("</a>");
+                }
+            }
+            else
+            {
+                sb.Append("<span class=\"status-pill journey-route__test-pill-todo journey-route__test-status\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.TestTodo"]));
+                sb.Append("</span>");
+                if (!string.IsNullOrWhiteSpace(test.ProgressText))
+                {
+                    sb.Append("<span class=\"status-pill journey-route__test-pill-progress\">");
+                    sb.Append(WebUtility.HtmlEncode(test.ProgressText));
+                    sb.Append("</span>");
+                }
+
+                if (!string.IsNullOrWhiteSpace(test.StartHref))
+                {
+                    sb.Append("<a class=\"btn btn-primary journey-route__test-start\" href=\"");
+                    sb.Append(WebUtility.HtmlEncode(test.StartHref));
+                    sb.Append("\" data-enhance-nav=\"false\">");
+                    sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Start"]));
+                    sb.Append("</a>");
+                }
+
+                if (!string.IsNullOrWhiteSpace(test.ShedHref))
+                {
+                    sb.Append("<a class=\"btn btn-secondary journey-route__test-report\" href=\"");
+                    sb.Append(WebUtility.HtmlEncode(test.ShedHref));
+                    sb.Append("\" data-enhance-nav=\"false\">");
+                    sb.Append(WebUtility.HtmlEncode(culture["Discovery.Shed.DiveDeeper"]));
+                    sb.Append("</a>");
+                }
+            }
+
+            sb.Append("</div></div>");
+        }
+
+        sb.Append("</div>");
+
         sb.Append("<div class=\"journey-route__mobile-only\"><p class=\"journey-route-mobile__label\" id=\"discovery-route-mobile-label\">");
         sb.Append(WebUtility.HtmlEncode(culture["Discovery.Eyebrow"]));
         sb.Append("</p><div class=\"journey-route-mobile__map\" id=\"discovery-route-canvas-mobile\" data-route-layout=\"mobile\" data-you-at-phase=\"");
@@ -234,7 +326,7 @@ internal static class DiscoverySsrShells
         sb.Append(model.YouAreHereProgressFrac.ToString(System.Globalization.CultureInfo.InvariantCulture));
         sb.Append("\"><div class=\"journey-route-mobile__trail\" aria-hidden=\"true\"><svg class=\"journey-route-mobile__svg\" preserveAspectRatio=\"none\" viewBox=\"0 0 360 900\">");
         sb.Append("<path id=\"discovery-route-path-future\" d=\"");
-        sb.Append(DiscoveryRouteGeometry.MobileFuturePathD);
+        sb.Append(DiscoveryRouteGeometry.MobileFuturePathSsrD);
         sb.Append("\" fill=\"none\" stroke=\"#c9bfb0\" stroke-width=\"8\" stroke-dasharray=\"5 8\" stroke-linecap=\"round\" opacity=\"0.45\" />");
         sb.Append("<path id=\"discovery-route-path-done\" d=\"");
         sb.Append(DiscoveryRouteGeometry.MobileDonePathD);
@@ -260,9 +352,9 @@ internal static class DiscoverySsrShells
 
             sb.Append("\" data-phase=\"");
             sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
-            sb.Append("\"><div class=\"journey-route-mobile__row\"><a class=\"journey-route__stop-btn journey-route-mobile__hit\" href=\"");
+            sb.Append("\"><div class=\"journey-route-mobile__row\"><a class=\"journey-route__stop-btn journey-route-mobile__hit journey-route__stop-link\" href=\"");
             sb.Append(WebUtility.HtmlEncode(href));
-            sb.Append("\"><span class=\"journey-route-mobile__horiz\"><span class=\"journey-route-mobile__vig-slot\"><span class=\"journey-route__vignette");
+            sb.Append("\" data-enhance-nav=\"false\"><span class=\"journey-route-mobile__horiz\"><span class=\"journey-route-mobile__vig-slot\"><span class=\"journey-route__vignette");
             if (stop.ShowCheck)
             {
                 sb.Append(" is-done");
@@ -354,10 +446,10 @@ internal static class DiscoverySsrShells
 
         sb.Append("<div class=\"journey-step__foot\"><span class=\"journey-step__sp\"></span>");
         sb.Append("<a class=\"journey-later\" href=\"");
-        sb.Append(DiscoverySsrUrls.Overview());
-        sb.Append("\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Back"]));
-        sb.Append("</a>");
+            sb.Append(DiscoverySsrUrls.Overview());
+            sb.Append("\" data-enhance-nav=\"false\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Back"]));
+            sb.Append("</a>");
         if (model.ShowDiveDeeper)
         {
             sb.Append("<form method=\"post\" action=\"");

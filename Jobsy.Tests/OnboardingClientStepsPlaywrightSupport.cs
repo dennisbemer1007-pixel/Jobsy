@@ -657,7 +657,9 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 finishReached = factory.FinishReached,
                 isComplete = factory.OnboardingComplete,
                 source = factory.WelcomeDismissed ? "welcome" : null,
-                steps = Array.Empty<object>(),
+                steps = factory.OnboardingComplete
+                    ? Enumerable.Range(1, 10).Select(s => (object)new { step = s, completedAtUtc = "2026-04-01T12:00:00Z" }).ToArray()
+                    : Array.Empty<object>(),
                 impression,
             };
         }
