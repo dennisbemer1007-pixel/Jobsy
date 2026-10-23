@@ -1,0 +1,58 @@
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
+
+@if (_part == Part.Header && !string.IsNullOrEmpty(_headerHtml))
+{
+    @((MarkupString)_headerHtml)
+}
+else if (_part == Part.Bottom && !string.IsNullOrEmpty(_bottomHtml))
+{
+    @((MarkupString)_bottomHtml)
+}
+
+@code {
+    public enum Part
+    {
+        Header,
+        Bottom
+    }
+
+    [Parameter, EditorRequired]
+    public Part RenderPart { get; set; }
+
+    private Part _part;
+    private string? _headerHtml;
+    private string? _bottomHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _part = RenderPart;
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        var skipBlazor = http.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
+        if (!skipBlazor)
+        {
+            return;
+        }
+
+        var items = await CandidateNavSsrShell.ResolveItemsAsync(http.User, FeatureFlags, http.RequestAborted);
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        _headerHtml = CandidateNavSsrShell.BuildHeaderNav(Culture, items, relative);
+        _bottomHtml = CandidateNavSsrShell.BuildBottomNav(Culture, items, relative);
+    }
+}

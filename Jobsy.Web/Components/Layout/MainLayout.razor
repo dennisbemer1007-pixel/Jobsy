@@ -60,7 +60,14 @@
 
     @if (!_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
     {
-        <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
+        @if (_noBlazorCandidateNav)
+        {
+            <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Bottom" />
+        }
+        else
+        {
+            <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
+        }
     }
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
     {
@@ -111,6 +118,8 @@
     private bool _suppressInstallBanner;
     private bool _suppressPwaInstallEntry;
     private bool _pwaSheetOpen;
+    private bool _noBlazorRuntime;
+    private bool _noBlazorCandidateNav;
 
     private bool ShowInstallBanner =>
         RendererInfo.IsInteractive
@@ -348,18 +357,28 @@
 
     private void BootstrapCandidateFromHttpContext()
     {
-        var user = HttpContextAccessor.HttpContext?.User;
+        var http = HttpContextAccessor.HttpContext;
+        var user = http?.User;
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
         if (user?.Identity?.IsAuthenticated != true)
         {
+            _noBlazorCandidateNav = false;
             return;
         }
 
         if (!RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
+            _noBlazorCandidateNav = false;
             return;
         }
 
         _isCandidate = true;
+        _noBlazorCandidateNav = _noBlazorRuntime;
+        if (_noBlazorCandidateNav && !_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
+        {
+            _hasBottomNav = true;
+        }
+
         SyncBanenkaartImmersive();
     }
 

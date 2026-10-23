@@ -21,12 +21,47 @@
         }
     }
 
+    var BK_UI_KEY = "jobsy.bk.ui.v1";
+
+    function readUiState() {
+        try {
+            var raw = sessionStorage.getItem(BK_UI_KEY);
+            return raw ? JSON.parse(raw) : {};
+        } catch (eState) {
+            return {};
+        }
+    }
+
+    function writeUiState(patch) {
+        try {
+            var next = readUiState();
+            Object.keys(patch || {}).forEach(function (k) {
+                next[k] = patch[k];
+            });
+            sessionStorage.setItem(BK_UI_KEY, JSON.stringify(next));
+        } catch (eWrite) { }
+    }
+
+    function ensureBodyScrollUnlocked() {
+        try {
+            document.documentElement.classList.remove("pwa-sheet-open");
+            document.body.style.removeProperty("overflow");
+            document.body.style.removeProperty("position");
+            document.body.style.removeProperty("top");
+            document.body.style.removeProperty("width");
+        } catch (eUnlock) { }
+    }
+
     function setFiltersOpen(open) {
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (!root) {
             return;
         }
         root.classList.toggle("filters-open", open);
+        if (!open) {
+            ensureBodyScrollUnlocked();
+        }
+        writeUiState({ filtersOpen: !!open });
         var sheet = qs("[data-testid=kb-filter-sheet]");
         var backdrop = qs("[data-testid=kb-filter-backdrop]");
         qsa("[data-testid=kb-filters-button]").forEach(function (btn) {
@@ -111,6 +146,7 @@
         function setMap(on) {
             root.classList.toggle("show-map", on);
             root.classList.toggle("show-list", !on);
+            writeUiState({ showMap: !!on });
             if (mapBtn) {
                 mapBtn.classList.toggle("is-active", on);
                 mapBtn.setAttribute("aria-checked", on ? "true" : "false");
@@ -248,11 +284,65 @@
         }, true);
     }
 
+    function restoreUiState() {
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (!root) {
+            return;
+        }
+        var state = readUiState();
+        if (state.filtersOpen) {
+            setFiltersOpen(true);
+        } else {
+            setFiltersOpen(false);
+        }
+        if (state.showMap === false) {
+            root.classList.remove("show-map");
+            root.classList.add("show-list");
+            var mapBtn = qs("[data-testid=kb-view-kaart]");
+            var listBtn = qs("[data-testid=kb-view-lijst]");
+            if (mapBtn) {
+                mapBtn.classList.remove("is-active");
+                mapBtn.setAttribute("aria-checked", "false");
+            }
+            if (listBtn) {
+                listBtn.classList.add("is-active");
+                listBtn.setAttribute("aria-checked", "true");
+            }
+        }
+    }
+
+    function resumeMapLayout() {
+        ensureBodyScrollUnlocked();
+        if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+            window.jobMap.invalidate();
+        }
+    }
+
+    function bindLifecycleResume() {
+        if (document.documentElement.dataset.banenkaartLifecycle === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartLifecycle = "1";
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState !== "visible") {
+                return;
+            }
+            restoreUiState();
+            resumeMapLayout();
+        });
+        window.addEventListener("pageshow", function (ev) {
+            restoreUiState();
+            resumeMapLayout();
+        });
+    }
+
     function onReady() {
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (!root) {
             return;
         }
+        bindLifecycleResume();
+        restoreUiState();
         bindGuestFilterPersistence();
         bindFilters();
         markFilterReady();

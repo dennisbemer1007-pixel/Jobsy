@@ -80,6 +80,9 @@ public static class VacancyDiscoveryQuery
     public static bool MatchesTransport(VacancyDiscoveryRecord record, string transport)
         => TransportLabels.MatchesRequired(record.RequiredTransportLabels, transport);
 
+    public static bool CandidateCanReach(VacancyDiscoveryRecord record, string transport)
+        => TransportLabels.CandidateCanReach(record.RequiredTransportLabels, transport);
+
     public static bool MatchesWageFilter(
         decimal? hourlyWage,
         decimal? minHourlyWage,

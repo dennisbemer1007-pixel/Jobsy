@@ -270,3 +270,54 @@ window.jobsyCulture = {
         setOpen(null);
     });
 })();
+
+/* Static candidate nav (NoBlazor SSR): active link + document title without Blazor circuit. */
+(function () {
+    "use strict";
+    if (window.lobsyCandidateNav && window.lobsyCandidateNav.syncActiveClassesFromLocation) {
+        return;
+    }
+    window.lobsyCandidateNav = {
+        normalizePath: function (urlOrPath) {
+            try {
+                var u = typeof urlOrPath === "string" && urlOrPath.indexOf("http") === 0
+                    ? new URL(urlOrPath)
+                    : new URL(String(urlOrPath || ""), location.href);
+                var path = u.pathname || "/";
+                return path.length > 1 && path.charAt(path.length - 1) === "/"
+                    ? path.slice(0, -1)
+                    : path;
+            } catch (e) {
+                var s = String(urlOrPath || "/").split("?")[0].split("#")[0];
+                if (s.length > 1 && s.charAt(s.length - 1) === "/") {
+                    s = s.slice(0, -1);
+                }
+                return s || "/";
+            }
+        },
+        syncActiveClassesFromLocation: function (path) {
+            var p = this.normalizePath(path || location.pathname);
+            var links = document.querySelectorAll('[data-lobsy-candidate-nav="true"]');
+            for (var i = 0; i < links.length; i++) {
+                var el = links[i];
+                var href = el.getAttribute("href") || "";
+                var active = this.normalizePath(href) === p;
+                el.classList.toggle("is-active", active);
+                if (active) {
+                    el.setAttribute("aria-current", "page");
+                } else {
+                    el.removeAttribute("aria-current");
+                }
+            }
+        }
+    };
+    function syncNow() {
+        window.lobsyCandidateNav.syncActiveClassesFromLocation(location.pathname);
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", syncNow);
+    } else {
+        syncNow();
+    }
+    window.addEventListener("pageshow", syncNow);
+})();

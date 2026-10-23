@@ -108,6 +108,13 @@ public sealed class BanenkaartAccLivePlaywrightTests
 
         if (loggedIn)
         {
+            var bottomNavLinks = await page.Locator("[data-testid=candidate-bottom-nav-ssr] a.bottom-nav__item").CountAsync();
+            if (touch && width < 900)
+            {
+                Assert.True(bottomNavLinks >= 3,
+                    "Logged-in mobile NoBlazor banenkaart should render static bottom nav links.");
+            }
+
             var hasAuthChrome = await page.EvaluateAsync<bool>(
                 """
                 () => !Array.from(document.querySelectorAll('link[rel=stylesheet]'))
@@ -144,11 +151,39 @@ public sealed class BanenkaartAccLivePlaywrightTests
 
         if (loggedIn && width >= 900)
         {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                  if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) return false;
+                  const layers = ['jobsy-pins-clusters', 'jobsy-pins-unclustered', 'jobsy-pins-clusters-hit'];
+                  const feats = map.queryRenderedFeatures({ layers: layers.filter(id => map.getLayer(id)) });
+                  return !!(feats && feats.length > 0);
+                }
+                """,
+                null,
+                new() { Timeout = 120_000 });
+            var renderedPinFeatures = await page.EvaluateAsync<int>(
+                """
+                () => {
+                  const map = window.jobMap.__testGetMap();
+                  const layers = ['jobsy-pins-clusters', 'jobsy-pins-unclustered', 'jobsy-pins-clusters-hit'];
+                  return (map.queryRenderedFeatures({ layers: layers.filter(id => map.getLayer(id)) }) || []).length;
+                }
+                """);
+            Assert.True(renderedPinFeatures > 0,
+                "Desktop logged-in map should render at least one pin/cluster feature.");
+
             await ApplyTravelFiltersAsync(page, 60, "Auto");
             await page.WaitForLoadStateAsync(LoadState.Load);
 
             var emptyTravel = await page.Locator("[data-testid=kb-empty-travel]").CountAsync();
             Assert.Equal(0, emptyTravel);
+
+            var listRows = await page.Locator("[data-testid=kb-list-row]").CountAsync();
+            Assert.True(listRows > 0, "60 min Auto should show SSR discover list rows on desktop.");
+            var loadMore = await page.Locator("[data-testid=kb-load-more]").CountAsync();
+            Assert.True(loadMore > 0, "Discover list should include Meer laden when more than one page.");
 
             var transportVal = await page.Locator("#kb-filter-transport").InputValueAsync();
             var maxMinutes = await page.Locator("[data-testid=kb-sheet-travel-slider]").InputValueAsync();
@@ -217,6 +252,82 @@ public sealed class BanenkaartAccLivePlaywrightTests
 
         Assert.True(cspViolations.Count == 0,
             "Onboarding step 10 CSP script-src-attr: " + string.Join("; ", cspViolations));
+    }
+
+    [Fact]
+    public async Task Mobile_logged_in_banenkaart_stays_interactive_after_sheet_history_and_background()
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Allow,
+        });
+
+        var page = await context.NewPageAsync();
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, email, password)
+            && !await KbE2e.TryLoginAsync(page, baseUrl))
+        {
+            Assert.Fail("Candidate login failed on acceptatie.");
+        }
+
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForSelectorAsync("[data-banenkaart-ssr=\"1\"]", new() { Timeout = 60_000 });
+
+        await OpenFilterDrawerAsync(page);
+        await page.Locator("[data-testid=kb-filter-close]").ClickAsync();
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const root = document.querySelector('[data-banenkaart-ssr="1"]');
+              return root && !root.classList.contains('filters-open');
+            }
+            """);
+
+        await page.Locator("[data-testid=kb-view-lijst]").ClickAsync();
+        await page.Locator("[data-testid=kb-view-kaart]").ClickAsync();
+        await page.EvaluateAsync("() => window.scrollTo(0, 120)");
+
+        await page.GotoAsync(baseUrl + "/candidate/paspoort", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.GoBackAsync(new() { WaitUntil = WaitUntilState.Load, Timeout = 60_000 });
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              document.dispatchEvent(new Event('visibilitychange'));
+              Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+              document.dispatchEvent(new Event('visibilitychange'));
+            }
+            """);
+
+        var interactive = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const btn = document.querySelector('[data-testid=kb-filters-button]');
+              if (!btn || btn.disabled) return false;
+              const root = document.querySelector('[data-banenkaart-ssr="1"]');
+              if (root && root.classList.contains('filters-open')) return false;
+              const body = document.body;
+              const overflow = getComputedStyle(body).overflow;
+              if (overflow === 'hidden' && !document.querySelector('.jobsy-discovery.filters-open')) return false;
+              return true;
+            }
+            """);
+        Assert.True(interactive, "Banenkaart should stay interactive with no stray body scroll-lock after mobile PWA-style resume.");
     }
 
     private static async Task OpenFilterDrawerAsync(IPage page)
