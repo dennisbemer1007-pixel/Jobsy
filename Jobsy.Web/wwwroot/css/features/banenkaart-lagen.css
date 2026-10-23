@@ -1760,7 +1760,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         min-height: 0;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane.panel {
+    html body .app-shell--banenkaart-shell .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane.panel {
         display: flex !important;
         flex-direction: column;
         flex: none;
