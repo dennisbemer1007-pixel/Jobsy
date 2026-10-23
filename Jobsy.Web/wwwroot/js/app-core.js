@@ -1074,7 +1074,7 @@ window.jobsyMaps = (function () {
             }
             var parsed = JSON.parse(node.textContent);
             var inlinePins = parsed && Array.isArray(parsed.pins) && parsed.pins.length > 0;
-            if (!inlinePins && parsed && parsed.pinsUrl) {
+            if (!inlinePins && parsed && parsed.pinsUrl && !parsed.catalogMode) {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {

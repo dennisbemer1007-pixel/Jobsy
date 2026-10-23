@@ -43,6 +43,7 @@ internal static class BanenkaartSsrData
         BanenkaartSsrQuery.State query,
         bool isAuthenticated,
         bool isCandidate,
+        bool explicitRadiusKm = false,
         CancellationToken cancellationToken = default)
     {
         var flags = await featureFlags.GetAsync(cancellationToken);
@@ -194,12 +195,13 @@ internal static class BanenkaartSsrData
         {
             try
             {
+                double? discoverRadius = useOrigin && explicitRadiusKm ? effectiveQuery.RadiusKm : null;
                 return await api.DiscoverVacanciesPageAsync(
                     useOrigin ? originLat : null,
                     useOrigin ? originLng : null,
                     effectiveQuery.Transport,
                     effectiveQuery.MaxTravelMinutes,
-                    useOrigin ? effectiveQuery.RadiusKm : null,
+                    discoverRadius,
                     companyFocus ? null : effectiveQuery.AgeYears,
                     companyFocus ? null : minWage,
                     companyFocus ? null : maxWage,
@@ -268,7 +270,8 @@ internal static class BanenkaartSsrData
             originLat,
             originLng,
             zoomOutsideTravel,
-            highlightSeed);
+            highlightSeed,
+            explicitRadiusKm);
 
         var defaults = new KbFilterDefaults(
             AgeYears: effectiveQuery.AgeYears,

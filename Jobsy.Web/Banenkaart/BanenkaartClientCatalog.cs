@@ -40,6 +40,11 @@ internal static class BanenkaartClientCatalog
 
         if (upstream is null)
         {
+            if (cache.TryGetValue(cacheKey, out cached) && cached is not null)
+            {
+                return Write(http, cached.Body, cached.ETag);
+            }
+
             return Results.StatusCode(StatusCodes.Status502BadGateway);
         }
 
@@ -53,6 +58,11 @@ internal static class BanenkaartClientCatalog
         var body = upstream.Value.Body;
         if (body is null || body.Length == 0)
         {
+            if (cache.TryGetValue(cacheKey, out cached) && cached is not null)
+            {
+                return Write(http, cached.Body, cached.ETag);
+            }
+
             return Results.StatusCode(StatusCodes.Status502BadGateway);
         }
 

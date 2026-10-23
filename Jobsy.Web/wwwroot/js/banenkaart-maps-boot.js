@@ -7,9 +7,9 @@ window.jobsyMaps = (function () {
     var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261023-acc5"
+        "/js/jobsyMapLibre.min.js?v=20261023-acc6"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-acc5"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-acc6"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -140,7 +140,6 @@ window.jobsyMaps = (function () {
             return pending[kind];
         }
         var urls = mapLibreScripts.concat(discoveryScripts);
-        preloadScripts(urls);
         pending[kind] = loadScriptsParallel(urls).then(function () {
             Promise.all(css.map(loadCss)).catch(function () { });
         }).catch(function (err) {
