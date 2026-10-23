@@ -2865,9 +2865,10 @@ window.jobMap = (function () {
             closeButton: false,
             closeOnClick: false,
             maxWidth: "320px",
-            offset: 12,
+            offset: 16,
             anchor: "bottom"
         }, ll, html);
+        ensureLagenPopInView(activeClusterPopup);
         const root = activeClusterPopup.getElement();
         if (root) {
             root.querySelectorAll("[data-cluster-close], .x").forEach(function (btn) {
@@ -2886,6 +2887,7 @@ window.jobMap = (function () {
                 html = buildLagenCatalogPopupHtml(full, false);
                 try {
                     activeClusterPopup.setHTML(html);
+                    ensureLagenPopInView(activeClusterPopup);
                     root.querySelectorAll("[data-cluster-close], .x").forEach(function (btn) {
                         btn.addEventListener("click", function (ev) {
                             stopEvent(ev);
@@ -4009,6 +4011,48 @@ window.jobMap = (function () {
         return 8;
     }
 
+    function scheduleLagenLayoutResize() {
+        if (!lagenLayout || !map) {
+            return;
+        }
+        [0, 80, 200, 450, 900].forEach(function (ms) {
+            setTimeout(function () {
+                invalidate();
+            }, ms);
+        });
+    }
+
+    function syncLagenAttributionCompact() {
+        if (!lagenLayout || !map || typeof map.getContainer !== "function") {
+            return;
+        }
+        const attrib = map.getContainer().querySelector(".maplibregl-ctrl-attrib");
+        if (!attrib) {
+            return;
+        }
+        attrib.classList.add("maplibregl-compact");
+        attrib.classList.remove("maplibregl-compact-show");
+    }
+
+    function ensureLagenPopInView(popup) {
+        if (!popup || !map || typeof popup.getElement !== "function") {
+            return;
+        }
+        const el = popup.getElement();
+        const container = map.getContainer();
+        if (!el || !container) {
+            return;
+        }
+        const mapRect = container.getBoundingClientRect();
+        const popRect = el.getBoundingClientRect();
+        const pad = 14;
+        if (popRect.top < mapRect.top + pad) {
+            try {
+                map.panBy([0, mapRect.top + pad - popRect.top], { duration: 0 });
+            } catch (ePan) { }
+        }
+    }
+
     function revealMapStage() {
         if (!map || deferMapReveal) {
             return;
@@ -4016,6 +4060,9 @@ window.jobMap = (function () {
         const stage = map.getContainer() && map.getContainer().closest(".map-stage");
         if (stage) {
             stage.classList.add("is-live");
+        }
+        if (lagenLayout) {
+            scheduleLagenLayoutResize();
         }
     }
 
@@ -4447,9 +4494,9 @@ window.jobMap = (function () {
         }
         const ic = window.jobsyBanenkaartMapIcons;
         if (!ic || typeof ic.pinW !== "function" || typeof ic.pinI !== "function") {
-            if (done) {
-                done();
-            }
+            setTimeout(function () {
+                ensureLagenPinImages(done);
+            }, 40);
             return;
         }
         const specs = [
@@ -4464,6 +4511,7 @@ window.jobMap = (function () {
                 pending -= 1;
                 if (pending <= 0) {
                     map._jobsyLagenPinImagesReady = true;
+                    applyLagenPinLayerStyles();
                     if (done) {
                         done();
                     }
@@ -4519,10 +4567,11 @@ window.jobMap = (function () {
                 map.setLayoutProperty(PIN_LAYER_CLUSTER_AGENCY_BADGE, "visibility", "none");
             }
         } catch (eBadge) { }
+        const symbolsReady = !!map._jobsyLagenPinImagesReady;
         [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
             try {
                 if (map.getLayer(layerId)) {
-                    map.setLayoutProperty(layerId, "visibility", "none");
+                    map.setLayoutProperty(layerId, "visibility", symbolsReady ? "none" : "visible");
                 }
             } catch (ePin) { }
         });
@@ -4551,6 +4600,9 @@ window.jobMap = (function () {
                     map.getCanvas().style.cursor = "";
                 });
             }
+            try {
+                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", symbolsReady ? "visible" : "none");
+            } catch (eVisNew) { }
         } else {
             const layout = lagenUnclusteredIconLayout();
             Object.keys(layout).forEach(function (key) {
@@ -4559,9 +4611,41 @@ window.jobMap = (function () {
                 } catch (eLay) { }
             });
             try {
-                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", "visible");
+                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", symbolsReady ? "visible" : "none");
             } catch (eVis) { }
         }
+    }
+
+    function resetLagenPinSourceIfNeeded() {
+        if (!map || !lagenLayout || map._jobsyLagenPinClusterVer === 5) {
+            return;
+        }
+        const layerIds = [
+            PIN_LAYER_UNCLUSTERED_SYMBOL,
+            PIN_LAYER_SELECTED,
+            PIN_LAYER_UNCLUSTERED_GLYPH,
+            PIN_LAYER_UNCLUSTERED,
+            PIN_LAYER_UNCLUSTERED + "-hit",
+            PIN_LAYER_CLUSTER_COUNT,
+            PIN_LAYER_CLUSTER_AGENCY_BADGE,
+            PIN_LAYER_CLUSTERS,
+            PIN_LAYER_CLUSTERS + "-hit",
+            PIN_LAYER_CLUSTERS + "-halo"
+        ];
+        layerIds.forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.removeLayer(layerId);
+                }
+            } catch (eRm) { }
+        });
+        try {
+            if (map.getSource(PIN_SOURCE)) {
+                map.removeSource(PIN_SOURCE);
+            }
+        } catch (eSrc) { }
+        map._jobsyLagenPinClusterVer = 5;
+        map._jobsyLagenPinClicksBound = false;
     }
 
     function ensurePinImages() {
@@ -4594,13 +4678,16 @@ window.jobMap = (function () {
             return;
         }
         ensurePinImages();
+        if (lagenLayout) {
+            resetLagenPinSourceIfNeeded();
+        }
         if (!map.getSource(PIN_SOURCE)) {
             map.addSource(PIN_SOURCE, {
                 type: "geojson",
                 data: pinsGeoJson(),
                 cluster: true,
                 clusterRadius: lagenLayout ? 30 : CLUSTER_OPTS.clusterRadius,
-                clusterMaxZoom: lagenLayout ? 9 : CLUSTER_OPTS.clusterMaxZoom,
+                clusterMaxZoom: lagenLayout ? 11 : CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
                     agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },
@@ -5063,6 +5150,10 @@ window.jobMap = (function () {
         }
         if (window.jobsyMapLibre) {
             window.jobsyMapLibre.hideChrome(map);
+        }
+        syncLagenAttributionCompact();
+        if (lagenLayout) {
+            scheduleLagenLayoutResize();
         }
     }
 
@@ -6751,6 +6842,23 @@ window.jobMap = (function () {
         },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
+        __testGetRenderedPinCount: function () {
+            if (!map) {
+                return 0;
+            }
+            const layers = [
+                PIN_LAYER_CLUSTERS,
+                PIN_LAYER_UNCLUSTERED_SYMBOL,
+                PIN_LAYER_UNCLUSTERED
+            ];
+            let total = 0;
+            layers.forEach(function (layerId) {
+                try {
+                    total += (map.queryRenderedFeatures({ layers: [layerId] }) || []).length;
+                } catch (eFeat) { }
+            });
+            return total;
+        },
         __testGetAgencyAreaCount: function () {
             return agencyAreasGeoJson().features.length;
         },

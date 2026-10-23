@@ -713,7 +713,38 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             // Pins may still open via rendered features fallback.
         }
 
-        await page.WaitForTimeoutAsync(800);
+        await WaitForRenderedPinsAsync(page);
+        await page.EvaluateAsync(
+            """
+            () => {
+              if (window.jobMap && typeof window.jobMap.invalidate === 'function') {
+                window.jobMap.invalidate();
+              }
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (map && typeof map.resize === 'function') {
+                map.resize();
+              }
+            }
+            """);
+        await page.WaitForTimeoutAsync(400);
+        await WaitForRenderedPinsAsync(page);
+    }
+
+    private static async Task WaitForRenderedPinsAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (!map) return false;
+              const src = map.getSource('jobsy-pins');
+              if (!src) return false;
+              const n = window.jobMap.__testGetRenderedPinCount && window.jobMap.__testGetRenderedPinCount();
+              return typeof n === 'number' && n >= 3;
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
     }
 
     private static async Task ShotAsync(IPage page, string dir, string name) =>
