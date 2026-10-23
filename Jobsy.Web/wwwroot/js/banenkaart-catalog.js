@@ -11,6 +11,7 @@
     var rows = null;
     var lastEtag = null;
     var lastLoadedAt = 0;
+    var networkInFlight = null;
 
     var IDB_NAME = "jobsy.bk.catalog.v1";
     var IDB_STORE = "catalog";
@@ -296,12 +297,14 @@
     }
 
     function fetchCatalogNetwork(force) {
-        var now = Date.now();
+        if (networkInFlight) {
+            return networkInFlight;
+        }
         var headers = { Accept: "application/json" };
         if (lastEtag) {
             headers["If-None-Match"] = lastEtag;
         }
-        return fetch(CATALOG_URL, { credentials: "same-origin", headers: headers })
+        networkInFlight = fetch(CATALOG_URL, { credentials: "same-origin", headers: headers })
             .then(function (res) {
                 if (res.status === 304 && readCachedRaw()) {
                     lastLoadedAt = Date.now();
@@ -319,7 +322,11 @@
                     saveData(body, etag);
                     return expand(body);
                 });
+            })
+            .finally(function () {
+                networkInFlight = null;
             });
+        return networkInFlight;
     }
 
     function readBootFilters() {

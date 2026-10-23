@@ -297,29 +297,62 @@
         }, true);
     }
 
-    function restoreUiState() {
+    function isDesktopBanenkaart() {
+        return !!(window.jobsyViewport && typeof window.jobsyViewport.isWide === "function"
+            && window.jobsyViewport.isWide());
+    }
+
+    /** Fresh GET / hard reload: filters closed; desktop always shows map + list rail. */
+    function applyInitialUiState() {
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (!root) {
             return;
         }
-        var state = readUiState();
-        if (state.filtersOpen) {
-            setFiltersOpen(true);
-        } else {
-            setFiltersOpen(false);
-        }
-        if (state.showMap === false) {
-            root.classList.remove("show-map");
-            root.classList.add("show-list");
+        setFiltersOpen(false);
+        writeUiState({ filtersOpen: false });
+        if (isDesktopBanenkaart()) {
+            root.classList.add("show-map");
+            root.classList.remove("show-list");
             var mapBtn = qs("[data-testid=kb-view-kaart]");
             var listBtn = qs("[data-testid=kb-view-lijst]");
             if (mapBtn) {
-                mapBtn.classList.remove("is-active");
-                mapBtn.setAttribute("aria-checked", "false");
+                mapBtn.classList.add("is-active");
+                mapBtn.setAttribute("aria-checked", "true");
             }
             if (listBtn) {
-                listBtn.classList.add("is-active");
-                listBtn.setAttribute("aria-checked", "true");
+                listBtn.classList.remove("is-active");
+                listBtn.setAttribute("aria-checked", "false");
+            }
+            return;
+        }
+        var state = readUiState();
+        if (state.showMap === false) {
+            root.classList.remove("show-map");
+            root.classList.add("show-list");
+            var mapBtnM = qs("[data-testid=kb-view-kaart]");
+            var listBtnM = qs("[data-testid=kb-view-lijst]");
+            if (mapBtnM) {
+                mapBtnM.classList.remove("is-active");
+                mapBtnM.setAttribute("aria-checked", "false");
+            }
+            if (listBtnM) {
+                listBtnM.classList.add("is-active");
+                listBtnM.setAttribute("aria-checked", "true");
+            }
+        }
+    }
+
+    function restoreUiStateFromSession() {
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (!root) {
+            return;
+        }
+        setFiltersOpen(false);
+        if (isDesktopBanenkaart()) {
+            root.classList.add("show-map");
+            root.classList.remove("show-list");
+            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+                window.jobMap.invalidate();
             }
         }
     }
@@ -340,11 +373,11 @@
             if (document.visibilityState !== "visible") {
                 return;
             }
-            restoreUiState();
+            restoreUiStateFromSession();
             resumeMapLayout();
         });
         window.addEventListener("pageshow", function (ev) {
-            restoreUiState();
+            restoreUiStateFromSession();
             resumeMapLayout();
         });
     }
@@ -355,16 +388,18 @@
             return;
         }
         bindLifecycleResume();
-        restoreUiState();
+        applyInitialUiState();
         bindGuestFilterPersistence();
         bindFilters();
         markFilterReady();
         if (root.dataset.banenkaartSsrEnhance === "1") {
+            document.dispatchEvent(new Event("jobsy-bk-ssr-ui-ready"));
             return;
         }
         bindMobileView();
         bindStartPrompt();
         root.dataset.banenkaartSsrEnhance = "1";
+        document.dispatchEvent(new Event("jobsy-bk-ssr-ui-ready"));
         enhanceMap();
     }
 

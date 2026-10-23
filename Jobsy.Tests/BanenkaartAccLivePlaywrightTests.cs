@@ -266,6 +266,84 @@ public sealed class BanenkaartAccLivePlaywrightTests
     }
 
     [Fact]
+    public async Task Desktop_logged_in_banenkaart_ok_after_paspoort_and_hard_reload()
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 720 },
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Allow,
+        });
+
+        var consoleErrors = new List<string>();
+        var page = await context.NewPageAsync();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, email, password)
+            && !await KbE2e.TryLoginAsync(page, baseUrl))
+        {
+            Assert.Fail("Candidate login failed on acceptatie.");
+        }
+
+        await page.GotoAsync(baseUrl + "/candidate/paspoort", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForTimeoutAsync(800);
+
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              sessionStorage.setItem('jobsy.bk.ui.v1', JSON.stringify({ filtersOpen: true, showMap: false }));
+            }
+            """);
+
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForTimeoutAsync(1200);
+
+        var filtersOpen = await page.EvaluateAsync<bool>(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.classList.contains('filters-open') === true");
+        Assert.False(filtersOpen, "Filter drawer must be closed on load after hard reload.");
+
+        var mapHeight = await page.Locator("#job-map canvas, #job-map .maplibregl-canvas").First
+            .EvaluateAsync<double>("el => el.getBoundingClientRect().height");
+        Assert.True(mapHeight > 300, "Map canvas height should exceed 300px (got " + mapHeight + ").");
+
+        await WaitForBanenkaartMapReadyAsync(page);
+        var basemapFeatures = await CountRenderedBasemapFeaturesAsync(page);
+        Assert.True(basemapFeatures >= 5,
+            "Desktop basemap should render vector features (got " + basemapFeatures + ").");
+
+        var listRowHeight = await page.Locator("[data-testid=kb-list-row]").First
+            .EvaluateAsync<double>("el => el.getBoundingClientRect().height");
+        Assert.True(listRowHeight > 0 && listRowHeight < 200,
+            "Compact list row height should be under 200px (got " + listRowHeight + ").");
+
+        var badConsole = consoleErrors.Where(e =>
+            !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)
+            && !e.Contains("9472-9727", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.True(badConsole.Count == 0, "Console errors: " + string.Join("; ", badConsole));
+    }
+
+    [Fact]
     public async Task Desktop_banenkaart_basemap_stays_visible_after_pin_zoom_and_minus_control()
     {
         var baseUrl = ResolveBaseUrl();

@@ -229,6 +229,9 @@ window.jobsyMaps = (function () {
         }
         ensure("discovery").then(function () {
             bootDiscoveryMap();
+            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+                window.jobMap.invalidate();
+            }
             if (window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.applyToMap === "function") {
                 var node = document.getElementById("jobsy-map-boot");
                 var filters = null;
@@ -245,7 +248,36 @@ window.jobsyMaps = (function () {
         }).catch(function () { });
     }
 
-    warmBoot();
+    function scheduleWarmBoot() {
+        function run() {
+            try {
+                warmBoot();
+            } catch (eBoot) { /* ssr/map retry */ }
+        }
+        function afterSsrUi() {
+            var started = false;
+            function runOnce() {
+                if (started) {
+                    return;
+                }
+                started = true;
+                requestAnimationFrame(run);
+            }
+            if (document.querySelector("[data-banenkaart-ssr=\"1\"]")) {
+                document.addEventListener("jobsy-bk-ssr-ui-ready", runOnce, { once: true });
+                setTimeout(runOnce, 200);
+                return;
+            }
+            runOnce();
+        }
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", afterSsrUi);
+        } else {
+            afterSsrUi();
+        }
+    }
+
+    scheduleWarmBoot();
 
     return { ensure: ensure };
 })();
