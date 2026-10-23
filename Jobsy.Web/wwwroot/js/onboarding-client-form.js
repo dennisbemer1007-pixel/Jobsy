@@ -1913,7 +1913,15 @@
         document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
             if (form.__obSsrFormBound) return;
             form.__obSsrFormBound = true;
-            form.addEventListener("submit", function () {
+            form.addEventListener("submit", function (ev) {
+                if (form.getAttribute("data-ob-submitting") === "1") {
+                    ev.preventDefault();
+                    return;
+                }
+                form.setAttribute("data-ob-submitting", "1");
+                form.querySelectorAll("button[type=submit]").forEach(function (b) {
+                    b.disabled = true;
+                });
                 var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
                 var hidden = form.querySelector("[data-ob-ssr-payload]");
                 if (step === 6) {

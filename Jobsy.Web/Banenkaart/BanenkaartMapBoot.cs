@@ -28,7 +28,8 @@ internal static class BanenkaartMapBoot
         double? originLat,
         double? originLng,
         bool zoomToPinsOutsideTravel,
-        uint highlightSeed)
+        uint highlightSeed,
+        bool includeRadiusCap = false)
     {
         var payload = new Dictionary<string, object?>
         {
@@ -51,12 +52,7 @@ internal static class BanenkaartMapBoot
                 ["catalogUrl"] = catalogUrl,
                 ["catalogMode"] = true,
                 ["highlightSeed"] = highlightSeed,
-                ["travel"] = new Dictionary<string, object?>
-                {
-                    ["maxMinutes"] = query.MaxTravelMinutes,
-                    ["transport"] = query.Transport,
-                    ["radiusKm"] = query.RadiusKm
-                },
+                ["travel"] = BuildTravelBoot(query, includeRadiusCap),
                 ["filters"] = BuildFilterState(query),
                 ["labels"] = BuildLabels(culture, isAuthenticated),
                 ["illustratedTravelSpot"] = CandidateIllustratedImages.PopupTravelAccent,
@@ -88,6 +84,21 @@ internal static class BanenkaartMapBoot
 
         return JsonSerializer.Serialize(payload, JsonOptions)
             .Replace("<", "\\u003c", StringComparison.Ordinal);
+    }
+
+    private static Dictionary<string, object?> BuildTravelBoot(BanenkaartSsrQuery.State query, bool includeRadiusCap)
+    {
+        var travel = new Dictionary<string, object?>
+        {
+            ["maxMinutes"] = query.MaxTravelMinutes,
+            ["transport"] = query.Transport,
+        };
+        if (includeRadiusCap)
+        {
+            travel["radiusKm"] = query.RadiusKm;
+        }
+
+        return travel;
     }
 
     internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query) => new()

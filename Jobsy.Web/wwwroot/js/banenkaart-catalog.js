@@ -308,6 +308,10 @@
                     return expand(readCachedRaw());
                 }
                 if (!res.ok) {
+                    if (readCachedRaw()) {
+                        lastLoadedAt = Date.now();
+                        return expand(readCachedRaw());
+                    }
                     throw new Error("catalog " + res.status);
                 }
                 var etag = res.headers.get("ETag");

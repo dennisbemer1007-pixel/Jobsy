@@ -8,7 +8,7 @@ window.jobMap = (function () {
     let originMarker = null;
     let travelRingLayers = [];
     let travelRingGeo = null;
-    let travelOptions = { maxMinutes: 20, transport: "Fiets", radiusKm: 15 };
+    let travelOptions = { maxMinutes: 20, transport: "Fiets", radiusKm: null };
     let activeClusterPopup = null;
     let openCallback = null;
     let outsideClickCloserBound = false;
@@ -2437,6 +2437,15 @@ window.jobMap = (function () {
         };
     }
 
+    function clearPinsFetchState() {
+        pinsUrl = null;
+        pinsBaseUrl = null;
+        try {
+            window.__jobsyPinsPrefetch = null;
+            window.__jobsyPinsPrefetchUrl = null;
+        } catch (eClear) { }
+    }
+
     function fetchPins(url) {
         if (catalogModeActive) {
             return Promise.resolve([]);
@@ -4296,6 +4305,40 @@ window.jobMap = (function () {
         }
     }
 
+    function reconcileBootFromDom() {
+        const bootPayload = readBootPayload();
+        if (!bootPayload) {
+            return;
+        }
+        catalogModeActive = bootPayload.catalogMode === true;
+        if (catalogModeActive) {
+            clearPinsFetchState();
+        }
+        const mapInit = bootPayload.mapInit || null;
+        let travel = null;
+        if (mapInit && mapInit.travel) {
+            travel = mapInit.travel;
+            normalizeTravelOptions(travel);
+        }
+        let origin = bootPayload.origin || null;
+        if (!origin && mapInit && mapInit.filters
+            && mapInit.filters.originLat != null
+            && mapInit.filters.originLng != null) {
+            origin = {
+                lat: Number(mapInit.filters.originLat),
+                lng: Number(mapInit.filters.originLng)
+            };
+        }
+        if (origin && typeof setOrigin === "function") {
+            try {
+                setOrigin(origin.lat, origin.lng, travel || travelOptions);
+            } catch (eOrigin) { }
+        }
+        if (catalogModeActive) {
+            syncCatalogToMap();
+        }
+    }
+
     /**
      * Start the map from #jobsy-map-boot before the Blazor circuit is up.
      * Blazor jobMap.init reuses that MapLibre instance (same host or adoptMapContainer).
@@ -4312,10 +4355,12 @@ window.jobMap = (function () {
         if (map && typeof map.getContainer === "function") {
             const host = map.getContainer();
             if (host === el && el.isConnected) {
+                reconcileBootFromDom();
                 return;
             }
             // Boot map already exists on a prior host — adopt into current #job-map.
             if (adoptMapContainer(el)) {
+                reconcileBootFromDom();
                 return;
             }
         }
@@ -4963,6 +5008,9 @@ window.jobMap = (function () {
             : {};
 
         catalogModeActive = !!(options && options.catalogMode);
+        if (catalogModeActive) {
+            clearPinsFetchState();
+        }
         bootZoomOutsideTravel = !!(options && options.zoomToPinsOutsideTravel);
 
         bindMapRuntime();
