@@ -3273,11 +3273,11 @@ window.jobMap = (function () {
             let anchor = "center";
             if (lagenLayout) {
                 if (mins <= 10) {
-                    anchor = "top";
-                } else if (mins <= 20) {
                     anchor = "bottom";
+                } else if (mins <= 20) {
+                    anchor = "bottom-right";
                 } else {
-                    anchor = "left";
+                    anchor = "top-left";
                 }
             }
             try {

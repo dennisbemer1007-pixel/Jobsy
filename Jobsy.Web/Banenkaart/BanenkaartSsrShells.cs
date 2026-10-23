@@ -170,7 +170,7 @@ internal static class BanenkaartSsrShells
         if (!model.IsCandidate || model.OpenForWork)
         {
             var matchHref = model.IsAuthenticated ? "/candidate/match" : "/login?returnUrl=%2Fcandidate%2Fmatch";
-            sb.Append("<a class=\"btn match deskonly kb-match-button kb-match-button--icon jobsy-action--match\" data-testid=\"kb-match-button\" href=\"")
+            sb.Append("<a class=\"btn match deskonly kb-match-button kb-match-button--icon kb-match-button--lagen jobsy-action--match\" data-testid=\"kb-match-button\" href=\"")
                 .Append(matchHref)
                 .Append("\"><span class=\"kb-match-button__icon\" aria-hidden=\"true\">")
                 .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
