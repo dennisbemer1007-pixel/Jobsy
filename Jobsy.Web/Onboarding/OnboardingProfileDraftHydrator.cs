@@ -1,4 +1,5 @@
 using Jobsy.Core.Rules;
+using Jobsy.Web.Components.Candidate.Discovery;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
@@ -67,19 +68,113 @@ internal static class OnboardingProfileDraftHydrator
             draft.EducationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
         }
 
-        var serverWorkStatuses = preferences.WorkStatuses ?? [];
-        if (serverWorkStatuses.Count > 0)
+        draft.AboutMe = preferences.AboutMe;
+        draft.DutchLevel = preferences.DutchLevel;
+        draft.Certificates.Clear();
+        draft.Certificates.AddRange(preferences.Certificates ?? []);
+        draft.LearningGoals.Clear();
+        draft.LearningGoals.AddRange((preferences.LearningGoals ?? [])
+            .Where(g => !string.IsNullOrWhiteSpace(g))
+            .Take(DiscoveryCatalogs.MaxLearningGoals));
+        draft.EmployerPreferences.Clear();
+        foreach (var code in preferences.EmployerPreferences ?? [])
         {
-            draft.WorkStatuses.Clear();
-            foreach (var code in serverWorkStatuses)
+            if (DiscoveryCatalogs.IsKnownEmployerPreference(code))
             {
-                if (WorkStatusCatalog.IsKnown(code))
-                {
-                    draft.WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
-                }
+                draft.EmployerPreferences.Add(DiscoveryCatalogs.CanonicalEmployer(code)!);
+            }
+        }
+
+        draft.WorkStatuses.Clear();
+        foreach (var code in preferences.WorkStatuses ?? [])
+        {
+            if (WorkStatusCatalog.IsKnown(code))
+            {
+                draft.WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
+            }
+        }
+
+        draft.Roles.Clear();
+        foreach (var role in preferences.Roles ?? [])
+        {
+            var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
+                        ?? WorkTypeLabels.All.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                draft.Roles.Add(label);
+            }
+        }
+
+        draft.Hobbies.Clear();
+        draft.HobbyFreeText.Clear();
+        foreach (var hobby in preferences.Hobbies ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(hobby))
+            {
+                continue;
+            }
+
+            if (DiscoveryCatalogs.IsKnownHobby(hobby))
+            {
+                draft.Hobbies.Add(DiscoveryCatalogs.CanonicalHobby(hobby)!);
+            }
+            else
+            {
+                draft.HobbyFreeText.Add(hobby.Trim());
+            }
+        }
+
+        draft.SpokenLanguages.Clear();
+        foreach (var lang in preferences.SpokenLanguages ?? [])
+        {
+            var code = DiscoveryCatalogs.CanonicalLanguage(lang.Code);
+            if (code is null)
+            {
+                continue;
+            }
+
+            draft.SpokenLanguages.Add(new CandidateLanguage { Code = code, Level = lang.Level });
+        }
+
+        draft.DrivingLicenses.Clear();
+        foreach (var license in preferences.DrivingLicenses ?? [])
+        {
+            foreach (var code in DrivingLicenseLabels.Split(license))
+            {
+                draft.DrivingLicenses.Add(code);
             }
         }
 
         return draft;
+    }
+
+    public static void ApplyPrivatePreferences(OnboardingProfileDraft draft, CandidatePrivatePreferences? prefs)
+    {
+        draft.Dislikes.Clear();
+        draft.CustomDislikes.Clear();
+        if (prefs is null)
+        {
+            return;
+        }
+
+        foreach (var d in prefs.Dislikes ?? [])
+        {
+            if (DiscoveryCatalogs.IsKnownDislike(d))
+            {
+                draft.Dislikes.Add(DiscoveryCatalogs.CanonicalDislike(d)!);
+            }
+        }
+
+        draft.CustomDislikes.AddRange((prefs.CustomDislikes ?? [])
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Take(DiscoveryCatalogs.MaxCustomDislikes));
+    }
+
+    public static void ApplyDreamFromCareerPath(OnboardingProfileDraft draft, CareerPathPlanApiModel? careerPath)
+    {
+        if (!string.IsNullOrWhiteSpace(careerPath?.DreamTitle))
+        {
+            draft.Dream = careerPath.DreamTitle.Trim();
+        }
     }
 }

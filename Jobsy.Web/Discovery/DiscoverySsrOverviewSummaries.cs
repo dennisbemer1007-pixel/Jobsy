@@ -145,7 +145,46 @@ internal static class DiscoverySsrOverviewSummaries
     }
 
     public static string OverviewWorkSummary(CultureState culture, OnboardingProfileDraft draft)
-        => string.Join(", ", new[] { RolesSummary(culture, draft), draft.Dream }.Where(s => !string.IsNullOrWhiteSpace(s)));
+    {
+        var parts = new List<string>();
+        var roles = RolesSummary(culture, draft);
+        if (!string.IsNullOrWhiteSpace(roles))
+        {
+            parts.Add(roles);
+        }
+
+        if (draft.WorkStatuses.Count > 0)
+        {
+            var statuses = string.Join(
+                ", ",
+                draft.WorkStatuses
+                    .Select(code => culture[$"WorkStatus.{code}"])
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Take(3));
+            if (!string.IsNullOrWhiteSpace(statuses))
+            {
+                parts.Add(statuses);
+            }
+        }
+
+        var employers = string.Join(
+            ", ",
+            draft.Jobs
+                .Where(j => !string.IsNullOrWhiteSpace(j.EmployerName))
+                .Select(j => j.EmployerName.Trim())
+                .Take(2));
+        if (!string.IsNullOrWhiteSpace(employers))
+        {
+            parts.Add(employers);
+        }
+
+        if (!string.IsNullOrWhiteSpace(draft.Dream))
+        {
+            parts.Add(draft.Dream.Trim());
+        }
+
+        return string.Join(", ", parts);
+    }
 
     public static string OverviewLearnSummary(CultureState culture, OnboardingProfileDraft draft)
         => string.Join(", ", new[] { draft.Education, CertificatesSummary(draft), LanguagesSummary(culture, draft) }

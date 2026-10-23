@@ -36,7 +36,24 @@ internal static class DiscoveryMobileLayoutAssert
               }
 
               const problems = [];
+              const vw = window.innerWidth;
               const list = route.querySelector('.discovery-mobile-stops') || route;
+              list.querySelectorAll('.discovery-mobile-stop .discovery-mobile-stop__circle').forEach((circle, index) => {
+                const rect = circle.getBoundingClientRect();
+                if (rect.left < -1) {
+                  problems.push(`stop ${index}: circle clipped left (${rect.left})`);
+                }
+                if (rect.right > vw + 1) {
+                  problems.push(`stop ${index}: circle clipped right (${rect.right} > ${vw})`);
+                }
+                const badge = circle.querySelector('.journey-route__vignette.is-done');
+                if (badge) {
+                  const badgeRect = badge.getBoundingClientRect();
+                  if (badgeRect.left < -1 || badgeRect.right > vw + 1) {
+                    problems.push(`stop ${index}: done badge outside viewport`);
+                  }
+                }
+              });
               list.querySelectorAll('.discovery-mobile-stop').forEach((stop, index) => {
                 const circle = stop.querySelector('.discovery-mobile-stop__circle .journey-route__vignette');
                 const text = stop.querySelector('.discovery-mobile-stop__text');

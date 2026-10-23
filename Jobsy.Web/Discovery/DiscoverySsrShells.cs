@@ -266,6 +266,8 @@ internal static class DiscoverySsrShells
                 sb.Append(" is-you");
             }
 
+            sb.Append("\" id=\"halte-");
+            sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
             sb.Append("\" data-phase=\"");
             sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
             sb.Append("\"><div class=\"discovery-mobile-stop__row\"><div class=\"discovery-mobile-stop__rail\" aria-hidden=\"true\">");

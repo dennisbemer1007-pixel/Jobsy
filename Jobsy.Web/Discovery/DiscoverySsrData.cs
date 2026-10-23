@@ -33,10 +33,16 @@ internal static class DiscoverySsrData
     {
         try
         {
-            var state = await api.GetMyOnboardingAsync(cancellationToken);
-            var profile = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            var stateTask = api.GetMyOnboardingAsync(cancellationToken);
+            var profileTask = api.GetMyProfileAsync(cancellationToken);
+            var privateTask = api.GetMyPrivatePreferencesAsync(cancellationToken);
+            var dreamTask = api.GetCareerPathAsync(cancellationToken);
+            await Task.WhenAll(stateTask, profileTask, privateTask, dreamTask);
+            var profile = await profileTask ?? new MeProfile();
             var draft = OnboardingProfileDraftHydrator.FromProfile(profile);
-            return new Bootstrap(state, profile, draft);
+            OnboardingProfileDraftHydrator.ApplyPrivatePreferences(draft, await privateTask);
+            OnboardingProfileDraftHydrator.ApplyDreamFromCareerPath(draft, await dreamTask);
+            return new Bootstrap(await stateTask, profile, draft);
         }
         catch
         {
