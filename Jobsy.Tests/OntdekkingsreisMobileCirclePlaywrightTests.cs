@@ -64,6 +64,12 @@ public sealed class OntdekkingsreisMobileCirclePlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 30_000 });
 
+        var activeImg = page.Locator("[data-testid=\"discovery-active-vignette\"] img");
+        await activeImg.WaitForAsync(new() { Timeout = 30_000 });
+        var imgRadius = await activeImg.EvaluateAsync<string>(
+            "el => getComputedStyle(el).borderRadius");
+        Assert.Equal("50%", imgRadius);
+
         Directory.CreateDirectory(Path.GetDirectoryName(MobileCircle390ScreenshotPath)!);
         var activeStop = page.Locator(".discovery-mobile-stop.is-open .discovery-mobile-stop__circle");
         await activeStop.ScrollIntoViewIfNeededAsync();

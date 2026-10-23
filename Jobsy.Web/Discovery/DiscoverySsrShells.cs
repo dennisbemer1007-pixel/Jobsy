@@ -10,6 +10,15 @@ namespace Jobsy.Web.Discovery;
 
 internal static class DiscoverySsrShells
 {
+    private const string MobileStopCircleBaseStyle =
+        "border-radius:50%;overflow:hidden;width:44px;height:44px;flex:0 0 44px;";
+
+    private const string MobileStopCircleActiveRingStyle =
+        "box-shadow:0 0 0 3px var(--gold-light);";
+
+    private const string MobileStopCircleImgStyle =
+        "border-radius:50%;width:100%;height:100%;object-fit:cover;display:block;";
+
     internal sealed record OverviewStop(
         string PhaseId,
         string TitleKey,
@@ -259,7 +268,14 @@ internal static class DiscoverySsrShells
                 sb.Append("<span class=\"discovery-mobile-stop__line\"></span>");
             }
 
-            sb.Append("<span class=\"discovery-mobile-stop__circle\"><span class=\"journey-route__vignette");
+            sb.Append("<span class=\"discovery-mobile-stop__circle\" style=\"");
+            sb.Append(MobileStopCircleBaseStyle);
+            if (isActive)
+            {
+                sb.Append(MobileStopCircleActiveRingStyle);
+            }
+
+            sb.Append("\"><span class=\"journey-route__vignette");
             if (stop.ShowCheck)
             {
                 sb.Append(" is-done");
@@ -278,7 +294,9 @@ internal static class DiscoverySsrShells
 
             sb.Append("><img src=\"");
             sb.Append(WebUtility.HtmlEncode(stop.VignetteUrl));
-            sb.Append("\" alt=\"\" width=\"44\" height=\"44\" loading=\"eager\" decoding=\"async\" /></span></span></span><span class=\"discovery-mobile-stop__text\"><span class=\"journey-route__title\">");
+            sb.Append("\" alt=\"\" width=\"44\" height=\"44\" loading=\"eager\" decoding=\"async\" style=\"");
+            sb.Append(MobileStopCircleImgStyle);
+            sb.Append("\" /></span></span></span><span class=\"discovery-mobile-stop__text\"><span class=\"journey-route__title\">");
             sb.Append(WebUtility.HtmlEncode(culture[stop.TitleKey]));
             sb.Append("</span><span class=\"journey-route__status ");
             sb.Append(WebUtility.HtmlEncode(stop.StatusClass));
