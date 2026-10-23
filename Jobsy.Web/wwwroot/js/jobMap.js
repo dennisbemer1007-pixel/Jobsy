@@ -51,6 +51,8 @@ window.jobMap = (function () {
     let illustratedVacancySpots = {};
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
+    let catalogModeActive = false;
+    let bootZoomOutsideTravel = false;
     let viewportListDotNet = null;
     /** Suppress moveend-driven pin/discover churn during programmatic camera moves / resize. */
     let viewportNotifySuppressed = 0;
@@ -3449,6 +3451,47 @@ window.jobMap = (function () {
         revealMapStage();
     }
 
+    function fitOriginWithPinsOutsideTravel() {
+        if (!map || !lastOrigin) {
+            return;
+        }
+        var points = vacancyPoints();
+        var ringRadius = maxRingRadiusMeters() * 1.12;
+        var bounds = ringBounds(lastOrigin.lat, lastOrigin.lng, ringRadius);
+        if (points.length) {
+            points.forEach(function (p) {
+                bounds.extend([p[1], p[0]]);
+            });
+        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.fitBounds(bounds, {
+                    padding: overlayFitPadding(),
+                    maxZoom: 11,
+                    animate: !prefersReducedMotion(),
+                    duration: prefersReducedMotion() ? 0 : 450
+                });
+                originHasBeenFramed = true;
+                finishOpeningFrame();
+            } catch (eFit) {
+                fitToOriginRings(true);
+            }
+        });
+    }
+
+    function setVacanciesFromCatalog(pins, meta) {
+        meta = meta || {};
+        if (meta.zoomOutsideTravel) {
+            bootZoomOutsideTravel = true;
+        }
+        setVacancies(pins || []);
+        if (bootZoomOutsideTravel && lastOrigin) {
+            fitOriginWithPinsOutsideTravel();
+        } else if (lastOrigin) {
+            fitToOriginRings(true);
+        }
+    }
+
     function mapHasUsableSize() {
         if (!map) {
             return false;
@@ -4210,11 +4253,14 @@ window.jobMap = (function () {
                 }
             }
             const bootPinsUrl = parsed && parsed.pinsUrl ? String(parsed.pinsUrl) : null;
+            const catalogUrl = parsed && parsed.catalogUrl ? String(parsed.catalogUrl) : null;
             return {
                 pins: pins,
                 view: view,
                 preferFilledLocation: preferFilledLocation,
                 pinsUrl: bootPinsUrl,
+                catalogUrl: catalogUrl,
+                catalogMode: !!(parsed && parsed.catalogMode),
                 illustratedPopup: !!(parsed && parsed.illustratedPopup),
                 zoomToPinsOutsideTravel: !!(parsed && parsed.zoomToPinsOutsideTravel),
                 mapInit: parsed && parsed.mapInit ? parsed.mapInit : null,
@@ -4254,8 +4300,11 @@ window.jobMap = (function () {
                 view: bootPayload.view,
                 preferFilledLocation: bootPayload.preferFilledLocation !== false,
                 pinsUrl: bootPayload.pinsUrl || null,
+                catalogUrl: bootPayload.catalogUrl || null,
+                catalogMode: bootPayload.catalogMode === true,
                 illustratedPopup: bootPayload.illustratedPopup,
-                mapInit: bootPayload.mapInit
+                mapInit: bootPayload.mapInit,
+                zoomToPinsOutsideTravel: bootPayload.zoomToPinsOutsideTravel
             });
         } catch (_err) {
             // Circuit init will retry.
@@ -4837,8 +4886,11 @@ window.jobMap = (function () {
             ? options.illustratedVacancySpots
             : {};
 
+        catalogModeActive = !!(options && options.catalogMode);
+        bootZoomOutsideTravel = !!(options && options.zoomToPinsOutsideTravel);
+
         bindMapRuntime();
-        if (!live || !viewportPinsBound) {
+        if (!catalogModeActive && (!live || !viewportPinsBound)) {
             bindViewportPinsReload();
         }
 
@@ -4884,7 +4936,7 @@ window.jobMap = (function () {
                         fetchPins(pinsUrl);
                     }
                 });
-            } else if (pinsUrl) {
+            } else if (pinsUrl && !catalogModeActive) {
                 fetchPins(pinsUrl);
             }
         } else if (!pinsUrl) {
@@ -5477,6 +5529,7 @@ window.jobMap = (function () {
         boot,
         init,
         setVacancies,
+        setVacanciesFromCatalog,
         reloadPins,
         setOrigin,
         panTo,

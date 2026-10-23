@@ -9,7 +9,7 @@ window.jobsyMaps = (function () {
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-bkssr1"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-catalog1"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -213,7 +213,9 @@ window.jobsyMaps = (function () {
         if (!parsed) {
             return;
         }
-        if (!hasInlinePins(parsed) && parsed.pinsUrl && typeof fetch === "function") {
+        if (parsed.catalogUrl && window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.prefetch === "function") {
+            window.jobsyBanenkaartCatalog.prefetch().catch(function () { });
+        } else if (!hasInlinePins(parsed) && parsed.pinsUrl && typeof fetch === "function") {
             fetch(String(parsed.pinsUrl), {
                 credentials: "same-origin",
                 headers: { Accept: "application/json" }

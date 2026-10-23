@@ -409,6 +409,25 @@ public static class PageAssetCatalog
         return path is "/banenkaart" or "/banen";
     }
 
+    /// <summary>Candidate start surfaces: prefetch banenkaart catalog + map assets at idle.</summary>
+    public static bool IncludeBanenkaartPrefetch(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        if (path is "/banenkaart" or "/banen")
+        {
+            return false;
+        }
+
+        return path is "/candidate/paspoort"
+            or "/candidate/ontdekkingsreis"
+            or "/candidate/start"
+            or "/candidate/kompas"
+            or "/carriere"
+            or "/candidate/applications"
+            or "/candidate/liked"
+            or "/home";
+    }
+
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
