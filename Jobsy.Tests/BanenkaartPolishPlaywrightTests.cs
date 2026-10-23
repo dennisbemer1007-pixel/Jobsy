@@ -161,6 +161,93 @@ public sealed class BanenkaartPolishPlaywrightTests : IAsyncLifetime
         Assert.True(mapOk, "Map canvas should stay visible after resizing from mobile to desktop.");
     }
 
+    [Fact]
+    public async Task Desktop_list_thumbnails_stay_compact_after_hard_reload()
+    {
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = 1280, Height = 720 },
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+
+        var url = _baseUrl + "/banenkaart";
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.GotoAsync(url + "?_nocache=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+
+        await page.Locator("[data-testid=kb-list-row]").First.WaitForAsync(new() { Timeout = 60_000 });
+        var mediaWidth = await page.Locator("[data-testid=kb-list-row]").First
+            .Locator(".kb-list-row__media").EvaluateAsync<double>("el => el.getBoundingClientRect().width");
+        Assert.True(mediaWidth > 0 && mediaWidth < 170,
+            "List thumbnail should stay compact after hard reload (width=" + mediaWidth + ").");
+    }
+
+    [Fact]
+    public async Task Mobile_list_view_scrolls_after_reload()
+    {
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.EvaluateAsync(
+            """
+            () => {
+              sessionStorage.setItem('jobsy.bk.ui.v1', JSON.stringify({ filtersOpen: false, showMap: false }));
+            }
+            """);
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('.jobsy-discovery.show-list') !== null",
+            null,
+            new() { Timeout = 30_000 });
+        await page.Locator(".jobsy-discovery.show-list [data-testid=kb-list-row]").First
+            .WaitForAsync(new() { Timeout = 60_000 });
+        var rowCount = await page.Locator("[data-testid=kb-list-row]").CountAsync();
+        Assert.True(rowCount >= 3, "Need multiple list rows to assert scroll (count=" + rowCount + ").");
+
+        var scrollState = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const scroller = document.querySelector('.jobsy-discovery.show-list .vacancy-list')
+                || document.querySelector('.jobsy-discovery.show-list .vacancy-pane');
+              if (!scroller) return JSON.stringify({ error: 'no-scroller' });
+              scroller.style.maxHeight = '280px';
+              const style = getComputedStyle(scroller);
+              const before = scroller.scrollTop;
+              scroller.scrollTop = 9999;
+              const after = scroller.scrollTop;
+              return JSON.stringify({
+                overflowY: style.overflowY,
+                scrollHeight: scroller.scrollHeight,
+                clientHeight: scroller.clientHeight,
+                before: before,
+                after: after
+              });
+            }
+            """);
+        using var scrollDoc = System.Text.Json.JsonDocument.Parse(scrollState);
+        var root = scrollDoc.RootElement;
+        Assert.True(
+            root.GetProperty("overflowY").GetString() is "auto" or "scroll",
+            "Mobile list scroller should use overflow-y auto (state=" + scrollState + ").");
+        var canScroll = root.GetProperty("scrollHeight").GetDouble()
+            > root.GetProperty("clientHeight").GetDouble() + 8;
+        var moved = root.GetProperty("after").GetDouble() > 40;
+        Assert.True(canScroll && moved,
+            "Mobile list should scroll when content overflows (state=" + scrollState + ").");
+    }
+
     private static async Task EnsurePublishedAsync()
     {
         var dll = Path.Combine(PublishDir, "Jobsy.Web.dll");

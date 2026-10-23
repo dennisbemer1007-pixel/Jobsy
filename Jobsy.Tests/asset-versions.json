@@ -20,8 +20,8 @@
     "v": "20261021-03"
   },
   "css/critical.css": {
-    "sha256": "edf6b8b4a651a287eb72d5355e96b507a5ade81ae29a7e29eda25a82661d4589",
-    "v": "20261023-polish1"
+    "sha256": "3fd011f562fc141dac6c59c33aa57a2766d8e4f727f8249dbc93cae254ffc2c8",
+    "v": "20261023-regfix1"
   },
   "css/features/account-mfa.css": {
     "sha256": "77ffff1997179f77bc2086c352bb23b7cea454b05c0fc555a8bcf4e6371f3df3",
@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "c086bb2d3fc972cd00ad292fc9ebda6e6eccbf25bcf6f903d7c81a51b11aff55",
-    "v": "20261023-polish1"
+    "sha256": "600089fb76a40f611741d639e4fa68a5940583e46193f3ef4abf76bf74585411",
+    "v": "20261023-regfix1"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "dad2c3ee186da0f803f343df7a36e4dfb962f478790d05a58472ee403b0fee7c",

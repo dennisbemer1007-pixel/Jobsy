@@ -365,6 +365,184 @@
         }
     }
 
+    function readOriginFromUrl() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var lat = parseFloat(params.get("originLat"));
+            var lng = parseFloat(params.get("originLng"));
+            if (!isFinite(lat) || !isFinite(lng)) {
+                return null;
+            }
+            return {
+                originLat: lat,
+                originLng: lng,
+                originLabel: params.get("originLabel") || null
+            };
+        } catch (eOrigin) {
+            return null;
+        }
+    }
+
+    function filtersFromForm(form) {
+        var origin = readOriginFromUrl() || {};
+        var boot = readBootFilters() || {};
+        var data = {};
+        Array.prototype.forEach.call(form.elements, function (el) {
+            if (!el.name || el.disabled) {
+                return;
+            }
+            if (el.type === "checkbox" || el.type === "radio") {
+                if (el.checked) {
+                    if (!data[el.name]) {
+                        data[el.name] = [];
+                    }
+                    data[el.name].push(el.value);
+                }
+                return;
+            }
+            if (el.type === "submit" || el.type === "button") {
+                return;
+            }
+            data[el.name] = el.value;
+        });
+        var categoryIds = data.categoryId || [];
+        if (!Array.isArray(categoryIds)) {
+            categoryIds = [categoryIds];
+        }
+        return {
+            q: data.q || null,
+            maxMinutes: parseInt(data.maxMinutes, 10) || boot.maxMinutes || 20,
+            transport: data.transport || boot.transport || "Fiets",
+            minHours: parseInt(data.minHours, 10) || 0,
+            maxHours: parseInt(data.maxHours, 10) || 40,
+            minWageCents: data.minWage != null && data.minWage !== "" ? Math.round(parseFloat(data.minWage) * 100) : null,
+            maxWageCents: data.maxWage != null && data.maxWage !== "" ? Math.round(parseFloat(data.maxWage) * 100) : null,
+            categoryIds: categoryIds,
+            originLat: origin.originLat != null ? origin.originLat : boot.originLat,
+            originLng: origin.originLng != null ? origin.originLng : boot.originLng,
+            originLabel: origin.originLabel || boot.originLabel || null
+        };
+    }
+
+    function buildBanenkaartUrl(filters) {
+        var q = [];
+        if (filters.q) {
+            q.push("q=" + encodeURIComponent(filters.q));
+        }
+        if (filters.maxMinutes && filters.maxMinutes !== 20) {
+            q.push("maxMinutes=" + filters.maxMinutes);
+        }
+        if (filters.transport && filters.transport !== "Fiets") {
+            q.push("transport=" + encodeURIComponent(filters.transport));
+        }
+        if (filters.minHours) {
+            q.push("minHours=" + filters.minHours);
+        }
+        if (filters.maxHours && filters.maxHours !== 40) {
+            q.push("maxHours=" + filters.maxHours);
+        }
+        if (filters.categoryIds && filters.categoryIds.length) {
+            filters.categoryIds.forEach(function (id) {
+                q.push("categoryId=" + encodeURIComponent(id));
+            });
+        }
+        if (filters.originLat != null && filters.originLng != null) {
+            q.push("originLat=" + filters.originLat);
+            q.push("originLng=" + filters.originLng);
+            if (filters.originLabel) {
+                q.push("originLabel=" + encodeURIComponent(filters.originLabel));
+            }
+        }
+        return q.length ? "/banenkaart?" + q.join("&") : "/banenkaart";
+    }
+
+    function escapeHtml(text) {
+        return String(text || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function renderListRows(listRows, filters) {
+        var travelRows = filterRows(listRows, filters, false);
+        var pageSize = 20;
+        var slice = travelRows.slice(0, pageSize);
+        var html = "<div class=\"kb-list-rows\" data-testid=\"kb-list-rows\">";
+        slice.forEach(function (row, index) {
+            var href = "/vacancies/" + row.id;
+            var mins = travelMinutes(
+                filters.originLat != null ? { lat: filters.originLat, lng: filters.originLng } : null,
+                row.lat,
+                row.lng,
+                filters.transport);
+            html += "<article class=\"kb-list-row kb-list-row--compact\" data-vacancy-id=\""
+                + escapeHtml(row.id)
+                + "\" data-testid=\"kb-list-row\">";
+            html += "<a class=\"kb-list-row__media\" href=\"" + href + "\">";
+            if (row.imageUrl) {
+                html += "<img class=\"kb-list-row__photo\" src=\"" + escapeHtml(row.imageUrl)
+                    + "\" alt=\"\" width=\"150\" height=\"93\" loading=\"" + (index === 0 ? "eager" : "lazy")
+                    + "\" decoding=\"async\" />";
+            }
+            if (mins != null) {
+                html += "<span class=\"kb-list-row__travel-badge\">± " + mins + " min</span>";
+            }
+            html += "</a><div class=\"kb-list-row__body\"><div class=\"kb-list-row__top\"><div class=\"kb-list-row__titles\">";
+            html += "<h2 class=\"kb-list-row__title\"><a href=\"" + href + "\">" + escapeHtml(row.title) + "</a></h2>";
+            html += "<p class=\"kb-list-row__company\">" + escapeHtml(row.company) + "</p></div></div></div></article>";
+        });
+        html += "</div>";
+        var listRoot = document.querySelector("[data-banenkaart-ssr=\"1\"] [data-testid=vacancy-list]");
+        if (!listRoot) {
+            return travelRows.length;
+        }
+        var empty = listRoot.querySelector("[data-testid=kb-empty-travel]");
+        if (empty) {
+            empty.remove();
+        }
+        var existing = listRoot.querySelector("[data-testid=kb-list-rows]");
+        if (existing) {
+            existing.outerHTML = html;
+        } else {
+            listRoot.insertAdjacentHTML("afterbegin", html);
+        }
+        var countEl = document.querySelector(".results-meta__count, [data-testid=kb-results-count]");
+        if (countEl) {
+            countEl.textContent = travelRows.length + " banen";
+        }
+        return travelRows.length;
+    }
+
+    function patchBootFilters(filters) {
+        var node = document.getElementById("jobsy-map-boot");
+        if (!node || !node.textContent) {
+            return;
+        }
+        try {
+            var parsed = JSON.parse(node.textContent);
+            if (parsed && parsed.mapInit) {
+                parsed.mapInit.filters = Object.assign({}, parsed.mapInit.filters || {}, filters);
+                node.textContent = JSON.stringify(parsed);
+            }
+        } catch (eBoot) { }
+    }
+
+    function applyClientFilters(filters) {
+        if (!rows) {
+            return fetchCatalog(false).then(function () {
+                applyClientFilters(filters);
+            });
+        }
+        patchBootFilters(filters);
+        applyToMap(filters);
+        renderListRows(rows, filters);
+        try {
+            history.replaceState(null, "", buildBanenkaartUrl(filters));
+        } catch (eUrl) { }
+        document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", { detail: { count: filterRows(rows, filters, false).length } }));
+    }
+
     function bootAndApply() {
         var filters = readBootFilters();
         return fetchCatalog(false).then(function () {
@@ -387,6 +565,10 @@
         toPin: toPin,
         travelMinutes: travelMinutes,
         applyToMap: applyToMap,
+        filtersFromForm: filtersFromForm,
+        buildBanenkaartUrl: buildBanenkaartUrl,
+        applyClientFilters: applyClientFilters,
+        renderListRows: renderListRows,
         prefetch: function () {
             return fetchCatalog(false);
         },
