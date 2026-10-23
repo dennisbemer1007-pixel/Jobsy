@@ -111,6 +111,43 @@ window.jobMap = (function () {
     const NL_CENTER = [52.15, 5.2913];
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
+
+    function isInNetherlands(lat, lng) {
+        return Number.isFinite(lat) && Number.isFinite(lng)
+            && lat >= NL_BOUNDS[0][0] && lat <= NL_BOUNDS[1][0]
+            && lng >= NL_BOUNDS[0][1] && lng <= NL_BOUNDS[1][1];
+    }
+
+    function showLocateMessage(text) {
+        if (!map) {
+            return;
+        }
+        const host = map.getContainer();
+        if (!host) {
+            return;
+        }
+        let note = host.querySelector(".job-map-locate__message");
+        if (!note) {
+            note = document.createElement("p");
+            note.className = "job-map-locate__message";
+            note.setAttribute("role", "status");
+            host.appendChild(note);
+        }
+        note.textContent = text || "";
+        note.hidden = !text;
+    }
+
+    function detailHrefForVacancy(id) {
+        const base = "/vacancies/" + encodeURIComponent(String(id || ""));
+        const q = [];
+        if (travelOptions.transport) {
+            q.push("transport=" + encodeURIComponent(String(travelOptions.transport)));
+        }
+        if (travelOptions.maxMinutes != null) {
+            q.push("maxMinutes=" + encodeURIComponent(String(travelOptions.maxMinutes)));
+        }
+        return q.length ? base + "?" + q.join("&") : base;
+    }
     // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom (fits default 30-min fiets ring).
     const FILLED_LOCATION_ZOOM = 12;
     const BASEMAP_MAX_ZOOM = (window.jobsyMapLibre && window.jobsyMapLibre.BASEMAP_MAX_ZOOM) || 14;
@@ -174,7 +211,7 @@ window.jobMap = (function () {
         ["!", ["has", "point_count"]],
         [
             "any",
-            ["!=", ["get", "agency"], 1],
+            ["!=", ["coalesce", ["get", "agency"], 0], 1],
             [">=", ["zoom"], AGENCY_PIN_MIN_ZOOM]
         ]
     ];
@@ -241,6 +278,21 @@ window.jobMap = (function () {
         if (t.indexOf("tuinbouw") >= 0) return "🌿";
         if (t.indexOf("schoonmaak") >= 0) return "✨";
         if (t.indexOf("productie") >= 0) return "🏭";
+        return "";
+    }
+
+    /** ASCII-only glyphs for MapLibre symbol layers (no emoji / PUA font fetches). */
+    function workTypeMapGlyph(workType) {
+        const t = String(workType || "").toLowerCase();
+        if (t.indexOf("horeca") >= 0) return "H";
+        if (t.indexOf("winkel") >= 0 || t.indexOf("retail") >= 0 || t.indexOf("supermarkt") >= 0) return "W";
+        if (t.indexOf("logistiek") >= 0) return "L";
+        if (t.indexOf("zorg") >= 0) return "+";
+        if (t.indexOf("kantoor") >= 0) return "K";
+        if (t.indexOf("bouw") >= 0) return "B";
+        if (t.indexOf("tuinbouw") >= 0) return "T";
+        if (t.indexOf("schoonmaak") >= 0) return "S";
+        if (t.indexOf("productie") >= 0) return "P";
         return "";
     }
 
@@ -869,7 +921,7 @@ window.jobMap = (function () {
                 "\" alt=\"\" width=\"400\" height=\"267\" loading=\"lazy\" decoding=\"async\" />";
         }
 
-        const detailHref = "/vacancies/" + encodeURIComponent(v.id);
+        const detailHref = detailHrefForVacancy(v.id);
         const viewLabel = escapeHtml(uiLabels.viewJob || "Bekijk deze baan");
 
         return (
@@ -2200,9 +2252,9 @@ window.jobMap = (function () {
                 "<div class=\"map-popup__actions\">" +
                     "<button type=\"button\" class=\"map-popup__view\" data-retry-card=\"" +
                         escapeAttr(String(id || "")) + "\">" + escapeHtml(uiLabels.retry) + "</button>" +
-                    "<a class=\"map-popup__heart map-popup__cta\" href=\"/vacancies/" +
-                        encodeURIComponent(String(id || "")) + "\" aria-label=\"" +
-                        escapeAttr(uiLabels.view) + "\">" + escapeHtml(uiLabels.view) + "</a>" +
+                    "<button type=\"button\" class=\"map-popup__heart\" data-save-job=\"" +
+                        escapeAttr(String(id || "")) + "\" aria-label=\"" +
+                        escapeAttr(uiLabels.save || "Bewaar") + "\">" + heartIconHtml(false) + "</button>" +
                 "</div>" +
             "</div>"
         );
@@ -2236,6 +2288,7 @@ window.jobMap = (function () {
             fitWhyLine: card.fitWhyLine || pin.fitWhyLine || null,
             rankLowerReason: card.rankLowerReason || pin.rankLowerReason || null,
             wage: card.hourlyWage != null && card.wageVisible !== false ? card.hourlyWage : null,
+            wageLabel: card.wageLabel || card.displayWageLabel || null,
             minHoursPerWeek: card.minHoursPerWeek != null ? card.minHoursPerWeek : pin.minHoursPerWeek,
             maxHoursPerWeek: card.maxHoursPerWeek != null ? card.maxHoursPerWeek : pin.maxHoursPerWeek,
             liked: pin.liked === true,
@@ -3319,7 +3372,7 @@ window.jobMap = (function () {
         }
         runWithViewportNotifySuppressed(function () {
             try {
-                map.fitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
+                safeFitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
                 originNeedsFrame = false;
                 originHasBeenFramed = true;
                 cameraLocked = true;
@@ -3534,7 +3587,7 @@ window.jobMap = (function () {
         }
         runWithViewportNotifySuppressed(function () {
             try {
-                map.fitBounds(bounds, {
+                safeFitBounds(bounds, {
                     padding: overlayFitPadding(),
                     maxZoom: 11,
                     animate: !prefersReducedMotion(),
@@ -3585,6 +3638,53 @@ window.jobMap = (function () {
         return !!(c && c.clientWidth >= 32 && c.clientHeight >= 32);
     }
 
+    function fitPaddingTotals(padding) {
+        if (padding == null) {
+            return { h: 96, v: 96 };
+        }
+        if (typeof padding === "number") {
+            return { h: padding * 2, v: padding * 2 };
+        }
+        return {
+            h: (Number(padding.left) || 0) + (Number(padding.right) || 0),
+            v: (Number(padding.top) || 0) + (Number(padding.bottom) || 0)
+        };
+    }
+
+    function safeFitBounds(bounds, opts) {
+        if (!map || !bounds) {
+            return false;
+        }
+        if (typeof bounds.isEmpty === "function" && bounds.isEmpty()) {
+            return false;
+        }
+        if (!mapHasUsableSize()) {
+            originNeedsFrame = true;
+            return false;
+        }
+        const c = map.getContainer();
+        const totals = fitPaddingTotals(opts && opts.padding);
+        if (totals.h >= c.clientWidth - 8 || totals.v >= c.clientHeight - 8) {
+            originNeedsFrame = true;
+            try {
+                const center = bounds.getCenter();
+                safeJumpTo({
+                    center: [center.lng, center.lat],
+                    zoom: map.getZoom() || FILLED_LOCATION_ZOOM
+                });
+            } catch (eJump) { /* ignore */ }
+            return false;
+        }
+        try {
+            map.fitBounds(bounds, opts || {});
+            originNeedsFrame = false;
+            return true;
+        } catch (eFit) {
+            originNeedsFrame = true;
+            return false;
+        }
+    }
+
     function vacancyPoints() {
         return Object.keys(markersById).map(function (id) {
             return [markersById[id].lat, markersById[id].lng];
@@ -3621,7 +3721,7 @@ window.jobMap = (function () {
         const bounds = boundsFromPoints(points);
         if (mapHasUsableSize()) {
             try {
-                map.fitBounds(bounds, opts);
+                safeFitBounds(bounds, opts);
             } catch (e) { }
             firstSizedFit = true;
         } else {
@@ -3683,7 +3783,7 @@ window.jobMap = (function () {
                         agency: agency,
                         radiusKm: agency ? Number(agencyRadiusKm(v) || 0) : 0,
                         workType: workTypeOf(v) || "",
-                        glyph: kansberoep ? "★" : (agency ? "◆" : workTypeGlyph(workTypeOf(v))),
+                        glyph: kansberoep ? "★" : (agency ? "◆" : workTypeMapGlyph(workTypeOf(v))),
                         colour: kansberoep ? "#c9a227" : (openInit ? COMPANY_OPEN_PIN_COLOR : (agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""))),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
@@ -3838,7 +3938,7 @@ window.jobMap = (function () {
                 paint: {
                     "circle-color": "#16a34a",
                     "circle-radius": [
-                        "step", ["coalesce", ["get", "point_count"], 0],
+                        "step", ["to-number", ["coalesce", ["get", "point_count"], 0], 0],
                         20, 10, 22, 30, 25
                     ],
                     "circle-opacity": 0.22,
@@ -3868,7 +3968,7 @@ window.jobMap = (function () {
                 paint: {
                     "circle-color": "#16a34a",
                     "circle-radius": [
-                        "step", ["coalesce", ["get", "point_count"], 0],
+                        "step", ["to-number", ["coalesce", ["get", "point_count"], 0], 0],
                         15, 10, 17, 30, 20
                     ],
                     "circle-stroke-width": 2,
@@ -3926,21 +4026,21 @@ window.jobMap = (function () {
                 paint: {
                     "circle-color": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["coalesce", ["feature-state", "selected"], false], true], "#f54a1b",
                         ["==", ["coalesce", ["get", "kansberoep"], 0], 1], "#c9a227",
                         ["==", ["coalesce", ["get", "agency"], 0], 1], AGENCY_PIN_COLOR,
                         ["==", ["coalesce", ["get", "featured"], 0], 1], "#c9a227",
                         [
                             "case",
                             // Avoid literal null in the style (MapLibre warns); empty string means "no colour".
-                            ["all", ["has", "colour"], ["!=", ["get", "colour"], ""]],
-                            ["get", "colour"],
+                            ["all", ["has", "colour"], ["!=", ["coalesce", ["get", "colour"], ""], ""]],
+                            ["coalesce", ["get", "colour"], "#16a34a"],
                             "#16a34a"
                         ]
                     ],
                     "circle-radius": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], 10,
+                        ["==", ["coalesce", ["feature-state", "selected"], false], true], 10,
                         ["==", ["coalesce", ["get", "agency"], 0], 1], 8,
                         ["==", ["coalesce", ["get", "featured"], 0], 1], 8,
                         7
@@ -3948,7 +4048,7 @@ window.jobMap = (function () {
                     "circle-stroke-width": 2,
                     "circle-stroke-color": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["coalesce", ["feature-state", "selected"], false], true], "#f54a1b",
                         "#ffffff"
                     ],
                     "circle-opacity": [
@@ -3967,7 +4067,7 @@ window.jobMap = (function () {
                     "all",
                     UNCLUSTERED_PIN_FILTER,
                     ["has", "glyph"],
-                    ["!=", ["get", "glyph"], ""]
+                    ["!=", ["coalesce", ["get", "glyph"], ""], ""]
                 ],
                 layout: {
                     "text-field": ["coalesce", ["get", "glyph"], ""],
@@ -4877,7 +4977,7 @@ window.jobMap = (function () {
         } catch (logErr) { /* ignore */ }
         runWithViewportNotifySuppressed(function () {
             try {
-                map.fitBounds(bounds, {
+                safeFitBounds(bounds, {
                     padding: KK_FIT_PADDING,
                     maxZoom: 11.25,
                     animate: animate === true && !prefersReducedMotion(),
@@ -4886,14 +4986,12 @@ window.jobMap = (function () {
                 map.once("idle", function () {
                     var z = map.getZoom();
                     if (z < 9.75) {
-                        try {
-                            map.fitBounds(bounds, {
-                                padding: KK_FIT_PADDING,
-                                maxZoom: 11.25,
-                                animate: false,
-                                duration: 0
-                            });
-                        } catch (eRetry) { /* ignore */ }
+                        safeFitBounds(bounds, {
+                            padding: KK_FIT_PADDING,
+                            maxZoom: 11.25,
+                            animate: false,
+                            duration: 0
+                        });
                     }
                 });
             } catch (e) { /* ignore */ }
@@ -4981,7 +5079,7 @@ window.jobMap = (function () {
                 type: "symbol",
                 source: KK_LABELS_SOURCE,
                 layout: {
-                    "text-field": ["get", "count"],
+                    "text-field": ["to-string", ["coalesce", ["get", "count"], 0]],
                     "text-size": 13,
                     "text-font": ["Noto Sans Bold"],
                     "text-allow-overlap": true,
@@ -5301,8 +5399,16 @@ window.jobMap = (function () {
             } else if (window.jobsyGeo && typeof window.jobsyGeo.requestLocation === "function") {
                 window.jobsyGeo.requestLocation()
                     .then(function (pos) {
+                        if (!isInNetherlands(pos.lat, pos.lng)) {
+                            showLocateMessage("Je locatie ligt buiten Nederland");
+                            return;
+                        }
+                        showLocateMessage("");
                         setOrigin(pos.lat, pos.lng, travelOptions);
                         fitToOriginRings(true);
+                    })
+                    .catch(function (err) {
+                        showLocateMessage(err && err.message ? err.message : "Locatie kon niet worden bepaald.");
                     })
                     .then(done, done);
             } else {
@@ -5750,7 +5856,7 @@ window.jobMap = (function () {
 
         invalidate();
         const points = markers.map(function (m) { return [m.lat, m.lng]; });
-        map.fitBounds(boundsFromPoints(points), {
+        safeFitBounds(boundsFromPoints(points), {
             padding: 64,
             maxZoom: BASEMAP_MAX_ZOOM,
             animate: true,

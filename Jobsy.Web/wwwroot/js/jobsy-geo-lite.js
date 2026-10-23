@@ -56,6 +56,10 @@
                 function (pos) {
                     var lat = pos.coords.latitude;
                     var lng = pos.coords.longitude;
+                    if (lat < 50.29 || lat > 53.33 || lng < 2.81 || lng > 8.44) {
+                        reject(new Error("Je locatie ligt buiten Nederland"));
+                        return;
+                    }
                     setStoredOrigin(lat, lng);
                     resolve({ lat: lat, lng: lng, Lat: lat, Lng: lng });
                 },

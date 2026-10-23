@@ -181,8 +181,49 @@ public sealed class BanenkaartPolishPlaywrightTests : IAsyncLifetime
         await page.Locator("[data-testid=kb-list-row]").First.WaitForAsync(new() { Timeout = 60_000 });
         var mediaWidth = await page.Locator("[data-testid=kb-list-row]").First
             .Locator(".kb-list-row__media").EvaluateAsync<double>("el => el.getBoundingClientRect().width");
-        Assert.True(mediaWidth > 0 && mediaWidth < 170,
-            "List thumbnail should stay compact after hard reload (width=" + mediaWidth + ").");
+        Assert.True(mediaWidth >= 130 && mediaWidth < 170,
+            "Desktop list thumbnail should be ~150px wide (width=" + mediaWidth + ").");
+    }
+
+    [Fact]
+    public async Task Mobile_cluster_taps_to_pin_level_without_console_noise()
+    {
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var consoleErrors = new List<string>();
+        var page = await context.NewPageAsync();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error" or "warning")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        await page.GotoAsync(_baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => !!(window.jobMap && window.jobMap.__testTapLargestCluster && document.querySelector('#job-map canvas'))",
+            null,
+            new() { Timeout = 90_000 });
+
+        for (var i = 0; i < 4; i++)
+        {
+            await page.EvaluateAsync("() => window.jobMap.__testTapLargestCluster && window.jobMap.__testTapLargestCluster()");
+            await page.WaitForTimeoutAsync(450);
+        }
+
+        var bad = consoleErrors.Where(e =>
+            !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)
+            && !e.Contains("GL Driver Message", StringComparison.OrdinalIgnoreCase)
+            && !e.Contains("GPU stall", StringComparison.OrdinalIgnoreCase)
+            && !e.Contains("Expected value to be of type number", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.True(bad.Count == 0, "Console warnings/errors after cluster taps: " + string.Join("; ", bad));
     }
 
     [Fact]
