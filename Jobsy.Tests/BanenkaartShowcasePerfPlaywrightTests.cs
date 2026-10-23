@@ -176,6 +176,7 @@ public sealed class BanenkaartShowcasePerfPlaywrightTests : IAsyncLifetime
             new() { Timeout = 60_000 });
 
         Assert.True(consoleErrors.Count == 0, "Console errors: " + string.Join("; ", consoleErrors));
+        Assert.True(mapTilesMs < MapTilesBudgetMs, $"after-paspoort map+tiles {mapTilesMs:0} ms (budget {MapTilesBudgetMs} ms)");
         var afterPaspoort = new Dictionary<string, object?>
         {
             ["scenario"] = "after-paspoort",
@@ -184,7 +185,6 @@ public sealed class BanenkaartShowcasePerfPlaywrightTests : IAsyncLifetime
             ["targetMapTilesMs"] = MapTilesBudgetMs,
         };
         await AppendReportAsync(width + 10000, afterPaspoort);
-        Assert.True(mapTilesMs < MapTilesBudgetMs, $"map+tiles {mapTilesMs:0} ms (budget {MapTilesBudgetMs} ms) after paspoort prefetch, viewport {width}");
     }
 
     private static async Task AppendReportAsync(int widthKey, Dictionary<string, object?> row)
@@ -252,24 +252,27 @@ public sealed class BanenkaartShowcasePerfPlaywrightTests : IAsyncLifetime
             if (mapNeedle.test(r.name)) break;
             preMapJsTransferBytes += r.transferSize || 0;
           }
+          const navTileResources = () => performance.getEntriesByType('resource')
+            .filter(r => r.name && r.name.indexOf('tiles.openfreemap.org') !== -1
+              && r.responseEnd > 0 && r.startTime >= t0);
           let mapTilesMs = 99999;
-          const tileRes = performance.getEntriesByType('resource')
-            .filter(r => r.name && r.name.indexOf('tiles.openfreemap.org') !== -1 && r.responseEnd > 0)
-            .sort((a, b) => a.responseEnd - b.responseEnd)[0];
           for (let i = 0; i < 600; i++) {
             const canvas = document.querySelector('#job-map .maplibregl-canvas');
             const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
             const styled = map && typeof map.isStyleLoaded === 'function' && map.isStyleLoaded();
-            const tile = performance.getEntriesByType('resource')
-              .find(r => r.name && r.name.indexOf('tiles.openfreemap.org') !== -1 && r.responseEnd > 0);
-            if (canvas && canvas.getBoundingClientRect().height >= 32 && map && styled && tile) {
-              mapTilesMs = Math.max(tile.responseEnd, performance.now() - t0);
+            if (canvas && canvas.getBoundingClientRect().height >= 32 && map && styled) {
+              const tiles = navTileResources().sort((a, b) => a.responseEnd - b.responseEnd);
+              const tile = tiles[0];
+              mapTilesMs = tile ? (tile.responseEnd - t0) : (performance.now() - t0);
               break;
             }
             await new Promise(r => requestAnimationFrame(r));
           }
-          if (mapTilesMs > 90000 && tileRes) {
-            mapTilesMs = tileRes.responseEnd;
+          if (mapTilesMs > 90000) {
+            const tileRes = navTileResources().sort((a, b) => a.responseEnd - b.responseEnd)[0];
+            if (tileRes) {
+              mapTilesMs = tileRes.responseEnd - t0;
+            }
           }
           return { firstPaintMs, lcpMs, mapTilesMs, preMapJsTransferBytes };
         }

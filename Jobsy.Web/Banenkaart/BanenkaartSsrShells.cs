@@ -60,8 +60,9 @@ internal static class BanenkaartSsrShells
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
         AppendMapFab(sb, culture);
 
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-cat1\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-cat1\" defer></script>");
+        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-cat2\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-cat2\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-cat2\" defer></script>");
         sb.Append("</div>");
         return sb.ToString();
     }

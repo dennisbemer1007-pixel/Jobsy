@@ -27,16 +27,6 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    @if (PageAssetCatalog.IncludeMapPreconnect("/banenkaart"))
-    {
-        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
-        <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
-        <link rel="preload" href="/lib/maplibre/maplibre-gl.css?v=20260820-r166" as="style" crossorigin="anonymous" />
-        <link rel="modulepreload" href="/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180" crossorigin="anonymous" />
-        <link rel="modulepreload" href="/js/jobsyMapLibre.min.js?v=20261023-cat1" crossorigin="anonymous" />
-        <link rel="preload" href="/js/jobMap.min.js?v=20261023-cat1" as="script" crossorigin="anonymous" />
-        <link rel="preload" href="/map/basemap/liberty/style.json" as="fetch" crossorigin="anonymous" />
-    }
 </HeadContent>
 
 @if (!string.IsNullOrWhiteSpace(_fatalMessage))

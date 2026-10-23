@@ -5,7 +5,7 @@
     var CATALOG_URL = "/api/banenkaart-client/all";
     var MAP_LIBRE_CSS = "/lib/maplibre/maplibre-gl.css?v=20260820-r166";
     var MAP_LIBRE_JS = "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180";
-    var JOBSY_MAP_JS = "/js/jobsyMapLibre.min.js?v=20261002-ch01";
+    var JOBSY_MAP_JS = "/js/jobsyMapLibre.min.js?v=20261023-cat2";
 
     function saveDataEnabled() {
         try {
@@ -116,7 +116,14 @@
         idle(function () {
             warmMapAssets();
             warmCatalog();
-            warmIsochrones(readPrefetchOrigin());
+            var origin = readPrefetchOrigin();
+            warmIsochrones(origin);
+            if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
+                var view = origin && origin.lat != null && origin.lng != null
+                    ? { lat: origin.lat, lng: origin.lng, zoom: 11 }
+                    : { lat: 52.15, lng: 5.3, zoom: 10.5 };
+                window.jobsyBasemapWarm.warm(view).catch(function () { });
+            }
         });
     }
 
