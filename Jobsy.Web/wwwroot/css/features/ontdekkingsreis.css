@@ -2712,13 +2712,17 @@
   }
 
   .journey.journey-root--ssr.journey--overview-route {
-    padding-bottom: calc(var(--bottom-nav-clearance, 4.75rem) + 6rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
   }
 
   .journey.journey-root--ssr.journey--overview-route .discovery-ssr-container {
     display: flow-root;
-    padding-bottom: 2.5rem;
+    padding-bottom: 0.75rem;
     overflow: visible;
+  }
+
+  .app-shell--questionnaire:has([data-discovery-ssr="1"]) .journey-stage {
+    padding-bottom: 0 !important;
   }
 
   .journey.journey-root--ssr.journey--overview-route .discovery-mobile-route.discovery-mobile-route {
@@ -2747,12 +2751,36 @@
     overflow: visible;
   }
 
+  .journey.journey-root--ssr .discovery-mobile-route .journey-route__vignette {
+    animation: none !important;
+    outline: none;
+  }
+
+  .journey.journey-root--ssr .discovery-mobile-route .journey-route__vignette::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .journey.journey-root--ssr .discovery-mobile-route a.journey-route__stop-link::before,
+  .journey.journey-root--ssr .discovery-mobile-route a.journey-route__stop-link::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .journey.journey-root--ssr .discovery-mobile-stop__circle .journey-route__vignette:not(.is-current) {
+    box-shadow: var(--shadow-lg);
+  }
+
   .journey.journey-root--ssr .discovery-mobile-stop__circle .journey-route__vignette.is-current {
-    animation: none;
     box-shadow:
       0 0 0 3px var(--gold-light),
       var(--shadow-lg);
-    outline: none;
+  }
+
+  .journey.journey-root--ssr.journey--overview-route .journey-route__connector,
+  .journey.journey-root--ssr.journey--overview-route .journey-route__connector::after {
+    display: none !important;
+    content: none !important;
   }
 
   .journey.journey-root--ssr .discovery-mobile-stop__circle .journey-route__vignette.is-done::after {
