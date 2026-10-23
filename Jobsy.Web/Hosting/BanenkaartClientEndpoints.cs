@@ -5,13 +5,13 @@ using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
-
 namespace Jobsy.Web.Hosting;
 
 public static class BanenkaartClientEndpoints
 {
     public static IEndpointRouteBuilder MapBanenkaartClientEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapGet(BanenkaartClientCatalog.AllPath, BanenkaartClientCatalog.GetAllAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.ApplyPath, ApplyFiltersAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.ResetPath, ResetFiltersAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.SavePath, SaveVacancyAsync)
@@ -40,6 +40,7 @@ public static class BanenkaartClientEndpoints
         }
 
         var state = BanenkaartSsrQuery.FromForm(form);
+        BanenkaartFilterCookie.Persist(http.Response, state);
         return SeeOther(BanenkaartSsrQuery.BuildUrl(state));
     }
 
@@ -83,6 +84,7 @@ public static class BanenkaartClientEndpoints
             null,
             null,
             false);
+        BanenkaartFilterCookie.Clear(http.Response);
         return SeeOther(BanenkaartSsrQuery.BuildUrl(fresh));
     }
 

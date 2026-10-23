@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Jobsy.Api.Banenkaart;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Admin;
@@ -130,6 +131,29 @@ public class VacanciesController : ControllerBase
     {
         var view = await _discoveryIndex.GetMapViewAsync(cancellationToken);
         return Ok(new VacancyMapViewDto(view.CenterLat, view.CenterLng, view.Zoom, view.PinCount));
+    }
+
+    /// <summary>
+    /// Full banenkaart catalog (columnar JSON). Client filters locally — no per-filter refetch.
+    /// </summary>
+    [HttpGet("banenkaart-catalog")]
+    [AllowAnonymous]
+    [EnableRateLimiting("map-read")]
+    public async Task<IActionResult> GetBanenkaartCatalog(CancellationToken cancellationToken)
+    {
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var payload = BanenkaartCatalogSerializer.Serialize(records);
+        var etag = $"\"{payload.ETag}\"";
+        if (Request.Headers.IfNoneMatch.Contains(etag))
+        {
+            Response.Headers.ETag = etag;
+            Response.Headers.CacheControl = "private, max-age=900, stale-while-revalidate=3600";
+            return StatusCode(StatusCodes.Status304NotModified);
+        }
+
+        Response.Headers.ETag = etag;
+        Response.Headers.CacheControl = "private, max-age=900, stale-while-revalidate=3600";
+        return File(payload.Body, "application/json");
     }
 
     /// <summary>
