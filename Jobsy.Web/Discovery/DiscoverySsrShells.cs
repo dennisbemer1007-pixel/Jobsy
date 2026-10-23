@@ -25,6 +25,13 @@ internal static class DiscoverySsrShells
         string? AdjustHref,
         bool ShowAdjust);
 
+    internal sealed record OverviewPhasePanel(
+        string PhaseId,
+        string? TitleKey,
+        string? LeadKey,
+        string? VignetteUrl,
+        IReadOnlyList<OverviewPanelSection> Sections);
+
     internal sealed record OverviewTestRow(
         int Step,
         string TitleKey,
@@ -44,6 +51,7 @@ internal static class DiscoverySsrShells
         string? PanelLeadKey,
         string? PanelVignette,
         IReadOnlyList<OverviewPanelSection> PanelSections,
+        IReadOnlyDictionary<string, OverviewPhasePanel> PhasePanels,
         IReadOnlyList<OverviewTestRow> TestRows,
         string? ErrorMessage);
 
@@ -160,7 +168,7 @@ internal static class DiscoverySsrShells
         {
             var isActive = stop.PhaseId == model.ActivePhaseId;
             var href = DiscoverySsrUrls.Overview(stop.PhaseId);
-            sb.Append("<a class=\"journey-route__stop journey-route__stop-link");
+            sb.Append("<a class=\"journey-route__stop journey-route__stop-link discovery-halte-link");
             if (isActive)
             {
                 sb.Append(" is-current");
@@ -202,51 +210,18 @@ internal static class DiscoverySsrShells
 
         sb.Append("</div></div>");
 
-        if (model.PanelTitleKey is not null)
+        sb.Append("<div class=\"journey-route__panel-wrap\"><div class=\"journey-route__connector\" aria-hidden=\"true\"></div>");
+        foreach (var phasePanel in model.PhasePanels.Values.OrderBy(p => PhasePanelOrder(p.PhaseId)))
         {
-            sb.Append("<div class=\"journey-route__panel-wrap\"><div class=\"journey-route__connector\" aria-hidden=\"true\"></div>");
-            sb.Append("<article class=\"journey-route__panel\" aria-live=\"polite\"><header class=\"journey-route__panel-head\">");
-            if (model.PanelVignette is not null)
+            if (phasePanel.Sections.Count == 0 && !string.Equals(phasePanel.PhaseId, "beach", StringComparison.OrdinalIgnoreCase))
             {
-                sb.Append("<img class=\"journey-route__panel-vig\" src=\"");
-                sb.Append(WebUtility.HtmlEncode(model.PanelVignette));
-                sb.Append("\" alt=\"\" width=\"48\" height=\"48\" />");
+                continue;
             }
 
-            sb.Append("<div><h3>");
-            sb.Append(WebUtility.HtmlEncode(culture[model.PanelTitleKey]));
-            sb.Append("</h3>");
-            if (model.PanelLeadKey is not null)
-            {
-                sb.Append("<p>");
-                sb.Append(WebUtility.HtmlEncode(culture[model.PanelLeadKey]));
-                sb.Append("</p>");
-            }
-
-            sb.Append("</div></header><ul class=\"journey-route__sections\">");
-            foreach (var section in model.PanelSections)
-            {
-                sb.Append("<li><div><h4>");
-                sb.Append(WebUtility.HtmlEncode(section.Title));
-                sb.Append("</h4><p>");
-                sb.Append(WebUtility.HtmlEncode(section.Summary));
-                sb.Append("</p></div>");
-                if (section.ShowAdjust && !string.IsNullOrWhiteSpace(section.AdjustHref))
-                {
-                    sb.Append("<a class=\"journey-route__adjust\" href=\"");
-                    sb.Append(WebUtility.HtmlEncode(section.AdjustHref));
-                    sb.Append("\" data-enhance-nav=\"false\">");
-                    sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Adjust"]));
-                    sb.Append("</a>");
-                }
-
-                sb.Append("</li>");
-            }
-
-            sb.Append("</ul></article></div>");
+            AppendDesktopPhasePanel(sb, culture, phasePanel, phasePanel.PhaseId == model.ActivePhaseId);
         }
 
-        sb.Append("</div>");
+        sb.Append("</div></div>");
 
         sb.Append("<div class=\"journey-route__mobile-only discovery-mobile-route\" id=\"discovery-route-canvas-mobile\" data-route-layout=\"mobile-list\"><ol class=\"discovery-mobile-stops\" role=\"list\">");
         for (var i = 0; i < model.Stops.Count; i++)
@@ -276,8 +251,10 @@ internal static class DiscoverySsrShells
                 sb.Append("<span class=\"discovery-mobile-stop__line\"></span>");
             }
 
-            sb.Append("<a class=\"discovery-mobile-stop__circle journey-route__stop-link\" href=\"");
+            sb.Append("<a class=\"discovery-mobile-stop__circle journey-route__stop-link discovery-halte-link\" href=\"");
             sb.Append(WebUtility.HtmlEncode(href));
+            sb.Append("\" data-phase=\"");
+            sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
             sb.Append("\" data-enhance-nav=\"false\" aria-label=\"");
             sb.Append(WebUtility.HtmlEncode(culture[stop.TitleKey]));
             sb.Append("\"><span class=\"journey-route__vignette");
@@ -291,10 +268,18 @@ internal static class DiscoverySsrShells
                 sb.Append(" is-current");
             }
 
-            sb.Append("\"><img src=\"");
+            sb.Append('"');
+            if (isActive)
+            {
+                sb.Append(" data-testid=\"discovery-active-vignette\"");
+            }
+
+            sb.Append("><img src=\"");
             sb.Append(WebUtility.HtmlEncode(stop.VignetteUrl));
-            sb.Append("\" alt=\"\" width=\"56\" height=\"56\" loading=\"eager\" decoding=\"async\" /></span></a></div><div class=\"discovery-mobile-stop__body\"><a class=\"discovery-mobile-stop__text journey-route__stop-link\" href=\"");
+            sb.Append("\" alt=\"\" width=\"56\" height=\"56\" loading=\"eager\" decoding=\"async\" /></span></a></div><div class=\"discovery-mobile-stop__body\"><a class=\"discovery-mobile-stop__text journey-route__stop-link discovery-halte-link\" href=\"");
             sb.Append(WebUtility.HtmlEncode(href));
+            sb.Append("\" data-phase=\"");
+            sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
             sb.Append("\" data-enhance-nav=\"false\" aria-controls=\"");
             sb.Append(WebUtility.HtmlEncode($"discovery-panel-{stop.PhaseId}"));
             sb.Append("\"><span class=\"journey-route__title\">");
@@ -312,9 +297,9 @@ internal static class DiscoverySsrShells
             }
 
             sb.Append("</a>");
-            if (isActive && model.PanelTitleKey is not null)
+            if (model.PhasePanels.TryGetValue(stop.PhaseId, out var phasePanel))
             {
-                AppendMobileInlinePanel(sb, culture, stop, model);
+                AppendMobileInlinePanel(sb, culture, stop, phasePanel, isActive);
             }
 
             sb.Append("</div></div></li>");
@@ -390,23 +375,112 @@ internal static class DiscoverySsrShells
             sb.Append("</div></div>");
         }
 
-        sb.Append("</div></div>");
+        sb.Append("</div></div><script src=\"/js/discovery-ssr-haltes.js?v=20261023-haltes2\" defer></script></div>");
+    }
+
+    private static int PhasePanelOrder(string phaseId) => phaseId switch
+    {
+        "beach" => 0,
+        "kust" => 1,
+        "rots" => 2,
+        "diep" => 3,
+        _ => 4,
+    };
+
+    private static void AppendDesktopPhasePanel(
+        StringBuilder sb,
+        CultureState culture,
+        OverviewPhasePanel phasePanel,
+        bool isActive)
+    {
+        sb.Append("<article class=\"journey-route__panel discovery-phase-panel");
+        if (isActive)
+        {
+            sb.Append(" is-active");
+        }
+
+        sb.Append("\" data-phase=\"");
+        sb.Append(WebUtility.HtmlEncode(phasePanel.PhaseId));
+        sb.Append("\" aria-live=\"polite\"");
+        if (!isActive)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><header class=\"journey-route__panel-head\">");
+        if (phasePanel.VignetteUrl is not null)
+        {
+            sb.Append("<img class=\"journey-route__panel-vig\" src=\"");
+            sb.Append(WebUtility.HtmlEncode(phasePanel.VignetteUrl));
+            sb.Append("\" alt=\"\" width=\"48\" height=\"48\" />");
+        }
+
+        sb.Append("<div><h3>");
+        if (phasePanel.TitleKey is not null)
+        {
+            sb.Append(WebUtility.HtmlEncode(culture[phasePanel.TitleKey]));
+        }
+
+        sb.Append("</h3>");
+        if (phasePanel.LeadKey is not null)
+        {
+            sb.Append("<p>");
+            sb.Append(WebUtility.HtmlEncode(culture[phasePanel.LeadKey]));
+            sb.Append("</p>");
+        }
+
+        sb.Append("</div></header><ul class=\"journey-route__sections\">");
+        foreach (var section in phasePanel.Sections)
+        {
+            sb.Append("<li><div><h4>");
+            sb.Append(WebUtility.HtmlEncode(section.Title));
+            sb.Append("</h4><p>");
+            sb.Append(WebUtility.HtmlEncode(section.Summary));
+            sb.Append("</p></div>");
+            if (section.ShowAdjust && !string.IsNullOrWhiteSpace(section.AdjustHref))
+            {
+                sb.Append("<a class=\"journey-route__adjust\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(section.AdjustHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Adjust"]));
+                sb.Append("</a>");
+            }
+
+            sb.Append("</li>");
+        }
+
+        sb.Append("</ul></article>");
     }
 
     private static void AppendMobileInlinePanel(
         StringBuilder sb,
         CultureState culture,
         OverviewStop stop,
-        OverviewModel model)
+        OverviewPhasePanel phasePanel,
+        bool isActive)
     {
         sb.Append("<div id=\"discovery-panel-");
         sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
-        sb.Append("\" class=\"journey-route-mobile__inline\" role=\"region\" aria-label=\"");
-        sb.Append(WebUtility.HtmlEncode(culture[stop.TitleKey]));
-        sb.Append("\"><header class=\"journey-route-mobile__inline-head\"><h3>");
-        if (model.PanelTitleKey is not null)
+        sb.Append("\" class=\"journey-route-mobile__inline discovery-phase-panel");
+        if (isActive)
         {
-            sb.Append(WebUtility.HtmlEncode(culture[model.PanelTitleKey]));
+            sb.Append(" is-active");
+        }
+
+        sb.Append("\" data-phase=\"");
+        sb.Append(WebUtility.HtmlEncode(stop.PhaseId));
+        sb.Append("\" role=\"region\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture[stop.TitleKey]));
+        sb.Append('"');
+        if (!isActive)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><header class=\"journey-route-mobile__inline-head\"><h3>");
+        if (phasePanel.TitleKey is not null)
+        {
+            sb.Append(WebUtility.HtmlEncode(culture[phasePanel.TitleKey]));
         }
 
         sb.Append("</h3><div class=\"journey-route-mobile__inline-actions\"><span class=\"journey-route__status ");
@@ -422,15 +496,15 @@ internal static class DiscoverySsrShells
         }
 
         sb.Append("</div></header>");
-        if (model.PanelLeadKey is not null)
+        if (phasePanel.LeadKey is not null)
         {
             sb.Append("<p class=\"journey-route-mobile__inline-lead\">");
-            sb.Append(WebUtility.HtmlEncode(culture[model.PanelLeadKey]));
+            sb.Append(WebUtility.HtmlEncode(culture[phasePanel.LeadKey]));
             sb.Append("</p>");
         }
 
         sb.Append("<ul class=\"journey-route__sections journey-route__panel--compact\">");
-        foreach (var section in model.PanelSections)
+        foreach (var section in phasePanel.Sections)
         {
             sb.Append("<li><div><h4>");
             sb.Append(WebUtility.HtmlEncode(section.Title));

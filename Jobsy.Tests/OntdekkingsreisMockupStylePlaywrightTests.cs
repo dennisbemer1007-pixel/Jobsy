@@ -72,6 +72,10 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
         Assert.True(elapsedMs < 8000, $"Discovery overview SSR took {elapsedMs}ms.");
         Assert.True(navigations <= 2, $"Expected at most one redirect after sign-in, got {navigations} frame navigations.");
         await page.WaitForURLAsync(u => u.Contains("stap=overview", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-discovery-ssr=\"1\"]')?.dataset.discoveryHaltesBound === '1'",
+            null,
+            new() { Timeout = 30_000 });
 
         await DiscoveryRouteLabelPathAssert.AssertLabelsClearOfRoutePathAsync(page, mobile);
 
@@ -84,29 +88,35 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
 
         var routeRoot = mobile ? ".discovery-mobile-route" : ".journey-route__desktop-only";
         var kustLink = mobile
-            ? page.Locator(".discovery-mobile-stop[data-phase=kust] a.discovery-mobile-stop__text")
-            : page.Locator($"{routeRoot} a.journey-route__stop-link[data-phase=kust]");
-        await kustLink.ClickAsync();
-        await page.WaitForURLAsync(u => u.Contains("fase=kust", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
+            ? page.Locator(".discovery-mobile-stop[data-phase=kust] a.discovery-halte-link").First
+            : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=kust]");
+        await ClickHalteLinkAsync(kustLink, mobile);
+        await page.WaitForFunctionAsync("() => window.location.search.includes('fase=kust')", null, new() { Timeout = 15_000 });
         if (!mobile)
         {
-            var kustPanel = await page.Locator(".journey-route__panel").InnerTextAsync();
+            var kustPanel = await page.Locator(".journey-route__desktop-only .discovery-phase-panel.is-active").InnerTextAsync();
             Assert.DoesNotContain("Nog niet ingevuld", kustPanel, StringComparison.OrdinalIgnoreCase);
             Assert.True(kustPanel.Contains("+316", StringComparison.Ordinal) || kustPanel.Contains("Zaandam", StringComparison.OrdinalIgnoreCase),
                 $"Expected filled kust summaries, got: {kustPanel}");
         }
 
         var rotsLink = mobile
-            ? page.Locator(".discovery-mobile-stop[data-phase=rots] a.discovery-mobile-stop__text")
-            : page.Locator($"{routeRoot} a.journey-route__stop-link[data-phase=rots]");
-        await rotsLink.ClickAsync();
-        await page.WaitForURLAsync(u => u.Contains("fase=rots", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
+            ? page.Locator(".discovery-mobile-stop[data-phase=rots] a.discovery-halte-link").First
+            : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=rots]");
+        await ClickHalteLinkAsync(rotsLink, mobile);
+        await page.WaitForFunctionAsync("() => window.location.search.includes('fase=rots')", null, new() { Timeout = 15_000 });
+        if (!mobile)
+        {
+            var rotsPanel = await page.Locator(".journey-route__desktop-only .discovery-phase-panel[data-phase=rots]").InnerTextAsync();
+            Assert.Contains("Wat ik leuk vind", rotsPanel, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Waar houd ik niet van", rotsPanel, StringComparison.OrdinalIgnoreCase);
+        }
 
         var lightLink = mobile
-            ? page.Locator(".discovery-mobile-stop[data-phase=light] a.discovery-mobile-stop__text")
-            : page.Locator($"{routeRoot} a.journey-route__stop-link[data-phase=light]");
-        await lightLink.ClickAsync();
-        await page.WaitForURLAsync(u => u.Contains("fase=light", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
+            ? page.Locator(".discovery-mobile-stop[data-phase=light] a.discovery-halte-link").First
+            : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=light]");
+        await ClickHalteLinkAsync(lightLink, mobile);
+        await page.WaitForFunctionAsync("() => window.location.search.includes('fase=light')", null, new() { Timeout = 15_000 });
 
         await page.GotoAsync(root + "/candidate/ontdekkingsreis?stap=overview&fase=diep");
         await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync();
@@ -121,9 +131,22 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
         await AssertButtonsWithinViewportAsync(page, width, routeRoot);
     }
 
+    private static async Task ClickHalteLinkAsync(ILocator link, bool mobile)
+    {
+        await link.ScrollIntoViewIfNeededAsync();
+        if (mobile)
+        {
+            await link.EvaluateAsync("el => el.click()");
+        }
+        else
+        {
+            await link.ClickAsync();
+        }
+    }
+
     private static async Task AssertButtonsWithinViewportAsync(IPage page, int viewportWidth, string routeRoot)
     {
-        var buttons = page.Locator($"{routeRoot} button, {routeRoot} a.journey-route__stop-link[data-phase]");
+        var buttons = page.Locator($"{routeRoot} button, {routeRoot} a.discovery-halte-link[data-phase]");
         var count = await buttons.CountAsync();
         for (var i = 0; i < count; i++)
         {

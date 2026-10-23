@@ -66,29 +66,32 @@ public sealed class OntdekkingsreisAccFixPlaywrightTests : IAsyncLifetime
         _ = await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/ontdekkingsreis"));
         await page.WaitForURLAsync(u => u.Contains("stap=overview", StringComparison.OrdinalIgnoreCase), new() { Timeout = 90_000 });
         await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-discovery-ssr=\"1\"]')?.dataset.discoveryHaltesBound === '1'",
+            null,
+            new() { Timeout = 30_000 });
 
-        foreach (var phase in new[] { "kust", "rots", "diep", "light" })
-        {
-            await page.GotoAsync(
-                $"{root}/candidate/ontdekkingsreis?stap=overview&fase={phase}",
-                new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 45_000 });
-            if (mobile)
-            {
-                await page.Locator($"#discovery-panel-{phase}").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 45_000 });
-            }
-        }
+        await page.GotoAsync(
+            $"{root}/candidate/ontdekkingsreis?stap=overview&fase=kust",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 45_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-discovery-ssr=\"1\"]')?.dataset.discoveryHaltesBound === '1'",
+            null,
+            new() { Timeout = 30_000 });
 
         if (mobile)
         {
             await DiscoveryMobileLayoutAssert.AssertMobile390LayoutAsync(page);
         }
 
+        await DiscoveryHalteTapAssert.AssertHalteTapDoesNotReloadAsync(page, mobile);
+
         await page.GotoAsync(root + "/candidate/ontdekkingsreis?stap=overview&fase=diep");
         await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync();
         var adjust = mobile
             ? page.Locator(".discovery-mobile-stop.is-open .journey-route__adjust[href*='stap=7']").First
-            : page.Locator(".journey-route__panel-wrap .journey-route__adjust[href*='stap=7']").First;
+            : page.Locator(".discovery-phase-panel.is-active .journey-route__adjust[href*='stap=7']").First;
         await adjust.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 45_000 });
         await adjust.ClickAsync(new() { Force = mobile });
         await page.WaitForURLAsync(u => u.Contains("stap=7", StringComparison.OrdinalIgnoreCase), new() { Timeout = 45_000 });

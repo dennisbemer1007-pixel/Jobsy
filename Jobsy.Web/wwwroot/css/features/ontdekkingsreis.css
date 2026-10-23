@@ -2740,11 +2740,19 @@
     margin-right: 0;
   }
 
+  .journey.journey-root--ssr .discovery-mobile-stop__rail,
+  .journey.journey-root--ssr .discovery-mobile-stop__circle,
+  .journey.journey-root--ssr .discovery-mobile-stops,
+  .journey.journey-root--ssr .discovery-mobile-route {
+    overflow: visible;
+  }
+
   .journey.journey-root--ssr .discovery-mobile-stop__circle .journey-route__vignette.is-current {
+    animation: none;
     box-shadow:
-      0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent),
-      0 0 0 7px color-mix(in srgb, var(--gold-light) 50%, transparent),
+      0 0 0 3px var(--gold-light),
       var(--shadow-lg);
+    outline: none;
   }
 
   .journey.journey-root--ssr .discovery-mobile-stop__circle .journey-route__vignette.is-done::after {

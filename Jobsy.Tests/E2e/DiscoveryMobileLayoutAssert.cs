@@ -38,6 +38,24 @@ internal static class DiscoveryMobileLayoutAssert
               const problems = [];
               const vw = window.innerWidth;
               const list = route.querySelector('.discovery-mobile-stops') || route;
+              const activeVig = list.querySelector('[data-testid="discovery-active-vignette"]');
+              if (activeVig) {
+                const vigRect = activeVig.getBoundingClientRect();
+                if (vigRect.left < -1) {
+                  problems.push(`active ring clipped left (${vigRect.left})`);
+                }
+                if (vigRect.right > vw + 1) {
+                  problems.push(`active ring clipped right (${vigRect.right} > ${vw})`);
+                }
+                const circle = activeVig.closest('.discovery-mobile-stop__circle');
+                if (circle) {
+                  const circleRect = circle.getBoundingClientRect();
+                  if (circleRect.left < -1 || circleRect.right > vw + 1) {
+                    problems.push(`active circle outside viewport (${circleRect.left}-${circleRect.right})`);
+                  }
+                }
+              }
+
               list.querySelectorAll('.discovery-mobile-stop .discovery-mobile-stop__circle').forEach((circle, index) => {
                 const rect = circle.getBoundingClientRect();
                 if (rect.left < -1) {
