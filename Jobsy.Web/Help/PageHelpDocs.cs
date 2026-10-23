@@ -204,7 +204,7 @@ public static class PageHelpDocs
         ["/banenkaart"] = new(
             "Banenkaart",
             "Vacatures rondom je startadres (profiel-thuisadres, 20 min fietsen) met echte reistijd-ringen.",
-            "Pas adres en filters in de chipbalk. Fit-% zie je alleen na de cultuur- of waardentest; anders ‘Maak je paspoort af’. Dislikes zetten een baan lager (‘Staat lager: …’) zonder hem te verbergen.",
+            "Pas je startadres en filters via de chipbalk. Wissel tussen kaart en lijst met de weergave-knop of ?weergave=lijst.",
             "Banen zoeken op de kaart of in de lijstweergave (?weergave=lijst)."),
 
         ["/bedrijvenkaart"] = new(

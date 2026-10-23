@@ -24,40 +24,6 @@ internal static class BanenkaartSsrShells
         }
 
         sb.Append("\" data-banenkaart-ssr=\"1\" data-testid=\"banenkaart-ssr-root\">");
-        sb.Append("""
-            <script>
-            (function () {
-              var root = document.currentScript && document.currentScript.parentElement;
-              if (!root || root.getAttribute("data-banenkaart-ssr") !== "1") return;
-              function setOpen(open) {
-                root.classList.toggle("filters-open", open);
-                var sheet = root.querySelector("[data-testid=kb-filter-sheet]");
-                var backdrop = root.querySelector("[data-testid=kb-filter-backdrop]");
-                root.querySelectorAll("[data-testid=kb-filters-button]").forEach(function (btn) {
-                  btn.classList.toggle("is-active", open);
-                  btn.setAttribute("aria-expanded", open ? "true" : "false");
-                });
-                if (sheet) {
-                  sheet.setAttribute("aria-hidden", open ? "false" : "true");
-                  sheet.setAttribute("aria-modal", open ? "true" : "false");
-                }
-                if (backdrop) backdrop.setAttribute("aria-hidden", open ? "false" : "true");
-              }
-              if (document.documentElement.dataset.banenkaartFilterDelegation !== "1") {
-                document.documentElement.dataset.banenkaartFilterDelegation = "1";
-                document.addEventListener("click", function (ev) {
-                  var t = ev.target;
-                  if (!t || !t.closest) return;
-                  if (!t.closest("[data-testid=kb-filters-button]")) return;
-                  if (!root.contains(t)) return;
-                  ev.preventDefault();
-                  setOpen(!root.classList.contains("filters-open"));
-                }, true);
-              }
-              root.dataset.banenkaartSsrBound = "1";
-            })();
-            </script>
-            """);
 
         if (!string.IsNullOrWhiteSpace(q.Error))
         {
@@ -94,7 +60,7 @@ internal static class BanenkaartSsrShells
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
         AppendMapFab(sb, culture);
 
-        sb.Append("<script src=\"js/banenkaart-ssr.js?v=20261023-ssr4\"></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-acc1\" defer></script>");
         sb.Append("</div>");
         return sb.ToString();
     }
