@@ -34,7 +34,8 @@ internal static class BanenkaartMapBoot
         var payload = new Dictionary<string, object?>
         {
             ["preferFilledLocation"] = preferFilledLocation,
-            ["illustratedPopup"] = true,
+            ["illustratedPopup"] = false,
+            ["lagenLayout"] = true,
             ["zoomToPinsOutsideTravel"] = zoomToPinsOutsideTravel,
             ["view"] = new Dictionary<string, object?>
             {
@@ -47,7 +48,8 @@ internal static class BanenkaartMapBoot
             ["catalogMode"] = true,
             ["mapInit"] = new Dictionary<string, object?>
             {
-                ["illustratedPopup"] = true,
+                ["illustratedPopup"] = false,
+                ["lagenLayout"] = true,
                 ["preferFilledLocation"] = preferFilledLocation,
                 ["catalogUrl"] = catalogUrl,
                 ["catalogMode"] = true,

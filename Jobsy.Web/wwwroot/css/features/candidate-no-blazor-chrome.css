@@ -90,13 +90,13 @@
 
 @media (min-width: 1024px) {
     .app-shell--candidate .bottom-nav[data-testid="candidate-bottom-nav-ssr"] {
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: min(100%, 40rem);
-        max-width: 40rem;
-        border-radius: 14px 14px 0 0;
-        box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.08);
+        left: 0;
+        right: 0;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 0;
+        box-shadow: none;
     }
 
     .app-shell--candidate.has-bottom-nav .app-main {

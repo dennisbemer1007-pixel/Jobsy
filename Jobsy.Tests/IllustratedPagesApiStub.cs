@@ -328,10 +328,12 @@ internal static class IllustratedPagesApiStub
                   "lastName": "Kandidaat",{{testConsentLine}}
                   "role": "Candidate",
                   "openForWork": true,
-                  "homeLatitude": 52.3725,
-                  "homeLongitude": 4.8921,
+                  "homeLatitude": 51.9935,
+                  "homeLongitude": 4.2085,
                   "preferences": {
-                    "homeAddress": "Amsterdam",
+                    "homeAddress": "Kasweg 12, 2671 AB Naaldwijk",
+                    "maxTravelMinutes": 20,
+                    "preferredTransport": "Fiets",
                     "workRegion": null,
                     "aboutMe": "Ik werk graag in teamverband en houd van duidelijke afspraken."
                   }

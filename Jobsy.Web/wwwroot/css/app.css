@@ -8523,12 +8523,12 @@ button.bottom-nav__item {
     }
 
     .app-shell--candidate .bottom-nav {
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: min(100%, 40rem);
-        max-width: 40rem;
-        border-radius: 14px 14px 0 0;
+        left: 0;
+        right: 0;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 0;
     }
 
     .app-shell--candidate .bottom-nav__label--full {

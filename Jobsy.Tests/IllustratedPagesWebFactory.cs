@@ -197,6 +197,13 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                         return;
                     }
 
+                    if (path.StartsWith("/api/banenkaart-client", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ctx.Response.ContentType = "application/json; charset=utf-8";
+                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
+                        return;
+                    }
+
                     if (path.StartsWith("/api/travel/isochrones", StringComparison.OrdinalIgnoreCase))
                     {
                         ctx.Response.ContentType = "application/json; charset=utf-8";

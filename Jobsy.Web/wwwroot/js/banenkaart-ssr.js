@@ -21,7 +21,8 @@
         }
     }
 
-    var BK_UI_KEY = "jobsy.bk.ui.v1";
+    var BK_UI_KEY = "jobsy.bk.ui.v2";
+    var BK_UI_KEY_LEGACY = "jobsy.bk.ui.v1";
     var BK_VIEW_KEY = "jobsy.bk.view.v1";
 
     function readUiState() {
@@ -412,17 +413,64 @@
             && window.jobsyViewport.isWide());
     }
 
+    function isNavigationReload() {
+        try {
+            var nav = performance.getEntriesByType("navigation")[0];
+            return !!(nav && nav.type === "reload");
+        } catch (eNav) {
+            return false;
+        }
+    }
+
+    function clearLegacyUiSession() {
+        try {
+            sessionStorage.removeItem(BK_UI_KEY_LEGACY);
+        } catch (eLegacy) { }
+    }
+
+    function scheduleMapRelayout() {
+        [0, 80, 250, 600].forEach(function (ms) {
+            setTimeout(resumeMapLayout, ms);
+        });
+    }
+
+    function setDefaultBanenkaartView(root) {
+        root.classList.remove("jobsy-discovery--list");
+        root.classList.add("show-map");
+        root.classList.remove("show-list");
+        writeUiState({ showMap: true, desktopList: false, filtersOpen: false });
+        qsa("[data-testid=kb-view-kaart]").forEach(function (btn) {
+            btn.classList.add("is-active");
+            btn.setAttribute("aria-checked", "true");
+        });
+        qsa("[data-testid=kb-view-lijst]").forEach(function (btn) {
+            btn.classList.remove("is-active");
+            btn.setAttribute("aria-checked", "false");
+        });
+        scheduleMapRelayout();
+    }
+
     /** Fresh GET / hard reload: filters closed; desktop always shows map + list rail. */
-    function applyInitialUiState() {
+    function applyInitialUiState(skipSessionRestore) {
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (!root) {
             return;
         }
         setFiltersOpen(false);
         writeUiState({ filtersOpen: false });
+        if (skipSessionRestore) {
+            ensureBodyScrollUnlocked();
+            return;
+        }
+        clearLegacyUiSession();
+        var reload = isNavigationReload();
         if (isDesktopBanenkaart()) {
-            var deskState = readUiState();
-            var listMode = deskState.desktopList === true;
+            var deskState = reload ? {} : readUiState();
+            var listMode = !reload && deskState.desktopList === true;
+            if (reload) {
+                setDefaultBanenkaartView(root);
+                return;
+            }
             root.classList.toggle("jobsy-discovery--list", listMode);
             root.classList.toggle("show-map", !listMode);
             root.classList.toggle("show-list", listMode);
@@ -434,6 +482,11 @@
                 btn.classList.toggle("is-active", listMode);
                 btn.setAttribute("aria-checked", listMode ? "true" : "false");
             });
+            return;
+        }
+        if (reload) {
+            setDefaultBanenkaartView(root);
+            ensureBodyScrollUnlocked();
             return;
         }
         var state = readUiState();
@@ -1001,7 +1054,7 @@
     }
 
     function syncLayoutForViewport() {
-        applyInitialUiState();
+        applyInitialUiState(true);
         resumeMapLayout();
         try {
             var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
