@@ -11,6 +11,7 @@ Alleen afbeeldingen ter referentie. Bouw deze pagina's op dezelfde manier als de
 | Paspoort | `paspoort/desktop/`, `paspoort/mobile/` | r3; alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:57 |
 | Bewaard | `bewaard/desktop/`, `bewaard/mobile/` | alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:58 |
 | Match | `match/desktop/`, `match/mobile/` | alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:58 |
+| Bedrijvenkaart en bedrijfspagina | `bedrijvenkaart/desktop/`, `bedrijvenkaart/mobile/` | r21, vervangt r20; doorlopende smalle header, warme look; alle knoppen moeten werken, laadtijd erg belangrijk | 23 oktober 2026, 07:15 |
 
 Desktop van Carrière bestaat alleen voor het tabblad Voor jou; de andere tabs volgen dezelfde opbouw.
 
