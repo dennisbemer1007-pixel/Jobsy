@@ -10,6 +10,11 @@ internal static class DiscoverySsrJourneyState
 {
     public static bool IsJourneyComplete(OnboardingState? state, OnboardingProfileDraft draft)
     {
+        if (state?.IsComplete == true || state?.FinishReached == true || state?.CompletedAtUtc is not null)
+        {
+            return true;
+        }
+
         if (state?.Steps.Any(s => s.Step == 10 && s.CompletedAtUtc is not null) == true)
         {
             return true;

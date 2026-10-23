@@ -115,6 +115,41 @@ public sealed class DiscoveryShedFormPostTests
     }
 
     [Fact]
+    public async Task Legacy_stap_two_after_shed10_with_finish_reached_redirects_overview_not_start()
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        factory.FinishReached = true;
+        factory.OnboardingComplete = false;
+        factory.CandidatePassportEnabled = true;
+        factory.SavedStep = 2;
+        factory.StoredProfile.TestAiConsentAt = DateTime.UtcNow;
+        factory.StoredProfile.Preferences ??= new();
+        factory.StoredProfile.AvailableFromDate = new DateOnly(2027, 4, 20);
+        factory.StoredProfile.Preferences.MaxTravelMinutes = 30;
+        factory.DiscoveryOverviewCompetencyAnswered = OnboardingWizardCatalog.MiniLevelCount;
+        factory.DiscoveryOverviewCareerAnswered = OnboardingWizardCatalog.MiniLevelCount;
+        factory.DiscoveryOverviewCultureAnswered = OnboardingWizardCatalog.MiniLevelCount;
+        factory.DiscoveryOverviewValuesAnswered = OnboardingWizardCatalog.MiniLevelCount;
+
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/ontdekkingsreis?stap=shed-10"));
+        _ = await client.GetAsync("/candidate/ontdekkingsreis?stap=shed-10");
+
+        var bare = await client.GetAsync("/candidate/ontdekkingsreis");
+        Assert.Equal(HttpStatusCode.SeeOther, bare.StatusCode);
+        var location = bare.Headers.Location?.ToString() ?? "";
+        Assert.Contains("stap=overview", location, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/candidate/start", location, StringComparison.OrdinalIgnoreCase);
+
+        var legacy = await client.GetAsync("/candidate/ontdekkingsreis?stap=2");
+        Assert.Equal(HttpStatusCode.SeeOther, legacy.StatusCode);
+        var legacyLocation = legacy.Headers.Location?.ToString() ?? "";
+        Assert.Contains("stap=overview", legacyLocation, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/candidate/start", legacyLocation, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Bare_discovery_url_returns_single_303_to_overview()
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
