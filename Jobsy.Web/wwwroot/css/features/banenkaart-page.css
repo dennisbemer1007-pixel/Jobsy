@@ -192,30 +192,129 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
 }
 
 /* Banenkaart shell: map/list split (desktop list rail + mobile toggles). */
+.app-shell--banenkaart-shell {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-shell--banenkaart-shell .app-main,
+.app-shell--banenkaart-shell .app-main__content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 .app-shell--banenkaart-shell .jobsy-chrome {
     min-height: 0;
     border-bottom: none;
 }
 
+.app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+}
+
+/* One toolbar: mobile bar vs desktop panel head. */
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-panel-head.discovery-toolbar--desktop {
+    display: none;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-chrome-search.kb-filter-search .kb-filter-search__icon {
+    display: none;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-chrome-search.kb-filter-search input,
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-chrome-search--address input {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.5rem;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.45rem 0.65rem;
+    font: inherit;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-chrome-search.kb-filter-search input {
+    padding-left: 2.1rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6a7d' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    background-size: 18px 18px;
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"] .kb-filters-button {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane {
+    display: flex !important;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery.show-map .map-stage,
+.app-shell--banenkaart-shell .jobsy-discovery.show-map #job-map,
+.app-shell--banenkaart-shell .jobsy-discovery.show-map .job-map {
+    flex: 1 1 auto;
+    min-height: 300px;
+    height: 100%;
+    width: 100%;
+}
+
 @media (min-width: 900px) {
+    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-filter-bar {
+        display: none !important;
+    }
+
+    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-panel-head.discovery-toolbar--desktop {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        padding: 0.5rem 0.85rem;
+        min-width: 0;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] {
+        grid-template-columns: minmax(320px, 42%) minmax(0, 58%);
+        grid-template-rows: auto 1fr;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] > .jobsy-chrome {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
     .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane {
         display: flex !important;
         visibility: visible !important;
         pointer-events: auto !important;
-        height: auto;
+        grid-column: 1;
+        grid-row: 2;
+        height: 100%;
+        min-height: 0;
         max-height: none;
-        overflow: visible;
-        grid-column: 1 / -1;
-        z-index: 12;
+        overflow: auto;
+        z-index: 2;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .kb-nearby-banner,
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .results-meta,
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .vacancy-list,
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .kb-list-layout,
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .state-message,
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .highlight-carousel--list {
-        display: none !important;
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane {
+        grid-column: 2;
+        grid-row: 2;
+        height: 100%;
+        min-height: 0;
     }
 }
 

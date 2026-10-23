@@ -1,0 +1,66 @@
+/* Scoped candidate header chrome for NoBlazor /banenkaart (no full app.min.css). */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: var(--app-header-height, 4.25rem);
+    padding: 0.35rem 0.85rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.app-header__brand {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.app-header .brand,
+.app-header .brand:visited {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.app-header .brand__tagline {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-decoration: none;
+}
+
+.app-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+    min-width: 0;
+}
+
+.candidate-header-nav {
+    display: none;
+}
+
+@media (min-width: 900px) {
+    .candidate-header-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: center;
+    }
+}
+
+.account-menu__toggle,
+.notification-bell__toggle,
+.language-selector__toggle {
+    border: 1.5px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
+    background: color-mix(in srgb, var(--surface) 88%, var(--pearl-cool) 12%);
+    border-radius: 999px;
+    cursor: pointer;
+}
