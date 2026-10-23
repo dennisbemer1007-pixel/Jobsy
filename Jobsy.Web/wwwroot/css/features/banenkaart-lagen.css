@@ -7,6 +7,24 @@
     display: none !important;
 }
 
+@media (max-width: 899px) {
+    .app-shell--banenkaart-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .app-shell--banenkaart-shell .app-main,
+    .app-shell--banenkaart-shell .app-main__content {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen {
     --kb-navy: #1f2f55;
     --kb-ink: #1b2440;
@@ -79,7 +97,7 @@
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .vimg {
-    height: 96px;
+    height: 84px;
     position: relative;
     display: flex;
     align-items: center;
@@ -112,7 +130,7 @@
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .vb {
-    padding: 12px 14px 14px;
+    padding: 10px 12px 11px;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .vb > b {
@@ -1294,8 +1312,14 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         margin-bottom: 0;
     }
 
+    .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen.show-map:not(.show-list) .map-pane {
+        position: relative;
+    }
+
     .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen.show-map:not(.show-list) .map-pane .map-stage {
-        padding-bottom: calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+        position: absolute;
+        inset: 0 0 calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px)) 0;
+        padding-bottom: 0;
         box-sizing: border-box;
     }
 
@@ -1316,6 +1340,13 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto minmax(0, 1fr);
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        max-height: calc(
+            100dvh - var(--app-header-height, 4.25rem) - var(--bottom-nav-h, 4.25rem) - env(safe-area-inset-bottom, 0px));
+        height: calc(
+            100dvh - var(--app-header-height, 4.25rem) - var(--bottom-nav-h, 4.25rem) - env(safe-area-inset-bottom, 0px));
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
@@ -1331,6 +1362,8 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         grid-row: 3;
         min-height: 0;
         height: 100%;
+        max-height: 100%;
+        overflow: hidden;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map:not(.show-list) .vacancy-pane {
@@ -1458,5 +1491,19 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-popup-lagen--sheet .map-popup__heart {
-    display: none;
+    position: absolute;
+    right: 54px;
+    top: 0;
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-sheet--lagen .kb-popup-lagen--sheet {
+    position: relative;
+    padding-top: 36px;
 }

@@ -50,11 +50,14 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
     {
         var buttons = new List<object>();
         var elementTables = new List<object>();
+        var eightPoint = new List<object>();
         try
         {
         await CaptureViewportAsync(1280, 720, false, "desktop-1280-map-list", async (page, dir) =>
         {
             await WaitReadyAsync(page);
+            await WaitForRealIsochronesAsync(page);
+            eightPoint.AddRange(await EvaluateEightPointDesktopAsync(page));
             var twoCol = await page.EvaluateAsync<bool>(
                 """
                 () => {
@@ -104,6 +107,22 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         await CaptureViewportAsync(390, 844, true, "mobile-390-map", async (page, dir) =>
         {
             await WaitReadyAsync(page);
+            await WaitForRealIsochronesAsync(page);
+            eightPoint.AddRange(await EvaluateEightPointMobileAsync(page));
+            buttons.Add(new
+            {
+                action = "bottom-nav-not-covering-map",
+                pass = await page.EvaluateAsync<bool>(
+                    """
+                    () => {
+                      const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
+                      const pane = document.querySelector('.map-pane.show-map');
+                      if (!nav || !pane) return false;
+                      const gap = nav.getBoundingClientRect().top - pane.getBoundingClientRect().bottom;
+                      return Math.abs(gap) <= 14;
+                    }
+                    """)
+            });
             await ShotAsync(page, dir, "01-map.png");
             await SideBySideAsync(
                 Path.Combine(MockupRefRoot, "lagen/mobile/01-banenkaart-lagen-mobiel-390.png"),
@@ -137,6 +156,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             if (opened)
             {
                 await page.WaitForTimeoutAsync(400);
+                eightPoint.AddRange(await EvaluateEightPointVacancySheetAsync(page));
                 await ShotAsync(page, dir, "03-vacature.png");
                 await SideBySideAsync(
                     Path.Combine(MockupRefRoot, "lagen/mobile/03-banenkaart-lagen-mobiel-390-vacature.png"),
@@ -193,15 +213,6 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                 buttons.Add(new { action = "meer-laden", pass = false, note = "button not visible" });
             }
 
-            buttons.Add(new { action = "bottom-nav-not-covering-map", pass = await page.EvaluateAsync<bool>(
-                """
-                () => {
-                  const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
-                  const canvas = document.querySelector('#job-map .maplibregl-canvas');
-                  if (!nav || !canvas) return false;
-                  return canvas.getBoundingClientRect().bottom <= nav.getBoundingClientRect().top + 2;
-                }
-                """) });
         });
         }
         finally
@@ -215,6 +226,10 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             await File.WriteAllTextAsync(
                 Path.Combine(CompareDir, "REPORT.md"),
                 BuildReportMarkdown(elementTables, buttons));
+            await File.WriteAllTextAsync(
+                Path.Combine(CompareDir, "eight-point-checklist.json"),
+                JsonSerializer.Serialize(eightPoint, new JsonSerializerOptions { WriteIndented = true }));
+            await GenerateReportImagesAsync();
         }
 
         var sideCars = Directory.Exists(CompareDir)
@@ -227,7 +242,10 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             .Where(e => e.TryGetProperty("pass", out var p) && p.ValueKind == JsonValueKind.False)
             .Select(e => e.TryGetProperty("action", out var a) ? a.GetString() : "?")
             .ToList();
-        Assert.True(buttonFails.Count == 0, "Button checklist failures: " + string.Join(", ", buttonFails));
+        if (buttonFails.Count > 0)
+        {
+            Assert.Fail("Button checklist failures: " + string.Join(", ", buttonFails));
+        }
 
         var elementFails = new List<string>();
         foreach (var table in elementTables)
@@ -249,6 +267,189 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         }
 
         Assert.True(elementFails.Count == 0, "Element table failures: " + string.Join(", ", elementFails));
+
+        var eightFails = eightPoint
+            .Select(b => JsonSerializer.SerializeToElement(b))
+            .Where(e => e.TryGetProperty("pass", out var p) && p.ValueKind == JsonValueKind.False)
+            .Select(e => e.TryGetProperty("id", out var a) ? a.GetString() : "?")
+            .ToList();
+        if (eightFails.Count > 0)
+        {
+            Assert.Fail("Eight-point checklist failures: " + string.Join(", ", eightFails));
+        }
+    }
+
+    private static async Task WaitForRealIsochronesAsync(IPage page)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const m = document.querySelector('.map-pane[data-iso-mode="real"], #job-map[data-iso-mode="real"]');
+                  return !!m;
+                }
+                """,
+                null,
+                new() { Timeout = 45_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Captured for eight-point / screenshots even if rings lag.
+        }
+    }
+
+    private static async Task<List<object>> EvaluateEightPointDesktopAsync(IPage page)
+    {
+        var columnOrder = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const head = document.querySelector('.kb-panel-head.discovery-toolbar--desktop');
+              if (!head) return false;
+              const addr = head.querySelector('.kb-panel-head__address');
+              const filt = head.querySelector('.kb-panel-head__filters-row');
+              if (!addr || !filt) return false;
+              const oAddr = parseInt(getComputedStyle(addr).order, 10) || 0;
+              const oFilt = parseInt(getComputedStyle(filt).order, 10) || 0;
+              return oAddr < oFilt;
+            }
+            """);
+        var compactVc = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const list = document.querySelector('.vacancy-list');
+              const cards = document.querySelectorAll('.vacancy-list .vc');
+              if (!list || cards.length < 2) return false;
+              const s = getComputedStyle(list);
+              const twoCol = s.display === 'grid' && s.gridTemplateColumns.split(' ').filter(Boolean).length >= 2;
+              const vc = cards[0];
+              const r = vc.getBoundingClientRect();
+              return twoCol && r.height >= 48 && r.height <= 200;
+            }
+            """);
+        var isoLabels = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const real = document.querySelector('.map-pane[data-iso-mode="real"], #job-map[data-iso-mode="real"]');
+              if (!real) return false;
+              const labels = document.querySelectorAll('.map-iso-label');
+              return labels.length >= 3;
+            }
+            """);
+        var legendPos = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const legend = document.querySelector('[data-testid=kb-map-legend], .kb-map-legend-host .legend');
+              const map = document.querySelector('.map-pane');
+              if (!legend || !map) return false;
+              const lr = legend.getBoundingClientRect();
+              const mr = map.getBoundingClientRect();
+              const inLeft = lr.left < mr.left + mr.width * 0.4;
+              const inBottom = lr.bottom > mr.top + mr.height * 0.5;
+              return inLeft && inBottom && lr.width > 24;
+            }
+            """);
+        return
+        [
+            new { id = "1-desktop-column-order-widths", pass = columnOrder },
+            new { id = "2-compact-vc-cards", pass = compactVc },
+            new { id = "3-map-30min-zone-edge-labels", pass = isoLabels },
+            new { id = "4-legend-bottom-left-in-map", pass = legendPos },
+        ];
+    }
+
+    private static async Task<List<object>> EvaluateEightPointMobileAsync(IPage page)
+    {
+        var addressRow = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const addr = document.querySelector('.jobsy-discovery--lagen .ph .addr');
+              return !!(addr && addr.getBoundingClientRect().height > 8);
+            }
+            """);
+        var mapToNav = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
+              const pane = document.querySelector('.map-pane.show-map');
+              if (!nav || !pane) return false;
+              const gap = nav.getBoundingClientRect().top - pane.getBoundingClientRect().bottom;
+              return Math.abs(gap) <= 14;
+            }
+            """);
+        return
+        [
+            new { id = "5-mobile-address-row", pass = addressRow },
+            new { id = "6-map-down-to-bottom-nav", pass = mapToNav },
+        ];
+    }
+
+    private static async Task<List<object>> EvaluateEightPointVacancySheetAsync(IPage page)
+    {
+        var sheetMockup = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const sheet = document.querySelector('.map-cluster-sheet--lagen, .kb-popup-lagen--sheet');
+              if (!sheet) return false;
+              const grab = sheet.querySelector('.grab');
+              const title = sheet.querySelector('.map-popup__title--lagen, .map-cluster-card__title');
+              return !!(grab && title);
+            }
+            """);
+        var heartNearClose = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const root = document.querySelector('.map-cluster-sheet--lagen, .kb-popup-lagen--sheet, .maplibregl-popup');
+              if (!root) return false;
+              const heart = root.querySelector('.map-popup__heart');
+              const close = root.querySelector('.map-cluster-sheet__close, .map-cluster-card__close, .maplibregl-popup-close-button');
+              if (!heart || !close) return false;
+              const hr = heart.getBoundingClientRect();
+              const cr = close.getBoundingClientRect();
+              const heartSmall = hr.width <= 44 && hr.height <= 44;
+              return heartSmall && Math.abs(hr.top - cr.top) < 28 && hr.left < cr.left;
+            }
+            """);
+        return
+        [
+            new { id = "7-vacancy-sheet-mockup", pass = sheetMockup },
+            new { id = "8-heart-small-next-to-close", pass = heartNearClose },
+        ];
+    }
+
+    private static async Task GenerateReportImagesAsync()
+    {
+        var script = Path.Combine(Directory.GetCurrentDirectory(), "tmp", "generate-lagen-report-images.py");
+        while (!File.Exists(script) && Directory.GetParent(Directory.GetCurrentDirectory()) is { } parent)
+        {
+            var candidate = Path.Combine(parent.FullName, "tmp", "generate-lagen-report-images.py");
+            if (File.Exists(candidate))
+            {
+                script = candidate;
+                break;
+            }
+        }
+
+        if (!File.Exists(script))
+        {
+            script = "/workspace/tmp/generate-lagen-report-images.py";
+        }
+
+        if (!File.Exists(script))
+        {
+            return;
+        }
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = "python3",
+            ArgumentList = { script, CompareDir },
+            RedirectStandardError = true,
+        };
+        using var p = Process.Start(psi)!;
+        var err = await p.StandardError.ReadToEndAsync();
+        await p.WaitForExitAsync();
+        Assert.True(p.ExitCode == 0, "report images failed: " + err);
     }
 
     private static string BuildReportMarkdown(List<object> elementTables, List<object> buttons)
