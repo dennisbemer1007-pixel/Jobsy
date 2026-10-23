@@ -9,7 +9,7 @@ var PRECACHE = [
     OFFLINE_URL,
     "/manifest.webmanifest?v=20261004-14",
     "/css/tokens.css?v=20261018-06",
-    "/css/critical.css?v=20261019-12",
+    "/css/critical.css?v=20261023-polish1",
     "/css/features/stijl-a.css?v=20261018-03",
     "/icons/icon-192.png?v=20261018-23",
     "/icons/icon-512.png?v=20261018-23",

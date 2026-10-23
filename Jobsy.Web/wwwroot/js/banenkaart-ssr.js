@@ -364,6 +364,40 @@
         }
     }
 
+    function syncLayoutForViewport() {
+        applyInitialUiState();
+        resumeMapLayout();
+        try {
+            var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+            if (map && typeof map.resize === "function") {
+                map.resize();
+            }
+        } catch (eResize) { }
+    }
+
+    function bindViewportLayout() {
+        if (document.documentElement.dataset.banenkaartViewportLayout === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartViewportLayout = "1";
+        var resizeTimer = null;
+        function schedule() {
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+            }
+            resizeTimer = setTimeout(syncLayoutForViewport, 80);
+        }
+        window.addEventListener("resize", schedule);
+        try {
+            var mq = window.matchMedia("(min-width: 900px)");
+            if (typeof mq.addEventListener === "function") {
+                mq.addEventListener("change", schedule);
+            } else if (typeof mq.addListener === "function") {
+                mq.addListener(schedule);
+            }
+        } catch (eMq) { }
+    }
+
     function bindLifecycleResume() {
         if (document.documentElement.dataset.banenkaartLifecycle === "1") {
             return;
@@ -388,6 +422,7 @@
             return;
         }
         bindLifecycleResume();
+        bindViewportLayout();
         applyInitialUiState();
         bindGuestFilterPersistence();
         bindFilters();

@@ -67,8 +67,8 @@ internal static class BanenkaartSsrShells
 
         sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
         sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-reg1\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-reg1\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-polish1\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-polish1\" crossorigin=\"anonymous\" defer></script>");
         sb.Append("</div>");
         return sb.ToString();
     }

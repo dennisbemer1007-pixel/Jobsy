@@ -241,7 +241,7 @@ window.jobMap = (function () {
         if (t.indexOf("tuinbouw") >= 0) return "🌿";
         if (t.indexOf("schoonmaak") >= 0) return "✨";
         if (t.indexOf("productie") >= 0) return "🏭";
-        return "●";
+        return "";
     }
 
     function markerClassName(featured, selected, matchBand) {
@@ -3892,9 +3892,9 @@ window.jobMap = (function () {
                 id: PIN_LAYER_CLUSTER_AGENCY_BADGE,
                 type: "symbol",
                 source: PIN_SOURCE,
-                filter: ["all", ["has", "point_count"], [">", ["get", "agency_sum"], 0]],
+                filter: ["all", ["has", "point_count"], [">", ["coalesce", ["get", "agency_sum"], 0], 0]],
                 layout: {
-                    "text-field": ["concat", "◆", ["to-string", ["get", "agency_sum"]]],
+                    "text-field": ["concat", "◆", ["to-string", ["coalesce", ["get", "agency_sum"], 0]]],
                     "text-size": 10,
                     "text-offset": [1.15, 1.15],
                     "text-font": ["Noto Sans Bold"],
@@ -3963,9 +3963,14 @@ window.jobMap = (function () {
                 id: PIN_LAYER_UNCLUSTERED_GLYPH,
                 type: "symbol",
                 source: PIN_SOURCE,
-                filter: UNCLUSTERED_PIN_FILTER,
+                filter: [
+                    "all",
+                    UNCLUSTERED_PIN_FILTER,
+                    ["has", "glyph"],
+                    ["!=", ["get", "glyph"], ""]
+                ],
                 layout: {
-                    "text-field": ["get", "glyph"],
+                    "text-field": ["coalesce", ["get", "glyph"], ""],
                     "text-size": 10,
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
@@ -3986,7 +3991,7 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: ["all", ["has", "point_count"], [">", ["get", "agency_sum"], 0]],
                 layout: {
-                    "text-field": ["concat", "◆", ["to-string", ["get", "agency_sum"]]],
+                    "text-field": ["concat", "◆", ["to-string", ["coalesce", ["get", "agency_sum"], 0]]],
                     "text-size": 10,
                     "text-offset": [1.15, 1.15],
                     "text-font": ["Noto Sans Bold"],
@@ -4072,6 +4077,28 @@ window.jobMap = (function () {
      * MapLibre GL JS 5.x is promise-only for getClusterLeaves.
      * Pre-#316 behaviour: cluster tap opens the pager immediately — no zoom.
      */
+    function stubMarkersForCluster(total, coords, clusterId) {
+        const lng = coords[0];
+        const lat = coords[1];
+        const n = Math.min(Math.max(Number(total) || 2, 2), 100);
+        const stubs = [];
+        for (let i = 0; i < n; i++) {
+            stubs.push({
+                lng: lng,
+                lat: lat,
+                id: "cluster-pending-" + clusterId + "-" + i,
+                options: {
+                    jobData: {
+                        id: "cluster-pending-" + clusterId + "-" + i,
+                        title: "…",
+                        company: ""
+                    }
+                }
+            });
+        }
+        return stubs;
+    }
+
     function onClusterClick(ev) {
         if (!map || !ev.features || !ev.features.length) {
             return;
@@ -4087,22 +4114,28 @@ window.jobMap = (function () {
         }
         lastClusterTapAt = Date.now();
         const clusterId = props.cluster_id;
-        if (clusterId == null || typeof source.getClusterExpansionZoom !== "function") {
+        if (clusterId == null || typeof source.getClusterLeaves !== "function") {
             return;
         }
         const coords = feature.geometry && feature.geometry.coordinates;
-        Promise.resolve(source.getClusterExpansionZoom(clusterId))
-            .then(function (zoom) {
-                if (!map || !coords) {
+        if (!coords) {
+            return;
+        }
+        const total = Math.max(Number(props.point_count) || 2, 2);
+        openClusterList(stubMarkersForCluster(total, coords, clusterId), coords);
+        Promise.resolve(source.getClusterLeaves(clusterId, Math.min(total, 100), 0))
+            .then(function (leaves) {
+                if (!map) {
                     return;
                 }
-                map.easeTo({
-                    center: coords,
-                    zoom: clampBanenZoom(Math.min(
-                        Number(zoom) || map.getZoom() + 2,
-                        CLUSTER_OPTS.disableClusteringAtZoom)),
-                    duration: 320
-                });
+                const childMarkers = (leaves || [])
+                    .map(function (leaf) {
+                        return markerByLeafId(leaf.properties && leaf.properties.id);
+                    })
+                    .filter(Boolean);
+                if (childMarkers.length >= 1) {
+                    openClusterList(childMarkers, coords);
+                }
             })
             .catch(function () { });
     }
