@@ -305,7 +305,7 @@ internal static class PassportSsrShells
     {
         if (data.FromDiscovery)
         {
-            sb.Append("<p class=\"passport-ssr-back\"><a href=\"/candidate/ontdekkingsreis?stap=overview\" data-enhance-nav=\"false\" data-testid=\"passport-back-to-discovery\">");
+            sb.Append("<p class=\"passport-ssr-back\"><a class=\"passport-ssr-back-link btn btn-secondary\" href=\"/candidate/ontdekkingsreis?stap=overview\" data-enhance-nav=\"false\" data-testid=\"passport-back-to-discovery\"><span class=\"passport-ssr-back-link__icon\" aria-hidden=\"true\">←</span>");
             sb.Append(WebUtility.HtmlEncode(culture["Discovery.Passport.BackToJourney"]));
             sb.Append("</a></p>");
         }

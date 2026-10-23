@@ -388,7 +388,26 @@
         padding-inline-end: 5.5rem;
     }.app-shell:has(.passport-page) .app-main__content {
         padding-bottom: 5rem;
-    }}.passport-bubble {
+    }}.passport-ssr-back {
+    margin: 0 0 var(--space-4);
+}
+
+.passport-ssr-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.55rem 1rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.passport-ssr-back-link__icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.passport-bubble {
     display: flex;
     align-items: flex-start;
     gap: var(--space-3);

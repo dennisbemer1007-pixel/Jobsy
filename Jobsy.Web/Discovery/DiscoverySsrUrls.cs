@@ -23,7 +23,13 @@ internal static class DiscoverySsrUrls
             q.Add($"error={Uri.EscapeDataString(error)}");
         }
 
-        return $"{Path}?{string.Join("&", q)}";
+        var url = $"{Path}?{string.Join("&", q)}";
+        if (!string.IsNullOrWhiteSpace(fase))
+        {
+            url += "#halte-" + fase.Trim().ToLowerInvariant();
+        }
+
+        return url;
     }
 
     public static string Shed(int step) => WithStap(JourneyTestFlow.ShedQuery(step));
