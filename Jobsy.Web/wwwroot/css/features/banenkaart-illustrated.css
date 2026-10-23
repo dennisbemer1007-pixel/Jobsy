@@ -24,7 +24,10 @@
   .kb-nearby-banner__art {
     height: auto;
     min-height: 108px;
-    background-position: center 8%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: left center;
+    z-index: 0;
   }
 
   .kb-nearby-banner__copy {
@@ -32,6 +35,8 @@
     flex-direction: column;
     justify-content: center;
     min-height: 108px;
+    position: relative;
+    z-index: 1;
   }
 }
 

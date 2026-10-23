@@ -67,8 +67,8 @@ internal static class BanenkaartSsrShells
 
         sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
         sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-acc8\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-regfix1\" crossorigin=\"anonymous\" defer></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-regfix1\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261023-demo1\" crossorigin=\"anonymous\" defer></script>");
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261023-demo1\" crossorigin=\"anonymous\" defer></script>");
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -220,13 +220,9 @@ internal static class BanenkaartSsrShells
 
         if (model.HasMoreList)
         {
-            var next = BanenkaartSsrQuery.BuildUrl(model.Query with { Page = model.Query.Page + 1 });
-            var remaining = Math.Max(0, model.ListTotalCount - (model.Query.Page * BanenkaartSsrData.ListPageSize));
-            sb.Append("<a class=\"vacancy-list__more\" href=\"")
-                .Append(WebUtility.HtmlEncode(next))
-                .Append("\" data-testid=\"kb-load-more\">")
-                .Append(WebUtility.HtmlEncode(culture.Format("Discovery.ShowResults", Math.Max(remaining, BanenkaartSsrData.ListPageSize))))
-                .Append("</a>");
+            sb.Append("<button type=\"button\" class=\"vacancy-list__more\" data-testid=\"kb-load-more\">")
+                .Append(WebUtility.HtmlEncode("Meer laden"))
+                .Append("</button>");
         }
 
         sb.Append("</div></aside>");
@@ -282,7 +278,10 @@ internal static class BanenkaartSsrShells
             .Append("</h3><div class=\"filter-sheet__presets\" role=\"group\">");
         foreach (var m in new[] { 10, 20, 30, 45, 60 })
         {
-            sb.Append("<button type=\"button\" class=\"filter-sheet__chip\" data-kb-travel-preset=\"")
+            var presetSelected = m == q.MaxTravelMinutes ? " is-selected" : "";
+            sb.Append("<button type=\"button\" class=\"filter-sheet__chip")
+                .Append(presetSelected)
+                .Append("\" data-kb-travel-preset=\"")
                 .Append(m)
                 .Append("\" data-testid=\"kb-sheet-travel-")
                 .Append(m)
@@ -325,7 +324,7 @@ internal static class BanenkaartSsrShells
         if (model.Categories.Any(c => c.ShowInMapFilter))
         {
             sb.Append("<section class=\"filter-section\" data-filter-section=\"category\"><h3>")
-                .Append(WebUtility.HtmlEncode(culture["Kb.Filter.Category"]))
+                .Append(WebUtility.HtmlEncode(culture["Kb.Filter.WorkType"]))
                 .Append("</h3><div class=\"filter-sheet__chips\">");
             foreach (var cat in model.Categories.Where(c => c.ShowInMapFilter && c.IsActive))
             {
@@ -349,7 +348,7 @@ internal static class BanenkaartSsrShells
         }
 
         sb.Append("<section class=\"filter-section\" data-filter-section=\"branch\"><h3>")
-            .Append(WebUtility.HtmlEncode(culture["Kb.Filter.WorkType"]))
+            .Append(WebUtility.HtmlEncode(culture["Kb.Filter.Category"]))
             .Append("</h3>");
         foreach (var label in model.BranchOptions)
         {

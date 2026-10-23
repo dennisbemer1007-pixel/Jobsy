@@ -595,6 +595,7 @@ if (app.Environment.IsDevelopment() && !skipHttpsRedirect)
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<PrecompressedStaticFileMiddleware>();
 app.UseStaticFiles(WebPerformanceExtensions.JobsyStaticFiles());
 app.UseMiddleware<VersionedAssetCacheMiddleware>();
 

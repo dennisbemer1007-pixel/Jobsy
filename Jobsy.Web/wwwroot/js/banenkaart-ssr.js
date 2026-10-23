@@ -22,6 +22,7 @@
     }
 
     var BK_UI_KEY = "jobsy.bk.ui.v1";
+    var BK_VIEW_KEY = "jobsy.bk.view.v1";
 
     function readUiState() {
         try {
@@ -52,12 +53,27 @@
         } catch (eUnlock) { }
     }
 
+    function syncTravelPresetFromSlider() {
+        var slider = qs("[data-testid=kb-sheet-travel-slider]");
+        if (!slider) {
+            return;
+        }
+        var val = parseInt(slider.value, 10);
+        qsa("[data-kb-travel-preset]").forEach(function (btn) {
+            var preset = parseInt(btn.getAttribute("data-kb-travel-preset"), 10);
+            btn.classList.toggle("is-selected", preset === val);
+        });
+    }
+
     function setFiltersOpen(open) {
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (!root) {
             return;
         }
         root.classList.toggle("filters-open", open);
+        if (open) {
+            syncTravelPresetFromSlider();
+        }
         if (!open) {
             ensureBodyScrollUnlocked();
         }
@@ -142,8 +158,59 @@
                 var val = btn.getAttribute("data-kb-travel-preset");
                 if (slider && val) {
                     slider.value = val;
+                    syncTravelPresetFromSlider();
                 }
             });
+        });
+        var travelSlider = qs("[data-testid=kb-sheet-travel-slider]");
+        if (travelSlider) {
+            travelSlider.addEventListener("input", syncTravelPresetFromSlider);
+            travelSlider.addEventListener("change", syncTravelPresetFromSlider);
+            syncTravelPresetFromSlider();
+        }
+    }
+
+    function bindKeywordFields() {
+        if (document.documentElement.dataset.banenkaartKeywordSync === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartKeywordSync = "1";
+        var inputs = qsa("[data-banenkaart-ssr=\"1\"] input[name=\"q\"][form=\"kb-filter-form\"]");
+        function syncFrom(source) {
+            var val = source.value;
+            inputs.forEach(function (el) {
+                if (el !== source) {
+                    el.value = val;
+                }
+            });
+        }
+        inputs.forEach(function (el) {
+            el.addEventListener("input", function () { syncFrom(el); });
+        });
+    }
+
+    function bindListActions() {
+        if (document.documentElement.dataset.banenkaartListActions === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartListActions = "1";
+        document.addEventListener("click", function (ev) {
+            var target = ev.target;
+            if (!target || !target.closest) {
+                return;
+            }
+            if (target.closest("[data-testid=kb-load-more]")) {
+                ev.preventDefault();
+                if (window.jobsyBanenkaartCatalog
+                    && typeof window.jobsyBanenkaartCatalog.loadMoreListRows === "function") {
+                    window.jobsyBanenkaartCatalog.loadMoreListRows();
+                }
+                return;
+            }
+            if (target.closest("[data-testid=kb-widen-filters]")) {
+                ev.preventDefault();
+                setFiltersOpen(true);
+            }
         });
     }
 
@@ -160,6 +227,11 @@
             root.classList.toggle("show-list", !on);
             writeUiState({ showMap: !!on });
             ensureBodyScrollUnlocked();
+            if (on && window.jobMap && typeof window.jobMap.invalidate === "function") {
+                requestAnimationFrame(function () {
+                    window.jobMap.invalidate();
+                });
+            }
             if (mapBtn) {
                 mapBtn.classList.toggle("is-active", on);
                 mapBtn.setAttribute("aria-checked", on ? "true" : "false");
@@ -368,6 +440,97 @@
         ensureBodyScrollUnlocked();
     }
 
+    function listScroller() {
+        return qs(".jobsy-discovery[data-banenkaart-ssr=\"1\"] .vacancy-list")
+            || qs(".jobsy-discovery[data-banenkaart-ssr=\"1\"] .vacancy-pane");
+    }
+
+    function captureBanenkaartViewState() {
+        var state = { savedAt: Date.now() };
+        try {
+            var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+            if (map && typeof map.getCenter === "function") {
+                var c = map.getCenter();
+                state.zoom = map.getZoom();
+                state.center = [c.lng, c.lat];
+            }
+        } catch (eMap) { }
+        var scroller = listScroller();
+        if (scroller) {
+            state.listScrollTop = scroller.scrollTop;
+        }
+        try {
+            sessionStorage.setItem(BK_VIEW_KEY, JSON.stringify(state));
+        } catch (eStore) { }
+    }
+
+    function restoreBanenkaartViewState() {
+        var raw;
+        try {
+            raw = sessionStorage.getItem(BK_VIEW_KEY);
+        } catch (eRead) {
+            return;
+        }
+        if (!raw) {
+            return;
+        }
+        var state;
+        try {
+            state = JSON.parse(raw);
+        } catch (eParse) {
+            return;
+        }
+        if (!state || !state.center || state.zoom == null) {
+            return;
+        }
+        whenMapIdle(function () {
+            try {
+                var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                if (map && typeof map.jumpTo === "function") {
+                    map.jumpTo({
+                        center: state.center,
+                        zoom: state.zoom,
+                        duration: 0
+                    });
+                }
+            } catch (eJump) { }
+            var scroller = listScroller();
+            if (scroller && typeof state.listScrollTop === "number") {
+                scroller.scrollTop = state.listScrollTop;
+            }
+            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+                window.jobMap.invalidate();
+            }
+        });
+    }
+
+    function bindVacancyBackRestore() {
+        if (document.documentElement.dataset.banenkaartVacancyNav === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartVacancyNav = "1";
+        document.addEventListener("click", function (ev) {
+            var target = ev.target;
+            if (!target || !target.closest) {
+                return;
+            }
+            var link = target.closest("a[href*=\"/vacancies/\"]");
+            if (!link || !qs("[data-banenkaart-ssr=\"1\"]")) {
+                return;
+            }
+            captureBanenkaartViewState();
+        }, true);
+    }
+
+    function isBackForwardNavigation() {
+        try {
+            var nav = performance.getEntriesByType("navigation")[0];
+            return !!(nav && nav.type === "back_forward");
+        } catch (eNav) {
+            return false;
+        }
+    }
+
     function restoreUiStateFromSession() {
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (!root) {
@@ -439,6 +602,9 @@
         window.addEventListener("pageshow", function (ev) {
             restoreUiStateFromSession();
             resumeMapLayout();
+            if (ev.persisted || isBackForwardNavigation()) {
+                restoreBanenkaartViewState();
+            }
         });
     }
 
@@ -448,6 +614,9 @@
             return;
         }
         bindLifecycleResume();
+        bindVacancyBackRestore();
+        bindKeywordFields();
+        bindListActions();
         bindViewportLayout();
         applyInitialUiState();
         bindGuestFilterPersistence();

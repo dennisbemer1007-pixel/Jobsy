@@ -12,6 +12,14 @@
     var lastEtag = null;
     var lastLoadedAt = 0;
     var networkInFlight = null;
+    var listShown = 20;
+    var currentListFilters = null;
+    var LIST_PAGE = 20;
+
+    var WORK_TYPE_FLAG = {
+        horeca: 1, winkel: 2, logistiek: 4, tuinbouw: 8, zorg: 16,
+        kantoor: 32, bouw: 64, schoonmaak: 128, productie: 256
+    };
 
     var IDB_NAME = "jobsy.bk.catalog.v1";
     var IDB_STORE = "catalog";
@@ -212,7 +220,19 @@
             }
         }
         if (filters.workTypes && filters.workTypes.length) {
-            /* work type labels matched loosely via bitflags omitted — server SSR already filtered list */
+            var wt = Number(row.workTypes) || 0;
+            var branchOk = false;
+            for (var wi = 0; wi < filters.workTypes.length; wi++) {
+                var key = String(filters.workTypes[wi] || "").toLowerCase();
+                var bit = WORK_TYPE_FLAG[key] || 0;
+                if (bit && (wt & bit) !== 0) {
+                    branchOk = true;
+                    break;
+                }
+            }
+            if (!branchOk) {
+                return false;
+            }
         }
         var minH = filters.minHours != null ? filters.minHours : 0;
         var maxH = filters.maxHours != null ? filters.maxHours : 40;
@@ -342,15 +362,28 @@
         }
     }
 
+    function syncMapTravel(filters) {
+        if (!filters || !window.jobMap) {
+            return;
+        }
+        if (typeof window.jobMap.setTravelOptions === "function") {
+            window.jobMap.setTravelOptions({
+                maxMinutes: filters.maxMinutes,
+                transport: filters.transport
+            });
+        }
+    }
+
     function applyToMap(filters) {
         if (!rows) {
             return;
         }
-        var mapPins = filterRows(rows, filters, true);
+        syncMapTravel(filters);
+        var mapPins = filterRows(rows, filters, false);
         var pins = mapPins.map(toPin);
         if (window.jobMap && typeof window.jobMap.setVacanciesFromCatalog === "function") {
             window.jobMap.setVacanciesFromCatalog(pins, {
-                zoomOutsideTravel: mapPins.length > 0 && !filterRows(rows, filters, false).length
+                zoomOutsideTravel: false
             });
         } else {
             var travelPins = filterRows(rows, filters, false);
@@ -409,6 +442,14 @@
         if (!Array.isArray(categoryIds)) {
             categoryIds = [categoryIds];
         }
+        var workTypes = data.workType || [];
+        if (!Array.isArray(workTypes)) {
+            workTypes = workTypes ? [workTypes] : [];
+        }
+        var keyword = readKeywordFromUi();
+        if (keyword != null) {
+            data.q = keyword;
+        }
         return {
             q: data.q || null,
             maxMinutes: parseInt(data.maxMinutes, 10) || boot.maxMinutes || 20,
@@ -418,10 +459,69 @@
             minWageCents: data.minWage != null && data.minWage !== "" ? Math.round(parseFloat(data.minWage) * 100) : null,
             maxWageCents: data.maxWage != null && data.maxWage !== "" ? Math.round(parseFloat(data.maxWage) * 100) : null,
             categoryIds: categoryIds,
+            workTypes: workTypes,
             originLat: origin.originLat != null ? origin.originLat : boot.originLat,
             originLng: origin.originLng != null ? origin.originLng : boot.originLng,
             originLabel: origin.originLabel || boot.originLabel || null
         };
+    }
+
+    function readKeywordFromUi() {
+        var inputs = document.querySelectorAll(
+            "[data-banenkaart-ssr=\"1\"] input[name=\"q\"][form=\"kb-filter-form\"], #kb-filter-form input[name=\"q\"]"
+        );
+        if (!inputs.length) {
+            return null;
+        }
+        var best = "";
+        for (var i = 0; i < inputs.length; i++) {
+            var el = inputs[i];
+            if (el.offsetParent === null && el.type !== "hidden") {
+                continue;
+            }
+            var val = String(el.value || "");
+            if (val.length >= best.length) {
+                best = val;
+            }
+        }
+        return best.trim() || null;
+    }
+
+    function vacancyHref(id, filters) {
+        var href = "/vacancies/" + encodeURIComponent(id);
+        if (!filters) {
+            return href;
+        }
+        var q = [];
+        if (filters.transport) {
+            q.push("transport=" + encodeURIComponent(filters.transport));
+        }
+        if (filters.maxMinutes) {
+            q.push("maxMinutes=" + filters.maxMinutes);
+        }
+        return q.length ? href + "?" + q.join("&") : href;
+    }
+
+    function travelSubtitle(filters, count) {
+        var mins = filters && filters.maxMinutes ? filters.maxMinutes : 20;
+        var mode = filters && filters.transport ? filters.transport : "Fiets";
+        return count + " banen binnen " + mins + " min " + mode.toLowerCase();
+    }
+
+    function updateResultChrome(filters, travelCount) {
+        var sub = travelSubtitle(filters, travelCount);
+        document.querySelectorAll(
+            "[data-testid=kb-desktop-result-count], [data-testid=kb-mobile-result-count], .results-meta__count"
+        ).forEach(function (el) {
+            el.textContent = travelCount + " banen";
+        });
+        document.querySelectorAll(".kb-nearby-banner__sub, .kb-filter-bar__count-sub").forEach(function (el) {
+            el.textContent = sub;
+        });
+        var loadMore = document.querySelector("[data-testid=kb-load-more]");
+        if (loadMore) {
+            loadMore.style.display = travelCount > listShown ? "" : "none";
+        }
     }
 
     function buildBanenkaartUrl(filters) {
@@ -446,6 +546,11 @@
                 q.push("categoryId=" + encodeURIComponent(id));
             });
         }
+        if (filters.workTypes && filters.workTypes.length) {
+            filters.workTypes.forEach(function (wt) {
+                q.push("workType=" + encodeURIComponent(wt));
+            });
+        }
         if (filters.originLat != null && filters.originLng != null) {
             q.push("originLat=" + filters.originLat);
             q.push("originLng=" + filters.originLng);
@@ -464,13 +569,35 @@
             .replace(/"/g, "&quot;");
     }
 
-    function renderListRows(listRows, filters) {
+    function renderListRows(listRows, filters, resetPage) {
+        if (resetPage !== false) {
+            listShown = LIST_PAGE;
+        }
+        currentListFilters = filters;
         var travelRows = filterRows(listRows, filters, false);
-        var pageSize = 20;
-        var slice = travelRows.slice(0, pageSize);
+        var slice = travelRows.slice(0, listShown);
+        var listRoot = document.querySelector("[data-banenkaart-ssr=\"1\"] [data-testid=vacancy-list]");
+        if (!listRoot) {
+            return travelRows.length;
+        }
+        listRoot.querySelectorAll("[data-testid=kb-empty-travel], .state-message").forEach(function (el) {
+            el.remove();
+        });
+        listRoot.querySelectorAll("[data-testid=kb-list-rows]").forEach(function (el) {
+            el.remove();
+        });
+        if (travelRows.length === 0) {
+            listRoot.insertAdjacentHTML(
+                "afterbegin",
+                "<p class=\"state-message\" data-testid=\"kb-empty-travel\">Geen vacatures binnen je reistijd</p>"
+                + "<button type=\"button\" class=\"vacancy-list__more\" data-testid=\"kb-widen-filters\">Filters verruimen</button>"
+            );
+            updateResultChrome(filters, 0);
+            return 0;
+        }
         var html = "<div class=\"kb-list-rows\" data-testid=\"kb-list-rows\">";
         slice.forEach(function (row, index) {
-            var href = "/vacancies/" + row.id;
+            var href = vacancyHref(row.id, filters);
             var mins = travelMinutes(
                 filters.originLat != null ? { lat: filters.originLat, lng: filters.originLng } : null,
                 row.lat,
@@ -479,7 +606,7 @@
             html += "<article class=\"kb-list-row kb-list-row--compact\" data-vacancy-id=\""
                 + escapeHtml(row.id)
                 + "\" data-testid=\"kb-list-row\">";
-            html += "<a class=\"kb-list-row__media\" href=\"" + href + "\">";
+            html += "<a class=\"kb-list-row__media\" href=\"" + escapeHtml(href) + "\">";
             if (row.imageUrl) {
                 html += "<img class=\"kb-list-row__photo\" src=\"" + escapeHtml(row.imageUrl)
                     + "\" alt=\"\" width=\"150\" height=\"93\" loading=\"" + (index === 0 ? "eager" : "lazy")
@@ -489,29 +616,21 @@
                 html += "<span class=\"kb-list-row__travel-badge\">± " + mins + " min</span>";
             }
             html += "</a><div class=\"kb-list-row__body\"><div class=\"kb-list-row__top\"><div class=\"kb-list-row__titles\">";
-            html += "<h2 class=\"kb-list-row__title\"><a href=\"" + href + "\">" + escapeHtml(row.title) + "</a></h2>";
+            html += "<h2 class=\"kb-list-row__title\"><a href=\"" + escapeHtml(href) + "\">" + escapeHtml(row.title) + "</a></h2>";
             html += "<p class=\"kb-list-row__company\">" + escapeHtml(row.company) + "</p></div></div></div></article>";
         });
         html += "</div>";
-        var listRoot = document.querySelector("[data-banenkaart-ssr=\"1\"] [data-testid=vacancy-list]");
-        if (!listRoot) {
-            return travelRows.length;
-        }
-        var empty = listRoot.querySelector("[data-testid=kb-empty-travel]");
-        if (empty) {
-            empty.remove();
-        }
-        var existing = listRoot.querySelector("[data-testid=kb-list-rows]");
-        if (existing) {
-            existing.outerHTML = html;
-        } else {
-            listRoot.insertAdjacentHTML("afterbegin", html);
-        }
-        var countEl = document.querySelector(".results-meta__count, [data-testid=kb-results-count]");
-        if (countEl) {
-            countEl.textContent = travelRows.length + " banen";
-        }
+        listRoot.insertAdjacentHTML("afterbegin", html);
+        updateResultChrome(filters, travelRows.length);
         return travelRows.length;
+    }
+
+    function loadMoreListRows() {
+        if (!rows || !currentListFilters) {
+            return;
+        }
+        listShown += LIST_PAGE;
+        renderListRows(rows, currentListFilters, false);
     }
 
     function patchBootFilters(filters) {
@@ -569,6 +688,8 @@
         buildBanenkaartUrl: buildBanenkaartUrl,
         applyClientFilters: applyClientFilters,
         renderListRows: renderListRows,
+        loadMoreListRows: loadMoreListRows,
+        readKeywordFromUi: readKeywordFromUi,
         prefetch: function () {
             return fetchCatalog(false);
         },

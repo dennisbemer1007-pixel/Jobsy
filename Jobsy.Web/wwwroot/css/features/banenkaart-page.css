@@ -293,6 +293,34 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
 
 /* Desktop empty travel: compact list rail (mockup 01), no tall illustration header. */
 @media (min-width: 900px) {
+    /* Beat kandidaat-banen.css .kb-list-row--compact { grid-template-columns: 1fr } on SSR banenkaart. */
+    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row.kb-list-row--compact {
+        display: grid;
+        grid-template-columns: 9.375rem minmax(0, 1fr);
+        gap: 0.65rem;
+        padding: 0.5rem 0.6rem;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__media {
+        width: 9.375rem;
+        height: 5.8125rem;
+        max-width: 9.375rem;
+        max-height: 5.8125rem;
+        aspect-ratio: auto;
+        border-radius: 8px;
+    }
+
+    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__photo {
+        max-width: 9.375rem;
+        max-height: 5.8125rem;
+    }
+
+    .jobsy-discovery[data-banenkaart-ssr="1"] .kb-list-row--compact .kb-list-row__body {
+        padding: 0;
+    }
+
     .jobsy-discovery.kb-ssr-travel-empty .kb-nearby-banner {
         display: none;
     }
