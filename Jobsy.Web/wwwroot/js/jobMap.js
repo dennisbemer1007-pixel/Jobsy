@@ -962,61 +962,292 @@ window.jobMap = (function () {
         return escapeHtml(text);
     }
 
-    function buildLagenCatalogPopupHtml(v, sheetMode) {
+    function lagenPopupIsEnglish() {
+        try {
+            const lang = (document.documentElement && document.documentElement.lang) || "";
+            return String(lang).toLowerCase().indexOf("en") === 0;
+        } catch (eLang) {
+            return false;
+        }
+    }
+
+    function lagenIsIntermediaryPin(v) {
+        if (!v) {
+            return false;
+        }
+        if (v.offeredBy) {
+            return true;
+        }
+        const kind = String(v.pinKind || v.agency || "");
+        return kind === "intermediary" || kind === "1";
+    }
+
+    function lagenChevronRightSvg() {
+        return "<svg class=\"ic s\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10 7l5 5-5 5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>";
+    }
+
+    function lagenChevronLeftSvg() {
+        return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M14.5 6l-6 6 6 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>";
+    }
+
+    function lagenCloseSvg() {
+        return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"/></svg>";
+    }
+
+    function lagenClockSvg() {
+        return "<svg class=\"ic s\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/><path d=\"M12 8v4.5l3 2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"/></svg>";
+    }
+
+    function lagenDocSvg() {
+        return "<svg class=\"ic s\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 3.5h7l4 4V20H7z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linejoin=\"round\"/><path d=\"M14 3.5V8h4M10 12h5M10 15.5h5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"/></svg>";
+    }
+
+    function lagenWageAgeLabel(ageYears) {
+        const en = lagenPopupIsEnglish();
+        const age = Number(ageYears);
+        if (age >= 21) {
+            return en ? "21 years and over" : "21 jaar en ouder";
+        }
+        if (age === 14) {
+            return en ? "14 years" : "14 jaar";
+        }
+        return en ? (age + " years") : (age + " jaar");
+    }
+
+    function lagenVacancyCounter(current, total) {
+        const en = lagenPopupIsEnglish();
+        if (en) {
+            return current + " of " + total;
+        }
+        return current + " van " + total;
+    }
+
+    function normalizeLagenWageBands(v) {
+        if (Array.isArray(v.wageBands) && v.wageBands.length) {
+            return v.wageBands.slice();
+        }
+        if (Array.isArray(v.wageByAge) && v.wageByAge.length) {
+            return v.wageByAge.map(function (b) {
+                return {
+                    ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
+                    hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
+                    label: b.label || b.Label || ""
+                };
+            });
+        }
+        const adult = Number(v.wage);
+        if (!Number.isFinite(adult) || adult <= 0) {
+            return [];
+        }
+        const fracs = [
+            { ageYears: 15, f: 0.30 },
+            { ageYears: 16, f: 0.345 },
+            { ageYears: 17, f: 0.395 },
+            { ageYears: 18, f: 0.50 },
+            { ageYears: 19, f: 0.60 },
+            { ageYears: 20, f: 0.80 },
+            { ageYears: 21, f: 1.00 }
+        ];
+        return fracs.map(function (row) {
+            return {
+                ageYears: row.ageYears,
+                hourlyRate: Math.round(adult * row.f * 100) / 100,
+                label: String(row.ageYears)
+            };
+        });
+    }
+
+    function lagenHighlightBandAge(bands, candidateAge) {
+        const age = Number(candidateAge);
+        if (!Number.isFinite(age)) {
+            return null;
+        }
+        const clamped = Math.max(14, Math.min(99, age));
+        let match = null;
+        bands.forEach(function (b) {
+            const ay = Number(b.ageYears);
+            if (Number.isFinite(ay) && ay <= clamped) {
+                match = ay;
+            }
+        });
+        return match;
+    }
+
+    function lagenWageTooltipHtml(v, open) {
+        const bands = normalizeLagenWageBands(v);
+        if (!bands.length) {
+            return "";
+        }
+        const en = lagenPopupIsEnglish();
+        const title = en
+            ? (uiLabels.wageTooltipTitleEn || "Hourly wage (gross)")
+            : (uiLabels.wageTooltipTitle || "Uurloon (bruto)");
+        const candidateAge = uiLabels.candidateAgeYears != null
+            ? Number(uiLabels.candidateAgeYears)
+            : 21;
+        const highlightAge = lagenHighlightBandAge(bands, candidateAge);
+        const rows = [];
+        const age15 = bands.find(function (b) { return Number(b.ageYears) === 15; }) || bands[0];
+        rows.push({ ageYears: 14, hourlyRate: age15.hourlyRate, me: candidateAge === 14 });
+        bands.forEach(function (b) {
+            const ay = Number(b.ageYears);
+            rows.push({
+                ageYears: ay,
+                hourlyRate: b.hourlyRate,
+                me: highlightAge != null && ay === highlightAge
+            });
+        });
+        const uniq = [];
+        rows.forEach(function (r) {
+            if (!uniq.some(function (u) { return u.ageYears === r.ageYears; })) {
+                uniq.push(r);
+            }
+        });
+        const body = uniq.map(function (r) {
+            const cls = r.me ? "tr2 me" : "tr2";
+            return "<div class=\"" + cls + "\"><span>" + escapeHtml(lagenWageAgeLabel(r.ageYears)) +
+                "</span><span>€ " + formatWage(r.hourlyRate) + "</span></div>";
+        }).join("");
+        return "<div class=\"tip\" role=\"tooltip\"" + (open ? "" : " hidden") + "><b>" + escapeHtml(title) +
+            "</b>" + body + "</div>";
+    }
+
+    function lagenWorkplacePhotoHtml(v) {
+        const src = v.imageUrl ? String(v.imageUrl) : "";
+        const fallback = workTypeFallbackPhoto(v);
+        const photo = src || fallback;
+        if (!photo) {
+            return "<div class=\"fph fph--empty\" aria-hidden=\"true\"></div>";
+        }
+        return "<div class=\"fph\"><img src=\"" + escapeAttr(photo) +
+            "\" alt=\"\" width=\"400\" height=\"180\" loading=\"lazy\" decoding=\"async\" /></div>";
+    }
+
+    function lagenContractText(v) {
+        const wt = String(v.workType || (v.workTypes && v.workTypes[0]) || "").trim();
+        if (wt) {
+            return wt;
+        }
+        const en = lagenPopupIsEnglish();
+        return en ? "Flexible contract" : "Flexibel contract";
+    }
+
+    function lagenTravelFactText(v) {
+        if (v.travelMinutes == null || v.travelMinutes === "") {
+            return "";
+        }
+        const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+        return String(v.travelMinutes) + " min " + mode;
+    }
+
+    function lagenTypeLabelHtml(v) {
         const ic = window.jobsyBanenkaartMapIcons;
-        const typeLabel = ic && typeof ic.typeMarkerHtml === "function"
-            ? ic.typeMarkerHtml(v, true)
+        const via = lagenIsIntermediaryPin(v);
+        const en = lagenPopupIsEnglish();
+        const text = via
+            ? (en ? "Via intermediary" : "Via intermediair")
+            : (en ? "At employer" : "Bij werkgever");
+        const pinSvg = ic && (via ? ic.pinI : ic.pinW)
+            ? (via ? ic.pinI(0.46, false, false) : ic.pinW(0.46))
             : "";
-        const detailHref = detailHrefForVacancy(v.id);
-        const desc = lagenDescriptionLine(v);
-        const title = escapeHtml(v.title || vacancyFallbackTitle());
-        const company = escapeHtml(v.company || "");
-        let orgInner = company;
-        if (desc) {
-            orgInner += (orgInner ? "<br>" : "") + desc;
-        }
-        const travel = lagenTravelLineHtml(v);
-        const travelInner = travel
-            ? travel.replace(/class=\"kb-popup__travel[^\"]*\"/, "class=\"rt\"")
-                .replace(/<p /, "<div ").replace(/<\/p>/, "</div>")
-            : "";
-        const typeBlock = typeLabel
-            ? "<div class=\"kb-popup__type\">" + typeLabel + "</div>"
-            : "";
-        if (sheetMode) {
-            return (
-                typeBlock +
-                "<h3 class=\"map-popup__title map-popup__title--lagen\">" + title + "</h3>" +
-                (orgInner ? "<div class=\"org\">" + orgInner + "</div>" : "") +
-                travelInner +
-                "<a class=\"go map-popup__view map-popup__cta map-popup__view--primary\" href=\"" +
-                    escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>"
-            );
-        }
-        const closeX = "<button type=\"button\" class=\"x map-cluster-sheet__close\" data-cluster-close aria-label=\"" +
-            escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>";
+        return "<span class=\"flab " + (via ? "i" : "w") + "\">" + pinSvg + escapeHtml(text) + "</span>";
+    }
+
+    function lagenHeartHtml(v) {
+        const liked = !!v.liked;
+        const label = liked
+            ? (uiLabels.saved || "Bewaard")
+            : (uiLabels.save || "Bewaar");
         return (
-            closeX +
-            typeBlock +
-            "<h3>" + title + "</h3>" +
-            (orgInner ? "<div class=\"org\">" + orgInner + "</div>" : "") +
-            travelInner +
-            "<a class=\"go map-popup__view map-popup__cta map-popup__view--primary\" href=\"" +
-                escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>"
+            "<button type=\"button\" class=\"hrt map-popup__heart" + (liked ? " is-saved" : "") + "\" " +
+                "data-save-job=\"" + escapeAttr(v.id) + "\" " +
+                "aria-pressed=\"" + (liked ? "true" : "false") + "\" " +
+                "aria-label=\"" + escapeAttr(label) + "\">" +
+                heartIconHtml(liked) +
+            "</button>"
         );
     }
 
-    function buildLagenMobileSheetShell(viewportInner) {
-        return (
-            "<div class=\"map-cluster-sheet map-cluster-sheet--lagen map-popup--docked\" data-cluster-card=\"1\">" +
-                "<div class=\"grab\" aria-hidden=\"true\"></div>" +
-                "<button type=\"button\" class=\"map-cluster-card__close map-cluster-sheet__close\" data-cluster-close aria-label=\"" +
-                    escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>" +
-                "<div class=\"map-cluster-card__body map-cluster-card__body--lagen\">" +
-                    "<div class=\"map-cluster-card__viewport\" data-cluster-viewport>" + viewportInner + "</div>" +
-                "</div>" +
+    function buildLagenFundaPopupHtml(v, opts) {
+        opts = opts || {};
+        const mobile = !!opts.mobile;
+        const page = Math.max(1, Number(opts.page) || 1);
+        const pageCount = Math.max(1, Number(opts.pageCount) || 1);
+        const cluster = !!opts.cluster || pageCount > 1;
+        const wageOpen = !!opts.wageTipOpen;
+        const detailHref = detailHrefForVacancy(v.id);
+        const title = escapeHtml(v.title || vacancyFallbackTitle());
+        const orgName = escapeHtml(String(v.company || ""));
+        const viaPrefix = lagenIsIntermediaryPin(v) ? "via " : "";
+        const place = escapeHtml(String(v.place || v.address || ""));
+        const hours = escapeHtml(hoursMetaText(v) || (lagenPopupIsEnglish() ? "Hours vary" : "Uren variabel"));
+        const contract = escapeHtml(lagenContractText(v));
+        const travel = lagenTravelFactText(v);
+        const ic = window.jobsyBanenkaartMapIcons;
+        const bike = ic && ic.bikeSvg ? ic.bikeSvg.replace("class=\"ic\"", "class=\"ic s\"") : "";
+        const nav = cluster
+            ? "<div class=\"fnav\" role=\"navigation\" aria-label=\"" + escapeAttr(uiLabels.pagerNav || "Vacatures") + "\">" +
+                "<button type=\"button\" class=\"fb\" data-lagen-prev aria-label=\"" + escapeAttr(uiLabels.prevVacancy || "Vorige") + "\">" +
+                    lagenChevronLeftSvg() + "</button>" +
+                "<span class=\"fcount\" data-lagen-counter aria-live=\"polite\">" +
+                    escapeHtml(lagenVacancyCounter(page, pageCount)) + "</span>" +
+                "<button type=\"button\" class=\"fb\" data-lagen-next aria-label=\"" + escapeAttr(uiLabels.nextVacancy || "Volgende") + "\">" +
+                    lagenChevronRightSvg() + "</button>" +
             "</div>"
+            : "";
+        const tip = lagenWageTooltipHtml(v, wageOpen);
+        const euroBtn = tip
+            ? "<button type=\"button\" class=\"fb euro" + (wageOpen ? " on" : "") + "\" data-lagen-wage aria-expanded=\"" +
+                (wageOpen ? "true" : "false") + "\" aria-label=\"" +
+                escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" + tip + "</button>"
+            : "<span class=\"fb euro is-disabled\" aria-hidden=\"true\">€</span>";
+        const photoBlock = lagenWorkplacePhotoHtml(v);
+        const bodyInner = mobile
+            ? "<div class=\"fbody\"><div class=\"fbody-media\">" + photoBlock + "</div><div class=\"finfo\">" +
+                "<div class=\"flrow\">" + lagenTypeLabelHtml(v) + lagenHeartHtml(v) + "</div>" +
+                "<h3>" + title + "</h3>" +
+                "<div class=\"femp\">" + viaPrefix + orgName + "</div>" +
+                (place ? "<div class=\"fpl\">" + place + "</div>" : "") +
+                "<div class=\"ffacts\">" +
+                    (travel ? "<span>" + bike + escapeHtml(travel) + "</span>" : "") +
+                    "<span>" + lagenClockSvg() + hours + "</span>" +
+                    "<span>" + lagenDocSvg() + contract + "</span>" +
+                "</div></div></div>"
+            : photoBlock +
+                "<div class=\"finfo\"><div class=\"flrow\">" + lagenTypeLabelHtml(v) + lagenHeartHtml(v) + "</div>" +
+                "<h3>" + title + "</h3>" +
+                "<div class=\"femp\">" + viaPrefix + orgName + "</div>" +
+                (place ? "<div class=\"fpl\">" + place + "</div>" : "") +
+                "<div class=\"ffacts\">" +
+                    (travel ? "<span>" + bike + escapeHtml(travel) + "</span>" : "") +
+                    "<span>" + lagenClockSvg() + hours + "</span>" +
+                    "<span>" + lagenDocSvg() + contract + "</span>" +
+                "</div></div>";
+        return (
+            "<div class=\"fcw kb-lagen-fcw" + (mobile ? " m" : "") + (wageOpen ? " lagen-wage-open" : "") + "\" data-lagen-fcw=\"1\">" +
+                "<div class=\"fctl\">" + nav + "<span class=\"sp\"></span>" + euroBtn +
+                "<button type=\"button\" class=\"fb fx\" data-lagen-close aria-label=\"" +
+                    escapeAttr(uiLabels.close || "Sluiten") + "\">" + lagenCloseSvg() + "</button></div>" +
+                "<div class=\"fc" + (mobile ? " m" : "") + "\">" + bodyInner +
+                "<a class=\"fgo map-popup__view map-popup__cta\" href=\"" + escapeAttr(detailHref) +
+                    "\" data-job-id=\"" + escapeAttr(v.id) + "\"><span>" +
+                    (lagenPopupIsEnglish() ? "View vacancy" : "Bekijk vacature") + "</span>" +
+                    lagenChevronRightSvg() + "</a></div></div>"
         );
+    }
+
+    function buildLagenCatalogPopupHtml(v, sheetMode) {
+        return buildLagenFundaPopupHtml(v, {
+            mobile: !!sheetMode,
+            page: 1,
+            pageCount: 1,
+            cluster: false,
+            wageTipOpen: false
+        });
+    }
+
+    function buildLagenMobileSheetShell(viewportInner) {
+        return "<div class=\"fcwrap kb-lagen-fcwrap\">" + viewportInner + "</div>";
     }
 
     function buildPopupHtml(v) {
@@ -1294,6 +1525,15 @@ window.jobMap = (function () {
             return "<div class=\"map-popup\"><div class=\"map-popup__main\"><div class=\"map-popup__body\">" +
                 "<p class=\"map-popup__company\">" + escapeHtml(noVacanciesLabel()) + "</p></div></div></div>";
         }
+        if (lagenLayout && catalogModeActive && clusterUiState) {
+            return buildLagenFundaPopupHtml(job, {
+                mobile: isNarrowViewport(),
+                page: clusterUiState.page,
+                pageCount: clusterUiState.pageCount,
+                cluster: clusterUiState.pageCount > 1,
+                wageTipOpen: !!clusterUiState.wageTipOpen
+            });
+        }
         if (job._detailLoaded) {
             return buildPopupHtml(job);
         }
@@ -1385,6 +1625,16 @@ window.jobMap = (function () {
         if (!state || !state.root) {
             return;
         }
+        if (lagenLayout && catalogModeActive) {
+            const total = state.pageCount;
+            const current = state.page;
+            const lagenCounter = state.root && state.root.querySelector("[data-lagen-counter]");
+            if (lagenCounter) {
+                lagenCounter.textContent = lagenVacancyCounter(current, total);
+            }
+            syncSheetChromeOffset();
+            return;
+        }
         if (lagenLayout && isNarrowViewport()) {
             syncSheetChromeOffset();
             return;
@@ -1459,7 +1709,7 @@ window.jobMap = (function () {
         if (!pane) {
             return;
         }
-        const sheet = pane.querySelector(".map-cluster-sheet");
+        const sheet = pane.querySelector(".fcwrap.kb-lagen-fcwrap, .map-cluster-sheet--lagen, .map-cluster-sheet");
         const h = sheet && sheet.offsetParent !== null ? sheet.offsetHeight : 0;
         pane.style.setProperty("--map-cluster-sheet-h", h + "px");
     }
@@ -1702,9 +1952,27 @@ window.jobMap = (function () {
                 });
                 jobs[current - 1] = resolved;
             }
-            const html = buildClusterPinHtml(resolved || job);
-            const slide = setClusterSlideHtml(state.viewport, html, direction || 0, !!inPlace || !!replaceInPlace);
-            bindClusterSlideInteractions(slide || state.viewport, childMarkers);
+            if (lagenLayout && catalogModeActive) {
+                const mobile = isNarrowViewport();
+                const html = buildLagenFundaPopupHtml(resolved || job, {
+                    mobile: mobile,
+                    page: current,
+                    pageCount: pageCount,
+                    cluster: pageCount > 1,
+                    wageTipOpen: !!state.wageTipOpen
+                });
+                if (state.root) {
+                    const parent = state.root.parentNode;
+                    state.root.outerHTML = html;
+                    state.root = parent && parent.querySelector("[data-lagen-fcw]");
+                    const host = activeClusterPopup && activeClusterPopup.getElement();
+                    bindLagenFundaInteractions(host || parent, childMarkers);
+                }
+            } else {
+                const html = buildClusterPinHtml(resolved || job);
+                const slide = setClusterSlideHtml(state.viewport, html, direction || 0, !!inPlace || !!replaceInPlace);
+                bindClusterSlideInteractions(slide || state.viewport, childMarkers);
+            }
             preloadClusterImages(jobs, current);
             if (popup && typeof popup.update === "function" && !state.docked) {
                 try { popup.update(); } catch (e) { }
@@ -2022,12 +2290,234 @@ window.jobMap = (function () {
         };
     }
 
+    function createLagenFundaMobileController(html) {
+        const host = map.getContainer().closest(".map-stage")
+            || map.getContainer().closest(".map-pane")
+            || map.getContainer();
+        const root = document.createElement("div");
+        root.className = "fcwrap kb-lagen-fcwrap";
+        root.innerHTML = html;
+        host.appendChild(root);
+        clusterSheetEl = root;
+        return {
+            docked: true,
+            getElement: function () { return root; },
+            remove: function () {
+                if (root.parentNode) {
+                    root.parentNode.removeChild(root);
+                }
+                if (clusterSheetEl === root) {
+                    clusterSheetEl = null;
+                }
+            },
+            setHTML: function () { },
+            update: function () { },
+            setLngLat: function () { },
+            on: function () { return this; }
+        };
+    }
+
+    function setLagenWageTipOpen(root, open) {
+        if (!root) {
+            return;
+        }
+        const fcw = root.classList && root.classList.contains("fcw")
+            ? root
+            : root.querySelector("[data-lagen-fcw]");
+        if (!fcw) {
+            return;
+        }
+        fcw.classList.toggle("lagen-wage-open", !!open);
+        const btn = fcw.querySelector("[data-lagen-wage]");
+        const tip = fcw.querySelector(".tip");
+        if (btn) {
+            btn.classList.toggle("on", !!open);
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+        }
+        if (tip) {
+            if (open) {
+                tip.removeAttribute("hidden");
+            } else {
+                tip.setAttribute("hidden", "");
+            }
+        }
+        if (clusterUiState) {
+            clusterUiState.wageTipOpen = !!open;
+        }
+    }
+
+    function bindLagenFundaInteractions(root, childMarkers) {
+        if (!root) {
+            return;
+        }
+        const fcw = root.querySelector("[data-lagen-fcw]") || root;
+        if (fcw.dataset.lagenFundaBound === "1") {
+            return;
+        }
+        fcw.dataset.lagenFundaBound = "1";
+        const closeBtn = fcw.querySelector("[data-lagen-close]");
+        if (closeBtn) {
+            closeBtn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                closeActivePopup();
+            });
+        }
+        const prev = fcw.querySelector("[data-lagen-prev]");
+        const next = fcw.querySelector("[data-lagen-next]");
+        if (prev) {
+            prev.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                if (!clusterUiState) {
+                    return;
+                }
+                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page - 1, -1, true);
+            });
+        }
+        if (next) {
+            next.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                if (!clusterUiState) {
+                    return;
+                }
+                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page + 1, 1, true);
+            });
+        }
+        const wageBtn = fcw.querySelector("[data-lagen-wage]");
+        if (wageBtn) {
+            if (isNarrowViewport()) {
+                wageBtn.addEventListener("click", function (ev) {
+                    stopEvent(ev);
+                    const open = !fcw.classList.contains("lagen-wage-open");
+                    setLagenWageTipOpen(fcw, open);
+                });
+            } else {
+                wageBtn.addEventListener("mouseenter", function () {
+                    setLagenWageTipOpen(fcw, true);
+                });
+                wageBtn.addEventListener("mouseleave", function () {
+                    setLagenWageTipOpen(fcw, false);
+                });
+                wageBtn.addEventListener("focus", function () {
+                    setLagenWageTipOpen(fcw, true);
+                });
+                wageBtn.addEventListener("blur", function () {
+                    setLagenWageTipOpen(fcw, false);
+                });
+            }
+        }
+        fcw.querySelectorAll(".fgo, .map-popup__cta").forEach(function (cta) {
+            if (cta.dataset.bound) {
+                return;
+            }
+            cta.dataset.bound = "1";
+            cta.addEventListener("click", function () {
+                const id = cta.getAttribute("data-job-id");
+                if (id) {
+                    notifyOpen(id);
+                }
+            });
+        });
+        bindSaveJobButtons(fcw, childMarkers || []);
+    }
+
+    function openLagenFundaPopup(childMarkers, lngLat) {
+        if (!map || !childMarkers || !childMarkers.length) {
+            return;
+        }
+        closeActivePopup();
+        const jobs = clusterJobsFromMarkers(childMarkers);
+        const pageCount = Math.max(1, jobs.length);
+        const firstJob = jobs[0] || {};
+        const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
+        const mobile = isNarrowViewport();
+        const viewLock = mobile
+            ? { zoom: map.getZoom(), center: map.getCenter() }
+            : null;
+        const html = buildLagenFundaPopupHtml(firstJob, {
+            mobile: mobile,
+            page: 1,
+            pageCount: pageCount,
+            cluster: pageCount > 1,
+            wageTipOpen: false
+        });
+        highlight(firstJob.id);
+        setSelectedCluster(ll, pageCount);
+        setClusterOpenChrome(true, Object.keys(markersById).length);
+        bindClusterEscape();
+        document.body.classList.add("s-popup");
+        if (mobile) {
+            activeClusterPopup = createLagenFundaMobileController(html);
+            clusterUiState = {
+                jobs: jobs,
+                page: 1,
+                pageCount: pageCount,
+                childMarkers: childMarkers,
+                root: activeClusterPopup.getElement().querySelector("[data-lagen-fcw]") ||
+                    activeClusterPopup.getElement(),
+                viewport: null,
+                docked: true,
+                lngLat: ll,
+                wageTipOpen: false
+            };
+            bindLagenFundaInteractions(activeClusterPopup.getElement(), childMarkers);
+            panClusterAboveSheet(ll);
+            if (viewLock) {
+                try {
+                    map.jumpTo({
+                        center: viewLock.center,
+                        zoom: viewLock.zoom,
+                        duration: 0
+                    });
+                } catch (eLock) { }
+            }
+        } else {
+            activeClusterPopup = popupFromOpts({
+                className: "maplibregl-popup pop fpop kb-popup-lagen-pop",
+                closeButton: false,
+                closeOnClick: false,
+                maxWidth: "420px",
+                offset: 16,
+                anchor: "bottom"
+            }, ll, html);
+            ensureLagenPopInView(activeClusterPopup);
+            const popRoot = activeClusterPopup.getElement();
+            clusterUiState = {
+                jobs: jobs,
+                page: 1,
+                pageCount: pageCount,
+                childMarkers: childMarkers,
+                root: popRoot && popRoot.querySelector("[data-lagen-fcw]"),
+                viewport: null,
+                docked: false,
+                lngLat: ll,
+                wageTipOpen: false
+            };
+            bindLagenFundaInteractions(popRoot, childMarkers);
+        }
+        prefetchClusterCards(jobs).then(function () {
+            if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
+                return;
+            }
+            renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page, 0, true);
+        });
+        if (firstJob.id) {
+            fetchVacancyCard(firstJob.id).then(function (card) {
+                if (!clusterUiState || clusterUiState.childMarkers !== childMarkers || !card) {
+                    return;
+                }
+                const full = mapCardToPopup(card, firstJob);
+                jobs[0] = full;
+                renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
+            });
+        }
+    }
+
     function eventTargetInsidePopup(ev, popup) {
         if (!ev) {
             return false;
         }
         const target = ev.target || ev.srcElement;
-        if (target && target.closest && target.closest(".map-cluster-sheet, .map-cluster-chip")) {
+        if (target && target.closest && target.closest(".fcwrap, .kb-lagen-fcw, .map-cluster-sheet, .map-cluster-chip")) {
             return true;
         }
         if (!popup) {
@@ -2441,6 +2931,16 @@ window.jobMap = (function () {
             rankLowerReason: card.rankLowerReason || pin.rankLowerReason || null,
             wage: card.hourlyWage != null && card.wageVisible !== false ? card.hourlyWage : null,
             wageLabel: card.wageLabel || card.displayWageLabel || null,
+            wageByAge: Array.isArray(card.wageByAge) ? card.wageByAge : (Array.isArray(card.WageByAge) ? card.WageByAge : null),
+            wageBands: Array.isArray(card.wageByAge)
+                ? card.wageByAge.map(function (b) {
+                    return {
+                        ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
+                        hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
+                        label: b.label || b.Label || ""
+                    };
+                })
+                : (pin.wageBands || null),
             minHoursPerWeek: card.minHoursPerWeek != null ? card.minHoursPerWeek : pin.minHoursPerWeek,
             maxHoursPerWeek: card.maxHoursPerWeek != null ? card.maxHoursPerWeek : pin.maxHoursPerWeek,
             summary: card.summary || card.shortDescription || pin.summary || null,
@@ -2830,77 +3330,19 @@ window.jobMap = (function () {
         if (!map || !record) {
             return;
         }
-        const viewLock = lagenLayout && isNarrowViewport()
-            ? { zoom: map.getZoom(), center: map.getCenter() }
-            : null;
-        if (lagenLayout && catalogModeActive && !isNarrowViewport()) {
-            openLagenDesktopPop(record);
-            return;
-        }
-        if (lagenLayout && catalogModeActive && isNarrowViewport()) {
-            openClusterList([record], [record.lng, record.lat]);
-            if (viewLock) {
-                try {
-                    map.jumpTo({
-                        center: viewLock.center,
-                        zoom: viewLock.zoom,
-                        duration: 0
-                    });
-                } catch (eLock) { }
-            }
+        if (lagenLayout && catalogModeActive) {
+            openLagenFundaPopup([record], [record.lng, record.lat]);
             return;
         }
         openClusterList([record], [record.lng, record.lat]);
     }
 
-    function openLagenDesktopPop(record) {
-        closeActivePopup();
-        highlight(record.id);
-        const ll = [record.lng, record.lat];
-        const job = record.jobData || record.options && record.options.jobData || record;
-        const pinId = record.id != null ? record.id : job.id;
-        let html = buildLagenCatalogPopupHtml(job, false);
-        activeClusterPopup = popupFromOpts({
-            className: "maplibregl-popup pop kb-popup-lagen-pop",
-            closeButton: false,
-            closeOnClick: false,
-            maxWidth: "320px",
-            offset: 16,
-            anchor: "bottom"
-        }, ll, html);
-        ensureLagenPopInView(activeClusterPopup);
-        const root = activeClusterPopup.getElement();
-        if (root) {
-            root.querySelectorAll("[data-cluster-close], .x").forEach(function (btn) {
-                btn.addEventListener("click", function (ev) {
-                    stopEvent(ev);
-                    closeActivePopup();
-                });
-            });
-        }
-        if (pinId && typeof fetchVacancyCard === "function") {
-            fetchVacancyCard(pinId).then(function (card) {
-                if (!activeClusterPopup || !card) {
-                    return;
-                }
-                const full = mapCardToPopup(card, job);
-                html = buildLagenCatalogPopupHtml(full, false);
-                try {
-                    activeClusterPopup.setHTML(html);
-                    ensureLagenPopInView(activeClusterPopup);
-                    root.querySelectorAll("[data-cluster-close], .x").forEach(function (btn) {
-                        btn.addEventListener("click", function (ev) {
-                            stopEvent(ev);
-                            closeActivePopup();
-                        });
-                    });
-                } catch (eHtml) { }
-            });
-        }
-    }
-
     function openClusterList(childMarkers, lngLat) {
         if (!map || !childMarkers || childMarkers.length === 0) {
+            return;
+        }
+        if (lagenLayout && catalogModeActive) {
+            openLagenFundaPopup(childMarkers, lngLat);
             return;
         }
 

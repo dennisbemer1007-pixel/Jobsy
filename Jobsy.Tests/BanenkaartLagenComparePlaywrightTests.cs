@@ -21,7 +21,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
     public const string PublishDir = "/workspace/tmp/app-publish";
     public const string CompareDir = "/opt/cursor/artifacts/banenkaart-lagen-compare";
     public const string MockupRefRoot = CompareDir + "/mockup-ref/docs/mockups/kandidaat/banenkaart";
-    private const string MockupCommit = "dd7cb7ce";
+    private const string MockupCommit = "c8ee9298";
     private const string CompareBanenkaartPath =
         "/banenkaart?originLat=51.9944&originLng=4.2097&originLabel=Kasweg%2012%2C%202671%20AB%20Naaldwijk&maxMinutes=20&transport=Fiets&minHours=32&maxHours=40";
 
@@ -108,10 +108,10 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                 await page.WaitForTimeoutAsync(500);
                 await ShotAsync(page, dir, "02-popup.png");
                 await SideBySideAsync(
-                    Path.Combine(MockupRefRoot, "lagen/desktop/01-banenkaart-lagen-desktop-1440-popup.png"),
+                    Path.Combine(MockupRefRoot, "lagen/desktop/03-banenkaart-lagen-desktop-1440-enkel.png"),
                     Path.Combine(dir, "02-popup.png"),
                     Path.Combine(CompareDir, "side-by-side-desktop-1280-popup.png"));
-                var anchoredPop = await page.Locator(".maplibregl-popup.pop.kb-popup-lagen-pop").CountAsync() > 0;
+                var anchoredPop = await page.Locator(".maplibregl-popup.pop.fpop.kb-popup-lagen-pop, .fcw.kb-lagen-fcw").CountAsync() > 0;
                 buttons.Add(new { action = "desktop-anchored-pop", pass = anchoredPop });
                 var cta = page.Locator(".maplibregl-popup, .kb-popup-lagen").Filter(new() { HasText = "Bekijk vacature" });
                 buttons.Add(new { action = "popup-bekijk-vacature-visible", pass = await cta.CountAsync() > 0 });
@@ -178,9 +178,59 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                 eightPoint.AddRange(await EvaluateEightPointVacancySheetAsync(page));
                 await ShotAsync(page, dir, "03-vacature.png");
                 await SideBySideAsync(
-                    Path.Combine(MockupRefRoot, "lagen/mobile/03-banenkaart-lagen-mobiel-390-vacature.png"),
+                    Path.Combine(MockupRefRoot, "lagen/mobile/04-banenkaart-lagen-mobiel-390-enkel.png"),
                     Path.Combine(dir, "03-vacature.png"),
                     Path.Combine(CompareDir, "side-by-side-mobile-390-vacature.png"));
+            }
+        });
+
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup-cluster", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstClusterPopupAsync(page);
+            buttons.Add(new { action = "desktop-cluster-popup", pass = opened });
+            if (opened)
+            {
+                await page.WaitForTimeoutAsync(400);
+                await ShotAsync(page, dir, "03-popup-cluster.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/desktop/04-banenkaart-lagen-desktop-1440-cluster.png"),
+                    Path.Combine(dir, "03-popup-cluster.png"),
+                    Path.Combine(CompareDir, "side-by-side-desktop-1280-popup-cluster.png"));
+            }
+        });
+
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-uurloon", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstPinPopupAsync(page);
+            if (opened)
+            {
+                await page.Locator("[data-lagen-wage]").First.HoverAsync();
+                await page.WaitForTimeoutAsync(350);
+                await ShotAsync(page, dir, "04-uurloon-hover.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/extra/desktop-1440-enkel-uurloon-hover.png"),
+                    Path.Combine(dir, "04-uurloon-hover.png"),
+                    Path.Combine(CompareDir, "side-by-side-desktop-1280-uurloon-tooltip.png"));
+                buttons.Add(new { action = "desktop-uurloon-tooltip", pass = true });
+            }
+        });
+
+        await CaptureViewportAsync(390, 844, true, "mobile-390-uurloon", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstPinPopupAsync(page);
+            if (opened)
+            {
+                await page.Locator("[data-lagen-wage]").First.ClickAsync();
+                await page.WaitForTimeoutAsync(350);
+                await ShotAsync(page, dir, "04-uurloon-tap.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/extra/mobiel-390-enkel-uurloon-tik.png"),
+                    Path.Combine(dir, "04-uurloon-tap.png"),
+                    Path.Combine(CompareDir, "side-by-side-mobile-390-uurloon-tooltip.png"));
+                buttons.Add(new { action = "mobile-uurloon-tooltip", pass = true });
             }
         });
 
@@ -762,6 +812,24 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
     private static async Task ShotAsync(IPage page, string dir, string name) =>
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, name), FullPage = false });
 
+    private static async Task<bool> OpenFirstClusterPopupAsync(IPage page)
+    {
+        await WaitReadyAsync(page);
+        var opened = await page.EvaluateAsync<bool>(
+            """
+            async () => {
+              if (!window.jobMap || !window.jobMap.debugOpenLargestCluster) return false;
+              return await window.jobMap.debugOpenLargestCluster();
+            }
+            """);
+        if (!opened)
+        {
+            return false;
+        }
+
+        return await WaitForVacancyPopupAsync(page);
+    }
+
     private static async Task<bool> OpenFirstPinPopupAsync(IPage page)
     {
         var rowLoc = page.Locator(".vc[data-vacancy-id], [data-testid=kb-list-row][data-vacancy-id]");
@@ -811,7 +879,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
 
     private static async Task<bool> WaitForVacancyPopupAsync(IPage page)
     {
-        var popup = page.Locator(".maplibregl-popup:visible, .kb-popup-lagen:visible, .map-cluster-sheet:visible");
+        var popup = page.Locator(".maplibregl-popup:visible, .fcwrap.kb-lagen-fcwrap:visible, .fcw.kb-lagen-fcw:visible, .kb-popup-lagen:visible, .map-cluster-sheet:visible");
         try
         {
             await popup.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });

@@ -2126,7 +2126,350 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     position: relative;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-sheet--lagen .map-popup__heart {
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-sheet--lagen .map-popup__heart:not(.hrt) {
+    display: none !important;
+}
+
+/* Funda-style vacaturepopup (PR #878 mockup) */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop.kb-popup-lagen-pop {
+    max-width: 420px !important;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop .maplibregl-popup-content {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px) + 8px);
+    z-index: 55;
+    pointer-events: none;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw {
+    pointer-events: auto;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fctl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fctl .sp {
+    flex: 1;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fb {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--kb-navy, #1f2f55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 21px;
+    box-shadow: 0 4px 14px -4px rgba(31, 47, 85, 0.45);
+    border: 1px solid var(--kb-line, #e2d9cb);
+    cursor: pointer;
+    padding: 0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fb svg {
+    width: 22px;
+    height: 22px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fb.fx {
+    background: var(--kb-navy, #1f2f55);
+    color: #fff;
+    border-color: var(--kb-navy, #1f2f55);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fb.euro.on {
+    outline: 3px solid #d9b65a;
+    outline-offset: 1px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fb.euro.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fnav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcount {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--kb-ink, #1b2440);
+    box-shadow: 0 4px 14px -4px rgba(31, 47, 85, 0.45);
+    border: 1px solid var(--kb-line, #e2d9cb);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--kb-line, #e2d9cb);
+    box-shadow: 0 18px 40px -14px rgba(31, 47, 85, 0.5);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fph {
+    position: relative;
+    margin: 14px 14px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 180px;
+    background: #ddd;
+    aspect-ratio: 16 / 9;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fph img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .flrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 44px;
+    margin-top: -6px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .hrt {
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    color: var(--kb-navy, #1f2f55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    cursor: pointer;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .hrt svg {
+    width: 24px;
+    height: 24px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .finfo {
+    padding: 12px 16px 0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .flab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 9px 0 5px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .flab.w {
+    background: var(--kb-navy, #1f2f55);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .flab.i {
+    background: #b4500f;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc h3 {
+    font-size: 22px;
+    line-height: 1.25;
+    margin: 8px 0 3px;
+    color: var(--kb-ink, #1b2440);
+    font-weight: 800;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .femp {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2a5ba8;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fpl {
+    font-size: 15px;
+    color: var(--kb-ink, #1b2440);
+    margin-top: 2px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .ffacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 10px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--kb-ink, #1b2440);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .ffacts span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fgo {
+    margin: 14px 16px 0;
+    border-top: 1px solid #efe8dd;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 800;
+    font-size: 16px;
+    color: #2a5ba8;
+    text-decoration: none;
+    padding: 8px 0 14px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fgo svg {
+    width: 22px;
+    height: 22px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .tip {
+    position: absolute;
+    top: 52px;
+    right: -4px;
+    width: 196px;
+    background: #fffdf9;
+    color: #3a3f4b;
+    border: 1px solid #e3dacb;
+    border-radius: 10px;
+    padding: 9px 11px 8px;
+    z-index: 30;
+    box-shadow: 0 6px 16px -8px rgba(31, 47, 85, 0.3);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    line-height: 1.3;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .tip::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 19px;
+    width: 10px;
+    height: 10px;
+    background: #fffdf9;
+    border-left: 1px solid #e3dacb;
+    border-top: 1px solid #e3dacb;
+    transform: rotate(45deg);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .tip b {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #3a3f4b;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .tr2 {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 6px;
+    margin: 0 -6px;
+    border-radius: 5px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .tr2.me {
+    background: #eaf3e6;
+    font-weight: 700;
+    color: #1f2a37;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fctl {
+    margin-bottom: 8px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc.m .fbody {
+    display: flex;
+    gap: 12px;
+    padding: 12px 12px 0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc.m .fph {
+    margin: 0;
+    width: 124px;
+    height: 124px;
+    flex: none;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc.m .flrow {
+    margin-top: -10px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc.m .finfo {
+    padding: 0;
+    min-width: 0;
+    flex: 1;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc.m h3 {
+    font-size: 18px;
+    margin: 6px 0 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc.m .fgo {
+    margin: 10px 12px 0;
+    min-height: 48px;
+    font-size: 15.5px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip {
+    top: auto;
+    bottom: 52px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip::before {
+    top: auto;
+    bottom: -6px;
+    transform: rotate(225deg);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.lagen-wage-open .tip,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fb.euro.on .tip {
+    display: block;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fb.euro .tip[hidden] {
     display: none !important;
 }
 

@@ -56,7 +56,7 @@ internal static class BanenkaartMapBoot
                 ["highlightSeed"] = highlightSeed,
                 ["travel"] = BuildTravelBoot(query, includeRadiusCap),
                 ["filters"] = BuildFilterState(query),
-                ["labels"] = BuildLabels(culture, isAuthenticated),
+                ["labels"] = BuildLabels(culture, isAuthenticated, query),
                 ["illustratedTravelSpot"] = CandidateIllustratedImages.PopupTravelAccent,
                 ["illustratedVacancySpots"] = CandidateIllustratedImages.BanenkaartIllustratedSpots
                     .ToDictionary(static kv => kv.Key, static kv => kv.Value, StringComparer.OrdinalIgnoreCase),
@@ -210,7 +210,10 @@ internal static class BanenkaartMapBoot
         return dict;
     }
 
-    private static Dictionary<string, object?> BuildLabels(CultureState culture, bool isAuthenticated) => new()
+    private static Dictionary<string, object?> BuildLabels(
+        CultureState culture,
+        bool isAuthenticated,
+        BanenkaartSsrQuery.State query) => new()
     {
         ["vacanciesAtPlace"] = culture["Kb.Map.JobsAtPlace"],
         ["vacancyAtPlace"] = culture["Kb.Map.JobAtPlace"],
@@ -244,6 +247,9 @@ internal static class BanenkaartMapBoot
         ["transportWalk"] = culture["Transport.Verb.Walk"],
         ["transportDefault"] = culture["Transport.Verb.Default"],
         ["noVacanciesInTravel"] = culture["Kb.Map.NoVacanciesInTravel"],
-        ["canSave"] = isAuthenticated
+        ["canSave"] = isAuthenticated,
+        ["wageTooltipTitle"] = culture["Employer.WageByAge"],
+        ["wageTooltipTitleEn"] = "Hourly wage (gross)",
+        ["candidateAgeYears"] = query.AgeYears ?? 21
     };
 }

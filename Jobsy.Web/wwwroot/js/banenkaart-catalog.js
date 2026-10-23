@@ -373,6 +373,16 @@
         if (row.offeredBy && String(row.offeredBy).trim().toLowerCase()
             !== String(row.company || "").trim().toLowerCase()) {
             pin.isIntermediary = true;
+            pin.pinKind = "intermediary";
+        }
+        if (row.minHours != null) {
+            pin.minHoursPerWeek = row.minHours;
+        }
+        if (row.maxHours != null) {
+            pin.maxHoursPerWeek = row.maxHours;
+        }
+        if (row.workTypes && row.workTypes.length) {
+            pin.workType = row.workTypes[0];
         }
         return pin;
     }
