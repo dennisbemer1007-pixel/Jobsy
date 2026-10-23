@@ -266,6 +266,115 @@ public sealed class BanenkaartAccLivePlaywrightTests
     }
 
     [Fact]
+    public async Task Desktop_banenkaart_basemap_stays_visible_after_pin_zoom_and_minus_control()
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 720 },
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Allow,
+        });
+
+        var page = await context.NewPageAsync();
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, email, password)
+            && !await KbE2e.TryLoginAsync(page, baseUrl))
+        {
+            Assert.Fail("Candidate login failed on acceptatie.");
+        }
+
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await WaitForBanenkaartMapReadyAsync(page);
+
+        var basemapOnLoad = await CountRenderedBasemapFeaturesAsync(page);
+        Assert.True(basemapOnLoad >= 5,
+            "Initial desktop view should render basemap vector features (got " + basemapOnLoad + ").");
+
+        var maxBasemapZoom = await page.EvaluateAsync<double>(
+            """
+            () => {
+              const map = window.jobMap.__testGetMap();
+              return (window.jobsyMapLibre && window.jobsyMapLibre.BASEMAP_MAX_ZOOM) || map.getMaxZoom();
+            }
+            """);
+
+        await page.EvaluateAsync(
+            """
+            async () => {
+              const map = window.jobMap.__testGetMap();
+              if (!map) return;
+              const maxZ = (window.jobsyMapLibre && window.jobsyMapLibre.BASEMAP_MAX_ZOOM) || 14;
+              map.easeTo({ zoom: maxZ, duration: 0 });
+              await new Promise(r => {
+                if (!map.isMoving()) { r(); return; }
+                map.once('moveend', r);
+              });
+              const canvas = map.getCanvas();
+              const w = canvas.clientWidth || canvas.width || 1280;
+              const h = canvas.clientHeight || canvas.height || 720;
+              for (let y = 48; y < h - 48; y += 28) {
+                for (let x = 32; x < w - 32; x += 28) {
+                  const feats = map.queryRenderedFeatures(
+                    new maplibregl.Point(x, y),
+                    { layers: ['jobsy-pins-unclustered'] });
+                  if (feats && feats.length) {
+                    const rect = canvas.getBoundingClientRect();
+                    const ev = new MouseEvent('click', {
+                      bubbles: true,
+                      clientX: rect.left + x,
+                      clientY: rect.top + y,
+                      view: window
+                    });
+                    canvas.dispatchEvent(ev);
+                    return;
+                  }
+                }
+              }
+            }
+            """);
+        await page.WaitForTimeoutAsync(1200);
+
+        var zoomAtPin = await page.EvaluateAsync<double>(
+            "() => window.jobMap.__testGetMap().getZoom()");
+        Assert.True(zoomAtPin <= maxBasemapZoom + 0.05,
+            "Zoom at single pin should not exceed basemap max (" + zoomAtPin + " > " + maxBasemapZoom + ").");
+
+        var basemapAtPin = await CountRenderedBasemapFeaturesAsync(page);
+        Assert.True(basemapAtPin >= 5,
+            "Basemap should stay visible after zooming to a single pin (got " + basemapAtPin + ").");
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              const map = window.jobMap.__testGetMap();
+              if (!map) return;
+              map.zoomOut({ duration: 0 });
+              map.zoomOut({ duration: 0 });
+            }
+            """);
+        await page.WaitForTimeoutAsync(600);
+
+        var basemapAfterMinus = await CountRenderedBasemapFeaturesAsync(page);
+        Assert.True(basemapAfterMinus >= 5,
+            "Basemap should stay visible after zoom-out control (got " + basemapAfterMinus + ").");
+
+        var zoomAfterMinus = await page.EvaluateAsync<double>(
+            "() => window.jobMap.__testGetMap().getZoom()");
+        Assert.True(zoomAfterMinus >= 6.9, "Zoom-out should not leave map below min zoom (got " + zoomAfterMinus + ").");
+    }
+
+    [Fact]
     public async Task Onboarding_step_10_has_no_script_src_attr_violation_on_acc()
     {
         var baseUrl = ResolveBaseUrl();
@@ -371,6 +480,51 @@ public sealed class BanenkaartAccLivePlaywrightTests
             }
             """);
         Assert.True(interactive, "Banenkaart should stay interactive with no stray body scroll-lock after mobile PWA-style resume.");
+    }
+
+    private static async Task WaitForBanenkaartMapReadyAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const root = document.querySelector('[data-banenkaart-ssr="1"]');
+              if (root && root.dataset.banenkaartMapReady === '1') return true;
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) return false;
+              const canvas = document.querySelector('#job-map .maplibregl-canvas');
+              return !!(canvas && canvas.width > 0 && canvas.height > 0);
+            }
+            """,
+            null,
+            new() { Timeout = 120_000 });
+        await page.WaitForTimeoutAsync(800);
+    }
+
+    private static async Task<int> CountRenderedBasemapFeaturesAsync(IPage page)
+    {
+        return await page.EvaluateAsync<int>(
+            """
+            () => {
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) return -1;
+              const style = map.getStyle();
+              if (!style || !Array.isArray(style.layers)) return -1;
+              const layerIds = style.layers
+                .filter(l => l && l.id && !l.id.startsWith('jobsy-')
+                  && l.type !== 'background' && l.type !== 'sky')
+                .map(l => l.id)
+                .filter(id => {
+                  try { return !!map.getLayer(id); } catch (e) { return false; }
+                });
+              let feats = [];
+              try {
+                feats = map.queryRenderedFeatures({ layers: layerIds.slice(0, 48) }) || [];
+              } catch (e) {
+                return -2;
+              }
+              return feats.length;
+            }
+            """);
     }
 
     private static async Task OpenFilterDrawerAsync(IPage page)

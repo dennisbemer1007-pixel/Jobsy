@@ -1,6 +1,9 @@
 window.jobsyMapLibre = (function () {
     "use strict";
 
+    /** OpenFreeMap planet vector tiles (liberty style source maxzoom). */
+    var BASEMAP_MAX_ZOOM = 14;
+
     var LIBERTY_URL = "https://tiles.openfreemap.org/styles/liberty";
     var LIBERTY_SAME_ORIGIN_URL = "/map/basemap/liberty/style.json";
     var STORAGE_KEY = "jobsy.mapStyle";
@@ -410,8 +413,8 @@ window.jobsyMapLibre = (function () {
             dragPan: true,
             touchZoomRotate: options.touchZoomRotate !== false,
             renderWorldCopies: false,
-            maxZoom: 19,
-            minZoom: 4,
+            maxZoom: options.maxZoom != null ? options.maxZoom : BASEMAP_MAX_ZOOM,
+            minZoom: options.minZoom != null ? options.minZoom : 4,
             locale: {
                 "AttributionControl.ToggleAttribution": "Kaartbronnen tonen",
                 "Map.Title": "Kaart"
@@ -419,6 +422,7 @@ window.jobsyMapLibre = (function () {
         });
 
         map._jobsyStyleKey = spec.key;
+        map._jobsyBasemapMaxZoom = BASEMAP_MAX_ZOOM;
         lockTouch(map.getContainer());
         hideChrome(map);
         if (options.controls !== false) {
@@ -462,6 +466,7 @@ window.jobsyMapLibre = (function () {
     }
 
     return {
+        BASEMAP_MAX_ZOOM: BASEMAP_MAX_ZOOM,
         STYLES: {
             liberty: LIBERTY_URL,
             bright: LIBERTY_URL

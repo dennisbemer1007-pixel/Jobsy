@@ -308,12 +308,12 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "ee1dfa2262269139930f6e21244c5e37aed15177642408f753cda8c5679978de",
-    "v": "20261023-travel1"
+    "sha256": "2519dd5630938b69e1f67657ebadf2ac9f2e2553374c8f20ea21517677721154",
+    "v": "20261023-maxzoom1"
   },
   "js/jobsyMapLibre.min.js": {
-    "sha256": "17dc259da31153a37e62da9293dce0fbe3bc40a0590bc20608206381d8fdff96",
-    "v": "20261023-cat1"
+    "sha256": "dad2c3ee186da0f803f343df7a36e4dfb962f478790d05a58472ee403b0fee7c",
+    "v": "20261023-maxzoom1"
   },
   "js/landing.js": {
     "sha256": "cd942514333ce9c3dbb100475127d528220b67555a53ce2c6d1d28f44c1a043f",

@@ -87,7 +87,7 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("jobsy-pins", js);
         Assert.Contains("getClusterLeaves", js);
         Assert.Contains("openClusterList", js);
-        Assert.Contains("async function onClusterClick", js);
+        Assert.Contains("function onClusterClick", js);
         Assert.Contains("setFeatureState", js);
         Assert.Contains("AbortController", js);
         Assert.DoesNotContain(
@@ -111,13 +111,14 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.DoesNotContain("PersistAsJson", discovery);
         Assert.DoesNotContain("DiscoveryPersistState", discovery);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
-        var onClusterStart = js.IndexOf("async function onClusterClick", StringComparison.Ordinal);
+        var onClusterStart = js.IndexOf("function onClusterClick", StringComparison.Ordinal);
         Assert.True(onClusterStart >= 0);
         var onClusterEnd = js.IndexOf("\n    function onPinClick", onClusterStart, StringComparison.Ordinal);
         Assert.True(onClusterEnd > onClusterStart);
         var onCluster = js.Substring(onClusterStart, onClusterEnd - onClusterStart);
-        Assert.Contains("openClusterList", onCluster, StringComparison.Ordinal);
-        Assert.DoesNotContain("easeTo", onCluster, StringComparison.Ordinal);
+        Assert.Contains("getClusterExpansionZoom", onCluster, StringComparison.Ordinal);
+        Assert.Contains("clampBanenZoom", onCluster, StringComparison.Ordinal);
+        Assert.Contains("easeTo", onCluster, StringComparison.Ordinal);
         Assert.Contains("fetchJsonWithOneRetry", js);
         Assert.Contains("retryAfterMs", js);
         // Cluster paging uses pin/card HTML in a fixed frame — never the shimmer skeleton.
