@@ -136,7 +136,7 @@ internal static class BanenkaartSsrShells
                 .Append("\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("\"><span class=\"kb-match-button__icon\" aria-hidden=\"true\">")
-                .Append(NavIcons.Match)
+                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
                 .Append("</span><span class=\"kb-match-button__label\">")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("</span></a>");
@@ -156,7 +156,7 @@ internal static class BanenkaartSsrShells
             .Append("\" data-testid=\"kb-panel-head\">");
         AppendAddressField(sb, culture, "discovery-address-desktop", model.AddressLabel, "addr kb-panel-head__address", labeled: true);
         sb.Append("<div class=\"srow mobfirst kb-panel-head__filters-row\">");
-        sb.Append("<div class=\"field grow kb-chrome-search kb-filter-search\">")
+        sb.Append("<div class=\"grow kb-chrome-search kb-filter-search kb-filter-search--single\">")
             .Append(NavIcons.Search.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
             .Append("<input id=\"discovery-keyword-desktop\" type=\"search\" data-testid=\"kb-keyword-search\" placeholder=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.Filter.KeywordPlaceholder"]))
@@ -173,7 +173,7 @@ internal static class BanenkaartSsrShells
             sb.Append("<a class=\"btn match deskonly kb-match-button kb-match-button--icon jobsy-action--match\" data-testid=\"kb-match-button\" href=\"")
                 .Append(matchHref)
                 .Append("\"><span class=\"kb-match-button__icon\" aria-hidden=\"true\">")
-                .Append(NavIcons.Match)
+                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
                 .Append("</span><span class=\"kb-match-button__label\">")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("</span></a>");

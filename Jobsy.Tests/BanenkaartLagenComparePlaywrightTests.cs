@@ -15,6 +15,8 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
     public const string CompareDir = "/opt/cursor/artifacts/banenkaart-lagen-compare";
     public const string MockupRefRoot = CompareDir + "/mockup-ref/docs/mockups/kandidaat/banenkaart";
     private const string MockupCommit = "dd7cb7ce";
+    private const string CompareBanenkaartPath =
+        "/banenkaart?originLat=51.9944&originLng=4.2097&originLabel=Kasweg%2012%2C%202671%20AB%20Naaldwijk&maxMinutes=20&transport=Fiets&minHours=32&maxHours=40";
 
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -53,7 +55,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         var eightPoint = new List<object>();
         try
         {
-        await CaptureViewportAsync(1280, 720, false, "desktop-1280-map-list", async (page, dir) =>
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-map-list", async (page, dir) =>
         {
             await WaitReadyAsync(page);
             await WaitForRealIsochronesAsync(page);
@@ -82,7 +84,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             elementTables.Add(await BuildElementTableAsync(page, 1280, "desktop-1280-map-list"));
         });
 
-        await CaptureViewportAsync(1280, 720, false, "desktop-1280-popup", async (page, dir) =>
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup", async (page, dir) =>
         {
             await WaitReadyAsync(page);
             var opened = await OpenFirstPinPopupAsync(page);
@@ -165,7 +167,19 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
             }
         });
 
-        await CaptureViewportAsync(1280, 720, false, "desktop-1280-interactions", async (page, _) =>
+        await CaptureViewportAsync(1440, 900, false, "desktop-1440-map-list", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+            await page.WaitForFunctionAsync(
+                "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+                null,
+                new() { Timeout = 90_000 });
+            await WaitReadyAsync(page);
+            await ShotAsync(page, dir, "01-map-list-reload.png");
+        });
+
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-interactions", async (page, _) =>
         {
             await WaitReadyAsync(page);
             buttons.Add(new { action = "map-pan", pass = await page.EvaluateAsync<bool>("() => { const m = window.jobMap?.__testGetMap?.(); if(!m) return false; const c=m.getCenter(); m.panBy([40,0],{duration:0}); const c2=m.getCenter(); return Math.abs(c2.lng-c.lng)>0; }") });
@@ -324,7 +338,7 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
               const twoCol = s.display === 'grid' && s.gridTemplateColumns.split(' ').filter(Boolean).length >= 2;
               const vc = cards[0];
               const r = vc.getBoundingClientRect();
-              return twoCol && r.height >= 48 && r.height <= 200;
+              return twoCol && r.height >= 48 && r.height <= 185;
             }
             """);
         var isoLabels = await page.EvaluateAsync<bool>(
@@ -505,8 +519,8 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(30_000);
-        await page.GotoAsync(_baseUrl + "/__test/sign-in?role=candidate&return=" + Uri.EscapeDataString("/banenkaart"));
-        await page.GotoAsync(_baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load });
+        await page.GotoAsync(_baseUrl + "/__test/sign-in?role=candidate&return=" + Uri.EscapeDataString(CompareBanenkaartPath));
+        await page.GotoAsync(_baseUrl + CompareBanenkaartPath, new() { WaitUntil = WaitUntilState.Load });
         await page.WaitForFunctionAsync(
             "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
             null,

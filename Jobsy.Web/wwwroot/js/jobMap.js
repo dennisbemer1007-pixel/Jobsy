@@ -3194,8 +3194,8 @@ window.jobMap = (function () {
     function labelBearingForMinutes(mins, index) {
         if (lagenLayout) {
             if (mins <= 10) return 180;
-            if (mins <= 20) return 135;
-            return 315;
+            if (mins <= 20) return 120;
+            return 300;
         }
         // Mockup bearings ≈ 30° (10), 190° (20), 160° (30).
         if (mins <= 10) return 30;
@@ -3270,8 +3270,18 @@ window.jobMap = (function () {
                     el.textContent = mins + " min";
                 }
             }
+            let anchor = "center";
+            if (lagenLayout) {
+                if (mins <= 10) {
+                    anchor = "top";
+                } else if (mins <= 20) {
+                    anchor = "bottom";
+                } else {
+                    anchor = "left";
+                }
+            }
             try {
-                const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+                const marker = new maplibregl.Marker({ element: el, anchor: anchor })
                     .setLngLat(ll)
                     .addTo(map);
                 isochroneLabelMarkers.push(marker);
