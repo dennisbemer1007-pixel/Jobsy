@@ -12,7 +12,12 @@ Alleen afbeeldingen ter referentie. Bouw deze pagina's op dezelfde manier als de
 | Bewaard | `bewaard/desktop/`, `bewaard/mobile/` | alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:58 |
 | Match | `match/desktop/`, `match/mobile/` | alle knoppen moeten werken, laadtijd erg belangrijk | 22 oktober 2026, 22:58 |
 | Bedrijvenkaart en bedrijfspagina | `bedrijvenkaart/desktop/`, `bedrijvenkaart/mobile/` | r21, vervangt r20; doorlopende smalle header, warme look; alle knoppen moeten werken, laadtijd erg belangrijk | 23 oktober 2026, 07:15 |
+| Mijn Lobsy | `mijn-lobsy/desktop/`, `mijn-lobsy/mobile/` | zie NIEUWE-PAGINAS-23-OKT.md | 23 oktober 2026, 07:31 |
+| Sollicitaties en Mijn activiteiten | `sollicitaties/desktop/`, `sollicitaties/mobile/` | zie NIEUWE-PAGINAS-23-OKT.md | 23 oktober 2026, 07:31 |
+| Instellingen | `instellingen/desktop/`, `instellingen/mobile/` | zie NIEUWE-PAGINAS-23-OKT.md | 23 oktober 2026, 07:31 |
+| Profiel | `profiel/desktop/`, `profiel/mobile/` | zie NIEUWE-PAGINAS-23-OKT.md | 23 oktober 2026, 07:31 |
+| Wat drijft jou | `wat-drijft-jou/desktop/`, `wat-drijft-jou/mobile/` | zie NIEUWE-PAGINAS-23-OKT.md | 23 oktober 2026, 07:31 |
+| Ondernemerscheck | `ondernemerscheck/desktop/`, `ondernemerscheck/mobile/` | zie NIEUWE-PAGINAS-23-OKT.md | 23 oktober 2026, 07:31 |
+| Neem mee naar je adviseur | `adviseur/desktop/`, `adviseur/mobile/` | zie NIEUWE-PAGINAS-23-OKT.md | 23 oktober 2026, 07:31 |
 
 Desktop van Carrière bestaat alleen voor het tabblad Voor jou; de andere tabs volgen dezelfde opbouw.
-
-Nog geen goedgekeurde mockup: Mijn Lobsy (home), Sollicitaties, Instellingen, Profiel.
