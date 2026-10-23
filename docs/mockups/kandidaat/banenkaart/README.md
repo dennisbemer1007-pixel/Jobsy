@@ -8,3 +8,5 @@ Eisen van Dennis:
 - Bouwen op dezelfde manier als de onboarding: simpele knoppen met JS, opslaan per actie via dezelfde server, volledige navigatie, zichtbare foutmelding.
 
 Header-illustratie: variant C (getekende landkaart met stippelroute en kompasroos), goedgekeurd door Dennis op 23-10-2026, zie header/. Dunne strip over de volle breedte: desktop 150 px, mobiel 90 px, dezelfde stripstyling als de bedrijvenkaart r21.
+
+Kaartlagen: reistijdlijnen, clusters, vacatures bij werkgever en via intermediair, plus legenda en popup. Goedgekeurd door Dennis op 23-10-2026, zie lagen/. Dit is de leidende versie voor de kaart, met de header uit header/.
