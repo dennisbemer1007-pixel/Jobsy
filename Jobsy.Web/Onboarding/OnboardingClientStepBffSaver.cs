@@ -91,7 +91,7 @@ public static class OnboardingClientStepBffSaver
 
                 try
                 {
-                    await api.SaveMyOnboardingProgressAsync(step - 1, ct: cancellationToken);
+                    await OnboardingClientProgressSaver.SaveStickyAsync(api, step - 1, ct: cancellationToken);
                     api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
                     return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(step - 1) });
                 }
@@ -109,7 +109,8 @@ public static class OnboardingClientStepBffSaver
             var nextStep = step + 1;
             try
             {
-                await api.SaveMyOnboardingProgressAsync(
+                await OnboardingClientProgressSaver.SaveStickyAsync(
+                    api,
                     nextStep,
                     stepCompleted: !skipOptional,
                     stepSkipped: skipOptional,
@@ -190,7 +191,7 @@ public static class OnboardingClientStepBffSaver
 
                 try
                 {
-                    await api.SaveMyOnboardingProgressAsync(step - 1, ct: cancellationToken);
+                    await OnboardingClientProgressSaver.SaveStickyAsync(api, step - 1, ct: cancellationToken);
                     api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
                     return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(step - 1) });
                 }
@@ -214,7 +215,12 @@ public static class OnboardingClientStepBffSaver
             {
                 if (step == 10)
                 {
-                    await api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true, ct: cancellationToken);
+                    await OnboardingClientProgressSaver.SaveStickyAsync(
+                        api,
+                        10,
+                        stepCompleted: true,
+                        finishReached: true,
+                        ct: cancellationToken);
                     api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
                     try
                     {
@@ -228,7 +234,11 @@ public static class OnboardingClientStepBffSaver
                     return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.KompasReadyPath });
                 }
 
-                await api.SaveMyOnboardingProgressAsync(step + 1, stepCompleted: true, ct: cancellationToken);
+                await OnboardingClientProgressSaver.SaveStickyAsync(
+                    api,
+                    step + 1,
+                    stepCompleted: true,
+                    ct: cancellationToken);
                 api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
                 return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(step + 1) });
             }
@@ -250,7 +260,11 @@ public static class OnboardingClientStepBffSaver
         {
             var state = await api.GetMyOnboardingAsync(cancellationToken);
             var step = Math.Clamp(state?.CurrentStep ?? 1, 1, 10);
-            await api.SaveMyOnboardingProgressAsync(step, source: WelcomeDismissedSource, ct: cancellationToken);
+            await OnboardingClientProgressSaver.SaveStickyAsync(
+                api,
+                step,
+                source: WelcomeDismissedSource,
+                ct: cancellationToken);
             api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
             return (StatusCodes.Status200OK, new { redirectUrl = OnboardingRoutes.StepUrl(1) });
         }

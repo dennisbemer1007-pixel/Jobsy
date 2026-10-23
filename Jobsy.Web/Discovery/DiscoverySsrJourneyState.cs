@@ -3,6 +3,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Discovery;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Models;
+using Jobsy.Web.Onboarding;
 
 namespace Jobsy.Web.Discovery;
 
@@ -10,17 +11,12 @@ internal static class DiscoverySsrJourneyState
 {
     public static bool IsJourneyComplete(OnboardingState? state, OnboardingProfileDraft draft)
     {
-        if (state?.IsComplete == true || state?.FinishReached == true || state?.CompletedAtUtc is not null)
+        if (state is not null && OnboardingClientProgressSaver.IsFinished(state))
         {
             return true;
         }
 
-        if (state?.Steps.Any(s => s.Step == 10 && s.CompletedAtUtc is not null) == true)
-        {
-            return true;
-        }
-
-        return draft.HasConsent && (state?.CurrentStep ?? 0) >= 10;
+        return draft.HasConsent && (state?.CurrentStep ?? 0) >= OnboardingWizardCatalog.V3StepCount;
     }
 
     public static string ResolveScreen(string? stapRaw, OnboardingState? state)
