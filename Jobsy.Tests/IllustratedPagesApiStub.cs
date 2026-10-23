@@ -444,7 +444,8 @@ internal static class IllustratedPagesApiStub
         return path.Contains("/discover", StringComparison.OrdinalIgnoreCase)
                || path.Contains("/pins", StringComparison.OrdinalIgnoreCase)
                || path.Contains("/map-view", StringComparison.OrdinalIgnoreCase)
-               || path.Contains("/cards", StringComparison.OrdinalIgnoreCase);
+               || path.Contains("/cards", StringComparison.OrdinalIgnoreCase)
+               || path.Contains("/banenkaart-catalog", StringComparison.OrdinalIgnoreCase);
     }
 
     private static CareerPathPlanApiModel SampleCareerPlan()

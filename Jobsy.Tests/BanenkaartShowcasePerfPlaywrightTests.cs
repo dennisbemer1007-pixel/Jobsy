@@ -130,6 +130,63 @@ public sealed class BanenkaartShowcasePerfPlaywrightTests : IAsyncLifetime
         await AppendReportAsync(width, row);
     }
 
+    [Theory]
+    [InlineData(390, 844, true)]
+    [InlineData(1280, 720, false)]
+    public async Task Banenkaart_after_paspoort_visit_no_console_errors_and_map_budget(int width, int height, bool touch)
+    {
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            HasTouch = touch,
+            IsMobile = touch,
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var consoleErrors = new List<string>();
+        var page = await context.NewPageAsync();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+
+        var cdp = await context.NewCDPSessionAsync(page);
+        await cdp.SendAsync("Emulation.setCPUThrottlingRate", new Dictionary<string, object> { ["rate"] = 4 });
+        await cdp.SendAsync("Network.emulateNetworkConditions", new Dictionary<string, object>
+        {
+            ["offline"] = false,
+            ["latency"] = 150,
+            ["downloadThroughput"] = (1.6 * 1024 * 1024) / 8,
+            ["uploadThroughput"] = (750 * 1024) / 8,
+        });
+
+        await page.GotoAsync(_baseUrl + "/__test/sign-in?role=candidate&return=/candidate/paspoort", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForTimeoutAsync(3500);
+
+        await page.GotoAsync(_baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Commit, Timeout = 120_000 });
+        var metrics = await page.EvaluateAsync<JsonElement>(BanenkaartPerfMeasureScript(width));
+        var mapTilesMs = metrics.GetProperty("mapTilesMs").GetDouble();
+
+        await page.WaitForFunctionAsync(
+            "() => !!(window.jobMap && document.querySelector('#job-map canvas'))",
+            null,
+            new() { Timeout = 60_000 });
+
+        Assert.True(consoleErrors.Count == 0, "Console errors: " + string.Join("; ", consoleErrors));
+        Assert.True(mapTilesMs < MapTilesBudgetMs, $"after-paspoort map+tiles {mapTilesMs:0} ms (budget {MapTilesBudgetMs} ms)");
+        var afterPaspoort = new Dictionary<string, object?>
+        {
+            ["scenario"] = "after-paspoort",
+            ["viewport"] = $"{width}x{height}",
+            ["mapTilesMs"] = mapTilesMs,
+            ["targetMapTilesMs"] = MapTilesBudgetMs,
+        };
+        await AppendReportAsync(width + 10000, afterPaspoort);
+    }
+
     private static async Task AppendReportAsync(int widthKey, Dictionary<string, object?> row)
     {
         using var doc = File.Exists(ReportPath)
@@ -195,24 +252,27 @@ public sealed class BanenkaartShowcasePerfPlaywrightTests : IAsyncLifetime
             if (mapNeedle.test(r.name)) break;
             preMapJsTransferBytes += r.transferSize || 0;
           }
+          const navTileResources = () => performance.getEntriesByType('resource')
+            .filter(r => r.name && r.name.indexOf('tiles.openfreemap.org') !== -1
+              && r.responseEnd > 0 && r.startTime >= t0);
           let mapTilesMs = 99999;
-          const tileRes = performance.getEntriesByType('resource')
-            .filter(r => r.name && r.name.indexOf('tiles.openfreemap.org') !== -1 && r.responseEnd > 0)
-            .sort((a, b) => a.responseEnd - b.responseEnd)[0];
           for (let i = 0; i < 600; i++) {
             const canvas = document.querySelector('#job-map .maplibregl-canvas');
             const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
             const styled = map && typeof map.isStyleLoaded === 'function' && map.isStyleLoaded();
-            const tile = performance.getEntriesByType('resource')
-              .find(r => r.name && r.name.indexOf('tiles.openfreemap.org') !== -1 && r.responseEnd > 0);
-            if (canvas && canvas.getBoundingClientRect().height >= 32 && map && styled && tile) {
-              mapTilesMs = Math.max(tile.responseEnd, performance.now() - t0);
+            if (canvas && canvas.getBoundingClientRect().height >= 32 && map && styled) {
+              const tiles = navTileResources().sort((a, b) => a.responseEnd - b.responseEnd);
+              const tile = tiles[0];
+              mapTilesMs = tile ? (tile.responseEnd - t0) : (performance.now() - t0);
               break;
             }
             await new Promise(r => requestAnimationFrame(r));
           }
-          if (mapTilesMs > 90000 && tileRes) {
-            mapTilesMs = tileRes.responseEnd;
+          if (mapTilesMs > 90000) {
+            const tileRes = navTileResources().sort((a, b) => a.responseEnd - b.responseEnd)[0];
+            if (tileRes) {
+              mapTilesMs = tileRes.responseEnd - t0;
+            }
           }
           return { firstPaintMs, lcpMs, mapTilesMs, preMapJsTransferBytes };
         }

@@ -7,9 +7,9 @@ window.jobsyMaps = (function () {
     var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261002-ch01"
+        "/js/jobsyMapLibre.min.js?v=20261023-cat2"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-acc2"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-cat2"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -139,10 +139,9 @@ window.jobsyMaps = (function () {
         }
         var urls = mapLibreScripts.concat(discoveryScripts);
         preloadScripts(urls);
-        pending[kind] = Promise.all([
-            Promise.all(css.map(loadCss)),
-            loadScriptsParallel(urls)
-        ]).catch(function (err) {
+        pending[kind] = loadScriptsParallel(urls).then(function () {
+            Promise.all(css.map(loadCss)).catch(function () { });
+        }).catch(function (err) {
             pending[kind] = null;
             throw err;
         });
@@ -213,27 +212,24 @@ window.jobsyMaps = (function () {
         if (!parsed) {
             return;
         }
-        if (!hasInlinePins(parsed) && parsed.pinsUrl && typeof fetch === "function") {
-            fetch(String(parsed.pinsUrl), {
+        var warmUrl = parsed.catalogUrl || parsed.pinsUrl;
+        if (!hasInlinePins(parsed) && warmUrl && typeof fetch === "function") {
+            fetch(String(warmUrl), {
                 credentials: "same-origin",
                 headers: { Accept: "application/json" }
             }).catch(function () { });
         }
-        function kickMapLoad() {
-            ensure("discovery").then(bootDiscoveryMap).catch(function () { });
+        if (parsed.catalogMode && window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.prefetch === "function") {
+            window.jobsyBanenkaartCatalog.prefetch().catch(function () { });
         }
-        if (typeof requestAnimationFrame === "function") {
-            requestAnimationFrame(function () { requestAnimationFrame(kickMapLoad); });
-        } else {
-            kickMapLoad();
+        var view = parsed.view || (parsed.mapInit && parsed.mapInit.view) || null;
+        if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
+            window.jobsyBasemapWarm.warm(view).catch(function () { });
         }
+        ensure("discovery").then(bootDiscoveryMap).catch(function () { });
     }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", warmBoot);
-    } else {
-        warmBoot();
-    }
+    warmBoot();
 
     return { ensure: ensure };
 })();

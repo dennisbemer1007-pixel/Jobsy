@@ -12,6 +12,7 @@ public static class BanenkaartClientEndpoints
 {
     public static IEndpointRouteBuilder MapBanenkaartClientEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapGet(BanenkaartClientCatalog.AllPath, BanenkaartClientCatalog.GetAllAsync).AllowAnonymous();
         app.MapGet(BanenkaartClientPins.Path, BanenkaartClientPins.GetAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.ApplyPath, ApplyFiltersAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.ResetPath, ResetFiltersAsync).AllowAnonymous();

@@ -202,6 +202,12 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                         return;
                     }
 
+                    if (path.Equals("/map/basemap/liberty/style.json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ctx.Response.Redirect("https://tiles.openfreemap.org/styles/liberty");
+                        return;
+                    }
+
                     if (!ctx.Request.Path.Equals("/__test/sign-in", StringComparison.OrdinalIgnoreCase))
                     {
                         await nxt();

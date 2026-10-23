@@ -42,11 +42,31 @@
     }
     else if (IncludeBanenkaartClientScript)
     {
-        <link rel="preload" href="/js/banenkaart-maps-boot.js?v=20261023-acc1" as="script" crossorigin="anonymous" />
-        <link rel="preload" href="/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180" as="script" crossorigin />
-        <link rel="preload" href="/js/jobsyMapLibre.min.js?v=20261002-ch01" as="script" crossorigin />
-        <link rel="preload" href="/js/jobMap.min.js?v=20261023-acc2" as="script" crossorigin />
-        <link rel="preload" href="https://tiles.openfreemap.org/styles/liberty" as="fetch" crossorigin />
+        <link rel="preload" href="https://tiles.openfreemap.org/styles/liberty" as="fetch" crossorigin="anonymous" />
+        <link rel="preload" href="/js/jobsy-basemap-warm.js?v=20261023-cat2" as="script" crossorigin="anonymous" />
+        <link rel="preload" href="/js/banenkaart-maps-boot.js?v=20261023-cat2" as="script" crossorigin="anonymous" />
+        <link rel="preload" href="/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180" as="script" crossorigin="anonymous" />
+        <link rel="modulepreload" href="/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180" crossorigin="anonymous" />
+        <link rel="preload" href="/js/jobsyMapLibre.min.js?v=20261023-cat2" as="script" crossorigin="anonymous" />
+        <link rel="modulepreload" href="/js/jobsyMapLibre.min.js?v=20261023-cat2" crossorigin="anonymous" />
+        <link rel="preload" href="/js/jobMap.min.js?v=20261023-cat2" as="script" crossorigin="anonymous" />
+        <link rel="preload" href="/js/banenkaart-catalog.js?v=20261023-cat2" as="script" crossorigin="anonymous" />
+        <link rel="preload" href="/map/basemap/liberty/style.json" as="fetch" crossorigin="anonymous" />
+    }
+    @if (IncludeBanenkaartPrefetch)
+    {
+        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
+        <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+        <link rel="prefetch" href="/api/banenkaart-client/all" as="fetch" crossorigin="anonymous" />
+        <link rel="prefetch" href="/banenkaart" as="document" />
+        <link rel="prefetch" href="/map/basemap/liberty/style.json" as="fetch" crossorigin="anonymous" />
+        <link rel="prefetch" href="/lib/maplibre/maplibre-gl.css?v=20260820-r166" as="style" crossorigin="anonymous" />
+        <link rel="prefetch" href="/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180" as="script" crossorigin="anonymous" />
+        <link rel="preload" href="https://tiles.openfreemap.org/styles/liberty" as="fetch" crossorigin="anonymous" />
+        <link rel="prefetch" href="/js/jobsyMapLibre.min.js?v=20261023-cat2" as="script" crossorigin="anonymous" />
+        <script src="/js/jobsy-basemap-warm.js?v=20261023-cat2" nonce="@Nonce" defer></script>
+        <script src="/js/banenkaart-catalog.js?v=20261023-cat2" nonce="@Nonce" defer></script>
+        <script src="/js/banenkaart-prefetch.js?v=20261023-cat2" nonce="@Nonce" defer></script>
     }
     @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
     {
@@ -306,7 +326,7 @@
             <script src="/js/app-public.js?v=20261023-acc1" nonce="@Nonce" defer></script>
             @if (IncludeBanenkaartClientScript)
             {
-                <script src="/js/banenkaart-maps-boot.js?v=20261023-acc1" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+                <script src="/js/banenkaart-maps-boot.js?v=20261023-cat2" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             }
         }
         @if (!IncludeBanenkaartClientScript)
@@ -440,6 +460,9 @@
 
     private bool IncludeBanenkaartClientScript =>
         PageAssetCatalog.IncludeBanenkaartClientScript(RequestPath);
+
+    private bool IncludeBanenkaartPrefetch =>
+        PageAssetCatalog.IncludeBanenkaartPrefetch(RequestPath);
 
     private bool SkipBlazorForPage =>
         HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;

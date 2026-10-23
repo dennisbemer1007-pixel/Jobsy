@@ -25,7 +25,30 @@ internal static class PassportSsrShells
         AppendActivePanel(sb, culture, data, antiforgeryToken);
         AppendFooterNav(sb, culture);
         sb.Append("</div></div></div>");
+        AppendBanenkaartPrefetchBoot(sb, data);
         return sb.ToString();
+    }
+
+    private static void AppendBanenkaartPrefetchBoot(StringBuilder sb, PassportSsrData.PageData data)
+    {
+        if (data.Profile.HomeLatitude is not double lat || data.Profile.HomeLongitude is not double lng)
+        {
+            return;
+        }
+
+        var transport = string.IsNullOrWhiteSpace(data.Profile.Preferences.PreferredTransport)
+            ? "Fiets"
+            : data.Profile.Preferences.PreferredTransport.Trim();
+        var maxMinutes = data.Profile.Preferences.MaxTravelMinutes is int m and > 0 ? m : 20;
+        sb.Append("<script type=\"application/json\" id=\"jobsy-bk-prefetch\">{\"lat\":")
+            .Append(lat.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Append(",\"lng\":")
+            .Append(lng.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Append(",\"transport\":\"")
+            .Append(WebUtility.HtmlEncode(transport))
+            .Append("\",\"maxMinutes\":")
+            .Append(maxMinutes)
+            .Append("}</script>");
     }
 
     private static string BuildGreeting(CultureState culture, string? firstName)

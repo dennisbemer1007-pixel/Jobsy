@@ -27,11 +27,6 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    @if (PageAssetCatalog.IncludeMapPreconnect("/banenkaart"))
-    {
-        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
-        <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
-    }
 </HeadContent>
 
 @if (!string.IsNullOrWhiteSpace(_fatalMessage))

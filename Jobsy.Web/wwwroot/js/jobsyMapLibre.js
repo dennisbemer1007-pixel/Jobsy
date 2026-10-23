@@ -2,6 +2,7 @@ window.jobsyMapLibre = (function () {
     "use strict";
 
     var LIBERTY_URL = "https://tiles.openfreemap.org/styles/liberty";
+    var LIBERTY_SAME_ORIGIN_URL = "/map/basemap/liberty/style.json";
     var STORAGE_KEY = "jobsy.mapStyle";
     var BUILDINGS_LAYER = "jobsy-3d-buildings";
 
@@ -340,6 +341,16 @@ window.jobsyMapLibre = (function () {
         }
     }
 
+    function resolveInitialStyle(spec) {
+        if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.getCachedStyle === "function") {
+            var cached = window.jobsyBasemapWarm.getCachedStyle();
+            if (cached && cached.version) {
+                return cached;
+            }
+        }
+        return spec.url;
+    }
+
     function createMap(container, options) {
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
@@ -349,7 +360,7 @@ window.jobsyMapLibre = (function () {
         var spec = styleSpec(styleKey);
         var map = new maplibregl.Map({
             container: container,
-            style: spec.url,
+            style: options.style || resolveInitialStyle(spec),
             center: options.center,
             zoom: options.zoom,
             attributionControl: {
