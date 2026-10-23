@@ -1714,7 +1714,7 @@ window.jobMap = (function () {
                     type: "symbol",
                     source: sourceId,
                     layout: {
-                        "text-field": ["get", "count"],
+                        "text-field": ["to-string", ["coalesce", ["get", "count"], 0]],
                         "text-size": 14,
                         "text-font": ["Noto Sans Bold"],
                         "text-allow-overlap": true
@@ -3838,7 +3838,7 @@ window.jobMap = (function () {
                 paint: {
                     "circle-color": "#16a34a",
                     "circle-radius": [
-                        "step", ["get", "point_count"],
+                        "step", ["coalesce", ["get", "point_count"], 0],
                         20, 10, 22, 30, 25
                     ],
                     "circle-opacity": 0.22,
@@ -3868,7 +3868,7 @@ window.jobMap = (function () {
                 paint: {
                     "circle-color": "#16a34a",
                     "circle-radius": [
-                        "step", ["get", "point_count"],
+                        "step", ["coalesce", ["get", "point_count"], 0],
                         15, 10, 17, 30, 20
                     ],
                     "circle-stroke-width": 2,
@@ -3881,7 +3881,7 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: ["has", "point_count"],
                 layout: {
-                    "text-field": ["get", "point_count_abbreviated"],
+                    "text-field": ["coalesce", ["get", "point_count_abbreviated"], ["to-string", ["coalesce", ["get", "point_count"], 0]]],
                     "text-size": 13,
                     "text-font": ["Noto Sans Bold"],
                     "text-allow-overlap": true
@@ -3927,9 +3927,9 @@ window.jobMap = (function () {
                     "circle-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
-                        ["==", ["get", "kansberoep"], 1], "#c9a227",
-                        ["==", ["get", "agency"], 1], AGENCY_PIN_COLOR,
-                        ["==", ["get", "featured"], 1], "#c9a227",
+                        ["==", ["coalesce", ["get", "kansberoep"], 0], 1], "#c9a227",
+                        ["==", ["coalesce", ["get", "agency"], 0], 1], AGENCY_PIN_COLOR,
+                        ["==", ["coalesce", ["get", "featured"], 0], 1], "#c9a227",
                         [
                             "case",
                             // Avoid literal null in the style (MapLibre warns); empty string means "no colour".
@@ -3941,8 +3941,8 @@ window.jobMap = (function () {
                     "circle-radius": [
                         "case",
                         ["==", ["feature-state", "selected"], true], 10,
-                        ["==", ["get", "agency"], 1], 8,
-                        ["==", ["get", "featured"], 1], 8,
+                        ["==", ["coalesce", ["get", "agency"], 0], 1], 8,
+                        ["==", ["coalesce", ["get", "featured"], 0], 1], 8,
                         7
                     ],
                     "circle-stroke-width": 2,
@@ -3989,7 +3989,7 @@ window.jobMap = (function () {
                 id: PIN_LAYER_CLUSTER_AGENCY_BADGE,
                 type: "symbol",
                 source: PIN_SOURCE,
-                filter: ["all", ["has", "point_count"], [">", ["get", "agency_sum"], 0]],
+                filter: ["all", ["has", "point_count"], [">", ["coalesce", ["get", "agency_sum"], 0], 0]],
                 layout: {
                     "text-field": ["concat", "◆", ["to-string", ["coalesce", ["get", "agency_sum"], 0]]],
                     "text-size": 10,
@@ -4023,6 +4023,8 @@ window.jobMap = (function () {
             map._jobsyPinClicksBound = true;
             map.on("click", PIN_LAYER_CLUSTER_HIT, onClusterClick);
             map.on("click", PIN_LAYER_CLUSTERS, onClusterClick);
+            map.on("touchend", PIN_LAYER_CLUSTER_HIT, onClusterClick);
+            map.on("touchend", PIN_LAYER_CLUSTERS, onClusterClick);
             map.on("click", PIN_LAYER_UNCLUSTERED_HIT, onPinClick);
             map.on("click", PIN_LAYER_UNCLUSTERED, onPinClick);
             map.on("click", PIN_LAYER_UNCLUSTERED_GLYPH, onPinClick);
@@ -4073,30 +4075,26 @@ window.jobMap = (function () {
         });
     }
 
-    /**
-     * MapLibre GL JS 5.x is promise-only for getClusterLeaves.
-     * Pre-#316 behaviour: cluster tap opens the pager immediately — no zoom.
-     */
-    function stubMarkersForCluster(total, coords, clusterId) {
-        const lng = coords[0];
-        const lat = coords[1];
-        const n = Math.min(Math.max(Number(total) || 2, 2), 100);
-        const stubs = [];
-        for (let i = 0; i < n; i++) {
-            stubs.push({
-                lng: lng,
-                lat: lat,
-                id: "cluster-pending-" + clusterId + "-" + i,
-                options: {
-                    jobData: {
-                        id: "cluster-pending-" + clusterId + "-" + i,
-                        title: "…",
-                        company: ""
-                    }
-                }
-            });
+    function openClusterListFromClusterId(source, clusterId, coords, total) {
+        if (!source || clusterId == null || typeof source.getClusterLeaves !== "function") {
+            return;
         }
-        return stubs;
+        const cap = Math.min(Math.max(Number(total) || 2, 2), 100);
+        Promise.resolve(source.getClusterLeaves(clusterId, cap, 0))
+            .then(function (leaves) {
+                if (!map) {
+                    return;
+                }
+                const childMarkers = (leaves || [])
+                    .map(function (leaf) {
+                        return markerByLeafId(leaf.properties && leaf.properties.id);
+                    })
+                    .filter(Boolean);
+                if (childMarkers.length >= 1) {
+                    openClusterList(childMarkers, coords);
+                }
+            })
+            .catch(function () { });
     }
 
     function onClusterClick(ev) {
@@ -4114,7 +4112,7 @@ window.jobMap = (function () {
         }
         lastClusterTapAt = Date.now();
         const clusterId = props.cluster_id;
-        if (clusterId == null || typeof source.getClusterLeaves !== "function") {
+        if (clusterId == null) {
             return;
         }
         const coords = feature.geometry && feature.geometry.coordinates;
@@ -4122,22 +4120,60 @@ window.jobMap = (function () {
             return;
         }
         const total = Math.max(Number(props.point_count) || 2, 2);
-        openClusterList(stubMarkersForCluster(total, coords, clusterId), coords);
-        Promise.resolve(source.getClusterLeaves(clusterId, Math.min(total, 100), 0))
-            .then(function (leaves) {
+        const zoomNow = map.getZoom();
+        const maxZ = BASEMAP_MAX_ZOOM;
+
+        function openCompactListAtMax() {
+            openClusterListFromClusterId(source, clusterId, coords, total);
+        }
+
+        function easeToClusterZoom(targetZoom) {
+            map.easeTo({
+                center: coords,
+                zoom: clampBanenZoom(targetZoom),
+                duration: 320
+            });
+        }
+
+        if (zoomNow >= maxZ - 0.02) {
+            openCompactListAtMax();
+            return;
+        }
+
+        if (typeof source.getClusterExpansionZoom !== "function") {
+            const fallback = clampBanenZoom(Math.min(zoomNow + 1.75, maxZ));
+            if (fallback <= zoomNow + 0.05) {
+                openCompactListAtMax();
+            } else {
+                easeToClusterZoom(fallback);
+            }
+            return;
+        }
+
+        Promise.resolve(source.getClusterExpansionZoom(clusterId))
+            .then(function (expansionZoom) {
                 if (!map) {
                     return;
                 }
-                const childMarkers = (leaves || [])
-                    .map(function (leaf) {
-                        return markerByLeafId(leaf.properties && leaf.properties.id);
-                    })
-                    .filter(Boolean);
-                if (childMarkers.length >= 1) {
-                    openClusterList(childMarkers, coords);
+                const exp = typeof expansionZoom === "number" ? expansionZoom : zoomNow + 2;
+                let target = clampBanenZoom(Math.min(exp, maxZ));
+                if (map.getZoom() >= maxZ - 0.02 || target <= map.getZoom() + 0.05) {
+                    openCompactListAtMax();
+                    return;
                 }
+                easeToClusterZoom(target);
             })
-            .catch(function () { });
+            .catch(function () {
+                if (!map) {
+                    return;
+                }
+                const target = clampBanenZoom(Math.min(map.getZoom() + 1.5, maxZ));
+                if (target <= map.getZoom() + 0.05) {
+                    openCompactListAtMax();
+                } else {
+                    easeToClusterZoom(target);
+                }
+            });
     }
 
     function onPinClick(ev) {
@@ -5901,6 +5937,31 @@ window.jobMap = (function () {
                 return;
             }
             fitMapToVacancies(points);
+        },
+        /** @internal Funda-style cluster zoom for Playwright (fires onClusterClick on densest cluster). */
+        __testTapLargestCluster: function () {
+            if (!map || typeof map.queryRenderedFeatures !== "function") {
+                return false;
+            }
+            const layers = [PIN_LAYER_CLUSTERS + "-hit", PIN_LAYER_CLUSTERS].filter(function (id) {
+                return !!map.getLayer(id);
+            });
+            const feats = map.queryRenderedFeatures({ layers: layers }) || [];
+            if (!feats.length) {
+                return false;
+            }
+            feats.sort(function (a, b) {
+                return (Number(b.properties && b.properties.point_count) || 0) -
+                    (Number(a.properties && a.properties.point_count) || 0);
+            });
+            const f = feats[0];
+            onClusterClick({
+                features: [f],
+                point: map.project(f.geometry.coordinates),
+                lngLat: { lng: f.geometry.coordinates[0], lat: f.geometry.coordinates[1] },
+                originalEvent: { stopPropagation: function () { } }
+            });
+            return true;
         },
         /** @internal Open the densest visible cluster for v3 popup tests. */
         debugOpenLargestCluster: async function () {

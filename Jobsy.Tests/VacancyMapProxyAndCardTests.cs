@@ -110,15 +110,17 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.DoesNotContain("PersistentComponentState", discovery);
         Assert.DoesNotContain("PersistAsJson", discovery);
         Assert.DoesNotContain("DiscoveryPersistState", discovery);
+        Assert.Contains("getClusterExpansionZoom", js, StringComparison.Ordinal);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
         var onClusterStart = js.IndexOf("function onClusterClick", StringComparison.Ordinal);
         Assert.True(onClusterStart >= 0);
         var onClusterEnd = js.IndexOf("\n    function onPinClick", onClusterStart, StringComparison.Ordinal);
         Assert.True(onClusterEnd > onClusterStart);
         var onCluster = js.Substring(onClusterStart, onClusterEnd - onClusterStart);
-        Assert.Contains("getClusterLeaves", onCluster, StringComparison.Ordinal);
-        Assert.Contains("openClusterList", onCluster, StringComparison.Ordinal);
-        Assert.Contains("stubMarkersForCluster", onCluster, StringComparison.Ordinal);
+        Assert.Contains("getClusterExpansionZoom", onCluster, StringComparison.Ordinal);
+        Assert.Contains("easeTo", onCluster, StringComparison.Ordinal);
+        Assert.Contains("openClusterListFromClusterId", onCluster, StringComparison.Ordinal);
+        Assert.DoesNotContain("stubMarkersForCluster", onCluster, StringComparison.Ordinal);
         Assert.Contains("fetchJsonWithOneRetry", js);
         Assert.Contains("retryAfterMs", js);
         // Cluster paging uses pin/card HTML in a fixed frame — never the shimmer skeleton.

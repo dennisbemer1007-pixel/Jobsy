@@ -56,7 +56,7 @@ internal static class BanenkaartSsrListHtml
         {
             sb.Append("<img class=\"kb-list-row__photo\" src=\"")
                 .Append(WebUtility.HtmlEncode(vacancy.ImageUrl))
-                .Append("\" alt=\"\" width=\"400\" height=\"267\" loading=\"")
+                .Append("\" alt=\"\" width=\"150\" height=\"93\" loading=\"")
                 .Append(eager ? "eager" : "lazy")
                 .Append("\" decoding=\"async\" />");
         }

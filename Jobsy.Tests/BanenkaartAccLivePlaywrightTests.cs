@@ -477,6 +477,62 @@ public sealed class BanenkaartAccLivePlaywrightTests
     }
 
     [Fact]
+    public async Task Desktop_cluster_tap_zooms_in_on_acc()
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 720 },
+            HasTouch = false,
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Allow,
+        });
+
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await WaitForBanenkaartMapReadyAsync(page);
+        await page.EvaluateAsync(
+            """
+            async () => {
+              await new Promise(function (resolve) {
+                if (window.jobsyBanenkaartCatalog && window.jobsyBanenkaartCatalog.isReady()) {
+                  resolve();
+                  return;
+                }
+                document.addEventListener('jobsy-bk-catalog-ready', resolve, { once: true });
+                setTimeout(resolve, 12000);
+              });
+              const map = window.jobMap.__testGetMap();
+              if (window.jobMap.__testFitAllPins) {
+                window.jobMap.__testFitAllPins();
+              }
+              map.setZoom(6.5);
+              await new Promise(function (r) { map.once('idle', r); });
+            }
+            """);
+
+        var zoomBefore = await page.EvaluateAsync<double>(
+            "() => window.jobMap.__testGetMap().getZoom()");
+        var tapped = await page.EvaluateAsync<bool>(
+            "() => !!(window.jobMap.__testTapLargestCluster && window.jobMap.__testTapLargestCluster())");
+        Assert.True(tapped, "Expected a visible cluster to tap on acceptatie.");
+        await page.WaitForTimeoutAsync(900);
+        var zoomAfter = await page.EvaluateAsync<double>(
+            "() => window.jobMap.__testGetMap().getZoom()");
+        Assert.True(zoomAfter > zoomBefore + 0.12,
+            "Cluster tap should zoom in on acc (before=" + zoomBefore + ", after=" + zoomAfter + ").");
+    }
+
+    [Fact]
     public async Task Desktop_banenkaart_basemap_stays_visible_after_pin_zoom_and_minus_control()
     {
         var baseUrl = ResolveBaseUrl();

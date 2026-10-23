@@ -159,6 +159,7 @@
             root.classList.toggle("show-map", on);
             root.classList.toggle("show-list", !on);
             writeUiState({ showMap: !!on });
+            ensureBodyScrollUnlocked();
             if (mapBtn) {
                 mapBtn.classList.toggle("is-active", on);
                 mapBtn.setAttribute("aria-checked", on ? "true" : "false");
@@ -297,6 +298,30 @@
         }, true);
     }
 
+    function bindClientFilterApply() {
+        if (document.documentElement.dataset.banenkaartClientFilters === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartClientFilters = "1";
+        document.addEventListener("submit", function (ev) {
+            var form = ev.target;
+            if (!form || form.id !== "kb-filter-form") {
+                return;
+            }
+            var root = qs("[data-banenkaart-ssr=\"1\"]");
+            if (!root || !window.jobsyBanenkaartCatalog
+                || typeof window.jobsyBanenkaartCatalog.applyClientFilters !== "function") {
+                return;
+            }
+            ev.preventDefault();
+            persistGuestFilters(form);
+            var filters = window.jobsyBanenkaartCatalog.filtersFromForm(form);
+            window.jobsyBanenkaartCatalog.applyClientFilters(filters);
+            setFiltersOpen(false);
+            ensureBodyScrollUnlocked();
+        }, true);
+    }
+
     function isDesktopBanenkaart() {
         return !!(window.jobsyViewport && typeof window.jobsyViewport.isWide === "function"
             && window.jobsyViewport.isWide());
@@ -340,6 +365,7 @@
                 listBtnM.setAttribute("aria-checked", "true");
             }
         }
+        ensureBodyScrollUnlocked();
     }
 
     function restoreUiStateFromSession() {
@@ -425,6 +451,7 @@
         bindViewportLayout();
         applyInitialUiState();
         bindGuestFilterPersistence();
+        bindClientFilterApply();
         bindFilters();
         markFilterReady();
         if (root.dataset.banenkaartSsrEnhance === "1") {
