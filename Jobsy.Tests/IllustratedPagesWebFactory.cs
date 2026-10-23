@@ -145,6 +145,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
+            var pathAndQuery = path + (request.RequestUri?.Query ?? "");
             if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_CORE") == "1"
                 && path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
             {
@@ -158,7 +159,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 await Task.Delay(20_000, cancellationToken);
             }
 
-            var json = IllustratedPagesApiStub.BuildJson(path, emptyAppsAndLikes, minimalPassportProfile);
+            var json = IllustratedPagesApiStub.BuildJson(pathAndQuery, emptyAppsAndLikes, minimalPassportProfile);
             return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
@@ -191,14 +192,16 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                         }
 
                         ctx.Response.ContentType = "application/json; charset=utf-8";
-                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
+                        var pathAndQuery = path + ctx.Request.QueryString;
+                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(pathAndQuery));
                         return;
                     }
 
                     if (path.StartsWith("/api/travel/isochrones", StringComparison.OrdinalIgnoreCase))
                     {
                         ctx.Response.ContentType = "application/json; charset=utf-8";
-                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
+                        var isoPath = path + ctx.Request.QueryString;
+                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(isoPath));
                         return;
                     }
 

@@ -293,15 +293,23 @@ internal static class BanenkaartSsrData
                 originLat is not null),
             defaults);
 
+        var showEmptyTravel = zoomOutsideTravel && vacancies.Count == 0;
         var count = discoverTotal > 0 ? discoverTotal : vacancies.Count;
-        var heading = culture.Format("Kb.Filter.ResultCount", count);
+        var heading = showEmptyTravel
+            ? culture["Kb.Map.NoVacanciesInTravel"]
+            : culture.Format("Kb.Filter.ResultCount", count);
 
-        string? subtitle = originLat is not null
+        string? subtitle = showEmptyTravel
             ? culture.Format(
                 "Kb.Filter.ResultWithin",
                 effectiveQuery.MaxTravelMinutes,
                 UiLabels.TransportVerb(culture, effectiveQuery.Transport))
-            : null;
+            : originLat is not null
+                ? culture.Format(
+                    "Kb.Filter.ResultWithin",
+                    effectiveQuery.MaxTravelMinutes,
+                    UiLabels.TransportVerb(culture, effectiveQuery.Transport))
+                : null;
 
         return new PageModel(
             effectiveQuery,
@@ -317,7 +325,7 @@ internal static class BanenkaartSsrData
             categories,
             branchOptions,
             addressLabel,
-            zoomOutsideTravel && vacancies.Count == 0,
+            showEmptyTravel,
             activeFilters,
             heading,
             subtitle,

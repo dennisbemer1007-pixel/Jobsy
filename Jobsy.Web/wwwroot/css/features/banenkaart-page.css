@@ -183,6 +183,14 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     }
 }
 
+.jobsy-discovery .filter-sheet.kb-filter-drawer .filter-sheet__header {
+    padding: 1rem 1rem 0.75rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
 /* Banenkaart shell: map/list split (desktop list rail + mobile toggles). */
 .app-shell--banenkaart-shell .jobsy-chrome {
     min-height: 0;

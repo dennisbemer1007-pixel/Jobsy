@@ -342,7 +342,15 @@
                 zoomOutsideTravel: mapPins.length > 0 && !filterRows(rows, filters, false).length
             });
         } else {
-            document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-pins", { detail: { pins: pins } }));
+            var travelPins = filterRows(rows, filters, false);
+            document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-pins", {
+                detail: {
+                    pins: pins,
+                    meta: {
+                        zoomOutsideTravel: travelPins.length === 0 && mapPins.length > 0
+                    }
+                }
+            }));
         }
     }
 
@@ -351,6 +359,10 @@
         return fetchCatalog(false).then(function () {
             applyToMap(filters);
             document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", { detail: { count: rows ? rows.length : 0 } }));
+            if (!window.jobMap || typeof window.jobMap.setVacanciesFromCatalog !== "function") {
+                setTimeout(function () { applyToMap(filters); }, 400);
+                setTimeout(function () { applyToMap(filters); }, 1500);
+            }
         }).catch(function () { });
     }
 

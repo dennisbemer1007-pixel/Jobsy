@@ -48,6 +48,16 @@ internal static class IllustratedPagesVacancyStub
 
         if (path.Contains("/discover", StringComparison.OrdinalIgnoreCase))
         {
+            if (path.Contains("originLat=", StringComparison.OrdinalIgnoreCase))
+            {
+                return Serialize(new VacancyListPage
+                {
+                    Items = [],
+                    TotalCount = 0,
+                    HasMore = false
+                });
+            }
+
             return Serialize(BuildDiscoverPage());
         }
 

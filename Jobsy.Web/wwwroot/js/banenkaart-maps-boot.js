@@ -7,9 +7,9 @@ window.jobsyMaps = (function () {
     var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261023-acc3"
+        "/js/jobsyMapLibre.min.js?v=20261023-acc4"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-acc3"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261023-acc4"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -106,6 +106,7 @@ window.jobsyMaps = (function () {
             var script = document.createElement("script");
             script.src = src;
             script.defer = true;
+            script.crossOrigin = "anonymous";
             script.setAttribute("data-jobsy-map", src);
             if (!isMapLibreMain(src)) {
                 script.setAttribute("fetchpriority", "high");
@@ -226,7 +227,22 @@ window.jobsyMaps = (function () {
         if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
             window.jobsyBasemapWarm.warm(view).catch(function () { });
         }
-        ensure("discovery").then(bootDiscoveryMap).catch(function () { });
+        ensure("discovery").then(function () {
+            bootDiscoveryMap();
+            if (window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.applyToMap === "function") {
+                var node = document.getElementById("jobsy-map-boot");
+                var filters = null;
+                if (node && node.textContent) {
+                    try {
+                        var parsed = JSON.parse(node.textContent);
+                        filters = parsed && parsed.mapInit && parsed.mapInit.filters ? parsed.mapInit.filters : null;
+                    } catch (eParse) { }
+                }
+                if (window.jobsyBanenkaartCatalog.isReady && window.jobsyBanenkaartCatalog.isReady()) {
+                    window.jobsyBanenkaartCatalog.applyToMap(filters);
+                }
+            }
+        }).catch(function () { });
     }
 
     warmBoot();
