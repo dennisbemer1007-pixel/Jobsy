@@ -43,7 +43,10 @@ internal static class IllustratedPagesVacancyStub
     {
         if (path.Contains("/isochrones", StringComparison.OrdinalIgnoreCase))
         {
-            return """{"type":"FeatureCollection","features":[]}""";
+            var q = ParseQuery(path);
+            var lat = TryDouble(q, "lat") ?? OriginLat;
+            var lng = TryDouble(q, "lng") ?? OriginLng;
+            return LagenIsochroneFixtures.FeatureCollectionJson(lat, lng);
         }
 
         if (path.Contains("/discover", StringComparison.OrdinalIgnoreCase))

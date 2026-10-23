@@ -947,26 +947,60 @@ window.jobMap = (function () {
         );
     }
 
-    function buildLagenCatalogPopupHtml(v) {
+    function lagenDescriptionLine(v) {
+        const raw = v && (v.summary || v.shortDescription || v.descriptionLine || v.whyLine || "");
+        const text = String(raw || "").trim();
+        if (!text) {
+            return "";
+        }
+        return escapeHtml(text);
+    }
+
+    function buildLagenCatalogPopupHtml(v, sheetMode) {
         const ic = window.jobsyBanenkaartMapIcons;
         const typeLabel = ic && typeof ic.typeMarkerHtml === "function"
             ? ic.typeMarkerHtml(v, true)
             : "";
         const detailHref = detailHrefForVacancy(v.id);
+        const desc = lagenDescriptionLine(v);
+        let orgBlock = lagenOrgLineHtml(v);
+        if (desc && orgBlock.indexOf("kb-popup__org") >= 0) {
+            orgBlock = orgBlock.replace(/<\/p>\s*$/, "<br>" + desc + "</p>");
+        } else if (desc) {
+            orgBlock = "<p class=\"map-popup__company kb-popup__org\">" + desc + "</p>";
+        }
+        const rootClass = popupRootClass("kb-popup-lagen" + (sheetMode ? " kb-popup-lagen--sheet" : ""));
+        const heartInHeader = sheetMode
+            ? heartButtonHtml(v)
+            : "";
         return (
-            "<div class=\"" + popupRootClass("kb-popup-lagen") + "\">" +
+            "<div class=\"" + rootClass + "\">" +
+                heartInHeader +
                 (typeLabel ? "<div class=\"kb-popup__type\">" + typeLabel + "</div>" : "") +
                 "<h3 class=\"map-popup__title map-popup__title--lagen\">" +
                     escapeHtml(v.title || vacancyFallbackTitle()) +
                 "</h3>" +
-                lagenOrgLineHtml(v) +
+                orgBlock +
                 lagenTravelLineHtml(v) +
                 "<div class=\"map-popup__actions\">" +
                     "<a class=\"map-popup__view map-popup__cta map-popup__view--primary\" href=\"" +
                         escapeAttr(detailHref) + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         "Bekijk vacature" +
                     "</a>" +
-                    heartButtonHtml(v) +
+                    (sheetMode ? "" : heartButtonHtml(v)) +
+                "</div>" +
+            "</div>"
+        );
+    }
+
+    function buildLagenMobileSheetShell(viewportInner) {
+        return (
+            "<div class=\"map-cluster-sheet map-cluster-sheet--lagen map-popup--docked\" data-cluster-card=\"1\">" +
+                "<div class=\"grab\" aria-hidden=\"true\"></div>" +
+                "<button type=\"button\" class=\"map-cluster-card__close map-cluster-sheet__close\" data-cluster-close aria-label=\"" +
+                    escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>" +
+                "<div class=\"map-cluster-card__body map-cluster-card__body--lagen\">" +
+                    "<div class=\"map-cluster-card__viewport\" data-cluster-viewport>" + viewportInner + "</div>" +
                 "</div>" +
             "</div>"
         );
@@ -974,7 +1008,7 @@ window.jobMap = (function () {
 
     function buildPopupHtml(v) {
         if (lagenLayout && catalogModeActive) {
-            return buildLagenCatalogPopupHtml(v);
+            return buildLagenCatalogPopupHtml(v, lagenLayout && isNarrowViewport());
         }
         let mediaInner = "";
         let mediaClassFinal = "map-popup__media";
@@ -1336,6 +1370,10 @@ window.jobMap = (function () {
 
     function updateClusterChrome(state) {
         if (!state || !state.root) {
+            return;
+        }
+        if (lagenLayout && isNarrowViewport()) {
+            syncSheetChromeOffset();
             return;
         }
         const total = state.pageCount;
@@ -2392,6 +2430,9 @@ window.jobMap = (function () {
             wageLabel: card.wageLabel || card.displayWageLabel || null,
             minHoursPerWeek: card.minHoursPerWeek != null ? card.minHoursPerWeek : pin.minHoursPerWeek,
             maxHoursPerWeek: card.maxHoursPerWeek != null ? card.maxHoursPerWeek : pin.maxHoursPerWeek,
+            summary: card.summary || card.shortDescription || pin.summary || null,
+            shortDescription: card.shortDescription || card.summary || pin.shortDescription || null,
+            descriptionLine: card.descriptionLine || card.teaser || pin.descriptionLine || null,
             liked: pin.liked === true,
             transport: travelOptions.transport || pin.transport,
             transportLabel: transportVerb(travelOptions.transport) || pin.transportLabel,
@@ -2794,9 +2835,14 @@ window.jobMap = (function () {
         // Fixed-size chrome + skeleton card so the sheet appears on the same tap frame.
         const chromeHtml = buildClusterChromeHtml(pageCount, clusterPlaceLabel(jobs));
         const skeletonCard = skeletonPopupHtml(firstJob || {});
-        const sheetHtml = chromeHtml.replace(
-            "data-cluster-viewport\"></div>",
-            "data-cluster-viewport\">" + skeletonCard + "</div>");
+        let sheetHtml;
+        if (lagenLayout && isNarrowViewport()) {
+            sheetHtml = buildLagenMobileSheetShell(skeletonCard);
+        } else {
+            sheetHtml = chromeHtml.replace(
+                "data-cluster-viewport\"></div>",
+                "data-cluster-viewport\">" + skeletonCard + "</div>");
+        }
         const visibleCount = Object.keys(markersById).length;
 
         setSelectedCluster(ll, pageCount);
@@ -3151,6 +3197,11 @@ window.jobMap = (function () {
     }
 
     function labelBearingForMinutes(mins, index) {
+        if (lagenLayout) {
+            if (mins <= 10) return 180;
+            if (mins <= 20) return 135;
+            return 315;
+        }
         // Mockup bearings ≈ 30° (10), 190° (20), 160° (30).
         if (mins <= 10) return 30;
         if (mins <= 20) return 190;
@@ -3231,11 +3282,13 @@ window.jobMap = (function () {
                 isochroneLabelMarkers.push(marker);
             } catch (e) { }
         });
-        clampIsoLabelMarkersToMap();
+        if (!lagenLayout) {
+            clampIsoLabelMarkersToMap();
+        }
     }
 
     function clampIsoLabelMarkersToMap() {
-        if (!map || !isochroneLabelMarkers.length) {
+        if (lagenLayout || !map || !isochroneLabelMarkers.length) {
             return;
         }
         const container = map.getContainer();
@@ -3283,6 +3336,9 @@ window.jobMap = (function () {
     }
 
     function ringBrandColors() {
+        if (lagenLayout) {
+            return { fill: "#1F2F55", line: "#1F2F55" };
+        }
         const brand = readCssToken("--brand", "#0f2d5c");
         const brandDeep = readCssToken("--brand-deep", brand);
         return { fill: brand, line: brandDeep || brand };
@@ -3319,6 +3375,25 @@ window.jobMap = (function () {
         const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
         const colors = ringBrandColors();
 
+        const lagenFillOpacity = lagenLayout
+            ? ["match", ["coalesce", ["get", "minutes"], 0], 10, 0.10, 20, 0.06, 30, 0.035, 0.06]
+            : [
+                "match", ["coalesce", ["get", "minutes"], 0],
+                10, 0.12,
+                20, 0.09,
+                30, 0.06,
+                45, 0.05,
+                0.08
+            ];
+        const lagenLineWidth = lagenLayout
+            ? ["match", ["coalesce", ["get", "minutes"], 0], 10, 3, 20, 2.6, 30, 3, 2.5]
+            : [
+                "case",
+                ["==", ["coalesce", ["get", "chosen"], 0], 1],
+                2.5,
+                1.5
+            ];
+
         if (!map.getLayer(fillId)) {
             map.addLayer({
                 id: fillId,
@@ -3326,14 +3401,7 @@ window.jobMap = (function () {
                 source: sourceId,
                 paint: {
                     "fill-color": colors.fill,
-                    "fill-opacity": [
-                        "match", ["coalesce", ["get", "minutes"], 0],
-                        10, 0.12,
-                        20, 0.09,
-                        30, 0.06,
-                        45, 0.05,
-                        0.08
-                    ]
+                    "fill-opacity": lagenFillOpacity
                 }
             }, beforeId);
         }
@@ -3350,7 +3418,10 @@ window.jobMap = (function () {
                         4.5,
                         3
                     ],
-                    "line-opacity": 0.85
+                    "line-opacity": lagenLayout ? 0 : 0.85
+                },
+                layout: {
+                    visibility: lagenLayout ? "none" : "visible"
                 }
             }, beforeId);
         }
@@ -3361,15 +3432,18 @@ window.jobMap = (function () {
                 source: sourceId,
                 paint: {
                     "line-color": colors.line,
-                    "line-width": [
-                        "case",
-                        ["==", ["coalesce", ["get", "chosen"], 0], 1],
-                        2.5,
-                        1.5
-                    ],
-                    "line-opacity": 1,
+                    "line-width": lagenLineWidth,
+                    "line-opacity": 0.9,
                     "line-dasharray": travelRingLineDashPaint()
-                }
+                },
+                layout: lagenLayout ? {
+                    "line-cap": [
+                        "match", ["coalesce", ["get", "minutes"], 0],
+                        30, "round",
+                        "butt"
+                    ],
+                    "line-join": "round"
+                } : {}
             }, beforeId);
         } else {
             try {
@@ -3442,6 +3516,51 @@ window.jobMap = (function () {
         lastRingDrawKey = ringKey;
         travelRingDrawCount += 1;
 
+        const drawGen = ++ringRedrawTries;
+        function applyIsochroneFc(fc) {
+            if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
+                Math.abs(lastOrigin.lng - lng) > 1e-7) {
+                return;
+            }
+            if (!fc) {
+                if (lagenLayout) {
+                    clearTravelRings();
+                    lastRingDrawKey = ringKey;
+                    setIsoMode("none");
+                } else {
+                    try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
+                    setIsoMode("approx");
+                }
+                return;
+            }
+            const isoFeatures = featuresFromIsochroneFc(fc);
+            if (!isoFeatures.length) {
+                if (lagenLayout) {
+                    clearTravelRings();
+                    lastRingDrawKey = ringKey;
+                    setIsoMode("none");
+                } else {
+                    setIsoMode("approx");
+                }
+                return;
+            }
+            applyTravelRingData(isoFeatures, lat, lng);
+            setIsoMode("real");
+            ringRedrawTries = Math.min(ringRedrawTries, drawGen);
+        }
+
+        function loadIsochronesWhenIdle() {
+            fetchIsochrones(lat, lng).then(applyIsochroneFc);
+        }
+
+        if (lagenLayout) {
+            clearTravelRings();
+            lastRingDrawKey = ringKey;
+            setIsoMode("pending");
+            scheduleIsoLoad(loadIsochronesWhenIdle);
+            return;
+        }
+
         // Circles first, swap isochrones when they arrive (no flash).
         const circleFeatures = buildTravelRingFeatures(lat, lng);
         if (!circleFeatures.length) {
@@ -3450,48 +3569,29 @@ window.jobMap = (function () {
         }
         applyTravelRingData(circleFeatures, lat, lng);
         setIsoMode("approx");
+        scheduleIsoLoad(loadIsochronesWhenIdle);
 
-        const drawGen = ++ringRedrawTries;
-        function loadIsochronesWhenIdle() {
-            fetchIsochrones(lat, lng).then(function (fc) {
-                if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
-                    Math.abs(lastOrigin.lng - lng) > 1e-7) {
-                    return;
-                }
-                if (!fc) {
-                    try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
-                    setIsoMode("approx");
-                    return;
-                }
-                const isoFeatures = featuresFromIsochroneFc(fc);
-                if (!isoFeatures.length) {
-                    setIsoMode("approx");
-                    return;
-                }
-                applyTravelRingData(isoFeatures, lat, lng);
-                setIsoMode("real");
-                ringRedrawTries = Math.min(ringRedrawTries, drawGen);
-            });
-        }
-        if (map && typeof map.once === "function") {
-            if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()
-                && map.areTilesLoaded && map.areTilesLoaded()) {
-                if (typeof requestIdleCallback === "function") {
-                    requestIdleCallback(loadIsochronesWhenIdle, { timeout: 5000 });
+        function scheduleIsoLoad(fn) {
+            if (map && typeof map.once === "function") {
+                if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()
+                    && map.areTilesLoaded && map.areTilesLoaded()) {
+                    if (typeof requestIdleCallback === "function") {
+                        requestIdleCallback(fn, { timeout: 5000 });
+                    } else {
+                        setTimeout(fn, 32);
+                    }
                 } else {
-                    setTimeout(loadIsochronesWhenIdle, 32);
+                    map.once("idle", function () {
+                        if (typeof requestIdleCallback === "function") {
+                            requestIdleCallback(fn, { timeout: 5000 });
+                        } else {
+                            setTimeout(fn, 32);
+                        }
+                    });
                 }
             } else {
-                map.once("idle", function () {
-                    if (typeof requestIdleCallback === "function") {
-                        requestIdleCallback(loadIsochronesWhenIdle, { timeout: 5000 });
-                    } else {
-                        setTimeout(loadIsochronesWhenIdle, 32);
-                    }
-                });
+                fn();
             }
-        } else {
-            loadIsochronesWhenIdle();
         }
     }
 
@@ -3504,6 +3604,15 @@ window.jobMap = (function () {
     }
 
     function overlayFitPadding() {
+        if (lagenLayout && map) {
+            if (isNarrowViewport()) {
+                const pane = map.getContainer().closest(".map-pane");
+                const sheet = pane ? pane.querySelector(".map-cluster-sheet--lagen") : null;
+                const bottom = sheet && sheet.offsetHeight > 0 ? sheet.offsetHeight + 16 : 20;
+                return { top: 70, right: 0, bottom: bottom, left: 0 };
+            }
+            return { top: 80, left: 150, right: 0, bottom: 0 };
+        }
         const edge = 36;
         const padding = { top: edge, right: edge, bottom: edge, left: edge };
         if (!map) {
@@ -3564,7 +3673,9 @@ window.jobMap = (function () {
         if (!map || !lastOrigin) {
             return;
         }
-        const radius = maxRingRadiusMeters() * 1.12;
+        const radius = lagenLayout
+            ? ringRadiusForMinutes(30) * 1.05
+            : maxRingRadiusMeters() * 1.12;
         if (!(radius > 40)) {
             finishOpeningFrame();
             return;
@@ -3572,7 +3683,7 @@ window.jobMap = (function () {
         const opening = deferMapReveal || originHasBeenFramed !== true;
         const opts = {
             padding: overlayFitPadding(),
-            maxZoom: Math.min(13, BASEMAP_MAX_ZOOM),
+            maxZoom: lagenLayout ? Math.min(11.85, BASEMAP_MAX_ZOOM) : Math.min(13, BASEMAP_MAX_ZOOM),
             animate: animate === true && !opening && !prefersReducedMotion(),
             duration: animate === true && !opening && !prefersReducedMotion() ? 450 : 0
         };
@@ -3874,7 +3985,7 @@ window.jobMap = (function () {
         if (window.__jobsyBkRestoringView) {
             return;
         }
-        if (bootZoomOutsideTravel && lastOrigin) {
+        if (bootZoomOutsideTravel && lastOrigin && !lagenLayout) {
             fitOriginWithPinsOutsideTravel();
         } else if (lastOrigin && !meta.skipAutoFit) {
             fitToOriginRings(true);
@@ -6113,6 +6224,20 @@ window.jobMap = (function () {
             return;
         }
         const el = document.createElement("div");
+        if (lagenLayout) {
+            el.className = "job-map-origin home";
+            el.innerHTML = "<span class=\"hd\" aria-hidden=\"true\"><svg class=\"ic\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"><path d=\"M4 11l8-6.5 8 6.5M6.5 9.5V19h11V9.5M10 19v-5h4v5\"/></svg></span><span class=\"hl\">Jouw adres</span>";
+            originMarker = new maplibregl.Marker({
+                element: el,
+                anchor: "top",
+                offset: [0, -20],
+                pitchAlignment: "viewport",
+                rotationAlignment: "viewport"
+            })
+                .setLngLat([ln, la])
+                .addTo(map);
+            return;
+        }
         el.className = "job-map-origin";
         el.title = "Jouw locatie";
         originMarker = new maplibregl.Marker({
