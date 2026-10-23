@@ -24,16 +24,16 @@ internal static class DiscoveryHalteTapAssert
         page.Request += OnRequest;
         try
         {
-            var link = mobile
-                ? page.Locator(".discovery-mobile-stop[data-phase=rots] a.discovery-halte-link").First
-                : page.Locator(".journey-route__desktop-only a.discovery-halte-link[data-phase=rots]").First;
-            await link.ScrollIntoViewIfNeededAsync();
             if (mobile)
             {
-                await link.EvaluateAsync("el => el.click()");
+                var circleImg = page.Locator(".discovery-mobile-stop[data-phase=rots] .discovery-mobile-stop__circle img");
+                await circleImg.ScrollIntoViewIfNeededAsync();
+                await circleImg.TapAsync();
             }
             else
             {
+                var link = page.Locator(".journey-route__desktop-only a.discovery-halte-link[data-phase=rots]").First;
+                await link.ScrollIntoViewIfNeededAsync();
                 await link.ClickAsync();
             }
             await page.WaitForFunctionAsync(

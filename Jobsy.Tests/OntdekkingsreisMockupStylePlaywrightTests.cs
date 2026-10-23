@@ -88,7 +88,7 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
 
         var routeRoot = mobile ? ".discovery-mobile-route" : ".journey-route__desktop-only";
         var kustLink = mobile
-            ? page.Locator(".discovery-mobile-stop[data-phase=kust] a.discovery-halte-link").First
+            ? page.Locator(".discovery-mobile-stop[data-phase=kust] a.discovery-mobile-stop__hit")
             : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=kust]");
         await ClickHalteLinkAsync(kustLink, mobile);
         await page.WaitForFunctionAsync("() => window.location.search.includes('fase=kust')", null, new() { Timeout = 15_000 });
@@ -101,7 +101,7 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
         }
 
         var rotsLink = mobile
-            ? page.Locator(".discovery-mobile-stop[data-phase=rots] a.discovery-halte-link").First
+            ? page.Locator(".discovery-mobile-stop[data-phase=rots] a.discovery-mobile-stop__hit")
             : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=rots]");
         await ClickHalteLinkAsync(rotsLink, mobile);
         await page.WaitForFunctionAsync("() => window.location.search.includes('fase=rots')", null, new() { Timeout = 15_000 });
@@ -113,7 +113,7 @@ public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
         }
 
         var lightLink = mobile
-            ? page.Locator(".discovery-mobile-stop[data-phase=light] a.discovery-halte-link").First
+            ? page.Locator(".discovery-mobile-stop[data-phase=light] a.discovery-mobile-stop__hit")
             : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=light]");
         await ClickHalteLinkAsync(lightLink, mobile);
         await page.WaitForFunctionAsync("() => window.location.search.includes('fase=light')", null, new() { Timeout = 15_000 });
