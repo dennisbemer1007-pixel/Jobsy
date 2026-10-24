@@ -167,7 +167,6 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-reschedule-page .intro .bc{font-size:.85rem;color:var(--muted);margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ndm.ndm-reschedule-page .intro .bc a{color:var(--brand);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .ndm.ndm-reschedule-page .intro .bc i{font-style:normal;color:#b9a891}
-.ndm.ndm-reschedule-page .intro .eyb.ndm-reschedule-eyb{display:block;color:var(--coral);font-weight:700;font-size:.85rem;margin-bottom:4px}
 .ndm.ndm-reschedule-page .intro h1{font-size:2rem}
 .ndm.ndm-reschedule-page .intro p{color:#3d4e63;margin-top:6px;font-size:1rem;max-width:680px}
 .ndm.ndm-reschedule-page .wrap{max-width:1180px;margin:0 auto;padding:24px 28px 20px;box-sizing:border-box}
@@ -178,14 +177,24 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-reschedule-page .side .shd{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
 .ndm.ndm-reschedule-page .side .shd h2{font-size:1.3rem;margin:0}
 .ndm.ndm-reschedule-page .xbtn{border:0;background:transparent;cursor:pointer;font:inherit;padding:0}
-.ndm.ndm-reschedule-page .chip{border:0;cursor:pointer;font:inherit}
-.ndm.ndm-reschedule-page .ndm-reschedule-reason{resize:vertical}
+.ndm.ndm-reschedule-page button.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--rM);border:1.5px solid #d9cdbd;background:#fff;font-weight:700;font-size:.88rem;color:var(--brand);white-space:nowrap;cursor:pointer;font:inherit;box-sizing:border-box}
+.ndm.ndm-reschedule-page button.chip.on{border-color:var(--brand);background:#eef2f7}
+.ndm.ndm-reschedule-page .ndm-reschedule-reason-block{margin-top:0}
+.ndm.ndm-reschedule-page .ndm-reschedule-reason-lbl{margin-bottom:6px}
+.ndm.ndm-reschedule-page .ndm-reschedule-reason-chips{gap:6px;margin:0 0 10px;align-items:center}
+.ndm.ndm-reschedule-page .ndm-reschedule-reason{resize:vertical;width:100%;min-height:84px;margin-top:0;box-sizing:border-box;font:inherit;color:var(--text)}
+.ndm.ndm-reschedule-page .ndm-reschedule-when-block{margin-top:12px}
+.ndm.ndm-reschedule-page .ndm-reschedule-when-lbl{margin-bottom:6px}
 .ndm.ndm-reschedule-page .ndm-reschedule-when-display{width:100%;box-sizing:border-box}
-.ndm.ndm-reschedule-page .ndm-reschedule-actions{flex-wrap:wrap;align-items:center;gap:12px}
+.ndm.ndm-reschedule-page .ndm-reschedule-propose{display:inline-block;margin-top:8px;margin-bottom:16px}
+.ndm.ndm-reschedule-page .ndm-reschedule-actions{display:flex;flex-wrap:nowrap;align-items:center;gap:16px;margin-top:4px}
+.ndm.ndm-reschedule-page .ndm-reschedule-actions .btn{flex:0 0 auto}
+.ndm.ndm-reschedule-page .ndm-reschedule-actions .lk.ndm-reschedule-nevermind{border:0;background:transparent;padding:0;font:inherit;flex:0 0 auto;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ndm.ndm-reschedule-page .ndm-reschedule-cancel-footnote{margin-top:10px}
 .ndm.ndm-reschedule-page .askl{border:0;cursor:pointer;font:inherit}
 .ndm.ndm-reschedule-page .ndm-reschedule-chatdock{display:flex;justify-content:flex-end;max-width:1180px;margin:0 auto;padding:4px 28px 18px;box-sizing:border-box;width:100%}
 .ndm.ndm-reschedule-page .ndm-mockup-footer{margin-top:0}
 .ndm.ndm-reschedule-page .ndm-mockup-footer .ll{display:flex;flex-wrap:wrap;gap:6px 14px}
 .ndm.ndm-reschedule-page .ndm-mockup-footer .ll a{color:var(--muted);font-size:.82rem;text-decoration:underline;text-underline-offset:3px}
 .app-shell:has(.ndm-reschedule-page) .app-footer{display:none!important}
-@media(max-width:600px){.ndm.ndm-reschedule-page{display:flex;flex-direction:column}.ndm.ndm-reschedule-page main.wrap{display:block!important;order:1}.ndm.ndm-reschedule-page .intro{margin:0 0 14px}.ndm.ndm-reschedule-page .intro h1{font-size:1.45rem;line-height:1.16}.ndm.ndm-reschedule-page .intro p{font-size:.9rem;line-height:1.45}.ndm.ndm-reschedule-page .wrap{padding:12px}.ndm.ndm-reschedule-page .g2.ndm-reschedule-g2{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px}.ndm.ndm-reschedule-page .g2.ndm-reschedule-g2>.card{order:1}.ndm.ndm-reschedule-page .g2.ndm-reschedule-g2>.side{order:2}.ndm.ndm-reschedule-page .row.wrapflex.ndm-reschedule-mode-chips{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important}.ndm.ndm-reschedule-page .row.wrapflex.ndm-reschedule-reason-chips{flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important}.ndm.ndm-reschedule-page .ndm-reschedule-chatdock{order:3;padding:0 12px 12px;justify-content:flex-end}.ndm.ndm-reschedule-page .ndm-mockup-footer{order:4}}
+@media(max-width:600px){.ndm.ndm-reschedule-page{display:flex;flex-direction:column}.ndm.ndm-reschedule-page main.wrap{display:block!important;order:1}.ndm.ndm-reschedule-page .intro{margin:0 0 14px}.ndm.ndm-reschedule-page .intro h1{font-size:1.45rem;line-height:1.16}.ndm.ndm-reschedule-page .intro p{font-size:.9rem;line-height:1.45}.ndm.ndm-reschedule-page .wrap{padding:12px}.ndm.ndm-reschedule-page .g2.ndm-reschedule-g2{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px}.ndm.ndm-reschedule-page .g2.ndm-reschedule-g2>.card{order:1}.ndm.ndm-reschedule-page .g2.ndm-reschedule-g2>.side{order:2}.ndm.ndm-reschedule-page .row.wrapflex.ndm-reschedule-mode-chips{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important}.ndm.ndm-reschedule-page .row.wrapflex.ndm-reschedule-reason-chips{flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important}.ndm.ndm-reschedule-page .ndm-reschedule-actions{flex-wrap:nowrap!important;justify-content:flex-start!important}.ndm.ndm-reschedule-page .ndm-reschedule-chatdock{order:3;padding:0 12px 12px;justify-content:flex-end}.ndm.ndm-reschedule-page .ndm-mockup-footer{order:4}}

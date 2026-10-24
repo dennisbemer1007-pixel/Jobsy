@@ -31,8 +31,10 @@ public sealed class AfterMatchRescheduleSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchRescheduleSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-reschedule.js?v=20261026-ndm-reschedule1", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261026-ndm-reschedule1", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-reschedule.js?v=20261026-ndm-reschedule2", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261026-ndm-reschedule2", razor, StringComparison.Ordinal);
+        var ndmCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/na-de-match.css"));
+        Assert.Contains(".ndm-reschedule-page button.chip.on{border-color:var(--brand)", ndmCss, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -83,6 +85,10 @@ public sealed class AfterMatchRescheduleSsrTests : BunitContext
         var htmlCancel = AfterMatchRescheduleSsrShells.BuildBody(culture, data, appId, "cancel");
 
         Assert.Contains("data-ndm-reschedule-ssr=\"1\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("ndm-reschedule-eyb", html, StringComparison.Ordinal);
+        Assert.Contains("placeholder=\"", html, StringComparison.Ordinal);
+        Assert.Contains("Mijn zoon is ziek", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-reschedule-nevermind", html, StringComparison.Ordinal);
         Assert.Contains("Gesprek verzetten", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-mode-chip=\"reschedule\"", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-mode-chip=\"cancel\"", html, StringComparison.Ordinal);
