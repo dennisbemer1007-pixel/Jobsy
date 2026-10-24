@@ -43,7 +43,7 @@ public static class PageAssetCatalog
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
-        "css/features/applications.css?v=20261004-10",
+        "css/features/applications.css?v=20261024-apps720-scope",
         "css/features/kb-external-vacancy.css?v=20261011-03",
     ];
 
@@ -294,7 +294,7 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/sollicitaties-page.css?v=20261024-sollicitatie01-layout8",
+                "css/features/sollicitaties-page.css?v=20261024-sollicitatie01-layout10",
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
                 "css/features/banenkaart-illustrated.css?v=20261023-acc9",
             ];

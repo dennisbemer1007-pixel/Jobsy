@@ -739,9 +739,27 @@
 
 [data-testid="applications-page-ssr"] .sollicitaties-layout,
 [data-testid="applications-page-ssr"] .sollicitaties-list,
-[data-testid="applications-page-ssr"] .sollicitaties-page__body {
-  max-width: none;
+[data-testid="applications-page-ssr"] .sollicitaties-page__body,
+[data-testid="applications-page-ssr"] .sollicitaties-toolbar,
+[data-testid="applications-page-ssr"] .sollicitaties-empty,
+[data-testid="applications-page-ssr"] .sollicitaties-empty-card,
+[data-testid="applications-page-ssr"] .sollicitaties-intro,
+[data-testid="applications-page-ssr"] .sollicitaties-intro__lead {
+  max-width: none !important;
+  max-inline-size: none !important;
   width: 100%;
+  margin-inline: 0;
+  box-sizing: border-box;
+}
+
+/* Beat global applications.css 720px list cap when legacy selectors leak outside .apps-page. */
+.panel-page.sollicitaties-page .application-card-list,
+.panel-page.sollicitaties-page .apps-empty,
+.panel-page.sollicitaties-page .apps-page__message {
+  max-width: none !important;
+  max-inline-size: none !important;
+  width: 100% !important;
+  margin-inline: 0 !important;
 }
 
 @media (min-width: 640px) {

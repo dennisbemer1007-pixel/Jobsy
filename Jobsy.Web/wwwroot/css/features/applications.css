@@ -62,7 +62,7 @@
     font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
-}.application-card-list {
+}.apps-page .application-card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -304,7 +304,7 @@
     border: 0;
     border-block-start: 1px solid var(--border);
     margin: 4px 6px;
-}.apps-empty {
+}.apps-page .apps-empty {
     max-inline-size: 720px;
     margin: 1.25rem auto 0;
     padding: 1.25rem 1rem;
@@ -315,7 +315,7 @@
 }.apps-empty .state-message {
     color: var(--muted);
     margin: 0;
-}.apps-page__message {
+}.apps-page .apps-page__message {
     max-inline-size: 720px;
     margin-inline: auto;
 }.application-withdraw-actions {
