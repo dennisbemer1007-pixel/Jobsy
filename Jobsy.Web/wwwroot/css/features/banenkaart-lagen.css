@@ -362,6 +362,13 @@
     max-height: 200px;
 }
 
+@media (min-width: 701px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vc,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.jobsy-discovery--list .vc {
+        max-height: none;
+    }
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .vimg {
     height: 96px;
     position: relative;
@@ -1404,6 +1411,11 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         border-right: none;
         max-width: none;
         width: 100%;
+        display: flex !important;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.jobsy-discovery--list .map-pane,
@@ -1416,6 +1428,10 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         width: 100%;
         max-width: none;
         box-sizing: border-box;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen.show-map .map-pane {

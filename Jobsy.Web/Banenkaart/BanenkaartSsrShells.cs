@@ -18,8 +18,8 @@ internal static class BanenkaartSsrShells
     {
         var sb = new StringBuilder();
         var q = model.Query;
-        var listModeClass = model.Query.DesktopListMode ? " jobsy-discovery--list" : "";
-        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen show-map").Append(listModeClass);
+        var viewModeClass = model.Query.DesktopListMode ? " show-list jobsy-discovery--list" : " show-map";
+        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen").Append(viewModeClass);
         if (!string.IsNullOrWhiteSpace(q.Error))
         {
             sb.Append(" kb-ssr-has-error");
@@ -73,13 +73,13 @@ internal static class BanenkaartSsrShells
         sb.Append("<script src=\"/js/banenkaart-map-icons.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261024-chip1\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261024-listscroll1\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261024-chip1\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261024-listscroll1\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("</div>");

@@ -222,28 +222,16 @@
         }
         var fab = qs("[data-testid=kb-map-fab]");
         function setViewMode(onMap) {
-            root.classList.toggle("show-map", onMap);
-            root.classList.toggle("show-list", !onMap);
-            if (isDesktopBanenkaart()) {
-                root.classList.toggle("jobsy-discovery--list", !onMap);
-            } else {
-                root.classList.remove("jobsy-discovery--list");
-            }
-            writeUiState({ showMap: !!onMap, desktopList: isDesktopBanenkaart() && !onMap });
+            var listMode = !onMap;
+            applyListViewClasses(root, listMode);
+            writeUiState({ showMap: !!onMap, desktopList: isDesktopBanenkaart() && listMode });
+            syncViewQueryParam(listMode);
             ensureBodyScrollUnlocked();
             if (onMap && window.jobMap && typeof window.jobMap.invalidate === "function") {
                 requestAnimationFrame(function () {
                     window.jobMap.invalidate();
                 });
             }
-            qsa("[data-testid=kb-view-kaart]").forEach(function (btn) {
-                btn.classList.toggle("is-active", onMap);
-                btn.setAttribute("aria-checked", onMap ? "true" : "false");
-            });
-            qsa("[data-testid=kb-view-lijst]").forEach(function (btn) {
-                btn.classList.toggle("is-active", !onMap);
-                btn.setAttribute("aria-checked", onMap ? "false" : "true");
-            });
         }
         document.addEventListener("click", function (ev) {
             var target = ev.target;
@@ -430,6 +418,47 @@
             && window.jobsyViewport.isWide());
     }
 
+    function listModeFromUrl() {
+        try {
+            return new URLSearchParams(window.location.search).get("weergave") === "lijst";
+        } catch (eUrl) {
+            return false;
+        }
+    }
+
+    function syncViewQueryParam(listMode) {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            if (listMode) {
+                params.set("weergave", "lijst");
+            } else {
+                params.delete("weergave");
+            }
+            var qs = params.toString();
+            history.replaceState(null, "", qs ? "/banenkaart?" + qs : "/banenkaart");
+        } catch (eSync) { }
+    }
+
+    function applyListViewClasses(root, listMode) {
+        if (!root) {
+            return;
+        }
+        root.classList.toggle("jobsy-discovery--list", listMode && isDesktopBanenkaart());
+        if (!isDesktopBanenkaart()) {
+            root.classList.remove("jobsy-discovery--list");
+        }
+        root.classList.toggle("show-map", !listMode);
+        root.classList.toggle("show-list", listMode);
+        qsa("[data-testid=kb-view-kaart]").forEach(function (btn) {
+            btn.classList.toggle("is-active", !listMode);
+            btn.setAttribute("aria-checked", listMode ? "false" : "true");
+        });
+        qsa("[data-testid=kb-view-lijst]").forEach(function (btn) {
+            btn.classList.toggle("is-active", listMode);
+            btn.setAttribute("aria-checked", listMode ? "true" : "false");
+        });
+    }
+
     function isNavigationReload() {
         try {
             var nav = performance.getEntriesByType("navigation")[0];
@@ -483,31 +512,32 @@
         var reload = isNavigationReload();
         if (isDesktopBanenkaart()) {
             var deskState = reload ? {} : readUiState();
-            var listMode = !reload && deskState.desktopList === true;
-            if (reload) {
+            var listMode = listModeFromUrl()
+                || (!reload && deskState.desktopList === true);
+            if (reload && !listMode) {
                 setDefaultBanenkaartView(root);
                 return;
             }
-            root.classList.toggle("jobsy-discovery--list", listMode);
-            root.classList.toggle("show-map", !listMode);
-            root.classList.toggle("show-list", listMode);
-            qsa("[data-testid=kb-view-kaart]").forEach(function (btn) {
-                btn.classList.toggle("is-active", !listMode);
-                btn.setAttribute("aria-checked", listMode ? "false" : "true");
-            });
-            qsa("[data-testid=kb-view-lijst]").forEach(function (btn) {
-                btn.classList.toggle("is-active", listMode);
-                btn.setAttribute("aria-checked", listMode ? "true" : "false");
-            });
+            if (listMode) {
+                applyListViewClasses(root, true);
+                writeUiState({ showMap: false, desktopList: true, filtersOpen: false });
+            } else if (!reload) {
+                applyListViewClasses(root, false);
+            }
             return;
         }
         if (reload) {
-            setDefaultBanenkaartView(root);
+            if (listModeFromUrl()) {
+                applyListViewClasses(root, true);
+                writeUiState({ showMap: false, filtersOpen: false });
+            } else {
+                setDefaultBanenkaartView(root);
+            }
             ensureBodyScrollUnlocked();
             return;
         }
         var state = readUiState();
-        if (state.showMap === false) {
+        if (listModeFromUrl() || state.showMap === false) {
             root.classList.remove("show-map");
             root.classList.add("show-list");
             var mapBtnM = qs("[data-testid=kb-view-kaart]");
@@ -981,6 +1011,10 @@
         }
         document.documentElement.dataset.banenkaartFilterUrlSync = "1";
         window.addEventListener("popstate", function () {
+            var root = qs("[data-banenkaart-ssr=\"1\"]");
+            if (root && isDesktopBanenkaart()) {
+                applyListViewClasses(root, listModeFromUrl());
+            }
             if (!window.jobsyBanenkaartCatalog
                 || typeof window.jobsyBanenkaartCatalog.resolveFilters !== "function"
                 || typeof window.jobsyBanenkaartCatalog.applyClientFilters !== "function") {
@@ -1083,12 +1117,8 @@
             return;
         }
         setFiltersOpen(false);
-        if (isDesktopBanenkaart()) {
-            root.classList.add("show-map");
-            root.classList.remove("show-list");
-            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
-                window.jobMap.invalidate();
-            }
+        if (listModeFromUrl()) {
+            applyListViewClasses(root, true);
         }
     }
 

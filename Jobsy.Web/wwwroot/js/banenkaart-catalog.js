@@ -997,6 +997,12 @@
         }
     }
 
+    function domListViewActive() {
+        var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+        return !!(root && (root.classList.contains("show-list")
+            || root.classList.contains("jobsy-discovery--list")));
+    }
+
     function buildBanenkaartUrl(filters) {
         var q = [];
         if (filters.q) {
@@ -1031,6 +1037,9 @@
             if (filters.originLabel) {
                 q.push("originLabel=" + encodeURIComponent(filters.originLabel));
             }
+        }
+        if (domListViewActive()) {
+            q.push("weergave=lijst");
         }
         return q.length ? "/banenkaart?" + q.join("&") : "/banenkaart";
     }
