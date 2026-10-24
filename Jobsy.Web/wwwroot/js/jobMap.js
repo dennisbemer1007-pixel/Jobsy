@@ -1287,8 +1287,9 @@ window.jobMap = (function () {
                 "<div class=\"ffacts\">" +
                     (travel ? "<span>" + bike + escapeHtml(travel) + "</span>" : "") +
                     "<span>" + lagenClockSvg() + hours + "</span>" +
-                    "<span>" + lagenDocSvg() + contract + "</span>" +
-                "</div></div></div>"
+                "</div>" +
+                (contract ? "<div class=\"fcontract\">" + lagenDocSvg() + contract + "</div>" : "") +
+                "</div></div>"
             : photoBlock +
                 "<div class=\"finfo\"><div class=\"flrow\">" + lagenTypeLabelHtml(v) + lagenHeartHtml(v) + "</div>" +
                 "<h3>" + title + "</h3>" +
@@ -2051,6 +2052,9 @@ window.jobMap = (function () {
                     state.root = parent && parent.querySelector("[data-lagen-fcw]");
                     const host = activeClusterPopup && activeClusterPopup.getElement();
                     bindLagenFundaInteractions(host || parent, childMarkers);
+                    if (state.root) {
+                        loadLagenPopupPhoto(state.root, resolved || job, { mobile: mobile });
+                    }
                     const nextJob = jobs[current];
                     if (nextJob) {
                         prefetchLagenPopupPhoto(nextJob, isNarrowViewport());
@@ -2538,7 +2542,6 @@ window.jobMap = (function () {
         setSelectedCluster(ll, pageCount);
         setClusterOpenChrome(true, Object.keys(markersById).length);
         bindClusterEscape();
-        document.body.classList.add("s-popup");
         if (mobile) {
             activeClusterPopup = createLagenFundaMobileController(html);
             clusterUiState = {
@@ -2652,6 +2655,9 @@ window.jobMap = (function () {
         unbindClusterEscape();
         syncSheetChromeOffset();
         clearSelectedPinVisual();
+        if (document.body) {
+            document.body.classList.remove("s-popup");
+        }
     }
 
     function closePopupsIfClickOutside(ev) {
@@ -3465,7 +3471,6 @@ window.jobMap = (function () {
                 lngLat: ll
             };
             bindClusterPopupInteractions(activeClusterPopup, childMarkers);
-            document.body.classList.add("s-popup");
             if (firstJob && firstJob.id) {
                 fetchVacancyCard(firstJob.id).then(function (card) {
                     if (!clusterUiState || !card) {
@@ -4327,7 +4332,7 @@ window.jobMap = (function () {
     }
 
     function fitToOriginRings(animate) {
-        if (lagenLayout && document.body && document.body.classList.contains("s-popup")) {
+        if (lagenLayout && activeClusterPopup) {
             return;
         }
         if (window.__jobsyBkRestoringView) {
@@ -4340,7 +4345,7 @@ window.jobMap = (function () {
         if (lagenLayout) {
             const chosenM = chosenRingMinutes();
             if (isNarrowViewport()) {
-                radius = ringRadiusForMinutes(chosenM) * 0.965;
+                radius = ringRadiusForMinutes(Math.max(chosenM, 30)) * 1.14;
             } else {
                 radius = ringRadiusForMinutes(Math.max(chosenM, 30)) * 1.05;
             }
@@ -4352,7 +4357,9 @@ window.jobMap = (function () {
         const opening = deferMapReveal || originHasBeenFramed !== true;
         const opts = {
             padding: overlayFitPadding(),
-            maxZoom: lagenLayout ? Math.min(11.85, BASEMAP_MAX_ZOOM) : Math.min(13, BASEMAP_MAX_ZOOM),
+            maxZoom: lagenLayout
+                ? Math.min(isNarrowViewport() ? 10.35 : 11.85, BASEMAP_MAX_ZOOM)
+                : Math.min(13, BASEMAP_MAX_ZOOM),
             animate: animate === true && !opening && !prefersReducedMotion(),
             duration: animate === true && !opening && !prefersReducedMotion() ? 450 : 0
         };
@@ -4573,7 +4580,11 @@ window.jobMap = (function () {
             return;
         }
         attrib.classList.add("maplibregl-compact");
-        attrib.classList.remove("maplibregl-compact-show");
+        if (isNarrowViewport()) {
+            attrib.classList.add("maplibregl-compact-show");
+        } else {
+            attrib.classList.remove("maplibregl-compact-show");
+        }
     }
 
     function ensureLagenPopInView(popup) {

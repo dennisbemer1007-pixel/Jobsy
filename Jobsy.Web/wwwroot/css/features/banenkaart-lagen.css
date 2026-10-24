@@ -774,8 +774,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .cl.cl--flat {
 }
 
 /* Legend / popup sheets (body scope) */
-body.s-legend .app-shell--banenkaart-shell .scrim.kb-map-legend-scrim,
-body.s-popup .app-shell--banenkaart-shell .scrim.kb-map-legend-scrim {
+body.s-legend .app-shell--banenkaart-shell .scrim.kb-map-legend-scrim {
     display: block !important;
     position: fixed;
     inset: 0;
@@ -1782,6 +1781,16 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     display: none !important;
 }
 
+@media (max-width: 700px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner {
+        display: block !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+        display: none !important;
+    }
+}
+
 @media (min-width: 701px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .job-map .maplibregl-ctrl-attrib {
         left: auto !important;
@@ -2078,7 +2087,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     background: transparent;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-popup__heart,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-popup__heart:not(.hrt),
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-card__heading,
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-cluster-card__pager {
     display: none !important;
@@ -2133,6 +2142,11 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 /* Funda-style vacaturepopup (PR #878 mockup) */
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop.kb-popup-lagen-pop {
     max-width: 420px !important;
+    z-index: 25;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop.kb-popup-lagen-pop .maplibregl-popup-tip {
+    display: none;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop .maplibregl-popup-content {
@@ -2461,6 +2475,16 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     margin: 10px 12px 0;
     min-height: 48px;
     font-size: 15.5px;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fc.m .fcontract {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--kb-ink, #1b2440);
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip {

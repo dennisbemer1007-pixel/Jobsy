@@ -36,7 +36,8 @@ function sideBySide(mockRel, appFile, outName) {
 
 async function routeLocalAssets(context) {
   const files = [
-    ['jobMap.min.js', path.join(repoRoot, 'Jobsy.Web/wwwroot/js/jobMap.min.js')],
+    ['jobMap.min.js', path.join(repoRoot, 'Jobsy.Web/wwwroot/js/jobMap.js')],
+    ['jobMap.js', path.join(repoRoot, 'Jobsy.Web/wwwroot/js/jobMap.js')],
     ['banenkaart-lagen.css', path.join(repoRoot, 'Jobsy.Web/wwwroot/css/features/banenkaart-lagen.css')],
     ['banenkaart-catalog.js', path.join(repoRoot, 'Jobsy.Web/wwwroot/js/banenkaart-catalog.js')],
     ['banenkaart-map-layers.js', path.join(repoRoot, 'Jobsy.Web/wwwroot/js/banenkaart-map-layers.js')],
@@ -179,22 +180,28 @@ async function measurePhotoMs(page) {
 }
 
 async function openDesktopWageTooltip(page) {
-  await page.evaluate(() => {
-    const fcw = document.querySelector('[data-lagen-fcw], .fcw.kb-lagen-fcw');
-    if (!fcw) return;
-    fcw.classList.add('lagen-wage-open');
-    const btn = fcw.querySelector('[data-lagen-wage]');
-    const tip = fcw.querySelector('.tip');
-    if (btn) {
-      btn.classList.add('on');
-      btn.setAttribute('aria-expanded', 'true');
-    }
-    if (tip) tip.removeAttribute('hidden');
-  });
+  const btn = page.locator('[data-lagen-wage]').first();
+  await btn.waitFor({ state: 'visible', timeout: 10_000 });
+  await btn.hover();
+  await page.waitForFunction(
+    () => {
+      const tip = document.querySelector('[data-lagen-fcw] .tip, .fcw.kb-lagen-fcw .tip');
+      return tip && !tip.hasAttribute('hidden');
+    },
+    null,
+    { timeout: 5000 },
+  );
 }
 
 async function openMobileWageTooltip(page) {
-  await openDesktopWageTooltip(page);
+  const btn = page.locator('[data-lagen-wage]').first();
+  await btn.waitFor({ state: 'visible', timeout: 10_000 });
+  await btn.tap();
+  await page.waitForFunction(
+    () => document.querySelector('.fcw.kb-lagen-fcw.lagen-wage-open, [data-lagen-fcw].lagen-wage-open'),
+    null,
+    { timeout: 5000 },
+  );
 }
 
 async function openLargestCluster(page) {
@@ -299,6 +306,11 @@ async function main() {
   // 5 mobile map
   await runViewport(browser, 390, 844, true, 'mobile-390-map', async (page) => {
     await waitReady(page);
+    await page.waitForFunction(
+      () => window.jobMap?.__testGetMap?.()?._jobsyLagenPinImagesReady === true,
+      null,
+      { timeout: 60_000 },
+    ).catch(() => {});
     await page.waitForTimeout(600);
     const app = await shot(page, 'mobile-390-map', '01-map.png');
     sideBySide('mobile/01-banenkaart-lagen-mobiel-390.png', app, 'side-by-side-05-mobile-map.png');
