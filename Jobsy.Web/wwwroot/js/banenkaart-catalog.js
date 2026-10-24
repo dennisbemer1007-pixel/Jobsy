@@ -644,13 +644,27 @@
     }
 
     function updateActiveFiltersUi(filters) {
-        var travelTag = document.querySelector("[data-testid=kb-active-tag-travel] span:first-child");
-        if (travelTag && filters.originLat != null && filters.originLng != null) {
+        var travelBtn = document.querySelector("[data-testid=kb-active-tag-travel]");
+        var travelTag = travelBtn && travelBtn.querySelector("span:first-child");
+        var hasOrigin = filters.originLat != null && filters.originLng != null;
+        if (travelBtn) {
+            travelBtn.hidden = !hasOrigin;
+            travelBtn.style.display = hasOrigin ? "" : "none";
+        }
+        if (travelTag && hasOrigin) {
             travelTag.textContent = travelChipLabel(filters);
         }
         var bar = document.querySelector("[data-testid=kb-active-filters]");
         if (bar) {
-            bar.style.display = filters.originLat != null ? "" : "none";
+            var anyVisible = false;
+            bar.querySelectorAll(".kb-active-tag").forEach(function (tag) {
+                if (tag.hidden || tag.style.display === "none") {
+                    return;
+                }
+                anyVisible = true;
+            });
+            bar.hidden = !anyVisible;
+            bar.style.display = anyVisible ? "" : "none";
         }
     }
 

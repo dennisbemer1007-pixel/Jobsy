@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-pop9",
-    "sha256": "d60b0a07ba69ba9268e0a386640d4d87909fd8136a29508c061c664fdc01a736"
+    "v": "20261024-pop10",
+    "sha256": "fed24c23b50e6e417e47addf2541687bfdabab79b2e58cb45fc6eb9b652b5f14"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
@@ -368,12 +368,12 @@
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "sha256": "d72e9a885d2f77a9c6cd996bd6ba467bca569a8c606b1474ccb460497eed61ba",
-    "v": "20261024-filters1"
+    "sha256": "e450a46389d060ca9bed701fdd1868810377dd69dd4cdb8bd0461042147eb2dd",
+    "v": "20261024-filters2"
   },
   "js/banenkaart-ssr.js": {
     "sha256": "0aa5474b1c41b529be16edf1a6b7e720f6de873e9c3b9454ea64c652582f0d63",
-    "v": "20261024-filters1"
+    "v": "20261024-filters2"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -384,12 +384,7 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-<<<<<<< HEAD
-    "v": "20261024-pop9",
-    "sha256": "5cb82bcafd9eca80bb4e492b3befc64d7c179ad3516c034caf76cb31b061070e"
-=======
-    "v": "20261024-pins1c",
-    "sha256": "8179c83af3090e197a9ae3b7ea0b6b3a8c8dc5080bbbe143d7beabaf1606627d"
->>>>>>> f266ddaec (Fix banenkaart filter SSOT: URL drives chip, list, map, and strip.)
+    "v": "20261024-pop10",
+    "sha256": "4e8e2b577df00284e4672cf822e7e0bba74c9156adfb3f91648df6345e21ac30"
   }
 }

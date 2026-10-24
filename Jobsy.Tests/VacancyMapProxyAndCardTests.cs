@@ -107,6 +107,10 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         var proxy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs"));
         Assert.Contains("/api/vacancies/{id:guid}/map-popup-photo", proxy);
         Assert.Contains("DisableAntiforgery", proxy);
+        Assert.Contains("IsRequestValidAsync", proxy);
+        Assert.DoesNotContain("PostLikeAsync).RequireAuthorization().DisableAntiforgery", proxy);
+        Assert.Contains("readAntiforgeryHeader", js);
+        Assert.Contains("likeMutationHeaders", js);
         Assert.Contains("ensureLagenHeartInteractionGuard", js);
         Assert.Contains("stopEvent(ev)", js);
         var discovery = File.ReadAllText(

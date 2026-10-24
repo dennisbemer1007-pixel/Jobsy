@@ -123,7 +123,15 @@ public sealed class BanenkaartFiltersUrlSyncPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 15_000 });
 
-        var chipVisible = await page.Locator("[data-testid=kb-active-tag-travel]").CountAsync();
-        Assert.Equal(0, chipVisible);
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const btn = document.querySelector('[data-testid=kb-active-tag-travel]');
+              if (!btn) return true;
+              return btn.hidden || btn.style.display === 'none';
+            }
+            """,
+            null,
+            new() { Timeout = 10_000 });
     }
 }
