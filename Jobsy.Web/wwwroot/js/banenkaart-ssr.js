@@ -391,7 +391,24 @@
         document.documentElement.dataset.banenkaartClientFilters = "1";
         document.addEventListener("submit", function (ev) {
             var form = ev.target;
-            if (!form || form.id !== "kb-filter-form") {
+            if (!form || !form.getAttribute) {
+                return;
+            }
+            var action = form.getAttribute("action") || "";
+            if (action.indexOf("/api/banenkaart-client/reset-filters") !== -1) {
+                var rootReset = qs("[data-banenkaart-ssr=\"1\"]");
+                if (!rootReset || !window.jobsyBanenkaartCatalog
+                    || typeof window.jobsyBanenkaartCatalog.resetClientFilters !== "function") {
+                    return;
+                }
+                ev.preventDefault();
+                try { localStorage.removeItem(GUEST_FILTER_KEY); } catch (eResetStore) { }
+                window.jobsyBanenkaartCatalog.resetClientFilters();
+                setFiltersOpen(false);
+                ensureBodyScrollUnlocked();
+                return;
+            }
+            if (form.id !== "kb-filter-form") {
                 return;
             }
             var root = qs("[data-banenkaart-ssr=\"1\"]");
@@ -929,30 +946,40 @@
             }
             if (target.closest("[data-testid=kb-active-filters-clear]")) {
                 ev.preventDefault();
-                var resetForm = qs("form[action*=\"reset-filters\"], form[action*=\"banenkaart-client/reset-filters\"]");
-                if (resetForm && typeof resetForm.requestSubmit === "function") {
-                    resetForm.requestSubmit();
-                    return;
+                if (window.jobsyBanenkaartCatalog
+                    && typeof window.jobsyBanenkaartCatalog.resetClientFilters === "function") {
+                    try { localStorage.removeItem(GUEST_FILTER_KEY); } catch (eClr) { }
+                    window.jobsyBanenkaartCatalog.resetClientFilters();
                 }
+                return;
+            }
+            if (target.closest("[data-testid=kb-active-tag-travel]")) {
+                ev.preventDefault();
                 clearOrigin();
-                var form = qs("#kb-filter-form");
-                if (form && window.jobsyBanenkaartCatalog
-                    && typeof window.jobsyBanenkaartCatalog.applyClientFilters === "function") {
-                    window.jobsyBanenkaartCatalog.applyClientFilters({
-                        q: null,
-                        maxMinutes: 20,
-                        transport: "Fiets",
-                        minHours: 0,
-                        maxHours: 40,
-                        categoryIds: [],
-                        workTypes: [],
-                        originLat: null,
-                        originLng: null,
-                        originLabel: null
-                    });
-                }
             }
         }, true);
+    }
+
+    function bindFilterUrlSync() {
+        if (document.documentElement.dataset.banenkaartFilterUrlSync === "1") {
+            return;
+        }
+        document.documentElement.dataset.banenkaartFilterUrlSync = "1";
+        window.addEventListener("popstate", function () {
+            if (!window.jobsyBanenkaartCatalog
+                || typeof window.jobsyBanenkaartCatalog.resolveFilters !== "function"
+                || typeof window.jobsyBanenkaartCatalog.applyClientFilters !== "function") {
+                return;
+            }
+            window.jobsyBanenkaartCatalog.applyClientFilters(window.jobsyBanenkaartCatalog.resolveFilters());
+        });
+        document.addEventListener("jobsy-bk-filters-applied", function () {
+            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+                requestAnimationFrame(function () {
+                    window.jobMap.invalidate();
+                });
+            }
+        });
     }
 
     function bindListSort() {
@@ -1125,6 +1152,7 @@
         applyInitialUiState();
         bindGuestFilterPersistence();
         bindClientFilterApply();
+        bindFilterUrlSync();
         bindFilters();
         markFilterReady();
         if (root.dataset.banenkaartSsrEnhance === "1") {
