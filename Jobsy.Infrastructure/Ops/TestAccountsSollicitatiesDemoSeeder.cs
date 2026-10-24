@@ -837,6 +837,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return;
         }
 
+        interview.ChosenSlotId = null;
+
         var slots = await db.InterviewSlots
             .Where(s => s.InterviewId == interview.Id)
             .ToListAsync(cancellationToken);
@@ -918,8 +920,11 @@ public static class TestAccountsSollicitatiesDemoSeeder
 
         if (chooseFirstSlot && chosen is not null)
         {
+            // Break Interview <-> InterviewSlot cycle (ChosenSlotId FK vs InterviewId FK) for EF SaveChanges.
+            await db.SaveChangesAsync(cancellationToken);
             chosen.IsSelected = true;
             interview.ChosenSlotId = chosen.Id;
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 
