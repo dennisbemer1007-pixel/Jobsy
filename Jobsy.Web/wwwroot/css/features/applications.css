@@ -62,9 +62,13 @@
     font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
-}.panel-page.sollicitaties-page .application-card-list,
-.sollicitaties-page .application-card-list {
+}/* scope3: sollicitaties SSR must not inherit .apps-page 720px list cap. */
+.panel-page.sollicitaties-page .application-card-list,
+.sollicitaties-page .application-card-list,
+.panel-page.sollicitaties-page .sollicitaties-list,
+.panel-page.sollicitaties-page .sollic-card {
     max-inline-size: none !important;
+    max-width: none !important;
     width: 100% !important;
     margin-inline: 0 !important;
 }.apps-page .application-card-list {

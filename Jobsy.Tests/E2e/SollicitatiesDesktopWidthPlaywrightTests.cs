@@ -156,8 +156,13 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
 
         if (metrics.List is not null)
         {
-            Assert.True(metrics.List.W >= 980, $"list/card width {metrics.List.W} at 1280");
+            var listMin = metrics.Shell is { W: >= 1000 } ? 580 : 980;
+            Assert.True(metrics.List.W >= listMin, $"list width {metrics.List.W} at 1280 (split rail layout)");
         }
+
+        var hasDetailRail = await page.EvaluateAsync<bool>(
+            @"() => !!document.querySelector('.sollicitaties-detail .sollic-detail-panel')");
+        Assert.True(hasDetailRail, "Expected desktop detail rail markup.");
     }
 
     private sealed class LayoutMetrics

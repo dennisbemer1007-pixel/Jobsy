@@ -43,7 +43,7 @@ public static class PageAssetCatalog
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
-                "css/features/applications.css?v=20261024-apps720-scope2",
+                "css/features/applications.css?v=20261024-apps720-scope3",
         "css/features/kb-external-vacancy.css?v=20261011-03",
     ];
 
@@ -294,9 +294,9 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/sollicitaties-page.css?v=20261024-sollicitatie01-layout13",
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
                 "css/features/banenkaart-illustrated.css?v=20261023-acc9",
+                "css/features/sollicitaties-page.css?v=20261024-mockup01-acc1",
             ];
         }
 
@@ -437,7 +437,7 @@ public static class PageAssetCatalog
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [
-        "css/features/candidate-no-blazor-chrome.css?v=20261024-noblazor-nav2",
+        "css/features/candidate-no-blazor-chrome.css?v=20261024-noblazor-nav3",
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

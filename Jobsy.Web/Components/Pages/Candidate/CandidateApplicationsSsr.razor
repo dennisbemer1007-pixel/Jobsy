@@ -24,7 +24,9 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 <HeadContent>
-    <script src="/js/sollicitaties-filter-chips.js?v=20261024-sollicitatie01-layout10" defer></script>
+    <script src="/js/sollicitaties-filter-chips.js?v=20261024-mockup01-acc1" defer></script>
+    <script src="/js/sollicitaties-rail.js?v=20261024-mockup01-acc1" defer></script>
+    <script src="/js/sollicitaties-actions.js?v=20261024-mockup01-acc1" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -81,6 +83,11 @@ else if (_bodyHtml is not null)
                 selectedId = parsedSel;
             }
 
+            var userAgent = HttpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "";
+            var mobileDetailShell = userAgent.Contains("Mobile", StringComparison.OrdinalIgnoreCase)
+                || userAgent.Contains("Android", StringComparison.OrdinalIgnoreCase)
+                || userAgent.Contains("iPhone", StringComparison.OrdinalIgnoreCase);
+
             var data = await ApplicationsSsrData.LoadAsync(
                 Api,
                 FeatureFlags,
@@ -93,7 +100,8 @@ else if (_bodyHtml is not null)
                 selectedId,
                 givenName,
                 readOnly,
-                candidateEmail);
+                candidateEmail,
+                mobileDetailShell);
 
             _bodyHtml = ApplicationsSsrShells.BuildBody(Culture, data);
         }
