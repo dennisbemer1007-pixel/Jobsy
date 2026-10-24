@@ -2565,16 +2565,30 @@ window.jobMap = (function () {
         if (!tip || !btn || tip.hasAttribute("hidden")) {
             return;
         }
+        const discovery = fcw.closest(".jobsy-discovery--lagen");
         const stage = fcw.closest(".map-stage") || fcw.closest(".map-pane");
         if (!stage) {
             return;
         }
-        const stageRect = stage.getBoundingClientRect();
         const btnRect = btn.getBoundingClientRect();
         const gap = 12;
-        const maxH = Math.max(96, Math.floor(btnRect.top - stageRect.top - gap));
+        const seg = discovery ? discovery.querySelector(".seg") : null;
+        const segRect = seg ? seg.getBoundingClientRect() : null;
+        const topLimit = segRect ? segRect.bottom + 8 : stage.getBoundingClientRect().top;
+        const avail = Math.floor(btnRect.top - topLimit - gap);
+        const rows = tip.querySelectorAll(".tr2");
+        const rowCount = rows.length || 8;
+        const minVisibleRows = Math.min(6, rowCount);
+        const sampleRow = rows[0];
+        const rowH = sampleRow ? sampleRow.getBoundingClientRect().height : 22;
+        const titleEl = tip.querySelector("b");
+        const titleH = titleEl ? titleEl.getBoundingClientRect().height + 6 : 28;
+        const pad = 20;
+        const minH = Math.ceil(titleH + rowH * minVisibleRows + pad);
+        const naturalH = tip.scrollHeight;
+        const maxH = Math.max(minH, Math.min(avail, naturalH));
         tip.style.maxHeight = maxH + "px";
-        tip.style.overflowY = maxH < tip.scrollHeight ? "auto" : "";
+        tip.style.overflowY = maxH < naturalH - 2 ? "auto" : "hidden";
     }
 
     function setLagenWageTipOpen(root, open) {
