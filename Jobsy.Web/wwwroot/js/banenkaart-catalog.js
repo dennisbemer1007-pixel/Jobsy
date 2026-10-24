@@ -934,6 +934,9 @@
         if (window.jobMap && typeof window.jobMap.invalidate === "function") {
             window.jobMap.invalidate();
         }
+        if (window.jobMap && typeof window.jobMap.refitDesktopPopupAfterTopChrome === "function") {
+            window.jobMap.refitDesktopPopupAfterTopChrome();
+        }
     }
 
     function readKeywordFromUi() {

@@ -1215,7 +1215,7 @@ window.jobMap = (function () {
         }
         const url = lagenMapPopupPhotoUrl(job.id, mobile);
         if (!url) {
-            slot.classList.add("fph--empty");
+            slot.outerHTML = lagenCategoryPhotoPlaceholderHtml(job);
             return;
         }
         const started = typeof performance !== "undefined" && performance.now
@@ -1236,6 +1236,9 @@ window.jobMap = (function () {
                 return res.blob();
             })
             .then(function (blob) {
+                if (!blob || !blob.size) {
+                    throw new Error("photo-empty");
+                }
                 const ms = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - started);
                 lastLagenPopupPhotoMetrics = {
                     vacancyId: String(job.id),
@@ -1245,9 +1248,15 @@ window.jobMap = (function () {
                     ms: ms,
                     url: url
                 };
+                function showCategoryFallback() {
+                    if (slot.parentNode) {
+                        slot.outerHTML = lagenCategoryPhotoPlaceholderHtml(job);
+                    }
+                }
                 img.onload = function () {
                     slot.classList.remove("fph--loading");
                 };
+                img.onerror = showCategoryFallback;
                 img.src = URL.createObjectURL(blob);
                 slot.appendChild(img);
             })
@@ -2931,6 +2940,57 @@ window.jobMap = (function () {
         return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     }
 
+    const MAP_TOP_CHROME_MARGIN_PX = 12;
+
+    /** Lagen desktop job-card strip above the map (live DOM), or legacy highlight carousel. */
+    function mapTopChromeStripEl(pane) {
+        if (!pane) {
+            return null;
+        }
+        const host = pane.querySelector("[data-testid=kb-map-top-chrome]");
+        if (host) {
+            const strip = host.querySelector(".strip:not(.strip--empty)");
+            if (strip) {
+                return strip;
+            }
+        }
+        const carousel = pane.querySelector(".highlight-carousel--map");
+        if (carousel) {
+            return carousel;
+        }
+        return null;
+    }
+
+    function lagenDesktopMapTopChromeActive(pane) {
+        if (!pane || isNarrowViewport()) {
+            return false;
+        }
+        return !!pane.closest(".jobsy-discovery--lagen");
+    }
+
+    function mapTopChromeBottomViewport(pane, mapRect) {
+        const chrome = mapTopChromeStripEl(pane);
+        if (!chrome) {
+            return mapRect.top;
+        }
+        const cr = chrome.getBoundingClientRect();
+        if (cr.bottom <= mapRect.top || cr.top >= mapRect.bottom) {
+            return mapRect.top;
+        }
+        return cr.bottom + MAP_TOP_CHROME_MARGIN_PX;
+    }
+
+    function lagenDesktopMapTopPaddingPx() {
+        if (!map) {
+            return 80;
+        }
+        const container = map.getContainer();
+        const mapRect = container.getBoundingClientRect();
+        const pane = container.closest(".map-pane");
+        const bottomVp = mapTopChromeBottomViewport(pane, mapRect);
+        return Math.max(12, Math.ceil(bottomVp - mapRect.top));
+    }
+
     function mapFocusRect() {
         const container = map.getContainer();
         const mapRect = container.getBoundingClientRect();
@@ -2938,12 +2998,9 @@ window.jobMap = (function () {
         let bottom = mapRect.bottom;
         const pane = container.closest(".map-pane");
         if (pane) {
-            const carousel = pane.querySelector(".highlight-carousel--map");
-            if (carousel && carousel.offsetParent !== null && !pane.classList.contains("is-cluster-open")) {
-                const cr = carousel.getBoundingClientRect();
-                if (cr.bottom > top && cr.top < mapRect.bottom) {
-                    top = Math.max(top, cr.bottom);
-                }
+            const chromeBottom = mapTopChromeBottomViewport(pane, mapRect);
+            if (chromeBottom > top) {
+                top = Math.max(top, chromeBottom);
             }
             const chip = pane.querySelector(".map-cluster-chip");
             if (chip && !chip.hidden && chip.offsetParent !== null) {
@@ -2975,6 +3032,13 @@ window.jobMap = (function () {
         };
     }
 
+    function lagenDesktopPopupFitElement(popEl) {
+        if (!popEl || !lagenUsesFundaPopup() || isNarrowViewport()) {
+            return popEl;
+        }
+        return popEl.querySelector("[data-lagen-fcw]") || popEl.querySelector(".fcw") || popEl;
+    }
+
     function centerPopupInView(popup, instant, layoutAttempt) {
         if (!map || !popup) {
             return;
@@ -2989,7 +3053,7 @@ window.jobMap = (function () {
             if (!map || activeClusterPopup !== popup) {
                 return;
             }
-            const pr = el.getBoundingClientRect();
+            const pr = lagenDesktopPopupFitElement(el).getBoundingClientRect();
             const vr = mapFocusRect();
             if (pr.width < 8 || pr.height < 8 || vr.width < 32 || vr.height < 32) {
                 if (layoutAttempt < 10) {
@@ -4528,7 +4592,7 @@ window.jobMap = (function () {
                 const bottom = sheet && sheet.offsetHeight > 0 ? sheet.offsetHeight + 16 : 48;
                 return { top: 22, right: 4, bottom: bottom, left: 4 };
             }
-            return { top: 80, left: 150, right: 0, bottom: 0 };
+            return { top: lagenDesktopMapTopPaddingPx(), left: 150, right: 0, bottom: 0 };
         }
         const edge = 36;
         const padding = { top: edge, right: edge, bottom: edge, left: edge };
@@ -4536,12 +4600,13 @@ window.jobMap = (function () {
             return padding;
         }
         const container = map.getContainer();
+        const mapRect = container.getBoundingClientRect();
         const pane = container && container.closest ? container.closest(".map-pane") : null;
         if (pane) {
-            const carousel = pane.querySelector(".highlight-carousel--map");
-            if (carousel && carousel.offsetParent !== null && carousel.offsetHeight > 0
-                && !pane.classList.contains("is-cluster-open")) {
-                padding.top = Math.max(padding.top, carousel.offsetHeight + 28);
+            const topPad = Math.ceil(mapTopChromeBottomViewport(pane, mapRect) - mapRect.top);
+            if (topPad > edge && (!pane.classList.contains("is-cluster-open")
+                || lagenDesktopMapTopChromeActive(pane))) {
+                padding.top = Math.max(padding.top, topPad);
             }
             const sheet = pane.querySelector(".map-cluster-sheet");
             if (sheet && sheet.offsetParent !== null && sheet.offsetHeight > 0) {
@@ -4880,7 +4945,7 @@ window.jobMap = (function () {
             }
             fitLagenDesktopPopup(popup, lngLat, pass > 0);
             pass += 1;
-            if (pass < 2) {
+            if (pass < 8) {
                 if (typeof requestAnimationFrame === "function") {
                     requestAnimationFrame(function () {
                         requestAnimationFrame(tick);
@@ -7751,6 +7816,11 @@ window.jobMap = (function () {
         invalidate,
         dismissPopups: closeActivePopup,
         notifyFilterDrawerToggle,
+        refitDesktopPopupAfterTopChrome: function () {
+            if (activeClusterPopup && lagenLayout && !isNarrowViewport()) {
+                scheduleLagenDesktopPopupFit(activeClusterPopup);
+            }
+        },
         isAlive,
         /** @internal Playwright / diagnostics */
         __testOpenVacancyById: function (id) {
@@ -7761,6 +7831,67 @@ window.jobMap = (function () {
                 return true;
             }
             return false;
+        },
+        __testMapFocusRect: function () {
+            return map && mapFocusRect();
+        },
+        __testPopupInMapFocus: function () {
+            const pop = document.querySelector(".maplibregl-popup.kb-popup-lagen-pop");
+            if (!pop || !map) {
+                return false;
+            }
+            const pr = lagenDesktopPopupFitElement(pop).getBoundingClientRect();
+            const vr = mapFocusRect();
+            if (!vr || vr.width < 32 || vr.height < 32) {
+                return false;
+            }
+            return pr.top >= vr.top - 2 && pr.left >= vr.left - 2
+                && pr.right <= vr.right + 2 && pr.bottom <= vr.bottom + 2;
+        },
+        __testOpenVacancyNearMapTop: function (id) {
+            const key = id != null ? String(id) : "";
+            const rec = key ? markersById[key] : null;
+            if (!rec || !map) {
+                return false;
+            }
+            const pane = map.getContainer().closest(".map-pane");
+            const mapRect = map.getContainer().getBoundingClientRect();
+            const chromeBottom = mapTopChromeBottomViewport(pane, mapRect);
+            const targetY = chromeBottom + 36;
+            const pt = map.project([rec.lng, rec.lat]);
+            const dy = Math.round(pt.y - targetY);
+            if (Math.abs(dy) > 2) {
+                map.panBy([0, dy], { duration: 0 });
+            }
+            return this.__testOpenVacancyById(key);
+        },
+        __testOpenTopRenderedPin: function () {
+            if (!map) {
+                return false;
+            }
+            let bestId = null;
+            let bestY = Infinity;
+            const seenIds = {};
+            Object.keys(markersById).forEach(function (key) {
+                const rec = markersById[key];
+                if (!rec || rec.id == null || rec.lng == null || rec.lat == null) {
+                    return;
+                }
+                const id = String(rec.id);
+                if (seenIds[id]) {
+                    return;
+                }
+                seenIds[id] = true;
+                const pt = map.project([rec.lng, rec.lat]);
+                if (pt.y < bestY) {
+                    bestY = pt.y;
+                    bestId = id;
+                }
+            });
+            if (!bestId) {
+                return false;
+            }
+            return this.__testOpenVacancyNearMapTop(bestId);
         },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
