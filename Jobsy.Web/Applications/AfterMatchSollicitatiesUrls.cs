@@ -9,7 +9,16 @@ internal static class AfterMatchSollicitatiesUrls
     }
 
     internal static string PickSlot(Guid applicationId, string? returnUrl = null)
-        => AfterMatchBase(applicationId, returnUrl);
+    {
+        var url = $"/candidate/applications/{applicationId:D}/after-match?panel=pick-slot";
+        return AppendReturn(url, returnUrl);
+    }
+
+    internal static string ProposeSlot(Guid applicationId, string? returnUrl = null)
+    {
+        var url = $"/candidate/applications/{applicationId:D}/after-match?panel=propose-slot";
+        return AppendReturn(url, returnUrl);
+    }
 
     internal static string Messages(Guid applicationId, string? returnUrl = null)
     {

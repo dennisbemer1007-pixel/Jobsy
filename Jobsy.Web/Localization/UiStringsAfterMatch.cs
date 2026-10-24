@@ -22,12 +22,15 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Nav.Eyebrow", "Sollicitaties · Na de match", "Applications · After the match");
         Add("AfterMatch.Link.Open", "Naar gesprek en berichten", "Go to interview and messages");
         Add("AfterMatch.Link.BackApplications", "Terug naar sollicitaties", "Back to applications");
+        Add("AfterMatch.Link.BackBerichten", "Terug naar berichten", "Back to messages");
+        Add("AfterMatch.Link.BackPickSlot", "Terug naar sollicitaties", "Back to applications");
 
         Add("AfterMatch.Timeline.Yes", "Ja", "Yes");
         Add("AfterMatch.Timeline.Plan", "Gesprek plannen", "Plan interview");
         Add("AfterMatch.Timeline.Interview", "Gesprek", "Interview");
         Add("AfterMatch.Timeline.Outcome", "Uitkomst", "Outcome");
         Add("AfterMatch.Timeline.Now", "nu", "now");
+        Add("AfterMatch.Timeline.PlanNow", "22 okt", "22 Oct");
 
         Add("AfterMatch.What.Plan.Title", "Gesprek plannen", "Plan the interview");
         Add("AfterMatch.What.Plan.Body",
@@ -72,15 +75,28 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen03.Format.Phone", "Telefoon", "Phone");
         Add("AfterMatch.Screen03.Submit", "Momenten versturen", "Send times");
 
+        Add("AfterMatch.Screen04.Eyebrow", "Sollicitaties · Gesprek plannen", "Applications · Plan interview");
         Add("AfterMatch.Screen04.Hero.Title", "Kies een moment voor je gesprek", "Pick a time for your interview");
+        Add("AfterMatch.Screen04.SlotsLabel", "Welk moment past jou?", "Which time works for you?");
+        Add("AfterMatch.Screen04.ChooseSlot", "Dit moment kiezen", "Choose this time");
+        Add("AfterMatch.Screen04.NoSlotFits", "Past geen van deze?", "None of these work?");
         Add("AfterMatch.Screen04.Hero.Lead",
             "Linda stelde deze momenten voor. Kies er één of stel zelf een ander moment voor.",
             "Linda proposed these times. Pick one or suggest another time yourself.");
+        Add("AfterMatch.Screen04.Hero.LeadPick",
+            "{0} van {1} stelt {2} momenten voor. Kies wat jou het beste uitkomt.",
+            "{0} at {1} proposes {2} times. Pick what works best for you.");
         Add("AfterMatch.Screen04.Hero.LeadCompact",
             "Kies een moment of stel zelf een ander voor.",
             "Pick a time or suggest another yourself.");
         Add("AfterMatch.Screen04.Confirm", "Dit moment bevestigen", "Confirm this time");
         Add("AfterMatch.Screen04.ProposeOther", "Ander moment voorstellen", "Suggest another time");
+        Add("AfterMatch.Pick.OnSiteTitle", "Op locatie", "On site");
+        Add("AfterMatch.Pick.WithWhomHint", "Contact bij {0}", "Contact at {0}");
+        Add("AfterMatch.Pick.TravelFallbackTitle", "Reistijd", "Travel time");
+        Add("AfterMatch.Pick.TravelHint", "Op basis van je profiel", "Based on your profile");
+        Add("AfterMatch.Pick.ProposeLead", "Linda krijgt je voorstel en laat weten of het past.", "They will reply whether your time works.");
+        Add("AfterMatch.Pick.ProposeSubmit", "Voorstel versturen", "Send proposal");
 
         Add("AfterMatch.Screen05.Hero.Title", "Je gesprek staat erin", "Your interview is booked");
         Add("AfterMatch.Screen05.Hero.Lead",

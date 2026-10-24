@@ -461,7 +461,8 @@ internal static class ApplicationsSsrShells
         }
         else
         {
-            var cardAction = AfterMatchSollicitatiesPresentation.BuildCardAction(culture, row.AfterMatch);
+            var cardReturn = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
+            var cardAction = AfterMatchSollicitatiesPresentation.BuildCardAction(culture, row.AfterMatch, cardReturn);
             if (cardAction is not null)
             {
                 sb.Append("<a class=\"sollic-card__ndm-act act act--");
@@ -531,7 +532,8 @@ internal static class ApplicationsSsrShells
         {
             AppendAfterMatchTimeline(sb, culture, row.AfterMatch);
             AppendDetailTip(sb, culture, row);
-            var actions = AfterMatchSollicitatiesPresentation.BuildDetailActions(culture, row.AfterMatch);
+            var detailReturn = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
+            var actions = AfterMatchSollicitatiesPresentation.BuildDetailActions(culture, row.AfterMatch, detailReturn);
             if (actions is not null)
             {
                 sb.Append("<div class=\"sollic-detail__acts acts\">");

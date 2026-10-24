@@ -13,7 +13,10 @@ internal static class AfterMatchSollicitatiesPresentation
         string MessagesHref,
         int UnreadMessages);
 
-    internal static CardAction? BuildCardAction(CultureState culture, ApplicationAfterMatchSummary summary)
+    internal static CardAction? BuildCardAction(
+        CultureState culture,
+        ApplicationAfterMatchSummary summary,
+        string? returnUrl = null)
     {
         if (!Enum.TryParse<InterviewStatus>(summary.InterviewStatus, ignoreCase: true, out var status))
         {
@@ -24,7 +27,7 @@ internal static class AfterMatchSollicitatiesPresentation
             && summary.OpenSlotCount > 0)
         {
             return new CardAction(
-                AfterMatchSollicitatiesUrls.PickSlot(summary.ApplicationId),
+                AfterMatchSollicitatiesUrls.PickSlot(summary.ApplicationId, returnUrl),
                 culture["Apps.Ndm.PickSlot"],
                 "action-pick");
         }
@@ -45,7 +48,8 @@ internal static class AfterMatchSollicitatiesPresentation
 
     internal static DetailActions? BuildDetailActions(
         CultureState culture,
-        ApplicationAfterMatchSummary summary)
+        ApplicationAfterMatchSummary summary,
+        string? returnUrl = null)
     {
         if (!Enum.TryParse<InterviewStatus>(summary.InterviewStatus, ignoreCase: true, out var status))
         {
@@ -61,7 +65,7 @@ internal static class AfterMatchSollicitatiesPresentation
             && summary.OpenSlotCount > 0)
         {
             return new DetailActions(
-                AfterMatchSollicitatiesUrls.PickSlot(summary.ApplicationId),
+                AfterMatchSollicitatiesUrls.PickSlot(summary.ApplicationId, returnUrl),
                 culture["Apps.Ndm.PickSlot"],
                 messagesHref,
                 summary.UnreadMessageCount);
@@ -70,7 +74,7 @@ internal static class AfterMatchSollicitatiesPresentation
         if (status == InterviewStatus.Scheduled)
         {
             return new DetailActions(
-                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId),
+                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
                 culture["Apps.Ndm.ViewInterview"],
                 messagesHref,
                 summary.UnreadMessageCount);
@@ -79,14 +83,14 @@ internal static class AfterMatchSollicitatiesPresentation
         if (status == InterviewStatus.RescheduleRequested)
         {
             return new DetailActions(
-                AfterMatchSollicitatiesUrls.Reschedule(summary.ApplicationId),
+                AfterMatchSollicitatiesUrls.Reschedule(summary.ApplicationId, returnUrl),
                 culture["AfterMatch.Screen08.Reschedule"],
                 messagesHref,
                 summary.UnreadMessageCount);
         }
 
         return new DetailActions(
-            AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId),
+            AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
             culture["AfterMatch.Link.Open"],
             messagesHref,
             summary.UnreadMessageCount);

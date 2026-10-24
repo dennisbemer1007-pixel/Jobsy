@@ -32,7 +32,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         ("01", $"/candidate/applications/{AfterMatchDemoIds.WaitApp:D}/after-match", "kandidaat"),
         ("02", $"/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match", "werkgever"),
         ("03", $"/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=propose", "werkgever"),
-        ("04", $"/candidate/applications/{AfterMatchDemoIds.PickSlotsApp:D}/after-match", "kandidaat"),
+        ("04", $"/candidate/applications/{AfterMatchDemoIds.PickSlotsApp:D}/after-match?panel=pick-slot", "kandidaat"),
         ("05", $"/candidate/applications/{AfterMatchDemoIds.ScheduledApp:D}/after-match", "kandidaat"),
         ("06", $"/candidate/applications/{AfterMatchDemoIds.ScheduledApp:D}/after-match/bevestiging", "kandidaat"),
         ("07", $"/candidate/applications/{AfterMatchDemoIds.ScheduledApp:D}/after-match/herinneringen", "kandidaat"),

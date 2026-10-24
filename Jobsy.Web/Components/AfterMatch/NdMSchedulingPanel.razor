@@ -3,7 +3,10 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<div class="card stack">
+@{
+    var rootClass = Compact ? "stack ndm-scheduling--compact" : "card stack";
+}
+<div class="@rootClass">
     @if (Mode == NdMSchedulingMode.EmployerPropose)
     {
         <p class="lbl">@Culture["AfterMatch.Screen03.Format.OnSite"] / @Culture["AfterMatch.Screen03.Format.Online"]</p>
@@ -41,15 +44,27 @@
             {
                 <button type="button" class="slot @(SelectedSlotId == slot.Id ? "on" : "")" @onclick="() => SelectedSlotId = slot.Id">
                     <span class="radio @(SelectedSlotId == slot.Id ? "on" : "")"></span>
-                    <div><b>@FormatSlot(slot)</b></div>
+                    <div class="sp">
+                        <b>@FormatSlotTitle(slot)</b>
+                        <span class="small muted">@FormatSlotSubtitle(slot)</span>
+                    </div>
                 </button>
             }
         </div>
         <div class="row wrapflex">
             <button type="button" class="btn" disabled="@(Busy || SelectedSlotId is null)" @onclick="ConfirmSlotAsync">
-                @Culture["AfterMatch.Screen04.Confirm"]
+                @Culture["AfterMatch.Screen04.ChooseSlot"]
             </button>
-            <button type="button" class="btn line" disabled="@Busy">@Culture["AfterMatch.Screen04.ProposeOther"]</button>
+            @if (OnProposeOther.HasDelegate)
+            {
+                <button type="button" class="btn line" disabled="@Busy" @onclick="ProposeOtherAsync">
+                    @Culture["AfterMatch.Screen04.NoSlotFits"]
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn line" disabled="@Busy">@Culture["AfterMatch.Screen04.ProposeOther"]</button>
+            }
         </div>
     }
     else if (Mode == NdMSchedulingMode.Waiting)
@@ -84,9 +99,12 @@
     [Parameter] public string? ScheduledLabel { get; set; }
     [Parameter] public string? LocationOrLink { get; set; }
     [Parameter] public bool Busy { get; set; }
+    /// <summary>When true, omit outer card (parent already provides one).</summary>
+    [Parameter] public bool Compact { get; set; }
     [Parameter] public EventCallback<Guid> OnSelectSlot { get; set; }
     [Parameter] public EventCallback OnDownloadCalendar { get; set; }
     [Parameter] public EventCallback<ProposeEmployerSlotsRequest> OnProposeEmployer { get; set; }
+    [Parameter] public EventCallback OnProposeOther { get; set; }
 
     private InterviewFormat _format = InterviewFormat.OnSite;
     private string? _location;
@@ -121,9 +139,30 @@
             slots));
     }
 
+    private async Task ProposeOtherAsync()
+    {
+        if (OnProposeOther.HasDelegate)
+        {
+            await OnProposeOther.InvokeAsync();
+        }
+    }
+
     private static string FormatSlot(AfterMatchSlotDto slot)
     {
         var start = slot.StartUtc.ToLocalTime();
         return start.ToString("dddd d MMMM, HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private static string FormatSlotTitle(AfterMatchSlotDto slot)
+    {
+        var start = slot.StartUtc.ToLocalTime();
+        return start.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private static string FormatSlotSubtitle(AfterMatchSlotDto slot)
+    {
+        var start = slot.StartUtc.ToLocalTime();
+        var end = slot.EndUtc.ToLocalTime();
+        return $"{start:HH:mm} tot {end:HH:mm}";
     }
 }
