@@ -329,6 +329,10 @@
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .mobonly {
         display: flex !important;
     }
+
+    .app-shell--banenkaart-shell:has(.jobsy-discovery--lagen) {
+        --kb-map-above-nav-gap: 12px;
+    }
 }
 
 /* List grid (mockup .list) */
@@ -371,13 +375,6 @@
     color: inherit;
     display: block;
     min-height: 44px;
-    max-height: 200px;
-}
-
-@media (min-width: 701px) {
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .vc {
-        max-height: none;
-    }
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .vimg {
@@ -2169,7 +2166,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-h, 4.25rem) + var(--kb-map-above-nav-gap, 12px) + env(safe-area-inset-bottom, 0px));
     z-index: 55;
     background: var(--kb-paper);
     border-radius: 22px 22px 0 0;
@@ -2291,7 +2288,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     position: fixed;
     left: 10px;
     right: 10px;
-    bottom: calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px) + 8px);
+    bottom: calc(var(--bottom-nav-h, 4.25rem) + var(--kb-map-above-nav-gap, 12px) + env(safe-area-inset-bottom, 0px));
     z-index: 55;
     pointer-events: none;
 }
