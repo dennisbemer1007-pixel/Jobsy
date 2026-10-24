@@ -488,6 +488,11 @@ window.jobMap = (function () {
         return (window.innerWidth || 0) < 900;
     }
 
+    /** Lagen Funda popup (mockup c8ee9298): desktop always; mobile when catalog capture mode. */
+    function lagenUsesFundaPopup() {
+        return lagenLayout && (catalogModeActive || !isNarrowViewport());
+    }
+
     // Center-anchored pins: 34px job / 44px cluster. Tip sits on the top of the marker.
     const JOB_POPUP_OFFSET = { bottom: [0, -18] };
     const CLUSTER_POPUP_OFFSET = { bottom: [0, -23] };
@@ -1359,7 +1364,7 @@ window.jobMap = (function () {
     }
 
     function buildPopupHtml(v) {
-        if (lagenLayout && catalogModeActive) {
+        if (lagenUsesFundaPopup()) {
             return buildLagenCatalogPopupHtml(v, lagenLayout && isNarrowViewport());
         }
         let mediaInner = "";
@@ -1633,7 +1638,7 @@ window.jobMap = (function () {
             return "<div class=\"map-popup\"><div class=\"map-popup__main\"><div class=\"map-popup__body\">" +
                 "<p class=\"map-popup__company\">" + escapeHtml(noVacanciesLabel()) + "</p></div></div></div>";
         }
-        if (lagenLayout && catalogModeActive && clusterUiState) {
+        if (lagenUsesFundaPopup() && clusterUiState) {
             return buildLagenFundaPopupHtml(job, {
                 mobile: isNarrowViewport(),
                 page: clusterUiState.page,
@@ -1715,7 +1720,7 @@ window.jobMap = (function () {
     }
 
     function preloadClusterImages(jobs, fromPage) {
-        if (lagenLayout && catalogModeActive) {
+        if (lagenUsesFundaPopup()) {
             const page = Math.max(1, fromPage || 1);
             const next = jobs && jobs[page];
             if (next) {
@@ -1741,7 +1746,7 @@ window.jobMap = (function () {
         if (!state || !state.root) {
             return;
         }
-        if (lagenLayout && catalogModeActive) {
+        if (lagenUsesFundaPopup()) {
             const total = state.pageCount;
             const current = state.page;
             const lagenCounter = state.root && state.root.querySelector("[data-lagen-counter]");
@@ -2068,7 +2073,7 @@ window.jobMap = (function () {
                 });
                 jobs[current - 1] = resolved;
             }
-            if (lagenLayout && catalogModeActive) {
+            if (lagenUsesFundaPopup()) {
                 const mobile = isNarrowViewport();
                 const html = buildLagenFundaPopupHtml(resolved || job, {
                     mobile: mobile,
@@ -3468,7 +3473,7 @@ window.jobMap = (function () {
         if (!map || !record) {
             return;
         }
-        if (lagenLayout && catalogModeActive) {
+        if (lagenUsesFundaPopup()) {
             openLagenFundaPopup([record], [record.lng, record.lat]);
             return;
         }
@@ -3479,7 +3484,7 @@ window.jobMap = (function () {
         if (!map || !childMarkers || childMarkers.length === 0) {
             return;
         }
-        if (lagenLayout && catalogModeActive) {
+        if (lagenUsesFundaPopup()) {
             openLagenFundaPopup(childMarkers, lngLat);
             return;
         }
@@ -3490,39 +3495,6 @@ window.jobMap = (function () {
         const pageCount = Math.max(1, jobs.length);
         const firstJob = jobs[0];
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
-        if (lagenLayout && catalogModeActive && pageCount === 1 && isNarrowViewport()) {
-            const inner = buildLagenCatalogPopupHtml(firstJob || {}, true);
-            const sheetHtml = buildLagenMobileSheetShell(inner);
-            setSelectedCluster(ll, 1);
-            setClusterOpenChrome(true, Object.keys(markersById).length);
-            bindClusterEscape();
-            activeClusterPopup = createDockedClusterController(sheetHtml);
-            clusterUiState = {
-                jobs: jobs,
-                page: 1,
-                pageCount: 1,
-                childMarkers: childMarkers,
-                root: activeClusterPopup.getElement().querySelector("[data-cluster-card]") ||
-                    activeClusterPopup.getElement(),
-                viewport: activeClusterPopup.getElement().querySelector("[data-cluster-viewport]"),
-                docked: true,
-                lngLat: ll
-            };
-            bindClusterPopupInteractions(activeClusterPopup, childMarkers);
-            if (firstJob && firstJob.id) {
-                fetchVacancyCard(firstJob.id).then(function (card) {
-                    if (!clusterUiState || !card) {
-                        return;
-                    }
-                    const full = mapCardToPopup(card, firstJob);
-                    const vp = clusterUiState.viewport;
-                    if (vp) {
-                        vp.innerHTML = buildLagenCatalogPopupHtml(full, true);
-                    }
-                });
-            }
-            return;
-        }
         // Fixed-size chrome + skeleton card so the sheet appears on the same tap frame.
         const chromeHtml = buildClusterChromeHtml(pageCount, clusterPlaceLabel(jobs));
         const skeletonCard = skeletonPopupHtml(firstJob || {});
@@ -5910,7 +5882,7 @@ window.jobMap = (function () {
                     markersByCoordKey = {};
                 },
                 zoomToShowLayer: function (record, cb) {
-                    if (lagenLayout && catalogModeActive) {
+                    if (lagenLayout && catalogModeActive && isNarrowViewport()) {
                         if (typeof cb === "function") {
                             cb();
                         }
