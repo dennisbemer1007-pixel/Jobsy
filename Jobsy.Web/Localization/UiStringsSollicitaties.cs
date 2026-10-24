@@ -89,5 +89,36 @@ public static class UiStringsSollicitaties
         Add("Apps.Ndm.UnreadAria",
             "{0} ongelezen berichten", "{0} unread messages",
             "{0} nieprzeczytanych wiadomości", "{0} mesaje necitite", "{0} رسائل غير مقروءة");
+
+        Add("Apps.Ndm.ViewInterview",
+            "Bekijk je gesprek", "View your interview",
+            "Zobacz rozmowę", "Vezi interviul", "اعرض مقابلتك");
+
+        Add("Apps.Ndm.Messages",
+            "Berichten", "Messages",
+            "Wiadomości", "Mesaje", "الرسائل");
+
+        Add("Apps.Ndm.CompanyPage",
+            "Bedrijfspagina", "Company page",
+            "Strona firmy", "Pagina companie", "صفحة الشركة");
+
+        Add("Apps.Ndm.LobsyCv",
+            "Lobsy-cv", "Lobsy CV",
+            "CV Lobsy", "CV Lobsy", "سيرة Lobsy");
+
+        Add("Apps.Ndm.WithdrawShort",
+            "Intrekken", "Withdraw",
+            "Wycofaj", "Retrage", "سحب");
+
+        Add("Apps.Ndm.DetailTipPick",
+            "Kies een moment dat jou uitkomt, of stel zelf een ander moment voor.",
+            "Pick a time that suits you, or suggest another time yourself.",
+            "Wybierz dogodny termin lub zaproponuj inny.",
+            "Alege un moment potrivit sau propune altul.",
+            "اختر وقتاً يناسبك أو اقترح وقتاً آخر.");
+
+        Add("Apps.Ndm.BackAllApplications",
+            "Alle sollicitaties", "All applications",
+            "Wszystkie aplikacje", "Toate candidaturile", "كل الطلبات");
     }
 }

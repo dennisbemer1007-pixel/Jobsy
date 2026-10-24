@@ -23,7 +23,13 @@ internal static class ApplicationsSsrShells
         }
 
         var sb = new StringBuilder();
-        sb.Append("<div class=\"panel-page sollicitaties-page\" data-testid=\"applications-page-ssr\">");
+        sb.Append("<div class=\"panel-page sollicitaties-page");
+        if (data.DetailView)
+        {
+            sb.Append(" sollicitaties-page--detail");
+        }
+
+        sb.Append("\" data-testid=\"applications-page-ssr\">");
         AppendHeroStrip(sb);
         sb.Append("<div class=\"sollicitaties-shell\">");
         AppendPageIntro(sb, culture, data);
@@ -47,6 +53,7 @@ internal static class ApplicationsSsrShells
         }
 
         sb.Append("</div></div></div>");
+        sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-26\" defer></script>");
         return sb.ToString();
     }
 
@@ -270,8 +277,17 @@ internal static class ApplicationsSsrShells
             AppendListCard(sb, culture, data, row, selected?.RowId == row.RowId);
         }
 
-        sb.Append("</div></div>");
-        _ = selected;
+        sb.Append("</div>");
+        if (selected is not null)
+        {
+            sb.Append("<aside class=\"sollicitaties-detail\" aria-label=\"");
+            sb.Append(WebUtility.HtmlEncode(culture["Nav.MyApplications"]));
+            sb.Append("\">");
+            AppendDetailPanel(sb, culture, data, selected);
+            sb.Append("</aside>");
+        }
+
+        sb.Append("</div>");
     }
 
     private static void AppendListCard(
@@ -373,19 +389,54 @@ internal static class ApplicationsSsrShells
         sb.Append("<span class=\"sollic-card__chev chev\" aria-hidden=\"true\">›</span></div></article>");
     }
 
-#pragma warning disable IDE0051 // Mockup 02 detail rail (#969) reattaches this panel.
-    private static void AppendDetailPanel(StringBuilder sb, CultureState culture, SollicitationRow row)
+    private static void AppendDetailPanel(
+        StringBuilder sb,
+        CultureState culture,
+        ApplicationsSsrData.PageData data,
+        SollicitationRow row)
     {
-        sb.Append("<div class=\"sollic-detail\"><div class=\"sollic-detail__head\"><span class=\"sollic-card__source sollic-card__source--");
+        var listHref = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, null);
+        sb.Append("<div class=\"sollic-detail card detail\"><a class=\"sollic-detail__back back\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(listHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.BackAllApplications"]));
+        sb.Append("</a><div class=\"sollic-detail__head\"><span class=\"sollic-card__source sollic-card__source--");
         sb.Append(row.IsInitiative ? "initiative" : row.IsExternal ? "external" : "vacancy");
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture[row.SourceTagKey]));
         sb.Append("</span><h2 class=\"sollic-detail__title\">");
         sb.Append(WebUtility.HtmlEncode(row.Title));
-        sb.Append("</h2><p class=\"sollic-detail__meta\">");
+        sb.Append("</h2><p class=\"sollic-detail__meta muted small\">");
         sb.Append(WebUtility.HtmlEncode(CompanyPlace(row)));
         sb.Append("</p></div>");
-        if (row.Timeline.Count > 0)
+        if (row.AfterMatch is not null)
+        {
+            AppendAfterMatchTimeline(sb, culture, row.AfterMatch);
+            AppendDetailTip(sb, culture, row);
+            var actions = AfterMatchSollicitatiesPresentation.BuildDetailActions(culture, row.AfterMatch);
+            if (actions is not null)
+            {
+                sb.Append("<div class=\"sollic-detail__acts acts\">");
+                sb.Append("<a class=\"btn btn-primary sollic-detail__cta btn--primary\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(actions.PrimaryHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(actions.PrimaryLabel));
+                sb.Append("</a><a class=\"btn sollic-detail__cta-secondary\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(actions.MessagesHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.Messages"]));
+                if (actions.UnreadMessages > 0)
+                {
+                    sb.Append("<b class=\"sollic-detail__msg-badge\">");
+                    sb.Append(actions.UnreadMessages);
+                    sb.Append("</b>");
+                }
+
+                sb.Append("</a></div>");
+                AppendDetailMoreLinks(sb, culture, row);
+            }
+        }
+        else if (row.Timeline.Count > 0)
         {
             sb.Append("<ol class=\"kb-timeline kb-timeline--vertical sollic-detail__timeline\">");
             foreach (var step in row.Timeline)
@@ -412,43 +463,106 @@ internal static class ApplicationsSsrShells
             }
 
             sb.Append("</ol>");
-        }
-
-        AppendDetailTip(sb, culture, row);
-        var primaryHref = RowHref(row);
-        if (!string.IsNullOrEmpty(primaryHref))
-        {
-            sb.Append("<a class=\"btn btn-primary sollic-detail__cta\" href=\"");
-            sb.Append(WebUtility.HtmlEncode(primaryHref));
-            sb.Append("\" data-enhance-nav=\"false\">");
-            sb.Append(WebUtility.HtmlEncode(DetailCtaLabel(culture, row)));
-            sb.Append("</a>");
+            AppendDetailTip(sb, culture, row);
+            var primaryHref = RowHref(row);
+            if (!string.IsNullOrEmpty(primaryHref))
+            {
+                sb.Append("<a class=\"btn btn-primary sollic-detail__cta\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(primaryHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(DetailCtaLabel(culture, row)));
+                sb.Append("</a>");
+            }
         }
 
         sb.Append("</div>");
     }
+
+    private static void AppendAfterMatchTimeline(
+        StringBuilder sb,
+        CultureState culture,
+        ApplicationAfterMatchSummary summary)
+    {
+        var steps = AfterMatchSollicitatiesPresentation.BuildAfterMatchTimeline(culture, summary);
+        sb.Append("<div class=\"sollic-ndm-tl tl\" role=\"list\">");
+        foreach (var step in steps)
+        {
+            var state = step.State.ToLowerInvariant();
+            sb.Append("<div class=\"sollic-ndm-tl__step s sollic-ndm-tl__step--");
+            sb.Append(WebUtility.HtmlEncode(state));
+            sb.Append("\" role=\"listitem\"><span class=\"sollic-ndm-tl__dot i\" aria-hidden=\"true\"></span><span class=\"sollic-ndm-tl__label\">");
+            sb.Append(WebUtility.HtmlEncode(step.Label));
+            sb.Append("</span>");
+            if (step.OccurredAtUtc is DateTime at)
+            {
+                sb.Append("<small class=\"sollic-ndm-tl__sub\">");
+                sb.Append(WebUtility.HtmlEncode(FormatTimelineDate(culture, at, step)));
+                sb.Append("</small>");
+            }
+            else if (string.Equals(state, "current", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append("<small class=\"sollic-ndm-tl__sub\">");
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Now"]));
+                sb.Append("</small>");
+            }
+
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static void AppendDetailMoreLinks(StringBuilder sb, CultureState culture, SollicitationRow row)
+    {
+        if (row.ApplicationId is not Guid appId || row.VacancyId is not Guid vacId)
+        {
+            return;
+        }
+
+        sb.Append("<div class=\"sollic-detail__more more\">");
+        sb.Append("<a class=\"sollic-detail__more-link\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Vacancy(vacId)));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.CompanyPage"]));
+        sb.Append("</a><a class=\"sollic-detail__more-link\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.LobsyCvPdf(appId)));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.LobsyCv"]));
+        sb.Append("</a><button type=\"button\" class=\"sollic-detail__more-link sollic-detail__more-link--danger danger sollic-detail__withdraw\" data-application-id=\"");
+        sb.Append(appId.ToString("D"));
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.WithdrawShort"]));
+        sb.Append("</button></div>");
+    }
+
     private static void AppendDetailTip(StringBuilder sb, CultureState culture, SollicitationRow row)
     {
+        string? body = null;
+        if (row.AfterMatch is { OpenSlotCount: > 0 })
+        {
+            body = culture["Apps.Ndm.DetailTipPick"];
+        }
+
         var showInterviewTip = string.Equals(row.Status, nameof(ApplicationStatus.EmployerContacting), StringComparison.OrdinalIgnoreCase)
                                || row.Timeline.Any(t =>
                                    string.Equals(t.State, "Current", StringComparison.OrdinalIgnoreCase)
                                    && (string.Equals(t.Key, "Interview", StringComparison.OrdinalIgnoreCase)
                                        || string.Equals(t.Key, "Gesprek", StringComparison.OrdinalIgnoreCase)));
-        if (!showInterviewTip && string.IsNullOrWhiteSpace(row.NextStepKey))
+        if (body is null && !showInterviewTip && string.IsNullOrWhiteSpace(row.NextStepKey))
         {
             return;
         }
 
-        sb.Append("<div class=\"sollic-detail__tip\"><p class=\"sollic-detail__tip-title\">");
+        sb.Append("<div class=\"sollic-detail__tip note\"><p class=\"sollic-detail__tip-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Detail.TipTitle"]));
         sb.Append("</p><p class=\"sollic-detail__tip-body\">");
         sb.Append(WebUtility.HtmlEncode(
-            showInterviewTip
-                ? culture["Apps.Detail.TipInterview"]
-                : culture[row.NextStepKey!]));
+            body
+                ?? (showInterviewTip
+                    ? culture["Apps.Detail.TipInterview"]
+                    : culture[row.NextStepKey!])));
         sb.Append("</p></div>");
     }
-#pragma warning restore IDE0051
 
     private static void AppendActiviteitenPlaceholder(StringBuilder sb, CultureState culture)
     {

@@ -34,7 +34,8 @@ internal static class ApplicationsSsrData
         int CountVacancy,
         int CountInitiative,
         int CountExternal,
-        int CountDone);
+        int CountDone,
+        bool DetailView);
 
     internal static async Task<PageData> LoadAsync(
         JobsyApiClient api,
@@ -150,6 +151,7 @@ internal static class ApplicationsSsrData
 
         var counts = CountByFilter(rows);
         var filtered = rows.Where(r => ApplicationsSsrQuery.MatchesFilter(r, filter)).ToList();
+        var detailView = selectedId is not null;
         var sel = selectedId ?? filtered.FirstOrDefault()?.RowId;
 
         return new PageData(
@@ -170,7 +172,8 @@ internal static class ApplicationsSsrData
             counts.Vacancy,
             counts.Initiative,
             counts.External,
-            counts.Done);
+            counts.Done,
+            detailView);
     }
 
     private const string AcceptatieDemoCandidateEmail = "lobsy-test@mail.grokbot.com";
@@ -250,7 +253,8 @@ internal static class ApplicationsSsrData
             0,
             0,
             0,
-            0);
+            0,
+            false);
 
     private static (int All, int Vacancy, int Initiative, int External, int Done) CountByFilter(
         IReadOnlyList<SollicitationRow> rows)

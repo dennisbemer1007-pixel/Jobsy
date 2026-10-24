@@ -36,8 +36,12 @@
     "v": "20261004-10"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "88778175d8c11743dd6755882c0db2462c2839f3412c401225692687223797a7",
-    "v": "20261024-sollicitatie01-layout8"
+    "sha256": "a079bc996df8cd362a006201b18965d1bd072a23c87096a73e706bb87473f2ab",
+    "v": "20261024-26"
+  },
+  "js/sollicitaties-actions.js": {
+    "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",
+    "v": "20261024-26"
   },
   "js/sollicitaties-filter-chips.js": {
     "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",

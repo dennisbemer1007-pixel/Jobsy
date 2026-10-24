@@ -37,6 +37,7 @@ public class CandidateIllustratedAppMarkupTests
         Assert.DoesNotContain("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-layout", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-empty-card", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-ndm-tl", File.ReadAllText(Path.Combine(Root, "Jobsy.Web", "Applications", "ApplicationsSsrShells.cs")), StringComparison.Ordinal);
     }
 
     [Fact]
