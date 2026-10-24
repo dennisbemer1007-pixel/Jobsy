@@ -1040,6 +1040,52 @@
             .replace(/"/g, "&quot;");
     }
 
+    function listRowHasPhoto(row) {
+        return !!(row && row.imageUrl && String(row.imageUrl).trim());
+    }
+
+    function listMapPopupPhotoUrl(id) {
+        if (id == null || id === "") {
+            return "";
+        }
+        return "/api/vacancies/" + encodeURIComponent(String(id)) + "/map-popup-photo?variant=mobile";
+    }
+
+    var listPhotoObserver = null;
+
+    function observeLazyListPhotos(root) {
+        if (!root || typeof IntersectionObserver !== "function") {
+            return;
+        }
+        var pending = root.querySelectorAll("img[data-kb-list-photo][data-photo-src]:not([data-photo-loaded])");
+        if (!pending.length) {
+            return;
+        }
+        if (!listPhotoObserver) {
+            listPhotoObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) {
+                        return;
+                    }
+                    var img = entry.target;
+                    if (!img || img.getAttribute("data-photo-loaded") === "1") {
+                        return;
+                    }
+                    var src = img.getAttribute("data-photo-src");
+                    if (!src) {
+                        return;
+                    }
+                    img.setAttribute("data-photo-loaded", "1");
+                    img.src = src;
+                    listPhotoObserver.unobserve(img);
+                });
+            }, { root: null, rootMargin: "120px 0px", threshold: 0.01 });
+        }
+        pending.forEach(function (img) {
+            listPhotoObserver.observe(img);
+        });
+    }
+
     function renderListRows(listRows, filters, resetPage) {
         if (resetPage !== false) {
             listShown = LIST_PAGE;
@@ -1085,11 +1131,20 @@
             var typeHtml = ic ? ic.typeMarkerHtml(row, false) : "";
             var sector = row.categoryName ? escapeHtml(row.categoryName) : "";
             var hours = hoursLabel(row);
+            var photo = listRowHasPhoto(row);
             html += "<a class=\"vc\" href=\"" + escapeHtml(href) + "\" data-vacancy-id=\""
                 + escapeHtml(row.id) + "\" data-testid=\"kb-list-row\">";
-            html += "<div class=\"vimg\" style=\"background:linear-gradient(135deg,"
-                + escapeHtml(colors.bg) + ",#fff 150%);color:" + escapeHtml(colors.fg) + "\">"
-                + ico;
+            if (photo) {
+                html += "<div class=\"vimg vimg--photo\" style=\"background:linear-gradient(135deg,"
+                    + escapeHtml(colors.bg) + ",#fff 150%);\">";
+                html += "<img class=\"kb-list-lazy-photo\" alt=\"\" width=\"400\" height=\"250\" decoding=\"async\" "
+                    + "data-kb-list-photo=\"1\" data-photo-src=\""
+                    + escapeHtml(listMapPopupPhotoUrl(row.id)) + "\" />";
+            } else {
+                html += "<div class=\"vimg\" style=\"background:linear-gradient(135deg,"
+                    + escapeHtml(colors.bg) + ",#fff 150%);color:" + escapeHtml(colors.fg) + "\">"
+                    + ico;
+            }
             if (sector) {
                 html += "<span class=\"vtag\">" + sector + "</span>";
             }
@@ -1107,6 +1162,7 @@
         });
         html += "</div>";
         listRoot.insertAdjacentHTML("afterbegin", html);
+        observeLazyListPhotos(listRoot);
         syncDiscoveryChrome(filters, travelRows.length);
         renderMapTopChrome(filters, travelRows);
         return travelRows.length;
@@ -1165,6 +1221,10 @@
     }
 
     function bootAndApply() {
+        var listRoot = document.querySelector("[data-banenkaart-ssr=\"1\"] [data-testid=vacancy-list]");
+        if (listRoot) {
+            observeLazyListPhotos(listRoot);
+        }
         var filters = resolveFilters();
         return fetchCatalog(false).then(function () {
             patchBootFilters(filters);
@@ -1198,6 +1258,7 @@
         resolveFilters: resolveFilters,
         readFiltersFromUrl: readFiltersFromUrl,
         renderListRows: renderListRows,
+        observeLazyListPhotos: observeLazyListPhotos,
         loadMoreListRows: loadMoreListRows,
         readKeywordFromUi: readKeywordFromUi,
         prefetch: function () {

@@ -50,10 +50,25 @@ internal static class BanenkaartSsrListHtml
 
         sb.Append("<a class=\"vc\" href=\"").Append(href).Append("\" data-vacancy-id=\"")
             .Append(id).Append("\" data-testid=\"kb-list-row\">");
-        sb.Append("<div class=\"vimg\" style=\"background:linear-gradient(135deg,")
-            .Append(WebUtility.HtmlEncode(bg)).Append(",#fff 150%);color:")
-            .Append(WebUtility.HtmlEncode(fg)).Append("\">");
-        sb.Append("<svg class=\"big kb-wt-ico--big\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 8l8-4 8 4v8l-8 4-8-4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\"/></svg>");
+        var hasPhoto = !string.IsNullOrWhiteSpace(vacancy.ImageUrl);
+        if (hasPhoto)
+        {
+            var photoUrl = Jobsy.Core.Media.VacancyImageUrls.MapPopupPhotoPath(vacancy.Id, mobile: true);
+            sb.Append("<div class=\"vimg vimg--photo\" style=\"background:linear-gradient(135deg,")
+                .Append(WebUtility.HtmlEncode(bg)).Append(",#fff 150%);\">");
+            sb.Append("<img class=\"kb-list-lazy-photo\" alt=\"\" width=\"400\" height=\"250\" decoding=\"async\" ")
+                .Append("data-kb-list-photo=\"1\" data-photo-src=\"")
+                .Append(WebUtility.HtmlEncode(photoUrl))
+                .Append("\" />");
+        }
+        else
+        {
+            sb.Append("<div class=\"vimg\" style=\"background:linear-gradient(135deg,")
+                .Append(WebUtility.HtmlEncode(bg)).Append(",#fff 150%);color:")
+                .Append(WebUtility.HtmlEncode(fg)).Append("\">");
+            sb.Append("<svg class=\"big kb-wt-ico--big\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 8l8-4 8 4v8l-8 4-8-4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\"/></svg>");
+        }
+
         if (!string.IsNullOrEmpty(sector))
         {
             sb.Append("<span class=\"vtag\">").Append(sector).Append("</span>");

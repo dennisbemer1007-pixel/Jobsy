@@ -24,6 +24,8 @@ public sealed class BanenkaartSsrUiBootGuardTests
         var listHtml = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrListHtml.cs"));
         Assert.Contains("kb-list-row__sector", listHtml, StringComparison.Ordinal);
         Assert.Contains("kb-list-row__overlay", listHtml, StringComparison.Ordinal);
+        Assert.Contains("data-kb-list-photo", listHtml, StringComparison.Ordinal);
+        Assert.Contains("MapPopupPhotoPath", listHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("kb-why-line", listHtml, StringComparison.Ordinal);
     }
 

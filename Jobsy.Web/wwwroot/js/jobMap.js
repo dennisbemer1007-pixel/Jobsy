@@ -2004,6 +2004,9 @@ window.jobMap = (function () {
             btn.addEventListener("touchstart", stopHeartMapBubble, { capture: true, passive: false });
             btn.addEventListener("click", function (ev) {
                 stopHeartMapBubble(ev);
+                if (!ev || ev.type !== "click" || (ev.button != null && ev.button !== 0)) {
+                    return;
+                }
                 if (!uiLabels.canSave) {
                     window.location.href = "/login?returnUrl=" +
                         encodeURIComponent(banenkaartReturnUrl());
@@ -2012,7 +2015,8 @@ window.jobMap = (function () {
                 if (btn.dataset.saveBusy === "1") {
                     return;
                 }
-                const next = btn.getAttribute("aria-pressed") !== "true";
+                const pressed = btn.getAttribute("aria-pressed") === "true";
+                const next = !pressed;
                 btn.dataset.saveBusy = "1";
                 setHeartButtonState(btn, next);
                 toggleLiked(id, next).then(function (liked) {

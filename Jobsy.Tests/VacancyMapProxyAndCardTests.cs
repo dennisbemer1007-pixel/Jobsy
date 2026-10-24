@@ -111,7 +111,16 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.DoesNotContain("PostLikeAsync).RequireAuthorization().DisableAntiforgery", proxy);
         Assert.Contains("readAntiforgeryHeader", js);
         Assert.Contains("likeMutationHeaders", js);
+        Assert.Contains("ev.type !== \"click\"", js);
         Assert.Contains("ensureLagenHeartInteractionGuard", js);
+        var vacanciesClient = File.ReadAllText(
+            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Services", "ApiClient", "JobsyApiClient.Vacancies.cs"));
+        Assert.Contains("PostAsJsonAsync($\"api/vacancies/{vacancyId}/like\"", vacanciesClient);
+        Assert.Contains("PropertyNameCaseInsensitive = true", vacanciesClient);
+        var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        Assert.Contains("data-kb-list-photo", catalog);
+        Assert.Contains("observeLazyListPhotos", catalog);
+        Assert.Contains("map-popup-photo?variant=mobile", catalog);
         Assert.Contains("stopEvent(ev)", js);
         var discovery = File.ReadAllText(
             Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));

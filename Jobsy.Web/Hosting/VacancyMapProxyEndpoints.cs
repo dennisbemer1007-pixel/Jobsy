@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 using Jobsy.Core.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
@@ -69,6 +70,7 @@ public static class VacancyMapProxyEndpoints
         HttpContext http,
         IAntiforgery antiforgery,
         JobsyApiClient api,
+        ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         if (!await antiforgery.IsRequestValidAsync(http))
@@ -76,15 +78,7 @@ public static class VacancyMapProxyEndpoints
             return Results.BadRequest();
         }
 
-        try
-        {
-            var liked = await api.SetLikedAsync(id, true, ct);
-            return Results.Json(new { liked, Liked = liked });
-        }
-        catch
-        {
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+        return await MutateLikeAsync(id, liked: true, api, loggerFactory, ct);
     }
 
     private static async Task<IResult> DeleteLikeAsync(
@@ -92,6 +86,7 @@ public static class VacancyMapProxyEndpoints
         HttpContext http,
         IAntiforgery antiforgery,
         JobsyApiClient api,
+        ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         if (!await antiforgery.IsRequestValidAsync(http))
@@ -99,13 +94,31 @@ public static class VacancyMapProxyEndpoints
             return Results.BadRequest();
         }
 
+        return await MutateLikeAsync(id, liked: false, api, loggerFactory, ct);
+    }
+
+    private static async Task<IResult> MutateLikeAsync(
+        Guid id,
+        bool liked,
+        JobsyApiClient api,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
+    {
         try
         {
-            var liked = await api.SetLikedAsync(id, false, ct);
-            return Results.Json(new { liked, Liked = liked });
+            var saved = await api.SetLikedAsync(id, liked, ct);
+            return Results.Json(new { liked = saved, Liked = saved });
         }
-        catch
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode code)
         {
+            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+                .LogWarning(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked} status={Status}", id, liked, code);
+            return Results.StatusCode((int)code);
+        }
+        catch (Exception ex)
+        {
+            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+                .LogError(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked}", id, liked);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

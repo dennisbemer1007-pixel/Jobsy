@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-pop10",
-    "sha256": "fed24c23b50e6e417e47addf2541687bfdabab79b2e58cb45fc6eb9b652b5f14"
+    "v": "20261024-pop11",
+    "sha256": "e7a6eb0f84349d4102100683aed3e3a8dede51860ff9109c4fecce40c142b6bf"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
@@ -368,12 +368,12 @@
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "sha256": "e450a46389d060ca9bed701fdd1868810377dd69dd4cdb8bd0461042147eb2dd",
-    "v": "20261024-filters2"
+    "sha256": "a4c85e6e27d74f5c70d42b672cc7609694ebfe2590b1f7bdd6b6d4d9bb54d45d",
+    "v": "20261024-filters3"
   },
   "js/banenkaart-ssr.js": {
     "sha256": "0aa5474b1c41b529be16edf1a6b7e720f6de873e9c3b9454ea64c652582f0d63",
-    "v": "20261024-filters2"
+    "v": "20261024-filters3"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -384,7 +384,11 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-pop10",
-    "sha256": "4e8e2b577df00284e4672cf822e7e0bba74c9156adfb3f91648df6345e21ac30"
+    "v": "20261024-pop11",
+    "sha256": "74c74e7793a10406e658e51b748b67692852f766e36dadad4b32d8f3eb814abf"
+  },
+  "css/features/banenkaart-lagen.css": {
+    "v": "20261024-lagen1",
+    "sha256": "4fb7fc23d11845c510852cca122e6b1cff93922ef264c06e7639418815ee3ba5"
   }
 }
