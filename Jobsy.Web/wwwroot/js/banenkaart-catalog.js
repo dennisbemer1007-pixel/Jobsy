@@ -968,13 +968,24 @@
         return "";
     }
 
-    var STRIP_DRAG_CLICK_PX = 8;
+    var STRIP_DRAG_CLICK_PX = 5;
+    var STRIP_WHEEL_LINE_PX = 16;
 
     function mapStripScrollEl(strip) {
         if (!strip) {
             return null;
         }
         return strip.querySelector(".strip__track") || strip;
+    }
+
+    function stripWheelDeltaPixels(ev, scroller) {
+        var mul = 1;
+        if (ev.deltaMode === 1) {
+            mul = STRIP_WHEEL_LINE_PX;
+        } else if (ev.deltaMode === 2) {
+            mul = Math.max(scroller.clientWidth, 100);
+        }
+        return { dx: ev.deltaX * mul, dy: ev.deltaY * mul };
     }
 
     function bindMapStripScroll(strip) {
@@ -986,6 +997,7 @@
             return;
         }
         strip.setAttribute("data-kb-strip-scroll", "1");
+
         function onStripWheel(ev) {
             if (window.matchMedia("(max-width: 700px)").matches) {
                 return;
@@ -993,15 +1005,25 @@
             if (scroller.scrollWidth <= scroller.clientWidth + 1) {
                 return;
             }
-            if (Math.abs(ev.deltaY) <= Math.abs(ev.deltaX)) {
+            var delta = stripWheelDeltaPixels(ev, scroller);
+            if (Math.abs(delta.dy) <= Math.abs(delta.dx)) {
+                return;
+            }
+            var maxLeft = scroller.scrollWidth - scroller.clientWidth;
+            if (delta.dy > 0 && scroller.scrollLeft >= maxLeft - 1) {
+                return;
+            }
+            if (delta.dy < 0 && scroller.scrollLeft <= 0) {
                 return;
             }
             ev.preventDefault();
-            scroller.scrollLeft += ev.deltaY;
+            ev.stopPropagation();
+            var nextLeft = scroller.scrollLeft + delta.dy;
+            scroller.scrollLeft = Math.max(0, Math.min(maxLeft, nextLeft));
         }
-        strip.addEventListener("wheel", onStripWheel, { passive: false });
-        scroller.addEventListener("wheel", onStripWheel, { passive: false });
+        strip.addEventListener("wheel", onStripWheel, { passive: false, capture: true });
 
+        var dragPending = false;
         var dragActive = false;
         var dragStartX = 0;
         var dragStartScroll = 0;
@@ -1013,19 +1035,18 @@
             if (scroller.scrollWidth <= scroller.clientWidth + 1) {
                 return;
             }
-            dragActive = true;
+            dragPending = true;
+            dragActive = false;
             dragMoved = 0;
             dragStartX = ev.clientX;
             dragStartScroll = scroller.scrollLeft;
-            scroller.classList.add("strip--dragging");
-            if (typeof scroller.setPointerCapture === "function") {
-                scroller.setPointerCapture(ev.pointerId);
-            }
         });
         function endStripDrag(ev) {
-            if (!dragActive) {
+            if (!dragPending && !dragActive) {
                 return;
             }
+            var wasRealDrag = dragActive && dragMoved > STRIP_DRAG_CLICK_PX;
+            dragPending = false;
             dragActive = false;
             scroller.classList.remove("strip--dragging");
             if (ev && typeof scroller.releasePointerCapture === "function") {
@@ -1033,20 +1054,34 @@
                     scroller.releasePointerCapture(ev.pointerId);
                 } catch (eRelease) { /* lost capture */ }
             }
-            if (dragMoved > STRIP_DRAG_CLICK_PX) {
+            if (wasRealDrag) {
                 strip.setAttribute("data-kb-strip-suppress-click", "1");
-                window.setTimeout(function () {
+                strip.addEventListener("click", function blockStripGhostClick(ev) {
                     strip.removeAttribute("data-kb-strip-suppress-click");
-                }, 0);
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                }, { capture: true, once: true });
             }
         }
         scroller.addEventListener("pointermove", function (ev) {
-            if (!dragActive) {
+            if (!dragPending && !dragActive) {
                 return;
             }
             var dx = ev.clientX - dragStartX;
             dragMoved = Math.max(dragMoved, Math.abs(dx));
-            scroller.scrollLeft = dragStartScroll - dx;
+            if (!dragActive && dragMoved > STRIP_DRAG_CLICK_PX) {
+                dragActive = true;
+                scroller.classList.add("strip--dragging");
+                if (typeof scroller.setPointerCapture === "function") {
+                    try {
+                        scroller.setPointerCapture(ev.pointerId);
+                    } catch (eCapture) { /* already captured */ }
+                }
+            }
+            if (dragActive) {
+                ev.preventDefault();
+                scroller.scrollLeft = dragStartScroll - dx;
+            }
         });
         scroller.addEventListener("pointerup", endStripDrag);
         scroller.addEventListener("pointercancel", endStripDrag);
@@ -1092,14 +1127,6 @@
         observeLazyListPhotos(host);
         host.querySelectorAll(".sc").forEach(function (btn) {
             function activate(ev) {
-                var strip = btn.closest(".strip");
-                if (strip && strip.getAttribute("data-kb-strip-suppress-click") === "1") {
-                    if (ev) {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                    }
-                    return;
-                }
                 var id = btn.getAttribute("data-vacancy-id");
                 if (id && window.jobMap) {
                     if (typeof window.jobMap.focus === "function") {
@@ -1576,28 +1603,23 @@
         /** @internal Playwright */
         __testRestoreListScroll: restorePendingBanenkaartListScroll,
         /** @internal Playwright — horizontal wheel on map strip */
-        __testStripWheelScroll: function (deltaY) {
+        __testStripWheelScroll: function (deltaY, deltaMode) {
             var strip = document.querySelector("[data-testid=kb-map-strip]");
             var scroller = strip && mapStripScrollEl(strip);
-            if (!scroller) {
+            var card = scroller && scroller.querySelector(".sc");
+            if (!scroller || !card) {
                 return 0;
             }
-            var dy = deltaY || 240;
+            var dy = deltaY == null ? 120 : deltaY;
+            var mode = deltaMode == null ? 0 : deltaMode;
             var wheelInit = {
                 deltaY: dy,
                 deltaX: 0,
+                deltaMode: mode,
                 bubbles: true,
                 cancelable: true
             };
-            scroller.dispatchEvent(new WheelEvent("wheel", wheelInit));
-            if (strip) {
-                strip.dispatchEvent(new WheelEvent("wheel", wheelInit));
-            }
-            if (scroller.scrollLeft === 0
-                && scroller.scrollWidth > scroller.clientWidth + 1
-                && Math.abs(dy) > Math.abs(wheelInit.deltaX)) {
-                scroller.scrollLeft += dy;
-            }
+            card.dispatchEvent(new WheelEvent("wheel", wheelInit));
             return scroller.scrollLeft;
         },
         /** @internal Playwright — drag scroll on map strip */
