@@ -1464,6 +1464,11 @@
     grid-template-columns: 1fr;
   }
 
+  /* Beat na-de-match.css legacy `.thr .tlist { display: none }` (now scoped to .ndm). */
+  [data-testid="sollicitaties-berichten-tab"] .sollic-berichten.tlist {
+    display: block !important;
+  }
+
   .sollic-berichten.tlist {
     border-right: 0;
   }
@@ -1477,7 +1482,11 @@
   }
 
   .sollic-berichten.ti.sollic-berichten-ti--mob {
-    display: flex;
+    display: flex !important;
+  }
+
+  .sollic-berichten-tmain-panel {
+    display: none !important;
   }
 
   .sollic-berichten.tsafe {

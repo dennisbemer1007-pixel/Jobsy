@@ -199,6 +199,9 @@ public class MobileSaasUxTests
             FindRepoRoot(),
             "Jobsy.Web/Applications/SollicitatiesBerichtenPresentation.cs"));
         Assert.Contains("RowHasMessageThread", berichtenPresentation, StringComparison.Ordinal);
+        var ndmCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/na-de-match.css"));
+        Assert.Contains(".ndm .thr .tlist{display:none}", ndmCss, StringComparison.Ordinal);
+        Assert.Contains("[data-testid=\"sollicitaties-berichten-tab\"] .sollic-berichten.tlist", css, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
         AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/sollicitaties-page.css");
