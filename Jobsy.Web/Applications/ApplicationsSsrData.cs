@@ -40,7 +40,8 @@ internal static class ApplicationsSsrData
         bool AfterMatchEnabled,
         int UnreadMessagesTotal,
         Guid? BerichtenThreadId,
-        AfterMatchThreadDto? BerichtenThread);
+        AfterMatchThreadDto? BerichtenThread,
+        IReadOnlyDictionary<Guid, AfterMatchThreadDto> BerichtenThreads);
 
     internal static async Task<PageData> LoadAsync(
         JobsyApiClient api,
@@ -175,33 +176,60 @@ internal static class ApplicationsSsrData
         var sel = selectedId ?? filtered.FirstOrDefault()?.RowId;
 
         var messageRows = rows
-            .Where(r => r.AfterMatch is not null && r.ApplicationId is Guid)
+            .Where(SollicitatiesBerichtenPresentation.RowHasMessageThread)
             .OrderByDescending(r => r.AfterMatch!.LastMessageAtUtc ?? r.SortAtUtc)
             .ToList();
         var unreadTotal = messageRows.Sum(r => r.AfterMatch!.UnreadMessageCount);
 
         Guid? threadId = berichtenThreadId;
         AfterMatchThreadDto? berichtenThread = null;
+        var berichtenThreads = new Dictionary<Guid, AfterMatchThreadDto>();
         if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal)
             && afterMatchOn
             && !readOnly
             && isCandidate)
         {
             threadId ??= messageRows.FirstOrDefault()?.ApplicationId;
-            if (threadId is Guid tid && messageRows.Any(r => r.ApplicationId == tid))
+            if (messageRows.Count > 0)
             {
-                try
+                var loadTasks = messageRows.Select(async row =>
                 {
-                    berichtenThread = await api.GetAfterMatchForCandidateAsync(tid, cancellationToken);
-                }
-                catch
+                    var appId = row.ApplicationId!.Value;
+                    try
+                    {
+                        var loaded = await api.GetAfterMatchForCandidateAsync(appId, cancellationToken);
+                        return (appId, loaded);
+                    }
+                    catch
+                    {
+                        return (appId, (AfterMatchThreadDto?)null);
+                    }
+                });
+                foreach (var (appId, loaded) in await Task.WhenAll(loadTasks))
                 {
-                    berichtenThread = null;
+                    if (loaded is not null)
+                    {
+                        berichtenThreads[appId] = loaded;
+                    }
                 }
             }
-            else
+
+            if (threadId is Guid tid && berichtenThreads.TryGetValue(tid, out var selectedThread))
             {
-                threadId = null;
+                berichtenThread = selectedThread;
+            }
+            else if (threadId is Guid && !berichtenThreads.ContainsKey(threadId.Value))
+            {
+                threadId = messageRows.FirstOrDefault()?.ApplicationId;
+                if (threadId is Guid fallback && berichtenThreads.TryGetValue(fallback, out selectedThread))
+                {
+                    berichtenThread = selectedThread;
+                }
+                else
+                {
+                    threadId = null;
+                    berichtenThread = null;
+                }
             }
         }
         else if (!string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
@@ -232,7 +260,8 @@ internal static class ApplicationsSsrData
             afterMatchOn,
             unreadTotal,
             threadId,
-            berichtenThread);
+            berichtenThread,
+            berichtenThreads);
     }
 
     private const string AcceptatieDemoCandidateEmail = "lobsy-test@mail.grokbot.com";
@@ -317,7 +346,8 @@ internal static class ApplicationsSsrData
             false,
             0,
             null,
-            null);
+            null,
+            new Dictionary<Guid, AfterMatchThreadDto>());
 
     private static (int All, int Vacancy, int Initiative, int External, int Done) CountByFilter(
         IReadOnlyList<SollicitationRow> rows)

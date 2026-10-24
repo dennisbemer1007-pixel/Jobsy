@@ -6,18 +6,17 @@ namespace Jobsy.Web.Applications;
 
 internal static class SollicitatiesBerichtenPresentation
 {
+    internal static bool RowHasMessageThread(SollicitationRow row)
+        => row.AfterMatch is not null
+           && !string.IsNullOrWhiteSpace(row.AfterMatch.LastMessagePreview);
+
     internal static string ThreadListPreview(CultureState culture, SollicitationRow row)
     {
         var summary = row.AfterMatch!;
-        if (!string.IsNullOrWhiteSpace(summary.LastMessagePreview))
-        {
-            var prefix = summary.LastMessageFromCandidate
-                ? culture["Apps.Berichten.PreviewYou"]
-                : string.Empty;
-            return prefix + summary.LastMessagePreview;
-        }
-
-        return row.CardHint ?? row.StatusLabel;
+        var prefix = summary.LastMessageFromCandidate
+            ? culture["Apps.Berichten.PreviewYou"]
+            : string.Empty;
+        return prefix + summary.LastMessagePreview!;
     }
 
     internal static string ThreadSubtitle(CultureState culture, SollicitationRow row, AfterMatchThreadDto? thread)
@@ -29,7 +28,8 @@ internal static class SollicitatiesBerichtenPresentation
         }
 
         var role = row.Title;
-        if (thread?.ScheduledStartUtc is DateTime start)
+        var scheduled = thread?.ScheduledStartUtc ?? row.AfterMatch?.ScheduledStartUtc;
+        if (scheduled is DateTime start)
         {
             var when = FormatShortDate(culture, start);
             return string.Format(

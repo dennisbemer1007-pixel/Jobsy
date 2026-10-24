@@ -108,4 +108,26 @@ internal static class ApplicationsSsrQuery
             ? KbRoutes.Applications
             : $"{KbRoutes.Applications}?{string.Join("&", q)}";
     }
+
+    internal static bool TryGetSafeApplicationsReturn(string? raw, out string href)
+    {
+        href = "";
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        if (!raw.StartsWith(KbRoutes.Applications, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (raw.Contains("//", StringComparison.Ordinal) || raw.Contains('\\'))
+        {
+            return false;
+        }
+
+        href = raw;
+        return true;
+    }
 }

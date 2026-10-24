@@ -190,8 +190,15 @@ public class MobileSaasUxTests
         Assert.Contains("scroll-padding-inline: var(--sollic-inline-pad, 16px)", css, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-mockup01-acc4", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-mockup01-acc5", applicationsRazor, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-rail.js", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-berichten.js", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains(".sollic-berichten.ti.sollic-berichten-ti--mob", css, StringComparison.Ordinal);
+        Assert.Contains(".sollic-berichten-ti-preview", css, StringComparison.Ordinal);
+        var berichtenPresentation = File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/Applications/SollicitatiesBerichtenPresentation.cs"));
+        Assert.Contains("RowHasMessageThread", berichtenPresentation, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
         AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/sollicitaties-page.css");
