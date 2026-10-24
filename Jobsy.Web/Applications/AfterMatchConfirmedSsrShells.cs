@@ -31,7 +31,7 @@ internal static class AfterMatchConfirmedSsrShells
         AppendRemindersAside(sb, culture, data);
         sb.Append("</div></main>");
 
-        AppendChatDock(sb, culture);
+        AppendChatDock(sb, culture, data);
         AppendMockupFooter(sb, culture);
         sb.Append("</div>");
         return sb.ToString();
@@ -82,8 +82,12 @@ internal static class AfterMatchConfirmedSsrShells
 
         sb.Append("<span class=\"lbl\" style=\"margin-top:16px\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.CalendarRow"]));
-        sb.Append("</span><div class=\"addc\" data-ndm-calendar-row data-ics-href=\"");
+        sb.Append("</span><div class=\"addc ndm-confirmed-addc\" data-ndm-calendar-row data-ics-href=\"");
         sb.Append(WebUtility.HtmlEncode(data.CalendarIcsHref));
+        sb.Append("\" data-google-href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.CalendarGoogleHref));
+        sb.Append("\" data-outlook-href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.CalendarOutlookHref));
         sb.Append("\"><button type=\"button\" class=\"btn line sm\" data-ndm-cal-outlook>");
         sb.Append(CalendarBtn(culture["AfterMatch.Screen05.Outlook"]));
         sb.Append("<button type=\"button\" class=\"btn line sm\" data-ndm-cal-google>");
@@ -97,13 +101,13 @@ internal static class AfterMatchConfirmedSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.Ics"]));
         sb.Append("</a></div>");
 
-        sb.Append("<div class=\"hr\"></div><div class=\"row wrapflex\" style=\"gap:16px\"><a class=\"lk small\" href=\"");
+        sb.Append("<div class=\"hr ndm-confirmed-actions-hr\"></div><div class=\"row wrapflex ndm-confirmed-actions\" style=\"gap:16px\"><a class=\"lk small\" href=\"");
         sb.Append(WebUtility.HtmlEncode(data.RescheduleHref));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Reschedule"]));
         sb.Append("</a><a class=\"lk small\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.RescheduleHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(data.CancelHref));
+        sb.Append("#ndm-cancel-panel\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Cancel"]));
         sb.Append("</a>");
         if (!string.IsNullOrWhiteSpace(data.RouteHref))
@@ -115,7 +119,29 @@ internal static class AfterMatchConfirmedSsrShells
             sb.Append("</a>");
         }
 
-        sb.Append("</div></div></div>");
+        sb.Append("</div></div>");
+        AppendCancelPanel(sb, culture, data);
+        sb.Append("</div>");
+    }
+
+    private static void AppendCancelPanel(
+        StringBuilder sb,
+        CultureState culture,
+        AfterMatchConfirmedSsrData.PageData data)
+    {
+        sb.Append("<div class=\"card ndm-cancel-panel\" id=\"ndm-cancel-panel\" data-ndm-cancel-panel><h3 style=\"font-size:1.15rem\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Hero.Title"]));
+        sb.Append("</h3><p class=\"small muted\" style=\"margin-top:6px\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Hero.Lead"]));
+        sb.Append("</p><label class=\"lbl\" style=\"margin-top:14px\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Reason"]));
+        sb.Append("</label><textarea class=\"inp area ndm-cancel-reason\" style=\"width:100%;min-height:84px;font:inherit;color:var(--text)\" data-ndm-cancel-reason></textarea><div class=\"row wrapflex\" style=\"gap:10px;margin-top:12px\"><a class=\"btn line\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.RescheduleHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Reschedule"]));
+        sb.Append("</a><button type=\"button\" class=\"btn\" data-ndm-cancel-submit>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Cancel"]));
+        sb.Append("</button></div></div>");
     }
 
     private static string CalendarBtn(string label) =>
@@ -164,13 +190,30 @@ internal static class AfterMatchConfirmedSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.RemindersLead"]));
         sb.Append("</p><div class=\"list\" style=\"margin-top:12px\" data-ndm-reminder-list>");
 
-        AppendReminderRow(sb, "dayBefore18", prefs.DayBefore18, culture["AfterMatch.Screen07.Pref.DayBefore"], "E-mail en melding");
-        AppendReminderRow(sb, "twoHoursBefore", prefs.TwoHoursBefore, culture["AfterMatch.Screen07.Pref.TwoHours"], "Melding met reistijd");
-        AppendReminderRow(sb, "weekBefore", prefs.WeekBefore, culture["AfterMatch.Screen07.Pref.WeekBefore"], "E-mail");
+        AppendReminderRow(
+            sb,
+            "dayBefore18",
+            prefs.DayBefore18,
+            culture["AfterMatch.Screen05.Reminder.DayBeforeTitle"],
+            culture["AfterMatch.Screen05.Reminder.DayBeforeSub"]);
+        AppendReminderRow(
+            sb,
+            "twoHoursBefore",
+            prefs.TwoHoursBefore,
+            culture["AfterMatch.Screen05.Reminder.TwoHoursTitle"],
+            culture["AfterMatch.Screen05.Reminder.TwoHoursSub"]);
+        AppendReminderRow(
+            sb,
+            "weekBefore",
+            prefs.WeekBefore,
+            culture["AfterMatch.Screen05.Reminder.WeekBeforeTitle"],
+            culture["AfterMatch.Screen05.Reminder.WeekBeforeSub"]);
 
-        sb.Append("</div><div class=\"hr\"></div><div class=\"row\"><span class=\"ico\">");
+        sb.Append("</div><div class=\"hr ndm-confirmed-tips-hr\"></div><div class=\"row\"><span class=\"ico\">");
         sb.Append("""<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>""");
-        sb.Append("</span><p class=\"small\"><a class=\"lk\" href=\"/how-it-works\">");
+        sb.Append("</span><p class=\"small ndm-confirmed-tips\"><a class=\"lk\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.TipsHref));
+        sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.GoodToKnow.TipsLink"]));
         sb.Append("</a><br><span class=\"muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.TipsSuffix"]));
@@ -184,7 +227,9 @@ internal static class AfterMatchConfirmedSsrShells
         string title,
         string subtitle)
     {
-        sb.Append("<div><button type=\"button\" class=\"cbx");
+        sb.Append("<div class=\"ndm-reminder-row\" role=\"button\" tabindex=\"0\" data-ndm-reminder-row=\"");
+        sb.Append(WebUtility.HtmlEncode(key));
+        sb.Append("\"><span class=\"cbx");
         if (on)
         {
             sb.Append(" on");
@@ -192,20 +237,20 @@ internal static class AfterMatchConfirmedSsrShells
 
         sb.Append("\" data-ndm-reminder=\"");
         sb.Append(WebUtility.HtmlEncode(key));
-        sb.Append("\" aria-pressed=\"");
-        sb.Append(on ? "true" : "false");
-        sb.Append("\">");
+        sb.Append("\" aria-hidden=\"true\">");
         sb.Append(NdMIcons.Check);
-        sb.Append("</button><div class=\"sp\"><b class=\"small\" style=\"color:var(--brand)\">");
+        sb.Append("</span><div class=\"sp\"><b class=\"small\" style=\"color:var(--brand)\">");
         sb.Append(WebUtility.HtmlEncode(title));
         sb.Append("</b><div class=\"xs muted\">");
         sb.Append(WebUtility.HtmlEncode(subtitle));
         sb.Append("</div></div></div>");
     }
 
-    private static void AppendChatDock(StringBuilder sb, CultureState culture)
+    private static void AppendChatDock(StringBuilder sb, CultureState culture, AfterMatchConfirmedSsrData.PageData data)
     {
-        sb.Append("<div class=\"chatdock\"><button type=\"button\" class=\"askl\" data-ndm-ask-lobsy><img src=\"/brand/svg/lobsy-merkteken.svg\" alt=\"\">");
+        sb.Append("<div class=\"chatdock ndm-confirmed-chatdock\"><button type=\"button\" class=\"askl\" data-ndm-ask-lobsy data-assistant-fallback=\"");
+        sb.Append(WebUtility.HtmlEncode(data.AssistantHref));
+        sb.Append("\"><img src=\"/brand/svg/lobsy-merkteken.svg\" alt=\"\">");
         sb.Append(WebUtility.HtmlEncode(culture["Assistant.SubtitleWarm"]));
         sb.Append("</button></div>");
     }

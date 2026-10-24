@@ -17,6 +17,10 @@ public static class AfterMatchConfirmedClientEndpoints
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
             .DisableAntiforgery();
 
+        app.MapPost("/api/ndm-confirmed-client/cancel", CancelInterviewAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
+            .DisableAntiforgery();
+
         return app;
     }
 
@@ -52,6 +56,28 @@ public static class AfterMatchConfirmedClientEndpoints
         {
             var prefs = await api.UpdateAfterMatchReminderPreferencesAsync(body, cancellationToken);
             return Results.Json(prefs);
+        }
+        catch
+        {
+            return Results.BadRequest();
+        }
+    }
+
+    private static async Task<IResult> CancelInterviewAsync(
+        Guid applicationId,
+        RescheduleRequest body,
+        JobsyApiClient api,
+        CancellationToken cancellationToken)
+    {
+        if (applicationId == Guid.Empty || string.IsNullOrWhiteSpace(body.Reason))
+        {
+            return Results.BadRequest();
+        }
+
+        try
+        {
+            var thread = await api.CancelAfterMatchInterviewAsync(applicationId, body, cancellationToken);
+            return Results.Json(thread);
         }
         catch
         {

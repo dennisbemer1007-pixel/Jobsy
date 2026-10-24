@@ -76,11 +76,37 @@ public static class InterviewCalendarBuilder
         return $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={text}&dates={start}/{end}&details={det}&location={loc}";
     }
 
+    public static string OutlookWebCalendarUrl(
+        DateTime startUtc,
+        DateTime endUtc,
+        string title,
+        string details,
+        string? location)
+    {
+        var start = Uri.EscapeDataString(FormatOutlookWeb(startUtc));
+        var end = Uri.EscapeDataString(FormatOutlookWeb(endUtc));
+        var subject = Uri.EscapeDataString(title);
+        var body = Uri.EscapeDataString(details);
+        var loc = Uri.EscapeDataString(location ?? "");
+        return "https://outlook.office.com/calendar/action/compose"
+            + "?allday=false"
+            + $"&body={body}"
+            + $"&enddt={end}"
+            + $"&location={loc}"
+            + "&path=/calendar/action/compose"
+            + "&rru=addevent"
+            + $"&startdt={start}"
+            + $"&subject={subject}";
+    }
+
     private static string FormatUtc(DateTime utc) =>
         utc.ToUniversalTime().ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
 
     private static string FormatGoogle(DateTime utc) =>
         utc.ToUniversalTime().ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
+
+    private static string FormatOutlookWeb(DateTime utc) =>
+        utc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture);
 
     private static string Escape(string value) =>
         value.Replace("\\", "\\\\", StringComparison.Ordinal)

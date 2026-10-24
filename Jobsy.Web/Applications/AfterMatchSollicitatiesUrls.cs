@@ -32,6 +32,12 @@ internal static class AfterMatchSollicitatiesUrls
         return AppendReturn(url, returnUrl);
     }
 
+    internal static string Cancel(Guid applicationId, string? returnUrl = null)
+    {
+        var url = AfterMatchBase(applicationId) + "?panel=cancel";
+        return AppendReturn(url, returnUrl);
+    }
+
     private static string AppendReturn(string url, string? returnUrl)
     {
         if (string.IsNullOrWhiteSpace(returnUrl))

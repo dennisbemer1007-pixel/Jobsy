@@ -136,6 +136,12 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen05.Route", "Route bekijken", "View route");
         Add("AfterMatch.Screen05.RemindersTitle", "Herinneringen", "Reminders");
         Add("AfterMatch.Screen05.RemindersLead", "Jij kiest wanneer en hoe.", "You choose when and how.");
+        Add("AfterMatch.Screen05.Reminder.DayBeforeTitle", "De dag ervoor, om 18:00", "The day before, at 18:00");
+        Add("AfterMatch.Screen05.Reminder.DayBeforeSub", "E-mail en melding", "E-mail and notification");
+        Add("AfterMatch.Screen05.Reminder.TwoHoursTitle", "2 uur van tevoren", "2 hours ahead");
+        Add("AfterMatch.Screen05.Reminder.TwoHoursSub", "Melding met reistijd", "Notification with travel time");
+        Add("AfterMatch.Screen05.Reminder.WeekBeforeTitle", "Een week van tevoren", "One week ahead");
+        Add("AfterMatch.Screen05.Reminder.WeekBeforeSub", "E-mail", "E-mail");
         Add("AfterMatch.Screen05.TipsSuffix", "Oefen het gesprek met Lobsy, rustig en zonder oordeel.", "Practise the interview with Lobsy, calmly and without judgement.");
         Add("AfterMatch.Screen05.Calendar", "Toevoegen aan agenda", "Add to calendar");
         Add("AfterMatch.Screen05.Reminders", "Herinneringen instellen", "Set reminders");

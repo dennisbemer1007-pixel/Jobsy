@@ -26,7 +26,7 @@ public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
                 {
                     "pick-slot" or "propose-slot" => "/pick-slot-ssr",
                     "messages" or "reschedule" => "/blazor",
-                    "" => "/confirmed-ssr",
+                    "" or "cancel" => "/confirmed-ssr",
                     _ => "/blazor",
                 };
                 context.Request.Path = new PathString(match.Groups[1].Value + suffix);
