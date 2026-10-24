@@ -35,27 +35,7 @@ internal static class ApplicationsSsrShells
         AppendPageIntro(sb, culture, data);
         sb.Append("<div class=\"sollicitaties-page__body\">");
         AppendTabsRow(sb, culture, data);
-        if (string.Equals(data.Tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal))
-        {
-            AppendActiviteitenPlaceholder(sb, culture);
-        }
-        else if (string.Equals(data.Tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal)
-                 && data.AfterMatchEnabled)
-        {
-            SollicitatiesBerichtenSsr.AppendBerichtenTab(sb, culture, data);
-        }
-        else
-        {
-            AppendToolbar(sb, culture, data);
-            if (data.FilteredRows.Count == 0)
-            {
-                AppendEmpty(sb, culture, data);
-            }
-            else
-            {
-                AppendLayout(sb, culture, data);
-            }
-        }
+        AppendAllTabPanels(sb, culture, data);
 
         sb.Append("</div></div></div></div>");
         sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-mockup01-acc4\" defer></script>");
@@ -162,6 +142,8 @@ internal static class ApplicationsSsrShells
 
         sb.Append("\" href=\"");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.BuildUrl(tab, data.Filter, null)));
+        sb.Append("\" data-sollic-tab=\"");
+        sb.Append(WebUtility.HtmlEncode(tab));
         sb.Append("\" data-enhance-nav=\"false\"");
         if (active)
         {
@@ -247,6 +229,8 @@ internal static class ApplicationsSsrShells
 
         sb.Append("\" href=\"");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.BuildUrl(data.Tab, filter, data.SelectedId)));
+        sb.Append("\" data-sollic-filter=\"");
+        sb.Append(WebUtility.HtmlEncode(filter));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(label));
         sb.Append(" · ");
@@ -254,9 +238,15 @@ internal static class ApplicationsSsrShells
         sb.Append("</a>");
     }
 
-    private static void AppendEmpty(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    private static void AppendEmpty(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data, bool hidden = false)
     {
-        sb.Append("<div class=\"sollicitaties-empty\"><article class=\"sollicitaties-empty-card\"><h2 class=\"sollicitaties-empty-card__title\">");
+        sb.Append("<div class=\"sollicitaties-empty\" data-sollic-empty");
+        if (hidden)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><article class=\"sollicitaties-empty-card\"><h2 class=\"sollicitaties-empty-card__title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.MyApplications"]));
         sb.Append("</h2><p class=\"sollicitaties-empty-card__lead\">");
         sb.Append(WebUtility.HtmlEncode(data.AllRows.Count == 0 ? culture["Apps.Empty"] : culture["Apps.EmptyTab"]));
@@ -273,11 +263,69 @@ internal static class ApplicationsSsrShells
         sb.Append("</article></div>");
     }
 
+    private static void AppendAllTabPanels(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    {
+        sb.Append("<div class=\"sollicitaties-tab-panels\" data-sollic-active-tab=\"");
+        sb.Append(WebUtility.HtmlEncode(data.Tab));
+        sb.Append("\" data-sollic-active-filter=\"");
+        sb.Append(WebUtility.HtmlEncode(data.Filter));
+        sb.Append("\">");
+
+        var sollicActive = string.Equals(data.Tab, ApplicationsSsrQuery.TabSollicitaties, StringComparison.Ordinal);
+        sb.Append("<div class=\"sollicitaties-tab-panel\" data-sollic-tab-panel=\"");
+        sb.Append(ApplicationsSsrQuery.TabSollicitaties);
+        sb.Append('"');
+        if (!sollicActive)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append('>');
+        AppendToolbar(sb, culture, data);
+        AppendEmpty(sb, culture, data, hidden: data.FilteredRows.Count > 0);
+        AppendLayout(sb, culture, data);
+        sb.Append("</div>");
+
+        if (data.AfterMatchEnabled)
+        {
+            var berichtenActive = string.Equals(data.Tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal);
+            sb.Append("<div class=\"sollicitaties-tab-panel\" data-sollic-tab-panel=\"");
+            sb.Append(ApplicationsSsrQuery.TabBerichten);
+            sb.Append('"');
+            if (!berichtenActive)
+            {
+                sb.Append(" hidden");
+            }
+
+            sb.Append('>');
+            SollicitatiesBerichtenSsr.AppendBerichtenTab(sb, culture, data);
+            sb.Append("</div>");
+        }
+
+        var activiteitenActive = string.Equals(data.Tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal);
+        sb.Append("<div class=\"sollicitaties-tab-panel\" data-sollic-tab-panel=\"");
+        sb.Append(ApplicationsSsrQuery.TabActiviteiten);
+        sb.Append('"');
+        if (!activiteitenActive)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append('>');
+        AppendActiviteitenPlaceholder(sb, culture);
+        sb.Append("</div></div>");
+    }
+
     private static void AppendLayout(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
     {
         SollicitationRow? selected = null;
-        foreach (var row in data.FilteredRows)
+        foreach (var row in data.AllRows)
         {
+            if (!ApplicationsSsrQuery.MatchesFilter(row, data.Filter))
+            {
+                continue;
+            }
+
             if (data.SelectedId is Guid sel && row.RowId == sel)
             {
                 selected = row;
@@ -285,21 +333,35 @@ internal static class ApplicationsSsrShells
             }
         }
 
-        selected ??= data.FilteredRows.Count > 0 ? data.FilteredRows[0] : null;
-        sb.Append("<div class=\"sollicitaties-layout\"><div class=\"sollicitaties-list\" role=\"list\">");
-        foreach (var row in data.FilteredRows)
+        if (selected is null)
         {
-            AppendListCard(sb, culture, data, row, selected?.RowId == row.RowId);
+            selected = data.AllRows.FirstOrDefault(r => ApplicationsSsrQuery.MatchesFilter(r, data.Filter));
+        }
+
+        sb.Append("<div class=\"sollicitaties-layout\" data-sollic-layout=\"1\"");
+        if (data.FilteredRows.Count == 0)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><div class=\"sollicitaties-list\" role=\"list\">");
+        foreach (var row in data.AllRows)
+        {
+            var matches = ApplicationsSsrQuery.MatchesFilter(row, data.Filter);
+            AppendListCard(sb, culture, data, row, selected?.RowId == row.RowId, hidden: !matches);
         }
 
         sb.Append("</div><aside class=\"sollicitaties-detail\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.MyApplications"]));
         sb.Append("\">");
-        foreach (var row in data.FilteredRows)
+        foreach (var row in data.AllRows)
         {
-            var isSel = selected?.RowId == row.RowId;
+            var matches = ApplicationsSsrQuery.MatchesFilter(row, data.Filter);
+            var isSel = selected?.RowId == row.RowId && matches;
             sb.Append("<div class=\"sollic-detail-panel\" data-sollic-row-id=\"");
             sb.Append(row.RowId.ToString("D"));
+            sb.Append("\" data-sollic-filters=\"");
+            sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.RowFilterKeys(row)));
             sb.Append('"');
             if (!isSel)
             {
@@ -319,7 +381,8 @@ internal static class ApplicationsSsrShells
         CultureState culture,
         ApplicationsSsrData.PageData data,
         SollicitationRow row,
-        bool selected)
+        bool selected,
+        bool hidden = false)
     {
         var selectHref = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
         sb.Append("<article class=\"sollic-card sollic-card--app");
@@ -335,7 +398,15 @@ internal static class ApplicationsSsrShells
 
         sb.Append("\" role=\"listitem\" data-sollic-row-id=\"");
         sb.Append(row.RowId.ToString("D"));
-        sb.Append("\"><a class=\"sollic-card__select\" href=\"");
+        sb.Append("\" data-sollic-filters=\"");
+        sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.RowFilterKeys(row)));
+        sb.Append('"');
+        if (hidden)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><a class=\"sollic-card__select\" href=\"");
         sb.Append(WebUtility.HtmlEncode(selectHref));
         sb.Append("\" data-enhance-nav=\"false\"><span class=\"sollic-card__avatar logo-sq\" aria-hidden=\"true\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
