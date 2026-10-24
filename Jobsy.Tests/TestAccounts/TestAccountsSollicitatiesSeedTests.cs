@@ -4,13 +4,42 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Ops;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Npgsql;
 
 namespace Jobsy.Tests.TestAccounts;
 
 public sealed class TestAccountsSollicitatiesSeedTests
 {
     private const string FakePassword = "fake-Password-For-Tests-1";
+
+    [Fact]
+    public async Task Ensure_persists_demo_vacancies_before_applications_on_fresh_db()
+    {
+        var (db, candidateId, branchManagerId) = await SeedUsersAsync();
+        var logger = NullLogger.Instance;
+
+        await TestAccountsSollicitatiesDemoSeeder.EnsureForCandidateAsync(
+            db, candidateId, branchManagerId, logger);
+
+        var demoVacancyIds = new[]
+        {
+            TestAccountsIds.SollicDemoVacancySent,
+            TestAccountsIds.SollicDemoVacancySeen,
+            TestAccountsIds.SollicDemoVacancyPick,
+            TestAccountsIds.SollicDemoVacancyScheduled,
+            TestAccountsIds.SollicDemoVacancyMessages,
+            TestAccountsIds.SollicDemoVacancyDone
+        };
+        foreach (var vacancyId in demoVacancyIds)
+        {
+            Assert.True(await db.Vacancies.AnyAsync(v => v.Id == vacancyId));
+        }
+
+        await db.SaveChangesAsync();
+        Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == candidateId));
+    }
 
     [Fact]
     public async Task Ensure_is_idempotent_and_seeds_mockup_rows()
@@ -72,6 +101,86 @@ public sealed class TestAccountsSollicitatiesSeedTests
         Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == candidateId));
         Assert.Equal(2, await db.WorkInitiatives.CountAsync(i => i.CandidateUserId == candidateId));
         Assert.Equal(3, await db.InterviewSlots.CountAsync(s => s.InterviewId == pickInterview.Id));
+    }
+
+    [Fact]
+    public async Task TryEnsure_on_postgres_migrated_db_seeds_six_verified_applications()
+    {
+        var baseConnection = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(baseConnection))
+        {
+            return;
+        }
+
+        var admin = new NpgsqlConnectionStringBuilder(baseConnection) { Database = "postgres", Pooling = false };
+        try
+        {
+            await using var probe = new NpgsqlConnection(admin.ConnectionString);
+            await probe.OpenAsync();
+        }
+        catch (Exception ex) when (ex is NpgsqlException or System.Net.Sockets.SocketException or TimeoutException)
+        {
+            return;
+        }
+
+        var databaseName = $"lobsy_sollic_demo_{Guid.NewGuid():N}";
+        var builder = new NpgsqlConnectionStringBuilder(baseConnection)
+        {
+            Database = databaseName,
+            Pooling = false
+        };
+        await ExecuteAdminAsync(admin.ConnectionString, $"CREATE DATABASE \"{databaseName}\"");
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddDbContext<JobsyDbContext>(o =>
+                o.UseNpgsql(builder.ConnectionString, npgsql => npgsql.UseNetTopologySuite()));
+            await using var sp = services.BuildServiceProvider();
+            await using (var scope = sp.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+                await db.Database.MigrateAsync();
+            }
+
+            await using (var scope = sp.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+                var config = BuildConfig();
+                var seeder = new TestAccountsSeedService(db, config);
+                await seeder.SeedAsync(dryRun: false, onlyKeys: null);
+                await db.SaveChangesAsync();
+
+                var grok = await db.Users.SingleAsync(u => u.Email == "test-kandidaat@lobsy.nl");
+                grok.Email = TestAccountsSollicitatiesDemoSeeder.AcceptatiePrimaryCandidateEmail;
+                grok.IsTestAccount = true;
+                await db.SaveChangesAsync();
+
+                var branchManager = await db.Users.SingleAsync(u => u.Email == "test-werkgever@lobsy.nl");
+                var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+                    db,
+                    config,
+                    TestAccountEnvironmentGuard.Evaluate(ValidAcceptatieGuardInput()),
+                    NullLogger.Instance);
+                Assert.True(applied);
+                Assert.Equal(
+                    6,
+                    await db.Applications.CountAsync(a => a.CandidateUserId == grok.Id && a.EmailVerifiedAt != null));
+                _ = branchManager;
+            }
+        }
+        finally
+        {
+            NpgsqlConnection.ClearAllPools();
+            await ExecuteAdminAsync(admin.ConnectionString, $"DROP DATABASE IF EXISTS \"{databaseName}\" WITH (FORCE)");
+        }
+    }
+
+    private static async Task ExecuteAdminAsync(string connectionString, string sql)
+    {
+        await using var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await cmd.ExecuteNonQueryAsync();
     }
 
     [Fact]

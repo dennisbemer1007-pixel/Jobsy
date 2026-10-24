@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Npgsql;
 
 namespace Jobsy.Infrastructure.Ops;
 
@@ -26,16 +27,42 @@ public static class AcceptatieSollicitatiesDemoStartupState
 
     public static void RecordError(Exception ex)
     {
+        var constraint = FindPostgresConstraintName(ex);
         var message = Sanitize(ex.Message);
         if (!string.IsNullOrWhiteSpace(ex.InnerException?.Message))
         {
             message += " | " + Sanitize(ex.InnerException.Message);
         }
 
-        var outcome = string.IsNullOrWhiteSpace(message)
-            ? "error:" + ex.GetType().Name
-            : $"error:{ex.GetType().Name}:{message}";
-        Record(outcome);
+        Record(FormatErrorOutcome(ex.GetType().Name, constraint, message));
+    }
+
+    internal static string FormatErrorOutcome(string exceptionTypeName, string? postgresConstraint, string message)
+    {
+        message = message.Trim();
+        if (postgresConstraint is not null)
+        {
+            return string.IsNullOrWhiteSpace(message)
+                ? $"error:{exceptionTypeName}:{postgresConstraint}"
+                : $"error:{exceptionTypeName}:{postgresConstraint}:{message}";
+        }
+
+        return string.IsNullOrWhiteSpace(message)
+            ? "error:" + exceptionTypeName
+            : $"error:{exceptionTypeName}:{message}";
+    }
+
+    internal static string? FindPostgresConstraintName(Exception ex)
+    {
+        for (Exception? cur = ex; cur is not null; cur = cur.InnerException)
+        {
+            if (cur is PostgresException pg && !string.IsNullOrWhiteSpace(pg.ConstraintName))
+            {
+                return pg.ConstraintName;
+            }
+        }
+
+        return null;
     }
 
     public static AcceptatieSollicitatiesDemoHealthSnapshot Snapshot()
