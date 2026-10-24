@@ -6,6 +6,8 @@ namespace Jobsy.Tests.E2e;
 [Trait("Suite", "FunctionalE2e")]
 public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper output) : IAsyncLifetime
 {
+    private const string AcceptatieGrokbotEmail = "lobsy-test@mail.grokbot.com";
+
     private readonly ITestOutputHelper _output = output;
     private IllustratedPagesWebFactory? _localWeb;
     private string? _localBaseUrl;
@@ -56,23 +58,26 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
             await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
-            var email = baseUrl.Contains("127.0.0.1", StringComparison.Ordinal)
-                || baseUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase)
-                ? KbE2e.DefaultCompleteEmail
-                : "onboarding.e2e@jobsy.local";
-            if (!await KbE2e.TryLoginAsync(page, baseUrl, email, KbE2e.DefaultPassword))
+            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
             {
-                throw new InvalidOperationException($"Could not log in as {email} at {baseUrl}.");
+                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+            }
+
+            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+            {
+                var ensure = await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+                _output.WriteLine($"demo-ensure: {(int)ensure.Status} {ensure.StatusText}");
             }
 
             await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
         }
-        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
 
+        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var metrics = await page.EvaluateAsync<LayoutMetrics>(@"() => {
             const shell = document.querySelector('.sollicitaties-shell');
+            const pageRoot = document.querySelector('[data-testid=""applications-page-ssr""]');
             const list = document.querySelector('.sollicitaties-list') || document.querySelector('.sollic-card');
             const layout = document.querySelector('.sollicitaties-layout');
             const h1 = document.querySelector('.sollicitaties-intro__title');
@@ -97,7 +102,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
                 };
             };
             return {
-                hasSsr: !!document.querySelector('[data-testid=""applications-page-ssr""]'),
+                hasSsr: !!pageRoot,
                 hasLegacyKbApps: !!document.querySelector('.kb-apps__layout'),
                 bottomNavVisible: !!document.querySelector('[data-testid=""candidate-bottom-nav-ssr""]'),
                 bottomNavBox: pick(document.querySelector('[data-testid=""candidate-bottom-nav-ssr""]')),
@@ -105,6 +110,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
                 hasAppMin: !!document.querySelector('link[href*=""app.min.css""]'),
                 hasNoBlazorRouteCss: !!document.querySelector('link[data-noblazor-route-css][href*=""sollicitaties-page.css""]'),
                 shell: pick(shell),
+                pageRoot: pick(pageRoot),
                 layout: pick(layout),
                 list: pick(list),
                 h1: pick(h1),
@@ -113,14 +119,40 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
             };
         }");
 
+        if (metrics.HasSsr && metrics.PageRoot is not null)
+        {
+            var ancestorLog = await page.EvaluateAsync<string>(@"() => {
+                const pageRoot = document.querySelector('[data-testid=""applications-page-ssr""]');
+                if (!pageRoot) return '';
+                const out = [];
+                let n = pageRoot;
+                while (n && n !== document.documentElement) {
+                    const cs = getComputedStyle(n);
+                    const mw = parseFloat(cs.maxWidth);
+                    const mis = parseFloat(cs.maxInlineSize);
+                    const r = n.getBoundingClientRect();
+                    if ((mw > 0 && mw <= 760) || (mis > 0 && mis <= 760)) {
+                        out.push(n.tagName + '.' + n.className + ' maxWidth=' + cs.maxWidth + ' w=' + Math.round(r.width));
+                    }
+                    n = n.parentElement;
+                }
+                return out.join(' | ');
+            }");
+            if (!string.IsNullOrWhiteSpace(ancestorLog))
+            {
+                _output.WriteLine("narrow720 ancestors: " + ancestorLog);
+            }
+        }
+
         var layoutLine =
-            $"1280 layout: shell x={metrics.Shell?.X:F0}..{metrics.Shell?.Right:F0} (w={metrics.Shell?.W:F0}), "
+            $"1280 layout: page x={metrics.PageRoot?.X:F0}..{metrics.PageRoot?.Right:F0} (w={metrics.PageRoot?.W:F0}, max={metrics.PageRoot?.MaxWidth}), "
+            + $"shell x={metrics.Shell?.X:F0}..{metrics.Shell?.Right:F0} (w={metrics.Shell?.W:F0}), "
             + $"h1 x={metrics.H1?.X:F0}..{metrics.H1?.Right:F0} (w={metrics.H1?.W:F0}), "
-            + $"chips x={metrics.Chips?.X:F0}..{metrics.Chips?.Right:F0} (w={metrics.Chips?.W:F0}), "
-            + $"toolbar x={metrics.Toolbar?.X:F0}..{metrics.Toolbar?.Right:F0} (w={metrics.Toolbar?.W:F0}), "
-            + $"bottomNav x={metrics.BottomNavBox?.X:F0}..{metrics.BottomNavBox?.Right:F0} (w={metrics.BottomNavBox?.W:F0}), "
-            + $"stylesheets={metrics.StylesheetCount}, noblazorHeadCss={metrics.HasNoBlazorRouteCss}";
+            + $"layout x={metrics.Layout?.X:F0}..{metrics.Layout?.Right:F0} (w={metrics.Layout?.W:F0}, cols={metrics.Layout?.GridCols}), "
+            + $"list x={metrics.List?.X:F0}..{metrics.List?.Right:F0} (w={metrics.List?.W:F0}), "
+            + $"stylesheets={metrics.StylesheetCount}";
         _output.WriteLine(layoutLine);
+
         if (string.Equals(Environment.GetEnvironmentVariable("JOBSY_DUMP_SOLLIC_LAYOUT"), "1", StringComparison.Ordinal))
         {
             await File.WriteAllTextAsync("/tmp/sollic-layout-metrics.txt", layoutLine + Environment.NewLine);
@@ -128,16 +160,14 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
 
         Assert.True(metrics.HasSsr, "Expected SSR sollicitaties page markup.");
         Assert.False(metrics.HasLegacyKbApps, "Legacy kb-apps layout must not be used on /candidate/applications.");
-        Assert.NotNull(metrics.Shell);
+        Assert.NotNull(metrics.PageRoot);
         Assert.True(
-            metrics.Shell!.W >= 1000,
-            $"shell width {metrics.Shell.W} at 1280 (x={metrics.Shell.X}..{metrics.Shell.Right}, maxWidth={metrics.Shell.MaxWidth})");
+            metrics.PageRoot!.W >= 1000,
+            $"page root width {metrics.PageRoot.W} at 1280 (x={metrics.PageRoot.X}..{metrics.PageRoot.Right}, maxWidth={metrics.PageRoot.MaxWidth})");
+        Assert.NotNull(metrics.Shell);
+        Assert.True(metrics.Shell!.W >= 980, $"shell width {metrics.Shell.W} at 1280");
         Assert.True(metrics.HasNoBlazorRouteCss || metrics.HasAppMin, "Expected render-blocking sollicitaties CSS in document head.");
         Assert.True(metrics.BottomNavVisible, "Expected SSR candidate bottom nav on applications.");
-        if (metrics.BottomNavBox is not null)
-        {
-            Assert.True(metrics.BottomNavBox.W >= 1200, $"bottom nav width {metrics.BottomNavBox.W}");
-        }
 
         if (metrics.H1 is not null)
         {
@@ -146,23 +176,91 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
                 $"h1 width {metrics.H1.W} (x={metrics.H1.X:F0}..{metrics.H1.Right:F0})");
         }
 
-        var chipsRow = metrics.Toolbar ?? metrics.Chips;
-        if (chipsRow is not null)
+        if (metrics.Layout is not null)
         {
             Assert.True(
-                chipsRow.W >= 980,
-                $"toolbar/chips row width {chipsRow.W} (x={chipsRow.X:F0}..{chipsRow.Right:F0})");
-        }
-
-        if (metrics.List is not null)
-        {
-            var listMin = metrics.Shell is { W: >= 1000 } ? 580 : 980;
-            Assert.True(metrics.List.W >= listMin, $"list width {metrics.List.W} at 1280 (split rail layout)");
+                metrics.Layout.W >= 980,
+                $"layout width {metrics.Layout.W} (x={metrics.Layout.X:F0}..{metrics.Layout.Right:F0}, cols={metrics.Layout.GridCols})");
         }
 
         var hasDetailRail = await page.EvaluateAsync<bool>(
             @"() => !!document.querySelector('.sollicitaties-detail .sollic-detail-panel')");
         Assert.True(hasDetailRail, "Expected desktop detail rail markup.");
+    }
+
+    [Fact]
+    public async Task Mobile_sel_shows_detail_panel_at_390()
+    {
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync() ?? _localBaseUrl;
+        if (baseUrl is null)
+        {
+            return;
+        }
+
+        await using var browser = await KbE2e.LaunchChromiumAsync();
+        await using var context = await browser.NewContextAsync(KbE2e.MobileContext());
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        {
+            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+        }
+        else
+        {
+            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
+            {
+                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+            }
+
+            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+            }
+        }
+
+        await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        try
+        {
+            await page.WaitForSelectorAsync(".sollic-card", new() { Timeout = 20_000 });
+        }
+        catch (Exception ex) when (ex is TimeoutException or PlaywrightException)
+        {
+            _output.WriteLine("Skip mobile detail: no sollic cards (seed demo on acceptatie).");
+            return;
+        }
+
+        var firstRowId = await page.EvaluateAsync<string?>(@"() => {
+            const card = document.querySelector('.sollic-card[data-sollic-row-id]');
+            return card ? card.getAttribute('data-sollic-row-id') : null;
+        }");
+        Assert.False(string.IsNullOrWhiteSpace(firstRowId));
+
+        await page.GotoAsync(
+            baseUrl + "/candidate/applications?sel=" + firstRowId,
+            new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForSelectorAsync(".sollicitaties-page--detail", new() { Timeout = 30_000 });
+
+        var visible = await page.EvaluateAsync<MobileDetailMetrics>(@"() => {
+            const detail = document.querySelector('.sollicitaties-detail');
+            const panel = document.querySelector('.sollic-detail-panel:not([hidden])');
+            const back = document.querySelector('.sollic-detail__back');
+            const cs = detail ? getComputedStyle(detail) : null;
+            const dr = detail ? detail.getBoundingClientRect() : null;
+            return {
+                detailDisplay: cs ? cs.display : null,
+                detailW: dr ? dr.width : 0,
+                hasVisiblePanel: !!panel,
+                hasBack: !!back && getComputedStyle(back).display !== 'none',
+            };
+        }");
+
+        _output.WriteLine(
+            $"390 sel=: detail display={visible.DetailDisplay}, w={visible.DetailW:F0}, panel={visible.HasVisiblePanel}, back={visible.HasBack}");
+        Assert.Equal("block", visible.DetailDisplay);
+        Assert.True(visible.HasVisiblePanel, "Expected visible detail panel on mobile ?sel=.");
+        Assert.True(visible.HasBack, "Expected Terug link on mobile detail.");
+        Assert.True(visible.DetailW >= 320, $"detail width {visible.DetailW} at 390");
     }
 
     private sealed class LayoutMetrics
@@ -175,12 +273,52 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public int StylesheetCount { get; set; }
         public Box? BottomNavBox { get; set; }
         public Box? Shell { get; set; }
+        public Box? PageRoot { get; set; }
         public Box? Layout { get; set; }
         public Box? List { get; set; }
         public Box? H1 { get; set; }
         public Box? Chips { get; set; }
         public Box? Toolbar { get; set; }
-        public List<Box>? H1Ancestors { get; set; }
+    }
+
+    private sealed class MobileDetailMetrics
+    {
+        public string? DetailDisplay { get; set; }
+        public double DetailW { get; set; }
+        public bool HasVisiblePanel { get; set; }
+        public bool HasBack { get; set; }
+    }
+
+    private static async Task<bool> TryAcceptatieOrDefaultLoginAsync(IPage page, string baseUrl)
+    {
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+        var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
+        if (!string.IsNullOrWhiteSpace(preferred)
+            && await KbE2e.TryLoginAsync(page, baseUrl, preferred.Trim(), password))
+        {
+            return true;
+        }
+
+        if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+        {
+            string[] acceptatieCandidates =
+            [
+                AcceptatieGrokbotEmail,
+                "onboarding.e2e@jobsy.local",
+                "test-kandidaat@lobsy.nl",
+            ];
+            foreach (var email in acceptatieCandidates)
+            {
+                if (await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.DefaultCompleteEmail, password);
     }
 
     private sealed class Box

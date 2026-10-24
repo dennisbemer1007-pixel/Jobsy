@@ -36,7 +36,7 @@ public sealed class SollicitatiesAcceptatieCssTests
         var localSha = Convert.ToHexString(SHA256.HashData(localBytes)).ToLowerInvariant();
 
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-        var url = $"{AccBase}/css/features/sollicitaties-page.css?v=20261024-mockup01-acc1";
+        var url = $"{AccBase}/css/features/sollicitaties-page.css?v=20261024-mockup01-acc2";
         var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.TryAddWithoutValidation("Accept-Encoding", "br");
         using var brResp = await client.SendAsync(req);

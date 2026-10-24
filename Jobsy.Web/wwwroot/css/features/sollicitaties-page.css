@@ -2,8 +2,11 @@
 
 /* Beat applications.css 720px caps — do not set width:100% on .sollicitaties-shell (mockup 1120 column). */
 .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
-  max-width: none !important;
-  max-inline-size: none !important;
+  max-width: 1120px !important;
+  width: min(1120px, 100vw) !important;
+  max-inline-size: min(1120px, 100vw) !important;
+  margin-inline: auto !important;
+  padding-inline: 28px;
   box-sizing: border-box;
 }
 
@@ -89,13 +92,15 @@
   }
 }
 
-/* Mockup panel-page (878 base.css): max-width 1120px, padding 28px desktop / 16px mobile. */
+/* Mockup panel-page (878 base.css): 1120 column on .panel-page; shell fills it. */
 .sollicitaties-shell {
   box-sizing: border-box;
-  width: min(1120px, 100%);
-  max-width: 1120px;
-  margin-inline: auto;
-  padding-inline: 28px;
+  container-type: inline-size;
+  container-name: sollic-shell;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 0;
 }
 
 /* Beat global .panel-page { max-width: 1100px } and legacy apps list caps. */
@@ -331,8 +336,9 @@
 
 .sollicitaties-layout {
   display: grid;
-  gap: 1rem;
+  gap: 20px;
   width: 100%;
+  align-items: start;
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
@@ -351,14 +357,22 @@
   display: none !important;
 }
 
-@media (min-width: 1024px) {
+/* Mockup grid-side: split only when the 1120 column is wide enough (not a narrow 720px ancestor). */
+@container sollic-shell (min-width: 900px) {
   .sollicitaties-layout {
-    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 380px) !important;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 340px !important;
   }
 
   .sollicitaties-detail {
     display: block !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  @container sollic-shell (min-width: 900px) {
+    .sollicitaties-layout {
+      grid-template-columns: minmax(0, 1fr) 340px !important;
+    }
   }
 }
 
@@ -787,16 +801,15 @@
 }
 
 @media (min-width: 640px) {
-  .sollicitaties-shell {
-    width: min(1120px, 100%);
-    max-width: 1120px;
+  .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
+    padding-inline: 28px;
   }
 }
 
 @media (min-width: 1024px) {
   [data-testid="applications-page-ssr"] .sollicitaties-shell {
-    width: min(1120px, 100%);
-    max-width: 1120px;
+    width: 100%;
+    max-width: none;
     box-sizing: border-box;
   }
 
@@ -821,14 +834,19 @@
   color: var(--text);
 }
 
-.sollic-ndm-tl.tl {
+/* Mockup 01 detail rail timeline (sollicitaties-detail.html .tl) */
+.sollic-ndm-tl.tl,
+.sollic-detail__timeline.tl {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   position: relative;
   margin: 14px 0 12px;
+  list-style: none;
+  padding: 0;
 }
 
-.sollic-ndm-tl__step.s {
+.sollic-ndm-tl.tl .s,
+.sollic-detail__timeline.tl .s {
   position: relative;
   text-align: center;
   padding-top: 40px;
@@ -838,7 +856,8 @@
   line-height: 1.25;
 }
 
-.sollic-ndm-tl__step.s::before {
+.sollic-ndm-tl.tl .s::before,
+.sollic-detail__timeline.tl .s::before {
   content: "";
   position: absolute;
   top: 15px;
@@ -848,16 +867,20 @@
   background: #e4d9ca;
 }
 
-.sollic-ndm-tl__step.s:first-child::before {
+.sollic-ndm-tl.tl .s:first-child::before,
+.sollic-detail__timeline.tl .s:first-child::before {
   display: none;
 }
 
-.sollic-ndm-tl__step--done.s::before,
-.sollic-ndm-tl__step--current.s::before {
+.sollic-ndm-tl.tl .s.done::before,
+.sollic-ndm-tl.tl .s.now::before,
+.sollic-detail__timeline.tl .s.done::before,
+.sollic-detail__timeline.tl .s.now::before {
   background: var(--success);
 }
 
-.sollic-ndm-tl__dot.i {
+.sollic-ndm-tl.tl .s i,
+.sollic-detail__timeline.tl .s i {
   position: absolute;
   top: 0;
   left: 50%;
@@ -867,27 +890,43 @@
   border-radius: 50%;
   background: #fff;
   border: 2px dashed #cbbda9;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
 }
 
-.sollic-ndm-tl__step--done .sollic-ndm-tl__dot.i {
+.sollic-ndm-tl.tl .s i svg,
+.sollic-detail__timeline.tl .s i svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sollic-ndm-tl.tl .s.done i,
+.sollic-detail__timeline.tl .s.done i {
   background: var(--success);
   border: 2px solid var(--success);
+  color: #fff;
 }
 
-.sollic-ndm-tl__step--current .sollic-ndm-tl__dot.i {
+.sollic-ndm-tl.tl .s.now i,
+.sollic-detail__timeline.tl .s.now i {
   border: 2px solid #c2410c;
+  color: #c2410c;
   background: #fdf0e3;
 }
 
-.sollic-ndm-tl__step--done.s {
+.sollic-ndm-tl.tl .s.done,
+.sollic-detail__timeline.tl .s.done {
   color: var(--success);
 }
 
-.sollic-ndm-tl__step--current.s {
+.sollic-ndm-tl.tl .s.now,
+.sollic-detail__timeline.tl .s.now {
   color: #c2410c;
 }
 
-.sollic-ndm-tl__sub {
+.sollic-ndm-tl.tl .s small,
+.sollic-detail__timeline.tl .s small {
   display: block;
   font-weight: 600;
   font-size: 0.72rem;
@@ -944,11 +983,15 @@
 }
 
 @media (max-width: 900px) {
+  .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
+    padding-inline: 16px;
+  }
+
   .sollicitaties-shell {
     --sollic-inline-pad: 16px;
     width: 100%;
     max-width: none;
-    padding-inline: var(--sollic-inline-pad);
+    padding-inline: 0;
   }
 
   .sollicitaties-intro {
@@ -1007,7 +1050,11 @@
   }
 
   .sollicitaties-page--detail .sollicitaties-detail {
-    display: block;
+    display: block !important;
+  }
+
+  .sollicitaties-page--detail .sollicitaties-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   .sollic-detail__back.back {
@@ -1087,9 +1134,14 @@
 }
 
 .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-shell {
-  width: min(1120px, 100%) !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
+.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
+  width: min(1120px, 100vw) !important;
   max-width: 1120px !important;
-  margin-inline: auto !important;
 }
 
 .sollic-detail-panel[hidden] {
