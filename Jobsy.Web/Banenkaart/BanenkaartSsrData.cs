@@ -238,10 +238,12 @@ internal static class BanenkaartSsrData
             zoomOutsideTravel = true;
         }
 
-        var pinCentroid = VacancyMapViewCalculator.FromPoints(
-            vacancies
-                .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
-                .Select(v => (v.Latitude, v.Longitude)));
+        var pinPoints = vacancies
+            .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
+            .Select(v => (v.Latitude, v.Longitude));
+        var pinCentroid = useOrigin
+            ? VacancyMapViewCalculator.FromPoints(pinPoints)
+            : VacancyMapViewCalculator.FromPointsNetherlandsOrFallback(pinPoints);
 
         if (mapView is null || !mapView.HasPins)
         {
@@ -270,7 +272,7 @@ internal static class BanenkaartSsrData
             opening,
             bootPins,
             catalogUrl,
-            preferFilledLocation: !companyFocus,
+            preferFilledLocation: !companyFocus && useOrigin,
             isAuthenticated,
             originLat,
             originLng,

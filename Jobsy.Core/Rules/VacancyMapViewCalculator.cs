@@ -11,6 +11,10 @@ public static class VacancyMapViewCalculator
 {
     public static VacancyMapView Fallback { get; } = new(52.15, 5.2913, 7, 0);
 
+    /// <summary>Rough NL bounds for banenkaart opening view when no travel origin is set.</summary>
+    public static bool IsNetherlands(double lat, double lng)
+        => lat is >= 50.75 and <= 53.55 && lng is >= 3.35 and <= 7.22;
+
     /// <summary>
     /// Fallback zoom that fits the default 30-min fiets ring on a typical viewport.
     /// Keep in sync with <c>FILLED_LOCATION_ZOOM</c> in <c>jobMap.js</c>.
@@ -110,6 +114,19 @@ public static class VacancyMapViewCalculator
 
     public static VacancyMapView FromRecords(IEnumerable<VacancyDiscoveryRecord> records)
         => FromPoints(records.Select(r => (r.Latitude, r.Longitude)));
+
+    /// <summary>Centroid/zoom from NL pins only; <see cref="Fallback"/> when none (ignores stray coords).</summary>
+    public static VacancyMapView FromPointsNetherlandsOrFallback(IEnumerable<(double Lat, double Lng)> points)
+    {
+        var nl = points.Where(p => IsNetherlands(p.Lat, p.Lng)).ToList();
+        if (nl.Count == 0)
+        {
+            return Fallback;
+        }
+
+        var view = FromPoints(nl);
+        return view.Zoom < 7 ? Fallback : view;
+    }
 
     public static VacancyMapView FromPoints(IEnumerable<(double Lat, double Lng)> points)
     {

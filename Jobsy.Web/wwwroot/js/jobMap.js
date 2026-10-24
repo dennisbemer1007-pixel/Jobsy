@@ -4845,7 +4845,7 @@ window.jobMap = (function () {
     }
 
     function openingCamera(openingPoints, openingView, preferFilledLocation) {
-        if (preferFilledLocation !== false) {
+        if (useStoredOriginForMapCamera(preferFilledLocation)) {
             const filled = readFilledOrigin();
             if (filled) {
                 return { center: [filled.lng, filled.lat], zoom: filled.zoom, locked: true };
@@ -6364,7 +6364,7 @@ window.jobMap = (function () {
             const pins = parsed && Array.isArray(parsed.pins) ? parsed.pins : [];
             let view = parsed ? readOpeningView(parsed.view) : null;
             const preferFilledLocation = !parsed || parsed.preferFilledLocation !== false;
-            if (preferFilledLocation) {
+            if (useStoredOriginForMapCamera(preferFilledLocation)) {
                 const filled = readFilledOrigin();
                 if (filled) {
                     view = filled;
@@ -6387,6 +6387,19 @@ window.jobMap = (function () {
         } catch (e) {
             return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
+    }
+
+    function urlHasOriginInQuery() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            return params.has("originLat") || params.has("originLng");
+        } catch (eUrl) {
+            return false;
+        }
+    }
+
+    function useStoredOriginForMapCamera(preferFilledLocation) {
+        return preferFilledLocation !== false && urlHasOriginInQuery();
     }
 
     function urlOmitsOriginWhileFiltered() {
@@ -7061,7 +7074,7 @@ window.jobMap = (function () {
         const openingPoints = collectVacancyPoints(vacancies || []);
         const openingView = options && options.view ? options.view : null;
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
-        const filledOrigin = preferFilledLocation ? readFilledOrigin() : null;
+        const filledOrigin = useStoredOriginForMapCamera(preferFilledLocation) ? readFilledOrigin() : null;
         const hasOrigin = !!(options && options.origin) || !!filledOrigin;
         let live = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
