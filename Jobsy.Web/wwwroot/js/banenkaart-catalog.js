@@ -905,13 +905,20 @@
             var mini = ic && ic.isIntermediaryRow(row)
                 ? ic.pinI(0.5, false, false)
                 : (ic ? ic.pinW(0.5) : "");
+            var photo = listRowHasPhoto(row);
+            var thumb = photo
+                ? "<span class=\"ico ico--photo\" style=\"background:linear-gradient(135deg,"
+                + escapeHtml(colors.bg) + ",#fff 150%);\"><img class=\"kb-strip-lazy-photo\" alt=\"\" "
+                + "width=\"44\" height=\"44\" decoding=\"async\" data-kb-strip-photo=\"1\" data-photo-src=\""
+                + escapeHtml(listMapPopupPhotoUrl(row.id)) + "\" /></span>"
+                : "<span class=\"ico\" style=\"background:"
+                + escapeHtml(colors.bg) + ";color:" + escapeHtml(colors.fg) + "\">" + ico + "</span>";
             return "<div class=\"sc\" role=\"button\" tabindex=\"0\" data-vacancy-id=\""
-                + escapeHtml(row.id) + "\"><span class=\"ico\" style=\"background:"
-                + escapeHtml(colors.bg) + ";color:" + escapeHtml(colors.fg) + "\">" + ico
-                + "</span><div><b>" + escapeHtml(row.title) + "</b><small>" + mini
+                + escapeHtml(row.id) + "\">" + thumb + "<div><b>" + escapeHtml(row.title) + "</b><small>" + mini
                 + escapeHtml(row.company) + "</small></div></div>";
         }).join("");
         host.innerHTML = "<div class=\"strip\" role=\"list\">" + cards + "</div>";
+        observeLazyListPhotos(host);
         host.querySelectorAll(".sc").forEach(function (btn) {
             function activate() {
                 var id = btn.getAttribute("data-vacancy-id");
@@ -1082,7 +1089,10 @@
         if (!root || typeof IntersectionObserver !== "function") {
             return;
         }
-        var pending = root.querySelectorAll("img[data-kb-list-photo][data-photo-src]:not([data-photo-loaded])");
+        var pending = root.querySelectorAll(
+            "img[data-kb-list-photo][data-photo-src]:not([data-photo-loaded]), "
+            + "img[data-kb-strip-photo][data-photo-src]:not([data-photo-loaded])"
+        );
         if (!pending.length) {
             return;
         }

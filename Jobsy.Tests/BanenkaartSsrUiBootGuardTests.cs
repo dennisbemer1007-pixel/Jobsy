@@ -23,6 +23,17 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_map_strip_supports_lazy_vacancy_photos()
+    {
+        var root = FindRepoRoot();
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css"));
+        Assert.Contains("data-kb-strip-photo", catalog, StringComparison.Ordinal);
+        Assert.Contains("observeLazyListPhotos(host)", catalog, StringComparison.Ordinal);
+        Assert.Contains("kb-strip-lazy-photo", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_desktop_list_uses_two_column_card_grid()
     {
         var root = FindRepoRoot();

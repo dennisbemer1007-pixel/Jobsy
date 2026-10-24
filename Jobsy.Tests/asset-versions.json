@@ -368,8 +368,8 @@
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261024-desktopsplit1",
-    "sha256": "9d0788d9240e797c2b53938973cb79515b0bc9a362f1120741b055842f2c0b26"
+    "v": "20261024-carousel2",
+    "sha256": "63d9cc07cc606803aa0ef4646b47bb5386f74fdc6214ce55e7cd491e43716a6d"
   },
   "js/banenkaart-ssr.js": {
     "v": "20261024-desktopsplit1",
@@ -384,11 +384,11 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-desktopsplit1",
-    "sha256": "8471f626da62df2250c778eb9744e29d0af3ddc23d2e5a408467018aa25460f9"
+    "v": "20261024-popcarousel1",
+    "sha256": "d66de457f398ec4039d3e4e794b0d0679566bffbcc559f26dcb88e0f53144b5b"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-desktopsplit1",
-    "sha256": "9a2e8790392a3e6d4f4f18331bb1aaa31590f93a9972108125d7b746a40bc3af"
+    "v": "20261024-carousel2",
+    "sha256": "e753ee6f592664a650dad5195a57f7b704d5ec14631560c3a87e7996ff475bc6"
   }
 }
