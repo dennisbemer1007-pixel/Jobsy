@@ -122,6 +122,8 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("data-kb-list-photo", catalog);
         Assert.Contains("observeLazyListPhotos", catalog);
         Assert.Contains("map-popup-photo?variant=mobile", catalog);
+        Assert.Contains("data-kb-strip-photo", catalog);
+        Assert.Contains("kb-strip-lazy-photo", catalog);
         Assert.Contains("stopEvent(ev)", js);
         var discovery = File.ReadAllText(
             Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));

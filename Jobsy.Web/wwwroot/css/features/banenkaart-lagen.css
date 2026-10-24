@@ -599,6 +599,18 @@
     stroke-width: 1.6;
 }
 
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .sc .ico.ico--photo {
+    overflow: hidden;
+    padding: 0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .sc .ico.ico--photo .kb-strip-lazy-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .sc b {
     display: block;
     font-size: 14.5px;

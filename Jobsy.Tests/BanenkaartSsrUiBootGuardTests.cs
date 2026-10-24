@@ -8,7 +8,7 @@ public sealed class BanenkaartSsrUiBootGuardTests
         var root = FindRepoRoot();
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
         var heroIdx = shells.IndexOf("AppendNearbyHeroStrip", StringComparison.Ordinal);
-        var chromeIdx = shells.IndexOf("AppendChrome(sb, culture, model)", StringComparison.Ordinal);
+        var chromeIdx = shells.IndexOf("AppendMockupPanelHead(sb, culture, model)", StringComparison.Ordinal);
         Assert.True(heroIdx >= 0 && chromeIdx > heroIdx,
             "Illustration strip must be rendered before filter/search chrome in SSR markup.");
     }
@@ -20,6 +20,17 @@ public sealed class BanenkaartSsrUiBootGuardTests
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css"));
         Assert.Contains(".jobsy-discovery--lagen.show-list[data-banenkaart-ssr=\"1\"]", css, StringComparison.Ordinal);
         Assert.Contains("grid-column: 1 / -1", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_map_strip_supports_lazy_vacancy_photos()
+    {
+        var root = FindRepoRoot();
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css"));
+        Assert.Contains("data-kb-strip-photo", catalog, StringComparison.Ordinal);
+        Assert.Contains("observeLazyListPhotos(host)", catalog, StringComparison.Ordinal);
+        Assert.Contains("kb-strip-lazy-photo", css, StringComparison.Ordinal);
     }
 
     [Fact]
