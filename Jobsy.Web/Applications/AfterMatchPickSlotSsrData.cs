@@ -40,7 +40,7 @@ internal static class AfterMatchPickSlotSsrData
             thread,
             backHref,
             backLabel,
-            KbRoutes.Applications,
+            backHref,
             slots);
     }
 }

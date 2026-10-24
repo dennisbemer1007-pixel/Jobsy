@@ -102,7 +102,11 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Pick.ProposeFormTitle", "Een ander moment voorstellen", "Suggest another time");
         Add("AfterMatch.Pick.ProposeDateLabel", "Datum", "Date");
         Add("AfterMatch.Pick.ProposeTimeLabel", "Tijd", "Time");
-        Add("AfterMatch.Pick.ProposeNotePlaceholder", "Korte toelichting", "Short note");
+        Add("AfterMatch.Pick.ProposeNotePlaceholder",
+            "Op donderdag en vrijdag breng ik mijn zoon naar school.",
+            "On Thursday and Friday I take my son to school.");
+        Add("AfterMatch.Pick.ProposeDatePlaceholder", "Dinsdag 27 oktober", "Tuesday 27 October");
+        Add("AfterMatch.Pick.ProposeTimePlaceholder", "Ochtend, na 9:30", "Morning, after 9:30 a.m.");
         Add("AfterMatch.Pick.Breadcrumb", "Kruimelpad", "Breadcrumb");
         Add("AfterMatch.Pick.GoodToKnow.Title", "Goed om te weten", "Good to know");
         Add("AfterMatch.Pick.GoodToKnow.Reminders",

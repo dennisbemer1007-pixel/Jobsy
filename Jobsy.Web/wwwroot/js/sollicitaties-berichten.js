@@ -225,26 +225,18 @@
   }
 
   function migrateLegacyReadStorage() {
-    try {
-      var legacy = sessionStorage.getItem("sollicitaties-threads-read-v1");
-      if (!legacy) {
-        return;
+    var legacyKeys = [
+      "sollicitaties-threads-read-v1",
+      "sollicitaties-threads-read-pending",
+      "sollicitaties-threads-read-ack",
+    ];
+    legacyKeys.forEach(function (key) {
+      try {
+        sessionStorage.removeItem(key);
+      } catch (_e0) {
+        /* ignore */
       }
-      sessionStorage.removeItem("sollicitaties-threads-read-v1");
-      var ids = JSON.parse(legacy);
-      if (!Array.isArray(ids)) {
-        return;
-      }
-      var pending = readIdSet(READ_PENDING_KEY);
-      ids.forEach(function (id) {
-        if (typeof id === "string" && id && pending.indexOf(id) < 0 && !isThreadReadAcked(id)) {
-          pending.push(id);
-        }
-      });
-      writeIdSet(READ_PENDING_KEY, pending);
-    } catch (_e) {
-      /* ignore */
-    }
+    });
   }
 
   function markThreadReadServer(threadId) {

@@ -113,4 +113,17 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-pick-slot-page .cal3{align-items:stretch;justify-items:stretch}
 .ndm.ndm-pick-slot-page .cal3 .slot{text-align:left;justify-content:flex-start;width:100%;cursor:pointer;font:inherit}
 .ndm.ndm-pick-slot-page .askl{border:0;cursor:pointer;font:inherit}
-@media(max-width:600px){.ndm.ndm-pick-slot-page main.wrap{display:block!important}.ndm.ndm-pick-slot-page .intro{margin:0 0 14px}.ndm.ndm-pick-slot-page .intro h1{font-size:1.45rem;line-height:1.16}.ndm.ndm-pick-slot-page .intro p{font-size:.9rem;line-height:1.45}.ndm.ndm-pick-slot-page .g2.ndm-pick-slot-g2{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px}.ndm.ndm-pick-slot-page .what{display:grid!important}}
+.ndm.ndm-pick-slot-page .wrap{max-width:1180px;margin:0 auto;padding:24px 28px 20px;box-sizing:border-box}
+.ndm.ndm-pick-slot-page .g2.ndm-pick-slot-g2{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start;width:100%}
+.ndm.ndm-pick-slot-page .what{grid-template-columns:repeat(3,minmax(0,1fr))!important;margin-top:16px}
+.ndm.ndm-pick-slot-page .what>div{background:#fbf6ef;border-radius:var(--rM);padding:14px}
+.ndm.ndm-pick-slot-page .slot .slot-title{display:block;color:var(--brand);font-weight:600;font-size:inherit;line-height:1.25}
+.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions{flex-direction:row;align-items:center;flex-wrap:wrap;gap:12px}
+.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions .btn{width:auto;flex:0 0 auto}
+.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions [data-ndm-scroll-propose]{width:auto;flex:0 0 auto;text-align:left}
+.ndm.ndm-pick-slot-page .ndm-propose-fields .inp input::placeholder{color:var(--muted)}
+.ndm.ndm-pick-slot-page .ndm-mockup-footer{margin-top:0}
+.ndm.ndm-pick-slot-page .ndm-mockup-footer .ll{display:flex;flex-wrap:wrap;gap:6px 14px}
+.ndm.ndm-pick-slot-page .ndm-mockup-footer .ll a{color:var(--muted);font-size:.82rem;text-decoration:underline;text-underline-offset:3px}
+.app-shell:has(.ndm-pick-slot-page) .app-footer{display:none!important}
+@media(max-width:600px){.ndm.ndm-pick-slot-page main.wrap{display:block!important}.ndm.ndm-pick-slot-page .intro{margin:0 0 14px}.ndm.ndm-pick-slot-page .intro h1{font-size:1.45rem;line-height:1.16}.ndm.ndm-pick-slot-page .intro p{font-size:.9rem;line-height:1.45}.ndm.ndm-pick-slot-page .wrap{padding:12px}.ndm.ndm-pick-slot-page .g2.ndm-pick-slot-g2{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px}.ndm.ndm-pick-slot-page .what{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}.ndm.ndm-pick-slot-page .what>div{padding:10px 8px;font-size:.82rem}.ndm.ndm-pick-slot-page .what b{font-size:.84rem}.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions{flex-direction:row!important;align-items:center!important}.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions .btn,.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions [data-ndm-scroll-propose]{width:auto!important;justify-content:flex-start}}

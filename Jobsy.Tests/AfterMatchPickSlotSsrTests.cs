@@ -1,3 +1,4 @@
+using System.Net;
 using Bunit;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
@@ -119,6 +120,69 @@ public sealed class AfterMatchPickSlotSsrTests : BunitContext
         Assert.DoesNotContain("data-ndm-confirm-slot", playwright, StringComparison.Ordinal);
         Assert.DoesNotContain("select-slot", playwright, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Dit moment kiezen", playwright, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Page_seo_catalog_uses_gesprek_plannen_for_pick_slot_ssr()
+    {
+        var appId = Guid.Parse("77777771-0002-4000-8000-000000000002");
+        var path = $"/candidate/applications/{appId:D}/after-match/pick-slot-ssr";
+        var entry = Jobsy.Web.Seo.PageSeoCatalog.Resolve(path);
+        Assert.Equal("AfterMatch.Screen04.PageTitle", entry.TitleKey);
+    }
+
+    [Fact]
+    public void Mark_read_flush_script_uses_bff_only()
+    {
+        var root = FindRepoRoot();
+        var flush = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/sollicitaties-mark-read-flush.js"));
+        var berichten = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/sollicitaties-berichten.js"));
+        Assert.Contains("/api/sollicitaties-client/berichten/mark-read", flush, StringComparison.Ordinal);
+        Assert.DoesNotContain("after-match/messages/read", flush, StringComparison.Ordinal);
+        Assert.DoesNotContain("after-match/messages/read", berichten, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Shell_breadcrumb_uses_return_href_and_has_mockup_footer()
+    {
+        var culture = Culture;
+        var appId = Guid.Parse("77777771-0002-4000-8000-000000000002");
+        var returnHref = "/candidate/applications?tab=berichten&thread=" + appId.ToString("D");
+        var thread = new AfterMatchThreadDto(
+            appId,
+            Guid.NewGuid(),
+            InterviewStatus.Proposing,
+            AfterMatchContactShareState.From(InterviewStatus.Proposing, null),
+            null,
+            "Functie",
+            "Bedrijf",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            null,
+            null,
+            [new AfterMatchSlotDto(Guid.NewGuid(), DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(2).AddMinutes(30), InterviewSlotProposer.Employer, null, false)],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "Test",
+            null,
+            DateTime.UtcNow.AddDays(-1));
+        var data = new AfterMatchPickSlotSsrData.PageData(
+            thread,
+            returnHref,
+            "Terug",
+            returnHref,
+            thread.OpenSlots);
+        var html = AfterMatchPickSlotSsrShells.BuildBody(culture, data, appId);
+        Assert.Contains(WebUtility.HtmlEncode(returnHref), html, StringComparison.Ordinal);
+        Assert.DoesNotContain("ndm-back", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-mockup-footer", html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-propose-date", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("datetime-local", html, StringComparison.Ordinal);
     }
 
     [Fact]

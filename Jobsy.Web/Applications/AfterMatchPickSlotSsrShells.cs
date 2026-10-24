@@ -33,15 +33,10 @@ internal static class AfterMatchPickSlotSsrShells
         sb.Append("<div class=\"g2 ndm-pick-slot-g2\">");
         AppendMainCard(sb, culture, data, applicationId);
         AppendAside(sb, culture);
-        sb.Append("</div>");
-
-        sb.Append("<p class=\"ndm-back\" style=\"margin-top:16px\"><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.ApplicationsBackHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(data.BackLabel));
-        sb.Append("</a></p></main>");
+        sb.Append("</div></main>");
 
         AppendChatDock(sb, culture);
+        AppendMockupFooter(sb, culture);
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -119,9 +114,9 @@ internal static class AfterMatchPickSlotSsrShells
                 sb.Append(" on");
             }
 
-            sb.Append("\"></span><div class=\"sp\"><b>");
+            sb.Append("\"></span><div class=\"sp\"><span class=\"slot-title\">");
             sb.Append(WebUtility.HtmlEncode(FormatSlotTitle(slot)));
-            sb.Append("</b><span class=\"small muted\">");
+            sb.Append("</span><span class=\"small muted\">");
             sb.Append(WebUtility.HtmlEncode(FormatSlotSubtitle(slot)));
             sb.Append("</span></div></button>");
         }
@@ -132,13 +127,13 @@ internal static class AfterMatchPickSlotSsrShells
         if (!string.IsNullOrWhiteSpace(thread.Note))
         {
             sb.Append("<div class=\"note warm\" style=\"margin-top:14px\">");
-            sb.Append(NdMIcons.Mail);
+            sb.Append(ChatBubbleIcon);
             sb.Append("<span>\"");
             sb.Append(WebUtility.HtmlEncode(thread.Note));
             sb.Append("\"</span></div>");
         }
 
-        sb.Append("<div class=\"row wrapflex\" style=\"margin-top:16px\"><button type=\"button\" class=\"btn\" data-ndm-confirm-slot");
+        sb.Append("<div class=\"row wrapflex ndm-pick-actions\" style=\"margin-top:16px\"><button type=\"button\" class=\"btn\" data-ndm-confirm-slot");
         if (data.SlotsOrdered.Count == 0)
         {
             sb.Append(" disabled");
@@ -229,16 +224,20 @@ internal static class AfterMatchPickSlotSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeFormTitle"]));
         sb.Append("</b><p class=\"small muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeLead"]));
-        sb.Append("</p><div class=\"g2b\" style=\"gap:10px;margin-top:10px\"><label class=\"inp\" style=\"flex:1\"><span class=\"visually-hidden\">");
+        sb.Append("</p><div class=\"g2b ndm-propose-fields\" style=\"gap:10px;margin-top:10px\"><label class=\"inp\" style=\"flex:1\"><span class=\"visually-hidden\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeDateLabel"]));
         sb.Append("</span>");
         sb.Append(NdMIcons.Calendar);
-        sb.Append("<input type=\"datetime-local\" name=\"start\" data-ndm-propose-start required style=\"border:0;background:transparent;flex:1;font:inherit;padding:0\" /></label><label class=\"inp\" style=\"flex:1\"><span class=\"visually-hidden\">");
+        sb.Append("<input type=\"text\" name=\"proposeDate\" data-ndm-propose-date required autocomplete=\"off\" style=\"border:0;background:transparent;flex:1;font:inherit;padding:0;color:var(--text)\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeDatePlaceholder"]));
+        sb.Append("\" /></label><label class=\"inp\" style=\"flex:1\"><span class=\"visually-hidden\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeTimeLabel"]));
         sb.Append("</span>");
         sb.Append("""<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>""");
-        sb.Append("<input type=\"datetime-local\" name=\"end\" data-ndm-propose-end required style=\"border:0;background:transparent;flex:1;font:inherit;padding:0\" /></label></div>");
-        sb.Append("<textarea class=\"inp area\" data-ndm-propose-note required style=\"width:100%;margin-top:10px;min-height:56px;font:inherit\" placeholder=\"");
+        sb.Append("<input type=\"text\" name=\"proposeTime\" data-ndm-propose-time required autocomplete=\"off\" style=\"border:0;background:transparent;flex:1;font:inherit;padding:0;color:var(--text)\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeTimePlaceholder"]));
+        sb.Append("\" /></label></div>");
+        sb.Append("<textarea class=\"inp area\" data-ndm-propose-note required style=\"width:100%;margin-top:10px;min-height:56px;font:inherit;color:var(--text)\" placeholder=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeNotePlaceholder"]));
         sb.Append("\"></textarea><div style=\"margin-top:10px\"><button type=\"button\" class=\"btn line sm\" data-ndm-propose-submit data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
@@ -274,6 +273,24 @@ internal static class AfterMatchPickSlotSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["Assistant.SubtitleWarm"]));
         sb.Append("</button></div>");
     }
+
+    private static void AppendMockupFooter(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<footer class=\"lf ndm-mockup-footer\"><div class=\"ll\"><a href=\"/privacy\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Footer.Privacy"]));
+        sb.Append("</a><a href=\"/algemene-voorwaarden\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Footer.Terms"]));
+        sb.Append("</a><a href=\"/toegankelijkheid\">");
+        sb.Append(WebUtility.HtmlEncode(culture["PublicFooter.Accessibility"]));
+        sb.Append("</a><a href=\"/bronnen\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Footer.Sources"]));
+        sb.Append("</a></div><span>© ");
+        sb.Append(DateTime.UtcNow.Year);
+        sb.Append(" Lobsy</span></footer>");
+    }
+
+    private const string ChatBubbleIcon =
+        """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18 3 21V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/></svg>""";
 
     private static string VacancySubtitle(AfterMatchThreadDto t) =>
         string.Join(" · ", new[] { t.CompanyName, t.LocationOrLink, t.TravelLabel }.Where(s => !string.IsNullOrWhiteSpace(s)));
