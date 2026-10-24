@@ -10,6 +10,10 @@
 }
 
 .bottom-nav[data-testid="candidate-bottom-nav-ssr"] {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     box-sizing: border-box;
     z-index: 50;
     width: 100%;
@@ -89,7 +93,9 @@
 }
 
 @media (min-width: 1024px) {
+    /* app.min.css hides all .bottom-nav on desktop; SSR candidate nav must stay visible. */
     .app-shell--candidate .bottom-nav[data-testid="candidate-bottom-nav-ssr"] {
+        display: flex !important;
         left: 0;
         right: 0;
         transform: none;
