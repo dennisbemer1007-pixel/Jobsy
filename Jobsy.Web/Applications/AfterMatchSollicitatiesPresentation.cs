@@ -52,7 +52,11 @@ internal static class AfterMatchSollicitatiesPresentation
             return null;
         }
 
-        var messagesHref = AfterMatchSollicitatiesUrls.Messages(summary.ApplicationId);
+        var messagesHref = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabBerichten,
+            ApplicationsSsrQuery.FilterAll,
+            null,
+            summary.ApplicationId);
         if (status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
             && summary.OpenSlotCount > 0)
         {

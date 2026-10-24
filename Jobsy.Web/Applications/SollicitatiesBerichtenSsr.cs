@@ -92,13 +92,6 @@ internal static class SollicitatiesBerichtenSsr
             ApplicationsSsrQuery.FilterAll,
             null,
             appId);
-        var mobHref = AfterMatchSollicitatiesUrls.Messages(
-            appId,
-            ApplicationsSsrQuery.BuildUrl(
-                ApplicationsSsrQuery.TabBerichten,
-                ApplicationsSsrQuery.FilterAll,
-                null,
-                appId));
         sb.Append("<a class=\"sollic-berichten ti sollic-berichten-ti--desk sollic-berichten-ti__select");
         if (active)
         {
@@ -128,14 +121,16 @@ internal static class SollicitatiesBerichtenSsr
 
         sb.Append("</a>");
 
-        sb.Append("<a class=\"sollic-berichten ti sollic-berichten-ti--mob");
+        sb.Append("<a class=\"sollic-berichten ti sollic-berichten-ti--mob sollic-berichten-ti__select");
         if (active)
         {
             sb.Append(" on");
         }
 
         sb.Append("\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(mobHref));
+        sb.Append(WebUtility.HtmlEncode(deskHref));
+        sb.Append("\" data-sollic-thread-id=\"");
+        sb.Append(appId.ToString("D"));
         sb.Append("\" data-enhance-nav=\"false\"><span class=\"logo-sq\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><div><b>");
@@ -168,8 +163,16 @@ internal static class SollicitatiesBerichtenSsr
             ApplicationsSsrQuery.FilterAll,
             null,
             appId);
+        var listHref = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabBerichten,
+            ApplicationsSsrQuery.FilterAll,
+            null);
 
-        sb.Append("<div class=\"sollic-berichten thd\"><span class=\"logo-sq\">");
+        sb.Append("<a class=\"sollic-berichten__back lk\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(listHref));
+        sb.Append("\" data-sollic-berichten-back data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Berichten.BackList"]));
+        sb.Append("</a><div class=\"sollic-berichten thd\"><span class=\"logo-sq\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><div><b>");
         var headContact = thread.WithWhom ?? row.CompanyName;
