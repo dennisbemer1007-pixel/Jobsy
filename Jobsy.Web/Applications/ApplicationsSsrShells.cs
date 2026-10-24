@@ -23,17 +23,18 @@ internal static class ApplicationsSsrShells
         }
 
         var sb = new StringBuilder();
-        sb.Append("<div class=\"panel-page sollicitaties-page panel-page--cand-ill\" data-testid=\"applications-page-ssr\">");
-        AppendHero(sb, culture, data);
+        sb.Append("<div class=\"panel-page sollicitaties-page\" data-testid=\"applications-page-ssr\">");
+        AppendHeroStrip(sb);
+        sb.Append("<div class=\"sollicitaties-shell\">");
+        AppendPageIntro(sb, culture, data);
         sb.Append("<div class=\"sollicitaties-page__body\">");
-        AppendSegmentTabs(sb, culture, data);
+        AppendTabsRow(sb, culture, data);
         if (string.Equals(data.Tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal))
         {
             AppendActiviteitenPlaceholder(sb, culture);
         }
         else
         {
-            AppendInitiativeBanner(sb, culture, data);
             AppendToolbar(sb, culture, data);
             if (data.FilteredRows.Count == 0)
             {
@@ -45,29 +46,52 @@ internal static class ApplicationsSsrShells
             }
         }
 
-        sb.Append("</div></div>");
+        sb.Append("</div></div></div>");
         return sb.ToString();
     }
 
-    private static void AppendHero(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    private static void AppendHeroStrip(StringBuilder sb)
     {
-        var art = CandidateIllustratedImages.SollicitatiesBand;
+        sb.Append("<div class=\"sollicitaties-hero-strip kb-banenkaart-header-strip\" aria-hidden=\"true\"><div class=\"kb-banenkaart-header-strip__inner\">");
+        sb.Append("<img class=\"sollicitaties-hero-strip__img desk\" src=\"");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp));
+        sb.Append("\" srcset=\"");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp));
+        sb.Append(" 1x, ");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp2x));
+        sb.Append(" 2x\" alt=\"\" width=\"1440\" height=\"150\" loading=\"eager\" decoding=\"async\" fetchpriority=\"high\" />");
+        sb.Append("<img class=\"sollicitaties-hero-strip__img mob\" src=\"");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripMobileWebp));
+        sb.Append("\" srcset=\"");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripMobileWebp));
+        sb.Append(" 1x, ");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripMobileWebp2x));
+        sb.Append(" 2x\" alt=\"\" width=\"390\" height=\"90\" loading=\"eager\" decoding=\"async\" fetchpriority=\"high\" />");
+        sb.Append("</div></div>");
+    }
+
+    private static void AppendPageIntro(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    {
         var lead = data.ReadOnly
             ? culture["Apps.LeadReadOnly"]
             : culture["Apps.MockupLead"];
 
-        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--with-art\" style=\"");
-        sb.Append("--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\"><div class=\"cand-hero__copy\"><span class=\"cand-hero__eyebrow cand-hero__eyebrow--coral\">");
+        sb.Append("<header class=\"sollicitaties-intro\"><span class=\"sollicitaties-intro__eyebrow\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.ApplicationsTab"]));
-        sb.Append("</span><h1 tabindex=\"-1\">");
+        sb.Append("</span><h1 class=\"sollicitaties-intro__title\" tabindex=\"-1\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.MyApplications"]));
-        sb.Append("</h1><p class=\"cand-hero__lead\">");
+        sb.Append("</h1><p class=\"sollicitaties-intro__lead\">");
         sb.Append(WebUtility.HtmlEncode(lead));
-        sb.Append("</p></div><div class=\"cand-hero__media\" style=\"--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\" aria-hidden=\"true\"></div></header>");
+        sb.Append("</p></header>");
+    }
+
+    private static void AppendTabsRow(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    {
+        sb.Append("<div class=\"sollicitaties-tabs-row\">");
+        AppendSegmentTabs(sb, culture, data);
+        AppendInitiativeBanner(sb, culture, data, inline: true);
+        sb.Append("</div>");
+        AppendInitiativeBanner(sb, culture, data, inline: false);
     }
 
     private static void AppendSegmentTabs(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
@@ -134,7 +158,7 @@ internal static class ApplicationsSsrShells
         sb.Append("</a>");
     }
 
-    private static void AppendInitiativeBanner(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    private static void AppendInitiativeBanner(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data, bool inline)
     {
         if (data.InitiativeUsed is not int used || data.InitiativeMax is not int max || max <= 0)
         {
@@ -147,7 +171,9 @@ internal static class ApplicationsSsrShells
             return;
         }
 
-        sb.Append("<p class=\"sollicitaties-init-banner\" role=\"status\">");
+        sb.Append("<p class=\"sollicitaties-init-banner");
+        sb.Append(inline ? " sollicitaties-init-banner--inline" : " sollicitaties-init-banner--stacked");
+        sb.Append("\" role=\"status\">");
         sb.Append(WebUtility.HtmlEncode(culture.Format("Apps.InitiativeWeekBanner", remaining, max)));
         sb.Append("</p>");
     }
@@ -204,24 +230,21 @@ internal static class ApplicationsSsrShells
 
     private static void AppendEmpty(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
     {
-        var spot = CandidateIllustratedImages.SpotKaart;
-        sb.Append("<div class=\"sollicitaties-empty\"><div class=\"cand-empty cand-empty--apps-prominent\" style=\"--cand-empty-art:url('");
-        sb.Append(WebUtility.HtmlEncode(spot));
-        sb.Append("');\"><h2 class=\"cand-empty__title\">");
+        sb.Append("<div class=\"sollicitaties-empty\"><article class=\"sollicitaties-empty-card\"><h2 class=\"sollicitaties-empty-card__title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.MyApplications"]));
-        sb.Append("</h2><p class=\"cand-empty__lead\">");
+        sb.Append("</h2><p class=\"sollicitaties-empty-card__lead\">");
         sb.Append(WebUtility.HtmlEncode(data.AllRows.Count == 0 ? culture["Apps.Empty"] : culture["Apps.EmptyTab"]));
         sb.Append("</p>");
         if (!data.ReadOnly && data.AllRows.Count == 0)
         {
-            sb.Append("<a class=\"btn btn-primary cand-empty__cta\" href=\"");
+            sb.Append("<a class=\"btn btn-primary sollicitaties-empty-card__cta\" href=\"");
             sb.Append(KbRoutes.Map);
             sb.Append("\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(culture["CandidateVacancies.BrowseMap"]));
             sb.Append("</a>");
         }
 
-        sb.Append("</div></div>");
+        sb.Append("</article></div>");
     }
 
     private static void AppendLayout(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)

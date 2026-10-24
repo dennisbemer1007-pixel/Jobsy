@@ -152,6 +152,7 @@ public class MobileSaasUxTests
         var shells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("applications-page-ssr", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-segment", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-card", shells, StringComparison.Ordinal);
         Assert.Contains("kb-timeline", shells, StringComparison.Ordinal);

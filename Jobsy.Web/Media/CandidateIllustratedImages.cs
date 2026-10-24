@@ -45,6 +45,21 @@ public static class CandidateIllustratedImages
 
     public const string SollicitatiesBand = $"{Base}/werkervaring-profession-wide.jpg?v={Version}";
     public const string SollicitatiesHeroBandC = SollicitatiesBand;
+
+    /// <summary>PR #878 sollicitaties mockup — full-width watercolour strip (cyclist / polder).</summary>
+    public const string SollicitatiesHeroStripVersion = "20261024-sollicitaties2";
+
+    public const string SollicitatiesHeroStripDesktopWebp =
+        $"{Base}/sollicitaties-hero-strip-desktop.webp?v={SollicitatiesHeroStripVersion}";
+
+    public const string SollicitatiesHeroStripDesktopWebp2x =
+        $"{Base}/sollicitaties-hero-strip-desktop-2x.webp?v={SollicitatiesHeroStripVersion}";
+
+    public const string SollicitatiesHeroStripMobileWebp =
+        $"{Base}/sollicitaties-hero-strip-mobile.webp?v={SollicitatiesHeroStripVersion}";
+
+    public const string SollicitatiesHeroStripMobileWebp2x =
+        $"{Base}/sollicitaties-hero-strip-mobile-2x.webp?v={SollicitatiesHeroStripVersion}";
     public const string BewaardBand = $"{Base}/vervoer-profession-wide.jpg?v={Version}";
     public const string BewaardHeroBandC = BewaardBand;
     public const string CarriereBand = $"{Base}/opleiding.jpg?v={Version}";
