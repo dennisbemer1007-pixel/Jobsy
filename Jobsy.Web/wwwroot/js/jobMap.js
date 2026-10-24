@@ -1355,8 +1355,10 @@ window.jobMap = (function () {
         const euroBtn = tip
             ? "<button type=\"button\" class=\"fb euro" + (wageOpen ? " on" : "") + "\" data-lagen-wage aria-expanded=\"" +
                 (wageOpen ? "true" : "false") + "\" aria-label=\"" +
-                escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" + tip + "</button>"
+                escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" +
+                (mobile ? "" : tip) + "</button>"
             : "<span class=\"fb euro is-disabled\" aria-hidden=\"true\">€</span>";
+        const mobileSheetTip = mobile && tip ? tip : "";
         const photoBlock = lagenWorkplacePhotoShell(v);
         const bodyInner = mobile
             ? "<div class=\"fbody\"><div class=\"fbody-media\">" + photoBlock + "</div><div class=\"finfo\">" +
@@ -1385,6 +1387,7 @@ window.jobMap = (function () {
                 "<div class=\"fctl\">" + nav + "<span class=\"sp\"></span>" + euroBtn +
                 "<button type=\"button\" class=\"fb fx\" data-lagen-close aria-label=\"" +
                     escapeAttr(uiLabels.close || "Sluiten") + "\">" + lagenCloseSvg() + "</button></div>" +
+                mobileSheetTip +
                 "<div class=\"fc" + (mobile ? " m" : "") + "\">" + bodyInner +
                 "<button type=\"button\" class=\"fgo\" data-job-id=\"" + escapeAttr(v.id) +
                     "\"><span>" +

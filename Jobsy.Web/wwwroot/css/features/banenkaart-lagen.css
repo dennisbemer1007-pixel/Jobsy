@@ -2691,21 +2691,29 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     color: var(--kb-ink, #1b2440);
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip {
+/* Mobile sheet: wage table expands inside the card under the € row (not over the map chrome). */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m > .tip {
+    position: relative;
     top: auto;
-    bottom: 52px;
-    max-height: min(10.5rem, 42vh);
+    bottom: auto;
+    right: auto;
+    left: auto;
+    width: auto;
+    margin: 0 14px 10px;
+    max-height: min(11rem, 38vh);
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    width: min(196px, calc(100vw - 2rem));
+    box-shadow: none;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip::before {
-    top: auto;
-    bottom: -6px;
-    transform: rotate(225deg);
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m > .tip::before {
+    display: none;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fb.euro .tip {
+    display: none !important;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.lagen-wage-open .tip,
