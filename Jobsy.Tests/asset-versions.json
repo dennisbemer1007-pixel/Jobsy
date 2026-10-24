@@ -36,20 +36,20 @@
     "v": "20261024-apps720-scope3"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "87f0b3fdff94211c6910196d654a0602d7e54bda3fa1f237d2a3ea124ba94296",
-    "v": "20261024-mockup01-acc2"
+    "sha256": "66f228113075f493251b78aaa748fce6ed22b392a6911afd14d5683845d5d698",
+    "v": "20261024-mockup01-acc3"
   },
   "js/sollicitaties-actions.js": {
     "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",
-    "v": "20261024-mockup01-acc2"
+    "v": "20261024-mockup01-acc3"
   },
   "js/sollicitaties-filter-chips.js": {
     "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
-    "v": "20261024-mockup01-acc2"
+    "v": "20261024-mockup01-acc3"
   },
   "js/sollicitaties-rail.js": {
     "sha256": "5eca56d0159de05451acb13268e361ec9d18fdf78e3290bc447b8c984af3b47d",
-    "v": "20261024-mockup01-acc2"
+    "v": "20261024-mockup01-acc3"
   },
   "css/features/auth.css": {
     "sha256": "02384861b1eb4bccf28df6969d0559f18af7bca2a6b6af489c0fc0ea2835cdc7",
