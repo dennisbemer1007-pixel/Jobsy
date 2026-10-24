@@ -2734,6 +2734,26 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         border-bottom: 1px solid #e3dacb;
         transform: rotate(45deg);
     }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed {
+        position: fixed;
+        bottom: auto;
+        left: auto;
+        z-index: 120;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed::before {
+        display: none;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed b {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #fffdf9;
+        padding-bottom: 4px;
+        margin-bottom: 2px;
+    }
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.lagen-wage-open .tip,

@@ -2556,6 +2556,21 @@ window.jobMap = (function () {
         };
     }
 
+    function clearLagenMobileWageTipLayout(tip) {
+        if (!tip) {
+            return;
+        }
+        tip.classList.remove("tip--mobile-fixed");
+        tip.style.top = "";
+        tip.style.right = "";
+        tip.style.bottom = "";
+        tip.style.left = "";
+        tip.style.width = "";
+        tip.style.maxWidth = "";
+        tip.style.maxHeight = "";
+        tip.style.overflowY = "";
+    }
+
     function clampLagenMobileWageTip(fcw) {
         if (!fcw || !isNarrowViewport()) {
             return;
@@ -2574,8 +2589,13 @@ window.jobMap = (function () {
         const gap = 12;
         const seg = discovery ? discovery.querySelector(".seg") : null;
         const segRect = seg ? seg.getBoundingClientRect() : null;
-        const topLimit = segRect ? segRect.bottom + 8 : stage.getBoundingClientRect().top;
-        const avail = Math.floor(btnRect.top - topLimit - gap);
+        const stageRect = stage.getBoundingClientRect();
+        const topLimit = Math.max(
+            stageRect.top + 8,
+            segRect ? segRect.bottom + 8 : stageRect.top + 8
+        );
+        const bottomLimit = btnRect.top - gap;
+        const avail = Math.floor(bottomLimit - topLimit);
         const rows = tip.querySelectorAll(".tr2");
         const rowCount = rows.length || 8;
         const minVisibleRows = Math.min(6, rowCount);
@@ -2585,8 +2605,16 @@ window.jobMap = (function () {
         const titleH = titleEl ? titleEl.getBoundingClientRect().height + 6 : 28;
         const pad = 20;
         const minH = Math.ceil(titleH + rowH * minVisibleRows + pad);
+        clearLagenMobileWageTipLayout(tip);
+        tip.classList.add("tip--mobile-fixed");
+        tip.style.top = topLimit + "px";
+        tip.style.right = Math.max(8, Math.round(window.innerWidth - btnRect.right)) + "px";
+        tip.style.width = "196px";
+        tip.style.maxWidth = "calc(100vw - 28px)";
         const naturalH = tip.scrollHeight;
-        const maxH = Math.max(minH, Math.min(avail, naturalH));
+        const maxH = avail > 0
+            ? Math.max(Math.min(minH, avail), Math.min(avail, naturalH))
+            : Math.min(minH, naturalH);
         tip.style.maxHeight = maxH + "px";
         tip.style.overflowY = maxH < naturalH - 2 ? "auto" : "hidden";
     }
@@ -2611,15 +2639,13 @@ window.jobMap = (function () {
         if (tip) {
             if (open) {
                 tip.removeAttribute("hidden");
-                tip.style.maxHeight = "";
-                tip.style.overflowY = "";
+                clearLagenMobileWageTipLayout(tip);
                 requestAnimationFrame(function () {
                     clampLagenMobileWageTip(fcw);
                 });
             } else {
                 tip.setAttribute("hidden", "");
-                tip.style.maxHeight = "";
-                tip.style.overflowY = "";
+                clearLagenMobileWageTipLayout(tip);
             }
         }
         if (clusterUiState) {
