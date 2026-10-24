@@ -2691,29 +2691,43 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     color: var(--kb-ink, #1b2440);
 }
 
-/* Mobile sheet: wage table expands inside the card under the € row (not over the map chrome). */
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m > .tip {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    right: auto;
-    left: auto;
-    width: auto;
-    margin: 0 14px 10px;
-    max-height: min(11rem, 38vh);
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    box-shadow: none;
-}
+/* Mobile sheet (<=640): wage table in document flow inside the white card, below meta rows. */
+@media (max-width: 640px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fc.m {
+        overflow: auto;
+        max-height: min(52vh, 420px);
+        -webkit-overflow-scrolling: touch;
+    }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m > .tip::before {
-    display: none;
-}
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fc.m .tip.tip--sheet-incard {
+        position: static;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        left: auto;
+        display: none;
+        width: auto;
+        margin: 10px 0 0;
+        max-height: min(12rem, 36vh);
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        box-shadow: none;
+        z-index: auto;
+    }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fb.euro .tip {
-    display: none !important;
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m.lagen-wage-open .fc.m .tip.tip--sheet-incard:not([hidden]) {
+        display: block !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fc.m .tip.tip--sheet-incard::before {
+        display: none;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fb.euro .tip {
+        display: none !important;
+    }
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.lagen-wage-open .tip,
