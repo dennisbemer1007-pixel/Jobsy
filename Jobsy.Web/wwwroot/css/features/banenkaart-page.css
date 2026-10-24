@@ -579,7 +579,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     width: 100%;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 701px) {
     .jobsy-discovery[data-banenkaart-ssr="1"] .kb-filter-bar {
         display: none !important;
     }
@@ -672,7 +672,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
-@media (max-width: 899px) {
+@media (max-width: 700px) {
     .jobsy-discovery[data-banenkaart-ssr="1"] {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto minmax(0, 1fr);

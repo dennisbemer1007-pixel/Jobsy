@@ -3059,6 +3059,30 @@ window.jobMap = (function () {
         }
     }
 
+    const BK_VIEW_STATE_KEY = "jobsy.bk.view.v1";
+
+    function isBackForwardNavigation() {
+        try {
+            const nav = performance.getEntriesByType("navigation")[0];
+            return !!(nav && nav.type === "back_forward");
+        } catch (eNav) {
+            return false;
+        }
+    }
+
+    function shouldSkipMapPopupRestoreFromViewState() {
+        try {
+            const raw = sessionStorage.getItem(BK_VIEW_STATE_KEY);
+            if (!raw) {
+                return false;
+            }
+            const state = JSON.parse(raw);
+            return !!(state && state.skipMapPopupRestore);
+        } catch (eSkip) {
+            return false;
+        }
+    }
+
     function readStoredBanenkaartMapView() {
         try {
             const raw = sessionStorage.getItem(BK_MAP_VIEW_KEY);
@@ -3111,6 +3135,13 @@ window.jobMap = (function () {
             return false;
         }
         banenkaartMapRestoreAttempted = true;
+        const allowPopup = isBackForwardNavigation()
+            && stored.popupOpen
+            && !shouldSkipMapPopupRestoreFromViewState();
+        if (!isBackForwardNavigation()) {
+            closeActivePopup();
+            return false;
+        }
         window.__jobsyBkRestoringView = true;
         originHasBeenFramed = true;
         try {
@@ -3123,7 +3154,7 @@ window.jobMap = (function () {
         finishOpeningFrame();
         if (stored.vacancyId && markersById[stored.vacancyId]) {
             const rec = markersById[stored.vacancyId];
-            if (stored.popupOpen) {
+            if (allowPopup) {
                 openVacancyPopup(rec);
                 if (clusterUiState && stored.popupPage > 1 && clusterUiState.pageCount >= stored.popupPage) {
                     renderClusterPage(
@@ -7718,6 +7749,7 @@ window.jobMap = (function () {
         initKandidatenkaart,
         setKandidatenkaartAreas,
         invalidate,
+        dismissPopups: closeActivePopup,
         notifyFilterDrawerToggle,
         isAlive,
         /** @internal Playwright / diagnostics */

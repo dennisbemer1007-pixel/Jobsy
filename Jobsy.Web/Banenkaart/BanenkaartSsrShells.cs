@@ -74,13 +74,13 @@ internal static class BanenkaartSsrShells
         sb.Append("<script src=\"/js/banenkaart-map-icons.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261024-listtoggle2\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261024-desktopsplit1\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261024-listmapresize1\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261024-desktopsplit1\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("</div>");

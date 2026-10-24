@@ -419,11 +419,11 @@ public static class PageAssetCatalog
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
-        "/css/features/banenkaart-page.css?v=20261024-listtoggle2",
+        "/css/features/banenkaart-page.css?v=20261024-desktopsplit1",
         "/css/features/kandidaat-banen.css?v=20261024-listtoggle2",
         "/css/features/banenkaart.css?v=20261023-acc9",
         "/css/features/banenkaart-illustrated.css?v=20261023-acc9",
-        "/css/features/banenkaart-lagen.css?v=20261024-listtoggle2",
+        "/css/features/banenkaart-lagen.css?v=20261024-desktopsplit1",
     ];
 
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>
