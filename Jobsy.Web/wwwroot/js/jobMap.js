@@ -1060,20 +1060,8 @@ window.jobMap = (function () {
         return current + " van " + total;
     }
 
-    function normalizeLagenWageBands(v) {
-        if (Array.isArray(v.wageBands) && v.wageBands.length) {
-            return v.wageBands.slice();
-        }
-        if (Array.isArray(v.wageByAge) && v.wageByAge.length) {
-            return v.wageByAge.map(function (b) {
-                return {
-                    ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
-                    hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
-                    label: b.label || b.Label || ""
-                };
-            });
-        }
-        const adult = Number(v.wage);
+    function buildLagenYouthWageBandsFromAdult(adultHourly) {
+        const adult = Number(adultHourly);
         if (!Number.isFinite(adult) || adult <= 0) {
             return [];
         }
@@ -1095,6 +1083,33 @@ window.jobMap = (function () {
         });
     }
 
+    function lagenFallbackAdultHourlyWage() {
+        const fromLabels = uiLabels.wageFallbackAdultHourly != null
+            ? Number(uiLabels.wageFallbackAdultHourly)
+            : NaN;
+        return Number.isFinite(fromLabels) && fromLabels > 0 ? fromLabels : 14.06;
+    }
+
+    function normalizeLagenWageBands(v) {
+        if (Array.isArray(v.wageBands) && v.wageBands.length) {
+            return v.wageBands.slice();
+        }
+        if (Array.isArray(v.wageByAge) && v.wageByAge.length) {
+            return v.wageByAge.map(function (b) {
+                return {
+                    ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
+                    hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
+                    label: b.label || b.Label || ""
+                };
+            });
+        }
+        const adult = Number(v.wage);
+        if (Number.isFinite(adult) && adult > 0) {
+            return buildLagenYouthWageBandsFromAdult(adult);
+        }
+        return buildLagenYouthWageBandsFromAdult(lagenFallbackAdultHourlyWage());
+    }
+
     function lagenHighlightBandAge(bands, candidateAge) {
         const age = Number(candidateAge);
         if (!Number.isFinite(age)) {
@@ -1111,7 +1126,7 @@ window.jobMap = (function () {
         return match;
     }
 
-    function lagenWageTooltipHtml(v, open) {
+    function lagenWageTooltipHtml(v, open, extraTipClass) {
         const bands = normalizeLagenWageBands(v);
         if (!bands.length) {
             return "";
@@ -1146,7 +1161,8 @@ window.jobMap = (function () {
             return "<div class=\"" + cls + "\"><span>" + escapeHtml(lagenWageAgeLabel(r.ageYears)) +
                 "</span><span>€ " + formatWage(r.hourlyRate) + "</span></div>";
         }).join("");
-        return "<div class=\"tip\" role=\"tooltip\"" + (open ? "" : " hidden") + "><b>" + escapeHtml(title) +
+        const tipClass = "tip" + (extraTipClass || "");
+        return "<div class=\"" + tipClass + "\" role=\"tooltip\"" + (open ? "" : " hidden") + "><b>" + escapeHtml(title) +
             "</b>" + body + "</div>";
     }
 
@@ -1351,16 +1367,14 @@ window.jobMap = (function () {
                     lagenChevronRightSvg() + "</button>" +
             "</div>"
             : "";
-        const tip = lagenWageTooltipHtml(v, wageOpen);
+        const tip = lagenWageTooltipHtml(v, wageOpen, mobile ? " tip--sheet-incard" : "");
         const euroBtn = tip
             ? "<button type=\"button\" class=\"fb euro" + (wageOpen ? " on" : "") + "\" data-lagen-wage aria-expanded=\"" +
                 (wageOpen ? "true" : "false") + "\" aria-label=\"" +
                 escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" +
                 (mobile ? "" : tip) + "</button>"
             : "<span class=\"fb euro is-disabled\" aria-hidden=\"true\">€</span>";
-        const mobileSheetTip = mobile && tip
-            ? tip.replace("class=\"tip\"", "class=\"tip tip--sheet-incard\"")
-            : "";
+        const mobileSheetTip = mobile ? tip : "";
         const photoBlock = lagenWorkplacePhotoShell(v);
         const bodyInner = mobile
             ? "<div class=\"fbody\"><div class=\"fbody-media\">" + photoBlock + "</div><div class=\"finfo\">" +

@@ -38,7 +38,7 @@
     }
     @if (LoadBlazorRuntime)
     {
-        <link rel="preload" href="js/app-core.js?v=20261024-24" as="script" crossorigin />
+        <link rel="preload" href="js/app-core.js?v=20261024-25" as="script" crossorigin />
         <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
     }
     else if (IncludeBanenkaartClientScript)
@@ -331,7 +331,7 @@
     }
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261024-24" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+            <script src="js/app-core.js?v=20261024-25" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
             <script src="js/lobsyPush.js?v=20261021-02" nonce="@Nonce" defer></script>
             <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
@@ -341,7 +341,7 @@
             <script src="/js/app-public.js?v=20261023-acc9" nonce="@Nonce" defer></script>
             @if (IncludeBanenkaartClientScript)
             {
-                <script src="/js/banenkaart-maps-boot.js?v=20261024-mobilewagetip4" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+                <script src="/js/banenkaart-maps-boot.js?v=20261024-mobilewagetip5" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             }
         }
         @if (!IncludeBanenkaartClientScript)
