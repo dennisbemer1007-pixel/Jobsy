@@ -58,6 +58,7 @@
 }
 
 @media (max-width: 639px) {
+  .sollicitaties-page-wrap .sollicitaties-hero-strip,
   .sollicitaties-hero-strip {
     --sollic-hero-h: var(--cand-header-strip-h-mobile, 90px);
     height: var(--cand-header-strip-h-mobile, 90px);

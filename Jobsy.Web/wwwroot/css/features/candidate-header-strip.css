@@ -1,4 +1,5 @@
-/* Shared candidate header illustration height (mockup Sollicitaties 01 / na-de-match 04: 150px desktop, 90px mobile). */
+/* Shared candidate header illustration height (mockup Sollicitaties 01 / na-de-match 04: 150px desktop, 90px mobile).
+   Copy-only heroes (Paspoort/Bewaard/Carrière/Reis zonder strip): unchanged here; future strips use .cand-header-strip-h + these tokens. */
 
 :root {
   --cand-header-strip-h-desktop: 150px;
@@ -42,6 +43,7 @@
 .app-shell--banenkaart-shell .jobsy-discovery--lagen > .rustig-hero,
 .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] > .kb-nearby-banner--strip,
 .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
+  box-sizing: border-box;
   height: var(--cand-header-strip-h-desktop);
   min-height: var(--cand-header-strip-h-desktop);
   max-height: var(--cand-header-strip-h-desktop);

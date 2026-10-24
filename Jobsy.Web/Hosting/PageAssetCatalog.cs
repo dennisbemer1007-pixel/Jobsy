@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/features/candidate-header-strip.css?v=20261025-cand-strip1",
+        "css/features/candidate-header-strip.css?v=20261025-cand-strip2",
         "css/app.min.css?v=20261021-14",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
@@ -39,7 +39,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidatePublicCss =
     [
         "css/features/banenkaart.css?v=20261019-01",
-        "css/features/banenkaart-illustrated.css?v=20261025-cand-strip1",
+        "css/features/banenkaart-illustrated.css?v=20261025-cand-strip2",
         "css/features/bedrijvenkaart.css?v=20261019-10",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
@@ -52,7 +52,7 @@ public static class PageAssetCatalog
     [
         "css/features/uwv-mockups.css?v=20261019-r8",
         "css/features/banenkaart.css?v=20261018-02",
-        "css/features/banenkaart-illustrated.css?v=20261025-cand-strip1",
+        "css/features/banenkaart-illustrated.css?v=20261025-cand-strip2",
     ];
 
     public static readonly string[] CandidateAppCss =
@@ -295,10 +295,10 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/candidate-header-strip.css?v=20261025-cand-strip1",
+                "css/features/candidate-header-strip.css?v=20261025-cand-strip2",
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
-                "css/features/banenkaart-illustrated.css?v=20261025-cand-strip1",
-                "css/features/sollicitaties-page.css?v=20261025-cand-strip1",
+                "css/features/banenkaart-illustrated.css?v=20261025-cand-strip2",
+                "css/features/sollicitaties-page.css?v=20261025-cand-strip2",
             ];
         }
 
@@ -420,12 +420,12 @@ public static class PageAssetCatalog
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
-        "/css/features/candidate-header-strip.css?v=20261025-cand-strip1",
+        "/css/features/candidate-header-strip.css?v=20261025-cand-strip2",
         "/css/features/banenkaart-page.css?v=20261024-desktopsplit1",
         "/css/features/kandidaat-banen.css?v=20261024-listtoggle2",
         "/css/features/banenkaart.css?v=20261023-acc9",
-        "/css/features/banenkaart-illustrated.css?v=20261025-cand-strip1",
-        "/css/features/banenkaart-lagen.css?v=20261025-cand-strip1",
+        "/css/features/banenkaart-illustrated.css?v=20261025-cand-strip2",
+        "/css/features/banenkaart-lagen.css?v=20261025-cand-strip2",
     ];
 
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>

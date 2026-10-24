@@ -1412,10 +1412,10 @@
 .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
   display: block;
   inline-size: 100%;
-  block-size: auto;
-  min-block-size: 0;
-  max-block-size: 200px;
-  aspect-ratio: 390 / 140;
+  block-size: var(--cand-header-strip-h-mobile, 90px);
+  min-block-size: var(--cand-header-strip-h-mobile, 90px);
+  max-block-size: var(--cand-header-strip-h-mobile, 90px);
+  aspect-ratio: auto;
   overflow: hidden;
   border-block-end: none;
   background: color-mix(in srgb, var(--accent-soft) 40%, var(--bg));
@@ -1447,10 +1447,10 @@
 
 @media (min-width: 1024px) {
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
-    aspect-ratio: 1280 / 280;
-    max-block-size: 280px;
-    min-block-size: 0;
-    block-size: auto;
+    aspect-ratio: auto;
+    block-size: var(--cand-header-strip-h-desktop, 150px);
+    min-block-size: var(--cand-header-strip-h-desktop, 150px);
+    max-block-size: var(--cand-header-strip-h-desktop, 150px);
   }
 
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
