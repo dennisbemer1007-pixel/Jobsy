@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-popcarousel1",
-    "sha256": "3eb7c209fa93795e6f0856a307473e306c0206151df410bbb60fc403a4b0c3c2"
+    "v": "20261024-travelrings1",
+    "sha256": "cdc76f97679379176493f928ab7e1b8f3d518857a26cc5e0d3aa0df59983b7ff"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
@@ -368,8 +368,8 @@
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261024-urlssot2",
-    "sha256": "f7309fbd93654d96a9753a339cbef4bdb56d943cee43846ad1e7ddacc81dea4f"
+    "v": "20261024-travelrings1",
+    "sha256": "747ffd73cbd5b48a5446c67770625d3bc99e0a1a7824abc1e845eb4f08936b7c"
   },
   "js/banenkaart-ssr.js": {
     "v": "20261024-desktopsplit1",
@@ -384,8 +384,8 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-popcarousel1",
-    "sha256": "d66de457f398ec4039d3e4e794b0d0679566bffbcc559f26dcb88e0f53144b5b"
+    "v": "20261024-travelrings1",
+    "sha256": "dc5bb090e4f4ea192c5d44aa49b7e69ca6cb2b4dfd1507292c6801cb0994af30"
   },
   "css/features/banenkaart-lagen.css": {
     "v": "20261024-carousel2",

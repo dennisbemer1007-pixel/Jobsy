@@ -128,7 +128,7 @@ internal static class BanenkaartMapBoot
         var qs = new List<string>
         {
             $"transport={Uri.EscapeDataString(query.Transport)}",
-            $"maxMinutes={query.MaxTravelMinutes}"
+            $"maxMinutes={BanenkaartSsrQuery.DiscoverMaxMinutes(query.MaxTravelMinutes)}"
         };
 
         if (query.OriginLat is double lat && query.OriginLng is double lng)

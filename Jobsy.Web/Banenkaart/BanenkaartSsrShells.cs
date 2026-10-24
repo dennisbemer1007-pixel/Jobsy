@@ -74,10 +74,10 @@ internal static class BanenkaartSsrShells
         sb.Append("<script src=\"/js/banenkaart-map-icons.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261024-urlssot2\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261024-travelrings1\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261024-travelrings1\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261024-desktopsplit1\" crossorigin=\"anonymous\" defer")
@@ -385,7 +385,7 @@ internal static class BanenkaartSsrShells
             .Append("</h3><div class=\"filter-sheet__presets\" role=\"group\">");
         foreach (var m in new[] { 10, 20, 30, 45, 60 })
         {
-            var presetSelected = m == q.MaxTravelMinutes ? " is-selected" : "";
+            var presetSelected = q.MaxTravelMinutes is int sel && m == sel ? " is-selected" : "";
             sb.Append("<button type=\"button\" class=\"filter-sheet__chip")
                 .Append(presetSelected)
                 .Append("\" data-kb-travel-preset=\"")
@@ -398,7 +398,7 @@ internal static class BanenkaartSsrShells
         }
 
         sb.Append("</div><input type=\"range\" min=\"5\" max=\"90\" step=\"5\" name=\"maxMinutes\" data-testid=\"kb-sheet-travel-slider\" value=\"")
-            .Append(q.MaxTravelMinutes)
+            .Append(q.MaxTravelMinutes ?? KbMapStart.DefaultMaxTravelMinutes)
             .Append("\" /><div class=\"filter-sheet__modes\" role=\"group\">");
         foreach (var mode in new[] { "Lopend", "Fiets", "Auto", "OV" })
         {

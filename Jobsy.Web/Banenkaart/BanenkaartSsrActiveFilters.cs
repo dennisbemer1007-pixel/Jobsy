@@ -14,14 +14,14 @@ internal static class BanenkaartSsrActiveFilters
         var inner = new StringBuilder();
         var tags = 0;
 
-        if (q.OriginLat is not null)
+        if (q.OriginLat is not null && q.MaxTravelMinutes is int travelMinutes)
         {
             tags++;
             var travel = string.Equals(q.Transport, "Fiets", StringComparison.OrdinalIgnoreCase)
-                ? culture.Format("Kb.Filter.TravelChipBike", q.MaxTravelMinutes)
+                ? culture.Format("Kb.Filter.TravelChipBike", travelMinutes)
                 : culture.Format(
                     "Kb.Filter.TravelChip",
-                    q.MaxTravelMinutes,
+                    travelMinutes,
                     UiLabels.TransportVerb(culture, q.Transport));
             AppendTag(inner, "kb-active-tag-travel", travel, culture.Format("Kb.Filter.RemoveTag", travel));
         }

@@ -152,7 +152,7 @@ public sealed class BanenkaartFiltersUrlSyncPlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Travel_chip_remove_resets_minutes_but_keeps_address()
+    public async Task Travel_chip_remove_clears_time_filter_but_keeps_address()
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
@@ -168,20 +168,27 @@ public sealed class BanenkaartFiltersUrlSyncPlaywrightTests : IAsyncLifetime
 
         await page.Locator("[data-testid=kb-active-tag-travel]").ClickAsync();
         await page.WaitForFunctionAsync(
-            "() => !window.location.search.includes('maxMinutes=60')",
+            """
+            () => {
+              const btn = document.querySelector('[data-testid=kb-active-tag-travel]');
+              return btn && (btn.hidden || btn.style.display === 'none');
+            }
+            """,
             null,
             new() { Timeout = 15_000 });
 
         var url = page.Url;
         Assert.Contains("originLat=51.9944", url, StringComparison.Ordinal);
         Assert.Contains("originLng=4.2097", url, StringComparison.Ordinal);
+        Assert.DoesNotContain("maxMinutes=", url, StringComparison.Ordinal);
 
         var address = await page.Locator("[data-kb-address]").First.InputValueAsync();
         Assert.Contains("Naaldwijk", address, StringComparison.OrdinalIgnoreCase);
 
-        var chip = await page.Locator("[data-testid=kb-active-tag-travel]").InnerTextAsync();
-        Assert.Contains("20", chip, StringComparison.Ordinal);
-        Assert.Contains("fiets", chip, StringComparison.OrdinalIgnoreCase);
+        var filters = await page.EvaluateAsync<JsonElement>(
+            "() => window.jobsyBanenkaartCatalog.resolveFilters()");
+        Assert.True(filters.TryGetProperty("maxMinutes", out var maxEl));
+        Assert.Equal(JsonValueKind.Null, maxEl.ValueKind);
 
         var sliderVal = await page.EvaluateAsync<string>(
             "() => document.querySelector('[data-testid=kb-sheet-travel-slider]')?.value || ''");

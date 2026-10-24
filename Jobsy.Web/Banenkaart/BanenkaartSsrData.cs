@@ -204,7 +204,7 @@ internal static class BanenkaartSsrData
                     useOrigin ? originLat : null,
                     useOrigin ? originLng : null,
                     effectiveQuery.Transport,
-                    effectiveQuery.MaxTravelMinutes,
+                    BanenkaartSsrQuery.DiscoverMaxMinutes(effectiveQuery.MaxTravelMinutes),
                     discoverRadius,
                     companyFocus ? null : effectiveQuery.AgeYears,
                     companyFocus ? null : minWage,
@@ -256,7 +256,7 @@ internal static class BanenkaartSsrData
             region?.Latitude,
             region?.Longitude,
             companyFocus,
-            effectiveQuery.MaxTravelMinutes,
+            BanenkaartSsrQuery.DiscoverMaxMinutes(effectiveQuery.MaxTravelMinutes),
             effectiveQuery.Transport,
             effectiveQuery.RadiusKm);
 
@@ -286,7 +286,7 @@ internal static class BanenkaartSsrData
         var activeFilters = KbFilterBadge.Count(
             new KbFilterState(
                 effectiveQuery.Transport,
-                effectiveQuery.MaxTravelMinutes,
+                BanenkaartSsrQuery.DiscoverMaxMinutes(effectiveQuery.MaxTravelMinutes),
                 effectiveQuery.RadiusKm,
                 effectiveQuery.AgeYears,
                 effectiveQuery.MinHoursPerWeek,
@@ -307,17 +307,21 @@ internal static class BanenkaartSsrData
             ? culture["Kb.Map.NoVacanciesInTravel"]
             : culture.Format("Kb.Filter.ResultCount", count);
 
-        string? subtitle = showEmptyTravel
-            ? culture.Format(
-                "Kb.Filter.ResultWithin",
-                effectiveQuery.MaxTravelMinutes,
-                UiLabels.TransportVerb(culture, effectiveQuery.Transport))
-            : originLat is not null
+        string? subtitle = null;
+        if (effectiveQuery.MaxTravelMinutes is int travelChipMinutes)
+        {
+            subtitle = showEmptyTravel
                 ? culture.Format(
                     "Kb.Filter.ResultWithin",
-                    effectiveQuery.MaxTravelMinutes,
+                    travelChipMinutes,
                     UiLabels.TransportVerb(culture, effectiveQuery.Transport))
-                : null;
+                : originLat is not null
+                    ? culture.Format(
+                        "Kb.Filter.ResultWithin",
+                        travelChipMinutes,
+                        UiLabels.TransportVerb(culture, effectiveQuery.Transport))
+                    : null;
+        }
 
         return new PageModel(
             effectiveQuery,

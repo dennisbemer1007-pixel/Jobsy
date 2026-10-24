@@ -14,7 +14,7 @@ internal static class BanenkaartSsrQuery
     internal sealed record State(
         string? SearchQuery,
         IReadOnlyList<string> WorkTypes,
-        int MaxTravelMinutes,
+        int? MaxTravelMinutes,
         string Transport,
         int RadiusKm,
         int MinHoursPerWeek,
@@ -38,6 +38,9 @@ internal static class BanenkaartSsrQuery
     /// <summary>
     /// URL carries filter params but no origin — origin must not be restored from cookie/profile (URL SSOT).
     /// </summary>
+    internal static int DiscoverMaxMinutes(int? maxTravelMinutes)
+        => maxTravelMinutes ?? 90;
+
     internal static bool UrlOmitsOriginWhileFiltered(IQueryCollection query)
     {
         if (query.ContainsKey("originLat") || query.ContainsKey("originLng"))
@@ -74,7 +77,8 @@ internal static class BanenkaartSsrQuery
         query.TryGetValue("workType", out var workTypeValues);
         var workTypes = WorkTypeLabels.NormalizeFilterLabels(workTypeValues).ToList();
 
-        var maxMinutes = KbMapStart.DefaultMaxTravelMinutes;
+        var hasOriginInUrl = query.ContainsKey("originLat") || query.ContainsKey("originLng");
+        int? maxMinutes = hasOriginInUrl ? null : KbMapStart.DefaultMaxTravelMinutes;
         if (query.TryGetValue("maxMinutes", out var minValues)
             && int.TryParse(minValues.FirstOrDefault(), out var parsedMinutes))
         {
@@ -248,9 +252,9 @@ internal static class BanenkaartSsrQuery
             q.Add($"workType={Uri.EscapeDataString(wt)}");
         }
 
-        if (state.MaxTravelMinutes != KbMapStart.DefaultMaxTravelMinutes)
+        if (state.MaxTravelMinutes is int travelMinutes)
         {
-            q.Add($"maxMinutes={state.MaxTravelMinutes}");
+            q.Add($"maxMinutes={travelMinutes}");
         }
 
         if (!string.Equals(state.Transport, KbMapStart.DefaultTransport, StringComparison.Ordinal))
@@ -354,7 +358,7 @@ internal static class BanenkaartSsrQuery
 
         var workTypes = form["workType"].Select(v => v?.Trim()).Where(v => !string.IsNullOrWhiteSpace(v)).Cast<string>().ToList();
 
-        var maxMinutes = int.TryParse(form["maxMinutes"], out var mm) ? Math.Clamp(mm, 5, 90) : fallback.MaxTravelMinutes;
+        int? maxMinutes = int.TryParse(form["maxMinutes"], out var mm) ? Math.Clamp(mm, 5, 90) : fallback.MaxTravelMinutes;
         var transport = NormalizeTransport(form["transport"]) ?? fallback.Transport;
         var radiusKm = int.TryParse(form["radiusKm"], out var rk) ? Math.Clamp(rk, 1, 50) : fallback.RadiusKm;
         var minHours = int.TryParse(form["minHours"], out var minH) ? Math.Clamp(minH, 0, 40) : fallback.MinHoursPerWeek;
