@@ -77,5 +77,17 @@ public static class UiStringsSollicitaties
             "Poćwicz rozmowę i przeczytaj wskazówki do spotkania.",
             "Exersează interviul și citește sfaturi pentru o întâlnire.",
             "تدرّب على مقابلتك واقرأ نصائح اللقاء التعارفي.");
+
+        Add("Apps.Ndm.PickSlot",
+            "Kies een moment", "Pick a time",
+            "Wybierz termin", "Alege un moment", "اختر وقتاً");
+
+        Add("Apps.Ndm.InterviewPlannedShort",
+            "Gesprek gepland, {0}", "Interview scheduled, {0}",
+            "Rozmowa zaplanowana, {0}", "Interviu programat, {0}", "مقابلة مجدولة، {0}");
+
+        Add("Apps.Ndm.UnreadAria",
+            "{0} ongelezen berichten", "{0} unread messages",
+            "{0} nieprzeczytanych wiadomości", "{0} mesaje necitite", "{0} رسائل غير مقروءة");
     }
 }
