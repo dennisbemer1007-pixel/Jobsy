@@ -38,7 +38,6 @@ internal static class ApplicationsSsrShells
         AppendAllTabPanels(sb, culture, data);
 
         sb.Append("</div></div></div></div>");
-        sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-mockup01-acc4\" defer></script>");
         return sb.ToString();
     }
 
@@ -145,6 +144,12 @@ internal static class ApplicationsSsrShells
         sb.Append("\" data-sollic-tab=\"");
         sb.Append(WebUtility.HtmlEncode(tab));
         sb.Append("\" data-enhance-nav=\"false\"");
+        if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
+        {
+            sb.Append(" data-sollic-unread-threads=\"");
+            sb.Append(badge ?? 0);
+            sb.Append('"');
+        }
         if (active)
         {
             sb.Append(" aria-current=\"page\"");

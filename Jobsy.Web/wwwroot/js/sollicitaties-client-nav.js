@@ -225,9 +225,13 @@
       return;
     }
     try {
-      selected.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
+      selected.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
     } catch (_err) {
-      selected.scrollIntoView(true);
+      try {
+        selected.scrollIntoView({ inline: "center", block: "nearest" });
+      } catch (_err2) {
+        selected.scrollIntoView(true);
+      }
     }
   }
 

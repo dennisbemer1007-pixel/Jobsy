@@ -4,6 +4,8 @@
   var DESKTOP = window.matchMedia("(min-width: 901px)");
   var MOBILE = window.matchMedia("(max-width: 900px)");
   var BASE = "/candidate/applications";
+  var READ_STORAGE_KEY = "sollicitaties-threads-read-v1";
+  var initialUnreadTabCount = null;
 
   function parseThreadId(href) {
     if (!href) {
@@ -31,6 +33,35 @@
 
   function root() {
     return document.querySelector("[data-testid=\"sollicitaties-berichten-tab\"]");
+  }
+
+  function readStorageIds() {
+    try {
+      var raw = sessionStorage.getItem(READ_STORAGE_KEY);
+      if (!raw) {
+        return [];
+      }
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(function (id) { return typeof id === "string" && id; }) : [];
+    } catch (_e) {
+      return [];
+    }
+  }
+
+  function rememberThreadRead(threadId) {
+    if (!threadId) {
+      return;
+    }
+    try {
+      var ids = readStorageIds();
+      if (ids.indexOf(threadId) >= 0) {
+        return;
+      }
+      ids.push(threadId);
+      sessionStorage.setItem(READ_STORAGE_KEY, JSON.stringify(ids));
+    } catch (_e2) {
+      /* ignore */
+    }
   }
 
   function pushSollicHistory(threadId) {
@@ -61,10 +92,73 @@
     }
   }
 
-  function clearUnreadForThread(threadId) {
+  function threadListRowSelector() {
+    return MOBILE.matches
+      ? ".sollic-berichten-ti--mob.sollic-berichten-ti__select"
+      : ".sollic-berichten-ti--desk.sollic-berichten-ti__select";
+  }
+
+  function threadHadUnreadBadge(threadId) {
     if (!threadId) {
-      return;
+      return false;
     }
+    var r = root();
+    if (!r) {
+      return false;
+    }
+    return !!r.querySelector(
+      ".sollic-berichten-ti__select[data-sollic-thread-id=\"" + threadId + "\"] .n"
+    );
+  }
+
+  function countUnreadThreads() {
+    var r = root();
+    if (!r) {
+      return 0;
+    }
+    var seen = {};
+    var count = 0;
+    r.querySelectorAll(threadListRowSelector() + " .n").forEach(function (_badge) {
+      var link = _badge.closest(".sollic-berichten-ti__select");
+      var id = link && link.getAttribute("data-sollic-thread-id");
+      if (!id || seen[id]) {
+        return;
+      }
+      seen[id] = true;
+      count += 1;
+    });
+    return count;
+  }
+
+  function berichtenTabUnreadBaseline() {
+    var tab = document.querySelector(".sollicitaties-segment__tab[data-sollic-tab=\"berichten\"]");
+    if (!tab) {
+      return null;
+    }
+    var fromAttr = tab.getAttribute("data-sollic-unread-threads");
+    if (fromAttr !== null && fromAttr !== "") {
+      var n = parseInt(fromAttr, 10);
+      if (!isNaN(n) && n >= 0) {
+        return n;
+      }
+    }
+    var badge = tab.querySelector(".sollicitaties-segment__badge");
+    if (badge) {
+      var parsed = parseInt(badge.textContent || "", 10);
+      if (!isNaN(parsed) && parsed >= 0) {
+        return parsed;
+      }
+    }
+    return null;
+  }
+
+  function clearUnreadForThread(threadId, options) {
+    var opts = options || {};
+    if (!threadId) {
+      return false;
+    }
+
+    var hadUnread = threadHadUnreadBadge(threadId);
 
     var r = root();
     if (r) {
@@ -94,33 +188,56 @@
       }
     });
 
-    updateBerichtenTabBadge();
+    if (hadUnread || opts.forceBadgeUpdate) {
+      updateBerichtenTabBadge();
+    }
+
+    if (hadUnread) {
+      rememberThreadRead(threadId);
+    }
+
+    return hadUnread;
   }
 
   function markThreadReadServer(threadId) {
     if (!threadId) {
       return;
     }
-    fetch("/api/me/applications/" + encodeURIComponent(threadId) + "/after-match/messages/read", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "X-Requested-With": "XMLHttpRequest" }
-    }).catch(function () {
-      /* optimistic UI already cleared badges */
-    });
+    var url = "/api/me/applications/" + encodeURIComponent(threadId) + "/after-match/messages/read";
+    var sent = false;
+    if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+      try {
+        sent = navigator.sendBeacon(url, new Blob([], { type: "application/json" }));
+      } catch (_beaconErr) {
+        sent = false;
+      }
+    }
+    if (!sent) {
+      fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        keepalive: true,
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      }).catch(function () {
+        /* optimistic UI already cleared badges */
+      });
+    }
   }
 
   function updateBerichtenTabBadge() {
-    var r = root();
-    var total = 0;
-    if (r) {
-      total = r.querySelectorAll(".sollic-berichten-ti__select .n").length;
+    var total = countUnreadThreads();
+    if (initialUnreadTabCount !== null && total > initialUnreadTabCount) {
+      total = initialUnreadTabCount;
+    } else if (initialUnreadTabCount !== null && total < initialUnreadTabCount) {
+      initialUnreadTabCount = total;
     }
 
     var tab = document.querySelector(".sollicitaties-segment__tab[data-sollic-tab=\"berichten\"]");
     if (!tab) {
       return;
     }
+    tab.setAttribute("data-sollic-unread-threads", String(total));
+
     var existing = tab.querySelector(".sollicitaties-segment__badge");
     if (total > 0) {
       if (existing) {
@@ -171,8 +288,10 @@
       setMobileThreadOpen(true);
     }
 
-    clearUnreadForThread(threadId);
-    markThreadReadServer(threadId);
+    var hadUnread = clearUnreadForThread(threadId);
+    if (hadUnread) {
+      markThreadReadServer(threadId);
+    }
 
     if (opts.history === "push") {
       pushSollicHistory(threadId);
@@ -284,6 +403,16 @@
       });
   }
 
+  function applyOptimisticReadFromStorage() {
+    readStorageIds().forEach(function (id) {
+      clearUnreadForThread(id, { forceBadgeUpdate: false });
+    });
+    updateBerichtenTabBadge();
+    readStorageIds().forEach(function (id) {
+      markThreadReadServer(id);
+    });
+  }
+
   window.__sollicBerichtenSelectThread = function (threadId, replaceUrl) {
     if (!threadId) {
       closeThreadList({ history: !!replaceUrl });
@@ -313,6 +442,9 @@
     document.addEventListener("click", onThreadClick, true);
     document.addEventListener("click", onBackClick, true);
     document.addEventListener("submit", onComposeSubmit, true);
+
+    initialUnreadTabCount = berichtenTabUnreadBaseline();
+    applyOptimisticReadFromStorage();
 
     var initialThread = parseThreadId(window.location.href);
     if (initialThread) {

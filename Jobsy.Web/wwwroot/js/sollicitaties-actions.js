@@ -1,4 +1,9 @@
 (function () {
+  if (window.__sollicitatiesActionsBound) {
+    return;
+  }
+  window.__sollicitatiesActionsBound = true;
+
   function showError(root, message) {
     var existing = root.querySelector(".sollicitaties-inline-error");
     if (!existing) {
