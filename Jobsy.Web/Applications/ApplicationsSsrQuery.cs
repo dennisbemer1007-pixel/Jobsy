@@ -5,6 +5,7 @@ namespace Jobsy.Web.Applications;
 internal static class ApplicationsSsrQuery
 {
     internal const string TabSollicitaties = "sollicitaties";
+    internal const string TabBerichten = "berichten";
     internal const string TabActiviteiten = "activiteiten";
 
     internal const string FilterAll = "all";
@@ -14,9 +15,19 @@ internal static class ApplicationsSsrQuery
     internal const string FilterDone = "done";
 
     internal static string NormalizeTab(string? raw)
-        => string.Equals(raw, TabActiviteiten, StringComparison.OrdinalIgnoreCase)
-            ? TabActiviteiten
-            : TabSollicitaties;
+    {
+        if (string.Equals(raw, TabActiviteiten, StringComparison.OrdinalIgnoreCase))
+        {
+            return TabActiviteiten;
+        }
+
+        if (string.Equals(raw, TabBerichten, StringComparison.OrdinalIgnoreCase))
+        {
+            return TabBerichten;
+        }
+
+        return TabSollicitaties;
+    }
 
     internal static string NormalizeFilter(string? raw)
     {

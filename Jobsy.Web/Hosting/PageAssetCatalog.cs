@@ -292,17 +292,12 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            var appsCss = new List<string>
-            {
-                "css/features/sollicitaties-page.css?v=20261024-sollicitaties1",
+            return
+            [
+                "css/features/sollicitaties-page.css?v=20261024-sollicitaties3",
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
-            };
-            if (RouteUsesCompactHeroCss(path))
-            {
-                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261022-reis-r7");
-            }
-
-            return appsCss;
+                "css/features/banenkaart-illustrated.css?v=20261023-acc9",
+            ];
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
