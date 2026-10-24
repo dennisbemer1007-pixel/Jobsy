@@ -270,17 +270,8 @@ internal static class ApplicationsSsrShells
             AppendListCard(sb, culture, data, row, selected?.RowId == row.RowId);
         }
 
-        sb.Append("</div>");
-        if (selected is not null)
-        {
-            sb.Append("<aside class=\"sollicitaties-detail\" aria-label=\"");
-            sb.Append(WebUtility.HtmlEncode(culture["Nav.MyApplications"]));
-            sb.Append("\">");
-            AppendDetailPanel(sb, culture, selected);
-            sb.Append("</aside>");
-        }
-
-        sb.Append("</div>");
+        sb.Append("</div></div>");
+        _ = selected;
     }
 
     private static void AppendListCard(
@@ -382,6 +373,7 @@ internal static class ApplicationsSsrShells
         sb.Append("<span class=\"sollic-card__chev chev\" aria-hidden=\"true\">›</span></div></article>");
     }
 
+#pragma warning disable IDE0051 // Mockup 02 detail rail (#969) reattaches this panel.
     private static void AppendDetailPanel(StringBuilder sb, CultureState culture, SollicitationRow row)
     {
         sb.Append("<div class=\"sollic-detail\"><div class=\"sollic-detail__head\"><span class=\"sollic-card__source sollic-card__source--");
@@ -435,7 +427,6 @@ internal static class ApplicationsSsrShells
 
         sb.Append("</div>");
     }
-
     private static void AppendDetailTip(StringBuilder sb, CultureState culture, SollicitationRow row)
     {
         var showInterviewTip = string.Equals(row.Status, nameof(ApplicationStatus.EmployerContacting), StringComparison.OrdinalIgnoreCase)
@@ -457,6 +448,7 @@ internal static class ApplicationsSsrShells
                 : culture[row.NextStepKey!]));
         sb.Append("</p></div>");
     }
+#pragma warning restore IDE0051
 
     private static void AppendActiviteitenPlaceholder(StringBuilder sb, CultureState culture)
     {

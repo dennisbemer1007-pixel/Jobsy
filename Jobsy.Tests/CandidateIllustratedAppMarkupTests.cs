@@ -34,7 +34,7 @@ public class CandidateIllustratedAppMarkupTests
         Assert.Contains("sollicitaties-page", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-intro", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-layout", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-empty-card", shells, StringComparison.Ordinal);
     }

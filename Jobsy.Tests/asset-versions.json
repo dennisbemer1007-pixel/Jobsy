@@ -36,12 +36,12 @@
     "v": "20261004-10"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "c43b98ca18aad2eba437a67c40fc51fc009e2dca1f47f3d692a4547ebcf658d6",
-    "v": "20261024-sollicitatie01-layout7"
+    "sha256": "88778175d8c11743dd6755882c0db2462c2839f3412c401225692687223797a7",
+    "v": "20261024-sollicitatie01-layout8"
   },
   "js/sollicitaties-filter-chips.js": {
     "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
-    "v": "20261024-sollicitatie01-layout7"
+    "v": "20261024-sollicitatie01-layout8"
   },
   "css/features/auth.css": {
     "sha256": "02384861b1eb4bccf28df6969d0559f18af7bca2a6b6af489c0fc0ea2835cdc7",
