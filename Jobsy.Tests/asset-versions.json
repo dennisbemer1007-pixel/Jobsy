@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-travelrings3",
-    "sha256": "b2b93fa1107ee84d90128f3606ff72415c45d401989542a7d6a2f33c8b7ce079"
+    "v": "20261024-mobileattrib2",
+    "sha256": "5c934734c377d8955a29f4005d8d608dc629960d0145a92f387c5d1bd15414a1"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
@@ -388,7 +388,7 @@
     "sha256": "dc5bb090e4f4ea192c5d44aa49b7e69ca6cb2b4dfd1507292c6801cb0994af30"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-mobilemeer1",
-    "sha256": "bb2468188e8213229ec1c7f93a081682d853a6cfe816b0eee5d8dd9c43d0c3ad"
+    "v": "20261024-mobileattrib2",
+    "sha256": "14fcc01e30d6f3751057f69706e160a4f363f79cfbf43934a929c2e96eb54bf6"
   }
 }
