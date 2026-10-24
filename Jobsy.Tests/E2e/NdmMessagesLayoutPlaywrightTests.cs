@@ -38,7 +38,7 @@ public sealed class NdmMessagesLayoutPlaywrightTests : IAsyncLifetime
             </style></head><body>
             <div class="ndm ndm-page ndm-messages-page" data-ndm-messages-ssr="1">
             <main class="wrap">
-            <section class="band ndm-hero ndm-hero--gesprek"><div class="bt"><span class="eyb">Sollicitaties · Berichten</span><h1>Berichten</h1><p class="ndm-hero-lead ndm-hero-lead--full">Per sollicitatie een rustige plek.</p></div><div class="art ndm-hero__art"></div></section>
+            <section class="intro ndm-messages-intro"><nav class="bc"><a href="#">Sollicitaties</a><i> › </i><span>Test</span><i> › </i><span>Berichten</span></nav><h1>Berichten</h1><p>Per sollicitatie een rustige plek.</p></section>
             <div class="thr ndm-messages-thr"><div class="tlist"><a class="ti on" href="#"><span class="av w">DK</span><div class="sp"><b>Test</b><p>sub</p></div></a></div>
             <div class="tmain ndm-messages-tmain"><div class="thread"><div class="msg">Hoi</div></div><form class="compose"><input class="sp" name="body" /><button type="submit" class="btn sm">Go</button></form></div></div>
             </main></div></body></html>
@@ -50,7 +50,7 @@ public sealed class NdmMessagesLayoutPlaywrightTests : IAsyncLifetime
         });
         await page.SetContentAsync(html);
         var json = await page.EvaluateAsync<JsonElement>(@"() => {
-            var hero = document.querySelector('.ndm-hero--gesprek');
+            var hero = document.querySelector('.ndm-messages-intro');
             var thr = document.querySelector('.ndm-messages-thr');
             function rect(el) {
                 if (!el) return { right: 0, width: 0 };

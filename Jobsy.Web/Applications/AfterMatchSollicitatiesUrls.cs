@@ -1,3 +1,5 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchSollicitatiesUrls
@@ -22,8 +24,15 @@ internal static class AfterMatchSollicitatiesUrls
 
     internal static string Messages(Guid applicationId, string? returnUrl = null)
     {
-        var url = AfterMatchBase(applicationId) + "?panel=messages";
+        var url = $"/candidate/applications/{applicationId:D}/after-match?panel=messages";
         return AppendReturn(url, returnUrl);
+    }
+
+    internal static string ViewApplicationSsr(Guid applicationId, InterviewStatus status, string? returnUrl = null)
+    {
+        return status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+            ? PickSlot(applicationId, returnUrl)
+            : AfterMatchBase(applicationId, returnUrl);
     }
 
     internal static string Reschedule(Guid applicationId, string? returnUrl = null)

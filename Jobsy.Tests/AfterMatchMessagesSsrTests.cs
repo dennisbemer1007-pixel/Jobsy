@@ -1,5 +1,6 @@
 using Bunit;
 using Jobsy.Core.Contracts;
+using Microsoft.AspNetCore.Http;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
@@ -31,8 +32,8 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchMessagesSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-messages.js?v=20261027-ndm-messages1", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261027-ndm-messages1", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-messages.js?v=20261027-ndm-messages2", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261027-ndm-messages2", razor, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -41,7 +42,29 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
         var src = File.ReadAllText(Path.Combine(
             FindRepoRoot(),
             "Jobsy.Web/Middleware/AfterMatchPickSlotRouteRewriteMiddleware.cs"));
-        Assert.Contains("\"messages\" => \"/messages-ssr\"", src, StringComparison.Ordinal);
+        Assert.Contains("AfterMatchPanelRouting", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Messages_shell_uses_intro_not_hero_band()
+    {
+        var src = File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/Applications/AfterMatchMessagesSsrShells.cs"));
+        Assert.Contains("ndm-messages-intro", src, StringComparison.Ordinal);
+        Assert.DoesNotContain("ndm-hero--gesprek", src, StringComparison.Ordinal);
+        Assert.Contains("PublicFooter.Accessibility", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Panel_routing_messages_wins_over_trailing_cancel()
+    {
+        var query = new QueryCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+        {
+            ["panel"] = new[] { "messages", "cancel" },
+        });
+        Assert.Equal("messages", AfterMatchPanelRouting.ResolvePanel(query));
+        Assert.Equal("/messages-ssr", AfterMatchPanelRouting.PathSuffixForPanel("messages"));
     }
 
     [Fact]

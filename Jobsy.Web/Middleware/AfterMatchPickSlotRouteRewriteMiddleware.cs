@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Jobsy.Web.Applications;
 
 namespace Jobsy.Web.Middleware;
 
@@ -21,15 +22,8 @@ public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
             var match = AfterMatchBasePath().Match(path);
             if (match.Success)
             {
-                var panel = context.Request.Query["panel"].ToString().Trim().ToLowerInvariant();
-                var suffix = panel switch
-                {
-                    "pick-slot" or "propose-slot" => "/pick-slot-ssr",
-                    "messages" => "/messages-ssr",
-                    "reschedule" or "cancel" => "/reschedule-ssr",
-                    "" => "/confirmed-ssr",
-                    _ => "/blazor",
-                };
+                var panel = AfterMatchPanelRouting.ResolvePanel(context.Request.Query);
+                var suffix = AfterMatchPanelRouting.PathSuffixForPanel(panel);
                 context.Request.Path = new PathString(match.Groups[1].Value + suffix);
             }
         }

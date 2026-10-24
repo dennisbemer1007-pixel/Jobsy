@@ -31,8 +31,8 @@
         <link rel="stylesheet" href="@href" />
     }
     <link rel="stylesheet" href="css/features/sollicitaties-page.css?v=20261024-ndm-pick-slot2" />
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261027-ndm-messages1" />
-    <script src="/js/ndm-messages.js?v=20261027-ndm-messages1" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261027-ndm-messages2" />
+    <script src="/js/ndm-messages.js?v=20261027-ndm-messages2" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -98,12 +98,8 @@ else if (_bodyHtml is not null)
             if (data is null)
             {
                 _redirecting = true;
-                var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor?panel=messages";
-                if (http.Request.QueryString.HasValue)
-                {
-                    blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor{http.Request.QueryString.Value}";
-                }
-
+                var blazorPath =
+                    $"/candidate/applications/{ApplicationId:D}/after-match/blazor?panel=messages";
                 http.Response.Redirect(blazorPath);
                 return;
             }
