@@ -126,6 +126,10 @@ public static class UiStringsSollicitaties
             "Sollicitatie bekijken", "View application",
             "Zobacz aplikację", "Vezi candidatura", "عرض الطلب");
 
+        Add("Apps.Berichten.BackList",
+            "Terug naar berichten", "Back to messages",
+            "Wróć do wiadomości", "Înapoi la mesaje", "العودة إلى الرسائل");
+
         Add("Apps.Berichten.SafePanel",
             "Je telefoonnummer deel je pas na het gesprek, je bankgegevens pas na een aanbod. Gesprekken van afgeronde sollicitaties staan in het archief.",
             "You share your phone number only after the interview, and bank details only after an offer. Conversations from closed applications are archived.",

@@ -169,8 +169,11 @@
       applyFilter(filter, { updateUrl: false, sel: opts.sel });
     }
 
-    if (tab === TAB_BER && opts.thread && typeof window.__sollicBerichtenSelectThread === "function") {
-      window.__sollicBerichtenSelectThread(opts.thread, false);
+    if (tab === TAB_BER && typeof window.__sollicBerichtenSyncFromHistory === "function") {
+      window.__sollicBerichtenSyncFromHistory({
+        tab: TAB_BER,
+        thread: opts.thread || null
+      });
     }
 
     if (opts.updateUrl !== false) {
@@ -260,6 +263,8 @@
     applyTab(state.tab, { thread: state.thread, sel: state.sel, updateUrl: false });
     if (state.tab === TAB_SOL) {
       applyFilter(state.filter, { sel: state.sel, updateUrl: false });
+    } else if (state.tab === TAB_BER && typeof window.__sollicBerichtenSyncFromHistory === "function") {
+      window.__sollicBerichtenSyncFromHistory(state);
     }
   }
 

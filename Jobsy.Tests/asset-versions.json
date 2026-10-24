@@ -36,8 +36,8 @@
     "v": "20261024-apps720-scope3"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "714be2cc7c0cb1495644c4b32fe5d891891eefda2e955aba0773b4c44955e93c",
-    "v": "20261024-client-nav1"
+    "sha256": "015c0d67b19f7467d415de82682301aa0362696ec0794c542b7b357024d7136d",
+    "v": "20261024-click-nav1"
   },
   "js/sollicitaties-actions.js": {
     "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",

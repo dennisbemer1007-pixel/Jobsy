@@ -401,6 +401,13 @@ internal static class ApplicationsSsrShells
         sb.Append("\" data-sollic-filters=\"");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.RowFilterKeys(row)));
         sb.Append('"');
+        if (row.ApplicationId is Guid appIdForCard)
+        {
+            sb.Append(" data-sollic-app-id=\"");
+            sb.Append(appIdForCard.ToString("D"));
+            sb.Append('"');
+        }
+
         if (hidden)
         {
             sb.Append(" hidden");
@@ -418,7 +425,15 @@ internal static class ApplicationsSsrShells
         sb.Append(WebUtility.HtmlEncode(row.Title));
         sb.Append("</span><span class=\"sollic-card__meta c\">");
         sb.Append(WebUtility.HtmlEncode(CompanyPlace(row)));
-        sb.Append("</span><span class=\"sollic-card__status-row s\">");
+        sb.Append("</span>");
+        if (row.AfterMatch is null && !string.IsNullOrWhiteSpace(row.CardHint))
+        {
+            sb.Append("<span class=\"sollic-card__hint\">");
+            sb.Append(WebUtility.HtmlEncode(row.CardHint));
+            sb.Append("</span>");
+        }
+
+        sb.Append("</span></a><div class=\"sollic-card__status-row s\">");
         if (row.AfterMatch is null)
         {
             sb.Append("<span class=\"sollic-card__pill sollic-card__pill--");
@@ -463,15 +478,7 @@ internal static class ApplicationsSsrShells
             }
         }
 
-        sb.Append("</span>");
-        if (row.AfterMatch is null && !string.IsNullOrWhiteSpace(row.CardHint))
-        {
-            sb.Append("<span class=\"sollic-card__hint\">");
-            sb.Append(WebUtility.HtmlEncode(row.CardHint));
-            sb.Append("</span>");
-        }
-
-        sb.Append("</span></a><div class=\"sollic-card__right right\">");
+        sb.Append("</div><div class=\"sollic-card__right right\">");
         if (row.AfterMatch is { UnreadMessageCount: > 0 } am)
         {
             sb.Append("<a class=\"sollic-card__msg msgc\" href=\"");

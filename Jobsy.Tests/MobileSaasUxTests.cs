@@ -190,7 +190,9 @@ public class MobileSaasUxTests
         Assert.Contains("scroll-padding-inline: var(--sollic-inline-pad, 16px)", css, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-client-nav.js?v=20261024-client-nav1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-client-nav.js?v=20261024-click-nav1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("data-sollic-app-id", shells, StringComparison.Ordinal);
+        Assert.Contains("data-sollic-berichten-back", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/SollicitatiesBerichtenSsr.cs")), StringComparison.Ordinal);
         Assert.Contains("data-sollic-tab-panel", shells, StringComparison.Ordinal);
         Assert.Contains("data-sollic-filters", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-rail.js", applicationsRazor, StringComparison.Ordinal);
