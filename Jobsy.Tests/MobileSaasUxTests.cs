@@ -168,6 +168,8 @@ public class MobileSaasUxTests
         Assert.Contains(".sollicitaties-segment", css);
         Assert.Contains(".sollic-card", css);
         Assert.Contains(".sollicitaties-detail", css);
+        Assert.Contains("@media (min-width: 1440px)", css, StringComparison.Ordinal);
+        Assert.Contains("font-size: 2rem", css, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
         AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/sollicitaties-page.css");

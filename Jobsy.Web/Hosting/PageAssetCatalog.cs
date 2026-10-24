@@ -294,7 +294,7 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/sollicitaties-page.css?v=20261024-sollicitatie01-layout2",
+                "css/features/sollicitaties-page.css?v=20261024-sollicitatie01-layout4",
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
                 "css/features/banenkaart-illustrated.css?v=20261023-acc9",
             ];
