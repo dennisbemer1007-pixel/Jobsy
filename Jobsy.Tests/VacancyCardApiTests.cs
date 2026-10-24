@@ -45,4 +45,30 @@ public class VacancyCardApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.NotNull(card);
         Assert.Equal(VacancyImageUrls.PublicImagePath(id), card!.ThumbnailUrl);
     }
+
+    [Fact]
+    public async Task Map_popup_photo_returns_webp_when_source_missing_on_disk()
+    {
+        var client = _factory.CreateClient();
+        var pins = await client.GetFromJsonAsync<List<VacancyPinDto>>("api/vacancies/pins", JsonOpts);
+        Assert.NotNull(pins);
+        Assert.NotEmpty(pins!);
+        var id = pins[0].Id;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var vacancy = await db.Vacancies.FindAsync(id);
+            Assert.NotNull(vacancy);
+            vacancy!.ImageUrl = "https://example.invalid/no-such-photo.jpg";
+            await db.SaveChangesAsync();
+            scope.ServiceProvider.GetRequiredService<IVacancyDiscoveryIndex>().Invalidate();
+        }
+
+        var response = await client.GetAsync($"api/vacancies/{id:D}/map-popup-photo?variant=desktop");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("image/webp", response.Content.Headers.ContentType?.MediaType);
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        Assert.InRange(bytes.Length, 200, 80_000);
+    }
 }

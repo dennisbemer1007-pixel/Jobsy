@@ -16,6 +16,14 @@ public class VacancyMapPopupPhotoEncoderTests
     }
 
     [Fact]
+    public void Category_placeholder_webp_is_valid_and_compact()
+    {
+        var bytes = VacancyMapPopupPhotoEncoder.CategoryPlaceholderWebp("#b4500f", 640, "desktop");
+        Assert.InRange(bytes.Length, 200, 12_000);
+        Assert.Equal(0x52, bytes[0]); // RIFF / WebP container
+    }
+
+    [Fact]
     public void Desktop_webp_from_category_photo_stays_under_typical_budget()
     {
         var repoRoot = FindRepoRoot();

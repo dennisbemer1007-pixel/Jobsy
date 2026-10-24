@@ -851,12 +851,18 @@ public class VacanciesController : ControllerBase
         var workType = record.WorkTypeLabelList.FirstOrDefault();
         var width = VacancyMapPopupPhotoEncoder.WidthForVariant(variant);
         var sourceBytes = await TryLoadVacancyPhotoBytesAsync(record, id, workType, cancellationToken);
+        byte[] webp;
         if (sourceBytes is null || sourceBytes.Length == 0)
         {
-            return NotFound();
+            webp = VacancyMapPopupPhotoEncoder.CategoryPlaceholderWebp(
+                record.CategoryColorHex,
+                width,
+                variant);
         }
-
-        var webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width);
+        else
+        {
+            webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width);
+        }
         Response.Headers.CacheControl = "public,max-age=31536000,immutable";
         return File(webp, "image/webp");
     }
