@@ -112,7 +112,10 @@ public record ApplicationAfterMatchSummaryDto(
     int OpenSlotCount,
     DateTime? ScheduledStartUtc,
     DateTime? ScheduledEndUtc,
-    DateTime? AcceptedAtUtc);
+    DateTime? AcceptedAtUtc,
+    string? LastMessagePreview = null,
+    bool LastMessageFromCandidate = false,
+    DateTime? LastMessageAtUtc = null);
 
 /// <summary>Candidate timeline step (no actor ids).</summary>
 public record ApplicationTimelineStepDto(

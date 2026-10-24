@@ -129,4 +129,7 @@ internal sealed record ApplicationAfterMatchSummary(
     int OpenSlotCount,
     DateTime? ScheduledStartUtc,
     DateTime? ScheduledEndUtc,
-    DateTime? AcceptedAtUtc);
+    DateTime? AcceptedAtUtc,
+    string? LastMessagePreview,
+    bool LastMessageFromCandidate,
+    DateTime? LastMessageAtUtc);

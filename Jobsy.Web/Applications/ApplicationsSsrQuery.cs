@@ -5,6 +5,7 @@ namespace Jobsy.Web.Applications;
 internal static class ApplicationsSsrQuery
 {
     internal const string TabSollicitaties = "sollicitaties";
+    internal const string TabBerichten = "berichten";
     internal const string TabActiviteiten = "activiteiten";
 
     internal const string FilterAll = "all";
@@ -14,9 +15,19 @@ internal static class ApplicationsSsrQuery
     internal const string FilterDone = "done";
 
     internal static string NormalizeTab(string? raw)
-        => string.Equals(raw, TabActiviteiten, StringComparison.OrdinalIgnoreCase)
-            ? TabActiviteiten
-            : TabSollicitaties;
+    {
+        if (string.Equals(raw, TabActiviteiten, StringComparison.OrdinalIgnoreCase))
+        {
+            return TabActiviteiten;
+        }
+
+        if (string.Equals(raw, TabBerichten, StringComparison.OrdinalIgnoreCase))
+        {
+            return TabBerichten;
+        }
+
+        return TabSollicitaties;
+    }
 
     internal static string NormalizeFilter(string? raw)
     {
@@ -65,7 +76,7 @@ internal static class ApplicationsSsrQuery
         return true;
     }
 
-    internal static string BuildUrl(string tab, string filter, Guid? selectedId)
+    internal static string BuildUrl(string tab, string filter, Guid? selectedId, Guid? threadApplicationId = null)
     {
         var q = new List<string>();
         if (!string.Equals(tab, TabSollicitaties, StringComparison.Ordinal))
@@ -73,12 +84,22 @@ internal static class ApplicationsSsrQuery
             q.Add($"tab={Uri.EscapeDataString(tab)}");
         }
 
-        if (!string.Equals(filter, FilterAll, StringComparison.Ordinal))
+        if (string.Equals(tab, TabSollicitaties, StringComparison.Ordinal)
+            && !string.Equals(filter, FilterAll, StringComparison.Ordinal))
         {
             q.Add($"filter={Uri.EscapeDataString(filter)}");
         }
 
-        if (selectedId is Guid id && id != Guid.Empty)
+        if (string.Equals(tab, TabBerichten, StringComparison.Ordinal)
+            && threadApplicationId is Guid threadId
+            && threadId != Guid.Empty)
+        {
+            q.Add($"thread={threadId:D}");
+        }
+
+        if (string.Equals(tab, TabSollicitaties, StringComparison.Ordinal)
+            && selectedId is Guid id
+            && id != Guid.Empty)
         {
             q.Add($"sel={id:D}");
         }

@@ -125,6 +125,9 @@ public class ApplicationAfterMatchSummaryItem
     public DateTime? ScheduledStartUtc { get; set; }
     public DateTime? ScheduledEndUtc { get; set; }
     public DateTime? AcceptedAtUtc { get; set; }
+    public string? LastMessagePreview { get; set; }
+    public bool LastMessageFromCandidate { get; set; }
+    public DateTime? LastMessageAtUtc { get; set; }
 }
 
 public class ApplicationTimelineStepItem

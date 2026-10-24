@@ -155,6 +155,9 @@ public class MobileSaasUxTests
         Assert.Contains("sollicitaties-page-wrap", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-vsteps vsteps", shells, StringComparison.Ordinal);
+        Assert.Contains("ApplicationsSsrQuery.TabBerichten", shells, StringComparison.Ordinal);
+        var berichtenShells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/SollicitatiesBerichtenSsr.cs"));
+        Assert.Contains("sollicitaties-berichten-tab", berichtenShells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-segment", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-card--app", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-card", shells, StringComparison.Ordinal);
@@ -167,6 +170,7 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("<table", shells, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/sollicitaties-page.css"));
+        Assert.Contains(".sollic-berichten.thr", css, StringComparison.Ordinal);
         Assert.Contains(".sollicitaties-segment", css);
         Assert.Contains(".sollic-card", css);
         Assert.Contains(".sollicitaties-detail", css);
@@ -186,7 +190,7 @@ public class MobileSaasUxTests
         Assert.Contains("scroll-padding-inline: var(--sollic-inline-pad, 16px)", css, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-mockup01-acc3", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-mockup01-acc4", applicationsRazor, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-rail.js", applicationsRazor, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));

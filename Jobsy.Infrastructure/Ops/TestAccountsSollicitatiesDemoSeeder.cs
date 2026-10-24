@@ -730,7 +730,14 @@ public static class TestAccountsSollicitatiesDemoSeeder
                     proposeSlots: true,
                     chooseFirstSlot: true,
                     cancellationToken);
-                await RemoveMessagesAsync(db, applicationId, cancellationToken);
+                await EnsureDemoConversationAsync(
+                    db,
+                    applicationId,
+                    branchManagerId,
+                    candidate.Id,
+                    "Top, dinsdag 27 oktober past goed voor ons team.",
+                    "Tot dinsdag!",
+                    cancellationToken);
                 break;
 
             case DemoApplicationScenario.UnreadMessages:
@@ -988,6 +995,39 @@ public static class TestAccountsSollicitatiesDemoSeeder
             ReadAtUtc = readAtUtc,
             BlockReason = ApplicationMessageBlockReason.None,
             CreatedAtUtc = DemoAnchorUtc.AddDays(-1)
+        });
+    }
+
+    private static async Task EnsureDemoConversationAsync(
+        JobsyDbContext db,
+        Guid applicationId,
+        Guid employerUserId,
+        Guid candidateUserId,
+        string employerBody,
+        string candidateBody,
+        CancellationToken cancellationToken)
+    {
+        await RemoveMessagesAsync(db, applicationId, cancellationToken);
+        var baseAt = DemoAnchorUtc.AddDays(-2);
+        db.ApplicationMessages.Add(new ApplicationMessage
+        {
+            Id = Guid.NewGuid(),
+            ApplicationId = applicationId,
+            SenderUserId = employerUserId,
+            Body = employerBody,
+            ReadAtUtc = baseAt.AddHours(1),
+            BlockReason = ApplicationMessageBlockReason.None,
+            CreatedAtUtc = baseAt
+        });
+        db.ApplicationMessages.Add(new ApplicationMessage
+        {
+            Id = Guid.NewGuid(),
+            ApplicationId = applicationId,
+            SenderUserId = candidateUserId,
+            Body = candidateBody,
+            ReadAtUtc = baseAt.AddHours(3),
+            BlockReason = ApplicationMessageBlockReason.None,
+            CreatedAtUtc = baseAt.AddHours(2)
         });
     }
 
