@@ -173,9 +173,11 @@ internal static class ApplicationsSsrShells
 
         sb.Append("<p class=\"sollicitaties-init-banner");
         sb.Append(inline ? " sollicitaties-init-banner--inline" : " sollicitaties-init-banner--stacked");
-        sb.Append("\" role=\"status\">");
+        sb.Append("\" role=\"status\"><span class=\"sollicitaties-init-banner__icon\" aria-hidden=\"true\">");
+        sb.Append(SollicitatiesInlineIcons.People16);
+        sb.Append("</span><span class=\"sollicitaties-init-banner__text\">");
         sb.Append(WebUtility.HtmlEncode(culture.Format("Apps.InitiativeWeekBanner", remaining, max)));
-        sb.Append("</p>");
+        sb.Append("</span></p>");
     }
 
     private static void AppendToolbar(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
@@ -197,7 +199,9 @@ internal static class ApplicationsSsrShells
         {
             sb.Append("<a class=\"btn btn-primary sollicitaties-toolbar__add\" href=\"");
             sb.Append(KbRoutes.ExternalVacancyAdd);
-            sb.Append("\" data-enhance-nav=\"false\">+ ");
+            sb.Append("\" data-enhance-nav=\"false\"><span class=\"sollicitaties-toolbar__add-icon\" aria-hidden=\"true\">");
+            sb.Append(SollicitatiesInlineIcons.Plus16);
+            sb.Append("</span>");
             sb.Append(WebUtility.HtmlEncode(culture["Apps.AddApplication"]));
             sb.Append("</a>");
         }
