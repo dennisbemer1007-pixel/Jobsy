@@ -119,6 +119,10 @@ public static class TestAccountsSollicitatiesDemoSeeder
         }
 
         var regulierCategoryId = await ResolveRegulierCategoryIdAsync(db, cancellationToken);
+        if (db.ChangeTracker.HasChanges())
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
 
         var companies = BuildCompanies();
         foreach (var company in companies)
@@ -126,11 +130,15 @@ public static class TestAccountsSollicitatiesDemoSeeder
             await UpsertCompanyAsync(db, company, cancellationToken);
         }
 
+        await db.SaveChangesAsync(cancellationToken);
+
         var vacancies = BuildVacancies(companies);
         foreach (var vacancy in vacancies)
         {
             await UpsertVacancyAsync(db, vacancy, regulierCategoryId, cancellationToken);
         }
+
+        await db.SaveChangesAsync(cancellationToken);
 
         await EnsureVacancyApplicationAsync(
             db,
@@ -515,11 +523,16 @@ public static class TestAccountsSollicitatiesDemoSeeder
         Guid categoryId,
         CancellationToken cancellationToken)
     {
-        var companyExists = await db.Companies.AsNoTracking()
-            .AnyAsync(c => c.Id == seed.CompanyId, cancellationToken);
-        if (!companyExists)
+        if (!await EntityExistsAsync(db.Companies, seed.CompanyId, cancellationToken))
         {
-            return;
+            throw new InvalidOperationException(
+                $"Sollicitaties demo company {seed.CompanyId:D} missing before vacancy {seed.Id:D}.");
+        }
+
+        if (!await EntityExistsAsync(db.VacancyCategories, categoryId, cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Sollicitaties demo vacancy category {categoryId:D} missing before vacancy {seed.Id:D}.");
         }
 
         var today = DateOnly.FromDateTime(DemoAnchorUtc);
@@ -571,6 +584,24 @@ public static class TestAccountsSollicitatiesDemoSeeder
         DemoApplicationScenario scenario,
         CancellationToken cancellationToken)
     {
+        if (!await EntityExistsAsync(db.Vacancies, vacancyId, cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Sollicitaties demo vacancy {vacancyId:D} missing before application {applicationId:D}.");
+        }
+
+        if (!await EntityExistsAsync(db.Users, candidate.Id, cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Sollicitaties demo candidate user {candidate.Id:D} missing before application {applicationId:D}.");
+        }
+
+        if (!await EntityExistsAsync(db.Users, branchManagerId, cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Sollicitaties demo branch manager {branchManagerId:D} missing before application {applicationId:D}.");
+        }
+
         var createdAt = DemoAnchorUtc.AddDays(-CreatedDaysAgo(scenario));
 
         var app = await db.Applications.FirstOrDefaultAsync(a => a.Id == applicationId, cancellationToken);
@@ -1119,4 +1150,23 @@ public static class TestAccountsSollicitatiesDemoSeeder
         row.RespondedAtUtc = respondedAtUtc;
         row.ResponseDeadlineUtc = InitiativeBusinessDayRules.AddBusinessDaysUtc(createdAtUtc, 5);
     }
+
+    private static async Task<bool> EntityExistsAsync<TEntity>(
+        DbSet<TEntity> set,
+        Guid id,
+        CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        foreach (var entity in set.Local)
+        {
+            var idProp = entity.GetType().GetProperty("Id");
+            if (idProp?.GetValue(entity) is Guid trackedId && trackedId == id)
+            {
+                return true;
+            }
+        }
+
+        return await set.AsNoTracking().AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+    }
+
 }
