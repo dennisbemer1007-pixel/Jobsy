@@ -237,16 +237,30 @@ internal static class AfterMatchRescheduleSsrShells
         AfterMatchRescheduleSsrData.PageData data,
         string mode)
     {
-        sb.Append("<div class=\"row ndm-reschedule-actions\"><button type=\"button\" class=\"btn\" data-ndm-submit-reschedule");
-        if (mode != "reschedule")
+        var rescheduleHidden = mode != "reschedule";
+        var cancelHidden = mode != "cancel";
+        sb.Append("<div class=\"row ndm-reschedule-actions\"><button type=\"button\" class=\"btn");
+        if (rescheduleHidden)
+        {
+            sb.Append(" ndm-reschedule-is-hidden");
+        }
+
+        sb.Append("\" data-ndm-submit-reschedule=\"\"");
+        if (rescheduleHidden)
         {
             sb.Append(" hidden");
         }
 
         sb.Append('>');
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Screen08.SendTo"], data.ContactShort)));
-        sb.Append("</button><button type=\"button\" class=\"btn\" data-ndm-submit-cancel");
-        if (mode != "cancel")
+        sb.Append("</button><button type=\"button\" class=\"btn");
+        if (cancelHidden)
+        {
+            sb.Append(" ndm-reschedule-is-hidden");
+        }
+
+        sb.Append("\" data-ndm-submit-cancel=\"\"");
+        if (cancelHidden)
         {
             sb.Append(" hidden");
         }

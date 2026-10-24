@@ -76,6 +76,8 @@ public sealed class PrecompressedStaticAssetTests
                 StringComparison.Ordinal);
             Assert.Contains(".ndm.ndm-reschedule-page", text, StringComparison.Ordinal);
             Assert.Contains(".ndm-reschedule-page button.chip.on{border-color:var(--brand);background:#eef2f7}", text, StringComparison.Ordinal);
+            Assert.Contains(".ndm-reschedule-page [hidden]", text, StringComparison.Ordinal);
+            Assert.Contains("display:none!important", text, StringComparison.Ordinal);
         }
     }
 
