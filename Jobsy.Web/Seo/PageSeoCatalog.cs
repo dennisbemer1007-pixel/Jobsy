@@ -28,6 +28,11 @@ public static partial class PageSeoCatalog
             return exact;
         }
 
+        if (p.Contains("/after-match/pick-slot-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen04.PageTitle", "Seo.PrivateDescription");
+        }
+
         foreach (var (prefix, entry) in Prefixes)
         {
             if (p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))

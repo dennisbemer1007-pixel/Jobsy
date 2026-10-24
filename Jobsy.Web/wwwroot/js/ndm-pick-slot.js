@@ -87,19 +87,19 @@
     btn.addEventListener("click", function () {
       var form = container.querySelector("#ndm-propose-form");
       if (!form || !appId) return;
-      var startEl = form.querySelector("[data-ndm-propose-start]");
-      var endEl = form.querySelector("[data-ndm-propose-end]");
+      var dateEl = form.querySelector("[data-ndm-propose-date]");
+      var timeEl = form.querySelector("[data-ndm-propose-time]");
       var noteEl = form.querySelector("[data-ndm-propose-note]");
-      if (!startEl || !endEl || !noteEl) return;
-      if (!startEl.value || !endEl.value || !noteEl.value.trim()) return;
+      if (!dateEl || !timeEl || !noteEl) return;
+      if (!dateEl.value.trim() || !timeEl.value.trim() || !noteEl.value.trim()) return;
       btn.disabled = true;
       postJson(
         "/api/ndm-pick-slot-client/propose-slot?applicationId=" +
           encodeURIComponent(appId),
         {
-          startLocal: startEl.value,
-          endLocal: endEl.value,
-          reason: noteEl.value.trim(),
+          dateLabel: dateEl.value.trim(),
+          timeWindow: timeEl.value.trim(),
+          note: noteEl.value.trim(),
         }
       )
         .then(function (res) {

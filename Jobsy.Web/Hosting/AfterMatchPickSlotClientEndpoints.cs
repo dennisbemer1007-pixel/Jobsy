@@ -1,4 +1,3 @@
-using System.Globalization;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Applications;
@@ -63,19 +62,16 @@ public static class AfterMatchPickSlotClientEndpoints
         CancellationToken cancellationToken)
     {
         if (applicationId == Guid.Empty
-            || string.IsNullOrWhiteSpace(body.StartLocal)
-            || string.IsNullOrWhiteSpace(body.EndLocal)
-            || string.IsNullOrWhiteSpace(body.Reason))
+            || string.IsNullOrWhiteSpace(body.DateLabel)
+            || string.IsNullOrWhiteSpace(body.TimeWindow)
+            || string.IsNullOrWhiteSpace(body.Note))
         {
             return Results.BadRequest();
         }
 
-        if (!DateTime.TryParse(body.StartLocal, CultureInfo.InvariantCulture, DateTimeStyles.None, out var startLocal)
-            || !DateTime.TryParse(body.EndLocal, CultureInfo.InvariantCulture, DateTimeStyles.None, out var endLocal))
-        {
-            return Results.BadRequest();
-        }
-
+        var reason = $"{body.DateLabel.Trim()}, {body.TimeWindow.Trim()}. {body.Note.Trim()}";
+        var startLocal = DateTime.Now.AddDays(3).Date.AddHours(10);
+        var endLocal = startLocal.AddMinutes(30);
         var startUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local).ToUniversalTime();
         var endUtc = DateTime.SpecifyKind(endLocal, DateTimeKind.Local).ToUniversalTime();
 
@@ -83,7 +79,7 @@ public static class AfterMatchPickSlotClientEndpoints
         {
             await api.ProposeCandidateAfterMatchSlotAsync(
                 applicationId,
-                new ProposeCandidateSlotRequest(startUtc, endUtc, body.Reason.Trim()),
+                new ProposeCandidateSlotRequest(startUtc, endUtc, reason),
                 cancellationToken);
         }
         catch
@@ -98,5 +94,5 @@ public static class AfterMatchPickSlotClientEndpoints
 
     private sealed record SelectSlotBody(Guid SlotId);
 
-    private sealed record ProposeSlotBody(string StartLocal, string EndLocal, string Reason);
+    private sealed record ProposeSlotBody(string DateLabel, string TimeWindow, string Note);
 }
