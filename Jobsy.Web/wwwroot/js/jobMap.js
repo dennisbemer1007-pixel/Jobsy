@@ -6389,6 +6389,27 @@ window.jobMap = (function () {
         }
     }
 
+    function urlOmitsOriginWhileFiltered() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("originLat") || params.has("originLng")) {
+                return false;
+            }
+            return params.has("maxMinutes") || params.has("transport")
+                || params.has("minHours") || params.has("maxHours") || params.has("q")
+                || params.has("categoryId") || params.has("workType") || params.has("sort")
+                || params.has("minWage") || params.has("maxWage") || params.has("age")
+                || params.has("minMatchPercent") || params.has("companyId") || params.has("radiusKm")
+                || params.has("weergave");
+        } catch (eUrl) {
+            return false;
+        }
+    }
+
+    function bootOriginFromFiltersAllowed() {
+        return !urlOmitsOriginWhileFiltered();
+    }
+
     function reconcileBootFromDom() {
         const bootPayload = readBootPayload();
         if (!bootPayload) {
@@ -6413,7 +6434,7 @@ window.jobMap = (function () {
             normalizeTravelOptions(travel);
         }
         let origin = bootPayload.origin || null;
-        if (!origin && mapInit && mapInit.filters
+        if (!origin && bootOriginFromFiltersAllowed() && mapInit && mapInit.filters
             && mapInit.filters.originLat != null
             && mapInit.filters.originLng != null) {
             origin = {
@@ -6425,6 +6446,10 @@ window.jobMap = (function () {
             try {
                 setOrigin(origin.lat, origin.lng, travel || travelOptions);
             } catch (eOrigin) { }
+        } else if (!origin && typeof clearOrigin === "function") {
+            try {
+                clearOrigin();
+            } catch (eClearOrigin) { }
         }
         if (catalogModeActive) {
             syncCatalogToMap();
@@ -6464,7 +6489,7 @@ window.jobMap = (function () {
             if (mapInit.travel) {
                 travel = mapInit.travel;
             }
-            if (!origin && mapInit.filters
+            if (!origin && bootOriginFromFiltersAllowed() && mapInit.filters
                 && mapInit.filters.originLat != null
                 && mapInit.filters.originLng != null) {
                 origin = {

@@ -103,25 +103,38 @@ internal static class BanenkaartMapBoot
         return travel;
     }
 
-    internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query) => new()
+    internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query)
     {
-        ["q"] = query.SearchQuery,
-        ["workTypes"] = query.WorkTypes,
-        ["maxMinutes"] = query.MaxTravelMinutes,
-        ["transport"] = query.Transport,
-        ["radiusKm"] = query.RadiusKm,
-        ["minHours"] = query.MinHoursPerWeek,
-        ["maxHours"] = query.MaxHoursPerWeek,
-        ["minWageCents"] = query.MinHourlyWageCents,
-        ["maxWageCents"] = query.MaxHourlyWageCents,
-        ["age"] = query.AgeYears,
-        ["minMatchPercent"] = query.MinMatchPercent,
-        ["categoryIds"] = query.CategoryIds.Select(id => id.ToString("D")).ToList(),
-        ["companyIds"] = query.CompanyIds.Select(id => id.ToString("D")).ToList(),
-        ["originLat"] = query.OriginLat,
-        ["originLng"] = query.OriginLng,
-        ["originLabel"] = query.OriginLabel,
-    };
+        var originLat = query.OriginLat;
+        var originLng = query.OriginLng;
+        var originLabel = query.OriginLabel;
+        if (query.UrlOriginAbsentByQuery)
+        {
+            originLat = null;
+            originLng = null;
+            originLabel = null;
+        }
+
+        return new Dictionary<string, object?>
+        {
+            ["q"] = query.SearchQuery,
+            ["workTypes"] = query.WorkTypes,
+            ["maxMinutes"] = query.MaxTravelMinutes,
+            ["transport"] = query.Transport,
+            ["radiusKm"] = query.RadiusKm,
+            ["minHours"] = query.MinHoursPerWeek,
+            ["maxHours"] = query.MaxHoursPerWeek,
+            ["minWageCents"] = query.MinHourlyWageCents,
+            ["maxWageCents"] = query.MaxHourlyWageCents,
+            ["age"] = query.AgeYears,
+            ["minMatchPercent"] = query.MinMatchPercent,
+            ["categoryIds"] = query.CategoryIds.Select(id => id.ToString("D")).ToList(),
+            ["companyIds"] = query.CompanyIds.Select(id => id.ToString("D")).ToList(),
+            ["originLat"] = originLat,
+            ["originLng"] = originLng,
+            ["originLabel"] = originLabel,
+        };
+    }
 
     internal static string BuildPinsApiUrl(BanenkaartSsrQuery.State query, bool isCandidate)
     {
