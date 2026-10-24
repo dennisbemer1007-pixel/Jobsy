@@ -41,6 +41,8 @@ const min = readFileSync(minPath, "utf8");
 assert.match(js, /function lagenPinSymbolsRenderable/);
 assert.match(js, /if \(lagenLayout\) \{\s*return "";\s*\}/);
 assert.match(js, /pushPinData\(\)/);
+assert.match(js, /tip--sheet-incard/);
+assert.match(min, /tip--sheet-incard/);
 assert.match(js, /icon-ignore-placement": true/);
 assert.match(js, /lagenUnclusteredIconLayout[\s\S]*?"icon-ignore-placement": true/);
 const hash = createHash("sha256").update(committed).digest("hex");

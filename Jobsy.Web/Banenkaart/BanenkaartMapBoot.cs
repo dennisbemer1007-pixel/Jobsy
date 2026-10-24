@@ -263,6 +263,7 @@ internal static class BanenkaartMapBoot
         ["canSave"] = isAuthenticated,
         ["wageTooltipTitle"] = culture["Employer.WageByAge"],
         ["wageTooltipTitleEn"] = "Hourly wage (gross)",
-        ["candidateAgeYears"] = query.AgeYears ?? 21
+        ["candidateAgeYears"] = query.AgeYears ?? 21,
+        ["wageFallbackAdultHourly"] = 14.06m
     };
 }
