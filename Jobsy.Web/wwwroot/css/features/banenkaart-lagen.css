@@ -1905,12 +1905,15 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 }
 
 @media (max-width: 700px) {
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner {
-        display: block !important;
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .job-map .maplibregl-ctrl-attrib {
+        left: 8px !important;
+        right: auto !important;
+        max-width: min(11rem, calc(100% - 76px)) !important;
+        text-align: left;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
-        display: none !important;
+    .app-shell--banenkaart-shell.has-bottom-nav .jobsy-discovery--lagen .job-map .maplibregl-ctrl-attrib {
+        bottom: calc(var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px) + 8px) !important;
     }
 }
 
