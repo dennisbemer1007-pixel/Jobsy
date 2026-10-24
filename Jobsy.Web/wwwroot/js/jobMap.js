@@ -1938,19 +1938,37 @@ window.jobMap = (function () {
         });
     }
 
+    let lagenHeartGuardBound = false;
+
+    function ensureLagenHeartInteractionGuard() {
+        if (lagenHeartGuardBound || typeof document === "undefined") {
+            return;
+        }
+        lagenHeartGuardBound = true;
+        document.addEventListener("submit", function (ev) {
+            const sub = ev && ev.submitter;
+            if (sub && sub.closest &&
+                sub.closest("[data-lagen-heart], button.map-popup__heart[data-save-job]")) {
+                stopEvent(ev);
+            }
+        }, true);
+    }
+
     function bindSaveJobButtons(root, childMarkers) {
         if (!root) {
             return;
         }
+        ensureLagenHeartInteractionGuard();
         root.querySelectorAll("[data-save-job]").forEach(function (btn) {
             if (btn.dataset.boundSave) {
                 return;
             }
             btn.dataset.boundSave = "1";
+            btn.setAttribute("type", "button");
             const id = btn.getAttribute("data-save-job");
             if (uiLabels.canSave) {
                 fetchLikedStatus(id).then(function (liked) {
-                    if (!btn.isConnected) {
+                    if (!btn.isConnected || btn.dataset.saveBusy === "1") {
                         return;
                     }
                     setHeartButtonState(btn, liked);
@@ -1958,14 +1976,11 @@ window.jobMap = (function () {
                 });
             }
             function stopHeartMapBubble(ev) {
-                if (!ev || typeof ev.stopPropagation !== "function") {
-                    return;
-                }
-                ev.stopPropagation();
+                stopEvent(ev);
             }
             btn.addEventListener("pointerdown", stopHeartMapBubble, true);
             btn.addEventListener("mousedown", stopHeartMapBubble, true);
-            btn.addEventListener("touchstart", stopHeartMapBubble, { capture: true, passive: true });
+            btn.addEventListener("touchstart", stopHeartMapBubble, { capture: true, passive: false });
             btn.addEventListener("click", function (ev) {
                 stopHeartMapBubble(ev);
                 if (!uiLabels.canSave) {
@@ -6231,6 +6246,10 @@ window.jobMap = (function () {
         if (lagenLayout) {
             illustratedPopup = false;
         }
+        if (mapInit && mapInit.labels && typeof mapInit.labels === "object") {
+            uiLabels = Object.assign({}, uiLabels, mapInit.labels);
+            uiLabels.canSave = mapInit.labels.canSave === true || mapInit.labels.canSave === "true";
+        }
         let travel = null;
         if (mapInit && mapInit.travel) {
             travel = mapInit.travel;
@@ -6900,9 +6919,14 @@ window.jobMap = (function () {
         viewportListDotNet = options && options.syncViewportList && options.dotNetRef
             ? options.dotNetRef
             : null;
-        if (options && options.labels && typeof options.labels === "object") {
-            uiLabels = Object.assign({}, uiLabels, options.labels);
-            uiLabels.canSave = options.labels.canSave === true || options.labels.canSave === "true";
+        const labelSource = (options && options.labels && typeof options.labels === "object")
+            ? options.labels
+            : (options && options.mapInit && options.mapInit.labels && typeof options.mapInit.labels === "object"
+                ? options.mapInit.labels
+                : null);
+        if (labelSource) {
+            uiLabels = Object.assign({}, uiLabels, labelSource);
+            uiLabels.canSave = labelSource.canSave === true || labelSource.canSave === "true";
         }
         normalizeTravelOptions(options && options.travel);
         highlightSeed = options && Number.isFinite(Number(options.highlightSeed))

@@ -124,7 +124,12 @@ public static class BanenkaartClientEndpoints
 
         try
         {
-            await api.SetLikedAsync(vacancyId, liked, cancellationToken);
+            var savedLiked = await api.SetLikedAsync(vacancyId, liked, cancellationToken);
+            if (WantsJson(http))
+            {
+                return Results.Json(new { liked = savedLiked, Liked = savedLiked });
+            }
+
             var returnQuery = form["returnQuery"].ToString();
             if (!string.IsNullOrWhiteSpace(returnQuery) && returnQuery.StartsWith('?'))
             {
@@ -173,6 +178,23 @@ public static class BanenkaartClientEndpoints
     }
 
     private sealed record AddressSuggestDto(string Label, double Latitude, double Longitude);
+
+    private static bool WantsJson(HttpContext http)
+    {
+        if (http.Request.Headers.TryGetValue("Accept", out var accept))
+        {
+            foreach (var value in accept)
+            {
+                if (!string.IsNullOrEmpty(value)
+                    && value.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return string.Equals(http.Request.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static RedirectHttpResult SeeOther(string url)
         => TypedResults.Redirect(url, permanent: false, preserveMethod: false);

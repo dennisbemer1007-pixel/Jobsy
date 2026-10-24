@@ -45,9 +45,9 @@ public static class VacancyMapProxyEndpoints
         app.MapGet("/api/travel/isochrones", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, "api/travel/isochrones", ct));
 
-        app.MapGet("/api/vacancies/{id:guid}/like", GetLikeAsync).RequireAuthorization();
-        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization();
-        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization();
+        app.MapGet("/api/vacancies/{id:guid}/like", GetLikeAsync).RequireAuthorization().DisableAntiforgery();
+        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization().DisableAntiforgery();
+        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization().DisableAntiforgery();
     }
 
     private static async Task<IResult> GetLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)

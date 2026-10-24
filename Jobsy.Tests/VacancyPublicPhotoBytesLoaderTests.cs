@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Media;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Media;
 using Microsoft.EntityFrameworkCore;
@@ -79,6 +80,43 @@ public sealed class VacancyPublicPhotoBytesLoaderTests : IClassFixture<RoleFunct
         Assert.NotNull(bytes);
         Assert.True(bytes!.Length > 3000);
         Assert.Equal(1, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task Loader_uses_acceptatie_origin_when_PublicWebBaseUrl_missing_on_acceptatie_deployment()
+    {
+        var repoRoot = TestRepo.FindRoot();
+        var sourcePath = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "images", "vacancies", "tuinbouw.webp");
+        var sourceBytes = await File.ReadAllBytesAsync(sourcePath);
+        Assert.True(sourceBytes.Length > 3000);
+
+        Uri? requested = null;
+        var handler = new StubHttpHandler(req =>
+        {
+            requested = req.RequestUri;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(sourceBytes)
+            };
+        });
+
+        using var httpFactory = new SingleHandlerClientFactory(handler);
+        var loader = new VacancyPublicPhotoBytesLoader(
+            httpFactory,
+            new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Lobsy:DeploymentEnvironment"] = "Acceptatie"
+                })
+                .Build(),
+            NullLogger<VacancyPublicPhotoBytesLoader>.Instance);
+
+        var bytes = await loader.LoadPathViaPublicWebForTestsAsync(
+            "/images/vacancies/flex.webp",
+            CancellationToken.None);
+
+        Assert.NotNull(bytes);
+        Assert.Equal("https://acceptatie.lobsy.nl/images/vacancies/flex.webp", requested?.ToString());
     }
 
     private sealed class StubHttpHandler : HttpMessageHandler

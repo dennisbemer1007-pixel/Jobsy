@@ -142,10 +142,38 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
 
     private sealed class StubApiHandler(bool emptyAppsAndLikes, bool minimalPassportProfile) : HttpMessageHandler
     {
+        private static readonly HashSet<Guid> LikedVacancyIds = [];
+
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
             var pathAndQuery = path + (request.RequestUri?.Query ?? "");
+            if (path.StartsWith("/api/vacancies/", StringComparison.OrdinalIgnoreCase)
+                && path.EndsWith("/like", StringComparison.OrdinalIgnoreCase))
+            {
+                var idPart = path["/api/vacancies/".Length..^"/like".Length].Trim('/');
+                _ = Guid.TryParse(idPart, out var vacancyId);
+                if (vacancyId != Guid.Empty)
+                {
+                    if (request.Method == HttpMethod.Post)
+                    {
+                        LikedVacancyIds.Add(vacancyId);
+                    }
+                    else if (request.Method == HttpMethod.Delete)
+                    {
+                        LikedVacancyIds.Remove(vacancyId);
+                    }
+                }
+
+                var liked = vacancyId != Guid.Empty && LikedVacancyIds.Contains(vacancyId);
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        $"{{\"liked\":{(liked ? "true" : "false")},\"Liked\":{(liked ? "true" : "false")}}}",
+                        System.Text.Encoding.UTF8,
+                        "application/json")
+                };
+            }
             if (Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_SLOW_CORE") == "1"
                 && path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
             {

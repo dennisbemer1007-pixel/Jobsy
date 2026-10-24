@@ -88,8 +88,39 @@ public sealed class BanenkaartLagenDesktopPopupPlaywrightTests : IAsyncLifetime
             ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
             IgnoreHTTPSErrors = true
         });
+        var likedVacancyIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await context.RouteAsync("**/api/vacancies/*/like", async route =>
+        {
+            var path = route.Request.Url;
+            var idStart = path.IndexOf("/api/vacancies/", StringComparison.OrdinalIgnoreCase);
+            var idPart = idStart >= 0
+                ? path[(idStart + "/api/vacancies/".Length)..].Split('?', '#')[0].Trim('/')
+                : "";
+            var method = route.Request.Method;
+            if (method is "POST" or "PUT" && idPart.Length > 0)
+            {
+                likedVacancyIds.Add(idPart);
+            }
+            else if (method is "DELETE" && idPart.Length > 0)
+            {
+                likedVacancyIds.Remove(idPart);
+            }
+
+            var liked = idPart.Length > 0 && likedVacancyIds.Contains(idPart);
+            await route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/json",
+                Body = $"{{\"liked\":{(liked ? "true" : "false")},\"Liked\":{(liked ? "true" : "false")}}}"
+            });
+        });
         var page = await context.NewPageAsync();
-        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.GotoAsync(
+            _baseUrl + "/__test/sign-in?role=candidate&return=" + Uri.EscapeDataString(BanenkaartPath),
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForURLAsync(
+            url => url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 30_000 });
         await page.WaitForFunctionAsync(
             "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
             null,
@@ -130,9 +161,54 @@ public sealed class BanenkaartLagenDesktopPopupPlaywrightTests : IAsyncLifetime
             """);
         Assert.True(inFocus, "Desktop popup should sit fully inside the map area below the carousel.");
 
-        await page.Locator("[data-lagen-heart]").First.ClickAsync(new() { Force = true });
-        await page.WaitForTimeoutAsync(400);
-        Assert.DoesNotContain("/vacancies/", page.Url, StringComparison.OrdinalIgnoreCase);
+        var heart = page.Locator("[data-lagen-heart]").First;
+        await heart.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+        var canSave = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              try {
+                const node = document.getElementById("jobsy-map-boot");
+                const boot = JSON.parse(node.textContent || "{}");
+                const labels = (boot.mapInit && boot.mapInit.labels) || boot.labels;
+                return labels && (labels.canSave === true || labels.canSave === "true");
+              } catch (e) {
+                return false;
+              }
+            }
+            """);
+        Assert.True(canSave, "Candidate session should expose canSave in map boot labels.");
+        var boundSave = await heart.EvaluateAsync<string?>("el => el.dataset.boundSave ?? null");
+        Assert.Equal("1", boundSave);
+        var urlBefore = page.Url;
+        var pressedBefore = await heart.GetAttributeAsync("aria-pressed") ?? "false";
+        var navigated = false;
+        page.FrameNavigated += (_, frame) =>
+        {
+            if (frame == page.MainFrame)
+            {
+                navigated = true;
+            }
+        };
+        await heart.ClickAsync(new() { Position = new() { X = 12, Y = 12 } });
+        await page.WaitForTimeoutAsync(600);
+        Assert.False(navigated, "Heart click must not trigger a full document navigation.");
+        Assert.StartsWith(_baseUrl + "/banenkaart", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(urlBefore, page.Url);
+        var pressedAfter = await heart.GetAttributeAsync("aria-pressed") ?? "false";
+        Assert.NotEqual(pressedBefore, pressedAfter);
+
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.WaitForTimeoutAsync(600);
+        Assert.True(await page.EvaluateAsync<bool>(
+            "(vid) => window.jobMap?.__testOpenVacancyById?.(vid) ?? false",
+            VacancyWithPhoto));
+        await page.Locator("[data-lagen-heart].is-saved, [data-lagen-heart][aria-pressed=\"true\"]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
     }
 
     [Fact]

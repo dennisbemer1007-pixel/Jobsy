@@ -104,8 +104,11 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("photoIsWorkTypePlaceholder", js);
         Assert.Contains("/api/vacancies/{id:guid}/image",
             File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
-        Assert.Contains("/api/vacancies/{id:guid}/map-popup-photo",
-            File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
+        var proxy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs"));
+        Assert.Contains("/api/vacancies/{id:guid}/map-popup-photo", proxy);
+        Assert.Contains("DisableAntiforgery", proxy);
+        Assert.Contains("ensureLagenHeartInteractionGuard", js);
+        Assert.Contains("stopEvent(ev)", js);
         var discovery = File.ReadAllText(
             Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         // Full vacancy catalog must never be persisted into / HTML (2 MB hub limit).

@@ -36,8 +36,10 @@ public sealed class VacancyPublicPhotoBytesLoader : IVacancyPublicPhotoBytesLoad
             return inline;
         }
 
+        var attempted = new List<string>();
         foreach (var path in CandidatePaths(record, vacancyId, workType))
         {
+            attempted.Add(path);
             var bytes = await TryLoadPathAsync(path, cancellationToken);
             if (bytes is { Length: > 0 })
             {
@@ -48,12 +50,20 @@ public sealed class VacancyPublicPhotoBytesLoader : IVacancyPublicPhotoBytesLoad
         var publicImage = VacancyImageUrls.PublicImagePath(vacancyId);
         if (!string.IsNullOrWhiteSpace(publicImage))
         {
+            attempted.Add(publicImage);
             var viaWebApi = await TryFetchPublicWebAsync(publicImage, cancellationToken);
             if (viaWebApi is { Length: > 0 })
             {
                 return viaWebApi;
             }
         }
+
+        _logger.LogWarning(
+            "Map popup photo: no source bytes for vacancy {VacancyId}. Tried paths [{Paths}]. PublicWebBaseUrl configured={ConfiguredOrigin}. Resolved origin={ResolvedOrigin}",
+            vacancyId,
+            string.Join(", ", attempted),
+            string.IsNullOrWhiteSpace(_configuration["PublicWebBaseUrl"]) ? "(empty)" : _configuration["PublicWebBaseUrl"],
+            VacancyPublicWebOrigin.Resolve(_configuration));
 
         return null;
     }
@@ -79,6 +89,12 @@ public sealed class VacancyPublicPhotoBytesLoader : IVacancyPublicPhotoBytesLoad
         Guid vacancyId,
         string? workType)
     {
+        var direct = VacancyImageUrls.Normalize(record.ImageUrl);
+        if (IsStaticPath(direct))
+        {
+            yield return direct!;
+        }
+
         var card = VacancyImageUrls.ForCard(record.ImageUrl, record.CompanyLogoUrl, vacancyId, workType);
         if (IsStaticPath(card))
         {
@@ -125,35 +141,42 @@ public sealed class VacancyPublicPhotoBytesLoader : IVacancyPublicPhotoBytesLoad
 
     private async Task<byte[]?> TryFetchPublicWebAsync(string webPath, CancellationToken cancellationToken)
     {
-        var baseUrl = JobsyPublicUrl.NormalizeOrigin(_configuration["PublicWebBaseUrl"]);
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            return null;
-        }
-
         if (!VacancyImageUrls.IsSafeSameOriginPath(webPath))
         {
+            _logger.LogWarning("Map popup photo fetch skipped: unsafe path {Path}", webPath);
             return null;
         }
 
+        var baseUrl = VacancyPublicWebOrigin.Resolve(_configuration);
         var url = baseUrl.TrimEnd('/') + webPath;
         try
         {
             var client = _httpClientFactory.CreateClient(HttpClientName);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("image/*"));
+            request.Headers.UserAgent.ParseAdd("Jobsy-MapPopupPhoto/1.0");
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
+                _logger.LogWarning(
+                    "Map popup photo fetch failed: GET {Url} returned {StatusCode}",
+                    url,
+                    (int)response.StatusCode);
                 return null;
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-            return bytes.Length > 0 ? bytes : null;
+            if (bytes.Length == 0)
+            {
+                _logger.LogWarning("Map popup photo fetch returned empty body for {Url}", url);
+                return null;
+            }
+
+            return bytes;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or OperationCanceledException)
         {
-            _logger.LogDebug(ex, "Public web photo fetch failed for {Path}", webPath);
+            _logger.LogWarning(ex, "Map popup photo fetch error for GET {Url}", url);
             return null;
         }
     }
