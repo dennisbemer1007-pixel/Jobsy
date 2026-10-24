@@ -12,6 +12,11 @@ public static class SollicitatiesClientEndpoints
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
             .DisableAntiforgery();
 
+        // Stale cached sollicitaties-berichten.js may still POST here; same handler as the BFF above.
+        app.MapPost("/api/me/applications/{applicationId:guid}/after-match/messages/read", MarkBerichtenReadAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
+            .DisableAntiforgery();
+
         return app;
     }
 

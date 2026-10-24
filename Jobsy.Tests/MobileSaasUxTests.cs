@@ -191,7 +191,7 @@ public class MobileSaasUxTests
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-client-nav.js?v=20261024-unread-badge1", applicationsRazor, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-berichten.js?v=20261024-mark-read-bff1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-berichten.js?v=20261025-mark-read-bff2", applicationsRazor, StringComparison.Ordinal);
         Assert.Contains("/api/sollicitaties-client/berichten/mark-read", File.ReadAllText(Path.Combine(
             FindRepoRoot(),
             "Jobsy.Web/wwwroot/js/sollicitaties-berichten.js")), StringComparison.Ordinal);
