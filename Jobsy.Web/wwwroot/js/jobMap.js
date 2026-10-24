@@ -23,6 +23,8 @@ window.jobMap = (function () {
 
     let cameraLocked = false;
     let originHasBeenFramed = false;
+    let banenkaartMapRestoreAttempted = false;
+    const BK_MAP_VIEW_KEY = "jobsy.bk.mapView.v1";
     let originNeedsFrame = false;
     let ringRedrawBound = false;
     let ringStyleHandlerBound = false;
@@ -1171,10 +1173,18 @@ window.jobMap = (function () {
     }
 
     function lagenCategoryPhotoPlaceholderHtml(v) {
-        const hex = (v && (v.categoryColor || v.colour || v.categoryColorHex)) || "#e8e0d5";
-        const safe = String(hex).replace(/[^#a-fA-F0-9]/g, "") || "#e8e0d5";
-        return "<div class=\"fph fph--empty fph--category\" style=\"background:" +
+        const hex = (v && (v.categoryColor || v.colour || v.categoryColorHex)) || "#3366cc";
+        const safe = String(hex).replace(/[^#a-fA-F0-9]/g, "") || "#3366cc";
+        return "<div class=\"fph fph--category\" style=\"background:" +
             escapeAttr(safe) + "\" aria-hidden=\"true\"></div>";
+    }
+
+    function banenkaartReturnUrl() {
+        try {
+            return window.location.pathname + window.location.search;
+        } catch (eUrl) {
+            return "/banenkaart";
+        }
     }
 
     function lagenWorkplacePhotoShell(v) {
@@ -1242,8 +1252,7 @@ window.jobMap = (function () {
                 slot.appendChild(img);
             })
             .catch(function () {
-                slot.classList.remove("fph--loading");
-                slot.classList.add("fph--empty");
+                slot.outerHTML = lagenCategoryPhotoPlaceholderHtml(job);
             });
     }
 
@@ -1296,12 +1305,13 @@ window.jobMap = (function () {
             ? (uiLabels.saved || "Bewaard")
             : (uiLabels.save || "Bewaar");
         return (
+            "<span class=\"lagen-heart-slot\" data-lagen-heart-slot=\"1\">" +
             "<button type=\"button\" class=\"hrt map-popup__heart" + (liked ? " is-saved" : "") + "\" " +
-                "data-save-job=\"" + escapeAttr(v.id) + "\" " +
+                "data-lagen-heart=\"1\" data-save-job=\"" + escapeAttr(v.id) + "\" " +
                 "aria-pressed=\"" + (liked ? "true" : "false") + "\" " +
                 "aria-label=\"" + escapeAttr(label) + "\">" +
                 heartIconHtml(liked) +
-            "</button>"
+            "</button></span>"
         );
     }
 
@@ -1367,10 +1377,10 @@ window.jobMap = (function () {
                 "<button type=\"button\" class=\"fb fx\" data-lagen-close aria-label=\"" +
                     escapeAttr(uiLabels.close || "Sluiten") + "\">" + lagenCloseSvg() + "</button></div>" +
                 "<div class=\"fc" + (mobile ? " m" : "") + "\">" + bodyInner +
-                "<a class=\"fgo\" href=\"" + escapeAttr(detailHref) +
-                    "\" data-job-id=\"" + escapeAttr(v.id) + "\"><span>" +
+                "<button type=\"button\" class=\"fgo\" data-job-id=\"" + escapeAttr(v.id) +
+                    "\"><span>" +
                     (lagenPopupIsEnglish() ? "View vacancy" : "Bekijk vacature") + "</span>" +
-                    lagenChevronRightSvg() + "</a></div></div>"
+                    lagenChevronRightSvg() + "</button></div></div>"
         );
     }
 
@@ -1899,7 +1909,7 @@ window.jobMap = (function () {
         }).then(function (res) {
             if (res.status === 401 || res.status === 403) {
                 window.location.href = "/login?returnUrl=" +
-                    encodeURIComponent("/vacancies/" + String(id));
+                    encodeURIComponent(banenkaartReturnUrl());
                 return null;
             }
             if (!res.ok) {
@@ -1947,17 +1957,20 @@ window.jobMap = (function () {
                     rememberJobLiked(id, liked, childMarkers);
                 });
             }
-            btn.addEventListener("mousedown", function (ev) {
+            function blockHeartBubble(ev) {
+                if (ev && typeof ev.stopImmediatePropagation === "function") {
+                    ev.stopImmediatePropagation();
+                }
                 stopEvent(ev);
-            }, true);
-            btn.addEventListener("touchstart", function (ev) {
-                stopEvent(ev);
-            }, { capture: true, passive: false });
+            }
+            btn.addEventListener("pointerdown", blockHeartBubble, true);
+            btn.addEventListener("mousedown", blockHeartBubble, true);
+            btn.addEventListener("touchstart", blockHeartBubble, { capture: true, passive: false });
             btn.addEventListener("click", function (ev) {
-                stopEvent(ev);
+                blockHeartBubble(ev);
                 if (!uiLabels.canSave) {
                     window.location.href = "/login?returnUrl=" +
-                        encodeURIComponent("/vacancies/" + String(id || ""));
+                        encodeURIComponent(banenkaartReturnUrl());
                     return;
                 }
                 if (btn.dataset.saveBusy === "1") {
@@ -1977,7 +1990,8 @@ window.jobMap = (function () {
                 }).finally(function () {
                     delete btn.dataset.saveBusy;
                 });
-            }, true);
+            });
+            btn.addEventListener("click", blockHeartBubble, true);
         });
     }
 
@@ -2121,7 +2135,7 @@ window.jobMap = (function () {
                         prefetchLagenPopupPhoto(nextJob, isNarrowViewport());
                     }
                     if (!mobile && activeClusterPopup && !state.docked) {
-                        fitLagenDesktopPopup(activeClusterPopup);
+                        scheduleLagenDesktopPopupFit(activeClusterPopup);
                     }
                 }
             } else {
@@ -2570,18 +2584,11 @@ window.jobMap = (function () {
                 stopEvent(ev);
                 const id = cta.getAttribute("data-job-id");
                 if (id) {
+                    writeBanenkaartMapView();
                     notifyOpen(id);
+                    window.location.assign(detailHrefForVacancy(id));
                 }
             });
-        });
-        fcw.querySelectorAll("[data-lagen-close], [data-lagen-prev], [data-lagen-next], [data-lagen-wage]").forEach(function (btn) {
-            if (btn.dataset.lagenStopBound) {
-                return;
-            }
-            btn.dataset.lagenStopBound = "1";
-            btn.addEventListener("click", function (ev) {
-                stopEvent(ev);
-            }, true);
         });
         bindSaveJobButtons(fcw, childMarkers || []);
         const job = clusterUiState && clusterUiState.jobs
@@ -2664,14 +2671,9 @@ window.jobMap = (function () {
             };
             bindLagenFundaInteractions(popRoot, childMarkers);
             bindLagenDesktopPopupMapSync();
-            fitLagenDesktopPopup(activeClusterPopup, ll);
+            scheduleLagenDesktopPopupFit(activeClusterPopup, ll);
         }
-        prefetchClusterCards(jobs).then(function () {
-            if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
-                return;
-            }
-            renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page, 0, true);
-        });
+        writeBanenkaartMapView();
         if (firstJob.id) {
             fetchVacancyCard(firstJob.id).then(function (card) {
                 if (!clusterUiState || clusterUiState.childMarkers !== childMarkers || !card) {
@@ -2679,7 +2681,10 @@ window.jobMap = (function () {
                 }
                 const full = mapCardToPopup(card, firstJob);
                 jobs[0] = full;
-                renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
+                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page || 1, 0, true);
+                if (!isNarrowViewport() && activeClusterPopup) {
+                    scheduleLagenDesktopPopupFit(activeClusterPopup);
+                }
             });
         }
     }
@@ -2806,6 +2811,7 @@ window.jobMap = (function () {
     }
 
     function notifyOpen(id) {
+        writeBanenkaartMapView();
         if (openCallback) {
             try {
                 openCallback.invokeMethodAsync("OnMapVacancyOpened", id);
@@ -2926,7 +2932,7 @@ window.jobMap = (function () {
         };
     }
 
-    function centerPopupInView(popup) {
+    function centerPopupInView(popup, instant, layoutAttempt) {
         if (!map || !popup) {
             return;
         }
@@ -2934,6 +2940,7 @@ window.jobMap = (function () {
         if (!el) {
             return;
         }
+        layoutAttempt = layoutAttempt || 0;
 
         const run = function () {
             if (!map || activeClusterPopup !== popup) {
@@ -2942,6 +2949,17 @@ window.jobMap = (function () {
             const pr = el.getBoundingClientRect();
             const vr = mapFocusRect();
             if (pr.width < 8 || pr.height < 8 || vr.width < 32 || vr.height < 32) {
+                if (layoutAttempt < 10) {
+                    if (typeof requestAnimationFrame === "function") {
+                        requestAnimationFrame(function () {
+                            centerPopupInView(popup, instant, layoutAttempt + 1);
+                        });
+                    } else {
+                        setTimeout(function () {
+                            centerPopupInView(popup, instant, layoutAttempt + 1);
+                        }, 16);
+                    }
+                }
                 return;
             }
 
@@ -2962,9 +2980,14 @@ window.jobMap = (function () {
                 return;
             }
 
-            map.panBy([dx, dy], { duration: prefersReducedMotion() ? 0 : 320 });
+            var duration = instant || prefersReducedMotion() ? 0 : 320;
+            map.panBy([dx, dy], { duration: duration });
         };
 
+        if (instant) {
+            run();
+            return;
+        }
         if (typeof requestAnimationFrame === "function") {
             requestAnimationFrame(function () {
                 requestAnimationFrame(run);
@@ -2972,6 +2995,93 @@ window.jobMap = (function () {
         } else {
             setTimeout(run, 0);
         }
+    }
+
+    function readStoredBanenkaartMapView() {
+        try {
+            const raw = sessionStorage.getItem(BK_MAP_VIEW_KEY);
+            if (!raw) {
+                return null;
+            }
+            return JSON.parse(raw);
+        } catch (eRead) {
+            return null;
+        }
+    }
+
+    function writeBanenkaartMapView() {
+        if (!map || !lagenLayout) {
+            return;
+        }
+        const c = map.getCenter();
+        const z = map.getZoom();
+        if (!c || !Number.isFinite(z)) {
+            return;
+        }
+        const payload = {
+            lat: c.lat,
+            lng: c.lng,
+            zoom: z,
+            vacancyId: selectedId != null ? String(selectedId) : null,
+            popupPage: clusterUiState && clusterUiState.page ? clusterUiState.page : null,
+            popupOpen: !!activeClusterPopup,
+            savedAt: Date.now()
+        };
+        try {
+            sessionStorage.setItem(BK_MAP_VIEW_KEY, JSON.stringify(payload));
+        } catch (eWrite) { }
+    }
+
+    function tryRestoreBanenkaartMapViewOnce() {
+        if (banenkaartMapRestoreAttempted || !map || !lagenLayout) {
+            return false;
+        }
+        if (Object.keys(markersById).length < 1) {
+            return false;
+        }
+        const stored = readStoredBanenkaartMapView();
+        if (!stored || !Number.isFinite(stored.lat) || !Number.isFinite(stored.lng) || !Number.isFinite(stored.zoom)) {
+            banenkaartMapRestoreAttempted = true;
+            return false;
+        }
+        if (Date.now() - (stored.savedAt || 0) > 30 * 60 * 1000) {
+            banenkaartMapRestoreAttempted = true;
+            return false;
+        }
+        banenkaartMapRestoreAttempted = true;
+        window.__jobsyBkRestoringView = true;
+        originHasBeenFramed = true;
+        try {
+            map.jumpTo({
+                center: [stored.lng, stored.lat],
+                zoom: stored.zoom,
+                duration: 0
+            });
+        } catch (eJump) { }
+        finishOpeningFrame();
+        if (stored.vacancyId && markersById[stored.vacancyId]) {
+            const rec = markersById[stored.vacancyId];
+            if (stored.popupOpen) {
+                openVacancyPopup(rec);
+                if (clusterUiState && stored.popupPage > 1 && clusterUiState.pageCount >= stored.popupPage) {
+                    renderClusterPage(
+                        activeClusterPopup,
+                        clusterUiState.childMarkers,
+                        stored.popupPage,
+                        0,
+                        true);
+                }
+            } else {
+                highlight(stored.vacancyId);
+            }
+        }
+        setTimeout(function () {
+            window.__jobsyBkRestoringView = false;
+            if (activeClusterPopup && !isNarrowViewport()) {
+                scheduleLagenDesktopPopupFit(activeClusterPopup);
+            }
+        }, 50);
+        return true;
     }
 
     function agencyRadiusKm(raw) {
@@ -4650,7 +4760,7 @@ window.jobMap = (function () {
         fitLagenDesktopPopup(popup);
     }
 
-    function fitLagenDesktopPopup(popup, lngLat) {
+    function fitLagenDesktopPopup(popup, lngLat, instant) {
         if (!popup || !map || isNarrowViewport()) {
             return;
         }
@@ -4663,7 +4773,37 @@ window.jobMap = (function () {
                 popup.setLngLat(clusterUiState.lngLat);
             } catch (eLl2) { }
         }
-        centerPopupInView(popup);
+        centerPopupInView(popup, !!instant, 0);
+    }
+
+    function scheduleLagenDesktopPopupFit(popup, lngLat) {
+        if (!popup || !map || isNarrowViewport()) {
+            return;
+        }
+        var pass = 0;
+        function tick() {
+            if (!activeClusterPopup || activeClusterPopup !== popup) {
+                return;
+            }
+            fitLagenDesktopPopup(popup, lngLat, pass > 0);
+            pass += 1;
+            if (pass < 4) {
+                if (typeof requestAnimationFrame === "function") {
+                    requestAnimationFrame(function () {
+                        requestAnimationFrame(tick);
+                    });
+                } else {
+                    setTimeout(tick, 32);
+                }
+            }
+        }
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(tick);
+            });
+        } else {
+            setTimeout(tick, 0);
+        }
     }
 
     function bindLagenDesktopPopupMapSync() {
@@ -4681,7 +4821,8 @@ window.jobMap = (function () {
             }
             moveTimer = setTimeout(function () {
                 moveTimer = null;
-                fitLagenDesktopPopup(activeClusterPopup);
+                writeBanenkaartMapView();
+                scheduleLagenDesktopPopupFit(activeClusterPopup);
             }, 80);
         });
     }
@@ -5620,6 +5761,24 @@ window.jobMap = (function () {
     function onClusterClick(ev) {
         if (!map || !ev.features || !ev.features.length) {
             return;
+        }
+        if (lagenLayout && !isNarrowViewport()) {
+            const feature = ev.features[0];
+            const props = feature.properties || {};
+            const source = map.getSource(PIN_SOURCE);
+            const coords = feature.geometry && feature.geometry.coordinates;
+            if (source && coords && props.cluster_id != null) {
+                if (ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
+                    ev.originalEvent.stopPropagation();
+                }
+                lastClusterTapAt = Date.now();
+                openClusterListFromClusterId(
+                    source,
+                    props.cluster_id,
+                    coords,
+                    Math.max(Number(props.point_count) || 2, 2));
+                return;
+            }
         }
         const feature = ev.features[0];
         const props = feature.properties || {};
@@ -6979,6 +7138,7 @@ window.jobMap = (function () {
         refreshClusters();
         ensureVacancyTiles();
         revealMapStage();
+        tryRestoreBanenkaartMapViewOnce();
     }
 
     function reloadPins(url) {
@@ -7140,6 +7300,13 @@ window.jobMap = (function () {
         drawTravelRings(la, ln);
         syncLocateButton();
 
+        if (window.__jobsyBkRestoringView) {
+            finishOpeningFrame();
+            return;
+        }
+        if (tryRestoreBanenkaartMapViewOnce()) {
+            return;
+        }
         if (originChanged || !originHasBeenFramed) {
             fitToOriginRings(originHasBeenFramed);
         } else {
@@ -7454,6 +7621,10 @@ window.jobMap = (function () {
         document.addEventListener("visibilitychange", onVisible);
         window.addEventListener("pageshow", function () {
             onVisible();
+            if (lagenLayout && map) {
+                banenkaartMapRestoreAttempted = false;
+                tryRestoreBanenkaartMapViewOnce();
+            }
         });
     })();
 

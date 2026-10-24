@@ -2267,6 +2267,16 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     background: #efe8dd;
 }
 
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .fph--category {
+    background: var(--lagen-category-ph, #3366cc);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .lagen-heart-slot {
+    position: relative;
+    z-index: 4;
+    flex: none;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fph img {
     width: 100%;
     height: 100%;
@@ -2284,6 +2294,8 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .hrt {
+    position: relative;
+    z-index: 5;
     width: 44px;
     height: 44px;
     margin-right: -10px;
