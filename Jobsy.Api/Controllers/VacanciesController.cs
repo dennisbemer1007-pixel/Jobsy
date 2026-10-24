@@ -855,18 +855,23 @@ public class VacanciesController : ControllerBase
         var width = VacancyMapPopupPhotoEncoder.WidthForVariant(variant);
         var sourceBytes = await _publicPhotoBytes.LoadForMapPopupAsync(record, id, workType, cancellationToken);
         byte[] webp;
-        if (sourceBytes is null || sourceBytes.Length == 0)
+        var usedCategoryFallback = sourceBytes is null || sourceBytes.Length == 0;
+        if (usedCategoryFallback)
         {
             webp = VacancyMapPopupPhotoEncoder.CategoryPlaceholderWebp(
                 record.CategoryColorHex,
                 width,
                 variant);
+            Response.Headers.CacheControl = "no-store";
+            Response.Headers["X-Jobsy-Map-Popup-Photo"] = "category-fallback";
         }
         else
         {
             webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width, variant);
+            Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+            Response.Headers["X-Jobsy-Map-Popup-Photo"] = "photo";
         }
-        Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+
         return File(webp, "image/webp");
     }
 
