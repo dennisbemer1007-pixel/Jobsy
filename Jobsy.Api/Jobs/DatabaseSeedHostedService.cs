@@ -77,6 +77,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         }
 
         await TryRepairAcceptatieTestCandidateAsync(stoppingToken);
+        await TryEnsureAcceptatieSollicitatiesDemoAsync(stoppingToken);
 
         try
         {
@@ -125,6 +126,44 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Test-account assessment repair failed; API continues.");
+        }
+    }
+
+    /// <summary>
+    /// Acceptatie only: idempotent sollicitaties mockup rows for the CLI test candidate
+    /// (incl. <c>lobsy-test@mail.grokbot.com</c> when flagged as test account).
+    /// </summary>
+    private async Task TryEnsureAcceptatieSollicitatiesDemoAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            var input = TestAccountGuardInputFactory.FromConfiguration(
+                _configuration, _environment, isWebRuntime: false);
+            var guard = TestAccountEnvironmentGuard.Evaluate(input);
+            if (!guard.Allowed)
+            {
+                _logger.LogInformation(
+                    "Acceptatie sollicitaties demo skipped ({Codes}).",
+                    guard.CodesSummary());
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+                db,
+                _configuration,
+                guard,
+                _logger,
+                stoppingToken);
+            if (!applied)
+            {
+                _logger.LogInformation("Acceptatie sollicitaties demo skipped (candidate not seeded yet).");
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Acceptatie sollicitaties demo ensure failed; API continues.");
         }
     }
 }
