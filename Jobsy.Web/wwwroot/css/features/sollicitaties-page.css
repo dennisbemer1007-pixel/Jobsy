@@ -312,10 +312,24 @@
 }
 
 /* Mockup 01 desktop list: full ~1064px column at 1280; split detail rail only at mockup 1440+. */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  [data-testid="applications-page-ssr"] .sollicitaties-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-testid="applications-page-ssr"] .sollicitaties-detail {
+    display: none !important;
+  }
+}
+
 @media (min-width: 1440px) {
   .sollicitaties-layout {
     grid-template-columns: minmax(0, 1.05fr) minmax(300px, 380px);
     align-items: start;
+  }
+
+  [data-testid="applications-page-ssr"] .sollicitaties-layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 380px) !important;
   }
 }
 
@@ -739,6 +753,21 @@
   .sollicitaties-shell {
     width: min(1120px, 100%);
     max-width: 1120px;
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-testid="applications-page-ssr"] .sollicitaties-shell {
+    width: min(1120px, 100%);
+    max-width: 1120px;
+    box-sizing: border-box;
+  }
+
+  [data-testid="applications-page-ssr"] .sollicitaties-page__body,
+  [data-testid="applications-page-ssr"] .sollicitaties-list,
+  [data-testid="applications-page-ssr"] .sollic-card.sollic-card--app {
+    max-width: none;
+    width: 100%;
   }
 }
 
