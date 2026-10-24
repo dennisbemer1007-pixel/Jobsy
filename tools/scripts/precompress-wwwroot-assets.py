@@ -18,6 +18,7 @@ DEFAULTS = [
     ROOT / "Jobsy.Web/wwwroot/js/jobMap.min.js",
     ROOT / "Jobsy.Web/wwwroot/css/features/sollicitaties-page.css",
     ROOT / "Jobsy.Web/wwwroot/css/features/applications.css",
+    ROOT / "Jobsy.Web/wwwroot/css/features/na-de-match.css",
 ]
 
 
