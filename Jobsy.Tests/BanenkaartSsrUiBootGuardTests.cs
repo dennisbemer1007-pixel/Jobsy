@@ -14,6 +14,15 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_lagen_list_mode_spans_full_width_on_desktop()
+    {
+        var root = FindRepoRoot();
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css"));
+        Assert.Contains(".jobsy-discovery--lagen.show-list[data-banenkaart-ssr=\"1\"]", css, StringComparison.Ordinal);
+        Assert.Contains("grid-column: 1 / -1", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_desktop_list_uses_two_column_card_grid()
     {
         var root = FindRepoRoot();
