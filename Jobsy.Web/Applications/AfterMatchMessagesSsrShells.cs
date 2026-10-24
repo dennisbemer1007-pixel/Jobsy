@@ -26,8 +26,7 @@ internal static class AfterMatchMessagesSsrShells
         sb.Append(WebUtility.HtmlEncode(data.BackHref));
         sb.Append("\"><main class=\"wrap\">");
 
-        AppendHeroBand(sb, culture);
-        AppendBreadcrumb(sb, culture, data);
+        AppendIntro(sb, culture, data);
         AppendThreads(sb, culture, data);
         sb.Append("</main>");
 
@@ -49,41 +48,25 @@ internal static class AfterMatchMessagesSsrShells
         sb.Append("</div></div>");
     }
 
-    private static void AppendHeroBand(StringBuilder sb, CultureState culture)
-    {
-        sb.Append("<section class=\"band ndm-hero ndm-hero--gesprek\"><div class=\"bt\"><span class=\"eyb\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Hero.Eyebrow"]));
-        sb.Append("</span><h1>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Hero.Title"]));
-        sb.Append("</h1><p class=\"ndm-hero-lead ndm-hero-lead--full\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Hero.Lead"]));
-        sb.Append("</p></div><div class=\"art ndm-hero__art\" aria-hidden=\"true\"></div></section>");
-    }
-
-    private static void AppendBreadcrumb(StringBuilder sb, CultureState culture, AfterMatchMessagesSsrData.PageData data)
+    private static void AppendIntro(StringBuilder sb, CultureState culture, AfterMatchMessagesSsrData.PageData data)
     {
         var selectedRow = data.Apps.AllRows.FirstOrDefault(r => r.ApplicationId == data.SelectedThreadId);
-        sb.Append("<nav class=\"bc ndm-messages-bc\" aria-label=\"");
+        var company = selectedRow?.CompanyName ?? "";
+        sb.Append("<section class=\"intro ndm-messages-intro\"><nav class=\"bc ndm-messages-bc\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.Breadcrumb"]));
-        sb.Append("\"><a href=\"");
+        sb.Append("\" data-ndm-messages-bc><a href=\"");
         sb.Append(WebUtility.HtmlEncode(KbRoutes.Applications));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.ApplicationsTab"]));
-        sb.Append("</a><i>›</i><span>");
+        sb.Append("</a><i aria-hidden=\"true\"> › </i><span data-ndm-bc-company>");
+        sb.Append(WebUtility.HtmlEncode(company));
+        sb.Append("</span><i aria-hidden=\"true\"> › </i><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Hero.Title"]));
-        sb.Append("</span>");
-        if (selectedRow is not null)
-        {
-            sb.Append("<i>›</i><span>");
-            sb.Append(WebUtility.HtmlEncode(selectedRow.CompanyName));
-            sb.Append("</span>");
-        }
-
-        sb.Append("</nav><p class=\"ndm-messages-return\"><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.BackHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Link.BackApplications"]));
-        sb.Append("</a></p>");
+        sb.Append("</span></nav><h1>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Hero.Title"]));
+        sb.Append("</h1><p>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Hero.Lead"]));
+        sb.Append("</p></section>");
     }
 
     private static void AppendThreads(StringBuilder sb, CultureState culture, AfterMatchMessagesSsrData.PageData data)
@@ -138,7 +121,7 @@ internal static class AfterMatchMessagesSsrShells
         var appId = row.ApplicationId!.Value;
         data.Apps.BerichtenThreads.TryGetValue(appId, out var threadDto);
         var active = appId == data.SelectedThreadId;
-        var href = AfterMatchMessagesSsrData.BuildThreadHref(data, appId);
+        var href = AfterMatchMessagesSsrData.BuildThreadHref(appId);
 
         sb.Append("<a class=\"ti ndm-messages-ti");
         if (active)
@@ -150,6 +133,8 @@ internal static class AfterMatchMessagesSsrShells
         sb.Append(WebUtility.HtmlEncode(href));
         sb.Append("\" data-ndm-thread-id=\"");
         sb.Append(appId.ToString("D"));
+        sb.Append("\" data-ndm-company=\"");
+        sb.Append(WebUtility.HtmlEncode(row.CompanyName));
         sb.Append("\" data-enhance-nav=\"false\"");
         if (active)
         {
@@ -208,11 +193,7 @@ internal static class AfterMatchMessagesSsrShells
         Guid appId,
         AfterMatchThreadDto thread)
     {
-        sb.Append("<a class=\"lk small show-m ndm-messages-back\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.MessagesBasePath));
-        sb.Append("\" data-ndm-messages-back data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Apps.Berichten.BackList"]));
-        sb.Append("</a><div class=\"row\"><span class=\"av ");
+        sb.Append("<div class=\"row ndm-messages-thd\"><span class=\"av ");
         sb.Append(AvatarClass(0));
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
@@ -221,8 +202,9 @@ internal static class AfterMatchMessagesSsrShells
         sb.Append(WebUtility.HtmlEncode($"{headContact} · {row.CompanyName}"));
         sb.Append("</b><div class=\"xs muted\">");
         sb.Append(WebUtility.HtmlEncode(FormatThreadHeadSubtitle(culture, row, thread)));
-        sb.Append("</div></div><a class=\"lk small hide-m\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.AfterMatchBase(appId, data.BackHref)));
+        sb.Append("</div></div><a class=\"lk small hide-m ndm-messages-view-app\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(
+            AfterMatchSollicitatiesUrls.ViewApplicationSsr(appId, thread.InterviewStatus, data.BackHref)));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Berichten.ViewApplication"]));
         sb.Append("</a></div><div class=\"thread\">");
@@ -269,15 +251,15 @@ internal static class AfterMatchMessagesSsrShells
 
         sb.Append("<form class=\"compose ndm-messages-compose\" data-ndm-compose data-application-id=\"");
         sb.Append(appId.ToString("D"));
-        sb.Append("\"><span aria-hidden=\"true\"><svg style=\"width:18px;height:18px\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 11 12 19a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7\"/></svg></span><label class=\"visually-hidden\" for=\"ndm-compose-");
+        sb.Append("\"><span class=\"ndm-messages-compose-attach\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 11 12 19a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7\"/></svg></span><label class=\"visually-hidden\" for=\"ndm-compose-");
         sb.Append(appId.ToString("N"));
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Compose"]));
-        sb.Append("</label><input class=\"sp\" id=\"ndm-compose-");
+        sb.Append("</label><input class=\"ndm-messages-compose-input\" id=\"ndm-compose-");
         sb.Append(appId.ToString("N"));
         sb.Append("\" type=\"text\" name=\"body\" autocomplete=\"off\" placeholder=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Compose"]));
-        sb.Append("\" /><button type=\"submit\" class=\"btn sm\" aria-label=\"");
+        sb.Append("\" /><button type=\"submit\" class=\"btn sm ndm-messages-compose-send\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Compose"]));
         sb.Append("\">");
         sb.Append(NdMIcons.Send);
@@ -331,7 +313,7 @@ internal static class AfterMatchMessagesSsrShells
         sb.Append("</a><a href=\"/terms\">");
         sb.Append(WebUtility.HtmlEncode(culture["Footer.Terms"]));
         sb.Append("</a><a href=\"/accessibility\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Footer.Accessibility"]));
+        sb.Append(WebUtility.HtmlEncode(culture["PublicFooter.Accessibility"]));
         sb.Append("</a><a href=\"/sources\">");
         sb.Append(WebUtility.HtmlEncode(culture["Footer.Sources"]));
         sb.Append("</a></div><span>© ");

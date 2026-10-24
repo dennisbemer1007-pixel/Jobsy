@@ -75,8 +75,7 @@ internal static class AfterMatchMessagesSsrData
             ? safeReturn
             : AfterMatchSollicitatiesUrls.AfterMatchBase(contextApplicationId);
 
-        var messagesBasePath =
-            $"/candidate/applications/{contextApplicationId:D}/after-match?panel=messages";
+        var messagesBasePath = AfterMatchSollicitatiesUrls.Messages(contextApplicationId);
 
         var archiveHref = ApplicationsSsrQuery.BuildUrl(
             ApplicationsSsrQuery.TabSollicitaties,
@@ -92,11 +91,8 @@ internal static class AfterMatchMessagesSsrData
             archiveHref);
     }
 
-    internal static string BuildThreadHref(PageData data, Guid applicationId)
-    {
-        var sep = data.MessagesBasePath.Contains('?', StringComparison.Ordinal) ? "&" : "?";
-        return data.MessagesBasePath + sep + "thread=" + applicationId.ToString("D");
-    }
+    internal static string BuildThreadHref(Guid applicationId)
+        => AfterMatchSollicitatiesUrls.Messages(applicationId);
 
     internal static string BuildReportHref(SollicitationRow row)
     {

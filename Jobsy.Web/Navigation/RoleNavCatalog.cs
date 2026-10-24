@@ -50,7 +50,7 @@ public static class RoleNavCatalog
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]);
 
     public static readonly NavItem ApplicationsItem =
-        new("Nav.Applications", "/candidate/applications", NavIcons.Applications);
+        new("Nav.Applications", "/candidate/applications", NavIcons.Applications, ["/candidate/applications/"]);
 
     public static readonly NavItem CareerItem =
         new("Nav.CareerPath", "/carriere", NavIcons.Career, ["/carriere/leren"]);

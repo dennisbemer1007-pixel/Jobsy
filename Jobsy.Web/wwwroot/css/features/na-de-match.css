@@ -164,7 +164,24 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 @media(max-width:600px){.ndm.ndm-pick-slot-page main.wrap{display:block!important}.ndm.ndm-pick-slot-page .intro{margin:0 0 14px}.ndm.ndm-pick-slot-page .intro h1{font-size:1.45rem;line-height:1.16}.ndm.ndm-pick-slot-page .intro p{font-size:.9rem;line-height:1.45}.ndm.ndm-pick-slot-page .wrap{padding:12px}.ndm.ndm-pick-slot-page .g2.ndm-pick-slot-g2{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px}.ndm.ndm-pick-slot-page .what{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}.ndm.ndm-pick-slot-page .what>div{padding:10px 8px;font-size:.82rem}.ndm.ndm-pick-slot-page .what b{font-size:.84rem}.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions{flex-direction:row!important;align-items:center!important}.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions .btn,.ndm.ndm-pick-slot-page .row.wrapflex.ndm-pick-actions [data-ndm-scroll-propose]{width:auto!important;justify-content:flex-start}}
 .ndm.ndm-reschedule-page [hidden],.ndm.ndm-reschedule-page .ndm-reschedule-is-hidden{display:none!important}
 .ndm.ndm-messages-page [hidden]{display:none!important}
-@media(max-width:600px){.ndm.ndm-messages-page.ndm-messages-thread-open .ndm-messages-thr .tlist{display:none}.ndm.ndm-messages-page:not(.ndm-messages-thread-open) .ndm-messages-thr .tmain{display:none!important}}
+.ndm.ndm-messages-page .intro.ndm-messages-intro{margin:2px 0 18px}
+.ndm.ndm-messages-page .intro .bc{font-size:.85rem;color:var(--muted);margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ndm.ndm-messages-page .intro .bc a{color:var(--brand);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.ndm.ndm-messages-page .intro .bc i{font-style:normal;color:#b9a891}
+.ndm.ndm-messages-page .intro h1{font-size:2rem}
+.ndm.ndm-messages-page .intro p{color:#3d4e63;margin-top:6px;font-size:1rem;max-width:680px}
+.ndm.ndm-messages-page .ndm-messages-thr .ti{padding:14px 16px;text-decoration:none;color:inherit}
+.ndm.ndm-messages-page .ndm-messages-thr .ti.on{background:#fff}
+.ndm.ndm-messages-page .ndm-messages-thr .ti p{font-size:.82rem;color:var(--muted);margin:0}
+.ndm.ndm-messages-page .ndm-messages-thr .ti b{font-size:.92rem;color:var(--brand)}
+.ndm.ndm-messages-page .ndm-messages-tmain{padding:18px 20px}
+.ndm.ndm-messages-page .ndm-messages-compose{align-items:center;border:1.5px solid #d9cdbd;border-radius:999px;padding:6px 6px 6px 14px;background:#fff;margin-top:12px}
+.ndm.ndm-messages-page .ndm-messages-compose-attach{display:grid;place-items:center;color:var(--muted);flex-shrink:0}
+.ndm.ndm-messages-page .ndm-messages-compose-attach svg{width:18px;height:18px}
+.ndm.ndm-messages-page .ndm-messages-compose-input{flex:1 1 auto;min-width:0;border:0!important;outline:0;background:transparent;font:inherit;color:var(--text);padding:6px 8px}
+.ndm.ndm-messages-page .ndm-messages-compose-send{width:40px!important;height:40px!important;min-width:40px;padding:0!important;border-radius:50%!important;flex-shrink:0}
+.ndm.ndm-messages-page .ndm-messages-compose-send svg{width:17px;height:17px}
+@media(max-width:600px){.ndm.ndm-messages-page .intro{margin:0 0 14px}.ndm.ndm-messages-page .intro h1{font-size:1.45rem;line-height:1.16}.ndm.ndm-messages-page .intro p{font-size:.9rem;line-height:1.45}.ndm.ndm-messages-page .wrap{padding:12px}.ndm.ndm-messages-page.ndm-messages-thread-open .ndm-messages-thr .tlist{display:none}.ndm.ndm-messages-page:not(.ndm-messages-thread-open) .ndm-messages-thr .tmain{display:none!important}.ndm.ndm-messages-page.ndm-messages-thread-open .ndm-messages-thr{border:1px solid var(--border);border-radius:var(--rL);overflow:hidden;background:var(--surf)}.ndm.ndm-messages-page.ndm-messages-thread-open .ndm-messages-tmain{padding:14px}}
 .ndm.ndm-reschedule-page{--bg:#faf6ef;background:var(--pearl)}
 .ndm.ndm-reschedule-page .intro{margin:2px 0 20px}
 .ndm.ndm-reschedule-page .intro .bc{font-size:.85rem;color:var(--muted);margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
