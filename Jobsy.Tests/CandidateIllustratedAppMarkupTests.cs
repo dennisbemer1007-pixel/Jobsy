@@ -30,10 +30,10 @@ public class CandidateIllustratedAppMarkupTests
     [Fact]
     public void Applications_has_desktop_detail_rail()
     {
-        var apps = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/Applications.razor"));
-        Assert.Contains("kb-apps--illustrated", apps, StringComparison.Ordinal);
-        Assert.Contains("kb-apps__detail-rail", apps, StringComparison.Ordinal);
-        Assert.Contains("_appsWide", apps, StringComparison.Ordinal);
+        var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
+        Assert.Contains("sollicitaties-page", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-layout", shells, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -1,0 +1,367 @@
+/* Sollicitaties mockup SSR (PR #878) — tabs, filters, list + detail rail */
+
+.sollicitaties-page.panel-page--cand-ill {
+  padding-inline: 0;
+  padding-block-end: 1.5rem;
+}
+
+.sollicitaties-page > .cand-hero {
+  margin-inline: 0;
+}
+
+.sollicitaties-page__body {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1100px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+.sollicitaties-segment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  margin-block: 1rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--pearl) 65%, var(--surface));
+  border: 1px solid var(--border);
+}
+
+.sollicitaties-segment__tab {
+  flex: 1 1 auto;
+  min-block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+}
+
+.sollicitaties-segment__tab.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.sollicitaties-segment__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 1.35rem;
+  block-size: 1.35rem;
+  padding-inline: 0.35rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--muted) 18%, var(--surface));
+  color: var(--muted);
+}
+
+.sollicitaties-init-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--r-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--brand);
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--brand) 12%, var(--border));
+}
+
+.sollicitaties-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-block-end: 1rem;
+}
+
+@media (min-width: 900px) {
+  .sollicitaties-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.sollicitaties-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.sollicitaties-chip {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--brand);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--border));
+}
+
+.sollicitaties-chip.is-selected {
+  background: var(--brand);
+  color: var(--surface);
+  border-color: var(--brand);
+}
+
+.sollicitaties-toolbar__add {
+  width: 100%;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  min-block-size: 48px;
+}
+
+@media (min-width: 900px) {
+  .sollicitaties-toolbar__add {
+    width: auto;
+    flex-shrink: 0;
+  }
+}
+
+.sollicitaties-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .sollicitaties-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    align-items: start;
+  }
+}
+
+.sollicitaties-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.sollic-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--gold) 18%, var(--border));
+  text-decoration: none;
+  color: inherit;
+  min-block-size: 44px;
+}
+
+.sollic-card.is-selected {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--brand));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 35%, transparent);
+}
+
+.sollic-card--done {
+  opacity: 0.92;
+}
+
+.sollic-card__avatar {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--brand);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.sollic-card__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sollic-card__source {
+  align-self: flex-start;
+  display: inline-flex;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.sollic-card__source--initiative {
+  background: color-mix(in srgb, var(--coral) 14%, var(--surface));
+  color: var(--coral);
+}
+
+.sollic-card__source--vacancy {
+  background: color-mix(in srgb, var(--muted) 12%, var(--surface));
+  color: var(--muted);
+}
+
+.sollic-card__source--external {
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+  color: var(--brand);
+}
+
+.sollic-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1.25;
+}
+
+.sollic-card__meta {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sollic-card__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.sollic-card__pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.sollic-card__pill--contact,
+.sollic-card__pill--interview {
+  background: color-mix(in srgb, var(--success) 16%, var(--surface));
+  color: var(--success);
+}
+
+.sollic-card__pill--review,
+.sollic-card__pill--pending {
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  color: var(--brand);
+}
+
+.sollic-card__pill--closed,
+.sollic-card__pill--external {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.sollic-card__step {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sollic-card__hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+
+.sollic-card__chev {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 1.25rem;
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  line-height: 1;
+}
+
+.sollicitaties-detail {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .sollicitaties-detail {
+    display: block;
+  }
+}
+
+.sollic-detail {
+  padding: 1rem;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.sollic-detail__title {
+  margin: 0.25rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.sollic-detail__meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.sollic-detail__timeline {
+  margin-top: 1rem;
+}
+
+.sollic-detail__tip {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--gold) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+}
+
+.sollic-detail__tip-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--brand);
+}
+
+.sollic-detail__tip-body {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+
+.sollic-detail__cta {
+  width: 100%;
+  margin-top: 1rem;
+  border-radius: var(--radius-pill);
+  min-block-size: 48px;
+  justify-content: center;
+}
+
+.sollicitaties-empty {
+  margin-block: 1rem;
+}
+
+.sollicitaties-activiteiten-placeholder {
+  margin-block: 1.5rem 0;
+}
+
+.sollicitaties-gate {
+  max-width: 28rem;
+  margin: 2rem auto;
+  padding-inline: 1.25rem;
+  text-align: center;
+}

@@ -1,0 +1,105 @@
+@page "/candidate/applications"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/candidate/applications"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="3" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            var isCandidate = user.Identity?.IsAuthenticated == true
+                              && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+            var readOnly = user.Identity?.IsAuthenticated == true && !isCandidate;
+            string? givenName = null;
+            if (isCandidate)
+            {
+                givenName = user.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value
+                            ?? user.FindFirst("given_name")?.Value;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("tab", out var tabValues);
+            query.TryGetValue("filter", out var filterValues);
+            query.TryGetValue("sel", out var selValues);
+            Guid? selectedId = null;
+            if (Guid.TryParse(selValues.FirstOrDefault(), out var parsedSel))
+            {
+                selectedId = parsedSel;
+            }
+
+            var data = await ApplicationsSsrData.LoadAsync(
+                Api,
+                FeatureFlags,
+                Culture,
+                isCandidate,
+                tabValues.FirstOrDefault(),
+                filterValues.FirstOrDefault(),
+                selectedId,
+                givenName,
+                readOnly);
+
+            _bodyHtml = ApplicationsSsrShells.BuildBody(Culture, data);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

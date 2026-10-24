@@ -1,6 +1,6 @@
-@page "/candidate/applications"
-@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; no CandidateJobListTabs *@
+@* Route moved to CandidateApplicationsSsr.razor (mockup SSR). Legacy interactive markup kept for reference. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [ExcludeFromInteractiveRouting]
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]

@@ -292,7 +292,11 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-10" };
+            var appsCss = new List<string>
+            {
+                "css/features/sollicitaties-page.css?v=20261024-sollicitaties1",
+                "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
+            };
             if (RouteUsesCompactHeroCss(path))
             {
                 appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261022-reis-r7");
