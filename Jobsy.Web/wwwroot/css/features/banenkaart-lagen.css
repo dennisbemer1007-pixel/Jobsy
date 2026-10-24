@@ -2649,6 +2649,12 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip {
     top: auto;
     bottom: 52px;
+    max-height: min(10.5rem, 42vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    width: min(196px, calc(100vw - 2rem));
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip::before {
