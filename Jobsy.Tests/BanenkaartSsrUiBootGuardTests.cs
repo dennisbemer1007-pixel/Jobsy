@@ -54,6 +54,7 @@ public sealed class BanenkaartSsrUiBootGuardTests
         var root = FindRepoRoot();
         var ssr = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-ssr.js"));
         var boot = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-maps-boot.js"));
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
 
         Assert.Contains("applyInitialUiState", ssr, StringComparison.Ordinal);
         Assert.Contains("jobsy-bk-ssr-ui-ready", ssr, StringComparison.Ordinal);

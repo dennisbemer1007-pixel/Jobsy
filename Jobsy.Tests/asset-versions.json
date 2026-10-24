@@ -104,8 +104,8 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "ed1216fe71e6ccf1e6164b9fe3bb6f754b719e16ca4899093bd7e4b685dfda1e",
-    "v": "20261015-27"
+    "v": "20261024-listtoggle2",
+    "sha256": "e2f5c139b319849f604ec0265d1c18e299212b5a6c8e441925da17a7fe68ab78"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "45758384a12b52fb030600210a4768cbd00560e003bcda2d8f43cd882bc77f26",
@@ -360,20 +360,20 @@
     "v": "20261024-acc10"
   },
   "css/features/banenkaart-page.css": {
-    "v": "20261023-21",
-    "sha256": "5b74df3f1bf389faf381d96a78bb6f610f6487653a3abf9213acb5fd2c4c112a"
+    "v": "20261024-listtoggle2",
+    "sha256": "73c4e162caf9ac089e760aa38451f95247338b3d66486b6a9d570da731fe5ee5"
   },
   "css/features/banenkaart-illustrated.css": {
     "v": "20261023-21",
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "sha256": "a4c85e6e27d74f5c70d42b672cc7609694ebfe2590b1f7bdd6b6d4d9bb54d45d",
-    "v": "20261024-filters3"
+    "v": "20261024-listtoggle2",
+    "sha256": "92d1a7789ce40a583c0287d8b06f30c67fc8889b034b9b67ee4b9836047d5a16"
   },
   "js/banenkaart-ssr.js": {
-    "sha256": "0aa5474b1c41b529be16edf1a6b7e720f6de873e9c3b9454ea64c652582f0d63",
-    "v": "20261024-filters3"
+    "v": "20261024-listtoggle2",
+    "sha256": "739599b3baaac66187e508718138d511fcba68d2a7ff547ff6f42fbd32ea065b"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -388,7 +388,7 @@
     "sha256": "74c74e7793a10406e658e51b748b67692852f766e36dadad4b32d8f3eb814abf"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-lagen1",
-    "sha256": "4fb7fc23d11845c510852cca122e6b1cff93922ef264c06e7639418815ee3ba5"
+    "v": "20261024-listtoggle2",
+    "sha256": "c001a03950c77df009aca0aeda82142648d0981d6b6390e0f49080f47c8f0581"
   }
 }

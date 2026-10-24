@@ -66,7 +66,8 @@ public sealed class BanenkaartLijstScrollViewPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 15_000 });
 
-        await page.Locator("[data-testid=kb-view-lijst]").First.ClickAsync();
+        var desktopToggle = page.Locator("[data-testid=kb-view-toggle][data-kb-view-toggle-desktop=\"1\"]");
+        await desktopToggle.Locator("[data-testid=kb-view-lijst]").ClickAsync();
         await page.WaitForFunctionAsync(
             """
             () => {
@@ -88,7 +89,14 @@ public sealed class BanenkaartLijstScrollViewPlaywrightTests : IAsyncLifetime
 
         Assert.True(await WheelScrollReachesLastCardAsync(page), "Wheel scroll on list must reach the last card.");
 
-        await page.Locator("[data-testid=kb-view-kaart]").First.ClickAsync();
+        await page.EvaluateAsync(
+            """
+            () => {
+              const btn = document.querySelector('[data-kb-view-toggle-desktop="1"] [data-testid=kb-view-kaart]');
+              if (!btn) throw new Error('missing kaart toggle');
+              btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            }
+            """);
         await page.WaitForFunctionAsync(
             """
             () => {
@@ -105,7 +113,7 @@ public sealed class BanenkaartLijstScrollViewPlaywrightTests : IAsyncLifetime
 
         Assert.True(await CardMetaFullyVisibleAsync(page), "Kaart rail card meta row must not be clipped.");
 
-        await page.Locator("[data-testid=kb-view-lijst]").First.ClickAsync();
+        await desktopToggle.Locator("[data-testid=kb-view-lijst]").ClickAsync();
         await page.WaitForFunctionAsync(
             "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.getAttribute('data-kb-view') === 'list'",
             null,
