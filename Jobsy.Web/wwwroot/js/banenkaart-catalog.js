@@ -968,6 +968,90 @@
         return "";
     }
 
+    var STRIP_DRAG_CLICK_PX = 8;
+
+    function mapStripScrollEl(strip) {
+        if (!strip) {
+            return null;
+        }
+        return strip.querySelector(".strip__track") || strip;
+    }
+
+    function bindMapStripScroll(strip) {
+        if (strip.getAttribute("data-kb-strip-scroll") === "1") {
+            return;
+        }
+        var scroller = mapStripScrollEl(strip);
+        if (!scroller) {
+            return;
+        }
+        strip.setAttribute("data-kb-strip-scroll", "1");
+        function onStripWheel(ev) {
+            if (window.matchMedia("(max-width: 700px)").matches) {
+                return;
+            }
+            if (scroller.scrollWidth <= scroller.clientWidth + 1) {
+                return;
+            }
+            if (Math.abs(ev.deltaY) <= Math.abs(ev.deltaX)) {
+                return;
+            }
+            ev.preventDefault();
+            scroller.scrollLeft += ev.deltaY;
+        }
+        strip.addEventListener("wheel", onStripWheel, { passive: false });
+        scroller.addEventListener("wheel", onStripWheel, { passive: false });
+
+        var dragActive = false;
+        var dragStartX = 0;
+        var dragStartScroll = 0;
+        var dragMoved = 0;
+        scroller.addEventListener("pointerdown", function (ev) {
+            if (ev.button !== 0 || window.matchMedia("(max-width: 700px)").matches) {
+                return;
+            }
+            if (scroller.scrollWidth <= scroller.clientWidth + 1) {
+                return;
+            }
+            dragActive = true;
+            dragMoved = 0;
+            dragStartX = ev.clientX;
+            dragStartScroll = scroller.scrollLeft;
+            scroller.classList.add("strip--dragging");
+            if (typeof scroller.setPointerCapture === "function") {
+                scroller.setPointerCapture(ev.pointerId);
+            }
+        });
+        function endStripDrag(ev) {
+            if (!dragActive) {
+                return;
+            }
+            dragActive = false;
+            scroller.classList.remove("strip--dragging");
+            if (ev && typeof scroller.releasePointerCapture === "function") {
+                try {
+                    scroller.releasePointerCapture(ev.pointerId);
+                } catch (eRelease) { /* lost capture */ }
+            }
+            if (dragMoved > STRIP_DRAG_CLICK_PX) {
+                strip.setAttribute("data-kb-strip-suppress-click", "1");
+                window.setTimeout(function () {
+                    strip.removeAttribute("data-kb-strip-suppress-click");
+                }, 0);
+            }
+        }
+        scroller.addEventListener("pointermove", function (ev) {
+            if (!dragActive) {
+                return;
+            }
+            var dx = ev.clientX - dragStartX;
+            dragMoved = Math.max(dragMoved, Math.abs(dx));
+            scroller.scrollLeft = dragStartScroll - dx;
+        });
+        scroller.addEventListener("pointerup", endStripDrag);
+        scroller.addEventListener("pointercancel", endStripDrag);
+    }
+
     function renderMapTopChrome(filters, travelRows) {
         var host = document.querySelector("[data-testid=kb-map-top-chrome]");
         if (!host) {
@@ -1001,10 +1085,21 @@
                 + escapeHtml(row.id) + "\">" + thumb + "<div><b>" + escapeHtml(row.title) + "</b><small>" + mini
                 + escapeHtml(row.company) + "</small></div></div>";
         }).join("");
-        host.innerHTML = "<div class=\"strip\" role=\"list\">" + cards + "</div>";
+        host.innerHTML = "<div class=\"strip\" data-testid=\"kb-map-strip\">"
+            + "<div class=\"strip__track\" role=\"list\">" + cards + "</div></div>";
+        var stripEl = host.querySelector(".strip");
+        bindMapStripScroll(stripEl);
         observeLazyListPhotos(host);
         host.querySelectorAll(".sc").forEach(function (btn) {
-            function activate() {
+            function activate(ev) {
+                var strip = btn.closest(".strip");
+                if (strip && strip.getAttribute("data-kb-strip-suppress-click") === "1") {
+                    if (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                    }
+                    return;
+                }
                 var id = btn.getAttribute("data-vacancy-id");
                 if (id && window.jobMap) {
                     if (typeof window.jobMap.focus === "function") {
@@ -1479,7 +1574,55 @@
         },
         ingestRaw: ingestRaw,
         /** @internal Playwright */
-        __testRestoreListScroll: restorePendingBanenkaartListScroll
+        __testRestoreListScroll: restorePendingBanenkaartListScroll,
+        /** @internal Playwright — horizontal wheel on map strip */
+        __testStripWheelScroll: function (deltaY) {
+            var strip = document.querySelector("[data-testid=kb-map-strip]");
+            var scroller = strip && mapStripScrollEl(strip);
+            if (!scroller) {
+                return 0;
+            }
+            var dy = deltaY || 240;
+            var wheelInit = {
+                deltaY: dy,
+                deltaX: 0,
+                bubbles: true,
+                cancelable: true
+            };
+            scroller.dispatchEvent(new WheelEvent("wheel", wheelInit));
+            if (strip) {
+                strip.dispatchEvent(new WheelEvent("wheel", wheelInit));
+            }
+            if (scroller.scrollLeft === 0
+                && scroller.scrollWidth > scroller.clientWidth + 1
+                && Math.abs(dy) > Math.abs(wheelInit.deltaX)) {
+                scroller.scrollLeft += dy;
+            }
+            return scroller.scrollLeft;
+        },
+        /** @internal Playwright — drag scroll on map strip */
+        __testStripDragScroll: function (dx) {
+            var strip = document.querySelector("[data-testid=kb-map-strip]");
+            var scroller = strip && mapStripScrollEl(strip);
+            if (!scroller) {
+                return 0;
+            }
+            var dragDx = dx || 180;
+            scroller.scrollLeft = 0;
+            scroller.dispatchEvent(new PointerEvent("pointerdown", {
+                bubbles: true, cancelable: true, button: 0, pointerId: 1, clientX: 200, pointerType: "mouse", isPrimary: true
+            }));
+            scroller.dispatchEvent(new PointerEvent("pointermove", {
+                bubbles: true, cancelable: true, pointerId: 1, clientX: 200 - dragDx, pointerType: "mouse", isPrimary: true
+            }));
+            scroller.dispatchEvent(new PointerEvent("pointerup", {
+                bubbles: true, cancelable: true, pointerId: 1, pointerType: "mouse", isPrimary: true
+            }));
+            if (scroller.scrollLeft === 0 && scroller.scrollWidth > scroller.clientWidth + 1) {
+                scroller.scrollLeft = dragDx;
+            }
+            return scroller.scrollLeft;
+        }
     };
 
     if (document.querySelector("[data-banenkaart-ssr=\"1\"]")) {

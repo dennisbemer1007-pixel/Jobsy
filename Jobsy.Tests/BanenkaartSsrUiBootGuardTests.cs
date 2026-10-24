@@ -66,6 +66,22 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_map_strip_supports_desktop_wheel_and_drag_scroll()
+    {
+        var root = FindRepoRoot();
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css"));
+        var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
+        Assert.Contains("bindMapStripScroll", catalog, StringComparison.Ordinal);
+        Assert.Contains("kb-map-strip", catalog, StringComparison.Ordinal);
+        Assert.Contains("strip__track", css, StringComparison.Ordinal);
+        Assert.Contains("scroll-snap-type: x mandatory", css, StringComparison.Ordinal);
+        Assert.Contains("overflow-x: auto", css, StringComparison.Ordinal);
+        Assert.Contains("var candidateShell = onRoute;", layout, StringComparison.Ordinal);
+        Assert.DoesNotContain("var candidateShell = onRoute && _isCandidate", layout, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_desktop_list_uses_two_column_card_grid()
     {
         var root = FindRepoRoot();
