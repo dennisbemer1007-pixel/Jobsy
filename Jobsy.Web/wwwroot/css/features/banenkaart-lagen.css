@@ -2143,6 +2143,11 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop.kb-popup-lagen-pop {
     max-width: 420px !important;
     z-index: 25;
+    pointer-events: none;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop.kb-popup-lagen-pop .fcw {
+    pointer-events: auto;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-popup.pop.fpop.kb-popup-lagen-pop .maplibregl-popup-tip {
