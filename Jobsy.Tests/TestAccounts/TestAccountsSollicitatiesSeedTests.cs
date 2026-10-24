@@ -155,6 +155,44 @@ public sealed class TestAccountsSollicitatiesSeedTests
     }
 
     [Fact]
+    public async Task TryEnsure_uses_any_branch_manager_when_catalog_missing()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var grokId = Guid.NewGuid();
+        db.Users.Add(new Jobsy.Core.Entities.User
+        {
+            Id = grokId,
+            Email = TestAccountsSollicitatiesDemoSeeder.AcceptatiePrimaryCandidateEmail,
+            FullName = "Grok Test",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            IsTestAccount = false
+        });
+        var managerId = Guid.NewGuid();
+        db.Users.Add(new Jobsy.Core.Entities.User
+        {
+            Id = managerId,
+            Email = "real-manager@lobsy.nl",
+            FullName = "Manager",
+            Role = UserRole.BranchManager,
+            IsActive = true,
+            IsTestAccount = false
+        });
+        await db.SaveChangesAsync();
+
+        var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+            db,
+            BuildConfig(),
+            TestAccountEnvironmentGuard.Evaluate(ValidAcceptatieGuardInput()),
+            NullLogger.Instance);
+        Assert.True(applied);
+        Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == grokId));
+    }
+
+    [Fact]
     public async Task Ensure_skips_non_test_candidate()
     {
         var (db, _, branchManagerId) = await SeedUsersAsync();
