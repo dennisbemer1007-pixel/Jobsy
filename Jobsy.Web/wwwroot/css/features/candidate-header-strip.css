@@ -1,0 +1,98 @@
+/* Shared candidate header illustration height (mockup Sollicitaties 01 / na-de-match 04: 150px desktop, 90px mobile). */
+
+:root {
+  --cand-header-strip-h-desktop: 150px;
+  --cand-header-strip-h-mobile: 90px;
+  --hero-d: var(--cand-header-strip-h-desktop);
+  --hero-m: var(--cand-header-strip-h-mobile);
+  --kb-header-strip-h: var(--cand-header-strip-h-desktop);
+  --sollic-hero-h: var(--cand-header-strip-h-desktop);
+}
+
+@media (max-width: 639px) {
+  :root {
+    --hero-d: var(--cand-header-strip-h-mobile);
+    --kb-header-strip-h: var(--cand-header-strip-h-mobile);
+    --sollic-hero-h: var(--cand-header-strip-h-mobile);
+  }
+}
+
+.cand-header-strip-h {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  height: var(--cand-header-strip-h-desktop);
+  min-height: var(--cand-header-strip-h-desktop);
+  max-height: var(--cand-header-strip-h-desktop);
+}
+
+@media (max-width: 639px) {
+  .cand-header-strip-h {
+    height: var(--cand-header-strip-h-mobile);
+    min-height: var(--cand-header-strip-h-mobile);
+    max-height: var(--cand-header-strip-h-mobile);
+  }
+}
+
+.sollicitaties-hero-strip,
+.sollicitaties-page-wrap .sollicitaties-hero-strip,
+.rustig-hero.kb-nearby-banner--strip,
+.kb-banenkaart-header-strip,
+.kb-nearby-banner--strip-wide.kb-banenkaart-header-strip,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen > .rustig-hero,
+.app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] > .kb-nearby-banner--strip,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
+  height: var(--cand-header-strip-h-desktop);
+  min-height: var(--cand-header-strip-h-desktop);
+  max-height: var(--cand-header-strip-h-desktop);
+  overflow: hidden;
+}
+
+@media (max-width: 639px) {
+  .sollicitaties-hero-strip,
+  .sollicitaties-page-wrap .sollicitaties-hero-strip,
+  .rustig-hero.kb-nearby-banner--strip,
+  .kb-banenkaart-header-strip,
+  .kb-nearby-banner--strip-wide.kb-banenkaart-header-strip,
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen > .rustig-hero,
+  .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] > .kb-nearby-banner--strip,
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
+    height: var(--cand-header-strip-h-mobile);
+    min-height: var(--cand-header-strip-h-mobile);
+    max-height: var(--cand-header-strip-h-mobile);
+  }
+}
+
+.sollicitaties-hero-strip .sollicitaties-hero-strip__img,
+.rustig-hero.kb-nearby-banner--strip img,
+.kb-banenkaart-header-strip__img,
+.kb-banenkaart-header-strip__inner picture,
+.kb-banenkaart-header-strip__inner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 640px) {
+  .cand-hero,
+  header.cand-compact-hero.cand-hero--compact-preview-c {
+    min-height: var(--cand-header-strip-h-desktop);
+    height: var(--cand-header-strip-h-desktop);
+    max-height: var(--cand-header-strip-h-desktop);
+  }
+}
+
+@media (max-width: 639px) {
+  .panel-page--cand-ill .cand-hero,
+  .passport-page--illustrated .cand-hero,
+  .career-page--illustrated .cand-hero,
+  .cand-hero--with-art,
+  header.cand-compact-hero.cand-hero--compact-preview-c,
+  .journey.journey--overview-route > header.cand-hero--discovery-overview-v8.cand-compact-hero,
+  .journey.journey--overview-route > header.cand-hero--discovery-overview-v8 {
+    min-height: var(--cand-header-strip-h-mobile) !important;
+    height: var(--cand-header-strip-h-mobile) !important;
+    max-height: var(--cand-header-strip-h-mobile) !important;
+  }
+}

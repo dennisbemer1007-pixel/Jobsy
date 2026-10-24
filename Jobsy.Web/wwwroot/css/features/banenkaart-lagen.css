@@ -294,8 +294,8 @@
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen {
-    --hero-d: 150px;
-    --hero-m: 90px;
+    --hero-d: var(--cand-header-strip-h-desktop, 150px);
+    --hero-m: var(--cand-header-strip-h-mobile, 90px);
     --kb-navy: #1f2f55;
     --kb-ink: #1b2440;
     font-family: "Noto Sans", sans-serif;
@@ -1435,7 +1435,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
         grid-template-columns: minmax(320px, 42%) minmax(0, 58%);
-        grid-template-rows: 64px 150px auto minmax(0, 1fr);
+        grid-template-rows: 64px var(--cand-header-strip-h-desktop, 150px) auto minmax(0, 1fr);
         flex: 1 1 auto;
         min-height: 0;
         height: 100%;
@@ -1452,8 +1452,8 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
         grid-column: 1 / -1;
         grid-row: 2 !important;
-        min-height: 150px;
-        max-height: 150px;
+        min-height: var(--cand-header-strip-h-desktop, 150px);
+        max-height: var(--cand-header-strip-h-desktop, 150px);
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] > .kb-nearby-banner--strip {
@@ -2094,7 +2094,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 @media (max-width: 700px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: 62px 90px auto minmax(0, 1fr) !important;
+        grid-template-rows: 62px var(--cand-header-strip-h-mobile, 90px) auto minmax(0, 1fr) !important;
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
@@ -2118,8 +2118,8 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-nearby-banner--strip {
-        min-height: 90px;
-        max-height: 90px;
+        min-height: var(--cand-header-strip-h-mobile, 90px);
+        max-height: var(--cand-header-strip-h-mobile, 90px);
         grid-row: 2 !important;
     }
 

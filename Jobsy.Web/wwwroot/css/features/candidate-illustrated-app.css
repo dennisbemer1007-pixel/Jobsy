@@ -29,8 +29,9 @@
   max-width: 100vw;
   margin-inline: calc(50% - 50vw);
   margin-bottom: 0.75rem;
-  min-height: clamp(11.25rem, 15.28vw, 13.75rem);
-  height: clamp(11.25rem, 15.28vw, 13.75rem);
+  min-height: var(--cand-header-strip-h-desktop, 150px);
+  height: var(--cand-header-strip-h-desktop, 150px);
+  max-height: var(--cand-header-strip-h-desktop, 150px);
   background-color: var(--pearl);
   background-image: var(--cand-hero-art, none);
   background-repeat: no-repeat;
@@ -74,8 +75,9 @@
 
 @media (min-width: 640px) {
   .cand-hero--profession-band {
-    min-height: clamp(11.25rem, 15.28vw, 13.75rem);
-    height: clamp(11.25rem, 15.28vw, 13.75rem);
+    min-height: var(--cand-header-strip-h-desktop, 150px);
+    height: var(--cand-header-strip-h-desktop, 150px);
+    max-height: var(--cand-header-strip-h-desktop, 150px);
     margin-top: 0;
   }
 }
