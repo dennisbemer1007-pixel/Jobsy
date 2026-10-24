@@ -103,18 +103,23 @@
     min-width: 0;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand img {
-    width: 40px;
-    height: 40px;
-    flex: none;
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand .brand__logo.lobsy-logo--horizontal {
+    width: auto;
+    height: 44px;
+    max-width: min(168px, 36vw);
+    flex-shrink: 0;
+    transform: none;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand b {
-    font-size: 22px;
-    color: var(--kb-navy, #1f2f55);
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand .lobsy-logo__img {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand small {
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand .kb-mockup-top__tagline {
     font-size: 14.5px;
     font-weight: 600;
     color: var(--kb-navy, #1f2f55);
@@ -251,9 +256,9 @@
         display: none;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand img {
-        width: 36px;
-        height: 36px;
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .brand .brand__logo.lobsy-logo--horizontal {
+        height: 40px;
+        max-width: min(140px, 44vw);
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top .tr .round:first-child {

@@ -14,6 +14,17 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_mockup_top_uses_shared_horizontal_lobsy_logo()
+    {
+        var root = FindRepoRoot();
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
+        Assert.Contains("lobsy-logo--horizontal", shells, StringComparison.Ordinal);
+        Assert.Contains("lobsy-logo__img", shells, StringComparison.Ordinal);
+        Assert.Contains("BrandImages.HorizontalSvg", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("banenkaart-lagen-logo.png", shells, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_lagen_list_mode_spans_full_width_on_desktop()
     {
         var root = FindRepoRoot();

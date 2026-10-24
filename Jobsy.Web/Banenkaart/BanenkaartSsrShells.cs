@@ -265,8 +265,12 @@ internal static class BanenkaartSsrShells
 
         sb.Append("<header class=\"top kb-mockup-top\" data-testid=\"kb-mockup-top\">");
         sb.Append("<a class=\"brand\" href=\"/\" aria-label=\"Lobsy\">");
-        sb.Append("<img src=\"/images/brand/banenkaart-lagen-logo.png\" width=\"40\" height=\"40\" alt=\"\" decoding=\"async\" />");
-        sb.Append("<b>Lobsy</b><small>").Append(WebUtility.HtmlEncode(tagline)).Append("</small></a>");
+        sb.Append("<span class=\"lobsy-logo lobsy-logo--horizontal brand__logo kb-mockup-top__logo\" role=\"img\" aria-label=\"Lobsy\">");
+        sb.Append("<img class=\"lobsy-logo__img\" src=\"")
+            .Append(WebUtility.HtmlEncode(BrandImages.HorizontalSvg))
+            .Append("\" alt=\"\" width=\"154\" height=\"44\" decoding=\"async\" data-logo-fallback=\"1\" draggable=\"false\" />");
+        sb.Append("</span><small class=\"kb-mockup-top__tagline\">")
+            .Append(WebUtility.HtmlEncode(tagline)).Append("</small></a>");
         sb.Append("<div class=\"tr\">");
         sb.Append("<a class=\"round\" href=\"").Append(WebUtility.HtmlEncode(notificationsHref))
             .Append("\" aria-label=\"").Append(WebUtility.HtmlEncode(culture["Nav.Notifications"])).Append("\">");
