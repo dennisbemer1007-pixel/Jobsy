@@ -102,55 +102,12 @@
     });
   }
 
-  function scrollCancelPanel(container) {
-    var params = new URLSearchParams(window.location.search);
-    if (params.get("panel") !== "cancel") return;
-    var panel = container.querySelector("#ndm-cancel-panel");
-    if (panel) {
-      panel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }
-
-  function bindCancel(container) {
-    var btn = container.querySelector("[data-ndm-cancel-submit]");
-    var reasonEl = container.querySelector("[data-ndm-cancel-reason]");
-    if (!btn || !reasonEl) return;
-    var appId = container.getAttribute("data-application-id");
-    if (!appId) return;
-    btn.addEventListener("click", function () {
-      var reason = (reasonEl.value || "").trim();
-      if (!reason) {
-        reasonEl.focus();
-        return;
-      }
-      btn.disabled = true;
-      fetch("/api/ndm-confirmed-client/cancel?applicationId=" + encodeURIComponent(appId), {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        body: JSON.stringify({ reason: reason }),
-      })
-        .then(function (resp) {
-          if (!resp.ok) throw new Error("cancel failed");
-          window.location.reload();
-        })
-        .catch(function () {
-          btn.disabled = false;
-        });
-    });
-  }
-
   function boot() {
     var container = root();
     if (!container) return;
     bindCalendar(container);
     bindReminders(container);
     bindAskLobsy(container);
-    bindCancel(container);
-    scrollCancelPanel(container);
   }
 
   if (document.readyState === "loading") {

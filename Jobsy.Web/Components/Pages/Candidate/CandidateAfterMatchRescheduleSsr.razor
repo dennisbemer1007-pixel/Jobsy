@@ -1,0 +1,110 @@
+@page "/candidate/applications/{ApplicationId:guid}/after-match/reschedule-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["AfterMatch.Screen08.Hero.Title"] · Lobsy</PageTitle>
+<PageSeo Title="@Culture["AfterMatch.Screen08.Hero.Title"]" />
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/candidate/applications"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+    <link rel="stylesheet" href="css/features/sollicitaties-page.css?v=20261024-ndm-pick-slot2" />
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261026-ndm-reschedule1" />
+    <script src="/js/ndm-reschedule.js?v=20261026-ndm-reschedule1" defer></script>
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="2" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (_redirecting)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private bool _loading = true;
+    private bool _redirecting;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("return", out var returnValues);
+            var returnUrl = returnValues.FirstOrDefault();
+            query.TryGetValue("panel", out var panelValues);
+            var panel = panelValues.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(panel))
+            {
+                panel = "reschedule";
+            }
+
+            var data = await AfterMatchRescheduleSsrData.LoadAsync(
+                Api,
+                Culture,
+                ApplicationId,
+                returnUrl);
+
+            if (data is null)
+            {
+                _redirecting = true;
+                var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor";
+                if (http.Request.QueryString.HasValue)
+                {
+                    blazorPath += http.Request.QueryString.Value;
+                }
+
+                http.Response.Redirect(blazorPath);
+                return;
+            }
+
+            _bodyHtml = AfterMatchRescheduleSsrShells.BuildBody(Culture, data, ApplicationId, panel);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

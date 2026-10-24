@@ -168,12 +168,36 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen07.Pref.WeekBefore", "Een week van tevoren, e-mail", "One week ahead, e-mail");
 
         Add("AfterMatch.Screen08.Hero.Title", "Verzetten of afzeggen", "Reschedule or cancel");
+        Add("AfterMatch.Screen08.Eyebrow", "Sollicitaties · Gesprek gepland", "Applications · Interview scheduled");
         Add("AfterMatch.Screen08.Hero.Lead",
             "Dat kan altijd. Geef een korte reden, dan ziet de ander wat er aan de hand is.",
             "You can always do that. Give a short reason so the other person understands.");
+        Add("AfterMatch.Screen08.Hero.LeadDetail",
+            "Dat kan gebeuren. Laat {0} weten waarom, dan zoeken jullie samen een nieuw moment.",
+            "It happens. Let {0} know why, then you can find a new time together.");
         Add("AfterMatch.Screen08.Reschedule", "Verzetten", "Reschedule");
         Add("AfterMatch.Screen08.Cancel", "Afzeggen", "Cancel");
         Add("AfterMatch.Screen08.Reason", "Korte reden", "Short reason");
+        Add("AfterMatch.Screen08.ReasonLong", "Waarom (verplicht, mag kort)", "Why (required, keep it short)");
+        Add("AfterMatch.Screen08.SideTitle.Reschedule", "Gesprek verzetten", "Reschedule interview");
+        Add("AfterMatch.Screen08.SideTitle.Cancel", "Gesprek afzeggen", "Cancel interview");
+        Add("AfterMatch.Screen08.SideLead", "{0} krijgt meteen bericht.", "{0} is notified right away.");
+        Add("AfterMatch.Screen08.ReasonChip.Sick", "Ziek", "Sick");
+        Add("AfterMatch.Screen08.ReasonChip.Family", "Zorg voor familie", "Family care");
+        Add("AfterMatch.Screen08.ReasonChip.Transport", "Vervoer lukt niet", "Transport issue");
+        Add("AfterMatch.Screen08.ReasonChip.OtherAppt", "Andere afspraak", "Other appointment");
+        Add("AfterMatch.Screen08.ReasonChip.Other", "Iets anders", "Something else");
+        Add("AfterMatch.Screen08.WhenLabel", "Wanneer kan het wel?", "When could it work?");
+        Add("AfterMatch.Screen08.ProposeOther", "Ander moment voorstellen", "Suggest another time");
+        Add("AfterMatch.Screen08.AlternateSlotHint", "{0} (een van de andere momenten)", "{0} (one of the other times)");
+        Add("AfterMatch.Screen08.SendTo", "Verstuur naar {0}", "Send to {0}");
+        Add("AfterMatch.Screen08.CancelConfirm", "Afzeggen bevestigen", "Confirm cancellation");
+        Add("AfterMatch.Screen08.NeverMind", "Toch niet", "Never mind");
+        Add("AfterMatch.Screen08.CancelFootnote",
+            "Afzeggen telt niet tegen je. Je sollicitatie blijft gewoon staan.",
+            "Cancelling does not count against you. Your application stays active.");
+        Add("AfterMatch.Screen08.ScheduledSubOnSite", "Op locatie, {0}", "On site, {0}");
+        Add("AfterMatch.Screen08.ScheduledSubOnline", "Online, {0}", "Online, {0}");
 
         Add("AfterMatch.Screen09.Hero.Title", "Verzoek om te verzetten", "Request to reschedule");
         Add("AfterMatch.Screen09.Hero.Lead",

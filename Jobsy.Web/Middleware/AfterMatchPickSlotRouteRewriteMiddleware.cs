@@ -25,8 +25,9 @@ public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
                 var suffix = panel switch
                 {
                     "pick-slot" or "propose-slot" => "/pick-slot-ssr",
-                    "messages" or "reschedule" => "/blazor",
-                    "" or "cancel" => "/confirmed-ssr",
+                    "messages" => "/blazor",
+                    "reschedule" or "cancel" => "/reschedule-ssr",
+                    "" => "/confirmed-ssr",
                     _ => "/blazor",
                 };
                 context.Request.Path = new PathString(match.Groups[1].Value + suffix);

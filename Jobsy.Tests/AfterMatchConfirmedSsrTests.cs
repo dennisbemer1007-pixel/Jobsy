@@ -100,11 +100,9 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
             "22 okt");
 
         var html = AfterMatchConfirmedSsrShells.BuildBody(culture, data, appId);
-        var htmlCancel = AfterMatchConfirmedSsrShells.BuildBody(culture, data, appId, "cancel");
 
         Assert.Contains("data-ndm-confirmed-ssr=\"1\"", html, StringComparison.Ordinal);
         Assert.DoesNotContain("ndm-cancel-panel", html, StringComparison.Ordinal);
-        Assert.Contains("ndm-cancel-panel", htmlCancel, StringComparison.Ordinal);
         Assert.Contains("Je gesprek staat erin", html, StringComparison.Ordinal);
         Assert.Contains("Gesprek gepland", html, StringComparison.Ordinal);
         Assert.Contains("Zet in je agenda", html, StringComparison.Ordinal);
@@ -112,7 +110,7 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
         Assert.Contains("data-ndm-reminder=\"dayBefore18\"", html, StringComparison.Ordinal);
         Assert.Contains("class=\"s now\"", html, StringComparison.Ordinal);
         Assert.Contains("Verzetten", html, StringComparison.Ordinal);
-        Assert.Contains("panel=cancel", html, StringComparison.Ordinal);
+        Assert.Contains("panel=reschedule", html, StringComparison.Ordinal);
         Assert.Contains("De dag ervoor, om 18:00", html, StringComparison.Ordinal);
         Assert.Contains("E-mail en melding", html, StringComparison.Ordinal);
         Assert.Contains("href=\"https://calendar.google.com/calendar/render?action=TEMPLATE\"", html, StringComparison.Ordinal);
@@ -130,8 +128,7 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
             root,
             "Jobsy.Web/Middleware/AfterMatchPickSlotRouteRewriteMiddleware.cs"));
         Assert.Contains("/confirmed-ssr", middleware, StringComparison.Ordinal);
-        Assert.Contains("\"messages\" or \"reschedule\" => \"/blazor\"", middleware, StringComparison.Ordinal);
-        Assert.Contains("\"cancel\" => \"/confirmed-ssr\"", middleware, StringComparison.Ordinal);
+        Assert.Contains("\"reschedule\" or \"cancel\" => \"/reschedule-ssr\"", middleware, StringComparison.Ordinal);
     }
 
     [Fact]
