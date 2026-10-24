@@ -190,13 +190,15 @@ public class MobileSaasUxTests
         Assert.Contains("scroll-padding-inline: var(--sollic-inline-pad, 16px)", css, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-client-nav.js?v=20261024-mobile-read2", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-client-nav.js?v=20261024-unread-badge1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-berichten.js?v=20261024-unread-badge1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("data-sollic-unread-threads", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("sollicitaties-actions.js", shells, StringComparison.Ordinal);
         Assert.Contains("data-sollic-app-id", shells, StringComparison.Ordinal);
         Assert.Contains("data-sollic-berichten-back", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/SollicitatiesBerichtenSsr.cs")), StringComparison.Ordinal);
         Assert.Contains("data-sollic-tab-panel", shells, StringComparison.Ordinal);
         Assert.Contains("data-sollic-filters", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-rail.js", applicationsRazor, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-berichten.js", applicationsRazor, StringComparison.Ordinal);
         Assert.Contains(".sollic-berichten.ti.sollic-berichten-ti--mob", css, StringComparison.Ordinal);
         Assert.Contains(".sollic-berichten-ti-preview", css, StringComparison.Ordinal);
         var berichtenPresentation = File.ReadAllText(Path.Combine(
