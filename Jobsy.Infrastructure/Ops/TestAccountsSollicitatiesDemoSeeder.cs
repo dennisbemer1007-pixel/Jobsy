@@ -273,12 +273,12 @@ public static class TestAccountsSollicitatiesDemoSeeder
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public static bool IsAcceptatieDemoCandidateEmail(string? email)
+        => !string.IsNullOrWhiteSpace(email)
+           && string.Equals(email, AcceptatiePrimaryCandidateEmail, StringComparison.OrdinalIgnoreCase);
+
     private static bool IsAllowlistedPrimaryCandidate(User? candidate)
-        => candidate?.Email is not null
-           && string.Equals(
-               candidate.Email,
-               AcceptatiePrimaryCandidateEmail,
-               StringComparison.OrdinalIgnoreCase);
+        => IsAcceptatieDemoCandidateEmail(candidate?.Email);
 
     private static CompanySeed[] BuildCompanies() =>
     [

@@ -43,6 +43,7 @@ internal static class ApplicationsSsrData
         Guid? selectedId,
         string? givenName,
         bool readOnly,
+        string? candidateEmail = null,
         CancellationToken cancellationToken = default)
     {
         var tab = ApplicationsSsrQuery.NormalizeTab(tabRaw);
@@ -86,6 +87,40 @@ internal static class ApplicationsSsrData
         catch
         {
             // show empty list
+        }
+
+        if (rows.Count == 0 && IsAcceptatieDemoCandidateEmail(candidateEmail))
+        {
+            try
+            {
+                var ensure = await api.TryEnsureAcceptatieSollicitatiesDemoAsync(cancellationToken);
+                if (ensure is { VerifiedApplicationCount: > 0 })
+                {
+                    var apps = await api.GetMyApplicationsAsync(cancellationToken);
+                    rows.Clear();
+                    foreach (var a in apps)
+                    {
+                        rows.Add(MapApplication(culture, a));
+                    }
+
+                    try
+                    {
+                        var initiatives = await api.GetCandidateInitiativesAsync(cancellationToken);
+                        foreach (var initiative in initiatives)
+                        {
+                            rows.Add(MapApplication(culture, InitiativeApplicationMapper.ToApplicationItem(initiative)));
+                        }
+                    }
+                    catch
+                    {
+                        // optional
+                    }
+                }
+            }
+            catch
+            {
+                // acc-only fallback; ignore on failure
+            }
         }
 
         if (externalOn)
@@ -156,6 +191,12 @@ internal static class ApplicationsSsrData
             counts.External,
             counts.Done);
     }
+
+    private const string AcceptatieDemoCandidateEmail = "lobsy-test@mail.grokbot.com";
+
+    private static bool IsAcceptatieDemoCandidateEmail(string? email)
+        => !string.IsNullOrWhiteSpace(email)
+           && string.Equals(email, AcceptatieDemoCandidateEmail, StringComparison.OrdinalIgnoreCase);
 
     private static PageData Empty(
         string tab,

@@ -65,10 +65,13 @@ else if (_bodyHtml is not null)
                               && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
             var readOnly = user.Identity?.IsAuthenticated == true && !isCandidate;
             string? givenName = null;
+            string? candidateEmail = null;
             if (isCandidate)
             {
                 givenName = user.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value
                             ?? user.FindFirst("given_name")?.Value;
+                candidateEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                                 ?? user.FindFirst("email")?.Value;
             }
 
             var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
@@ -90,7 +93,8 @@ else if (_bodyHtml is not null)
                 filterValues.FirstOrDefault(),
                 selectedId,
                 givenName,
-                readOnly);
+                readOnly,
+                candidateEmail);
 
             _bodyHtml = ApplicationsSsrShells.BuildBody(Culture, data);
         }
