@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Ops;
@@ -108,7 +109,16 @@ public static class TestAccountsSollicitatiesDemoSeeder
                 candidate.Email);
         }
 
-        await new VacancyCategoryService(db).EnsureDefaultsAsync(cancellationToken);
+        try
+        {
+            await new VacancyCategoryService(db).EnsureDefaultsAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "VacancyCategory EnsureDefaults failed; resolving regulier category for sollicitaties demo.");
+        }
+
+        var regulierCategoryId = await ResolveRegulierCategoryIdAsync(db, cancellationToken);
 
         var companies = BuildCompanies();
         foreach (var company in companies)
@@ -119,7 +129,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
         var vacancies = BuildVacancies(companies);
         foreach (var vacancy in vacancies)
         {
-            await UpsertVacancyAsync(db, vacancy, cancellationToken);
+            await UpsertVacancyAsync(db, vacancy, regulierCategoryId, cancellationToken);
         }
 
         await EnsureVacancyApplicationAsync(
@@ -374,10 +384,82 @@ public static class TestAccountsSollicitatiesDemoSeeder
         _ => 1
     };
 
+    private static string TruncateEstablishmentId(string value)
+        => value.Length <= 40 ? value : value[..40];
+
     private static string DemoKvk(int offset)
     {
-        var baseNumber = int.Parse(TestAccountsIds.SollicDemoKvkBase, System.Globalization.NumberStyles.None);
-        return (baseNumber + 10 + offset).ToString("D8", System.Globalization.CultureInfo.InvariantCulture);
+        var baseNumber = int.Parse(TestAccountsIds.SollicDemoKvkBase, NumberStyles.None, CultureInfo.InvariantCulture);
+        return (baseNumber + 10 + offset).ToString("D8", CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<Guid> ResolveRegulierCategoryIdAsync(
+        JobsyDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var byId = await db.VacancyCategories.AsNoTracking()
+            .Where(c => c.Id == VacancyCategoryDefaults.RegulierId)
+            .Select(c => c.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (byId != Guid.Empty)
+        {
+            return byId;
+        }
+
+        var bySlug = await db.VacancyCategories.AsNoTracking()
+            .Where(c => c.Slug == "regulier")
+            .Select(c => c.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (bySlug != Guid.Empty)
+        {
+            return bySlug;
+        }
+
+        var seed = VacancyCategoryDefaults.All.FirstOrDefault(c => c.Id == VacancyCategoryDefaults.RegulierId)
+                   ?? VacancyCategoryDefaults.All.First(c => c.Slug == "regulier");
+        db.VacancyCategories.Add(new VacancyCategory
+        {
+            Id = seed.Id,
+            Slug = seed.Slug,
+            Name = seed.Name,
+            ColorHex = seed.ColorHex,
+            PublishCostTokens = seed.PublishCostTokens,
+            HighlightAvailable = seed.HighlightAvailable,
+            HighlightCostTokens = seed.HighlightCostTokens,
+            PushBomAvailable = seed.PushBomAvailable,
+            PushBomCostTokens = seed.PushBomCostTokens,
+            IsAlwaysFree = seed.IsAlwaysFree,
+            ExtraFieldsJson = VacancyCategoryExtraFields.SerializeKeys(seed.ExtraFields),
+            PlacementKind = seed.PlacementKind,
+            SortOrder = seed.SortOrder,
+            IsActive = true,
+            ShowInMapFilter = true,
+            ShowInLegend = true,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        return seed.Id;
+    }
+
+    private static async Task<string> ResolveUniqueKvkEstablishmentIdAsync(
+        JobsyDbContext db,
+        Guid companyId,
+        string kvk,
+        CancellationToken cancellationToken)
+    {
+        var candidates = new[] { $"{kvk}_0001", TruncateEstablishmentId($"demo-{companyId:N}") };
+
+        foreach (var establishmentId in candidates.Distinct(StringComparer.Ordinal))
+        {
+            var taken = await db.Companies.AsNoTracking().AnyAsync(
+                c => c.KvkEstablishmentId == establishmentId && c.Id != companyId,
+                cancellationToken);
+            if (!taken)
+            {
+                return establishmentId;
+            }
+        }
+
+        return TruncateEstablishmentId($"demo-{companyId:N}");
     }
 
     private static async Task UpsertCompanyAsync(
@@ -386,13 +468,14 @@ public static class TestAccountsSollicitatiesDemoSeeder
         CancellationToken cancellationToken)
     {
         var kvk = DemoKvk(seed.KvkOffset);
+        var establishmentId = await ResolveUniqueKvkEstablishmentIdAsync(db, seed.Id, kvk, cancellationToken);
         var existing = await db.Companies.FirstOrDefaultAsync(c => c.Id == seed.Id, cancellationToken);
         if (existing is not null)
         {
             existing.Name = seed.Name;
             existing.IsTestData = true;
             existing.KvkNumber = kvk;
-            existing.KvkEstablishmentId = $"{kvk}_0001";
+            existing.KvkEstablishmentId = establishmentId;
             existing.Type = CompanyType.Employer;
             existing.ParentCompanyId = null;
             existing.Location = seed.Location;
@@ -410,7 +493,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
             Id = seed.Id,
             Name = seed.Name,
             KvkNumber = kvk,
-            KvkEstablishmentId = $"{kvk}_0001",
+            KvkEstablishmentId = establishmentId,
             Type = CompanyType.Employer,
             Location = seed.Location,
             Address = $"Teststraat 1, {seed.City}",
@@ -429,10 +512,21 @@ public static class TestAccountsSollicitatiesDemoSeeder
     private static async Task UpsertVacancyAsync(
         JobsyDbContext db,
         VacancySeed seed,
+        Guid categoryId,
         CancellationToken cancellationToken)
     {
+        var companyExists = await db.Companies.AsNoTracking()
+            .AnyAsync(c => c.Id == seed.CompanyId, cancellationToken);
+        if (!companyExists)
+        {
+            return;
+        }
+
         var today = DateOnly.FromDateTime(DemoAnchorUtc);
         var existing = await db.Vacancies.FirstOrDefaultAsync(v => v.Id == seed.Id, cancellationToken);
+        existing ??= await db.Vacancies.FirstOrDefaultAsync(
+            v => v.IsTestData && v.CompanyId == seed.CompanyId && v.Title == seed.Title,
+            cancellationToken);
         if (existing is not null)
         {
             existing.Title = seed.Title;
@@ -441,6 +535,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
             existing.IsTestData = true;
             existing.Location = seed.Location;
             existing.WorkTypes = seed.WorkType;
+            existing.CategoryId = categoryId;
             existing.PublishedAtUtc ??= DemoAnchorUtc;
             return;
         }
@@ -459,7 +554,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
             RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
             WorkTypes = seed.WorkType,
             Kind = VacancyKind.Regular,
-            CategoryId = VacancyCategoryDefaults.RegulierId,
+            CategoryId = categoryId,
             IsTestData = true,
             ContentModerationPassed = true,
             CreatedAtUtc = DemoAnchorUtc.AddDays(-14),
