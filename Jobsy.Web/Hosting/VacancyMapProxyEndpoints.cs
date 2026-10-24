@@ -33,6 +33,10 @@ public static class VacancyMapProxyEndpoints
         app.MapGet("/api/vacancies/{id:guid}/image", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/image", ct));
 
+        // Small WebP for lagen map popups (lazy-loaded when a card opens).
+        app.MapGet("/api/vacancies/{id:guid}/map-popup-photo", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/map-popup-photo", ct));
+
         // Legacy detail path still used by older cached jobMap bundles.
         app.MapGet("/api/vacancies/{id:guid}", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, $"api/vacancies/{id:D}", ct));
@@ -137,8 +141,9 @@ public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
 
         using var client = JobsyApiClientFactory.Create(_services, _configuration);
         using var request = new HttpRequestMessage(HttpMethod.Get, target);
-        // Image proxy accepts any content; JSON endpoints keep application/json preference.
-        if (!apiPath.EndsWith("/image", StringComparison.OrdinalIgnoreCase))
+        // Image / map-popup-photo accept any content; JSON endpoints keep application/json preference.
+        if (!apiPath.EndsWith("/image", StringComparison.OrdinalIgnoreCase)
+            && !apiPath.Contains("/map-popup-photo", StringComparison.OrdinalIgnoreCase))
         {
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }

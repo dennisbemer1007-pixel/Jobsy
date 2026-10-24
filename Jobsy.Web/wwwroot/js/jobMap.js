@@ -1957,17 +1957,17 @@ window.jobMap = (function () {
                     rememberJobLiked(id, liked, childMarkers);
                 });
             }
-            function blockHeartBubble(ev) {
-                if (ev && typeof ev.stopImmediatePropagation === "function") {
-                    ev.stopImmediatePropagation();
+            function stopHeartMapBubble(ev) {
+                if (!ev || typeof ev.stopPropagation !== "function") {
+                    return;
                 }
-                stopEvent(ev);
+                ev.stopPropagation();
             }
-            btn.addEventListener("pointerdown", blockHeartBubble, true);
-            btn.addEventListener("mousedown", blockHeartBubble, true);
-            btn.addEventListener("touchstart", blockHeartBubble, { capture: true, passive: false });
+            btn.addEventListener("pointerdown", stopHeartMapBubble, true);
+            btn.addEventListener("mousedown", stopHeartMapBubble, true);
+            btn.addEventListener("touchstart", stopHeartMapBubble, { capture: true, passive: true });
             btn.addEventListener("click", function (ev) {
-                blockHeartBubble(ev);
+                stopHeartMapBubble(ev);
                 if (!uiLabels.canSave) {
                     window.location.href = "/login?returnUrl=" +
                         encodeURIComponent(banenkaartReturnUrl());
@@ -1991,7 +1991,6 @@ window.jobMap = (function () {
                     delete btn.dataset.saveBusy;
                 });
             });
-            btn.addEventListener("click", blockHeartBubble, true);
         });
     }
 
@@ -2521,75 +2520,75 @@ window.jobMap = (function () {
             return;
         }
         const fcw = root.querySelector("[data-lagen-fcw]") || root;
-        if (fcw.dataset.lagenFundaBound === "1") {
-            return;
-        }
-        fcw.dataset.lagenFundaBound = "1";
-        const closeBtn = fcw.querySelector("[data-lagen-close]");
-        if (closeBtn) {
-            closeBtn.addEventListener("click", function (ev) {
-                stopEvent(ev);
-                closeActivePopup();
-            });
-        }
-        const prev = fcw.querySelector("[data-lagen-prev]");
-        const next = fcw.querySelector("[data-lagen-next]");
-        if (prev) {
-            prev.addEventListener("click", function (ev) {
-                stopEvent(ev);
-                if (!clusterUiState) {
-                    return;
-                }
-                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page - 1, -1, true);
-            });
-        }
-        if (next) {
-            next.addEventListener("click", function (ev) {
-                stopEvent(ev);
-                if (!clusterUiState) {
-                    return;
-                }
-                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page + 1, 1, true);
-            });
-        }
-        const wageBtn = fcw.querySelector("[data-lagen-wage]");
-        if (wageBtn) {
-            if (isNarrowViewport()) {
-                wageBtn.addEventListener("click", function (ev) {
+        const firstBind = fcw.dataset.lagenFundaBound !== "1";
+        if (firstBind) {
+            fcw.dataset.lagenFundaBound = "1";
+            const closeBtn = fcw.querySelector("[data-lagen-close]");
+            if (closeBtn) {
+                closeBtn.addEventListener("click", function (ev) {
                     stopEvent(ev);
-                    const open = !fcw.classList.contains("lagen-wage-open");
-                    setLagenWageTipOpen(fcw, open);
-                });
-            } else {
-                wageBtn.addEventListener("mouseenter", function () {
-                    setLagenWageTipOpen(fcw, true);
-                });
-                wageBtn.addEventListener("mouseleave", function () {
-                    setLagenWageTipOpen(fcw, false);
-                });
-                wageBtn.addEventListener("focus", function () {
-                    setLagenWageTipOpen(fcw, true);
-                });
-                wageBtn.addEventListener("blur", function () {
-                    setLagenWageTipOpen(fcw, false);
+                    closeActivePopup();
                 });
             }
-        }
-        fcw.querySelectorAll(".fgo, .map-popup__cta").forEach(function (cta) {
-            if (cta.dataset.bound) {
-                return;
+            const prev = fcw.querySelector("[data-lagen-prev]");
+            const next = fcw.querySelector("[data-lagen-next]");
+            if (prev) {
+                prev.addEventListener("click", function (ev) {
+                    stopEvent(ev);
+                    if (!clusterUiState) {
+                        return;
+                    }
+                    renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page - 1, -1, true);
+                });
             }
-            cta.dataset.bound = "1";
-            cta.addEventListener("click", function (ev) {
-                stopEvent(ev);
-                const id = cta.getAttribute("data-job-id");
-                if (id) {
-                    writeBanenkaartMapView();
-                    notifyOpen(id);
-                    window.location.assign(detailHrefForVacancy(id));
+            if (next) {
+                next.addEventListener("click", function (ev) {
+                    stopEvent(ev);
+                    if (!clusterUiState) {
+                        return;
+                    }
+                    renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page + 1, 1, true);
+                });
+            }
+            const wageBtn = fcw.querySelector("[data-lagen-wage]");
+            if (wageBtn) {
+                if (isNarrowViewport()) {
+                    wageBtn.addEventListener("click", function (ev) {
+                        stopEvent(ev);
+                        const open = !fcw.classList.contains("lagen-wage-open");
+                        setLagenWageTipOpen(fcw, open);
+                    });
+                } else {
+                    wageBtn.addEventListener("mouseenter", function () {
+                        setLagenWageTipOpen(fcw, true);
+                    });
+                    wageBtn.addEventListener("mouseleave", function () {
+                        setLagenWageTipOpen(fcw, false);
+                    });
+                    wageBtn.addEventListener("focus", function () {
+                        setLagenWageTipOpen(fcw, true);
+                    });
+                    wageBtn.addEventListener("blur", function () {
+                        setLagenWageTipOpen(fcw, false);
+                    });
                 }
+            }
+            fcw.querySelectorAll(".fgo, .map-popup__cta").forEach(function (cta) {
+                if (cta.dataset.bound) {
+                    return;
+                }
+                cta.dataset.bound = "1";
+                cta.addEventListener("click", function (ev) {
+                    stopEvent(ev);
+                    const id = cta.getAttribute("data-job-id");
+                    if (id) {
+                        writeBanenkaartMapView();
+                        notifyOpen(id);
+                        window.location.assign(detailHrefForVacancy(id));
+                    }
+                });
             });
-        });
+        }
         bindSaveJobButtons(fcw, childMarkers || []);
         const job = clusterUiState && clusterUiState.jobs
             ? clusterUiState.jobs[(clusterUiState.page || 1) - 1]

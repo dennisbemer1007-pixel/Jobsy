@@ -104,6 +104,8 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("photoIsWorkTypePlaceholder", js);
         Assert.Contains("/api/vacancies/{id:guid}/image",
             File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
+        Assert.Contains("/api/vacancies/{id:guid}/map-popup-photo",
+            File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
         var discovery = File.ReadAllText(
             Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         // Full vacancy catalog must never be persisted into / HTML (2 MB hub limit).
@@ -182,7 +184,8 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             "/api/vacancies/pins",
             $"/api/vacancies/{sampleId:D}/card",
             $"/api/vacancies/cards?ids={sampleId:D}",
-            $"/api/vacancies/{sampleId:D}"
+            $"/api/vacancies/{sampleId:D}",
+            $"/api/vacancies/{sampleId:D}/map-popup-photo?variant=desktop"
         };
 
         foreach (var url in urls)
@@ -191,6 +194,20 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             Assert.True(
                 response.StatusCode is HttpStatusCode.OK or HttpStatusCode.NotModified,
                 $"{url} → {response.StatusCode}");
+        }
+
+        var photo = await webClient.GetAsync($"/api/vacancies/{sampleId:D}/map-popup-photo?variant=desktop");
+        Assert.Equal(HttpStatusCode.OK, photo.StatusCode);
+        var photoBytes = await photo.Content.ReadAsByteArrayAsync();
+        Assert.InRange(photoBytes.Length, 200, 80_000);
+        if (photo.Content.Headers.ContentType?.MediaType is { } mediaType)
+        {
+            Assert.Equal("image/webp", mediaType);
+        }
+        else
+        {
+            Assert.Equal((byte)'R', photoBytes[0]);
+            Assert.Equal((byte)'I', photoBytes[1]);
         }
     }
 
