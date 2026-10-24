@@ -24,9 +24,9 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 <HeadContent>
-    <script src="/js/sollicitaties-filter-chips.js?v=20261024-mockup01-acc3" defer></script>
-    <script src="/js/sollicitaties-rail.js?v=20261024-mockup01-acc3" defer></script>
-    <script src="/js/sollicitaties-actions.js?v=20261024-mockup01-acc3" defer></script>
+    <script src="/js/sollicitaties-filter-chips.js?v=20261024-mockup01-acc4" defer></script>
+    <script src="/js/sollicitaties-rail.js?v=20261024-mockup01-acc4" defer></script>
+    <script src="/js/sollicitaties-actions.js?v=20261024-mockup01-acc4" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -77,10 +77,17 @@ else if (_bodyHtml is not null)
             query.TryGetValue("tab", out var tabValues);
             query.TryGetValue("filter", out var filterValues);
             query.TryGetValue("sel", out var selValues);
+            query.TryGetValue("thread", out var threadValues);
             Guid? selectedId = null;
             if (Guid.TryParse(selValues.FirstOrDefault(), out var parsedSel))
             {
                 selectedId = parsedSel;
+            }
+
+            Guid? berichtenThreadId = null;
+            if (Guid.TryParse(threadValues.FirstOrDefault(), out var parsedThread))
+            {
+                berichtenThreadId = parsedThread;
             }
 
             var userAgent = HttpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "";
@@ -101,7 +108,8 @@ else if (_bodyHtml is not null)
                 givenName,
                 readOnly,
                 candidateEmail,
-                mobileDetailShell);
+                mobileDetailShell,
+                berichtenThreadId);
 
             _bodyHtml = ApplicationsSsrShells.BuildBody(Culture, data);
         }

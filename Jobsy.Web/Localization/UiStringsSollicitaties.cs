@@ -98,6 +98,56 @@ public static class UiStringsSollicitaties
             "Berichten", "Messages",
             "Wiadomości", "Mesaje", "الرسائل");
 
+        Add("Apps.Berichten.PreviewYou",
+            "Jij: ", "You: ",
+            "Ty: ", "Tu: ", "أنت: ");
+
+        Add("Apps.Berichten.SubtitleInterview",
+            "{0} · gesprek {1}", "{0} · interview {1}",
+            "{0} · rozmowa {1}", "{0} · interviu {1}", "{0} · مقابلة {1}");
+
+        Add("Apps.Berichten.SysBothYes",
+            "Jullie zeiden allebei ja · {0}", "You both said yes · {0}",
+            "Oboje powiedzieliście tak · {0}", "Ați spus amândoi da · {0}", "قال كلٌّ منكما نعم · {0}");
+
+        Add("Apps.Berichten.SysSlots",
+            "Er staan {0} momenten klaar · {1}", "{0} time slots ready · {1}",
+            "Gotowych terminów: {0} · {1}", "{0} intervale disponibile · {1}", "{0} مواعيد جاهزة · {1}");
+
+        Add("Apps.Berichten.SysScheduled",
+            "Gesprek gepland · {0}", "Interview scheduled · {0}",
+            "Rozmowa zaplanowana · {0}", "Interviu programat · {0}", "مقابلة مجدولة · {0}");
+
+        Add("Apps.Berichten.AboutRole",
+            "Over: {0}", "About: {0}",
+            "O: {0}", "Despre: {0}", "حول: {0}");
+
+        Add("Apps.Berichten.ViewApplication",
+            "Sollicitatie bekijken", "View application",
+            "Zobacz aplikację", "Vezi candidatura", "عرض الطلب");
+
+        Add("Apps.Berichten.SafePanel",
+            "Je telefoonnummer deel je pas na het gesprek, je bankgegevens pas na een aanbod. Gesprekken van afgeronde sollicitaties staan in het archief.",
+            "You share your phone number only after the interview, and bank details only after an offer. Conversations from closed applications are archived.",
+            "Numer telefonu podajesz dopiero po rozmowie, dane bankowe dopiero po ofercie. Rozmowy z zamkniętych aplikacji trafiają do archiwum.",
+            "Numărul de telefon îl partajezi abia după interviu, datele bancare abia după ofertă. Conversațiile din candidaturi închise sunt arhivate.",
+            "تشارك رقم هاتفك فقط بعد المقابلة، وبياناتك البنكية فقط بعد عرض. محادثات الطلبات المغلقة في الأرشيف.");
+
+        Add("Apps.Berichten.EmptyTitle",
+            "Nog geen berichten", "No messages yet",
+            "Brak wiadomości", "Încă nu sunt mesaje", "لا رسائل بعد");
+
+        Add("Apps.Berichten.EmptyBody",
+            "Zodra een werkgever reageert op je sollicitatie, zie je het gesprek hier.",
+            "When an employer responds to your application, the conversation appears here.",
+            "Gdy pracodawca odpowie na aplikację, rozmowa pojawi się tutaj.",
+            "Când un angajator răspunde la candidatură, conversația apare aici.",
+            "عندما يرد صاحب العمل على طلبك، تظهر المحادثة هنا.");
+
+        Add("Apps.Berichten.ReadSuffix",
+            " · Gelezen", " · Read",
+            " · Przeczytane", " · Citit", " · مقروء");
+
         Add("Apps.Ndm.CompanyPage",
             "Bedrijfspagina", "Company page",
             "Strona firmy", "Pagina companie", "صفحة الشركة");

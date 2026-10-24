@@ -2,6 +2,7 @@ using System.Globalization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Contracts;
 using Jobsy.Web.Bedrijvenkaart;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
@@ -35,7 +36,11 @@ internal static class ApplicationsSsrData
         int CountInitiative,
         int CountExternal,
         int CountDone,
-        bool DetailView);
+        bool DetailView,
+        bool AfterMatchEnabled,
+        int UnreadMessagesTotal,
+        Guid? BerichtenThreadId,
+        AfterMatchThreadDto? BerichtenThread);
 
     internal static async Task<PageData> LoadAsync(
         JobsyApiClient api,
@@ -51,6 +56,7 @@ internal static class ApplicationsSsrData
         bool readOnly,
         string? candidateEmail = null,
         bool mobileDetailShell = false,
+        Guid? berichtenThreadId = null,
         CancellationToken cancellationToken = default)
     {
         var tab = ApplicationsSsrQuery.NormalizeTab(tabRaw);
@@ -58,6 +64,7 @@ internal static class ApplicationsSsrData
         var flags = await featureFlags.GetAsync(cancellationToken);
         var employersOn = flags.EmployersEnabled;
         var externalOn = flags.CandidateExternalVacanciesEnabled;
+        var afterMatchOn = flags.AfterMatchEnabled;
 
         if (!employersOn)
         {
@@ -163,6 +170,41 @@ internal static class ApplicationsSsrData
         var detailView = selectedId is not null && mobileDetailShell;
         var sel = selectedId ?? filtered.FirstOrDefault()?.RowId;
 
+        var messageRows = rows
+            .Where(r => r.AfterMatch is not null && r.ApplicationId is Guid)
+            .OrderByDescending(r => r.AfterMatch!.LastMessageAtUtc ?? r.SortAtUtc)
+            .ToList();
+        var unreadTotal = messageRows.Sum(r => r.AfterMatch!.UnreadMessageCount);
+
+        Guid? threadId = berichtenThreadId;
+        AfterMatchThreadDto? berichtenThread = null;
+        if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal)
+            && afterMatchOn
+            && !readOnly
+            && isCandidate)
+        {
+            threadId ??= messageRows.FirstOrDefault()?.ApplicationId;
+            if (threadId is Guid tid && messageRows.Any(r => r.ApplicationId == tid))
+            {
+                try
+                {
+                    berichtenThread = await api.GetAfterMatchForCandidateAsync(tid, cancellationToken);
+                }
+                catch
+                {
+                    berichtenThread = null;
+                }
+            }
+            else
+            {
+                threadId = null;
+            }
+        }
+        else if (!string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
+        {
+            threadId = null;
+        }
+
         return new PageData(
             isCandidate || readOnly,
             true,
@@ -182,7 +224,11 @@ internal static class ApplicationsSsrData
             counts.Initiative,
             counts.External,
             counts.Done,
-            detailView);
+            detailView,
+            afterMatchOn,
+            unreadTotal,
+            threadId,
+            berichtenThread);
     }
 
     private const string AcceptatieDemoCandidateEmail = "lobsy-test@mail.grokbot.com";
@@ -263,7 +309,11 @@ internal static class ApplicationsSsrData
             0,
             0,
             0,
-            false);
+            false,
+            false,
+            0,
+            null,
+            null);
 
     private static (int All, int Vacancy, int Initiative, int External, int Done) CountByFilter(
         IReadOnlyList<SollicitationRow> rows)
@@ -297,7 +347,10 @@ internal static class ApplicationsSsrData
                 a.AfterMatch.OpenSlotCount,
                 a.AfterMatch.ScheduledStartUtc,
                 a.AfterMatch.ScheduledEndUtc,
-                a.AfterMatch.AcceptedAtUtc);
+                a.AfterMatch.AcceptedAtUtc,
+                a.AfterMatch.LastMessagePreview,
+                a.AfterMatch.LastMessageFromCandidate,
+                a.AfterMatch.LastMessageAtUtc);
         }
 
         return new SollicitationRow(
@@ -405,6 +458,8 @@ internal static class ApplicationsSsrData
         var time = local.ToString("HH:mm", cultureInfo);
         return $"{day}, {time}";
     }
+
+    internal static CultureInfo FormatCulture(CultureState culture) => CultureInfoFor(culture);
 
     private static CultureInfo CultureInfoFor(CultureState culture)
         => culture.Language switch

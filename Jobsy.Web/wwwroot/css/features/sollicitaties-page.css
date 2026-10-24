@@ -1222,3 +1222,251 @@
 .sollic-detail-panel[hidden] {
   display: none !important;
 }
+
+/* Mockup 03: Berichten-tab (sollicitaties-berichten.html) */
+.sollic-berichten.thr {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sollic-berichten.tlist {
+  border-right: 1px solid var(--border);
+  background: #fbf8f3;
+}
+
+.sollic-berichten.ti {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+  align-items: flex-start;
+}
+
+.sollic-berichten.ti.on {
+  background: #fff;
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.sollic-berichten.ti .logo-sq {
+  width: 38px;
+  height: 38px;
+  font-size: 0.78rem;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: var(--pearl);
+  border: 1px solid var(--border);
+}
+
+.sollic-berichten.ti b {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.sollic-berichten.ti p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.sollic-berichten.ti .n {
+  margin-left: auto;
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #c2410c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.sollic-berichten.tmain {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sollic-berichten.thd {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sollic-berichten.thd .logo-sq {
+  width: 38px;
+  height: 38px;
+  font-size: 0.78rem;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: var(--pearl);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sollic-berichten.thd b {
+  display: block;
+}
+
+.sollic-berichten.thd p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.sollic-berichten.thd .lnk {
+  margin-left: auto;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sollic-berichten.msg {
+  max-width: 78%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.sollic-berichten.msg.me {
+  align-self: flex-end;
+  background: #eef2f7;
+  border-color: #d6e0ec;
+}
+
+.sollic-berichten.msg small {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.sollic-berichten.sys {
+  align-self: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: #f3ede4;
+  border-radius: 8px;
+  padding: 4px 10px;
+  text-align: center;
+}
+
+.sollic-berichten.sysact {
+  align-self: center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  background: #fbf3e6;
+  border: 1px solid #f1e0c4;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+}
+
+.sollic-berichten.compose {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1.5px solid #d9cdbd;
+  border-radius: 12px;
+  background: #fff;
+  padding: 6px 6px 6px 12px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.sollic-berichten.compose span:first-child {
+  flex: 1;
+}
+
+.sollic-berichten.compose .btn {
+  padding: 8px 12px;
+}
+
+.sollic-berichten.compose svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.sollic-berichten.safe {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.sollic-berichten.tsafe {
+  margin: 14px 16px;
+  font-size: 0.82rem;
+  color: #34465c;
+  background: #f3f6fa;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.sollic-berichten-ti--mob {
+  display: none;
+}
+
+.sollic-berichten-empty {
+  text-align: center;
+  padding: 26px 18px;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .sollic-berichten.thr {
+    grid-template-columns: 1fr;
+  }
+
+  .sollic-berichten.tlist {
+    border-right: 0;
+  }
+
+  .sollic-berichten.tmain {
+    display: none;
+  }
+
+  .sollic-berichten-ti--desk {
+    display: none;
+  }
+
+  .sollic-berichten-ti--mob {
+    display: flex;
+  }
+
+  .sollic-berichten.tsafe {
+    margin: 12px;
+  }
+}
+
+@media (min-width: 901px) {
+  .sollic-berichten-ti--mob {
+    display: none;
+  }
+}

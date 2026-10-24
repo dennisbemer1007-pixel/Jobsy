@@ -511,6 +511,14 @@ public partial class MeController : ControllerBase
                     .ToListAsync(cancellationToken);
                 var unreadByApp = unreadRows.ToDictionary(x => x.ApplicationId, x => x.Count);
 
+                var messageRows = await _db.ApplicationMessages.AsNoTracking()
+                    .Where(m => eligibleIds.Contains(m.ApplicationId))
+                    .OrderByDescending(m => m.CreatedAtUtc)
+                    .ToListAsync(cancellationToken);
+                var lastMessageByApp = messageRows
+                    .GroupBy(m => m.ApplicationId)
+                    .ToDictionary(g => g.Key, g => g.First());
+
                 for (var i = 0; i < items.Count; i++)
                 {
                     var item = items[i];
@@ -536,6 +544,16 @@ public partial class MeController : ControllerBase
                                          .FirstOrDefault(h => h.ToStatus == ApplicationStatus.Accepted)
                                          ?.OccurredAtUtc;
 
+                    string? lastPreview = null;
+                    var lastFromCandidate = false;
+                    DateTime? lastAt = null;
+                    if (lastMessageByApp.TryGetValue(item.Id, out var lastMsg))
+                    {
+                        lastPreview = TruncateMessagePreview(lastMsg.Body);
+                        lastFromCandidate = lastMsg.SenderUserId == user.Id;
+                        lastAt = lastMsg.CreatedAtUtc;
+                    }
+
                     items[i] = item with
                     {
                         AfterMatch = new ApplicationAfterMatchSummaryDto(
@@ -544,7 +562,10 @@ public partial class MeController : ControllerBase
                             openSlots,
                             start,
                             end,
-                            acceptedAt)
+                            acceptedAt,
+                            lastPreview,
+                            lastFromCandidate,
+                            lastAt)
                     };
                 }
             }
@@ -565,6 +586,17 @@ public partial class MeController : ControllerBase
         }
 
         return Ok(items);
+    }
+
+    private static string TruncateMessagePreview(string body)
+    {
+        var trimmed = body.Trim();
+        if (trimmed.Length <= 120)
+        {
+            return trimmed;
+        }
+
+        return trimmed[..117] + "…";
     }
 
     [HttpPost("candidate-how-to-completed")]

@@ -39,6 +39,11 @@ internal static class ApplicationsSsrShells
         {
             AppendActiviteitenPlaceholder(sb, culture);
         }
+        else if (string.Equals(data.Tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal)
+                 && data.AfterMatchEnabled)
+        {
+            SollicitatiesBerichtenSsr.AppendBerichtenTab(sb, culture, data);
+        }
         else
         {
             AppendToolbar(sb, culture, data);
@@ -53,7 +58,7 @@ internal static class ApplicationsSsrShells
         }
 
         sb.Append("</div></div></div></div>");
-        sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-mockup01-acc3\" defer></script>");
+        sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-mockup01-acc4\" defer></script>");
         return sb.ToString();
     }
 
@@ -112,6 +117,16 @@ internal static class ApplicationsSsrShells
             ApplicationsSsrQuery.TabSollicitaties,
             culture["Nav.ApplicationsTab"],
             badge: null);
+        if (data.AfterMatchEnabled)
+        {
+            AppendSegmentTab(
+                sb,
+                data,
+                ApplicationsSsrQuery.TabBerichten,
+                culture["Apps.Ndm.Messages"],
+                badge: data.UnreadMessagesTotal > 0 ? data.UnreadMessagesTotal : null);
+        }
+
         AppendSegmentTab(
             sb,
             data,
