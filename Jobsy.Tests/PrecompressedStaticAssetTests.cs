@@ -51,6 +51,15 @@ public sealed class PrecompressedStaticAssetTests
             Assert.Contains(".fb.euro .tip", text, StringComparison.Ordinal);
             Assert.DoesNotContain("tip--sheet-incard", text, StringComparison.Ordinal);
         }
+
+        if (relativePath == "css/features/sollicitaties-page.css")
+        {
+            var text = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.Contains(
+                ".sollicitaties-page-wrap .sollicitaties-hero-strip",
+                text,
+                StringComparison.Ordinal);
+        }
     }
 
     private static byte[] DecompressGzip(string path)

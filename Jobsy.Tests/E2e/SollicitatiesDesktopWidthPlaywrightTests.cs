@@ -239,6 +239,72 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
     }
 
     [Fact]
+    public async Task Mobile_hero_strip_is_90px_on_applications_and_berichten()
+    {
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync() ?? _localBaseUrl;
+        if (baseUrl is null)
+        {
+            return;
+        }
+
+        await using var browser = await KbE2e.LaunchChromiumAsync();
+        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(390, 844));
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        {
+            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+        }
+        else
+        {
+            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
+            {
+                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+            }
+
+            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+            }
+
+            await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        }
+
+        await page.WaitForSelectorAsync(".sollicitaties-hero-strip", new() { Timeout = 60_000 });
+        var listHero = await MeasureHeroStripAsync(page);
+        _output.WriteLine(
+            $"390 applications hero: strip={listHero.StripH:F1}, mobImg={listHero.MobImgH:F1}, cssH={listHero.StripCssHeight}");
+        Assert.InRange(listHero.StripH, 85, 95);
+        if (listHero.MobImgH > 0)
+        {
+            Assert.InRange(listHero.MobImgH, 85, 95);
+        }
+
+        await page.GotoAsync(
+            baseUrl + "/candidate/applications?tab=berichten",
+            new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForSelectorAsync(".sollicitaties-hero-strip", new() { Timeout = 60_000 });
+        var berichtenHero = await MeasureHeroStripAsync(page);
+        _output.WriteLine(
+            $"390 berichten hero: strip={berichtenHero.StripH:F1}, mobImg={berichtenHero.MobImgH:F1}, cssH={berichtenHero.StripCssHeight}");
+        Assert.InRange(berichtenHero.StripH, 85, 95);
+    }
+
+    private static Task<HeroStripMetrics> MeasureHeroStripAsync(IPage page) =>
+        page.EvaluateAsync<HeroStripMetrics>(@"() => {
+            const strip = document.querySelector('.sollicitaties-hero-strip');
+            const mobImg = document.querySelector('.sollicitaties-hero-strip__img.mob');
+            const sr = strip ? strip.getBoundingClientRect() : null;
+            const mr = mobImg ? mobImg.getBoundingClientRect() : null;
+            return {
+                stripH: sr ? sr.height : 0,
+                mobImgH: mr ? mr.height : 0,
+                stripCssHeight: strip ? getComputedStyle(strip).height : null,
+            };
+        }");
+
+    [Fact]
     public async Task Mobile_sel_shows_detail_panel_at_390()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync() ?? _localBaseUrl;
@@ -404,6 +470,13 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public double H { get; set; }
         public string? Display { get; set; }
         public string? Visibility { get; set; }
+    }
+
+    private sealed class HeroStripMetrics
+    {
+        public double StripH { get; set; }
+        public double MobImgH { get; set; }
+        public string? StripCssHeight { get; set; }
     }
 
     private sealed class LayoutMetrics

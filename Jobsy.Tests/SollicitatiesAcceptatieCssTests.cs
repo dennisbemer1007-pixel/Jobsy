@@ -36,7 +36,8 @@ public sealed class SollicitatiesAcceptatieCssTests
         var localSha = Convert.ToHexString(SHA256.HashData(localBytes)).ToLowerInvariant();
 
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-        var url = $"{AccBase}/css/features/sollicitaties-page.css?v=20261024-mockup01-acc4";
+        var version = AssetVersions.Version("css/features/sollicitaties-page.css");
+        var url = $"{AccBase}/css/features/sollicitaties-page.css?v={version}";
         var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.TryAddWithoutValidation("Accept-Encoding", "br");
         using var brResp = await client.SendAsync(req);
@@ -49,7 +50,36 @@ public sealed class SollicitatiesAcceptatieCssTests
         var decoded = BrotliDecompress(await brResp.Content.ReadAsByteArrayAsync());
         var accSha = Convert.ToHexString(SHA256.HashData(decoded)).ToLowerInvariant();
         Assert.Equal(localSha, accSha);
-        Assert.Contains("@media (min-width: 1024px)", Encoding.UTF8.GetString(decoded), StringComparison.Ordinal);
+        var text = Encoding.UTF8.GetString(decoded);
+        Assert.Contains("@media (min-width: 1024px)", text, StringComparison.Ordinal);
+        Assert.Contains(
+            ".sollicitaties-page-wrap .sollicitaties-hero-strip",
+            text,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Acc_serves_sollicitaties_css_gzip_with_mobile_wrap_selector()
+    {
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var version = AssetVersions.Version("css/features/sollicitaties-page.css");
+        var url = $"{AccBase}/css/features/sollicitaties-page.css?v={version}";
+        var req = new HttpRequestMessage(HttpMethod.Get, url);
+        req.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip");
+        using var gzResp = await client.SendAsync(req);
+        if (gzResp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return;
+        }
+
+        Assert.Equal(HttpStatusCode.OK, gzResp.StatusCode);
+        var decoded = GzipDecompress(await gzResp.Content.ReadAsByteArrayAsync());
+        var text = Encoding.UTF8.GetString(decoded);
+        Assert.Contains(
+            ".sollicitaties-page-wrap .sollicitaties-hero-strip",
+            text,
+            StringComparison.Ordinal);
+        Assert.Contains("max-width: 639px", text, StringComparison.Ordinal);
     }
 
     private static byte[] BrotliDecompress(byte[] input)
@@ -58,6 +88,15 @@ public sealed class SollicitatiesAcceptatieCssTests
         using var brotli = new System.IO.Compression.BrotliStream(ms, System.IO.Compression.CompressionMode.Decompress);
         using var output = new MemoryStream();
         brotli.CopyTo(output);
+        return output.ToArray();
+    }
+
+    private static byte[] GzipDecompress(byte[] input)
+    {
+        using var ms = new MemoryStream(input);
+        using var gzip = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionMode.Decompress);
+        using var output = new MemoryStream();
+        gzip.CopyTo(output);
         return output.ToArray();
     }
 
