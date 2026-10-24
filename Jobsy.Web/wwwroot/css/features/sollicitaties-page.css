@@ -739,16 +739,9 @@
 
 [data-testid="applications-page-ssr"] .sollicitaties-layout,
 [data-testid="applications-page-ssr"] .sollicitaties-list,
-[data-testid="applications-page-ssr"] .sollicitaties-page__body,
-[data-testid="applications-page-ssr"] .sollicitaties-toolbar,
-[data-testid="applications-page-ssr"] .sollicitaties-empty,
-[data-testid="applications-page-ssr"] .sollicitaties-empty-card,
-[data-testid="applications-page-ssr"] .sollicitaties-intro {
-  max-width: none !important;
-  max-inline-size: none !important;
+[data-testid="applications-page-ssr"] .sollicitaties-page__body {
+  max-width: none;
   width: 100%;
-  margin-inline: 0;
-  box-sizing: border-box;
 }
 
 @media (min-width: 640px) {

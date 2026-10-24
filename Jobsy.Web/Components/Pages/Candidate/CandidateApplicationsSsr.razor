@@ -21,11 +21,13 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.SollicitatiesSsrStylesheets())
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/candidate/applications"))
     {
-        <link rel="stylesheet" href="@href" data-sollicitaties-ssr-css="true" />
+        <link rel="stylesheet" href="@href" />
     }
-    <script src="/js/sollicitaties-filter-chips.js?v=20261024-sollicitatie01-layout9" defer></script>
+    <script src="/js/sollicitaties-filter-chips.js?v=20261024-sollicitatie01-layout8" defer></script>
 </HeadContent>
 
 @if (_loading)
