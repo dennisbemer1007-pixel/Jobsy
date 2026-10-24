@@ -1002,6 +1002,11 @@
         if (!root) {
             return false;
         }
+        try {
+            if (window.matchMedia("(min-width: 701px)").matches) {
+                return false;
+            }
+        } catch (eSplit) { }
         if (root.getAttribute("data-kb-view") === "list") {
             return true;
         }
@@ -1103,6 +1108,58 @@
         });
     }
 
+    function restorePendingBanenkaartListScroll() {
+        var raw;
+        try {
+            raw = sessionStorage.getItem("jobsy.bk.view.v1");
+        } catch (eRead) {
+            return;
+        }
+        if (!raw) {
+            return;
+        }
+        var state;
+        try {
+            state = JSON.parse(raw);
+        } catch (eParse) {
+            return;
+        }
+        if (!state || !state.pendingListScrollRestore || typeof state.listScrollTop !== "number") {
+            return;
+        }
+        var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+        if (!root) {
+            return;
+        }
+        var scrollTop = state.listScrollTop;
+        var list = root.querySelector(".vacancy-list") || root.querySelector("[data-testid=vacancy-list]");
+        var pane = root.querySelector(".vacancy-pane");
+        var scroller = null;
+        var bestMax = 0;
+        [list, pane].forEach(function (el) {
+            if (!el) {
+                return;
+            }
+            var max = el.scrollHeight - el.clientHeight;
+            if (max > bestMax) {
+                bestMax = max;
+                scroller = el;
+            }
+        });
+        scroller = scroller || list || pane;
+        [list, pane].forEach(function (el) {
+            if (el) {
+                el.scrollTop = scrollTop;
+            }
+        });
+        if (scroller && Math.abs(scroller.scrollTop - scrollTop) <= 80) {
+            delete state.pendingListScrollRestore;
+            try {
+                sessionStorage.setItem("jobsy.bk.view.v1", JSON.stringify(state));
+            } catch (eWrite) { }
+        }
+    }
+
     function renderListRows(listRows, filters, resetPage) {
         if (resetPage !== false) {
             listShown = LIST_PAGE;
@@ -1182,6 +1239,15 @@
         observeLazyListPhotos(listRoot);
         syncDiscoveryChrome(filters, travelRows.length);
         renderMapTopChrome(filters, travelRows);
+        try {
+            document.dispatchEvent(new Event("jobsy-bk-list-dom-updated"));
+        } catch (eListEvt) { }
+        restorePendingBanenkaartListScroll();
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                restorePendingBanenkaartListScroll();
+            });
+        }
         return travelRows.length;
     }
 
@@ -1289,7 +1355,9 @@
         prefetch: function () {
             return fetchCatalog(false);
         },
-        ingestRaw: ingestRaw
+        ingestRaw: ingestRaw,
+        /** @internal Playwright */
+        __testRestoreListScroll: restorePendingBanenkaartListScroll
     };
 
     if (document.querySelector("[data-banenkaart-ssr=\"1\"]")) {

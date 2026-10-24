@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-listmapresize1",
-    "sha256": "92b698e5e8c6b043a03d4d483edec189aabada66182f42686b5995366e800894"
+    "v": "20261024-desktopsplit1",
+    "sha256": "5cc244830b2ac22a73f926bafcda022eb8ab9ffe541f6e83d3de85ba74d60ee6"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
@@ -360,20 +360,20 @@
     "v": "20261024-acc10"
   },
   "css/features/banenkaart-page.css": {
-    "v": "20261024-listtoggle2",
-    "sha256": "73c4e162caf9ac089e760aa38451f95247338b3d66486b6a9d570da731fe5ee5"
+    "v": "20261024-desktopsplit1",
+    "sha256": "48370ab9c3f817eeeeaccdaca5443088c10128a3b882fd48632aa72d1b72da1c"
   },
   "css/features/banenkaart-illustrated.css": {
     "v": "20261023-21",
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261024-listtoggle2",
-    "sha256": "92d1a7789ce40a583c0287d8b06f30c67fc8889b034b9b67ee4b9836047d5a16"
+    "v": "20261024-desktopsplit1",
+    "sha256": "9d0788d9240e797c2b53938973cb79515b0bc9a362f1120741b055842f2c0b26"
   },
   "js/banenkaart-ssr.js": {
-    "v": "20261024-listmapresize1",
-    "sha256": "7e3afc53c40ef9bb8f9b72a926fb966dd35f2c57a66db797255ce15278c64ddf"
+    "v": "20261024-desktopsplit1",
+    "sha256": "a63c213367a54dcc099de8d7d798d82a21394fcaa0a08f2d1ab5e3cdef2213ad"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -384,11 +384,11 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-listmapresize1",
-    "sha256": "9b42c75312276e6908adabd66e5457da35b317503580585cdd806b277a9d355e"
+    "v": "20261024-desktopsplit1",
+    "sha256": "8471f626da62df2250c778eb9744e29d0af3ddc23d2e5a408467018aa25460f9"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-listtoggle2",
-    "sha256": "c001a03950c77df009aca0aeda82142648d0981d6b6390e0f49080f47c8f0581"
+    "v": "20261024-desktopsplit1",
+    "sha256": "9a2e8790392a3e6d4f4f18331bb1aaa31590f93a9972108125d7b746a40bc3af"
   }
 }

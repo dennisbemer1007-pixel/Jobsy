@@ -5,6 +5,7 @@ namespace Jobsy.Tests;
 /// <summary>
 /// SSR Lijst load then Kaart toggle: map must fill the pane, show tiles/pins, and open a popup on pin tap.
 /// </summary>
+[Collection("BanenkaartPlaywright")]
 public sealed class BanenkaartLijstToKaartMapPlaywrightTests : IAsyncLifetime
 {
     private const string DelftListPath =
@@ -55,20 +56,10 @@ public sealed class BanenkaartLijstToKaartMapPlaywrightTests : IAsyncLifetime
             """
             () => {
               const root = document.querySelector('[data-banenkaart-ssr="1"]');
-              return root && root.getAttribute('data-kb-view') === 'list';
-            }
-            """,
-            null,
-            new() { Timeout = 15_000 });
-
-        var desktopToggle = page.Locator("[data-testid=kb-view-toggle][data-kb-view-toggle-desktop=\"1\"]");
-        await desktopToggle.Locator("[data-testid=kb-view-kaart]").ClickAsync(new() { Force = true });
-
-        await page.WaitForFunctionAsync(
-            """
-            () => {
-              const root = document.querySelector('[data-banenkaart-ssr="1"]');
-              return root && root.getAttribute('data-kb-view') === 'map';
+              const pane = document.querySelector('.jobsy-discovery[data-banenkaart-ssr="1"] .map-pane');
+              return root && root.getAttribute('data-kb-view') === 'map'
+                && root.classList.contains('show-map')
+                && pane && pane.getClientRects().length > 0;
             }
             """,
             null,
