@@ -372,8 +372,8 @@
     "sha256": "92d1a7789ce40a583c0287d8b06f30c67fc8889b034b9b67ee4b9836047d5a16"
   },
   "js/banenkaart-ssr.js": {
-    "v": "20261024-listtoggle2",
-    "sha256": "739599b3baaac66187e508718138d511fcba68d2a7ff547ff6f42fbd32ea065b"
+    "v": "20261024-listmapresize1",
+    "sha256": "6f1d5355beecb46d381bf44f0d96889d313b29c1a3c451a2f6c81617b4bb755b"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -384,8 +384,8 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-heart1",
-    "sha256": "74c74e7793a10406e658e51b748b67692852f766e36dadad4b32d8f3eb814abf"
+    "v": "20261024-listmapresize1",
+    "sha256": "d90379805e254b8f6d0efc9644dfeb6b307e39746db2a18a25659e4ffd8c3e71"
   },
   "css/features/banenkaart-lagen.css": {
     "v": "20261024-listtoggle2",

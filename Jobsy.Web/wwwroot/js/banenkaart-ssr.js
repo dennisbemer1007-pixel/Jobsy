@@ -467,8 +467,10 @@
         if (opts.updateUrl !== false) {
             syncViewQueryParam(listMode);
         }
-        if (!listMode) {
-            scheduleMapRelayout();
+        if (listMode) {
+            saveListScrollToSession();
+        } else {
+            revealMapPaneAndSync();
         }
     }
 
@@ -489,10 +491,118 @@
         } catch (eLegacy) { }
     }
 
-    function scheduleMapRelayout() {
-        [0, 80, 250, 600].forEach(function (ms) {
-            setTimeout(resumeMapLayout, ms);
+    function saveListScrollToSession() {
+        var scroller = listScroller();
+        if (!scroller) {
+            return;
+        }
+        var raw;
+        try {
+            raw = sessionStorage.getItem(BK_VIEW_KEY);
+        } catch (eRead) {
+            raw = null;
+        }
+        var state = {};
+        if (raw) {
+            try {
+                state = JSON.parse(raw) || {};
+            } catch (eParse) {
+                state = {};
+            }
+        }
+        state.listScrollTop = scroller.scrollTop;
+        state.savedAt = Date.now();
+        try {
+            sessionStorage.setItem(BK_VIEW_KEY, JSON.stringify(state));
+        } catch (eStore) { }
+    }
+
+    function restoreListScrollFromSession() {
+        var raw;
+        try {
+            raw = sessionStorage.getItem(BK_VIEW_KEY);
+        } catch (eRead) {
+            return;
+        }
+        if (!raw) {
+            return;
+        }
+        var state;
+        try {
+            state = JSON.parse(raw);
+        } catch (eParse) {
+            return;
+        }
+        if (!state || typeof state.listScrollTop !== "number") {
+            return;
+        }
+        var scroller = listScroller();
+        if (scroller) {
+            scroller.scrollTop = state.listScrollTop;
+        }
+    }
+
+    function syncMapAfterPaneVisible() {
+        function pass() {
+            var pane = qs(".jobsy-discovery[data-banenkaart-ssr=\"1\"] .map-pane");
+            if (pane) {
+                try {
+                    var st = window.getComputedStyle(pane);
+                    if (st.display === "none" || pane.getClientRects().length === 0) {
+                        return;
+                    }
+                } catch (ePane) { }
+            }
+            if (window.jobsyMaps && typeof window.jobsyMaps.ensure === "function") {
+                window.jobsyMaps.ensure("discovery").then(function () {
+                    if (window.jobMap && typeof window.jobMap.boot === "function") {
+                        window.jobMap.boot("job-map");
+                    }
+                    resumeMapLayout();
+                    try {
+                        var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                        if (map && typeof map.resize === "function") {
+                            map.resize();
+                        }
+                    } catch (eResize) { }
+                    if (window.jobMap && typeof window.jobMap.fitToOriginRings === "function") {
+                        window.jobMap.fitToOriginRings(false);
+                    }
+                    if (window.jobsyBanenkaartCatalog
+                        && typeof window.jobsyBanenkaartCatalog.applyToMap === "function") {
+                        var filters = typeof window.jobsyBanenkaartCatalog.resolveFilters === "function"
+                            ? window.jobsyBanenkaartCatalog.resolveFilters()
+                            : null;
+                        window.jobsyBanenkaartCatalog.applyToMap(filters);
+                    }
+                }).catch(function () {
+                    resumeMapLayout();
+                });
+                return;
+            }
+            resumeMapLayout();
+        }
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(pass);
+            });
+        } else {
+            pass();
+        }
+        [80, 250, 600, 1200].forEach(function (ms) {
+            setTimeout(pass, ms);
         });
+    }
+
+    function revealMapPaneAndSync() {
+        try {
+            document.dispatchEvent(new Event("jobsy-bk-map-pane-visible"));
+        } catch (eEvt) { }
+        syncMapAfterPaneVisible();
+    }
+
+    function scheduleMapRelayout() {
+        revealMapPaneAndSync();
     }
 
     function setDefaultBanenkaartView(root) {
@@ -1109,6 +1219,7 @@
         setFiltersOpen(false);
         if (listModeFromUrl()) {
             applyBanenkaartViewMode(root, "list", { updateUrl: false });
+            restoreListScrollFromSession();
         }
     }
 
@@ -1170,6 +1281,8 @@
             resumeMapLayout();
             if (ev.persisted || isBackForwardNavigation()) {
                 restoreBanenkaartViewState();
+            } else if (listModeFromUrl()) {
+                restoreListScrollFromSession();
             }
         });
     }
