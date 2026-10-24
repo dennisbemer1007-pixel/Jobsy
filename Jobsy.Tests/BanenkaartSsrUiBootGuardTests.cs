@@ -8,7 +8,7 @@ public sealed class BanenkaartSsrUiBootGuardTests
         var root = FindRepoRoot();
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
         var heroIdx = shells.IndexOf("AppendNearbyHeroStrip", StringComparison.Ordinal);
-        var chromeIdx = shells.IndexOf("AppendChrome(sb, culture, model)", StringComparison.Ordinal);
+        var chromeIdx = shells.IndexOf("AppendMockupPanelHead(sb, culture, model)", StringComparison.Ordinal);
         Assert.True(heroIdx >= 0 && chromeIdx > heroIdx,
             "Illustration strip must be rendered before filter/search chrome in SSR markup.");
     }
