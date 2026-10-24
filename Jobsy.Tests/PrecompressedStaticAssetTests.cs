@@ -40,6 +40,8 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("css/features/sollicitaties-page.css")]
     [InlineData("css/features/applications.css")]
     [InlineData("css/features/na-de-match.css")]
+    [InlineData("js/ndm-confirmed.js")]
+    [InlineData("js/ndm-reschedule.js")]
     public void Precompressed_sidecars_match_source_bytes(string relativePath)
     {
         var root = FindRepoRoot();
@@ -73,6 +75,7 @@ public sealed class PrecompressedStaticAssetTests
                 text,
                 StringComparison.Ordinal);
             Assert.Contains(".ndm.ndm-reschedule-page", text, StringComparison.Ordinal);
+            Assert.Contains(".ndm-reschedule-page button.chip.on{border-color:var(--brand);background:#eef2f7}", text, StringComparison.Ordinal);
         }
     }
 

@@ -63,9 +63,7 @@ internal static class AfterMatchRescheduleSsrShells
         sb.Append(WebUtility.HtmlEncode(thread.CompanyName));
         sb.Append("</span><i>›</i><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Hero.Title"]));
-        sb.Append("</span></nav><span class=\"eyb ndm-reschedule-eyb\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Eyebrow"]));
-        sb.Append("</span><h1>");
+        sb.Append("</span></nav><h1>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Hero.Title"]));
         sb.Append("</h1><p>");
         sb.Append(WebUtility.HtmlEncode(data.HeroLead));
@@ -182,15 +180,17 @@ internal static class AfterMatchRescheduleSsrShells
 
     private static void AppendReasonBlock(StringBuilder sb, CultureState culture)
     {
-        sb.Append("<div><span class=\"lbl\">");
+        sb.Append("<div class=\"ndm-reschedule-reason-block\"><span class=\"lbl ndm-reschedule-reason-lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.ReasonLong"]));
-        sb.Append("</span><div class=\"row wrapflex ndm-reschedule-reason-chips\" style=\"gap:6px\">");
+        sb.Append("</span><div class=\"row wrapflex ndm-reschedule-reason-chips\">");
         AppendReasonChip(sb, culture["AfterMatch.Screen08.ReasonChip.Sick"]);
         AppendReasonChip(sb, culture["AfterMatch.Screen08.ReasonChip.Family"]);
         AppendReasonChip(sb, culture["AfterMatch.Screen08.ReasonChip.Transport"]);
         AppendReasonChip(sb, culture["AfterMatch.Screen08.ReasonChip.OtherAppt"]);
         AppendReasonChip(sb, culture["AfterMatch.Screen08.ReasonChip.Other"]);
-        sb.Append("</div><textarea class=\"inp area ndm-reschedule-reason\" style=\"margin-top:8px;min-height:60px;width:100%;font:inherit;color:var(--text)\" data-ndm-reason rows=\"3\"></textarea></div>");
+        sb.Append("</div><textarea class=\"inp area ndm-reschedule-reason\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.ReasonPlaceholder"]));
+        sb.Append("\" data-ndm-reason rows=\"3\"></textarea></div>");
     }
 
     private static void AppendReasonChip(StringBuilder sb, string label)
@@ -214,7 +214,7 @@ internal static class AfterMatchRescheduleSsrShells
             sb.Append(" hidden");
         }
 
-        sb.Append("><span class=\"lbl\">");
+        sb.Append("><span class=\"lbl ndm-reschedule-when-lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.WhenLabel"]));
         sb.Append("</span><div class=\"inp ndm-reschedule-when-display\"><span>");
         sb.Append(CalendarIcon);
@@ -224,7 +224,7 @@ internal static class AfterMatchRescheduleSsrShells
             sb.Append(WebUtility.HtmlEncode(data.AlternateSlotLabel));
         }
 
-        sb.Append("</span></div><a class=\"lk small ndm-reschedule-propose\" style=\"display:inline-block;margin-top:6px\" href=\"");
+        sb.Append("</span></div><a class=\"lk small ndm-reschedule-propose\" href=\"");
         sb.Append(WebUtility.HtmlEncode(data.ProposeSlotHref));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.ProposeOther"]));
@@ -253,9 +253,9 @@ internal static class AfterMatchRescheduleSsrShells
 
         sb.Append('>');
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.CancelConfirm"]));
-        sb.Append("</button><button type=\"button\" class=\"lk\" data-ndm-reschedule-nevermind>");
+        sb.Append("</button><button type=\"button\" class=\"lk ndm-reschedule-nevermind\" data-ndm-reschedule-nevermind>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.NeverMind"]));
-        sb.Append("</button></div><p class=\"xs muted\" data-ndm-cancel-footnote");
+        sb.Append("</button></div><p class=\"xs muted ndm-reschedule-cancel-footnote\" data-ndm-cancel-footnote");
         if (mode != "cancel")
         {
             sb.Append(" hidden");
