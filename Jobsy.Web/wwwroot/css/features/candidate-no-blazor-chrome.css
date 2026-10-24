@@ -108,6 +108,11 @@
     .app-shell--candidate.has-bottom-nav .app-main {
         padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
+
+    .app-shell--candidate.has-bottom-nav .app-footer,
+    .app-shell--candidate:has(.bottom-nav) .app-footer {
+        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 .candidate-header-nav[data-testid="candidate-header-nav"] .candidate-header-nav__link {

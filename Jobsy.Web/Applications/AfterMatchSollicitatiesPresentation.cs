@@ -3,10 +3,15 @@ using Jobsy.Web.Localization;
 
 namespace Jobsy.Web.Applications;
 
-/// <summary>List-card Na de match actions (mockup 01 sollicitaties.html).</summary>
 internal static class AfterMatchSollicitatiesPresentation
 {
     internal sealed record CardAction(string Href, string Label, string Modifier);
+
+    internal sealed record DetailActions(
+        string PrimaryHref,
+        string PrimaryLabel,
+        string MessagesHref,
+        int UnreadMessages);
 
     internal static CardAction? BuildCardAction(CultureState culture, ApplicationAfterMatchSummary summary)
     {
@@ -36,6 +41,84 @@ internal static class AfterMatchSollicitatiesPresentation
         }
 
         return null;
+    }
+
+    internal static DetailActions? BuildDetailActions(
+        CultureState culture,
+        ApplicationAfterMatchSummary summary)
+    {
+        if (!Enum.TryParse<InterviewStatus>(summary.InterviewStatus, ignoreCase: true, out var status))
+        {
+            return null;
+        }
+
+        var messagesHref = AfterMatchSollicitatiesUrls.Messages(summary.ApplicationId);
+        if (status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+            && summary.OpenSlotCount > 0)
+        {
+            return new DetailActions(
+                AfterMatchSollicitatiesUrls.PickSlot(summary.ApplicationId),
+                culture["Apps.Ndm.PickSlot"],
+                messagesHref,
+                summary.UnreadMessageCount);
+        }
+
+        if (status == InterviewStatus.Scheduled)
+        {
+            return new DetailActions(
+                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId),
+                culture["Apps.Ndm.ViewInterview"],
+                messagesHref,
+                summary.UnreadMessageCount);
+        }
+
+        if (status == InterviewStatus.RescheduleRequested)
+        {
+            return new DetailActions(
+                AfterMatchSollicitatiesUrls.Reschedule(summary.ApplicationId),
+                culture["AfterMatch.Screen08.Reschedule"],
+                messagesHref,
+                summary.UnreadMessageCount);
+        }
+
+        return new DetailActions(
+            AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId),
+            culture["AfterMatch.Link.Open"],
+            messagesHref,
+            summary.UnreadMessageCount);
+    }
+
+    internal static IReadOnlyList<SollicitationTimelineStep> BuildAfterMatchTimeline(
+        CultureState culture,
+        ApplicationAfterMatchSummary summary)
+    {
+        if (!Enum.TryParse<InterviewStatus>(summary.InterviewStatus, ignoreCase: true, out var status))
+        {
+            return [];
+        }
+
+        var yesAt = summary.AcceptedAtUtc;
+        var planState = status switch
+        {
+            InterviewStatus.Proposing or InterviewStatus.RescheduleRequested => "Current",
+            InterviewStatus.Scheduled or InterviewStatus.Done or InterviewStatus.Cancelled => "Done",
+            _ => "Upcoming"
+        };
+        var interviewState = status switch
+        {
+            InterviewStatus.Scheduled => "Current",
+            InterviewStatus.Done => "Done",
+            _ => "Upcoming"
+        };
+        var outcomeState = status == InterviewStatus.Done ? "Current" : "Upcoming";
+
+        return
+        [
+            new("Yes", "Done", culture["AfterMatch.Timeline.Yes"], yesAt),
+            new("Plan", planState, culture["AfterMatch.Timeline.Plan"], null),
+            new("Interview", interviewState, culture["AfterMatch.Timeline.Interview"], summary.ScheduledStartUtc),
+            new("Outcome", outcomeState, culture["AfterMatch.Timeline.Outcome"], null)
+        ];
     }
 }
 
