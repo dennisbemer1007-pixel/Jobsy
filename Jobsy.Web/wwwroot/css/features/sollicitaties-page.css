@@ -35,9 +35,12 @@
   background: linear-gradient(to bottom, transparent 70%, var(--pearl, #faf8f5) 100%);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 639px) {
   .sollicitaties-hero-strip {
     --sollic-hero-h: 90px;
+    height: 90px;
+    min-height: 90px;
+    max-height: 90px;
   }
 }
 
@@ -60,7 +63,7 @@
   display: none;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 639px) {
   .sollicitaties-hero-strip .sollicitaties-hero-strip__img.desk {
     display: none;
   }
@@ -77,6 +80,11 @@
   max-width: 1120px;
   margin-inline: auto;
   padding-inline: 28px;
+}
+
+/* Beat global .panel-page { max-width: 1100px } and legacy apps list caps. */
+.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
+  max-width: none !important;
 }
 
 .sollicitaties-intro {
@@ -303,7 +311,8 @@
   width: 100%;
 }
 
-@media (min-width: 1024px) {
+/* Mockup 01 desktop list: full ~1064px column at 1280; split detail rail only at mockup 1440+. */
+@media (min-width: 1440px) {
   .sollicitaties-layout {
     grid-template-columns: minmax(0, 1.05fr) minmax(300px, 380px);
     align-items: start;
@@ -594,7 +603,7 @@
   display: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1440px) {
   .sollicitaties-detail {
     display: block;
   }
@@ -719,6 +728,20 @@
   width: 100%;
 }
 
+[data-testid="applications-page-ssr"] .sollicitaties-layout,
+[data-testid="applications-page-ssr"] .sollicitaties-list,
+[data-testid="applications-page-ssr"] .sollicitaties-page__body {
+  max-width: none;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .sollicitaties-shell {
+    width: min(1120px, 100%);
+    max-width: 1120px;
+  }
+}
+
 @media (max-width: 900px) {
   .sollicitaties-shell {
     width: 100%;
@@ -772,5 +795,25 @@
 
   .sollicitaties-empty-card {
     padding: 1.125rem 1rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .sollicitaties-tabs-row {
+    width: 100%;
+  }
+
+  .sollicitaties-segment {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .sollicitaties-intro__title {
+    font-size: 2rem;
+    line-height: 1.12;
   }
 }
