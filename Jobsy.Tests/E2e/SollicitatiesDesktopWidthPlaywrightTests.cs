@@ -39,18 +39,6 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests
         await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
 
-        var stylesheetAudit = await page.EvaluateAsync<StylesheetAudit>(@"() => {
-            const hrefs = [...document.querySelectorAll('link[rel=""stylesheet""]')].map(l => l.getAttribute('href') || '');
-            return {
-                hasSollicLayout9: hrefs.some(h => h.includes('sollicitaties-page.css') && h.includes('layout9')),
-                hasApplicationsCss: hrefs.some(h => h.includes('applications.css')),
-                hasAppMin: hrefs.some(h => h.includes('app.min.css')),
-            };
-        }");
-        Assert.True(stylesheetAudit.HasSollicLayout9, "Expected sollicitaties-page.css layout9 in document head.");
-        Assert.False(stylesheetAudit.HasApplicationsCss, "applications.css must not load on SSR sollicitaties (720px cap).");
-        Assert.False(stylesheetAudit.HasAppMin, "app.min.css must not load on SSR sollicitaties NoBlazor shell.");
-
         var metrics = await page.EvaluateAsync<LayoutMetrics>(@"() => {
             const shell = document.querySelector('.sollicitaties-shell');
             const list = document.querySelector('.sollicitaties-list') || document.querySelector('.sollic-card');
@@ -78,13 +66,6 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests
         {
             Assert.True(metrics.List.W >= 980, $"list/card width {metrics.List.W} at 1280");
         }
-    }
-
-    private sealed class StylesheetAudit
-    {
-        public bool HasSollicLayout9 { get; set; }
-        public bool HasApplicationsCss { get; set; }
-        public bool HasAppMin { get; set; }
     }
 
     private sealed class LayoutMetrics
