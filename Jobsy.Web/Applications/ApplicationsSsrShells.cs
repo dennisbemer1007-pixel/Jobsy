@@ -449,31 +449,7 @@ internal static class ApplicationsSsrShells
         }
         else if (row.Timeline.Count > 0)
         {
-            sb.Append("<ol class=\"kb-timeline kb-timeline--vertical sollic-detail__timeline\">");
-            foreach (var step in row.Timeline)
-            {
-                sb.Append("<li class=\"kb-timeline__step kb-timeline__step--");
-                sb.Append(WebUtility.HtmlEncode(step.State.ToLowerInvariant()));
-                sb.Append("\"><span class=\"kb-timeline__dot\" aria-hidden=\"true\"></span><span class=\"kb-timeline__label\">");
-                sb.Append(WebUtility.HtmlEncode(step.Label));
-                sb.Append("</span>");
-                if (step.OccurredAtUtc is DateTime at)
-                {
-                    sb.Append("<time class=\"kb-timeline__date\" datetime=\"");
-                    sb.Append(at.ToUniversalTime().ToString("yyyy-MM-dd"));
-                    sb.Append("\">");
-                    sb.Append(WebUtility.HtmlEncode(FormatTimelineDate(culture, at, step)));
-                    sb.Append("</time>");
-                }
-                else if (string.Equals(step.Key, "Outcome", StringComparison.OrdinalIgnoreCase))
-                {
-                    sb.Append("<span class=\"kb-timeline__date\">");
-                    sb.Append(WebUtility.HtmlEncode(culture["Kb.Timeline.AfterInterview"]));
-                    sb.Append("</span>");
-                }
-            }
-
-            sb.Append("</ol>");
+            AppendMockupTimeline(sb, culture, row.Timeline);
             AppendDetailTip(sb, culture, row);
             var primaryHref = RowHref(row);
             if (!string.IsNullOrEmpty(primaryHref))
@@ -495,25 +471,52 @@ internal static class ApplicationsSsrShells
         ApplicationAfterMatchSummary summary)
     {
         var steps = AfterMatchSollicitatiesPresentation.BuildAfterMatchTimeline(culture, summary);
+        AppendMockupTimeline(sb, culture, steps);
+    }
+
+    private const string MockupTlIconCheck =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\"><path d=\"m5 12 4 4 10-10\"/></svg>";
+
+    private const string MockupTlIconCal =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><rect x=\"4\" y=\"5\" width=\"16\" height=\"15\" rx=\"2\"/><path d=\"M4 10h16M9 3v4M15 3v4\"/></svg>";
+
+    private const string MockupTlIconHand =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m3 12 4-4 4 2 3-2 4 1 3 3-6 6-3-2-3 2z\"/></svg>";
+
+    private const string MockupTlIconFlag =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"><path d=\"M5 21V4M5 4h11l-2 4 2 4H5\"/></svg>";
+
+    private static void AppendMockupTimeline(
+        StringBuilder sb,
+        CultureState culture,
+        IReadOnlyList<SollicitationTimelineStep> steps)
+    {
         sb.Append("<div class=\"sollic-ndm-tl tl\" role=\"list\">");
         foreach (var step in steps)
         {
-            var state = step.State.ToLowerInvariant();
-            sb.Append("<div class=\"sollic-ndm-tl__step s sollic-ndm-tl__step--");
-            sb.Append(WebUtility.HtmlEncode(state));
-            sb.Append("\" role=\"listitem\"><span class=\"sollic-ndm-tl__dot i\" aria-hidden=\"true\"></span><span class=\"sollic-ndm-tl__label\">");
+            sb.Append("<div class=\"s");
+            sb.Append(MockupTimelineStateClass(step.State));
+            sb.Append("\" role=\"listitem\"><i aria-hidden=\"true\">");
+            sb.Append(MockupTimelineIcon(step.Key));
+            sb.Append("</i>");
             sb.Append(WebUtility.HtmlEncode(step.Label));
-            sb.Append("</span>");
             if (step.OccurredAtUtc is DateTime at)
             {
-                sb.Append("<small class=\"sollic-ndm-tl__sub\">");
+                sb.Append("<small>");
                 sb.Append(WebUtility.HtmlEncode(FormatTimelineDate(culture, at, step)));
                 sb.Append("</small>");
             }
-            else if (string.Equals(state, "current", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(step.State, "Current", StringComparison.OrdinalIgnoreCase))
             {
-                sb.Append("<small class=\"sollic-ndm-tl__sub\">");
+                sb.Append("<small>");
                 sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Now"]));
+                sb.Append("</small>");
+            }
+            else if (string.Equals(step.Key, "Outcome", StringComparison.OrdinalIgnoreCase)
+                     && string.Equals(step.State, "Upcoming", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append("<small>");
+                sb.Append(WebUtility.HtmlEncode(culture["Kb.Timeline.AfterInterview"]));
                 sb.Append("</small>");
             }
 
@@ -522,6 +525,24 @@ internal static class ApplicationsSsrShells
 
         sb.Append("</div>");
     }
+
+    private static string MockupTimelineStateClass(string state)
+        => state switch
+        {
+            "Done" or "Skipped" => " done",
+            "Current" => " now",
+            _ => string.Empty
+        };
+
+    private static string MockupTimelineIcon(string key)
+        => key switch
+        {
+            "Yes" or "Sent" or "Created" => MockupTlIconCheck,
+            "Plan" or "Seen" or "EmployerViewed" => MockupTlIconCal,
+            "Interview" or "Gesprek" => MockupTlIconHand,
+            "Outcome" or "Uitslag" => MockupTlIconFlag,
+            _ => MockupTlIconCal
+        };
 
     private static void AppendDetailMoreLinks(StringBuilder sb, CultureState culture, SollicitationRow row)
     {
