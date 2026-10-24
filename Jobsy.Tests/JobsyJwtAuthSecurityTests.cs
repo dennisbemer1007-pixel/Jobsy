@@ -110,7 +110,14 @@ public class JobsyJwtAuthSecurityTests : IClassFixture<JobsyJwtAuthSecurityFacto
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/health");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<HealthProbeDto>();
+        Assert.NotNull(json);
+        Assert.Equal("ok", json.Status);
+        Assert.False(string.IsNullOrWhiteSpace(json.Commit));
+        Assert.NotNull(json.AcceptatieSollicitatiesDemo);
     }
+
+    private sealed record HealthProbeDto(string Status, string Commit, object? AcceptatieSollicitatiesDemo);
 
     [Fact]
     public async Task Mollie_webhook_is_reachable_without_origin_header()

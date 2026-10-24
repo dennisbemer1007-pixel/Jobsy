@@ -432,8 +432,7 @@ app.Use(async (context, next) =>
         && context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.StatusCode = StatusCodes.Status200OK;
-        context.Response.ContentType = "application/json; charset=utf-8";
-        await context.Response.WriteAsync("""{"status":"ok"}""", context.RequestAborted);
+        await context.Response.WriteAsJsonAsync(ApiHealthEndpoints.BuildPayload(), context.RequestAborted);
         return;
     }
 
@@ -499,14 +498,7 @@ app.UseMiddleware<Jobsy.Api.Security.MaintenanceApiMiddleware>();
 app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
 app.UseMiddleware<Jobsy.Api.Middleware.TestAccountScopeMiddleware>();
 
-app.MapGet("/health", () => Results.Ok(new
-{
-    status = "ok",
-    commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
-            ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
-            ?? "local",
-    acceptatieSollicitatiesDemo = AcceptatieSollicitatiesDemoStartupState.Snapshot()
-}))
+app.MapGet("/health", () => Results.Ok(ApiHealthEndpoints.BuildPayload()))
     .AllowAnonymous();
 
 // Partner OpenAPI for the external vacancy API (X-API-Key). Development only —

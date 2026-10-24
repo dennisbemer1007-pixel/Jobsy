@@ -13,11 +13,14 @@
 @using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Hosting
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
 @inject IHttpContextAccessor HttpContextAccessor
 @inject AuthenticationStateProvider AuthState
+@inject IConfiguration Configuration
+@inject IHostEnvironment HostEnvironment
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 <HeadContent>
@@ -86,6 +89,8 @@ else if (_bodyHtml is not null)
                 Api,
                 FeatureFlags,
                 Culture,
+                Configuration,
+                HostEnvironment,
                 isCandidate,
                 tabValues.FirstOrDefault(),
                 filterValues.FirstOrDefault(),

@@ -37,7 +37,7 @@ public partial class MeController
         }
 
         var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
-        var input = TestAccountGuardInputFactory.FromConfiguration(configuration, _environment, isWebRuntime: true);
+        var input = TestAccountGuardInputFactory.FromConfiguration(configuration, _environment, isWebRuntime: false);
         var guard = TestAccountEnvironmentGuard.Evaluate(input);
         if (!guard.Allowed)
         {
