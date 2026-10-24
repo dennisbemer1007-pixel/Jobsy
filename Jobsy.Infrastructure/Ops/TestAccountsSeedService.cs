@@ -394,6 +394,16 @@ public sealed class TestAccountsSeedService
             progress.Step = "candidate";
             progress.AccountKey = "Candidate";
             await EnsureCompleteCandidateAsync(candidate, cancellationToken);
+            if (usersByKey.TryGetValue("BranchManager", out var branchManager))
+            {
+                progress.Step = "sollicitaties-demo";
+                await TestAccountsSollicitatiesDemoSeeder.EnsureForCandidateAsync(
+                    _db,
+                    candidate.Id,
+                    branchManager.Id,
+                    Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+                    cancellationToken);
+            }
         }
 
         if (usersByKey.TryGetValue("CandidateNew", out var candidateNew))
@@ -711,27 +721,6 @@ public sealed class TestAccountsSeedService
         MarkJourneyStepsDone(onboarding);
 
         await EnsureCompletedProfileAsync(candidate.Id, cancellationToken);
-
-        if (!await _db.Applications.AnyAsync(a => a.Id == TestAccountsIds.Application, cancellationToken))
-        {
-            _db.Applications.Add(new Application
-            {
-                Id = TestAccountsIds.Application,
-                VacancyId = TestAccountsIds.VacancyHaag1,
-                CandidateUserId = candidate.Id,
-                CandidateName = candidate.FullName,
-                CandidateEmail = candidate.Email,
-                CandidateCity = "Den Haag",
-                PreferredTransport = "Bike",
-                EstimatedTravelMinutes = 15,
-                Status = ApplicationStatus.Pending,
-                ConsentAcceptedAt = DateTime.UtcNow,
-                ConsentVersion = PrivacyConstants.CurrentConsentVersion,
-                WorkPermitConfirmed = true,
-                EmailVerifiedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
     }
 
     private static void MarkJourneyStepsDone(CandidateOnboarding onboarding)

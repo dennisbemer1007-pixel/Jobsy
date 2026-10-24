@@ -2,6 +2,7 @@ using System.Globalization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
+using Jobsy.Web.Bedrijvenkaart;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
@@ -67,6 +68,19 @@ internal static class ApplicationsSsrData
             foreach (var a in apps)
             {
                 rows.Add(MapApplication(culture, a));
+            }
+
+            try
+            {
+                var initiatives = await api.GetCandidateInitiativesAsync(cancellationToken);
+                foreach (var initiative in initiatives)
+                {
+                    rows.Add(MapApplication(culture, InitiativeApplicationMapper.ToApplicationItem(initiative)));
+                }
+            }
+            catch
+            {
+                // optional
             }
         }
         catch
