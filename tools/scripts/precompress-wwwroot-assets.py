@@ -16,6 +16,7 @@ DEFAULTS = [
     ROOT / "Jobsy.Web/wwwroot/lib/maplibre/maplibre-gl-csp.js",
     ROOT / "Jobsy.Web/wwwroot/lib/maplibre/maplibre-gl-csp-worker.js",
     ROOT / "Jobsy.Web/wwwroot/js/jobMap.min.js",
+    ROOT / "Jobsy.Web/wwwroot/css/features/sollicitaties-page.css",
 ]
 
 

@@ -12,6 +12,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("lib/maplibre/maplibre-gl-csp.js")]
     [InlineData("lib/maplibre/maplibre-gl-csp-worker.js")]
     [InlineData("js/jobMap.min.js")]
+    [InlineData("css/features/sollicitaties-page.css")]
     public void Precompressed_brotli_is_smaller_than_gzip(string relativePath)
     {
         var root = FindRepoRoot();
@@ -32,6 +33,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("lib/maplibre/maplibre-gl-csp.js")]
     [InlineData("lib/maplibre/maplibre-gl-csp-worker.js")]
     [InlineData("js/jobMap.min.js")]
+    [InlineData("css/features/sollicitaties-page.css")]
     public void Precompressed_sidecars_match_source_bytes(string relativePath)
     {
         var root = FindRepoRoot();
