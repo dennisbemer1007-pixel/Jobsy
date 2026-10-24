@@ -377,6 +377,32 @@
     min-height: 44px;
 }
 
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .vacancy-list__more {
+    display: block;
+    width: calc(100% - 32px);
+    max-width: 22rem;
+    margin: 10px auto 18px;
+    padding: 12px 16px;
+    border: 1px solid var(--kb-line);
+    border-radius: 12px;
+    background: var(--kb-paper, #fffdf9);
+    color: var(--kb-ink, #1b2440);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 1px 0 rgba(31, 47, 85, 0.04);
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .vacancy-list__more:hover {
+    background: #f1ebe0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .vacancy-list__more:active {
+    background: #e8dfd0;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .vimg {
     height: 96px;
     position: relative;
@@ -2649,6 +2675,12 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip {
     top: auto;
     bottom: 52px;
+    max-height: min(10.5rem, 42vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    width: min(196px, calc(100vw - 2rem));
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .tip::before {
