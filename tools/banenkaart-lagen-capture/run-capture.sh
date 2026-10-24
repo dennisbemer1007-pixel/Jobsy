@@ -65,8 +65,13 @@ export BANENKAART_CAPTURE_DEADLINE_MS="${BANENKAART_CAPTURE_DEADLINE_MS:-540000}
 log "Playwright capture (hard limit 10 min)…"
 ( cd "$SCRIPT_DIR" && timeout 600 node "$SCRIPT_DIR/capture-lagen.mjs" )
 
+if [[ "${BANENKAART_CLICK_CHECKLIST:-1}" == "1" ]]; then
+  log "Click + smoothness checklist…"
+  ( cd "$SCRIPT_DIR" && node "$SCRIPT_DIR/click-checklist.mjs" ) || exit 1
+fi
+
 log "Copy to compare folder…"
 mkdir -p /opt/cursor/artifacts/compare
-cp -a "$OUT"/side-by-side-*.png "$OUT/REPORT.md" "$OUT/popup-photo-metrics.json" /opt/cursor/artifacts/compare/ 2>/dev/null || true
+cp -a "$OUT"/side-by-side-*.png "$OUT/REPORT.md" "$OUT/popup-photo-metrics.json" "$OUT"/click-checklist.* /opt/cursor/artifacts/compare/ 2>/dev/null || true
 
 log "Complete."
