@@ -33,6 +33,11 @@ public static partial class PageSeoCatalog
             return Private("AfterMatch.Screen04.PageTitle", "Seo.PrivateDescription");
         }
 
+        if (p.Contains("/after-match/confirmed-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen05.PageTitle", "Seo.PrivateDescription");
+        }
+
         foreach (var (prefix, entry) in Prefixes)
         {
             if (p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))

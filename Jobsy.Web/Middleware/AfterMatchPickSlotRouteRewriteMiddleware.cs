@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 namespace Jobsy.Web.Middleware;
 
 /// <summary>
-/// Keeps public URL <c>/after-match?panel=pick-slot</c> while routing pick-slot to SSR and other panels to Blazor.
+/// Keeps public URL <c>/after-match</c> while routing pick-slot and confirmed interview to SSR and other panels to Blazor.
 /// </summary>
 public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
 {
@@ -22,9 +22,13 @@ public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
             if (match.Success)
             {
                 var panel = context.Request.Query["panel"].ToString().Trim().ToLowerInvariant();
-                var suffix = panel is "pick-slot" or "propose-slot"
-                    ? "/pick-slot-ssr"
-                    : "/blazor";
+                var suffix = panel switch
+                {
+                    "pick-slot" or "propose-slot" => "/pick-slot-ssr",
+                    "messages" or "reschedule" => "/blazor",
+                    "" => "/confirmed-ssr",
+                    _ => "/blazor",
+                };
                 context.Request.Path = new PathString(match.Groups[1].Value + suffix);
             }
         }

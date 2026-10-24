@@ -165,4 +165,16 @@ public sealed partial class JobsyApiClient
             "lobsy-gesprek.ics",
             ct);
     }
+
+    public async Task<byte[]?> TryDownloadAfterMatchCalendarAsync(
+        Guid applicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/applications/{applicationId:D}/after-match/calendar.ics",
+            ct);
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadAsByteArrayAsync(ct)
+            : null;
+    }
 }

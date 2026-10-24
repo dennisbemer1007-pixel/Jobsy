@@ -118,10 +118,25 @@ public static class UiStringsAfterMatch
             "Het gesprek komt vanzelf in je activiteitenoverzicht voor UWV.",
             "The interview appears in your UWV activity overview.");
 
+        Add("AfterMatch.Screen05.PageTitle", "Gesprek gepland", "Interview scheduled");
         Add("AfterMatch.Screen05.Hero.Title", "Je gesprek staat erin", "Your interview is booked");
+        Add("AfterMatch.Screen05.Hero.LeadDetail",
+            "{0} bij {1}. We hebben {2} laten weten dat je komt.",
+            "{0} at {1}. We let {2} know you are coming.");
         Add("AfterMatch.Screen05.Hero.Lead",
             "Je krijgt een bevestiging per mail. Voeg het moment toe aan je agenda.",
             "You receive a confirmation by e-mail. Add the time to your calendar.");
+        Add("AfterMatch.Screen05.ScheduledSub", "Op locatie, {0} · met {1}", "On site, {0} · with {1}");
+        Add("AfterMatch.Screen05.ScheduledSubOnline", "{0} · met {1}", "{0} · with {1}");
+        Add("AfterMatch.Screen05.CalendarRow", "Zet in je agenda", "Add to your calendar");
+        Add("AfterMatch.Screen05.Outlook", "Outlook", "Outlook");
+        Add("AfterMatch.Screen05.GoogleCal", "Google Agenda", "Google Calendar");
+        Add("AfterMatch.Screen05.AppleCal", "Apple Agenda", "Apple Calendar");
+        Add("AfterMatch.Screen05.Ics", "Agendabestand (.ics)", "Calendar file (.ics)");
+        Add("AfterMatch.Screen05.Route", "Route bekijken", "View route");
+        Add("AfterMatch.Screen05.RemindersTitle", "Herinneringen", "Reminders");
+        Add("AfterMatch.Screen05.RemindersLead", "Jij kiest wanneer en hoe.", "You choose when and how.");
+        Add("AfterMatch.Screen05.TipsSuffix", "Oefen het gesprek met Lobsy, rustig en zonder oordeel.", "Practise the interview with Lobsy, calmly and without judgement.");
         Add("AfterMatch.Screen05.Calendar", "Toevoegen aan agenda", "Add to calendar");
         Add("AfterMatch.Screen05.Reminders", "Herinneringen instellen", "Set reminders");
 
