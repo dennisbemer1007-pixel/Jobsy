@@ -194,6 +194,18 @@ internal static class ApplicationsSsrData
 
         var hint = BuildCardHint(culture, a, timeline);
         var sourceKey = a.IsInitiative ? "Initiative.Panel.Title" : "Bk.Apps.FilterVacancy";
+        ApplicationAfterMatchSummary? afterMatch = null;
+        if (a.AfterMatch is not null)
+        {
+            afterMatch = new ApplicationAfterMatchSummary(
+                a.Id,
+                a.AfterMatch.InterviewStatus,
+                a.AfterMatch.UnreadMessageCount,
+                a.AfterMatch.OpenSlotCount,
+                a.AfterMatch.ScheduledStartUtc,
+                a.AfterMatch.ScheduledEndUtc,
+                a.AfterMatch.AcceptedAtUtc);
+        }
 
         return new SollicitationRow(
             a.Id,
@@ -214,7 +226,8 @@ internal static class ApplicationsSsrData
             hint,
             a.RespondedAt ?? a.CreatedAt,
             timeline,
-            a.NextStepKey);
+            a.NextStepKey,
+            afterMatch);
     }
 
     private static SollicitationRow MapExternal(CultureState culture, Core.Contracts.ExternalVacancyListItemDto e)
@@ -238,6 +251,7 @@ internal static class ApplicationsSsrData
             culture["ExtVac.Card.AppliedHint"],
             e.SavedAtUtc,
             [],
+            null,
             null);
     }
 

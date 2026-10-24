@@ -19,7 +19,8 @@ internal sealed record SollicitationRow(
     string? CardHint,
     DateTime SortAtUtc,
     IReadOnlyList<SollicitationTimelineStep> Timeline,
-    string? NextStepKey);
+    string? NextStepKey,
+    ApplicationAfterMatchSummary? AfterMatch);
 
 internal sealed record SollicitationTimelineStep(
     string Key,

@@ -47,7 +47,7 @@ public static class CandidateIllustratedImages
     public const string SollicitatiesHeroBandC = SollicitatiesBand;
 
     /// <summary>PR #878 sollicitaties mockup — full-width watercolour strip (cyclist / polder).</summary>
-    public const string SollicitatiesHeroStripVersion = "20261024-sollicitaties2";
+    public const string SollicitatiesHeroStripVersion = "20261024-sollicitatie01-hero";
 
     public const string SollicitatiesHeroStripDesktopWebp =
         $"{Base}/sollicitaties-hero-strip-desktop.webp?v={SollicitatiesHeroStripVersion}";

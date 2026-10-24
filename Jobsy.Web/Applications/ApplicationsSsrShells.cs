@@ -52,7 +52,7 @@ internal static class ApplicationsSsrShells
 
     private static void AppendHeroStrip(StringBuilder sb)
     {
-        sb.Append("<div class=\"sollicitaties-hero-strip kb-banenkaart-header-strip\" aria-hidden=\"true\"><div class=\"kb-banenkaart-header-strip__inner\">");
+        sb.Append("<div class=\"sollicitaties-hero-strip\" aria-hidden=\"true\"><div class=\"sollicitaties-hero-strip__inner\">");
         sb.Append("<img class=\"sollicitaties-hero-strip__img desk\" src=\"");
         sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp));
         sb.Append("\" srcset=\"");
@@ -287,7 +287,7 @@ internal static class ApplicationsSsrShells
         bool selected)
     {
         var selectHref = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
-        sb.Append("<a class=\"sollic-card");
+        sb.Append("<article class=\"sollic-card sollic-card--app");
         if (selected)
         {
             sb.Append(" is-selected");
@@ -298,9 +298,9 @@ internal static class ApplicationsSsrShells
             sb.Append(" sollic-card--done");
         }
 
-        sb.Append("\" href=\"");
+        sb.Append("\" role=\"listitem\"><a class=\"sollic-card__select\" href=\"");
         sb.Append(WebUtility.HtmlEncode(selectHref));
-        sb.Append("\" data-enhance-nav=\"false\" role=\"listitem\"><span class=\"sollic-card__avatar\" aria-hidden=\"true\">");
+        sb.Append("\" data-enhance-nav=\"false\"><span class=\"sollic-card__avatar logo-sq\" aria-hidden=\"true\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><span class=\"sollic-card__main\"><span class=\"sollic-card__source sollic-card__source--");
         sb.Append(row.IsInitiative ? "initiative" : row.IsExternal ? "external" : "vacancy");
@@ -308,29 +308,74 @@ internal static class ApplicationsSsrShells
         sb.Append(WebUtility.HtmlEncode(culture[row.SourceTagKey]));
         sb.Append("</span><span class=\"sollic-card__title\">");
         sb.Append(WebUtility.HtmlEncode(row.Title));
-        sb.Append("</span><span class=\"sollic-card__meta\">");
+        sb.Append("</span><span class=\"sollic-card__meta c\">");
         sb.Append(WebUtility.HtmlEncode(CompanyPlace(row)));
-        sb.Append("</span><span class=\"sollic-card__status-row\"><span class=\"sollic-card__pill sollic-card__pill--");
-        sb.Append(WebUtility.HtmlEncode(row.StatusModifier));
-        sb.Append("\">");
-        sb.Append(WebUtility.HtmlEncode(CardPillLabel(culture, row)));
-        sb.Append("</span>");
-        if (!string.IsNullOrWhiteSpace(CurrentStepLabel(row)))
+        sb.Append("</span><span class=\"sollic-card__status-row s\">");
+        if (row.AfterMatch is null)
         {
-            sb.Append("<span class=\"sollic-card__step\">");
-            sb.Append(WebUtility.HtmlEncode(CurrentStepLabel(row)!));
+            sb.Append("<span class=\"sollic-card__pill sollic-card__pill--");
+            sb.Append(WebUtility.HtmlEncode(row.StatusModifier));
+            sb.Append("\">");
+            sb.Append(WebUtility.HtmlEncode(CardPillLabel(culture, row)));
             sb.Append("</span>");
+            if (!string.IsNullOrWhiteSpace(CurrentStepLabel(row)))
+            {
+                sb.Append("<span class=\"sollic-card__step\">");
+                sb.Append(WebUtility.HtmlEncode(CurrentStepLabel(row)!));
+                sb.Append("</span>");
+            }
+        }
+        else
+        {
+            var cardAction = AfterMatchSollicitatiesPresentation.BuildCardAction(culture, row.AfterMatch);
+            if (cardAction is not null)
+            {
+                sb.Append("<a class=\"sollic-card__ndm-act act act--");
+                sb.Append(cardAction.Modifier == "action-pick" ? "do" : "ok");
+                sb.Append("\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(cardAction.Href));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(cardAction.Label));
+                sb.Append("</a>");
+            }
+            else
+            {
+                sb.Append("<span class=\"sollic-card__pill sollic-card__pill--");
+                sb.Append(WebUtility.HtmlEncode(row.StatusModifier));
+                sb.Append("\">");
+                sb.Append(WebUtility.HtmlEncode(row.StatusLabel));
+                sb.Append("</span>");
+            }
+
+            if (!string.IsNullOrWhiteSpace(row.CardHint))
+            {
+                sb.Append("<span class=\"sollic-card__step\">");
+                sb.Append(WebUtility.HtmlEncode(row.CardHint));
+                sb.Append("</span>");
+            }
         }
 
         sb.Append("</span>");
-        if (!string.IsNullOrWhiteSpace(row.CardHint))
+        if (row.AfterMatch is null && !string.IsNullOrWhiteSpace(row.CardHint))
         {
             sb.Append("<span class=\"sollic-card__hint\">");
             sb.Append(WebUtility.HtmlEncode(row.CardHint));
             sb.Append("</span>");
         }
 
-        sb.Append("</span><span class=\"sollic-card__chev\" aria-hidden=\"true\">›</span></a>");
+        sb.Append("</span></a><div class=\"sollic-card__right right\">");
+        if (row.AfterMatch is { UnreadMessageCount: > 0 } am)
+        {
+            sb.Append("<a class=\"sollic-card__msg msgc\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Messages(am.ApplicationId)));
+            sb.Append("\" data-enhance-nav=\"false\" aria-label=\"");
+            sb.Append(WebUtility.HtmlEncode(string.Format(culture["Apps.Ndm.UnreadAria"], am.UnreadMessageCount)));
+            sb.Append("\"><span class=\"sollic-card__msg-icon\" aria-hidden=\"true\">✉</span><b class=\"sollic-card__msg-count\">");
+            sb.Append(am.UnreadMessageCount);
+            sb.Append("</b></a>");
+        }
+
+        sb.Append("<span class=\"sollic-card__chev chev\" aria-hidden=\"true\">›</span></div></article>");
     }
 
     private static void AppendDetailPanel(StringBuilder sb, CultureState culture, SollicitationRow row)
