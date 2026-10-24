@@ -16,7 +16,7 @@ internal static class AfterMatchSollicitatiesUrls
 
     internal static string ProposeSlot(Guid applicationId, string? returnUrl = null)
     {
-        var url = $"/candidate/applications/{applicationId:D}/after-match?panel=propose-slot";
+        var url = $"/candidate/applications/{applicationId:D}/after-match?panel=pick-slot#ndm-propose-form";
         return AppendReturn(url, returnUrl);
     }
 
