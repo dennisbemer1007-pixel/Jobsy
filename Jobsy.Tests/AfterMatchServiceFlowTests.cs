@@ -63,6 +63,27 @@ public sealed class AfterMatchServiceFlowTests
     }
 
     [Fact]
+    public async Task MarkCandidateMessagesRead_sets_ReadAtUtc_on_inbound_messages()
+    {
+        await using var db = CreateDb();
+        var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
+        db.ApplicationMessages.Add(new ApplicationMessage
+        {
+            Id = Guid.NewGuid(),
+            ApplicationId = appId,
+            SenderUserId = employerId,
+            Body = "Hoi",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await service.MarkCandidateMessagesReadAsync(appId, candidateId);
+
+        var message = await db.ApplicationMessages.SingleAsync(m => m.ApplicationId == appId);
+        Assert.NotNull(message.ReadAtUtc);
+    }
+
+    [Fact]
     public async Task PreviewMessage_flags_phone_for_candidate_and_iban_for_employer()
     {
         await using var db = CreateDb();

@@ -228,7 +228,10 @@ internal static class ApplicationsSsrShells
         }
 
         sb.Append("\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.BuildUrl(data.Tab, filter, data.SelectedId)));
+        sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabSollicitaties,
+            filter,
+            data.SelectedId)));
         sb.Append("\" data-sollic-filter=\"");
         sb.Append(WebUtility.HtmlEncode(filter));
         sb.Append("\" data-enhance-nav=\"false\">");
@@ -384,7 +387,10 @@ internal static class ApplicationsSsrShells
         bool selected,
         bool hidden = false)
     {
-        var selectHref = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
+        var selectHref = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabSollicitaties,
+            data.Filter,
+            row.RowId);
         sb.Append("<article class=\"sollic-card sollic-card--app");
         if (selected)
         {
@@ -499,7 +505,10 @@ internal static class ApplicationsSsrShells
         ApplicationsSsrData.PageData data,
         SollicitationRow row)
     {
-        var listHref = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, null);
+        var listHref = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabSollicitaties,
+            data.Filter,
+            null);
         sb.Append("<div class=\"sollic-detail card detail\"><a class=\"sollic-detail__back back\" href=\"");
         sb.Append(WebUtility.HtmlEncode(listHref));
         sb.Append("\" data-enhance-nav=\"false\">");

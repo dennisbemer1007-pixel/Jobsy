@@ -97,16 +97,24 @@
     updateBerichtenTabBadge();
   }
 
+  function markThreadReadServer(threadId) {
+    if (!threadId) {
+      return;
+    }
+    fetch("/api/me/applications/" + encodeURIComponent(threadId) + "/after-match/messages/read", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).catch(function () {
+      /* optimistic UI already cleared badges */
+    });
+  }
+
   function updateBerichtenTabBadge() {
     var r = root();
     var total = 0;
     if (r) {
-      r.querySelectorAll(".sollic-berichten-ti__select .n").forEach(function (badge) {
-        var n = parseInt(badge.textContent, 10);
-        if (!isNaN(n)) {
-          total += n;
-        }
-      });
+      total = r.querySelectorAll(".sollic-berichten-ti__select .n").length;
     }
 
     var tab = document.querySelector(".sollicitaties-segment__tab[data-sollic-tab=\"berichten\"]");
@@ -164,6 +172,7 @@
     }
 
     clearUnreadForThread(threadId);
+    markThreadReadServer(threadId);
 
     if (opts.history === "push") {
       pushSollicHistory(threadId);

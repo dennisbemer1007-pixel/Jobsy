@@ -167,6 +167,14 @@
         (panels && panels.getAttribute("data-sollic-active-filter")) ||
         parseStateFromUrl(window.location.href).filter;
       applyFilter(filter, { updateUrl: false, sel: opts.sel });
+      if (typeof window.__sollicRailSyncFromHistory === "function") {
+        window.__sollicRailSyncFromHistory({
+          tab: TAB_SOL,
+          filter: filter,
+          sel: opts.sel || null,
+          thread: null
+        });
+      }
     }
 
     if (tab === TAB_BER && typeof window.__sollicBerichtenSyncFromHistory === "function") {
@@ -263,8 +271,13 @@
     applyTab(state.tab, { thread: state.thread, sel: state.sel, updateUrl: false });
     if (state.tab === TAB_SOL) {
       applyFilter(state.filter, { sel: state.sel, updateUrl: false });
+      if (typeof window.__sollicRailSyncFromHistory === "function") {
+        window.__sollicRailSyncFromHistory(state);
+      }
     } else if (state.tab === TAB_BER && typeof window.__sollicBerichtenSyncFromHistory === "function") {
       window.__sollicBerichtenSyncFromHistory(state);
+    } else if (typeof window.__sollicRailSyncFromHistory === "function") {
+      window.__sollicRailSyncFromHistory(state);
     }
   }
 

@@ -179,7 +179,7 @@ internal static class ApplicationsSsrData
             .Where(SollicitatiesBerichtenPresentation.RowHasMessageThread)
             .OrderByDescending(r => r.AfterMatch!.LastMessageAtUtc ?? r.SortAtUtc)
             .ToList();
-        var unreadTotal = messageRows.Sum(r => r.AfterMatch!.UnreadMessageCount);
+        var unreadTotal = messageRows.Count(r => r.AfterMatch!.UnreadMessageCount > 0);
 
         Guid? threadId = berichtenThreadId;
         AfterMatchThreadDto? berichtenThread = null;

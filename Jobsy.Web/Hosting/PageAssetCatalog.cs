@@ -296,7 +296,7 @@ public static class PageAssetCatalog
             [
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
                 "css/features/banenkaart-illustrated.css?v=20261023-acc9",
-                "css/features/sollicitaties-page.css?v=20261024-click-nav1",
+                "css/features/sollicitaties-page.css?v=20261024-mobile-read2",
             ];
         }
 

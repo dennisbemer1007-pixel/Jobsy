@@ -151,6 +151,17 @@ public sealed class AfterMatchController : ControllerBase
         return Ok(preview);
     }
 
+    [HttpPost("api/me/applications/{applicationId:guid}/after-match/messages/read")]
+    [Authorize(Roles = JobsyRoles.Candidate)]
+    public async Task<IActionResult> MarkCandidateMessagesRead(
+        Guid applicationId,
+        CancellationToken cancellationToken)
+    {
+        var user = await RequireCandidateUserAsync(cancellationToken);
+        await _afterMatch.MarkCandidateMessagesReadAsync(applicationId, user.Id, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("api/applications/{applicationId:guid}/after-match/messages")]
     public async Task<ActionResult<AfterMatchThreadDto>> SendMessage(
         Guid applicationId,
