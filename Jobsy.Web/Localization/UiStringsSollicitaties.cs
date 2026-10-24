@@ -77,5 +77,58 @@ public static class UiStringsSollicitaties
             "Poćwicz rozmowę i przeczytaj wskazówki do spotkania.",
             "Exersează interviul și citește sfaturi pentru o întâlnire.",
             "تدرّب على مقابلتك واقرأ نصائح اللقاء التعارفي.");
+
+        Add("Nav.MessagesTab",
+            "Berichten", "Messages",
+            "Wiadomości", "Mesaje", "الرسائل");
+
+        Add("Apps.Ndm.PickSlot",
+            "Kies een moment", "Pick a time",
+            "Wybierz termin", "Alege un moment", "اختر وقتاً");
+
+        Add("Apps.Ndm.ViewInterview",
+            "Bekijk je gesprek", "View your interview",
+            "Zobacz rozmowę", "Vezi interviul", "اعرض مقابلتك");
+
+        Add("Apps.Ndm.Messages",
+            "Berichten", "Messages",
+            "Wiadomości", "Mesaje", "الرسائل");
+
+        Add("Apps.Ndm.InterviewPlannedShort",
+            "Gesprek gepland, {0}", "Interview scheduled, {0}",
+            "Rozmowa zaplanowana, {0}", "Interviu programat, {0}", "مقابلة مجدولة، {0}");
+
+        Add("Apps.Ndm.UnreadAria",
+            "{0} ongelezen berichten", "{0} unread messages",
+            "{0} nieprzeczytanych wiadomości", "{0} mesaje necitite", "{0} رسائل غير مقروءة");
+
+        Add("Apps.Ndm.CompanyPage",
+            "Bedrijfspagina", "Company page",
+            "Strona firmy", "Pagina companie", "صفحة الشركة");
+
+        Add("Apps.Ndm.LobsyCv",
+            "Lobsy-cv", "Lobsy CV",
+            "CV Lobsy", "CV Lobsy", "سيرة Lobsy");
+
+        Add("Apps.Ndm.DetailTipPick",
+            "Kies een moment dat jou uitkomt, of stel zelf een ander moment voor.",
+            "Pick a time that suits you, or suggest another time yourself.",
+            "Wybierz dogodny termin lub zaproponuj inny.",
+            "Alege un moment potrivit sau propune altul.",
+            "اختر وقتاً يناسبك أو اقترح وقتاً آخر.");
+
+        Add("Apps.Ndm.BerichtenEmpty",
+            "Nog geen gesprekken met berichten. Zodra een werkgever reageert, zie je het hier.",
+            "No interview threads with messages yet. When an employer replies, you will see it here.",
+            "Brak wątków z wiadomościami. Gdy pracodawca odpowie, zobaczysz to tutaj.",
+            "Încă nu ai conversații cu mesaje. Când un angajator răspunde, le vezi aici.",
+            "لا توجد محادثات بعد. عندما يرد صاحب العمل ستظهر هنا.");
+
+        Add("Apps.Ndm.BerichtenSafe",
+            "Je telefoonnummer deel je pas na het gesprek, je bankgegevens pas na een aanbod.",
+            "You share your phone number only after the interview, and bank details only after an offer.",
+            "Numer telefonu udostępniasz dopiero po rozmowie, dane bankowe po ofercie.",
+            "Numărul de telefon îl partajezi după interviu, datele bancare după ofertă.",
+            "تشارك رقم هاتفك بعد المقابلة وبياناتك البنكية بعد العرض.");
     }
 }

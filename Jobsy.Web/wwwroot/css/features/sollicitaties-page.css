@@ -264,9 +264,27 @@
   border-radius: 18px;
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--gold) 18%, var(--border));
-  text-decoration: none;
   color: inherit;
   min-block-size: 44px;
+  position: relative;
+}
+
+.sollic-card__select {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.sollic-card__aside {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
 }
 
 .sollic-card.is-selected {
@@ -510,4 +528,248 @@
 
 .app-shell:has(.sollicitaties-page) .app-main {
   overflow-x: clip;
+}
+
+.sollic-card__ndm-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sollic-card__ndm-act--action-pick {
+  background: var(--brand);
+  color: var(--surface);
+}
+
+.sollic-card__ndm-act--action-scheduled {
+  background: color-mix(in srgb, var(--success) 14%, var(--surface));
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, var(--border));
+}
+
+.sollic-card__msg {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--brand);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+}
+
+.sollic-card__msg-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: #c2410c;
+  color: #fff;
+  font-size: 0.7rem;
+}
+
+.sollic-ndm-tl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 1rem 0 0.75rem;
+  position: relative;
+}
+
+.sollic-ndm-tl__step {
+  text-align: center;
+  padding-top: 2.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  position: relative;
+}
+
+.sollic-ndm-tl__step::before {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  left: -50%;
+  right: 50%;
+  height: 3px;
+  background: var(--border);
+}
+
+.sollic-ndm-tl__step:first-child::before {
+  display: none;
+}
+
+.sollic-ndm-tl__step--done::before,
+.sollic-ndm-tl__step--current::before {
+  background: var(--success);
+}
+
+.sollic-ndm-tl__dot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--gold) 45%, var(--border));
+  background: var(--surface);
+}
+
+.sollic-ndm-tl__step--done .sollic-ndm-tl__dot {
+  background: var(--success);
+  border: 2px solid var(--success);
+}
+
+.sollic-ndm-tl__step--current .sollic-ndm-tl__dot {
+  border: 2px solid #c2410c;
+  background: color-mix(in srgb, #c2410c 8%, var(--surface));
+}
+
+.sollic-ndm-tl__sub {
+  display: block;
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.sollic-detail__acts {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.sollic-detail__cta-secondary {
+  width: 100%;
+  min-block-size: 48px;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sollic-detail__msg-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #c2410c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.sollic-detail__more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.84rem;
+}
+
+.sollic-detail__more-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sollic-detail__more-link--danger {
+  color: var(--danger);
+}
+
+.sollic-berichten__list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.sollic-berichten__thread {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+}
+
+.sollic-berichten__thread:last-child {
+  border-bottom: 0;
+}
+
+.sollic-berichten__body b {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.sollic-berichten__sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+
+.sollic-berichten__badge {
+  margin-left: auto;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #c2410c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.sollic-berichten__safe {
+  margin: 0.85rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--brand) 6%, var(--surface));
+}
+
+.sollicitaties-segment__badge {
+  background: #c2410c;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .sollic-card__aside {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.75rem;
+    margin: 0;
+  }
+
+  .sollic-card__select {
+    padding-right: 3.5rem;
+  }
 }

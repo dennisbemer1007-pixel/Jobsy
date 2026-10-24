@@ -30,7 +30,9 @@ internal static class ApplicationsSsrData
         int CountVacancy,
         int CountInitiative,
         int CountExternal,
-        int CountDone);
+        int CountDone,
+        bool AfterMatchEnabled,
+        int TotalUnreadMessages);
 
     internal static async Task<PageData> LoadAsync(
         JobsyApiClient api,
@@ -49,15 +51,16 @@ internal static class ApplicationsSsrData
         var flags = await featureFlags.GetAsync(cancellationToken);
         var employersOn = flags.EmployersEnabled;
         var externalOn = flags.CandidateExternalVacanciesEnabled;
+        var afterMatchOn = flags.AfterMatchEnabled;
 
         if (!employersOn)
         {
-            return Empty(tab, filter, selectedId, givenName, readOnly, isCandidate, employersOn, externalOn);
+            return Empty(tab, filter, selectedId, givenName, readOnly, isCandidate, employersOn, externalOn, afterMatchOn);
         }
 
         if (!isCandidate && !readOnly)
         {
-            return Empty(tab, filter, selectedId, givenName, readOnly, isCandidate, employersOn, externalOn);
+            return Empty(tab, filter, selectedId, givenName, readOnly, isCandidate, employersOn, externalOn, afterMatchOn);
         }
 
         var rows = new List<SollicitationRow>();
@@ -120,7 +123,13 @@ internal static class ApplicationsSsrData
 
         var counts = CountByFilter(rows);
         var filtered = rows.Where(r => ApplicationsSsrQuery.MatchesFilter(r, filter)).ToList();
+        if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
+        {
+            filtered = rows.Where(r => r.AfterMatch is not null).ToList();
+        }
+
         var sel = selectedId ?? filtered.FirstOrDefault()?.RowId;
+        var totalUnread = rows.Sum(r => r.AfterMatch?.UnreadMessageCount ?? 0);
 
         return new PageData(
             isCandidate || readOnly,
@@ -140,7 +149,9 @@ internal static class ApplicationsSsrData
             counts.Vacancy,
             counts.Initiative,
             counts.External,
-            counts.Done);
+            counts.Done,
+            afterMatchOn,
+            totalUnread);
     }
 
     private static PageData Empty(
@@ -151,7 +162,8 @@ internal static class ApplicationsSsrData
         bool readOnly,
         bool isCandidate,
         bool employersOn,
-        bool externalOn)
+        bool externalOn,
+        bool afterMatchOn)
         => new(
             isCandidate,
             employersOn,
@@ -170,6 +182,8 @@ internal static class ApplicationsSsrData
             0,
             0,
             0,
+            0,
+            afterMatchOn,
             0);
 
     private static (int All, int Vacancy, int Initiative, int External, int Done) CountByFilter(
@@ -184,7 +198,7 @@ internal static class ApplicationsSsrData
     private static SollicitationRow MapApplication(CultureState culture, ApplicationItem a)
     {
         var isDone = IsDoneStatus(a.Status);
-        var timeline = (a.Timeline ?? [])
+        IReadOnlyList<SollicitationTimelineStep> timeline = (a.Timeline ?? [])
             .Select(t => new SollicitationTimelineStep(
                 t.Key,
                 t.State,
@@ -194,6 +208,19 @@ internal static class ApplicationsSsrData
 
         var hint = BuildCardHint(culture, a, timeline);
         var sourceKey = a.IsInitiative ? "Initiative.Panel.Title" : "Bk.Apps.FilterVacancy";
+        ApplicationAfterMatchSummary? afterMatch = null;
+        if (a.AfterMatch is not null)
+        {
+            afterMatch = new ApplicationAfterMatchSummary(
+                a.Id,
+                a.AfterMatch.InterviewStatus,
+                a.AfterMatch.UnreadMessageCount,
+                a.AfterMatch.OpenSlotCount,
+                a.AfterMatch.ScheduledStartUtc,
+                a.AfterMatch.ScheduledEndUtc,
+                a.AfterMatch.AcceptedAtUtc);
+            timeline = AfterMatchSollicitatiesPresentation.BuildAfterMatchTimeline(culture, afterMatch);
+        }
 
         return new SollicitationRow(
             a.Id,
@@ -214,7 +241,8 @@ internal static class ApplicationsSsrData
             hint,
             a.RespondedAt ?? a.CreatedAt,
             timeline,
-            a.NextStepKey);
+            a.NextStepKey,
+            afterMatch);
     }
 
     private static SollicitationRow MapExternal(CultureState culture, Core.Contracts.ExternalVacancyListItemDto e)
@@ -238,6 +266,7 @@ internal static class ApplicationsSsrData
             culture["ExtVac.Card.AppliedHint"],
             e.SavedAtUtc,
             [],
+            null,
             null);
     }
 

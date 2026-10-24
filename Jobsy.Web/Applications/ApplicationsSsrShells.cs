@@ -33,6 +33,10 @@ internal static class ApplicationsSsrShells
         {
             AppendActiviteitenPlaceholder(sb, culture);
         }
+        else if (string.Equals(data.Tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
+        {
+            AppendBerichtenInbox(sb, culture, data);
+        }
         else
         {
             AppendToolbar(sb, culture, data);
@@ -47,6 +51,7 @@ internal static class ApplicationsSsrShells
         }
 
         sb.Append("</div></div></div>");
+        sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-sollicitaties3\" defer></script>");
         return sb.ToString();
     }
 
@@ -105,6 +110,16 @@ internal static class ApplicationsSsrShells
             ApplicationsSsrQuery.TabSollicitaties,
             culture["Nav.ApplicationsTab"],
             badge: null);
+        if (data.AfterMatchEnabled)
+        {
+            AppendSegmentTab(
+                sb,
+                data,
+                ApplicationsSsrQuery.TabBerichten,
+                culture["Nav.MessagesTab"],
+                badge: data.TotalUnreadMessages > 0 ? data.TotalUnreadMessages : null);
+        }
+
         AppendSegmentTab(
             sb,
             data,
@@ -287,7 +302,7 @@ internal static class ApplicationsSsrShells
         bool selected)
     {
         var selectHref = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
-        sb.Append("<a class=\"sollic-card");
+        sb.Append("<article class=\"sollic-card");
         if (selected)
         {
             sb.Append(" is-selected");
@@ -298,9 +313,9 @@ internal static class ApplicationsSsrShells
             sb.Append(" sollic-card--done");
         }
 
-        sb.Append("\" href=\"");
+        sb.Append("\" role=\"listitem\"><a class=\"sollic-card__select\" href=\"");
         sb.Append(WebUtility.HtmlEncode(selectHref));
-        sb.Append("\" data-enhance-nav=\"false\" role=\"listitem\"><span class=\"sollic-card__avatar\" aria-hidden=\"true\">");
+        sb.Append("\" data-enhance-nav=\"false\"><span class=\"sollic-card__avatar\" aria-hidden=\"true\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><span class=\"sollic-card__main\"><span class=\"sollic-card__source sollic-card__source--");
         sb.Append(row.IsInitiative ? "initiative" : row.IsExternal ? "external" : "vacancy");
@@ -310,27 +325,63 @@ internal static class ApplicationsSsrShells
         sb.Append(WebUtility.HtmlEncode(row.Title));
         sb.Append("</span><span class=\"sollic-card__meta\">");
         sb.Append(WebUtility.HtmlEncode(CompanyPlace(row)));
-        sb.Append("</span><span class=\"sollic-card__status-row\"><span class=\"sollic-card__pill sollic-card__pill--");
-        sb.Append(WebUtility.HtmlEncode(row.StatusModifier));
-        sb.Append("\">");
-        sb.Append(WebUtility.HtmlEncode(CardPillLabel(culture, row)));
-        sb.Append("</span>");
-        if (!string.IsNullOrWhiteSpace(CurrentStepLabel(row)))
+        sb.Append("</span><span class=\"sollic-card__status-row\">");
+        if (row.AfterMatch is null)
         {
-            sb.Append("<span class=\"sollic-card__step\">");
-            sb.Append(WebUtility.HtmlEncode(CurrentStepLabel(row)!));
+            sb.Append("<span class=\"sollic-card__pill sollic-card__pill--");
+            sb.Append(WebUtility.HtmlEncode(row.StatusModifier));
+            sb.Append("\">");
+            sb.Append(WebUtility.HtmlEncode(CardPillLabel(culture, row)));
             sb.Append("</span>");
+            if (!string.IsNullOrWhiteSpace(CurrentStepLabel(row)))
+            {
+                sb.Append("<span class=\"sollic-card__step\">");
+                sb.Append(WebUtility.HtmlEncode(CurrentStepLabel(row)!));
+                sb.Append("</span>");
+            }
+        }
+        else
+        {
+            var cardAction = AfterMatchSollicitatiesPresentation.BuildCardAction(culture, row.AfterMatch);
+            if (cardAction is not null)
+            {
+                sb.Append("<a class=\"sollic-card__ndm-act sollic-card__ndm-act--");
+                sb.Append(WebUtility.HtmlEncode(cardAction.Modifier));
+                sb.Append("\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(cardAction.Href!));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(cardAction.Label));
+                sb.Append("</a>");
+            }
+            else if (!string.IsNullOrWhiteSpace(row.CardHint))
+            {
+                sb.Append("<span class=\"sollic-card__step\">");
+                sb.Append(WebUtility.HtmlEncode(row.CardHint));
+                sb.Append("</span>");
+            }
         }
 
         sb.Append("</span>");
-        if (!string.IsNullOrWhiteSpace(row.CardHint))
+        if (row.AfterMatch is null && !string.IsNullOrWhiteSpace(row.CardHint))
         {
             sb.Append("<span class=\"sollic-card__hint\">");
             sb.Append(WebUtility.HtmlEncode(row.CardHint));
             sb.Append("</span>");
         }
 
-        sb.Append("</span><span class=\"sollic-card__chev\" aria-hidden=\"true\">›</span></a>");
+        sb.Append("</span></a><div class=\"sollic-card__aside\">");
+        if (row.AfterMatch is { UnreadMessageCount: > 0 } am)
+        {
+            sb.Append("<a class=\"sollic-card__msg\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Messages(am.ApplicationId)));
+            sb.Append("\" data-enhance-nav=\"false\" aria-label=\"");
+            sb.Append(WebUtility.HtmlEncode(string.Format(culture["Apps.Ndm.UnreadAria"], am.UnreadMessageCount)));
+            sb.Append("\"><span class=\"sollic-card__msg-icon\" aria-hidden=\"true\">✉</span><span class=\"sollic-card__msg-count\">");
+            sb.Append(am.UnreadMessageCount);
+            sb.Append("</span></a>");
+        }
+
+        sb.Append("<span class=\"sollic-card__chev\" aria-hidden=\"true\">›</span></div></article>");
     }
 
     private static void AppendDetailPanel(StringBuilder sb, CultureState culture, SollicitationRow row)
@@ -344,7 +395,34 @@ internal static class ApplicationsSsrShells
         sb.Append("</h2><p class=\"sollic-detail__meta\">");
         sb.Append(WebUtility.HtmlEncode(CompanyPlace(row)));
         sb.Append("</p></div>");
-        if (row.Timeline.Count > 0)
+        if (row.AfterMatch is not null)
+        {
+            AppendAfterMatchTimeline(sb, culture, row);
+            AppendDetailTip(sb, culture, row);
+            var actions = AfterMatchSollicitatiesPresentation.BuildDetailActions(culture, row.AfterMatch);
+            if (actions is not null)
+            {
+                sb.Append("<div class=\"sollic-detail__acts\">");
+                sb.Append("<a class=\"btn btn-primary sollic-detail__cta\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(actions.PrimaryHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(actions.PrimaryLabel));
+                sb.Append("</a><a class=\"btn sollic-detail__cta-secondary\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(actions.MessagesHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.Messages"]));
+                if (actions.UnreadMessages > 0)
+                {
+                    sb.Append("<span class=\"sollic-detail__msg-badge\">");
+                    sb.Append(actions.UnreadMessages);
+                    sb.Append("</span>");
+                }
+
+                sb.Append("</a></div>");
+                AppendDetailMoreLinks(sb, culture, row);
+            }
+        }
+        else if (row.Timeline.Count > 0)
         {
             sb.Append("<ol class=\"kb-timeline kb-timeline--vertical sollic-detail__timeline\">");
             foreach (var step in row.Timeline)
@@ -371,30 +449,133 @@ internal static class ApplicationsSsrShells
             }
 
             sb.Append("</ol>");
-        }
-
-        AppendDetailTip(sb, culture, row);
-        var primaryHref = RowHref(row);
-        if (!string.IsNullOrEmpty(primaryHref))
-        {
-            sb.Append("<a class=\"btn btn-primary sollic-detail__cta\" href=\"");
-            sb.Append(WebUtility.HtmlEncode(primaryHref));
-            sb.Append("\" data-enhance-nav=\"false\">");
-            sb.Append(WebUtility.HtmlEncode(DetailCtaLabel(culture, row)));
-            sb.Append("</a>");
+            AppendDetailTip(sb, culture, row);
+            var primaryHref = RowHref(row);
+            if (!string.IsNullOrEmpty(primaryHref))
+            {
+                sb.Append("<a class=\"btn btn-primary sollic-detail__cta\" href=\"");
+                sb.Append(WebUtility.HtmlEncode(primaryHref));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(DetailCtaLabel(culture, row)));
+                sb.Append("</a>");
+            }
         }
 
         sb.Append("</div>");
     }
 
+    private static void AppendAfterMatchTimeline(StringBuilder sb, CultureState culture, SollicitationRow row)
+    {
+        sb.Append("<div class=\"sollic-ndm-tl\" role=\"list\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
+        sb.Append("\">");
+        foreach (var step in row.Timeline)
+        {
+            var state = step.State.ToLowerInvariant();
+            sb.Append("<div class=\"sollic-ndm-tl__step sollic-ndm-tl__step--");
+            sb.Append(WebUtility.HtmlEncode(state));
+            sb.Append("\" role=\"listitem\"><span class=\"sollic-ndm-tl__dot\" aria-hidden=\"true\"></span><span class=\"sollic-ndm-tl__label\">");
+            sb.Append(WebUtility.HtmlEncode(step.Label));
+            sb.Append("</span>");
+            if (step.OccurredAtUtc is DateTime at)
+            {
+                sb.Append("<span class=\"sollic-ndm-tl__sub\">");
+                sb.Append(WebUtility.HtmlEncode(FormatTimelineDate(culture, at, step)));
+                sb.Append("</span>");
+            }
+            else if (string.Equals(state, "current", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append("<span class=\"sollic-ndm-tl__sub\">");
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Now"]));
+                sb.Append("</span>");
+            }
+
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static void AppendDetailMoreLinks(StringBuilder sb, CultureState culture, SollicitationRow row)
+    {
+        if (row.ApplicationId is not Guid appId || row.VacancyId is not Guid vacId)
+        {
+            return;
+        }
+
+        sb.Append("<div class=\"sollic-detail__more\">");
+        sb.Append("<a class=\"sollic-detail__more-link\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Vacancy(vacId)));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.CompanyPage"]));
+        sb.Append("</a><a class=\"sollic-detail__more-link\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.LobsyCvPdf(appId)));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.LobsyCv"]));
+        sb.Append("</a><button type=\"button\" class=\"sollic-detail__more-link sollic-detail__more-link--danger sollic-detail__withdraw\" data-application-id=\"");
+        sb.Append(appId.ToString("D"));
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.MenuWithdraw"]));
+        sb.Append("</button></div>");
+    }
+
+    private static void AppendBerichtenInbox(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    {
+        sb.Append("<div class=\"sollic-berichten\">");
+        if (data.FilteredRows.Count == 0)
+        {
+            sb.Append("<p class=\"state-message\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.BerichtenEmpty"]));
+            sb.Append("</p></div>");
+            return;
+        }
+
+        sb.Append("<div class=\"sollic-berichten__list\" role=\"list\">");
+        foreach (var row in data.FilteredRows)
+        {
+            if (row.ApplicationId is not Guid appId)
+            {
+                continue;
+            }
+
+            sb.Append("<a class=\"sollic-berichten__thread\" role=\"listitem\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Messages(appId)));
+            sb.Append("\" data-enhance-nav=\"false\"><span class=\"sollic-card__avatar\" aria-hidden=\"true\">");
+            sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
+            sb.Append("</span><span class=\"sollic-berichten__body\"><b>");
+            sb.Append(WebUtility.HtmlEncode(row.CompanyName));
+            sb.Append("</b><span class=\"sollic-berichten__sub\">");
+            sb.Append(WebUtility.HtmlEncode(row.Title));
+            sb.Append("</span></span>");
+            if (row.AfterMatch is { UnreadMessageCount: > 0 } am)
+            {
+                sb.Append("<span class=\"sollic-berichten__badge\">");
+                sb.Append(am.UnreadMessageCount);
+                sb.Append("</span>");
+            }
+
+            sb.Append("</a>");
+        }
+
+        sb.Append("</div><p class=\"sollic-berichten__safe\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.BerichtenSafe"]));
+        sb.Append("</p></div>");
+    }
+
     private static void AppendDetailTip(StringBuilder sb, CultureState culture, SollicitationRow row)
     {
+        string? body = null;
+        if (row.AfterMatch is { OpenSlotCount: > 0 })
+        {
+            body = culture["Apps.Ndm.DetailTipPick"];
+        }
+
         var showInterviewTip = string.Equals(row.Status, nameof(ApplicationStatus.EmployerContacting), StringComparison.OrdinalIgnoreCase)
                                || row.Timeline.Any(t =>
                                    string.Equals(t.State, "Current", StringComparison.OrdinalIgnoreCase)
                                    && (string.Equals(t.Key, "Interview", StringComparison.OrdinalIgnoreCase)
                                        || string.Equals(t.Key, "Gesprek", StringComparison.OrdinalIgnoreCase)));
-        if (!showInterviewTip && string.IsNullOrWhiteSpace(row.NextStepKey))
+        if (body is null && !showInterviewTip && string.IsNullOrWhiteSpace(row.NextStepKey))
         {
             return;
         }
@@ -403,9 +584,10 @@ internal static class ApplicationsSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Detail.TipTitle"]));
         sb.Append("</p><p class=\"sollic-detail__tip-body\">");
         sb.Append(WebUtility.HtmlEncode(
-            showInterviewTip
-                ? culture["Apps.Detail.TipInterview"]
-                : culture[row.NextStepKey!]));
+            body
+                ?? (showInterviewTip
+                    ? culture["Apps.Detail.TipInterview"]
+                    : culture[row.NextStepKey!])));
         sb.Append("</p></div>");
     }
 

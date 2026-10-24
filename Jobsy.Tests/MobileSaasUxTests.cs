@@ -154,6 +154,7 @@ public class MobileSaasUxTests
         Assert.Contains("applications-page-ssr", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-segment", shells, StringComparison.Ordinal);
+        Assert.Contains("TabBerichten", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/ApplicationsSsrQuery.cs")), StringComparison.Ordinal);
         Assert.Contains("sollic-card", shells, StringComparison.Ordinal);
         Assert.Contains("kb-timeline", shells, StringComparison.Ordinal);
         Assert.Contains("Bk.Apps.FilterVacancy", shells, StringComparison.Ordinal);

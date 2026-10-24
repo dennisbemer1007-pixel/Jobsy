@@ -486,6 +486,70 @@ public partial class MeController : ControllerBase
                 row.VacancyStatus != VacancyStatus.Active);
         }).ToList();
 
+        var featureSnap = await _features.GetAsync(cancellationToken);
+        if (featureSnap.AfterMatchEnabled && items.Count > 0)
+        {
+            var eligibleIds = rows
+                .Where(r => AfterMatchInterviewRules.ApplicationEligible(r.Status))
+                .Select(r => r.Id)
+                .ToList();
+            if (eligibleIds.Count > 0)
+            {
+                var interviews = await _db.Interviews.AsNoTracking()
+                    .Include(i => i.Slots)
+                    .Include(i => i.ChosenSlot)
+                    .Where(i => eligibleIds.Contains(i.ApplicationId))
+                    .ToListAsync(cancellationToken);
+                var interviewByApp = interviews.ToDictionary(i => i.ApplicationId);
+
+                var unreadRows = await _db.ApplicationMessages.AsNoTracking()
+                    .Where(m => eligibleIds.Contains(m.ApplicationId)
+                                && m.SenderUserId != user.Id
+                                && m.ReadAtUtc == null)
+                    .GroupBy(m => m.ApplicationId)
+                    .Select(g => new { ApplicationId = g.Key, Count = g.Count() })
+                    .ToListAsync(cancellationToken);
+                var unreadByApp = unreadRows.ToDictionary(x => x.ApplicationId, x => x.Count);
+
+                for (var i = 0; i < items.Count; i++)
+                {
+                    var item = items[i];
+                    if (!interviewByApp.TryGetValue(item.Id, out var interview))
+                    {
+                        continue;
+                    }
+
+                    var openSlots = interview.Status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+                        ? interview.Slots.Count(s => !s.IsSelected)
+                        : 0;
+                    DateTime? start = interview.ChosenSlot?.StartUtc;
+                    DateTime? end = interview.ChosenSlot?.EndUtc;
+                    if (start is null && interview.Status == InterviewStatus.Scheduled)
+                    {
+                        start = interview.Slots.FirstOrDefault(s => s.Id == interview.ChosenSlotId)?.StartUtc;
+                        end = interview.Slots.FirstOrDefault(s => s.Id == interview.ChosenSlotId)?.EndUtc;
+                    }
+
+                    unreadByApp.TryGetValue(item.Id, out var unread);
+                    var acceptedAt = item.RespondedAt
+                                     ?? historyLookup[item.Id]
+                                         .FirstOrDefault(h => h.ToStatus == ApplicationStatus.Accepted)
+                                         ?.OccurredAtUtc;
+
+                    items[i] = item with
+                    {
+                        AfterMatch = new ApplicationAfterMatchSummaryDto(
+                            interview.Status.ToString(),
+                            unread,
+                            openSlots,
+                            start,
+                            end,
+                            acceptedAt)
+                    };
+                }
+            }
+        }
+
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
         if (!JobsyLanguages.AreSame(VacancySourceLanguage, lang) && items.Count > 0)
         {
