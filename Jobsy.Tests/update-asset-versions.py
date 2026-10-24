@@ -17,7 +17,10 @@ HTML_REF = re.compile(
 )
 JS_REF = re.compile(r"""["'](/(?:js|css|service-worker)[^"']+\?v=[^"']+)["']""")
 JOB_MAP_MIN = "js/jobMap.min.js"
+MAPS_BOOT_JS = "js/banenkaart-maps-boot.js"
 JOB_MAP_REF = re.compile(r"(jobMap\.min\.js\?v=)([^\"'\s]+)")
+MAPS_BOOT_REF = re.compile(r"(banenkaart-maps-boot\.js\?v=)([^\"'\s]+)")
+APP_RAZOR = ROOT / "Jobsy.Web" / "Components" / "App.razor"
 
 
 def collect_sources() -> list[Path]:
@@ -79,10 +82,20 @@ def main() -> int:
         digest = hashlib.sha256(physical.read_bytes()).hexdigest()
         manifest[path] = {"sha256": digest, "v": version}
 
+    tie_maps_boot_version_to_jobmap(manifest)
     OUT.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)} ({len(manifest)} entries)")
     sync_job_map_min_refs(manifest)
+    sync_banenkaart_maps_boot_app_razor(manifest)
     return 0
+
+
+def tie_maps_boot_version_to_jobmap(manifest: dict[str, dict[str, str]]) -> None:
+    """Banenkaart SSR loads jobMap via maps-boot.js in App.razor — one ?v= busts the chain."""
+    job = manifest.get(JOB_MAP_MIN)
+    boot = manifest.get(MAPS_BOOT_JS)
+    if job and boot and job.get("v"):
+        boot["v"] = job["v"]
 
 
 def sync_job_map_min_refs(manifest: dict[str, dict[str, str]]) -> None:
@@ -100,6 +113,20 @@ def sync_job_map_min_refs(manifest: dict[str, dict[str, str]]) -> None:
         if updated != text:
             path.write_text(updated, encoding="utf-8")
             print(f"synced {rel} jobMap.min.js ?v={version}")
+
+
+def sync_banenkaart_maps_boot_app_razor(manifest: dict[str, dict[str, str]]) -> None:
+    entry = manifest.get(MAPS_BOOT_JS)
+    if not entry or not entry.get("v"):
+        return
+    if not APP_RAZOR.is_file():
+        return
+    version = entry["v"]
+    text = APP_RAZOR.read_text(encoding="utf-8")
+    updated = MAPS_BOOT_REF.sub(rf"\g<1>{version}", text)
+    if updated != text:
+        APP_RAZOR.write_text(updated, encoding="utf-8")
+        print(f"synced App.razor banenkaart-maps-boot.js ?v={version}")
 
 
 if __name__ == "__main__":

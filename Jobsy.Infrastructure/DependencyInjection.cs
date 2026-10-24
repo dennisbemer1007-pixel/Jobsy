@@ -5,6 +5,7 @@ using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Geo;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Media;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
 using Jobsy.Core.Passport;
@@ -16,6 +17,7 @@ using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Media;
 using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Reminders;
 using Jobsy.Infrastructure.Sales;
@@ -299,6 +301,11 @@ public static class DependencyInjection
         services.AddScoped<IExactRoutingService, OsrmRoutingService>();
         services.AddHttpClient(ValhallaIsochroneService.HttpClientName, client =>
             ValhallaIsochroneService.ConfigureClient(client, TimeSpan.FromSeconds(6)));
+        services.AddHttpClient(VacancyPublicPhotoBytesLoader.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(12);
+        });
+        services.AddSingleton<IVacancyPublicPhotoBytesLoader, VacancyPublicPhotoBytesLoader>();
         var isochroneBase = configuration["Routing:IsochroneBaseUrl"];
         if (string.Equals(isochroneBase, "mock", StringComparison.OrdinalIgnoreCase)
             || environment?.IsEnvironment("Testing") == true)
