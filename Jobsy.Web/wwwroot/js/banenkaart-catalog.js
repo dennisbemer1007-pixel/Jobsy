@@ -973,8 +973,11 @@
     }
 
     function travelSubtitle(filters) {
-        var mins = filters && filters.maxMinutes ? filters.maxMinutes : 20;
-        var mode = filters && filters.transport ? filters.transport : "Fiets";
+        if (!filters || filters.originLat == null || filters.originLng == null) {
+            return "";
+        }
+        var mins = filters.maxMinutes ? filters.maxMinutes : 20;
+        var mode = filters.transport ? filters.transport : "Fiets";
         return "binnen " + mins + " min " + transportVerbNl(mode);
     }
 
@@ -1210,6 +1213,13 @@
         }));
     }
 
+    function resetTravelKeepOrigin() {
+        var filters = normalizeFilters(resolveFilters());
+        filters.maxMinutes = 20;
+        filters.transport = "Fiets";
+        return applyClientFilters(filters);
+    }
+
     function resetClientFilters() {
         var defaults = defaultFilters();
         syncFilterFormToState(defaults);
@@ -1255,6 +1265,7 @@
         buildBanenkaartUrl: buildBanenkaartUrl,
         applyClientFilters: applyClientFilters,
         resetClientFilters: resetClientFilters,
+        resetTravelKeepOrigin: resetTravelKeepOrigin,
         resolveFilters: resolveFilters,
         readFiltersFromUrl: readFiltersFromUrl,
         renderListRows: renderListRows,

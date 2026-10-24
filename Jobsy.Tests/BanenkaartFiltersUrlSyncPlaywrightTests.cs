@@ -133,5 +133,81 @@ public sealed class BanenkaartFiltersUrlSyncPlaywrightTests : IAsyncLifetime
             """,
             null,
             new() { Timeout = 10_000 });
+
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const el = document.querySelector('.results-meta__sub');
+              return !el || !String(el.textContent || '').trim();
+            }
+            """,
+            null,
+            new() { Timeout = 15_000 });
+
+        var address = await page.Locator("[data-kb-address]").First.InputValueAsync();
+        Assert.True(string.IsNullOrWhiteSpace(address));
+    }
+
+    [Fact]
+    public async Task Travel_chip_remove_resets_minutes_but_keeps_address()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => window.jobsyBanenkaartCatalog?.isReady?.() === true",
+            null,
+            new() { Timeout = 90_000 });
+
+        await page.Locator("[data-testid=kb-active-tag-travel]").ClickAsync();
+        await page.WaitForFunctionAsync(
+            "() => !window.location.search.includes('maxMinutes=60')",
+            null,
+            new() { Timeout = 15_000 });
+
+        var url = page.Url;
+        Assert.Contains("originLat=51.9944", url, StringComparison.Ordinal);
+        Assert.Contains("originLng=4.2097", url, StringComparison.Ordinal);
+
+        var address = await page.Locator("[data-kb-address]").First.InputValueAsync();
+        Assert.Contains("Naaldwijk", address, StringComparison.OrdinalIgnoreCase);
+
+        var chip = await page.Locator("[data-testid=kb-active-tag-travel]").InnerTextAsync();
+        Assert.Contains("20", chip, StringComparison.Ordinal);
+        Assert.Contains("fiets", chip, StringComparison.OrdinalIgnoreCase);
+
+        var sliderVal = await page.EvaluateAsync<string>(
+            "() => document.querySelector('[data-testid=kb-sheet-travel-slider]')?.value || ''");
+        Assert.Equal("20", sliderVal);
+    }
+
+    [Fact]
+    public async Task Without_origin_result_subtitle_is_empty_after_catalog_boot()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => window.jobsyBanenkaartCatalog?.isReady?.() === true",
+            null,
+            new() { Timeout = 90_000 });
+
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const el = document.querySelector('.results-meta__sub');
+              return !el || !String(el.textContent || '').trim();
+            }
+            """,
+            null,
+            new() { Timeout = 15_000 });
     }
 }
