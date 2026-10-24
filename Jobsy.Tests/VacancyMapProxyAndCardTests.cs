@@ -108,7 +108,8 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("/api/vacancies/{id:guid}/map-popup-photo", proxy);
         Assert.Contains("DisableAntiforgery", proxy);
         Assert.Contains("IsRequestValidAsync", proxy);
-        Assert.DoesNotContain("PostLikeAsync).RequireAuthorization().DisableAntiforgery", proxy);
+        Assert.Contains("MapPost(\"/api/vacancies/{id:guid}/like\", PostLikeAsync).RequireAuthorization().DisableAntiforgery()", proxy);
+        Assert.Contains("AcceptatieDiagnosticHeaders.TrySet", proxy);
         Assert.Contains("readAntiforgeryHeader", js);
         Assert.Contains("likeMutationHeaders", js);
         Assert.Contains("ev.type !== \"click\"", js);

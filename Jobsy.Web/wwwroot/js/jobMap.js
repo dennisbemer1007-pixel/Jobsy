@@ -1884,6 +1884,10 @@ window.jobMap = (function () {
     }
 
     function readAntiforgeryHeader() {
+        var meta = document.querySelector('meta[name="jobsy-request-verification-token"]');
+        if (meta && meta.getAttribute("content")) {
+            return { RequestVerificationToken: meta.getAttribute("content") };
+        }
         var form = document.getElementById("kb-filter-form");
         if (!form || !form.querySelector) {
             return null;
