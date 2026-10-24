@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -84,18 +85,39 @@ public sealed class BanenkaartLagenDesktopStripScrollPlaywrightTests : IAsyncLif
             """);
 
         var track = page.Locator("[data-testid=kb-map-strip] .strip__track");
-        var box = await track.BoundingBoxAsync();
-        Assert.NotNull(box);
-        var wheelX = (float)(box!.X + box.Width * 0.5);
-        var wheelY = (float)(box.Y + box.Height * 0.5);
+        var wheelJson = await page.EvaluateAsync<JsonElement>(
+            """
+            () => {
+              const card = document.querySelector('[data-testid=kb-map-strip] .sc');
+              if (!card) throw new Error('Missing strip card.');
+              const r = card.getBoundingClientRect();
+              const x = r.left + r.width * 0.5;
+              const y = r.top + r.height * 0.5;
+              const el = document.elementFromPoint(x, y);
+              const hit = el ? el.tagName + (el.className ? '.' + String(el.className) : '') : '(none)';
+              const inStrip = !!(el && el.closest('[data-testid=kb-map-strip]'));
+              return { x, y, hit, inStrip };
+            }
+            """);
+        var wheelX = (float)wheelJson.GetProperty("x").GetDouble();
+        var wheelY = (float)wheelJson.GetProperty("y").GetDouble();
+        var wheelHit = wheelJson.GetProperty("hit").GetString() ?? "";
+        var wheelInStrip = wheelJson.GetProperty("inStrip").GetBoolean();
+        Assert.True(wheelInStrip, $"Expected elementFromPoint over card to be inside strip; hit={wheelHit}.");
+
         await page.Mouse.MoveAsync(wheelX, wheelY);
-        await page.Mouse.WheelAsync(0, 240);
+        await page.Mouse.WheelAsync(0, 300);
+        await page.Mouse.WheelAsync(0, 300);
+        await page.Mouse.WheelAsync(0, 300);
         var afterWheel = await track.EvaluateAsync<double>("el => el.scrollLeft");
-        Assert.True(afterWheel > 0, $"Expected wheel to scroll strip horizontally; scrollLeft={afterWheel}.");
+        Assert.True(afterWheel > 0,
+            $"Expected real mouse wheel over card to scroll strip; scrollLeft={afterWheel}, hit={wheelHit}.");
 
         await track.EvaluateAsync("el => { el.scrollLeft = 0; }");
-        var dragY = (float)(box.Y + box.Height * 0.5);
-        var dragStartX = (float)(box.X + box.Width * 0.55);
+        var trackBox = await track.BoundingBoxAsync();
+        Assert.NotNull(trackBox);
+        var dragY = (float)(trackBox!.Y + trackBox.Height * 0.5);
+        var dragStartX = (float)(trackBox.X + trackBox.Width * 0.55);
         await page.Mouse.MoveAsync(dragStartX, dragY);
         await page.Mouse.DownAsync();
         await page.Mouse.MoveAsync(dragStartX - 180, dragY);

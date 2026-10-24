@@ -368,8 +368,8 @@
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261024-stripscroll4",
-    "sha256": "9807a70ab302d7844c4954c87f461ae5b90c19717ba9e8eed45706b525621405"
+    "v": "20261024-stripscroll5",
+    "sha256": "0e24874706cf56dea389335a055a8287a1ad99a2b50dd2b5cf2a0f958bf1b945"
   },
   "js/banenkaart-ssr.js": {
     "v": "20261024-desktopsplit1",
@@ -388,7 +388,7 @@
     "sha256": "dc5bb090e4f4ea192c5d44aa49b7e69ca6cb2b4dfd1507292c6801cb0994af30"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-stripscroll4",
-    "sha256": "50937c1f88fe0744d0a733be72121fbe2a03d87112b8fe52f484dacfa494dce9"
+    "v": "20261024-stripscroll5",
+    "sha256": "9f49263383f76d5aca4160972be195c9f1f2fbff185090154a0379e5b97d91e8"
   }
 }

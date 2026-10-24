@@ -988,6 +988,67 @@
         return { dx: ev.deltaX * mul, dy: ev.deltaY * mul };
     }
 
+    function mapStripWheelPointInside(strip, clientX, clientY) {
+        if (!strip || clientX == null || clientY == null) {
+            return false;
+        }
+        var rect = strip.getBoundingClientRect();
+        return clientX >= rect.left && clientX <= rect.right
+            && clientY >= rect.top && clientY <= rect.bottom;
+    }
+
+    /** @returns {boolean} true when the wheel was consumed for horizontal strip scroll */
+    function applyMapStripWheelScroll(ev, scroller) {
+        if (!ev || !scroller) {
+            return false;
+        }
+        if (window.matchMedia("(max-width: 700px)").matches) {
+            return false;
+        }
+        if (scroller.scrollWidth <= scroller.clientWidth + 1) {
+            return false;
+        }
+        var delta = stripWheelDeltaPixels(ev, scroller);
+        if (Math.abs(delta.dy) <= Math.abs(delta.dx)) {
+            return false;
+        }
+        var maxLeft = scroller.scrollWidth - scroller.clientWidth;
+        if (delta.dy > 0 && scroller.scrollLeft >= maxLeft - 1) {
+            return false;
+        }
+        if (delta.dy < 0 && scroller.scrollLeft <= 0) {
+            return false;
+        }
+        ev.preventDefault();
+        ev.stopPropagation();
+        var nextLeft = scroller.scrollLeft + delta.dy;
+        scroller.scrollLeft = Math.max(0, Math.min(maxLeft, nextLeft));
+        return true;
+    }
+
+    var mapStripWheelCaptureBound = false;
+
+    function ensureMapStripWheelCapture() {
+        if (mapStripWheelCaptureBound) {
+            return;
+        }
+        mapStripWheelCaptureBound = true;
+        document.addEventListener("wheel", function (ev) {
+            var strip = document.querySelector("[data-testid=kb-map-strip]");
+            if (!strip || strip.classList.contains("strip--empty")) {
+                return;
+            }
+            if (!mapStripWheelPointInside(strip, ev.clientX, ev.clientY)) {
+                return;
+            }
+            var scroller = mapStripScrollEl(strip);
+            if (!scroller) {
+                return;
+            }
+            applyMapStripWheelScroll(ev, scroller);
+        }, { passive: false, capture: true });
+    }
+
     function bindMapStripScroll(strip) {
         if (strip.getAttribute("data-kb-strip-scroll") === "1") {
             return;
@@ -997,31 +1058,7 @@
             return;
         }
         strip.setAttribute("data-kb-strip-scroll", "1");
-
-        function onStripWheel(ev) {
-            if (window.matchMedia("(max-width: 700px)").matches) {
-                return;
-            }
-            if (scroller.scrollWidth <= scroller.clientWidth + 1) {
-                return;
-            }
-            var delta = stripWheelDeltaPixels(ev, scroller);
-            if (Math.abs(delta.dy) <= Math.abs(delta.dx)) {
-                return;
-            }
-            var maxLeft = scroller.scrollWidth - scroller.clientWidth;
-            if (delta.dy > 0 && scroller.scrollLeft >= maxLeft - 1) {
-                return;
-            }
-            if (delta.dy < 0 && scroller.scrollLeft <= 0) {
-                return;
-            }
-            ev.preventDefault();
-            ev.stopPropagation();
-            var nextLeft = scroller.scrollLeft + delta.dy;
-            scroller.scrollLeft = Math.max(0, Math.min(maxLeft, nextLeft));
-        }
-        strip.addEventListener("wheel", onStripWheel, { passive: false, capture: true });
+        ensureMapStripWheelCapture();
 
         var dragPending = false;
         var dragActive = false;
@@ -1612,14 +1649,17 @@
             }
             var dy = deltaY == null ? 120 : deltaY;
             var mode = deltaMode == null ? 0 : deltaMode;
-            var wheelInit = {
+            var cardRect = card.getBoundingClientRect();
+            var fakeEv = new WheelEvent("wheel", {
                 deltaY: dy,
                 deltaX: 0,
                 deltaMode: mode,
                 bubbles: true,
-                cancelable: true
-            };
-            card.dispatchEvent(new WheelEvent("wheel", wheelInit));
+                cancelable: true,
+                clientX: cardRect.left + cardRect.width * 0.5,
+                clientY: cardRect.top + cardRect.height * 0.5
+            });
+            applyMapStripWheelScroll(fakeEv, scroller);
             return scroller.scrollLeft;
         },
         /** @internal Playwright — drag scroll on map strip */
@@ -1648,6 +1688,7 @@
     };
 
     if (document.querySelector("[data-banenkaart-ssr=\"1\"]")) {
+        ensureMapStripWheelCapture();
         if (document.readyState === "loading") {
             document.addEventListener("DOMContentLoaded", bootAndApply);
         } else {
