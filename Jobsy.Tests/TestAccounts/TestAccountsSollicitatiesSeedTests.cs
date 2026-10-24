@@ -39,6 +39,12 @@ public sealed class TestAccountsSollicitatiesSeedTests
 
         await db.SaveChangesAsync();
         Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == candidateId));
+
+        var (outcome, apps, threads) = await TestAccountsSollicitatiesDemoSeeder.BuildDemoHealthCountsAsync(
+            db,
+            candidateId);
+        Assert.Equal(6, apps);
+        Assert.True(threads >= 2, outcome);
     }
 
     [Fact]

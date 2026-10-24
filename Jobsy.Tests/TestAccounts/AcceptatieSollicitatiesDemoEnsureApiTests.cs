@@ -49,9 +49,16 @@ public sealed class AcceptatieSollicitatiesDemoEnsureApiTests : IClassFixture<Ac
         Assert.NotNull(body);
         Assert.True(body.Applied);
         Assert.True(body.VerifiedApplicationCount >= 6);
+        Assert.True(body.MessageThreadCount >= 2, body.DemoHealthOutcome);
+        Assert.Contains("threads=", body.DemoHealthOutcome, StringComparison.Ordinal);
     }
 
-    private sealed record EnsureDto(bool Applied, int VerifiedApplicationCount, string? SkipReason);
+    private sealed record EnsureDto(
+        bool Applied,
+        int VerifiedApplicationCount,
+        int MessageThreadCount,
+        string? DemoHealthOutcome,
+        string? SkipReason);
 }
 
 public sealed class AcceptatieSollicitatiesDemoEnsureApiFactory : ApiWebApplicationFactory
