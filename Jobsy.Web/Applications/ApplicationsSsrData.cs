@@ -184,10 +184,7 @@ internal static class ApplicationsSsrData
         Guid? threadId = berichtenThreadId;
         AfterMatchThreadDto? berichtenThread = null;
         var berichtenThreads = new Dictionary<Guid, AfterMatchThreadDto>();
-        if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal)
-            && afterMatchOn
-            && !readOnly
-            && isCandidate)
+        if (afterMatchOn && !readOnly && isCandidate)
         {
             threadId ??= messageRows.FirstOrDefault()?.ApplicationId;
             if (messageRows.Count > 0)
@@ -232,7 +229,7 @@ internal static class ApplicationsSsrData
                 }
             }
         }
-        else if (!string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
+        if (!string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
         {
             threadId = null;
         }

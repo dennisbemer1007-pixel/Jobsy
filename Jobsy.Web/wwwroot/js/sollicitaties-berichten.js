@@ -112,6 +112,10 @@
       });
   }
 
+  window.__sollicBerichtenSelectThread = function (threadId, replaceUrl) {
+    selectThread(threadId, replaceUrl);
+  };
+
   function boot() {
     var root = document.querySelector("[data-testid=\"sollicitaties-berichten-tab\"]");
     if (!root) {

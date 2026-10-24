@@ -1219,6 +1219,14 @@
   max-width: 1120px !important;
 }
 
+.sollicitaties-tab-panel[hidden] {
+  display: none !important;
+}
+
+.sollic-card.sollic-card--app[hidden] {
+  display: none !important;
+}
+
 .sollic-detail-panel[hidden] {
   display: none !important;
 }

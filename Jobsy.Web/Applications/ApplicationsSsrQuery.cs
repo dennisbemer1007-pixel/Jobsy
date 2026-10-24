@@ -46,6 +46,32 @@ internal static class ApplicationsSsrQuery
         };
     }
 
+    internal static string RowFilterKeys(SollicitationRow row)
+    {
+        var keys = new List<string> { FilterAll };
+        if (!row.IsExternal && !row.IsInitiative)
+        {
+            keys.Add(FilterVacancy);
+        }
+
+        if (row.IsInitiative && !row.IsExternal)
+        {
+            keys.Add(FilterInitiative);
+        }
+
+        if (row.IsExternal)
+        {
+            keys.Add(FilterExternal);
+        }
+
+        if (row.IsDone)
+        {
+            keys.Add(FilterDone);
+        }
+
+        return string.Join(' ', keys);
+    }
+
     internal static bool MatchesFilter(SollicitationRow row, string filter)
     {
         if (filter == FilterAll)
