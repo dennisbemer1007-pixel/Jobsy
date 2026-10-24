@@ -32,8 +32,8 @@ internal static class TestAccountsIds
     public static readonly Guid SollicDemoVacancyMessages = Guid.Parse("b0000001-0000-4000-8000-000000000074");
     public static readonly Guid SollicDemoVacancyDone = Guid.Parse("b0000001-0000-4000-8000-000000000075");
 
-    /// <summary>Pending — Verstuurd (reuses legacy test application id).</summary>
-    public static readonly Guid SollicDemoAppSent = Application;
+    /// <summary>Pending — Verstuurd (dedicated id; do not reuse catalog <see cref="Application"/>).</summary>
+    public static readonly Guid SollicDemoAppSent = Guid.Parse("b0000001-0000-4000-8000-00000000002f");
     public static readonly Guid SollicDemoAppSeen = Guid.Parse("b0000001-0000-4000-8000-000000000033");
     public static readonly Guid SollicDemoAppPick = Guid.Parse("b0000001-0000-4000-8000-000000000034");
     public static readonly Guid SollicDemoAppScheduled = Guid.Parse("b0000001-0000-4000-8000-000000000035");

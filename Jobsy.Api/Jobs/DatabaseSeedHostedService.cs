@@ -184,7 +184,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            AcceptatieSollicitatiesDemoStartupState.Record("error:" + ex.GetType().Name);
+            AcceptatieSollicitatiesDemoStartupState.RecordError(ex);
             _logger.LogError(ex, "Acceptatie sollicitaties demo ensure failed; API continues.");
         }
     }
