@@ -101,7 +101,7 @@ Never put real passwords in tests or docs. Automated coverage lives under `Jobsy
 
 When the **test-accounts guard** is active (`Lobsy__DeploymentEnvironment=Acceptatie`, `TestAccounts__Enabled=true`, `lobsy-acc-*`, stub payments, etc.), the API runs **`TestAccountsSollicitatiesDemoSeeder`** on **every startup** (after migrate). It is idempotent and only touches **`IsTestAccount`** candidates:
 
-- Primary lookup: `lobsy-test@mail.grokbot.com` (when that user is a test account)
+- Primary lookup: `lobsy-test@mail.grokbot.com` (auto-marked `IsTestAccount` on acceptatie when the guard passes)
 - Fallback: catalog candidate e-mail (`test-kandidaat@<TestAccounts__EmailDomain>`)
 
 It adds fake employers (e.g. **Testbedrijf Groen**), vacancy applications (Verstuurd/Gezien, **Kies een moment** with open slots, gesprek gepland, unread berichten, afgerond), **Buiten Lobsy** external applied, and **Ik wil hier werken** initiatives.
