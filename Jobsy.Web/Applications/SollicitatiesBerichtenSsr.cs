@@ -210,17 +210,7 @@ internal static class SollicitatiesBerichtenSsr
             sb.Append("</small></div>");
         }
 
-        if (SollicitatiesBerichtenPresentation.SlotProposalSystemLine(culture, thread) is { } slotsLine)
-        {
-            sb.Append("<div class=\"sollic-berichten sysact\"><span>");
-            sb.Append(WebUtility.HtmlEncode(slotsLine));
-            sb.Append("</span><a class=\"btn btn-primary btn--sm\" href=\"");
-            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.PickSlot(appId, threadReturn)));
-            sb.Append("\" data-enhance-nav=\"false\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.PickSlot"]));
-            sb.Append("</a></div>");
-        }
-        else if (thread.InterviewStatus == InterviewStatus.Scheduled && thread.ScheduledStartUtc is DateTime start)
+        if (thread.InterviewStatus == InterviewStatus.Scheduled && thread.ScheduledStartUtc is DateTime start)
         {
             sb.Append("<div class=\"sollic-berichten sysact\" data-testid=\"sollic-berichten-sysact-scheduled\"><span class=\"sollic-berichten-sysact__text\">");
             sb.Append(WebUtility.HtmlEncode(string.Format(
@@ -230,6 +220,16 @@ internal static class SollicitatiesBerichtenSsr
             sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.AfterMatchBase(appId, threadReturn)));
             sb.Append("\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.ViewInterview"]));
+            sb.Append("</a></div>");
+        }
+        else if (SollicitatiesBerichtenPresentation.SlotProposalSystemLine(culture, thread) is { } slotsLine)
+        {
+            sb.Append("<div class=\"sollic-berichten sysact sollic-berichten-sysact--slots\"><span class=\"sollic-berichten-sysact__text\">");
+            sb.Append(WebUtility.HtmlEncode(slotsLine));
+            sb.Append("</span><a class=\"sollic-berichten-sysact__cta\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.PickSlot(appId, threadReturn)));
+            sb.Append("\" data-enhance-nav=\"false\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.PickSlot"]));
             sb.Append("</a></div>");
         }
 

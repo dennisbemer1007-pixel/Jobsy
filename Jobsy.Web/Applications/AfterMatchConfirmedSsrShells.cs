@@ -9,7 +9,11 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchConfirmedSsrShells
 {
-    internal static string BuildBody(CultureState culture, AfterMatchConfirmedSsrData.PageData data, Guid applicationId)
+    internal static string BuildBody(
+        CultureState culture,
+        AfterMatchConfirmedSsrData.PageData data,
+        Guid applicationId,
+        string? activePanel = null)
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"sollicitaties-hero-strip\" aria-hidden=\"true\"><div class=\"sollicitaties-hero-strip__inner\">");
@@ -27,7 +31,7 @@ internal static class AfterMatchConfirmedSsrShells
 
         AppendIntro(sb, culture, data);
         sb.Append("<div class=\"g2 ndm-confirmed-g2\">");
-        AppendMainStack(sb, culture, data);
+        AppendMainStack(sb, culture, data, activePanel);
         AppendRemindersAside(sb, culture, data);
         sb.Append("</div></main>");
 
@@ -60,7 +64,8 @@ internal static class AfterMatchConfirmedSsrShells
     private static void AppendMainStack(
         StringBuilder sb,
         CultureState culture,
-        AfterMatchConfirmedSsrData.PageData data)
+        AfterMatchConfirmedSsrData.PageData data,
+        string? activePanel)
     {
         var thread = data.Thread;
         sb.Append("<div class=\"stack\"><div class=\"card\"><div class=\"co\"><span class=\"lg\">");
@@ -69,10 +74,10 @@ internal static class AfterMatchConfirmedSsrShells
         sb.Append(WebUtility.HtmlEncode(thread.VacancyTitle));
         sb.Append("</h3><p class=\"small muted\">");
         sb.Append(WebUtility.HtmlEncode(VacancySubtitle(thread)));
-        sb.Append("</p></div></div><div class=\"hr\"></div>");
+        sb.Append("</p></div></div><div class=\"hr ndm-confirmed-card-hr\"></div>");
 
         AppendTimeline(sb, culture, data);
-        sb.Append("<div class=\"hr\"></div><div class=\"row wrapflex\"><span class=\"ico green\">");
+        sb.Append("<div class=\"hr ndm-confirmed-card-hr\"></div><div class=\"row wrapflex ndm-confirmed-when\"><span class=\"ico green\">");
         sb.Append(NdMIcons.Check);
         sb.Append("</span><div class=\"sp\"><h3 style=\"font-size:1.2rem\">");
         sb.Append(WebUtility.HtmlEncode(data.ScheduledTitle));
@@ -80,21 +85,23 @@ internal static class AfterMatchConfirmedSsrShells
         sb.Append(WebUtility.HtmlEncode(data.ScheduledSub));
         sb.Append("</p></div></div>");
 
-        sb.Append("<span class=\"lbl\" style=\"margin-top:16px\">");
+        sb.Append("<div class=\"hr ndm-confirmed-card-hr ndm-confirmed-calendar-hr\"></div><span class=\"lbl ndm-confirmed-calendar-lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.CalendarRow"]));
         sb.Append("</span><div class=\"addc ndm-confirmed-addc\" data-ndm-calendar-row data-ics-href=\"");
         sb.Append(WebUtility.HtmlEncode(data.CalendarIcsHref));
-        sb.Append("\" data-google-href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.CalendarGoogleHref));
-        sb.Append("\" data-outlook-href=\"");
+        sb.Append("\"><a class=\"btn line sm\" href=\"");
         sb.Append(WebUtility.HtmlEncode(data.CalendarOutlookHref));
-        sb.Append("\"><button type=\"button\" class=\"btn line sm\" data-ndm-cal-outlook>");
-        sb.Append(CalendarBtn(culture["AfterMatch.Screen05.Outlook"]));
-        sb.Append("<button type=\"button\" class=\"btn line sm\" data-ndm-cal-google>");
-        sb.Append(CalendarBtn(culture["AfterMatch.Screen05.GoogleCal"]));
-        sb.Append("<button type=\"button\" class=\"btn line sm\" data-ndm-cal-apple>");
-        sb.Append(CalendarBtn(culture["AfterMatch.Screen05.AppleCal"]));
-        sb.Append("<a class=\"btn line sm\" href=\"");
+        sb.Append("\" target=\"_blank\" rel=\"noopener noreferrer\" data-ndm-cal-outlook>");
+        sb.Append(CalendarBtnInner(culture["AfterMatch.Screen05.Outlook"]));
+        sb.Append("</a><a class=\"btn line sm\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.CalendarGoogleHref));
+        sb.Append("\" target=\"_blank\" rel=\"noopener noreferrer\" data-ndm-cal-google>");
+        sb.Append(CalendarBtnInner(culture["AfterMatch.Screen05.GoogleCal"]));
+        sb.Append("</a><a class=\"btn line sm\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.CalendarIcsHref));
+        sb.Append("\" data-ndm-cal-apple>");
+        sb.Append(CalendarBtnInner(culture["AfterMatch.Screen05.AppleCal"]));
+        sb.Append("</a><a class=\"btn line sm\" href=\"");
         sb.Append(WebUtility.HtmlEncode(data.CalendarIcsHref));
         sb.Append("\" download data-ndm-cal-ics>");
         sb.Append(IcsIcon);
@@ -107,7 +114,7 @@ internal static class AfterMatchConfirmedSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Reschedule"]));
         sb.Append("</a><a class=\"lk small\" href=\"");
         sb.Append(WebUtility.HtmlEncode(data.CancelHref));
-        sb.Append("#ndm-cancel-panel\" data-enhance-nav=\"false\">");
+        sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Cancel"]));
         sb.Append("</a>");
         if (!string.IsNullOrWhiteSpace(data.RouteHref))
@@ -120,7 +127,11 @@ internal static class AfterMatchConfirmedSsrShells
         }
 
         sb.Append("</div></div>");
-        AppendCancelPanel(sb, culture, data);
+        if (string.Equals(activePanel, "cancel", StringComparison.OrdinalIgnoreCase))
+        {
+            AppendCancelPanel(sb, culture, data);
+        }
+
         sb.Append("</div>");
     }
 
@@ -144,10 +155,9 @@ internal static class AfterMatchConfirmedSsrShells
         sb.Append("</button></div></div>");
     }
 
-    private static string CalendarBtn(string label) =>
+    private static string CalendarBtnInner(string label) =>
         """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>"""
-        + WebUtility.HtmlEncode(label)
-        + "</button>";
+        + WebUtility.HtmlEncode(label);
 
     private const string IcsIcon =
         """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>""";
@@ -188,7 +198,7 @@ internal static class AfterMatchConfirmedSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.RemindersTitle"]));
         sb.Append("</h2><p class=\"small muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.RemindersLead"]));
-        sb.Append("</p><div class=\"list\" style=\"margin-top:12px\" data-ndm-reminder-list>");
+        sb.Append("</p><div class=\"list ndm-confirmed-reminders\" style=\"margin-top:12px\" data-ndm-reminder-list>");
 
         AppendReminderRow(
             sb,

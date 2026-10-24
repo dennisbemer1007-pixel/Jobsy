@@ -143,12 +143,18 @@ internal static class ApplicationsSsrQuery
             return false;
         }
 
-        if (!raw.StartsWith(KbRoutes.Applications, StringComparison.OrdinalIgnoreCase))
+        raw = raw.Trim();
+        if (Uri.TryCreate(raw, UriKind.Absolute, out var absolute)
+            && (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps))
+        {
+            raw = absolute.PathAndQuery;
+        }
+        else if (raw.StartsWith("//", StringComparison.Ordinal) || raw.Contains('\\'))
         {
             return false;
         }
 
-        if (raw.Contains("//", StringComparison.Ordinal) || raw.Contains('\\'))
+        if (!raw.StartsWith(KbRoutes.Applications, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
