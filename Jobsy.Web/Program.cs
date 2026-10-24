@@ -561,6 +561,7 @@ app.UseWebSockets(new WebSocketOptions
 app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseAdminLegacyRedirects();
 app.UseCandidateLegacyRedirects();
+app.UseAfterMatchPickSlotRouteRewrite();
 app.UseResponseCompression();
 
 // Development keeps the developer exception page; tests opt in with Errors:ForceHandler.
@@ -661,6 +662,7 @@ app.MapPassportClientEndpoints();
 app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
 app.MapSollicitatiesClientEndpoints();
+app.MapAfterMatchPickSlotClientEndpoints();
 app.MapBanenkaartClientEndpoints();
 app.MapMapBasemapEndpoints();
 app.MapOnboardingStartFormEndpoints();

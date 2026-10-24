@@ -76,6 +76,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen03.Submit", "Momenten versturen", "Send times");
 
         Add("AfterMatch.Screen04.Eyebrow", "Sollicitaties · Gesprek plannen", "Applications · Plan interview");
+        Add("AfterMatch.Screen04.PageTitle", "Gesprek plannen", "Plan interview");
         Add("AfterMatch.Screen04.Hero.Title", "Kies een moment voor je gesprek", "Pick a time for your interview");
         Add("AfterMatch.Screen04.SlotsLabel", "Welk moment past jou?", "Which time works for you?");
         Add("AfterMatch.Screen04.ChooseSlot", "Dit moment kiezen", "Choose this time");
@@ -97,6 +98,21 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Pick.TravelHint", "Op basis van je profiel", "Based on your profile");
         Add("AfterMatch.Pick.ProposeLead", "Linda krijgt je voorstel en laat weten of het past.", "They will reply whether your time works.");
         Add("AfterMatch.Pick.ProposeSubmit", "Voorstel versturen", "Send proposal");
+        Add("AfterMatch.Pick.ProposeSubmitShort", "Voorstel sturen", "Send proposal");
+        Add("AfterMatch.Pick.ProposeFormTitle", "Een ander moment voorstellen", "Suggest another time");
+        Add("AfterMatch.Pick.ProposeDateLabel", "Datum", "Date");
+        Add("AfterMatch.Pick.ProposeTimeLabel", "Tijd", "Time");
+        Add("AfterMatch.Pick.ProposeNotePlaceholder", "Korte toelichting", "Short note");
+        Add("AfterMatch.Pick.Breadcrumb", "Kruimelpad", "Breadcrumb");
+        Add("AfterMatch.Pick.GoodToKnow.Title", "Goed om te weten", "Good to know");
+        Add("AfterMatch.Pick.GoodToKnow.Reminders",
+            "Je krijgt een herinnering de dag ervoor en 2 uur van tevoren.",
+            "You get a reminder the day before and 2 hours ahead.");
+        Add("AfterMatch.Pick.GoodToKnow.TipsLink", "Tips voor je gesprek", "Tips for your interview");
+        Add("AfterMatch.Pick.GoodToKnow.TipsSuffix", ", of oefen het gesprek met Lobsy.", ", or practise with Lobsy.");
+        Add("AfterMatch.Pick.GoodToKnow.Uwv",
+            "Het gesprek komt vanzelf in je activiteitenoverzicht voor UWV.",
+            "The interview appears in your UWV activity overview.");
 
         Add("AfterMatch.Screen05.Hero.Title", "Je gesprek staat erin", "Your interview is booked");
         Add("AfterMatch.Screen05.Hero.Lead",
