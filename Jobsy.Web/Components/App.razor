@@ -111,6 +111,26 @@
             }
         }
     }
+    @* Logged-in candidate [NoBlazorRuntime] SSR (sollicitaties, bewaard, paspoort, …): render-blocking route bundles in head — not late HeadContent. *@
+    @if (!LoadBlazorRuntime && IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript)
+    {
+        @foreach (var href in PageStylesheets)
+        {
+            if (href.StartsWith("css/app.min.css", StringComparison.Ordinal))
+            {
+                <link rel="stylesheet" href="@href" data-app-css data-noblazor-route-css="true" />
+            }
+            else
+            {
+                <link rel="stylesheet" href="@href" data-noblazor-route-css="true" />
+            }
+        }
+        @* After app.min: bottom nav + header chrome (app.min hides .bottom-nav on desktop). *@
+        @foreach (var href in PageAssetCatalog.CandidateNoBlazorChromeCss())
+        {
+            <link rel="stylesheet" href="@href" data-noblazor-route-css="true" />
+        }
+    }
     @if (LoadBlazorRuntime)
     {
         @foreach (var href in PageStylesheets)
