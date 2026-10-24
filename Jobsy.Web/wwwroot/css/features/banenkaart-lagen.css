@@ -555,25 +555,47 @@
     pointer-events: none;
 }
 
-/* Map strip */
+/* Map strip — mockup #878: horizontal scroll (wheel / drag / touch), no arrow buttons */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-pane__top-chrome .strip {
+    pointer-events: auto;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip {
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
-    display: flex;
-    gap: 12px;
     padding: 12px 16px;
     background: linear-gradient(var(--kb-cream) 70%, rgba(250, 246, 239, 0));
     z-index: 2;
     overflow: hidden;
-    pointer-events: none;
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .strip__track {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip .sc {
-    pointer-events: auto;
     flex: none;
+    flex-shrink: 0;
+    scroll-snap-align: start;
     width: 250px;
+    min-width: 250px;
     height: 68px;
     background: #fff;
     border: 1px solid var(--kb-line);
@@ -636,6 +658,23 @@
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .sc > div {
     min-width: 0;
+}
+
+@media (min-width: 701px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip__track {
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip__track.strip--dragging {
+        cursor: grabbing;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip .sc {
+        user-select: none;
+        -webkit-user-select: none;
+    }
 }
 
 @media (max-width: 700px) {

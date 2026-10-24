@@ -483,7 +483,7 @@
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
         var immersive = onRoute && !_isCandidate;
-        var candidateShell = onRoute && _isCandidate;
+        var candidateShell = onRoute;
         var mockupTop = onRoute;
         var changed = false;
         if (_banenkaartImmersive != immersive)
