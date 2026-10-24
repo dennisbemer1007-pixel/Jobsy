@@ -19,6 +19,8 @@ DEFAULTS = [
     ROOT / "Jobsy.Web/wwwroot/css/features/sollicitaties-page.css",
     ROOT / "Jobsy.Web/wwwroot/css/features/applications.css",
     ROOT / "Jobsy.Web/wwwroot/css/features/na-de-match.css",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-confirmed.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-reschedule.js",
 ]
 
 

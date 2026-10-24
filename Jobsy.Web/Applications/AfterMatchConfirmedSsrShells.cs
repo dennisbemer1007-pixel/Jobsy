@@ -12,8 +12,7 @@ internal static class AfterMatchConfirmedSsrShells
     internal static string BuildBody(
         CultureState culture,
         AfterMatchConfirmedSsrData.PageData data,
-        Guid applicationId,
-        string? activePanel = null)
+        Guid applicationId)
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"sollicitaties-hero-strip\" aria-hidden=\"true\"><div class=\"sollicitaties-hero-strip__inner\">");
@@ -31,7 +30,7 @@ internal static class AfterMatchConfirmedSsrShells
 
         AppendIntro(sb, culture, data);
         sb.Append("<div class=\"g2 ndm-confirmed-g2\">");
-        AppendMainStack(sb, culture, data, activePanel);
+        AppendMainStack(sb, culture, data);
         AppendRemindersAside(sb, culture, data);
         sb.Append("</div></main>");
 
@@ -64,8 +63,7 @@ internal static class AfterMatchConfirmedSsrShells
     private static void AppendMainStack(
         StringBuilder sb,
         CultureState culture,
-        AfterMatchConfirmedSsrData.PageData data,
-        string? activePanel)
+        AfterMatchConfirmedSsrData.PageData data)
     {
         var thread = data.Thread;
         sb.Append("<div class=\"stack\"><div class=\"card\"><div class=\"co\"><span class=\"lg\">");
@@ -126,33 +124,7 @@ internal static class AfterMatchConfirmedSsrShells
             sb.Append("</a>");
         }
 
-        sb.Append("</div></div>");
-        if (string.Equals(activePanel, "cancel", StringComparison.OrdinalIgnoreCase))
-        {
-            AppendCancelPanel(sb, culture, data);
-        }
-
-        sb.Append("</div>");
-    }
-
-    private static void AppendCancelPanel(
-        StringBuilder sb,
-        CultureState culture,
-        AfterMatchConfirmedSsrData.PageData data)
-    {
-        sb.Append("<div class=\"card ndm-cancel-panel\" id=\"ndm-cancel-panel\" data-ndm-cancel-panel><h3 style=\"font-size:1.15rem\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Hero.Title"]));
-        sb.Append("</h3><p class=\"small muted\" style=\"margin-top:6px\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Hero.Lead"]));
-        sb.Append("</p><label class=\"lbl\" style=\"margin-top:14px\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Reason"]));
-        sb.Append("</label><textarea class=\"inp area ndm-cancel-reason\" style=\"width:100%;min-height:84px;font:inherit;color:var(--text)\" data-ndm-cancel-reason></textarea><div class=\"row wrapflex\" style=\"gap:10px;margin-top:12px\"><a class=\"btn line\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.RescheduleHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Reschedule"]));
-        sb.Append("</a><button type=\"button\" class=\"btn\" data-ndm-cancel-submit>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Cancel"]));
-        sb.Append("</button></div></div>");
+        sb.Append("</div></div></div>");
     }
 
     private static string CalendarBtnInner(string label) =>

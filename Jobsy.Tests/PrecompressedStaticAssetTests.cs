@@ -15,6 +15,8 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("css/features/sollicitaties-page.css")]
     [InlineData("css/features/applications.css")]
     [InlineData("css/features/na-de-match.css")]
+    [InlineData("js/ndm-confirmed.js")]
+    [InlineData("js/ndm-reschedule.js")]
     public void Precompressed_brotli_is_smaller_than_gzip(string relativePath)
     {
         var root = FindRepoRoot();
@@ -70,6 +72,7 @@ public sealed class PrecompressedStaticAssetTests
                 ".ndm-confirmed-page .row.wrapflex.ndm-confirmed-actions{flex-direction:row!important",
                 text,
                 StringComparison.Ordinal);
+            Assert.Contains(".ndm.ndm-reschedule-page", text, StringComparison.Ordinal);
         }
     }
 
