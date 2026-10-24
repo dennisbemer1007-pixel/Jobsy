@@ -62,7 +62,7 @@
     font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
-}.application-card-list {
+}.apps-page .application-card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;

@@ -292,12 +292,7 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            return
-            [
-                "css/features/sollicitaties-page.css?v=20261024-sollicitatie01-layout8",
-                "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
-                "css/features/banenkaart-illustrated.css?v=20261023-acc9",
-            ];
+            return SollicitatiesSsrStylesheets();
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
@@ -432,6 +427,16 @@ public static class PageAssetCatalog
         "css/features/form-fields.css?v=20261019-01",
         "css/features/nav-feedback.css?v=20261017-01",
         "css/features/candidate-header-tablet.css?v=20261021-01",
+    ];
+
+    /// <summary>
+    /// Logged-in sollicitaties mockup SSR: no <c>app.min.css</c> / <c>applications.css</c> (720px list cap).
+    /// Loaded from App.razor + <see cref="CandidateApplicationsSsr"/> HeadContent; keep sollicitaties-page last.
+    /// </summary>
+    public static IReadOnlyList<string> SollicitatiesSsrStylesheets() =>
+    [
+        "css/features/banenkaart-illustrated.css?v=20261023-acc9",
+        "css/features/sollicitaties-page.css?v=20261024-sollicitatie01-layout9",
     ];
 
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>

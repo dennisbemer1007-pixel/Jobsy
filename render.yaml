@@ -228,6 +228,9 @@ projects:
             plan: starter
             region: frankfurt
             branch: acceptatie
+            # Same branch + autoDeploy as lobsy-acc-web; no path filters. If acc web shows a new
+            # meta lobsy-commit but https://lobsy-acc-api.onrender.com/health lacks commit/acceptatieSollicitatiesDemo,
+            # the API service did not deploy — use Dashboard → lobsy-acc-api → Manual Deploy (acceptatie).
             autoDeployTrigger: commit
             dockerfilePath: ./Jobsy.Api/Dockerfile
             dockerContext: .
