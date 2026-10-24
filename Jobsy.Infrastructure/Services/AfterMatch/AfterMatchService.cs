@@ -333,6 +333,31 @@ public sealed class AfterMatchService : IAfterMatchService
         return await MapThreadAsync(application, interview, senderUserId, senderIsEmployer, cancellationToken);
     }
 
+    public async Task MarkCandidateMessagesReadAsync(
+        Guid applicationId,
+        Guid candidateUserId,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await RequireCandidateApplicationAsync(applicationId, candidateUserId, cancellationToken);
+        var now = DateTime.UtcNow;
+        var unread = await _db.ApplicationMessages
+            .Where(m => m.ApplicationId == applicationId
+                        && m.SenderUserId != candidateUserId
+                        && m.ReadAtUtc == null)
+            .ToListAsync(cancellationToken);
+        if (unread.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var message in unread)
+        {
+            message.ReadAtUtc = now;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<AfterMatchThreadDto> RecordOutcomeAsync(
         Guid applicationId,
         Guid employerUserId,

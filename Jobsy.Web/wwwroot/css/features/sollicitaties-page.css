@@ -1058,6 +1058,19 @@
 }
 
 @media (max-width: 900px) {
+  .sollicitaties-page-wrap .hide-m {
+    display: none !important;
+  }
+
+  .sollic-berichten.thd.row {
+    align-items: flex-start;
+  }
+
+  .sollic-berichten.thd .sp b {
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+
   .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
     padding-inline: 16px;
   }
@@ -1317,12 +1330,22 @@
   min-width: 0;
 }
 
-.sollic-berichten.thd {
+.sollic-berichten.thd.row {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: flex-start;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
+}
+
+.sollic-berichten.thd .sp {
+  flex: 1;
+  min-width: 0;
+}
+
+.sollic-berichten-thd__sub {
+  margin: 4px 0 0;
+  line-height: 1.35;
 }
 
 .sollic-berichten.thd .logo-sq {

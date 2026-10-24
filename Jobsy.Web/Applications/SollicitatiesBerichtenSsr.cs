@@ -172,14 +172,14 @@ internal static class SollicitatiesBerichtenSsr
         sb.Append(WebUtility.HtmlEncode(listHref));
         sb.Append("\" data-sollic-berichten-back data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Berichten.BackList"]));
-        sb.Append("</a><div class=\"sollic-berichten thd\"><span class=\"logo-sq\">");
+        sb.Append("</a><div class=\"sollic-berichten thd row\"><span class=\"logo-sq\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
-        sb.Append("</span><div><b>");
+        sb.Append("</span><div class=\"sp\"><b>");
         var headContact = thread.WithWhom ?? row.CompanyName;
         sb.Append(WebUtility.HtmlEncode($"{headContact} · {row.CompanyName}"));
-        sb.Append("</b><p>");
-        sb.Append(WebUtility.HtmlEncode(string.Format(culture["Apps.Berichten.AboutRole"], row.Title)));
-        sb.Append("</p></div><a class=\"lnk\" href=\"");
+        sb.Append("</b><p class=\"sollic-berichten-thd__sub xs muted\">");
+        sb.Append(WebUtility.HtmlEncode(FormatThreadHeadSubtitle(culture, row, thread)));
+        sb.Append("</p></div><a class=\"lnk small hide-m sollic-berichten-thd__app-link\" href=\"");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.BuildUrl(
             ApplicationsSsrQuery.TabSollicitaties,
             ApplicationsSsrQuery.FilterAll,
@@ -250,5 +250,22 @@ internal static class SollicitatiesBerichtenSsr
         sb.Append("</button></form><p class=\"sollic-berichten safe\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Privacy"]));
         sb.Append("</p>");
+    }
+
+    private static string FormatThreadHeadSubtitle(
+        CultureState culture,
+        SollicitationRow row,
+        AfterMatchThreadDto thread)
+    {
+        var about = string.Format(culture["Apps.Berichten.AboutRole"], row.Title);
+        if (thread.ScheduledStartUtc is DateTime start)
+        {
+            var when = start.ToLocalTime().ToString(
+                "dddd d MMMM, HH:mm",
+                System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+            return $"{about} · gesprek {when}";
+        }
+
+        return about;
     }
 }
