@@ -5,6 +5,13 @@
     return document.querySelector("[data-ndm-reschedule-ssr]");
   }
 
+  function setVisible(el, visible) {
+    if (!el) return;
+    el.hidden = !visible;
+    el.classList.toggle("ndm-reschedule-is-hidden", !visible);
+    el.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+
   function setMode(container, mode) {
     var next = mode === "cancel" ? "cancel" : "reschedule";
     container.setAttribute("data-active-mode", next);
@@ -15,33 +22,12 @@
       chip.setAttribute("aria-pressed", on ? "true" : "false");
     });
 
-    var when = container.querySelector("[data-ndm-when-block]");
-    if (when) {
-      when.hidden = next === "cancel";
-    }
-
-    var submitReschedule = container.querySelector("[data-ndm-submit-reschedule]");
-    var submitCancel = container.querySelector("[data-ndm-submit-cancel]");
-    if (submitReschedule) {
-      submitReschedule.hidden = next !== "reschedule";
-    }
-    if (submitCancel) {
-      submitCancel.hidden = next !== "cancel";
-    }
-
-    var footnote = container.querySelector("[data-ndm-cancel-footnote]");
-    if (footnote) {
-      footnote.hidden = next !== "cancel";
-    }
-
-    var titleReschedule = container.querySelector("[data-ndm-side-title-reschedule]");
-    var titleCancel = container.querySelector("[data-ndm-side-title-cancel]");
-    if (titleReschedule) {
-      titleReschedule.hidden = next !== "reschedule";
-    }
-    if (titleCancel) {
-      titleCancel.hidden = next !== "cancel";
-    }
+    setVisible(container.querySelector("[data-ndm-when-block]"), next !== "cancel");
+    setVisible(container.querySelector("[data-ndm-submit-reschedule]"), next === "reschedule");
+    setVisible(container.querySelector("[data-ndm-submit-cancel]"), next === "cancel");
+    setVisible(container.querySelector("[data-ndm-cancel-footnote]"), next === "cancel");
+    setVisible(container.querySelector("[data-ndm-side-title-reschedule]"), next === "reschedule");
+    setVisible(container.querySelector("[data-ndm-side-title-cancel]"), next === "cancel");
 
     try {
       var url = new URL(window.location.href);
