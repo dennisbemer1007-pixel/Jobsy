@@ -322,6 +322,90 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         Assert.True(visible.DetailW >= 320, $"detail width {visible.DetailW} at 390");
     }
 
+    [Fact]
+    public async Task Mobile_berichten_tab_shows_thread_rows_at_390()
+    {
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync() ?? _localBaseUrl;
+        if (baseUrl is null)
+        {
+            return;
+        }
+
+        await using var browser = await KbE2e.LaunchChromiumAsync();
+        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(390, 885));
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        {
+            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications?tab=berichten");
+        }
+        else
+        {
+            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
+            {
+                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+            }
+
+            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+            }
+        }
+
+        await page.GotoAsync(
+            baseUrl + "/candidate/applications?tab=berichten",
+            new() { WaitUntil = WaitUntilState.NetworkIdle });
+
+        var tab = await page.QuerySelectorAsync("[data-testid=\"sollicitaties-berichten-tab\"]");
+        if (tab is null)
+        {
+            _output.WriteLine("Skip berichten mobile: tab not rendered (AfterMatch off or no demo).");
+            return;
+        }
+
+        var rows = await page.EvaluateAsync<BerichtenRowMetrics[]>(@"() => {
+            const links = Array.from(document.querySelectorAll('.sollic-berichten-ti--mob'));
+            return links.map((el) => {
+                const r = el.getBoundingClientRect();
+                const cs = getComputedStyle(el);
+                return {
+                    w: r.width,
+                    h: r.height,
+                    display: cs.display,
+                    visibility: cs.visibility,
+                };
+            });
+        }");
+
+        if (rows.Length == 0)
+        {
+            _output.WriteLine("Skip berichten mobile: no message threads in demo data.");
+            return;
+        }
+
+        _output.WriteLine($"berichten mobile rows: {rows.Length}, first h={rows[0].H:F0} display={rows[0].Display}");
+        Assert.All(rows, row =>
+        {
+            Assert.NotEqual("none", row.Display);
+            Assert.True(row.W > 0 && row.H > 0, $"thread row box {row.W}x{row.H}, display={row.Display}");
+        });
+
+        var firstHref = await page.GetAttributeAsync(".sollic-berichten-ti--mob", "href");
+        Assert.False(string.IsNullOrWhiteSpace(firstHref));
+        Assert.Contains("after-match", firstHref, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("panel=messages", firstHref, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("return=", firstHref, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class BerichtenRowMetrics
+    {
+        public double W { get; set; }
+        public double H { get; set; }
+        public string? Display { get; set; }
+        public string? Visibility { get; set; }
+    }
+
     private sealed class LayoutMetrics
     {
         public bool HasSsr { get; set; }

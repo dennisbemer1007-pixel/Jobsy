@@ -36,8 +36,8 @@
     "v": "20261024-apps720-scope3"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "be9e28a79c19fdd177f193afc5010e7794e54d2df72d445142b8c844a3e33926",
-    "v": "20261024-mockup01-acc5"
+    "sha256": "00e1d935904da27610852a8e84a6dda5ea22f20d074959f2e75b43cc1cc4e833",
+    "v": "20261024-mockup01-acc6"
   },
   "js/sollicitaties-actions.js": {
     "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",
@@ -152,8 +152,8 @@
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
-    "sha256": "aa3b50de268dd2e856a1caa7e32066130b4eec4b959d9e3ae00ea8bc7d4f05f1",
-    "v": "20261020-01"
+    "sha256": "27f30fec1e7faa31aee7330f9ff789f26ca3629e8dafd744317300744d54b256",
+    "v": "20261024-ndm-thr-scope"
   },
   "css/features/nav-feedback.css": {
     "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",

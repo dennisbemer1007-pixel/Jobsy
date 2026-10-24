@@ -83,7 +83,7 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
-        "css/features/na-de-match.css?v=20261020-01",
+        "css/features/na-de-match.css?v=20261024-ndm-thr-scope",
     ];
 
     public static readonly string[] WerkgeverCss =
@@ -94,7 +94,7 @@ public static class PageAssetCatalog
         "css/features/vacancy-wizard.css?v=20261017-02",
         "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",
-        "css/features/na-de-match.css?v=20261020-01",
+        "css/features/na-de-match.css?v=20261024-ndm-thr-scope",
     ];
 
     public static readonly string[] KandidatenkaartCss =
@@ -296,7 +296,7 @@ public static class PageAssetCatalog
             [
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
                 "css/features/banenkaart-illustrated.css?v=20261023-acc9",
-                "css/features/sollicitaties-page.css?v=20261024-mockup01-acc5",
+                "css/features/sollicitaties-page.css?v=20261024-mockup01-acc6",
             ];
         }
 
