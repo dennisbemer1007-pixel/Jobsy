@@ -110,6 +110,29 @@ public sealed class TestAccountsSollicitatiesSeedTests
     }
 
     [Fact]
+    public async Task Unread_messages_demo_resets_ReadAtUtc_when_demo_seeder_runs_again()
+    {
+        var (db, candidateId, branchManagerId) = await SeedUsersAsync();
+        var logger = NullLogger.Instance;
+
+        await TestAccountsSollicitatiesDemoSeeder.EnsureForCandidateAsync(
+            db, candidateId, branchManagerId, logger);
+        await db.SaveChangesAsync();
+
+        var grijsAppId = TestAccountsIds.SollicDemoAppMessages;
+        var message = await db.ApplicationMessages.SingleAsync(m => m.ApplicationId == grijsAppId);
+        message.ReadAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        await TestAccountsSollicitatiesDemoSeeder.EnsureForCandidateAsync(
+            db, candidateId, branchManagerId, logger);
+        await db.SaveChangesAsync();
+
+        var after = await db.ApplicationMessages.SingleAsync(m => m.ApplicationId == grijsAppId);
+        Assert.Null(after.ReadAtUtc);
+    }
+
+    [Fact]
     public async Task TryEnsure_on_postgres_migrated_db_seeds_six_verified_applications()
     {
         var baseConnection = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");

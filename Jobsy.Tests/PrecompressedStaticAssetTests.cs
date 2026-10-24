@@ -14,6 +14,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("js/jobMap.min.js")]
     [InlineData("css/features/sollicitaties-page.css")]
     [InlineData("css/features/applications.css")]
+    [InlineData("css/features/na-de-match.css")]
     public void Precompressed_brotli_is_smaller_than_gzip(string relativePath)
     {
         var root = FindRepoRoot();
@@ -36,6 +37,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("js/jobMap.min.js")]
     [InlineData("css/features/sollicitaties-page.css")]
     [InlineData("css/features/applications.css")]
+    [InlineData("css/features/na-de-match.css")]
     public void Precompressed_sidecars_match_source_bytes(string relativePath)
     {
         var root = FindRepoRoot();
@@ -57,6 +59,15 @@ public sealed class PrecompressedStaticAssetTests
             var text = System.Text.Encoding.UTF8.GetString(raw);
             Assert.Contains(
                 ".sollicitaties-page-wrap .sollicitaties-hero-strip",
+                text,
+                StringComparison.Ordinal);
+        }
+
+        if (relativePath == "css/features/na-de-match.css")
+        {
+            var text = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.Contains(
+                ".ndm-confirmed-page .row.wrapflex.ndm-confirmed-actions{flex-direction:row!important",
                 text,
                 StringComparison.Ordinal);
         }

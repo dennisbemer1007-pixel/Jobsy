@@ -43,6 +43,12 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("AfterMatch.Screen05.PageTitle", razor, StringComparison.Ordinal);
         Assert.Contains("ndm-confirmed.js", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261025-ndm-confirmed4", razor, StringComparison.Ordinal);
+        var ndmCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/na-de-match.css"));
+        Assert.Contains(
+            ".ndm-confirmed-page .row.wrapflex.ndm-confirmed-actions{flex-direction:row!important",
+            ndmCss,
+            StringComparison.Ordinal);
     }
 
     [Fact]
