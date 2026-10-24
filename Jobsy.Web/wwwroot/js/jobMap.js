@@ -237,6 +237,37 @@ window.jobMap = (function () {
         ]
     ];
 
+    /** Lagen: agency/intermediary pins must appear once clusters dissolve (zoom > clusterMaxZoom). */
+    function unclusteredPinFilter() {
+        const agencyMinZ = lagenLayout ? 10 : AGENCY_PIN_MIN_ZOOM;
+        return [
+            "all",
+            ["!", ["has", "point_count"]],
+            [
+                "any",
+                ["!=", ["coalesce", ["get", "agency"], 0], 1],
+                [">=", ["zoom"], agencyMinZ]
+            ]
+        ];
+    }
+
+    function lagenPinSymbolImageIds() {
+        return ["jobsy-pin-w", "jobsy-pin-w-selected", "jobsy-pin-i", "jobsy-pin-i-selected"];
+    }
+
+    function lagenPinSymbolsRenderable() {
+        if (!map) {
+            return false;
+        }
+        const ids = lagenPinSymbolImageIds();
+        for (let i = 0; i < ids.length; i++) {
+            if (!map.hasImage(ids[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // On-road cruise km/h. Keep in sync with TravelReach.SpeedKmPerHour.
     const CRUISE_KM_H = {
         Fiets: 18.0,
@@ -5073,8 +5104,14 @@ window.jobMap = (function () {
             loadSvgAsMapImage(spec.id, spec.svg, spec.w, spec.h, function () {
                 pending -= 1;
                 if (pending <= 0) {
-                    map._jobsyLagenPinImagesReady = true;
+                    map._jobsyLagenPinImagesReady = lagenPinSymbolsRenderable();
                     applyLagenPinLayerStyles();
+                    if (!map._jobsyLagenPinImagesReady) {
+                        setTimeout(function () {
+                            ensureLagenPinImages(done);
+                        }, 120);
+                        return;
+                    }
                     if (done) {
                         done();
                     }
@@ -5084,32 +5121,18 @@ window.jobMap = (function () {
     }
 
     function lagenUnclusteredIconLayout() {
+        // MapLibre layout properties cannot use feature-state; selection uses circle paint + highlight().
         return {
             "icon-image": [
                 "case",
                 ["==", ["coalesce", ["get", "pinKind"], ""], "intermediary"],
-                [
-                    "case",
-                    ["==", ["coalesce", ["feature-state", "selected"], false], true],
-                    "jobsy-pin-i-selected",
-                    "jobsy-pin-i"
-                ],
-                [
-                    "case",
-                    ["==", ["coalesce", ["feature-state", "selected"], false], true],
-                    "jobsy-pin-w-selected",
-                    "jobsy-pin-w"
-                ]
+                "jobsy-pin-i",
+                "jobsy-pin-w"
             ],
-            "icon-size": [
-                "case",
-                ["==", ["coalesce", ["feature-state", "selected"], false], true],
-                1.18,
-                1
-            ],
+            "icon-size": 1,
             "icon-anchor": "bottom",
             "icon-allow-overlap": true,
-            "icon-ignore-placement": false
+            "icon-ignore-placement": true
         };
     }
 
@@ -5130,7 +5153,7 @@ window.jobMap = (function () {
                 map.setLayoutProperty(PIN_LAYER_CLUSTER_AGENCY_BADGE, "visibility", "none");
             }
         } catch (eBadge) { }
-        const symbolsReady = !!map._jobsyLagenPinImagesReady;
+        const symbolsReady = lagenPinSymbolsRenderable();
         [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
             try {
                 if (map.getLayer(layerId)) {
@@ -5150,7 +5173,7 @@ window.jobMap = (function () {
                 id: PIN_LAYER_UNCLUSTERED_SYMBOL,
                 type: "symbol",
                 source: PIN_SOURCE,
-                filter: UNCLUSTERED_PIN_FILTER,
+                filter: unclusteredPinFilter(),
                 layout: lagenUnclusteredIconLayout()
             });
             if (!map._jobsyLagenPinClicksBound) {
@@ -5174,13 +5197,16 @@ window.jobMap = (function () {
                 } catch (eLay) { }
             });
             try {
+                map.setFilter(PIN_LAYER_UNCLUSTERED_SYMBOL, unclusteredPinFilter());
+            } catch (eFlt) { }
+            try {
                 map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", symbolsReady ? "visible" : "none");
             } catch (eVis) { }
         }
     }
 
     function resetLagenPinSourceIfNeeded() {
-        if (!map || !lagenLayout || map._jobsyLagenPinClusterVer === 7) {
+        if (!map || !lagenLayout || map._jobsyLagenPinClusterVer === 9) {
             return;
         }
         const layerIds = [
@@ -5207,7 +5233,7 @@ window.jobMap = (function () {
                 map.removeSource(PIN_SOURCE);
             }
         } catch (eSrc) { }
-        map._jobsyLagenPinClusterVer = 7;
+        map._jobsyLagenPinClusterVer = 9;
         map._jobsyLagenPinClicksBound = false;
     }
 
@@ -5250,7 +5276,7 @@ window.jobMap = (function () {
                 data: pinsGeoJson(),
                 cluster: true,
                 clusterRadius: lagenLayout ? 16 : CLUSTER_OPTS.clusterRadius,
-                clusterMaxZoom: lagenLayout ? 10 : CLUSTER_OPTS.clusterMaxZoom,
+                clusterMaxZoom: lagenLayout ? (BASEMAP_MAX_ZOOM - 1) : CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
                     agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },
@@ -5352,7 +5378,7 @@ window.jobMap = (function () {
                 id: PIN_LAYER_UNCLUSTERED_HIT,
                 type: "circle",
                 source: PIN_SOURCE,
-                filter: UNCLUSTERED_PIN_FILTER,
+                filter: unclusteredPinFilter(),
                 paint: {
                     "circle-color": "#000000",
                     "circle-radius": 22,
@@ -5363,7 +5389,7 @@ window.jobMap = (function () {
                 id: PIN_LAYER_UNCLUSTERED,
                 type: "circle",
                 source: PIN_SOURCE,
-                filter: UNCLUSTERED_PIN_FILTER,
+                filter: unclusteredPinFilter(),
                 paint: {
                     "circle-color": [
                         "case",
@@ -5406,7 +5432,7 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: [
                     "all",
-                    UNCLUSTERED_PIN_FILTER,
+                    unclusteredPinFilter(),
                     ["has", "glyph"],
                     ["!=", ["coalesce", ["get", "glyph"], ""], ""]
                 ],
@@ -5448,7 +5474,7 @@ window.jobMap = (function () {
             [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_HIT, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
                 try {
                     if (map.getLayer(layerId)) {
-                        map.setFilter(layerId, UNCLUSTERED_PIN_FILTER);
+                        map.setFilter(layerId, unclusteredPinFilter());
                     }
                 } catch (eFilter) { }
             });
@@ -5687,7 +5713,17 @@ window.jobMap = (function () {
             }
         }
         if (lagenLayout) {
-            ensureLagenPinImages(pushPinData);
+            pushPinData();
+            ensureLagenPinImages(function () {
+                applyLagenPinLayerStyles();
+                const source = map.getSource(PIN_SOURCE);
+                if (source && typeof source.setData === "function") {
+                    source.setData(pinsGeoJson());
+                }
+                if (selectedId != null) {
+                    highlight(selectedId);
+                }
+            });
             return;
         }
         pushPinData();
@@ -5894,8 +5930,12 @@ window.jobMap = (function () {
                 if (!ev || !ev.point || !map) {
                     return;
                 }
+                const prefetchLayers = [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH];
+                if (map.getLayer(PIN_LAYER_UNCLUSTERED_SYMBOL)) {
+                    prefetchLayers.push(PIN_LAYER_UNCLUSTERED_SYMBOL);
+                }
                 const feats = map.queryRenderedFeatures(ev.point, {
-                    layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH]
+                    layers: prefetchLayers
                 });
                 if (feats && feats[0] && feats[0].properties && feats[0].properties.id) {
                     fetchVacancyCard(feats[0].properties.id);
@@ -7430,6 +7470,46 @@ window.jobMap = (function () {
                 } catch (eFeat) { }
             });
             return total;
+        },
+        /** @internal Lagen pin layer diagnostics for Playwright. */
+        __testLagenPinLayerDebug: function () {
+            if (!map) {
+                return { ok: false };
+            }
+            function vis(id) {
+                try {
+                    return map.getLayer(id) ? map.getLayoutProperty(id, "visibility") : null;
+                } catch (eV) {
+                    return null;
+                }
+            }
+            return {
+                lagenLayout: lagenLayout,
+                zoom: map.getZoom(),
+                pinData: Object.keys(markersById).length,
+                rendered: (function () {
+                    const layers = [
+                        PIN_LAYER_CLUSTERS,
+                        PIN_LAYER_UNCLUSTERED_SYMBOL,
+                        PIN_LAYER_UNCLUSTERED
+                    ];
+                    let total = 0;
+                    layers.forEach(function (layerId) {
+                        try {
+                            total += (map.queryRenderedFeatures({ layers: [layerId] }) || []).length;
+                        } catch (eDbg) { }
+                    });
+                    return total;
+                })(),
+                symbolsRenderable: lagenPinSymbolsRenderable(),
+                imagesReady: !!map._jobsyLagenPinImagesReady,
+                clusterVer: map._jobsyLagenPinClusterVer,
+                layers: {
+                    clusters: vis(PIN_LAYER_CLUSTERS),
+                    circle: vis(PIN_LAYER_UNCLUSTERED),
+                    symbol: vis(PIN_LAYER_UNCLUSTERED_SYMBOL)
+                }
+            };
         },
         __testGetAgencyAreaCount: function () {
             return agencyAreasGeoJson().features.length;
