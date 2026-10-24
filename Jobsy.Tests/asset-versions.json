@@ -312,7 +312,7 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-mobilewagetip5",
+    "v": "20261024-mobilewagetip6",
     "sha256": "056aaf2dfb43c1c99276c55acba04527cbadc3d40c12c7a224d6cd21df8d9fee"
   },
   "js/jobsyMapLibre.min.js": {
@@ -388,11 +388,11 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-mobilewagetip5",
-    "sha256": "4d6733d4c9d1eb5d39aaa33298c288c90c462704d9cca20f599b979f36b52fb1"
+    "v": "20261024-mobilewagetip6",
+    "sha256": "1d1a0bc9f19ccf8cd2dc718bfb1da126e59b3e59e3de458cf331b4d83ecbb9ed"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-mobilewagetip5",
+    "v": "20261024-mobilewagetip6",
     "sha256": "f9742f4d66d82f230085b42ebd2c97cc44d9f769e5f1b511b012d9bda9e18d14"
   }
 }

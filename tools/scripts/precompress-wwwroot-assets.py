@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Write .br (quality 11) and .gz sidecars next to large static JS/CSS assets."""
+"""Write .br (quality 11) and .gz sidecars next to large static JS/CSS assets.
+
+Run after regenerating jobMap.min.js (terser). PrecompressedStaticAssetTests fails if
+sidecars do not decompress to the same bytes as the source file.
+"""
 from __future__ import annotations
 
 import brotli
