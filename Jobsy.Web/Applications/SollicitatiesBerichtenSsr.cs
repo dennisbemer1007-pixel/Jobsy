@@ -14,7 +14,7 @@ internal static class SollicitatiesBerichtenSsr
         ApplicationsSsrData.PageData data)
     {
         var threads = data.AllRows
-            .Where(r => r.AfterMatch is not null && r.ApplicationId is Guid)
+            .Where(SollicitatiesBerichtenPresentation.RowHasMessageThread)
             .OrderByDescending(r => r.AfterMatch!.LastMessageAtUtc ?? r.SortAtUtc)
             .ToList();
 
@@ -38,8 +38,6 @@ internal static class SollicitatiesBerichtenSsr
 
         var selectedId = data.BerichtenThreadId ?? threads[0].ApplicationId;
         var selectedRow = threads.FirstOrDefault(r => r.ApplicationId == selectedId) ?? threads[0];
-        var thread = data.BerichtenThread;
-
         sb.Append("<div class=\"sollic-berichten thr\" data-testid=\"sollicitaties-berichten-tab\">");
         sb.Append("<div class=\"sollic-berichten tlist\">");
         foreach (var row in threads)
@@ -51,9 +49,30 @@ internal static class SollicitatiesBerichtenSsr
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Berichten.SafePanel"]));
         sb.Append("</div></div>");
 
-        if (thread is not null && selectedRow.ApplicationId is Guid appId)
+        foreach (var row in threads)
         {
-            AppendThreadMain(sb, culture, selectedRow, appId, thread);
+            if (row.ApplicationId is not Guid appId)
+            {
+                continue;
+            }
+
+            if (!data.BerichtenThreads.TryGetValue(appId, out var thread))
+            {
+                continue;
+            }
+
+            var active = row.ApplicationId == selectedRow.ApplicationId;
+            sb.Append("<div class=\"sollic-berichten-tmain-panel sollic-berichten tmain\" data-sollic-thread-id=\"");
+            sb.Append(appId.ToString("D"));
+            sb.Append('"');
+            if (!active)
+            {
+                sb.Append(" hidden");
+            }
+
+            sb.Append('>');
+            AppendThreadMain(sb, culture, row, appId, thread);
+            sb.Append("</div>");
         }
 
         sb.Append("</div>");
@@ -67,13 +86,20 @@ internal static class SollicitatiesBerichtenSsr
         bool active)
     {
         var appId = row.ApplicationId!.Value;
+        data.BerichtenThreads.TryGetValue(appId, out var threadDto);
         var deskHref = ApplicationsSsrQuery.BuildUrl(
             ApplicationsSsrQuery.TabBerichten,
             ApplicationsSsrQuery.FilterAll,
             null,
             appId);
-        var mobHref = AfterMatchSollicitatiesUrls.Messages(appId);
-        sb.Append("<a class=\"sollic-berichten ti sollic-berichten-ti--desk");
+        var mobHref = AfterMatchSollicitatiesUrls.Messages(
+            appId,
+            ApplicationsSsrQuery.BuildUrl(
+                ApplicationsSsrQuery.TabBerichten,
+                ApplicationsSsrQuery.FilterAll,
+                null,
+                appId));
+        sb.Append("<a class=\"sollic-berichten ti sollic-berichten-ti--desk sollic-berichten-ti__select");
         if (active)
         {
             sb.Append(" on");
@@ -81,14 +107,16 @@ internal static class SollicitatiesBerichtenSsr
 
         sb.Append("\" href=\"");
         sb.Append(WebUtility.HtmlEncode(deskHref));
+        sb.Append("\" data-sollic-thread-id=\"");
+        sb.Append(appId.ToString("D"));
         sb.Append("\" data-enhance-nav=\"false\"><span class=\"logo-sq\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><div><b>");
         sb.Append(WebUtility.HtmlEncode(row.CompanyName));
         sb.Append("</b><p>");
         sb.Append(WebUtility.HtmlEncode(
-            SollicitatiesBerichtenPresentation.ThreadSubtitle(culture, row, active ? data.BerichtenThread : null)));
-        sb.Append("</p><p>");
+            SollicitatiesBerichtenPresentation.ThreadSubtitle(culture, row, threadDto)));
+        sb.Append("</p><p class=\"sollic-berichten-ti-preview\">");
         sb.Append(WebUtility.HtmlEncode(SollicitatiesBerichtenPresentation.ThreadListPreview(culture, row)));
         sb.Append("</p></div>");
         if (row.AfterMatch!.UnreadMessageCount > 0)
@@ -113,8 +141,9 @@ internal static class SollicitatiesBerichtenSsr
         sb.Append("</span><div><b>");
         sb.Append(WebUtility.HtmlEncode(row.CompanyName));
         sb.Append("</b><p>");
-        sb.Append(WebUtility.HtmlEncode(SollicitatiesBerichtenPresentation.ThreadSubtitle(culture, row, null)));
-        sb.Append("</p><p>");
+        sb.Append(WebUtility.HtmlEncode(
+            SollicitatiesBerichtenPresentation.ThreadSubtitle(culture, row, threadDto)));
+        sb.Append("</p><p class=\"sollic-berichten-ti-preview\">");
         sb.Append(WebUtility.HtmlEncode(SollicitatiesBerichtenPresentation.ThreadListPreview(culture, row)));
         sb.Append("</p></div>");
         if (row.AfterMatch!.UnreadMessageCount > 0)
@@ -134,7 +163,12 @@ internal static class SollicitatiesBerichtenSsr
         Guid appId,
         AfterMatchThreadDto thread)
     {
-        sb.Append("<div class=\"sollic-berichten tmain\">");
+        var threadReturn = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabBerichten,
+            ApplicationsSsrQuery.FilterAll,
+            null,
+            appId);
+
         sb.Append("<div class=\"sollic-berichten thd\"><span class=\"logo-sq\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><div><b>");
@@ -178,7 +212,7 @@ internal static class SollicitatiesBerichtenSsr
             sb.Append("<div class=\"sollic-berichten sysact\"><span>");
             sb.Append(WebUtility.HtmlEncode(slotsLine));
             sb.Append("</span><a class=\"btn btn-primary btn--sm\" href=\"");
-            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.PickSlot(appId)));
+            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.PickSlot(appId, threadReturn)));
             sb.Append("\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.PickSlot"]));
             sb.Append("</a></div>");
@@ -190,20 +224,28 @@ internal static class SollicitatiesBerichtenSsr
                 culture["Apps.Berichten.SysScheduled"],
                 SollicitatiesBerichtenPresentation.FormatShortDate(culture, start))));
             sb.Append("</span><a class=\"btn btn-primary btn--sm\" href=\"");
-            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.AfterMatchBase(appId)));
+            sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.AfterMatchBase(appId, threadReturn)));
             sb.Append("\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.ViewInterview"]));
             sb.Append("</a></div>");
         }
 
-        sb.Append("<a class=\"sollic-berichten compose\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Messages(appId)));
-        sb.Append("\" data-enhance-nav=\"false\"><span>");
+        sb.Append("<form class=\"sollic-berichten compose\" data-sollic-compose data-application-id=\"");
+        sb.Append(appId.ToString("D"));
+        sb.Append("\"><label class=\"visually-hidden\" for=\"sollic-compose-");
+        sb.Append(appId.ToString("N"));
+        sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Compose"]));
-        sb.Append("</span><span class=\"btn btn-primary\" aria-hidden=\"true\">");
+        sb.Append("</label><input id=\"sollic-compose-");
+        sb.Append(appId.ToString("N"));
+        sb.Append("\" type=\"text\" name=\"body\" autocomplete=\"off\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Compose"]));
+        sb.Append("\" /><button type=\"submit\" class=\"btn btn-primary\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Compose"]));
+        sb.Append("\">");
         sb.Append(SollicitatiesInlineIcons.Send16);
-        sb.Append("</span></a><p class=\"sollic-berichten safe\">");
+        sb.Append("</button></form><p class=\"sollic-berichten safe\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Privacy"]));
-        sb.Append("</p></div>");
+        sb.Append("</p>");
     }
 }

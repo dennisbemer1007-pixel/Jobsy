@@ -36,20 +36,24 @@
     "v": "20261024-apps720-scope3"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "4c2221c52748730d26ff750f803c13fab9a2ce67990526937222174857c61f18",
-    "v": "20261024-mockup01-acc4"
+    "sha256": "be9e28a79c19fdd177f193afc5010e7794e54d2df72d445142b8c844a3e33926",
+    "v": "20261024-mockup01-acc5"
   },
   "js/sollicitaties-actions.js": {
     "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",
-    "v": "20261024-mockup01-acc4"
+    "v": "20261024-mockup01-acc5"
+  },
+  "js/sollicitaties-berichten.js": {
+    "sha256": "dc2440ea41543be9819957d9b6e122891997fad949222a025877388896c8087e",
+    "v": "20261024-mockup01-acc5"
   },
   "js/sollicitaties-filter-chips.js": {
     "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
-    "v": "20261024-mockup01-acc4"
+    "v": "20261024-mockup01-acc5"
   },
   "js/sollicitaties-rail.js": {
     "sha256": "5eca56d0159de05451acb13268e361ec9d18fdf78e3290bc447b8c984af3b47d",
-    "v": "20261024-mockup01-acc4"
+    "v": "20261024-mockup01-acc5"
   },
   "css/features/auth.css": {
     "sha256": "02384861b1eb4bccf28df6969d0559f18af7bca2a6b6af489c0fc0ea2835cdc7",

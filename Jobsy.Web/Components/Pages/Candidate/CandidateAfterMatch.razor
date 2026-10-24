@@ -12,6 +12,7 @@
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Applications
 @attribute [RequiresFeature(PlatformFeature.AfterMatch)]
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
@@ -29,7 +30,7 @@
 else if (_thread is null)
 {
     <p class="state-message error">@Culture["AfterMatch.Error.NotFound"]</p>
-    <a class="btn btn-secondary" href="@KbRoutes.Applications">@Culture["AfterMatch.Link.BackApplications"]</a>
+    <a class="btn btn-secondary" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a>
 }
 else if (_view == ViewKind.MailConfirmation)
 {
@@ -38,7 +39,7 @@ else if (_view == ViewKind.MailConfirmation)
             <p class="crumb">@Culture["AfterMatch.Screen06.Crumb"]</p>
             <h1 style="font-size:1.8rem;margin-bottom:14px">@Culture["AfterMatch.Screen06.PageTitle"]</h1>
             <NdMMailConfirmation Thread="_thread" />
-            <p style="margin-top:16px"><a class="lk" href="@BaseHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
         </main>
     </div>
 }
@@ -77,7 +78,7 @@ else if (_view == ViewKind.Reminders)
                                       OnSave="SaveRemindersAsync" />
                 </div>
             </div>
-            <p style="margin-top:16px"><a class="lk" href="@BaseHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
         </main>
     </div>
 }
@@ -205,7 +206,7 @@ else
                     </div>
                 </div>
             }
-            <p class="ndm-back" style="margin-top:16px"><a class="lk" href="@KbRoutes.Applications">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+            <p class="ndm-back" style="margin-top:16px"><a class="lk" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
         </main>
     </div>
 }
@@ -220,8 +221,11 @@ else
 
     [Parameter] public Guid ApplicationId { get; set; }
     [SupplyParameterFromQuery] public string? Panel { get; set; }
+    [SupplyParameterFromQuery(Name = "return")]
+    public string? ReturnUrl { get; set; }
 
     private AfterMatchThreadDto? _thread;
+    private string _applicationsBackHref = KbRoutes.Applications;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -242,6 +246,9 @@ else
         _error = null;
         _panel = (Panel ?? "").Trim().ToLowerInvariant();
         _view = ResolveView(Navigation.Uri);
+        _applicationsBackHref = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(ReturnUrl, out var backHref)
+            ? backHref
+            : KbRoutes.Applications;
 
         try
         {
