@@ -717,7 +717,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261023-maxzoom1"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261024-pins1b"
+        "/js/jobMap.min.js?v=20261024-pins1c"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -1599,8 +1599,8 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261023-acc9"
-        : "/service-worker.js?v=20261023-acc9";
+        ? "/service-worker.published.js?v=20261024-acc10"
+        : "/service-worker.js?v=20261024-acc10";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
     var userRequestedReload = false;

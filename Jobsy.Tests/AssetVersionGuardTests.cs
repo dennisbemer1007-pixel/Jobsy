@@ -252,6 +252,7 @@ public class AssetVersionGuardTests
             "*.razor",
             SearchOption.AllDirectories));
         hostFiles.Add(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
+        hostFiles.Add(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-maps-boot.js"));
         hostFiles.Add(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "lobsyPush.js"));
 
         foreach (var file in hostFiles.Distinct(StringComparer.OrdinalIgnoreCase))

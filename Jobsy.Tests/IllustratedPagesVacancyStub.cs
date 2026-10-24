@@ -17,6 +17,10 @@ public static class IllustratedPagesVacancyStub
     internal const double OriginLng = 4.2085;
     internal const string OriginLabel = "Kasweg 12, 2671 AB Naaldwijk";
 
+    /// <summary>Acceptatie repro: Delft origin, ~181 vacatures in travel ring.</summary>
+    internal const double DelftOriginLat = 51.99389784;
+    internal const double DelftOriginLng = 4.37897242;
+
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -26,7 +30,8 @@ public static class IllustratedPagesVacancyStub
     private static readonly Guid CompanyId = Guid.Parse("a1000000-0000-0000-0000-000000000001");
     private static readonly Guid IntermediaryCompanyId = Guid.Parse("a1000000-0000-0000-0000-000000000002");
 
-    private static readonly SeedVacancy[] Seeds = BuildWestlandSeeds();
+    private static readonly SeedVacancy[] WestlandSeeds = BuildWestlandSeeds();
+    private static readonly SeedVacancy[] DelftSeeds = BuildDelftSeeds();
 
     public static string? ThumbnailForImageRequest(string path)
     {
@@ -36,7 +41,7 @@ public static class IllustratedPagesVacancyStub
             return null;
         }
 
-        var seed = Seeds.FirstOrDefault(s => s.Id == id);
+        var seed = FindSeedById(id.Value);
         return seed?.Image;
     }
 
@@ -53,7 +58,7 @@ public static class IllustratedPagesVacancyStub
             : ParseQuery("?" + queryString.TrimStart('?'));
         var variant = q.GetValueOrDefault("variant") ?? "desktop";
         var width = VacancyMapPopupPhotoEncoder.WidthForVariant(variant);
-        var seed = Seeds.FirstOrDefault(s => s.Id == id);
+        var seed = FindSeedById(id.Value);
         var webPath = seed?.Image ?? "/images/vacancies/tuinbouw.webp";
         var repoRoot = Directory.GetCurrentDirectory();
         while (!string.IsNullOrEmpty(repoRoot) && !File.Exists(Path.Combine(repoRoot, "Jobsy.sln")))
@@ -102,7 +107,7 @@ public static class IllustratedPagesVacancyStub
                 Lat = OriginLat,
                 Lng = OriginLng,
                 Zoom = 11.4,
-                PinCount = Seeds.Length
+                PinCount = WestlandSeeds.Length
             });
         }
 
@@ -114,7 +119,7 @@ public static class IllustratedPagesVacancyStub
 
         if (path.Contains("/pins", StringComparison.OrdinalIgnoreCase))
         {
-            return Serialize(BuildPins());
+            return Serialize(BuildPinsFromQuery(path));
         }
 
         if (path.Contains("/cards", StringComparison.OrdinalIgnoreCase))
@@ -148,7 +153,8 @@ public static class IllustratedPagesVacancyStub
         var skip = Math.Max(0, (int)(TryDouble(q, "skip") ?? 0));
         var take = Math.Max(1, (int)(TryDouble(q, "take") ?? 20));
 
-        var filtered = Seeds
+        var seeds = ResolveSeeds(originLat, originLng);
+        var filtered = seeds
             .Where(s => TravelMinutes(originLat, originLng, s.Lat, s.Lng, transport) <= maxMinutes)
             .OrderBy(s => TravelMinutes(originLat, originLng, s.Lat, s.Lng, transport))
             .ToList();
@@ -202,25 +208,49 @@ public static class IllustratedPagesVacancyStub
 
     private static string BuildCatalogColumnarJson()
     {
-        var n = Seeds.Length;
-        var ids = Seeds.Select(s => s.Id.ToString("D")).ToArray();
-        var lats = Seeds.Select(s => s.Lat).ToArray();
-        var lngs = Seeds.Select(s => s.Lng).ToArray();
-        var titles = Seeds.Select(s => s.Title).ToArray();
-        var companies = Seeds.Select(s => s.Company).ToArray();
-        var offeredBy = Seeds.Select(s => s.OfferedBy ?? "").ToArray();
-        var places = Seeds.Select(s => s.Place).ToArray();
-        var catNames = Seeds.Select(s => s.CategoryName).ToArray();
-        var colours = Seeds.Select(s => s.Colour).ToArray();
-        var pm = Seeds.Select(s => s.IsIntermediary ? 12 : 0).ToArray();
-        var co = Seeds.Select(s => (s.IsIntermediary ? IntermediaryCompanyId : CompanyId).ToString("D")).ToArray();
+        var n = WestlandSeeds.Length;
+        var ids = WestlandSeeds.Select(s => s.Id.ToString("D")).ToArray();
+        var lats = WestlandSeeds.Select(s => s.Lat).ToArray();
+        var lngs = WestlandSeeds.Select(s => s.Lng).ToArray();
+        var titles = WestlandSeeds.Select(s => s.Title).ToArray();
+        var companies = WestlandSeeds.Select(s => s.Company).ToArray();
+        var offeredBy = WestlandSeeds.Select(s => s.OfferedBy ?? "").ToArray();
+        var places = WestlandSeeds.Select(s => s.Place).ToArray();
+        var catNames = WestlandSeeds.Select(s => s.CategoryName).ToArray();
+        var colours = WestlandSeeds.Select(s => s.Colour).ToArray();
+        var pm = WestlandSeeds.Select(s => s.IsIntermediary ? 12 : 0).ToArray();
+        var co = WestlandSeeds.Select(s => (s.IsIntermediary ? IntermediaryCompanyId : CompanyId).ToString("D")).ToArray();
         return $$"""
             {"v":1,"n":{{n}},"id":{{JsonSerializer.Serialize(ids)}},"lat":{{JsonSerializer.Serialize(lats)}},"lng":{{JsonSerializer.Serialize(lngs)}},"t":{{JsonSerializer.Serialize(titles)}},"c":{{JsonSerializer.Serialize(companies)}},"ob":{{JsonSerializer.Serialize(offeredBy)}},"pl":{{JsonSerializer.Serialize(places)}},"cn":{{JsonSerializer.Serialize(catNames)}},"w":{{JsonSerializer.Serialize(Enumerable.Repeat(1450, n).ToArray())}},"h0":{{JsonSerializer.Serialize(Enumerable.Repeat(16, n).ToArray())}},"h1":{{JsonSerializer.Serialize(Enumerable.Repeat(32, n).ToArray())}},"cat":{{JsonSerializer.Serialize(Enumerable.Repeat("", n).ToArray())}},"co":{{JsonSerializer.Serialize(co)}},"wt":{{JsonSerializer.Serialize(Enumerable.Repeat(1, n).ToArray())}},"tr":{{JsonSerializer.Serialize(Enumerable.Repeat(1, n).ToArray())}},"col":{{JsonSerializer.Serialize(colours)}},"s65":{{JsonSerializer.Serialize(Enumerable.Repeat(0, n).ToArray())}},"pm":{{JsonSerializer.Serialize(pm)}},"iu":{{JsonSerializer.Serialize(Enumerable.Repeat("", n).ToArray())}}}
             """;
     }
 
-    private static List<VacancyPinBootItem> BuildPins()
-        => Seeds.Select(s => new VacancyPinBootItem
+    private static List<VacancyPinBootItem> BuildPinsFromQuery(string pathAndQuery)
+    {
+        var q = ParseQuery(pathAndQuery);
+        var originLat = TryDouble(q, "originLat") ?? OriginLat;
+        var originLng = TryDouble(q, "originLng") ?? OriginLng;
+        var transport = q.GetValueOrDefault("transport") ?? "Fiets";
+        var maxMinutes = (int)(TryDouble(q, "maxMinutes") ?? 20);
+        var seeds = ResolveSeeds(originLat, originLng);
+        var filtered = seeds
+            .Where(s => TravelMinutes(originLat, originLng, s.Lat, s.Lng, transport) <= maxMinutes)
+            .ToList();
+
+        if (TryParseBbox(q, out var bbox))
+        {
+            filtered = filtered
+                .Where(s => Contains(bbox, s.Lat, s.Lng))
+                .ToList();
+            // Mimic acc: tight viewport refetch after zoom can drop the whole set (client must not wipe).
+            var zoom = TryDouble(q, "zoom");
+            if (zoom is >= 12 && filtered.Count == 0 && seeds.Length > 50)
+            {
+                return [];
+            }
+        }
+
+        return filtered.Select(s => new VacancyPinBootItem
         {
             Id = s.Id,
             Lat = s.Lat,
@@ -230,9 +260,10 @@ public static class IllustratedPagesVacancyStub
             WorkType = s.WorkType,
             MatchColorBand = "good"
         }).ToList();
+    }
 
     private static List<VacancyCardStub> BuildCards()
-        => Seeds.Select(s => new VacancyCardStub
+        => WestlandSeeds.Select(s => new VacancyCardStub
         {
             Id = s.Id,
             Title = s.Title,
@@ -250,6 +281,108 @@ public static class IllustratedPagesVacancyStub
             CompanyAddress = s.Place,
             FitWhyLine = s.FitWhy
         }).ToList();
+
+    private static SeedVacancy? FindSeedById(Guid id)
+        => WestlandSeeds.FirstOrDefault(s => s.Id == id)
+           ?? DelftSeeds.FirstOrDefault(s => s.Id == id);
+
+    private static SeedVacancy[] ResolveSeeds(double originLat, double originLng)
+    {
+        var dKm = HaversineKm(originLat, originLng, DelftOriginLat, DelftOriginLng);
+        var wKm = HaversineKm(originLat, originLng, OriginLat, OriginLng);
+        return dKm + 0.01 < wKm ? DelftSeeds : WestlandSeeds;
+    }
+
+    private static bool TryParseBbox(
+        IReadOnlyDictionary<string, string> q,
+        out (double MinLat, double MinLng, double MaxLat, double MaxLng) bbox)
+    {
+        bbox = default;
+        var minLat = TryDouble(q, "minLat");
+        var minLng = TryDouble(q, "minLng");
+        var maxLat = TryDouble(q, "maxLat");
+        var maxLng = TryDouble(q, "maxLng");
+        if (minLat is null || minLng is null || maxLat is null || maxLng is null)
+        {
+            return false;
+        }
+
+        if (minLat > maxLat || minLng > maxLng)
+        {
+            return false;
+        }
+
+        bbox = (minLat.Value, minLng.Value, maxLat.Value, maxLng.Value);
+        return true;
+    }
+
+    private static bool Contains(
+        (double MinLat, double MinLng, double MaxLat, double MaxLng) box,
+        double lat,
+        double lng)
+        => lat >= box.MinLat && lat <= box.MaxLat && lng >= box.MinLng && lng <= box.MaxLng;
+
+    private static SeedVacancy[] BuildDelftSeeds()
+    {
+        var list = new List<SeedVacancy>();
+        var titles = new[]
+        {
+            "Operator productie", "Magazijnmedewerker", "Orderpicker", "Technisch operator",
+            "Logistiek planner", "Kwaliteitsmedewerker", "Procesoperator", "Montagemedewerker",
+            "Chauffeur B", "Administratief medewerker", "Teamleider shift", "Schoonmaak industrie"
+        };
+        var companies = new[]
+        {
+            "Delft Tech Campus", "Holland Logistics", "FlexWork Delft", "BlueChem Labs",
+            "Stadshaven BV", "Precision Parts", "FoodProcess NL", "CleanFacility"
+        };
+        var categories = new[] { "Productie", "Logistiek", "Techniek", "Administratie", "Industrie" };
+        var workTypes = new[] { "Parttime", "Fulltime", "Bijbaan" };
+        // Dense stacks (acc-like): many vacancies share coordinates.
+        var stacks = new (double Lat, double Lng, string Place)[]
+        {
+            (51.9952, 4.3712, "Delft"),
+            (51.9918, 4.3825, "Delft"),
+            (51.9889, 4.3761, "Delft"),
+            (51.9971, 4.3855, "Delft"),
+            (51.9865, 4.3688, "Delfgauw"),
+            (51.9998, 4.3620, "Ypenburg"),
+            (51.9842, 4.3910, "Pijnacker"),
+            (51.9939, 4.3790, "Delft centrum"),
+            (51.9905, 4.3745, "TNO campus"),
+            (51.9968, 4.3778, "Municipal yard"),
+            (51.9877, 4.3833, "Rail hub"),
+            (51.9924, 4.3665, "Industrial park")
+        };
+
+        for (var i = 0; i < 181; i++)
+        {
+            var stack = stacks[i % stacks.Length];
+            var jitter = (i / stacks.Length) * 0.000015;
+            var lat = stack.Lat + Math.Sin(i * 1.71) * 0.00004 + jitter;
+            var lng = stack.Lng + Math.Cos(i * 2.03) * 0.00005;
+            var isIntermediary = i % 3 == 1;
+            var company = companies[i % companies.Length];
+            var offeredBy = isIntermediary ? "Uitzend Delft" : null;
+            list.Add(new SeedVacancy(
+                Index: i,
+                Id: Guid.Parse($"b3{(i + 1):D6}-0000-0000-0000-000000000001"),
+                Title: titles[i % titles.Length] + " " + (i + 1),
+                Company: company,
+                OfferedBy: offeredBy,
+                Place: stack.Place,
+                Lat: lat,
+                Lng: lng,
+                Image: i % 5 == 0 ? "/images/vacancies/tuinbouw.webp" : null,
+                WorkType: workTypes[i % workTypes.Length],
+                CategoryName: categories[i % categories.Length],
+                Colour: i % 3 == 0 ? "#3366cc" : (i % 3 == 1 ? "#1e7a4c" : "#b4500f"),
+                FitWhy: "passend rond Delft",
+                IsIntermediary: isIntermediary));
+        }
+
+        return list.ToArray();
+    }
 
     private static SeedVacancy[] BuildWestlandSeeds()
     {
