@@ -42,6 +42,7 @@ assert.match(js, /function lagenPinSymbolsRenderable/);
 assert.match(js, /if \(lagenLayout\) \{\s*return "";\s*\}/);
 assert.match(js, /pushPinData\(\)/);
 assert.match(js, /clampLagenMobileWageTip/);
+assert.match(js, /tip--mobile-fixed-full/);
 assert.doesNotMatch(js, /tip--sheet-incard/);
 assert.doesNotMatch(min, /tip--sheet-incard/);
 assert.match(min, /\.fb\.euro \.tip/);

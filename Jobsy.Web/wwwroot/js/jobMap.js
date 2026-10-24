@@ -2560,7 +2560,7 @@ window.jobMap = (function () {
         if (!tip) {
             return;
         }
-        tip.classList.remove("tip--mobile-fixed");
+        tip.classList.remove("tip--mobile-fixed", "tip--mobile-fixed-full");
         tip.style.top = "";
         tip.style.right = "";
         tip.style.bottom = "";
@@ -2569,6 +2569,14 @@ window.jobMap = (function () {
         tip.style.maxWidth = "";
         tip.style.maxHeight = "";
         tip.style.overflowY = "";
+        tip.style.overflowX = "";
+        tip.style.zIndex = "";
+        tip.style.position = "";
+        tip.querySelectorAll(".tr2").forEach(function (row) {
+            row.style.minHeight = "";
+            row.style.lineHeight = "";
+            row.style.fontSize = "";
+        });
     }
 
     function clampLagenMobileWageTip(fcw) {
@@ -2580,43 +2588,39 @@ window.jobMap = (function () {
         if (!tip || !btn || tip.hasAttribute("hidden")) {
             return;
         }
-        const discovery = fcw.closest(".jobsy-discovery--lagen");
-        const stage = fcw.closest(".map-stage") || fcw.closest(".map-pane");
-        if (!stage) {
-            return;
-        }
+        const header = document.querySelector(".app-header");
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
         const btnRect = btn.getBoundingClientRect();
-        const gap = 12;
-        const seg = discovery ? discovery.querySelector(".seg") : null;
-        const segRect = seg ? seg.getBoundingClientRect() : null;
-        const stageRect = stage.getBoundingClientRect();
-        const topLimit = Math.max(
-            stageRect.top + 8,
-            segRect ? segRect.bottom + 8 : stageRect.top + 8
-        );
-        const bottomLimit = btnRect.top - gap;
-        const avail = Math.floor(bottomLimit - topLimit);
+        const gap = 8;
         const rows = tip.querySelectorAll(".tr2");
         const rowCount = rows.length || 8;
-        const minVisibleRows = Math.min(6, rowCount);
-        const sampleRow = rows[0];
-        const rowH = sampleRow ? sampleRow.getBoundingClientRect().height : 22;
-        const titleEl = tip.querySelector("b");
-        const titleH = titleEl ? titleEl.getBoundingClientRect().height + 6 : 28;
-        const pad = 20;
-        const minH = Math.ceil(titleH + rowH * minVisibleRows + pad);
+        const avail = Math.max(140, btnRect.top - gap - (headerBottom + 6));
+        const titleReserve = 34;
+        const targetRowH = Math.min(
+            22,
+            Math.max(18, Math.floor((avail - titleReserve) / rowCount))
+        );
+
         clearLagenMobileWageTipLayout(tip);
-        tip.classList.add("tip--mobile-fixed");
-        tip.style.top = topLimit + "px";
+        tip.classList.add("tip--mobile-fixed", "tip--mobile-fixed-full");
+        rows.forEach(function (row) {
+            row.style.minHeight = targetRowH + "px";
+            row.style.lineHeight = targetRowH + "px";
+            row.style.fontSize = "0.72rem";
+        });
+
+        tip.style.position = "fixed";
+        tip.style.zIndex = "39";
+        tip.style.bottom = Math.max(0, Math.round(window.innerHeight - btnRect.top + gap)) + "px";
         tip.style.right = Math.max(8, Math.round(window.innerWidth - btnRect.right)) + "px";
-        tip.style.width = "196px";
-        tip.style.maxWidth = "calc(100vw - 28px)";
-        const naturalH = tip.scrollHeight;
-        const maxH = avail > 0
-            ? Math.max(Math.min(minH, avail), Math.min(avail, naturalH))
-            : Math.min(minH, naturalH);
-        tip.style.maxHeight = maxH + "px";
-        tip.style.overflowY = maxH < naturalH - 2 ? "auto" : "hidden";
+        tip.style.left = "auto";
+        tip.style.top = "auto";
+        tip.style.width = "210px";
+        tip.style.maxWidth = "calc(100vw - 24px)";
+        tip.style.maxHeight = "none";
+        tip.style.height = "auto";
+        tip.style.overflowY = "visible";
+        tip.style.overflowX = "hidden";
     }
 
     function setLagenWageTipOpen(root, open) {

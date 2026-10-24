@@ -2739,20 +2739,32 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         position: fixed;
         bottom: auto;
         left: auto;
-        z-index: 120;
+        z-index: 39;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed::before {
         display: none;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed b {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background: #fffdf9;
-        padding-bottom: 4px;
-        margin-bottom: 2px;
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed-full {
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow-x: hidden;
+        box-shadow: 0 8px 28px rgba(15, 45, 92, 0.16);
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed-full b {
+        position: static;
+        display: block;
+        font-size: 0.74rem;
+        line-height: 1.2;
+        margin-bottom: 4px;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip.tip--mobile-fixed-full .tr2 {
+        min-height: 22px;
+        line-height: 22px;
+        font-size: 0.72rem;
     }
 }
 
