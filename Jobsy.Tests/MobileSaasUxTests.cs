@@ -191,7 +191,13 @@ public class MobileSaasUxTests
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-client-nav.js?v=20261024-unread-badge1", applicationsRazor, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-berichten.js?v=20261024-unread-badge1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-berichten.js?v=20261024-mark-read-bff1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("/api/sollicitaties-client/berichten/mark-read", File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/wwwroot/js/sollicitaties-berichten.js")), StringComparison.Ordinal);
+        Assert.Contains("MapSollicitatiesClientEndpoints", File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/Program.cs")), StringComparison.Ordinal);
         Assert.Contains("data-sollic-unread-threads", shells, StringComparison.Ordinal);
         Assert.DoesNotContain("sollicitaties-actions.js", shells, StringComparison.Ordinal);
         Assert.Contains("data-sollic-app-id", shells, StringComparison.Ordinal);

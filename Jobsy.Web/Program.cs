@@ -660,6 +660,7 @@ app.MapOnboardingClientEndpoints();
 app.MapPassportClientEndpoints();
 app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
+app.MapSollicitatiesClientEndpoints();
 app.MapBanenkaartClientEndpoints();
 app.MapMapBasemapEndpoints();
 app.MapOnboardingStartFormEndpoints();

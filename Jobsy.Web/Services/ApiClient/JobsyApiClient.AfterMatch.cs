@@ -121,6 +121,17 @@ public sealed partial class JobsyApiClient
         return (await ReadApiJsonAsync<AfterMatchThreadDto>(response.Content, ct))!;
     }
 
+    public async Task<bool> TryMarkCandidateAfterMatchMessagesReadAsync(
+        Guid applicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/applications/{applicationId:D}/after-match/messages/read",
+            content: null,
+            ct);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<AfterMatchThreadDto> RecordAfterMatchOutcomeAsync(
         Guid applicationId,
         RecordOutcomeRequest request,

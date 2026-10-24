@@ -4,7 +4,9 @@
   var DESKTOP = window.matchMedia("(min-width: 901px)");
   var MOBILE = window.matchMedia("(max-width: 900px)");
   var BASE = "/candidate/applications";
-  var READ_STORAGE_KEY = "sollicitaties-threads-read-v1";
+  var READ_PENDING_KEY = "sollicitaties-threads-read-pending-v1";
+  var READ_ACK_KEY = "sollicitaties-threads-read-ack-v1";
+  var MARK_READ_PATH = "/api/sollicitaties-client/berichten/mark-read";
   var initialUnreadTabCount = null;
 
   function parseThreadId(href) {
@@ -27,17 +29,13 @@
     return BASE + "?" + q;
   }
 
-  function listHref() {
-    return hrefForBerichten(null);
-  }
-
   function root() {
     return document.querySelector("[data-testid=\"sollicitaties-berichten-tab\"]");
   }
 
-  function readStorageIds() {
+  function readIdSet(storageKey) {
     try {
-      var raw = sessionStorage.getItem(READ_STORAGE_KEY);
+      var raw = sessionStorage.getItem(storageKey);
       if (!raw) {
         return [];
       }
@@ -48,20 +46,43 @@
     }
   }
 
-  function rememberThreadRead(threadId) {
-    if (!threadId) {
-      return;
-    }
+  function writeIdSet(storageKey, ids) {
     try {
-      var ids = readStorageIds();
-      if (ids.indexOf(threadId) >= 0) {
-        return;
-      }
-      ids.push(threadId);
-      sessionStorage.setItem(READ_STORAGE_KEY, JSON.stringify(ids));
+      sessionStorage.setItem(storageKey, JSON.stringify(ids));
     } catch (_e2) {
       /* ignore */
     }
+  }
+
+  function isThreadReadAcked(threadId) {
+    return readIdSet(READ_ACK_KEY).indexOf(threadId) >= 0;
+  }
+
+  function markThreadReadPending(threadId) {
+    if (!threadId || isThreadReadAcked(threadId)) {
+      return;
+    }
+    var pending = readIdSet(READ_PENDING_KEY);
+    if (pending.indexOf(threadId) >= 0) {
+      return;
+    }
+    pending.push(threadId);
+    writeIdSet(READ_PENDING_KEY, pending);
+  }
+
+  function markThreadReadAcked(threadId) {
+    if (!threadId) {
+      return;
+    }
+    var ack = readIdSet(READ_ACK_KEY);
+    if (ack.indexOf(threadId) < 0) {
+      ack.push(threadId);
+      writeIdSet(READ_ACK_KEY, ack);
+    }
+    var pending = readIdSet(READ_PENDING_KEY).filter(function (id) {
+      return id !== threadId;
+    });
+    writeIdSet(READ_PENDING_KEY, pending);
   }
 
   function pushSollicHistory(threadId) {
@@ -193,35 +214,62 @@
     }
 
     if (hadUnread) {
-      rememberThreadRead(threadId);
+      markThreadReadPending(threadId);
     }
 
     return hadUnread;
   }
 
+  function markReadUrl(threadId) {
+    return MARK_READ_PATH + "?applicationId=" + encodeURIComponent(threadId);
+  }
+
+  function migrateLegacyReadStorage() {
+    try {
+      var legacy = sessionStorage.getItem("sollicitaties-threads-read-v1");
+      if (!legacy) {
+        return;
+      }
+      sessionStorage.removeItem("sollicitaties-threads-read-v1");
+      var ids = JSON.parse(legacy);
+      if (!Array.isArray(ids)) {
+        return;
+      }
+      var pending = readIdSet(READ_PENDING_KEY);
+      ids.forEach(function (id) {
+        if (typeof id === "string" && id && pending.indexOf(id) < 0 && !isThreadReadAcked(id)) {
+          pending.push(id);
+        }
+      });
+      writeIdSet(READ_PENDING_KEY, pending);
+    } catch (_e) {
+      /* ignore */
+    }
+  }
+
   function markThreadReadServer(threadId) {
-    if (!threadId) {
+    if (!threadId || isThreadReadAcked(threadId)) {
       return;
     }
-    var url = "/api/me/applications/" + encodeURIComponent(threadId) + "/after-match/messages/read";
-    var sent = false;
-    if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
-      try {
-        sent = navigator.sendBeacon(url, new Blob([], { type: "application/json" }));
-      } catch (_beaconErr) {
-        sent = false;
-      }
+    if (readIdSet(READ_PENDING_KEY).indexOf(threadId) < 0) {
+      return;
     }
-    if (!sent) {
-      fetch(url, {
-        method: "POST",
-        credentials: "same-origin",
-        keepalive: true,
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      }).catch(function () {
-        /* optimistic UI already cleared badges */
+
+    var url = markReadUrl(threadId);
+    fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      keepalive: true,
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+      .then(function (res) {
+        if (res.ok) {
+          markThreadReadAcked(threadId);
+        }
+      })
+      .catch(function () {
+        /* pending stays for a later retry */
       });
-    }
   }
 
   function updateBerichtenTabBadge() {
@@ -404,12 +452,16 @@
   }
 
   function applyOptimisticReadFromStorage() {
-    readStorageIds().forEach(function (id) {
+    var pending = readIdSet(READ_PENDING_KEY);
+    var ack = readIdSet(READ_ACK_KEY);
+    pending.concat(ack).forEach(function (id) {
       clearUnreadForThread(id, { forceBadgeUpdate: false });
     });
     updateBerichtenTabBadge();
-    readStorageIds().forEach(function (id) {
-      markThreadReadServer(id);
+    pending.forEach(function (id) {
+      if (!isThreadReadAcked(id)) {
+        markThreadReadServer(id);
+      }
     });
   }
 
@@ -443,6 +495,7 @@
     document.addEventListener("click", onBackClick, true);
     document.addEventListener("submit", onComposeSubmit, true);
 
+    migrateLegacyReadStorage();
     initialUnreadTabCount = berichtenTabUnreadBaseline();
     applyOptimisticReadFromStorage();
 
