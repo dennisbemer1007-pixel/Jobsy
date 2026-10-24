@@ -85,6 +85,13 @@ public sealed class NdmRescheduleActionsLayoutPlaywrightTests : IAsyncLifetime
 
         Assert.NotEqual("none", neverDisplay);
 
+        var footnoteDisplay = await page.EvaluateAsync<string>(@"() => {
+            var el = document.querySelector('[data-ndm-cancel-footnote]');
+            if (!el) return 'missing';
+            return getComputedStyle(el).display;
+        }");
+        Assert.NotEqual("none", footnoteDisplay);
+
         var primaryRect = mode == "reschedule"
             ? json.GetProperty("rescheduleRect")
             : json.GetProperty("cancelRect");

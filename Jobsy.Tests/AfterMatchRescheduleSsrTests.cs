@@ -31,8 +31,8 @@ public sealed class AfterMatchRescheduleSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchRescheduleSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-reschedule.js?v=20261026-ndm-reschedule3", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261026-ndm-reschedule3", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-reschedule.js?v=20261027-ndm-reschedule4", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261027-ndm-messages1", razor, StringComparison.Ordinal);
         var ndmCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/na-de-match.css"));
         Assert.Contains(".ndm-reschedule-page button.chip.on{border-color:var(--brand)", ndmCss, StringComparison.Ordinal);
     }

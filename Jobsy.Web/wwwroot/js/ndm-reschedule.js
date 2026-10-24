@@ -25,7 +25,6 @@
     setVisible(container.querySelector("[data-ndm-when-block]"), next !== "cancel");
     setVisible(container.querySelector("[data-ndm-submit-reschedule]"), next === "reschedule");
     setVisible(container.querySelector("[data-ndm-submit-cancel]"), next === "cancel");
-    setVisible(container.querySelector("[data-ndm-cancel-footnote]"), next === "cancel");
     setVisible(container.querySelector("[data-ndm-side-title-reschedule]"), next === "reschedule");
     setVisible(container.querySelector("[data-ndm-side-title-cancel]"), next === "cancel");
 

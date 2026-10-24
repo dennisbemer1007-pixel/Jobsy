@@ -269,13 +269,7 @@ internal static class AfterMatchRescheduleSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.CancelConfirm"]));
         sb.Append("</button><button type=\"button\" class=\"lk ndm-reschedule-nevermind\" data-ndm-reschedule-nevermind>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.NeverMind"]));
-        sb.Append("</button></div><p class=\"xs muted ndm-reschedule-cancel-footnote\" data-ndm-cancel-footnote");
-        if (mode != "cancel")
-        {
-            sb.Append(" hidden");
-        }
-
-        sb.Append('>');
+        sb.Append("</button></div><p class=\"xs muted ndm-reschedule-cancel-footnote\" data-ndm-cancel-footnote>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.CancelFootnote"]));
         sb.Append("</p>");
     }
