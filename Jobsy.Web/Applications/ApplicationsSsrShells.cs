@@ -23,15 +23,15 @@ internal static class ApplicationsSsrShells
         }
 
         var sb = new StringBuilder();
+        sb.Append("<div class=\"sollicitaties-page-wrap\">");
+        AppendHeroStrip(sb);
         sb.Append("<div class=\"panel-page sollicitaties-page");
         if (data.DetailView)
         {
             sb.Append(" sollicitaties-page--detail");
         }
 
-        sb.Append("\" data-testid=\"applications-page-ssr\">");
-        AppendHeroStrip(sb);
-        sb.Append("<div class=\"sollicitaties-shell\">");
+        sb.Append("\" data-testid=\"applications-page-ssr\"><div class=\"sollicitaties-shell\">");
         AppendPageIntro(sb, culture, data);
         sb.Append("<div class=\"sollicitaties-page__body\">");
         AppendTabsRow(sb, culture, data);
@@ -52,8 +52,8 @@ internal static class ApplicationsSsrShells
             }
         }
 
-        sb.Append("</div></div></div>");
-        sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-26\" defer></script>");
+        sb.Append("</div></div></div></div>");
+        sb.Append("<script src=\"/js/sollicitaties-actions.js?v=20261024-mockup01-acc3\" defer></script>");
         return sb.ToString();
     }
 
@@ -449,7 +449,7 @@ internal static class ApplicationsSsrShells
         }
         else if (row.Timeline.Count > 0)
         {
-            AppendMockupTimeline(sb, culture, row.Timeline);
+            AppendMockup01VerticalTimeline(sb, culture, row.Timeline);
             AppendDetailTip(sb, culture, row);
             var primaryHref = RowHref(row);
             if (!string.IsNullOrEmpty(primaryHref))
@@ -471,7 +471,7 @@ internal static class ApplicationsSsrShells
         ApplicationAfterMatchSummary summary)
     {
         var steps = AfterMatchSollicitatiesPresentation.BuildAfterMatchTimeline(culture, summary);
-        AppendMockupTimeline(sb, culture, steps);
+        AppendMockup02HorizontalTimeline(sb, culture, steps);
     }
 
     private const string MockupTlIconCheck =
@@ -486,7 +486,52 @@ internal static class ApplicationsSsrShells
     private const string MockupTlIconFlag =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"><path d=\"M5 21V4M5 4h11l-2 4 2 4H5\"/></svg>";
 
-    private static void AppendMockupTimeline(
+    private static void AppendMockup01VerticalTimeline(
+        StringBuilder sb,
+        CultureState culture,
+        IReadOnlyList<SollicitationTimelineStep> steps)
+    {
+        sb.Append("<ol class=\"sollic-vsteps vsteps\" role=\"list\">");
+        foreach (var step in steps)
+        {
+            sb.Append("<li class=\"vsteps__step vsteps__step--");
+            sb.Append(WebUtility.HtmlEncode(step.State.ToLowerInvariant()));
+            sb.Append("\" role=\"listitem\"><span class=\"vsteps__dot\" aria-hidden=\"true\">");
+            if (string.Equals(step.State, "Done", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(step.State, "Skipped", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append(MockupTlIconCheck);
+            }
+
+            sb.Append("</span><span class=\"vsteps__body\"><span class=\"vsteps__label\">");
+            sb.Append(WebUtility.HtmlEncode(step.Label));
+            sb.Append("</span>");
+            if (step.OccurredAtUtc is DateTime at)
+            {
+                sb.Append("<span class=\"vsteps__sub\">");
+                sb.Append(WebUtility.HtmlEncode(FormatTimelineDate(culture, at, step)));
+                sb.Append("</span>");
+            }
+            else if (string.Equals(step.State, "Current", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append("<span class=\"vsteps__sub\">");
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Now"]));
+                sb.Append("</span>");
+            }
+            else if (string.Equals(step.Key, "Outcome", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append("<span class=\"vsteps__sub\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Kb.Timeline.AfterInterview"]));
+                sb.Append("</span>");
+            }
+
+            sb.Append("</span></li>");
+        }
+
+        sb.Append("</ol>");
+    }
+
+    private static void AppendMockup02HorizontalTimeline(
         StringBuilder sb,
         CultureState culture,
         IReadOnlyList<SollicitationTimelineStep> steps)

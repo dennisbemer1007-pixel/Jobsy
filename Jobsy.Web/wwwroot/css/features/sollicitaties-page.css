@@ -1,13 +1,19 @@
 /* Sollicitaties mockup SSR (PR #878) */
 
-/* Beat applications.css 720px caps — do not set width:100% on .sollicitaties-shell (mockup 1120 column). */
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
+/* Mockup 01: full-width hero, then 1120px panel-page column (hero is NOT inside panel-page). */
+.sollicitaties-page-wrap {
+  width: 100%;
+  background: var(--pearl);
+}
+
+.sollicitaties-page-wrap .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
   max-width: 1120px !important;
   width: min(1120px, 100vw) !important;
   max-inline-size: min(1120px, 100vw) !important;
   margin-inline: auto !important;
   padding-inline: 28px;
   box-sizing: border-box;
+  overflow-x: visible;
 }
 
 .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollic-card,
@@ -20,19 +26,16 @@
 }
 
 .sollicitaties-page.panel-page {
-  background: var(--pearl);
+  background: transparent;
   padding: 0;
-  max-width: none;
-  width: 100%;
-  overflow-x: clip;
 }
 
-.sollicitaties-hero-strip {
+.sollicitaties-page-wrap .sollicitaties-hero-strip {
   --sollic-hero-h: 150px;
   display: block;
-  width: 100vw;
-  max-width: 100vw;
-  margin-inline: calc(50% - 50vw);
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
   height: var(--sollic-hero-h);
   max-height: var(--sollic-hero-h);
   overflow: hidden;
@@ -95,17 +98,10 @@
 /* Mockup panel-page (878 base.css): 1120 column on .panel-page; shell fills it. */
 .sollicitaties-shell {
   box-sizing: border-box;
-  container-type: inline-size;
-  container-name: sollic-shell;
   width: 100%;
   max-width: none;
   margin-inline: 0;
   padding-inline: 0;
-}
-
-/* Beat global .panel-page { max-width: 1100px } and legacy apps list caps. */
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
-  max-width: none !important;
 }
 
 .sollicitaties-intro {
@@ -357,22 +353,14 @@
   display: none !important;
 }
 
-/* Mockup grid-side: split only when the 1120 column is wide enough (not a narrow 720px ancestor). */
-@container sollic-shell (min-width: 900px) {
+/* Mockup 01 grid-side @ desktop: list + 340px detail rail (mockup base.css .grid-side). */
+@media (min-width: 1024px) {
   .sollicitaties-layout {
     grid-template-columns: minmax(0, 1fr) 340px !important;
   }
 
   .sollicitaties-detail {
     display: block !important;
-  }
-}
-
-@media (min-width: 1024px) {
-  @container sollic-shell (min-width: 900px) {
-    .sollicitaties-layout {
-      grid-template-columns: minmax(0, 1fr) 340px !important;
-    }
   }
 }
 
@@ -769,10 +757,15 @@
   overflow-x: clip;
 }
 
-.app-shell:has(.sollicitaties-page) .panel-page.sollicitaties-page {
-  max-width: none !important;
-  margin-inline: 0;
+.app-shell:has(.sollicitaties-page) .sollicitaties-page-wrap {
   width: 100%;
+  max-width: none !important;
+}
+
+.app-shell:has(.sollicitaties-page) .panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
+  width: min(1120px, 100vw) !important;
+  max-width: 1120px !important;
+  margin-inline: auto !important;
 }
 
 [data-testid="applications-page-ssr"] .sollicitaties-layout,
@@ -834,9 +827,103 @@
   color: var(--text);
 }
 
-/* Mockup 01 detail rail timeline (sollicitaties-detail.html .tl) */
-.sollic-ndm-tl.tl,
-.sollic-detail__timeline.tl {
+/* Mockup 01 list rail: vertical steps (label + sub rechts van bolletje). */
+.sollic-vsteps.vsteps {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.vsteps__step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+  position: relative;
+  padding-bottom: 14px;
+}
+
+.vsteps__step:last-child {
+  padding-bottom: 0;
+}
+
+.vsteps__step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 0;
+  width: 2px;
+  background: #e4d9ca;
+}
+
+.vsteps__step--done:not(:last-child)::before {
+  background: var(--success);
+}
+
+.vsteps__dot {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px dashed #cbbda9;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  box-sizing: border-box;
+}
+
+.vsteps__dot svg {
+  width: 15px;
+  height: 15px;
+}
+
+.vsteps__step--done .vsteps__dot {
+  background: var(--success);
+  border: 2px solid var(--success);
+  color: #fff;
+}
+
+.vsteps__step--current .vsteps__dot {
+  border: 2px solid #0f2d5c;
+  background: #fff;
+  box-shadow: 0 0 0 3px #efe7da;
+}
+
+.vsteps__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+  min-width: 0;
+}
+
+.vsteps__label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.vsteps__step--done .vsteps__label {
+  color: var(--success);
+}
+
+.vsteps__step--current .vsteps__label {
+  color: #0f2d5c;
+}
+
+.vsteps__sub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* Mockup 02 / na-de-match: horizontal .tl (sollicitaties-detail.html). */
+.sollic-ndm-tl.tl {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   position: relative;
@@ -845,8 +932,7 @@
   padding: 0;
 }
 
-.sollic-ndm-tl.tl .s,
-.sollic-detail__timeline.tl .s {
+.sollic-ndm-tl.tl .s {
   position: relative;
   text-align: center;
   padding-top: 40px;
@@ -856,8 +942,7 @@
   line-height: 1.25;
 }
 
-.sollic-ndm-tl.tl .s::before,
-.sollic-detail__timeline.tl .s::before {
+.sollic-ndm-tl.tl .s::before {
   content: "";
   position: absolute;
   top: 15px;
@@ -867,20 +952,16 @@
   background: #e4d9ca;
 }
 
-.sollic-ndm-tl.tl .s:first-child::before,
-.sollic-detail__timeline.tl .s:first-child::before {
+.sollic-ndm-tl.tl .s:first-child::before {
   display: none;
 }
 
 .sollic-ndm-tl.tl .s.done::before,
-.sollic-ndm-tl.tl .s.now::before,
-.sollic-detail__timeline.tl .s.done::before,
-.sollic-detail__timeline.tl .s.now::before {
+.sollic-ndm-tl.tl .s.now::before {
   background: var(--success);
 }
 
-.sollic-ndm-tl.tl .s i,
-.sollic-detail__timeline.tl .s i {
+.sollic-ndm-tl.tl .s i {
   position: absolute;
   top: 0;
   left: 50%;
@@ -895,38 +976,32 @@
   color: var(--muted);
 }
 
-.sollic-ndm-tl.tl .s i svg,
-.sollic-detail__timeline.tl .s i svg {
+.sollic-ndm-tl.tl .s i svg {
   width: 15px;
   height: 15px;
 }
 
-.sollic-ndm-tl.tl .s.done i,
-.sollic-detail__timeline.tl .s.done i {
+.sollic-ndm-tl.tl .s.done i {
   background: var(--success);
   border: 2px solid var(--success);
   color: #fff;
 }
 
-.sollic-ndm-tl.tl .s.now i,
-.sollic-detail__timeline.tl .s.now i {
+.sollic-ndm-tl.tl .s.now i {
   border: 2px solid #c2410c;
   color: #c2410c;
   background: #fdf0e3;
 }
 
-.sollic-ndm-tl.tl .s.done,
-.sollic-detail__timeline.tl .s.done {
+.sollic-ndm-tl.tl .s.done {
   color: var(--success);
 }
 
-.sollic-ndm-tl.tl .s.now,
-.sollic-detail__timeline.tl .s.now {
+.sollic-ndm-tl.tl .s.now {
   color: #c2410c;
 }
 
-.sollic-ndm-tl.tl .s small,
-.sollic-detail__timeline.tl .s small {
+.sollic-ndm-tl.tl .s small {
   display: block;
   font-weight: 600;
   font-size: 0.72rem;

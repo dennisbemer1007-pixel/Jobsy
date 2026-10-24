@@ -152,7 +152,9 @@ public class MobileSaasUxTests
         var shells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("applications-page-ssr", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-page-wrap", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-vsteps vsteps", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-segment", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-card--app", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-card", shells, StringComparison.Ordinal);
@@ -170,7 +172,8 @@ public class MobileSaasUxTests
         Assert.Contains(".sollicitaties-detail", css);
         Assert.Contains("grid-template-columns: minmax(0, 1fr) !important", css, StringComparison.Ordinal);
         Assert.Contains(".sollicitaties-page .kb-apps__layout", css, StringComparison.Ordinal);
-        Assert.Contains("@container sollic-shell (min-width: 900px)", css, StringComparison.Ordinal);
+        Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
+        Assert.Contains("grid-template-columns: minmax(0, 1fr) 340px !important", css, StringComparison.Ordinal);
         Assert.Contains(".sollicitaties-detail", css, StringComparison.Ordinal);
         Assert.Contains(".sollicitaties-page--detail .sollicitaties-detail", css, StringComparison.Ordinal);
         Assert.Contains("display: block !important", css, StringComparison.Ordinal);
@@ -183,7 +186,7 @@ public class MobileSaasUxTests
         Assert.Contains("scroll-padding-inline: var(--sollic-inline-pad, 16px)", css, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-mockup01-acc2", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-mockup01-acc3", applicationsRazor, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-rail.js", applicationsRazor, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));

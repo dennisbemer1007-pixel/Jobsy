@@ -29,6 +29,7 @@ def collect_sources() -> list[Path]:
     files.extend(
         [
             ROOT / "Jobsy.Web" / "Banenkaart" / "BanenkaartSsrShells.cs",
+            ROOT / "Jobsy.Web" / "Applications" / "ApplicationsSsrShells.cs",
             WWW / "js" / "app-core.js",
             WWW / "js" / "app-public.js",
             WWW / "js" / "lobsyPush.js",
