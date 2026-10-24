@@ -14,6 +14,8 @@ public partial class MeController
     public sealed record AcceptatieSollicitatiesDemoEnsureResponse(
         bool Applied,
         int VerifiedApplicationCount,
+        int MessageThreadCount,
+        string? DemoHealthOutcome,
         string? SkipReason);
 
     /// <summary>
@@ -54,10 +56,20 @@ public partial class MeController
         var count = await _db.Applications.CountAsync(
             a => a.CandidateUserId == user.Id && a.EmailVerifiedAt != null,
             cancellationToken);
+        var (healthOutcome, _, threadCount) = await TestAccountsSollicitatiesDemoSeeder.BuildDemoHealthCountsAsync(
+            _db,
+            user.Id,
+            cancellationToken);
+        if (applied)
+        {
+            AcceptatieSollicitatiesDemoStartupState.Record(healthOutcome);
+        }
 
         return Ok(new AcceptatieSollicitatiesDemoEnsureResponse(
             applied,
             count,
+            threadCount,
+            healthOutcome,
             applied ? null : "skipped_no_manager_or_candidate"));
     }
 }

@@ -84,6 +84,42 @@ public static class TestAccountsSollicitatiesDemoSeeder
         return true;
     }
 
+    public static Task<User?> FindAcceptatieDemoCandidateAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+        => ResolveAcceptatieDemoCandidateAsync(db, configuration, logger, cancellationToken);
+
+    /// <summary>Health / diagnostics: verified applications and distinct apps with ≥1 message.</summary>
+    public static async Task<(string Outcome, int Apps, int Threads)> BuildDemoHealthCountsAsync(
+        JobsyDbContext db,
+        Guid candidateUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var apps = await db.Applications.CountAsync(
+            a => a.CandidateUserId == candidateUserId && a.EmailVerifiedAt != null,
+            cancellationToken);
+        var threads = await db.ApplicationMessages.AsNoTracking()
+            .Where(m => db.Applications.Any(a =>
+                a.Id == m.ApplicationId
+                && a.CandidateUserId == candidateUserId
+                && a.EmailVerifiedAt != null))
+            .Select(m => m.ApplicationId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+        return ($"applied:apps={apps},threads={threads}", apps, threads);
+    }
+
+    public static async Task<string> BuildDemoHealthOutcomeAsync(
+        JobsyDbContext db,
+        Guid candidateUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var counts = await BuildDemoHealthCountsAsync(db, candidateUserId, cancellationToken);
+        return counts.Outcome;
+    }
+
     public static async Task EnsureForCandidateAsync(
         JobsyDbContext db,
         Guid candidateId,

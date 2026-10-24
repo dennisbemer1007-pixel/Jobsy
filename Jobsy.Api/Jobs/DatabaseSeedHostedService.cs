@@ -179,7 +179,23 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             }
             else
             {
-                AcceptatieSollicitatiesDemoStartupState.Record("applied");
+                var candidate = await TestAccountsSollicitatiesDemoSeeder.FindAcceptatieDemoCandidateAsync(
+                    db,
+                    _configuration,
+                    _logger,
+                    stoppingToken);
+                if (candidate is not null)
+                {
+                    var outcome = await TestAccountsSollicitatiesDemoSeeder.BuildDemoHealthOutcomeAsync(
+                        db,
+                        candidate.Id,
+                        stoppingToken);
+                    AcceptatieSollicitatiesDemoStartupState.Record(outcome);
+                }
+                else
+                {
+                    AcceptatieSollicitatiesDemoStartupState.Record("applied");
+                }
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

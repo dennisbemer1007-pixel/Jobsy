@@ -8,6 +8,7 @@ using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
 using Jobsy.Core.Localization;
+using Jobsy.Infrastructure.Hosting;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Jobsy.Infrastructure.Data;
@@ -29,6 +30,7 @@ if (args.Length > 0 && args[0] == "proactive-matching")
 }
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJobsyAcceptatieAppSettings();
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];
 if (!string.IsNullOrWhiteSpace(sentryDsn))

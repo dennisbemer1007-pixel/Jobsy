@@ -65,6 +65,10 @@ internal static class ApplicationsSsrData
         var employersOn = flags.EmployersEnabled;
         var externalOn = flags.CandidateExternalVacanciesEnabled;
         var afterMatchOn = flags.AfterMatchEnabled;
+        if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal) && !afterMatchOn)
+        {
+            tab = ApplicationsSsrQuery.TabSollicitaties;
+        }
 
         if (!employersOn)
         {

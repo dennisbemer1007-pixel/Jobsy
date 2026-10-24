@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
 using Jobsy.Core.Localization;
+using Jobsy.Web.Hosting;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
 using Jobsy.Core.Security;
@@ -8,7 +9,6 @@ using Jobsy.Web.Auth;
 using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
 using Jobsy.Web.Discovery;
-using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Middleware;
 using Jobsy.Web.Security;
@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJobsyAcceptatieAppSettings();
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];
 if (!string.IsNullOrWhiteSpace(sentryDsn))
