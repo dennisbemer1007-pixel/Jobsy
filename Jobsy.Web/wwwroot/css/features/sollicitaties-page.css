@@ -8,11 +8,37 @@
   overflow-x: clip;
 }
 
-.sollicitaties-hero-strip.kb-banenkaart-header-strip {
-  --kb-header-strip-bg: var(--pearl);
+.sollicitaties-hero-strip {
+  --sollic-hero-h: 150px;
+  display: block;
   width: 100vw;
   max-width: 100vw;
   margin-inline: calc(50% - 50vw);
+  height: var(--sollic-hero-h);
+  max-height: var(--sollic-hero-h);
+  overflow: hidden;
+  position: relative;
+  background: var(--pearl);
+}
+
+.sollicitaties-hero-strip__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.sollicitaties-hero-strip__inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 70%, var(--pearl) 100%);
+}
+
+@media (max-width: 600px) {
+  .sollicitaties-hero-strip {
+    --sollic-hero-h: 90px;
+  }
 }
 
 .sollicitaties-hero-strip .sollicitaties-hero-strip__img {
@@ -20,7 +46,14 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
+}
+
+.sollicitaties-hero-strip .sollicitaties-hero-strip__img.desk {
+  object-position: center 46%;
+}
+
+.sollicitaties-hero-strip .sollicitaties-hero-strip__img.mob {
+  object-position: center 55%;
 }
 
 .sollicitaties-hero-strip .sollicitaties-hero-strip__img.mob {
@@ -37,18 +70,13 @@
   }
 }
 
+/* Mockup panel-page: max-width 1120px, padding 28px (≈1060px content @ 1440 viewport). */
 .sollicitaties-shell {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1360px;
-  margin-inline: 0;
-  padding-inline: 1.25rem;
-}
-
-@media (min-width: 1024px) {
-  .sollicitaties-shell {
-    padding-inline: 2rem;
-  }
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: 28px;
 }
 
 .sollicitaties-intro {
@@ -605,7 +633,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.65rem;
-  max-width: 36rem;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 .sollicitaties-empty-card__title {

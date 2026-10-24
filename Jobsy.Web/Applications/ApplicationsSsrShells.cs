@@ -52,7 +52,7 @@ internal static class ApplicationsSsrShells
 
     private static void AppendHeroStrip(StringBuilder sb)
     {
-        sb.Append("<div class=\"sollicitaties-hero-strip kb-banenkaart-header-strip\" aria-hidden=\"true\"><div class=\"kb-banenkaart-header-strip__inner\">");
+        sb.Append("<div class=\"sollicitaties-hero-strip\" aria-hidden=\"true\"><div class=\"sollicitaties-hero-strip__inner\">");
         sb.Append("<img class=\"sollicitaties-hero-strip__img desk\" src=\"");
         sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp));
         sb.Append("\" srcset=\"");
