@@ -39,6 +39,7 @@ try {
 const js = readFileSync(srcPath, "utf8");
 const min = readFileSync(minPath, "utf8");
 assert.match(js, /function lagenPinSymbolsRenderable/);
+assert.match(js, /if \(lagenLayout\) \{\s*return "";\s*\}/);
 assert.match(js, /pushPinData\(\)/);
 assert.match(js, /icon-ignore-placement": true/);
 assert.match(js, /lagenUnclusteredIconLayout[\s\S]*?"icon-ignore-placement": true/);

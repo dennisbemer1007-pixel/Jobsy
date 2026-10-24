@@ -3276,6 +3276,10 @@ window.jobMap = (function () {
     }
 
     function viewportQueryString() {
+        // Lagen: keep the full travel-radius pin set; list/carousel use discover viewport, not /pins bbox.
+        if (lagenLayout) {
+            return "";
+        }
         var box = readViewportBounds();
         if (!box) {
             return "";
@@ -3402,6 +3406,9 @@ window.jobMap = (function () {
                 const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
                 if (!pinsByFilterKey[filterKey]) {
                     rememberPinsFilter(pinsUrl, data, pinsEtag);
+                }
+                if (lagenLayout && pins.length === 0 && Object.keys(markersById).length > 0) {
+                    return;
                 }
                 setVacancies(pins);
             })
@@ -7536,6 +7543,7 @@ window.jobMap = (function () {
         __testGetMapCreateCount: function () { return mapCreateCount; },
         __testGetPinsNetworkFetchCount: function () { return pinsNetworkFetchCount; },
         __testViewportQueryString: function () { return viewportQueryString(); },
+        __testMarkUserMapGesture: markUserMapGesture,
         __testGetPinsUrl: function () {
             return pinsBaseUrl ? pinsBaseUrl + viewportQueryString() : pinsUrl;
         },

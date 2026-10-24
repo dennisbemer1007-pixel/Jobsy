@@ -66,6 +66,10 @@ public sealed class BanenkaartJobMapServedMinPlaywrightTests : IAsyncLifetime
             """);
         Assert.False(string.IsNullOrWhiteSpace(url));
 
+        var expectedTag = AssetVersions.Version("js/jobMap.min.js");
+        Assert.Contains($"jobMap.min.js?v={expectedTag}", url, StringComparison.Ordinal);
+        Assert.DoesNotContain("acc19", url, StringComparison.Ordinal);
+
         var served = await page.EvaluateAsync<byte[]>(
             """
             async (u) => {

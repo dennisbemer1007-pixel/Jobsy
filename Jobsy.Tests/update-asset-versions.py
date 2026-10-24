@@ -16,6 +16,8 @@ HTML_REF = re.compile(
     r"""(?i)(?:src|href)\s*=\s*["'](?!https?:|//|data:)([^"']+\?v=[^"']+)["']"""
 )
 JS_REF = re.compile(r"""["'](/(?:js|css|service-worker)[^"']+\?v=[^"']+)["']""")
+JOB_MAP_MIN = "js/jobMap.min.js"
+JOB_MAP_REF = re.compile(r"(jobMap\.min\.js\?v=)([^\"'\s]+)")
 
 
 def collect_sources() -> list[Path]:
@@ -79,7 +81,25 @@ def main() -> int:
 
     OUT.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)} ({len(manifest)} entries)")
+    sync_job_map_min_refs(manifest)
     return 0
+
+
+def sync_job_map_min_refs(manifest: dict[str, dict[str, str]]) -> None:
+    """Single source of truth: asset-versions jobMap tag → all loader JS files."""
+    entry = manifest.get(JOB_MAP_MIN)
+    if not entry or not entry.get("v"):
+        return
+    version = entry["v"]
+    for rel in ("js/app-core.js", "js/banenkaart-maps-boot.js"):
+        path = WWW / rel
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        updated = JOB_MAP_REF.sub(rf"\g<1>{version}", text)
+        if updated != text:
+            path.write_text(updated, encoding="utf-8")
+            print(f"synced {rel} jobMap.min.js ?v={version}")
 
 
 if __name__ == "__main__":

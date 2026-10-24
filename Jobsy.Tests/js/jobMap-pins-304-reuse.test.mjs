@@ -11,6 +11,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const js = readFileSync(join(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js"), "utf8");
 const min = readFileSync(join(root, "Jobsy.Web", "wwwroot", "js", "jobMap.min.js"), "utf8");
 const core = readFileSync(join(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"), "utf8");
+const mapsBoot = readFileSync(
+  join(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-maps-boot.js"),
+  "utf8",
+);
 const manifest = JSON.parse(readFileSync(join(root, "Jobsy.Tests", "asset-versions.json"), "utf8"));
 const jobMapVersion = manifest["js/jobMap.min.js"]?.v;
 assert.ok(jobMapVersion, "asset-versions.json must list js/jobMap.min.js");
@@ -39,6 +43,10 @@ assert.match(initMatch[0], /let live\s*=/);
 
 assert.match(min, /304/);
 assert.match(min, /__testGetMapCreateCount/);
-assert.match(core, new RegExp(`jobMap\\.min\\.js\\?v=${jobMapVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+const jobMapPattern = new RegExp(
+  `jobMap\\.min\\.js\\?v=${jobMapVersion.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}`,
+);
+assert.match(core, jobMapPattern);
+assert.match(mapsBoot, jobMapPattern);
 
 console.log("jobMap-pins-304-reuse: ok");
