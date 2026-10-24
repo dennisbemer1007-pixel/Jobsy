@@ -43,7 +43,9 @@ public sealed class PrecompressedStaticAssetTests
         Assert.Equal(raw, brBytes);
         if (relativePath == "js/jobMap.min.js")
         {
-            Assert.Contains("tip--sheet-incard", System.Text.Encoding.UTF8.GetString(raw), StringComparison.Ordinal);
+            var text = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.Contains(".fb.euro .tip", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("tip--sheet-incard", text, StringComparison.Ordinal);
         }
     }
 

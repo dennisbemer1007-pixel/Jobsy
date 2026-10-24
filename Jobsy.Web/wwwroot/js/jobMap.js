@@ -1367,14 +1367,13 @@ window.jobMap = (function () {
                     lagenChevronRightSvg() + "</button>" +
             "</div>"
             : "";
-        const tip = lagenWageTooltipHtml(v, wageOpen, mobile ? " tip--sheet-incard" : "");
+        const tip = lagenWageTooltipHtml(v, wageOpen, "");
         const euroBtn = tip
             ? "<button type=\"button\" class=\"fb euro" + (wageOpen ? " on" : "") + "\" data-lagen-wage aria-expanded=\"" +
                 (wageOpen ? "true" : "false") + "\" aria-label=\"" +
                 escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" +
-                (mobile ? "" : tip) + "</button>"
+                tip + "</button>"
             : "<span class=\"fb euro is-disabled\" aria-hidden=\"true\">€</span>";
-        const mobileSheetTip = mobile ? tip : "";
         const photoBlock = lagenWorkplacePhotoShell(v);
         const bodyInner = mobile
             ? "<div class=\"fbody\"><div class=\"fbody-media\">" + photoBlock + "</div><div class=\"finfo\">" +
@@ -1387,7 +1386,6 @@ window.jobMap = (function () {
                     "<span>" + lagenClockSvg() + hours + "</span>" +
                 "</div>" +
                 (contract ? "<div class=\"fcontract\">" + lagenDocSvg() + contract + "</div>" : "") +
-                mobileSheetTip +
                 "</div></div>"
             : photoBlock +
                 "<div class=\"finfo\"><div class=\"flrow\">" + lagenTypeLabelHtml(v) + lagenHeartHtml(v) + "</div>" +
@@ -2558,6 +2556,27 @@ window.jobMap = (function () {
         };
     }
 
+    function clampLagenMobileWageTip(fcw) {
+        if (!fcw || !isNarrowViewport()) {
+            return;
+        }
+        const tip = fcw.querySelector(".fb.euro .tip");
+        const btn = fcw.querySelector("[data-lagen-wage]");
+        if (!tip || !btn || tip.hasAttribute("hidden")) {
+            return;
+        }
+        const stage = fcw.closest(".map-stage") || fcw.closest(".map-pane");
+        if (!stage) {
+            return;
+        }
+        const stageRect = stage.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+        const gap = 12;
+        const maxH = Math.max(96, Math.floor(btnRect.top - stageRect.top - gap));
+        tip.style.maxHeight = maxH + "px";
+        tip.style.overflowY = maxH < tip.scrollHeight ? "auto" : "";
+    }
+
     function setLagenWageTipOpen(root, open) {
         if (!root) {
             return;
@@ -2570,7 +2589,7 @@ window.jobMap = (function () {
         }
         fcw.classList.toggle("lagen-wage-open", !!open);
         const btn = fcw.querySelector("[data-lagen-wage]");
-        const tip = fcw.querySelector(".tip");
+        const tip = fcw.querySelector(".fb.euro .tip") || fcw.querySelector(".tip");
         if (btn) {
             btn.classList.toggle("on", !!open);
             btn.setAttribute("aria-expanded", open ? "true" : "false");
@@ -2578,8 +2597,15 @@ window.jobMap = (function () {
         if (tip) {
             if (open) {
                 tip.removeAttribute("hidden");
+                tip.style.maxHeight = "";
+                tip.style.overflowY = "";
+                requestAnimationFrame(function () {
+                    clampLagenMobileWageTip(fcw);
+                });
             } else {
                 tip.setAttribute("hidden", "");
+                tip.style.maxHeight = "";
+                tip.style.overflowY = "";
             }
         }
         if (clusterUiState) {
@@ -2599,6 +2625,10 @@ window.jobMap = (function () {
             if (closeBtn) {
                 closeBtn.addEventListener("click", function (ev) {
                     stopEvent(ev);
+                    if (isNarrowViewport() && fcw.classList.contains("lagen-wage-open")) {
+                        setLagenWageTipOpen(fcw, false);
+                        return;
+                    }
                     closeActivePopup();
                 });
             }
