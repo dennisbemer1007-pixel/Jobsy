@@ -9,6 +9,92 @@ namespace Jobsy.Web.Banenkaart;
 
 internal static class BanenkaartSsrListHtml
 {
+    internal static void AppendLagenMockupListRows(
+        StringBuilder sb,
+        CultureState culture,
+        BanenkaartSsrQuery.State query,
+        IReadOnlyList<VacancyListItem> vacancies)
+    {
+        sb.Append("<div class=\"kb-list-rows\" data-testid=\"kb-list-rows\">");
+        foreach (var vacancy in vacancies)
+        {
+            AppendLagenMockupRow(sb, culture, query, vacancy);
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static void AppendLagenMockupRow(
+        StringBuilder sb,
+        CultureState culture,
+        BanenkaartSsrQuery.State query,
+        VacancyListItem vacancy)
+    {
+        var id = vacancy.Id.ToString("D");
+        var href = WebUtility.HtmlEncode(DetailHref(id, query));
+        var title = WebUtility.HtmlEncode(vacancy.Title);
+        var company = WebUtility.HtmlEncode(KbIntermediaryDisplay.CompanyLine(culture, vacancy));
+        var sector = WebUtility.HtmlEncode(SectorLabel(culture, vacancy) ?? "");
+        var viaIntermediary = vacancy.IntermediaryCompanyId is not null
+            || !string.IsNullOrWhiteSpace(vacancy.OfferedByLabel);
+        var typeClass = viaIntermediary ? "tm i" : "tm w";
+        var typeLabel = viaIntermediary ? "Via intermediair" : "Bij werkgever";
+        var travel = vacancy.TravelMinutes is int mins and > 0
+            ? $"{mins} min {UiLabels.TransportVerb(culture, query.Transport)}"
+            : "";
+        var hours = HoursLabel(culture, vacancy);
+        var bg = vacancy.CategoryColorHex is { Length: > 0 } hex && hex.StartsWith('#')
+            ? hex
+            : "#E3EEDD";
+        var fg = "#3F6E31";
+
+        sb.Append("<a class=\"vc\" href=\"").Append(href).Append("\" data-vacancy-id=\"")
+            .Append(id).Append("\" data-testid=\"kb-list-row\">");
+        sb.Append("<div class=\"vimg\" style=\"background:linear-gradient(135deg,")
+            .Append(WebUtility.HtmlEncode(bg)).Append(",#fff 150%);color:")
+            .Append(WebUtility.HtmlEncode(fg)).Append("\">");
+        sb.Append("<svg class=\"big kb-wt-ico--big\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 8l8-4 8 4v8l-8 4-8-4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\"/></svg>");
+        if (!string.IsNullOrEmpty(sector))
+        {
+            sb.Append("<span class=\"vtag\">").Append(sector).Append("</span>");
+        }
+
+        sb.Append("</div><div class=\"vb\"><b>").Append(title).Append("</b>");
+        sb.Append("<div class=\"who\"><span class=\"").Append(typeClass).Append("\">")
+            .Append(WebUtility.HtmlEncode(typeLabel)).Append("</span></div>");
+        sb.Append("<div class=\"who\" style=\"margin-top:4px\">").Append(company).Append("</div>");
+        sb.Append("<div class=\"meta\">");
+        if (!string.IsNullOrEmpty(travel))
+        {
+            sb.Append("<span><svg class=\"ic s\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/><circle cx=\"18\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/><path d=\"M6 16l4-7h5l3 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/></svg>")
+                .Append(WebUtility.HtmlEncode(travel)).Append("</span>");
+        }
+
+        if (!string.IsNullOrEmpty(hours))
+        {
+            sb.Append("<span>").Append(WebUtility.HtmlEncode(hours)).Append("</span>");
+        }
+
+        sb.Append("</div></div></a>");
+    }
+
+    private static string? HoursLabel(CultureState culture, VacancyListItem vacancy)
+    {
+        var min = (int)(vacancy.MinHoursPerWeek ?? 0);
+        var max = (int)(vacancy.MaxHoursPerWeek ?? 0);
+        if (min <= 0 && max <= 0)
+        {
+            return null;
+        }
+
+        if (max <= 0)
+        {
+            max = 40;
+        }
+
+        return culture.Format("Kb.Filter.HoursValue", min, max);
+    }
+
     internal static void AppendListRows(
         StringBuilder sb,
         CultureState culture,

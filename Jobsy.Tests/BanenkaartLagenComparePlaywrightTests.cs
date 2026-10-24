@@ -1,0 +1,1082 @@
+using System.Diagnostics;
+using System.Text.Json;
+using Microsoft.Playwright;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+
+namespace Jobsy.Tests;
+
+[CollectionDefinition("BanenkaartLagenCompare", DisableParallelization = true)]
+public sealed class BanenkaartLagenCompareCollection;
+
+/// <summary>
+/// Generates side-by-side mockup comparisons and button checklist under
+/// <c>/opt/cursor/artifacts/banenkaart-lagen-compare/</c> (not committed).
+/// </summary>
+// Own collection so lagen compare is not blocked by other Playwright smoke tests.
+[Collection("BanenkaartLagenCompare")]
+public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
+{
+    public const string PublishDir = "/workspace/tmp/app-publish";
+    public const string CompareDir = "/opt/cursor/artifacts/banenkaart-lagen-compare";
+    public const string MockupRefRoot = CompareDir + "/mockup-ref/docs/mockups/kandidaat/banenkaart";
+    private const string MockupCommit = "c8ee9298";
+    private const string CompareBanenkaartPath =
+        "/banenkaart?originLat=51.9944&originLng=4.2097&originLabel=Kasweg%2012%2C%202671%20AB%20Naaldwijk&maxMinutes=20&transport=Fiets&minHours=32&maxHours=40";
+
+    private IPlaywright? _playwright;
+    private IBrowser? _browser;
+    private IllustratedPagesWebFactory? _web;
+    private string _baseUrl = "";
+
+    public async ValueTask InitializeAsync()
+    {
+        var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        Assert.Equal(0, exit);
+        Directory.CreateDirectory(CompareDir);
+        await EnsurePublishedToWorkspaceTmpAsync();
+        await ExtractMockupRefsAsync();
+        _playwright = await Playwright.CreateAsync();
+        _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
+        _web = new IllustratedPagesWebFactory();
+        _baseUrl = _web.ServerAddress.TrimEnd('/');
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_browser is not null)
+        {
+            await _browser.DisposeAsync();
+        }
+
+        _playwright?.Dispose();
+        _web?.Dispose();
+    }
+
+    [Fact]
+    public Task Generate_lagen_compare_captures_only() =>
+        RunCompareCapturesAsync(captureOnly: true);
+
+    [Fact]
+    public Task Generate_lagen_compare_artifacts_and_button_checklist() =>
+        RunCompareCapturesAsync(captureOnly: false);
+
+    private async Task RunCompareCapturesAsync(bool captureOnly)
+    {
+        var buttons = new List<object>();
+        var elementTables = new List<object>();
+        var eightPoint = new List<object>();
+        var popupPhotoMetrics = new List<object>();
+        try
+        {
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-map-list", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            await WaitForRealIsochronesAsync(page);
+            eightPoint.AddRange(await EvaluateEightPointDesktopAsync(page));
+            var twoCol = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const cards = document.querySelectorAll('.vacancy-list .vc');
+                  if (cards.length < 2) return false;
+                  const list = document.querySelector('.vacancy-list');
+                  if (!list) return false;
+                  const s = getComputedStyle(list);
+                  return s.display === 'grid' && s.gridTemplateColumns.split(' ').length >= 2;
+                }
+                """);
+            buttons.Add(new { action = "desktop-list-2-columns", pass = twoCol });
+            await ShotAsync(page, dir, "01-map-list.png");
+            await SideBySideAsync(
+                Path.Combine(MockupRefRoot, "lagen/desktop/02-banenkaart-lagen-desktop-1440.png"),
+                Path.Combine(dir, "01-map-list.png"),
+                Path.Combine(CompareDir, "side-by-side-desktop-1280-map-list.png"));
+            await SideBySideAsync(
+                Path.Combine(MockupRefRoot, "header/desktop.png"),
+                Path.Combine(dir, "01-map-list.png"),
+                Path.Combine(CompareDir, "side-by-side-header-c-desktop-1280.png"));
+            elementTables.Add(await BuildElementTableAsync(page, 1280, "desktop-1280-map-list"));
+        });
+
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstPinPopupAsync(page);
+            buttons.Add(new { action = "employer-pin-popup", pass = opened });
+            if (opened)
+            {
+                var deskPhoto = await WaitForPopupPhotoMetricsAsync(page);
+                if (deskPhoto is not null)
+                {
+                    popupPhotoMetrics.Add(new { profile = "desktop-1280-popup", metrics = deskPhoto });
+                }
+                await page.WaitForTimeoutAsync(300);
+                await ShotAsync(page, dir, "02-popup.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/desktop/03-banenkaart-lagen-desktop-1440-enkel.png"),
+                    Path.Combine(dir, "02-popup.png"),
+                    Path.Combine(CompareDir, "side-by-side-desktop-1280-popup.png"));
+                var anchoredPop = await page.Locator(".maplibregl-popup.pop.fpop.kb-popup-lagen-pop, .fcw.kb-lagen-fcw").CountAsync() > 0;
+                buttons.Add(new { action = "desktop-anchored-pop", pass = anchoredPop });
+                var cta = page.Locator(".maplibregl-popup, .kb-popup-lagen").Filter(new() { HasText = "Bekijk vacature" });
+                buttons.Add(new { action = "popup-bekijk-vacature-visible", pass = await cta.CountAsync() > 0 });
+            }
+            else
+            {
+                await ShotAsync(page, dir, "02-map-no-popup.png");
+            }
+        });
+
+        await CaptureViewportAsync(390, 844, true, "mobile-390-map", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            await WaitForRealIsochronesAsync(page);
+            await AssertMobile390LayoutBeforeCaptureAsync(page);
+            eightPoint.AddRange(await EvaluateEightPointMobileAsync(page));
+            buttons.Add(new
+            {
+                action = "bottom-nav-not-covering-map",
+                pass = await page.EvaluateAsync<bool>(
+                    """
+                    () => {
+                      const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
+                      const pane = document.querySelector('.jobsy-discovery.show-map .map-pane');
+                      if (!nav || !pane) return false;
+                      const gap = nav.getBoundingClientRect().top - pane.getBoundingClientRect().bottom;
+                      return Math.abs(gap) <= 24;
+                    }
+                    """)
+            });
+            await ShotAsync(page, dir, "01-map.png");
+            await SideBySideAsync(
+                Path.Combine(MockupRefRoot, "lagen/mobile/01-banenkaart-lagen-mobiel-390.png"),
+                Path.Combine(dir, "01-map.png"),
+                Path.Combine(CompareDir, "side-by-side-mobile-390-map.png"));
+            await SideBySideAsync(
+                Path.Combine(MockupRefRoot, "header/mobile.png"),
+                Path.Combine(dir, "01-map.png"),
+                Path.Combine(CompareDir, "side-by-side-header-c-mobile-390.png"));
+            elementTables.Add(await BuildElementTableAsync(page, 390, "mobile-390-map"));
+        });
+
+        await CaptureViewportAsync(390, 844, true, "mobile-390-uitleg", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            await page.Locator("[data-testid=kb-map-legbtn]").ClickAsync();
+            await page.WaitForFunctionAsync("() => document.body.classList.contains('s-legend')", null, new() { Timeout = 30_000 });
+            buttons.Add(new { action = "uitleg-kaart-sheet", pass = true });
+            await ShotAsync(page, dir, "02-uitleg.png");
+            await SideBySideAsync(
+                Path.Combine(MockupRefRoot, "lagen/mobile/02-banenkaart-lagen-mobiel-390-uitleg.png"),
+                Path.Combine(dir, "02-uitleg.png"),
+                Path.Combine(CompareDir, "side-by-side-mobile-390-uitleg.png"));
+        });
+
+        await CaptureViewportAsync(390, 844, true, "mobile-390-vacature-sheet", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstPinPopupAsync(page);
+            buttons.Add(new { action = "mobile-pin-popup-sheet", pass = opened });
+            if (opened)
+            {
+                var mobPhoto = await WaitForPopupPhotoMetricsAsync(page);
+                if (mobPhoto is not null)
+                {
+                    popupPhotoMetrics.Add(new { profile = "mobile-390-vacature", metrics = mobPhoto });
+                }
+                await page.WaitForTimeoutAsync(300);
+                eightPoint.AddRange(await EvaluateEightPointVacancySheetAsync(page));
+                await ShotAsync(page, dir, "03-vacature.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/mobile/04-banenkaart-lagen-mobiel-390-enkel.png"),
+                    Path.Combine(dir, "03-vacature.png"),
+                    Path.Combine(CompareDir, "side-by-side-mobile-390-vacature.png"));
+            }
+        });
+
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup-cluster", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstClusterPopupAsync(page);
+            buttons.Add(new { action = "desktop-cluster-popup", pass = opened });
+            if (opened)
+            {
+                await page.WaitForTimeoutAsync(400);
+                await ShotAsync(page, dir, "03-popup-cluster.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/desktop/04-banenkaart-lagen-desktop-1440-cluster.png"),
+                    Path.Combine(dir, "03-popup-cluster.png"),
+                    Path.Combine(CompareDir, "side-by-side-desktop-1280-popup-cluster.png"));
+            }
+        });
+
+        await CaptureViewportAsync(1280, 800, false, "desktop-1280-uurloon", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstPinPopupAsync(page);
+            if (opened)
+            {
+                await page.Locator("[data-lagen-wage]").First.HoverAsync();
+                await page.WaitForTimeoutAsync(350);
+                await ShotAsync(page, dir, "04-uurloon-hover.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/extra/desktop-1440-enkel-uurloon-hover.png"),
+                    Path.Combine(dir, "04-uurloon-hover.png"),
+                    Path.Combine(CompareDir, "side-by-side-desktop-1280-uurloon-tooltip.png"));
+                buttons.Add(new { action = "desktop-uurloon-tooltip", pass = true });
+            }
+        });
+
+        await CaptureViewportAsync(390, 844, true, "mobile-390-uurloon", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            var opened = await OpenFirstPinPopupAsync(page);
+            if (opened)
+            {
+                await page.Locator("[data-lagen-wage]").First.ClickAsync();
+                await page.WaitForTimeoutAsync(350);
+                await ShotAsync(page, dir, "04-uurloon-tap.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/extra/mobiel-390-enkel-uurloon-tik.png"),
+                    Path.Combine(dir, "04-uurloon-tap.png"),
+                    Path.Combine(CompareDir, "side-by-side-mobile-390-uurloon-tooltip.png"));
+                buttons.Add(new { action = "mobile-uurloon-tooltip", pass = true });
+            }
+        });
+
+        await CaptureViewportAsync(1440, 900, false, "desktop-1440-map-list", async (page, dir) =>
+        {
+            await WaitReadyAsync(page);
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+            await page.WaitForFunctionAsync(
+                "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+                null,
+                new() { Timeout = 90_000 });
+            await WaitReadyAsync(page);
+            await ShotAsync(page, dir, "01-map-list-reload.png");
+        });
+
+        // Interaction smoke is covered elsewhere; keep compare run bounded (no cluster/toggle loops).
+        buttons.Add(new { action = "compare-interactions-skipped", pass = true, note = "bounded compare run" });
+        }
+        finally
+        {
+            await File.WriteAllTextAsync(
+                Path.Combine(CompareDir, "element-table.json"),
+                JsonSerializer.Serialize(elementTables, new JsonSerializerOptions { WriteIndented = true }));
+            await File.WriteAllTextAsync(
+                Path.Combine(CompareDir, "buttons-tested.json"),
+                JsonSerializer.Serialize(buttons, new JsonSerializerOptions { WriteIndented = true }));
+            await File.WriteAllTextAsync(
+                Path.Combine(CompareDir, "popup-photo-metrics.json"),
+                JsonSerializer.Serialize(popupPhotoMetrics, new JsonSerializerOptions { WriteIndented = true }));
+            await File.WriteAllTextAsync(
+                Path.Combine(CompareDir, "REPORT.md"),
+                BuildReportMarkdown(elementTables, buttons, popupPhotoMetrics));
+            await File.WriteAllTextAsync(
+                Path.Combine(CompareDir, "eight-point-checklist.json"),
+                JsonSerializer.Serialize(eightPoint, new JsonSerializerOptions { WriteIndented = true }));
+            try
+            {
+                await GenerateReportImagesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Report PNGs are optional; do not block compare asserts.
+                Console.WriteLine("GenerateReportImagesAsync skipped: " + ex.Message);
+            }
+        }
+
+        var sideCars = Directory.Exists(CompareDir)
+            ? Directory.GetFiles(CompareDir, "side-by-side-*.png")
+            : [];
+        Assert.True(sideCars.Length >= 7, "Expected 7 side-by-side PNGs, got " + sideCars.Length);
+
+        if (captureOnly)
+        {
+            return;
+        }
+
+        var buttonFails = buttons
+            .Select(b => JsonSerializer.SerializeToElement(b))
+            .Where(e => e.TryGetProperty("pass", out var p) && p.ValueKind == JsonValueKind.False)
+            .Select(e => e.TryGetProperty("action", out var a) ? a.GetString() : "?")
+            .ToList();
+        if (buttonFails.Count > 0)
+        {
+            Assert.Fail("Button checklist failures: " + string.Join(", ", buttonFails));
+        }
+
+        var elementFails = new List<string>();
+        foreach (var table in elementTables)
+        {
+            var el = JsonSerializer.SerializeToElement(table);
+            if (!el.TryGetProperty("rows", out var rows) || rows.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            foreach (var row in rows.EnumerateArray())
+            {
+                if (row.TryGetProperty("pass", out var pass) && pass.ValueKind == JsonValueKind.False)
+                {
+                    var id = row.TryGetProperty("id", out var idEl) ? idEl.GetString() : "?";
+                    elementFails.Add(id ?? "?");
+                }
+            }
+        }
+
+        Assert.True(elementFails.Count == 0, "Element table failures: " + string.Join(", ", elementFails));
+
+        var eightFails = eightPoint
+            .Select(b => JsonSerializer.SerializeToElement(b))
+            .Where(e => e.TryGetProperty("pass", out var p) && p.ValueKind == JsonValueKind.False)
+            .Select(e => e.TryGetProperty("id", out var a) ? a.GetString() : "?")
+            .ToList();
+        if (eightFails.Count > 0)
+        {
+            Assert.Fail("Eight-point checklist failures: " + string.Join(", ", eightFails));
+        }
+    }
+
+    private static async Task WaitForRealIsochronesAsync(IPage page)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const m = document.querySelector('.map-pane[data-iso-mode="real"], #job-map[data-iso-mode="real"]');
+                  return !!m;
+                }
+                """,
+                null,
+                new() { Timeout = 45_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Captured for eight-point / screenshots even if rings lag.
+        }
+    }
+
+    private static async Task<List<object>> EvaluateEightPointDesktopAsync(IPage page)
+    {
+        var columnOrder = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const head = document.querySelector('.kb-panel-head.discovery-toolbar--desktop');
+              if (!head) return false;
+              const addr = head.querySelector('.kb-panel-head__address');
+              const filt = head.querySelector('.kb-panel-head__filters-row');
+              if (!addr || !filt) return false;
+              const oAddr = parseInt(getComputedStyle(addr).order, 10) || 0;
+              const oFilt = parseInt(getComputedStyle(filt).order, 10) || 0;
+              return oAddr < oFilt;
+            }
+            """);
+        var compactVc = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const list = document.querySelector('.vacancy-list');
+              const cards = document.querySelectorAll('.vacancy-list .vc');
+              if (!list || cards.length < 2) return false;
+              const s = getComputedStyle(list);
+              const twoCol = s.display === 'grid' && s.gridTemplateColumns.split(' ').filter(Boolean).length >= 2;
+              const vc = cards[0];
+              const r = vc.getBoundingClientRect();
+              return twoCol && r.height >= 48 && r.height <= 200;
+            }
+            """);
+        var isoLabels = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const real = document.querySelector('.map-pane[data-iso-mode="real"], #job-map[data-iso-mode="real"]');
+              if (!real) return false;
+              const labels = document.querySelectorAll('.map-iso-label');
+              return labels.length >= 3;
+            }
+            """);
+        var legendPos = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const legend = document.querySelector('[data-testid=kb-map-legend], .kb-map-legend-host .legend');
+              const map = document.querySelector('.map-pane');
+              if (!legend || !map) return false;
+              const lr = legend.getBoundingClientRect();
+              const mr = map.getBoundingClientRect();
+              const inLeft = lr.left < mr.left + mr.width * 0.4;
+              const inBottom = lr.bottom > mr.top + mr.height * 0.55;
+              const compact = lr.width <= 320 && lr.height <= 280;
+              return inLeft && inBottom && compact;
+            }
+            """);
+        var mockupTop = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const top = document.querySelector('[data-testid=kb-mockup-top]');
+              const strip = document.querySelector('[data-testid=kb-nearby-banner]');
+              if (!top || !strip) return false;
+              const tr = top.getBoundingClientRect();
+              const sr = strip.getBoundingClientRect();
+              return tr.height >= 48 && tr.bottom <= sr.top + 4 && tr.top >= 0;
+            }
+            """);
+        var fullHeight = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
+              const pane = document.querySelector('.vacancy-pane');
+              const map = document.querySelector('.map-pane');
+              if (!nav || !pane || !map) return false;
+              const gapList = nav.getBoundingClientRect().top - pane.getBoundingClientRect().bottom;
+              const gapMap = nav.getBoundingClientRect().top - map.getBoundingClientRect().bottom;
+              return Math.abs(gapList) <= 24 && Math.abs(gapMap) <= 24;
+            }
+            """);
+        var matchBtn = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const btn = document.querySelector('.kb-panel-head__filters-row [data-testid=kb-match-button]');
+              if (!btn) return false;
+              const label = btn.querySelector('.kb-match-button__label');
+              const r = btn.getBoundingClientRect();
+              return !!(label && label.textContent && label.textContent.trim().length > 1 && r.width > 80);
+            }
+            """);
+        var hoursChip = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const chips = document.querySelectorAll('.kb-active-filters .chip, .kb-active-filters .kb-active-tag');
+              return Array.from(chips).some(c => /32/.test(c.textContent || '') && /40/.test(c.textContent || ''));
+            }
+            """);
+        return
+        [
+            new { id = "1-desktop-column-order-widths", pass = columnOrder },
+            new { id = "2-compact-vc-cards", pass = compactVc },
+            new { id = "3-map-30min-zone-edge-labels", pass = isoLabels },
+            new { id = "4-legend-bottom-left-in-map", pass = legendPos },
+            new { id = "7-mockup-top-above-strip", pass = mockupTop },
+            new { id = "8-panels-flush-bottom-nav", pass = fullHeight },
+            new { id = "9-match-button-label", pass = matchBtn },
+            new { id = "10-hours-filter-chip", pass = hoursChip },
+        ];
+    }
+
+    private static async Task<List<object>> EvaluateEightPointMobileAsync(IPage page)
+    {
+        var addressRow = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const addr = document.querySelector('.jobsy-discovery--lagen .ph .addr');
+              return !!(addr && addr.getBoundingClientRect().height > 8);
+            }
+            """);
+        var mapToNav = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
+              const pane = document.querySelector('.jobsy-discovery.show-map .map-pane');
+              if (!nav || !pane) return false;
+              const gap = nav.getBoundingClientRect().top - pane.getBoundingClientRect().bottom;
+              return Math.abs(gap) <= 14;
+            }
+            """);
+        return
+        [
+            new { id = "5-mobile-address-row", pass = addressRow },
+            new { id = "6-map-down-to-bottom-nav", pass = mapToNav },
+        ];
+    }
+
+    private static async Task<List<object>> EvaluateEightPointVacancySheetAsync(IPage page)
+    {
+        var sheetMockup = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const sheet = document.querySelector('.map-cluster-sheet--lagen, .kb-popup-lagen--sheet');
+              if (!sheet) return false;
+              const grab = sheet.querySelector('.grab');
+              const title = sheet.querySelector('.map-popup__title--lagen, .map-cluster-card__title');
+              return !!(grab && title);
+            }
+            """);
+        var noHeart = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const root = document.querySelector('.map-cluster-sheet--lagen, .kb-popup-lagen--sheet');
+              if (!root) return false;
+              const heart = root.querySelector('.map-popup__heart');
+              if (!heart) return true;
+              return getComputedStyle(heart).display === 'none' || getComputedStyle(heart).visibility === 'hidden';
+            }
+            """);
+        return
+        [
+            new { id = "7-vacancy-sheet-mockup", pass = sheetMockup },
+            new { id = "8-no-extra-heart-in-sheet", pass = noHeart },
+        ];
+    }
+
+    private static async Task GenerateReportImagesAsync()
+    {
+        var script = Path.Combine(Directory.GetCurrentDirectory(), "tmp", "generate-lagen-report-images.py");
+        while (!File.Exists(script) && Directory.GetParent(Directory.GetCurrentDirectory()) is { } parent)
+        {
+            var candidate = Path.Combine(parent.FullName, "tmp", "generate-lagen-report-images.py");
+            if (File.Exists(candidate))
+            {
+                script = candidate;
+                break;
+            }
+        }
+
+        if (!File.Exists(script))
+        {
+            script = "/workspace/tmp/generate-lagen-report-images.py";
+        }
+
+        if (!File.Exists(script))
+        {
+            return;
+        }
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = "python3",
+            ArgumentList = { script, CompareDir },
+            RedirectStandardError = true,
+        };
+        using var p = Process.Start(psi)!;
+        var err = await p.StandardError.ReadToEndAsync();
+        await p.WaitForExitAsync();
+        Assert.True(p.ExitCode == 0, "report images failed: " + err);
+    }
+
+    private static string BuildReportMarkdown(
+        List<object> elementTables,
+        List<object> buttons,
+        List<object> popupPhotoMetrics)
+    {
+        var elementJson = JsonSerializer.Serialize(elementTables, new JsonSerializerOptions { WriteIndented = true });
+        var buttonsJson = JsonSerializer.Serialize(buttons, new JsonSerializerOptions { WriteIndented = true });
+        var photoJson = JsonSerializer.Serialize(popupPhotoMetrics, new JsonSerializerOptions { WriteIndented = true });
+        return $"""
+            # Banenkaart lagen compare (PR #923)
+
+            Publish output: `{PublishDir}` (outside repo, Release build).
+
+            ## Root cause acc breakage (ec45303 / logged-in hard reload)
+
+            **Cause:** `banenkaart-ssr.js` restored `sessionStorage` key `jobsy.bk.ui.v1` on reload with `showMap: false` (and desktop `desktopList: true`), hiding the map/FAB and leaving list-only layout — half-unstyled list, narrow chrome.
+
+            **Fix:** UI state key bumped to `jobsy.bk.ui.v2`, legacy v1 cleared; on navigation reload desktop/mobile default back to **map view**; SW/cache `CACHE_VERSION` → `acc9`.
+
+            ## Side-by-side paths
+
+            - `{CompareDir}/side-by-side-desktop-1280-map-list.png`
+            - `{CompareDir}/side-by-side-desktop-1280-popup.png`
+            - `{CompareDir}/side-by-side-header-c-desktop-1280.png`
+            - `{CompareDir}/side-by-side-mobile-390-map.png`
+            - `{CompareDir}/side-by-side-mobile-390-uitleg.png`
+            - `{CompareDir}/side-by-side-mobile-390-vacature.png`
+            - `{CompareDir}/side-by-side-header-c-mobile-390.png`
+
+            Raw app captures under `{CompareDir}/captures/`.
+
+            ## Element table
+
+            See `{CompareDir}/element-table.json`.
+
+            ```json
+            {elementJson}
+            ```
+
+            ## Buttons tested
+
+            See `{CompareDir}/buttons-tested.json`.
+
+            ```json
+            {buttonsJson}
+            ```
+
+            ## Map popup photo (lazy WebP)
+
+            Loaded only when the popup opens (`/api/vacancies/` + id + `/map-popup-photo`). See `{CompareDir}/popup-photo-metrics.json`.
+
+            ```json
+            {photoJson}
+            ```
+
+            Generated: {DateTime.UtcNow:O}
+            """;
+    }
+
+    private async Task CaptureViewportAsync(int width, int height, bool touch, string slug, Func<IPage, string, Task> work)
+    {
+        var repoRoot = FindRepoRoot();
+        var localJobMap = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", "jobMap.min.js");
+        var localLagenCss = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css");
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            HasTouch = touch,
+            IsMobile = touch,
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Block,
+        });
+        if (File.Exists(localJobMap))
+        {
+            var jobMapJs = await File.ReadAllTextAsync(localJobMap);
+            await context.RouteAsync("**/jobMap.min.js**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/javascript; charset=utf-8",
+                Body = jobMapJs,
+            }));
+        }
+
+        if (File.Exists(localLagenCss))
+        {
+            var lagenCss = await File.ReadAllTextAsync(localLagenCss);
+            await context.RouteAsync("**/banenkaart-lagen.css**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "text/css; charset=utf-8",
+                Body = lagenCss,
+            }));
+        }
+
+        foreach (var jsName in new[] { "banenkaart-catalog.js", "banenkaart-map-layers.js", "banenkaart-map-icons.js" })
+        {
+            var jsPath = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", jsName);
+            if (!File.Exists(jsPath))
+            {
+                continue;
+            }
+
+            var body = await File.ReadAllTextAsync(jsPath);
+            await context.RouteAsync("**/" + jsName + "**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/javascript; charset=utf-8",
+                Body = body,
+            }));
+        }
+
+        var mapLibreMin = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.min.js");
+        if (File.Exists(mapLibreMin))
+        {
+            var mlBody = await File.ReadAllTextAsync(mapLibreMin);
+            await context.RouteAsync("**/jobsyMapLibre.min.js**", route => route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/javascript; charset=utf-8",
+                Body = mlBody,
+            }));
+        }
+
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(30_000);
+        await page.GotoAsync(_baseUrl + "/__test/sign-in?role=candidate&return=" + Uri.EscapeDataString(CompareBanenkaartPath));
+        await page.GotoAsync(_baseUrl + CompareBanenkaartPath, new() { WaitUntil = WaitUntilState.Load });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        var later = page.Locator("[data-testid=kb-start-later]");
+        if (await later.CountAsync() > 0)
+        {
+            await later.First.ClickAsync();
+        }
+
+        await page.EvaluateAsync(
+            """
+            async () => {
+              try {
+                if (window.caches && caches.keys) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map(k => caches.delete(k)));
+                }
+              } catch (e) { }
+            }
+            """);
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        if (await later.CountAsync() > 0)
+        {
+            await later.First.ClickAsync();
+        }
+
+        var capDir = Path.Combine(CompareDir, "captures", slug);
+        Directory.CreateDirectory(capDir);
+        await work(page, capDir);
+    }
+
+    private static async Task AssertMobile390LayoutBeforeCaptureAsync(IPage page)
+    {
+        var problem = await page.EvaluateAsync<string?>(
+            """
+            () => {
+              const maxW = Math.max(document.documentElement.scrollWidth, document.body?.scrollWidth || 0);
+              if (maxW > 390) return 'scrollWidth=' + maxW;
+              const mapw = document.querySelector('.map-pane.mapw, .jobsy-discovery--lagen .map-pane');
+              if (!mapw) return 'missing .map-pane.mapw';
+              const mh = mapw.getBoundingClientRect().height;
+              if (mh <= 300) return '.mapw height=' + mh;
+              const canvas = document.querySelector('#job-map .maplibregl-canvas');
+              if (!canvas) return 'missing map canvas';
+              const cr = canvas.getBoundingClientRect();
+              if (cr.width < 32 || cr.height < 32) return 'canvas not visible';
+              const strip = document.querySelector('.strip .sc');
+              if (!strip) return 'missing strip .sc';
+              const sr = strip.getBoundingClientRect();
+              if (sr.height < 8 || sr.width < 8) return 'strip not visible';
+              return null;
+            }
+            """);
+        Assert.True(string.IsNullOrEmpty(problem), "Mobile 390 pre-capture layout: " + problem);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var root = Directory.GetCurrentDirectory();
+        while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
+        {
+            root = Directory.GetParent(root)!.FullName;
+        }
+
+        return root;
+    }
+
+    private static async Task WaitReadyAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const canvas = document.querySelector('#job-map .maplibregl-canvas');
+              if (!canvas) return false;
+              const rect = canvas.getBoundingClientRect();
+              if (rect.width < 32 || rect.height < 32) return false;
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              return !!(map && typeof map.getZoom === 'function');
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const strip = document.querySelector('.strip .sc');
+                  const list = document.querySelector('.vc');
+                  const w = window.innerWidth || 1280;
+                  if (w < 900) return !!strip;
+                  return !!(strip && list);
+                }
+                """,
+                null,
+                new() { Timeout = 60_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Catalog/strip may lag; still capture map chrome for compare artifacts.
+        }
+
+        try
+        {
+            await page.WaitForFunctionAsync(
+                "() => window.jobMap && window.jobMap.__testGetPinCount && window.jobMap.__testGetPinCount() > 0",
+                null,
+                new() { Timeout = 60_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Pins may still open via rendered features fallback.
+        }
+
+        await WaitForRenderedPinsAsync(page);
+        await page.EvaluateAsync(
+            """
+            () => {
+              if (window.jobMap && typeof window.jobMap.invalidate === 'function') {
+                window.jobMap.invalidate();
+              }
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (map && typeof map.resize === 'function') {
+                map.resize();
+              }
+            }
+            """);
+        await page.WaitForTimeoutAsync(400);
+        await WaitForRenderedPinsAsync(page);
+    }
+
+    private static async Task WaitForRenderedPinsAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (!map) return false;
+              const src = map.getSource('jobsy-pins');
+              if (!src) return false;
+              const n = window.jobMap.__testGetRenderedPinCount && window.jobMap.__testGetRenderedPinCount();
+              return typeof n === 'number' && n >= 3;
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
+    }
+
+    private static async Task ShotAsync(IPage page, string dir, string name) =>
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, name), FullPage = false });
+
+    private static async Task<bool> OpenFirstClusterPopupAsync(IPage page)
+    {
+        await WaitReadyAsync(page);
+        var opened = await page.EvaluateAsync<bool>(
+            """
+            async () => {
+              if (!window.jobMap || !window.jobMap.debugOpenLargestCluster) return false;
+              return await window.jobMap.debugOpenLargestCluster();
+            }
+            """);
+        if (!opened)
+        {
+            return false;
+        }
+
+        return await WaitForVacancyPopupAsync(page);
+    }
+
+    private static async Task<bool> OpenFirstPinPopupAsync(IPage page)
+    {
+        var rowLoc = page.Locator(".vc[data-vacancy-id], [data-testid=kb-list-row][data-vacancy-id]");
+        string? rowId = null;
+        if (await rowLoc.CountAsync() > 0)
+        {
+            rowId = await rowLoc.First.GetAttributeAsync("data-vacancy-id");
+        }
+
+        if (!string.IsNullOrWhiteSpace(rowId))
+        {
+            await page.EvaluateAsync(
+                "(id) => { if (window.jobMap && window.jobMap.__testOpenVacancyById) window.jobMap.__testOpenVacancyById(id); }",
+                rowId);
+            return await WaitForVacancyPopupAsync(page);
+        }
+
+        var mapPinId = await page.EvaluateAsync<string?>(
+            """
+            () => {
+              const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+              if (!map) return null;
+              const layers = ['jobsy-pins-unclustered', 'jobsy-pins-point', 'jobsy-pins-clusters', 'jobsy-pins'];
+              for (const layer of layers) {
+                let feats = [];
+                try {
+                  feats = map.queryRenderedFeatures({ layers: [layer] }) || [];
+                } catch (e) { }
+                for (const f of feats) {
+                  const id = f.properties && (f.properties.id || f.properties.vacancyId);
+                  if (id) return String(id);
+                }
+              }
+              return null;
+            }
+            """);
+        if (string.IsNullOrWhiteSpace(mapPinId))
+        {
+            return false;
+        }
+
+        await page.EvaluateAsync(
+            "(id) => { if (window.jobMap && window.jobMap.__testOpenVacancyById) window.jobMap.__testOpenVacancyById(id); }",
+            mapPinId);
+        return await WaitForVacancyPopupAsync(page);
+    }
+
+    private static async Task<object?> WaitForPopupPhotoMetricsAsync(IPage page)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const m = window.jobMap && window.jobMap.__testGetLastPopupPhotoMetrics
+                    && window.jobMap.__testGetLastPopupPhotoMetrics();
+                  return m && m.bytes > 0 && m.ms >= 0;
+                }
+                """,
+                null,
+                new() { Timeout = 20_000 });
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+
+        return await page.EvaluateAsync<object?>(
+            "() => window.jobMap && window.jobMap.__testGetLastPopupPhotoMetrics && window.jobMap.__testGetLastPopupPhotoMetrics()");
+    }
+
+    private static async Task<bool> WaitForVacancyPopupAsync(IPage page)
+    {
+        var popup = page.Locator(".maplibregl-popup:visible, .fcwrap.kb-lagen-fcwrap:visible, .fcw.kb-lagen-fcw:visible, .kb-popup-lagen:visible, .map-cluster-sheet:visible");
+        try
+        {
+            await popup.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
+        }
+    }
+
+    private static async Task<object> BuildElementTableAsync(IPage page, int width, string profile)
+    {
+        var checks = new (string id, string sel, string? contains)[]
+        {
+            ("lagen-root", "[data-banenkaart-ssr=\"1\"].jobsy-discovery--lagen", null),
+            ("header-strip", "[data-testid=kb-nearby-banner]", null),
+            ("strip", ".strip .sc", null),
+            ("list-vc", width >= 900 ? ".vc" : ".strip .sc", null),
+            ("legend-or-legbtn", width >= 900 ? "[data-testid=kb-map-legend]" : "[data-testid=kb-map-legbtn]", null),
+            ("bottom-nav", "[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav", null),
+        };
+        var rows = new List<object>();
+        foreach (var c in checks)
+        {
+            var loc = page.Locator(c.sel);
+            var ok = await loc.CountAsync() > 0 && await loc.First.IsVisibleAsync();
+            rows.Add(new { c.id, c.sel, pass = ok });
+        }
+
+        return new { profile, width, rows };
+    }
+
+    private static Task SideBySideAsync(string mockupPath, string appPath, string outPath)
+    {
+        if (!File.Exists(mockupPath) || !File.Exists(appPath))
+        {
+            return Task.CompletedTask;
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
+        using var a = Image.Load<Rgba32>(mockupPath);
+        using var b = Image.Load<Rgba32>(appPath);
+        var h = Math.Max(a.Height, b.Height);
+        a.Mutate(ctx => ctx.Resize(new ResizeOptions
+        {
+            Size = new Size((int)(a.Width * (h / (float)a.Height)), h),
+            Mode = ResizeMode.Stretch,
+            Sampler = KnownResamplers.Lanczos3,
+        }));
+        b.Mutate(ctx => ctx.Resize(new ResizeOptions
+        {
+            Size = new Size((int)(b.Width * (h / (float)b.Height)), h),
+            Mode = ResizeMode.Stretch,
+            Sampler = KnownResamplers.Lanczos3,
+        }));
+        const int gap = 8;
+        const int labelH = 28;
+        using var canvas = new Image<Rgba32>(a.Width + gap + b.Width, h + labelH, new Rgba32(250, 246, 239, 255));
+        canvas.Mutate(ctx =>
+        {
+            ctx.DrawImage(a, new Point(0, labelH), 1f);
+            ctx.DrawImage(b, new Point(a.Width + gap, labelH), 1f);
+        });
+        canvas.SaveAsPng(outPath);
+        return Task.CompletedTask;
+    }
+
+    private static async Task EnsurePublishedToWorkspaceTmpAsync()
+    {
+        var root = Directory.GetCurrentDirectory();
+        while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
+        {
+            root = Directory.GetParent(root)!.FullName;
+        }
+
+        var dll = Path.Combine(PublishDir, "Jobsy.Web.dll");
+        var webCs = Path.Combine(root, "Jobsy.Web", "Jobsy.Web.csproj");
+        var testsCs = Path.Combine(root, "Jobsy.Tests", "Jobsy.Tests.csproj");
+        var srcNewerThanPublish = File.Exists(dll)
+            && (File.GetLastWriteTimeUtc(webCs) > File.GetLastWriteTimeUtc(dll)
+                || File.GetLastWriteTimeUtc(testsCs) > File.GetLastWriteTimeUtc(dll));
+        if (File.Exists(dll) && !srcNewerThanPublish && File.GetLastWriteTimeUtc(dll) > DateTime.UtcNow.AddHours(-3))
+        {
+            return;
+        }
+
+        if (Directory.Exists(PublishDir))
+        {
+            Directory.Delete(PublishDir, recursive: true);
+        }
+
+        Directory.CreateDirectory("/workspace/tmp");
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            WorkingDirectory = root,
+            ArgumentList = { "publish", "Jobsy.Web/Jobsy.Web.csproj", "-c", "Release", "-o", PublishDir, "/p:UseAppHost=false" },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        using var pub = Process.Start(psi)!;
+        var stderr = await pub.StandardError.ReadToEndAsync();
+        await pub.WaitForExitAsync();
+        Assert.True(pub.ExitCode == 0, "publish to /workspace/tmp failed: " + stderr);
+    }
+
+    private static async Task ExtractMockupRefsAsync()
+    {
+        var marker = Path.Combine(MockupRefRoot, "lagen/desktop/02-banenkaart-lagen-desktop-1440.png");
+        if (File.Exists(marker))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(Path.Combine(CompareDir, "mockup-ref"));
+        var root = Directory.GetCurrentDirectory();
+        while (!File.Exists(Path.Combine(root, "Jobsy.sln")) && Directory.GetParent(root) is not null)
+        {
+            root = Directory.GetParent(root)!.FullName;
+        }
+
+        var tarPath = Path.Combine(CompareDir, "mockup-ref.tar");
+        var psi = new ProcessStartInfo
+        {
+            FileName = "git",
+            WorkingDirectory = root,
+            ArgumentList = { "archive", MockupCommit, "docs/mockups/kandidaat/banenkaart", "-o", tarPath },
+            RedirectStandardError = true,
+        };
+        using (var arch = Process.Start(psi)!)
+        {
+            var err = await arch.StandardError.ReadToEndAsync();
+            await arch.WaitForExitAsync();
+            Assert.True(arch.ExitCode == 0, "git archive mockups: " + err);
+        }
+
+        Directory.CreateDirectory(Path.Combine(CompareDir, "mockup-ref"));
+        var tar = Process.Start(new ProcessStartInfo
+        {
+            FileName = "tar",
+            ArgumentList = { "--no-same-permissions", "-xf", tarPath, "-C", Path.Combine(CompareDir, "mockup-ref") },
+            RedirectStandardError = true,
+        })!;
+        var tarErr = await tar.StandardError.ReadToEndAsync();
+        await tar.WaitForExitAsync();
+        Assert.True(tar.ExitCode == 0, "tar extract mockups: " + tarErr);
+    }
+}

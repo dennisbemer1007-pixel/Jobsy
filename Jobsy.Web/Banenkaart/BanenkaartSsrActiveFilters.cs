@@ -44,6 +44,16 @@ internal static class BanenkaartSsrActiveFilters
             AppendTag(inner, "kb-active-tag-match", culture.Format("Kb.Filter.MatchTag", q.MinMatchPercent), null);
         }
 
+        if (q.MinHoursPerWeek > 0 || q.MaxHoursPerWeek is > 0 and < 40)
+        {
+            tags++;
+            AppendTag(
+                inner,
+                "kb-active-tag-hours",
+                culture.Format("Kb.Filter.HoursValue", q.MinHoursPerWeek, q.MaxHoursPerWeek),
+                culture.Format("Kb.Filter.RemoveTag", culture.Format("Kb.Filter.HoursValue", q.MinHoursPerWeek, q.MaxHoursPerWeek)));
+        }
+
         if (!string.IsNullOrWhiteSpace(q.SearchQuery))
         {
             tags++;
@@ -55,16 +65,16 @@ internal static class BanenkaartSsrActiveFilters
             return;
         }
 
-        sb.Append("<div class=\"kb-active-filters\" data-testid=\"kb-active-filters\">");
+        sb.Append("<div class=\"chips deskonly kb-active-filters\" data-testid=\"kb-active-filters\">");
         sb.Append(inner);
-        sb.Append("<button type=\"button\" class=\"kb-active-filters__clear\" data-testid=\"kb-active-filters-clear\">")
+        sb.Append("<button type=\"button\" class=\"link kb-active-filters__clear\" data-testid=\"kb-active-filters-clear\">")
             .Append(WebUtility.HtmlEncode(culture["Kb.Filter.Wissen"]))
             .Append("</button></div>");
     }
 
     private static void AppendTag(StringBuilder sb, string testId, string label, string? removeAria)
     {
-        sb.Append("<button type=\"button\" class=\"kb-active-tag\" data-testid=\"")
+        sb.Append("<button type=\"button\" class=\"chip kb-active-tag\" data-testid=\"")
             .Append(testId)
             .Append('"');
         if (!string.IsNullOrWhiteSpace(removeAria))

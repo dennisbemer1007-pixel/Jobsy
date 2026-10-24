@@ -50,6 +50,8 @@ html.cookie-consent-known .cookie-consent { display: none; }
     .jobsy-discovery[data-banenkaart-ssr="1"].show-list .vacancy-pane { display: flex !important; flex-direction: column; overflow: hidden; min-height: 0; flex: 1 1 auto; grid-row: 3; }
     .jobsy-discovery[data-banenkaart-ssr="1"].show-list .vacancy-list { overflow-y: auto !important; -webkit-overflow-scrolling: touch; min-height: 0; flex: 1 1 auto; }
     .jobsy-discovery[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane { display: none !important; }
+    .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane.panel { display: flex !important; flex-direction: column; flex: none; border-bottom: 1px solid var(--border, #e2d9cb); }
+    .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane .list.vacancy-list { display: none !important; }
 }
 .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
 .map-stage.is-live .job-map-placeholder { opacity: 0; visibility: hidden; transition: none; }

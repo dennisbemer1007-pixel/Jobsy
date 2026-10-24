@@ -145,8 +145,19 @@ window.jobsyMapLibre = (function () {
     var OSM_ATTRIBUTION =
         '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 
-    /** Desktop (≥1025px): expanded credit always visible. Mobile: compact "i" toggle. */
+    function isLagenBanenkaartPage() {
+        try {
+            return !!document.querySelector(".jobsy-discovery--lagen[data-banenkaart-ssr=\"1\"]");
+        } catch (ePage) {
+            return false;
+        }
+    }
+
+    /** Desktop (≥1025px): expanded credit — except lagen banenkaart mockup (always compact). */
     function preferCompactAttribution() {
+        if (isLagenBanenkaartPage()) {
+            return true;
+        }
         try {
             return !(window.matchMedia && window.matchMedia("(min-width: 1025px)").matches);
         } catch (e) {
@@ -397,7 +408,7 @@ window.jobsyMapLibre = (function () {
                 return { url: url };
             },
             attributionControl: {
-                compact: preferCompactAttribution(),
+                compact: options.compactAttribution === true || preferCompactAttribution(),
                 customAttribution: OSM_ATTRIBUTION
             },
             maplibreLogo: false,

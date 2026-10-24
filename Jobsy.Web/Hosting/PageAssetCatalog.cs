@@ -38,7 +38,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidatePublicCss =
     [
         "css/features/banenkaart.css?v=20261019-01",
-        "css/features/banenkaart-illustrated.css?v=20261023-25",
+        "css/features/banenkaart-illustrated.css?v=20261023-acc9",
         "css/features/bedrijvenkaart.css?v=20261019-10",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
@@ -51,7 +51,7 @@ public static class PageAssetCatalog
     [
         "css/features/uwv-mockups.css?v=20261019-r8",
         "css/features/banenkaart.css?v=20261018-02",
-        "css/features/banenkaart-illustrated.css?v=20261023-25",
+        "css/features/banenkaart-illustrated.css?v=20261023-acc9",
     ];
 
     public static readonly string[] CandidateAppCss =
@@ -419,16 +419,17 @@ public static class PageAssetCatalog
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
-        "/css/features/banenkaart-page.css?v=20261023-25",
+        "/css/features/banenkaart-page.css?v=20261023-acc9",
         "/css/features/kandidaat-banen.css?v=20261019-01",
-        "/css/features/banenkaart.css?v=20261023-25",
-        "/css/features/banenkaart-illustrated.css?v=20261023-25",
+        "/css/features/banenkaart.css?v=20261023-acc9",
+        "/css/features/banenkaart-illustrated.css?v=20261023-acc9",
+        "/css/features/banenkaart-lagen.css?v=20261023-acc21",
     ];
 
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>
     public static IReadOnlyList<string> BanenkaartAuthenticatedShellCss() =>
     [
-        "css/features/banenkaart-auth-chrome.css?v=20261023-25",
+        "css/features/banenkaart-auth-chrome.css?v=20261023-acc9",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/nav-feedback.css?v=20261017-01",
         "css/features/candidate-header-tablet.css?v=20261021-01",
@@ -437,7 +438,7 @@ public static class PageAssetCatalog
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [
-        "css/features/candidate-no-blazor-chrome.css?v=20261023-25",
+        "css/features/candidate-no-blazor-chrome.css?v=20261023-acc9",
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

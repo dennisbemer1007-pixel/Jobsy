@@ -178,6 +178,23 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                     if (HttpMethods.IsGet(ctx.Request.Method)
                         && IllustratedPagesApiStub.ShouldStubVacancyCatalog(path))
                     {
+                        if (path.Contains("/map-popup-photo", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var bytes = IllustratedPagesVacancyStub.MapPopupPhotoBytes(
+                                path,
+                                ctx.Request.QueryString.Value);
+                            if (bytes is { Length: > 0 })
+                            {
+                                ctx.Response.ContentType = "image/webp";
+                                ctx.Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+                                await ctx.Response.Body.WriteAsync(bytes);
+                                return;
+                            }
+
+                            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                            return;
+                        }
+
                         if (path.EndsWith("/image", StringComparison.OrdinalIgnoreCase))
                         {
                             var thumb = IllustratedPagesVacancyStub.ThumbnailForImageRequest(path);
@@ -194,6 +211,13 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                         ctx.Response.ContentType = "application/json; charset=utf-8";
                         var pathAndQuery = path + ctx.Request.QueryString;
                         await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(pathAndQuery));
+                        return;
+                    }
+
+                    if (path.StartsWith("/api/banenkaart-client", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ctx.Response.ContentType = "application/json; charset=utf-8";
+                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
                         return;
                     }
 

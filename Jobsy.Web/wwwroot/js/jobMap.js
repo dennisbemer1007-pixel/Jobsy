@@ -52,6 +52,8 @@ window.jobMap = (function () {
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
     let catalogModeActive = false;
+    let lagenLayout = false;
+    let catalogMapReadySent = false;
     let bootZoomOutsideTravel = false;
     let pendingCatalogPins = null;
     let pendingCatalogMeta = null;
@@ -215,7 +217,9 @@ window.jobMap = (function () {
     const PIN_LAYER_CLUSTER_COUNT = "jobsy-pins-cluster-count";
     const PIN_LAYER_UNCLUSTERED = "jobsy-pins-unclustered";
     const PIN_LAYER_UNCLUSTERED_GLYPH = "jobsy-pins-unclustered-glyph";
+    const PIN_LAYER_UNCLUSTERED_SYMBOL = "jobsy-pins-unclustered-symbol";
     const PIN_LAYER_SELECTED = "jobsy-pins-selected";
+    const LAGEN_CLUSTER_GREEN = "#1E7A4C";
     const PIN_SOURCE_AGENCY_AREAS = "jobsy-agency-areas";
     const PIN_LAYER_AGENCY_AREAS_FILL = "jobsy-agency-areas-fill";
     const PIN_LAYER_AGENCY_AREAS_LINE = "jobsy-agency-areas-line";
@@ -785,6 +789,9 @@ window.jobMap = (function () {
     }
 
     function metaRowHtml(v) {
+        if (lagenLayout) {
+            return "";
+        }
         const parts = [];
         if (v.travelMinutes != null && v.travelMinutes !== "") {
             const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
@@ -907,7 +914,423 @@ window.jobMap = (function () {
         );
     }
 
+    function lagenOrgLineHtml(v) {
+        if (v.offeredBy) {
+            return (
+                "<p class=\"map-popup__company map-popup__company--via kb-popup__org\">" +
+                    escapeHtml(String(v.offeredBy)) +
+                "</p>"
+            );
+        }
+        if (v.company) {
+            return (
+                "<p class=\"map-popup__company kb-popup__org\">" +
+                    escapeHtml(String(v.company)) +
+                "</p>"
+            );
+        }
+        return "";
+    }
+
+    function lagenTravelLineHtml(v) {
+        if (v.travelMinutes == null || v.travelMinutes === "") {
+            return "";
+        }
+        const ic = window.jobsyBanenkaartMapIcons;
+        const bike = ic && ic.bikeSvg ? ic.bikeSvg : "";
+        const mins = escapeHtml(String(v.travelMinutes)) + " min";
+        if (lagenLayout) {
+            const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+            return "<div class=\"rt kb-popup__travel\">" + bike + "<span>"
+                + escapeHtml(String(v.travelMinutes)) + " min " + escapeHtml(mode) + "</span></div>";
+        }
+        const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+        return (
+            "<p class=\"map-popup__meta kb-popup__travel\">" +
+                bike +
+                "<span>" + mins + " " + escapeHtml(mode) + "</span>" +
+            "</p>"
+        );
+    }
+
+    function lagenDescriptionLine(v) {
+        const raw = v && (v.summary || v.shortDescription || v.descriptionLine || v.whyLine || v.categoryName || "");
+        const text = String(raw || "").trim();
+        if (!text) {
+            return "";
+        }
+        return escapeHtml(text);
+    }
+
+    function lagenPopupIsEnglish() {
+        try {
+            const lang = (document.documentElement && document.documentElement.lang) || "";
+            return String(lang).toLowerCase().indexOf("en") === 0;
+        } catch (eLang) {
+            return false;
+        }
+    }
+
+    function lagenIsIntermediaryPin(v) {
+        if (!v) {
+            return false;
+        }
+        if (v.offeredBy) {
+            return true;
+        }
+        const kind = String(v.pinKind || v.agency || "");
+        return kind === "intermediary" || kind === "1";
+    }
+
+    function lagenChevronRightSvg() {
+        return "<svg class=\"ic s\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10 7l5 5-5 5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>";
+    }
+
+    function lagenChevronLeftSvg() {
+        return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M14.5 6l-6 6 6 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>";
+    }
+
+    function lagenCloseSvg() {
+        return "<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"/></svg>";
+    }
+
+    function lagenClockSvg() {
+        return "<svg class=\"ic s\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/><path d=\"M12 8v4.5l3 2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"/></svg>";
+    }
+
+    function lagenDocSvg() {
+        return "<svg class=\"ic s\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 3.5h7l4 4V20H7z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linejoin=\"round\"/><path d=\"M14 3.5V8h4M10 12h5M10 15.5h5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"/></svg>";
+    }
+
+    function lagenWageAgeLabel(ageYears) {
+        const en = lagenPopupIsEnglish();
+        const age = Number(ageYears);
+        if (age >= 21) {
+            return en ? "21 years and over" : "21 jaar en ouder";
+        }
+        if (age === 14) {
+            return en ? "14 years" : "14 jaar";
+        }
+        return en ? (age + " years") : (age + " jaar");
+    }
+
+    function lagenVacancyCounter(current, total) {
+        const en = lagenPopupIsEnglish();
+        if (en) {
+            return current + " of " + total;
+        }
+        return current + " van " + total;
+    }
+
+    function normalizeLagenWageBands(v) {
+        if (Array.isArray(v.wageBands) && v.wageBands.length) {
+            return v.wageBands.slice();
+        }
+        if (Array.isArray(v.wageByAge) && v.wageByAge.length) {
+            return v.wageByAge.map(function (b) {
+                return {
+                    ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
+                    hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
+                    label: b.label || b.Label || ""
+                };
+            });
+        }
+        const adult = Number(v.wage);
+        if (!Number.isFinite(adult) || adult <= 0) {
+            return [];
+        }
+        const fracs = [
+            { ageYears: 15, f: 0.30 },
+            { ageYears: 16, f: 0.345 },
+            { ageYears: 17, f: 0.395 },
+            { ageYears: 18, f: 0.50 },
+            { ageYears: 19, f: 0.60 },
+            { ageYears: 20, f: 0.80 },
+            { ageYears: 21, f: 1.00 }
+        ];
+        return fracs.map(function (row) {
+            return {
+                ageYears: row.ageYears,
+                hourlyRate: Math.round(adult * row.f * 100) / 100,
+                label: String(row.ageYears)
+            };
+        });
+    }
+
+    function lagenHighlightBandAge(bands, candidateAge) {
+        const age = Number(candidateAge);
+        if (!Number.isFinite(age)) {
+            return null;
+        }
+        const clamped = Math.max(14, Math.min(99, age));
+        let match = null;
+        bands.forEach(function (b) {
+            const ay = Number(b.ageYears);
+            if (Number.isFinite(ay) && ay <= clamped) {
+                match = ay;
+            }
+        });
+        return match;
+    }
+
+    function lagenWageTooltipHtml(v, open) {
+        const bands = normalizeLagenWageBands(v);
+        if (!bands.length) {
+            return "";
+        }
+        const en = lagenPopupIsEnglish();
+        const title = en
+            ? (uiLabels.wageTooltipTitleEn || "Hourly wage (gross)")
+            : (uiLabels.wageTooltipTitle || "Uurloon (bruto)");
+        const candidateAge = uiLabels.candidateAgeYears != null
+            ? Number(uiLabels.candidateAgeYears)
+            : 21;
+        const highlightAge = lagenHighlightBandAge(bands, candidateAge);
+        const rows = [];
+        const age15 = bands.find(function (b) { return Number(b.ageYears) === 15; }) || bands[0];
+        rows.push({ ageYears: 14, hourlyRate: age15.hourlyRate, me: candidateAge === 14 });
+        bands.forEach(function (b) {
+            const ay = Number(b.ageYears);
+            rows.push({
+                ageYears: ay,
+                hourlyRate: b.hourlyRate,
+                me: highlightAge != null && ay === highlightAge
+            });
+        });
+        const uniq = [];
+        rows.forEach(function (r) {
+            if (!uniq.some(function (u) { return u.ageYears === r.ageYears; })) {
+                uniq.push(r);
+            }
+        });
+        const body = uniq.map(function (r) {
+            const cls = r.me ? "tr2 me" : "tr2";
+            return "<div class=\"" + cls + "\"><span>" + escapeHtml(lagenWageAgeLabel(r.ageYears)) +
+                "</span><span>€ " + formatWage(r.hourlyRate) + "</span></div>";
+        }).join("");
+        return "<div class=\"tip\" role=\"tooltip\"" + (open ? "" : " hidden") + "><b>" + escapeHtml(title) +
+            "</b>" + body + "</div>";
+    }
+
+    let lastLagenPopupPhotoMetrics = null;
+
+    function lagenMapPopupPhotoUrl(vacancyId, mobile) {
+        if (vacancyId == null || vacancyId === "") {
+            return "";
+        }
+        const variant = mobile ? "mobile" : "desktop";
+        return "/api/vacancies/" + encodeURIComponent(String(vacancyId)) +
+            "/map-popup-photo?variant=" + variant;
+    }
+
+    function lagenWorkplacePhotoShell(v) {
+        if (!v || v.id == null) {
+            return "<div class=\"fph fph--empty\" aria-hidden=\"true\"></div>";
+        }
+        return "<div class=\"fph fph--await\" data-lagen-photo-slot=\"1\" data-lagen-photo-id=\"" +
+            escapeAttr(String(v.id)) + "\"></div>";
+    }
+
+    function loadLagenPopupPhoto(root, job, opts) {
+        opts = opts || {};
+        if (!root || !job || job.id == null) {
+            return;
+        }
+        const slot = root.querySelector("[data-lagen-photo-slot]");
+        if (!slot) {
+            return;
+        }
+        slot.replaceChildren();
+        const mobile = opts.mobile != null ? !!opts.mobile : isNarrowViewport();
+        const url = lagenMapPopupPhotoUrl(job.id, mobile);
+        if (!url) {
+            slot.classList.add("fph--empty");
+            return;
+        }
+        const started = typeof performance !== "undefined" && performance.now
+            ? performance.now()
+            : Date.now();
+        slot.classList.remove("fph--await", "fph--empty");
+        slot.classList.add("fph--loading");
+        const img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.setAttribute("width", mobile ? "248" : "640");
+        img.setAttribute("height", mobile ? "248" : "360");
+        fetch(url, { credentials: "same-origin" })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error("photo-http");
+                }
+                return res.blob();
+            })
+            .then(function (blob) {
+                const ms = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - started);
+                lastLagenPopupPhotoMetrics = {
+                    vacancyId: String(job.id),
+                    variant: mobile ? "mobile" : "desktop",
+                    bytes: blob.size,
+                    kb: Math.round(blob.size / 102.4) / 10,
+                    ms: ms,
+                    url: url
+                };
+                img.onload = function () {
+                    slot.classList.remove("fph--loading");
+                };
+                img.src = URL.createObjectURL(blob);
+                slot.appendChild(img);
+            })
+            .catch(function () {
+                slot.classList.remove("fph--loading");
+                slot.classList.add("fph--empty");
+            });
+    }
+
+    function prefetchLagenPopupPhoto(job, mobile) {
+        if (!job || job.id == null) {
+            return;
+        }
+        const url = lagenMapPopupPhotoUrl(job.id, mobile);
+        if (!url) {
+            return;
+        }
+        try {
+            fetch(url, { credentials: "same-origin", priority: "low" }).catch(function () { });
+        } catch (eFetch) { }
+    }
+
+    function lagenContractText(v) {
+        const wt = String(v.workType || (v.workTypes && v.workTypes[0]) || "").trim();
+        if (wt) {
+            return wt;
+        }
+        const en = lagenPopupIsEnglish();
+        return en ? "Flexible contract" : "Flexibel contract";
+    }
+
+    function lagenTravelFactText(v) {
+        if (v.travelMinutes == null || v.travelMinutes === "") {
+            return "";
+        }
+        const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+        return String(v.travelMinutes) + " min " + mode;
+    }
+
+    function lagenTypeLabelHtml(v) {
+        const ic = window.jobsyBanenkaartMapIcons;
+        const via = lagenIsIntermediaryPin(v);
+        const en = lagenPopupIsEnglish();
+        const text = via
+            ? (en ? "Via intermediary" : "Via intermediair")
+            : (en ? "At employer" : "Bij werkgever");
+        const pinSvg = ic && (via ? ic.pinI : ic.pinW)
+            ? (via ? ic.pinI(0.46, false, false) : ic.pinW(0.46))
+            : "";
+        return "<span class=\"flab " + (via ? "i" : "w") + "\">" + pinSvg + escapeHtml(text) + "</span>";
+    }
+
+    function lagenHeartHtml(v) {
+        const liked = !!v.liked;
+        const label = liked
+            ? (uiLabels.saved || "Bewaard")
+            : (uiLabels.save || "Bewaar");
+        return (
+            "<button type=\"button\" class=\"hrt map-popup__heart" + (liked ? " is-saved" : "") + "\" " +
+                "data-save-job=\"" + escapeAttr(v.id) + "\" " +
+                "aria-pressed=\"" + (liked ? "true" : "false") + "\" " +
+                "aria-label=\"" + escapeAttr(label) + "\">" +
+                heartIconHtml(liked) +
+            "</button>"
+        );
+    }
+
+    function buildLagenFundaPopupHtml(v, opts) {
+        opts = opts || {};
+        const mobile = !!opts.mobile;
+        const page = Math.max(1, Number(opts.page) || 1);
+        const pageCount = Math.max(1, Number(opts.pageCount) || 1);
+        const cluster = !!opts.cluster || pageCount > 1;
+        const wageOpen = !!opts.wageTipOpen;
+        const detailHref = detailHrefForVacancy(v.id);
+        const title = escapeHtml(v.title || vacancyFallbackTitle());
+        const orgName = escapeHtml(String(v.company || ""));
+        const viaPrefix = lagenIsIntermediaryPin(v) ? "via " : "";
+        const place = escapeHtml(String(v.place || v.address || ""));
+        const hours = escapeHtml(hoursMetaText(v) || (lagenPopupIsEnglish() ? "Hours vary" : "Uren variabel"));
+        const contract = escapeHtml(lagenContractText(v));
+        const travel = lagenTravelFactText(v);
+        const ic = window.jobsyBanenkaartMapIcons;
+        const bike = ic && ic.bikeSvg ? ic.bikeSvg.replace("class=\"ic\"", "class=\"ic s\"") : "";
+        const nav = cluster
+            ? "<div class=\"fnav\" role=\"navigation\" aria-label=\"" + escapeAttr(uiLabels.pagerNav || "Vacatures") + "\">" +
+                "<button type=\"button\" class=\"fb\" data-lagen-prev aria-label=\"" + escapeAttr(uiLabels.prevVacancy || "Vorige") + "\">" +
+                    lagenChevronLeftSvg() + "</button>" +
+                "<span class=\"fcount\" data-lagen-counter aria-live=\"polite\">" +
+                    escapeHtml(lagenVacancyCounter(page, pageCount)) + "</span>" +
+                "<button type=\"button\" class=\"fb\" data-lagen-next aria-label=\"" + escapeAttr(uiLabels.nextVacancy || "Volgende") + "\">" +
+                    lagenChevronRightSvg() + "</button>" +
+            "</div>"
+            : "";
+        const tip = lagenWageTooltipHtml(v, wageOpen);
+        const euroBtn = tip
+            ? "<button type=\"button\" class=\"fb euro" + (wageOpen ? " on" : "") + "\" data-lagen-wage aria-expanded=\"" +
+                (wageOpen ? "true" : "false") + "\" aria-label=\"" +
+                escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" + tip + "</button>"
+            : "<span class=\"fb euro is-disabled\" aria-hidden=\"true\">€</span>";
+        const photoBlock = lagenWorkplacePhotoShell(v);
+        const bodyInner = mobile
+            ? "<div class=\"fbody\"><div class=\"fbody-media\">" + photoBlock + "</div><div class=\"finfo\">" +
+                "<div class=\"flrow\">" + lagenTypeLabelHtml(v) + lagenHeartHtml(v) + "</div>" +
+                "<h3>" + title + "</h3>" +
+                "<div class=\"femp\">" + viaPrefix + orgName + "</div>" +
+                (place ? "<div class=\"fpl\">" + place + "</div>" : "") +
+                "<div class=\"ffacts\">" +
+                    (travel ? "<span>" + bike + escapeHtml(travel) + "</span>" : "") +
+                    "<span>" + lagenClockSvg() + hours + "</span>" +
+                "</div>" +
+                (contract ? "<div class=\"fcontract\">" + lagenDocSvg() + contract + "</div>" : "") +
+                "</div></div>"
+            : photoBlock +
+                "<div class=\"finfo\"><div class=\"flrow\">" + lagenTypeLabelHtml(v) + lagenHeartHtml(v) + "</div>" +
+                "<h3>" + title + "</h3>" +
+                "<div class=\"femp\">" + viaPrefix + orgName + "</div>" +
+                (place ? "<div class=\"fpl\">" + place + "</div>" : "") +
+                "<div class=\"ffacts\">" +
+                    (travel ? "<span>" + bike + escapeHtml(travel) + "</span>" : "") +
+                    "<span>" + lagenClockSvg() + hours + "</span>" +
+                    "<span>" + lagenDocSvg() + contract + "</span>" +
+                "</div></div>";
+        return (
+            "<div class=\"fcw kb-lagen-fcw" + (mobile ? " m" : "") + (wageOpen ? " lagen-wage-open" : "") + "\" data-lagen-fcw=\"1\">" +
+                "<div class=\"fctl\">" + nav + "<span class=\"sp\"></span>" + euroBtn +
+                "<button type=\"button\" class=\"fb fx\" data-lagen-close aria-label=\"" +
+                    escapeAttr(uiLabels.close || "Sluiten") + "\">" + lagenCloseSvg() + "</button></div>" +
+                "<div class=\"fc" + (mobile ? " m" : "") + "\">" + bodyInner +
+                "<a class=\"fgo\" href=\"" + escapeAttr(detailHref) +
+                    "\" data-job-id=\"" + escapeAttr(v.id) + "\"><span>" +
+                    (lagenPopupIsEnglish() ? "View vacancy" : "Bekijk vacature") + "</span>" +
+                    lagenChevronRightSvg() + "</a></div></div>"
+        );
+    }
+
+    function buildLagenCatalogPopupHtml(v, sheetMode) {
+        return buildLagenFundaPopupHtml(v, {
+            mobile: !!sheetMode,
+            page: 1,
+            pageCount: 1,
+            cluster: false,
+            wageTipOpen: false
+        });
+    }
+
+    function buildLagenMobileSheetShell(viewportInner) {
+        return "<div class=\"fcwrap kb-lagen-fcwrap\">" + viewportInner + "</div>";
+    }
+
     function buildPopupHtml(v) {
+        if (lagenLayout && catalogModeActive) {
+            return buildLagenCatalogPopupHtml(v, lagenLayout && isNarrowViewport());
+        }
         let mediaInner = "";
         let mediaClassFinal = "map-popup__media";
         const photoSrc = v.imageUrl ? String(v.imageUrl) : "";
@@ -979,6 +1402,9 @@ window.jobMap = (function () {
     }
 
     function matchLineHtml(v) {
+        if (lagenLayout) {
+            return "";
+        }
         if (v.fitGate === "closed") {
             const href = String(uiLabels.passportHref || "/profiel");
             const label = String(v.fitGateLabel || uiLabels.fitGate || "Maak je paspoort af");
@@ -1176,6 +1602,15 @@ window.jobMap = (function () {
             return "<div class=\"map-popup\"><div class=\"map-popup__main\"><div class=\"map-popup__body\">" +
                 "<p class=\"map-popup__company\">" + escapeHtml(noVacanciesLabel()) + "</p></div></div></div>";
         }
+        if (lagenLayout && catalogModeActive && clusterUiState) {
+            return buildLagenFundaPopupHtml(job, {
+                mobile: isNarrowViewport(),
+                page: clusterUiState.page,
+                pageCount: clusterUiState.pageCount,
+                cluster: clusterUiState.pageCount > 1,
+                wageTipOpen: !!clusterUiState.wageTipOpen
+            });
+        }
         if (job._detailLoaded) {
             return buildPopupHtml(job);
         }
@@ -1249,6 +1684,14 @@ window.jobMap = (function () {
     }
 
     function preloadClusterImages(jobs, fromPage) {
+        if (lagenLayout && catalogModeActive) {
+            const page = Math.max(1, fromPage || 1);
+            const next = jobs && jobs[page];
+            if (next) {
+                prefetchLagenPopupPhoto(next, isNarrowViewport());
+            }
+            return;
+        }
         const start = Math.max(0, (fromPage || 1) - 1);
         for (let i = start; i < Math.min(jobs.length, start + 3); i++) {
             const j = jobs[i];
@@ -1265,6 +1708,20 @@ window.jobMap = (function () {
 
     function updateClusterChrome(state) {
         if (!state || !state.root) {
+            return;
+        }
+        if (lagenLayout && catalogModeActive) {
+            const total = state.pageCount;
+            const current = state.page;
+            const lagenCounter = state.root && state.root.querySelector("[data-lagen-counter]");
+            if (lagenCounter) {
+                lagenCounter.textContent = lagenVacancyCounter(current, total);
+            }
+            syncSheetChromeOffset();
+            return;
+        }
+        if (lagenLayout && isNarrowViewport()) {
+            syncSheetChromeOffset();
             return;
         }
         const total = state.pageCount;
@@ -1337,7 +1794,7 @@ window.jobMap = (function () {
         if (!pane) {
             return;
         }
-        const sheet = pane.querySelector(".map-cluster-sheet");
+        const sheet = pane.querySelector(".fcwrap.kb-lagen-fcwrap, .map-cluster-sheet--lagen, .map-cluster-sheet");
         const h = sheet && sheet.offsetParent !== null ? sheet.offsetHeight : 0;
         pane.style.setProperty("--map-cluster-sheet-h", h + "px");
     }
@@ -1580,9 +2037,34 @@ window.jobMap = (function () {
                 });
                 jobs[current - 1] = resolved;
             }
-            const html = buildClusterPinHtml(resolved || job);
-            const slide = setClusterSlideHtml(state.viewport, html, direction || 0, !!inPlace || !!replaceInPlace);
-            bindClusterSlideInteractions(slide || state.viewport, childMarkers);
+            if (lagenLayout && catalogModeActive) {
+                const mobile = isNarrowViewport();
+                const html = buildLagenFundaPopupHtml(resolved || job, {
+                    mobile: mobile,
+                    page: current,
+                    pageCount: pageCount,
+                    cluster: pageCount > 1,
+                    wageTipOpen: !!state.wageTipOpen
+                });
+                if (state.root) {
+                    const parent = state.root.parentNode;
+                    state.root.outerHTML = html;
+                    state.root = parent && parent.querySelector("[data-lagen-fcw]");
+                    const host = activeClusterPopup && activeClusterPopup.getElement();
+                    bindLagenFundaInteractions(host || parent, childMarkers);
+                    if (state.root) {
+                        loadLagenPopupPhoto(state.root, resolved || job, { mobile: mobile });
+                    }
+                    const nextJob = jobs[current];
+                    if (nextJob) {
+                        prefetchLagenPopupPhoto(nextJob, isNarrowViewport());
+                    }
+                }
+            } else {
+                const html = buildClusterPinHtml(resolved || job);
+                const slide = setClusterSlideHtml(state.viewport, html, direction || 0, !!inPlace || !!replaceInPlace);
+                bindClusterSlideInteractions(slide || state.viewport, childMarkers);
+            }
             preloadClusterImages(jobs, current);
             if (popup && typeof popup.update === "function" && !state.docked) {
                 try { popup.update(); } catch (e) { }
@@ -1900,12 +2382,239 @@ window.jobMap = (function () {
         };
     }
 
+    function createLagenFundaMobileController(html) {
+        const host = map.getContainer().closest(".map-stage")
+            || map.getContainer().closest(".map-pane")
+            || map.getContainer();
+        const root = document.createElement("div");
+        root.className = "fcwrap kb-lagen-fcwrap";
+        root.innerHTML = html;
+        host.appendChild(root);
+        clusterSheetEl = root;
+        return {
+            docked: true,
+            getElement: function () { return root; },
+            remove: function () {
+                if (root.parentNode) {
+                    root.parentNode.removeChild(root);
+                }
+                if (clusterSheetEl === root) {
+                    clusterSheetEl = null;
+                }
+            },
+            setHTML: function () { },
+            update: function () { },
+            setLngLat: function () { },
+            on: function () { return this; }
+        };
+    }
+
+    function setLagenWageTipOpen(root, open) {
+        if (!root) {
+            return;
+        }
+        const fcw = root.classList && root.classList.contains("fcw")
+            ? root
+            : root.querySelector("[data-lagen-fcw]");
+        if (!fcw) {
+            return;
+        }
+        fcw.classList.toggle("lagen-wage-open", !!open);
+        const btn = fcw.querySelector("[data-lagen-wage]");
+        const tip = fcw.querySelector(".tip");
+        if (btn) {
+            btn.classList.toggle("on", !!open);
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+        }
+        if (tip) {
+            if (open) {
+                tip.removeAttribute("hidden");
+            } else {
+                tip.setAttribute("hidden", "");
+            }
+        }
+        if (clusterUiState) {
+            clusterUiState.wageTipOpen = !!open;
+        }
+    }
+
+    function bindLagenFundaInteractions(root, childMarkers) {
+        if (!root) {
+            return;
+        }
+        const fcw = root.querySelector("[data-lagen-fcw]") || root;
+        if (fcw.dataset.lagenFundaBound === "1") {
+            return;
+        }
+        fcw.dataset.lagenFundaBound = "1";
+        const closeBtn = fcw.querySelector("[data-lagen-close]");
+        if (closeBtn) {
+            closeBtn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                closeActivePopup();
+            });
+        }
+        const prev = fcw.querySelector("[data-lagen-prev]");
+        const next = fcw.querySelector("[data-lagen-next]");
+        if (prev) {
+            prev.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                if (!clusterUiState) {
+                    return;
+                }
+                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page - 1, -1, true);
+            });
+        }
+        if (next) {
+            next.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                if (!clusterUiState) {
+                    return;
+                }
+                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page + 1, 1, true);
+            });
+        }
+        const wageBtn = fcw.querySelector("[data-lagen-wage]");
+        if (wageBtn) {
+            if (isNarrowViewport()) {
+                wageBtn.addEventListener("click", function (ev) {
+                    stopEvent(ev);
+                    const open = !fcw.classList.contains("lagen-wage-open");
+                    setLagenWageTipOpen(fcw, open);
+                });
+            } else {
+                wageBtn.addEventListener("mouseenter", function () {
+                    setLagenWageTipOpen(fcw, true);
+                });
+                wageBtn.addEventListener("mouseleave", function () {
+                    setLagenWageTipOpen(fcw, false);
+                });
+                wageBtn.addEventListener("focus", function () {
+                    setLagenWageTipOpen(fcw, true);
+                });
+                wageBtn.addEventListener("blur", function () {
+                    setLagenWageTipOpen(fcw, false);
+                });
+            }
+        }
+        fcw.querySelectorAll(".fgo, .map-popup__cta").forEach(function (cta) {
+            if (cta.dataset.bound) {
+                return;
+            }
+            cta.dataset.bound = "1";
+            cta.addEventListener("click", function () {
+                const id = cta.getAttribute("data-job-id");
+                if (id) {
+                    notifyOpen(id);
+                }
+            });
+        });
+        bindSaveJobButtons(fcw, childMarkers || []);
+        const job = clusterUiState && clusterUiState.jobs
+            ? clusterUiState.jobs[(clusterUiState.page || 1) - 1]
+            : null;
+        if (job) {
+            loadLagenPopupPhoto(fcw, job, { mobile: isNarrowViewport() });
+        }
+    }
+
+    function openLagenFundaPopup(childMarkers, lngLat) {
+        if (!map || !childMarkers || !childMarkers.length) {
+            return;
+        }
+        closeActivePopup();
+        const jobs = clusterJobsFromMarkers(childMarkers);
+        const pageCount = Math.max(1, jobs.length);
+        const firstJob = jobs[0] || {};
+        const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
+        const mobile = isNarrowViewport();
+        const viewLock = mobile
+            ? { zoom: map.getZoom(), center: map.getCenter() }
+            : null;
+        const html = buildLagenFundaPopupHtml(firstJob, {
+            mobile: mobile,
+            page: 1,
+            pageCount: pageCount,
+            cluster: pageCount > 1,
+            wageTipOpen: false
+        });
+        highlight(firstJob.id);
+        setSelectedCluster(ll, pageCount);
+        setClusterOpenChrome(true, Object.keys(markersById).length);
+        bindClusterEscape();
+        if (mobile) {
+            activeClusterPopup = createLagenFundaMobileController(html);
+            clusterUiState = {
+                jobs: jobs,
+                page: 1,
+                pageCount: pageCount,
+                childMarkers: childMarkers,
+                root: activeClusterPopup.getElement().querySelector("[data-lagen-fcw]") ||
+                    activeClusterPopup.getElement(),
+                viewport: null,
+                docked: true,
+                lngLat: ll,
+                wageTipOpen: false
+            };
+            bindLagenFundaInteractions(activeClusterPopup.getElement(), childMarkers);
+            panClusterAboveSheet(ll);
+            if (viewLock) {
+                try {
+                    map.jumpTo({
+                        center: viewLock.center,
+                        zoom: viewLock.zoom,
+                        duration: 0
+                    });
+                } catch (eLock) { }
+            }
+        } else {
+            activeClusterPopup = popupFromOpts({
+                className: "maplibregl-popup pop fpop kb-popup-lagen-pop",
+                closeButton: false,
+                closeOnClick: false,
+                maxWidth: "420px",
+                offset: 16,
+                anchor: "bottom"
+            }, ll, html);
+            ensureLagenPopInView(activeClusterPopup);
+            const popRoot = activeClusterPopup.getElement();
+            clusterUiState = {
+                jobs: jobs,
+                page: 1,
+                pageCount: pageCount,
+                childMarkers: childMarkers,
+                root: popRoot && popRoot.querySelector("[data-lagen-fcw]"),
+                viewport: null,
+                docked: false,
+                lngLat: ll,
+                wageTipOpen: false
+            };
+            bindLagenFundaInteractions(popRoot, childMarkers);
+        }
+        prefetchClusterCards(jobs).then(function () {
+            if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
+                return;
+            }
+            renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page, 0, true);
+        });
+        if (firstJob.id) {
+            fetchVacancyCard(firstJob.id).then(function (card) {
+                if (!clusterUiState || clusterUiState.childMarkers !== childMarkers || !card) {
+                    return;
+                }
+                const full = mapCardToPopup(card, firstJob);
+                jobs[0] = full;
+                renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
+            });
+        }
+    }
+
     function eventTargetInsidePopup(ev, popup) {
         if (!ev) {
             return false;
         }
         const target = ev.target || ev.srcElement;
-        if (target && target.closest && target.closest(".map-cluster-sheet, .map-cluster-chip")) {
+        if (target && target.closest && target.closest(".fcwrap, .kb-lagen-fcw, .map-cluster-sheet, .map-cluster-chip")) {
             return true;
         }
         if (!popup) {
@@ -1946,6 +2655,9 @@ window.jobMap = (function () {
         unbindClusterEscape();
         syncSheetChromeOffset();
         clearSelectedPinVisual();
+        if (document.body) {
+            document.body.classList.remove("s-popup");
+        }
     }
 
     function closePopupsIfClickOutside(ev) {
@@ -2319,8 +3031,21 @@ window.jobMap = (function () {
             rankLowerReason: card.rankLowerReason || pin.rankLowerReason || null,
             wage: card.hourlyWage != null && card.wageVisible !== false ? card.hourlyWage : null,
             wageLabel: card.wageLabel || card.displayWageLabel || null,
+            wageByAge: Array.isArray(card.wageByAge) ? card.wageByAge : (Array.isArray(card.WageByAge) ? card.WageByAge : null),
+            wageBands: Array.isArray(card.wageByAge)
+                ? card.wageByAge.map(function (b) {
+                    return {
+                        ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
+                        hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
+                        label: b.label || b.Label || ""
+                    };
+                })
+                : (pin.wageBands || null),
             minHoursPerWeek: card.minHoursPerWeek != null ? card.minHoursPerWeek : pin.minHoursPerWeek,
             maxHoursPerWeek: card.maxHoursPerWeek != null ? card.maxHoursPerWeek : pin.maxHoursPerWeek,
+            summary: card.summary || card.shortDescription || pin.summary || null,
+            shortDescription: card.shortDescription || card.summary || pin.shortDescription || null,
+            descriptionLine: card.descriptionLine || card.teaser || pin.descriptionLine || null,
             liked: pin.liked === true,
             transport: travelOptions.transport || pin.transport,
             transportLabel: transportVerb(travelOptions.transport) || pin.transportLabel,
@@ -2705,12 +3430,19 @@ window.jobMap = (function () {
         if (!map || !record) {
             return;
         }
-        // Same docked card as a cluster (one item, no pager) — file 03.
+        if (lagenLayout && catalogModeActive) {
+            openLagenFundaPopup([record], [record.lng, record.lat]);
+            return;
+        }
         openClusterList([record], [record.lng, record.lat]);
     }
 
     function openClusterList(childMarkers, lngLat) {
         if (!map || !childMarkers || childMarkers.length === 0) {
+            return;
+        }
+        if (lagenLayout && catalogModeActive) {
+            openLagenFundaPopup(childMarkers, lngLat);
             return;
         }
 
@@ -2720,12 +3452,50 @@ window.jobMap = (function () {
         const pageCount = Math.max(1, jobs.length);
         const firstJob = jobs[0];
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
+        if (lagenLayout && catalogModeActive && pageCount === 1 && isNarrowViewport()) {
+            const inner = buildLagenCatalogPopupHtml(firstJob || {}, true);
+            const sheetHtml = buildLagenMobileSheetShell(inner);
+            setSelectedCluster(ll, 1);
+            setClusterOpenChrome(true, Object.keys(markersById).length);
+            bindClusterEscape();
+            activeClusterPopup = createDockedClusterController(sheetHtml);
+            clusterUiState = {
+                jobs: jobs,
+                page: 1,
+                pageCount: 1,
+                childMarkers: childMarkers,
+                root: activeClusterPopup.getElement().querySelector("[data-cluster-card]") ||
+                    activeClusterPopup.getElement(),
+                viewport: activeClusterPopup.getElement().querySelector("[data-cluster-viewport]"),
+                docked: true,
+                lngLat: ll
+            };
+            bindClusterPopupInteractions(activeClusterPopup, childMarkers);
+            if (firstJob && firstJob.id) {
+                fetchVacancyCard(firstJob.id).then(function (card) {
+                    if (!clusterUiState || !card) {
+                        return;
+                    }
+                    const full = mapCardToPopup(card, firstJob);
+                    const vp = clusterUiState.viewport;
+                    if (vp) {
+                        vp.innerHTML = buildLagenCatalogPopupHtml(full, true);
+                    }
+                });
+            }
+            return;
+        }
         // Fixed-size chrome + skeleton card so the sheet appears on the same tap frame.
         const chromeHtml = buildClusterChromeHtml(pageCount, clusterPlaceLabel(jobs));
         const skeletonCard = skeletonPopupHtml(firstJob || {});
-        const sheetHtml = chromeHtml.replace(
-            "data-cluster-viewport\"></div>",
-            "data-cluster-viewport\">" + skeletonCard + "</div>");
+        let sheetHtml;
+        if (lagenLayout && isNarrowViewport()) {
+            sheetHtml = buildLagenMobileSheetShell(skeletonCard);
+        } else {
+            sheetHtml = chromeHtml.replace(
+                "data-cluster-viewport\"></div>",
+                "data-cluster-viewport\">" + skeletonCard + "</div>");
+        }
         const visibleCount = Object.keys(markersById).length;
 
         setSelectedCluster(ll, pageCount);
@@ -2814,6 +3584,39 @@ window.jobMap = (function () {
         return Math.max(5, Number(travelOptions.maxMinutes) || 30);
     }
 
+    function readLagenLayoutFromOptions(options) {
+        if (!options) {
+            return false;
+        }
+        if (options.lagenLayout === true) {
+            return true;
+        }
+        const mi = options.mapInit;
+        return !!(mi && mi.lagenLayout === true);
+    }
+
+    function lagenTravelRingMinutes() {
+        return [10, 20, 30];
+    }
+
+    function travelRingLineDashPaint() {
+        if (lagenLayout) {
+            return [
+                "match", ["coalesce", ["get", "minutes"], 0],
+                10, ["literal", [1, 0]],
+                20, ["literal", [3, 1.6]],
+                30, ["literal", [0.6, 1.4]],
+                ["literal", [1, 0]]
+            ];
+        }
+        return [
+            "case",
+            [">=", ["coalesce", ["get", "minutes"], 0], 30],
+            ["literal", [2, 2]],
+            ["literal", [1, 0]]
+        ];
+    }
+
     function metersPerMinute(transport) {
         const mode = canonicalTransport(transport);
         const cruise = CRUISE_KM_H[mode] || CRUISE_KM_H.Fiets;
@@ -2880,7 +3683,10 @@ window.jobMap = (function () {
 
     function maxRingRadiusMeters() {
         const speed = metersPerMinute(travelOptions.transport || "Fiets");
-        const travelMeters = (Number(travelOptions.maxMinutes) || 30) * speed;
+        const maxMin = lagenLayout
+            ? Math.max(30, Number(travelOptions.maxMinutes) || 30)
+            : (Number(travelOptions.maxMinutes) || 30);
+        const travelMeters = maxMin * speed;
         const radiusKm = Number(travelOptions.radiusKm);
         if (Number.isFinite(radiusKm) && radiusKm > 0) {
             return Math.min(travelMeters, radiusKm * 1000);
@@ -2932,6 +3738,16 @@ window.jobMap = (function () {
     }
 
     function eachTravelRing(lat, lng, fn) {
+        if (lagenLayout) {
+            const chosen = chosenRingMinutes();
+            lagenTravelRingMinutes().forEach(function (mins, index) {
+                const radius = ringRadiusForMinutes(mins);
+                if (radius >= 40) {
+                    fn(mins, index, radius, mins === chosen);
+                }
+            });
+            return;
+        }
         const mins = chosenRingMinutes();
         const radius = ringRadiusForMinutes(mins);
         if (radius >= 40) {
@@ -2967,7 +3783,7 @@ window.jobMap = (function () {
 
     function fetchIsochrones(lat, lng) {
         const mode = canonicalTransport(travelOptions.transport || "Fiets");
-        const minutes = [chosenRingMinutes()];
+        const minutes = lagenLayout ? lagenTravelRingMinutes() : [chosenRingMinutes()];
         const key = isochroneCacheKey(lat, lng, mode, minutes);
         if (isochroneCache[key]) {
             return Promise.resolve(isochroneCache[key]);
@@ -3034,6 +3850,11 @@ window.jobMap = (function () {
     }
 
     function labelBearingForMinutes(mins, index) {
+        if (lagenLayout) {
+            if (mins <= 10) return 180;
+            if (mins <= 20) return 135;
+            return 315;
+        }
         // Mockup bearings ≈ 30° (10), 190° (20), 160° (30).
         if (mins <= 10) return 30;
         if (mins <= 20) return 190;
@@ -3043,6 +3864,9 @@ window.jobMap = (function () {
 
     function pointOnRingEdge(lat, lng, mins, index, feature) {
         const bearing = labelBearingForMinutes(mins, index);
+        if (lagenLayout) {
+            return destinationLngLat(lat, lng, ringRadiusForMinutes(mins), bearing);
+        }
         if (feature && feature.geometry && feature.geometry.type === "Polygon") {
             const ring = feature.geometry.coordinates && feature.geometry.coordinates[0];
             if (ring && ring.length > 8) {
@@ -3087,27 +3911,49 @@ window.jobMap = (function () {
             const isChosen = !!feature.properties.chosen || mins === chosen;
             const ll = pointOnRingEdge(lat, lng, mins, index, feature);
             const el = document.createElement("div");
-            el.className = "map-iso-label" + (isChosen ? " map-iso-label--chosen" : "");
-            el.setAttribute("title", mins + " min " + labelVerb);
-            el.setAttribute("aria-label", mins + " min " + labelVerb);
-            if (isChosen) {
-                el.innerHTML = "<span class=\"map-iso-label__icon\" aria-hidden=\"true\">" +
-                    transportIconChar(transport) + "</span>" + mins + " min";
+            const labelText = mins + " min " + labelVerb;
+            if (lagenLayout) {
+                const ic = window.jobsyBanenkaartMapIcons;
+                const bike = ic && ic.bikeSvg ? ic.bikeSvg : "";
+                el.className = "map-iso-label kb-rl";
+                el.setAttribute("title", labelText);
+                el.setAttribute("aria-label", labelText);
+                el.innerHTML = bike + "<span>" + escapeHtml(String(mins)) + " min</span>";
             } else {
-                el.textContent = mins + " min";
+                el.className = "map-iso-label" + (isChosen ? " map-iso-label--chosen" : "");
+                el.setAttribute("title", labelText);
+                el.setAttribute("aria-label", labelText);
+                if (isChosen) {
+                    el.innerHTML = "<span class=\"map-iso-label__icon\" aria-hidden=\"true\">" +
+                        transportIconChar(transport) + "</span>" + mins + " min";
+                } else {
+                    el.textContent = mins + " min";
+                }
+            }
+            let anchor = "center";
+            if (lagenLayout) {
+                if (mins <= 10) {
+                    anchor = "bottom";
+                } else if (mins <= 20) {
+                    anchor = "bottom-right";
+                } else {
+                    anchor = "top-left";
+                }
             }
             try {
-                const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+                const marker = new maplibregl.Marker({ element: el, anchor: anchor })
                     .setLngLat(ll)
                     .addTo(map);
                 isochroneLabelMarkers.push(marker);
             } catch (e) { }
         });
-        clampIsoLabelMarkersToMap();
+        if (!lagenLayout) {
+            clampIsoLabelMarkersToMap();
+        }
     }
 
     function clampIsoLabelMarkersToMap() {
-        if (!map || !isochroneLabelMarkers.length) {
+        if (lagenLayout || !map || !isochroneLabelMarkers.length) {
             return;
         }
         const container = map.getContainer();
@@ -3155,6 +4001,9 @@ window.jobMap = (function () {
     }
 
     function ringBrandColors() {
+        if (lagenLayout) {
+            return { fill: "#1F2F55", line: "#1F2F55" };
+        }
         const brand = readCssToken("--brand", "#0f2d5c");
         const brandDeep = readCssToken("--brand-deep", brand);
         return { fill: brand, line: brandDeep || brand };
@@ -3191,6 +4040,25 @@ window.jobMap = (function () {
         const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
         const colors = ringBrandColors();
 
+        const lagenFillOpacity = lagenLayout
+            ? ["match", ["coalesce", ["get", "minutes"], 0], 10, 0.10, 20, 0.06, 30, 0.035, 0.06]
+            : [
+                "match", ["coalesce", ["get", "minutes"], 0],
+                10, 0.12,
+                20, 0.09,
+                30, 0.06,
+                45, 0.05,
+                0.08
+            ];
+        const lagenLineWidth = lagenLayout
+            ? ["match", ["coalesce", ["get", "minutes"], 0], 10, 3, 20, 2.6, 30, 3, 2.5]
+            : [
+                "case",
+                ["==", ["coalesce", ["get", "chosen"], 0], 1],
+                2.5,
+                1.5
+            ];
+
         if (!map.getLayer(fillId)) {
             map.addLayer({
                 id: fillId,
@@ -3198,14 +4066,7 @@ window.jobMap = (function () {
                 source: sourceId,
                 paint: {
                     "fill-color": colors.fill,
-                    "fill-opacity": [
-                        "match", ["coalesce", ["get", "minutes"], 0],
-                        10, 0.12,
-                        20, 0.09,
-                        30, 0.06,
-                        45, 0.05,
-                        0.08
-                    ]
+                    "fill-opacity": lagenFillOpacity
                 }
             }, beforeId);
         }
@@ -3222,7 +4083,10 @@ window.jobMap = (function () {
                         4.5,
                         3
                     ],
-                    "line-opacity": 0.85
+                    "line-opacity": lagenLayout ? 0 : 0.85
+                },
+                layout: {
+                    visibility: lagenLayout ? "none" : "visible"
                 }
             }, beforeId);
         }
@@ -3233,24 +4097,23 @@ window.jobMap = (function () {
                 source: sourceId,
                 paint: {
                     "line-color": colors.line,
-                    "line-width": [
-                        "case",
-                        ["==", ["coalesce", ["get", "chosen"], 0], 1],
-                        2.5,
-                        1.5
+                    "line-width": lagenLineWidth,
+                    "line-opacity": 0.9,
+                    "line-dasharray": travelRingLineDashPaint()
+                },
+                layout: lagenLayout ? {
+                    "line-cap": [
+                        "match", ["coalesce", ["get", "minutes"], 0],
+                        30, "round",
+                        "butt"
                     ],
-                    "line-opacity": 1,
-                    "line-dasharray": [
-                        "case",
-                        [">=", ["coalesce", ["get", "minutes"], 0], 30],
-                        ["literal", [2, 2]],
-                        ["literal", [1, 0]]
-                    ]
-                }
+                    "line-join": "round"
+                } : {}
             }, beforeId);
         } else {
             try {
                 map.setPaintProperty(lineId, "line-color", colors.line);
+                map.setPaintProperty(lineId, "line-dasharray", travelRingLineDashPaint());
                 map.setPaintProperty(fillId, "fill-color", colors.fill);
             } catch (e) { }
         }
@@ -3310,12 +4173,58 @@ window.jobMap = (function () {
         }
 
         const ringKey = String(lat) + "," + String(lng) + "|"
-            + String(travelOptions.maxMinutes) + "|" + String(travelOptions.transport || "");
+            + (lagenLayout ? "lagen:10,20,30" : String(travelOptions.maxMinutes)) + "|"
+            + String(travelOptions.transport || "");
         if (ringKey === lastRingDrawKey && travelRingGeo) {
             return;
         }
         lastRingDrawKey = ringKey;
         travelRingDrawCount += 1;
+
+        const drawGen = ++ringRedrawTries;
+        function applyIsochroneFc(fc) {
+            if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
+                Math.abs(lastOrigin.lng - lng) > 1e-7) {
+                return;
+            }
+            if (!fc) {
+                if (lagenLayout) {
+                    clearTravelRings();
+                    lastRingDrawKey = ringKey;
+                    setIsoMode("none");
+                } else {
+                    try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
+                    setIsoMode("approx");
+                }
+                return;
+            }
+            const isoFeatures = featuresFromIsochroneFc(fc);
+            if (!isoFeatures.length) {
+                if (lagenLayout) {
+                    clearTravelRings();
+                    lastRingDrawKey = ringKey;
+                    setIsoMode("none");
+                } else {
+                    setIsoMode("approx");
+                }
+                return;
+            }
+            applyTravelRingData(isoFeatures, lat, lng);
+            setIsoMode("real");
+            ringRedrawTries = Math.min(ringRedrawTries, drawGen);
+        }
+
+        function loadIsochronesWhenIdle() {
+            fetchIsochrones(lat, lng).then(applyIsochroneFc);
+        }
+
+        if (lagenLayout) {
+            clearTravelRings();
+            lastRingDrawKey = ringKey;
+            setIsoMode("pending");
+            scheduleIsoLoad(loadIsochronesWhenIdle);
+            return;
+        }
 
         // Circles first, swap isochrones when they arrive (no flash).
         const circleFeatures = buildTravelRingFeatures(lat, lng);
@@ -3325,48 +4234,29 @@ window.jobMap = (function () {
         }
         applyTravelRingData(circleFeatures, lat, lng);
         setIsoMode("approx");
+        scheduleIsoLoad(loadIsochronesWhenIdle);
 
-        const drawGen = ++ringRedrawTries;
-        function loadIsochronesWhenIdle() {
-            fetchIsochrones(lat, lng).then(function (fc) {
-                if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
-                    Math.abs(lastOrigin.lng - lng) > 1e-7) {
-                    return;
-                }
-                if (!fc) {
-                    try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
-                    setIsoMode("approx");
-                    return;
-                }
-                const isoFeatures = featuresFromIsochroneFc(fc);
-                if (!isoFeatures.length) {
-                    setIsoMode("approx");
-                    return;
-                }
-                applyTravelRingData(isoFeatures, lat, lng);
-                setIsoMode("real");
-                ringRedrawTries = Math.min(ringRedrawTries, drawGen);
-            });
-        }
-        if (map && typeof map.once === "function") {
-            if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()
-                && map.areTilesLoaded && map.areTilesLoaded()) {
-                if (typeof requestIdleCallback === "function") {
-                    requestIdleCallback(loadIsochronesWhenIdle, { timeout: 5000 });
+        function scheduleIsoLoad(fn) {
+            if (map && typeof map.once === "function") {
+                if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()
+                    && map.areTilesLoaded && map.areTilesLoaded()) {
+                    if (typeof requestIdleCallback === "function") {
+                        requestIdleCallback(fn, { timeout: 5000 });
+                    } else {
+                        setTimeout(fn, 32);
+                    }
                 } else {
-                    setTimeout(loadIsochronesWhenIdle, 32);
+                    map.once("idle", function () {
+                        if (typeof requestIdleCallback === "function") {
+                            requestIdleCallback(fn, { timeout: 5000 });
+                        } else {
+                            setTimeout(fn, 32);
+                        }
+                    });
                 }
             } else {
-                map.once("idle", function () {
-                    if (typeof requestIdleCallback === "function") {
-                        requestIdleCallback(loadIsochronesWhenIdle, { timeout: 5000 });
-                    } else {
-                        setTimeout(loadIsochronesWhenIdle, 32);
-                    }
-                });
+                fn();
             }
-        } else {
-            loadIsochronesWhenIdle();
         }
     }
 
@@ -3379,6 +4269,15 @@ window.jobMap = (function () {
     }
 
     function overlayFitPadding() {
+        if (lagenLayout && map) {
+            if (isNarrowViewport()) {
+                const pane = map.getContainer().closest(".map-pane");
+                const sheet = pane ? pane.querySelector(".map-cluster-sheet--lagen") : null;
+                const bottom = sheet && sheet.offsetHeight > 0 ? sheet.offsetHeight + 16 : 48;
+                return { top: 22, right: 4, bottom: bottom, left: 4 };
+            }
+            return { top: 80, left: 150, right: 0, bottom: 0 };
+        }
         const edge = 36;
         const padding = { top: edge, right: edge, bottom: edge, left: edge };
         if (!map) {
@@ -3433,13 +4332,24 @@ window.jobMap = (function () {
     }
 
     function fitToOriginRings(animate) {
+        if (lagenLayout && activeClusterPopup) {
+            return;
+        }
         if (window.__jobsyBkRestoringView) {
             return;
         }
         if (!map || !lastOrigin) {
             return;
         }
-        const radius = maxRingRadiusMeters() * 1.12;
+        let radius = maxRingRadiusMeters() * 1.12;
+        if (lagenLayout) {
+            const chosenM = chosenRingMinutes();
+            if (isNarrowViewport()) {
+                radius = ringRadiusForMinutes(Math.max(chosenM, 30)) * 1.14;
+            } else {
+                radius = ringRadiusForMinutes(Math.max(chosenM, 30)) * 1.05;
+            }
+        }
         if (!(radius > 40)) {
             finishOpeningFrame();
             return;
@@ -3447,7 +4357,9 @@ window.jobMap = (function () {
         const opening = deferMapReveal || originHasBeenFramed !== true;
         const opts = {
             padding: overlayFitPadding(),
-            maxZoom: Math.min(13, BASEMAP_MAX_ZOOM),
+            maxZoom: lagenLayout
+                ? Math.min(isNarrowViewport() ? 10.35 : 11.85, BASEMAP_MAX_ZOOM)
+                : Math.min(13, BASEMAP_MAX_ZOOM),
             animate: animate === true && !opening && !prefersReducedMotion(),
             duration: animate === true && !opening && !prefersReducedMotion() ? 450 : 0
         };
@@ -3462,7 +4374,16 @@ window.jobMap = (function () {
         }
         runWithViewportNotifySuppressed(function () {
             try {
-                safeFitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
+                let bounds = ringBounds(lastOrigin.lat, lastOrigin.lng, radius);
+                if (lagenLayout && isNarrowViewport() && catalogModeActive) {
+                    Object.keys(markersById).forEach(function (id) {
+                        const rec = markersById[id];
+                        if (rec && Number.isFinite(rec.lat) && Number.isFinite(rec.lng)) {
+                            bounds.extend([rec.lng, rec.lat]);
+                        }
+                    });
+                }
+                safeFitBounds(bounds, opts);
                 originNeedsFrame = false;
                 originHasBeenFramed = true;
                 cameraLocked = true;
@@ -3648,6 +4569,53 @@ window.jobMap = (function () {
         return 8;
     }
 
+    function scheduleLagenLayoutResize() {
+        if (!lagenLayout || !map) {
+            return;
+        }
+        [0, 80, 200, 450, 900].forEach(function (ms) {
+            setTimeout(function () {
+                invalidate();
+            }, ms);
+        });
+    }
+
+    function syncLagenAttributionCompact() {
+        if (!lagenLayout || !map || typeof map.getContainer !== "function") {
+            return;
+        }
+        const attrib = map.getContainer().querySelector(".maplibregl-ctrl-attrib");
+        if (!attrib) {
+            return;
+        }
+        if (isNarrowViewport()) {
+            attrib.classList.remove("maplibregl-compact");
+            attrib.classList.add("maplibregl-compact-show");
+        } else {
+            attrib.classList.add("maplibregl-compact");
+            attrib.classList.remove("maplibregl-compact-show");
+        }
+    }
+
+    function ensureLagenPopInView(popup) {
+        if (!popup || !map || typeof popup.getElement !== "function") {
+            return;
+        }
+        const el = popup.getElement();
+        const container = map.getContainer();
+        if (!el || !container) {
+            return;
+        }
+        const mapRect = container.getBoundingClientRect();
+        const popRect = el.getBoundingClientRect();
+        const pad = 14;
+        if (popRect.top < mapRect.top + pad) {
+            try {
+                map.panBy([0, mapRect.top + pad - popRect.top], { duration: 0 });
+            } catch (ePan) { }
+        }
+    }
+
     function revealMapStage() {
         if (!map || deferMapReveal) {
             return;
@@ -3655,6 +4623,9 @@ window.jobMap = (function () {
         const stage = map.getContainer() && map.getContainer().closest(".map-stage");
         if (stage) {
             stage.classList.add("is-live");
+        }
+        if (lagenLayout) {
+            scheduleLagenLayoutResize();
         }
     }
 
@@ -3702,6 +4673,38 @@ window.jobMap = (function () {
         setVacanciesFromCatalog(pins, meta);
     }
 
+    function emitCatalogMapReady() {
+        if (catalogMapReadySent || !catalogModeActive) {
+            return;
+        }
+        catalogMapReadySent = true;
+        try {
+            document.dispatchEvent(new CustomEvent("jobsy-bk-map-ready", { bubbles: true }));
+        } catch (eReady) { }
+        try {
+            const root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+            if (root) {
+                root.dataset.banenkaartMapReady = "1";
+            }
+        } catch (eDom) { }
+    }
+
+    function scheduleCatalogMapReadyAfterIdle() {
+        if (!catalogModeActive || catalogMapReadySent || !map) {
+            return;
+        }
+        const onIdle = function () {
+            emitCatalogMapReady();
+        };
+        if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()) {
+            map.once("idle", onIdle);
+        } else if (typeof map.once === "function") {
+            map.once("load", function () {
+                map.once("idle", onIdle);
+            });
+        }
+    }
+
     function setVacanciesFromCatalog(pins, meta) {
         meta = meta || {};
         if (!clusterGroup || !map) {
@@ -3713,10 +4716,11 @@ window.jobMap = (function () {
             bootZoomOutsideTravel = true;
         }
         setVacancies(pins || []);
+        scheduleCatalogMapReadyAfterIdle();
         if (window.__jobsyBkRestoringView) {
             return;
         }
-        if (bootZoomOutsideTravel && lastOrigin) {
+        if (bootZoomOutsideTravel && lastOrigin && !lagenLayout) {
             fitOriginWithPinsOutsideTravel();
         } else if (lastOrigin && !meta.skipAutoFit) {
             fitToOriginRings(true);
@@ -3847,6 +4851,20 @@ window.jobMap = (function () {
         }
     }
 
+    function pinKindForVacancy(v) {
+        if (!lagenLayout) {
+            return "";
+        }
+        const ic = window.jobsyBanenkaartMapIcons;
+        if (ic && typeof ic.isIntermediaryRow === "function" && ic.isIntermediaryRow(v)) {
+            return "intermediary";
+        }
+        if (isAgencyPin(v) || v.isIntermediary === true || v.agency === 1 || v.agency === true) {
+            return "intermediary";
+        }
+        return "employer";
+    }
+
     function pinsGeoJson() {
         const origin = lastOrigin;
         const outerM = origin ? maxRingRadiusMeters() : 0;
@@ -3856,6 +4874,7 @@ window.jobMap = (function () {
                 const record = markersById[id];
                 const v = record.options.jobData || {};
                 const agency = (isAgencyPin(v) || (companyMapMode && v.isIntermediary === true)) ? 1 : 0;
+                const pinKind = pinKindForVacancy(v);
                 const openInit = companyMapMode && v.openForInitiative === true;
                 const kansberoep = v.kansberoep === true || v.kansberoep === 1 ? 1 : 0;
                 let outside = 0;
@@ -3882,7 +4901,8 @@ window.jobMap = (function () {
                         colour: kansberoep ? "#c9a227" : (openInit ? COMPANY_OPEN_PIN_COLOR : (agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""))),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
-                        outside: outside ? 1 : 0
+                        outside: outside ? 1 : 0,
+                        pinKind: pinKind
                     }
                 };
             })
@@ -3916,6 +4936,23 @@ window.jobMap = (function () {
     }
 
     function refreshAgencyAreas() {
+        if (lagenLayout) {
+            if (!map || !map.getSource(PIN_SOURCE_AGENCY_AREAS)) {
+                return;
+            }
+            const source = map.getSource(PIN_SOURCE_AGENCY_AREAS);
+            if (source && typeof source.setData === "function") {
+                source.setData({ type: "FeatureCollection", features: [] });
+            }
+            [PIN_LAYER_AGENCY_AREAS_FILL, PIN_LAYER_AGENCY_AREAS_LINE].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setLayoutProperty(layerId, "visibility", "none");
+                    }
+                } catch (eHide) { }
+            });
+            return;
+        }
         if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) {
             return;
         }
@@ -3968,6 +5005,212 @@ window.jobMap = (function () {
         }
     }
 
+    function loadSvgAsMapImage(imageId, svgString, width, height, done) {
+        if (!map || map.hasImage(imageId)) {
+            if (done) {
+                done();
+            }
+            return;
+        }
+        const img = new Image();
+        const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+        img.onload = function () {
+            try {
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                if (!map.hasImage(imageId)) {
+                    map.addImage(imageId, {
+                        width: width,
+                        height: height,
+                        data: new Uint8Array(ctx.getImageData(0, 0, width, height).data.buffer),
+                        sdf: false
+                    });
+                }
+            } catch (eImg) { }
+            if (done) {
+                done();
+            }
+        };
+        img.onerror = function () {
+            if (done) {
+                done();
+            }
+        };
+        img.src = url;
+    }
+
+    function ensureLagenPinImages(done) {
+        if (!map || !lagenLayout) {
+            if (done) {
+                done();
+            }
+            return;
+        }
+        if (map._jobsyLagenPinImagesReady) {
+            if (done) {
+                done();
+            }
+            return;
+        }
+        const ic = window.jobsyBanenkaartMapIcons;
+        if (!ic || typeof ic.pinW !== "function" || typeof ic.pinI !== "function") {
+            setTimeout(function () {
+                ensureLagenPinImages(done);
+            }, 40);
+            return;
+        }
+        const specs = [
+            { id: "jobsy-pin-w", svg: ic.pinW(1), w: 40, h: 50 },
+            { id: "jobsy-pin-w-selected", svg: ic.pinW(1, true), w: 40, h: 50 },
+            { id: "jobsy-pin-i", svg: ic.pinI(1, false, true), w: 46, h: 50 },
+            { id: "jobsy-pin-i-selected", svg: ic.pinI(1, true, true), w: 46, h: 50 }
+        ];
+        let pending = specs.length;
+        specs.forEach(function (spec) {
+            loadSvgAsMapImage(spec.id, spec.svg, spec.w, spec.h, function () {
+                pending -= 1;
+                if (pending <= 0) {
+                    map._jobsyLagenPinImagesReady = true;
+                    applyLagenPinLayerStyles();
+                    if (done) {
+                        done();
+                    }
+                }
+            });
+        });
+    }
+
+    function lagenUnclusteredIconLayout() {
+        return {
+            "icon-image": [
+                "case",
+                ["==", ["coalesce", ["get", "pinKind"], ""], "intermediary"],
+                [
+                    "case",
+                    ["==", ["coalesce", ["feature-state", "selected"], false], true],
+                    "jobsy-pin-i-selected",
+                    "jobsy-pin-i"
+                ],
+                [
+                    "case",
+                    ["==", ["coalesce", ["feature-state", "selected"], false], true],
+                    "jobsy-pin-w-selected",
+                    "jobsy-pin-w"
+                ]
+            ],
+            "icon-size": [
+                "case",
+                ["==", ["coalesce", ["feature-state", "selected"], false], true],
+                1.18,
+                1
+            ],
+            "icon-anchor": "bottom",
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": false
+        };
+    }
+
+    function applyLagenPinLayerStyles() {
+        if (!map || !lagenLayout) {
+            return;
+        }
+        const clusterLayers = [PIN_LAYER_CLUSTERS, PIN_LAYER_CLUSTERS + "-halo"];
+        clusterLayers.forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.setPaintProperty(layerId, "circle-color", LAGEN_CLUSTER_GREEN);
+                }
+            } catch (eCl) { }
+        });
+        try {
+            if (map.getLayer(PIN_LAYER_CLUSTER_AGENCY_BADGE)) {
+                map.setLayoutProperty(PIN_LAYER_CLUSTER_AGENCY_BADGE, "visibility", "none");
+            }
+        } catch (eBadge) { }
+        const symbolsReady = !!map._jobsyLagenPinImagesReady;
+        [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.setLayoutProperty(layerId, "visibility", symbolsReady ? "none" : "visible");
+                }
+            } catch (ePin) { }
+        });
+        [PIN_LAYER_AGENCY_AREAS_FILL, PIN_LAYER_AGENCY_AREAS_LINE].forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.setLayoutProperty(layerId, "visibility", "none");
+                }
+            } catch (eArea) { }
+        });
+        if (!map.getLayer(PIN_LAYER_UNCLUSTERED_SYMBOL)) {
+            map.addLayer({
+                id: PIN_LAYER_UNCLUSTERED_SYMBOL,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: UNCLUSTERED_PIN_FILTER,
+                layout: lagenUnclusteredIconLayout()
+            });
+            if (!map._jobsyLagenPinClicksBound) {
+                map._jobsyLagenPinClicksBound = true;
+                map.on("click", PIN_LAYER_UNCLUSTERED_SYMBOL, onPinClick);
+                map.on("mouseenter", PIN_LAYER_UNCLUSTERED_SYMBOL, function () {
+                    map.getCanvas().style.cursor = "pointer";
+                });
+                map.on("mouseleave", PIN_LAYER_UNCLUSTERED_SYMBOL, function () {
+                    map.getCanvas().style.cursor = "";
+                });
+            }
+            try {
+                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", symbolsReady ? "visible" : "none");
+            } catch (eVisNew) { }
+        } else {
+            const layout = lagenUnclusteredIconLayout();
+            Object.keys(layout).forEach(function (key) {
+                try {
+                    map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, key, layout[key]);
+                } catch (eLay) { }
+            });
+            try {
+                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", symbolsReady ? "visible" : "none");
+            } catch (eVis) { }
+        }
+    }
+
+    function resetLagenPinSourceIfNeeded() {
+        if (!map || !lagenLayout || map._jobsyLagenPinClusterVer === 7) {
+            return;
+        }
+        const layerIds = [
+            PIN_LAYER_UNCLUSTERED_SYMBOL,
+            PIN_LAYER_SELECTED,
+            PIN_LAYER_UNCLUSTERED_GLYPH,
+            PIN_LAYER_UNCLUSTERED,
+            PIN_LAYER_UNCLUSTERED + "-hit",
+            PIN_LAYER_CLUSTER_COUNT,
+            PIN_LAYER_CLUSTER_AGENCY_BADGE,
+            PIN_LAYER_CLUSTERS,
+            PIN_LAYER_CLUSTERS + "-hit",
+            PIN_LAYER_CLUSTERS + "-halo"
+        ];
+        layerIds.forEach(function (layerId) {
+            try {
+                if (map.getLayer(layerId)) {
+                    map.removeLayer(layerId);
+                }
+            } catch (eRm) { }
+        });
+        try {
+            if (map.getSource(PIN_SOURCE)) {
+                map.removeSource(PIN_SOURCE);
+            }
+        } catch (eSrc) { }
+        map._jobsyLagenPinClusterVer = 7;
+        map._jobsyLagenPinClicksBound = false;
+    }
+
     function ensurePinImages() {
         if (!map || map._jobsyPinImages) {
             return;
@@ -3998,13 +5241,16 @@ window.jobMap = (function () {
             return;
         }
         ensurePinImages();
+        if (lagenLayout) {
+            resetLagenPinSourceIfNeeded();
+        }
         if (!map.getSource(PIN_SOURCE)) {
             map.addSource(PIN_SOURCE, {
                 type: "geojson",
                 data: pinsGeoJson(),
                 cluster: true,
-                clusterRadius: CLUSTER_OPTS.clusterRadius,
-                clusterMaxZoom: CLUSTER_OPTS.clusterMaxZoom,
+                clusterRadius: lagenLayout ? 16 : CLUSTER_OPTS.clusterRadius,
+                clusterMaxZoom: lagenLayout ? 10 : CLUSTER_OPTS.clusterMaxZoom,
                 clusterProperties: {
                     agency_sum: ["+", ["coalesce", ["get", "agency"], 0]]
                 },
@@ -4214,6 +5460,20 @@ window.jobMap = (function () {
                 } catch (ePaint) { }
             });
         }
+        if (lagenLayout) {
+            applyLagenPinLayerStyles();
+        } else if (map.getLayer(PIN_LAYER_UNCLUSTERED_SYMBOL)) {
+            try {
+                map.setLayoutProperty(PIN_LAYER_UNCLUSTERED_SYMBOL, "visibility", "none");
+            } catch (eSymHide) { }
+            [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setLayoutProperty(layerId, "visibility", "visible");
+                    }
+                } catch (eShow) { }
+            });
+        }
         if (!map._jobsyPinClicksBound) {
             map._jobsyPinClicksBound = true;
             map.on("click", PIN_LAYER_CLUSTER_HIT, onClusterClick);
@@ -4412,15 +5672,25 @@ window.jobMap = (function () {
             map.once("load", refreshClusters);
             return;
         }
-        ensurePinLayers();
-        const source = map.getSource(PIN_SOURCE);
-        if (source && typeof source.setData === "function") {
-            source.setData(pinsGeoJson());
+        function pushPinData() {
+            ensurePinLayers();
+            if (lagenLayout) {
+                applyLagenPinLayerStyles();
+            }
+            const source = map.getSource(PIN_SOURCE);
+            if (source && typeof source.setData === "function") {
+                source.setData(pinsGeoJson());
+            }
+            refreshAgencyAreas();
+            if (selectedId != null) {
+                highlight(selectedId);
+            }
         }
-        refreshAgencyAreas();
-        if (selectedId != null) {
-            highlight(selectedId);
+        if (lagenLayout) {
+            ensureLagenPinImages(pushPinData);
+            return;
         }
+        pushPinData();
     }
 
     function restoreOverlays() {
@@ -4443,6 +5713,15 @@ window.jobMap = (function () {
         }
         if (window.jobsyMapLibre) {
             window.jobsyMapLibre.hideChrome(map);
+        }
+        syncLagenAttributionCompact();
+        if (lagenLayout && map && !map._jobsyLagenAttribSyncBound) {
+            map._jobsyLagenAttribSyncBound = true;
+            map.on("idle", syncLagenAttributionCompact);
+            map.on("resize", syncLagenAttributionCompact);
+        }
+        if (lagenLayout) {
+            scheduleLagenLayoutResize();
         }
     }
 
@@ -4467,7 +5746,8 @@ window.jobMap = (function () {
         map = window.jobsyMapLibre.createMap(el, {
             center: opening.center,
             zoom: opening.zoom,
-            controlsPosition: "bottom-right"
+            controlsPosition: "bottom-right",
+            compactAttribution: !!(lagenLayout || catalogModeActive)
         });
         cameraLocked = opening.locked;
         firstSizedFit = true;
@@ -4587,6 +5867,12 @@ window.jobMap = (function () {
                     markersByCoordKey = {};
                 },
                 zoomToShowLayer: function (record, cb) {
+                    if (lagenLayout && catalogModeActive) {
+                        if (typeof cb === "function") {
+                            cb();
+                        }
+                        return;
+                    }
                     map.easeTo({
                         center: [record.lng, record.lat],
                         zoom: clampBanenZoom(Math.max(map.getZoom(), CLUSTER_OPTS.disableClusteringAtZoom)),
@@ -4685,6 +5971,10 @@ window.jobMap = (function () {
             clearPinsFetchState();
         }
         const mapInit = bootPayload.mapInit || null;
+        lagenLayout = !!(mapInit && mapInit.lagenLayout);
+        if (lagenLayout) {
+            illustratedPopup = false;
+        }
         let travel = null;
         if (mapInit && mapInit.travel) {
             travel = mapInit.travel;
@@ -5367,7 +6657,12 @@ window.jobMap = (function () {
             pinsBaseUrl = stripViewportParams(nextPinsUrl);
             pinsUrl = pinsBaseUrl + viewportQueryString();
         }
-        illustratedPopup = !!(options && options.illustratedPopup);
+        lagenLayout = readLagenLayoutFromOptions(options);
+        if (lagenLayout) {
+            illustratedPopup = false;
+        } else {
+            illustratedPopup = !!(options && options.illustratedPopup);
+        }
         illustratedTravelSpot = options && options.illustratedTravelSpot
             ? String(options.illustratedTravelSpot)
             : "";
@@ -5720,6 +7015,20 @@ window.jobMap = (function () {
             return;
         }
         const el = document.createElement("div");
+        if (lagenLayout) {
+            el.className = "job-map-origin home";
+            el.innerHTML = "<span class=\"hd\" aria-hidden=\"true\"><svg class=\"ic\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"><path d=\"M4 11l8-6.5 8 6.5M6.5 9.5V19h11V9.5M10 19v-5h4v5\"/></svg></span><span class=\"hl\">Jouw adres</span>";
+            originMarker = new maplibregl.Marker({
+                element: el,
+                anchor: "top",
+                offset: [0, -20],
+                pitchAlignment: "viewport",
+                rotationAlignment: "viewport"
+            })
+                .setLngLat([ln, la])
+                .addTo(map);
+            return;
+        }
         el.className = "job-map-origin";
         el.title = "Jouw locatie";
         originMarker = new maplibregl.Marker({
@@ -6096,10 +7405,32 @@ window.jobMap = (function () {
             const rec = key ? markersById[key] : null;
             if (rec) {
                 openVacancyPopup(rec);
+                return true;
             }
+            return false;
         },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
+        __testGetLastPopupPhotoMetrics: function () {
+            return lastLagenPopupPhotoMetrics ? Object.assign({}, lastLagenPopupPhotoMetrics) : null;
+        },
+        __testGetRenderedPinCount: function () {
+            if (!map) {
+                return 0;
+            }
+            const layers = [
+                PIN_LAYER_CLUSTERS,
+                PIN_LAYER_UNCLUSTERED_SYMBOL,
+                PIN_LAYER_UNCLUSTERED
+            ];
+            let total = 0;
+            layers.forEach(function (layerId) {
+                try {
+                    total += (map.queryRenderedFeatures({ layers: [layerId] }) || []).length;
+                } catch (eFeat) { }
+            });
+            return total;
+        },
         __testGetAgencyAreaCount: function () {
             return agencyAreasGeoJson().features.length;
         },

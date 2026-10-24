@@ -337,13 +337,51 @@
         return sortRows(out, filters);
     }
 
-    function toPin(row) {
-        var pin = { id: row.id, lat: row.lat, lng: row.lng };
+    function toPin(row, filters) {
+        filters = filters || currentListFilters;
+        var pin = {
+            id: row.id,
+            lat: row.lat,
+            lng: row.lng,
+            title: row.title,
+            company: row.company,
+            offeredBy: row.offeredBy || "",
+            place: row.place || "",
+            categoryName: row.categoryName || "",
+            workTypes: row.workTypes
+        };
         if (row.colour) {
             pin.colour = row.colour;
+            pin.categoryColor = row.colour;
         }
         if (row.publicMapRadiusKm > 0) {
             pin.publicMapRadiusKm = row.publicMapRadiusKm;
+        }
+        if (filters && filters.originLat != null && filters.originLng != null) {
+            var mins = travelMinutes(
+                { lat: filters.originLat, lng: filters.originLng },
+                row.lat,
+                row.lng,
+                filters.transport);
+            if (mins != null) {
+                pin.travelMinutes = mins;
+            }
+            pin.transport = filters.transport;
+            pin.transportLabel = transportVerbNl(filters.transport);
+        }
+        if (row.offeredBy && String(row.offeredBy).trim().toLowerCase()
+            !== String(row.company || "").trim().toLowerCase()) {
+            pin.isIntermediary = true;
+            pin.pinKind = "intermediary";
+        }
+        if (row.minHours != null) {
+            pin.minHoursPerWeek = row.minHours;
+        }
+        if (row.maxHours != null) {
+            pin.maxHoursPerWeek = row.maxHours;
+        }
+        if (row.workTypes && row.workTypes.length) {
+            pin.workType = row.workTypes[0];
         }
         return pin;
     }
@@ -460,8 +498,9 @@
             ? travelPins
             : (allowOutside ? filterRows(rows, filters, true) : []);
         var dimmed = travelPins.length === 0 && mapPins.length > 0;
+        currentListFilters = filters;
         var pins = mapPins.map(function (row) {
-            var pin = toPin(row);
+            var pin = toPin(row, filters);
             if (dimmed) {
                 pin.outsideTravel = true;
             }
@@ -564,69 +603,69 @@
         };
     }
 
+    function mapIcons() {
+        return window.jobsyBanenkaartMapIcons || null;
+    }
+
+    function transportVerbNl(mode) {
+        var t = String(mode || "Fiets");
+        if (t === "Fiets") {
+            return "fietsen";
+        }
+        if (t === "Auto") {
+            return "auto";
+        }
+        if (t === "OV") {
+            return "ov";
+        }
+        if (t === "Lopend") {
+            return "lopen";
+        }
+        return t.toLowerCase();
+    }
+
+    function hoursLabel(row) {
+        var minH = row.minHours != null ? row.minHours : 0;
+        var maxH = row.maxHours != null ? row.maxHours : 40;
+        if (minH > 0 && maxH > 0 && minH !== maxH) {
+            return minH + " tot " + maxH + " uur";
+        }
+        if (maxH > 0) {
+            return maxH + " uur";
+        }
+        return "";
+    }
+
     function renderMapTopChrome(filters, travelRows) {
         var host = document.querySelector("[data-testid=kb-map-top-chrome]");
-        if (!host || !travelRows || !travelRows.length) {
-            if (host) {
-                host.innerHTML = "";
-            }
+        if (!host) {
             return;
         }
+        if (!travelRows || !travelRows.length) {
+            host.innerHTML = "";
+            return;
+        }
+        var ic = mapIcons();
         var seed = readHighlightSeed();
         var featured = travelRows.slice().sort(function (a, b) {
             return highlightRank(a.id, seed) - highlightRank(b.id, seed);
         }).slice(0, 12);
         var cards = featured.map(function (row) {
-            var mins = travelMinutes(
-                filters.originLat != null ? { lat: filters.originLat, lng: filters.originLng } : null,
-                row.lat,
-                row.lng,
-                filters.transport);
-            var travel = mins != null
-                ? "± " + mins + " min · " + String(filters.transport || "Fiets").toLowerCase()
-                : "";
-            var img = row.imageUrl
-                ? "<img class=\"highlight-carousel__media vacancy-photo\" src=\"" + escapeHtml(row.imageUrl)
-                + "\" alt=\"\" width=\"160\" height=\"107\" loading=\"lazy\" decoding=\"async\" />"
-                : "";
-            return "<button type=\"button\" class=\"highlight-carousel__card\" role=\"listitem\" data-vacancy-id=\""
-                + escapeHtml(row.id) + "\">" + img
-                + "<span class=\"highlight-carousel__body\"><span class=\"highlight-carousel__title-text\">"
-                + escapeHtml(row.title) + "</span><span class=\"highlight-carousel__meta\">"
-                + escapeHtml(row.company) + "</span>"
-                + (travel ? "<span class=\"highlight-carousel__travel\">" + escapeHtml(travel) + "</span>" : "")
-                + "</span></button>";
+            var wtKey = ic ? ic.workTypeKey(row) : "box";
+            var colors = ic ? ic.workTypeColors(wtKey) : { bg: "#F3EADB", fg: "#7E5E2C" };
+            var ico = ic ? ic.workTypeIconSvg(row, false) : "";
+            var mini = ic && ic.isIntermediaryRow(row)
+                ? ic.pinI(0.5, false, false)
+                : (ic ? ic.pinW(0.5) : "");
+            return "<div class=\"sc\" role=\"button\" tabindex=\"0\" data-vacancy-id=\""
+                + escapeHtml(row.id) + "\"><span class=\"ico\" style=\"background:"
+                + escapeHtml(colors.bg) + ";color:" + escapeHtml(colors.fg) + "\">" + ico
+                + "</span><div><b>" + escapeHtml(row.title) + "</b><small>" + mini
+                + escapeHtml(row.company) + "</small></div></div>";
         }).join("");
-        var legendMap = {};
-        travelRows.forEach(function (row) {
-            var name = row.categoryName || "";
-            if (!name || legendMap[name]) {
-                return;
-            }
-            legendMap[name] = row.colour || "#0f2d5c";
-        });
-        var legendNames = Object.keys(legendMap);
-        var legendHtml = "";
-        if (legendNames.length) {
-            var dots = legendNames.slice(0, 4).map(function (name) {
-                return "<i style=\"background:" + escapeHtml(legendMap[name]) + "\"></i>";
-            }).join("");
-            var items = legendNames.map(function (name) {
-                return "<li class=\"map-legend__item\"><span class=\"map-legend__swatch\" style=\"background:"
-                    + escapeHtml(legendMap[name]) + "\" aria-hidden=\"true\"></span><span>"
-                    + escapeHtml(name) + "</span></li>";
-            }).join("");
-            legendHtml = "<div class=\"map-legend\" data-testid=\"kb-map-legend\">"
-                + "<button type=\"button\" class=\"map-legend__toggle\" aria-expanded=\"false\" aria-controls=\"map-legend-panel-ssr\">"
-                + "<span class=\"map-legend__toggle-dots\" aria-hidden=\"true\">" + dots + "</span>"
-                + "<span class=\"visually-hidden\">Legenda</span></button>"
-                + "<aside id=\"map-legend-panel-ssr\" class=\"map-legend__panel\" hidden aria-hidden=\"true\">"
-                + "<ul class=\"map-legend__list\">" + items + "</ul></aside></div>";
-        }
-        host.innerHTML = "<aside class=\"highlight-carousel highlight-carousel--map\" aria-label=\"Uitgelicht\">"
-            + "<div class=\"highlight-carousel__track\" role=\"list\">" + cards + "</div></aside>" + legendHtml;
-        host.querySelectorAll(".highlight-carousel__card").forEach(function (btn) {
-            btn.addEventListener("click", function () {
+        host.innerHTML = "<div class=\"strip\" role=\"list\">" + cards + "</div>";
+        host.querySelectorAll(".sc").forEach(function (btn) {
+            function activate() {
                 var id = btn.getAttribute("data-vacancy-id");
                 if (id && window.jobMap) {
                     if (typeof window.jobMap.focus === "function") {
@@ -635,22 +674,15 @@
                         window.jobMap.highlight(id);
                     }
                 }
+            }
+            btn.addEventListener("click", activate);
+            btn.addEventListener("keydown", function (ev) {
+                if (ev.key === "Enter" || ev.key === " ") {
+                    ev.preventDefault();
+                    activate();
+                }
             });
         });
-        var legend = host.querySelector(".map-legend");
-        if (legend) {
-            var toggle = legend.querySelector(".map-legend__toggle");
-            var panel = legend.querySelector(".map-legend__panel");
-            if (toggle && panel) {
-                toggle.addEventListener("click", function (ev) {
-                    ev.stopPropagation();
-                    var open = legend.classList.toggle("is-open");
-                    toggle.setAttribute("aria-expanded", open ? "true" : "false");
-                    panel.hidden = !open;
-                    panel.setAttribute("aria-hidden", open ? "false" : "true");
-                });
-            }
-        }
         if (window.jobMap && typeof window.jobMap.invalidate === "function") {
             window.jobMap.invalidate();
         }
@@ -692,20 +724,20 @@
         return q.length ? href + "?" + q.join("&") : href;
     }
 
-    function travelSubtitle(filters, count) {
+    function travelSubtitle(filters) {
         var mins = filters && filters.maxMinutes ? filters.maxMinutes : 20;
         var mode = filters && filters.transport ? filters.transport : "Fiets";
-        return count + " banen binnen " + mins + " min " + mode.toLowerCase();
+        return "binnen " + mins + " min " + transportVerbNl(mode);
     }
 
     function updateResultChrome(filters, travelCount) {
-        var sub = travelSubtitle(filters, travelCount);
+        var sub = travelSubtitle(filters);
         document.querySelectorAll(
             "[data-testid=kb-desktop-result-count], [data-testid=kb-mobile-result-count], .results-meta__count"
         ).forEach(function (el) {
-            el.textContent = travelCount + " banen";
+            el.textContent = travelCount + " vacatures";
         });
-        document.querySelectorAll(".kb-nearby-banner__sub, .kb-filter-bar__count-sub").forEach(function (el) {
+        document.querySelectorAll(".results-meta__sub, .kb-filter-bar__count-sub").forEach(function (el) {
             el.textContent = sub;
         });
         var loadMore = document.querySelector("[data-testid=kb-load-more]");
@@ -785,46 +817,44 @@
             updateResultChrome(filters, 0);
             return 0;
         }
+        var ic = mapIcons();
+        var bike = ic && ic.bikeSvg ? ic.bikeSvg.replace("class=\"ic\"", "class=\"ic s\"") : "";
         var html = "<div class=\"kb-list-rows\" data-testid=\"kb-list-rows\">";
-        slice.forEach(function (row, index) {
+        slice.forEach(function (row) {
             var href = vacancyHref(row.id, filters);
             var mins = travelMinutes(
                 filters.originLat != null ? { lat: filters.originLat, lng: filters.originLng } : null,
                 row.lat,
                 row.lng,
                 filters.transport);
-            var wage = row.wageCents != null && row.wageCents > 0
-                ? "€ " + (row.wageCents / 100).toFixed(2).replace(".", ",") + "/u"
-                : "";
             var travel = mins != null
-                ? "± " + mins + " min · " + String(filters.transport || "Fiets").toLowerCase()
+                ? mins + " min " + transportVerbNl(filters.transport)
                 : "";
-            html += "<article class=\"kb-list-row kb-list-row--compact kb-list-row--card\" data-vacancy-id=\""
-                + escapeHtml(row.id)
-                + "\" data-testid=\"kb-list-row\">";
-            html += "<a class=\"kb-list-row__media\" href=\"" + escapeHtml(href) + "\">";
-            if (row.imageUrl) {
-                html += "<img class=\"kb-list-row__photo\" src=\"" + escapeHtml(row.imageUrl)
-                    + "\" alt=\"\" width=\"400\" height=\"250\" loading=\"" + (index === 0 ? "eager" : "lazy")
-                    + "\" decoding=\"async\" />";
+            var wtKey = ic ? ic.workTypeKey(row) : "box";
+            var colors = ic ? ic.workTypeColors(wtKey) : { bg: "#E3EEDD", fg: "#3F6E31" };
+            var ico = ic ? ic.workTypeIconSvg(row, true) : "";
+            var typeHtml = ic ? ic.typeMarkerHtml(row, false) : "";
+            var sector = row.categoryName ? escapeHtml(row.categoryName) : "";
+            var hours = hoursLabel(row);
+            html += "<a class=\"vc\" href=\"" + escapeHtml(href) + "\" data-vacancy-id=\""
+                + escapeHtml(row.id) + "\" data-testid=\"kb-list-row\">";
+            html += "<div class=\"vimg\" style=\"background:linear-gradient(135deg,"
+                + escapeHtml(colors.bg) + ",#fff 150%);color:" + escapeHtml(colors.fg) + "\">"
+                + ico;
+            if (sector) {
+                html += "<span class=\"vtag\">" + sector + "</span>";
             }
-            if (row.categoryName) {
-                html += "<span class=\"kb-list-row__sector\">" + escapeHtml(row.categoryName) + "</span>";
-            }
-            html += "<div class=\"kb-list-row__overlay\"><h2 class=\"kb-list-row__title\">"
-                + escapeHtml(row.title) + "</h2><p class=\"kb-list-row__overlay-meta\">";
+            html += "</div><div class=\"vb\"><b>" + escapeHtml(row.title) + "</b>";
+            html += "<div class=\"who\">" + typeHtml + "</div>";
+            html += "<div class=\"who\" style=\"margin-top:4px\">" + escapeHtml(row.company) + "</div>";
+            html += "<div class=\"meta\">";
             if (travel) {
-                html += "<span class=\"kb-list-row__travel\">" + escapeHtml(travel) + "</span>";
+                html += "<span>" + bike + escapeHtml(travel) + "</span>";
             }
-            if (wage) {
-                html += "<span class=\"kb-list-row__wage\">" + escapeHtml(wage) + "</span>";
+            if (hours) {
+                html += "<span>" + escapeHtml(hours) + "</span>";
             }
-            html += "</p></div></a><div class=\"kb-list-row__footer\">";
-            html += "<p class=\"kb-list-row__company\">" + escapeHtml(row.company) + "</p>";
-            if (row.place) {
-                html += "<p class=\"kb-list-row__place\">" + escapeHtml(row.place) + "</p>";
-            }
-            html += "</div></article>";
+            html += "</div></div></a>";
         });
         html += "</div>";
         listRoot.insertAdjacentHTML("afterbegin", html);
