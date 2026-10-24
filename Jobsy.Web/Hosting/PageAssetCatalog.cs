@@ -298,7 +298,7 @@ public static class PageAssetCatalog
                 "css/features/candidate-header-strip.css?v=20261025-cand-strip2",
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
                 "css/features/banenkaart-illustrated.css?v=20261025-cand-strip2",
-                "css/features/sollicitaties-page.css?v=20261025-cand-strip2",
+                "css/features/sollicitaties-page.css?v=20261025-sollic-mob90-gz",
             ];
         }
 
