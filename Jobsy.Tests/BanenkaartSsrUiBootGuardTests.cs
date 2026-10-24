@@ -65,6 +65,8 @@ public sealed class BanenkaartSsrUiBootGuardTests
         Assert.Contains("syncLayoutForViewport", ssr, StringComparison.Ordinal);
         Assert.Contains("bindClientFilterApply", ssr, StringComparison.Ordinal);
         Assert.Contains("applyBanenkaartViewMode", ssr, StringComparison.Ordinal);
+        Assert.Contains("jobsy-bk-map-pane-visible", ssr, StringComparison.Ordinal);
+        Assert.Contains("deferMapBootWhileListMode", boot, StringComparison.Ordinal);
         Assert.Contains("data-kb-view", shells, StringComparison.Ordinal);
     }
 
