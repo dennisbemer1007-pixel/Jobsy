@@ -61,6 +61,7 @@ public sealed class BanenkaartLagenDesktopStripScrollPlaywrightTests : IAsyncLif
             () => {
               const track = document.querySelector('[data-testid=kb-map-strip] .strip__track');
               return !!(track && track.querySelectorAll('.sc').length >= 3
+                && track.scrollWidth > track.clientWidth + 280
                 && document.querySelector('[data-testid=kb-map-strip]')?.getAttribute('data-kb-strip-scroll') === '1');
             }
             """,
@@ -76,10 +77,9 @@ public sealed class BanenkaartLagenDesktopStripScrollPlaywrightTests : IAsyncLif
               }
               const track = document.querySelector('[data-testid=kb-map-strip] .strip__track');
               if (!track) return;
-              if (track.scrollWidth <= track.clientWidth + 8) {
-                throw new Error('Expected horizontal overflow on map strip track.');
+              if (track.scrollWidth <= track.clientWidth + 280) {
+                throw new Error('Expected at least one card of horizontal overflow on map strip track.');
               }
-              track.style.scrollSnapType = 'none';
               track.scrollLeft = 0;
             }
             """);
@@ -106,12 +106,11 @@ public sealed class BanenkaartLagenDesktopStripScrollPlaywrightTests : IAsyncLif
         Assert.True(wheelInStrip, $"Expected elementFromPoint over card to be inside strip; hit={wheelHit}.");
 
         await page.Mouse.MoveAsync(wheelX, wheelY);
-        await page.Mouse.WheelAsync(0, 300);
-        await page.Mouse.WheelAsync(0, 300);
-        await page.Mouse.WheelAsync(0, 300);
+        await page.Mouse.WheelAsync(0, 100);
+        await page.WaitForTimeoutAsync(300);
         var afterWheel = await track.EvaluateAsync<double>("el => el.scrollLeft");
         Assert.True(afterWheel > 0,
-            $"Expected real mouse wheel over card to scroll strip; scrollLeft={afterWheel}, hit={wheelHit}.");
+            $"Expected one real wheel notch (100px) over card to scroll strip with scroll-snap; scrollLeft={afterWheel}, hit={wheelHit}.");
 
         await track.EvaluateAsync("el => { el.scrollLeft = 0; }");
         var trackBox = await track.BoundingBoxAsync();

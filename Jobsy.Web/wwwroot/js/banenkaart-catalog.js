@@ -970,6 +970,9 @@
 
     var STRIP_DRAG_CLICK_PX = 5;
     var STRIP_WHEEL_LINE_PX = 16;
+    var STRIP_WHEEL_SNAP_RESTORE_MS = 150;
+    var stripWheelSnapRestoreTimers = typeof WeakMap === "function" ? new WeakMap() : null;
+    var mapStripLastPointer = { x: 0, y: 0, at: 0 };
 
     function mapStripScrollEl(strip) {
         if (!strip) {
@@ -992,14 +995,120 @@
         if (!strip || clientX == null || clientY == null) {
             return false;
         }
+        if (clientX !== clientX || clientY !== clientY) {
+            return false;
+        }
         var rect = strip.getBoundingClientRect();
         return clientX >= rect.left && clientX <= rect.right
             && clientY >= rect.top && clientY <= rect.bottom;
     }
 
+    function mapStripWheelPointer(ev) {
+        if (ev && ev.clientX === ev.clientX && ev.clientY === ev.clientY
+            && (ev.clientX !== 0 || ev.clientY !== 0)) {
+            return { x: ev.clientX, y: ev.clientY };
+        }
+        if (mapStripLastPointer.at && Date.now() - mapStripLastPointer.at < 5000) {
+            return { x: mapStripLastPointer.x, y: mapStripLastPointer.y };
+        }
+        return null;
+    }
+
+    function mapStripWheelEventInside(strip, ev) {
+        if (!strip || !ev) {
+            return false;
+        }
+        if (ev.target && typeof strip.contains === "function" && strip.contains(ev.target)) {
+            return true;
+        }
+        var ptr = mapStripWheelPointer(ev);
+        if (!ptr) {
+            return false;
+        }
+        if (mapStripWheelPointInside(strip, ptr.x, ptr.y)) {
+            return true;
+        }
+        var hit = document.elementFromPoint(ptr.x, ptr.y);
+        return !!(hit && typeof strip.contains === "function" && strip.contains(hit));
+    }
+
+    function suspendStripScrollSnap(scroller) {
+        if (!scroller) {
+            return;
+        }
+        scroller.style.scrollSnapType = "none";
+        if (!stripWheelSnapRestoreTimers) {
+            return;
+        }
+        var prevTimer = stripWheelSnapRestoreTimers.get(scroller);
+        if (prevTimer) {
+            window.clearTimeout(prevTimer);
+        }
+        stripWheelSnapRestoreTimers.set(scroller, window.setTimeout(function () {
+            stripWheelSnapRestoreTimers.delete(scroller);
+            mapStripSnapScrollToNearestCard(scroller);
+            scroller.style.removeProperty("scroll-snap-type");
+        }, STRIP_WHEEL_SNAP_RESTORE_MS));
+    }
+
+    function mapStripCardScrollLeft(scroller, card) {
+        var scrollerRect = scroller.getBoundingClientRect();
+        var cardRect = card.getBoundingClientRect();
+        return cardRect.left - scrollerRect.left + scroller.scrollLeft;
+    }
+
+    function mapStripCardScrollStep(scroller, direction) {
+        var cards = scroller.querySelectorAll(".sc");
+        if (!cards.length) {
+            return 0;
+        }
+        var current = scroller.scrollLeft;
+        var positions = [];
+        for (var p = 0; p < cards.length; p++) {
+            positions.push(mapStripCardScrollLeft(scroller, cards[p]));
+        }
+        if (direction > 0) {
+            for (var i = 0; i < positions.length; i++) {
+                if (positions[i] > current + 2) {
+                    return positions[i] - current;
+                }
+            }
+            var maxLeft = scroller.scrollWidth - scroller.clientWidth;
+            return Math.max(0, maxLeft - current);
+        }
+        for (var j = positions.length - 1; j >= 0; j--) {
+            if (positions[j] < current - 2) {
+                return positions[j] - current;
+            }
+        }
+        return -current;
+    }
+
+    function mapStripSnapScrollToNearestCard(scroller) {
+        var cards = scroller.querySelectorAll(".sc");
+        if (!cards.length) {
+            return;
+        }
+        var current = scroller.scrollLeft;
+        var best = 0;
+        var bestDist = Infinity;
+        for (var i = 0; i < cards.length; i++) {
+            var at = mapStripCardScrollLeft(scroller, cards[i]);
+            var dist = Math.abs(at - current);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = at;
+            }
+        }
+        scroller.scrollLeft = best;
+    }
+
     /** @returns {boolean} true when the wheel was consumed for horizontal strip scroll */
     function applyMapStripWheelScroll(ev, scroller) {
         if (!ev || !scroller) {
+            return false;
+        }
+        if (ev.defaultPrevented) {
             return false;
         }
         if (window.matchMedia("(max-width: 700px)").matches) {
@@ -1021,7 +1130,13 @@
         }
         ev.preventDefault();
         ev.stopPropagation();
-        var nextLeft = scroller.scrollLeft + delta.dy;
+        suspendStripScrollSnap(scroller);
+        var scrollDir = delta.dy > 0 ? 1 : -1;
+        var scrollDelta = mapStripCardScrollStep(scroller, scrollDir);
+        if (scrollDelta === 0) {
+            return true;
+        }
+        var nextLeft = scroller.scrollLeft + scrollDelta;
         scroller.scrollLeft = Math.max(0, Math.min(maxLeft, nextLeft));
         return true;
     }
@@ -1033,12 +1148,17 @@
             return;
         }
         mapStripWheelCaptureBound = true;
+        document.addEventListener("mousemove", function (ev) {
+            mapStripLastPointer.x = ev.clientX;
+            mapStripLastPointer.y = ev.clientY;
+            mapStripLastPointer.at = Date.now();
+        }, { passive: true, capture: true });
         document.addEventListener("wheel", function (ev) {
             var strip = document.querySelector("[data-testid=kb-map-strip]");
             if (!strip || strip.classList.contains("strip--empty")) {
                 return;
             }
-            if (!mapStripWheelPointInside(strip, ev.clientX, ev.clientY)) {
+            if (!mapStripWheelEventInside(strip, ev)) {
                 return;
             }
             var scroller = mapStripScrollEl(strip);
@@ -1059,6 +1179,9 @@
         }
         strip.setAttribute("data-kb-strip-scroll", "1");
         ensureMapStripWheelCapture();
+        strip.addEventListener("wheel", function (ev) {
+            applyMapStripWheelScroll(ev, scroller);
+        }, { passive: false });
 
         var dragPending = false;
         var dragActive = false;
@@ -1661,6 +1784,14 @@
             });
             applyMapStripWheelScroll(fakeEv, scroller);
             return scroller.scrollLeft;
+        },
+        /** @internal Playwright — drag scroll on map strip */
+        __testStripPointerSnapshot: function () {
+            return {
+                x: mapStripLastPointer.x,
+                y: mapStripLastPointer.y,
+                at: mapStripLastPointer.at
+            };
         },
         /** @internal Playwright — drag scroll on map strip */
         __testStripDragScroll: function (dx) {

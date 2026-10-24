@@ -669,6 +669,7 @@
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip__track.strip--dragging {
         cursor: grabbing;
+        scroll-snap-type: none;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip .sc {
