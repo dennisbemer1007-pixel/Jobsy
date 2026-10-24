@@ -1159,9 +1159,30 @@ window.jobMap = (function () {
             "/map-popup-photo?variant=" + variant;
     }
 
+    function lagenJobHasMapPopupPhoto(job) {
+        if (!job) {
+            return false;
+        }
+        if (job.hasMapPopupPhoto === false || job.hasMapPopupPhoto === 0) {
+            return false;
+        }
+        const u = job.imageUrl || job.thumbnailUrl || job.photoUrl || job.ImageUrl;
+        return !!(u && String(u).trim());
+    }
+
+    function lagenCategoryPhotoPlaceholderHtml(v) {
+        const hex = (v && (v.categoryColor || v.colour || v.categoryColorHex)) || "#e8e0d5";
+        const safe = String(hex).replace(/[^#a-fA-F0-9]/g, "") || "#e8e0d5";
+        return "<div class=\"fph fph--empty fph--category\" style=\"background:" +
+            escapeAttr(safe) + "\" aria-hidden=\"true\"></div>";
+    }
+
     function lagenWorkplacePhotoShell(v) {
         if (!v || v.id == null) {
             return "<div class=\"fph fph--empty\" aria-hidden=\"true\"></div>";
+        }
+        if (!lagenJobHasMapPopupPhoto(v)) {
+            return lagenCategoryPhotoPlaceholderHtml(v);
         }
         return "<div class=\"fph fph--await\" data-lagen-photo-slot=\"1\" data-lagen-photo-id=\"" +
             escapeAttr(String(v.id)) + "\"></div>";
@@ -1178,6 +1199,10 @@ window.jobMap = (function () {
         }
         slot.replaceChildren();
         const mobile = opts.mobile != null ? !!opts.mobile : isNarrowViewport();
+        if (!lagenJobHasMapPopupPhoto(job)) {
+            slot.outerHTML = lagenCategoryPhotoPlaceholderHtml(job);
+            return;
+        }
         const url = lagenMapPopupPhotoUrl(job.id, mobile);
         if (!url) {
             slot.classList.add("fph--empty");
@@ -1223,7 +1248,7 @@ window.jobMap = (function () {
     }
 
     function prefetchLagenPopupPhoto(job, mobile) {
-        if (!job || job.id == null) {
+        if (!job || job.id == null || !lagenJobHasMapPopupPhoto(job)) {
             return;
         }
         const url = lagenMapPopupPhotoUrl(job.id, mobile);
@@ -2095,6 +2120,9 @@ window.jobMap = (function () {
                     if (nextJob) {
                         prefetchLagenPopupPhoto(nextJob, isNarrowViewport());
                     }
+                    if (!mobile && activeClusterPopup && !state.docked) {
+                        fitLagenDesktopPopup(activeClusterPopup);
+                    }
                 }
             } else {
                 const html = buildClusterPinHtml(resolved || job);
@@ -2538,12 +2566,22 @@ window.jobMap = (function () {
                 return;
             }
             cta.dataset.bound = "1";
-            cta.addEventListener("click", function () {
+            cta.addEventListener("click", function (ev) {
+                stopEvent(ev);
                 const id = cta.getAttribute("data-job-id");
                 if (id) {
                     notifyOpen(id);
                 }
             });
+        });
+        fcw.querySelectorAll("[data-lagen-close], [data-lagen-prev], [data-lagen-next], [data-lagen-wage]").forEach(function (btn) {
+            if (btn.dataset.lagenStopBound) {
+                return;
+            }
+            btn.dataset.lagenStopBound = "1";
+            btn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+            }, true);
         });
         bindSaveJobButtons(fcw, childMarkers || []);
         const job = clusterUiState && clusterUiState.jobs
@@ -2612,7 +2650,6 @@ window.jobMap = (function () {
                 offset: 16,
                 anchor: "bottom"
             }, ll, html);
-            ensureLagenPopInView(activeClusterPopup);
             const popRoot = activeClusterPopup.getElement();
             clusterUiState = {
                 jobs: jobs,
@@ -2626,6 +2663,8 @@ window.jobMap = (function () {
                 wageTipOpen: false
             };
             bindLagenFundaInteractions(popRoot, childMarkers);
+            bindLagenDesktopPopupMapSync();
+            fitLagenDesktopPopup(activeClusterPopup, ll);
         }
         prefetchClusterCards(jobs).then(function () {
             if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
@@ -4608,22 +4647,43 @@ window.jobMap = (function () {
     }
 
     function ensureLagenPopInView(popup) {
-        if (!popup || !map || typeof popup.getElement !== "function") {
+        fitLagenDesktopPopup(popup);
+    }
+
+    function fitLagenDesktopPopup(popup, lngLat) {
+        if (!popup || !map || isNarrowViewport()) {
             return;
         }
-        const el = popup.getElement();
-        const container = map.getContainer();
-        if (!el || !container) {
-            return;
-        }
-        const mapRect = container.getBoundingClientRect();
-        const popRect = el.getBoundingClientRect();
-        const pad = 14;
-        if (popRect.top < mapRect.top + pad) {
+        if (lngLat && typeof popup.setLngLat === "function") {
             try {
-                map.panBy([0, mapRect.top + pad - popRect.top], { duration: 0 });
-            } catch (ePan) { }
+                popup.setLngLat(lngLat);
+            } catch (eLl) { }
+        } else if (clusterUiState && clusterUiState.lngLat && typeof popup.setLngLat === "function") {
+            try {
+                popup.setLngLat(clusterUiState.lngLat);
+            } catch (eLl2) { }
         }
+        centerPopupInView(popup);
+    }
+
+    function bindLagenDesktopPopupMapSync() {
+        if (!map || map._jobsyLagenDesktopPopSync) {
+            return;
+        }
+        map._jobsyLagenDesktopPopSync = true;
+        var moveTimer = null;
+        map.on("moveend", function () {
+            if (!activeClusterPopup || !clusterUiState || clusterUiState.docked || isNarrowViewport()) {
+                return;
+            }
+            if (moveTimer) {
+                clearTimeout(moveTimer);
+            }
+            moveTimer = setTimeout(function () {
+                moveTimer = null;
+                fitLagenDesktopPopup(activeClusterPopup);
+            }, 80);
+        });
     }
 
     function revealMapStage() {
