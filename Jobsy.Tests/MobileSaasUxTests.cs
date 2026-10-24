@@ -168,7 +168,8 @@ public class MobileSaasUxTests
         Assert.Contains(".sollicitaties-segment", css);
         Assert.Contains(".sollic-card", css);
         Assert.Contains(".sollicitaties-detail", css);
-        Assert.Contains("@media (min-width: 1024px) and (max-width: 1439px)", css, StringComparison.Ordinal);
+        Assert.Contains("grid-template-columns: minmax(0, 1fr) !important", css, StringComparison.Ordinal);
+        Assert.Contains(".sollicitaties-page .kb-apps__layout", css, StringComparison.Ordinal);
         Assert.Contains("@media (min-width: 1440px)", css, StringComparison.Ordinal);
         Assert.Contains("font-size: 2rem", css, StringComparison.Ordinal);
         Assert.Contains(".sollicitaties-toolbar__filters {\n    display: flex;\n    flex-wrap: nowrap;", css, StringComparison.Ordinal);
@@ -177,7 +178,8 @@ public class MobileSaasUxTests
             FindRepoRoot(),
             "Jobsy.Web/Components/Pages/Candidate/CandidateApplicationsSsr.razor"));
         Assert.Contains("scroll-padding-inline: var(--sollic-inline-pad, 16px)", css, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-sollicitatie01-layout7", applicationsRazor, StringComparison.Ordinal);
+        Assert.DoesNotContain("sollicitaties-detail", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-filter-chips.js?v=20261024-sollicitatie01-layout8", applicationsRazor, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
         AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/sollicitaties-page.css");

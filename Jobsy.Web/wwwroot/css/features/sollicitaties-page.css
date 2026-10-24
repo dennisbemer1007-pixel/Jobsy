@@ -309,27 +309,32 @@
   display: grid;
   gap: 1rem;
   width: 100%;
+  grid-template-columns: minmax(0, 1fr) !important;
 }
 
-/* Mockup 01 desktop list: full ~1064px column at 1280; split detail rail only at mockup 1440+. */
-@media (min-width: 1024px) and (max-width: 1439px) {
-  [data-testid="applications-page-ssr"] .sollicitaties-layout {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
+/* Mockup 01: one column until 1440; beat legacy kb-apps 1024px split from applications.css bundle. */
+.sollicitaties-page .kb-apps__layout,
+.sollicitaties-page .application-card-list,
+.sollicitaties-page .kb-apps__list {
+  max-width: none !important;
+  max-inline-size: none !important;
+  width: 100% !important;
+  margin-inline: 0 !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
 
-  [data-testid="applications-page-ssr"] .sollicitaties-detail {
-    display: none !important;
-  }
+.sollicitaties-detail {
+  display: none !important;
 }
 
 @media (min-width: 1440px) {
   .sollicitaties-layout {
-    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 380px);
+    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 380px) !important;
     align-items: start;
   }
 
-  [data-testid="applications-page-ssr"] .sollicitaties-layout {
-    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 380px) !important;
+  .sollicitaties-detail {
+    display: block !important;
   }
 }
 
@@ -611,16 +616,6 @@
   font-size: 1.25rem;
   color: color-mix(in srgb, var(--muted) 70%, transparent);
   line-height: 1;
-}
-
-.sollicitaties-detail {
-  display: none;
-}
-
-@media (min-width: 1440px) {
-  .sollicitaties-detail {
-    display: block;
-  }
 }
 
 .sollic-detail {
