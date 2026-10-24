@@ -13,11 +13,13 @@ internal static class BanenkaartFilterCookie
 
     internal static BanenkaartSsrQuery.State Merge(HttpContext http, BanenkaartSsrQuery.State fromUrl)
     {
+        var urlOriginAbsent = BanenkaartSsrQuery.UrlOmitsOriginWhileFiltered(http.Request.Query);
         if (!TryRead(http.Request, out var stored))
         {
-            return fromUrl;
+            return fromUrl with { UrlOriginAbsentByQuery = urlOriginAbsent };
         }
 
+        var keepStoredOrigin = !urlOriginAbsent;
         return fromUrl with
         {
             SearchQuery = fromUrl.SearchQuery ?? stored.SearchQuery,
@@ -34,9 +36,10 @@ internal static class BanenkaartFilterCookie
             CategoryIds = fromUrl.CategoryIds.Count > 0 ? fromUrl.CategoryIds : stored.CategoryIds,
             CompanyIds = fromUrl.CompanyIds.Count > 0 ? fromUrl.CompanyIds : stored.CompanyIds,
             SortMode = http.Request.Query.ContainsKey("sort") ? fromUrl.SortMode : stored.SortMode,
-            OriginLat = fromUrl.OriginLat ?? stored.OriginLat,
-            OriginLng = fromUrl.OriginLng ?? stored.OriginLng,
-            OriginLabel = fromUrl.OriginLabel ?? stored.OriginLabel,
+            OriginLat = keepStoredOrigin ? fromUrl.OriginLat ?? stored.OriginLat : fromUrl.OriginLat,
+            OriginLng = keepStoredOrigin ? fromUrl.OriginLng ?? stored.OriginLng : fromUrl.OriginLng,
+            OriginLabel = keepStoredOrigin ? fromUrl.OriginLabel ?? stored.OriginLabel : fromUrl.OriginLabel,
+            UrlOriginAbsentByQuery = urlOriginAbsent,
         };
     }
 
