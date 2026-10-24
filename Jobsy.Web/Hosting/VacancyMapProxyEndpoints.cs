@@ -2,7 +2,9 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
+using Jobsy.Core.Hosting;
 using Jobsy.Core.Security;
+using Jobsy.Web.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +20,20 @@ namespace Jobsy.Web.Hosting;
 public static class VacancyMapProxyEndpoints
 {
     public static readonly TimeSpan AnonymousCacheTtl = TimeSpan.FromSeconds(60);
+
+    private sealed class VacancyLikeProxyDto
+    {
+        public bool Liked { get; set; }
+    }
+
+    private sealed class VacancyLikeErrorDto
+    {
+        public bool Liked { get; set; }
+
+        public string? Error { get; set; }
+
+        public int? Status { get; set; }
+    }
 
     public static void MapVacancyMapProxyEndpoints(this WebApplication app)
     {
@@ -48,20 +64,29 @@ public static class VacancyMapProxyEndpoints
             forwarder.ForwardAsync(http, "api/travel/isochrones", ct));
 
         app.MapGet("/api/vacancies/{id:guid}/like", GetLikeAsync).RequireAuthorization().DisableAntiforgery();
-        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization();
-        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization();
+        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization().DisableAntiforgery();
+        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization().DisableAntiforgery();
     }
 
-    private static async Task<IResult> GetLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)
+    private static async Task<IResult> GetLikeAsync(
+        Guid id,
+        HttpContext http,
+        JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
     {
         try
         {
             var liked = await api.GetLikedAsync(id, ct);
-            return Results.Json(new { liked, Liked = liked });
+            return Results.Json(new VacancyLikeProxyDto { Liked = liked });
         }
-        catch
+        catch (Exception ex)
         {
-            return Results.Json(new { liked = false, Liked = false });
+            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+                .LogWarning(ex, "Vacancy like GET proxy failed for {VacancyId}", id);
+            AcceptatieDiagnosticHeaders.TrySet(http.Response, deployment, ex);
+            return Results.Json(new VacancyLikeProxyDto { Liked = false });
         }
     }
 
@@ -70,15 +95,29 @@ public static class VacancyMapProxyEndpoints
         HttpContext http,
         IAntiforgery antiforgery,
         JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
         ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
-        if (!await antiforgery.IsRequestValidAsync(http))
+        try
         {
-            return Results.BadRequest();
-        }
+            if (!await TryValidateAntiforgeryAsync(http, antiforgery))
+            {
+                AcceptatieDiagnosticHeaders.TrySetMessage(
+                    http.Response,
+                    deployment,
+                    "AntiforgeryValidationException: token missing or invalid");
+                return Results.Json(
+                    new VacancyLikeErrorDto { Liked = false, Error = "antiforgery" },
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
 
-        return await MutateLikeAsync(id, liked: true, api, loggerFactory, ct);
+            return await MutateLikeAsync(id, liked: true, http, api, deployment, loggerFactory, ct);
+        }
+        catch (Exception ex)
+        {
+            return LikeProxyFailure(http, deployment, loggerFactory, id, liked: true, ex);
+        }
     }
 
     private static async Task<IResult> DeleteLikeAsync(
@@ -86,41 +125,108 @@ public static class VacancyMapProxyEndpoints
         HttpContext http,
         IAntiforgery antiforgery,
         JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
         ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
-        if (!await antiforgery.IsRequestValidAsync(http))
+        try
         {
-            return Results.BadRequest();
+            if (!await TryValidateAntiforgeryAsync(http, antiforgery))
+            {
+                AcceptatieDiagnosticHeaders.TrySetMessage(
+                    http.Response,
+                    deployment,
+                    "AntiforgeryValidationException: token missing or invalid");
+                return Results.Json(
+                    new VacancyLikeErrorDto { Liked = false, Error = "antiforgery" },
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            return await MutateLikeAsync(id, liked: false, http, api, deployment, loggerFactory, ct);
+        }
+        catch (Exception ex)
+        {
+            return LikeProxyFailure(http, deployment, loggerFactory, id, liked: false, ex);
+        }
+    }
+
+    private static async Task<bool> TryValidateAntiforgeryAsync(HttpContext http, IAntiforgery antiforgery)
+    {
+        if (!HasAntiforgeryToken(http))
+        {
+            return false;
         }
 
-        return await MutateLikeAsync(id, liked: false, api, loggerFactory, ct);
+        try
+        {
+            return await antiforgery.IsRequestValidAsync(http);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return false;
+        }
+    }
+
+    private static bool HasAntiforgeryToken(HttpContext http)
+    {
+        if (http.Request.Headers.ContainsKey("RequestVerificationToken"))
+        {
+            return true;
+        }
+
+        if (http.Request.HasFormContentType
+            && http.Request.Form.TryGetValue("__RequestVerificationToken", out var formToken)
+            && !string.IsNullOrWhiteSpace(formToken))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static async Task<IResult> MutateLikeAsync(
         Guid id,
         bool liked,
+        HttpContext http,
         JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
         ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         try
         {
             var saved = await api.SetLikedAsync(id, liked, ct);
-            return Results.Json(new { liked = saved, Liked = saved });
+            return Results.Json(new VacancyLikeProxyDto { Liked = saved });
         }
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode code)
         {
             loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
                 .LogWarning(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked} status={Status}", id, liked, code);
-            return Results.StatusCode((int)code);
+            AcceptatieDiagnosticHeaders.TrySet(http.Response, deployment, ex);
+            return Results.Json(
+                new VacancyLikeErrorDto { Liked = false, Error = "api", Status = (int)code },
+                statusCode: (int)code);
         }
         catch (Exception ex)
         {
-            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
-                .LogError(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked}", id, liked);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+            return LikeProxyFailure(http, deployment, loggerFactory, id, liked, ex);
         }
+    }
+
+    private static IResult LikeProxyFailure(
+        HttpContext http,
+        DeploymentEnvironmentLabel deployment,
+        ILoggerFactory loggerFactory,
+        Guid id,
+        bool liked,
+        Exception ex)
+    {
+        loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+            .LogError(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked}", id, liked);
+        AcceptatieDiagnosticHeaders.TrySet(http.Response, deployment, ex);
+        return Results.Json(
+            new VacancyLikeErrorDto { Liked = false, Error = "proxy" },
+            statusCode: StatusCodes.Status500InternalServerError);
     }
 }
 

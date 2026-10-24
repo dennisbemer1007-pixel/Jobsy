@@ -31,6 +31,12 @@ internal static class BanenkaartSsrShells
         }
 
         sb.Append("\" data-banenkaart-ssr=\"1\" data-testid=\"banenkaart-ssr-root\">");
+        if (!string.IsNullOrWhiteSpace(antiforgeryToken))
+        {
+            sb.Append("<meta name=\"jobsy-request-verification-token\" content=\"")
+                .Append(WebUtility.HtmlEncode(antiforgeryToken))
+                .Append("\" />");
+        }
 
         if (!string.IsNullOrWhiteSpace(q.Error))
         {
