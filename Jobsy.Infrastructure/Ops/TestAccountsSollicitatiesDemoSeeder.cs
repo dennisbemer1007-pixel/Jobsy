@@ -47,32 +47,20 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return false;
         }
 
-        var candidate = await db.Users.FirstOrDefaultAsync(
-            u => u.Email == AcceptatiePrimaryCandidateEmail && u.IsTestAccount,
-            cancellationToken);
+        var candidate = await ResolveAcceptatieDemoCandidateAsync(db, configuration, logger, cancellationToken);
         if (candidate is null)
         {
-            var domain = configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
-            var entry = TestAccountCatalog.FindByKey("Candidate");
-            if (entry is null)
-            {
-                return false;
-            }
-
-            var catalogEmail = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain).ToLowerInvariant();
-            candidate = await db.Users.FirstOrDefaultAsync(
-                u => u.Email == catalogEmail && u.IsTestAccount,
-                cancellationToken);
-        }
-
-        if (candidate is null)
-        {
+            logger.LogInformation(
+                "Acceptatie sollicitaties demo skipped: no user for {Primary} or catalog candidate.",
+                AcceptatiePrimaryCandidateEmail);
             return false;
         }
 
         var branchManager = await FindBranchManagerAsync(db, configuration, cancellationToken);
         if (branchManager is null)
         {
+            logger.LogInformation(
+                "Acceptatie sollicitaties demo skipped: branch manager test account missing.");
             return false;
         }
 
@@ -174,6 +162,61 @@ public static class TestAccountsSollicitatiesDemoSeeder
         logger.LogDebug("Sollicitaties demo rows ensured for candidate {CandidateId}.", candidateId);
     }
 
+    /// <summary>
+    /// Acceptatie-only allowlist: primary Grokbot login, else catalog CLI candidate. Marks <see cref="User.IsTestAccount"/>.
+    /// </summary>
+    private static async Task<User?> ResolveAcceptatieDemoCandidateAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var primary = AcceptatiePrimaryCandidateEmail.ToLowerInvariant();
+        var candidate = await db.Users.FirstOrDefaultAsync(
+            u => u.Email != null && u.Email.ToLower() == primary,
+            cancellationToken);
+        if (candidate is not null)
+        {
+            await EnsureDemoCandidateTestFlagAsync(candidate, logger);
+            return candidate;
+        }
+
+        var entry = TestAccountCatalog.FindByKey("Candidate");
+        if (entry is null)
+        {
+            return null;
+        }
+
+        var domain = configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+        var catalogEmail = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain).ToLowerInvariant();
+        candidate = await db.Users.FirstOrDefaultAsync(
+            u => u.Email != null && u.Email.ToLower() == catalogEmail,
+            cancellationToken);
+        if (candidate is null)
+        {
+            return null;
+        }
+
+        await EnsureDemoCandidateTestFlagAsync(candidate, logger);
+        return candidate;
+    }
+
+    private static Task EnsureDemoCandidateTestFlagAsync(
+        User candidate,
+        ILogger logger)
+    {
+        if (candidate.IsTestAccount)
+        {
+            return Task.CompletedTask;
+        }
+
+        candidate.IsTestAccount = true;
+        logger.LogInformation(
+            "Acceptatie sollicitaties demo: marked allowlisted candidate {Email} as test account.",
+            candidate.Email);
+        return Task.CompletedTask;
+    }
+
     private static async Task<User?> FindBranchManagerAsync(
         JobsyDbContext db,
         IConfiguration configuration,
@@ -187,9 +230,15 @@ public static class TestAccountsSollicitatiesDemoSeeder
 
         var domain = configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
         var email = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain).ToLowerInvariant();
-        return await db.Users.FirstOrDefaultAsync(
-            u => u.Email == email && u.IsTestAccount,
+        var manager = await db.Users.FirstOrDefaultAsync(
+            u => u.Email != null && u.Email.ToLower() == email,
             cancellationToken);
+        if (manager is not null && !manager.IsTestAccount)
+        {
+            manager.IsTestAccount = true;
+        }
+
+        return manager;
     }
 
     private static CompanySeed[] BuildCompanies() =>

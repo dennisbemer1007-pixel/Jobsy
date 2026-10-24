@@ -137,8 +137,9 @@ public sealed class DatabaseSeedHostedService : BackgroundService
     {
         try
         {
+            // Same guard shape as assessment repair: API startup has no PublicWebBaseUrl host check.
             var input = TestAccountGuardInputFactory.FromConfiguration(
-                _configuration, _environment, isWebRuntime: false);
+                _configuration, _environment, isWebRuntime: true);
             var guard = TestAccountEnvironmentGuard.Evaluate(input);
             if (!guard.Allowed)
             {
@@ -158,7 +159,8 @@ public sealed class DatabaseSeedHostedService : BackgroundService
                 stoppingToken);
             if (!applied)
             {
-                _logger.LogInformation("Acceptatie sollicitaties demo skipped (candidate not seeded yet).");
+                _logger.LogInformation(
+                    "Acceptatie sollicitaties demo skipped (no allowlisted candidate or branch manager).");
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

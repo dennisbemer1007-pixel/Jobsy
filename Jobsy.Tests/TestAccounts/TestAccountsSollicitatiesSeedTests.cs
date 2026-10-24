@@ -75,6 +75,47 @@ public sealed class TestAccountsSollicitatiesSeedTests
     }
 
     [Fact]
+    public async Task TryEnsure_promotes_grokbot_without_test_account_flag()
+    {
+        var (db, _, branchManagerId) = await SeedUsersAsync(includeGrokbotCandidate: true);
+        var grok = await db.Users.SingleAsync(u => u.Email == TestAccountsSollicitatiesDemoSeeder.AcceptatiePrimaryCandidateEmail);
+        grok.IsTestAccount = false;
+        await db.SaveChangesAsync();
+
+        var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+            db,
+            BuildConfig(),
+            TestAccountEnvironmentGuard.Evaluate(ValidAcceptatieGuardInput()),
+            NullLogger.Instance);
+        Assert.True(applied);
+        Assert.True((await db.Users.SingleAsync(u => u.Id == grok.Id)).IsTestAccount);
+        Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == grok.Id));
+        _ = branchManagerId;
+    }
+
+    [Fact]
+    public void Api_startup_guard_allows_acc_api_without_public_web_host()
+    {
+        var input = new TestAccountGuardInput
+        {
+            DeploymentEnvironment = "Acceptatie",
+            TestAccountsEnabled = true,
+            RenderServiceName = "lobsy-acc-api",
+            PublicWebHost = null,
+            DatabaseName = "lobsy",
+            ConnectionStringParseFailed = false,
+            AllowStubPayments = false,
+            HasLiveMollieKey = false,
+            HostEnvironmentName = "Production",
+            ExpectedDatabaseName = "lobsy",
+            IsWebRuntime = true
+        };
+
+        var guard = TestAccountEnvironmentGuard.Evaluate(input);
+        Assert.True(guard.Allowed, guard.CodesSummary());
+    }
+
+    [Fact]
     public async Task TryEnsure_uses_primary_grokbot_email_when_test_account()
     {
         var (db, _, branchManagerId) = await SeedUsersAsync(includeGrokbotCandidate: true);
