@@ -625,14 +625,26 @@
         if (lngEl) {
             lngEl.value = String(lng);
         }
-        if (labelEl && label) {
-            labelEl.value = label;
+        if (labelEl) {
+            labelEl.value = label || "";
         }
         qsa("[data-kb-address]").forEach(function (input) {
-            if (label) {
-                input.value = label;
-            }
+            input.value = label || "";
         });
+    }
+
+    function syncAddressUiFromFilters(filters) {
+        if (!filters) {
+            return;
+        }
+        var hasOrigin = filters.originLat != null && filters.originLng != null;
+        if (hasOrigin) {
+            syncOriginFields(filters.originLat, filters.originLng, filters.originLabel || "");
+            toggleAddressClearButtons(true);
+            return;
+        }
+        syncOriginFields("", "", "");
+        toggleAddressClearButtons(false);
     }
 
     function toggleAddressClearButtons(show) {
@@ -955,7 +967,10 @@
             }
             if (target.closest("[data-testid=kb-active-tag-travel]")) {
                 ev.preventDefault();
-                clearOrigin();
+                if (window.jobsyBanenkaartCatalog
+                    && typeof window.jobsyBanenkaartCatalog.resetTravelKeepOrigin === "function") {
+                    window.jobsyBanenkaartCatalog.resetTravelKeepOrigin();
+                }
             }
         }, true);
     }
@@ -973,7 +988,11 @@
             }
             window.jobsyBanenkaartCatalog.applyClientFilters(window.jobsyBanenkaartCatalog.resolveFilters());
         });
-        document.addEventListener("jobsy-bk-filters-applied", function () {
+        document.addEventListener("jobsy-bk-filters-applied", function (ev) {
+            var filters = ev && ev.detail ? ev.detail.filters : null;
+            if (filters) {
+                syncAddressUiFromFilters(filters);
+            }
             if (window.jobMap && typeof window.jobMap.invalidate === "function") {
                 requestAnimationFrame(function () {
                     window.jobMap.invalidate();
