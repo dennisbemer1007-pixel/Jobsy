@@ -1,0 +1,55 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="card stack ndm-propose-slot" style="margin-top:14px;background:#fbf6ef;border-style:dashed">
+    <b style="color:var(--brand)">@Culture["AfterMatch.Screen04.ProposeOther"]</b>
+    <p class="small muted">@Culture["AfterMatch.Pick.ProposeLead"]</p>
+    <label class="lbl">@Culture["AfterMatch.Screen04.SlotsLabel"]</label>
+    <div class="g2b" style="gap:10px">
+        <input class="inp" type="datetime-local" value="@_startLocal" @onchange="OnStartChanged" />
+        <input class="inp" type="datetime-local" value="@_endLocal" @onchange="OnEndChanged" />
+    </div>
+    <label class="lbl">@Culture["AfterMatch.Screen08.Reason"]</label>
+    <textarea class="inp area" style="width:100%" @bind="_reason"></textarea>
+    <button type="button" class="btn" disabled="@Busy" @onclick="SubmitAsync">
+        @Culture["AfterMatch.Pick.ProposeSubmit"]
+    </button>
+</div>
+
+@code {
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<ProposeCandidateSlotRequest> OnSubmit { get; set; }
+
+    private string _startLocal = "";
+    private string _endLocal = "";
+    private string _reason = "";
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(_startLocal))
+        {
+            var start = DateTime.Now.AddDays(3).Date.AddHours(10);
+            _startLocal = start.ToString("yyyy-MM-ddTHH:mm");
+            _endLocal = start.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm");
+        }
+    }
+
+    private void OnStartChanged(ChangeEventArgs e) => _startLocal = e.Value?.ToString() ?? "";
+
+    private void OnEndChanged(ChangeEventArgs e) => _endLocal = e.Value?.ToString() ?? "";
+
+    private async Task SubmitAsync()
+    {
+        if (!DateTime.TryParse(_startLocal, out var startLocal)
+            || !DateTime.TryParse(_endLocal, out var endLocal)
+            || string.IsNullOrWhiteSpace(_reason))
+        {
+            return;
+        }
+
+        var startUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local).ToUniversalTime();
+        var endUtc = DateTime.SpecifyKind(endLocal, DateTimeKind.Local).ToUniversalTime();
+        await OnSubmit.InvokeAsync(new ProposeCandidateSlotRequest(startUtc, endUtc, _reason.Trim()));
+    }
+}

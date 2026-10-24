@@ -22,6 +22,7 @@
 @inject NavigationManager Navigation
 
 <PageTitle>@_pageTitle · Lobsy</PageTitle>
+<PageSeo Title="@_pageTitle" />
 
 @if (_loading)
 {
@@ -30,7 +31,7 @@
 else if (_thread is null)
 {
     <p class="state-message error">@Culture["AfterMatch.Error.NotFound"]</p>
-    <a class="btn btn-secondary" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a>
+    <a class="btn btn-secondary" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a>
 }
 else if (_view == ViewKind.MailConfirmation)
 {
@@ -39,7 +40,7 @@ else if (_view == ViewKind.MailConfirmation)
             <p class="crumb">@Culture["AfterMatch.Screen06.Crumb"]</p>
             <h1 style="font-size:1.8rem;margin-bottom:14px">@Culture["AfterMatch.Screen06.PageTitle"]</h1>
             <NdMMailConfirmation Thread="_thread" />
-            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a></p>
         </main>
     </div>
 }
@@ -78,7 +79,7 @@ else if (_view == ViewKind.Reminders)
                                       OnSave="SaveRemindersAsync" />
                 </div>
             </div>
-            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a></p>
         </main>
     </div>
 }
@@ -103,6 +104,57 @@ else
                                  OnSend="SendMessageAsync"
                                  OnPreview="PreviewMessageAsync" />
                 </div>
+            }
+            else if (_panel == "pick-slot")
+            {
+                <div class="ndm-flow-hero">
+                    <NdMHero Title="@Culture["AfterMatch.Screen04.Hero.Title"]"
+                             Lead="@PickSlotHeroLead(_thread)"
+                             LeadCompact="@Culture["AfterMatch.Screen04.Hero.LeadCompact"]"
+                             Eyebrow="@Culture["AfterMatch.Screen04.Eyebrow"]" />
+                </div>
+                <div class="ndm-mob-timeline ndm-flow-timeline card">
+                    <NdMTimeline CurrentStep="1" YesDate="@YesDateLabel" InterviewHint="@Culture["AfterMatch.Timeline.PlanNow"]" />
+                </div>
+                <div class="ndm-flow-pick">
+                    <div class="card stack">
+                        <NdMVacancyCard Initials="@Initials(_thread.CompanyName)"
+                                        Title="@_thread.VacancyTitle"
+                                        Subtitle="@VacancySubtitle(_thread)" />
+                        <div class="hide-m">
+                            <div class="hr"></div>
+                            <NdMTimeline CurrentStep="1" YesDate="@YesDateLabel" InterviewHint="@Culture["AfterMatch.Timeline.PlanNow"]" />
+                        </div>
+                        <span class="lbl">@Culture["AfterMatch.Screen04.SlotsLabel"]</span>
+                        <NdMSchedulingPanel Mode="NdMSchedulingMode.CandidatePick"
+                                            OpenSlots="_thread.OpenSlots"
+                                            Busy="_busy"
+                                            Compact="true"
+                                            OnSelectSlot="SelectSlotAsync"
+                                            OnProposeOther="GoProposeSlotAsync" />
+                        <NdMPickSlotFacts Thread="_thread" />
+                        @if (!string.IsNullOrWhiteSpace(_thread.Note))
+                        {
+                            <div class="note warm" style="margin-top:14px">
+                                <span>"@_thread.Note"</span>
+                            </div>
+                        }
+                        @if (_panel == "pick-slot" && _showProposeOnPick)
+                        {
+                            <NdMCandidateProposeSlotPanel Busy="_busy" OnSubmit="ProposeCandidateSlotAsync" />
+                        }
+                    </div>
+                </div>
+            }
+            else if (_panel == "propose-slot")
+            {
+                <div class="ndm-flow-hero">
+                    <NdMHero Title="@Culture["AfterMatch.Screen04.ProposeOther"]"
+                             Lead="@Culture["AfterMatch.Pick.ProposeLead"]"
+                             ShowArt="false"
+                             Eyebrow="@Culture["AfterMatch.Screen04.Eyebrow"]" />
+                </div>
+                <NdMCandidateProposeSlotPanel Busy="_busy" OnSubmit="ProposeCandidateSlotAsync" />
             }
             else
             {
@@ -206,7 +258,7 @@ else
                     </div>
                 </div>
             }
-            <p class="ndm-back" style="margin-top:16px"><a class="lk" href="@_applicationsBackHref">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+            <p class="ndm-back" style="margin-top:16px"><a class="lk" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a></p>
         </main>
     </div>
 }
@@ -237,6 +289,7 @@ else
     private ViewKind _view = ViewKind.Main;
     private string _firstName = "";
     private string? _notNowReason;
+    private bool _showProposeOnPick;
 
     private string BaseHref => $"/candidate/applications/{ApplicationId}/after-match";
 
@@ -249,6 +302,8 @@ else
         _applicationsBackHref = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(ReturnUrl, out var backHref)
             ? backHref
             : KbRoutes.Applications;
+        _pageTitle = ResolveInitialPageTitle(_panel);
+        _showProposeOnPick = false;
 
         try
         {
@@ -311,8 +366,20 @@ else
         {
             _heroTitle = Culture["AfterMatch.Screen10.Hero.Title"];
             _heroLead = Culture["AfterMatch.Screen10.Hero.Lead"];
+            _pageTitle = Culture["AfterMatch.Screen10.Hero.Title"];
+            return;
         }
-        else if (_panel == "reschedule")
+
+        if (_panel is "pick-slot" or "propose-slot")
+        {
+            _heroTitle = Culture["AfterMatch.Screen04.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen04.Hero.Lead"];
+            _heroLeadCompact = Culture["AfterMatch.Screen04.Hero.LeadCompact"];
+            _pageTitle = Culture["AfterMatch.Screen04.Hero.Title"];
+            return;
+        }
+
+        if (_panel == "reschedule")
         {
             _heroTitle = Culture["AfterMatch.Screen08.Hero.Title"];
             _heroLead = Culture["AfterMatch.Screen08.Hero.Lead"];
@@ -407,6 +474,11 @@ else
         {
             _thread = await Api.SelectAfterMatchSlotAsync(ApplicationId, new SelectSlotRequest(slotId));
             ApplyHero(_thread);
+            if (_panel == "pick-slot" && _thread?.InterviewStatus == InterviewStatus.Scheduled)
+            {
+                var url = AfterMatchSollicitatiesUrls.AfterMatchBase(ApplicationId, _applicationsBackHref);
+                Navigation.NavigateTo(url, forceLoad: true);
+            }
         }
         catch (Exception ex)
         {
@@ -417,6 +489,66 @@ else
         {
             _busy = false;
         }
+    }
+
+    private async Task ProposeCandidateSlotAsync(ProposeCandidateSlotRequest request)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.ProposeCandidateAfterMatchSlotAsync(ApplicationId, request);
+            ApplyHero(_thread);
+            var url = AfterMatchSollicitatiesUrls.AfterMatchBase(ApplicationId, _applicationsBackHref);
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task GoProposeSlotAsync()
+    {
+        _showProposeOnPick = true;
+        return Task.CompletedTask;
+    }
+
+    private static string ResolveInitialPageTitle(string panel) => panel switch
+    {
+        "messages" => "Berichten",
+        "pick-slot" or "propose-slot" => "Kies een moment voor je gesprek",
+        _ => "Sollicitaties"
+    };
+
+    private string ApplicationsBackLabel()
+    {
+        if (ApplicationsSsrQuery.TryGetSafeApplicationsReturn(ReturnUrl, out var href)
+            && href.Contains("tab=berichten", StringComparison.OrdinalIgnoreCase))
+        {
+            return Culture["AfterMatch.Link.BackBerichten"];
+        }
+
+        if (_panel is "pick-slot" or "propose-slot")
+        {
+            return Culture["AfterMatch.Link.BackPickSlot"];
+        }
+
+        return Culture["AfterMatch.Link.BackApplications"];
+    }
+
+    private string PickSlotHeroLead(AfterMatchThreadDto thread)
+    {
+        var contact = string.IsNullOrWhiteSpace(thread.WithWhom) ? thread.CompanyName : thread.WithWhom;
+        return string.Format(
+            Culture["AfterMatch.Screen04.Hero.LeadPick"],
+            contact,
+            thread.CompanyName,
+            thread.OpenSlots.Count);
     }
 
     private async Task RescheduleAsync(string reason)
