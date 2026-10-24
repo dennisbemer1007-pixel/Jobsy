@@ -1,14 +1,15 @@
 /* Sollicitaties mockup SSR (PR #878) */
 
-/* Mockup 01 desktop column (~1064px inner @ 1280): beat applications.css 720px if it loads first. */
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"],
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-shell,
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-intro,
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-intro__title,
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-toolbar,
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-toolbar__filters,
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-toolbar__add,
-.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollic-card {
+/* Beat applications.css 720px caps — do not set width:100% on .sollicitaties-shell (mockup 1120 column). */
+.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] {
+  max-width: none !important;
+  max-inline-size: none !important;
+  box-sizing: border-box;
+}
+
+.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollic-card,
+.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .sollicitaties-list,
+.panel-page.sollicitaties-page[data-testid="applications-page-ssr"] .application-card-list {
   max-width: none !important;
   max-inline-size: none !important;
   width: 100%;

@@ -77,6 +77,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
             const layout = document.querySelector('.sollicitaties-layout');
             const h1 = document.querySelector('.sollicitaties-intro__title');
             const chips = document.querySelector('.sollicitaties-toolbar__filters');
+            const toolbar = document.querySelector('.sollicitaties-toolbar');
             const pick = (el) => {
                 if (!el) return null;
                 const r = el.getBoundingClientRect();
@@ -108,6 +109,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
                 list: pick(list),
                 h1: pick(h1),
                 chips: pick(chips),
+                toolbar: pick(toolbar),
             };
         }");
 
@@ -115,9 +117,14 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
             $"1280 layout: shell x={metrics.Shell?.X:F0}..{metrics.Shell?.Right:F0} (w={metrics.Shell?.W:F0}), "
             + $"h1 x={metrics.H1?.X:F0}..{metrics.H1?.Right:F0} (w={metrics.H1?.W:F0}), "
             + $"chips x={metrics.Chips?.X:F0}..{metrics.Chips?.Right:F0} (w={metrics.Chips?.W:F0}), "
+            + $"toolbar x={metrics.Toolbar?.X:F0}..{metrics.Toolbar?.Right:F0} (w={metrics.Toolbar?.W:F0}), "
             + $"bottomNav x={metrics.BottomNavBox?.X:F0}..{metrics.BottomNavBox?.Right:F0} (w={metrics.BottomNavBox?.W:F0}), "
             + $"stylesheets={metrics.StylesheetCount}, noblazorHeadCss={metrics.HasNoBlazorRouteCss}";
         _output.WriteLine(layoutLine);
+        if (string.Equals(Environment.GetEnvironmentVariable("JOBSY_DUMP_SOLLIC_LAYOUT"), "1", StringComparison.Ordinal))
+        {
+            await File.WriteAllTextAsync("/tmp/sollic-layout-metrics.txt", layoutLine + Environment.NewLine);
+        }
 
         Assert.True(metrics.HasSsr, "Expected SSR sollicitaties page markup.");
         Assert.False(metrics.HasLegacyKbApps, "Legacy kb-apps layout must not be used on /candidate/applications.");
@@ -139,11 +146,12 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
                 $"h1 width {metrics.H1.W} (x={metrics.H1.X:F0}..{metrics.H1.Right:F0})");
         }
 
-        if (metrics.Chips is not null)
+        var chipsRow = metrics.Toolbar ?? metrics.Chips;
+        if (chipsRow is not null)
         {
             Assert.True(
-                metrics.Chips.W >= 980,
-                $"chips width {metrics.Chips.W} (x={metrics.Chips.X:F0}..{metrics.Chips.Right:F0})");
+                chipsRow.W >= 980,
+                $"toolbar/chips row width {chipsRow.W} (x={chipsRow.X:F0}..{chipsRow.Right:F0})");
         }
 
         if (metrics.List is not null)
@@ -166,6 +174,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public Box? List { get; set; }
         public Box? H1 { get; set; }
         public Box? Chips { get; set; }
+        public Box? Toolbar { get; set; }
         public List<Box>? H1Ancestors { get; set; }
     }
 
