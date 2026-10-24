@@ -2691,42 +2691,47 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     color: var(--kb-ink, #1b2440);
 }
 
-/* Mobile sheet (<=640): wage table in document flow inside the white card, below meta rows. */
+/* Mobile (<=640): floating wage tooltip on € (same as desktop), card does not grow. */
 @media (max-width: 640px) {
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fc.m {
-        overflow: auto;
-        max-height: min(52vh, 420px);
-        -webkit-overflow-scrolling: touch;
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-stage .fcwrap.kb-lagen-fcwrap {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: calc(var(--bottom-nav-h, 4.25rem) + var(--kb-map-above-nav-gap, 12px) + env(safe-area-inset-bottom, 0px));
+        overflow: visible;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fc.m .tip.tip--sheet-incard {
-        position: static;
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m {
+        overflow: visible;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fctl {
+        overflow: visible;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip {
         top: auto;
-        right: auto;
-        bottom: auto;
+        bottom: calc(100% + 10px);
+        right: 0;
         left: auto;
-        display: none;
-        width: auto;
-        margin: 10px 0 0;
-        max-height: min(12rem, 36vh);
+        width: min(210px, calc(100vw - 28px));
+        max-height: min(240px, 45dvh);
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
-        box-shadow: none;
-        z-index: auto;
+        z-index: 70;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m.lagen-wage-open .fc.m .tip.tip--sheet-incard:not([hidden]) {
-        display: block !important;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fc.m .tip.tip--sheet-incard::before {
-        display: none;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcwrap.kb-lagen-fcwrap .fcw.m .fb.euro .tip {
-        display: none !important;
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .fcw.m .fb.euro .tip::before {
+        top: auto;
+        bottom: -6px;
+        right: 19px;
+        border-left: 0;
+        border-top: 0;
+        border-right: 1px solid #e3dacb;
+        border-bottom: 1px solid #e3dacb;
+        transform: rotate(45deg);
     }
 }
 
