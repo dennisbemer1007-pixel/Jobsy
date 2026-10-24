@@ -254,6 +254,9 @@
         if (!filters || filters.originLat == null || filters.originLng == null) {
             return true;
         }
+        if (filters.maxMinutes == null) {
+            return true;
+        }
         var mins = travelMinutes(
             { lat: filters.originLat, lng: filters.originLng },
             row.lat,
@@ -262,7 +265,7 @@
         if (mins == null) {
             return true;
         }
-        var maxM = filters.maxMinutes || 20;
+        var maxM = filters.maxMinutes;
         var reachKm = crowFliesKmPerHour(transportMode(filters.transport)) * (maxM / 60) * 1.25;
         var km = haversineKm(filters.originLat, filters.originLng, row.lat, row.lng);
         return mins <= maxM && km <= reachKm;
@@ -472,10 +475,21 @@
         if (!Array.isArray(workTypes)) {
             workTypes = workTypes ? [workTypes] : [];
         }
-        var maxMinutes = parseInt(raw.maxMinutes, 10);
+        var hasMaxKey = Object.prototype.hasOwnProperty.call(raw, "maxMinutes");
+        var maxMinutes = hasMaxKey && raw.maxMinutes != null && raw.maxMinutes !== ""
+            ? parseInt(raw.maxMinutes, 10)
+            : NaN;
+        var originLat = raw.originLat != null ? Number(raw.originLat) : null;
+        var originLng = raw.originLng != null ? Number(raw.originLng) : null;
+        var hasOrigin = originLat != null && originLng != null && isFinite(originLat) && isFinite(originLng);
+        var resolvedMax = isFinite(maxMinutes)
+            ? maxMinutes
+            : (hasMaxKey && (raw.maxMinutes == null || raw.maxMinutes === "")
+                ? null
+                : (hasOrigin ? null : 20));
         return {
             q: raw.q || null,
-            maxMinutes: isFinite(maxMinutes) ? maxMinutes : 20,
+            maxMinutes: resolvedMax,
             transport: raw.transport || "Fiets",
             minHours: raw.minHours != null ? parseInt(raw.minHours, 10) || 0 : 0,
             maxHours: raw.maxHours != null ? parseInt(raw.maxHours, 10) || 40 : 40,
@@ -483,8 +497,8 @@
             maxWageCents: raw.maxWageCents != null ? raw.maxWageCents : null,
             categoryIds: categoryIds,
             workTypes: workTypes,
-            originLat: raw.originLat != null ? Number(raw.originLat) : null,
-            originLng: raw.originLng != null ? Number(raw.originLng) : null,
+            originLat: hasOrigin ? originLat : (raw.originLat != null ? Number(raw.originLat) : null),
+            originLng: hasOrigin ? originLng : (raw.originLng != null ? Number(raw.originLng) : null),
             originLabel: raw.originLabel || null,
             sort: raw.sort || "distance"
         };
@@ -495,21 +509,25 @@
             var params = new URLSearchParams(window.location.search);
             var lat = parseFloat(params.get("originLat"));
             var lng = parseFloat(params.get("originLng"));
-            var maxMinutes = parseInt(params.get("maxMinutes") || "", 10);
+            var hasOrigin = isFinite(lat) && isFinite(lng);
+            var maxMinutesRaw = params.get("maxMinutes");
+            var maxMinutes = maxMinutesRaw != null ? parseInt(maxMinutesRaw, 10) : NaN;
             var minHours = parseInt(params.get("minHours") || "", 10);
             var maxHours = parseInt(params.get("maxHours") || "", 10);
             var categoryIds = params.getAll("categoryId");
             var workTypes = params.getAll("workType");
             return normalizeFilters({
                 q: params.get("q") || null,
-                maxMinutes: isFinite(maxMinutes) ? maxMinutes : 20,
+                maxMinutes: maxMinutesRaw != null
+                    ? (isFinite(maxMinutes) ? maxMinutes : 20)
+                    : (hasOrigin ? null : 20),
                 transport: params.get("transport") || "Fiets",
                 minHours: isFinite(minHours) ? minHours : 0,
                 maxHours: isFinite(maxHours) ? maxHours : 40,
                 categoryIds: categoryIds,
                 workTypes: workTypes,
-                originLat: isFinite(lat) ? lat : null,
-                originLng: isFinite(lng) ? lng : null,
+                originLat: hasOrigin ? lat : null,
+                originLng: hasOrigin ? lng : null,
                 originLabel: params.get("originLabel") || null,
                 sort: params.get("sort") || "distance"
             });
@@ -581,7 +599,7 @@
         }
         var slider = form.querySelector("[data-testid=kb-sheet-travel-slider]");
         if (slider) {
-            slider.value = String(filters.maxMinutes || 20);
+            slider.value = String(filters.maxMinutes != null ? filters.maxMinutes : 20);
         }
         var transportHidden = document.getElementById("kb-filter-transport");
         if (transportHidden) {
@@ -592,7 +610,7 @@
         });
         document.querySelectorAll("[data-kb-travel-preset]").forEach(function (btn) {
             var preset = parseInt(btn.getAttribute("data-kb-travel-preset"), 10);
-            btn.classList.toggle("is-selected", preset === (filters.maxMinutes || 20));
+            btn.classList.toggle("is-selected", filters.maxMinutes != null && preset === filters.maxMinutes);
         });
         var minHours = form.querySelector("input[name=minHours]");
         var maxHours = form.querySelector("input[name=maxHours]");
@@ -647,11 +665,12 @@
         var travelBtn = document.querySelector("[data-testid=kb-active-tag-travel]");
         var travelTag = travelBtn && travelBtn.querySelector("span:first-child");
         var hasOrigin = filters.originLat != null && filters.originLng != null;
+        var showTravelChip = hasOrigin && filters.maxMinutes != null;
         if (travelBtn) {
-            travelBtn.hidden = !hasOrigin;
-            travelBtn.style.display = hasOrigin ? "" : "none";
+            travelBtn.hidden = !showTravelChip;
+            travelBtn.style.display = showTravelChip ? "" : "none";
         }
-        if (travelTag && hasOrigin) {
+        if (travelTag && showTravelChip) {
             travelTag.textContent = travelChipLabel(filters);
         }
         var bar = document.querySelector("[data-testid=kb-active-filters]");
@@ -717,7 +736,7 @@
         if (typeof window.jobMap.setTravelOptions === "function") {
             window.jobMap.setTravelOptions({
                 maxMinutes: filters.maxMinutes,
-                transport: filters.transport
+                transport: filters.transport || "Fiets"
             });
         }
     }
@@ -986,7 +1005,10 @@
         if (!filters || filters.originLat == null || filters.originLng == null) {
             return "";
         }
-        var mins = filters.maxMinutes ? filters.maxMinutes : 20;
+        if (filters.maxMinutes == null) {
+            return "";
+        }
+        var mins = filters.maxMinutes;
         var mode = filters.transport ? filters.transport : "Fiets";
         return "binnen " + mins + " min " + transportVerbNl(mode);
     }
@@ -1029,8 +1051,8 @@
             q.push("q=" + encodeURIComponent(filters.q));
         }
         var hasOrigin = filters.originLat != null && filters.originLng != null;
-        if (hasOrigin || (filters.maxMinutes && filters.maxMinutes !== 20)) {
-            q.push("maxMinutes=" + (filters.maxMinutes || 20));
+        if (filters.maxMinutes != null && (hasOrigin || filters.maxMinutes !== 20)) {
+            q.push("maxMinutes=" + filters.maxMinutes);
         }
         if (hasOrigin || (filters.transport && filters.transport !== "Fiets")) {
             q.push("transport=" + encodeURIComponent(filters.transport || "Fiets"));
@@ -1308,8 +1330,7 @@
 
     function resetTravelKeepOrigin() {
         var filters = normalizeFilters(resolveFilters());
-        filters.maxMinutes = 20;
-        filters.transport = "Fiets";
+        filters.maxMinutes = null;
         return applyClientFilters(filters);
     }
 

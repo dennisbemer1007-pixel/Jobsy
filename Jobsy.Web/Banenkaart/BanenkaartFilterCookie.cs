@@ -103,7 +103,7 @@ internal static class BanenkaartFilterCookie
     {
         public string? SearchQuery { get; set; }
         public List<string> WorkTypes { get; set; } = [];
-        public int MaxTravelMinutes { get; set; }
+        public int? MaxTravelMinutes { get; set; }
         public string Transport { get; set; } = KbMapStart.DefaultTransport;
         public int RadiusKm { get; set; } = 15;
         public int MinHoursPerWeek { get; set; }

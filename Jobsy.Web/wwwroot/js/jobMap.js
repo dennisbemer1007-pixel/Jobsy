@@ -3896,8 +3896,22 @@ window.jobMap = (function () {
         return rings.slice(-3);
     }
 
+    function lagenTravelTimeFilterActive() {
+        return lagenLayout && travelOptions.maxMinutes != null;
+    }
+
     function chosenRingMinutes() {
+        if (lagenLayout && travelOptions.maxMinutes == null) {
+            return null;
+        }
         return Math.max(5, Number(travelOptions.maxMinutes) || 30);
+    }
+
+    function lagenFitMinutes() {
+        if (travelOptions.maxMinutes != null) {
+            return Math.max(5, Number(travelOptions.maxMinutes) || 20);
+        }
+        return 30;
     }
 
     function readLagenLayoutFromOptions(options) {
@@ -3913,6 +3927,16 @@ window.jobMap = (function () {
 
     function lagenTravelRingMinutes() {
         return [10, 20, 30];
+    }
+
+    function visibleTravelRingMinutes() {
+        if (!lagenLayout) {
+            return [chosenRingMinutes()];
+        }
+        if (travelOptions.maxMinutes == null) {
+            return lagenTravelRingMinutes();
+        }
+        return [Math.max(5, Number(travelOptions.maxMinutes) || 20)];
     }
 
     function travelRingLineDashPaint() {
@@ -4000,7 +4024,7 @@ window.jobMap = (function () {
     function maxRingRadiusMeters() {
         const speed = metersPerMinute(travelOptions.transport || "Fiets");
         const maxMin = lagenLayout
-            ? Math.max(30, Number(travelOptions.maxMinutes) || 30)
+            ? Math.max(30, lagenFitMinutes())
             : (Number(travelOptions.maxMinutes) || 30);
         const travelMeters = maxMin * speed;
         const radiusKm = Number(travelOptions.radiusKm);
@@ -4056,10 +4080,10 @@ window.jobMap = (function () {
     function eachTravelRing(lat, lng, fn) {
         if (lagenLayout) {
             const chosen = chosenRingMinutes();
-            lagenTravelRingMinutes().forEach(function (mins, index) {
+            visibleTravelRingMinutes().forEach(function (mins, index) {
                 const radius = ringRadiusForMinutes(mins);
                 if (radius >= 40) {
-                    fn(mins, index, radius, mins === chosen);
+                    fn(mins, index, radius, chosen != null && mins === chosen);
                 }
             });
             return;
@@ -4080,8 +4104,8 @@ window.jobMap = (function () {
                 properties: {
                     index: index,
                     minutes: mins,
-                    chosen: isChosen || mins === chosen ? 1 : 0,
-                    outer: isChosen ? 1 : 0
+                    chosen: (chosen != null && (isChosen || mins === chosen)) ? 1 : 0,
+                    outer: (chosen != null && isChosen) ? 1 : 0
                 },
                 geometry: { type: "Polygon", coordinates: circlePolygon(lat, lng, radius) }
             });
@@ -4099,7 +4123,7 @@ window.jobMap = (function () {
 
     function fetchIsochrones(lat, lng) {
         const mode = canonicalTransport(travelOptions.transport || "Fiets");
-        const minutes = lagenLayout ? lagenTravelRingMinutes() : [chosenRingMinutes()];
+        const minutes = lagenLayout ? visibleTravelRingMinutes() : [chosenRingMinutes()];
         const key = isochroneCacheKey(lat, lng, mode, minutes);
         if (isochroneCache[key]) {
             return Promise.resolve(isochroneCache[key]);
@@ -4134,6 +4158,10 @@ window.jobMap = (function () {
 
     function featuresFromIsochroneFc(fc) {
         const chosen = chosenRingMinutes();
+        const visible = {};
+        visibleTravelRingMinutes().forEach(function (m) {
+            visible[m] = true;
+        });
         const features = (fc.features || []).map(function (f, index) {
             const mins = Number((f.properties && (f.properties.minutes != null
                 ? f.properties.minutes
@@ -4143,13 +4171,13 @@ window.jobMap = (function () {
                 properties: {
                     index: index,
                     minutes: mins,
-                    chosen: mins === chosen ? 1 : 0,
-                    outer: mins === chosen ? 1 : 0
+                    chosen: (chosen != null && mins === chosen) ? 1 : 0,
+                    outer: (chosen != null && mins === chosen) ? 1 : 0
                 },
                 geometry: f.geometry
             };
         }).filter(function (f) {
-            return f.geometry && f.properties.minutes > 0;
+            return f.geometry && f.properties.minutes > 0 && !!visible[f.properties.minutes];
         });
         features.sort(function (a, b) {
             return (b.properties.minutes || 0) - (a.properties.minutes || 0);
@@ -4489,7 +4517,7 @@ window.jobMap = (function () {
         }
 
         const ringKey = String(lat) + "," + String(lng) + "|"
-            + (lagenLayout ? "lagen:10,20,30" : String(travelOptions.maxMinutes)) + "|"
+            + (lagenLayout ? "lagen:" + visibleTravelRingMinutes().join(",") : String(travelOptions.maxMinutes)) + "|"
             + String(travelOptions.transport || "");
         if (ringKey === lastRingDrawKey && travelRingGeo) {
             return;
@@ -4660,7 +4688,7 @@ window.jobMap = (function () {
         }
         let radius = maxRingRadiusMeters() * 1.12;
         if (lagenLayout) {
-            const chosenM = chosenRingMinutes();
+            const chosenM = lagenFitMinutes();
             if (isNarrowViewport()) {
                 radius = ringRadiusForMinutes(Math.max(chosenM, 30)) * 1.14;
             } else {
@@ -4724,8 +4752,12 @@ window.jobMap = (function () {
 
     function normalizeTravelOptions(options) {
         if (!options) return;
-        if (options.maxMinutes != null) {
-            travelOptions.maxMinutes = Number(options.maxMinutes) || travelOptions.maxMinutes;
+        if (Object.prototype.hasOwnProperty.call(options, "maxMinutes")) {
+            if (options.maxMinutes == null || options.maxMinutes === "") {
+                travelOptions.maxMinutes = null;
+            } else {
+                travelOptions.maxMinutes = Number(options.maxMinutes) || travelOptions.maxMinutes;
+            }
         }
         if (options.transport) {
             travelOptions.transport = String(options.transport);
@@ -7996,6 +8028,25 @@ window.jobMap = (function () {
         __testGetViewportNotifyCount: function () { return viewportNotifyCount; },
         __testResetViewportNotifyCount: function () { viewportNotifyCount = 0; },
         __testGetTravelRingDrawCount: function () { return travelRingDrawCount; },
+        __testGetTravelRingFeatureCount: function () {
+            if (!map) {
+                return 0;
+            }
+            try {
+                const src = map.getSource("jobsy-travel-rings");
+                const data = src && typeof src.serialize === "function" ? src.serialize().data : null;
+                if (data && Array.isArray(data.features)) {
+                    return data.features.length;
+                }
+            } catch (eSer) { }
+            if (typeof map.querySourceFeatures === "function") {
+                try {
+                    return (map.querySourceFeatures("jobsy-travel-rings") || []).length;
+                } catch (eCount) { }
+            }
+            return 0;
+        },
+        __testLagenTravelTimeFilterActive: function () { return lagenTravelTimeFilterActive(); },
         __testFitAllPins: function () {
             if (!map) {
                 return;

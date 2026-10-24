@@ -23,6 +23,18 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    [Fact]
+    public void Banenkaart_travel_rings_follow_time_filter_ssot()
+    {
+        var root = FindRepoRoot();
+        var jobMap = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        Assert.Contains("visibleTravelRingMinutes", jobMap, StringComparison.Ordinal);
+        Assert.Contains("filters.maxMinutes = null", catalog, StringComparison.Ordinal);
+        Assert.Contains("filters.maxMinutes == null", catalog, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_map_strip_supports_lazy_vacancy_photos()
     {
         var root = FindRepoRoot();

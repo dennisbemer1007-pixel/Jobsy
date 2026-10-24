@@ -206,9 +206,12 @@ internal static class BanenkaartSsrListHtml
             q.Add("transport=" + Uri.EscapeDataString(query.Transport));
         }
 
-        q.Add("maxMinutes=" + query.MaxTravelMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (query.MaxTravelMinutes is int maxMinutes)
+        {
+            q.Add("maxMinutes=" + maxMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
 
-        return href + "?" + string.Join("&", q);
+        return q.Count > 0 ? href + "?" + string.Join("&", q) : href;
     }
 
     private static string? SectorLabel(CultureState culture, VacancyListItem vacancy)
