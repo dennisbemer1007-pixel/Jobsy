@@ -13,7 +13,7 @@ public class KandidaatBanenFoundationGuardTests
     [
         "Jobsy.Web/Components/VacancyDiscovery.razor",
         "Jobsy.Web/Components/Pages/VacancyDetail.razor",
-        "Jobsy.Web/Components/Pages/Candidate/Applications.razor",
+        "Jobsy.Web/Components/Pages/Candidate/CandidateApplicationsSsr.razor",
         "Jobsy.Web/Components/Pages/Candidate/CandidateLikedSsr.razor",
         "Jobsy.Web/Components/Pages/Candidate/Shared.razor",
         "Jobsy.Web/Components/Pages/Candidate/MatchPage.razor",

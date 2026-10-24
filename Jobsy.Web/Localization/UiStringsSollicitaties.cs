@@ -1,0 +1,81 @@
+namespace Jobsy.Web.Localization;
+
+public static class UiStringsSollicitaties
+{
+    public static void MergeAll(
+        Dictionary<string, string> nl,
+        Dictionary<string, string> en,
+        Dictionary<string, string> pl,
+        Dictionary<string, string> ro,
+        Dictionary<string, string> ar)
+    {
+        void Add(string key, string nlText, string enText, string plText, string roText, string arText)
+        {
+            nl[key] = nlText;
+            en[key] = enText;
+            pl[key] = plText;
+            ro[key] = roText;
+            ar[key] = arText;
+        }
+
+        Add("Apps.MockupLead",
+            "Op vacatures en bij bedrijven waar je zelf aanklopte. Alles op één plek.",
+            "On vacancies and at companies you reached out to yourself. All in one place.",
+            "Na oferty i u firm, do których sam/a zagadałeś/aś. Wszystko w jednym miejscu.",
+            "La joburi și la firme unde ai bătut tu la ușă. Totul într-un loc.",
+            "على الوظائف وعند الشركات التي تواصلت معها بنفسك. الكل في مكان واحد.");
+
+        Add("Nav.ActivitiesTab",
+            "Mijn activiteiten", "My activities",
+            "Moje aktywności", "Activitățile mele", "نشاطاتي");
+
+        Add("Apps.AddApplication",
+            "Sollicitatie toevoegen", "Add application",
+            "Dodaj aplikację", "Adaugă candidatură", "إضافة طلب");
+
+        Add("Apps.InitiativeWeekBanner",
+            "Nog {0} van de {1} keer 'Ik wil hier werken' deze week",
+            "{0} of {1} 'I want to work here' left this week",
+            "Zostało {0} z {1} razy „Chcę tu pracować” w tym tygodniu",
+            "Mai ai {0} din {1} ori „Vreau să lucrez aici” săptămâna asta",
+            "تبقّى {0} من {1} مرات «أريد العمل هنا» هذا الأسبوع");
+
+        Add("Bk.Apps.FilterInitiative",
+            "Ik wil hier werken", "I want to work here",
+            "Chcę tu pracować", "Vreau să lucrez aici", "أريد العمل هنا");
+
+        Add("Apps.SourceExternal",
+            "Buiten Lobsy", "Outside Lobsy",
+            "Poza Lobsy", "În afara Lobsy", "خارج Lobsy");
+
+        Add("ExtVac.Status.Applied",
+            "Gesolliciteerd", "Applied",
+            "Aplikowano", "Ai aplicat", "تم التقديم");
+
+        Add("Apps.SentOn",
+            "Verstuurd {0}", "Sent {0}",
+            "Wysłano {0}", "Trimis {0}", "أُرسل {0}");
+
+        Add("Apps.Activiteiten.Placeholder",
+            "Mijn activiteiten komt hier. Je ziet straks je wekelijkse zoekactiviteit en kunt die aanvullen.",
+            "My activities will appear here. You will soon see weekly job-search activity and can add to it.",
+            "Moje aktywności pojawią się tutaj. Wkrótce zobaczysz tygodniową aktywność i uzupełnisz ją.",
+            "Activitățile tale vor apărea aici. În curând vei vedea activitatea săptămânală.",
+            "ستظهر نشاطاتك هنا. قريباً سترى نشاط البحث الأسبوعي.");
+
+        Add("Apps.CardPill.InterviewPlanned",
+            "Gesprek gepland", "Interview scheduled",
+            "Rozmowa zaplanowana", "Interviu programat", "مقابلة مجدولة");
+
+        Add("Apps.Detail.TipTitle",
+            "Wat kun je nu doen?", "What can you do now?",
+            "Co możesz teraz zrobić?", "Ce poți face acum?", "ماذا يمكنك أن تفعل الآن؟");
+
+        Add("Apps.Detail.TipInterview",
+            "Oefen je gesprek en lees de tips voor een kennismaking.",
+            "Practice your interview and read tips for an introductory meeting.",
+            "Poćwicz rozmowę i przeczytaj wskazówki do spotkania.",
+            "Exersează interviul și citește sfaturi pentru o întâlnire.",
+            "تدرّب على مقابلتك واقرأ نصائح اللقاء التعارفي.");
+    }
+}
