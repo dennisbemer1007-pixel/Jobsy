@@ -661,11 +661,56 @@
         });
     }
 
+    function ensureActiveFiltersBar() {
+        var bar = document.querySelector("[data-testid=kb-active-filters]");
+        if (bar) {
+            return bar;
+        }
+        var head = document.querySelector("[data-testid=kb-panel-head]");
+        if (!head) {
+            return null;
+        }
+        bar = document.createElement("div");
+        bar.className = "chips deskonly kb-active-filters";
+        bar.setAttribute("data-testid", "kb-active-filters");
+        var clearBtn = document.createElement("button");
+        clearBtn.type = "button";
+        clearBtn.className = "link kb-active-filters__clear";
+        clearBtn.setAttribute("data-testid", "kb-active-filters-clear");
+        clearBtn.textContent = "Wissen";
+        bar.appendChild(clearBtn);
+        head.appendChild(bar);
+        return bar;
+    }
+
+    function ensureTravelChipButton() {
+        var bar = ensureActiveFiltersBar();
+        if (!bar) {
+            return null;
+        }
+        var travelBtn = bar.querySelector("[data-testid=kb-active-tag-travel]");
+        if (travelBtn) {
+            return travelBtn;
+        }
+        travelBtn = document.createElement("button");
+        travelBtn.type = "button";
+        travelBtn.className = "chip kb-active-tag";
+        travelBtn.setAttribute("data-testid", "kb-active-tag-travel");
+        travelBtn.innerHTML = "<span></span><span class=\"kb-active-tag__remove\" aria-hidden=\"true\">\u00d7</span>";
+        var clearBtn = bar.querySelector("[data-testid=kb-active-filters-clear]");
+        if (clearBtn) {
+            bar.insertBefore(travelBtn, clearBtn);
+        } else {
+            bar.appendChild(travelBtn);
+        }
+        return travelBtn;
+    }
+
     function updateActiveFiltersUi(filters) {
-        var travelBtn = document.querySelector("[data-testid=kb-active-tag-travel]");
-        var travelTag = travelBtn && travelBtn.querySelector("span:first-child");
         var hasOrigin = filters.originLat != null && filters.originLng != null;
         var showTravelChip = hasOrigin && filters.maxMinutes != null;
+        var travelBtn = showTravelChip ? ensureTravelChipButton() : document.querySelector("[data-testid=kb-active-tag-travel]");
+        var travelTag = travelBtn && travelBtn.querySelector("span:first-child");
         if (travelBtn) {
             travelBtn.hidden = !showTravelChip;
             travelBtn.style.display = showTravelChip ? "" : "none";
@@ -741,6 +786,25 @@
         }
     }
 
+    function syncMapOrigin(filters) {
+        if (!window.jobMap) {
+            return;
+        }
+        var hasOrigin = filters && filters.originLat != null && filters.originLng != null;
+        if (!hasOrigin) {
+            if (typeof window.jobMap.clearOrigin === "function") {
+                window.jobMap.clearOrigin();
+            }
+            return;
+        }
+        if (typeof window.jobMap.setOrigin === "function") {
+            window.jobMap.setOrigin(filters.originLat, filters.originLng, {
+                maxMinutes: filters.maxMinutes,
+                transport: filters.transport
+            });
+        }
+    }
+
     function readBootZoomOutsideTravel() {
         var node = document.getElementById("jobsy-map-boot");
         if (!node || !node.textContent) {
@@ -759,6 +823,7 @@
             return;
         }
         syncMapTravel(filters);
+        syncMapOrigin(filters);
         var travelPins = filterRows(rows, filters, false);
         var allowOutside = readBootZoomOutsideTravel();
         var mapPins = travelPins.length > 0
@@ -1013,6 +1078,20 @@
         return "binnen " + mins + " min " + transportVerbNl(mode);
     }
 
+    function ensureResultSubtitleEl() {
+        var meta = document.querySelector("[data-testid=kb-results-meta] > div");
+        if (!meta) {
+            return null;
+        }
+        var sub = meta.querySelector(".results-meta__sub");
+        if (!sub) {
+            sub = document.createElement("small");
+            sub.className = "results-meta__sub muted";
+            meta.appendChild(sub);
+        }
+        return sub;
+    }
+
     function updateResultChrome(filters, travelCount) {
         var sub = travelSubtitle(filters);
         document.querySelectorAll(
@@ -1020,6 +1099,9 @@
         ).forEach(function (el) {
             el.textContent = travelCount + " vacatures";
         });
+        if (sub) {
+            ensureResultSubtitleEl();
+        }
         document.querySelectorAll(".results-meta__sub, .kb-filter-bar__count-sub").forEach(function (el) {
             el.textContent = sub;
         });
@@ -1323,8 +1405,10 @@
             history.replaceState(null, "", buildBanenkaartUrl(filters));
         } catch (eUrl) { }
         persistFilterCookieQuietly(filters);
+        var travelCount = filterRows(rows, filters, false).length;
+        syncDiscoveryChrome(filters, travelCount);
         document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", {
-            detail: { count: filterRows(rows, filters, false).length, filters: filters }
+            detail: { count: travelCount, filters: filters }
         }));
     }
 

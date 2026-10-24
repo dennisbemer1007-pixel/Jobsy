@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-travelrings1",
-    "sha256": "cdc76f97679379176493f928ab7e1b8f3d518857a26cc5e0d3aa0df59983b7ff"
+    "v": "20261024-travelrings2",
+    "sha256": "8651a17281e7d2f7fcc738f633cd89b0e5bab7e55cfe76491952817870ed9fd8"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
@@ -368,8 +368,8 @@
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261024-travelrings1",
-    "sha256": "747ffd73cbd5b48a5446c67770625d3bc99e0a1a7824abc1e845eb4f08936b7c"
+    "v": "20261024-chipsorigin2",
+    "sha256": "1cf59fa67dd29126a3cf851ff182e45638eb35c9c42f39fc3b02811a9a57eb34"
   },
   "js/banenkaart-ssr.js": {
     "v": "20261024-desktopsplit1",
