@@ -88,10 +88,13 @@ builder.Services.AddScoped<Jobsy.Core.Interfaces.ITotpVerifier, Jobsy.Infrastruc
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
+    var deploymentLabel = config["Lobsy:DeploymentEnvironment"]
+                          ?? config["Lobsy__DeploymentEnvironment"]
+                          ?? config["Deployment:Label"];
     return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
         Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
             config["PublicWebBaseUrl"],
-            config["Deployment:Label"]));
+            deploymentLabel));
 });
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddScoped<Jobsy.Api.Admin.IAdminAuditContext, Jobsy.Api.Admin.AdminAuditContext>();
