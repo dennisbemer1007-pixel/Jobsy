@@ -208,9 +208,25 @@ public static class UiStringsAfterMatch
             "Sanne asked for another time. Reply with new times or a message.");
 
         Add("AfterMatch.Screen10.Hero.Title", "Berichten", "Messages");
+        Add("AfterMatch.Screen10.Hero.Eyebrow", "Sollicitaties · Berichten", "Applications · Messages");
         Add("AfterMatch.Screen10.Hero.Lead",
-            "Eén draad per sollicitatie. Je ziet wanneer iets gelezen is.",
-            "One thread per application. You see when something was read.");
+            "Per sollicitatie een rustige plek om te praten. Jij bepaalt wanneer je antwoordt.",
+            "One calm place to talk per application. You decide when to reply.");
+        Add("AfterMatch.Screen10.SafeTitle", "Zo blijft het veilig.", "This keeps it safe.");
+        Add("AfterMatch.Screen10.SafeBody",
+            "Je telefoonnummer deel je na het gesprek, je bankgegevens pas na een aanbod. Vraagt iemand eerder om geld of je ID?",
+            "You share your phone number after the interview and bank details only after an offer. Does someone ask for money or your ID earlier?");
+        Add("AfterMatch.Screen10.ReportLink", "Meld het", "Report it");
+        Add("AfterMatch.Screen10.ArchiveHint",
+            "Gesprekken van afgeronde sollicitaties staan in",
+            "Conversations from finished applications are in");
+        Add("AfterMatch.Screen10.ArchiveLink", "Archief", "Archive");
+        Add("AfterMatch.Screen10.PhoneWaitWarning",
+            "Even wachten met je telefoonnummer. Je nummer deel je via Lobsy pas na het gesprek, je bankgegevens pas na een aanbod. Zo blijft het veilig voor jou. Wil je het toch nu sturen? Dat mag, het is jouw keuze.",
+            "Hold off on sharing your phone number for now. Via Lobsy you share it only after the interview and bank details only after an offer. That keeps you safe. Still want to send it now? You may, it is your choice.");
+        Add("AfterMatch.Screen10.ReplyPace",
+            "Linda ziet je bericht wanneer het haar uitkomt. Je hoeft niet meteen te antwoorden, en zij ook niet.",
+            "Linda sees your message when it suits her. You do not have to reply right away, and neither does she.");
         Add("AfterMatch.Screen10.Compose", "Schrijf een bericht", "Write a message");
         Add("AfterMatch.Screen10.Privacy",
             "Je telefoonnummer deel je pas na het gesprek, je bankgegevens pas na een aanbod. Zo blijft het veilig.",
