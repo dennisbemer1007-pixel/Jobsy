@@ -5,37 +5,18 @@
     return document.querySelector("[data-ndm-confirmed-ssr]");
   }
 
-  function calendarRow(container) {
-    return container.querySelector("[data-ndm-calendar-row]");
-  }
-
-  function openHref(href) {
-    if (!href) return;
-    window.open(href, "_blank", "noopener,noreferrer");
-  }
-
   function bindCalendar(container) {
-    var row = calendarRow(container);
+    var row = container.querySelector("[data-ndm-calendar-row]");
     if (!row) return;
     var icsHref = row.getAttribute("data-ics-href");
-    var googleHref = row.getAttribute("data-google-href");
-    var outlookHref = row.getAttribute("data-outlook-href");
-    var outlook = container.querySelector("[data-ndm-cal-outlook]");
-    var google = container.querySelector("[data-ndm-cal-google]");
     var apple = container.querySelector("[data-ndm-cal-apple]");
-    if (outlook) {
-      outlook.addEventListener("click", function () {
-        openHref(outlookHref);
-      });
-    }
-    if (google) {
-      google.addEventListener("click", function () {
-        openHref(googleHref);
-      });
-    }
-    if (apple) {
-      apple.addEventListener("click", function () {
-        if (icsHref) window.location.href = icsHref;
+    if (apple && icsHref) {
+      apple.addEventListener("click", function (ev) {
+        if (apple.getAttribute("href") === icsHref) {
+          return;
+        }
+        ev.preventDefault();
+        window.location.href = icsHref;
       });
     }
   }
@@ -123,10 +104,9 @@
 
   function scrollCancelPanel(container) {
     var params = new URLSearchParams(window.location.search);
-    if (params.get("panel") !== "cancel" && !window.location.hash) return;
+    if (params.get("panel") !== "cancel") return;
     var panel = container.querySelector("#ndm-cancel-panel");
-    if (!panel) return;
-    if (params.get("panel") === "cancel" || window.location.hash === "#ndm-cancel-panel") {
+    if (panel) {
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }

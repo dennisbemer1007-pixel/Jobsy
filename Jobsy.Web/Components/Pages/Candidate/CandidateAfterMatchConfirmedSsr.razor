@@ -28,8 +28,8 @@
         <link rel="stylesheet" href="@href" />
     }
     <link rel="stylesheet" href="css/features/sollicitaties-page.css?v=20261024-ndm-pick-slot2" />
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-confirmed2" />
-    <script src="/js/ndm-confirmed.js?v=20261025-ndm-confirmed2" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-confirmed3" />
+    <script src="/js/ndm-confirmed.js?v=20261025-ndm-confirmed3" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -71,6 +71,8 @@ else if (_bodyHtml is not null)
             var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
             query.TryGetValue("return", out var returnValues);
             var returnUrl = returnValues.FirstOrDefault();
+            query.TryGetValue("panel", out var panelValues);
+            var activePanel = panelValues.FirstOrDefault();
 
             var data = await AfterMatchConfirmedSsrData.LoadAsync(
                 Api,
@@ -91,7 +93,7 @@ else if (_bodyHtml is not null)
                 return;
             }
 
-            _bodyHtml = AfterMatchConfirmedSsrShells.BuildBody(Culture, data, ApplicationId);
+            _bodyHtml = AfterMatchConfirmedSsrShells.BuildBody(Culture, data, ApplicationId, activePanel);
         }
         catch
         {

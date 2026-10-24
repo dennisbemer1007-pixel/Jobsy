@@ -81,6 +81,13 @@ internal static class SollicitatiesBerichtenPresentation
 
     internal static string? SlotProposalSystemLine(CultureState culture, AfterMatchThreadDto thread)
     {
+        if (thread.InterviewStatus == InterviewStatus.Scheduled
+            || thread.InterviewStatus == InterviewStatus.Done
+            || thread.InterviewStatus == InterviewStatus.Cancelled)
+        {
+            return null;
+        }
+
         if (thread.OpenSlots.Count == 0)
         {
             return null;

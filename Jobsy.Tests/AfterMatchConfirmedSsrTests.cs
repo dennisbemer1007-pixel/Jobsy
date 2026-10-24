@@ -94,8 +94,11 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
             "22 okt");
 
         var html = AfterMatchConfirmedSsrShells.BuildBody(culture, data, appId);
+        var htmlCancel = AfterMatchConfirmedSsrShells.BuildBody(culture, data, appId, "cancel");
 
         Assert.Contains("data-ndm-confirmed-ssr=\"1\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("ndm-cancel-panel", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-cancel-panel", htmlCancel, StringComparison.Ordinal);
         Assert.Contains("Je gesprek staat erin", html, StringComparison.Ordinal);
         Assert.Contains("Gesprek gepland", html, StringComparison.Ordinal);
         Assert.Contains("Zet in je agenda", html, StringComparison.Ordinal);
@@ -104,10 +107,11 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
         Assert.Contains("class=\"s now\"", html, StringComparison.Ordinal);
         Assert.Contains("Verzetten", html, StringComparison.Ordinal);
         Assert.Contains("panel=cancel", html, StringComparison.Ordinal);
-        Assert.Contains("ndm-cancel-panel", html, StringComparison.Ordinal);
         Assert.Contains("De dag ervoor, om 18:00", html, StringComparison.Ordinal);
         Assert.Contains("E-mail en melding", html, StringComparison.Ordinal);
-        Assert.Contains("data-google-href=\"https://calendar.google.com/calendar/render?action=TEMPLATE\"", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"https://calendar.google.com/calendar/render?action=TEMPLATE\"", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-confirmed-card-hr", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-confirmed-reminders", html, StringComparison.Ordinal);
         Assert.Contains("/candidate/hoe-werkt-lobsy", html, StringComparison.Ordinal);
         Assert.Contains("Route bekijken", html, StringComparison.Ordinal);
     }
@@ -131,6 +135,48 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
         var path = $"/candidate/applications/{appId:D}/after-match/confirmed-ssr";
         var entry = Jobsy.Web.Seo.PageSeoCatalog.Resolve(path);
         Assert.Equal("AfterMatch.Screen05.PageTitle", entry.TitleKey);
+    }
+
+    [Fact]
+    public void TryGetSafeApplicationsReturn_accepts_absolute_applications_url()
+    {
+        var ok = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(
+            "https://acceptatie.lobsy.nl/candidate/applications?tab=berichten&thread=b0000001-0000-4000-8000-000000000035",
+            out var href);
+        Assert.True(ok);
+        Assert.Equal(
+            "/candidate/applications?tab=berichten&thread=b0000001-0000-4000-8000-000000000035",
+            href);
+    }
+
+    [Fact]
+    public void SlotProposalSystemLine_is_null_when_interview_scheduled()
+    {
+        var culture = Culture;
+        var thread = new AfterMatchThreadDto(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            InterviewStatus.Scheduled,
+            AfterMatchContactShareState.From(InterviewStatus.Scheduled, null),
+            null,
+            "Rol",
+            "Blauw",
+            null,
+            InterviewFormat.OnSite,
+            "Adres",
+            "Contact",
+            null,
+            DateTime.UtcNow.AddDays(2),
+            DateTime.UtcNow.AddDays(2).AddMinutes(30),
+            [new AfterMatchSlotDto(Guid.NewGuid(), DateTime.UtcNow, DateTime.UtcNow.AddMinutes(30), InterviewSlotProposer.Employer, null, false)],
+            [],
+            new AfterMatchReminderPreferenceDto(false, false, false),
+            [],
+            [],
+            "Test",
+            null,
+            DateTime.UtcNow);
+        Assert.Null(SollicitatiesBerichtenPresentation.SlotProposalSystemLine(culture, thread));
     }
 
     [Fact]
