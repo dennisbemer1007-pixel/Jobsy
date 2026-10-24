@@ -51,7 +51,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
         if (candidate is null)
         {
             logger.LogInformation(
-                "Acceptatie sollicitaties demo skipped: no user for {Primary} or catalog candidate.",
+                "Acceptatie sollicitaties demo skipped: no user for {Primary} or catalog candidate (create the account via acc login or run test-accounts seed on lobsy-acc-api).",
                 AcceptatiePrimaryCandidateEmail);
             return false;
         }
@@ -60,15 +60,26 @@ public static class TestAccountsSollicitatiesDemoSeeder
         if (branchManager is null)
         {
             logger.LogInformation(
-                "Acceptatie sollicitaties demo skipped: branch manager test account missing.");
+                "Acceptatie sollicitaties demo skipped: no branch/regional manager in DB (run test-accounts seed once on lobsy-acc-api).");
             return false;
         }
 
+        var beforeApps = await db.Applications.CountAsync(
+            a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null,
+            cancellationToken);
+
         await EnsureForCandidateAsync(db, candidate.Id, branchManager.Id, logger, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+
+        var afterApps = await db.Applications.CountAsync(
+            a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null,
+            cancellationToken);
         logger.LogInformation(
-            "Acceptatie sollicitaties demo ensured for test candidate {UserId}.",
-            candidate.Id);
+            "Acceptatie sollicitaties demo ensured for {Email} userId={UserId} verifiedApplications={After} (was {Before}); SSR loads the same rows via ApiBaseUrl → GET /me/applications.",
+            candidate.Email,
+            candidate.Id,
+            afterApps,
+            beforeApps);
         return true;
     }
 
@@ -80,12 +91,21 @@ public static class TestAccountsSollicitatiesDemoSeeder
         CancellationToken cancellationToken = default)
     {
         var candidate = await db.Users.FirstOrDefaultAsync(u => u.Id == candidateId, cancellationToken);
-        if (candidate is null || !candidate.IsTestAccount)
+        var allowlistedPrimary = IsAllowlistedPrimaryCandidate(candidate);
+        if (candidate is null || (!candidate.IsTestAccount && !allowlistedPrimary))
         {
             logger.LogDebug(
                 "Sollicitaties demo skipped: candidate {CandidateId} missing or not a test account.",
                 candidateId);
             return;
+        }
+
+        if (allowlistedPrimary && !candidate.IsTestAccount)
+        {
+            candidate.IsTestAccount = true;
+            logger.LogInformation(
+                "Acceptatie sollicitaties demo: marked allowlisted candidate {Email} as test account.",
+                candidate.Email);
         }
 
         await new VacancyCategoryService(db).EnsureDefaultsAsync(cancellationToken);
@@ -236,10 +256,29 @@ public static class TestAccountsSollicitatiesDemoSeeder
         if (manager is not null && !manager.IsTestAccount)
         {
             manager.IsTestAccount = true;
+            return manager;
         }
 
-        return manager;
+        if (manager is not null)
+        {
+            return manager;
+        }
+
+        return await db.Users
+            .Where(u => u.IsActive
+                        && (u.Role == UserRole.BranchManager
+                            || u.Role == UserRole.RegionalManager
+                            || u.Role == UserRole.EnterpriseManager))
+            .OrderByDescending(u => u.IsTestAccount)
+            .FirstOrDefaultAsync(cancellationToken);
     }
+
+    private static bool IsAllowlistedPrimaryCandidate(User? candidate)
+        => candidate?.Email is not null
+           && string.Equals(
+               candidate.Email,
+               AcceptatiePrimaryCandidateEmail,
+               StringComparison.OrdinalIgnoreCase);
 
     private static CompanySeed[] BuildCompanies() =>
     [

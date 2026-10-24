@@ -140,12 +140,25 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             // Same guard shape as assessment repair: API startup has no PublicWebBaseUrl host check.
             var input = TestAccountGuardInputFactory.FromConfiguration(
                 _configuration, _environment, isWebRuntime: true);
+            _logger.LogInformation(
+                "Acceptatie sollicitaties demo probe: service={Service} deployment={Deployment} testAccountsEnabled={TestAccountsEnabled} dbName={DatabaseName} dbParseFailed={DbParseFailed} apiHost={ApiHost} (web SSR uses ApiBaseUrl → same API DB when configured for lobsy-acc-api).",
+                input.RenderServiceName,
+                input.DeploymentEnvironment,
+                input.TestAccountsEnabled,
+                input.DatabaseName ?? "(null)",
+                input.ConnectionStringParseFailed,
+                input.ApiBaseUrlHost ?? "(null)");
             var guard = TestAccountEnvironmentGuard.Evaluate(input);
             if (!guard.Allowed)
             {
-                _logger.LogInformation(
-                    "Acceptatie sollicitaties demo skipped ({Codes}).",
-                    guard.CodesSummary());
+                foreach (var failure in guard.Failures)
+                {
+                    _logger.LogInformation(
+                        "Acceptatie sollicitaties demo skipped: {Code} — {Message}",
+                        failure.Code,
+                        failure.Message);
+                }
+
                 return;
             }
 
