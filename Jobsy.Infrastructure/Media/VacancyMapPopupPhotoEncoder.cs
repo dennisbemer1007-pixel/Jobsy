@@ -13,13 +13,20 @@ public static class VacancyMapPopupPhotoEncoder
     public const int DesktopWidth = 640;
     public const int MobileWidth = 248;
     public const int Quality = 70;
+    public const int DesktopQuality = 75;
+    public const int MobileQuality = 62;
 
     public static int WidthForVariant(string? variant)
         => string.Equals(variant, "mobile", StringComparison.OrdinalIgnoreCase)
             ? MobileWidth
             : DesktopWidth;
 
-    public static byte[] ToWebp(ReadOnlySpan<byte> sourceBytes, int targetWidth)
+    public static int QualityForVariant(string? variant)
+        => string.Equals(variant, "mobile", StringComparison.OrdinalIgnoreCase)
+            ? MobileQuality
+            : DesktopQuality;
+
+    public static byte[] ToWebp(ReadOnlySpan<byte> sourceBytes, int targetWidth, string? variant = null)
     {
         using var image = Image.Load(sourceBytes);
         if (image.Width > targetWidth)
@@ -32,7 +39,8 @@ public static class VacancyMapPopupPhotoEncoder
         }
 
         using var ms = new MemoryStream();
-        image.SaveAsWebp(ms, new WebpEncoder { Quality = Quality });
+        var quality = variant is null ? Quality : QualityForVariant(variant);
+        image.SaveAsWebp(ms, new WebpEncoder { Quality = quality });
         return ms.ToArray();
     }
 

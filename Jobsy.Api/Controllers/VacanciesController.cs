@@ -50,6 +50,7 @@ public class VacanciesController : ControllerBase
     private readonly ICandidateVacancyCultureFitService _cultureFit;
     private readonly IKbDislikeSource _dislikeSource;
     private readonly IAdminAuditLog _audit;
+    private readonly IVacancyPublicPhotoBytesLoader _publicPhotoBytes;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -66,7 +67,8 @@ public class VacanciesController : ControllerBase
         IProfileVacancyMatchService profileMatch,
         ICandidateVacancyCultureFitService cultureFit,
         IKbDislikeSource dislikeSource,
-        IAdminAuditLog audit)
+        IAdminAuditLog audit,
+        IVacancyPublicPhotoBytesLoader publicPhotoBytes)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -83,6 +85,7 @@ public class VacanciesController : ControllerBase
         _cultureFit = cultureFit;
         _dislikeSource = dislikeSource;
         _audit = audit;
+        _publicPhotoBytes = publicPhotoBytes;
     }
 
     /// <summary>
@@ -850,7 +853,7 @@ public class VacanciesController : ControllerBase
 
         var workType = record.WorkTypeLabelList.FirstOrDefault();
         var width = VacancyMapPopupPhotoEncoder.WidthForVariant(variant);
-        var sourceBytes = await TryLoadVacancyPhotoBytesAsync(record, id, workType, cancellationToken);
+        var sourceBytes = await _publicPhotoBytes.LoadForMapPopupAsync(record, id, workType, cancellationToken);
         byte[] webp;
         if (sourceBytes is null || sourceBytes.Length == 0)
         {
@@ -861,76 +864,10 @@ public class VacanciesController : ControllerBase
         }
         else
         {
-            webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width);
+            webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width, variant);
         }
         Response.Headers.CacheControl = "public,max-age=31536000,immutable";
         return File(webp, "image/webp");
-    }
-
-    private static async Task<byte[]?> TryLoadVacancyPhotoBytesAsync(
-        VacancyDiscoveryRecord record,
-        Guid id,
-        string? workType,
-        CancellationToken cancellationToken)
-    {
-        if (VacancyImageUrls.TryDecodeInlineImage(record.ImageUrl, out var inline, out _))
-        {
-            return inline;
-        }
-
-        var display = VacancyImageUrls.ForCard(record.ImageUrl, record.CompanyLogoUrl, id, workType);
-        if (display.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
-        {
-            display = VacancyImageUrls.Placeholder(id, workType);
-        }
-
-        var fromDisk = await TryReadWwwrootFileAsync(display, cancellationToken);
-        if (fromDisk is not null)
-        {
-            return fromDisk;
-        }
-
-        var fallback = VacancyImageUrls.Placeholder(id, workType);
-        return await TryReadWwwrootFileAsync(fallback, cancellationToken);
-    }
-
-    private static async Task<byte[]?> TryReadWwwrootFileAsync(string webPath, CancellationToken cancellationToken)
-    {
-        if (!VacancyImageUrls.IsSafeSameOriginPath(webPath))
-        {
-            return null;
-        }
-
-        var relative = webPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var roots =
-            new[]
-            {
-                Path.Combine(AppContext.BaseDirectory, "wwwroot"),
-                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Jobsy.Web", "wwwroot")),
-                Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")),
-                Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "Jobsy.Web", "wwwroot"))
-            };
-
-        foreach (var root in roots)
-        {
-            if (string.IsNullOrWhiteSpace(root))
-            {
-                continue;
-            }
-
-            var full = Path.GetFullPath(Path.Combine(root, relative));
-            if (!full.StartsWith(Path.GetFullPath(root), StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (System.IO.File.Exists(full))
-            {
-                return await System.IO.File.ReadAllBytesAsync(full, cancellationToken);
-            }
-        }
-
-        return null;
     }
 
     [HttpGet("{id:guid}")]

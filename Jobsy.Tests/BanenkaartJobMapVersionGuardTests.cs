@@ -13,6 +13,17 @@ public sealed class BanenkaartJobMapVersionGuardTests
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     [Fact]
+    public void App_razor_maps_boot_tag_matches_manifest_and_jobMap_version()
+    {
+        var root = TestRepo.FindRoot();
+        var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
+        AssetVersions.AssertHostUsesManifestVersion(app, "js/banenkaart-maps-boot.js");
+        Assert.Equal(
+            AssetVersions.Version("js/jobMap.min.js"),
+            AssetVersions.Version("js/banenkaart-maps-boot.js"));
+    }
+
+    [Fact]
     public void All_host_files_reference_single_jobMap_min_version_from_manifest()
     {
         var root = TestRepo.FindRoot();

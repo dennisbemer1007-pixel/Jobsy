@@ -43,9 +43,16 @@ public sealed class BanenkaartJobMapServedMinPlaywrightTests : IAsyncLifetime
 
         await using var context = await _browser!.NewContextAsync(new() { IgnoreHTTPSErrors = true });
         var page = await context.NewPageAsync();
+        var banenkaartUrl = _baseUrl + "/banenkaart?originLat=52.0115&originLng=4.3571&maxMinutes=20&transport=Fiets";
         await page.GotoAsync(
-            _baseUrl + "/banenkaart?originLat=52.0115&originLng=4.3571&maxMinutes=20&transport=Fiets",
+            banenkaartUrl,
             new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+
+        var bootTag = AssetVersions.Version("js/banenkaart-maps-boot.js");
+        var jobMapTag = AssetVersions.Version("js/jobMap.min.js");
+        Assert.Equal(jobMapTag, bootTag);
+        var html = await page.ContentAsync();
+        Assert.Contains($"/js/banenkaart-maps-boot.js?v={bootTag}", html, StringComparison.Ordinal);
 
         await page.WaitForFunctionAsync(
             """
@@ -69,6 +76,17 @@ public sealed class BanenkaartJobMapServedMinPlaywrightTests : IAsyncLifetime
         var expectedTag = AssetVersions.Version("js/jobMap.min.js");
         Assert.Contains($"jobMap.min.js?v={expectedTag}", url, StringComparison.Ordinal);
         Assert.DoesNotContain("acc19", url, StringComparison.Ordinal);
+        Assert.Contains($"jobMap.min.js?v={jobMapTag}", html, StringComparison.Ordinal);
+        var bootUrl = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const hit = performance.getEntriesByType('resource')
+                .map(e => e.name)
+                .find(u => u.includes('/js/banenkaart-maps-boot.js'));
+              return hit || '';
+            }
+            """);
+        Assert.Contains($"banenkaart-maps-boot.js?v={bootTag}", bootUrl, StringComparison.Ordinal);
 
         var served = await page.EvaluateAsync<byte[]>(
             """

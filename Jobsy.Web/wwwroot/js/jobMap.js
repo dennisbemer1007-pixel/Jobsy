@@ -2964,15 +2964,34 @@ window.jobMap = (function () {
 
             let dx;
             let dy;
-            if (pr.width >= vr.width) {
+            const lagenMinimalFit = lagenUsesFundaPopup() && !isNarrowViewport() &&
+                el.classList && el.classList.contains("kb-popup-lagen-pop");
+            if (lagenMinimalFit) {
+                dx = 0;
+                dy = 0;
+                if (pr.right > vr.right) {
+                    dx += pr.right - vr.right;
+                }
+                if (pr.left < vr.left) {
+                    dx += pr.left - vr.left;
+                }
+                if (pr.bottom > vr.bottom) {
+                    dy += pr.bottom - vr.bottom;
+                }
+                if (pr.top < vr.top) {
+                    dy += pr.top - vr.top;
+                }
+            } else if (pr.width >= vr.width) {
                 dx = pr.left - vr.left;
             } else {
                 dx = (pr.left + pr.width / 2) - (vr.left + vr.width / 2);
             }
-            if (pr.height >= vr.height) {
-                dy = pr.top - vr.top;
-            } else {
-                dy = (pr.top + pr.height / 2) - (vr.top + vr.height / 2);
+            if (!lagenMinimalFit) {
+                if (pr.height >= vr.height) {
+                    dy = pr.top - vr.top;
+                } else {
+                    dy = (pr.top + pr.height / 2) - (vr.top + vr.height / 2);
+                }
             }
 
             if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
@@ -4786,7 +4805,7 @@ window.jobMap = (function () {
             }
             fitLagenDesktopPopup(popup, lngLat, pass > 0);
             pass += 1;
-            if (pass < 4) {
+            if (pass < 2) {
                 if (typeof requestAnimationFrame === "function") {
                     requestAnimationFrame(function () {
                         requestAnimationFrame(tick);
