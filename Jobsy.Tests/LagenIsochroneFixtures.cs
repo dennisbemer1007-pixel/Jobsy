@@ -6,7 +6,7 @@ namespace Jobsy.Tests;
 /// <summary>
 /// Irregular bike isochrone polygons around Naaldwijk (mockup lagen/src/app.js ring shapes, not circles).
 /// </summary>
-internal static class LagenIsochroneFixtures
+public static class LagenIsochroneFixtures
 {
     internal static string FeatureCollectionJson(double originLat, double originLng)
     {

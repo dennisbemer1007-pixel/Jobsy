@@ -11,7 +11,7 @@ namespace Jobsy.Tests;
 /// Fake banenkaart catalog for illustrated captures — Westland / Naaldwijk mockup scenario
 /// (Kasweg 12, ~40 vacatures, employer + via-intermediary).
 /// </summary>
-internal static class IllustratedPagesVacancyStub
+public static class IllustratedPagesVacancyStub
 {
     internal const double OriginLat = 51.9935;
     internal const double OriginLng = 4.2085;

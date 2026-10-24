@@ -6,7 +6,7 @@ using Jobsy.Web.Services;
 namespace Jobsy.Tests;
 
 /// <summary>Fake API payloads for illustrated / stijl-A Playwright captures (Delft / Zaandam demo content).</summary>
-internal static class IllustratedPagesApiStub
+public static class IllustratedPagesApiStub
 {
     public static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -38,7 +38,11 @@ internal static class IllustratedPagesApiStub
         {
             var k = minimalPassportProfile || PassportMinimalProfileCapture
                 ? BuildMinimalKompas()
+#if ILLUSTRATED_CAPTURE_HOST
+                : BuildMinimalKompas();
+#else
                 : PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
+#endif
             return Serialize(new CandidateDnaSummary
             {
                 WhoAmI = k.WhoAmI,
@@ -83,7 +87,11 @@ internal static class IllustratedPagesApiStub
                 return Serialize(BuildMinimalKompas());
             }
 
+#if ILLUSTRATED_CAPTURE_HOST
+            var kompas = BuildMinimalKompas();
+#else
             var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
+#endif
             kompas.Profile!.FullName = "Sanne de Vries";
             kompas.Profile.FirstName = "Sanne";
             kompas.Profile.Role = "Candidate";
@@ -718,6 +726,20 @@ internal static class IllustratedPagesApiStub
 
     private static CandidateKompasState BuildMinimalKompas()
     {
+#if ILLUSTRATED_CAPTURE_HOST
+        return new CandidateKompasState
+        {
+            ProfileCompletenessPercent = 8,
+            Profile = new MeProfile
+            {
+                FullName = "Sanne de Vries",
+                FirstName = "Sanne",
+                Role = "Candidate",
+                Preferences = new CandidatePreferences()
+            },
+            WhoAmI = null
+        };
+#else
         var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: false);
         kompas.ProfileCompletenessPercent = 8;
         kompas.Profile!.FullName = "Sanne de Vries";
@@ -726,6 +748,7 @@ internal static class IllustratedPagesApiStub
         kompas.Profile.Preferences = new CandidatePreferences();
         kompas.WhoAmI = null;
         return kompas;
+#endif
     }
 
     private static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Json);
