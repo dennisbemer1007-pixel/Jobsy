@@ -31,7 +31,7 @@
 }
 
 .sollicitaties-page-wrap .sollicitaties-hero-strip {
-  --sollic-hero-h: 150px;
+  --sollic-hero-h: var(--cand-header-strip-h-desktop, 150px);
   display: block;
   width: 100%;
   max-width: none;
@@ -59,10 +59,10 @@
 
 @media (max-width: 639px) {
   .sollicitaties-hero-strip {
-    --sollic-hero-h: 90px;
-    height: 90px;
-    min-height: 90px;
-    max-height: 90px;
+    --sollic-hero-h: var(--cand-header-strip-h-mobile, 90px);
+    height: var(--cand-header-strip-h-mobile, 90px);
+    min-height: var(--cand-header-strip-h-mobile, 90px);
+    max-height: var(--cand-header-strip-h-mobile, 90px);
   }
 }
 

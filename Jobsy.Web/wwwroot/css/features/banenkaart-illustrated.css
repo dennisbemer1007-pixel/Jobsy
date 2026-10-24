@@ -4,7 +4,7 @@
 .kb-banenkaart-header-strip,
 .kb-nearby-banner--strip-wide.kb-banenkaart-header-strip {
   --kb-header-strip-bg: #faf6ef;
-  --kb-header-strip-h: 150px;
+  --kb-header-strip-h: var(--cand-header-strip-h-desktop, 150px);
   display: block;
   width: 100%;
   min-width: 0;
@@ -63,7 +63,7 @@
 @media (max-width: 600px) {
   .kb-banenkaart-header-strip,
   .kb-nearby-banner--strip-wide.kb-banenkaart-header-strip {
-    --kb-header-strip-h: 90px;
+    --kb-header-strip-h: var(--cand-header-strip-h-mobile, 90px);
   }
 }
 
