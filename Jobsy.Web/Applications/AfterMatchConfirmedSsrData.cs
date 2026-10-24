@@ -1,5 +1,6 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
@@ -12,8 +13,13 @@ internal static class AfterMatchConfirmedSsrData
         AfterMatchThreadDto Thread,
         string SollicitatiesHref,
         string RescheduleHref,
+        string CancelHref,
         string? RouteHref,
         string CalendarIcsHref,
+        string CalendarGoogleHref,
+        string CalendarOutlookHref,
+        string TipsHref,
+        string AssistantHref,
         string HeroLead,
         string ScheduledTitle,
         string ScheduledSub,
@@ -54,10 +60,10 @@ internal static class AfterMatchConfirmedSsrData
 
         var scheduledTitle = $"{whenLong} tot {endLocal:HH:mm}";
         var contact = string.IsNullOrWhiteSpace(thread.WithWhom) ? thread.CompanyName : thread.WithWhom!;
-        var location = string.IsNullOrWhiteSpace(thread.LocationOrLink) ? thread.CompanyName : thread.LocationOrLink!;
+        var venueLabel = string.IsNullOrWhiteSpace(thread.LocationOrLink) ? thread.CompanyName : thread.LocationOrLink!;
         var scheduledSub = thread.Format == InterviewFormat.OnSite
-            ? string.Format(culture["AfterMatch.Screen05.ScheduledSub"], location, contact)
-            : string.Format(culture["AfterMatch.Screen05.ScheduledSubOnline"], location, contact);
+            ? string.Format(culture["AfterMatch.Screen05.ScheduledSub"], venueLabel, contact)
+            : string.Format(culture["AfterMatch.Screen05.ScheduledSubOnline"], venueLabel, contact);
 
         var heroWhen = startLocal.ToString("dddd d MMMM 'om' HH:mm", nl);
         if (char.IsLower(heroWhen[0]))
@@ -82,12 +88,35 @@ internal static class AfterMatchConfirmedSsrData
                 + Uri.EscapeDataString(thread.LocationOrLink);
         }
 
+        var summary = $"{thread.VacancyTitle} · {thread.CompanyName}";
+        var details = thread.Note ?? "Kennismakingsgesprek via Lobsy";
+        var calLocation = thread.Format == InterviewFormat.OnSite ? thread.LocationOrLink : thread.LocationOrLink ?? "Online";
+        var googleHref = InterviewCalendarBuilder.GoogleCalendarUrl(
+            startUtc,
+            endUtc,
+            summary,
+            details,
+            calLocation);
+        var outlookHref = InterviewCalendarBuilder.OutlookWebCalendarUrl(
+            startUtc,
+            endUtc,
+            summary,
+            details,
+            calLocation);
+
+        const string candidateHow = "/candidate/hoe-werkt-lobsy";
+
         return new PageData(
             thread,
             backHref,
             AfterMatchSollicitatiesUrls.Reschedule(applicationId, backHref),
+            AfterMatchSollicitatiesUrls.Cancel(applicationId, backHref),
             routeHref,
             $"/api/ndm-confirmed-client/calendar.ics?applicationId={applicationId:D}",
+            googleHref,
+            outlookHref,
+            candidateHow,
+            candidateHow,
             heroLead,
             scheduledTitle,
             scheduledSub,

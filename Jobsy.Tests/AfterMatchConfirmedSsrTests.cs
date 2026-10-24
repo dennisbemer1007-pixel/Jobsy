@@ -78,9 +78,14 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
         var data = new AfterMatchConfirmedSsrData.PageData(
             thread,
             "/candidate/applications?tab=berichten",
-            "/candidate/applications/" + appId.ToString("D") + "/after-match?panel=reschedule",
+            "/candidate/applications/" + appId.ToString("D") + "/after-match?panel=reschedule&return=%2Fcandidate%2Fapplications%3Ftab%3Dberichten",
+            "/candidate/applications/" + appId.ToString("D") + "/after-match?panel=cancel&return=%2Fcandidate%2Fapplications%3Ftab%3Dberichten",
             "https://maps.example",
             "/api/ndm-confirmed-client/calendar.ics?applicationId=" + appId.ToString("D"),
+            "https://calendar.google.com/calendar/render?action=TEMPLATE",
+            "https://outlook.office.com/calendar/action/compose",
+            "/candidate/hoe-werkt-lobsy",
+            "/candidate/hoe-werkt-lobsy",
             "Lead",
             "Donderdag 22 oktober, 10:30 tot 11:00",
             "Op locatie",
@@ -98,6 +103,12 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
         Assert.Contains("data-ndm-reminder=\"dayBefore18\"", html, StringComparison.Ordinal);
         Assert.Contains("class=\"s now\"", html, StringComparison.Ordinal);
         Assert.Contains("Verzetten", html, StringComparison.Ordinal);
+        Assert.Contains("panel=cancel", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-cancel-panel", html, StringComparison.Ordinal);
+        Assert.Contains("De dag ervoor, om 18:00", html, StringComparison.Ordinal);
+        Assert.Contains("E-mail en melding", html, StringComparison.Ordinal);
+        Assert.Contains("data-google-href=\"https://calendar.google.com/calendar/render?action=TEMPLATE\"", html, StringComparison.Ordinal);
+        Assert.Contains("/candidate/hoe-werkt-lobsy", html, StringComparison.Ordinal);
         Assert.Contains("Route bekijken", html, StringComparison.Ordinal);
     }
 
@@ -110,6 +121,7 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
             "Jobsy.Web/Middleware/AfterMatchPickSlotRouteRewriteMiddleware.cs"));
         Assert.Contains("/confirmed-ssr", middleware, StringComparison.Ordinal);
         Assert.Contains("\"messages\" or \"reschedule\" => \"/blazor\"", middleware, StringComparison.Ordinal);
+        Assert.Contains("\"cancel\" => \"/confirmed-ssr\"", middleware, StringComparison.Ordinal);
     }
 
     [Fact]
