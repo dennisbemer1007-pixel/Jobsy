@@ -717,7 +717,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261023-maxzoom1"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261024-mobilewagetip8"
+        "/js/jobMap.min.js?v=20261024-mobilewagetip9"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
