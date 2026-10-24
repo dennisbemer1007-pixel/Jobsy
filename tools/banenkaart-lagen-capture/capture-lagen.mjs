@@ -321,6 +321,7 @@ async function main() {
       null,
       { timeout: 60_000 },
     ).catch(() => {});
+    await page.waitForSelector('.jobsy-discovery--lagen .hint', { timeout: 12_000 }).catch(() => {});
     await page.waitForTimeout(600);
     const app = await shot(page, 'mobile-390-map', '01-map.png');
     sideBySide('mobile/01-banenkaart-lagen-mobiel-390.png', app, 'side-by-side-05-mobile-map.png');
