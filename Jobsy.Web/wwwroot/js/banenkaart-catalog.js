@@ -462,6 +462,254 @@
         }
     }
 
+    function normalizeFilters(raw) {
+        raw = raw || {};
+        var categoryIds = raw.categoryIds || [];
+        if (!Array.isArray(categoryIds)) {
+            categoryIds = categoryIds ? [categoryIds] : [];
+        }
+        var workTypes = raw.workTypes || [];
+        if (!Array.isArray(workTypes)) {
+            workTypes = workTypes ? [workTypes] : [];
+        }
+        var maxMinutes = parseInt(raw.maxMinutes, 10);
+        return {
+            q: raw.q || null,
+            maxMinutes: isFinite(maxMinutes) ? maxMinutes : 20,
+            transport: raw.transport || "Fiets",
+            minHours: raw.minHours != null ? parseInt(raw.minHours, 10) || 0 : 0,
+            maxHours: raw.maxHours != null ? parseInt(raw.maxHours, 10) || 40 : 40,
+            minWageCents: raw.minWageCents != null ? raw.minWageCents : null,
+            maxWageCents: raw.maxWageCents != null ? raw.maxWageCents : null,
+            categoryIds: categoryIds,
+            workTypes: workTypes,
+            originLat: raw.originLat != null ? Number(raw.originLat) : null,
+            originLng: raw.originLng != null ? Number(raw.originLng) : null,
+            originLabel: raw.originLabel || null,
+            sort: raw.sort || "distance"
+        };
+    }
+
+    function readFiltersFromUrl() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var lat = parseFloat(params.get("originLat"));
+            var lng = parseFloat(params.get("originLng"));
+            var maxMinutes = parseInt(params.get("maxMinutes") || "", 10);
+            var minHours = parseInt(params.get("minHours") || "", 10);
+            var maxHours = parseInt(params.get("maxHours") || "", 10);
+            var categoryIds = params.getAll("categoryId");
+            var workTypes = params.getAll("workType");
+            return normalizeFilters({
+                q: params.get("q") || null,
+                maxMinutes: isFinite(maxMinutes) ? maxMinutes : 20,
+                transport: params.get("transport") || "Fiets",
+                minHours: isFinite(minHours) ? minHours : 0,
+                maxHours: isFinite(maxHours) ? maxHours : 40,
+                categoryIds: categoryIds,
+                workTypes: workTypes,
+                originLat: isFinite(lat) ? lat : null,
+                originLng: isFinite(lng) ? lng : null,
+                originLabel: params.get("originLabel") || null,
+                sort: params.get("sort") || "distance"
+            });
+        } catch (eUrl) {
+            return normalizeFilters({});
+        }
+    }
+
+    function urlHasFilterParams() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            return params.has("originLat") || params.has("maxMinutes") || params.has("transport")
+                || params.has("minHours") || params.has("maxHours") || params.has("q")
+                || params.has("categoryId") || params.has("workType") || params.has("sort");
+        } catch (eParams) {
+            return false;
+        }
+    }
+
+    function resolveFilters() {
+        if (urlHasFilterParams()) {
+            return readFiltersFromUrl();
+        }
+        var boot = readBootFilters();
+        if (boot) {
+            return normalizeFilters(boot);
+        }
+        return readFiltersFromUrl();
+    }
+
+    function defaultFilters() {
+        return normalizeFilters({
+            q: null,
+            maxMinutes: 20,
+            transport: "Fiets",
+            minHours: 0,
+            maxHours: 40,
+            categoryIds: [],
+            workTypes: [],
+            originLat: null,
+            originLng: null,
+            originLabel: null,
+            sort: "distance"
+        });
+    }
+
+    function travelChipLabel(filters) {
+        var mins = filters.maxMinutes || 20;
+        var mode = filters.transport || "Fiets";
+        if (mode === "Fiets") {
+            return mins + " min fietsen";
+        }
+        if (mode === "Auto") {
+            return mins + " min rijden";
+        }
+        if (mode === "OV") {
+            return mins + " min ov";
+        }
+        if (mode === "Lopend") {
+            return mins + " min lopen";
+        }
+        return mins + " min " + transportVerbNl(mode);
+    }
+
+    function syncFilterFormToState(filters) {
+        var form = document.getElementById("kb-filter-form");
+        if (!form) {
+            return;
+        }
+        var slider = form.querySelector("[data-testid=kb-sheet-travel-slider]");
+        if (slider) {
+            slider.value = String(filters.maxMinutes || 20);
+        }
+        var transportHidden = document.getElementById("kb-filter-transport");
+        if (transportHidden) {
+            transportHidden.value = filters.transport || "Fiets";
+        }
+        document.querySelectorAll("[data-kb-transport]").forEach(function (btn) {
+            btn.classList.toggle("is-selected", btn.getAttribute("data-kb-transport") === (filters.transport || "Fiets"));
+        });
+        document.querySelectorAll("[data-kb-travel-preset]").forEach(function (btn) {
+            var preset = parseInt(btn.getAttribute("data-kb-travel-preset"), 10);
+            btn.classList.toggle("is-selected", preset === (filters.maxMinutes || 20));
+        });
+        var minHours = form.querySelector("input[name=minHours]");
+        var maxHours = form.querySelector("input[name=maxHours]");
+        if (minHours) {
+            minHours.value = String(filters.minHours != null ? filters.minHours : 0);
+        }
+        if (maxHours) {
+            maxHours.value = String(filters.maxHours != null ? filters.maxHours : 40);
+        }
+        form.querySelectorAll("input[name=categoryId]").forEach(function (input) {
+            var id = input.value;
+            var on = false;
+            for (var i = 0; i < filters.categoryIds.length; i++) {
+                if (filters.categoryIds[i] === id) {
+                    on = true;
+                    break;
+                }
+            }
+            input.checked = on;
+        });
+        form.querySelectorAll("input[name=workType]").forEach(function (input) {
+            var on = false;
+            for (var w = 0; w < filters.workTypes.length; w++) {
+                if (String(filters.workTypes[w]).toLowerCase() === String(input.value).toLowerCase()) {
+                    on = true;
+                    break;
+                }
+            }
+            input.checked = on;
+        });
+        var latEl = document.getElementById("kb-filter-origin-lat");
+        var lngEl = document.getElementById("kb-filter-origin-lng");
+        var labelEl = document.getElementById("kb-filter-origin-label");
+        if (latEl) {
+            latEl.value = filters.originLat != null ? String(filters.originLat) : "";
+        }
+        if (lngEl) {
+            lngEl.value = filters.originLng != null ? String(filters.originLng) : "";
+        }
+        if (labelEl) {
+            labelEl.value = filters.originLabel || "";
+        }
+        document.querySelectorAll("[data-testid=kb-list-sort]").forEach(function (sel) {
+            sel.value = filters.sort || "distance";
+        });
+        document.querySelectorAll("[data-banenkaart-ssr=\"1\"] input[name=\"q\"][form=\"kb-filter-form\"]").forEach(function (input) {
+            input.value = filters.q || "";
+        });
+    }
+
+    function updateActiveFiltersUi(filters) {
+        var travelBtn = document.querySelector("[data-testid=kb-active-tag-travel]");
+        var travelTag = travelBtn && travelBtn.querySelector("span:first-child");
+        var hasOrigin = filters.originLat != null && filters.originLng != null;
+        if (travelBtn) {
+            travelBtn.hidden = !hasOrigin;
+            travelBtn.style.display = hasOrigin ? "" : "none";
+        }
+        if (travelTag && hasOrigin) {
+            travelTag.textContent = travelChipLabel(filters);
+        }
+        var bar = document.querySelector("[data-testid=kb-active-filters]");
+        if (bar) {
+            var anyVisible = false;
+            bar.querySelectorAll(".kb-active-tag").forEach(function (tag) {
+                if (tag.hidden || tag.style.display === "none") {
+                    return;
+                }
+                anyVisible = true;
+            });
+            bar.hidden = !anyVisible;
+            bar.style.display = anyVisible ? "" : "none";
+        }
+    }
+
+    function syncDiscoveryChrome(filters, travelCount) {
+        var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+        if (root) {
+            root.classList.remove("kb-ssr-travel-empty");
+        }
+        updateActiveFiltersUi(filters);
+        updateResultChrome(filters, travelCount);
+    }
+
+    function persistFilterCookieQuietly(filters) {
+        var form = document.getElementById("kb-filter-form");
+        if (!form || typeof fetch !== "function") {
+            return;
+        }
+        syncFilterFormToState(filters);
+        try {
+            var fd = new FormData(form);
+            fetch(form.action, {
+                method: "POST",
+                body: fd,
+                credentials: "same-origin",
+                redirect: "manual"
+            }).catch(function () { });
+        } catch (ePost) { }
+    }
+
+    function clearFilterCookieQuietly() {
+        var resetForm = document.querySelector("form[action*=\"reset-filters\"]");
+        if (!resetForm || typeof fetch !== "function") {
+            return;
+        }
+        try {
+            var fd = new FormData(resetForm);
+            fetch(resetForm.action, {
+                method: "POST",
+                body: fd,
+                credentials: "same-origin",
+                redirect: "manual"
+            }).catch(function () { });
+        } catch (eReset) { }
+    }
+
     function syncMapTravel(filters) {
         if (!filters || !window.jobMap) {
             return;
@@ -642,7 +890,7 @@
             return;
         }
         if (!travelRows || !travelRows.length) {
-            host.innerHTML = "";
+            host.innerHTML = "<div class=\"strip strip--empty\" role=\"status\"><p>Geen vacatures in beeld — pas filters aan of verruim je reistijd.</p></div>";
             return;
         }
         var ic = mapIcons();
@@ -751,11 +999,12 @@
         if (filters.q) {
             q.push("q=" + encodeURIComponent(filters.q));
         }
-        if (filters.maxMinutes && filters.maxMinutes !== 20) {
-            q.push("maxMinutes=" + filters.maxMinutes);
+        var hasOrigin = filters.originLat != null && filters.originLng != null;
+        if (hasOrigin || (filters.maxMinutes && filters.maxMinutes !== 20)) {
+            q.push("maxMinutes=" + (filters.maxMinutes || 20));
         }
-        if (filters.transport && filters.transport !== "Fiets") {
-            q.push("transport=" + encodeURIComponent(filters.transport));
+        if (hasOrigin || (filters.transport && filters.transport !== "Fiets")) {
+            q.push("transport=" + encodeURIComponent(filters.transport || "Fiets"));
         }
         if (filters.minHours) {
             q.push("minHours=" + filters.minHours);
@@ -791,6 +1040,52 @@
             .replace(/"/g, "&quot;");
     }
 
+    function listRowHasPhoto(row) {
+        return !!(row && row.imageUrl && String(row.imageUrl).trim());
+    }
+
+    function listMapPopupPhotoUrl(id) {
+        if (id == null || id === "") {
+            return "";
+        }
+        return "/api/vacancies/" + encodeURIComponent(String(id)) + "/map-popup-photo?variant=mobile";
+    }
+
+    var listPhotoObserver = null;
+
+    function observeLazyListPhotos(root) {
+        if (!root || typeof IntersectionObserver !== "function") {
+            return;
+        }
+        var pending = root.querySelectorAll("img[data-kb-list-photo][data-photo-src]:not([data-photo-loaded])");
+        if (!pending.length) {
+            return;
+        }
+        if (!listPhotoObserver) {
+            listPhotoObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) {
+                        return;
+                    }
+                    var img = entry.target;
+                    if (!img || img.getAttribute("data-photo-loaded") === "1") {
+                        return;
+                    }
+                    var src = img.getAttribute("data-photo-src");
+                    if (!src) {
+                        return;
+                    }
+                    img.setAttribute("data-photo-loaded", "1");
+                    img.src = src;
+                    listPhotoObserver.unobserve(img);
+                });
+            }, { root: null, rootMargin: "120px 0px", threshold: 0.01 });
+        }
+        pending.forEach(function (img) {
+            listPhotoObserver.observe(img);
+        });
+    }
+
     function renderListRows(listRows, filters, resetPage) {
         if (resetPage !== false) {
             listShown = LIST_PAGE;
@@ -802,10 +1097,9 @@
         if (!listRoot) {
             return travelRows.length;
         }
-        listRoot.querySelectorAll("[data-testid=kb-empty-travel], .state-message").forEach(function (el) {
-            el.remove();
-        });
-        listRoot.querySelectorAll("[data-testid=kb-list-rows]").forEach(function (el) {
+        listRoot.querySelectorAll(
+            "[data-testid=kb-empty-travel], [data-testid=kb-widen-filters], [data-testid=kb-list-rows], .state-message"
+        ).forEach(function (el) {
             el.remove();
         });
         if (travelRows.length === 0) {
@@ -814,7 +1108,8 @@
                 "<p class=\"state-message\" data-testid=\"kb-empty-travel\">Geen vacatures binnen je reistijd</p>"
                 + "<button type=\"button\" class=\"filter-sheet__cancel kb-widen-filters-btn\" data-testid=\"kb-widen-filters\">Filters verruimen</button>"
             );
-            updateResultChrome(filters, 0);
+            syncDiscoveryChrome(filters, 0);
+            renderMapTopChrome(filters, []);
             return 0;
         }
         var ic = mapIcons();
@@ -836,11 +1131,20 @@
             var typeHtml = ic ? ic.typeMarkerHtml(row, false) : "";
             var sector = row.categoryName ? escapeHtml(row.categoryName) : "";
             var hours = hoursLabel(row);
+            var photo = listRowHasPhoto(row);
             html += "<a class=\"vc\" href=\"" + escapeHtml(href) + "\" data-vacancy-id=\""
                 + escapeHtml(row.id) + "\" data-testid=\"kb-list-row\">";
-            html += "<div class=\"vimg\" style=\"background:linear-gradient(135deg,"
-                + escapeHtml(colors.bg) + ",#fff 150%);color:" + escapeHtml(colors.fg) + "\">"
-                + ico;
+            if (photo) {
+                html += "<div class=\"vimg vimg--photo\" style=\"background:linear-gradient(135deg,"
+                    + escapeHtml(colors.bg) + ",#fff 150%);\">";
+                html += "<img class=\"kb-list-lazy-photo\" alt=\"\" width=\"400\" height=\"250\" decoding=\"async\" "
+                    + "data-kb-list-photo=\"1\" data-photo-src=\""
+                    + escapeHtml(listMapPopupPhotoUrl(row.id)) + "\" />";
+            } else {
+                html += "<div class=\"vimg\" style=\"background:linear-gradient(135deg,"
+                    + escapeHtml(colors.bg) + ",#fff 150%);color:" + escapeHtml(colors.fg) + "\">"
+                    + ico;
+            }
             if (sector) {
                 html += "<span class=\"vtag\">" + sector + "</span>";
             }
@@ -858,7 +1162,8 @@
         });
         html += "</div>";
         listRoot.insertAdjacentHTML("afterbegin", html);
-        updateResultChrome(filters, travelRows.length);
+        observeLazyListPhotos(listRoot);
+        syncDiscoveryChrome(filters, travelRows.length);
         renderMapTopChrome(filters, travelRows);
         return travelRows.length;
     }
@@ -886,31 +1191,52 @@
     }
 
     function applyClientFilters(filters) {
+        filters = normalizeFilters(filters);
         if (!rows) {
             return fetchCatalog(false).then(function () {
                 applyClientFilters(filters);
             });
         }
         patchBootFilters(filters);
+        syncFilterFormToState(filters);
         applyToMap(filters);
         renderListRows(rows, filters);
         try {
             history.replaceState(null, "", buildBanenkaartUrl(filters));
         } catch (eUrl) { }
-        document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", { detail: { count: filterRows(rows, filters, false).length } }));
+        persistFilterCookieQuietly(filters);
+        document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", {
+            detail: { count: filterRows(rows, filters, false).length, filters: filters }
+        }));
+    }
+
+    function resetClientFilters() {
+        var defaults = defaultFilters();
+        syncFilterFormToState(defaults);
+        if (window.jobMap && typeof window.jobMap.clearOrigin === "function") {
+            window.jobMap.clearOrigin();
+        }
+        clearFilterCookieQuietly();
+        applyClientFilters(defaults);
     }
 
     function bootAndApply() {
-        var filters = readBootFilters() || {};
+        var listRoot = document.querySelector("[data-banenkaart-ssr=\"1\"] [data-testid=vacancy-list]");
+        if (listRoot) {
+            observeLazyListPhotos(listRoot);
+        }
+        var filters = resolveFilters();
         return fetchCatalog(false).then(function () {
+            patchBootFilters(filters);
+            syncFilterFormToState(filters);
             applyToMap(filters);
             if (rows) {
                 renderListRows(rows, filters);
             }
             document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", { detail: { count: rows ? rows.length : 0 } }));
             if (!window.jobMap || typeof window.jobMap.setVacanciesFromCatalog !== "function") {
-                setTimeout(function () { applyToMap(filters); }, 400);
-                setTimeout(function () { applyToMap(filters); }, 1500);
+                setTimeout(function () { applyToMap(resolveFilters()); }, 400);
+                setTimeout(function () { applyToMap(resolveFilters()); }, 1500);
             }
         }).catch(function () { });
     }
@@ -928,7 +1254,11 @@
         filtersFromForm: filtersFromForm,
         buildBanenkaartUrl: buildBanenkaartUrl,
         applyClientFilters: applyClientFilters,
+        resetClientFilters: resetClientFilters,
+        resolveFilters: resolveFilters,
+        readFiltersFromUrl: readFiltersFromUrl,
         renderListRows: renderListRows,
+        observeLazyListPhotos: observeLazyListPhotos,
         loadMoreListRows: loadMoreListRows,
         readKeywordFromUi: readKeywordFromUi,
         prefetch: function () {

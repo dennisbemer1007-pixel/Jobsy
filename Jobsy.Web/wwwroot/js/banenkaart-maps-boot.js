@@ -9,7 +9,7 @@ window.jobsyMaps = (function () {
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
         "/js/jobsyMapLibre.min.js?v=20261023-lagen-compact1"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261024-pop9"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261024-pop11"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -233,14 +233,9 @@ window.jobsyMaps = (function () {
                 window.jobMap.invalidate();
             }
             if (window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.applyToMap === "function") {
-                var node = document.getElementById("jobsy-map-boot");
-                var filters = null;
-                if (node && node.textContent) {
-                    try {
-                        var parsed = JSON.parse(node.textContent);
-                        filters = parsed && parsed.mapInit && parsed.mapInit.filters ? parsed.mapInit.filters : null;
-                    } catch (eParse) { }
-                }
+                var filters = typeof window.jobsyBanenkaartCatalog.resolveFilters === "function"
+                    ? window.jobsyBanenkaartCatalog.resolveFilters()
+                    : null;
                 if (window.jobsyBanenkaartCatalog.isReady && window.jobsyBanenkaartCatalog.isReady()) {
                     window.jobsyBanenkaartCatalog.applyToMap(filters);
                 }

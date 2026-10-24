@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 using Jobsy.Core.Security;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -46,8 +48,8 @@ public static class VacancyMapProxyEndpoints
             forwarder.ForwardAsync(http, "api/travel/isochrones", ct));
 
         app.MapGet("/api/vacancies/{id:guid}/like", GetLikeAsync).RequireAuthorization().DisableAntiforgery();
-        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization().DisableAntiforgery();
-        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization().DisableAntiforgery();
+        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization();
+        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization();
     }
 
     private static async Task<IResult> GetLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)
@@ -63,28 +65,60 @@ public static class VacancyMapProxyEndpoints
         }
     }
 
-    private static async Task<IResult> PostLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)
+    private static async Task<IResult> PostLikeAsync(
+        Guid id,
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
     {
-        try
+        if (!await antiforgery.IsRequestValidAsync(http))
         {
-            var liked = await api.SetLikedAsync(id, true, ct);
-            return Results.Json(new { liked, Liked = liked });
+            return Results.BadRequest();
         }
-        catch
-        {
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+
+        return await MutateLikeAsync(id, liked: true, api, loggerFactory, ct);
     }
 
-    private static async Task<IResult> DeleteLikeAsync(Guid id, JobsyApiClient api, CancellationToken ct)
+    private static async Task<IResult> DeleteLikeAsync(
+        Guid id,
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
+    {
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return Results.BadRequest();
+        }
+
+        return await MutateLikeAsync(id, liked: false, api, loggerFactory, ct);
+    }
+
+    private static async Task<IResult> MutateLikeAsync(
+        Guid id,
+        bool liked,
+        JobsyApiClient api,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
     {
         try
         {
-            var liked = await api.SetLikedAsync(id, false, ct);
-            return Results.Json(new { liked, Liked = liked });
+            var saved = await api.SetLikedAsync(id, liked, ct);
+            return Results.Json(new { liked = saved, Liked = saved });
         }
-        catch
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode code)
         {
+            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+                .LogWarning(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked} status={Status}", id, liked, code);
+            return Results.StatusCode((int)code);
+        }
+        catch (Exception ex)
+        {
+            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+                .LogError(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked}", id, liked);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

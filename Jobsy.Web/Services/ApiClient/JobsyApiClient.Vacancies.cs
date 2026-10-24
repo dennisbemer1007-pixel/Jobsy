@@ -13,6 +13,11 @@ namespace Jobsy.Web.Services;
 
 public sealed partial class JobsyApiClient
 {
+    private static readonly JsonSerializerOptions LikeJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     public async Task<IReadOnlyList<VacancyListItem>> DiscoverVacanciesAsync(
         double? originLat,
         double? originLng,
@@ -777,7 +782,10 @@ public sealed partial class JobsyApiClient
 
     public async Task<bool> GetLikedAsync(Guid vacancyId, CancellationToken ct = default)
     {
-        var result = await _http.GetFromJsonAsync<LikeStatus>($"api/vacancies/{vacancyId}/like", ct);
+        var result = await _http.GetFromJsonAsync<LikeStatus>(
+            $"api/vacancies/{vacancyId}/like",
+            LikeJsonOptions,
+            ct);
         return result?.Liked == true;
     }
 
@@ -786,15 +794,22 @@ public sealed partial class JobsyApiClient
         HttpResponseMessage response;
         if (liked)
         {
-            response = await _http.PostAsync($"api/vacancies/{vacancyId}/like", null, ct);
+            response = await _http.PostAsJsonAsync($"api/vacancies/{vacancyId}/like", new { }, ct);
         }
         else
         {
             response = await _http.DeleteAsync($"api/vacancies/{vacancyId}/like", ct);
         }
 
-        response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<LikeStatus>(cancellationToken: ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(
+                $"Like mutation failed with {(int)response.StatusCode}.",
+                inner: null,
+                statusCode: response.StatusCode);
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<LikeStatus>(LikeJsonOptions, ct);
         return result?.Liked == true;
     }
 

@@ -1883,6 +1883,27 @@ window.jobMap = (function () {
         btn.innerHTML = heartIconHtml(on);
     }
 
+    function readAntiforgeryHeader() {
+        var form = document.getElementById("kb-filter-form");
+        if (!form || !form.querySelector) {
+            return null;
+        }
+        var input = form.querySelector('input[name="__RequestVerificationToken"]');
+        if (!input || !input.value) {
+            return null;
+        }
+        return { RequestVerificationToken: input.value };
+    }
+
+    function likeMutationHeaders() {
+        var headers = { Accept: "application/json" };
+        var af = readAntiforgeryHeader();
+        if (af) {
+            headers.RequestVerificationToken = af.RequestVerificationToken;
+        }
+        return headers;
+    }
+
     function fetchLikedStatus(id) {
         if (!id || !uiLabels.canSave) {
             return Promise.resolve(false);
@@ -1905,7 +1926,7 @@ window.jobMap = (function () {
         return fetch(url, {
             method: nextLiked ? "POST" : "DELETE",
             credentials: "same-origin",
-            headers: { Accept: "application/json" }
+            headers: likeMutationHeaders()
         }).then(function (res) {
             if (res.status === 401 || res.status === 403) {
                 window.location.href = "/login?returnUrl=" +
@@ -1983,6 +2004,9 @@ window.jobMap = (function () {
             btn.addEventListener("touchstart", stopHeartMapBubble, { capture: true, passive: false });
             btn.addEventListener("click", function (ev) {
                 stopHeartMapBubble(ev);
+                if (!ev || ev.type !== "click" || (ev.button != null && ev.button !== 0)) {
+                    return;
+                }
                 if (!uiLabels.canSave) {
                     window.location.href = "/login?returnUrl=" +
                         encodeURIComponent(banenkaartReturnUrl());
@@ -1991,7 +2015,8 @@ window.jobMap = (function () {
                 if (btn.dataset.saveBusy === "1") {
                     return;
                 }
-                const next = btn.getAttribute("aria-pressed") !== "true";
+                const pressed = btn.getAttribute("aria-pressed") === "true";
+                const next = !pressed;
                 btn.dataset.saveBusy = "1";
                 setHeartButtonState(btn, next);
                 toggleLiked(id, next).then(function (liked) {
