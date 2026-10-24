@@ -423,7 +423,7 @@ public static class PageAssetCatalog
         "/css/features/kandidaat-banen.css?v=20261024-listtoggle2",
         "/css/features/banenkaart.css?v=20261023-acc9",
         "/css/features/banenkaart-illustrated.css?v=20261023-acc9",
-        "/css/features/banenkaart-lagen.css?v=20261024-stripscroll4",
+        "/css/features/banenkaart-lagen.css?v=20261024-stripscroll5",
     ];
 
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>
