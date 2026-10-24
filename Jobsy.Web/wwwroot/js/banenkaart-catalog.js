@@ -1336,6 +1336,10 @@
             if (rows) {
                 renderListRows(rows, filters);
             }
+            persistFilterCookieQuietly(filters);
+            document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", {
+                detail: { count: rows ? filterRows(rows, filters, false).length : 0, filters: filters }
+            }));
             document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", { detail: { count: rows ? rows.length : 0 } }));
             if (!window.jobMap || typeof window.jobMap.setVacanciesFromCatalog !== "function") {
                 setTimeout(function () { applyToMap(resolveFilters()); }, 400);

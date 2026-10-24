@@ -129,7 +129,10 @@ internal static class BanenkaartSsrData
                 {
                     openForWork = profile.OpenForWork;
                     showFitFilters = openForWork;
-                    if (originLat is null && profile.HomeLatitude is double hLat && profile.HomeLongitude is double hLng)
+                    if (originLat is null
+                        && !query.UrlOriginAbsentByQuery
+                        && profile.HomeLatitude is double hLat
+                        && profile.HomeLongitude is double hLng)
                     {
                         var resolved = KbMapStart.Resolve(new KbMapStart.Input(
                             UrlOrStateOrigin: null,

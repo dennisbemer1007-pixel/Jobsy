@@ -32,7 +32,35 @@ internal static class BanenkaartSsrQuery
         string? OriginLabel,
         string? Error,
         bool Saved,
-        int Page = 1);
+        int Page = 1,
+        bool UrlOriginAbsentByQuery = false);
+
+    /// <summary>
+    /// URL carries filter params but no origin — origin must not be restored from cookie/profile (URL SSOT).
+    /// </summary>
+    internal static bool UrlOmitsOriginWhileFiltered(IQueryCollection query)
+    {
+        if (query.ContainsKey("originLat") || query.ContainsKey("originLng"))
+        {
+            return false;
+        }
+
+        return query.ContainsKey("maxMinutes")
+               || query.ContainsKey("transport")
+               || query.ContainsKey("minHours")
+               || query.ContainsKey("maxHours")
+               || query.ContainsKey("q")
+               || query.ContainsKey("categoryId")
+               || query.ContainsKey("workType")
+               || query.ContainsKey("sort")
+               || query.ContainsKey("minWage")
+               || query.ContainsKey("maxWage")
+               || query.ContainsKey("age")
+               || query.ContainsKey("minMatchPercent")
+               || query.ContainsKey("companyId")
+               || query.ContainsKey("radiusKm")
+               || query.ContainsKey("weergave");
+    }
 
     internal static State Parse(IQueryCollection query)
     {
