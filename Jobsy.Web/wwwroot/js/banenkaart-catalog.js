@@ -999,8 +999,13 @@
 
     function domListViewActive() {
         var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
-        return !!(root && (root.classList.contains("show-list")
-            || root.classList.contains("jobsy-discovery--list")));
+        if (!root) {
+            return false;
+        }
+        if (root.getAttribute("data-kb-view") === "list") {
+            return true;
+        }
+        return root.classList.contains("show-list");
     }
 
     function buildBanenkaartUrl(filters) {

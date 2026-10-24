@@ -63,6 +63,8 @@ public sealed class BanenkaartSsrUiBootGuardTests
         Assert.Contains("bindViewportLayout", ssr, StringComparison.Ordinal);
         Assert.Contains("syncLayoutForViewport", ssr, StringComparison.Ordinal);
         Assert.Contains("bindClientFilterApply", ssr, StringComparison.Ordinal);
+        Assert.Contains("applyBanenkaartViewMode", ssr, StringComparison.Ordinal);
+        Assert.Contains("data-kb-view", shells, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

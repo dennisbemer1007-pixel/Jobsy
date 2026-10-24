@@ -363,8 +363,7 @@
 }
 
 @media (min-width: 701px) {
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vc,
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen.jobsy-discovery--list .vc {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .vc {
         max-height: none;
     }
 }
@@ -1400,12 +1399,14 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 
     /* Lijst mode: full-width panel + 2-col grid (mockup), not the 42% map split column. */
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.jobsy-discovery--list[data-banenkaart-ssr="1"],
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list[data-banenkaart-ssr="1"] {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list[data-banenkaart-ssr="1"],
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-view="list"][data-banenkaart-ssr="1"] {
         grid-template-columns: minmax(0, 1fr);
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.jobsy-discovery--list .vacancy-pane,
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vacancy-pane {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vacancy-pane,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-view="list"] .vacancy-pane {
         grid-column: 1 / -1;
         grid-row: 3 / 5;
         border-right: none;
@@ -1419,12 +1420,14 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.jobsy-discovery--list .map-pane,
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .map-pane {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .map-pane,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-view="list"] .map-pane {
         display: none !important;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.jobsy-discovery--list .vacancy-list,
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vacancy-list {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-list .vacancy-list,
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-view="list"] .vacancy-list {
         width: 100%;
         max-width: none;
         box-sizing: border-box;
