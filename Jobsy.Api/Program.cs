@@ -11,6 +11,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Ops;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
@@ -503,7 +504,8 @@ app.MapGet("/health", () => Results.Ok(new
     status = "ok",
     commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
             ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
-            ?? "local"
+            ?? "local",
+    acceptatieSollicitatiesDemo = AcceptatieSollicitatiesDemoStartupState.Snapshot()
 }))
     .AllowAnonymous();
 

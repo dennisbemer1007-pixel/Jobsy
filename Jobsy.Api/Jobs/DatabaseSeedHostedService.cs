@@ -151,6 +151,8 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             var guard = TestAccountEnvironmentGuard.Evaluate(input);
             if (!guard.Allowed)
             {
+                AcceptatieSollicitatiesDemoStartupState.Record(
+                    "skipped_guard:" + guard.CodesSummary());
                 foreach (var failure in guard.Failures)
                 {
                     _logger.LogInformation(
@@ -172,12 +174,18 @@ public sealed class DatabaseSeedHostedService : BackgroundService
                 stoppingToken);
             if (!applied)
             {
+                AcceptatieSollicitatiesDemoStartupState.Record("skipped_no_candidate_or_manager");
                 _logger.LogInformation(
                     "Acceptatie sollicitaties demo skipped (no allowlisted candidate or branch manager).");
+            }
+            else
+            {
+                AcceptatieSollicitatiesDemoStartupState.Record("applied");
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            AcceptatieSollicitatiesDemoStartupState.Record("error:" + ex.GetType().Name);
             _logger.LogError(ex, "Acceptatie sollicitaties demo ensure failed; API continues.");
         }
     }
