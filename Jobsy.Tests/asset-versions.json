@@ -308,7 +308,7 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-heart1",
+    "v": "20261024-listmapresize1",
     "sha256": "92b698e5e8c6b043a03d4d483edec189aabada66182f42686b5995366e800894"
   },
   "js/jobsyMapLibre.min.js": {
@@ -373,7 +373,7 @@
   },
   "js/banenkaart-ssr.js": {
     "v": "20261024-listmapresize1",
-    "sha256": "6f1d5355beecb46d381bf44f0d96889d313b29c1a3c451a2f6c81617b4bb755b"
+    "sha256": "7e3afc53c40ef9bb8f9b72a926fb966dd35f2c57a66db797255ce15278c64ddf"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -385,7 +385,7 @@
   },
   "js/banenkaart-maps-boot.js": {
     "v": "20261024-listmapresize1",
-    "sha256": "d90379805e254b8f6d0efc9644dfeb6b307e39746db2a18a25659e4ffd8c3e71"
+    "sha256": "9b42c75312276e6908adabd66e5457da35b317503580585cdd806b277a9d355e"
   },
   "css/features/banenkaart-lagen.css": {
     "v": "20261024-listtoggle2",

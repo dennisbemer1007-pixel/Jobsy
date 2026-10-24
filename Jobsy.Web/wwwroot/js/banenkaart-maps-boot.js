@@ -9,7 +9,7 @@ window.jobsyMaps = (function () {
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
         "/js/jobsyMapLibre.min.js?v=20261023-lagen-compact1"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261024-heart1"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261024-listmapresize1"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -237,12 +237,36 @@ window.jobsyMaps = (function () {
         }
     }
 
+    function whenMapIdle(cb) {
+        if (!window.jobMap || typeof window.jobMap.__testGetMap !== "function") {
+            cb();
+            return;
+        }
+        var m = window.jobMap.__testGetMap();
+        if (!m || typeof m.once !== "function") {
+            cb();
+            return;
+        }
+        if (typeof m.isStyleLoaded === "function" && m.isStyleLoaded()) {
+            m.once("idle", cb);
+            return;
+        }
+        m.once("load", function () {
+            m.once("idle", cb);
+        });
+    }
+
     function startDiscoveryMapAfterVisible() {
         bootDiscoveryMap();
-        if (window.jobMap && typeof window.jobMap.invalidate === "function") {
-            window.jobMap.invalidate();
-        }
-        applyCatalogToMapWhenReady();
+        whenMapIdle(function () {
+            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+                window.jobMap.invalidate();
+            }
+            if (window.jobMap && typeof window.jobMap.fitToOriginRings === "function") {
+                window.jobMap.fitToOriginRings(false);
+            }
+            applyCatalogToMapWhenReady();
+        });
     }
 
     function warmBoot() {
@@ -264,18 +288,27 @@ window.jobsyMaps = (function () {
         if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
             window.jobsyBasemapWarm.warm(view).catch(function () { });
         }
+        function onMapPaneVisible() {
+            if (typeof requestAnimationFrame === "function") {
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(startDiscoveryMapAfterVisible);
+                });
+            } else {
+                startDiscoveryMapAfterVisible();
+            }
+        }
+
+        if (document.documentElement.dataset.bkMapRevealListen !== "1") {
+            document.documentElement.dataset.bkMapRevealListen = "1";
+            document.addEventListener("jobsy-bk-map-pane-visible", onMapPaneVisible);
+        }
+
         ensure("discovery").then(function () {
             if (deferMapBootWhileListMode()) {
-                document.addEventListener("jobsy-bk-map-pane-visible", function onVisible() {
-                    document.removeEventListener("jobsy-bk-map-pane-visible", onVisible);
-                    if (typeof requestAnimationFrame === "function") {
-                        requestAnimationFrame(function () {
-                            requestAnimationFrame(startDiscoveryMapAfterVisible);
-                        });
-                    } else {
-                        startDiscoveryMapAfterVisible();
-                    }
-                });
+                var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+                if (root && root.getAttribute("data-kb-view") === "map") {
+                    onMapPaneVisible();
+                }
                 return;
             }
             startDiscoveryMapAfterVisible();

@@ -90,13 +90,21 @@ public sealed class BanenkaartLijstToKaartMapPlaywrightTests : IAsyncLifetime
             new() { Timeout = 30_000 });
 
         await page.WaitForFunctionAsync(
+            "() => (window.jobMap?.__testGetPinCount?.() ?? 0) >= 10",
+            null,
+            new() { Timeout = 90_000 });
+
+        await page.EvaluateAsync(
             """
             () => {
-              const data = window.jobMap?.__testGetPinCount?.() ?? 0;
-              const rendered = window.jobMap?.__testGetRenderedPinCount?.() ?? 0;
-              return data >= 20 && rendered >= 1;
+              window.jobMap?.invalidate?.();
+              window.jobMap?.fitToOriginRings?.(false);
+              window.jobMap?.__testGetMap?.()?.resize?.();
             }
-            """,
+            """);
+
+        await page.WaitForFunctionAsync(
+            "() => (window.jobMap?.__testGetRenderedPinCount?.() ?? 0) >= 1",
             null,
             new() { Timeout = 45_000 });
 

@@ -287,18 +287,26 @@
             cb();
             return;
         }
-        var m = window.jobMap.__testGetMap();
-        if (!m || typeof m.once !== "function") {
-            cb();
-            return;
+        var waits = 0;
+        function waitForInstance() {
+            var m = window.jobMap.__testGetMap();
+            if (!m || typeof m.once !== "function") {
+                if (waits++ < 160) {
+                    setTimeout(waitForInstance, 50);
+                    return;
+                }
+                cb();
+                return;
+            }
+            if (typeof m.isStyleLoaded === "function" && m.isStyleLoaded()) {
+                m.once("idle", cb);
+                return;
+            }
+            m.once("load", function () {
+                m.once("idle", cb);
+            });
         }
-        if (typeof m.isStyleLoaded === "function" && m.isStyleLoaded()) {
-            m.once("idle", cb);
-            return;
-        }
-        m.once("load", function () {
-            m.once("idle", cb);
-        });
+        waitForInstance();
     }
 
     function enhanceMap() {
@@ -558,23 +566,29 @@
                     if (window.jobMap && typeof window.jobMap.boot === "function") {
                         window.jobMap.boot("job-map");
                     }
-                    resumeMapLayout();
-                    try {
-                        var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
-                        if (map && typeof map.resize === "function") {
-                            map.resize();
+                    whenMapIdle(function () {
+                        resumeMapLayout();
+                        try {
+                            var map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                            if (map && typeof map.resize === "function") {
+                                map.resize();
+                            }
+                        } catch (eResize) { }
+                        if (window.jobMap && typeof window.jobMap.fitToOriginRings === "function") {
+                            window.jobMap.fitToOriginRings(false);
                         }
-                    } catch (eResize) { }
-                    if (window.jobMap && typeof window.jobMap.fitToOriginRings === "function") {
-                        window.jobMap.fitToOriginRings(false);
-                    }
-                    if (window.jobsyBanenkaartCatalog
-                        && typeof window.jobsyBanenkaartCatalog.applyToMap === "function") {
-                        var filters = typeof window.jobsyBanenkaartCatalog.resolveFilters === "function"
-                            ? window.jobsyBanenkaartCatalog.resolveFilters()
-                            : null;
-                        window.jobsyBanenkaartCatalog.applyToMap(filters);
-                    }
+                        if (window.jobsyBanenkaartCatalog
+                            && typeof window.jobsyBanenkaartCatalog.applyToMap === "function") {
+                            var filters = typeof window.jobsyBanenkaartCatalog.resolveFilters === "function"
+                                ? window.jobsyBanenkaartCatalog.resolveFilters()
+                                : null;
+                            window.jobsyBanenkaartCatalog.applyToMap(filters);
+                        }
+                        if (window.jobMap && typeof window.jobMap.reloadPins === "function") {
+                            window.jobMap.reloadPins().catch(function () { });
+                        }
+                        markMapReady();
+                    });
                 }).catch(function () {
                     resumeMapLayout();
                 });
