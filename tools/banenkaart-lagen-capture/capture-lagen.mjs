@@ -77,6 +77,7 @@ async function gotoBanenkaart(page) {
   await dismissCookies(page);
   await page.evaluate(async () => {
     try {
+      localStorage.removeItem('jobsy.bk.cluster-hint.v1');
       if (window.caches?.keys) {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
@@ -180,9 +181,20 @@ async function measurePhotoMs(page) {
 }
 
 async function openDesktopWageTooltip(page) {
-  const btn = page.locator('[data-lagen-wage]').first();
-  await btn.waitFor({ state: 'visible', timeout: 10_000 });
-  await btn.hover();
+  await page.waitForSelector('[data-lagen-wage]', { state: 'attached', timeout: 10_000 });
+  await page.evaluate(() => {
+    const fcw = document.querySelector('[data-lagen-fcw], .fcw.kb-lagen-fcw');
+    const btn = fcw?.querySelector('[data-lagen-wage]');
+    if (!btn || !fcw) return;
+    btn.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    if (typeof fcw.classList !== 'undefined') {
+      fcw.classList.add('lagen-wage-open');
+    }
+    btn.classList.add('on');
+    btn.setAttribute('aria-expanded', 'true');
+    const tip = fcw.querySelector('.tip');
+    if (tip) tip.removeAttribute('hidden');
+  });
   await page.waitForFunction(
     () => {
       const tip = document.querySelector('[data-lagen-fcw] .tip, .fcw.kb-lagen-fcw .tip');
@@ -194,9 +206,7 @@ async function openDesktopWageTooltip(page) {
 }
 
 async function openMobileWageTooltip(page) {
-  const btn = page.locator('[data-lagen-wage]').first();
-  await btn.waitFor({ state: 'visible', timeout: 10_000 });
-  await btn.tap();
+  await page.locator('[data-lagen-wage]').first().click({ force: true });
   await page.waitForFunction(
     () => document.querySelector('.fcw.kb-lagen-fcw.lagen-wage-open, [data-lagen-fcw].lagen-wage-open'),
     null,

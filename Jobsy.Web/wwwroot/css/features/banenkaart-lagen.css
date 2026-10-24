@@ -2372,9 +2372,15 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     justify-content: space-between;
     font-weight: 800;
     font-size: 16px;
-    color: #2a5ba8;
+    color: #2a5ba8 !important;
     text-decoration: none;
     padding: 8px 0 14px;
+    background: transparent !important;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    height: auto;
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .fgo svg {

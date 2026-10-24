@@ -1306,7 +1306,7 @@ window.jobMap = (function () {
                 "<button type=\"button\" class=\"fb fx\" data-lagen-close aria-label=\"" +
                     escapeAttr(uiLabels.close || "Sluiten") + "\">" + lagenCloseSvg() + "</button></div>" +
                 "<div class=\"fc" + (mobile ? " m" : "") + "\">" + bodyInner +
-                "<a class=\"fgo map-popup__view map-popup__cta\" href=\"" + escapeAttr(detailHref) +
+                "<a class=\"fgo\" href=\"" + escapeAttr(detailHref) +
                     "\" data-job-id=\"" + escapeAttr(v.id) + "\"><span>" +
                     (lagenPopupIsEnglish() ? "View vacancy" : "Bekijk vacature") + "</span>" +
                     lagenChevronRightSvg() + "</a></div></div>"
@@ -4374,7 +4374,16 @@ window.jobMap = (function () {
         }
         runWithViewportNotifySuppressed(function () {
             try {
-                safeFitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
+                let bounds = ringBounds(lastOrigin.lat, lastOrigin.lng, radius);
+                if (lagenLayout && isNarrowViewport() && catalogModeActive) {
+                    Object.keys(markersById).forEach(function (id) {
+                        const rec = markersById[id];
+                        if (rec && Number.isFinite(rec.lat) && Number.isFinite(rec.lng)) {
+                            bounds.extend([rec.lng, rec.lat]);
+                        }
+                    });
+                }
+                safeFitBounds(bounds, opts);
                 originNeedsFrame = false;
                 originHasBeenFramed = true;
                 cameraLocked = true;
