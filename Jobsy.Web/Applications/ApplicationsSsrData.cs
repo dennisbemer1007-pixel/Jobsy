@@ -6,8 +6,11 @@ using Jobsy.Web.Bedrijvenkaart;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
+using Jobsy.Core.Ops;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Web.Applications;
 
@@ -37,6 +40,8 @@ internal static class ApplicationsSsrData
         JobsyApiClient api,
         IFeatureFlags featureFlags,
         CultureState culture,
+        IConfiguration configuration,
+        IHostEnvironment hostEnvironment,
         bool isCandidate,
         string? tabRaw,
         string? filterRaw,
@@ -60,6 +65,16 @@ internal static class ApplicationsSsrData
         if (!isCandidate && !readOnly)
         {
             return Empty(tab, filter, selectedId, givenName, readOnly, isCandidate, employersOn, externalOn);
+        }
+
+        if (isCandidate)
+        {
+            await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
+                api,
+                configuration,
+                hostEnvironment,
+                candidateEmail,
+                cancellationToken);
         }
 
         var rows = new List<SollicitationRow>();
@@ -87,40 +102,6 @@ internal static class ApplicationsSsrData
         catch
         {
             // show empty list
-        }
-
-        if (rows.Count == 0 && IsAcceptatieDemoCandidateEmail(candidateEmail))
-        {
-            try
-            {
-                var ensure = await api.TryEnsureAcceptatieSollicitatiesDemoAsync(cancellationToken);
-                if (ensure is { VerifiedApplicationCount: > 0 })
-                {
-                    var apps = await api.GetMyApplicationsAsync(cancellationToken);
-                    rows.Clear();
-                    foreach (var a in apps)
-                    {
-                        rows.Add(MapApplication(culture, a));
-                    }
-
-                    try
-                    {
-                        var initiatives = await api.GetCandidateInitiativesAsync(cancellationToken);
-                        foreach (var initiative in initiatives)
-                        {
-                            rows.Add(MapApplication(culture, InitiativeApplicationMapper.ToApplicationItem(initiative)));
-                        }
-                    }
-                    catch
-                    {
-                        // optional
-                    }
-                }
-            }
-            catch
-            {
-                // acc-only fallback; ignore on failure
-            }
         }
 
         if (externalOn)
@@ -197,6 +178,50 @@ internal static class ApplicationsSsrData
     private static bool IsAcceptatieDemoCandidateEmail(string? email)
         => !string.IsNullOrWhiteSpace(email)
            && string.Equals(email, AcceptatieDemoCandidateEmail, StringComparison.OrdinalIgnoreCase);
+
+    private static async Task TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
+        JobsyApiClient api,
+        IConfiguration configuration,
+        IHostEnvironment hostEnvironment,
+        string? candidateEmail,
+        CancellationToken cancellationToken)
+    {
+        if (!IsAcceptatieDemoCandidateEmail(candidateEmail))
+        {
+            return;
+        }
+
+        var testAccountsEnabled = string.Equals(
+                configuration["TestAccounts:Enabled"], "true", StringComparison.OrdinalIgnoreCase)
+            || configuration.GetValue("TestAccounts:Enabled", false);
+        var input = TestAccountGuardInputBuilder.Create(
+            deploymentEnvironment: configuration["Lobsy:DeploymentEnvironment"],
+            testAccountsEnabled: testAccountsEnabled,
+            renderServiceName: configuration["RENDER_SERVICE_NAME"],
+            publicWebBaseUrl: null,
+            apiBaseUrl: configuration["ApiBaseUrl"],
+            connectionString: configuration.GetConnectionString("JobsyDb") ?? configuration["DATABASE_URL"],
+            allowStubPayments: true,
+            hasLiveMollieKey: false,
+            hostEnvironmentName: hostEnvironment.EnvironmentName,
+            allowedPublicHosts: configuration.GetSection("TestAccounts:AllowedPublicHosts").Get<string[]>(),
+            expectedDatabaseName: configuration["TestAccounts:ExpectedDatabaseName"],
+            isWebRuntime: true);
+        var guard = TestAccountEnvironmentGuard.Evaluate(input);
+        if (!guard.Allowed)
+        {
+            return;
+        }
+
+        try
+        {
+            await api.TryEnsureAcceptatieSollicitatiesDemoAsync(cancellationToken);
+        }
+        catch
+        {
+            // Acceptatie-only fallback; page still renders without demo rows.
+        }
+    }
 
     private static PageData Empty(
         string tab,
