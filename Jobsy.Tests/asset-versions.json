@@ -308,8 +308,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-mobileattrib2",
-    "sha256": "5c934734c377d8955a29f4005d8d608dc629960d0145a92f387c5d1bd15414a1"
+    "v": "20261024-mobilewagetip3",
+    "sha256": "67930439053c4e55bbc0e43fcdbbff99f0316956806f157c16242ffd3709dbea"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
@@ -384,11 +384,11 @@
     "v": "20261023-19"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-travelrings1",
-    "sha256": "dc5bb090e4f4ea192c5d44aa49b7e69ca6cb2b4dfd1507292c6801cb0994af30"
+    "v": "20261024-mobilewagetip3",
+    "sha256": "53759e4afd2673501bf605c26f38e7394de9aa7c8ba8a1a756609a8d4c1d67a0"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-mobileattrib2",
-    "sha256": "14fcc01e30d6f3751057f69706e160a4f363f79cfbf43934a929c2e96eb54bf6"
+    "v": "20261024-mobilewagetip3",
+    "sha256": "518ecbdd14c5140c8a71484fdb5803ce8dad3f66300ed13711393d5bd1e5a33f"
   }
 }
