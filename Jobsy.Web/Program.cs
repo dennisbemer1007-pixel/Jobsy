@@ -663,6 +663,7 @@ app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
 app.MapSollicitatiesClientEndpoints();
 app.MapAfterMatchPickSlotClientEndpoints();
+app.MapAfterMatchEmployerProposeClientEndpoints();
 app.MapAfterMatchConfirmedClientEndpoints();
 app.MapAfterMatchRescheduleClientEndpoints();
 app.MapBanenkaartClientEndpoints();
