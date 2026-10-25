@@ -14234,23 +14234,27 @@ a.apply-flow__secondary {
     }
 
     .lobsy-assistant__panel {
-        width: calc(100vw - 1rem);
-        max-height: calc(100dvh - 5rem);
+        box-sizing: border-box;
+        width: min(366px, calc(100vw - 1.5rem));
+        height: 396px;
+        min-height: 396px;
+        max-height: 396px;
         padding: 0.65rem 0.7rem 0.75rem;
     }
 
     .lobsy-assistant.has-bottom-nav .lobsy-assistant__panel {
-        max-height: calc(100dvh - 8.5rem - var(--sticky-footer-h, 0px) - env(safe-area-inset-bottom, 0px));
+        max-height: 396px;
+    }
+
+    .lobsy-assistant__chat {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
     }
 
     .lobsy-assistant__logo {
         width: 48px;
         height: 48px;
-    }
-
-    .lobsy-assistant__chat {
-        min-height: 100px;
-        max-height: 38vh;
     }
 
     .lobsy-assistant__bubble-logo {

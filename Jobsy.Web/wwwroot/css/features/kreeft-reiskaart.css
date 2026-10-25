@@ -206,6 +206,35 @@
   min-width: 0;
 }
 
+.kompas--ssr-hub > .kompas-hub-layout--reiskaart {
+  display: block;
+}
+
+@media (min-width: 901px) {
+  .kompas--ssr-hub {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) min(280px, 30vw);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .kompas--ssr-hub > .kompas-hub-layout__reiskaart {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: calc(var(--app-header-height, 4.25rem) + 12px);
+    min-width: 0;
+  }
+
+  .kompas--ssr-hub > .kompas__intro,
+  .kompas--ssr-hub > .kompas-tabs,
+  .kompas--ssr-hub > .kompas-hub-layout,
+  .kompas--ssr-hub > .kompas__ssr-actions {
+    grid-column: 1;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .kreeft-reiskaart.reis {
     padding: 12px 14px;
@@ -286,24 +315,14 @@
     grid-row: 2;
   }
 
-  .kompas-hub-layout--reiskaart {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 14px;
-  }
-
-  .kompas-hub-layout--reiskaart > .kompas-hub-layout__reiskaart {
-    grid-column: 1;
-    grid-row: 1;
-    order: -1;
-    position: static;
+  .kompas--ssr-hub > .kompas-hub-layout__reiskaart {
     width: 100%;
     max-width: 100%;
+    position: static;
   }
 
-  .kompas-hub-layout--reiskaart > .kompas-hub-layout__main {
-    grid-column: 1;
-    grid-row: 2;
+  .kompas--ssr-hub > .kompas-hub-layout--reiskaart {
+    display: block;
   }
 }
 

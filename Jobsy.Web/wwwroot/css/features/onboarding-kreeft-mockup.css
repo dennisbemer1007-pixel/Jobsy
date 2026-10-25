@@ -262,7 +262,12 @@
   }
 
   .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-wizard__field-row > label {
-    margin-block: 0 0.5rem;
+    margin-block: 0;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-fields__address > label,
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-fields__address .kb-address__label {
+    margin: 0;
   }
 }
 

@@ -52,7 +52,10 @@ internal static class OnboardingKompasSsrShells
         var sb = new StringBuilder();
         sb.Append("<div class=\"kompas-page-wrap\">");
         KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtKompasDesk, KreeftHeaderStripAssets.LichtKompasMob, "licht-kompas");
-        sb.Append("<section class=\"kompas kompas--ssr\" aria-labelledby=\"kompas-title\" data-testid=\"candidate-kompas-ssr\">");
+        sb.Append("<section class=\"kompas kompas--ssr kompas--ssr-hub\" aria-labelledby=\"kompas-title\" data-testid=\"candidate-kompas-ssr\">");
+        sb.Append("<div class=\"kompas-hub-layout__reiskaart\">");
+        KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(15));
+        sb.Append("</div>");
         sb.Append("<header class=\"kompas__intro\">");
         sb.Append("<h2 id=\"kompas-title\" class=\"kompas__heading\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Title"]));
@@ -73,9 +76,7 @@ internal static class OnboardingKompasSsrShells
         sb.Append("</nav>");
 
         sb.Append("<div class=\"kompas-hub-layout kompas-hub-layout--reiskaart\">");
-        sb.Append("<div class=\"kompas-hub-layout__reiskaart\">");
-        KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(15));
-        sb.Append("</div><div class=\"kompas-hub-layout__main\">");
+        sb.Append("<div class=\"kompas-hub-layout__main\">");
         sb.Append("<div class=\"ob-rustig__canvas ob-rustig__kompas kompas--ssr-body\">");
         sb.Append("<section class=\"ob-finale ob-finale--no-hero ob-finale--hub\" data-testid=\"onboarding-finale-v2\">");
         sb.Append("<div class=\"ob-finale__wrap\">");
