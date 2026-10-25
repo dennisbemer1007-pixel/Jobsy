@@ -214,23 +214,42 @@
   .kompas--ssr-hub {
     display: grid;
     grid-template-columns: minmax(0, 1fr) min(280px, 30vw);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     gap: 20px;
     align-items: start;
   }
 
   .kompas--ssr-hub > .kompas-hub-layout__reiskaart {
     grid-column: 2;
-    grid-row: 1 / -1;
+    grid-row: 1 / span 3;
+    align-self: start;
     position: sticky;
     top: calc(var(--app-header-height, 4.25rem) + 12px);
     min-width: 0;
   }
 
-  .kompas--ssr-hub > .kompas__intro,
-  .kompas--ssr-hub > .kompas-tabs,
-  .kompas--ssr-hub > .kompas-hub-layout,
+  .kompas--ssr-hub > .kompas__intro {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .kompas--ssr-hub > .kompas-tabs {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+    margin-block-start: 0.75rem;
+  }
+
+  .kompas--ssr-hub > .kompas-hub-layout {
+    grid-column: 1;
+    grid-row: 3;
+    min-width: 0;
+  }
+
   .kompas--ssr-hub > .kompas__ssr-actions {
     grid-column: 1;
+    grid-row: 4;
     min-width: 0;
   }
 }

@@ -364,7 +364,7 @@
             <script src="/js/app-public.js?v=20261027-nav-active1" nonce="@Nonce" defer></script>
             @if (IncludeCandidateNoBlazorChromeCss || BanenkaartAuthenticatedShell)
             {
-                <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft8" nonce="@Nonce" defer></script>
+                <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>
             }
             @if (IncludeBanenkaartClientScript)
             {

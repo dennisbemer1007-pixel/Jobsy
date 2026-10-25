@@ -375,13 +375,14 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.Kompas.Dir.Team.Body"] = english
             ? "Structure, overview and contact with a team."
             : "Structuur, overzicht en contact met een team.";
-        map["Kompas.Ssr.Eyebrow"] = english
-            ? "Light · Your Compass · onboarding and tests complete"
-            : "Licht · Jouw Kompas · onboarding en tests afgerond";
+        map["Kompas.Ssr.EyebrowZone"] = english ? "Light" : "Licht";
+        map["Kompas.Ssr.EyebrowRest"] = english
+            ? " · Your Compass · onboarding and tests complete"
+            : " · Jouw Kompas · onboarding en tests afgerond";
         map["Kompas.Ssr.HubTitle"] = english ? "Your Compass" : "Jouw Kompas";
         map["Kompas.Ssr.HubLead"] = english
-            ? "What your four tests show together — in words, without scores. This is your starting point for your Compass."
-            : "Wat je vier tests samen laten zien — in woorden, zonder scores. Dit is je startpunt voor je Kompas.";
+            ? "No scores, just words that fit you."
+            : "Geen cijfers, wel woorden die bij je passen.";
         map["Kompas.Ssr.Lead"] = english
             ? "Open your profile for the full Compass experience, or go straight to your passport."
             : "Open je profiel voor het volledige Kompas, of ga direct naar je paspoort.";

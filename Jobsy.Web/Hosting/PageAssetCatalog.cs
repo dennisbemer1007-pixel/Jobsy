@@ -28,6 +28,7 @@ public static class PageAssetCatalog
     [
         "css/tokens.css?v=20261018-06",
         WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css"),
+        WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
         "css/app.min.css?v=20261025-kreeft11",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
@@ -39,7 +40,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidatePublicCss =
     [
         "css/features/banenkaart.css?v=20261019-01",
-        "css/features/banenkaart-illustrated.css?v=20261025-acc1093",
+        WwwrootAssetCatalog.Url("css/features/banenkaart-illustrated.css"),
         "css/features/bedrijvenkaart.css?v=20261019-10",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
@@ -52,7 +53,7 @@ public static class PageAssetCatalog
     [
         "css/features/uwv-mockups.css?v=20261019-r8",
         "css/features/banenkaart.css?v=20261018-02",
-        "css/features/banenkaart-illustrated.css?v=20261025-acc1093",
+        WwwrootAssetCatalog.Url("css/features/banenkaart-illustrated.css"),
     ];
 
     public static readonly string[] CandidateAppCss =
@@ -300,9 +301,9 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/candidate-header-strip.css?v=20261025-kreeft11",
+                WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css"),
                 "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
-                "css/features/banenkaart-illustrated.css?v=20261025-acc1093",
+                WwwrootAssetCatalog.Url("css/features/banenkaart-illustrated.css"),
                 "css/features/sollicitaties-page.css?v=20261027-detail-return1",
             ];
         }
@@ -447,6 +448,7 @@ public static class PageAssetCatalog
     [
         "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft8",
         WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css"),
+        WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

@@ -57,8 +57,10 @@ internal static class OnboardingKompasSsrShells
         KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(15));
         sb.Append("</div>");
         sb.Append("<header class=\"kompas__intro kompas__intro--hub-mockup\">");
-        sb.Append("<p class=\"kompas__eyebrow\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.Eyebrow"]));
+        sb.Append("<p class=\"kompas__eyebrow\"><span class=\"kompas__eyebrow-zone\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.EyebrowZone"]));
+        sb.Append("</span>");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.EyebrowRest"]));
         sb.Append("</p>");
         sb.Append("<h1 id=\"kompas-title\" class=\"kompas__heading\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.HubTitle"]));
