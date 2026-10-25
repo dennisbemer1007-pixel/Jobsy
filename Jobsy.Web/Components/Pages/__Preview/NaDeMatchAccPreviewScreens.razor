@@ -51,6 +51,18 @@ else
             return;
         }
 
+        if (id is "07" or "7")
+        {
+            var demo = AfterMatchHerinneringenSsrData.Demo();
+            _bodyHtml = AfterMatchHerinneringenSsrShells.BuildBody(
+                Culture,
+                demo,
+                AfterMatchMailSsrDemoData.ScheduledApplicationId,
+                includeBackLink: false,
+                editableReminders: false);
+            return;
+        }
+
         _bodyHtml = null;
     }
 }

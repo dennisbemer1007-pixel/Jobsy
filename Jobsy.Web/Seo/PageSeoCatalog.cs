@@ -49,6 +49,17 @@ public static partial class PageSeoCatalog
             return Private("AfterMatch.Screen06.PageTitle", "Seo.PrivateDescription");
         }
 
+        if (p.Contains("/after-match/herinneringen-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen07.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.StartsWith("/preview/na-de-match/07", StringComparison.OrdinalIgnoreCase)
+            || p.StartsWith("/preview/na-de-match/7", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen07.PageTitle", "Seo.PrivateDescription");
+        }
+
         if (p.Contains("/after-match/reschedule-ssr", StringComparison.OrdinalIgnoreCase))
         {
             return Private("AfterMatch.Screen08.Hero.Title", "Seo.PrivateDescription");
