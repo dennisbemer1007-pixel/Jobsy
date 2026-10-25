@@ -828,6 +828,10 @@
   color: var(--text);
 }
 
+.sollic-detail__back.back.sollic-detail__back--return {
+  display: inline-flex;
+}
+
 /* Mockup 01 list rail: vertical steps (label + sub rechts van bolletje). */
 .sollic-vsteps.vsteps {
   list-style: none;

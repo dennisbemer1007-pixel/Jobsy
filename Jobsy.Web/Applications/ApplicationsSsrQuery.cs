@@ -154,12 +154,13 @@ internal static class ApplicationsSsrQuery
             return false;
         }
 
-        if (!raw.StartsWith(KbRoutes.Applications, StringComparison.OrdinalIgnoreCase))
+        if (raw.StartsWith(KbRoutes.Applications, StringComparison.OrdinalIgnoreCase)
+            || raw.StartsWith("/candidate/applications/", StringComparison.OrdinalIgnoreCase))
         {
-            return false;
+            href = raw;
+            return true;
         }
 
-        href = raw;
-        return true;
+        return false;
     }
 }
