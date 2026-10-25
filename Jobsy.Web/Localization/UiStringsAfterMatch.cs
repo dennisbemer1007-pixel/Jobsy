@@ -60,20 +60,20 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Screen02.Hero.Title", "Na de match", "After the match");
         Add("AfterMatch.Screen02.Hero.Lead",
-            "Plan het gesprek, houd contact en leg de uitkomst vast. Alles bij deze sollicitatie.",
-            "Plan the interview, stay in touch and record the outcome. All in one place for this application.");
+            "Jullie zeiden allebei ja. Dit is de volgende stap.",
+            "You both said yes. Here is the next step.");
         Add("AfterMatch.Screen02.Next.Title", "Wat nu", "What now");
         Add("AfterMatch.Screen02.Next.Slots", "Stel 2 of 3 momenten voor", "Propose 2 or 3 times");
         Add("AfterMatch.Screen02.Next.Messages", "Stuur een bericht", "Send a message");
 
         Add("AfterMatch.Screen03.Hero.Title", "Gesprek plannen", "Plan interview");
         Add("AfterMatch.Screen03.Hero.Lead",
-            "Kies hoe je wilt afspreken en stel twee of drie momenten voor.",
-            "Choose how you want to meet and propose two or three times.");
+            "Stel een paar momenten voor. Sanne kiest er één.",
+            "Propose a few times. Sanne will pick one.");
         Add("AfterMatch.Screen03.Format.OnSite", "Op locatie", "On site");
         Add("AfterMatch.Screen03.Format.Online", "Online", "Online");
-        Add("AfterMatch.Screen03.Format.Phone", "Telefoon", "Phone");
-        Add("AfterMatch.Screen03.Submit", "Momenten versturen", "Send times");
+        Add("AfterMatch.Screen03.Format.Phone", "Telefonisch", "Phone");
+        Add("AfterMatch.Screen03.Submit", "Verstuur momenten", "Send times");
 
         Add("AfterMatch.Screen04.Eyebrow", "Sollicitaties · Gesprek plannen", "Applications · Plan interview");
         Add("AfterMatch.Screen04.PageTitle", "Gesprek plannen", "Plan interview");
@@ -360,6 +360,15 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Propose.ShareAgenda", "Mijn agenda delen", "Share my calendar");
         Add("AfterMatch.Employer.Propose.PickHint", "Klik in de weekweergave om momenten te selecteren (2–3).", "Click the week view to select 2–3 times.");
         Add("AfterMatch.Employer.Propose.AgendaSoon", "Agenda koppelen komt later. Gebruik intussen de weekweergave om handmatig momenten te kiezen.", "Calendar linking comes later. Use the week view to pick times manually for now.");
+        Add("AfterMatch.Employer.Propose.CandidateNote",
+            "Sanne kiest zelf uit je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen.",
+            "Sanne picks from your times or suggests another. You will be notified when she has chosen.");
+        Add("AfterMatch.Employer.Propose.AddSlot", "Nog een moment", "Another time");
+        Add("AfterMatch.Employer.Propose.AddDate", "Datum", "Date");
+        Add("AfterMatch.Employer.Propose.AddTime", "Tijd", "Time");
+        Add("AfterMatch.Employer.Propose.AgendaPlaceholder",
+            "Agenda koppelen volgt later. Gebruik intussen zelf momenten kiezen.",
+            "Calendar linking comes later. Pick times manually for now.");
         Add("AfterMatch.Employer.Propose.Where", "Locatie of link", "Location or link");
         Add("AfterMatch.Employer.Propose.WithWhom", "Met wie", "With whom");
         Add("AfterMatch.Employer.Propose.Note", "Bericht erbij (mag kort)", "Short note (optional)");

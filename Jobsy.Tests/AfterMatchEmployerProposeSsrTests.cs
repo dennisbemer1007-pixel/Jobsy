@@ -31,15 +31,14 @@ public sealed class AfterMatchEmployerProposeSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchProposeSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-employer-propose.js?v=20261028-ndm-wg03", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261028-ndm-wg03", razor, StringComparison.Ordinal);
+        Assert.Contains("after-match?panel=propose", razor, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Employer_panel_routing_propose_goes_to_propose_ssr()
+    public void Employer_panel_routing_propose_goes_to_panel_ssr()
     {
-        Assert.Equal("/propose-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
-        Assert.Equal("/propose-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("slots"));
+        Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
+        Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("slots"));
     }
 
     [Fact]
@@ -76,18 +75,21 @@ public sealed class AfterMatchEmployerProposeSsrTests : BunitContext
             thread,
             $"/werkgever/sollicitaties/{appId:D}/after-match",
             $"/werkgever/sollicitaties/{appId:D}",
-            [new DateTime(2026, 10, 22, 8, 30, 0, DateTimeKind.Utc)],
+            AfterMatchEmployerDemoSlots.InitialUtc,
             InterviewFormat.OnSite,
             "Loc",
             "Linda",
             "Note");
 
         var html = AfterMatchEmployerProposeSsrShells.BuildBody(culture, data, appId);
-        Assert.Contains("data-ndm-employer-propose-ssr=\"1\"", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-panel=\"propose\"", html, StringComparison.Ordinal);
-        Assert.Contains("data-ndm-week-calendar", html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-propose-panel", html, StringComparison.Ordinal);
+        Assert.Contains("Donderdag 22 oktober", html, StringComparison.Ordinal);
+        Assert.Contains("Vrijdag 23 oktober", html, StringComparison.Ordinal);
+        Assert.Contains("Maandag 26 oktober", html, StringComparison.Ordinal);
         Assert.Contains(culture["AfterMatch.Screen03.Submit"], html, StringComparison.Ordinal);
-        Assert.Contains(culture["AfterMatch.Employer.Propose.Manual"], html, StringComparison.Ordinal);
+        Assert.Contains(culture["AfterMatch.Employer.Propose.AddSlot"], html, StringComparison.Ordinal);
+        Assert.Contains("Telefonisch", html, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
