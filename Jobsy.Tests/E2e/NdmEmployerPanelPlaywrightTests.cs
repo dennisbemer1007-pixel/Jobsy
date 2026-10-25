@@ -86,6 +86,7 @@ public sealed class NdmEmployerPanelPlaywrightTests
         await PlaywrightCookieConsent.AcceptOnPageAsync(mobilePage);
         Assert.True(await KbE2e.TryLoginAsync(mobilePage, baseUrl, EmployerEmail, Password));
         await AssertMessagesMobileListReachableAsync(mobilePage, baseUrl);
+        await AssertMessagesMobileListViaBerichtSturenAsync(mobilePage, baseUrl);
     }
 
     private static async Task AssertAfterMatchSkipsBlazorRuntimeAsync(IPage page, string baseUrl)
@@ -236,11 +237,62 @@ public sealed class NdmEmployerPanelPlaywrightTests
 
     private static async Task AssertMessagesMobileListReachableAsync(IPage page, string baseUrl)
     {
+        var ensure = await page.APIRequest.PostAsync($"{baseUrl}/api/werkgever-client/after-match-demo-ensure");
+        Assert.True(ensure.Ok, $"mobile demo ensure failed: {ensure.Status}");
         var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=messages";
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Kandidaat #4790" })).ToBeVisibleAsync();
-        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Sanne de Vries" })).ToBeVisibleAsync();
+        await AssertMessagesMobileThreadListVisibleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "11-messages-mobile-list.png"), FullPage = true });
+    }
+
+    private static async Task AssertMessagesMobileListViaBerichtSturenAsync(IPage page, string baseUrl)
+    {
+        var ensure = await page.APIRequest.PostAsync($"{baseUrl}/api/werkgever-client/after-match-demo-ensure");
+        Assert.True(ensure.Ok, $"mobile demo ensure failed: {ensure.Status}");
+        var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match";
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        var loads = 0;
+        page.Load += (_, _) => loads++;
+        await page.GetByRole(AriaRole.Button, new() { Name = "Bericht sturen" }).ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        Assert.Equal(0, loads);
+        await Assertions.Expect(page.Locator("[data-ndm-messages-panel]:not([hidden])")).ToBeVisibleAsync();
+        await AssertMessagesMobileThreadListVisibleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "12-messages-mobile-bericht-sturen.png"), FullPage = true });
+
+        var list = page.Locator("[data-ndm-employer-messages-ssr] .tlist [data-ndm-thread-select]");
+        await list.Filter(new() { HasText = "Sanne" }).First.ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        Assert.Equal(0, loads);
+        Assert.Contains("thread=", page.Url, StringComparison.OrdinalIgnoreCase);
+        await Assertions.Expect(page.Locator("[data-ndm-thread-panel]:not([hidden])")).ToBeVisibleAsync();
+    }
+
+    private static async Task AssertMessagesMobileThreadListVisibleAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const root = document.querySelector('[data-ndm-employer-messages-ssr]');
+              if (!root) return false;
+              const params = new URL(location.href).searchParams;
+              if (params.get('thread')) return true;
+              const list = root.querySelector('.tlist');
+              if (!list) return false;
+              const rect = list.getBoundingClientRect();
+              return getComputedStyle(list).display !== 'none' && rect.height > 0;
+            }
+            """,
+            null,
+            new() { Timeout = 20_000 });
+        var list = page.Locator("[data-ndm-employer-messages-ssr] .tlist [data-ndm-thread-select]");
+        await Assertions.Expect(list.First).ToBeVisibleAsync();
+        Assert.True(
+            await list.CountAsync() >= 2,
+            "expected at least 2 message threads in mobile list");
+        await Assertions.Expect(list.Filter(new() { HasText = "#4790" })).ToBeVisibleAsync();
+        await Assertions.Expect(list.Filter(new() { HasText = "Sanne" })).ToBeVisibleAsync();
+        await Assertions.Expect(list.Filter(new() { HasText = "Yusuf" })).ToBeVisibleAsync();
     }
 
     private static async Task AssertDemo0006LoadsAsync(IPage page, string baseUrl)

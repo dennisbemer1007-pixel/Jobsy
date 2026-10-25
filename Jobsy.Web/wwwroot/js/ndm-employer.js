@@ -124,6 +124,7 @@
   function setPanel(el, panel, push) {
     panel = panel || "";
     if (panel === "slots") panel = "propose";
+    var previousPanel = el.getAttribute("data-ndm-panel") || "";
     el.setAttribute("data-ndm-panel", panel);
 
     var flow = el.querySelector("[data-ndm-wg-flow]");
@@ -146,6 +147,9 @@
       }
       if (window.NdmEmployerMessagesInit) {
         window.NdmEmployerMessagesInit();
+      }
+      if (window.NdmEmployerMessagesSyncLayout) {
+        window.NdmEmployerMessagesSyncLayout();
       }
     } else if (panel === "propose") {
       if (flow) flow.hidden = false;
@@ -190,6 +194,9 @@
         window.NdmEmployerOutcomeInit();
       }
     } else {
+      if (previousPanel === "messages" && window.NdmEmployerMessagesResetMobileList) {
+        window.NdmEmployerMessagesResetMobileList();
+      }
       if (flow) flow.hidden = false;
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = true;

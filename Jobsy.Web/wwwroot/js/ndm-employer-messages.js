@@ -291,6 +291,28 @@
       });
   }
 
+  function shouldForceMobileList(container) {
+    if (!container) {
+      return false;
+    }
+    try {
+      var params = new URL(window.location.href).searchParams;
+      if (params.get("thread")) {
+        return false;
+      }
+      if (params.get("panel") === "messages") {
+        return true;
+      }
+      if (container.getAttribute("data-ndm-messages-list-first") === "1") {
+        return true;
+      }
+      var page = container.closest("[data-ndm-employer-ssr]");
+      return !!(page && page.getAttribute("data-ndm-panel") === "messages");
+    } catch (_e) {
+      return false;
+    }
+  }
+
   function showMobileListOnly(container) {
     if (!container || !MOBILE.matches) {
       return;
@@ -314,14 +336,7 @@
       setThreadOpen(false);
       return;
     }
-    var params;
-    try {
-      params = new URL(window.location.href).searchParams;
-    } catch (_e) {
-      params = null;
-    }
-    var explicitThread = params && params.get("thread");
-    if (!explicitThread) {
+    if (shouldForceMobileList(container)) {
       showMobileListOnly(container);
       return;
     }
@@ -333,25 +348,25 @@
     showMobileListOnly(root());
   };
 
-  function init() {
-    var container = root();
-    if (!container) {
+  window.NdmEmployerMessagesSyncLayout = syncMobileLayout;
+
+  function bindPopstateOnce() {
+    if (window.__ndmEmployerMessagesPopstateBound) {
       return;
     }
-    if (container.getAttribute("data-ndm-employer-messages-bound") === "1") {
-      return;
-    }
-    container.setAttribute("data-ndm-employer-messages-bound", "1");
-
-    container.addEventListener("click", onThreadClick);
-    container.addEventListener("click", onQuickReply);
-    container.addEventListener("input", onComposeInput);
-    container.addEventListener("submit", onComposeSubmit);
-
+    window.__ndmEmployerMessagesPopstateBound = true;
     window.addEventListener("popstate", function () {
+      var container = root();
+      if (!container) {
+        return;
+      }
       try {
         var params = new URL(window.location.href).searchParams;
         var threadId = params.get("thread");
+        if (shouldForceMobileList(container)) {
+          showMobileListOnly(container);
+          return;
+        }
         if (!threadId) {
           var match = window.location.pathname.match(
             /\/werkgever\/sollicitaties\/([0-9a-f-]{36})\/after-match/i
@@ -365,11 +380,30 @@
         /* ignore */
       }
     });
+  }
 
-    if (typeof MOBILE.addEventListener === "function") {
-      MOBILE.addEventListener("change", syncMobileLayout);
-    } else if (typeof MOBILE.addListener === "function") {
-      MOBILE.addListener(syncMobileLayout);
+  function init() {
+    var container = root();
+    if (!container) {
+      return;
+    }
+    if (!messagesPanelVisible(container)) {
+      return;
+    }
+
+    var firstBind = container.getAttribute("data-ndm-employer-messages-bound") !== "1";
+    if (firstBind) {
+      container.setAttribute("data-ndm-employer-messages-bound", "1");
+      container.addEventListener("click", onThreadClick);
+      container.addEventListener("click", onQuickReply);
+      container.addEventListener("input", onComposeInput);
+      container.addEventListener("submit", onComposeSubmit);
+      bindPopstateOnce();
+      if (typeof MOBILE.addEventListener === "function") {
+        MOBILE.addEventListener("change", syncMobileLayout);
+      } else if (typeof MOBILE.addListener === "function") {
+        MOBILE.addListener(syncMobileLayout);
+      }
     }
 
     syncMobileLayout();
@@ -429,6 +463,9 @@
   function tryAutoInit() {
     var container = root();
     if (container && messagesPanelVisible(container)) {
+      if (shouldForceMobileList(container)) {
+        showMobileListOnly(container);
+      }
       init();
     }
   }

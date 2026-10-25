@@ -12,14 +12,21 @@ internal static class AfterMatchEmployerMessagesSsrShells
     internal static string BuildBody(
         CultureState culture,
         AfterMatchEmployerMessagesSsrData.PageData data,
-        Guid contextApplicationId)
+        Guid contextApplicationId,
+        bool showSelectedThreadPanel = true)
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"ndm ndm-wg ndm-wg-messages-page\" data-testid=\"ndm-werkgever-live\" data-ndm-view=\"messages\" data-ndm-employer-messages-ssr=\"1\" data-context-application-id=\"");
         sb.Append(contextApplicationId.ToString("D"));
         sb.Append("\" data-messages-base=\"");
         sb.Append(WebUtility.HtmlEncode(data.MessagesBasePath));
-        sb.Append("\" data-enhance-nav=\"false\"><div class=\"thr ndm-wg-messages-thr\" data-testid=\"ndm-employer-messages-hub\"><div class=\"tlist\">");
+        sb.Append("\" data-enhance-nav=\"false\"");
+        if (!showSelectedThreadPanel)
+        {
+            sb.Append(" data-ndm-messages-list-first=\"1\"");
+        }
+
+        sb.Append("><div class=\"thr ndm-wg-messages-thr\" data-testid=\"ndm-employer-messages-hub\"><div class=\"tlist\">");
 
         var avatarIndex = 0;
         foreach (var row in data.Threads)
@@ -33,7 +40,7 @@ internal static class AfterMatchEmployerMessagesSsrShells
         foreach (var row in data.Threads)
         {
             var appId = row.Thread.ApplicationId;
-            var active = appId == data.SelectedThreadId;
+            var active = showSelectedThreadPanel && appId == data.SelectedThreadId;
             sb.Append("<div class=\"tmain ndm-wg-messages-tmain\" data-ndm-thread-panel data-ndm-thread-id=\"");
             sb.Append(appId.ToString("D"));
             sb.Append('"');

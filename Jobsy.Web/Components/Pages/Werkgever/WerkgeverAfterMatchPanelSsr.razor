@@ -28,23 +28,23 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-fix1" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-fix3" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-fix3" defer></script>
     @if (_includeMessagesScript)
     {
-        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-acc-fix3" defer></script>
     }
     @if (_includeOutcomeScript)
     {
-        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-acc-fix3" defer></script>
     }
     @if (_includeCancelScript)
     {
-        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-fix3" defer></script>
     }
     @if (_includeRescheduleScript)
     {
-        <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+        <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-fix3" defer></script>
     }
 </HeadContent>
 
@@ -206,8 +206,9 @@ else if (_bodyHtml is not null)
                     _includeMessagesScript = true;
                     SetHero(Culture["AfterMatch.Screen11.Hero.Title"], Culture["AfterMatch.Screen11.Hero.Lead"]);
                     var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
-                    query.TryGetValue("thread", out var threadValues);
-                    Guid? threadId = Guid.TryParse(threadValues.FirstOrDefault(), out var parsedThread)
+                    var hasThreadQuery = query.ContainsKey("thread");
+                    Guid? threadId = hasThreadQuery
+                        && Guid.TryParse(query["thread"].FirstOrDefault(), out var parsedThread)
                         ? parsedThread
                         : ApplicationId;
                     var messagesOnly = await AfterMatchEmployerMessagesSsrData.LoadAsync(
@@ -222,7 +223,11 @@ else if (_bodyHtml is not null)
                         return;
                     }
 
-                    _bodyHtml = AfterMatchEmployerMessagesSsrShells.BuildBody(Culture, messagesOnly, ApplicationId);
+                    _bodyHtml = AfterMatchEmployerMessagesSsrShells.BuildBody(
+                        Culture,
+                        messagesOnly,
+                        ApplicationId,
+                        showSelectedThreadPanel: hasThreadQuery);
                     break;
 
                 default:
