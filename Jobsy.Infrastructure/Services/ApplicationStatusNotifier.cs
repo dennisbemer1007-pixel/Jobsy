@@ -17,19 +17,22 @@ public sealed partial class ApplicationStatusNotifier
     private readonly IPushNotificationService _push;
     private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
+    private readonly IStatusNotificationDispatchGate _dispatchGate;
 
     public ApplicationStatusNotifier(
         JobsyDbContext db,
         IUserNotificationService notifications,
         IPushNotificationService push,
         ITransactionalMailer mailer,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        IStatusNotificationDispatchGate dispatchGate)
     {
         _db = db;
         _notifications = notifications;
         _push = push;
         _mailer = mailer;
         _features = features;
+        _dispatchGate = dispatchGate;
     }
 
     public async Task NotifyCvViewedAsync(Application application, CancellationToken cancellationToken = default)
@@ -93,36 +96,66 @@ public sealed partial class ApplicationStatusNotifier
         ApplicationStatusNotificationTexts.Copy copy,
         string category,
         string deepLink,
-        ComposedEmail mail,
-        CancellationToken cancellationToken)
+        ComposedEmail? mail,
+        CancellationToken cancellationToken,
+        bool sendPush = true)
     {
         var absoluteLink = EmailLayout.Absolute(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
             deepLink);
 
-        await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
-        await _push.SendAsync(
-            new PushMessage(
-                application.CandidateEmail,
-                copy.Title,
-                copy.Body,
-                absoluteLink,
-                category),
-            cancellationToken);
-
         if (application.CandidateUserId is Guid userId)
         {
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    userId,
+            var decision = await _dispatchGate.EvaluateAsync(userId, category, cancellationToken);
+            if (decision.AllowMail && mail is not null)
+            {
+                await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
+            }
+
+            if (sendPush && decision.AllowPush)
+            {
+                await _push.SendAsync(
+                    new PushMessage(
+                        application.CandidateEmail,
+                        copy.Title,
+                        copy.Body,
+                        absoluteLink,
+                        category),
+                    cancellationToken);
+            }
+
+            if (decision.AllowBell)
+            {
+                await _notifications.CreateAsync(
+                    new NotificationCreateRequest(
+                        userId,
+                        copy.Title,
+                        copy.Body,
+                        category,
+                        deepLink,
+                        RelatedEntityType: "Application",
+                        RelatedEntityId: application.Id),
+                    cancellationToken);
+            }
+
+            return;
+        }
+
+        if (mail is not null)
+        {
+            await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
+        }
+
+        if (sendPush)
+        {
+            await _push.SendAsync(
+                new PushMessage(
+                    application.CandidateEmail,
                     copy.Title,
                     copy.Body,
-                    category,
-                    deepLink,
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
+                    absoluteLink,
+                    category),
                 cancellationToken);
-            return;
         }
 
         await _notifications.CreateForEmailAsync(

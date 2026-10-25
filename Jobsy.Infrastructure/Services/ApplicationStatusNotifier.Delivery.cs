@@ -52,6 +52,7 @@ public sealed partial class ApplicationStatusNotifier
 
         foreach (var contact in contacts)
         {
+            var decision = await _dispatchGate.EvaluateAsync(contact.Id, category, cancellationToken);
             var lang = perContactLanguage
                 ? ResolveLanguageFromPreferencesJson(contact.PreferencesJson)
                 : JobsyLanguages.Default;
@@ -60,28 +61,31 @@ public sealed partial class ApplicationStatusNotifier
                 ? mailTemplate
                 : BuildStatusAlertMail(baseUrl, application, effectiveCopy, deepLink, lang, contact.FullName);
 
-            if (mail is not null)
+            if (decision.AllowMail && mail is not null)
             {
                 await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
             }
 
-            if (sendPush)
+            if (sendPush && decision.AllowPush)
             {
                 await _push.SendAsync(
                     new PushMessage(contact.Email, effectiveCopy.Title, effectiveCopy.Body, absoluteLink, category),
                     cancellationToken);
             }
 
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    contact.Id,
-                    effectiveCopy.Title,
-                    effectiveCopy.Body,
-                    category,
-                    deepLink,
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
-                cancellationToken);
+            if (decision.AllowBell)
+            {
+                await _notifications.CreateAsync(
+                    new NotificationCreateRequest(
+                        contact.Id,
+                        effectiveCopy.Title,
+                        effectiveCopy.Body,
+                        category,
+                        deepLink,
+                        RelatedEntityType: "Application",
+                        RelatedEntityId: application.Id),
+                    cancellationToken);
+            }
         }
     }
 
@@ -93,6 +97,12 @@ public sealed partial class ApplicationStatusNotifier
         Guid applicationId,
         CancellationToken cancellationToken)
     {
+        var decision = await _dispatchGate.EvaluateAsync(userId, category, cancellationToken);
+        if (!decision.AllowBell)
+        {
+            return;
+        }
+
         await _notifications.CreateAsync(
             new NotificationCreateRequest(
                 userId,
