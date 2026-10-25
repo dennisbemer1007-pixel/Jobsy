@@ -71,7 +71,7 @@
     }
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
     {
-        <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
+        <LobsyCoach Compact="_isQuestionnairePage" HasBottomNav="_hasBottomNav" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" UiVariant="AssistantChatUiVariant.Warm" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }

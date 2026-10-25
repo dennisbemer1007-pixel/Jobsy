@@ -2148,6 +2148,28 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
         overflow: visible;
     }
 
+    .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
+        grid-template-rows: auto minmax(0, 1fr) !important;
+    }
+
+    .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery--lagen > .kb-mockup-top {
+        display: none !important;
+    }
+
+    .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane.panel {
+        grid-row: 1 !important;
+        margin-block-start: 14px;
+    }
+
+    .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery--lagen.show-map:not(.show-list) .map-pane.mapw {
+        grid-row: 2 !important;
+    }
+
+    .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery--lagen.show-list .vacancy-pane {
+        grid-row: 1 !important;
+        margin-block-start: 14px;
+    }
+
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map:not(.show-list) .vacancy-pane .list.vacancy-list {
         display: none !important;
     }

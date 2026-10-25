@@ -125,10 +125,9 @@
     inset-inline-end: 14px;
   }
 
-  .app-shell--candidate.has-bottom-nav:has(.passport-page--illustrated) .lobsy-coach-dock[data-ssr-coach],
-  .app-shell--candidate.has-bottom-nav:has(.passport-page) .lobsy-coach-dock[data-lobsy-coach],
-  .app-shell--candidate.has-bottom-nav:has(.passport-page) .lobsy-coach-dock[data-ssr-coach] {
-    bottom: calc(var(--bottom-nav-h, 64px) + 22px + env(safe-area-inset-bottom, 0px));
+  .lobsy-coach-dock.lobsy-coach-dock--has-nav[data-lobsy-coach],
+  .lobsy-coach-dock.lobsy-coach-dock--has-nav[data-ssr-coach] {
+    bottom: calc(var(--bottom-nav-h, 4.25rem) + 22px + env(safe-area-inset-bottom, 0px));
   }
 
   :root {
@@ -205,5 +204,14 @@
     flex: 1 1 auto;
     min-height: 0;
     max-height: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .lobsy-assistant__panel {
+    width: min(366px, calc(100vw - 1.5rem));
+    height: 396px;
+    min-height: 396px;
+    max-height: 396px;
   }
 }
