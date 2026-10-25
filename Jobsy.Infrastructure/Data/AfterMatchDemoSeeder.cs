@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Ops;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -107,7 +108,12 @@ internal static class AfterMatchDemoSeeder
             return CandidateId;
         }
 
-        foreach (var email in new[] { "kandidaat.denhaag@jobsy.local", "kandidaat@jobsy.local" })
+        foreach (var email in new[]
+                 {
+                     "kandidaat.denhaag@jobsy.local",
+                     "kandidaat@jobsy.local",
+                     TestAccountsSollicitatiesDemoSeeder.AcceptatiePrimaryCandidateEmail,
+                 })
         {
             var byEmail = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
             if (byEmail is not null)
