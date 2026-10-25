@@ -14,9 +14,16 @@ internal static class AfterMatchEmployerOutcomeSsrShells
         StringBuilder sb,
         CultureState culture,
         AfterMatchEmployerOutcomeSsrData.PageData data,
-        Guid applicationId)
+        Guid applicationId,
+        bool startVisible = false)
     {
-        sb.Append("<aside class=\"wc side pop stack\" data-ndm-outcome-panel hidden data-ndm-employer-outcome-ssr=\"1\" data-application-id=\"");
+        sb.Append("<aside class=\"wc side pop stack\" data-ndm-outcome-panel");
+        if (!startVisible)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append(" data-ndm-employer-outcome-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
         sb.Append("\"><p style=\"margin-bottom:12px\"><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
         sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
