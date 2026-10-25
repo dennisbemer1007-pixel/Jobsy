@@ -22,9 +22,12 @@ public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
             var match = AfterMatchBasePath().Match(path);
             if (match.Success)
             {
+                var prefix = match.Groups[1].Value;
                 var panel = AfterMatchPanelRouting.ResolvePanel(context.Request.Query);
-                var suffix = AfterMatchPanelRouting.PathSuffixForPanel(panel);
-                context.Request.Path = new PathString(match.Groups[1].Value + suffix);
+                var suffix = prefix.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+                    ? AfterMatchEmployerPanelRouting.PathSuffixForPanel(panel)
+                    : AfterMatchPanelRouting.PathSuffixForPanel(panel);
+                context.Request.Path = new PathString(prefix + suffix);
             }
         }
 
@@ -32,7 +35,7 @@ public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
     }
 
     [GeneratedRegex(
-        @"^(?<prefix>/candidate/applications/[0-9a-fA-F-]{36}/after-match)$",
+        @"^(?<prefix>/(?:candidate/applications|werkgever/sollicitaties)/[0-9a-fA-F-]{36}/after-match)$",
         RegexOptions.CultureInvariant)]
     private static partial Regex AfterMatchBasePath();
 }
