@@ -34,7 +34,8 @@ public sealed partial class ApplicationStatusNotifier
         ComposedEmail? mailTemplate,
         CancellationToken cancellationToken,
         bool perContactLanguage = false,
-        Func<string, ApplicationStatusNotificationTexts.Copy>? copyFactory = null)
+        Func<string, ApplicationStatusNotificationTexts.Copy>? copyFactory = null,
+        bool sendPush = true)
     {
         var companyId = application.Vacancy!.CompanyId;
         var contacts = await _db.Users.AsNoTracking()
@@ -64,9 +65,13 @@ public sealed partial class ApplicationStatusNotifier
                 await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
             }
 
-            await _push.SendAsync(
-                new PushMessage(contact.Email, effectiveCopy.Title, effectiveCopy.Body, absoluteLink, category),
-                cancellationToken);
+            if (sendPush)
+            {
+                await _push.SendAsync(
+                    new PushMessage(contact.Email, effectiveCopy.Title, effectiveCopy.Body, absoluteLink, category),
+                    cancellationToken);
+            }
+
             await _notifications.CreateAsync(
                 new NotificationCreateRequest(
                     contact.Id,
@@ -120,4 +125,10 @@ public sealed partial class ApplicationStatusNotifier
         var path = $"/werkgever/sollicitaties/{applicationId:D}/after-match";
         return string.IsNullOrWhiteSpace(panel) ? path : $"{path}?panel={Uri.EscapeDataString(panel)}";
     }
+
+    private static string CandidateApplicationsSelPath(Guid applicationId)
+        => $"/candidate/applications?tab=sollicitaties&sel={applicationId:D}";
+
+    private static string EmployerApplicationPath(Guid applicationId)
+        => $"/werkgever/sollicitaties/{applicationId:D}";
 }

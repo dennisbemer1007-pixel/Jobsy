@@ -1361,7 +1361,7 @@ public class ApplicationsController : ControllerBase
             .FirstOrDefaultAsync(v => v.Id == application.VacancyId, cancellationToken);
         if (vacancy is not null)
         {
-            await NotifyEmployersOfWithdrawalAsync(vacancy, application, cancellationToken);
+            await _statusNotifier.NotifyApplicationWithdrawnAsync(application, vacancy, cancellationToken);
         }
 
         return NoContent();
@@ -1943,44 +1943,6 @@ public class ApplicationsController : ControllerBase
                     subject,
                     body,
                     "EmployerNewApplication",
-                    "/branch/applicants",
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
-                cancellationToken);
-        }
-    }
-
-    private async Task NotifyEmployersOfWithdrawalAsync(
-        Core.Entities.Vacancy vacancy,
-        Core.Entities.Application application,
-        CancellationToken cancellationToken)
-    {
-        var contacts = await _db.Users
-            .AsNoTracking()
-            .Where(u =>
-                u.IsActive
-                && u.Role != UserRole.Candidate
-                && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
-            .Select(u => new { u.Id, u.Email })
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var subject = $"Sollicitatie ingetrokken: {vacancy.Title}";
-        var body = "Een kandidaat heeft de sollicitatie ingetrokken.";
-        var mail = TransactionalEmails.CandidateWithdrawn(
-            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title,
-            companyName: vacancy.Company.Name);
-        foreach (var contact in contacts)
-        {
-            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
-
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    contact.Id,
-                    subject,
-                    body,
-                    "CandidateWithdrawn",
                     "/branch/applicants",
                     RelatedEntityType: "Application",
                     RelatedEntityId: application.Id),
