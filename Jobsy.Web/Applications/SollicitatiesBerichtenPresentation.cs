@@ -69,13 +69,13 @@ internal static class SollicitatiesBerichtenPresentation
 
     internal static string FormatMessageWhen(CultureState culture, DateTime utc)
     {
-        var local = utc.ToLocalTime();
+        var local = AfterMatchMailSsrTime.ToAmsterdam(utc);
         return local.ToString("d MMM, HH:mm", ApplicationsSsrData.FormatCulture(culture));
     }
 
     internal static string FormatShortDate(CultureState culture, DateTime utc)
     {
-        var local = utc.ToLocalTime();
+        var local = AfterMatchMailSsrTime.ToAmsterdam(utc);
         return local.ToString("d MMM", ApplicationsSsrData.FormatCulture(culture));
     }
 
