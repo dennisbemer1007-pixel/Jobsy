@@ -99,6 +99,7 @@ public static class DependencyInjection
         services.AddScoped<IPlatformErrorLog, PlatformErrorLog>();
         services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
         services.AddScoped<IApplicationStatusRecorder, ApplicationStatusRecorder>();
+        services.AddScoped<ApplicationStatusNotifier>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ISupportAccessService, SupportAccessService>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();

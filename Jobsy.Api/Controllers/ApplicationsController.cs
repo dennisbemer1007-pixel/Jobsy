@@ -47,6 +47,7 @@ public class ApplicationsController : ControllerBase
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly ISupportAccessService _supportAccess;
     private readonly IApplicationStatusRecorder _statusRecorder;
+    private readonly ApplicationStatusNotifier _statusNotifier;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -63,7 +64,8 @@ public class ApplicationsController : ControllerBase
         IVacancyDiscoveryIndex discoveryIndex,
         IPersonalDataAccessLogger accessLog,
         ISupportAccessService supportAccess,
-        IApplicationStatusRecorder statusRecorder)
+        IApplicationStatusRecorder statusRecorder,
+        ApplicationStatusNotifier statusNotifier)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -80,6 +82,7 @@ public class ApplicationsController : ControllerBase
         _accessLog = accessLog;
         _supportAccess = supportAccess;
         _statusRecorder = statusRecorder;
+        _statusNotifier = statusNotifier;
     }
 
     [HttpGet]
@@ -1452,27 +1455,7 @@ public class ApplicationsController : ControllerBase
         }
         else
         {
-            var acceptSubject = $"Je sollicitatie is geaccepteerd: {application.Vacancy.Title}";
-            var acceptBody =
-                $"{application.Vacancy.Company.Name}: je sollicitatie is geaccepteerd.";
-            var acceptMail = TransactionalEmails.EmployerReactionAccepted(
-                baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
-            await _mailer.SendAsync(acceptMail, application.CandidateEmail, cancellationToken: cancellationToken);
-
-            await _push.SendAsync(new PushMessage(
-                application.CandidateEmail,
-                "Positief nieuws over je sollicitatie",
-                acceptBody,
-                appsLink,
-                "EmployerReaction"), cancellationToken);
-
-            await NotifyCandidateAsync(
-                application,
-                acceptSubject,
-                acceptBody,
-                "EmployerReaction",
-                "/candidate/applications",
-                cancellationToken);
+            await _statusNotifier.NotifyMutualYesAsync(application, cancellationToken);
         }
 
         return Ok(MapEmployerDto(application));
@@ -2111,10 +2094,24 @@ public class ApplicationsController : ControllerBase
             return;
         }
 
-        await _statusRecorder.TryRecordEmployerViewedAsync(
+        var recorded = await _statusRecorder.TryRecordEmployerViewedAsync(
             application.Id,
             actorUserId,
             nowUtc,
             cancellationToken);
+        if (!recorded)
+        {
+            return;
+        }
+
+        if (application.Vacancy is null)
+        {
+            application = await _db.Applications
+                .Include(a => a.Vacancy)
+                .ThenInclude(v => v.Company)
+                .FirstAsync(a => a.Id == application.Id, cancellationToken);
+        }
+
+        await _statusNotifier.NotifyCvViewedAsync(application, cancellationToken);
     }
 }
