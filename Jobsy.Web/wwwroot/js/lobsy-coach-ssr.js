@@ -152,9 +152,7 @@
       btn.type = "button";
       btn.className = "lobsy-assistant__action";
       btn.textContent = chip.label;
-      btn.addEventListener("click", function () {
-        sendMessage(chip.message);
-      });
+      btn.dataset.ssrChipMessage = chip.message;
       host.appendChild(btn);
     });
   }
@@ -274,9 +272,11 @@
       if (ev.key === "Escape" && state.open) setOpen(false);
     });
 
-    var form = document.querySelector("[data-ssr-assistant-form]");
-    if (form) {
-      form.addEventListener("submit", function (ev) {
+    document.addEventListener(
+      "submit",
+      function (ev) {
+        var form = ev.target;
+        if (!form || !form.matches || !form.matches("[data-ssr-assistant-form]")) return;
         ev.preventDefault();
         var input = document.getElementById("lobsy-assistant-input");
         if (!input) return;
@@ -284,8 +284,18 @@
         if (!text) return;
         input.value = "";
         sendMessage(text);
-      });
-    }
+      },
+      true
+    );
+
+    document.body.addEventListener("click", function (ev) {
+      var chip = ev.target.closest("[data-ssr-assistant-chips] .lobsy-assistant__action");
+      if (!chip || chip.disabled) return;
+      ev.preventDefault();
+      var msg = chip.dataset.ssrChipMessage || (chip.textContent || "").trim();
+      if (!msg) return;
+      sendMessage(msg);
+    });
 
     syncClearance();
     window.addEventListener("resize", syncClearance);

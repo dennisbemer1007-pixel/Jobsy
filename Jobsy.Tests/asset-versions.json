@@ -35,37 +35,37 @@
     "sha256": "9d51d0b07d46beda10cc34bde1baae6e177220c6be61df3ac6244eb116017766",
     "v": "20261024-apps720-scope3"
   },
-  "css/features/sollicitaties-page.css": {
-    "sha256": "2a2c25c4d01193ae2808aa01bf50fb57454c69c604f7e086a5ae8733b83c3bc9",
-    "v": "20261025-sollic-mob90-gz"
-  },
-  "js/sollicitaties-actions.js": {
-    "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",
-    "v": "20261024-mockup01-acc5"
-  },
-  "js/sollicitaties-berichten.js": {
-    "sha256": "dc2440ea41543be9819957d9b6e122891997fad949222a025877388896c8087e",
-    "v": "20261025-mark-read-bff2"
-  },
-  "js/sollicitaties-filter-chips.js": {
-    "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
-    "v": "20261024-mockup01-acc5"
-  },
-  "js/sollicitaties-rail.js": {
-    "sha256": "5eca56d0159de05451acb13268e361ec9d18fdf78e3290bc447b8c984af3b47d",
-    "v": "20261024-mockup01-acc5"
-  },
   "css/features/auth.css": {
     "sha256": "02384861b1eb4bccf28df6969d0559f18af7bca2a6b6af489c0fc0ea2835cdc7",
     "v": "20261018-01"
   },
+  "css/features/banenkaart-auth-chrome.css": {
+    "v": "20261025-kreeft9",
+    "sha256": "6c8439e448d0e1ec0cf896250f280bca3755bc6b954ea88a69e9c12e613ee54f"
+  },
+  "css/features/banenkaart-illustrated.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
+  },
+  "css/features/banenkaart-lagen.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "1a9fd99dcb0e5bf933dbced87154b849658ec3110b3b2833a9893fa298b58db9"
+  },
+  "css/features/banenkaart-page.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "8b962163e1caf0d3e9bb432e3127a2b60fb6d629c03b99efcd623d23edf5947d"
+  },
   "css/features/banenkaart.css": {
-    "v": "20261023-21",
+    "v": "20261025-kreeft12",
     "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
   },
   "css/features/bedrijvenkaart.css": {
     "sha256": "7ffdb5503fe02cd7ce703cdd3f7c9b2ae55c0ae91f1d61adfedc3e2ddcd7271c",
     "v": "20261019-09"
+  },
+  "css/features/candidate-header-strip.css": {
+    "v": "20261025-kreeft13",
+    "sha256": "772c26b9860f8a3a4ca3ce6291fd230325d19e845fc7760dba62618e3d5e7c60"
   },
   "css/features/candidate-hero-compact-preview.css": {
     "sha256": "480e1e883f5ce9202353dd3b0043b79aa0351aa43a260ffaf4cf0a3c61a556d8",
@@ -82,6 +82,10 @@
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
     "v": "20261018-02"
+  },
+  "css/features/candidate-no-blazor-chrome.css": {
+    "v": "20261025-kreeft8",
+    "sha256": "a16cea6f64ddf3dd4da4eb2c17fb74aa2e9616d0a1860b657dd27f7398fb76ee"
   },
   "css/features/carriere.css": {
     "sha256": "4763da056911303c965424e922ca17737655acb43ae58e5f310a21d4024cddd1",
@@ -100,8 +104,8 @@
     "v": "20261004-10"
   },
   "css/features/errors.css": {
-    "sha256": "f7747fb354a7ef7b211fb82aa974237d1f9a6268d850faac4c214b527e29d004",
-    "v": "20261004-10"
+    "sha256": "f05b72a2b3cdadf183afb863c32141583181c49d2c693aa500270062f4cf33eb",
+    "v": "20261025-kreeft14"
   },
   "css/features/form-fields.css": {
     "sha256": "dee90194df3ce52e43bc9c9bd5c9aca798d30e6cbc498f217b7355e5d5ac75d1",
@@ -124,7 +128,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "v": "20261024-listtoggle2",
+    "v": "20261025-kreeft12",
     "sha256": "e2f5c139b319849f604ec0265d1c18e299212b5a6c8e441925da17a7fe68ab78"
   },
   "css/features/kandidaatinzichten.css": {
@@ -135,9 +139,21 @@
     "sha256": "7831996af5de14d7471ee4653c5410bf1704822dbf2d9a878c3c8b683391ce36",
     "v": "20261011-03"
   },
+  "css/features/kreeft-reiskaart.css": {
+    "v": "20261025-kreeft14",
+    "sha256": "13d07db838af1735804ebd2a3a2f5f4017dbcdb02fe215b22d762f6d9ef2edc7"
+  },
   "css/features/landing.css": {
     "sha256": "ded9a240e72c6957942276ba6b110e53c0cd6bcb481942285ea8fa5d6ea4cb1d",
     "v": "20261018-01"
+  },
+  "css/features/lobsy-assistant-panel.css": {
+    "v": "20261025-kreeft14",
+    "sha256": "c4d02afee9c3de6750b804416d46f359eebb3b79f08da7102762ffaca3f3a5cf"
+  },
+  "css/features/lobsy-coach-pill.css": {
+    "v": "20261025-kreeft13",
+    "sha256": "8a48bb649cc3da87e72ae358f790449e5694f16270f5772d8164133975ca8ace"
   },
   "css/features/match-desktop.css": {
     "sha256": "bf9760ca115f0730a129fcae7aaf97c78ff1ec780b316f29d700ec7b05a26fc0",
@@ -171,9 +187,17 @@
     "sha256": "3dd725e6f8d1efd345f1dc738fee6ec689ec2c53f233ae92b99c6c579c3d0fba",
     "v": "20261019-r24"
   },
+  "css/features/onboarding-kreeft-mockup.css": {
+    "v": "20261025-kreeft11",
+    "sha256": "c118af817e65f27409d6144462022bc7dc8890afb16bc8e95e0efaeeb8a2a301"
+  },
   "css/features/onboarding-rustig.css": {
     "sha256": "7548dcb7725c386a15cffa800710b005d9b31289f80c63b5fed5d549a0e51769",
-    "v": "20261020-21"
+    "v": "20261022-step2opslaan44"
+  },
+  "css/features/onboarding-start-strand.css": {
+    "v": "20261025-kreeft8",
+    "sha256": "adb249b1c866b1e5e0f5f7264fd487f2f3f91c1eaaf210609754210863a65968"
   },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
@@ -243,6 +267,10 @@
     "sha256": "2bef7a071ba7c93834490b922d243cd8b5c84db67293bdba244cc856ca3806bd",
     "v": "20261017-02"
   },
+  "css/features/sollicitaties-page.css": {
+    "sha256": "2a2c25c4d01193ae2808aa01bf50fb57454c69c604f7e086a5ae8733b83c3bc9",
+    "v": "20261025-sollic-mob90-gz"
+  },
   "css/features/stijl-a.css": {
     "sha256": "9e388948163ff96b032e049d010daa40980593cb6c7f50445048e88da915eec9",
     "v": "20261018-03"
@@ -299,6 +327,22 @@
     "sha256": "64ec8e13b6a48873f2295e5161ec884cc861dc5cc19ccdac5006a75fb4e224c7",
     "v": "20261016-04"
   },
+  "js/banenkaart-catalog.js": {
+    "v": "20261025-matchsort1",
+    "sha256": "a2e408bd958781c21263fca6f640316098f9953ed7bc62e862e2ca49c84d07a8"
+  },
+  "js/banenkaart-maps-boot.js": {
+    "v": "20261024-mobilewagetip11",
+    "sha256": "42e4646c963b399f64f3f62314ec20605dde9345aa9a8de12be867c582fa3a42"
+  },
+  "js/banenkaart-prefetch.js": {
+    "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
+    "v": "20261023-19"
+  },
+  "js/banenkaart-ssr.js": {
+    "v": "20261024-desktopsplit1",
+    "sha256": "a63c213367a54dcc099de8d7d798d82a21394fcaa0a08f2d1ab5e3cdef2213ad"
+  },
   "js/blazor-boot.js": {
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
     "v": "20261021-15"
@@ -331,6 +375,10 @@
     "v": "20261024-mobilewagetip11",
     "sha256": "186f82175163fd4610db1f6302ed15c2022cd1503ea51083f80f8f84f5a2cb68"
   },
+  "js/jobsy-basemap-warm.js": {
+    "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
+    "v": "20261023-19"
+  },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
     "v": "20261023-lagen-compact1"
@@ -342,6 +390,10 @@
   "js/leerling-login.js": {
     "sha256": "25521f1a69b2f38a757d8670e8d3f28befe0458b7a2ce2761f3a5d969eaec2d8",
     "v": "20261004-13"
+  },
+  "js/lobsy-coach-ssr.js": {
+    "v": "20261025-kreeft14",
+    "sha256": "edbb6dbcd357aa2c8de086836cbe31fa714fd675364245ef4195e905c03c8650"
   },
   "js/lobsyPush.js": {
     "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",
@@ -358,6 +410,22 @@
   "js/read-aloud.js": {
     "sha256": "48461623f48be4c5c47b4896ff7ccd38c1cc86f4a7e11922344f3941ce663044",
     "v": "20261015-01"
+  },
+  "js/sollicitaties-actions.js": {
+    "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",
+    "v": "20261024-mockup01-acc5"
+  },
+  "js/sollicitaties-berichten.js": {
+    "sha256": "dc2440ea41543be9819957d9b6e122891997fad949222a025877388896c8087e",
+    "v": "20261025-mark-read-bff2"
+  },
+  "js/sollicitaties-filter-chips.js": {
+    "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
+    "v": "20261024-mockup01-acc5"
+  },
+  "js/sollicitaties-rail.js": {
+    "sha256": "5eca56d0159de05451acb13268e361ec9d18fdf78e3290bc447b8c984af3b47d",
+    "v": "20261024-mockup01-acc5"
   },
   "js/vacancy-wizard.js": {
     "sha256": "e267d43b5e51a3a8972358357471c74fe7bf2ccf7ee4d1bed91f16a6c362f19d",
@@ -378,73 +446,5 @@
   "service-worker.published.js": {
     "sha256": "7e226ca33f4061e1bae6f88a032710597405c8217bab7c64275b561a7bcdb3e0",
     "v": "20261024-acc10"
-  },
-  "css/features/banenkaart-page.css": {
-    "v": "20261024-desktopsplit1",
-    "sha256": "48370ab9c3f817eeeeaccdaca5443088c10128a3b882fd48632aa72d1b72da1c"
-  },
-  "css/features/banenkaart-illustrated.css": {
-    "v": "20261023-21",
-    "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
-  },
-  "js/banenkaart-catalog.js": {
-    "v": "20261025-matchsort1",
-    "sha256": "a2e408bd958781c21263fca6f640316098f9953ed7bc62e862e2ca49c84d07a8"
-  },
-  "js/banenkaart-ssr.js": {
-    "v": "20261024-desktopsplit1",
-    "sha256": "a63c213367a54dcc099de8d7d798d82a21394fcaa0a08f2d1ab5e3cdef2213ad"
-  },
-  "js/banenkaart-prefetch.js": {
-    "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
-    "v": "20261023-19"
-  },
-  "js/jobsy-basemap-warm.js": {
-    "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
-    "v": "20261023-19"
-  },
-  "js/banenkaart-maps-boot.js": {
-    "v": "20261024-mobilewagetip11",
-    "sha256": "42e4646c963b399f64f3f62314ec20605dde9345aa9a8de12be867c582fa3a42"
-  },
-  "css/features/banenkaart-lagen.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "1a9fd99dcb0e5bf933dbced87154b849658ec3110b3b2833a9893fa298b58db9"
-  },
-  "css/features/kreeft-reiskaart.css": {
-    "v": "20261025-kreeft13",
-    "sha256": "a4e8cf3182195b1f888425071e4ee65a902ff06362a754cb2d860368a922bda6"
-  },
-  "css/features/candidate-header-strip.css": {
-    "v": "20261025-kreeft13",
-    "sha256": "772c26b9860f8a3a4ca3ce6291fd230325d19e845fc7760dba62618e3d5e7c60"
-  },
-  "css/features/lobsy-coach-pill.css": {
-    "v": "20261025-kreeft13",
-    "sha256": "8a48bb649cc3da87e72ae358f790449e5694f16270f5772d8164133975ca8ace"
-  },
-  "css/features/lobsy-assistant-panel.css": {
-    "v": "20261025-kreeft13",
-    "sha256": "1e8509b4aa994987ace96c75fbb166488b659b23efd74a989fc586e228e7b63d"
-  },
-  "js/lobsy-coach-ssr.js": {
-    "v": "20261025-kreeft13",
-    "sha256": "c1fb2b019051faa6380db9be7f6feea3964a7890cdee5919c17e14930937aadd"
-  },
-  "css/features/banenkaart-page.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "8b962163e1caf0d3e9bb432e3127a2b60fb6d629c03b99efcd623d23edf5947d"
-  },
-  "css/features/banenkaart-illustrated.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
-  },
-  "css/features/banenkaart.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
-  },
-  "css/features/kandidaat-banen.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "e2f5c139b319849f604ec0265d1c18e299212b5a6c8e441925da17a7fe68ab78"
   }
 }

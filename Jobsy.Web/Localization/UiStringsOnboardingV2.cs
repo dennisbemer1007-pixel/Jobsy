@@ -381,8 +381,8 @@ internal static class UiStringsOnboardingV2
             : " · Jouw Kompas · onboarding en tests afgerond";
         map["Kompas.Ssr.HubTitle"] = english ? "Your Compass" : "Jouw Kompas";
         map["Kompas.Ssr.HubLead"] = english
-            ? "No scores, just words that fit you."
-            : "Geen cijfers, wel woorden die bij je passen.";
+            ? "What your four tests show together. No scores, just words that fit you."
+            : "Wat je vier tests samen laten zien. Geen cijfers, wel woorden die bij je passen.";
         map["Kompas.Ssr.Lead"] = english
             ? "Open your profile for the full Compass experience, or go straight to your passport."
             : "Open je profiel voor het volledige Kompas, of ga direct naar je paspoort.";

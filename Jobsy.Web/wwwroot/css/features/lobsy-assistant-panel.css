@@ -290,4 +290,11 @@
     bottom: auto;
     align-items: flex-end;
   }
+
+  .lobsy-assistant__panel,
+  #lobsy-assistant-ssr-shell .lobsy-assistant__panel {
+    height: 396px;
+    min-height: 396px;
+    max-height: 396px;
+  }
 }

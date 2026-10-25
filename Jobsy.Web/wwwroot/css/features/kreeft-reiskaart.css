@@ -215,7 +215,8 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) min(280px, 30vw);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 20px;
+    row-gap: 0;
+    column-gap: 20px;
     align-items: start;
   }
 
@@ -232,13 +233,14 @@
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
+    margin-block-end: 0;
   }
 
   .kompas--ssr-hub > .kompas-tabs {
     grid-column: 1;
     grid-row: 2;
     min-width: 0;
-    margin-block-start: 0.75rem;
+    margin-block-start: 12px;
   }
 
   .kompas--ssr-hub > .kompas-hub-layout {
