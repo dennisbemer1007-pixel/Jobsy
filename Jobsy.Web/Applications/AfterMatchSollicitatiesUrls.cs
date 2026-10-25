@@ -1,3 +1,4 @@
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 
 namespace Jobsy.Web.Applications;
@@ -28,11 +29,27 @@ internal static class AfterMatchSollicitatiesUrls
         return AppendReturn(url, returnUrl);
     }
 
-    internal static string ViewApplicationSsr(Guid applicationId, InterviewStatus status, string? returnUrl = null)
+    internal static string ViewApplicationFromMessages(Guid applicationId, AfterMatchThreadDto thread)
     {
-        return status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
-            ? PickSlot(applicationId, returnUrl)
-            : AfterMatchBase(applicationId, returnUrl);
+        var returnUrl = Messages(applicationId);
+        var openSlots = thread.OpenSlots?.Count ?? 0;
+        if (thread.InterviewStatus is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+            && openSlots > 0)
+        {
+            return PickSlot(applicationId, returnUrl);
+        }
+
+        if (thread.InterviewStatus == InterviewStatus.Scheduled)
+        {
+            return AfterMatchBase(applicationId, returnUrl);
+        }
+
+        var detail = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabSollicitaties,
+            ApplicationsSsrQuery.FilterAll,
+            applicationId,
+            null);
+        return AppendReturn(detail, returnUrl);
     }
 
     internal static string Reschedule(Guid applicationId, string? returnUrl = null)

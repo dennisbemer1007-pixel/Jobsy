@@ -104,7 +104,7 @@ internal static class AfterMatchMessagesSsrShells
             }
 
             sb.Append('>');
-            AppendThreadMain(sb, culture, data, row, appId, thread);
+            AppendThreadMain(sb, culture, row, appId, thread);
             sb.Append("</div>");
         }
 
@@ -188,7 +188,6 @@ internal static class AfterMatchMessagesSsrShells
     private static void AppendThreadMain(
         StringBuilder sb,
         CultureState culture,
-        AfterMatchMessagesSsrData.PageData data,
         SollicitationRow row,
         Guid appId,
         AfterMatchThreadDto thread)
@@ -204,7 +203,7 @@ internal static class AfterMatchMessagesSsrShells
         sb.Append(WebUtility.HtmlEncode(FormatThreadHeadSubtitle(culture, row, thread)));
         sb.Append("</div></div><a class=\"lk small hide-m ndm-messages-view-app\" href=\"");
         sb.Append(WebUtility.HtmlEncode(
-            AfterMatchSollicitatiesUrls.ViewApplicationSsr(appId, thread.InterviewStatus, data.BackHref)));
+            AfterMatchSollicitatiesUrls.ViewApplicationFromMessages(appId, thread)));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Berichten.ViewApplication"]));
         sb.Append("</a></div><div class=\"thread\">");

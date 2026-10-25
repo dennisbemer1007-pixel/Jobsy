@@ -35,13 +35,13 @@
 {
     <PageContentSkeleton Variant="apps" CardCount="2" LoadingLabel="@Culture["Common.Loading"]" />
 }
-else if (!string.IsNullOrWhiteSpace(_fatalMessage))
-{
-    <p class="state-message">@_fatalMessage</p>
-}
 else if (_bodyHtml is not null)
 {
     @((MarkupString)_bodyHtml)
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
 }
 
 @code {
@@ -74,7 +74,11 @@ else if (_bodyHtml is not null)
 
             if (data is null)
             {
-                _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                _bodyHtml = AfterMatchSsrErrorShells.BuildInterviewNotFound(
+                    Culture,
+                    returnUrl,
+                    "AfterMatch.Screen04.PageTitle",
+                    "AfterMatch.Link.BackPickSlot");
                 return;
             }
 

@@ -7,6 +7,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Navigation;
 using Jobsy.Web.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
@@ -32,8 +33,8 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchMessagesSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-messages.js?v=20261027-ndm-messages2", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261027-ndm-messages2", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-messages.js?v=20261027-ndm-messages3", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261027-ndm-messages3", razor, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -43,6 +44,51 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             FindRepoRoot(),
             "Jobsy.Web/Middleware/AfterMatchPickSlotRouteRewriteMiddleware.cs"));
         Assert.Contains("AfterMatchPanelRouting", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void View_application_from_messages_without_slots_goes_to_sollicitaties_detail()
+    {
+        var appId = Guid.Parse("b0000001-0000-4000-8000-000000000036");
+        var thread = new AfterMatchThreadDto(
+            appId,
+            Guid.NewGuid(),
+            InterviewStatus.Proposing,
+            AfterMatchContactShareState.From(InterviewStatus.Proposing, null),
+            null,
+            "Medewerker",
+            "Testbedrijf Grijs (test)",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            null,
+            null,
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "",
+            null,
+            null);
+        var href = AfterMatchSollicitatiesUrls.ViewApplicationFromMessages(appId, thread);
+        Assert.Contains($"/candidate/applications?sel={appId:D}", href, StringComparison.Ordinal);
+        Assert.Contains("return=", href, StringComparison.Ordinal);
+        Assert.Contains("panel%3Dmessages", href, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Applications_nav_active_on_after_match_subpaths()
+    {
+        var flags = FeatureFlagSnapshot.Defaults with { EmployersEnabled = true };
+        var items = RoleNavCatalog.CandidateItems(flags);
+        var apps = items.First(i => i.TitleKey == "Nav.Applications");
+        Assert.True(RoleNavCatalog.IsActive(
+            apps,
+            "candidate/applications/b0000001-0000-4000-8000-000000000035/after-match/messages-ssr",
+            items));
     }
 
     [Fact]

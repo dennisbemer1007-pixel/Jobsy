@@ -171,7 +171,11 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-messages-page .intro h1{font-size:2rem}
 .ndm.ndm-messages-page .intro p{color:#3d4e63;margin-top:6px;font-size:1rem;max-width:680px}
 .ndm.ndm-messages-page .ndm-messages-thr .ti{padding:14px 16px;text-decoration:none;color:inherit}
+.ndm.ndm-messages-page .ndm-messages-thr .tlist{background:#fbf6ef}
 .ndm.ndm-messages-page .ndm-messages-thr .ti.on{background:#fff}
+.ndm.ndm-ssr-error-page .intro{margin:2px 0 20px}
+.ndm.ndm-ssr-error-page .intro .bc{font-size:.85rem;color:var(--muted);margin-bottom:8px}
+.ndm.ndm-ssr-error-page .intro h1{font-size:2rem}
 .ndm.ndm-messages-page .ndm-messages-thr .ti p{font-size:.82rem;color:var(--muted);margin:0}
 .ndm.ndm-messages-page .ndm-messages-thr .ti b{font-size:.92rem;color:var(--brand)}
 .ndm.ndm-messages-page .ndm-messages-tmain{padding:18px 20px}
