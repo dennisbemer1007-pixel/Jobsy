@@ -9,7 +9,8 @@
 @if (!Embedded)
 {
     <HeadContent>
-        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft6" />
+        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft7" />
+        <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft7" />
     </HeadContent>
 }
 
@@ -21,19 +22,21 @@
 
 <section class="err-hero @(Embedded ? "err-embed pub-theme" : null)" data-testid="not-found-view">
     <div class="err-hero__text">
-        <p class="pub-chip err-code">@Culture["Status.NotFound.CodeLabel"]</p>
+        <p class="err-eyebrow">@Culture["Status.NotFound.CodeLabel"]</p>
         <h1 class="err-hero__title">@Culture["Status.NotFound.Title"]</h1>
         <p class="err-hero__lead">@Culture["Status.NotFound.Lead"]</p>
+
+        <div class="err-kcoach" role="note">
+            <div>
+                <b>@Culture["Status.NotFound.GoodToKnow"]</b>
+                @Culture["Status.NotFound.GoodToKnowBody"]
+            </div>
+        </div>
 
         <div class="err-actions">
             <a class="pub-btn pub-btn--primary" href="@_myLobsyHref">@Culture["Status.NotFound.ToMyLobsy"]</a>
             <a class="pub-btn pub-btn--secondary" href="@_journeyHref">@Culture["Status.NotFound.ToJourney"]</a>
         </div>
-
-        <aside class="err-aside" aria-label="@Culture["Status.NotFound.GoodToKnow"]">
-            <p class="err-aside__title">@Culture["Status.NotFound.GoodToKnow"]</p>
-            <p class="err-aside__body">@Culture["Status.NotFound.GoodToKnowBody"]</p>
-        </aside>
 
         @if (!Embedded)
         {

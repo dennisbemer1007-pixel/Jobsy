@@ -196,6 +196,42 @@ a {
 
 .app-header .auth-user__name {
     color: var(--brand);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 11rem;
+}
+
+.app-header .account-menu__av {
+    display: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    place-items: center;
+    flex: none;
+}
+
+@media (max-width: 900px) {
+    .app-shell--candidate .account-menu__toggle .auth-user {
+        display: none;
+    }
+
+    .app-shell--candidate .account-menu__toggle .account-menu__av {
+        display: grid;
+    }
+
+    .app-shell--candidate .account-menu__toggle .account-menu__icon {
+        display: none;
+    }
+
+    .app-header {
+        min-height: 55px;
+        padding-block: 10px;
+    }
 }
 
 .app-header .auth-user__role {

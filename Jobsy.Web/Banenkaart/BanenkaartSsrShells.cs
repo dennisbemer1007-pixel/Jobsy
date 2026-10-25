@@ -24,6 +24,10 @@ internal static class BanenkaartSsrShells
         AppendNearbyHeroStrip(sb);
         sb.Append("</div>");
         sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen").Append(viewModeClass).Append(viewDataAttr);
+        if (model.IsAuthenticated)
+        {
+            sb.Append(" data-kb-strip-external=\"1\"");
+        }
         if (!string.IsNullOrWhiteSpace(q.Error))
         {
             sb.Append(" kb-ssr-has-error");

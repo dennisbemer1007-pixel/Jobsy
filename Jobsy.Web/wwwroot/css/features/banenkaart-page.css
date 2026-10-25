@@ -505,6 +505,32 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
     border-radius: 0;
 }
 
+.kb-banenkaart-ssr-chrome + .jobsy-discovery[data-kb-strip-external="1"] {
+    margin-block-start: 0;
+}
+
+.app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-strip-external="1"] {
+    grid-template-rows: auto minmax(0, 1fr) !important;
+}
+
+@media (min-width: 1024px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-strip-external="1"] {
+        grid-template-columns: minmax(320px, 42%) minmax(0, 58%);
+        grid-template-rows: auto minmax(0, 1fr) !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-strip-external="1"] > .main.kb-lagen-main {
+        grid-row: 1 / -1;
+        display: contents;
+    }
+}
+
+@media (max-width: 1023px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-kb-strip-external="1"] {
+        grid-template-rows: auto minmax(0, 1fr) !important;
+    }
+}
+
 .app-shell--banenkaart-shell .app-main,
 .app-shell--banenkaart-shell .app-main__content {
     flex: 1 1 auto;
