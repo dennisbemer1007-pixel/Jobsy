@@ -51,7 +51,8 @@ else if (_part == Part.Bottom && !string.IsNullOrEmpty(_bottomHtml))
             return;
         }
 
-        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = http.Request.Path.Value ?? "/";
+        var relative = path.TrimStart('/');
         _headerHtml = CandidateNavSsrShell.BuildHeaderNav(Culture, items, relative);
         _bottomHtml = CandidateNavSsrShell.BuildBottomNav(Culture, items, relative);
     }
