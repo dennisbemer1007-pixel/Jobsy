@@ -268,7 +268,6 @@
 
   function boot() {
     if (!document.querySelector("[data-ssr-coach]")) return;
-    ensurePanel();
     bind();
   }
 

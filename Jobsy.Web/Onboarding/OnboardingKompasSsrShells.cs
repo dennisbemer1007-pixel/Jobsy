@@ -72,11 +72,16 @@ internal static class OnboardingKompasSsrShells
         AppendTabLink(sb, culture["Kompas.TabFit"], hubPath + "#kompas-directions", samePageAnchor: true);
         sb.Append("</nav>");
 
+        sb.Append("<div class=\"kompas-hub-layout kompas-hub-layout--reiskaart\">");
+        sb.Append("<div class=\"kompas-hub-layout__reiskaart\">");
+        KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(15));
+        sb.Append("</div><div class=\"kompas-hub-layout__main\">");
         sb.Append("<div class=\"ob-rustig__canvas ob-rustig__kompas kompas--ssr-body\">");
         sb.Append("<section class=\"ob-finale ob-finale--no-hero ob-finale--hub\" data-testid=\"onboarding-finale-v2\">");
         sb.Append("<div class=\"ob-finale__wrap\">");
         AppendKompasContent(sb, culture, model.Impression, model.MatchCount, model.MaxTravelMinutes, model.HomeLabel, model.CardsInput, includeFullTestsSection: true);
         sb.Append("</div></section></div>");
+        sb.Append("</div></div>");
 
         sb.Append("<div class=\"kompas__ssr-actions\">");
         var openProfileUrl = model.PassportEnabled ? model.PassportUrl : model.ProfileUrl;
