@@ -181,8 +181,23 @@
     }, 250);
   }
 
+  function messagesPanelVisible(container) {
+    if (!container) {
+      return false;
+    }
+    if (container.getAttribute("data-ndm-view") === "messages") {
+      return true;
+    }
+    var wrap = container.closest("[data-ndm-messages-panel]");
+    return !wrap || !wrap.hidden;
+  }
+
   function markThreadRead(threadId) {
     if (!threadId) {
+      return;
+    }
+    var container = root();
+    if (container && !messagesPanelVisible(container)) {
       return;
     }
     markThreadReadAcked(threadId);
@@ -375,9 +390,16 @@
   window.NdmEmployerMessagesInit = init;
   bindEnhancedNavRecovery();
 
+  function tryAutoInit() {
+    var container = root();
+    if (container && messagesPanelVisible(container)) {
+      init();
+    }
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", tryAutoInit);
   } else {
-    init();
+    tryAutoInit();
   }
 })();

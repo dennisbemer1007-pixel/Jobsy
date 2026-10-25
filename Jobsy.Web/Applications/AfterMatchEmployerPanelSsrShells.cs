@@ -20,7 +20,8 @@ internal static class AfterMatchEmployerPanelSsrShells
         string InitialWithWhom,
         string InitialNote,
         string InitialPanel,
-        AfterMatchEmployerMessagesSsrData.PageData? MessagesHub);
+        AfterMatchEmployerMessagesSsrData.PageData? MessagesHub,
+        AfterMatchEmployerOutcomeSsrData.PageData? OutcomeOverlay = null);
 
     internal static string BuildBody(
         CultureState culture,
@@ -61,6 +62,11 @@ internal static class AfterMatchEmployerPanelSsrShells
         AppendMainCard(sb, culture, data, panel, showProposeAction);
         AppendShareAside(sb, culture, data.Thread);
         AppendProposePanel(sb, culture, data);
+        if (data.OutcomeOverlay is not null)
+        {
+            AfterMatchEmployerOutcomeSsrShells.AppendInlinePanel(sb, culture, data.OutcomeOverlay, applicationId);
+        }
+
         sb.Append("</div></div>");
 
         if (data.MessagesHub is not null)
@@ -105,9 +111,9 @@ internal static class AfterMatchEmployerPanelSsrShells
         var thread = data.Thread;
         var scheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
         sb.Append("<div class=\"wc stack ndm-wg-main\" data-ndm-wg-main><div class=\"row\"><span class=\"av w\" style=\"width:46px;height:46px\">");
-        sb.Append(WebUtility.HtmlEncode(CandidateInitials(thread.CandidateName)));
+        sb.Append(WebUtility.HtmlEncode(AfterMatchEmployerEmployerPresentation.CandidateInitials(thread)));
         sb.Append("</span><div><h3 style=\"font-size:1.25rem\">");
-        sb.Append(WebUtility.HtmlEncode(thread.CandidateName));
+        sb.Append(WebUtility.HtmlEncode(AfterMatchEmployerEmployerPresentation.CandidateDisplayName(thread)));
         sb.Append("</h3><p class=\"small muted\">");
         sb.Append(WebUtility.HtmlEncode(CandidateSubtitle(culture, thread)));
         sb.Append("</p></div></div><div class=\"hr\"></div>");
@@ -154,11 +160,9 @@ internal static class AfterMatchEmployerPanelSsrShells
             }
             else if (scheduled)
             {
-                sb.Append("<a class=\"btn\" href=\"");
-                sb.Append(WebUtility.HtmlEncode($"/werkgever/sollicitaties/{thread.ApplicationId:D}/after-match?panel=outcome"));
-                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append("<button type=\"button\" class=\"btn\" data-ndm-open-panel=\"outcome\">");
                 sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.OutcomeAction"]));
-                sb.Append("</a>");
+                sb.Append("</button>");
             }
 
             sb.Append("<button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"messages\">");
@@ -426,12 +430,15 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
         sb.Append("<small>");
+        var slotsSent = isProposing && thread.OpenSlots.Count > 0;
         sb.Append(WebUtility.HtmlEncode(
             isScheduled
                 ? (interviewDate ?? yesDate ?? "")
-                : isProposing
-                    ? culture["AfterMatch.Timeline.PlanNow"]
-                    : culture["AfterMatch.Timeline.PlanNow"]));
+                : slotsSent
+                    ? culture["AfterMatch.Timeline.PlanWaiting"]
+                    : isProposing
+                        ? culture["AfterMatch.Timeline.PlanNow"]
+                        : culture["AfterMatch.Timeline.PlanNow"]));
         sb.Append("</small></div><div class=\"s");
         if (isScheduled)
         {
@@ -489,11 +496,4 @@ internal static class AfterMatchEmployerPanelSsrShells
                 .Where(s => !string.IsNullOrWhiteSpace(s)));
     }
 
-    private static string CandidateInitials(string candidateName)
-    {
-        var parts = candidateName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length >= 2
-            ? $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
-            : candidateName.Length >= 2 ? candidateName[..2].ToUpperInvariant() : "?";
-    }
 }

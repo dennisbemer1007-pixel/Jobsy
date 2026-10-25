@@ -34,7 +34,7 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         sb.Append("\" data-ndm-employer-ssr=\"1\" data-ndm-employer-reschedule-ssr=\"1\" data-ndm-employer-cancel-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
         sb.Append("\" data-back-href=\"");
-        sb.Append(WebUtility.HtmlEncode($"/werkgever/sollicitaties/{applicationId:D}/after-match/reschedule-ssr"));
+        sb.Append(WebUtility.HtmlEncode($"/werkgever/sollicitaties/{applicationId:D}/after-match"));
         sb.Append("\" data-ndm-title-home=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen09.Hero.Title"]));
         sb.Append("\" data-ndm-lead-home=\"");

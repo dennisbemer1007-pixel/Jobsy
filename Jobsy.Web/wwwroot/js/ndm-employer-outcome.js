@@ -2,7 +2,13 @@
   "use strict";
 
   function root() {
-    return document.querySelector("[data-ndm-employer-outcome-ssr]");
+    var page = document.querySelector(
+      "[data-ndm-employer-outcome-ssr]:not([hidden]), [data-ndm-outcome-panel]:not([hidden])"
+    );
+    if (page) {
+      return page;
+    }
+    return document.querySelector("[data-ndm-employer-outcome-ssr], [data-ndm-outcome-panel]");
   }
 
   function selectedOutcome(container) {

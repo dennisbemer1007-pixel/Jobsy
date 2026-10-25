@@ -10,6 +10,22 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchEmployerOutcomeSsrShells
 {
+    internal static void AppendInlinePanel(
+        StringBuilder sb,
+        CultureState culture,
+        AfterMatchEmployerOutcomeSsrData.PageData data,
+        Guid applicationId)
+    {
+        sb.Append("<aside class=\"wc side pop stack\" data-ndm-outcome-panel hidden data-ndm-employer-outcome-ssr=\"1\" data-application-id=\"");
+        sb.Append(applicationId.ToString("D"));
+        sb.Append("\"><p style=\"margin-bottom:12px\"><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
+        sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
+        sb.Append("</button></p>");
+        AppendOutcomeForm(sb, culture, data);
+        AppendPreviewAside(sb, culture, data);
+        sb.Append("</aside>");
+    }
+
     internal static string BuildBody(CultureState culture, AfterMatchEmployerOutcomeSsrData.PageData data, Guid applicationId)
     {
         var sb = new StringBuilder();

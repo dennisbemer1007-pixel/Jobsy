@@ -93,14 +93,24 @@
 
   function baseAfterMatchUrl(el) {
     var appId = el.getAttribute("data-application-id");
-    if (el.hasAttribute("data-ndm-employer-reschedule-ssr")) {
-      return (
-        "/werkgever/sollicitaties/" +
-        encodeURIComponent(appId) +
-        "/after-match/reschedule-ssr"
-      );
-    }
     return "/werkgever/sollicitaties/" + encodeURIComponent(appId) + "/after-match";
+  }
+
+  function syncCanonicalUrl(el) {
+    if (!el || !window.history || !window.history.replaceState) {
+      return;
+    }
+    var canonical = baseAfterMatchUrl(el);
+    try {
+      var current = new URL(window.location.href);
+      if (current.pathname.indexOf("-ssr") >= 0) {
+        var panel = panelFromUrl();
+        var target = panel ? canonical + "?panel=" + encodeURIComponent(panel) : canonical;
+        window.history.replaceState(window.history.state || {}, "", target);
+      }
+    } catch (_e) {
+      /* ignore */
+    }
   }
 
   function panelFromUrl() {
@@ -120,6 +130,7 @@
     var messagesPanel = el.querySelector("[data-ndm-messages-panel]");
     var proposePanel = el.querySelector("[data-ndm-propose-panel]");
     var cancelPanel = el.querySelector("[data-ndm-cancel-panel]");
+    var outcomePanel = el.querySelector("[data-ndm-outcome-panel]");
     var shareAside = el.querySelector("[data-ndm-share-aside], [data-ndm-wg-aside]");
     var infoNote = el.querySelector("[data-ndm-propose-info-note]");
     var whatGrid = el.querySelector(".what");
@@ -128,6 +139,7 @@
     if (panel === "messages") {
       if (flow) flow.hidden = true;
       if (messagesPanel) messagesPanel.hidden = false;
+      if (outcomePanel) outcomePanel.hidden = true;
       syncHero("messages");
       if (window.NdmEmployerMessagesInit) {
         window.NdmEmployerMessagesInit();
@@ -137,6 +149,7 @@
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = false;
       if (cancelPanel) cancelPanel.hidden = true;
+      if (outcomePanel) outcomePanel.hidden = true;
       el.querySelectorAll("[data-ndm-share-aside], [data-ndm-wg-aside]").forEach(function (aside) {
         aside.hidden = true;
       });
@@ -149,6 +162,7 @@
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = true;
       if (cancelPanel) cancelPanel.hidden = false;
+      if (outcomePanel) outcomePanel.hidden = true;
       el.querySelectorAll("[data-ndm-share-aside], [data-ndm-wg-aside]").forEach(function (aside) {
         aside.hidden = true;
       });
@@ -156,11 +170,28 @@
       if (whatGrid) whatGrid.hidden = true;
       if (actions) actions.hidden = true;
       syncHero("");
+    } else if (panel === "outcome") {
+      if (flow) flow.hidden = false;
+      if (messagesPanel) messagesPanel.hidden = true;
+      if (proposePanel) proposePanel.hidden = true;
+      if (cancelPanel) cancelPanel.hidden = true;
+      if (outcomePanel) outcomePanel.hidden = false;
+      el.querySelectorAll("[data-ndm-share-aside], [data-ndm-wg-aside]").forEach(function (aside) {
+        aside.hidden = true;
+      });
+      if (infoNote) infoNote.hidden = true;
+      if (whatGrid) whatGrid.hidden = true;
+      if (actions) actions.hidden = true;
+      syncHero("");
+      if (window.NdmEmployerOutcomeInit) {
+        window.NdmEmployerOutcomeInit();
+      }
     } else {
       if (flow) flow.hidden = false;
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = true;
       if (cancelPanel) cancelPanel.hidden = true;
+      if (outcomePanel) outcomePanel.hidden = true;
       el.querySelectorAll("[data-ndm-share-aside], [data-ndm-wg-aside]").forEach(function (aside) {
         aside.hidden = false;
       });
@@ -430,6 +461,7 @@
     var el = root();
     if (!el) return;
 
+    syncCanonicalUrl(el);
     var initial = el.getAttribute("data-ndm-panel") || panelFromUrl();
     setPanel(el, initial, false);
 
