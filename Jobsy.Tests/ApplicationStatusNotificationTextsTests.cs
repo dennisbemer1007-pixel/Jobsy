@@ -58,6 +58,16 @@ public sealed class ApplicationStatusNotificationTextsTests
     }
 
     [Fact]
+    public void ApplicationSubmitted_sm01_copy()
+    {
+        var employer = ApplicationStatusNotificationTexts.EmployerNewApplication("Acme", "Kassier", "nl");
+        Assert.Equal("Nieuwe sollicitatie", employer.Title);
+
+        var self = ApplicationStatusNotificationTexts.ApplicationSubmittedSelf("Acme", "Kassier", "en");
+        Assert.Equal("Application sent", self.Title);
+    }
+
+    [Fact]
     public void ApplicationNewMessage_sm11_copy_nl_en()
     {
         var nl = ApplicationStatusNotificationTexts.ApplicationNewMessage("Kassier", "nl");

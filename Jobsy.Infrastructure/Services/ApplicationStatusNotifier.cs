@@ -38,7 +38,8 @@ public sealed partial class ApplicationStatusNotifier
         string category,
         string deepLink,
         ComposedEmail? mail,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool sendPush = true)
     {
         var absoluteLink = EmailLayout.Absolute(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
@@ -49,14 +50,17 @@ public sealed partial class ApplicationStatusNotifier
             await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
         }
 
-        await _push.SendAsync(
-            new PushMessage(
-                application.CandidateEmail,
-                copy.Title,
-                copy.Body,
-                absoluteLink,
-                category),
-            cancellationToken);
+        if (sendPush)
+        {
+            await _push.SendAsync(
+                new PushMessage(
+                    application.CandidateEmail,
+                    copy.Title,
+                    copy.Body,
+                    absoluteLink,
+                    category),
+                cancellationToken);
+        }
 
         if (application.CandidateUserId is Guid userId)
         {
