@@ -5,6 +5,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -340,6 +341,7 @@ public sealed class AfterMatchService : IAfterMatchService
 
         _db.ApplicationMessages.Add(message);
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyApplicationNewMessageAsync(application, senderUserId, senderIsEmployer, cancellationToken);
         return await MapThreadAsync(application, interview, senderUserId, senderIsEmployer, cancellationToken);
     }
 
@@ -446,6 +448,11 @@ public sealed class AfterMatchService : IAfterMatchService
             DateTime.UtcNow);
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyApplicationOutcomeRecordedAsync(
+            application,
+            employerUserId,
+            request.Outcome,
+            cancellationToken);
         return await MapThreadAsync(application, interview, employerUserId, isEmployer: true, cancellationToken);
     }
 

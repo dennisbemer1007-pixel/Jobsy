@@ -218,7 +218,8 @@ public sealed class AfterMatchServiceFlowTests
             new NoOpUserNotifications(),
             new NoOpPush(),
             new NoOpMailer(),
-            new AlwaysOnFeatures());
+            new AlwaysOnFeatures(),
+            new AllowAllDispatchGate());
         var service = new AfterMatchService(db, new NoOpStatusRecorder(), mailer, statusNotifier, config);
         await service.EnsureThreadAsync(appId);
         return (service, appId, candidateId, employerId);
@@ -313,5 +314,14 @@ public sealed class AfterMatchServiceFlowTests
     private sealed class NoOpPush : IPushNotificationService
     {
         public Task SendAsync(PushMessage message, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class AllowAllDispatchGate : IStatusNotificationDispatchGate
+    {
+        public Task<StatusNotificationDispatchDecision> EvaluateAsync(
+            Guid userId,
+            string category,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new StatusNotificationDispatchDecision(true, true, true));
     }
 }

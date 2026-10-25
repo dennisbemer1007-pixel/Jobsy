@@ -5232,6 +5232,37 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("MinimumWageRates");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Soort")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxPerDag")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("NietStorenTot")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly>("NietStorenVan")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("ViaMail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ViaPush")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("UserId", "Soort");
+
+                    b.ToTable("NotificationPreferences", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.OccupationDayInLife", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6119,20 +6150,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("TestEditModeEnabled")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("TestJourneyIllustrationEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("TestsV2Enabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
                     b.Property<bool>("TestItemExamplesEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("TestJourneyIllustrationEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("TestProgressInsightEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("TestsV2Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
@@ -11562,6 +11593,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.MfaTrustedDevice", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.NotificationPreference", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
                         .WithMany()

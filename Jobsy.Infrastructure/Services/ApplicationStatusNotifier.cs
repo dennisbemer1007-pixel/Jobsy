@@ -17,75 +17,22 @@ public sealed partial class ApplicationStatusNotifier
     private readonly IPushNotificationService _push;
     private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
+    private readonly IStatusNotificationDispatchGate _dispatchGate;
 
     public ApplicationStatusNotifier(
         JobsyDbContext db,
         IUserNotificationService notifications,
         IPushNotificationService push,
         ITransactionalMailer mailer,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        IStatusNotificationDispatchGate dispatchGate)
     {
         _db = db;
         _notifications = notifications;
         _push = push;
         _mailer = mailer;
         _features = features;
-    }
-
-    public async Task NotifyCvViewedAsync(Application application, CancellationToken cancellationToken = default)
-    {
-        if (application.Vacancy?.Company is null)
-        {
-            return;
-        }
-
-        var language = await ResolveCandidateLanguageAsync(application, cancellationToken);
-        var copy = ApplicationStatusNotificationTexts.CvViewed(
-            application.Vacancy.Company.Name,
-            application.Vacancy.Title,
-            language);
-        var deepLink = $"/candidate/applications?tab=sollicitaties&sel={application.Id:D}";
-        await DeliverToCandidateAsync(
-            application,
-            copy,
-            category: "ApplicationCvViewed",
-            deepLink,
-            mail: TransactionalEmails.ApplicationCvViewed(
-                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-                application.CandidateName,
-                application.Vacancy.Title,
-                application.Vacancy.Company.Name,
-                application.Id,
-                ToEmailCulture(language)),
-            cancellationToken);
-    }
-
-    public async Task NotifyMutualYesAsync(Application application, CancellationToken cancellationToken = default)
-    {
-        if (application.Vacancy?.Company is null)
-        {
-            return;
-        }
-
-        var language = await ResolveCandidateLanguageAsync(application, cancellationToken);
-        var copy = ApplicationStatusNotificationTexts.MutualYes(
-            application.Vacancy.Company.Name,
-            application.Vacancy.Title,
-            language);
-        var deepLink = $"/candidate/applications/{application.Id:D}/after-match";
-        await DeliverToCandidateAsync(
-            application,
-            copy,
-            category: "ApplicationMutualYes",
-            deepLink,
-            mail: TransactionalEmails.ApplicationMutualYes(
-                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-                application.CandidateName,
-                application.Vacancy.Title,
-                application.Vacancy.Company.Name,
-                application.Id,
-                ToEmailCulture(language)),
-            cancellationToken);
+        _dispatchGate = dispatchGate;
     }
 
     private async Task DeliverToCandidateAsync(
@@ -94,39 +41,65 @@ public sealed partial class ApplicationStatusNotifier
         string category,
         string deepLink,
         ComposedEmail? mail,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool sendPush = true)
     {
         var absoluteLink = EmailLayout.Absolute(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
             deepLink);
+
+        if (application.CandidateUserId is Guid userId)
+        {
+            var decision = await _dispatchGate.EvaluateAsync(userId, category, cancellationToken);
+            if (decision.AllowMail && mail is not null)
+            {
+                await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
+            }
+
+            if (sendPush && decision.AllowPush)
+            {
+                await _push.SendAsync(
+                    new PushMessage(
+                        application.CandidateEmail,
+                        copy.Title,
+                        copy.Body,
+                        absoluteLink,
+                        category),
+                    cancellationToken);
+            }
+
+            if (decision.AllowBell)
+            {
+                await _notifications.CreateAsync(
+                    new NotificationCreateRequest(
+                        userId,
+                        copy.Title,
+                        copy.Body,
+                        category,
+                        deepLink,
+                        RelatedEntityType: "Application",
+                        RelatedEntityId: application.Id),
+                    cancellationToken);
+            }
+
+            return;
+        }
 
         if (mail is not null)
         {
             await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
         }
 
-        await _push.SendAsync(
-            new PushMessage(
-                application.CandidateEmail,
-                copy.Title,
-                copy.Body,
-                absoluteLink,
-                category),
-            cancellationToken);
-
-        if (application.CandidateUserId is Guid userId)
+        if (sendPush)
         {
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    userId,
+            await _push.SendAsync(
+                new PushMessage(
+                    application.CandidateEmail,
                     copy.Title,
                     copy.Body,
-                    category,
-                    deepLink,
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
+                    absoluteLink,
+                    category),
                 cancellationToken);
-            return;
         }
 
         await _notifications.CreateForEmailAsync(
