@@ -358,6 +358,31 @@ public sealed class AfterMatchService : IAfterMatchService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task MarkEmployerMessagesReadAsync(
+        Guid applicationId,
+        Guid employerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await RequireEmployerApplicationAsync(applicationId, employerUserId, cancellationToken);
+        var now = DateTime.UtcNow;
+        var unread = await _db.ApplicationMessages
+            .Where(m => m.ApplicationId == applicationId
+                        && m.SenderUserId != employerUserId
+                        && m.ReadAtUtc == null)
+            .ToListAsync(cancellationToken);
+        if (unread.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var message in unread)
+        {
+            message.ReadAtUtc = now;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<AfterMatchThreadDto> RecordOutcomeAsync(
         Guid applicationId,
         Guid employerUserId,

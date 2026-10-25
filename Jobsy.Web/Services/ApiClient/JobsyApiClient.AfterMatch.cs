@@ -140,6 +140,17 @@ public sealed partial class JobsyApiClient
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<bool> TryMarkEmployerAfterMatchMessagesReadAsync(
+        Guid applicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/werkgever/applications/{applicationId:D}/after-match/messages/read",
+            content: null,
+            ct);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<AfterMatchThreadDto> RecordAfterMatchOutcomeAsync(
         Guid applicationId,
         RecordOutcomeRequest request,

@@ -240,8 +240,8 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Screen09.Hero.Title", "Verzoek om te verzetten", "Request to reschedule");
         Add("AfterMatch.Screen09.Hero.Lead",
-            "Sanne vroeg om een ander moment. Reageer met nieuwe tijden of een bericht.",
-            "Sanne asked for another time. Reply with new times or a message.");
+            "Kies een nieuw moment of stel er zelf een voor.",
+            "Pick a new time or propose one yourself.");
 
         Add("AfterMatch.Screen10.Hero.Title", "Berichten", "Messages");
         Add("AfterMatch.Screen10.Hero.Eyebrow", "Sollicitaties · Berichten", "Applications · Messages");
@@ -272,19 +272,40 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Screen11.Hero.Title", "Berichten", "Messages");
         Add("AfterMatch.Screen11.Hero.Lead",
-            "Snelle antwoorden en één overzicht met de kandidaat.",
-            "Quick replies and one overview with the candidate.");
+            "Per sollicitatie één draad. Kandidaten zien wanneer je iets hebt gelezen.",
+            "One thread per application. Candidates see when you have read their messages.");
         Add("AfterMatch.Screen11.QuickReplies", "Snelle antwoorden", "Quick replies");
+        Add("AfterMatch.Screen11.QuickReply1", "Tot donderdag", "See you Thursday");
+        Add("AfterMatch.Screen11.QuickReply2", "Bedankt, ik kijk ernaar", "Thanks, I will look into it");
+        Add("AfterMatch.Screen11.QuickReply3", "Kun je iets eerder komen?", "Can you come a bit earlier?");
+        Add("AfterMatch.Screen11.SafeTitle", "Contactregels.", "Contact rules.");
+        Add("AfterMatch.Screen11.SafeBody",
+            "Telefoon van de kandidaat zie je na het gesprek, bankgegevens vraag je pas na een aanbod.",
+            "You see the candidate's phone number after the interview; ask for bank details only after an offer.");
+        Add("AfterMatch.Screen11.ArchiveHint",
+            "Afgeronde sollicitaties staan in",
+            "Closed applications are in");
+        Add("AfterMatch.Screen11.ArchiveLink", "Archief", "Archive");
 
         Add("AfterMatch.Screen12.Hero.Title", "Uitkomst van het gesprek", "Outcome of the interview");
         Add("AfterMatch.Screen12.Hero.Lead",
-            "Leg vast wat de volgende stap is. De kandidaat ziet je reden.",
-            "Record what the next step is. The candidate sees your reason.");
+            "Geef binnen 5 werkdagen de uitkomst, met een korte reden.",
+            "Record the outcome within 5 working days, with a short reason.");
+        Add("AfterMatch.Screen12.Question", "Hoe ging het gesprek?", "How did the interview go?");
         Add("AfterMatch.Screen12.Offer", "Aanbod", "Offer");
+        Add("AfterMatch.Screen12.Offer.HintFmt", "Je wilt {0} een plek aanbieden", "You want to offer {0} a role");
         Add("AfterMatch.Screen12.NextRound", "Nog een gesprek", "Another interview");
+        Add("AfterMatch.Screen12.NextRound.Hint", "Bijvoorbeeld een proefdag", "For example a trial day");
         Add("AfterMatch.Screen12.NotNow", "Nu niet", "Not now");
+        Add("AfterMatch.Screen12.NotNow.Hint", "Het past nu niet", "It does not fit right now");
         Add("AfterMatch.Screen12.Reason", "Korte uitleg voor de kandidaat", "Short explanation for the candidate");
+        Add("AfterMatch.Screen12.ReasonRequiredFmt", "Korte reden (verplicht, {0} ziet dit)", "Short reason (required, {0} sees this)");
+        Add("AfterMatch.Screen12.ReasonChip.Experience", "Iemand met meer ervaring in de oven", "Someone with more oven experience");
+        Add("AfterMatch.Screen12.ReasonChip.Hours", "Uren passen niet", "Hours do not match");
+        Add("AfterMatch.Screen12.ReasonChip.Filled", "Plek al vervuld", "Role already filled");
+        Add("AfterMatch.Screen12.ReasonChip.Other", "Iets anders", "Something else");
         Add("AfterMatch.Screen12.Submit", "Uitkomst versturen", "Send outcome");
+        Add("AfterMatch.Screen12.TalentPool", "Bewaren in talentpool", "Save to talent pool");
 
         Add("AfterMatch.Screen13.PageTitle", "Uitkomst", "Outcome");
         Add("AfterMatch.Screen13.Eyebrow", "Sollicitaties · Uitkomst", "Applications · Outcome");
@@ -416,8 +437,34 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen07.PageTitle", "Herinneringen", "Reminders");
         Add("AfterMatch.Employer.Reschedule.Note", "Sanne vroeg om een ander moment. Hieronder zie je de reden en het voorstel.", "Sanne asked for another time. See the reason and proposal below.");
         Add("AfterMatch.Employer.Reschedule.Accept", "Akkoord met voorstel", "Accept proposal");
+        Add("AfterMatch.Employer.Reschedule.AcceptSlotFmt", "Akkoord, {0}", "Accept, {0}");
         Add("AfterMatch.Employer.Reschedule.Counter", "Ander moment voorstellen", "Propose another time");
+        Add("AfterMatch.Employer.Reschedule.WarningTitleFmt", "{0} vraagt het gesprek te verzetten", "{0} asks to reschedule the interview");
+        Add("AfterMatch.Employer.Reschedule.ReasonLineFmt", "Reden: {0}", "Reason: {0}");
+        Add("AfterMatch.Employer.Reschedule.ProposalLineFmt", "Voorstel: {0} {1}", "Proposal: {0} {1}");
+        Add("AfterMatch.Employer.Reschedule.OwnSlotHint", "(een van je eigen momenten)", "(one of your own times)");
+        Add("AfterMatch.Employer.Reschedule.CancelLink", "Gesprek afzeggen", "Cancel interview");
+        Add("AfterMatch.Employer.Reschedule.Footnote",
+            "Zeg je zelf af of verzet je? Dan vraagt Lobsy ook jou om een korte reden. Sanne ziet die reden.",
+            "If you cancel or reschedule, Lobsy asks you for a short reason too. Sanne will see it.");
+        Add("AfterMatch.Employer.Reschedule.WeekAside", "Gesprekken deze week", "Interviews this week");
+        Add("AfterMatch.Employer.Reschedule.RequestLabel", "Verzoek om te verzetten", "Request to reschedule");
+        Add("AfterMatch.Employer.Reschedule.ActionPill", "Actie", "Action");
+        Add("AfterMatch.Employer.Cancel.Lead",
+            "Geef een korte reden. Sanne ziet die reden in Lobsy.",
+            "Give a short reason. Sanne will see it in Lobsy.");
+        Add("AfterMatch.Employer.Cancel.HeroLead",
+            "Het gesprek wordt afgezegd. Sanne krijgt bericht met je reden.",
+            "The interview will be cancelled. Sanne will be notified with your reason.");
         Add("AfterMatch.Employer.Outcome.PreviewTitle", "Zo ziet Sanne het", "How Sanne sees it");
         Add("AfterMatch.Employer.Outcome.PreviewLead", "Dank je wel voor het gesprek. Hier komt je korte uitleg.", "Thank you for the interview. Your short explanation appears here.");
+        Add("AfterMatch.Employer.Outcome.PreviewNotNowTitleFmt", "Dank je wel voor het gesprek, {0}", "Thank you for the interview, {0}");
+        Add("AfterMatch.Employer.Outcome.PreviewNotNowLeadFmt", "{0} kiest nu voor iemand anders. Dit zeggen ze erover:", "{0} is choosing someone else for now. They say:");
+        Add("AfterMatch.Employer.Outcome.PreviewOfferTitleFmt", "Gefeliciteerd, {0}", "Congratulations, {0}");
+        Add("AfterMatch.Employer.Outcome.PreviewOfferLeadFmt", "{0} biedt je een plek aan. Dit staat erbij:", "{0} is offering you a role. They add:");
+        Add("AfterMatch.Employer.Outcome.PreviewNextTitleFmt", "Nog een gesprek, {0}", "Another interview, {0}");
+        Add("AfterMatch.Employer.Outcome.PreviewNextLeadFmt", "{0} wil graag nog een gesprek met je. Dit staat erbij:", "{0} would like another interview. They add:");
+        Add("AfterMatch.Employer.Outcome.ToneNote", "Lobsy controleert reden-teksten op toon voordat ze verstuurd worden.", "Lobsy checks reason texts for tone before they are sent.");
+        Add("AfterMatch.Employer.Outcome.OfferNote", "Kies je Aanbod? Dan kan Sanne daarna haar bankgegevens met je delen.", "Choosing Offer lets Sanne share bank details with you afterwards.");
     }
 }

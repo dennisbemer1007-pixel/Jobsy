@@ -13,8 +13,10 @@
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
+@using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 @inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@_pageTitle · Lobsy</PageTitle>
@@ -26,8 +28,20 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg0203" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg0203" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-stack" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-stack" defer></script>
+    @if (_includeMessagesScript)
+    {
+        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-stack" defer></script>
+    }
+    @if (_includeOutcomeScript)
+    {
+        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-stack" defer></script>
+    }
+    @if (_includeCancelScript)
+    {
+        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-stack" defer></script>
+    }
 </HeadContent>
 
 @if (_loading)
@@ -62,6 +76,9 @@ else if (_bodyHtml is not null)
     private string _pageTitle = "";
     private string _heroTitle = "";
     private string _heroLead = "";
+    private bool _includeMessagesScript;
+    private bool _includeOutcomeScript;
+    private bool _includeCancelScript;
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,23 +94,12 @@ else if (_bodyHtml is not null)
             http.Response.Headers.CacheControl = "no-store";
 
             var panel = AfterMatchEmployerPanelRouting.ResolvePanel(http.Request.Query);
-            var isProposePanel = panel is "propose" or "slots";
-
-            var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
-            if (!AfterMatchEmployerSsrRouting.ShouldUseWatNuScreen(thread)
-                && !(isProposePanel && AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread)))
+            if (panel is "slots")
             {
-                _redirecting = true;
-                var blazorPath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/blazor";
-                if (http.Request.QueryString.HasValue)
-                {
-                    blazorPath += http.Request.QueryString.Value;
-                }
-
-                http.Response.Redirect(blazorPath);
-                return;
+                panel = "propose";
             }
 
+            var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
             if (thread is null)
             {
                 _fatalMessage = Culture["AfterMatch.Error.NotFound"];
@@ -101,26 +107,118 @@ else if (_bodyHtml is not null)
             }
 
             _candidateName = thread.CandidateName;
-            _heroTitle = isProposePanel
-                ? Culture["AfterMatch.Screen03.Hero.Title"]
-                : Culture["AfterMatch.Screen02.Hero.Title"];
-            _heroLead = isProposePanel
-                ? Culture["AfterMatch.Screen03.Hero.Lead"]
-                : Culture["AfterMatch.Screen02.Hero.Lead"];
-            _pageTitle = _heroTitle;
 
-            var data = new AfterMatchEmployerPanelSsrShells.PageData(
-                thread,
-                $"/werkgever/sollicitaties/{ApplicationId:D}",
-                null,
-                AfterMatchEmployerDemoSlots.InitialUtc,
-                InterviewFormat.OnSite,
-                "Loosduinseweg 120, Den Haag · ingang naast de winkel",
-                "Linda de Wit, eigenaar",
-                "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
-                panel);
+            if (AfterMatchEmployerSsrRouting.ShouldUseRescheduleScreen(thread)
+                && panel is not ("cancel" or "messages"))
+            {
+                _redirecting = true;
+                var reschedulePath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/reschedule-ssr";
+                if (http.Request.QueryString.HasValue)
+                {
+                    reschedulePath += http.Request.QueryString.Value;
+                }
 
-            _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildBody(Culture, data, ApplicationId);
+                http.Response.Redirect(reschedulePath);
+                return;
+            }
+
+            switch (panel)
+            {
+                case "cancel":
+                    if (!AfterMatchEmployerSsrRouting.ShouldUseCancelScreen(thread))
+                    {
+                        RedirectBlazor(http, ApplicationId);
+                        return;
+                    }
+
+                    SetHero(Culture["AfterMatch.Screen08.SideTitle.Cancel"], Culture["AfterMatch.Employer.Cancel.Lead"]);
+                    _includeCancelScript = true;
+                    var cancelData = new AfterMatchEmployerCancelSsrShells.PageData(
+                        thread,
+                        $"/werkgever/sollicitaties/{ApplicationId:D}/after-match",
+                        $"/werkgever/sollicitaties/{ApplicationId:D}");
+                    _bodyHtml = AfterMatchEmployerCancelSsrShells.BuildBody(Culture, cancelData, ApplicationId);
+                    break;
+
+                case "outcome":
+                    if (!AfterMatchEmployerSsrRouting.ShouldUseOutcomeScreen(thread))
+                    {
+                        RedirectBlazor(http, ApplicationId);
+                        return;
+                    }
+
+                    SetHero(Culture["AfterMatch.Screen12.Hero.Title"], Culture["AfterMatch.Screen12.Hero.Lead"]);
+                    _includeOutcomeScript = true;
+                    var outcomeData = AfterMatchEmployerOutcomeSsrData.FromThread(Culture, thread, ApplicationId);
+                    _bodyHtml = AfterMatchEmployerOutcomeSsrShells.BuildBody(Culture, outcomeData, ApplicationId);
+                    break;
+
+                case "messages":
+                    _includeMessagesScript = true;
+                    SetHero(Culture["AfterMatch.Screen11.Hero.Title"], Culture["AfterMatch.Screen11.Hero.Lead"]);
+                    var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+                    query.TryGetValue("thread", out var threadValues);
+                    Guid? threadId = Guid.TryParse(threadValues.FirstOrDefault(), out var parsedThread)
+                        ? parsedThread
+                        : ApplicationId;
+                    var messagesOnly = await AfterMatchEmployerMessagesSsrData.LoadAsync(
+                        Api,
+                        FeatureFlags,
+                        ApplicationId,
+                        threadId,
+                        http.RequestAborted);
+                    if (messagesOnly is null)
+                    {
+                        _fatalMessage = Culture["Panel.ErrorInline"];
+                        return;
+                    }
+
+                    _bodyHtml = AfterMatchEmployerMessagesSsrShells.BuildBody(Culture, messagesOnly, ApplicationId);
+                    break;
+
+                default:
+                    if (!AfterMatchEmployerSsrRouting.ShouldUseWatNuScreen(thread)
+                        && !(panel is "propose" && AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread)))
+                    {
+                        RedirectBlazor(http, ApplicationId);
+                        return;
+                    }
+
+                    var isProposePanel = panel is "propose";
+                    SetHero(
+                        isProposePanel ? Culture["AfterMatch.Screen03.Hero.Title"] : Culture["AfterMatch.Screen02.Hero.Title"],
+                        isProposePanel ? Culture["AfterMatch.Screen03.Hero.Lead"] : Culture["AfterMatch.Screen02.Hero.Lead"]);
+
+                    AfterMatchEmployerMessagesSsrData.PageData? messagesHub = null;
+                    if (AfterMatchEmployerBerichtenPresentation.ThreadEligible(thread))
+                    {
+                        messagesHub = await AfterMatchEmployerMessagesSsrData.LoadAsync(
+                            Api,
+                            FeatureFlags,
+                            ApplicationId,
+                            ApplicationId,
+                            http.RequestAborted);
+                        if (messagesHub is not null)
+                        {
+                            _includeMessagesScript = true;
+                        }
+                    }
+
+                    var data = new AfterMatchEmployerPanelSsrShells.PageData(
+                        thread,
+                        $"/werkgever/sollicitaties/{ApplicationId:D}",
+                        null,
+                        AfterMatchEmployerDemoSlots.InitialUtc,
+                        InterviewFormat.OnSite,
+                        "Loosduinseweg 120, Den Haag · ingang naast de winkel",
+                        "Linda de Wit, eigenaar",
+                        "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
+                        panel,
+                        messagesHub);
+
+                    _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildBody(Culture, data, ApplicationId);
+                    break;
+            }
         }
         catch
         {
@@ -130,5 +228,24 @@ else if (_bodyHtml is not null)
         {
             _loading = false;
         }
+    }
+
+    private void SetHero(string title, string lead)
+    {
+        _heroTitle = title;
+        _heroLead = lead;
+        _pageTitle = title;
+    }
+
+    private void RedirectBlazor(HttpContext http, Guid applicationId)
+    {
+        _redirecting = true;
+        var blazorPath = $"/werkgever/sollicitaties/{applicationId:D}/after-match/blazor";
+        if (http.Request.QueryString.HasValue)
+        {
+            blazorPath += http.Request.QueryString.Value;
+        }
+
+        http.Response.Redirect(blazorPath);
     }
 }

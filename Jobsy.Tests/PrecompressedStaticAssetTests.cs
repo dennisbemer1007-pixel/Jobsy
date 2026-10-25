@@ -17,6 +17,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("css/features/na-de-match.css")]
     [InlineData("js/ndm-confirmed.js")]
     [InlineData("js/ndm-reschedule.js")]
+    [InlineData("js/ndm-employer-outcome.js")]
     public void Precompressed_brotli_is_smaller_than_gzip(string relativePath)
     {
         var root = FindRepoRoot();
@@ -42,6 +43,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("css/features/na-de-match.css")]
     [InlineData("js/ndm-confirmed.js")]
     [InlineData("js/ndm-reschedule.js")]
+    [InlineData("js/ndm-employer-outcome.js")]
     public void Precompressed_sidecars_match_source_bytes(string relativePath)
     {
         var root = FindRepoRoot();

@@ -60,9 +60,21 @@ public static partial class PageSeoCatalog
             return Private("AfterMatch.Screen07.PageTitle", "Seo.PrivateDescription");
         }
 
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/reschedule-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen09.Hero.Title", "Seo.PrivateDescription");
+        }
+
         if (p.Contains("/after-match/reschedule-ssr", StringComparison.OrdinalIgnoreCase))
         {
             return Private("AfterMatch.Screen08.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/messages-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen11.Hero.Title", "Seo.PrivateDescription");
         }
 
         if (p.Contains("/after-match/messages-ssr", StringComparison.OrdinalIgnoreCase))
@@ -74,6 +86,18 @@ public static partial class PageSeoCatalog
             && p.Contains("/after-match/propose-ssr", StringComparison.OrdinalIgnoreCase))
         {
             return Private("AfterMatch.Screen03.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/cancel-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen08.SideTitle.Cancel", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/outcome-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen12.Hero.Title", "Seo.PrivateDescription");
         }
 
         if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)

@@ -1,0 +1,37 @@
+@page "/werkgever/sollicitaties/{ApplicationId:guid}/after-match/messages-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Redirect · Lobsy</PageTitle>
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+        var qs = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
+        if (string.IsNullOrEmpty(qs))
+        {
+            qs = "?panel=messages";
+        }
+        else if (!qs.Contains("panel=", StringComparison.OrdinalIgnoreCase))
+        {
+            qs += "&panel=messages";
+        }
+
+        http.Response.Redirect($"/werkgever/sollicitaties/{ApplicationId:D}/after-match{qs}");
+    }
+}
