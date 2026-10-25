@@ -26,6 +26,17 @@ public sealed class ApplicationStatusNotificationTextsTests
     }
 
     [Fact]
+    public void Prematch_self_sm02b_sm03b_copy()
+    {
+        var cv = ApplicationStatusNotificationTexts.CvViewedSelf("Jan", "Kassier", "nl");
+        Assert.Equal("Bevestiging", cv.Title);
+        Assert.Contains("Jan", cv.Body, StringComparison.Ordinal);
+
+        var yes = ApplicationStatusNotificationTexts.MutualYesSelf("Jan", "Kassier", "en");
+        Assert.Equal("Confirmation", yes.Title);
+    }
+
+    [Fact]
     public void ResolveLanguageFromPreferencesJson_reads_language_field()
     {
         Assert.Equal("en", ApplicationStatusNotifier.ResolveLanguageFromPreferencesJson("{\"language\":\"en\"}"));
