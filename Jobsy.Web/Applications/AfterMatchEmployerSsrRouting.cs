@@ -19,4 +19,9 @@ internal static class AfterMatchEmployerSsrRouting
     internal static bool ShouldUseRescheduleScreen(AfterMatchThreadDto? thread) =>
         thread is not null
         && thread.InterviewStatus == InterviewStatus.RescheduleRequested;
+
+    /// <summary>Employer cancel interview SSR (from gesprek / verzetten flows).</summary>
+    internal static bool ShouldUseCancelScreen(AfterMatchThreadDto? thread) =>
+        thread is not null
+        && thread.InterviewStatus is InterviewStatus.Scheduled or InterviewStatus.RescheduleRequested;
 }

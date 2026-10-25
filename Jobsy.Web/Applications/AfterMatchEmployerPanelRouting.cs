@@ -19,6 +19,7 @@ internal static class AfterMatchEmployerPanelRouting
         {
             "" => "/panel-ssr",
             "propose" => "/propose-ssr",
+            "cancel" => "/cancel-ssr",
             _ => "/blazor",
         };
     }

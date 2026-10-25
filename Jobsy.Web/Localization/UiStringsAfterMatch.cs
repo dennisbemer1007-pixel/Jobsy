@@ -420,6 +420,12 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Reschedule.WeekAside", "Gesprekken deze week", "Interviews this week");
         Add("AfterMatch.Employer.Reschedule.RequestLabel", "Verzoek om te verzetten", "Request to reschedule");
         Add("AfterMatch.Employer.Reschedule.ActionPill", "Actie", "Action");
+        Add("AfterMatch.Employer.Cancel.Lead",
+            "Geef een korte reden. Sanne ziet die reden in Lobsy.",
+            "Give a short reason. Sanne will see it in Lobsy.");
+        Add("AfterMatch.Employer.Cancel.HeroLead",
+            "Het gesprek wordt afgezegd. Sanne krijgt bericht met je reden.",
+            "The interview will be cancelled. Sanne will be notified with your reason.");
         Add("AfterMatch.Employer.Outcome.PreviewTitle", "Zo ziet Sanne het", "How Sanne sees it");
         Add("AfterMatch.Employer.Outcome.PreviewLead", "Dank je wel voor het gesprek. Hier komt je korte uitleg.", "Thank you for the interview. Your short explanation appears here.");
     }
