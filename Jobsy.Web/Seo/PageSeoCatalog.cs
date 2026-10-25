@@ -71,6 +71,12 @@ public static partial class PageSeoCatalog
         }
 
         if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/propose-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen03.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
             && p.Contains("/after-match/panel-ssr", StringComparison.OrdinalIgnoreCase))
         {
             return Private("AfterMatch.Screen02.Hero.Title", "Seo.PrivateDescription");

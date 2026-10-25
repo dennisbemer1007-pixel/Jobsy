@@ -9,4 +9,9 @@ internal static class AfterMatchEmployerSsrRouting
     internal static bool ShouldUseWatNuScreen(AfterMatchThreadDto? thread) =>
         thread is not null
         && thread.InterviewStatus == InterviewStatus.Proposing;
+
+    /// <summary>Screen 03 (momenten voorstellen) SSR.</summary>
+    internal static bool ShouldUseProposeScreen(AfterMatchThreadDto? thread) =>
+        thread is not null
+        && thread.InterviewStatus == InterviewStatus.Proposing;
 }

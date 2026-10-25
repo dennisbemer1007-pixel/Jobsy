@@ -48,7 +48,7 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
     [Fact]
     public void Employer_panel_routing_propose_goes_to_blazor()
     {
-        Assert.Equal("/blazor", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
+        Assert.Equal("/propose-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel(""));
         Assert.Equal("/blazor", AfterMatchEmployerPanelRouting.PathSuffixForPanel("messages"));
     }
