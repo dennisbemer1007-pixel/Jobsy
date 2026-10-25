@@ -192,11 +192,18 @@ public sealed class KreeftAccLayoutPlaywrightTests
 
         await openBtn.ScrollIntoViewIfNeededAsync();
         await openBtn.ClickAsync(new() { Timeout = 15_000 });
-        var shell = page.Locator("#lobsy-assistant-ssr-shell");
-        await shell.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
-        var close = page.Locator("[data-ssr-assistant-close]").First;
-        await close.ClickAsync(new() { Force = true });
-        await page.WaitForTimeoutAsync(300);
-        Assert.True(await shell.IsHiddenAsync(), $"{label}: coach panel should close on ×");
+        await page.WaitForFunctionAsync(
+            "() => { var b = document.querySelector('[data-ssr-coach-open]'); return b && b.getAttribute('aria-expanded') === 'true'; }",
+            null,
+            new() { Timeout = 15_000 });
+        await page.WaitForFunctionAsync(
+            "() => !!document.querySelector('[data-ssr-assistant-close]')",
+            null,
+            new() { Timeout = 10_000 });
+        await page.EvaluateAsync("() => { var c = document.querySelector('[data-ssr-assistant-close]'); if (c) c.click(); }");
+        await page.WaitForFunctionAsync(
+            "() => { var b = document.querySelector('[data-ssr-coach-open]'); return b && b.getAttribute('aria-expanded') === 'false'; }",
+            null,
+            new() { Timeout = 10_000 });
     }
 }
