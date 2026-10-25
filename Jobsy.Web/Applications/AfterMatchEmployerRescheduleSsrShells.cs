@@ -43,7 +43,7 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Title"]));
         sb.Append("\" data-ndm-lead-propose=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Lead"]));
-        sb.Append("\"><div data-ndm-wg-flow><div class=\"g2 ndm-wg-g2\"><div class=\"wc stack ndm-wg-main\">");
+        sb.Append("\" data-enhance-nav=\"false\"><div data-ndm-wg-flow><div class=\"g2 ndm-wg-g2\"><div class=\"wc stack ndm-wg-main\">");
         AppendCandidateHeader(sb, culture, thread);
         sb.Append("<div class=\"hr\"></div>");
         AppendTimeline(sb, culture, data);

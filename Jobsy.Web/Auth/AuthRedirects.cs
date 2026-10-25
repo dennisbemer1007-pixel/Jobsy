@@ -276,7 +276,31 @@ public static partial class AuthRedirects
             return "/home";
         }
 
-        return url;
+        return NormalizeWerkgeverAfterMatchReturnUrl(url);
+    }
+
+    /// <summary>Login/deep links must use public <c>/after-match</c>, not internal *-ssr paths.</summary>
+    internal static string NormalizeWerkgeverAfterMatchReturnUrl(string url)
+    {
+        var hashIdx = url.IndexOf('#');
+        var hash = hashIdx >= 0 ? url[hashIdx..] : "";
+        var withoutHash = hashIdx >= 0 ? url[..hashIdx] : url;
+        var qIdx = withoutHash.IndexOf('?');
+        var path = qIdx >= 0 ? withoutHash[..qIdx] : withoutHash;
+        var query = qIdx >= 0 ? withoutHash[qIdx..] : "";
+
+        if (path.Contains("/werkgever/sollicitaties/", StringComparison.OrdinalIgnoreCase)
+            && path.Contains("/after-match/", StringComparison.OrdinalIgnoreCase))
+        {
+            path = path.Replace("/after-match/panel-ssr", "/after-match", StringComparison.OrdinalIgnoreCase);
+            path = path.Replace("/after-match/propose-ssr", "/after-match", StringComparison.OrdinalIgnoreCase);
+            path = path.Replace("/after-match/messages-ssr", "/after-match", StringComparison.OrdinalIgnoreCase);
+            path = path.Replace("/after-match/outcome-ssr", "/after-match", StringComparison.OrdinalIgnoreCase);
+            path = path.Replace("/after-match/cancel-ssr", "/after-match", StringComparison.OrdinalIgnoreCase);
+            path = path.Replace("/after-match/reschedule-ssr", "/after-match", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return path + query + hash;
     }
 
     /// <summary>

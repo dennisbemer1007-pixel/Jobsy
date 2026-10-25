@@ -99,7 +99,7 @@ else
 
             @if (_afterMatchEnabled && AfterMatchEligible(a.Status))
             {
-                <a class="btn-compact" href="/werkgever/sollicitaties/@(a.Id)/after-match">@Culture["AfterMatch.Link.Open"]</a>
+                <a class="btn-compact" href="/werkgever/sollicitaties/@(a.Id)/after-match" data-enhance-nav="false">@Culture["AfterMatch.Link.Open"]</a>
             }
 
             <section>

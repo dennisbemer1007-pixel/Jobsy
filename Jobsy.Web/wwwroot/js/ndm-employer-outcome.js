@@ -126,6 +126,45 @@
     syncPreview(el);
   }
 
+  function bindEnhancedNavRecovery() {
+    function onNav() {
+      init();
+    }
+    document.addEventListener("enhancedload", onNav);
+    try {
+      if (window.Blazor && typeof window.Blazor.addEventListener === "function") {
+        window.Blazor.addEventListener("enhancedload", onNav);
+      }
+    } catch (_e) {
+      /* ignore */
+    }
+    if (window.__ndmEmployerOutcomeCaptureBound) {
+      return;
+    }
+    window.__ndmEmployerOutcomeCaptureBound = true;
+    document.addEventListener(
+      "click",
+      function (ev) {
+        var btn = ev.target && ev.target.closest && ev.target.closest("[data-ndm-employer-outcome]");
+        if (!btn || !root()) {
+          return;
+        }
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        var container = root();
+        container.querySelectorAll("[data-ndm-employer-outcome]").forEach(function (other) {
+          other.classList.remove("on");
+        });
+        btn.classList.add("on");
+        syncPreview(container);
+      },
+      true
+    );
+  }
+
+  window.NdmEmployerOutcomeInit = init;
+  bindEnhancedNavRecovery();
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {

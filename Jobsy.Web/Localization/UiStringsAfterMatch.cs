@@ -31,6 +31,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Timeline.Outcome", "Uitkomst", "Outcome");
         Add("AfterMatch.Timeline.Now", "nu", "now");
         Add("AfterMatch.Timeline.PlanNow", "22 okt", "22 Oct");
+        Add("AfterMatch.Employer.Timeline.OutcomeDone", "Verstuurd", "Sent");
 
         Add("AfterMatch.What.Plan.Title", "Gesprek plannen", "Plan the interview");
         Add("AfterMatch.What.Plan.Body",
@@ -402,7 +403,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Scheduled.WhenFallback", "Donderdag 22 oktober, 10:30", "Thursday 22 October, 10:30");
         Add("AfterMatch.Employer.Action.Propose", "Momenten voorstellen", "Propose times");
         Add("AfterMatch.Employer.Action.Messages", "Bericht sturen", "Send message");
-        Add("AfterMatch.Employer.Expectation", "Sanne verwacht momenten voor donderdag 15 oktober", "Sanne expects times before Thursday 15 October");
+        Add("AfterMatch.Employer.Expectation", "Sanne verwacht je voorstel · rond 22–26 okt", "Sanne expects your proposal · around 22–26 Oct");
 
         Add("AfterMatch.Mail.CandidateSubject", "Onderwerp: Je gesprek bij Bakkerij De Korenaar staat erin", "Subject: Your interview at Bakkerij De Korenaar is booked");
         Add("AfterMatch.Mail.EmployerSubject", "Onderwerp: Gesprek met {0} gepland", "Subject: Interview with {0} scheduled");

@@ -268,4 +268,8 @@ public static class JobsyDbSeeder
             logger.LogWarning(ex, "Partial seed failure after companies/users; continuing.");
         }
     }
+
+    /// <summary>Idempotent werkgever after-match demo apps (77777771-0001 … 0006) for acceptatie E2E.</summary>
+    public static Task EnsureAfterMatchDemoApplicationsAsync(JobsyDbContext db, ILogger logger)
+        => AfterMatchDemoSeeder.EnsureAsync(db, logger);
 }

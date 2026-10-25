@@ -38,6 +38,18 @@ public class AuthRedirectsTests
         => Assert.Equal(expected, AuthRedirects.SafeLocalUrl(input));
 
     [Fact]
+    public void SafeLocalUrl_normalizes_werkgever_after_match_internal_ssr_paths()
+    {
+        var app = "77777771-0001-4000-8000-000000000001";
+        Assert.Equal(
+            $"/werkgever/sollicitaties/{app}/after-match?panel=propose",
+            AuthRedirects.SafeLocalUrl($"/werkgever/sollicitaties/{app}/after-match/panel-ssr?panel=propose"));
+        Assert.Equal(
+            $"/werkgever/sollicitaties/{app}/after-match",
+            AuthRedirects.SafeLocalUrl($"/werkgever/sollicitaties/{app}/after-match/reschedule-ssr"));
+    }
+
+    [Fact]
     public void ResolveRequestedReturnUrl_accepts_returnTo_and_redirect_aliases()
     {
         Assert.Equal("/home", AuthRedirects.ResolveRequestedReturnUrl());
