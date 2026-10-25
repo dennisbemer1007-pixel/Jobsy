@@ -29,6 +29,12 @@ internal static class AfterMatchSollicitatiesUrls
         return AppendReturn(url, returnUrl);
     }
 
+    internal static string Outcome(Guid applicationId, string? returnUrl = null)
+    {
+        var url = $"/candidate/applications/{applicationId:D}/after-match?panel=outcome";
+        return AppendReturn(url, returnUrl);
+    }
+
     internal static string ViewApplicationFromMessages(Guid applicationId, AfterMatchThreadDto thread)
     {
         var returnUrl = Messages(applicationId);
@@ -40,6 +46,12 @@ internal static class AfterMatchSollicitatiesUrls
         }
 
         if (thread.InterviewStatus == InterviewStatus.Scheduled)
+        {
+            return AfterMatchBase(applicationId, returnUrl);
+        }
+
+        if (thread.InterviewStatus == InterviewStatus.Done
+            || thread.Outcome == AfterMatchOutcomeKind.NotNow)
         {
             return AfterMatchBase(applicationId, returnUrl);
         }

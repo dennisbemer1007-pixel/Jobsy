@@ -47,6 +47,40 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
     }
 
     [Fact]
+    public void View_application_from_messages_done_goes_to_after_match_outcome()
+    {
+        var appId = Guid.Parse("b0000001-0000-4000-8000-000000000037");
+        var thread = new AfterMatchThreadDto(
+            appId,
+            Guid.NewGuid(),
+            InterviewStatus.Done,
+            AfterMatchContactShareState.From(InterviewStatus.Done, AfterMatchOutcomeKind.NotNow),
+            AfterMatchOutcomeKind.NotNow,
+            "Barista",
+            "Testbedrijf",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            null,
+            null,
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "",
+            null,
+            null,
+            "Uitkomst reden");
+        var href = AfterMatchSollicitatiesUrls.ViewApplicationFromMessages(appId, thread);
+        Assert.Contains($"/candidate/applications/{appId:D}/after-match", href, StringComparison.Ordinal);
+        Assert.Contains("return=", href, StringComparison.Ordinal);
+        Assert.Contains("panel%3Dmessages", href, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void View_application_from_messages_without_slots_goes_to_sollicitaties_detail()
     {
         var appId = Guid.Parse("b0000001-0000-4000-8000-000000000036");
@@ -71,6 +105,7 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             [],
             [],
             "",
+            null,
             null,
             null);
         var href = AfterMatchSollicitatiesUrls.ViewApplicationFromMessages(appId, thread);
@@ -156,7 +191,8 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             [],
             "Sanne de Vries",
             null,
-            start.AddDays(-9));
+            start.AddDays(-9),
+            null);
 
         var data = new AfterMatchRescheduleSsrData.PageData(
             thread,

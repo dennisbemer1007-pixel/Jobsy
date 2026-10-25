@@ -75,7 +75,8 @@ public sealed class AfterMatchPickSlotSsrTests : BunitContext
             [],
             "Sanne de Vries",
             null,
-            DateTime.UtcNow.AddDays(-10));
+            DateTime.UtcNow.AddDays(-10),
+            null);
 
         var data = new AfterMatchPickSlotSsrData.PageData(
             thread,
@@ -170,7 +171,8 @@ public sealed class AfterMatchPickSlotSsrTests : BunitContext
             [],
             "Test",
             null,
-            DateTime.UtcNow.AddDays(-1));
+            DateTime.UtcNow.AddDays(-1),
+            null);
         var data = new AfterMatchPickSlotSsrData.PageData(
             thread,
             returnHref,

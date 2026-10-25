@@ -80,12 +80,16 @@ else if (_bodyHtml is not null)
             if (data is null)
             {
                 _redirecting = true;
-                var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor";
-                if (http.Request.QueryString.HasValue)
+                var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId);
+                var querySuffix = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
+                if (thread?.Outcome == Jobsy.Core.Enums.AfterMatchOutcomeKind.NotNow)
                 {
-                    blazorPath += http.Request.QueryString.Value;
+                    http.Response.Redirect(
+                        $"/candidate/applications/{ApplicationId:D}/after-match/outcome-ssr{querySuffix}");
+                    return;
                 }
 
+                var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor{querySuffix}";
                 http.Response.Redirect(blazorPath);
                 return;
             }

@@ -25,7 +25,8 @@ public sealed record AfterMatchThreadDto(
     IReadOnlyList<AfterMatchSimilarVacancyDto> SimilarVacancies,
     string CandidateName,
     string? CandidateEmail,
-    DateTime? AcceptedAtUtc);
+    DateTime? AcceptedAtUtc,
+    string? OutcomeReason);
 
 public sealed record AfterMatchSlotDto(
     Guid Id,
