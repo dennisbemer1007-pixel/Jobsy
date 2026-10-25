@@ -21,6 +21,10 @@
     }
     <link rel="stylesheet" href="css/features/na-de-match.css?v=20261030-ndm-scroll1" />
     <script src="/js/ndm-mail-chrome.js?v=20261030-ndm-mail-chrome" defer></script>
+    @if (_includeHerinneringenScript)
+    {
+        <script src="/js/ndm-herinneringen.js?v=20261030-ndm-mail07" defer></script>
+    }
 </HeadContent>
 
 @if (_bodyHtml is not null)
@@ -36,6 +40,7 @@ else
     [Parameter] public string ScreenId { get; set; } = "";
 
     private string? _bodyHtml;
+    private bool _includeHerinneringenScript;
 
     protected override void OnInitialized()
     {
@@ -53,7 +58,8 @@ else
 
         if (id is "07" or "7")
         {
-            var demo = AfterMatchHerinneringenSsrData.Demo();
+            _includeHerinneringenScript = true;
+            var demo = AfterMatchHerinneringenSsrData.Demo(Culture);
             _bodyHtml = AfterMatchHerinneringenSsrShells.BuildBody(
                 Culture,
                 demo,

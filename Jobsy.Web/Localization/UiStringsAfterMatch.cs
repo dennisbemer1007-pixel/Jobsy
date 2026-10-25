@@ -178,6 +178,30 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen07.Pref.DayBefore", "De dag ervoor, e-mail en melding", "The day before, e-mail and notification");
         Add("AfterMatch.Screen07.Pref.TwoHours", "2 uur van tevoren, melding met reistijd", "2 hours ahead, notification with travel time");
         Add("AfterMatch.Screen07.Pref.WeekBefore", "Een week van tevoren, e-mail", "One week ahead, e-mail");
+        Add("AfterMatch.Screen07.ReminderEmailSubject", "Onderwerp: Morgen je gesprek bij {0}", "Subject: Your interview at {0} is tomorrow");
+        Add("AfterMatch.Screen07.ReminderEmailTitle", "Morgen is je gesprek", "Your interview is tomorrow");
+        Add("AfterMatch.Screen07.ReminderEmailLead", "Hoi {0}, nog even op een rij. Je kunt het.", "Hi {0}, a quick recap. You've got this.");
+        Add("AfterMatch.Screen07.ReminderEmailLeadMock",
+            "Hoi {0}, nog even op een rij. Je kunt het. Linda kijkt ernaar uit om je te ontmoeten.",
+            "Hi {0}, a quick recap. You've got this. Linda looks forward to meeting you.");
+        Add("AfterMatch.Screen07.ReminderWhenMock", "Morgen, donderdag 22 oktober, 10:30", "Tomorrow, Thursday 22 October, 10:30");
+        Add("AfterMatch.Screen07.ReminderWhenFallback", "Morgen is je gesprek", "Your interview is tomorrow");
+        Add("AfterMatch.Screen07.ReminderWhereMock", "Loosduinseweg 120, ingang naast de winkel", "Loosduinseweg 120, entrance next to the shop");
+        Add("AfterMatch.Screen07.ReminderTravelMock", "9 min fietsen. Vertrek uiterlijk 10:15", "9 min by bike. Leave by 10:15 at the latest");
+        Add("AfterMatch.Screen07.ReminderWeatherMock", "Droog, 13 graden", "Dry, 13 degrees");
+        Add("AfterMatch.Screen07.WeatherLabel", "Weer", "Weather");
+        Add("AfterMatch.Screen07.BtnRoute", "Route bekijken", "View route");
+        Add("AfterMatch.Screen07.BtnTips", "Tips voor je gesprek", "Tips for your interview");
+        Add("AfterMatch.Screen07.BtnPractice", "Oefen met Lobsy", "Practise with Lobsy");
+        Add("AfterMatch.Screen07.EmailMfootLead", "Herinneringen aanpassen kan bij je gesprek in Lobsy.", "You can change reminders on your interview page in Lobsy.");
+        Add("AfterMatch.Screen07.PushTwoHoursTitle", "Over 2 uur je gesprek", "Your interview in 2 hours");
+        Add("AfterMatch.Screen07.PushTwoHoursBodyMock", "Bakkerij De Korenaar, 10:30. Met de fiets ben je er in 9 minuten.", "Bakkerij De Korenaar, 10:30. It is 9 minutes by bike.");
+        Add("AfterMatch.Screen07.PushTwoHoursBody", "{0}, 10:30.", "{0}, 10:30.");
+        Add("AfterMatch.Screen07.PushDayBeforeTitle", "Morgen je gesprek", "Your interview tomorrow");
+        Add("AfterMatch.Screen07.PushDayBeforeBodyMock", "Bekijk nog even de tips. Je hoeft niets mee te nemen.", "Skim the tips again. You do not need to bring anything.");
+        Add("AfterMatch.Screen07.PushDayBeforeBody", "Bekijk nog even de tips.", "Skim the tips again.");
+        Add("AfterMatch.Screen07.LockDateMock", "donderdag 22 oktober", "Thursday 22 October");
+        Add("AfterMatch.Screen07.LockDateFallback", "donderdag 22 oktober", "Thursday 22 October");
 
         Add("AfterMatch.Screen08.Hero.Title", "Verzetten of afzeggen", "Reschedule or cancel");
         Add("AfterMatch.Screen08.Eyebrow", "Sollicitaties · Gesprek gepland", "Applications · Interview scheduled");

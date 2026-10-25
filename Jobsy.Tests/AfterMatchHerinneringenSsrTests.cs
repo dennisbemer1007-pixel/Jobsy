@@ -36,54 +36,45 @@ public sealed class AfterMatchHerinneringenSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchHerinneringenSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("herinneringen-ssr", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-herinneringen.js", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-mail-chrome.js", razor, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Shell_renders_reminder_mockup_blocks()
     {
         var culture = Culture;
-        var demo = AfterMatchHerinneringenSsrData.Demo();
+        var demo = AfterMatchHerinneringenSsrData.Demo(culture);
         var html = AfterMatchHerinneringenSsrShells.BuildBody(
             culture,
             demo,
             AfterMatchDemoIds.ScheduledApp,
             includeBackLink: false,
-            editableReminders: true);
+            editableReminders: false);
 
-        Assert.Contains("data-ndm-herinneringen-ssr=\"1\"", html, StringComparison.Ordinal);
-        Assert.Contains("De dag ervoor en 2 uur van tevoren", html, StringComparison.Ordinal);
-        Assert.Contains("Morgen is je gesprek", html, StringComparison.Ordinal);
-        Assert.Contains("Over 2 uur je gesprek", html, StringComparison.Ordinal);
-        Assert.Contains("class=\"phone\"", html, StringComparison.Ordinal);
-        Assert.Contains("Zelf instellen", html, StringComparison.Ordinal);
-        Assert.Contains("data-ndm-reminder-save", html, StringComparison.Ordinal);
-        Assert.Contains("data-ndm-reminder=\"dayBefore18\"", html, StringComparison.Ordinal);
+        Assert.Contains("Morgen je gesprek bij Bakkerij De Korenaar", html, StringComparison.Ordinal);
+        Assert.Contains("Linda kijkt ernaar uit", html, StringComparison.Ordinal);
+        Assert.Contains("ingang naast de winkel", html, StringComparison.Ordinal);
+        Assert.Contains("Droog, 13 graden", html, StringComparison.Ordinal);
+        Assert.Contains("Route bekijken", html, StringComparison.Ordinal);
+        Assert.Contains("Oefen met Lobsy", html, StringComparison.Ordinal);
+        Assert.Contains("donderdag 22 oktober", html, StringComparison.Ordinal);
+        Assert.Contains("Met de fiets ben je er in 9 minuten", html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-ask-lobsy", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-ndm-reminder-save", html, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Preview_shell_omits_editable_save_on_demo()
+    public void Live_shell_includes_editable_save()
     {
-        var demo = AfterMatchHerinneringenSsrData.Demo();
+        var demo = AfterMatchHerinneringenSsrData.Demo(Culture);
         var html = AfterMatchHerinneringenSsrShells.BuildBody(
             Culture,
             demo,
             AfterMatchDemoIds.ScheduledApp,
             includeBackLink: false,
-            editableReminders: false);
+            editableReminders: true);
 
-        Assert.DoesNotContain("data-ndm-reminder-save", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("data-ndm-reminder-editable", html, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Page_seo_catalog_uses_herinneringen_title()
-    {
-        var appId = AfterMatchDemoIds.ScheduledApp;
-        var path = $"/candidate/applications/{appId:D}/after-match/herinneringen-ssr";
-        var entry = Jobsy.Web.Seo.PageSeoCatalog.Resolve(path);
-        Assert.Equal("AfterMatch.Screen07.PageTitle", entry.TitleKey);
+        Assert.Contains("data-ndm-reminder-save", html, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

@@ -1,16 +1,26 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Web.KandidaatBanen;
+using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 
 namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchHerinneringenSsrData
 {
-    internal sealed record PageData(AfterMatchThreadDto Thread, string SollicitatiesHref);
+    internal sealed record PageData(
+        AfterMatchThreadDto Thread,
+        string SollicitatiesHref,
+        string RescheduleHref,
+        string RouteHref,
+        string TipsHref,
+        string PracticeHref,
+        string AssistantHref,
+        AfterMatchHerinneringenFields Fields);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
+        CultureState culture,
         Guid applicationId,
         string? returnUrl,
         CancellationToken cancellationToken = default)
@@ -23,13 +33,34 @@ internal static class AfterMatchHerinneringenSsrData
             return null;
         }
 
+        return Build(culture, thread, applicationId, returnUrl);
+    }
+
+    internal static PageData Demo(CultureState culture) =>
+        Build(culture, AfterMatchMailSsrDemoData.ScheduledThread(), AfterMatchMailSsrDemoData.ScheduledApplicationId, null);
+
+    private static PageData Build(
+        CultureState culture,
+        AfterMatchThreadDto thread,
+        Guid applicationId,
+        string? returnUrl)
+    {
         var backHref = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(returnUrl, out var safeReturn)
             ? safeReturn
             : KbRoutes.Applications;
 
-        return new PageData(thread, backHref);
-    }
+        const string candidateHow = "/candidate/hoe-werkt-lobsy";
+        var routeHref = "https://www.google.com/maps/search/?api=1&query="
+            + Uri.EscapeDataString(thread.LocationOrLink ?? thread.CompanyName);
 
-    internal static PageData Demo() =>
-        new(AfterMatchMailSsrDemoData.ScheduledThread(), KbRoutes.Applications);
+        return new PageData(
+            thread,
+            backHref,
+            AfterMatchSollicitatiesUrls.Reschedule(applicationId, backHref),
+            routeHref,
+            candidateHow,
+            candidateHow,
+            candidateHow,
+            AfterMatchHerinneringenFieldsBuilder.Build(culture, thread, applicationId));
+    }
 }
