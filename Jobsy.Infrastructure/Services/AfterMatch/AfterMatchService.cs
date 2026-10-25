@@ -448,6 +448,11 @@ public sealed class AfterMatchService : IAfterMatchService
             DateTime.UtcNow);
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyApplicationOutcomeRecordedAsync(
+            application,
+            employerUserId,
+            request.Outcome,
+            cancellationToken);
         return await MapThreadAsync(application, interview, employerUserId, isEmployer: true, cancellationToken);
     }
 
