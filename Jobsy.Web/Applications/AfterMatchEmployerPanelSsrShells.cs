@@ -211,7 +211,7 @@ internal static class AfterMatchEmployerPanelSsrShells
             AppendPickedSlot(sb, start);
         }
 
-        sb.Append("</div><button type=\"button\" class=\"lk small\" data-ndm-add-slot style=\"margin-top:4px\">");
+        sb.Append("</div><button type=\"button\" class=\"lk small\" data-ndm-add-slot tabindex=\"-1\" style=\"margin-top:4px\">");
         sb.Append(NdMIcons.Plus);
         sb.Append(' ');
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AddSlot"]));
@@ -224,20 +224,24 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</button></div></div></div><div data-ndm-agenda-block hidden><p class=\"small muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AgendaPlaceholder"]));
         sb.Append("</p></div><div><span class=\"lbl\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Format.OnSite"]));
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.Where"]));
         sb.Append("</span><div class=\"row wrapflex\" style=\"gap:6px\" data-ndm-format-chips>");
         AppendFormatChip(sb, culture, InterviewFormat.OnSite, data.InitialFormat);
         AppendFormatChip(sb, culture, InterviewFormat.Online, data.InitialFormat);
         AppendFormatChip(sb, culture, InterviewFormat.Phone, data.InitialFormat);
-        sb.Append("</div><input class=\"inp\" style=\"margin-top:8px;width:100%\" data-ndm-location placeholder=\"");
+        sb.Append("</div><div class=\"inp ndm-wg-inp-field\" style=\"margin-top:8px;width:100%\"><span class=\"ndm-wg-inp-ico\" aria-hidden=\"true\">");
+        sb.Append(NdMIcons.MapPin);
+        sb.Append("</span><input class=\"ndm-wg-inp-control\" data-ndm-location placeholder=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Where"]));
         sb.Append("\" value=\"");
         sb.Append(WebUtility.HtmlEncode(data.InitialLocation));
-        sb.Append("\" /></div><div><span class=\"lbl\">");
+        sb.Append("\" /></div></div><div><span class=\"lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.WithWhom"]));
-        sb.Append("</span><input class=\"inp\" style=\"width:100%\" data-ndm-with-whom value=\"");
+        sb.Append("</span><div class=\"inp ndm-wg-inp-field\" style=\"width:100%\"><span class=\"ndm-wg-inp-ico\" aria-hidden=\"true\">");
+        sb.Append(NdMIcons.User);
+        sb.Append("</span><input class=\"ndm-wg-inp-control\" data-ndm-with-whom value=\"");
         sb.Append(WebUtility.HtmlEncode(data.InitialWithWhom));
-        sb.Append("\" /></div><div><span class=\"lbl\">");
+        sb.Append("\" /></div></div><div><span class=\"lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Note"]));
         sb.Append("</span><textarea class=\"inp area\" style=\"width:100%\" data-ndm-note>");
         sb.Append(WebUtility.HtmlEncode(data.InitialNote));
@@ -249,9 +253,9 @@ internal static class AfterMatchEmployerPanelSsrShells
 
         sb.Append('>');
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Submit"]));
-        sb.Append("</button><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
+        sb.Append("</button><a class=\"lk\" href=\"#\" data-ndm-close-panel>");
         sb.Append(WebUtility.HtmlEncode(culture["Common.Cancel"]));
-        sb.Append("</button></div></aside>");
+        sb.Append("</a></div></aside>");
     }
 
     private static void AppendFormatChip(
@@ -266,6 +270,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("\" data-ndm-format=\"");
         sb.Append((int)fmt);
         sb.Append("\">");
+        sb.Append(FormatIcon(fmt));
         sb.Append(WebUtility.HtmlEncode(FormatLabel(culture, fmt)));
         sb.Append("</button>");
     }
@@ -297,6 +302,13 @@ internal static class AfterMatchEmployerPanelSsrShells
         InterviewFormat.Online => culture["AfterMatch.Screen03.Format.Online"],
         InterviewFormat.Phone => culture["AfterMatch.Screen03.Format.Phone"],
         _ => culture["AfterMatch.Screen03.Format.OnSite"],
+    };
+
+    private static string FormatIcon(InterviewFormat fmt) => fmt switch
+    {
+        InterviewFormat.Online => NdMIcons.Video,
+        InterviewFormat.Phone => NdMIcons.Phone,
+        _ => NdMIcons.MapPin,
     };
 
     private static void AppendTimeline(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)

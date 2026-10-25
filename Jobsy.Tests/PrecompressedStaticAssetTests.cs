@@ -17,6 +17,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("css/features/na-de-match.css")]
     [InlineData("js/ndm-confirmed.js")]
     [InlineData("js/ndm-reschedule.js")]
+    [InlineData("js/ndm-employer.js")]
     [InlineData("js/ndm-employer-outcome.js")]
     public void Precompressed_brotli_is_smaller_than_gzip(string relativePath)
     {
@@ -43,6 +44,7 @@ public sealed class PrecompressedStaticAssetTests
     [InlineData("css/features/na-de-match.css")]
     [InlineData("js/ndm-confirmed.js")]
     [InlineData("js/ndm-reschedule.js")]
+    [InlineData("js/ndm-employer.js")]
     [InlineData("js/ndm-employer-outcome.js")]
     public void Precompressed_sidecars_match_source_bytes(string relativePath)
     {
@@ -80,6 +82,13 @@ public sealed class PrecompressedStaticAssetTests
             Assert.Contains(".ndm-reschedule-page button.chip.on{border-color:var(--brand);background:#eef2f7}", text, StringComparison.Ordinal);
             Assert.Contains(".ndm-reschedule-page [hidden]", text, StringComparison.Ordinal);
             Assert.Contains("display:none!important", text, StringComparison.Ordinal);
+        }
+
+        if (relativePath == "js/ndm-employer.js")
+        {
+            var text = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.Contains("function setPanel", text, StringComparison.Ordinal);
+            Assert.Contains("data-ndm-open-panel", text, StringComparison.Ordinal);
         }
     }
 

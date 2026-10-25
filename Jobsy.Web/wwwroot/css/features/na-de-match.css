@@ -55,6 +55,7 @@
 @media(max-width:600px){.ndm .mgrid{grid-template-columns:minmax(0,1fr)}.ndm .mail{padding:18px 14px}.ndm .phone{max-width:none}.ndm.ndm-mail-page .wrap{padding:12px}.ndm.ndm-mail-page .ndm-mail-chatdock{padding:0 12px 12px}.ndm.ndm-mail-page .ndm-mockup-footer{padding:14px 12px 6px}}
 @media(max-width:1023px){.ndm.ndm-mail-page{display:flex;flex-direction:column;align-items:stretch}.ndm.ndm-mail-page main.wrap{order:1;flex:0 0 auto}.ndm.ndm-mail-page .ndm-mail-chatdock{order:2;flex:0 0 auto}.ndm.ndm-mail-page .ndm-mockup-footer{order:3;flex:0 0 auto}}
 .ndm-wg .g2{grid-template-columns:minmax(0,1fr) 360px}
+.ndm.ndm-wg-page .g2.ndm-wg-g2{grid-template-columns:minmax(0,1fr) 400px}
 .ndm .mail .mtop{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0e6d8}
 .ndm .mail.ndm-mail-preview{padding:14px 16px 18px}
 .ndm .mail.ndm-mail-preview .ndm-mail-from{margin:8px 0 4px}
@@ -283,9 +284,17 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-wg-page .what>div{background:#fbf6ef;border-radius:var(--rM);padding:14px}
 .ndm.ndm-wg-page .side .shd{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
 .ndm.ndm-wg-page .side .shd h2{font-size:1.3rem;margin:0}
+.ndm.ndm-wg-page [data-ndm-picked-slots]{display:flex;flex-direction:column;gap:10px}
+.ndm.ndm-wg-page [data-ndm-picked-slots] .slot.on{border-color:var(--brand);background:#f3f6fa}
+.ndm.ndm-wg-page [data-ndm-format-chips] .chip svg{width:15px;height:15px;flex-shrink:0}
+.ndm.ndm-wg-page .ndm-wg-inp-field{align-items:center;padding:10px 12px;box-sizing:border-box}
+.ndm.ndm-wg-page .ndm-wg-inp-ico{display:flex;color:var(--muted);flex-shrink:0}
+.ndm.ndm-wg-page .ndm-wg-inp-ico svg{width:17px;height:17px}
+.ndm.ndm-wg-page .ndm-wg-inp-control{flex:1 1 auto;min-width:0;border:0!important;outline:0;background:transparent;font:inherit;color:var(--text);padding:0}
+.ndm.ndm-wg-page [data-ndm-add-slot]:focus{outline:none}
 @media(max-width:600px){
 .ndm.ndm-wg-page .g2.ndm-wg-g2{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px}
-.ndm.ndm-wg-page .what{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}
+.ndm.ndm-wg-page .what{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px}
 .ndm.ndm-wg-page .what>div{padding:10px 8px;font-size:.82rem}
 .ndm.ndm-wg-page .what b{font-size:.84rem}
 .ndm.ndm-wg-page .g2.ndm-wg-g2>.ndm-wg-main{order:1}

@@ -334,14 +334,16 @@
 
   function bindPanelNav(container) {
     container.querySelectorAll("[data-ndm-open-panel]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
         var panel = btn.getAttribute("data-ndm-open-panel");
         setPanel(container, panel, true);
       });
     });
 
     container.querySelectorAll("[data-ndm-close-panel]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
         setPanel(container, "", true);
       });
     });
