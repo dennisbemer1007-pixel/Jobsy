@@ -20,8 +20,7 @@ internal static class AfterMatchOutcomeSsrShells
         sb.Append(applicationId.ToString("D"));
         sb.Append("\"><main class=\"wrap\">");
 
-        AppendBreadcrumb(sb, culture, data);
-        AppendHeroBand(sb, culture);
+        AppendIntro(sb, culture, data);
         sb.Append("<div class=\"g2 ndm-outcome-g2\">");
         AppendMainStack(sb, culture, data);
         AppendFeedbackAside(sb, culture);
@@ -45,31 +44,24 @@ internal static class AfterMatchOutcomeSsrShells
         sb.Append("</div></div>");
     }
 
-    private static void AppendBreadcrumb(StringBuilder sb, CultureState culture, AfterMatchOutcomeSsrData.PageData data)
+    private static void AppendIntro(StringBuilder sb, CultureState culture, AfterMatchOutcomeSsrData.PageData data)
     {
         var thread = data.Thread;
-        sb.Append("<nav class=\"bc ndm-outcome-bc\" aria-label=\"");
+        sb.Append("<section class=\"intro\"><nav class=\"bc\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.Breadcrumb"]));
         sb.Append("\"><a href=\"");
         sb.Append(WebUtility.HtmlEncode(data.SollicitatiesHref));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.ApplicationsTab"]));
-        sb.Append("</a><i aria-hidden=\"true\"> › </i><span>");
+        sb.Append("</a><i>›</i><span>");
         sb.Append(WebUtility.HtmlEncode(thread.CompanyName));
-        sb.Append("</span><i aria-hidden=\"true\"> › </i><span>");
+        sb.Append("</span><i>›</i><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.PageTitle"]));
-        sb.Append("</span></nav>");
-    }
-
-    private static void AppendHeroBand(StringBuilder sb, CultureState culture)
-    {
-        sb.Append("<section class=\"band ndm-hero ndm-hero--gesprek ndm-outcome-hero\"><div class=\"bt\"><span class=\"eyb\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.Eyebrow"]));
-        sb.Append("</span><h1>");
+        sb.Append("</span></nav><h1>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.Hero.Title"]));
-        sb.Append("</h1><p class=\"ndm-hero-lead ndm-hero-lead--full\">");
+        sb.Append("</h1><p>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.Hero.Lead"]));
-        sb.Append("</p></div><div class=\"art ndm-hero__art\" aria-hidden=\"true\"></div></section>");
+        sb.Append("</p></section>");
     }
 
     private static void AppendMainStack(StringBuilder sb, CultureState culture, AfterMatchOutcomeSsrData.PageData data)
@@ -166,7 +158,7 @@ internal static class AfterMatchOutcomeSsrShells
             sb.Append("</div>");
             if (job.VacancyId is Guid vacancyId)
             {
-                sb.Append("<a class=\"btn line sm hide-m\" href=\"");
+                sb.Append("<a class=\"btn line sm\" href=\"");
                 sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Vacancy(vacancyId)));
                 sb.Append("\" data-enhance-nav=\"false\">");
                 sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.ViewJob"]));
@@ -174,7 +166,7 @@ internal static class AfterMatchOutcomeSsrShells
             }
             else
             {
-                sb.Append("<a class=\"btn line sm hide-m\" href=\"");
+                sb.Append("<a class=\"btn line sm\" href=\"");
                 sb.Append(WebUtility.HtmlEncode(data.SimilarJobsHref));
                 sb.Append("\" data-enhance-nav=\"false\">");
                 sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.ViewJob"]));
@@ -191,7 +183,7 @@ internal static class AfterMatchOutcomeSsrShells
         sb.Append("</a><a class=\"btn line\" href=\"");
         sb.Append(WebUtility.HtmlEncode(data.LearnHref));
         sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.LearnOven"]));
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.LearnCareer"]));
         sb.Append("</a></div></div>");
     }
 

@@ -263,7 +263,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen13.WhatNowLead", "Deze banen lijken erop en zijn dichtbij.", "These jobs look similar and are nearby.");
         Add("AfterMatch.Screen13.ViewJob", "Bekijken", "View");
         Add("AfterMatch.Screen13.MoreJobs", "Meer banen zoals deze", "More jobs like these");
-        Add("AfterMatch.Screen13.LearnOven", "Leren werken met een oven", "Learn to work with an oven");
+        Add("AfterMatch.Screen13.LearnCareer", "Leren en ontwikkelen", "Learn and grow");
         Add("AfterMatch.Screen13.ActivitiesPrefix", "Je sollicitatie en het gesprek staan al in ", "Your application and interview are already in ");
         Add("AfterMatch.Screen13.ActivitiesSuffix", ". Daar hoef je niets voor te doen.", ". You do not need to do anything for that.");
         Add("AfterMatch.Screen13.FeedbackAsideTitle", "Even iets kwijt?", "Need to share something?");

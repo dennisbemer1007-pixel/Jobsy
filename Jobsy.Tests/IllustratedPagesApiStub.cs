@@ -1,5 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
+using Jobsy.Infrastructure.Data;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 
@@ -201,6 +205,12 @@ public static class IllustratedPagesApiStub
                   "completedAtUtc": "2026-09-01T10:00:00Z"
                 }
                 """;
+        }
+
+        if (path.Contains("/me/applications/", StringComparison.OrdinalIgnoreCase)
+            && path.Contains("/after-match", StringComparison.OrdinalIgnoreCase))
+        {
+            return Serialize(BuildNotNowAfterMatchThread());
         }
 
         if (path.Contains("/me/applications", StringComparison.OrdinalIgnoreCase))
@@ -749,6 +759,35 @@ public static class IllustratedPagesApiStub
         kompas.WhoAmI = null;
         return kompas;
 #endif
+    }
+
+    private static AfterMatchThreadDto BuildNotNowAfterMatchThread()
+    {
+        var start = new DateTime(2026, 10, 22, 8, 30, 0, DateTimeKind.Utc);
+        return new AfterMatchThreadDto(
+            AfterMatchDemoIds.NotNowApp,
+            Guid.Parse("77777771-00a5-4000-8000-0000000000a5"),
+            InterviewStatus.Done,
+            AfterMatchContactShareState.From(InterviewStatus.Done, AfterMatchOutcomeKind.NotNow),
+            AfterMatchOutcomeKind.NotNow,
+            "Medewerker bakkerij",
+            "Bakkerij De Korenaar",
+            "9 min fietsen",
+            InterviewFormat.OnSite,
+            "Loosduinseweg 120, Den Haag",
+            "Linda de Wit",
+            null,
+            start,
+            start.AddMinutes(30),
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "Sanne de Vries",
+            null,
+            start.AddDays(-9),
+            "Je was heel zorgvuldig en vriendelijk.");
     }
 
     private static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Json);
