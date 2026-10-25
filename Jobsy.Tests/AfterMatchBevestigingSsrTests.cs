@@ -37,7 +37,7 @@ public sealed class AfterMatchBevestigingSsrTests : BunitContext
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchBevestigingSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("bevestiging-ssr", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261030-ndm-scroll1", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261030-ndm-scroll2", razor, StringComparison.Ordinal);
         Assert.Contains("ndm-mail-chrome.js", razor, StringComparison.Ordinal);
     }
 
@@ -71,14 +71,17 @@ public sealed class AfterMatchBevestigingSsrTests : BunitContext
         Assert.DoesNotContain("Zo blijft het veilig", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-ask-lobsy", html, StringComparison.Ordinal);
         Assert.Contains("Vraag het Lobsy", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-mockup-footer", html, StringComparison.Ordinal);
+        Assert.Contains(culture["Footer.Privacy"], html, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Na_de_match_css_has_desktop_bottom_nav_clearance_for_all_ndm_pages()
+    public void Na_de_match_css_has_bottom_nav_clearance_for_all_ndm_pages_below_desktop()
     {
         var root = FindRepoRoot();
         var ndmCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/na-de-match.css"));
-        Assert.Contains(".app-shell--candidate:has(.ndm-page) .app-main", ndmCss, StringComparison.Ordinal);
+        Assert.Contains("@media(max-width:1023px)", ndmCss, StringComparison.Ordinal);
+        Assert.Contains(".app-shell:has(.ndm-page) .app-main", ndmCss, StringComparison.Ordinal);
         Assert.Contains(
             "padding-bottom:calc(var(--bottom-nav-h,4.25rem) + env(safe-area-inset-bottom,0px) + 20px)!important",
             ndmCss,

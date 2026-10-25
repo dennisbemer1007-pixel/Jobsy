@@ -60,6 +60,8 @@ public sealed class AfterMatchHerinneringenSsrTests : BunitContext
         Assert.Contains("donderdag 22 oktober", html, StringComparison.Ordinal);
         Assert.Contains("Met de fiets ben je er in 9 minuten", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-ask-lobsy", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-mockup-footer", html, StringComparison.Ordinal);
+        Assert.Contains(culture["Footer.Privacy"], html, StringComparison.Ordinal);
         Assert.DoesNotContain("data-ndm-reminder-save", html, StringComparison.Ordinal);
     }
 
