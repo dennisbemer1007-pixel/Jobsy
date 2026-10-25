@@ -146,10 +146,22 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen05.Calendar", "Toevoegen aan agenda", "Add to calendar");
         Add("AfterMatch.Screen05.Reminders", "Herinneringen instellen", "Set reminders");
 
-        Add("AfterMatch.Screen06.Crumb", "Voorbeelden van bevestigingsmails", "Confirmation e-mail examples");
+        Add("AfterMatch.Screen06.Crumb", "Voorbeelden van de bevestiging", "Confirmation examples");
         Add("AfterMatch.Screen06.Title", "Wat jij en de werkgever in de mail zien", "What you and the employer see in e-mail");
+        Add("AfterMatch.Screen06.LabelCandidate", "Kandidaat", "Candidate");
+        Add("AfterMatch.Screen06.LabelEmployer", "Werkgever", "Employer");
         Add("AfterMatch.Screen06.CandidateMail", "Mail aan kandidaat", "E-mail to candidate");
         Add("AfterMatch.Screen06.EmployerMail", "Mail aan werkgever", "E-mail to employer");
+        Add("AfterMatch.Screen06.CandidateMfootLead", "Lukt het toch niet?", "Still not working out?");
+        Add("AfterMatch.Screen06.CandidateMfootReschedule", "Verzetten of afzeggen", "Reschedule or cancel");
+        Add("AfterMatch.Screen06.CandidateMfootMid", "kan tot het gesprek.", "is possible until the interview.");
+        Add("AfterMatch.Screen06.CandidateMfootTips", "Tips voor je gesprek", "Tips for your interview");
+        Add("AfterMatch.Screen06.EmployerMfootLead", "Je krijgt de dag ervoor een herinnering.", "You get a reminder the day before.");
+        Add("AfterMatch.Screen06.EmployerMfootLink", "Gesprek openen in Lobsy", "Open interview in Lobsy");
+        Add("AfterMatch.Screen06.MfootBrand", "Lobsy · Den Haag", "Lobsy · The Hague");
+        Add("AfterMatch.Screen06.PrivacyNote",
+            "Je telefoonnummer deel je pas na het gesprek, je bankgegevens pas na een aanbod.",
+            "You share your phone number only after the interview and bank details only after an offer.");
         Add("AfterMatch.Screen06.After.Title", "Wat er hierna gebeurt", "What happens next");
         Add("AfterMatch.Screen06.After.Body",
             "Beide partijen kunnen het gesprek verzetten of afzeggen met een korte reden. Berichten blijven in Lobsy.",
@@ -352,6 +364,8 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Mail.OutlookEventTitle", "Gesprek {0} (via Lobsy)", "Interview {0} (via Lobsy)");
         Add("AfterMatch.Mail.OutlookStart", "Begin", "Start");
         Add("AfterMatch.Mail.OutlookEnd", "Einde", "End");
+        Add("AfterMatch.Mail.OutlookLocation", "Locatie", "Location");
+        Add("AfterMatch.Mail.OutlookReschedule", "Verzetten of afzeggen: lobsy.nl/g/7KX2", "Reschedule or cancel: lobsy.nl/g/7KX2");
         Add("AfterMatch.Mail.OutlookReminder", "Herinnering", "Reminder");
         Add("AfterMatch.Mail.OutlookReminderVal", "2 uur van tevoren", "2 hours before");
         Add("AfterMatch.Mail.OutlookBody", "Kennismaking voor {0} met {1}.", "Introduction for {0} with {1}.");

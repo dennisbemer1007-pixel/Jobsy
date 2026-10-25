@@ -25,7 +25,8 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261029-ndm-mail06" />
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261030-ndm-mail06" />
+    <script src="/js/ndm-mail-chrome.js?v=20261030-ndm-mail-chrome" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -69,6 +70,7 @@ else if (_bodyHtml is not null)
             var returnUrl = returnValues.FirstOrDefault();
             var data = await AfterMatchBevestigingSsrData.LoadAsync(
                 Api,
+                Culture,
                 ApplicationId,
                 returnUrl);
 

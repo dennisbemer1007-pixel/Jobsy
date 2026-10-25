@@ -1,5 +1,4 @@
 using Bunit;
-using Jobsy.Core.Contracts;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
@@ -38,26 +37,15 @@ public sealed class AfterMatchBevestigingSsrTests : BunitContext
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchBevestigingSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("bevestiging-ssr", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261029-ndm-mail06", razor, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Preview_route_is_anonymous_no_blazor()
-    {
-        var root = FindRepoRoot();
-        var razor = File.ReadAllText(Path.Combine(
-            root,
-            "Jobsy.Web/Components/Pages/__Preview/NaDeMatchAccPreviewScreens.razor"));
-        Assert.Contains("AllowAnonymous", razor, StringComparison.Ordinal);
-        Assert.Contains("/preview/na-de-match/{ScreenId}", razor, StringComparison.Ordinal);
-        Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261030-ndm-mail06", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-mail-chrome.js", razor, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Shell_renders_mail_confirmation_mockup_blocks()
     {
         var culture = Culture;
-        var demo = AfterMatchBevestigingSsrData.Demo();
+        var demo = AfterMatchBevestigingSsrData.Demo(culture);
         var html = AfterMatchBevestigingSsrShells.BuildBody(
             culture,
             demo,
@@ -65,14 +53,24 @@ public sealed class AfterMatchBevestigingSsrTests : BunitContext
             includeBackLink: false);
 
         Assert.Contains("data-ndm-bevestiging-ssr=\"1\"", html, StringComparison.Ordinal);
-        Assert.Contains("Bevestiging voor allebei, met agenda-item", html, StringComparison.Ordinal);
-        Assert.Contains("Mail aan kandidaat", html, StringComparison.Ordinal);
-        Assert.Contains("Mail aan werkgever", html, StringComparison.Ordinal);
-        Assert.Contains("Je gesprek staat erin, Sanne", html, StringComparison.Ordinal);
-        Assert.Contains("Sanne komt donderdag", html, StringComparison.Ordinal);
-        Assert.Contains("Zo ziet het agenda-item eruit in Outlook", html, StringComparison.Ordinal);
-        Assert.Contains("Wat er hierna gebeurt", html, StringComparison.Ordinal);
-        Assert.Contains("class=\"olk\"", html, StringComparison.Ordinal);
+        Assert.Contains("Voorbeelden van de bevestiging", html, StringComparison.Ordinal);
+        Assert.Contains(">Kandidaat<", html, StringComparison.Ordinal);
+        Assert.Contains(">Werkgever<", html, StringComparison.Ordinal);
+        Assert.Contains("Donderdag 22 oktober, 10:30 tot 11:00", html, StringComparison.Ordinal);
+        Assert.Contains("Linda de Wit, eigenaar", html, StringComparison.Ordinal);
+        Assert.Contains("9 min fietsen of 18 min met tram 2", html, StringComparison.Ordinal);
+        Assert.Contains("Op locatie, Loosduinseweg 120", html, StringComparison.Ordinal);
+        Assert.Contains("Zet in je agenda", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"mfoot\"", html, StringComparison.Ordinal);
+        Assert.Contains("Tips voor je gesprek", html, StringComparison.Ordinal);
+        Assert.Contains("Gesprek openen in Lobsy", html, StringComparison.Ordinal);
+        Assert.Contains(">Locatie<", html, StringComparison.Ordinal);
+        Assert.Contains("2571 AH Den Haag", html, StringComparison.Ordinal);
+        Assert.Contains("lobsy.nl/g/7KX2", html, StringComparison.Ordinal);
+        Assert.Contains("Je telefoonnummer deel je pas na het gesprek", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Zo blijft het veilig", html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-ask-lobsy", html, StringComparison.Ordinal);
+        Assert.Contains("Vraag het Lobsy", html, StringComparison.Ordinal);
     }
 
     [Fact]

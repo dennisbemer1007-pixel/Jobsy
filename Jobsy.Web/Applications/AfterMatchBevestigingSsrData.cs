@@ -8,10 +8,18 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchBevestigingSsrData
 {
-    internal sealed record PageData(AfterMatchThreadDto Thread, string SollicitatiesHref);
+    internal sealed record PageData(
+        AfterMatchThreadDto Thread,
+        string SollicitatiesHref,
+        string RescheduleHref,
+        string TipsHref,
+        string OpenInterviewHref,
+        string AssistantHref,
+        AfterMatchMailConfirmationFields MailFields);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
+        CultureState culture,
         Guid applicationId,
         string? returnUrl,
         CancellationToken cancellationToken = default)
@@ -24,13 +32,31 @@ internal static class AfterMatchBevestigingSsrData
             return null;
         }
 
+        return Build(culture, thread, applicationId, returnUrl);
+    }
+
+    internal static PageData Demo(CultureState culture) =>
+        Build(culture, AfterMatchMailSsrDemoData.ScheduledThread(), AfterMatchMailSsrDemoData.ScheduledApplicationId, null);
+
+    private static PageData Build(
+        CultureState culture,
+        AfterMatchThreadDto thread,
+        Guid applicationId,
+        string? returnUrl)
+    {
         var backHref = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(returnUrl, out var safeReturn)
             ? safeReturn
             : KbRoutes.Applications;
 
-        return new PageData(thread, backHref);
-    }
+        const string candidateHow = "/candidate/hoe-werkt-lobsy";
 
-    internal static PageData Demo() =>
-        new(AfterMatchMailSsrDemoData.ScheduledThread(), KbRoutes.Applications);
+        return new PageData(
+            thread,
+            backHref,
+            AfterMatchSollicitatiesUrls.Reschedule(applicationId, backHref),
+            candidateHow,
+            $"/candidate/applications/{applicationId:D}/after-match",
+            candidateHow,
+            AfterMatchMailConfirmationFieldsBuilder.Build(culture, thread, applicationId));
+    }
 }

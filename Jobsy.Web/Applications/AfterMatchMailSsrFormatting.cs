@@ -15,8 +15,8 @@ internal static class AfterMatchMailSsrFormatting
             return "Donderdag 22 oktober, 10:30 tot 11:00";
         }
 
-        var s = start.ToLocalTime();
-        var e = end.ToLocalTime();
+        var s = AfterMatchMailSsrTime.ToAmsterdam(start);
+        var e = AfterMatchMailSsrTime.ToAmsterdam(end);
         var nl = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
         var whenLong = s.ToString("dddd d MMMM, HH:mm", nl);
         if (whenLong.Length > 0 && char.IsLower(whenLong[0]))
@@ -28,14 +28,18 @@ internal static class AfterMatchMailSsrFormatting
     }
 
     internal static string OutlookStart(AfterMatchThreadDto thread) =>
-        thread.ScheduledStartUtc?.ToLocalTime().ToString(
-            "ddd dd-MM-yyyy HH:mm",
-            System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+        (thread.ScheduledStartUtc is DateTime su
+            ? AfterMatchMailSsrTime.ToAmsterdam(su).ToString(
+                "ddd dd-MM-yyyy HH:mm",
+                System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+            : null)
         ?? "do 22-10-2026 10:30";
 
     internal static string OutlookEnd(AfterMatchThreadDto thread) =>
-        thread.ScheduledEndUtc?.ToLocalTime().ToString(
+        (thread.ScheduledEndUtc is DateTime eu
+            ? AfterMatchMailSsrTime.ToAmsterdam(eu).ToString(
             "ddd dd-MM-yyyy HH:mm",
             System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+            : null)
         ?? "do 22-10-2026 11:00";
 }

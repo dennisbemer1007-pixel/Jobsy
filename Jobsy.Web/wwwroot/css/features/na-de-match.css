@@ -30,7 +30,14 @@
 .ndm .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
 .ndm .mclient{background:#fff;border:1px solid #e3ddd3;border-radius:var(--rL);overflow:hidden}
 .ndm .mhead{padding:12px 18px;border-bottom:1px solid #eee7dc;font-size:.85rem}
-.ndm .mail{padding:16px 20px 20px;min-height:0}
+.ndm .mail{padding:22px 24px 26px;min-height:0}
+.ndm .mfoot{font-size:.76rem;color:var(--muted);margin-top:18px;border-top:1px solid #f0e6d8;padding-top:12px}
+.ndm .ldate{text-align:center;color:#fff;font-weight:600;margin-bottom:18px}
+.ndm .push img{width:34px;height:34px;border-radius:9px;flex-shrink:0}
+.ndm .push b{font-size:.85rem;color:#14202f}
+.ndm .push p{font-size:.82rem;color:#2c3746;line-height:1.35}
+.ndm .push small{font-size:.72rem;color:#5d6673;margin-left:auto}
+.ndm.ndm-mail-page .ndm-mail-chatdock{display:flex;justify-content:flex-end;max-width:1180px;margin:0 auto;padding:4px 28px 18px;box-sizing:border-box;width:100%}
 .ndm .ndm-msg-panel{display:flex!important;flex-direction:column!important;min-height:0!important;height:auto!important;flex:0 0 auto!important;align-self:flex-start!important;width:100%}
 .ndm .ndm-msg-panel>.thread{flex:none!important;flex-grow:0!important;min-height:0!important}
 .ndm .card.side{display:flex;flex-direction:column;min-height:0}
@@ -41,7 +48,7 @@
 .ndm .lock{border-radius:24px;background:linear-gradient(180deg,#e9c7a7,#c98f72 55%,#7d5a6b);padding:24px 12px 34px}
 .ndm .ltime{text-align:center;color:#fff;font-size:3rem;font-weight:300;line-height:1}
 .ndm .push{display:flex;gap:10px;background:rgba(255,250,244,.94);border-radius:16px;padding:10px 12px;margin-top:8px}
-@media(max-width:600px){.ndm .mgrid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.ndm .mgrid{grid-template-columns:minmax(0,1fr)}.ndm .mail{padding:18px 14px}.ndm .phone{max-width:none}.ndm.ndm-mail-page .wrap{padding:12px}.ndm.ndm-mail-page .ndm-mail-chatdock{padding:0 12px 12px}}
 .ndm-wg .g2{grid-template-columns:minmax(0,1fr) 360px}
 .ndm .mail .mtop{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f0e6d8}
 .ndm .mail.ndm-mail-preview{padding:14px 16px 18px}
