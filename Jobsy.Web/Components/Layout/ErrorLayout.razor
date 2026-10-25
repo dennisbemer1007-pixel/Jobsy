@@ -27,22 +27,31 @@
     {
         <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
         <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
-        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft7" />
-        <link rel="stylesheet" href="css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft7" />
-        <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft7" />
-        <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft7" defer></script>
+        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft8" />
+        <link rel="stylesheet" href="css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft8" />
+        <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft8" />
+        <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft8" defer></script>
     }
 </HeadContent>
 
 @if (_signedInCandidate)
 {
-    <div class="app-shell app-shell--candidate app-shell--error-ssr err-layout pub-theme" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
+    <div class="app-shell app-shell--candidate app-shell--error-ssr err-layout err-layout--candidate-shell pub-theme" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
         <AppShellHeader HomeHref="@FeatureRoutes.CandidateProfilePath"
                         HeaderTagline="@Culture["Brand.Tagline"]"
                         ShowCandidatePwaInstall="false" />
         <main id="main" class="app-main err-main">
             @Body
         </main>
+        <footer class="err-footer err-footer--candidate" aria-label="@Culture["Footer.Legal"]">
+            <nav class="err-footer__links">
+                <a href="/privacy">@Culture["Footer.Privacy"]</a>
+                <a href="/algemene-voorwaarden">@Culture["Footer.Terms"]</a>
+                <a href="/toegankelijkheid">@Culture["PublicFooter.Accessibility"]</a>
+                <a href="/contact">@Culture["Status.Common.Contact"]</a>
+            </nav>
+            <p class="err-footer__copy">© @_chrome.Year Lobsy</p>
+        </footer>
         @if (_ssrCoachAvailable)
         {
             <LobsyCoachSsr HasBottomNav="false" AskLabel="@Culture["Coach.Ask"]" />

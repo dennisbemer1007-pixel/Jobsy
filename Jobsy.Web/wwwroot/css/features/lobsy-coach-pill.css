@@ -125,7 +125,62 @@
     inset-inline-end: 14px;
   }
 
+  .app-shell--candidate.has-bottom-nav:has(.passport-page--illustrated) .lobsy-coach-dock[data-ssr-coach],
+  .app-shell--candidate.has-bottom-nav:has(.passport-page) .lobsy-coach-dock[data-lobsy-coach],
+  .app-shell--candidate.has-bottom-nav:has(.passport-page) .lobsy-coach-dock[data-ssr-coach] {
+    bottom: calc(var(--bottom-nav-h, 64px) + 22px + env(safe-area-inset-bottom, 0px));
+  }
+
   :root {
     --lobsy-coach-pill-font: 0.86rem;
   }
+}
+
+/* SSR coach panel (banenkaart and other pages without app.min.css). */
+.lobsy-assistant {
+  position: fixed;
+  z-index: 55;
+  inset-inline-end: 24px;
+  inset-inline-start: auto;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+  pointer-events: none;
+  max-width: min(380px, calc(100vw - 1.5rem));
+}
+
+.lobsy-assistant.has-bottom-nav {
+  bottom: calc(var(--bottom-nav-h, 64px) + 76px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .app-shell--candidate.has-bottom-nav .lobsy-assistant.has-bottom-nav {
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.lobsy-assistant[hidden] {
+  display: none !important;
+}
+
+.lobsy-assistant__panel,
+.lobsy-assistant__compose,
+.lobsy-assistant__actions,
+.lobsy-assistant__action {
+  pointer-events: auto;
+}
+
+.lobsy-assistant__panel {
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 1.5rem));
+  max-height: min(396px, 70vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 0.85rem 0.9rem 0.95rem;
 }

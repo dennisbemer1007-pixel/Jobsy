@@ -118,7 +118,8 @@
   block-size: var(--cand-header-strip-h-mobile, 105px);
   max-block-size: var(--cand-header-strip-h-mobile, 105px);
   overflow: hidden;
-  border-radius: 0.75rem;
+  border-radius: 0;
+  background: var(--bg, #f5f2ee);
 }.err-hero__art--kreeft .err-kreeft-scene {
   inline-size: 100%;
   block-size: 100%;
@@ -272,6 +273,21 @@
   align-items: center;
   min-block-size: 44px;
   color: inherit;
+}.err-layout--candidate-shell {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}.err-layout--candidate-shell .err-main {
+  flex: 1 1 auto;
+}.app-shell--error-ssr .err-footer--candidate {
+  margin-top: auto;
+  width: 100%;
+  max-inline-size: 72rem;
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding: 0.85rem clamp(1rem, 3vw, 1.5rem) 1.25rem;
+  border-block-start: 1px solid var(--err-line);
+  background: var(--err-surface);
 }@media (min-width: 640px) {.err-main {
     padding-inline: 1.5rem;
   }}@media (min-width: 900px) {.err-hero {
