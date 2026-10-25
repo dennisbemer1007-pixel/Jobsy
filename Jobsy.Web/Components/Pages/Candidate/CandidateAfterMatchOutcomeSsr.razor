@@ -35,10 +35,6 @@
 {
     <PageContentSkeleton Variant="apps" CardCount="2" LoadingLabel="@Culture["Common.Loading"]" />
 }
-else if (_redirecting)
-{
-    <p class="state-message">@Culture["Common.Loading"]</p>
-}
 else if (!string.IsNullOrWhiteSpace(_fatalMessage))
 {
     <p class="state-message">@_fatalMessage</p>
@@ -52,7 +48,6 @@ else if (_bodyHtml is not null)
     [Parameter] public Guid ApplicationId { get; set; }
 
     private bool _loading = true;
-    private bool _redirecting;
     private string? _fatalMessage;
     private string? _bodyHtml;
 
@@ -74,26 +69,25 @@ else if (_bodyHtml is not null)
                 Api,
                 Culture,
                 ApplicationId,
-                returnUrl);
-
-            if (data is null)
-            {
-                _redirecting = true;
-                var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor";
-                if (http.Request.QueryString.HasValue)
-                {
-                    blazorPath += http.Request.QueryString.Value;
-                }
-
-                http.Response.Redirect(blazorPath);
-                return;
-            }
+                returnUrl)
+                ?? AfterMatchOutcomeSsrData.BuildFallback(Culture, ApplicationId, returnUrl);
 
             _bodyHtml = AfterMatchOutcomeSsrShells.BuildBody(Culture, data, ApplicationId);
         }
         catch
         {
-            _fatalMessage = Culture["Panel.ErrorInline"];
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("return", out var returnValues);
+            var returnUrl = returnValues.FirstOrDefault();
+            var data = AfterMatchOutcomeSsrData.BuildFallback(Culture, ApplicationId, returnUrl);
+            _bodyHtml = AfterMatchOutcomeSsrShells.BuildBody(Culture, data, ApplicationId);
         }
         finally
         {

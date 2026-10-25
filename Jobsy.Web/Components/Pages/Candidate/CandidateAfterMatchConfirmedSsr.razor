@@ -82,7 +82,7 @@ else if (_bodyHtml is not null)
                 _redirecting = true;
                 var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId);
                 var querySuffix = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
-                if (thread?.Outcome == Jobsy.Core.Enums.AfterMatchOutcomeKind.NotNow)
+                if (thread is null || AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread))
                 {
                     http.Response.Redirect(
                         $"/candidate/applications/{ApplicationId:D}/after-match/outcome-ssr{querySuffix}");
@@ -98,6 +98,16 @@ else if (_bodyHtml is not null)
         }
         catch
         {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                _redirecting = true;
+                var querySuffix = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
+                http.Response.Redirect(
+                    $"/candidate/applications/{ApplicationId:D}/after-match/outcome-ssr{querySuffix}");
+                return;
+            }
+
             _fatalMessage = Culture["Panel.ErrorInline"];
         }
         finally
