@@ -557,6 +557,25 @@
         };
     }
 
+    function mergeUrlFiltersWithBoot(fromUrl, boot) {
+        if (!boot) {
+            return normalizeFilters(fromUrl);
+        }
+        var merged = Object.assign({}, fromUrl || {});
+        merged.showFitFilters = !!boot.showFitFilters;
+        try {
+            var params = new URLSearchParams(window.location.search);
+            if (!params.has("sort")) {
+                merged.sort = boot.sort || (boot.showFitFilters ? "match" : merged.sort);
+            }
+        } catch (eMerge) {
+            if (!merged.sort && boot.sort) {
+                merged.sort = boot.sort;
+            }
+        }
+        return normalizeFilters(merged);
+    }
+
     function readFiltersFromUrl() {
         try {
             var params = new URLSearchParams(window.location.search);
@@ -603,10 +622,10 @@
 
     function resolveFilters() {
         ensureFitMap();
-        if (urlHasFilterParams()) {
-            return readFiltersFromUrl();
-        }
         var boot = readBootFilters();
+        if (urlHasFilterParams()) {
+            return mergeUrlFiltersWithBoot(readFiltersFromUrl(), boot);
+        }
         if (boot) {
             return normalizeFilters(boot);
         }
@@ -709,8 +728,9 @@
         if (labelEl) {
             labelEl.value = filters.originLabel || "";
         }
-        document.querySelectorAll("[data-testid=kb-list-sort]").forEach(function (sel) {
-            sel.value = filters.sort || "distance";
+        var sortValue = filters.sort || defaultSort(filters);
+        document.querySelectorAll("[data-testid=kb-list-sort], [data-testid=kb-sheet-sort]").forEach(function (sel) {
+            sel.value = sortValue;
         });
         document.querySelectorAll("[data-banenkaart-ssr=\"1\"] input[name=\"q\"][form=\"kb-filter-form\"]").forEach(function (input) {
             input.value = filters.q || "";
@@ -893,6 +913,12 @@
                 pin.outsideTravel = true;
             }
             return pin;
+        }).filter(function (pin) {
+            return pin
+                && pin.lat != null
+                && pin.lng != null
+                && isFinite(Number(pin.lat))
+                && isFinite(Number(pin.lng));
         });
         var meta = {
             zoomOutsideTravel: dimmed && mapPins.length > 0,
@@ -972,9 +998,9 @@
             || origin.originLabel
             || boot.originLabel
             || null;
-        var sortSel = document.querySelector("[data-testid=kb-list-sort]");
+        var sortSel = document.querySelector("[data-testid=kb-list-sort], [data-testid=kb-sheet-sort]");
         var sortVal = (sortSel && sortSel.value) || data.sort || boot.sort || null;
-        return {
+        return normalizeFilters({
             q: data.q || null,
             maxMinutes: parseInt(data.maxMinutes, 10) || boot.maxMinutes || 20,
             transport: data.transport || boot.transport || "Fiets",
@@ -987,8 +1013,9 @@
             originLat: originLat,
             originLng: originLng,
             originLabel: originLabel,
-            sort: sortVal
-        };
+            sort: sortVal,
+            showFitFilters: boot.showFitFilters
+        });
     }
 
     function mapIcons() {

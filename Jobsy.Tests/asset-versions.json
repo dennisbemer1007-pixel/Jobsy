@@ -388,8 +388,8 @@
     "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261024-stripscroll6",
-    "sha256": "1320369c8595fd8596efbc9ab5b169aa9f50b896f9deabe21f80e9faf331ce96"
+    "v": "20261025-matchsort1",
+    "sha256": "a2e408bd958781c21263fca6f640316098f9953ed7bc62e862e2ca49c84d07a8"
   },
   "js/banenkaart-ssr.js": {
     "v": "20261024-desktopsplit1",

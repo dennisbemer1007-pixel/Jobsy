@@ -74,7 +74,7 @@ internal static class BanenkaartSsrShells
         sb.Append("<script src=\"/js/banenkaart-map-icons.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261024-stripscroll6\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261025-matchsort1\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261024-travelrings1\" crossorigin=\"anonymous\" defer")
@@ -392,6 +392,39 @@ internal static class BanenkaartSsrShells
         sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"")
             .Append(WebUtility.HtmlEncode(token))
             .Append("\" />");
+
+        if (model.ShowFitFilters || q.OriginLat is not null)
+        {
+            var sort = model.Query.SortMode;
+            sb.Append("<section class=\"filter-section\" data-filter-section=\"sort\"><h3>")
+                .Append(WebUtility.HtmlEncode(culture["Discovery.Sort"]))
+                .Append("</h3><label class=\"sel results-meta__sort\"><span class=\"visually-hidden\">")
+                .Append(WebUtility.HtmlEncode(culture["Discovery.Sort"]))
+                .Append("</span><select class=\"results-meta__sort-select\" data-testid=\"kb-sheet-sort\" name=\"sort\">");
+            if (model.ShowFitFilters)
+            {
+                sb.Append("<option value=\"match\"")
+                    .Append(string.Equals(sort, "match", StringComparison.OrdinalIgnoreCase) ? " selected" : "")
+                    .Append('>')
+                    .Append(WebUtility.HtmlEncode(culture["Discovery.SortMatch"]))
+                    .Append("</option>");
+            }
+
+            if (q.OriginLat is not null)
+            {
+                sb.Append("<option value=\"distance\"")
+                    .Append(string.Equals(sort, "distance", StringComparison.OrdinalIgnoreCase) ? " selected" : "")
+                    .Append('>')
+                    .Append(WebUtility.HtmlEncode(culture["Kb.List.SortNear"]))
+                    .Append("</option>");
+            }
+
+            sb.Append("<option value=\"title\"")
+                .Append(string.Equals(sort, "title", StringComparison.OrdinalIgnoreCase) ? " selected" : "")
+                .Append('>')
+                .Append(WebUtility.HtmlEncode(culture["Discovery.SortAlphaAsc"]))
+                .Append("</option></select></label></section>");
+        }
 
         sb.Append("<section class=\"filter-section\" data-filter-section=\"travel\"><h3>")
             .Append(WebUtility.HtmlEncode(culture["Discovery.TravelSlider"]))
