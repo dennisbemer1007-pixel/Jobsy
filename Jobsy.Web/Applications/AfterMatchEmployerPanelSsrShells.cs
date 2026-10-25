@@ -80,7 +80,11 @@ internal static class AfterMatchEmployerPanelSsrShells
             sb.Append("><p style=\"margin-bottom:12px\"><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
             sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
             sb.Append("</button></p>");
-            sb.Append(AfterMatchEmployerMessagesSsrShells.BuildBody(culture, data.MessagesHub, applicationId));
+            sb.Append(AfterMatchEmployerMessagesSsrShells.BuildBody(
+                culture,
+                data.MessagesHub,
+                applicationId,
+                showSelectedThreadPanel: false));
             sb.Append("</div>");
         }
 

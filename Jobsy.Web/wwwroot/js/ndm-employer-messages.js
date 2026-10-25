@@ -352,6 +352,10 @@
       try {
         var params = new URL(window.location.href).searchParams;
         var threadId = params.get("thread");
+        if (!threadId && params.get("panel") === "messages") {
+          showMobileListOnly(container);
+          return;
+        }
         if (!threadId) {
           var match = window.location.pathname.match(
             /\/werkgever\/sollicitaties\/([0-9a-f-]{36})\/after-match/i
@@ -429,6 +433,18 @@
   function tryAutoInit() {
     var container = root();
     if (container && messagesPanelVisible(container)) {
+      try {
+        var params = new URL(window.location.href).searchParams;
+        if (
+          !params.get("thread") &&
+          (params.get("panel") === "messages" ||
+            container.getAttribute("data-ndm-messages-list-first") === "1")
+        ) {
+          showMobileListOnly(container);
+        }
+      } catch (_e0) {
+        /* ignore */
+      }
       init();
     }
   }

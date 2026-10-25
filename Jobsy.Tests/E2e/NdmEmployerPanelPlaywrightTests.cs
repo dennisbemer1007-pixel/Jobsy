@@ -236,10 +236,30 @@ public sealed class NdmEmployerPanelPlaywrightTests
 
     private static async Task AssertMessagesMobileListReachableAsync(IPage page, string baseUrl)
     {
+        var ensure = await page.APIRequest.PostAsync($"{baseUrl}/api/werkgever-client/after-match-demo-ensure");
+        Assert.True(ensure.Ok, $"mobile demo ensure failed: {ensure.Status}");
         var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=messages";
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Kandidaat #4790" })).ToBeVisibleAsync();
-        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Sanne de Vries" })).ToBeVisibleAsync();
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const root = document.querySelector('[data-ndm-employer-messages-ssr]');
+              if (!root) return false;
+              const params = new URL(location.href).searchParams;
+              if (params.get('thread')) return true;
+              const list = root.querySelector('.tlist');
+              return list && getComputedStyle(list).display !== 'none';
+            }
+            """,
+            null,
+            new() { Timeout = 20_000 });
+        var list = page.Locator("[data-ndm-employer-messages-ssr] .tlist [data-ndm-thread-select]");
+        await Assertions.Expect(list.First).ToBeVisibleAsync();
+        Assert.True(
+            await list.CountAsync() >= 2,
+            "expected at least 2 message threads in mobile list");
+        await Assertions.Expect(list.Filter(new() { HasText = "#4790" })).ToBeVisibleAsync();
+        await Assertions.Expect(list.Filter(new() { HasText = "Sanne" })).ToBeVisibleAsync();
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "11-messages-mobile-list.png"), FullPage = true });
     }
 
