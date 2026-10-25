@@ -145,6 +145,7 @@
                 <link rel="stylesheet" href="@href" />
             }
         }
+        <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft7" data-app-css />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
     @if (LoadBlazorRuntime)
@@ -363,7 +364,7 @@
             <script src="/js/app-public.js?v=20261027-nav-active1" nonce="@Nonce" defer></script>
             @if (IncludeCandidateNoBlazorChromeCss || BanenkaartAuthenticatedShell)
             {
-                <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft6" nonce="@Nonce" defer></script>
+                <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft7" nonce="@Nonce" defer></script>
             }
             @if (IncludeBanenkaartClientScript)
             {

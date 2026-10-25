@@ -426,7 +426,7 @@ public static class PageAssetCatalog
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
         "/css/features/candidate-header-strip.css?v=20261025-acc1093",
-        "/css/features/banenkaart-page.css?v=20261024-desktopsplit1",
+        "/css/features/banenkaart-page.css?v=20261025-kreeft7",
         "/css/features/kandidaat-banen.css?v=20261024-listtoggle2",
         "/css/features/banenkaart.css?v=20261023-acc9",
         "/css/features/banenkaart-illustrated.css?v=20261025-acc1093",
@@ -445,8 +445,8 @@ public static class PageAssetCatalog
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [
-        "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft6",
-        "css/features/lobsy-coach-ssr-chrome.css?v=20261025-kreeft6",
+        "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft7",
+        "css/features/lobsy-coach-pill.css?v=20261025-kreeft7",
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

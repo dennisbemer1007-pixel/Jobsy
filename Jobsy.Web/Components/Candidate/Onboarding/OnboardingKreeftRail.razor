@@ -1,0 +1,22 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
+@inject CultureState Culture
+
+<aside class="ob-kreeft-rail" aria-label="@Culture["Reiskaart.Aria"]">
+    <ol>
+        @foreach (var zone in Zones)
+        {
+            <li class="@(zone.IsCurrent ? "is-current" : zone.IsDone ? "is-done" : null)">
+                <i aria-hidden="true"></i>
+                <div>
+                    <b>@Culture[zone.TitleKey]</b>
+                    <small>@(zone.ActiveSub ?? Culture[zone.DefaultSubKey])</small>
+                </div>
+            </li>
+        }
+    </ol>
+</aside>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<OnboardingKreeftRailCatalog.RailZone> Zones { get; set; } = [];
+}

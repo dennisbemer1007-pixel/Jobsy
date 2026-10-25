@@ -6,6 +6,8 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Components
+@using Jobsy.Web.Security
 @inject CultureState Culture
 @inject IErrorChromeProvider ChromeProvider
 @inject IHttpContextAccessor HttpContextAccessor
@@ -25,8 +27,10 @@
     {
         <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
         <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
-        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft6" />
-        <link rel="stylesheet" href="css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft6" />
+        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft7" />
+        <link rel="stylesheet" href="css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft7" />
+        <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft7" />
+        <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft7" defer></script>
     }
 </HeadContent>
 
@@ -39,6 +43,10 @@
         <main id="main" class="app-main err-main">
             @Body
         </main>
+        @if (_ssrCoachAvailable)
+        {
+            <LobsyCoachSsr HasBottomNav="false" AskLabel="@Culture["Coach.Ask"]" />
+        }
     </div>
 }
 else
@@ -147,6 +155,7 @@ else
     private ErrorChrome _chrome = default!;
     private bool _showHeaderStart = true;
     private bool _signedInCandidate;
+    private bool _ssrCoachAvailable;
     private LandingVariant _variant = LandingVariant.On;
 
     protected override async Task OnInitializedAsync()
@@ -156,6 +165,10 @@ else
         var user = http?.User;
         _signedInCandidate = user?.Identity?.IsAuthenticated == true
             && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+        if (_signedInCandidate && user is not null)
+        {
+            _ssrCoachAvailable = AssistantChatHost.IsAvailableFor(user);
+        }
         _showHeaderStart = !path.StartsWith("/access-denied", StringComparison.OrdinalIgnoreCase)
                            && !path.StartsWith("/status/403", StringComparison.OrdinalIgnoreCase);
         _chrome = ChromeProvider.Build(http);

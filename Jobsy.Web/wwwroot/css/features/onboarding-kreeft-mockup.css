@@ -1,0 +1,264 @@
+/* Kreeft mockup 03–14: rail, qcard, start grid, zone list (53863b26). */
+
+.ob-rustig--kreeft-steps .ob-rustig__chrome {
+  display: none !important;
+}
+
+.ob-kreeft-ob {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) min(280px, 250px);
+  gap: 36px;
+  align-items: start;
+  padding: 18px 0 40px;
+}
+
+.ob-kreeft-rail {
+  position: relative;
+}
+
+.ob-kreeft-rail ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.ob-kreeft-rail li {
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.ob-kreeft-rail li i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #cfc6b8;
+  margin-top: 4px;
+  background: var(--bg, #f5f2ee);
+  font-style: normal;
+}
+
+.ob-kreeft-rail li b {
+  display: block;
+  font-family: var(--font-display, Fraunces, Georgia, serif);
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ob-kreeft-rail li.is-done i {
+  background: var(--success, #15803d);
+  border-color: var(--success, #15803d);
+}
+
+.ob-kreeft-rail li.is-current {
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(15, 45, 92, 0.05);
+}
+
+.ob-kreeft-rail li.is-current i {
+  border-color: var(--coral, #f54a1b);
+  background: var(--coral, #f54a1b);
+}
+
+.ob-kreeft-rail li.is-current b {
+  color: var(--coral, #f54a1b);
+}
+
+.ob-kreeft-rail li small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.ob-kreeft-qcard {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 30px;
+  min-width: 0;
+}
+
+.ob-kreeft-zonetag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.ob-kreeft-zonetag b {
+  font-family: var(--font-display, Fraunces, Georgia, serif);
+  font-size: 1.05rem;
+  color: var(--coral, #f54a1b);
+  font-weight: 700;
+}
+
+.ob-rustig--start-strand .ob-kreeft-start-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(300px, 30vw);
+  gap: 40px;
+  align-items: start;
+  padding: 14px 0 30px;
+}
+
+.ob-kreeft-zone-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ob-kreeft-zone-list li {
+  display: grid;
+  grid-template-columns: minmax(9rem, 240px) minmax(0, 1fr);
+  gap: 14px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  align-items: start;
+}
+
+.ob-kreeft-zone-list b {
+  font-family: var(--font-display, Fraunces, Georgia, serif);
+  color: var(--coral, #f54a1b);
+  font-weight: 600;
+}
+
+.ob-kreeft-zone-list span {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.ob-kreeft-before-card {
+  margin-top: 18px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+}
+
+.ob-kreeft-before-card h3 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display, Fraunces, Georgia, serif);
+  font-size: 1.15rem;
+  color: var(--brand);
+}
+
+.ob-kreeft-consent-opt {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--accent-soft) 4%);
+}
+
+.ob-kreeft-consent-opt strong {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.93rem;
+}
+
+.ob-kreeft-consent-opt small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.ob-kreeft-before-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.app-shell--onboarding-ssr .kb-banenkaart-ssr-chrome,
+.app-shell--onboarding-ssr .ob-rustig__hero-band.ob-start-strand-hero {
+  margin-block-start: 0;
+}
+
+.app-shell--onboarding-ssr .app-main {
+  padding-block-start: 0;
+}
+
+.app-shell--onboarding-ssr .app-main__content {
+  max-inline-size: none;
+  padding-inline: clamp(1rem, 3vw, 1.75rem);
+  padding-block-start: 0;
+}
+
+@media (max-width: 900px) {
+  .ob-kreeft-ob {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 8px 0 28px;
+  }
+
+  .ob-kreeft-rail {
+    display: none;
+  }
+
+  .ob-kreeft-qcard {
+    padding: 20px 18px;
+    border-radius: 18px;
+  }
+
+  .ob-rustig--start-strand .ob-kreeft-start-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ob-rustig--start-strand .ob-kreeft-start-grid .ob-rustig__reiskaart,
+  .ob-rustig--start-strand .ob-kreeft-start-grid .kreeft-reiskaart-wrap {
+    order: -1;
+  }
+
+  .ob-kreeft-zone-list li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .ob-rustig__body--with-reiskaart.ob-rustig__body--start-desktop {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .ob-rustig__body--start-desktop > .kreeft-reiskaart-wrap {
+    order: -1;
+    position: static;
+  }
+}
+
+@media (min-width: 901px) {
+  .ob-rustig__body--with-reiskaart.ob-rustig__body--start-desktop {
+    display: contents;
+  }
+
+  .ob-rustig--start-strand .ob-kreeft-start-grid > .ob-kreeft-start-main {
+    grid-column: 1;
+  }
+
+  .ob-rustig--start-strand .ob-kreeft-start-grid > .kreeft-reiskaart-wrap {
+    grid-column: 2;
+    position: sticky;
+    top: 12px;
+  }
+}

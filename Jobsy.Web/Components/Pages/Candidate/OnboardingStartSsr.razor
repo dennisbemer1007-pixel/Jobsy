@@ -37,10 +37,11 @@
     <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261025-acc1093" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-mini-footer" />
-    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-kreeft6" />
-    <link rel="stylesheet" href="css/features/lobsy-coach-ssr-chrome.css?v=20261025-kreeft6" />
-    <link rel="stylesheet" href="css/features/onboarding-start-strand.css?v=20261025-kreeft6" />
-    <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft6" defer></script>
+    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-kreeft7" />
+    <link rel="stylesheet" href="css/features/onboarding-kreeft-mockup.css?v=20261025-kreeft7" />
+    <link rel="stylesheet" href="css/features/onboarding-start-strand.css?v=20261025-kreeft7" />
+    <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft7" />
+    <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft7" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -53,7 +54,6 @@ else if (_showWelcome && _welcomeHtml is not null)
 }
 else if (_step is >= 1 and <= 10)
 {
-    var rustigPhase = OnboardingWizardCatalog.PhaseForStep(_step);
     var step7Consent = _step == 7 && !_draft.HasConsent;
     var pageTitle = step7Consent ? Culture["Onboarding.Consent.Title"] : Culture[$"Onboarding.Step{_step}.Title"];
     var pageLead = step7Consent ? Culture["Onboarding.Consent.Lead"] : Culture[$"Onboarding.Step{_step}.Lead"];
@@ -66,6 +66,7 @@ else if (_step is >= 1 and <= 10)
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
     var heroDesktop = OnboardingRustigPanoramaAssets.DesktopForStep(_step);
     var heroMobile = OnboardingRustigPanoramaAssets.MobileForStep(_step) ?? heroDesktop;
+    var zoneTag = OnboardingKreeftRailCatalog.ZoneTag(_step, Culture);
     <form method="post"
           action="@formAction"
           class="ob-wizard ob-wizard--richting-a ob-wizard--rustig"
@@ -104,56 +105,21 @@ else if (_step is >= 1 and <= 10)
         {
             <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
         }
-        <div class="ob-rustig" data-ob-rustig-screen="@($"step-{_step:D2}")">
+        <div class="ob-rustig ob-rustig--kreeft-steps" data-ob-rustig-screen="@($"step-{_step:D2}")">
             <OnboardingRustigHero DesktopUrl="@heroDesktop"
                                   MobileUrl="@heroMobile" />
-            <div class="ob-rustig__layout @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
-                <OnboardingKreeftZoneSidebar Zones="@OnboardingKreeftZoneSidebarNav.ForOnboardingStep(_step)" />
+            <div class="ob-kreeft-ob @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
+                <OnboardingKreeftRail Zones="@OnboardingKreeftRailCatalog.ForOnboardingStep(_step, Culture)" />
 
-                <div class="ob-rustig__main">
-                    <header class="ob-rustig__chrome">
-                        <div class="ob-rustig__chrome-row">
-                            <span class="ob-rustig__link ob-rustig__link--spacer" aria-hidden="true">‹</span>
-                            <div class="ob-rustig__segments"
-                                 role="progressbar"
-                                 aria-valuemin="1"
-                                 aria-valuemax="10"
-                                 aria-valuenow="@_step"
-                                 aria-label="@Culture.Format("Onboarding.ProgressAria", _step, 10)">
-                                @foreach (var phase in OnboardingWizardCatalog.Phases)
-                                {
-                                    <span><i style="--w:@(OnboardingWizardCatalog.PhaseFill(phase, _step) * 100)%"></i></span>
-                                }
-                            </div>
-                            <div class="ob-rustig__actions">
-                                <a class="ob-rustig__link" href="/candidate/profile">@Culture["Onboarding.Later"]</a>
-                                <a class="ob-rustig__link ob-rustig__link--underline"
-                                   href="/privacy/data"
-                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
-                            </div>
-                        </div>
-                        <div class="ob-rustig__meta">
-                            <span>
-                                <strong>@Culture[rustigPhase.NameKey]</strong>
-                                <text> · @Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.V3RemainingMinutes(_step))</text>
-                            </span>
-                            <span class="ob-rustig__saved" aria-live="polite">@Culture["Onboarding.Rustig.Saved"]</span>
-                        </div>
-                    </header>
-
-                    <div class="ob-rustig__page-head">
-                        @if (_step is 4 or 5)
-                        {
-                            <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-                        }
-                        <h1 tabindex="-1">@pageTitle</h1>
-                        <p class="ob-rustig__lead">@pageLead</p>
-                    </div>
-
-                    <div class="ob-rustig__body ob-rustig__body--with-reiskaart">
-                        @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
-                        <div class="ob-rustig__body-main">
-                        <div class="@canvasClass" data-testid="@canvasTestId">
+                <section class="ob-kreeft-qcard" data-testid="@canvasTestId">
+                    <p class="ob-kreeft-zonetag"><b>@zoneTag.Primary</b>@zoneTag.Secondary</p>
+                    @if (_step is 4 or 5)
+                    {
+                        <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+                    }
+                    <h1 tabindex="-1">@pageTitle</h1>
+                    <p class="ob-rustig__lead">@pageLead</p>
+                        <div class="@canvasClass">
                             <div class="ob-rustig__form-grid">
                                 <div class="ob-client-step ob-fields ob-fields--illustrated"
                                      data-ob-client-step="@_step"
@@ -221,9 +187,8 @@ else if (_step is >= 1 and <= 10)
                                         data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
                             </div>
                         }
-                        </div>
-                    </div>
-                </div>
+                </section>
+                @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
                 @if (_showJobsRail && _nearbySignal is not null)
                 {
                     <aside class="ob-rustig__rail" aria-label="@Culture["Onboarding.Panel.Nearby.RailAria"]">
