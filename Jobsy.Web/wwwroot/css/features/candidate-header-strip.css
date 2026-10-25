@@ -89,6 +89,15 @@
   border-radius: 0;
 }
 
+.app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] > .kb-banenkaart-header-strip,
+.app-shell--banenkaart-shell .jobsy-discovery[data-banenkaart-ssr="1"] > .kreeft-header-strip,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen > .kb-banenkaart-header-strip {
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: var(--kreeft-strip-bleed);
+  border-radius: 0;
+}
+
 .ob-wizard--rustig .ob-rustig__hero-band {
   block-size: var(--cand-header-strip-h-mobile);
   max-block-size: var(--cand-header-strip-h-mobile);
