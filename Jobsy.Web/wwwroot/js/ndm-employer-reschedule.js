@@ -25,15 +25,24 @@
       }
     )
       .then(function (res) {
-        if (!res.ok) throw new Error("fail");
-        return res.json();
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
       })
-      .then(function (data) {
-        if (data && data.redirectUrl) {
-          window.location.href = data.redirectUrl;
-        } else {
-          window.location.reload();
+      .then(function (result) {
+        if (result.ok && result.data && result.data.redirectUrl) {
+          window.location.href = result.data.redirectUrl;
+          return;
         }
+        if (!result.ok && result.data && result.data.redirectUrl) {
+          window.location.href = result.data.redirectUrl;
+          return;
+        }
+        if (result.ok) {
+          window.location.reload();
+          return;
+        }
+        throw new Error("fail");
       })
       .catch(function () {
         if (btn) btn.disabled = false;
