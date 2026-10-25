@@ -61,13 +61,15 @@ internal static class OnboardingStartWelcomeSsrShell
         sb.Append(WebUtility.HtmlEncode(title));
         sb.Append("</h1><p class=\"ob-rustig__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.WelcomeLead"]));
-        sb.Append("</p></div><div class=\"ob-rustig__body ob-rustig__body--journey-start\"><div class=\"ob-rustig__canvas\">");
+        sb.Append("</p></div><div class=\"ob-rustig__body ob-rustig__body--journey-start ob-rustig__body--with-reiskaart\">");
+        KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(3));
+        sb.Append("<div class=\"ob-rustig__body-main\"><div class=\"ob-rustig__canvas\">");
         AppendJourneyRoute(sb, culture);
         sb.Append("</div><div class=\"ob-rustig__footer-actions ob-rustig__footer-actions--above-fold\"><button type=\"submit\" name=\"obNav\" value=\"begin\" class=\"ob-rustig__btn ob-rustig__btn--primary\" data-testid=\"onboarding-begin\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.CtaRustig"]));
         sb.Append("</button></div><p class=\"ob-wizard__hint ob-wizard__hint--compact\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.StartJourney.Hint"]));
-        sb.Append("</p></div></div></div></div></form></section>");
+        sb.Append("</p></div></div></div></div></div></form></section>");
         return sb.ToString();
     }
 

@@ -6,6 +6,7 @@ using Jobsy.Web.Components.Candidate.Dna;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
 using Jobsy.Web.Navigation;
+using Jobsy.Web.Onboarding;
 
 namespace Jobsy.Web.Passport;
 
@@ -22,13 +23,16 @@ internal static class PassportSsrShells
         sb.Append(BuildGreeting(culture, data.FirstName));
         sb.Append("<div class=\"passport-layout\">");
         AppendSidebarCard(sb, culture, data, compact: false);
-        sb.Append("<div class=\"passport-layout__main\">");
+        sb.Append("<div class=\"passport-layout__main passport-layout__main--reiskaart\">");
+        sb.Append("<div class=\"passport-layout__reiskaart\">");
+        KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(16));
+        sb.Append("</div><div class=\"passport-layout__main-flow\">");
         AppendSidebarCard(sb, culture, data, compact: true);
         AppendOverview(sb, culture, data);
         AppendTabs(sb, culture, data);
         AppendActivePanel(sb, culture, data, antiforgeryToken, openDataSection);
         AppendFooterNav(sb, culture);
-        sb.Append("</div></div></div>");
+        sb.Append("</div></div></div></div>");
         AppendBanenkaartPrefetchBoot(sb, data);
         return sb.ToString();
     }

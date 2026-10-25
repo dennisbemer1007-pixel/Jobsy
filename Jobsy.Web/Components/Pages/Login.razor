@@ -12,6 +12,7 @@
 @using Jobsy.Web.Media
 @using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Onboarding
 @using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.DataProtection
@@ -37,13 +38,18 @@
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-<section class="au-stage au-stage--illustrated au-stage--kreeft-strip"
+<HeadContent>
+    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-reis1" />
+</HeadContent>
+
+<section class="au-stage au-stage--illustrated au-stage--kreeft-strip au-stage--reiskaart"
          style="@($"--au-kreeft-strip-desk:url('{KreeftHeaderStripAssets.InloggenDesk}');--au-kreeft-strip-mob:url('{KreeftHeaderStripAssets.InloggenMob}')")"
          data-au-login
          @attributes="_stageAttrs">
     <div class="au-kreeft-header-strip" aria-hidden="true" data-testid="kreeft-header-strip"></div>
 
     <div class="au-col">
+        <div class="au-reiskaart-grid">
         <div class="au-card au-card--illustrated @(isPause ? "au-pause" : null)">
 
             @if (isPause)
@@ -251,6 +257,8 @@
                     </p>
                 </div>
             }
+        </div>
+        @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 2))
         </div>
 
         <div class="au-below">
