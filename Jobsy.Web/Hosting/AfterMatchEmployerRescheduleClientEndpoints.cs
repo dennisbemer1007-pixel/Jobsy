@@ -4,6 +4,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Web.Applications;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace Jobsy.Web.Hosting;
 
@@ -32,7 +33,7 @@ public static class AfterMatchEmployerRescheduleClientEndpoints
             return Results.BadRequest();
         }
 
-        AfterMatchThreadDto thread;
+        AfterMatchThreadDto? thread;
         try
         {
             thread = await api.SelectAfterMatchSlotAsync(
@@ -42,10 +43,16 @@ public static class AfterMatchEmployerRescheduleClientEndpoints
         }
         catch
         {
-            return Results.BadRequest();
+            thread = await api.GetAfterMatchForEmployerAsync(applicationId, cancellationToken);
+            if (thread?.InterviewStatus != InterviewStatus.Scheduled)
+            {
+                return Results.Json(
+                    new { message = "accept_failed" },
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
         }
 
-        var redirect = thread.InterviewStatus == InterviewStatus.Scheduled
+        var redirect = thread!.InterviewStatus == InterviewStatus.Scheduled
             ? $"/werkgever/sollicitaties/{applicationId:D}/after-match"
             : $"/werkgever/sollicitaties/{applicationId:D}/after-match/reschedule-ssr";
 
