@@ -30,22 +30,30 @@ internal static class AfterMatchEmployerMessagesSsrData
             return null;
         }
 
-        var threads = await LoadThreadRowsAsync(api, cancellationToken);
-        threads = AfterMatchEmployerMessagesDemoHub.Augment(threads, contextApplicationId).ToList();
+        var byId = (await LoadThreadRowsAsync(api, cancellationToken))
+            .ToDictionary(r => r.Thread.ApplicationId);
+        foreach (var row in await LoadContextOnlyAsync(api, contextApplicationId, cancellationToken))
+        {
+            byId[row.Thread.ApplicationId] = row;
+        }
+
+        var threads = byId.Values.ToList();
+
+        if (flags.TestDepthValueMockupEnabled
+            && AfterMatchEmployerMessagesDemoHub.IsDemoApplication(contextApplicationId))
+        {
+            threads = AfterMatchEmployerMessagesDemoHub.Augment(threads, contextApplicationId).ToList();
+        }
 
         if (threads.Count == 0)
         {
-            threads = await LoadContextOnlyAsync(api, contextApplicationId, cancellationToken);
-            if (threads.Count == 0)
-            {
-                return null;
-            }
+            return null;
         }
 
         var selected = threadId ?? contextApplicationId;
         if (threads.All(r => r.Thread.ApplicationId != selected))
         {
-            selected = threads[0].Thread.ApplicationId;
+            selected = contextApplicationId;
         }
 
         var messagesBasePath = AfterMatchEmployerSollicitatiesUrls.Messages(contextApplicationId);
