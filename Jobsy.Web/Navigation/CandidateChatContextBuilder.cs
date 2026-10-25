@@ -18,13 +18,20 @@ public sealed record CandidateChatBootstrap(
 /// </summary>
 public static class CandidateChatContextBuilder
 {
-    public static async Task<CandidateChatBootstrap> BuildAsync(
+    public static Task<CandidateChatBootstrap> BuildAsync(
         JobsyApiClient api,
         NavigationManager navigation,
         CultureState culture,
         CancellationToken ct = default)
+        => BuildForPagePathAsync(api, RoutePath(navigation.Uri), culture, ct);
+
+    public static async Task<CandidateChatBootstrap> BuildForPagePathAsync(
+        JobsyApiClient api,
+        string path,
+        CultureState culture,
+        CancellationToken ct = default)
     {
-        var path = RoutePath(navigation.Uri);
+        path = NormalizePagePath(path);
         MeProfile? profile = null;
         IReadOnlyList<ApplicationItem> apps = [];
 
@@ -256,10 +263,31 @@ public static class CandidateChatContextBuilder
     {
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed))
         {
-            return uri;
+            return NormalizePagePath(uri);
         }
 
         return parsed.AbsolutePath.TrimEnd('/').ToLowerInvariant();
+    }
+
+    private static string NormalizePagePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = path.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absolute))
+        {
+            return absolute.AbsolutePath.TrimEnd('/').ToLowerInvariant();
+        }
+
+        if (!trimmed.StartsWith('/'))
+        {
+            trimmed = "/" + trimmed;
+        }
+
+        return trimmed.TrimEnd('/').ToLowerInvariant();
     }
 
     private static string Format(CultureState culture, string key, string arg)
