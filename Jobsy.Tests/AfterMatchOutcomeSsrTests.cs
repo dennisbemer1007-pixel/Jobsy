@@ -33,22 +33,23 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
     }
 
     [Fact]
-    public void Outcome_ssr_page_is_no_blazor_static()
+    public void Panel_ssr_page_is_no_blazor_static()
     {
         var root = FindRepoRoot();
         var razor = File.ReadAllText(Path.Combine(
             root,
-            "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchOutcomeSsr.razor"));
+            "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchPanelSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("AfterMatch.Screen13.PageTitle", razor, StringComparison.Ordinal);
         Assert.Contains("ndm-outcome.js", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261027-ndm-outcome1", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261028-ndm-outcome4", razor, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Panel_outcome_routes_to_outcome_ssr()
+    public void Panel_outcome_and_default_route_to_panel_ssr()
     {
-        Assert.Equal("/outcome-ssr", AfterMatchPanelRouting.PathSuffixForPanel("outcome"));
+        Assert.Equal("/panel-ssr", AfterMatchPanelRouting.PathSuffixForPanel("outcome"));
+        Assert.Equal("/panel-ssr", AfterMatchPanelRouting.PathSuffixForPanel(""));
     }
 
     [Fact]
@@ -118,7 +119,7 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
             "/candidate/applications?tab=berichten",
             "/candidate/applications?tab=activiteiten",
             "/banenkaart",
-            "/candidate/hoe-werkt-lobsy",
+            "/carriere",
             "/candidate/hoe-werkt-lobsy",
             reason,
             "13 okt",
@@ -130,13 +131,18 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
         var html = AfterMatchOutcomeSsrShells.BuildBody(culture, data, appId);
 
         Assert.Contains("data-ndm-outcome-ssr=\"1\"", html, StringComparison.Ordinal);
-        Assert.Contains("ndm-hero--gesprek", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("ndm-hero--gesprek", html, StringComparison.Ordinal);
+        Assert.Contains("<section class=\"intro\">", html, StringComparison.Ordinal);
         Assert.Contains("Dank je wel voor het gesprek", html, StringComparison.Ordinal);
         Assert.Contains(WebUtility.HtmlEncode(reason), html, StringComparison.Ordinal);
         Assert.Contains("Wat nu?", html, StringComparison.Ordinal);
         Assert.Contains("Even iets kwijt?", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-outcome-chip", html, StringComparison.Ordinal);
         Assert.Contains("tl ndm-outcome-tl", html, StringComparison.Ordinal);
+        Assert.Contains("Leren en ontwikkelen", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/carriere\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("hide-m", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-mockup-footer", html, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

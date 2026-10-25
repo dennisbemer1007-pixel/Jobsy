@@ -1,0 +1,161 @@
+@page "/candidate/applications/{ApplicationId:guid}/after-match/panel-ssr"
+@page "/candidate/applications/{ApplicationId:guid}/after-match/outcome-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@_pageTitle · Lobsy</PageTitle>
+<PageSeo Title="@_pageTitle" />
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/candidate/applications"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+    <link rel="stylesheet" href="css/features/sollicitaties-page.css?v=20261024-ndm-pick-slot2" />
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261028-ndm-outcome4" />
+    @if (_includeConfirmedScript)
+    {
+        <script src="/js/ndm-confirmed.js?v=20261026-ndm-confirmed5" defer></script>
+    }
+    @if (_includeOutcomeScript)
+    {
+        <script src="/js/ndm-outcome.js?v=20261028-ndm-outcome4" defer></script>
+    }
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="2" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (_redirecting)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private bool _loading = true;
+    private bool _redirecting;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+    private string _pageTitle = "";
+    private bool _includeConfirmedScript;
+    private bool _includeOutcomeScript;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("return", out var returnValues);
+            var returnUrl = returnValues.FirstOrDefault();
+
+            var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId);
+            if (AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread))
+            {
+                await RenderOutcomeAsync(returnUrl);
+                return;
+            }
+
+            var confirmed = await AfterMatchConfirmedSsrData.LoadAsync(
+                Api,
+                Culture,
+                ApplicationId,
+                returnUrl);
+            if (confirmed is not null)
+            {
+                _pageTitle = Culture["AfterMatch.Screen05.PageTitle"];
+                _includeConfirmedScript = true;
+                _bodyHtml = AfterMatchConfirmedSsrShells.BuildBody(Culture, confirmed, ApplicationId);
+                return;
+            }
+
+            if (thread is null)
+            {
+                await RenderOutcomeAsync(returnUrl);
+                return;
+            }
+
+            _redirecting = true;
+            var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor";
+            if (http.Request.QueryString.HasValue)
+            {
+                blazorPath += http.Request.QueryString.Value;
+            }
+
+            http.Response.Redirect(blazorPath);
+        }
+        catch
+        {
+            await RenderOutcomeFallbackAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RenderOutcomeAsync(string? returnUrl)
+    {
+        _pageTitle = Culture["AfterMatch.Screen13.PageTitle"];
+        _includeOutcomeScript = true;
+        var data = await AfterMatchOutcomeSsrData.LoadAsync(
+            Api,
+            Culture,
+            ApplicationId,
+            returnUrl)
+            ?? AfterMatchOutcomeSsrData.BuildFallback(Culture, ApplicationId, returnUrl);
+        _bodyHtml = AfterMatchOutcomeSsrShells.BuildBody(Culture, data, ApplicationId);
+    }
+
+    private Task RenderOutcomeFallbackAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+            return Task.CompletedTask;
+        }
+
+        var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+        query.TryGetValue("return", out var returnValues);
+        var returnUrl = returnValues.FirstOrDefault();
+        _pageTitle = Culture["AfterMatch.Screen13.PageTitle"];
+        _includeOutcomeScript = true;
+        var data = AfterMatchOutcomeSsrData.BuildFallback(Culture, ApplicationId, returnUrl);
+        _bodyHtml = AfterMatchOutcomeSsrShells.BuildBody(Culture, data, ApplicationId);
+        return Task.CompletedTask;
+    }
+}

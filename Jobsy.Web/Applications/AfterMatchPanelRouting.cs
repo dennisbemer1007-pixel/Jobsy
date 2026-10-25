@@ -26,8 +26,7 @@ internal static class AfterMatchPanelRouting
         "pick-slot" or "propose-slot" => "/pick-slot-ssr",
         "messages" => "/messages-ssr",
         "reschedule" or "cancel" => "/reschedule-ssr",
-        "outcome" => "/outcome-ssr",
-        "" => "/confirmed-ssr",
+        "outcome" or "" => "/panel-ssr",
         _ => "/blazor",
     };
 }

@@ -56,7 +56,8 @@ internal static class AfterMatchOutcomeSsrData
             null,
             null);
 
-        const string candidateHow = "/candidate/hoe-werkt-lobsy";
+        const string learnHref = "/carriere";
+        const string assistantHref = "/candidate/hoe-werkt-lobsy";
         var reason = string.IsNullOrWhiteSpace(thread.OutcomeReason)
             ? culture["AfterMatch.Screen13.DemoReason"]
             : thread.OutcomeReason.Trim();
@@ -72,8 +73,8 @@ internal static class AfterMatchOutcomeSsrData
             backHref,
             activitiesHref,
             KbRoutes.Map,
-            candidateHow,
-            candidateHow,
+            learnHref,
+            assistantHref,
             reason,
             yesDate,
             planDate,
@@ -97,7 +98,8 @@ internal static class AfterMatchOutcomeSsrData
             null,
             null);
 
-        const string candidateHow = "/candidate/hoe-werkt-lobsy";
+        const string learnHref = "/carriere";
+        const string assistantHref = "/candidate/hoe-werkt-lobsy";
         var placeholder = new AfterMatchThreadDto(
             applicationId,
             Guid.Empty,
@@ -128,8 +130,8 @@ internal static class AfterMatchOutcomeSsrData
             backHref,
             activitiesHref,
             KbRoutes.Map,
-            candidateHow,
-            candidateHow,
+            learnHref,
+            assistantHref,
             culture["AfterMatch.Screen13.FallbackReason"],
             "13 okt",
             "15 okt",
