@@ -75,6 +75,10 @@
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" UiVariant="AssistantChatUiVariant.Warm" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
+    else if (_noBlazorRuntime && _ssrCoachAvailable && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
+    {
+        <LobsyCoachSsr HasBottomNav="_hasBottomNav" AskLabel="@Culture["Coach.Ask"]" />
+    }
     else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage && !_hideFloatingChrome)
     {
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
@@ -122,6 +126,7 @@
     private bool _pwaSheetOpen;
     private bool _noBlazorRuntime;
     private bool _noBlazorCandidateNav;
+    private bool _ssrCoachAvailable;
 
     private bool ShowInstallBanner =>
         RendererInfo.IsInteractive
@@ -365,16 +370,19 @@
         if (user?.Identity?.IsAuthenticated != true)
         {
             _noBlazorCandidateNav = false;
+            _ssrCoachAvailable = false;
             return;
         }
 
         if (!RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
             _noBlazorCandidateNav = false;
+            _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
             return;
         }
 
         _isCandidate = true;
+        _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
         _noBlazorCandidateNav = _noBlazorRuntime;
         if (_noBlazorCandidateNav && !_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
         {
