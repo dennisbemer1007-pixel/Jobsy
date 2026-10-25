@@ -32,62 +32,6 @@ public sealed partial class ApplicationStatusNotifier
         _features = features;
     }
 
-    public async Task NotifyCvViewedAsync(Application application, CancellationToken cancellationToken = default)
-    {
-        if (application.Vacancy?.Company is null)
-        {
-            return;
-        }
-
-        var language = await ResolveCandidateLanguageAsync(application, cancellationToken);
-        var copy = ApplicationStatusNotificationTexts.CvViewed(
-            application.Vacancy.Company.Name,
-            application.Vacancy.Title,
-            language);
-        var deepLink = $"/candidate/applications?tab=sollicitaties&sel={application.Id:D}";
-        await DeliverToCandidateAsync(
-            application,
-            copy,
-            category: "ApplicationCvViewed",
-            deepLink,
-            mail: TransactionalEmails.ApplicationCvViewed(
-                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-                application.CandidateName,
-                application.Vacancy.Title,
-                application.Vacancy.Company.Name,
-                application.Id,
-                ToEmailCulture(language)),
-            cancellationToken);
-    }
-
-    public async Task NotifyMutualYesAsync(Application application, CancellationToken cancellationToken = default)
-    {
-        if (application.Vacancy?.Company is null)
-        {
-            return;
-        }
-
-        var language = await ResolveCandidateLanguageAsync(application, cancellationToken);
-        var copy = ApplicationStatusNotificationTexts.MutualYes(
-            application.Vacancy.Company.Name,
-            application.Vacancy.Title,
-            language);
-        var deepLink = $"/candidate/applications/{application.Id:D}/after-match";
-        await DeliverToCandidateAsync(
-            application,
-            copy,
-            category: "ApplicationMutualYes",
-            deepLink,
-            mail: TransactionalEmails.ApplicationMutualYes(
-                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-                application.CandidateName,
-                application.Vacancy.Title,
-                application.Vacancy.Company.Name,
-                application.Id,
-                ToEmailCulture(language)),
-            cancellationToken);
-    }
-
     private async Task DeliverToCandidateAsync(
         Application application,
         ApplicationStatusNotificationTexts.Copy copy,

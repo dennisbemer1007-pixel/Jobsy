@@ -1455,7 +1455,7 @@ public class ApplicationsController : ControllerBase
         }
         else
         {
-            await _statusNotifier.NotifyMutualYesAsync(application, cancellationToken);
+            await _statusNotifier.NotifyMutualYesAsync(application, actor?.Id, cancellationToken);
         }
 
         return Ok(MapEmployerDto(application));
@@ -2112,6 +2112,6 @@ public class ApplicationsController : ControllerBase
                 .FirstAsync(a => a.Id == application.Id, cancellationToken);
         }
 
-        await _statusNotifier.NotifyCvViewedAsync(application, cancellationToken);
+        await _statusNotifier.NotifyCvViewedAsync(application, actorUserId, cancellationToken);
     }
 }

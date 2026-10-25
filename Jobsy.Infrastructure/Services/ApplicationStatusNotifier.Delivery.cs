@@ -120,4 +120,10 @@ public sealed partial class ApplicationStatusNotifier
         var path = $"/werkgever/sollicitaties/{applicationId:D}/after-match";
         return string.IsNullOrWhiteSpace(panel) ? path : $"{path}?panel={Uri.EscapeDataString(panel)}";
     }
+
+    private static string CandidateApplicationsSelPath(Guid applicationId)
+        => $"/candidate/applications?tab=sollicitaties&sel={applicationId:D}";
+
+    private static string EmployerApplicationPath(Guid applicationId)
+        => $"/werkgever/sollicitaties/{applicationId:D}";
 }
