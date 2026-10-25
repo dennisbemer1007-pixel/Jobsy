@@ -2158,7 +2158,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 
     .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"].show-map:not(.show-list) .vacancy-pane.panel {
         grid-row: 1 !important;
-        margin-block-start: 14px;
+        margin-block-start: 4px;
     }
 
     .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery--lagen.show-map:not(.show-list) .map-pane.mapw {
@@ -2167,7 +2167,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 
     .app-shell--banenkaart-shell.app-shell--candidate .jobsy-discovery--lagen.show-list .vacancy-pane {
         grid-row: 1 !important;
-        margin-block-start: 14px;
+        margin-block-start: 4px;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen.show-map:not(.show-list) .vacancy-pane .list.vacancy-list {

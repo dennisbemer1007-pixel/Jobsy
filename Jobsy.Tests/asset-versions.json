@@ -408,7 +408,35 @@
     "sha256": "42e4646c963b399f64f3f62314ec20605dde9345aa9a8de12be867c582fa3a42"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261024-mobilewagetip11",
-    "sha256": "ae50192d4ef14b0070350587eb3cef23010a40ed8a0488addcf4cc8de5118b33"
+    "v": "20261025-kreeft12",
+    "sha256": "1a9fd99dcb0e5bf933dbced87154b849658ec3110b3b2833a9893fa298b58db9"
+  },
+  "css/features/kreeft-reiskaart.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "d3957bf71f94ce4e0332987637d76bfe5a3b2b3ca5285d06c18fca49d06c17ca"
+  },
+  "css/features/candidate-header-strip.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "d4316a8e1565f26e016d71774d3c313a09b211090e54d710b06fb7e60d088e6b"
+  },
+  "css/features/lobsy-coach-pill.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "4684654165071d8afbb73d79d4b19b0114d993e7ce1f15d90919720b35efc639"
+  },
+  "css/features/banenkaart-page.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "8b962163e1caf0d3e9bb432e3127a2b60fb6d629c03b99efcd623d23edf5947d"
+  },
+  "css/features/banenkaart-illustrated.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
+  },
+  "css/features/banenkaart.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
+  },
+  "css/features/kandidaat-banen.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "e2f5c139b319849f604ec0265d1c18e299212b5a6c8e441925da17a7fe68ab78"
   }
 }
