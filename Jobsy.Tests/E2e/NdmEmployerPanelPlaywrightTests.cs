@@ -56,6 +56,12 @@ public sealed class NdmEmployerPanelPlaywrightTests
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, EmployerEmail, Password));
 
+        if (RequireAcceptatie)
+        {
+            var ensure = await page.APIRequest.PostAsync($"{baseUrl}/api/me/acceptatie-after-match-demo-ensure");
+            Assert.True(ensure.Ok, $"after-match demo ensure failed: {ensure.Status}");
+        }
+
         await AssertAfterMatchSkipsBlazorRuntimeAsync(page, baseUrl);
         await AssertProposePanelOpensInPageAsync(page, baseUrl);
         await AssertReschedulePanelsInPageAsync(page, baseUrl);
