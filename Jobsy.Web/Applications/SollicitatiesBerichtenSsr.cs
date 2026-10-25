@@ -260,7 +260,7 @@ internal static class SollicitatiesBerichtenSsr
         var about = string.Format(culture["Apps.Berichten.AboutRole"], row.Title);
         if (thread.ScheduledStartUtc is DateTime start)
         {
-            var when = start.ToLocalTime().ToString(
+            var when = AfterMatchMailSsrTime.ToAmsterdam(start).ToString(
                 "dddd d MMMM, HH:mm",
                 System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
             return $"{about} · gesprek {when}";

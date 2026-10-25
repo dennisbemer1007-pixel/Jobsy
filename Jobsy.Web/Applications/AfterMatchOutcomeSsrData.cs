@@ -62,11 +62,15 @@ internal static class AfterMatchOutcomeSsrData
             ? culture["AfterMatch.Screen13.DemoReason"]
             : thread.OutcomeReason.Trim();
 
-        var yesDate = thread.AcceptedAtUtc?.ToLocalTime().ToString("d MMM", Nl) ?? "13 okt";
-        var interviewStart = thread.ScheduledStartUtc?.ToLocalTime();
+        var yesDate = thread.AcceptedAtUtc is DateTime acceptedAt
+            ? AfterMatchMailSsrTime.ToAmsterdam(acceptedAt).ToString("d MMM", Nl)
+            : "13 okt";
+        var interviewStart = thread.ScheduledStartUtc is DateTime sched
+            ? AfterMatchMailSsrTime.ToAmsterdam(sched)
+            : (DateTime?)null;
         var planDate = interviewStart?.AddDays(-7).ToString("d MMM", Nl) ?? "15 okt";
         var interviewDate = interviewStart?.ToString("d MMM", Nl) ?? "22 okt";
-        var outcomeDate = DateTime.UtcNow.ToLocalTime().ToString("d MMM", Nl);
+        var outcomeDate = AfterMatchMailSsrTime.ToAmsterdam(DateTime.UtcNow).ToString("d MMM", Nl);
 
         return new PageData(
             thread,
@@ -136,7 +140,7 @@ internal static class AfterMatchOutcomeSsrData
             "13 okt",
             "15 okt",
             "22 okt",
-            DateTime.UtcNow.ToLocalTime().ToString("d MMM", Nl),
+            AfterMatchMailSsrTime.ToAmsterdam(DateTime.UtcNow).ToString("d MMM", Nl),
             ResolveSimilarJobs(culture, placeholder));
     }
 

@@ -48,8 +48,8 @@ internal static class AfterMatchConfirmedSsrData
             : KbRoutes.Applications;
 
         var endUtc = thread.ScheduledEndUtc ?? startUtc.AddMinutes(30);
-        var startLocal = startUtc.ToLocalTime();
-        var endLocal = endUtc.ToLocalTime();
+        var startLocal = AfterMatchMailSsrTime.ToAmsterdam(startUtc);
+        var endLocal = AfterMatchMailSsrTime.ToAmsterdam(endUtc);
         var nl = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
 
         var whenLong = startLocal.ToString("dddd d MMMM, HH:mm", nl);
@@ -77,7 +77,9 @@ internal static class AfterMatchConfirmedSsrData
             thread.CompanyName,
             contact);
 
-        var yesDate = thread.AcceptedAtUtc?.ToLocalTime().ToString("d MMM", nl) ?? "13 okt";
+        var yesDate = thread.AcceptedAtUtc is DateTime acceptedAt
+            ? AfterMatchMailSsrTime.ToAmsterdam(acceptedAt).ToString("d MMM", nl)
+            : "13 okt";
         var planDate = startLocal.AddDays(-7).ToString("d MMM", nl);
         var interviewDate = startLocal.ToString("d MMM", nl);
 

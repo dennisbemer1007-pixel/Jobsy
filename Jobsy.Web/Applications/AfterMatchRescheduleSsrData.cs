@@ -42,7 +42,7 @@ internal static class AfterMatchRescheduleSsrData
             ? safeReturn
             : KbRoutes.Applications;
 
-        var startLocal = startUtc.ToLocalTime();
+        var startLocal = AfterMatchMailSsrTime.ToAmsterdam(startUtc);
         var nl = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
 
         var whenLong = startLocal.ToString("dddd d MMMM, HH:mm", nl);
@@ -60,7 +60,9 @@ internal static class AfterMatchRescheduleSsrData
         var contactShort = ContactShortName(thread);
         var heroLead = string.Format(culture["AfterMatch.Screen08.Hero.LeadDetail"], contactShort);
 
-        var yesDate = thread.AcceptedAtUtc?.ToLocalTime().ToString("d MMM", nl) ?? "13 okt";
+        var yesDate = thread.AcceptedAtUtc is DateTime acceptedAt
+            ? AfterMatchMailSsrTime.ToAmsterdam(acceptedAt).ToString("d MMM", nl)
+            : "13 okt";
         var planDate = startLocal.AddDays(-7).ToString("d MMM", nl);
         var interviewDate = startLocal.ToString("d MMM", nl);
 
@@ -68,7 +70,7 @@ internal static class AfterMatchRescheduleSsrData
         if (thread.OpenSlots.Count > 0)
         {
             var slot = thread.OpenSlots[0];
-            var slotStart = slot.StartUtc.ToLocalTime();
+            var slotStart = AfterMatchMailSsrTime.ToAmsterdam(slot.StartUtc);
             var slotLabel = slotStart.ToString("dddd d MMMM, HH:mm", nl);
             if (slotLabel.Length > 0 && char.IsLower(slotLabel[0]))
             {

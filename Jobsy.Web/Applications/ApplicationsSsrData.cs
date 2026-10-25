@@ -475,15 +475,15 @@ internal static class ApplicationsSsrData
 
     internal static string FormatShortDate(CultureState culture, DateTime utc)
     {
-        var local = utc.ToLocalTime();
-        var now = DateTime.Now;
+        var local = AfterMatchMailSsrTime.ToAmsterdam(utc);
+        var now = AfterMatchMailSsrTime.ToAmsterdam(DateTime.UtcNow);
         var fmt = local.Year == now.Year ? "d MMMM" : "d MMMM yyyy";
         return local.ToString(fmt, CultureInfoFor(culture));
     }
 
     internal static string FormatShortDateTime(CultureState culture, DateTime utc)
     {
-        var local = utc.ToLocalTime();
+        var local = AfterMatchMailSsrTime.ToAmsterdam(utc);
         var cultureInfo = CultureInfoFor(culture);
         var day = local.ToString("dddd d MMMM", cultureInfo);
         var time = local.ToString("HH:mm", cultureInfo);

@@ -79,7 +79,9 @@ internal static class AfterMatchPickSlotSsrShells
         Guid applicationId)
     {
         var thread = data.Thread;
-        var yesDate = thread.AcceptedAtUtc?.ToLocalTime().ToString("d MMM", Nl) ?? "13 okt";
+        var yesDate = thread.AcceptedAtUtc is DateTime acceptedAt
+            ? AfterMatchMailSsrTime.ToAmsterdam(acceptedAt).ToString("d MMM", Nl)
+            : "13 okt";
 
         sb.Append("<div class=\"card\"><div class=\"co\"><span class=\"lg\">");
         sb.Append(WebUtility.HtmlEncode(CompanyInitials(thread.CompanyName)));
@@ -305,15 +307,15 @@ internal static class AfterMatchPickSlotSsrShells
 
     private static string FormatSlotTitle(AfterMatchSlotDto slot)
     {
-        var start = slot.StartUtc.ToLocalTime();
+        var start = AfterMatchMailSsrTime.ToAmsterdam(slot.StartUtc);
         var text = start.ToString("dddd d MMMM", Nl);
         return char.ToUpper(text[0], Nl) + text[1..];
     }
 
     private static string FormatSlotSubtitle(AfterMatchSlotDto slot)
     {
-        var start = slot.StartUtc.ToLocalTime();
-        var end = slot.EndUtc.ToLocalTime();
+        var start = AfterMatchMailSsrTime.ToAmsterdam(slot.StartUtc);
+        var end = AfterMatchMailSsrTime.ToAmsterdam(slot.EndUtc);
         return $"{start:HH:mm} tot {end:HH:mm}";
     }
 }

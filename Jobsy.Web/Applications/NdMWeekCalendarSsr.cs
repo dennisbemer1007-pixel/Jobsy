@@ -13,8 +13,9 @@ internal static class NdMWeekCalendarSsr
         IReadOnlyCollection<DateTime> selectedStartsUtc)
     {
         var selected = new HashSet<DateTime>(selectedStartsUtc);
+        var weekEndUtc = weekStartUtc.AddDays(4);
         var weekLabel =
-            $"{weekStartUtc.ToLocalTime():d MMM} – {weekStartUtc.AddDays(4).ToLocalTime():d MMM yyyy}";
+            $"{AfterMatchMailSsrTime.ToAmsterdam(weekStartUtc):d MMM} – {AfterMatchMailSsrTime.ToAmsterdam(weekEndUtc):d MMM yyyy}";
 
         sb.Append("<div class=\"ndm-week\" data-ndm-week-calendar data-week-start=\"");
         sb.Append(WebUtility.HtmlEncode(weekStartUtc.ToString("O")));
@@ -25,7 +26,7 @@ internal static class NdMWeekCalendarSsr
         foreach (var day in WeekDays(weekStartUtc))
         {
             sb.Append("<div class=\"ndm-week__col\"><span class=\"lbl\">");
-            sb.Append(WebUtility.HtmlEncode(day.ToLocalTime().ToString(
+            sb.Append(WebUtility.HtmlEncode(AfterMatchMailSsrTime.ToAmsterdam(day).ToString(
                 "ddd d MMM",
                 CultureInfo.GetCultureInfo("nl-NL"))));
             sb.Append("</span>");
@@ -37,7 +38,7 @@ internal static class NdMWeekCalendarSsr
                 sb.Append("\" data-ndm-week-slot=\"");
                 sb.Append(WebUtility.HtmlEncode(slot.ToString("O")));
                 sb.Append("\">");
-                sb.Append(WebUtility.HtmlEncode(slot.ToLocalTime().ToString(
+                sb.Append(WebUtility.HtmlEncode(AfterMatchMailSsrTime.ToAmsterdam(slot).ToString(
                     "HH:mm",
                     CultureInfo.InvariantCulture)));
                 sb.Append("</button>");
@@ -54,10 +55,10 @@ internal static class NdMWeekCalendarSsr
 
     internal static IEnumerable<DateTime> SlotsForDay(DateTime dayUtc)
     {
-        var local = dayUtc.ToLocalTime().Date;
+        var localDate = AfterMatchMailSsrTime.ToAmsterdam(dayUtc).Date;
         foreach (var hour in new[] { 9, 10, 11, 14, 15 })
         {
-            yield return DateTime.SpecifyKind(local.AddHours(hour), DateTimeKind.Local).ToUniversalTime();
+            yield return AfterMatchMailSsrTime.ToUtcFromAmsterdamWallClock(localDate.AddHours(hour));
         }
     }
 }
