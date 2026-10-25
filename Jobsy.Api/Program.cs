@@ -55,6 +55,9 @@ if (!builder.Environment.IsDevelopment()
 
 Jobsy.Core.Security.VerificationCodes.ConfigurePepper(otpPepper);
 
+builder.Services.Configure<Jobsy.Core.Options.AuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.AuthOptions.SectionName));
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
