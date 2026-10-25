@@ -30,7 +30,20 @@ public static class WerkgeverClientEndpoints
             })
             .DisableAntiforgery();
 
+        app.MapPost("/api/werkgever-client/after-match-demo-ensure", EnsureAfterMatchDemoAsync)
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.RegionalManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}"
+            })
+            .DisableAntiforgery();
+
         return app;
+    }
+
+    private static async Task<IResult> EnsureAfterMatchDemoAsync(JobsyApiClient api, CancellationToken cancellationToken)
+    {
+        var result = await api.TryEnsureAcceptatieAfterMatchDemoAsync(cancellationToken);
+        return result is null ? Results.NotFound() : Results.Json(result);
     }
 
     private static async Task<IResult> MarkBerichtenReadAsync(

@@ -58,7 +58,7 @@ public sealed class NdmEmployerPanelPlaywrightTests
 
         if (RequireAcceptatie)
         {
-            var ensure = await page.APIRequest.PostAsync($"{baseUrl}/api/me/acceptatie-after-match-demo-ensure");
+            var ensure = await page.APIRequest.PostAsync($"{baseUrl}/api/werkgever-client/after-match-demo-ensure");
             Assert.True(ensure.Ok, $"after-match demo ensure failed: {ensure.Status}");
         }
 
