@@ -1,0 +1,20 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
+@inject CultureState Culture
+
+<aside class="ob-rustig__sidebar ob-wizard__sidebar ob-rustig__sidebar--zones ob-rustig__sidebar--no-logo"
+       aria-label="@Culture["Reiskaart.Aria"]">
+    @foreach (var zone in Zones)
+    {
+        <div class="ob-wizard__side-item ob-wizard__side-item--zone @(zone.IsCurrent ? "is-current" : null) @(zone.IsDone ? "is-done" : null)">
+            <span class="ob-wizard__zone-mark" aria-hidden="true"></span>
+            <div>
+                <strong>@Culture[zone.LabelKey]</strong>
+            </div>
+        </div>
+    }
+</aside>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<OnboardingKreeftZoneSidebarNav.ZoneItem> Zones { get; set; } = [];
+}

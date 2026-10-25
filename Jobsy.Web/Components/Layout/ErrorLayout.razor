@@ -24,13 +24,15 @@
     @if (_signedInCandidate)
     {
         <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
-        <link rel="stylesheet" href="css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft-nav5" />
+        <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
+        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft6" />
+        <link rel="stylesheet" href="css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft6" />
     }
 </HeadContent>
 
 @if (_signedInCandidate)
 {
-    <div class="app-shell app-shell--candidate app-shell--error-ssr" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
+    <div class="app-shell app-shell--candidate app-shell--error-ssr err-layout pub-theme" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
         <AppShellHeader HomeHref="@FeatureRoutes.CandidateProfilePath"
                         HeaderTagline="@Culture["Brand.Tagline"]"
                         ShowCandidatePwaInstall="false" />

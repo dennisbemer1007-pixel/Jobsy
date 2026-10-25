@@ -445,8 +445,8 @@ public static class PageAssetCatalog
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [
-        "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft-nav5",
-        "css/features/lobsy-coach-ssr-chrome.css?v=20261025-kreeft-nav5",
+        "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft6",
+        "css/features/lobsy-coach-ssr-chrome.css?v=20261025-kreeft6",
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

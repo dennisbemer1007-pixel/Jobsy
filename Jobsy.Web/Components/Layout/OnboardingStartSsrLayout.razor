@@ -15,6 +15,11 @@
 @inject AuthenticationStateProvider AuthState
 @inject IFeatureFlags FeatureFlags
 
+<HeadContent>
+    <link rel="stylesheet" href="css/features/lobsy-coach-ssr-chrome.css?v=20261025-kreeft6" />
+    <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft6" defer></script>
+</HeadContent>
+
 <div class="app-shell app-shell--candidate has-bottom-nav app-shell--onboarding-ssr" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <AppShellHeader HomeHref="@_homeHref"
                     HeaderTagline="@Culture["Brand.Tagline"]"

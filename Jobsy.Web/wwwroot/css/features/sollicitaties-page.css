@@ -1209,12 +1209,6 @@
   }
 }
 
-@media (min-width: 1024px) {
-  .app-shell--candidate:has(.sollicitaties-page) .bottom-nav[data-testid="candidate-bottom-nav-ssr"] {
-    display: flex !important;
-  }
-}
-
 /* Last in bundle (after kandidaat-banen/applications): beat acc stale 720px caps. */
 .apps-page .application-card-list,
 .panel-page.sollicitaties-page .application-card-list,
