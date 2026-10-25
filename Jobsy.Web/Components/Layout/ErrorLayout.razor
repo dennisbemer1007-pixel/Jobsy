@@ -4,6 +4,7 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Authorization
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 @inject IErrorChromeProvider ChromeProvider
@@ -20,8 +21,26 @@
     <meta name="googlebot" content="noindex, nofollow" />
     @* Pages add their own head tags here; a second HeadContent would replace the noindex above. *@
     <Microsoft.AspNetCore.Components.Sections.SectionOutlet SectionName="@ErrorHeadSection" />
+    @if (_signedInCandidate)
+    {
+        <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
+        <link rel="stylesheet" href="css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft-nav5" />
+    }
 </HeadContent>
 
+@if (_signedInCandidate)
+{
+    <div class="app-shell app-shell--candidate app-shell--error-ssr" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
+        <AppShellHeader HomeHref="@FeatureRoutes.CandidateProfilePath"
+                        HeaderTagline="@Culture["Brand.Tagline"]"
+                        ShowCandidatePwaInstall="false" />
+        <main id="main" class="app-main err-main">
+            @Body
+        </main>
+    </div>
+}
+else
+{
 <div class="err-layout pub-theme" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
     <a class="pub-skip err-skip" href="#main">@Culture["Status.Nav.SkipToContent"]</a>
     <header class="pub-header">
@@ -117,6 +136,7 @@
         </div>
     </footer>
 </div>
+}
 
 @code {
     /// <summary>Section an error page adds extra <c>&lt;head&gt;</c> tags to (errors 04).</summary>
@@ -124,12 +144,16 @@
 
     private ErrorChrome _chrome = default!;
     private bool _showHeaderStart = true;
+    private bool _signedInCandidate;
     private LandingVariant _variant = LandingVariant.On;
 
     protected override async Task OnInitializedAsync()
     {
         var http = HttpContextAccessor.HttpContext;
         var path = http?.Request.Path.Value ?? "";
+        var user = http?.User;
+        _signedInCandidate = user?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
         _showHeaderStart = !path.StartsWith("/access-denied", StringComparison.OrdinalIgnoreCase)
                            && !path.StartsWith("/status/403", StringComparison.OrdinalIgnoreCase);
         _chrome = ChromeProvider.Build(http);

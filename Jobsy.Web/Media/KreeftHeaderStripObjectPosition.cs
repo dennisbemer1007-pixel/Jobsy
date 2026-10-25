@@ -15,7 +15,7 @@ public static class KreeftHeaderStripObjectPosition
             "landing" => "68% 52%",
             "inloggen" => "62% 48%",
             "route-kaart" => "58% 50%",
-            "licht-kompas" => "55% 48%",
+            "licht-kompas" => "50% 42%",
             "licht-paspoort" => "58% 46%",
             "banenkaart" or "bedrijvenkaart" => "52% 44%",
             "sollicitaties" or "berichten" or "activiteiten" or "na-de-match" or "moment" => "60% 46%",

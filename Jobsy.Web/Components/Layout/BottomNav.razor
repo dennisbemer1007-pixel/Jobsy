@@ -103,13 +103,6 @@
 
     private async Task RefreshDesktopViewportAsync()
     {
-        if (_isCandidate)
-        {
-            _hideForDesktopViewport = false;
-            await NotifyHasBottomNavAsync();
-            return;
-        }
-
         try
         {
             _hideForDesktopViewport = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");

@@ -9,27 +9,22 @@ public sealed class CandidateBottomNavPolicyTests
         File.ReadAllText(Path.Combine(RepoRoot, relativePath));
 
     [Fact]
-    public void Candidate_pages_keep_bottom_nav_on_desktop()
+    public void Candidate_desktop_uses_header_nav_ssr_bottom_nav_mobile_only()
     {
         var bottomNav = Read("Jobsy.Web/Components/Layout/BottomNav.razor");
-        Assert.Contains("_isCandidate", bottomNav, StringComparison.Ordinal);
-        Assert.Contains("_hideForDesktopViewport = false", bottomNav, StringComparison.Ordinal);
-
-        var appCss = Read("Jobsy.Web/wwwroot/css/app.css");
-        Assert.Contains(".app-shell:not(.app-shell--candidate) .bottom-nav", appCss, StringComparison.Ordinal);
-        Assert.DoesNotContain(".app-shell--candidate:has(.jobsy-discovery) .bottom-nav", appCss, StringComparison.Ordinal);
+        Assert.Contains("jobsyViewport.isKompasWide", bottomNav, StringComparison.Ordinal);
 
         var noBlazor = Read("Jobsy.Web/wwwroot/css/features/candidate-no-blazor-chrome.css");
         Assert.Contains(".bottom-nav[data-testid=\"candidate-bottom-nav-ssr\"]", noBlazor, StringComparison.Ordinal);
-        Assert.Contains("app-shell--candidate", noBlazor, StringComparison.Ordinal);
+        Assert.Contains("display: none !important", noBlazor, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void App_header_hides_candidate_top_nav_links()
+    public void App_header_renders_candidate_primary_nav()
     {
         var header = Read("Jobsy.Web/Components/Layout/AppShellHeader.razor");
-        Assert.DoesNotContain("CandidateHeaderNav", header, StringComparison.Ordinal);
-        Assert.DoesNotContain("NoBlazorCandidateNav", header, StringComparison.Ordinal);
-        Assert.Contains("_hideCandidateBrandTagline", header, StringComparison.Ordinal);
+        Assert.Contains("CandidateHeaderNav", header, StringComparison.Ordinal);
+        Assert.Contains("NoBlazorCandidateNav", header, StringComparison.Ordinal);
+        Assert.Contains("candidate-header-nav-slot", header, StringComparison.Ordinal);
     }
 }

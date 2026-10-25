@@ -80,7 +80,8 @@
 .kompas-hub-page-wrap > .kreeft-header-strip,
 .kompas-page-wrap > .sollicitaties-hero-strip,
 .kompas-page-wrap > .kreeft-header-strip,
-.ob-wizard--rustig > .ob-rustig .ob-rustig__hero-band,
+.ob-wizard--rustig > .ob-rustig > .ob-rustig__hero-band,
+.ob-wizard--rustig > .ob-rustig > .ob-rustig__illustrated-frame,
 .err-hero--kreeft-strip > .sollicitaties-hero-strip,
 .pub-landing__hero--kreeft-strip > .pub-landing__kreeft-strip {
   width: 100vw;
@@ -206,6 +207,20 @@
 .carriere-ssr-intro__title {
   margin: 0 0 0.35rem;
   font-size: clamp(1.5rem, 2.2vw, 2rem);
+}
+
+.app-shell--candidate:has(.kompas-page-wrap) .app-main__content,
+.app-shell--candidate:has(.kompas-page-wrap) .panel-page.profile-page--candidate {
+  padding-top: 0;
+}
+
+.kompas-page-wrap > .kreeft-header-strip,
+.kompas-page-wrap > .sollicitaties-hero-strip {
+  margin-top: 0;
+}
+
+.kompas-page-wrap > .kreeft-header-strip[data-kreeft-strip="licht-kompas"] .sollicitaties-hero-strip__img.desk {
+  object-position: 50% 42%;
 }
 
 .passport-page-wrap .sollicitaties-hero-strip,

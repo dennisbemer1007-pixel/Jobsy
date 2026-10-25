@@ -102,6 +102,8 @@ else if (_step is >= 1 and <= 10)
             <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
         }
         <div class="ob-rustig" data-ob-rustig-screen="@($"step-{_step:D2}")">
+            <OnboardingRustigHero DesktopUrl="@heroDesktop"
+                                  MobileUrl="@heroMobile" />
             <div class="ob-rustig__layout @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
                 <aside class="ob-rustig__sidebar ob-wizard__sidebar ob-rustig__sidebar--no-logo" aria-label="Stappen">
                     @foreach (var item in OnboardingRustigSidebarNav.Items(_step))
@@ -152,9 +154,6 @@ else if (_step is >= 1 and <= 10)
                             <span class="ob-rustig__saved" aria-live="polite">@Culture["Onboarding.Rustig.Saved"]</span>
                         </div>
                     </header>
-
-                    <OnboardingRustigHero DesktopUrl="@heroDesktop"
-                                          MobileUrl="@heroMobile" />
 
                     <div class="ob-rustig__page-head">
                         @if (_step is 4 or 5)

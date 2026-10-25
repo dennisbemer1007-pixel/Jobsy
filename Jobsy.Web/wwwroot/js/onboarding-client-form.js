@@ -819,7 +819,15 @@
             availFrom.addEventListener("change", onAvailFromEdited);
             availFrom.addEventListener("blur", onAvailFromEdited);
             availFrom.addEventListener("keydown", function (ev) {
-                if (ev.key === "Tab" || ev.key === "Enter") onAvailFromEdited();
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    onAvailFromEdited();
+                    var form = availFrom.form;
+                    var saveBtn = form && form.querySelector('[data-testid="onboarding-start-save"]');
+                    if (saveBtn) saveBtn.click();
+                    return;
+                }
+                if (ev.key === "Tab") onAvailFromEdited();
             });
             availFrom.addEventListener("input", function () {
                 if (availFrom.value && availFrom.value.trim().length >= 8) activateFromDateMode();
