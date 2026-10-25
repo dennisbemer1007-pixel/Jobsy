@@ -17,6 +17,8 @@ internal static class AfterMatchEmployerPanelRouting
 
         return panel switch
         {
+            "messages" => "/messages-ssr",
+            "outcome" => "/outcome-ssr",
             "" => "/panel-ssr",
             "propose" => "/propose-ssr",
             "cancel" => "/cancel-ssr",

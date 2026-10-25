@@ -63,6 +63,11 @@ public interface IAfterMatchService
         Guid candidateUserId,
         CancellationToken cancellationToken = default);
 
+    Task MarkEmployerMessagesReadAsync(
+        Guid applicationId,
+        Guid employerUserId,
+        CancellationToken cancellationToken = default);
+
     Task<SensitiveMessagePreview> PreviewMessageAsync(
         Guid applicationId,
         Guid senderUserId,

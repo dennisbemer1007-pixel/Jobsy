@@ -24,4 +24,9 @@ internal static class AfterMatchEmployerSsrRouting
     internal static bool ShouldUseCancelScreen(AfterMatchThreadDto? thread) =>
         thread is not null
         && thread.InterviewStatus is InterviewStatus.Scheduled or InterviewStatus.RescheduleRequested;
+
+    /// <summary>Screen 11 (berichten) SSR — at least one after-match thread hub.</summary>
+    internal static bool ShouldUseMessagesScreen(AfterMatchThreadDto? contextThread) =>
+        contextThread is not null
+        && AfterMatchEmployerBerichtenPresentation.ThreadEligible(contextThread);
 }

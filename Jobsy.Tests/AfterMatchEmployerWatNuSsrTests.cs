@@ -50,7 +50,8 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
     {
         Assert.Equal("/propose-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel(""));
-        Assert.Equal("/blazor", AfterMatchEmployerPanelRouting.PathSuffixForPanel("messages"));
+        Assert.Equal("/messages-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("messages"));
+        Assert.Equal("/outcome-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("outcome"));
     }
 
     [Fact]
