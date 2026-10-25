@@ -87,7 +87,7 @@ internal static class AfterMatchEmployerRescheduleSsrData
             warningBody,
             $"{baseHref}?panel=propose",
             $"{baseHref}?panel=messages",
-            $"{baseHref}/blazor",
+            $"{baseHref}?panel=cancel",
             $"/werkgever/sollicitaties/{applicationId:D}",
             yesHint,
             interviewHint);
