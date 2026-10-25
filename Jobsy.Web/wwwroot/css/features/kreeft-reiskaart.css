@@ -157,6 +157,35 @@
   min-width: 0;
 }
 
+.pub-landing__reiskaart-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.pub-landing__why-lobsy {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--muted, #6b6560);
+  font-weight: 400;
+}
+
+.pub-landing__why-lobsy-link {
+  color: var(--brand, #1a3a5c);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+.pub-landing__why-lobsy-link:hover,
+.pub-landing__why-lobsy-link:focus-visible {
+  color: var(--coral-deep, #a64b2a);
+}
+
+.pub-landing__hero-grid--reiskaart > .pub-landing__reiskaart-stack,
 .pub-landing__hero-grid--reiskaart > .kreeft-reiskaart-wrap,
 .au-stage--reiskaart .au-reiskaart-grid > .kreeft-reiskaart-wrap {
   grid-column: 2;
@@ -239,6 +268,7 @@
     gap: 14px;
   }
 
+  .pub-landing__hero-grid--reiskaart > .pub-landing__reiskaart-stack,
   .pub-landing__hero-grid--reiskaart .kreeft-reiskaart-wrap,
   .au-stage--reiskaart .kreeft-reiskaart-wrap {
     order: -1;

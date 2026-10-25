@@ -125,6 +125,18 @@ public static class UiStringsLanding
         Add("Landing.Hero.BarCreative", "Creativiteit", "Creativity", "Kreatywność", "Creativitate", "الإبداع");
         Add("Landing.Hero.BarCare", "Zorgzaam", "Caring", "Troskliwy", "Grijuliu", "حنون");
         Add("Landing.Hero.BarPrecision", "Precisie", "Precision", "Precyzja", "Precizie", "الدقة");
+        Add("Landing.Hero.WhyLobsy.Body",
+            "Een kreeft groeit door zijn oude schild los te laten. Zo groei jij ook, stap voor stap.",
+            "A lobster grows by letting go of its old shell. You grow the same way, step by step.",
+            "A lobster grows by letting go of its old shell. You grow the same way, step by step.",
+            "A lobster grows by letting go of its old shell. You grow the same way, step by step.",
+            "A lobster grows by letting go of its old shell. You grow the same way, step by step.");
+        Add("Landing.Hero.WhyLobsy.Link",
+            "Waarom een kreeft?",
+            "Why a lobster?",
+            "Why a lobster?",
+            "Why a lobster?",
+            "Why a lobster?");
         Add("Landing.Hero.EyebrowPlain", "Gratis en zonder account", "Free, no account needed", "Za darmo, bez konta", "Gratuit, fără cont", "مجاني وبدون حساب");
         Add("Landing.Hero.MetaTimePlain", "20 vragen · 3 minuten", "20 questions · 3 minutes", "20 pytań · 3 minuty", "20 întrebări · 3 minute", "20 سؤالًا · 3 دقائق");
         Add("Landing.Hero.MetaPrivacyPlain", "Werkgevers zien je antwoorden niet", "Employers never see your answers", "Pracodawcy nie widzą Twoich odpowiedzi", "Angajatorii nu îți văd răspunsurile", "أصحاب العمل لا يرون إجاباتك");

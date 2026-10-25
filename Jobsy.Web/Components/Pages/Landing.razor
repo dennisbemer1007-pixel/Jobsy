@@ -21,12 +21,12 @@
     @if (_variant == LandingVariant.On)
     {
         <link rel="stylesheet" href="css/features/candidate-header-strip.css?v=20261025-cand-strip4" />
-        <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-reis2" />
+        <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-reis3" />
     }
 </HeadContent>
 
 <div class="pub-landing @(_variant == LandingVariant.On ? "pub-landing--combo pub-landing--calm" : "")" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
-    <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" ReiskaartHtml="@(_variant == LandingVariant.On ? KreeftReiskaartMarkup.ForScreen(Culture, 1) : null)" />
+    <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" ReiskaartHtml="@(_variant == LandingVariant.On ? KreeftReiskaartMarkup.ForLandingHero(Culture) : null)" />
     @if (_variant == LandingVariant.On)
     {
         <LandingIllustratedSteps Variant="_variant" />
