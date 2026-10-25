@@ -3808,6 +3808,7 @@ public static class UiStrings
         UiStringsResearch.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyCandidate.MergeAll(nl, en, pl, ro, ar);
         UiStringsOnboardingV2.MergeAll(nl, en, pl, ro, ar);
+        UiStringsKreeftReiskaart.MergeAll(nl, en, pl, ro, ar);
         UiStringsGratisDna.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateInsights.MergeAll(nl, en, pl, ro, ar);
         UiStringsKandidatenkaart.MergeAll(nl, en, pl, ro, ar);

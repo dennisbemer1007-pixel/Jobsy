@@ -37,6 +37,7 @@
     <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261022-r6c" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-mini-footer" />
+    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-reis1" />
 </HeadContent>
 
 @if (_loading)
@@ -182,7 +183,9 @@ else if (_step is >= 1 and <= 10)
                         <p class="ob-rustig__lead">@pageLead</p>
                     </div>
 
-                    <div class="ob-rustig__body">
+                    <div class="ob-rustig__body ob-rustig__body--with-reiskaart">
+                        @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
+                        <div class="ob-rustig__body-main">
                         <div class="@canvasClass" data-testid="@canvasTestId">
                             <div class="ob-rustig__form-grid">
                                 <div class="ob-client-step ob-fields ob-fields--illustrated"
@@ -251,6 +254,7 @@ else if (_step is >= 1 and <= 10)
                                         data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
                             </div>
                         }
+                        </div>
                     </div>
                 </div>
                 @if (_showJobsRail && _nearbySignal is not null)

@@ -7,7 +7,7 @@
 
 <section class="pub-landing__hero @(Variant == LandingVariant.On ? "pub-landing__hero--illustrated" : null)" id="top"
          style="@(Variant == LandingVariant.On ? $"--pub-hero-art:url('{KreeftHeaderStripAssets.LandingDesk}')" : null)">
-    <div class="pub-landing__wrap @(Variant == LandingVariant.On ? null : $"pub-landing__hero-grid {HeroGridClass}")">
+    <div class="pub-landing__wrap @(Variant == LandingVariant.On ? (ReiskaartHtml is not null ? "pub-landing__hero-grid--reiskaart" : null) : $"pub-landing__hero-grid {HeroGridClass}")">
         <div class="pub-landing__hero-copy">
             <div class="pub-landing__hero-head">
                 <span class="pub-pill pub-pill--green">@LandingText.For(HeroEyebrowKey, Variant)</span>
@@ -77,6 +77,10 @@
             }
             </div>
         </div>
+        @if (ReiskaartHtml is not null)
+        {
+            @((MarkupString)ReiskaartHtml)
+        }
         @if (Variant == LandingVariant.Zw)
         {
             <LandingHeroPassport Variant="Variant" />
@@ -87,6 +91,7 @@
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
     [Parameter] public int? VacancyCount { get; set; }
+    [Parameter] public string? ReiskaartHtml { get; set; }
 
     private string HeroGridClass => Variant == LandingVariant.On ? "pub-landing__hero-grid--combo" : "";
     private string AccentClass => Variant == LandingVariant.On ? "pub-landing__accent pub-landing__accent--green" : "pub-landing__accent";

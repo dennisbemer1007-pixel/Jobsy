@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261025-kompas-strip2" />
     <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
+    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-reis1" />
 </HeadContent>
 
 @if (_loading)
@@ -122,8 +123,11 @@ else
                         <p class="ob-rustig__lead">@pageLead</p>
                     </div>
 
-                    <div class="ob-rustig__body">
-                        @((MarkupString)_bodyHtml)
+                    <div class="ob-rustig__body ob-rustig__body--with-reiskaart">
+                        @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 15))
+                        <div class="ob-rustig__body-main">
+                            @((MarkupString)_bodyHtml)
+                        </div>
                     </div>
                 </div>
             </div>
