@@ -259,9 +259,31 @@ public sealed class AfterMatchService : IAfterMatchService
             ? await RequireEmployerApplicationAsync(applicationId, userId, cancellationToken)
             : await RequireCandidateApplicationAsync(applicationId, userId, cancellationToken);
 
-        var interview = await EnsureInterviewEntityAsync(application, cancellationToken);
-        interview.Status = InterviewStatus.Cancelled;
+        var interview = await _db.Interviews
+            .Include(i => i.Slots)
+            .FirstAsync(i => i.ApplicationId == application.Id, cancellationToken);
+
+        interview.Status = InterviewStatus.Proposing;
+        interview.ChosenSlotId = null;
         interview.UpdatedAtUtc = DateTime.UtcNow;
+
+        foreach (var slot in interview.Slots)
+        {
+            slot.IsSelected = false;
+        }
+
+        if (isEmployer)
+        {
+            _db.InterviewSlots.RemoveRange(interview.Slots.ToList());
+        }
+
+        var reminders = await _db.InterviewReminders
+            .Where(r => r.InterviewId == interview.Id)
+            .ToListAsync(cancellationToken);
+        if (reminders.Count > 0)
+        {
+            _db.InterviewReminders.RemoveRange(reminders);
+        }
 
         _db.InterviewChanges.Add(new InterviewChange
         {
