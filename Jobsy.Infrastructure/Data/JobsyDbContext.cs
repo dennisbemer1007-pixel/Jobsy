@@ -100,6 +100,7 @@ public class JobsyDbContext : DbContext
     public DbSet<ApplicationUploadedCv> ApplicationUploadedCvs => Set<ApplicationUploadedCv>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
     public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
     public DbSet<MfaTrustedDevice> MfaTrustedDevices => Set<MfaTrustedDevice>();
     public DbSet<DeviceLoginHandoff> DeviceLoginHandoffs => Set<DeviceLoginHandoff>();
@@ -1632,6 +1633,16 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.RelatedEntityType).HasMaxLength(64);
             entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAtUtc });
             entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NotificationPreference>(entity =>
+        {
+            entity.ToTable("NotificationPreferences");
+            entity.HasKey(e => new { e.UserId, e.Soort });
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
