@@ -55,11 +55,13 @@ internal static class CareerSsrShells
 
     private static void AppendHero(StringBuilder sb, CultureState culture, CareerSsrData.PageData data)
     {
-        var art = CandidateIllustratedImages.DroombaanProfessionWide;
-        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--with-art uwv-carriere-showcase-hero\" style=\"");
+        var desk = string.Equals(data.ActiveTab, CareerSsrTabs.Omscholen, StringComparison.Ordinal)
+            ? KreeftHeaderStripAssets.OmscholenDesk
+            : KreeftHeaderStripAssets.CarriereDesk;
+        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--with-art uwv-carriere-showcase-hero cand-hero--kreeft-strip\" style=\"");
         sb.Append("--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\"><div class=\"cand-hero__copy\">");
+        sb.Append(WebUtility.HtmlEncode(desk));
+        sb.Append("');--cand-hero-pos:center center;\"><div class=\"cand-hero__copy\">");
         sb.Append("<span class=\"cand-hero__eyebrow cand-hero__eyebrow--coral\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Career.Eyebrow(culture.Language)));
         sb.Append("</span><h1 tabindex=\"-1\">");
@@ -67,8 +69,8 @@ internal static class CareerSsrShells
         sb.Append("</h1><p class=\"cand-hero__lead\">");
         sb.Append(WebUtility.HtmlEncode(data.HeroLead));
         sb.Append("</p></div><div class=\"cand-hero__media\" style=\"--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\" aria-hidden=\"true\"></div></header>");
+        sb.Append(WebUtility.HtmlEncode(desk));
+        sb.Append("');--cand-hero-pos:center center;\" aria-hidden=\"true\"></div></header>");
     }
 
     private static void AppendEmptyProfile(StringBuilder sb, CultureState culture)

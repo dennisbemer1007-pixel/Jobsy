@@ -12,7 +12,7 @@ public class ChatAssistantRestyleGuardTests
         var gate = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Features/ChatContextGreetingGate.cs"));
         var render = File.ReadAllText(Path.Combine(root, "render.yaml"));
 
-        Assert.Contains("Vraag het Lobsy", coach, StringComparison.Ordinal);
+        Assert.Contains("Lobsy-hulp", coach, StringComparison.Ordinal);
         Assert.Contains("lobsy-assistant--skin-warm", chat, StringComparison.Ordinal);
         Assert.Contains("lobsy-assistant-launcher--business", chat, StringComparison.Ordinal);
         Assert.DoesNotContain("UseMascot", chat, StringComparison.Ordinal);

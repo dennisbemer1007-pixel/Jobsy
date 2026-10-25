@@ -154,15 +154,16 @@ internal static class OnboardingStartWelcomeSsrShell
 
     private static void AppendHero(StringBuilder sb)
     {
+        var heroDesk = OnboardingRustigPanoramaAssets.StartDesktop;
         var heroMob = OnboardingRustigPanoramaAssets.StartMobile;
         sb.Append("<div class=\"ob-rustig__hero-band ob-start-journey-hero\" style=\"--ob-start-journey-hero-mob: url('");
         sb.Append(WebUtility.HtmlEncode(heroMob));
         sb.Append("');\" aria-hidden=\"true\" data-testid=\"ob-rustig-hero\">");
         sb.Append("<img class=\"ob-rustig__hero-img ob-rustig__hero-img--desk ob-start-journey-hero__img ob-start-journey-hero__img--shared\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(heroMob));
-        sb.Append("\" width=\"780\" height=\"184\" alt=\"\" loading=\"eager\" decoding=\"sync\" fetchpriority=\"high\" data-testid=\"ob-start-journey-hero-desk\" />");
+        sb.Append(WebUtility.HtmlEncode(heroDesk));
+        sb.Append("\" width=\"1440\" height=\"225\" alt=\"\" loading=\"eager\" decoding=\"sync\" fetchpriority=\"high\" data-testid=\"ob-start-journey-hero-desk\" />");
         sb.Append("<img class=\"ob-rustig__hero-img ob-rustig__hero-img--mob ob-start-journey-hero__img ob-start-journey-hero__img--shared\" src=\"");
         sb.Append(WebUtility.HtmlEncode(heroMob));
-        sb.Append("\" width=\"780\" height=\"184\" alt=\"\" loading=\"eager\" decoding=\"sync\" fetchpriority=\"high\" /></div>");
+        sb.Append("\" width=\"780\" height=\"105\" alt=\"\" loading=\"eager\" decoding=\"sync\" fetchpriority=\"high\" /></div>");
     }
 }

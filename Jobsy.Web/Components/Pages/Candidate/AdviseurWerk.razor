@@ -5,6 +5,7 @@
 @using Jobsy.Web.Components.UwvMockups
 @using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
+@using Jobsy.Web.Media
 @inject CultureState Culture
 @inject IUwvFeaturesGate UwvGate
 
@@ -26,6 +27,10 @@
 else
 {
     <div class="journey-page panel-page panel-page--cand-ill uwv-adviseur-page">
+        <div class="test-kreeft-strip uwv-adviseur-page__strip" aria-hidden="true" data-testid="kreeft-header-strip">
+            <img class="test-kreeft-strip__desk" src="@KreeftHeaderStripAssets.AdviseurDesk" width="1440" height="225" alt="" loading="lazy" decoding="async" />
+            <img class="test-kreeft-strip__mob" src="@KreeftHeaderStripAssets.AdviseurMob" width="780" height="105" alt="" loading="lazy" decoding="async" />
+        </div>
         <UwvAdviseurSharePanel />
     </div>
 }

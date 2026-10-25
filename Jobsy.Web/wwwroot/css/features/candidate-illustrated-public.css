@@ -1,5 +1,31 @@
 /* Candidate illustrated public pages — login + start (scoped under .pub-theme) */
 
+.pub-theme .au-stage--kreeft-strip .au-art--left,
+.pub-theme .au-stage--kreeft-strip .au-art--right,
+.pub-theme .au-stage--kreeft-strip .au-art-band {
+  display: none !important;
+}
+
+.pub-theme .au-kreeft-header-strip {
+  position: absolute;
+  inset-inline: 0;
+  top: var(--pub-header-h, 4.75rem);
+  block-size: 14.0625rem;
+  background: var(--au-kreeft-strip-desk) no-repeat center / cover;
+  pointer-events: none;
+}
+
+@media (max-width: 1023px) {
+  .pub-theme .au-kreeft-header-strip {
+    block-size: 6.5625rem;
+    background-image: var(--au-kreeft-strip-mob);
+  }
+
+  .pub-theme .au-stage--kreeft-strip {
+    padding-top: calc(var(--pub-header-h, 4.75rem) + 7rem);
+  }
+}
+
 .pub-theme .au-stage--illustrated {
   align-items: center;
   padding: 4.5rem 1.5rem 3rem;

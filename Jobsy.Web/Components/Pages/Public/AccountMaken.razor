@@ -22,12 +22,10 @@
 
 <PageTitle>@Culture["Signup.Title"] · Lobsy</PageTitle>
 
-<section class="au-stage au-stage--illustrated pub-signup"
-         style="@($"--au-art-left:url('{LoginLeft}');--au-art-right:url('{LoginRight}');--au-art-mobile:url('{AccountMobileArt}')")"
+<section class="au-stage au-stage--illustrated au-stage--kreeft-strip pub-signup"
+         style="@($"--au-kreeft-strip-desk:url('{KreeftHeaderStripAssets.InloggenDesk}');--au-kreeft-strip-mob:url('{KreeftHeaderStripAssets.InloggenMob}')")"
          aria-labelledby="signup-title">
-    <div class="au-art-band" aria-hidden="true"></div>
-    <div class="au-art au-art--left" aria-hidden="true"></div>
-    <div class="au-art au-art--right" aria-hidden="true"></div>
+    <div class="au-kreeft-header-strip" aria-hidden="true" data-testid="kreeft-header-strip"></div>
     <div class="au-col">
         <div class="au-card au-card--illustrated">
             <p class="au-eyebrow">@Culture["Signup.Eyebrow"]</p>

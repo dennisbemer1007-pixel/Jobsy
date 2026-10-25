@@ -2,7 +2,7 @@
 
 .ob-wizard--rustig {
   --ob-rustig-sidebar: 230px;
-  --ob-rustig-hero-h: 92px;
+  --ob-rustig-hero-h: 105px;
   background: var(--bg);
 }
 
@@ -405,7 +405,7 @@
 
   .ob-rustig[data-ob-rustig-screen="step-09"] .ob-rustig__hero-band,
   .ob-rustig[data-ob-rustig-screen="step-10"] .ob-rustig__hero-band {
-    --ob-rustig-hero-h: 92px;
+    --ob-rustig-hero-h: 105px;
   }
 
   .ob-rustig[data-ob-rustig-screen="step-09"] .ob-rustig__hero-img,
@@ -471,7 +471,7 @@
 
 @media (min-width: 1024px) {
   .ob-wizard--rustig {
-    --ob-rustig-hero-h: 170px;
+    --ob-rustig-hero-h: 225px;
   }
 
   .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-img--desk {
@@ -2359,7 +2359,7 @@
 
 @media (max-width: 1023px) {
   .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-band {
-    --ob-rustig-hero-h: 92px;
+    --ob-rustig-hero-h: 105px;
   }
 
   .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-img {

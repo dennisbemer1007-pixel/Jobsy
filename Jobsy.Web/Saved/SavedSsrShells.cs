@@ -66,7 +66,7 @@ internal static class SavedSsrShells
 
     private static void AppendHero(StringBuilder sb, CultureState culture)
     {
-        var art = CandidateIllustratedImages.BewaardBand;
+        var art = KreeftHeaderStripAssets.BewaardDesk;
         sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--with-art\" style=\"");
         sb.Append("--cand-hero-art:url('");
         sb.Append(WebUtility.HtmlEncode(art));
