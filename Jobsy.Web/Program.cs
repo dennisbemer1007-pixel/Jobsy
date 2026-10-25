@@ -664,6 +664,7 @@ app.MapPassportClientEndpoints();
 app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
 app.MapSollicitatiesClientEndpoints();
+app.MapAfterMatchMessagesClientEndpoints();
 app.MapAfterMatchPickSlotClientEndpoints();
 app.MapAfterMatchEmployerProposeClientEndpoints();
 app.MapAfterMatchConfirmedClientEndpoints();
