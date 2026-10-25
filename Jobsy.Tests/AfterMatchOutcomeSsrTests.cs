@@ -42,7 +42,10 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("AfterMatch.Screen13.PageTitle", razor, StringComparison.Ordinal);
         Assert.Contains("ndm-outcome.js", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261028-ndm-outcome5", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261028-ndm-outcome6", razor, StringComparison.Ordinal);
+        var ndmCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/na-de-match.css"));
+        Assert.Contains(".app-shell--candidate:has(.ndm-outcome-page) .app-main", ndmCss, StringComparison.Ordinal);
+        Assert.Contains("padding-bottom:calc(var(--bottom-nav-h,4.25rem)", ndmCss, StringComparison.Ordinal);
     }
 
     [Fact]
