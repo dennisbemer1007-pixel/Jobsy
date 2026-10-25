@@ -52,16 +52,19 @@
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
-else if (!string.IsNullOrWhiteSpace(_fatalMessage))
-{
-    <p class="state-message">@_fatalMessage</p>
-}
-else if (_bodyHtml is not null)
+else if (_bodyHtml is not null || !string.IsNullOrWhiteSpace(_fatalMessage))
 {
     <WgPageShell Title="@_heroTitle"
                  Lead="@_heroLead"
                  CrumbDetail="@_candidateName">
-        @((MarkupString)_bodyHtml)
+        @if (_bodyHtml is not null)
+        {
+            @((MarkupString)_bodyHtml)
+        }
+        else
+        {
+            <p class="state-message">@_fatalMessage</p>
+        }
     </WgPageShell>
 }
 
@@ -103,6 +106,7 @@ else if (_bodyHtml is not null)
             if (thread is null)
             {
                 _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                SetHero(Culture["AfterMatch.Screen02.Hero.Title"], Culture["AfterMatch.Screen02.Hero.Lead"]);
                 return;
             }
 
@@ -145,6 +149,7 @@ else if (_bodyHtml is not null)
                 && panel is not ("messages" or "cancel" or "outcome"))
             {
                 _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                SetHero(Culture["AfterMatch.Screen02.Hero.Title"], Culture["AfterMatch.Screen02.Hero.Lead"]);
                 return;
             }
 
@@ -154,6 +159,7 @@ else if (_bodyHtml is not null)
                     if (!AfterMatchEmployerSsrRouting.ShouldUseCancelScreen(thread))
                     {
                         _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                        SetHero(Culture["AfterMatch.Screen08.SideTitle.Cancel"], Culture["AfterMatch.Employer.Cancel.Lead"]);
                         return;
                     }
 
@@ -234,6 +240,7 @@ else if (_bodyHtml is not null)
                     if (!AfterMatchEmployerSsrRouting.ShouldUsePanelSsrDefault(thread, panel))
                     {
                         _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                        SetHero(Culture["AfterMatch.Screen02.Hero.Title"], Culture["AfterMatch.Screen02.Hero.Lead"]);
                         return;
                     }
 
