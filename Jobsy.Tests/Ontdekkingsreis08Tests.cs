@@ -193,12 +193,22 @@ public class Ontdekkingsreis08RoutesNavTests
     }
 
     [Fact]
-    public void Illustrated_candidate_pages_hide_floating_coach()
+    public void Illustrated_candidate_pages_show_floating_coach()
     {
-        Assert.True(MainLayout.IsIllustratedCandidateCoachHidden("carriere"));
-        Assert.True(MainLayout.IsIllustratedCandidateCoachHidden("candidate/applications"));
-        Assert.True(MainLayout.IsIllustratedCandidateCoachHidden("candidate/paspoort"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("carriere"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/applications"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/paspoort"));
         Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/profile"));
+    }
+
+    [Fact]
+    public void Lobsy_coach_excluded_only_on_landing_login_and_account_flow()
+    {
+        Assert.True(MainLayout.IsLobsyCoachExcludedPath(""));
+        Assert.True(MainLayout.IsLobsyCoachExcludedPath("login"));
+        Assert.True(MainLayout.IsLobsyCoachExcludedPath("account-maken"));
+        Assert.False(MainLayout.IsLobsyCoachExcludedPath("candidate/kompas"));
+        Assert.False(MainLayout.IsLobsyCoachExcludedPath("banenkaart"));
     }
 
     [Fact]

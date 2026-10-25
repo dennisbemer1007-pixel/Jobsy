@@ -12,6 +12,8 @@ internal static class CareerSsrShells
     internal static string BuildBody(CultureState culture, CareerSsrData.PageData data, string antiforgeryToken)
     {
         var sb = new StringBuilder();
+        sb.Append("<div class=\"career-page-wrap\">");
+        AppendHeroStrip(sb, data);
         sb.Append("<div class=\"journey-page career-page career-page--illustrated panel-page--cand-ill\" data-testid=\"career-page-ssr\">");
         AppendHero(sb, culture, data);
         sb.Append("<div class=\"carriere-segmented career-uwv-sections opl-wrap\" data-testid=\"uwv-carriere-sections\">");
@@ -49,28 +51,32 @@ internal static class CareerSsrShells
 
         sb.Append("<p class=\"carriere-segmented__footnote\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.CarriereSegmented.Footnote(culture.Language)));
-        sb.Append("</p></div></div>");
+        sb.Append("</p></div></div></div>");
         return sb.ToString();
+    }
+
+    private static void AppendHeroStrip(StringBuilder sb, CareerSsrData.PageData data)
+    {
+        var omscholen = string.Equals(data.ActiveTab, CareerSsrTabs.Omscholen, StringComparison.Ordinal);
+        if (omscholen)
+        {
+            KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.OmscholenDesk, KreeftHeaderStripAssets.OmscholenMob, "omscholen");
+            return;
+        }
+
+        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.CarriereDesk, KreeftHeaderStripAssets.CarriereMob, "carriere");
     }
 
     private static void AppendHero(StringBuilder sb, CultureState culture, CareerSsrData.PageData data)
     {
-        var desk = string.Equals(data.ActiveTab, CareerSsrTabs.Omscholen, StringComparison.Ordinal)
-            ? KreeftHeaderStripAssets.OmscholenDesk
-            : KreeftHeaderStripAssets.CarriereDesk;
-        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--with-art uwv-carriere-showcase-hero cand-hero--kreeft-strip\" style=\"");
-        sb.Append("--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(desk));
-        sb.Append("');--cand-hero-pos:center center;\"><div class=\"cand-hero__copy\">");
-        sb.Append("<span class=\"cand-hero__eyebrow cand-hero__eyebrow--coral\">");
+        sb.Append("<header class=\"carriere-ssr-intro uwv-carriere-showcase-hero\" data-testid=\"career-hero\">");
+        sb.Append("<span class=\"carriere-ssr-intro__eyebrow cand-hero__eyebrow cand-hero__eyebrow--coral\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Career.Eyebrow(culture.Language)));
-        sb.Append("</span><h1 tabindex=\"-1\">");
+        sb.Append("</span><h1 tabindex=\"-1\" class=\"carriere-ssr-intro__title\">");
         sb.Append(WebUtility.HtmlEncode(data.HeroTitle));
-        sb.Append("</h1><p class=\"cand-hero__lead\">");
+        sb.Append("</h1><p class=\"carriere-ssr-intro__lead cand-hero__lead\">");
         sb.Append(WebUtility.HtmlEncode(data.HeroLead));
-        sb.Append("</p></div><div class=\"cand-hero__media\" style=\"--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(desk));
-        sb.Append("');--cand-hero-pos:center center;\" aria-hidden=\"true\"></div></header>");
+        sb.Append("</p></header>");
     }
 
     private static void AppendEmptyProfile(StringBuilder sb, CultureState culture)

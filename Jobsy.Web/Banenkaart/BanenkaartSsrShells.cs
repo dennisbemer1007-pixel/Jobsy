@@ -377,7 +377,7 @@ internal static class BanenkaartSsrShells
     {
         var q = model.Query;
         sb.Append("<div class=\"filter-sheet-backdrop kb-filter-drawer-backdrop\" data-testid=\"kb-filter-backdrop\" aria-hidden=\"true\"></div>");
-        sb.Append("<div id=\"discovery-filters\" class=\"filter-sheet kb-filter-drawer\" role=\"dialog\" aria-modal=\"false\" aria-hidden=\"true\" aria-labelledby=\"filter-sheet-title\" data-testid=\"kb-filter-sheet\">");
+        sb.Append("<div id=\"discovery-filters\" class=\"filter-sheet kb-filter-drawer\" role=\"dialog\" aria-modal=\"false\" aria-hidden=\"true\" inert aria-labelledby=\"filter-sheet-title\" data-testid=\"kb-filter-sheet\">");
         sb.Append("<div class=\"filter-sheet__header\"><h2 id=\"filter-sheet-title\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
             .Append("</h2><button type=\"button\" class=\"filter-sheet__close\" data-testid=\"kb-filter-close\" aria-label=\"")

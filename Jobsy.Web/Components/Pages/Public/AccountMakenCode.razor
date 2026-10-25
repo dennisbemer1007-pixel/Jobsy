@@ -6,6 +6,7 @@
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
+@using Jobsy.Web.Components.Media
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.DataProtection
@@ -19,9 +20,11 @@
 <PageTitle>@Culture["Signup.Code.Title"] · Lobsy</PageTitle>
 
 <section class="au-stage au-stage--illustrated au-stage--kreeft-strip pub-signup"
-         style="@($"--au-kreeft-strip-desk:url('{KreeftHeaderStripAssets.InloggenDesk}');--au-kreeft-strip-mob:url('{KreeftHeaderStripAssets.InloggenMob}')")"
          aria-labelledby="signup-code-title">
-    <div class="au-kreeft-header-strip" aria-hidden="true" data-testid="kreeft-header-strip"></div>
+    <KreeftHeaderStrip StripKey="inloggen"
+                       DeskUrl="@KreeftHeaderStripAssets.InloggenDesk"
+                       MobUrl="@KreeftHeaderStripAssets.InloggenMob"
+                       CssClass="au-kreeft-header-strip kreeft-header-strip" />
     <div class="au-col">
     <div class="au-card au-card--illustrated pub-signup__card">
         <p class="au-eyebrow">@Culture["Signup.Eyebrow"]</p>

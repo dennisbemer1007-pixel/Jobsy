@@ -4092,10 +4092,6 @@ html[dir="rtl"] .account-menu__panel {
         max-height: calc(100dvh - var(--app-header-height, 4.25rem) - var(--cookie-bar-h, 3.75rem));
     }
 
-    .app-shell:has(.jobsy-discovery) .lobsy-coach-dock {
-        display: none !important;
-    }
-
     .jobsy-discovery .map-stage {
         overflow: visible;
     }
