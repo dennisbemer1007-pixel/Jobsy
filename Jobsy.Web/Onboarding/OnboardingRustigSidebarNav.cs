@@ -1,3 +1,4 @@
+using Jobsy.Web.Localization;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Onboarding;
@@ -31,26 +32,16 @@ public static class OnboardingRustigSidebarNav
     public static string LinkHref(int sectionNumber) =>
         OnboardingRoutes.StepUrl(LinkWizardStep(sectionNumber));
 
-    public static IReadOnlyList<NavItem> Items(int wizardStep, int? activeSectionOverride = null)
+    public static IReadOnlyList<NavItem> Items(CultureState culture, int wizardStep, int? activeSectionOverride = null)
     {
         var active = activeSectionOverride ?? ActiveSection(wizardStep);
         return
         [
-            new("1", "Over jou", "3 stappen", active == 1),
-            new("2", "Achtergrond", "optioneel", active == 2),
-            new("3", "Droom", "1 stap", active == 3),
-            new("4", "Wie ben jij", "4 korte tests", active == 4),
-            new("5", "Jouw Kompas", "je resultaat", active == 5),
+            new("1", culture["Onboarding.Phase.OverJou"], culture["Onboarding.StartJourney.Sidebar1"], active == 1),
+            new("2", culture["Onboarding.Phase.Achtergrond"], culture["Onboarding.StartJourney.Sidebar2"], active == 2),
+            new("3", culture["Onboarding.Rustig.Phase.Droom"], culture["Onboarding.StartJourney.Sidebar3"], active == 3),
+            new("4", culture["Onboarding.Rustig.Phase.WieBenJij"], culture["Onboarding.StartJourney.Sidebar4"], active == 4),
+            new("5", culture["Onboarding.Rustig.Phase.Kompas"], culture["Onboarding.StartJourney.Sidebar5"], active == 5),
         ];
     }
-
-    public static IReadOnlyList<double> PhaseWidths(int step) =>
-        step switch
-        {
-            <= 0 => [0, 0, 0, 0],
-            <= 3 => [100, 0, 0, 0],
-            <= 6 => [100, 100, 0, 0],
-            <= 9 => [100, 100, 100, 0],
-            _ => [100, 100, 100, 100],
-        };
 }

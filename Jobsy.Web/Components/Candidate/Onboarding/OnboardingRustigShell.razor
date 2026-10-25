@@ -14,7 +14,7 @@
                  decoding="async"
                  data-logo-fallback="off"
                  draggable="false" />
-            @foreach (var item in OnboardingRustigSidebarNav.Items(Step, SidebarActiveSection))
+            @foreach (var item in OnboardingRustigSidebarNav.Items(Culture, Step, SidebarActiveSection))
             {
                 var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
                 <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"

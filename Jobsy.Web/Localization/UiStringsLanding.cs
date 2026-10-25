@@ -186,12 +186,12 @@ public static class UiStringsLanding
 
         Add("Landing.Journey.Eyebrow", "Ontdekkingsreis", "Discovery journey", "Podróż odkrywcza", "Călătoria descoperirii", "رحلة الاكتشاف");
         Add("Landing.Journey.Title", "Van het strand naar het licht", "From the beach to the light", "Od plaży do światła", "De la plajă spre lumină", "من الشاطئ إلى النور");
-        Add("Landing.Journey.Lead", "Vijf zones — dezelfde reis als in de app.", "Five zones — the same journey as in the app.", "Pięć stref — ta sama podróż co w aplikacji.", "Cinci zone — aceeași călătorie ca în app.", "خمس مناطق — نفس الرحلة في التطبيق.");
-        Add("Landing.Journey.Beach", "Start met wie je bent vandaag.", "Start with who you are today.", "Zacznij od tego, kim jesteś dziś.", "Începe cu cine ești azi.", "ابدأ بمن أنت اليوم.");
-        Add("Landing.Journey.Coast", "Ontdek wat je kunt en wat je leuk vindt.", "Discover what you can do and what you like.", "Odkryj, co potrafisz i co lubisz.", "Descoperă ce poți și ce-ți place.", "اكتشف ما تستطيع وما تحب.");
-        Add("Landing.Journey.Rocks", "Kies welke richting bij je past.", "Choose which direction fits you.", "Wybierz kierunek, który pasuje.", "Alege direcția care ți se potrivește.", "اختر الاتجاه الذي يناسبك.");
-        Add("Landing.Journey.Deep", "Ga dieper met je werk-DNA.", "Go deeper with your work DNA.", "Zgłębiaj swoje DNA pracy.", "Mergi mai adânc cu ADN-ul tău.", "تعمّق في حمض عملك.");
-        Add("Landing.Journey.Light", "Zie welke banen echt bij je passen.", "See which jobs truly fit you.", "Zobacz, które oferty naprawdę pasują.", "Vezi ce joburi ți se potrivesc cu adevărat.", "اعرف أي الوظائف تناسبك حقًا.");
+        Add("Landing.Journey.Lead", "Vijf zones, dezelfde reis als in de app.", "Five zones, the same journey as in the app.", "Pięć stref, ta sama podróż co w aplikacji.", "Cinci zone, aceeași călătorie ca în app.", "خمس مناطق، نفس الرحلة في التطبيق.");
+        Add("Landing.Journey.Beach", "Je stapt in.", "You step in.", "Wchodzisz.", "Faci primul pas.", "تخطو إلى الداخل.");
+        Add("Landing.Journey.Coast", "Wanneer, waar en hoe je kunt werken.", "When, where and how you can work.", "Kiedy, gdzie i jak możesz pracować.", "Când, unde și cum poți lucra.", "متى وأين وكيف يمكنك العمل.");
+        Add("Landing.Journey.Rocks", "Wat je gedaan hebt en waar je naartoe wilt.", "What you have done and where you want to go.", "Co zrobiłeś i dokąd chcesz iść.", "Ce ai făcut și încotro vrei să mergi.", "ما فعلته وإلى أين تريد أن تذهب.");
+        Add("Landing.Journey.Deep", "Vier korte testen.", "Four short tests.", "Cztery krótkie testy.", "Patru teste scurte.", "أربعة اختبارات قصيرة.");
+        Add("Landing.Journey.Light", "Alles samen in je paspoort.", "Everything together in your passport.", "Wszystko razem w twoim paszporcie.", "Totul la un loc în pașaportul tău.", "كل شيء معًا في جوازك.");
         Add("Landing.Journey.Cta", "Start de ontdekkingsreis →", "Start the journey →", "Rozpocznij podróż →", "Pornește călătoria →", "ابدأ الرحلة ←");
 
         Add("Landing.Get.MapCardTitle", "De banenkaart", "The job map", "Mapa ofert", "Harta joburilor", "خريطة الوظائف");
