@@ -42,7 +42,7 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("AfterMatch.Screen13.PageTitle", razor, StringComparison.Ordinal);
         Assert.Contains("ndm-outcome.js", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261028-ndm-outcome4", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261028-ndm-outcome5", razor, StringComparison.Ordinal);
     }
 
     [Fact]
