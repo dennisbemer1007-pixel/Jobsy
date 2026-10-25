@@ -4,11 +4,9 @@ public static class OnboardingRustigKompasIllustrationAssets
 {
     public const string Version = "20261022-kompasc";
 
-    public static string DesktopJpg =>
-        $"/images/candidate-illustrated/kompas-hero-band-c.jpg?v={Version}";
+    public static string DesktopJpg => Jobsy.Web.Media.KreeftHeaderStripAssets.LichtKompasDesk;
 
-    public static string MobileJpg =>
-        $"/images/onboarding/rustig-mockup/kompas-c-hero-mobile.jpg?v={Version}";
+    public static string MobileJpg => Jobsy.Web.Media.KreeftHeaderStripAssets.LichtKompasMob;
 
     public static string DirectionZorg =>
         $"/images/onboarding/rustig-mockup/kompas-b-direction-zorg.jpg?v={Version}";

@@ -24,20 +24,16 @@
 else if (_phase == "intro")
 {
     <div class="journey-page panel-page--cand-ill uwv-ondernemer-intro-page">
+        <div class="test-kreeft-strip uwv-ondernemer-intro-page__strip" aria-hidden="true" data-testid="kreeft-header-strip">
+            <img class="test-kreeft-strip__desk" src="@KreeftHeaderStripAssets.OndernemerDesk" width="1440" height="225" alt="" loading="lazy" decoding="async" />
+            <img class="test-kreeft-strip__mob" src="@KreeftHeaderStripAssets.OndernemerMob" width="780" height="105" alt="" loading="lazy" decoding="async" />
+        </div>
         <div class="opl-wrap uwv-ondernemer-intro-layout">
             <header class="uwv-ondernemer-intro-layout__head">
                 <p class="uwv-ondernemer-intro-layout__eyebrow">@(Culture.Format("TestFlow.Eyebrow.Intro", UwvMockupCopy.Ondernemer.TestName(Culture.Language)))</p>
                 <h1 class="uwv-ondernemer-intro-layout__title">@UwvMockupCopy.Ondernemer.TestName(Culture.Language)</h1>
                 <p class="uwv-ondernemer-intro-layout__lead">@IntroLead</p>
             </header>
-            <figure class="uwv-ondernemer-intro-layout__art" aria-hidden="true">
-                <img src="@CandidateIllustratedImages.OndernemerIntroHero"
-                     alt=""
-                     width="1200"
-                     height="675"
-                     decoding="async"
-                     loading="eager" />
-            </figure>
             <section class="detail-card career-card uwv-ondernemer-intro-card__inner uwv-ondernemer-intro-layout__card">
                 <p>@UwvMockupCopy.Ondernemer.IntroLead(Culture.Language)</p>
                 <h2 class="uwv-ondernemer-intro-card__sub">@UwvMockupCopy.Ondernemer.IntroDiscoverTitle(Culture.Language)</h2>

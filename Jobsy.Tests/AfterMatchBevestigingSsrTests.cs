@@ -70,7 +70,7 @@ public sealed class AfterMatchBevestigingSsrTests : BunitContext
         Assert.Contains("Je telefoonnummer deel je pas na het gesprek", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Zo blijft het veilig", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-ask-lobsy", html, StringComparison.Ordinal);
-        Assert.Contains("Vraag het Lobsy", html, StringComparison.Ordinal);
+        Assert.Contains("Lobsy-hulp", html, StringComparison.Ordinal);
         Assert.Contains("ndm-mockup-footer", html, StringComparison.Ordinal);
         Assert.Contains(culture["Footer.Privacy"], html, StringComparison.Ordinal);
     }

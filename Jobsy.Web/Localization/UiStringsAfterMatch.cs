@@ -329,7 +329,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen13.ActivitiesPrefix", "Je sollicitatie en het gesprek staan al in ", "Your application and interview are already in ");
         Add("AfterMatch.Screen13.ActivitiesSuffix", ". Daar hoef je niets voor te doen.", ". You do not need to do anything for that.");
         Add("AfterMatch.Screen13.FeedbackAsideTitle", "Even iets kwijt?", "Need to share something?");
-        Add("AfterMatch.Screen13.FeedbackAsideLead", "Vraag het Lobsy, of praat erover met je begeleider als je die hebt.", "Ask Lobsy, or talk about it with your coach if you have one.");
+        Add("AfterMatch.Screen13.FeedbackAsideLead", "Open Lobsy-hulp, of praat erover met je begeleider als je die hebt.", "Open Lobsy help, or talk about it with your coach if you have one.");
         Add("AfterMatch.Screen13.FeedbackPrompt", "Hoe was het gesprek voor jou?", "How was the interview for you?");
         Add("AfterMatch.Screen13.FeedbackHint", "Alleen in woorden, gecontroleerd voor plaatsing.", "Words only, checked before posting.");
         Add("AfterMatch.Screen13.Chip.Friendly", "Vriendelijk", "Friendly");

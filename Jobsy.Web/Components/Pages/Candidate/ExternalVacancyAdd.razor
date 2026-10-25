@@ -5,6 +5,7 @@
 @attribute [RequiresFeature(PlatformFeature.CandidateExternalVacancies)]
 @using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Media
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
@@ -12,7 +13,11 @@
 
 <PageTitle>@Culture["ExtVac.Add.Title"] · Lobsy</PageTitle>
 
-<div class="kb-ext" data-testid="kb-ext-add">
+<div class="kb-ext kb-ext--kreeft" data-testid="kb-ext-add">
+    <div class="test-kreeft-strip kb-ext__strip" aria-hidden="true" data-testid="kreeft-header-strip">
+        <img class="test-kreeft-strip__desk" src="@KreeftHeaderStripAssets.ToevoegenDesk" width="1440" height="225" alt="" loading="lazy" decoding="async" />
+        <img class="test-kreeft-strip__mob" src="@KreeftHeaderStripAssets.ToevoegenMob" width="780" height="105" alt="" loading="lazy" decoding="async" />
+    </div>
     <header>
         <h1 class="kb-ext__title">@Culture["ExtVac.Add.Title"]</h1>
         <p class="kb-ext__lead">@Culture["ExtVac.Add.Lead"]</p>

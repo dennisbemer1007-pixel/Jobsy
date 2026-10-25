@@ -93,7 +93,7 @@ public sealed class AfterMatchPickSlotSsrTests : BunitContext
         Assert.Contains("Een ander moment voorstellen", html, StringComparison.Ordinal);
         Assert.Contains("id=\"ndm-propose-form\"", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-scroll-propose", html, StringComparison.Ordinal);
-        Assert.Contains("Vraag het Lobsy", html, StringComparison.Ordinal);
+        Assert.Contains("Lobsy-hulp", html, StringComparison.Ordinal);
 
         var firstSlotIdx = html.IndexOf("class=\"slot on\"", StringComparison.Ordinal);
         var secondSlotIdx = html.IndexOf("class=\"slot\"", StringComparison.Ordinal);
