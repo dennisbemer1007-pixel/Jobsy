@@ -1,10 +1,12 @@
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Options;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Web.Security;
 
@@ -54,6 +56,18 @@ public sealed class MfaEnforcementMiddleware
         {
             var systemAdmin = context.RequestServices?.GetService(typeof(ISystemAdminSettings)) as ISystemAdminSettings;
             if (systemAdmin?.RequireTwoFactor != true)
+            {
+                await _next(context);
+                return;
+            }
+        }
+
+        var authOptions = context.RequestServices?.GetService(typeof(IOptions<AuthOptions>)) as IOptions<AuthOptions>;
+        if (authOptions?.Value.SkipMfaForSeedAccounts == true)
+        {
+            var email = context.User.FindFirstValue(ClaimTypes.Email)
+                        ?? context.User.FindFirstValue("email");
+            if (MfaPolicy.IsJobsyLocalSeedEmail(email))
             {
                 await _next(context);
                 return;
