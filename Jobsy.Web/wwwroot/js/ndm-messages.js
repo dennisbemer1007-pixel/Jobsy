@@ -3,9 +3,53 @@
 
   var MOBILE = window.matchMedia("(max-width: 600px)");
   var MARK_READ_PATH = "/api/sollicitaties-client/berichten/mark-read";
+  var READ_ACK_KEY = "sollicitaties-threads-read-ack-v1";
+  var READ_PENDING_KEY = "sollicitaties-threads-read-pending-v1";
 
   function root() {
     return document.querySelector("[data-ndm-messages-ssr]");
+  }
+
+  function readIdSet(key) {
+    try {
+      var raw = sessionStorage.getItem(key);
+      if (!raw) {
+        return [];
+      }
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed)
+        ? parsed.filter(function (id) {
+            return typeof id === "string" && id;
+          })
+        : [];
+    } catch (_e) {
+      return [];
+    }
+  }
+
+  function writeIdSet(key, ids) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(ids));
+    } catch (_e2) {
+      /* ignore */
+    }
+  }
+
+  function markThreadReadAcked(threadId) {
+    if (!threadId) {
+      return;
+    }
+    var ack = readIdSet(READ_ACK_KEY);
+    if (ack.indexOf(threadId) < 0) {
+      ack.push(threadId);
+      writeIdSet(READ_ACK_KEY, ack);
+    }
+    writeIdSet(
+      READ_PENDING_KEY,
+      readIdSet(READ_PENDING_KEY).filter(function (id) {
+        return id !== threadId;
+      })
+    );
   }
 
   function setThreadOpen(open) {
@@ -27,6 +71,27 @@
     container.querySelectorAll('[data-ndm-thread-select][data-ndm-thread-id="' + threadId + '"] .pill.warm').forEach(function (badge) {
       badge.remove();
     });
+  }
+
+  function applyStoredReadState() {
+    var container = root();
+    if (!container) {
+      return;
+    }
+    var ack = readIdSet(READ_ACK_KEY);
+    ack.forEach(function (threadId) {
+      clearUnreadBadge(threadId);
+    });
+    try {
+      var match = window.location.pathname.match(
+        /\/candidate\/applications\/([0-9a-f-]{36})\/after-match/i
+      );
+      if (match && match[1]) {
+        clearUnreadBadge(match[1]);
+      }
+    } catch (_e) {
+      /* ignore */
+    }
   }
 
   function updateBreadcrumbCompany(company) {
@@ -88,13 +153,20 @@
     if (!threadId) {
       return;
     }
+    markThreadReadAcked(threadId);
     fetch(MARK_READ_PATH + "?applicationId=" + encodeURIComponent(threadId), {
       method: "POST",
       credentials: "same-origin",
       headers: { "X-Requested-With": "XMLHttpRequest" },
-    }).catch(function () {
-      /* ignore */
-    });
+    })
+      .then(function (res) {
+        if (res.ok) {
+          markThreadReadAcked(threadId);
+        }
+      })
+      .catch(function () {
+        /* ignore */
+      });
   }
 
   function onThreadClick(ev) {
@@ -184,12 +256,19 @@
       }
     });
 
+    window.addEventListener("pageshow", function (ev) {
+      if (ev && ev.persisted) {
+        applyStoredReadState();
+      }
+    });
+
     if (typeof MOBILE.addEventListener === "function") {
       MOBILE.addEventListener("change", syncMobileLayout);
     } else if (typeof MOBILE.addListener === "function") {
       MOBILE.addListener(syncMobileLayout);
     }
 
+    applyStoredReadState();
     syncMobileLayout();
     var active = container.querySelector("[data-ndm-thread-panel]:not([hidden])");
     if (active) {

@@ -141,6 +141,16 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
     }
 
     [Fact]
+    public void TryGetSafeApplicationsReturn_accepts_after_match_messages_return()
+    {
+        var ok = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(
+            "/candidate/applications/b0000001-0000-4000-8000-000000000036/after-match?panel=messages",
+            out var href);
+        Assert.True(ok);
+        Assert.Contains("panel=messages", href, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TryGetSafeApplicationsReturn_accepts_absolute_applications_url()
     {
         var ok = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(

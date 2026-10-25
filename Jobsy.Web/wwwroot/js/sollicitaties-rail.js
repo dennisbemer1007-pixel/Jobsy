@@ -129,7 +129,12 @@
 
   function onClick(ev) {
     var back = ev.target && ev.target.closest && ev.target.closest(".sollic-detail__back.back");
-    if (back && MOBILE_DETAIL.matches && shouldIntercept(ev)) {
+    if (
+      back
+      && !back.classList.contains("sollic-detail__back--return")
+      && MOBILE_DETAIL.matches
+      && shouldIntercept(ev)
+    ) {
       ev.preventDefault();
       closeMobileDetail({ updateUrl: true, historyMethod: "pushState" });
       return;
