@@ -53,6 +53,19 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("messages"));
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("outcome"));
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("cancel"));
+        Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("unknown-panel"));
+    }
+
+    [Fact]
+    public void Legacy_blazor_route_is_no_blazor_redirect()
+    {
+        var root = FindRepoRoot();
+        var razor = File.ReadAllText(Path.Combine(
+            root,
+            "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatch.razor"));
+        Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
+        Assert.DoesNotContain("InteractiveServerRenderMode", razor, StringComparison.Ordinal);
+        Assert.Contains("/after-match{qs}", razor, StringComparison.Ordinal);
     }
 
     [Fact]

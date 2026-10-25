@@ -4,7 +4,7 @@ using Jobsy.Web.Applications;
 namespace Jobsy.Web.Middleware;
 
 /// <summary>
-/// Keeps public URL <c>/after-match</c> while routing pick-slot and confirmed interview to SSR and other panels to Blazor.
+/// Keeps public URL <c>/after-match</c> while rewriting to internal *-ssr handlers (werkgever + kandidaat).
 /// </summary>
 public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
 {
