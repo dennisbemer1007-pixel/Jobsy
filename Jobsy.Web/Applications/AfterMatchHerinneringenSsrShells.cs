@@ -91,6 +91,7 @@ internal static class AfterMatchHerinneringenSsrShells
 
         sb.Append("</main>");
         AfterMatchMailSsrChrome.AppendChatDock(sb, culture, data.AssistantHref);
+        AfterMatchMailSsrChrome.AppendMockupFooter(sb, culture);
         sb.Append("</div>");
         return sb.ToString();
     }
