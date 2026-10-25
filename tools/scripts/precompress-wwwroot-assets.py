@@ -21,10 +21,12 @@ DEFAULTS = [
     ROOT / "Jobsy.Web/wwwroot/css/features/na-de-match.css",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-confirmed.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-reschedule.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-outcome.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-mail-chrome.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-herinneringen.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-reschedule.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-cancel.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-messages.js",
 ]
 
 

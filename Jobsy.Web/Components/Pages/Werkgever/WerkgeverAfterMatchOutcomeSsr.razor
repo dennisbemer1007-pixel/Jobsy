@@ -1,0 +1,109 @@
+@page "/werkgever/sollicitaties/{ApplicationId:guid}/after-match/outcome-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["AfterMatch.Screen12.Hero.Title"] · Lobsy</PageTitle>
+<PageSeo Title="@Culture["AfterMatch.Screen12.Hero.Title"]" />
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.Werkgever,
+                  "/werkgever/sollicitaties"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261028-ndm-wg12" />
+    <script src="/js/ndm-employer.js?v=20261028-ndm-wg02" defer></script>
+    <script src="/js/ndm-employer-outcome.js?v=20261030-ndm-wg12" defer></script>
+</HeadContent>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_redirecting)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    <WgPageShell Title="@Culture["AfterMatch.Screen12.Hero.Title"]"
+                 Lead="@Culture["AfterMatch.Screen12.Hero.Lead"]"
+                 CrumbDetail="@_candidateName">
+        @((MarkupString)_bodyHtml)
+    </WgPageShell>
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private bool _loading = true;
+    private bool _redirecting;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+    private string? _candidateName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            http.Response.Headers.CacheControl = "no-store";
+
+            var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
+            if (!AfterMatchEmployerSsrRouting.ShouldUseOutcomeScreen(thread))
+            {
+                _redirecting = true;
+                var blazorPath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/blazor";
+                if (http.Request.QueryString.HasValue)
+                {
+                    blazorPath += http.Request.QueryString.Value;
+                }
+
+                http.Response.Redirect(blazorPath);
+                return;
+            }
+
+            if (thread is null)
+            {
+                _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                return;
+            }
+
+            _candidateName = thread.CandidateName;
+            var data = AfterMatchEmployerOutcomeSsrData.FromThread(Culture, thread, ApplicationId);
+            _bodyHtml = AfterMatchEmployerOutcomeSsrShells.BuildBody(Culture, data, ApplicationId);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

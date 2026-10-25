@@ -29,4 +29,9 @@ internal static class AfterMatchEmployerSsrRouting
     internal static bool ShouldUseMessagesScreen(AfterMatchThreadDto? contextThread) =>
         contextThread is not null
         && AfterMatchEmployerBerichtenPresentation.ThreadEligible(contextThread);
+
+    internal static bool ShouldUseOutcomeScreen(AfterMatchThreadDto? thread) =>
+        thread is not null
+        && thread.Outcome is null
+        && thread.InterviewStatus is InterviewStatus.Scheduled or InterviewStatus.Done;
 }
