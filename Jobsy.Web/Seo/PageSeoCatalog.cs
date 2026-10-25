@@ -38,6 +38,17 @@ public static partial class PageSeoCatalog
             return Private("AfterMatch.Screen05.PageTitle", "Seo.PrivateDescription");
         }
 
+        if (p.Contains("/after-match/bevestiging-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen06.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.StartsWith("/preview/na-de-match/06", StringComparison.OrdinalIgnoreCase)
+            || p.StartsWith("/preview/na-de-match/6", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen06.PageTitle", "Seo.PrivateDescription");
+        }
+
         if (p.Contains("/after-match/reschedule-ssr", StringComparison.OrdinalIgnoreCase))
         {
             return Private("AfterMatch.Screen08.Hero.Title", "Seo.PrivateDescription");

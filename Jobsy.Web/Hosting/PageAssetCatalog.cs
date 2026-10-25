@@ -195,6 +195,11 @@ public static class PageAssetCatalog
             return Area.CandidatePublic | Area.CandidateApp;
         }
 
+        if (path.StartsWith("/preview/na-de-match", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.CandidatePublic | Area.CandidateApp;
+        }
+
         if (path.StartsWith("/candidate/", StringComparison.Ordinal)
             || path.StartsWith("/vacancies/", StringComparison.Ordinal)
             || path is "/home" or "/ontdek" or "/candidate/match")
