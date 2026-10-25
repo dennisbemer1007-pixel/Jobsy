@@ -95,7 +95,8 @@ else
 
             <WgAppPhase2AcceptPanel ApplicationId="a.Id"
                                     CanWrite="CanWrite"
-                                    OnChanged="ReloadSelfAsync" />
+                                    OnChanged="ReloadSelfAsync"
+                                    OnAcceptUiAvailable="OnPhase2AcceptUiChanged" />
 
             @if (_afterMatchEnabled && AfterMatchEligible(a.Status))
             {
@@ -139,7 +140,7 @@ else
             <div class="wg-app-cand__footer" data-testid="wg-app-mobile-footer">
                 <ApplicationCandidateActions Item="a"
                                              CanWrite="CanWrite"
-                                             HidePrimary="_phase2Enabled && CanWrite && ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending"
+                                             HidePrimary="_phase2AcceptUi && CanWrite && ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending"
                                              Busy="_busy"
                                              OnPrimary="HandlePrimary"
                                              OnReject="HandleReject"
@@ -200,6 +201,7 @@ else
     private bool _hireOpen;
     private string? _message;
     private bool _phase2Enabled;
+    private bool _phase2AcceptUi;
     private bool _afterMatchEnabled;
 
     private string EmployerHistory(int count)
@@ -259,6 +261,12 @@ else
     {
         var prefs = ApplicationPreferenceRedaction.ToHumanReadable(item.PreferencesSummary);
         return string.IsNullOrWhiteSpace(prefs) ? null : prefs;
+    }
+
+    private Task OnPhase2AcceptUiChanged(bool available)
+    {
+        _phase2AcceptUi = available;
+        return InvokeAsync(StateHasChanged);
     }
 
     private Task HandlePrimary()
