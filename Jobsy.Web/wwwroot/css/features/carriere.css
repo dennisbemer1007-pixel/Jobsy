@@ -1226,6 +1226,28 @@
   background-image: none !important;
 }
 
+/* Desktop: profession-band strip is 150px elsewhere; UWV showcase h1 may wrap (e.g. “Van … naar …”). */
+@media (min-width: 640px) {
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band .cand-hero__copy {
+    height: auto !important;
+    min-height: 0 !important;
+    justify-content: flex-start !important;
+    padding-block: clamp(1rem, 2.2vw, 1.65rem) !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band .cand-hero__copy h1 {
+    line-height: 1.18;
+    text-wrap: balance;
+  }
+}
+
 .carriere-segmented.opl-wrap {
   padding-top: 0 !important;
 }
