@@ -250,6 +250,9 @@ projects:
                 value: "true"
               - key: Seed__Enabled
                 value: "true"
+              # When false: skip Westland/Haaglanden demo banenkaart vacatures on deploy (ATS + employer posts stay). Does not remove rows already in lobsy-acc-db.
+              - key: Seed__BanenkaartDemoVacancies
+                value: "false"
               - key: Jobsy__PupilPassportV2Enabled
                 value: "true"
               - key: Jobsy__StudentPassportEnabled
