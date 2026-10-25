@@ -45,6 +45,7 @@ else
                                OnDepthSelected="SelectDepthAsync"
                                BubbleText="@IntroBubble">
                     <ChildContent>
+                        <TestAboutPanel Kind="AssessmentKind.Values" ShowTransparency="@AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)" />
                         <footer class="test-shell__footer">
                             <a href="/profiel/tests/values">@Culture["TestFlow.ToMyTests"]</a>
                             @if (_answered >= _fullCount)

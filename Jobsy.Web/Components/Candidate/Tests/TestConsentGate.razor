@@ -45,10 +45,6 @@ else if (_testConsentMissing)
 else
 {
     <div class="test-page journey-page">
-        @if (_showV2Transparency)
-        {
-            <TestAboutPanel />
-        }
         @ChildContent
     </div>
 }
@@ -63,20 +59,12 @@ else
     private bool _testConsentMissing;
     private bool _busy;
     private string? _error;
-    private bool _showV2Transparency;
-
     public bool IsOpen => !_loading && !_parentalMissing && !_testConsentMissing;
 
     protected override async Task OnInitializedAsync()
     {
-        RefreshTransparency();
         await RefreshAsync();
     }
-
-    protected override void OnParametersSet() => RefreshTransparency();
-
-    private void RefreshTransparency()
-        => _showV2Transparency = AssessmentTestVersions.UsesV2ItemBank(QuickScanVersion);
 
     public async Task RefreshAsync()
     {

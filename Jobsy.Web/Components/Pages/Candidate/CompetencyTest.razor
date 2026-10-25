@@ -46,6 +46,7 @@ else
                                OnDepthSelected="SelectDepthAsync"
                                BubbleText="@IntroBubble">
                     <ChildContent>
+                        <TestAboutPanel Kind="AssessmentKind.Competence" ShowTransparency="@AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)" />
                         <p class="test-privacy muted">
                             @Culture["Competency.PrivacyNote"]
                             <a href="/privacy">@Culture["Legal.Privacy"]</a>
