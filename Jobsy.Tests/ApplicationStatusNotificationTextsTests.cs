@@ -45,4 +45,18 @@ public sealed class ApplicationStatusNotificationTextsTests
         Assert.Equal("Gesprek verzet", reschedule.Title);
         Assert.DoesNotContain("%", reschedule.Body, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void ApplicationNewMessage_sm11_copy_nl_en()
+    {
+        var nl = ApplicationStatusNotificationTexts.ApplicationNewMessage("Kassier", "nl");
+        var en = ApplicationStatusNotificationTexts.ApplicationNewMessage("Cashier", "en");
+        Assert.Equal("Nieuw bericht", nl.Title);
+        Assert.Equal("New message", en.Title);
+        Assert.DoesNotContain("—", nl.Body, StringComparison.Ordinal);
+
+        var self = ApplicationStatusNotificationTexts.ApplicationNewMessageSelf("Kassier", "nl");
+        Assert.Equal("Bevestiging", self.Title);
+        Assert.Contains("verstuurd", self.Body, StringComparison.Ordinal);
+    }
 }
