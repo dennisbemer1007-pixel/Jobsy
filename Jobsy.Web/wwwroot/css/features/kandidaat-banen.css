@@ -874,6 +874,40 @@
     display: block;
     position: sticky;
     top: var(--space-3, 0.75rem);
+  }}@media (min-width: 1280px) {.jobsy-discovery.jobsy-discovery--list .kb-list-layout__main {
+    min-width: 0;
+  }.jobsy-discovery.jobsy-discovery--list .kb-list-rows {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    gap: var(--space-4, 1rem);
+    align-content: start;
+    padding-inline: var(--space-2, 0.5rem);
+  }.jobsy-discovery.jobsy-discovery--list .kb-list-row:not(.kb-list-row--compact) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    gap: var(--space-2, 0.5rem);
+    padding: var(--space-3, 0.75rem);
+    height: 100%;
+  }.jobsy-discovery.jobsy-discovery--list .kb-list-row:not(.kb-list-row--compact) .kb-list-row__media {
+    aspect-ratio: 16 / 10;
+    max-height: 11rem;
+  }.jobsy-discovery.jobsy-discovery--list .kb-list-row:not(.kb-list-row--compact) .kb-list-row__top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2, 0.5rem);
+  }.jobsy-discovery.jobsy-discovery--list .kb-list-row:not(.kb-list-row--compact) .kb-list-row__travel {
+    align-self: flex-start;
+  }.jobsy-discovery.jobsy-discovery--list .kb-list-rows > .job-card {
+    max-width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }.jobsy-discovery.jobsy-discovery--list .kb-list-rows > .job-card .job-card__media {
+    max-height: 11rem;
+    padding-bottom: 0;
+    height: auto;
+    aspect-ratio: 16 / 10;
   }}@media (min-width: 900px) and (max-width: 1023px) {.jobsy-discovery.jobsy-discovery--list .kb-list-layout {
     grid-template-columns: 1fr;
   }.jobsy-discovery.jobsy-discovery--list .kb-list-rail {
