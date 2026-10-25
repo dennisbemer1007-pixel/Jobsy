@@ -69,7 +69,15 @@
   }
 
   function messagesUrlForThread(threadId) {
-    return "/werkgever/sollicitaties/" + encodeURIComponent(threadId) + "/after-match?panel=messages";
+    var container = root();
+    var contextId =
+      (container && container.getAttribute("data-context-application-id")) || threadId;
+    return (
+      "/werkgever/sollicitaties/" +
+      encodeURIComponent(contextId) +
+      "/after-match?panel=messages&thread=" +
+      encodeURIComponent(threadId)
+    );
   }
 
   function selectThread(threadId, options) {
@@ -295,11 +303,16 @@
 
     window.addEventListener("popstate", function () {
       try {
-        var match = window.location.pathname.match(
-          /\/werkgever\/sollicitaties\/([0-9a-f-]{36})\/after-match/i
-        );
-        if (match && match[1]) {
-          selectThread(match[1], {});
+        var params = new URL(window.location.href).searchParams;
+        var threadId = params.get("thread");
+        if (!threadId) {
+          var match = window.location.pathname.match(
+            /\/werkgever\/sollicitaties\/([0-9a-f-]{36})\/after-match/i
+          );
+          threadId = match && match[1];
+        }
+        if (threadId) {
+          selectThread(threadId, {});
         }
       } catch (_e) {
         /* ignore */

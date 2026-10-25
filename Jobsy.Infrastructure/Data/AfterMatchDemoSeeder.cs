@@ -66,7 +66,8 @@ internal static class AfterMatchDemoSeeder
             AfterMatchDemoIds.PickSlotsApp,
             AfterMatchDemoIds.ScheduledApp,
             AfterMatchDemoIds.RescheduleApp,
-            AfterMatchDemoIds.NotNowApp
+            AfterMatchDemoIds.NotNowApp,
+            AfterMatchDemoIds.Verkoop4790App
         };
 
         foreach (var appId in appIds)
@@ -77,11 +78,14 @@ internal static class AfterMatchDemoSeeder
                 continue;
             }
 
+            var title = appId == AfterMatchDemoIds.Verkoop4790App
+                ? "Verkoopmedewerker"
+                : "Medewerker bakkerij";
             db.Vacancies.Add(new Vacancy
             {
                 Id = vacancyId,
                 CompanyId = DemoCompanyId,
-                Title = "Medewerker bakkerij",
+                Title = title,
                 Description = "After-match demo vacancy.",
                 HourlyWage = 14.5m,
                 StartDate = start,
@@ -109,6 +113,7 @@ internal static class AfterMatchDemoSeeder
         await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.ScheduledApp, InterviewStatus.Scheduled, "scheduled", hasMessage: true);
         await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.RescheduleApp, InterviewStatus.RescheduleRequested, "reschedule", hasMessage: true);
         await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.NotNowApp, InterviewStatus.Done, "notnow", hasMessage: false, outcome: AfterMatchOutcomeKind.NotNow);
+        await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.Verkoop4790App, InterviewStatus.Scheduled, "scheduled4790", hasMessage: true);
 
         logger.LogInformation("After-match demo applications ensured.");
     }
@@ -123,7 +128,7 @@ internal static class AfterMatchDemoSeeder
     {
         await UpsertAppAsync(db, appId, interviewStatus, scenario, hasMessage, outcome);
         await db.SaveChangesAsync();
-        if (scenario == "scheduled")
+        if (scenario is "scheduled" or "scheduled4790" or "reschedule")
         {
             await LinkChosenInterviewSlotAsync(db, appId);
             await db.SaveChangesAsync();
@@ -219,6 +224,12 @@ internal static class AfterMatchDemoSeeder
         interview.UpdatedAtUtc = DateTime.UtcNow;
         interview.ChosenSlotId = null;
 
+        if (appId == AfterMatchDemoIds.Verkoop4790App)
+        {
+            app.CandidateName = string.Empty;
+            app.CandidateEmail = string.Empty;
+        }
+
         db.InterviewSlots.RemoveRange(interview.Slots);
         interview.Slots.Clear();
 
@@ -233,14 +244,18 @@ internal static class AfterMatchDemoSeeder
         {
             var chosen = AddSlot(interview, Slot1Start);
             chosen.IsSelected = true;
-            interview.ChosenSlotId = chosen.Id;
+        }
+
+        if (scenario == "scheduled4790")
+        {
+            var chosen = AddSlot(interview, Slot2Start);
+            chosen.IsSelected = true;
         }
 
         if (scenario == "reschedule")
         {
             var chosen = AddSlot(interview, Slot1Start);
             chosen.IsSelected = true;
-            interview.ChosenSlotId = chosen.Id;
             var candidateSlot = AddSlot(
                 interview,
                 Slot3Start,

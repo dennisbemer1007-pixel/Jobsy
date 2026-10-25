@@ -133,21 +133,25 @@
         window.NdmEmployerMessagesInit();
       }
     } else if (panel === "propose") {
-      if (flow) flow.hidden = true;
+      if (flow) flow.hidden = false;
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = false;
       if (cancelPanel) cancelPanel.hidden = true;
-      if (shareAside) shareAside.hidden = true;
+      el.querySelectorAll("[data-ndm-share-aside], [data-ndm-wg-aside]").forEach(function (aside) {
+        aside.hidden = true;
+      });
       if (infoNote) infoNote.hidden = false;
       if (whatGrid) whatGrid.hidden = true;
       if (actions) actions.hidden = true;
       syncHero("propose");
     } else if (panel === "cancel") {
-      if (flow) flow.hidden = true;
+      if (flow) flow.hidden = false;
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = true;
       if (cancelPanel) cancelPanel.hidden = false;
-      if (shareAside) shareAside.hidden = true;
+      el.querySelectorAll("[data-ndm-share-aside], [data-ndm-wg-aside]").forEach(function (aside) {
+        aside.hidden = true;
+      });
       if (infoNote) infoNote.hidden = true;
       if (whatGrid) whatGrid.hidden = true;
       if (actions) actions.hidden = true;
@@ -157,7 +161,9 @@
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = true;
       if (cancelPanel) cancelPanel.hidden = true;
-      if (shareAside) shareAside.hidden = false;
+      el.querySelectorAll("[data-ndm-share-aside], [data-ndm-wg-aside]").forEach(function (aside) {
+        aside.hidden = false;
+      });
       if (infoNote) infoNote.hidden = true;
       if (whatGrid) whatGrid.hidden = false;
       if (actions) actions.hidden = false;

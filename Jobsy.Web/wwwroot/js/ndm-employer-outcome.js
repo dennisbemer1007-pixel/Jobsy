@@ -35,7 +35,8 @@
 
   function bindOutcomeOptions(container) {
     container.querySelectorAll("[data-ndm-employer-outcome]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
         container.querySelectorAll("[data-ndm-employer-outcome]").forEach(function (other) {
           other.classList.remove("on");
         });

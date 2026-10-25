@@ -394,6 +394,12 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Propose.Where", "Locatie of link", "Location or link");
         Add("AfterMatch.Employer.Propose.WithWhom", "Met wie", "With whom");
         Add("AfterMatch.Employer.Propose.Note", "Bericht erbij (mag kort)", "Short note (optional)");
+        Add("AfterMatch.Employer.Outcome.NotYet", "De uitkomst kun je invullen na het gesprek. Stel eerst momenten voor of stuur een bericht.", "You can record the outcome after the interview. Propose times or send a message first.");
+        Add("AfterMatch.Employer.Scheduled.Tile.When", "Gesprek", "Interview");
+        Add("AfterMatch.Employer.Scheduled.Tile.Reminders", "Jullie krijgen bevestiging en herinneringen via Lobsy.", "You both get confirmation and reminders via Lobsy.");
+        Add("AfterMatch.Employer.Scheduled.Tile.Outcome", "Na het gesprek geef je binnen vijf werkdagen de uitkomst.", "After the interview, record the outcome within five working days.");
+        Add("AfterMatch.Employer.Scheduled.OutcomeAction", "Uitkomst invullen", "Record outcome");
+        Add("AfterMatch.Employer.Scheduled.WhenFallback", "Donderdag 22 oktober, 10:30", "Thursday 22 October, 10:30");
         Add("AfterMatch.Employer.Action.Propose", "Momenten voorstellen", "Propose times");
         Add("AfterMatch.Employer.Action.Messages", "Bericht sturen", "Send message");
         Add("AfterMatch.Employer.Expectation", "Sanne verwacht momenten voor donderdag 15 oktober", "Sanne expects times before Thursday 15 October");

@@ -156,8 +156,24 @@ else if (_bodyHtml is not null)
 
                     if (!AfterMatchEmployerSsrRouting.ShouldUseOutcomeScreen(thread))
                     {
-                        _fatalMessage = Culture["AfterMatch.Error.NotFound"];
-                        return;
+                        SetHero(Culture["AfterMatch.Screen02.Hero.Title"], Culture["AfterMatch.Screen02.Hero.Lead"]);
+                        var notYetData = new AfterMatchEmployerPanelSsrShells.PageData(
+                            thread,
+                            $"/werkgever/sollicitaties/{ApplicationId:D}",
+                            Culture["AfterMatch.Employer.Outcome.NotYet"],
+                            AfterMatchEmployerDemoSlots.InitialUtc,
+                            InterviewFormat.OnSite,
+                            "Loosduinseweg 120, Den Haag · ingang naast de winkel",
+                            "Linda de Wit, eigenaar",
+                            "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
+                            "",
+                            null);
+                        _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildBody(
+                            Culture,
+                            notYetData,
+                            ApplicationId,
+                            showProposeAction: AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread));
+                        break;
                     }
 
                     SetHero(Culture["AfterMatch.Screen12.Hero.Title"], Culture["AfterMatch.Screen12.Hero.Lead"]);
@@ -204,6 +220,10 @@ else if (_bodyHtml is not null)
                     else if (AfterMatchEmployerSsrRouting.ShouldUseScheduledHomeScreen(thread))
                     {
                         SetHero(Culture["AfterMatch.Screen05.Hero.Title"], Culture["AfterMatch.Screen05.Hero.Lead"]);
+                    }
+                    else if (AfterMatchEmployerSsrRouting.ShouldUseDoneSummaryScreen(thread))
+                    {
+                        SetHero(Culture["AfterMatch.Screen12.Hero.Title"], Culture["AfterMatch.Screen12.SubmittedNote"]);
                     }
                     else
                     {

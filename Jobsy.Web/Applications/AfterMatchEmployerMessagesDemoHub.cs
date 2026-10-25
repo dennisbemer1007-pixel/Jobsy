@@ -1,7 +1,6 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
-using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 
 namespace Jobsy.Web.Applications;
@@ -10,13 +9,14 @@ namespace Jobsy.Web.Applications;
 internal static class AfterMatchEmployerMessagesDemoHub
 {
     private static readonly Guid WaitApp = Guid.Parse("77777771-0001-4000-8000-000000000001");
-    private static readonly Guid Kandidaat4790App = Guid.Parse("00000000-0000-0000-0000-000000004790");
+    private static readonly Guid Verkoop4790App = Guid.Parse("77777771-0006-4000-8000-000000000006");
     private static readonly Guid NotNowApp = Guid.Parse("77777771-0005-4000-8000-000000000005");
 
     internal static bool IsDemoApplication(Guid applicationId) =>
         applicationId == WaitApp
         || applicationId == Guid.Parse("77777771-0002-4000-8000-000000000002")
-        || applicationId == Kandidaat4790App
+        || applicationId == Guid.Parse("77777771-0003-4000-8000-000000000003")
+        || applicationId == Verkoop4790App
         || applicationId == Guid.Parse("77777771-0004-4000-8000-000000000004")
         || applicationId == NotNowApp;
 
@@ -39,7 +39,9 @@ internal static class AfterMatchEmployerMessagesDemoHub
             .OrderByDescending(r =>
             {
                 var last = r.Thread.Messages.Count > 0 ? r.Thread.Messages[^1] : null;
-                return last?.CreatedAtUtc ?? r.Thread.AcceptedAtUtc ?? r.Application.CreatedAt;
+                return last?.CreatedAtUtc
+                       ?? r.Thread.AcceptedAtUtc
+                       ?? r.Application.CreatedAt;
             })
             .ToList();
     }
@@ -67,7 +69,7 @@ internal static class AfterMatchEmployerMessagesDemoHub
 
         var fri = AmsterdamSlot(2026, 10, 23, 9, 0);
         yield return Row(
-            Kandidaat4790App,
+            Verkoop4790App,
             null,
             false,
             InterviewStatus.Scheduled,
@@ -75,7 +77,8 @@ internal static class AfterMatchEmployerMessagesDemoHub
             fri.AddMinutes(30),
             [],
             unread: 1,
-            vacancyTitle: "Verkoopmedewerker");
+            vacancyTitle: "Verkoopmedewerker",
+            displayLabel: "Kandidaat #4790");
 
         yield return Row(
             NotNowApp,
@@ -99,19 +102,21 @@ internal static class AfterMatchEmployerMessagesDemoHub
         IReadOnlyList<AfterMatchMessageDto> messages,
         int unread = 0,
         AfterMatchOutcomeKind? outcome = null,
-        string vacancyTitle = "Medewerker bakkerij")
+        string vacancyTitle = "Medewerker bakkerij",
+        string? displayLabel = null)
     {
         var item = new EmployerApplicationItem
         {
             Id = appId,
             VacancyTitle = vacancyTitle,
             CompanyName = "Bakkerij De Korenaar",
-            CandidateName = candidateName,
+            CandidateName = displayLabel ?? candidateName,
             Status = "Accepted",
             PiiRevealed = pii,
             CreatedAt = new DateTime(2026, 10, 11, 10, 0, 0, DateTimeKind.Utc),
         };
 
+        var threadName = displayLabel ?? candidateName ?? "Kandidaat";
         var thread = new AfterMatchThreadDto(
             appId,
             Guid.NewGuid(),
@@ -132,7 +137,7 @@ internal static class AfterMatchEmployerMessagesDemoHub
             new AfterMatchReminderPreferenceDto(false, true, true),
             [],
             [],
-            candidateName ?? "Kandidaat",
+            threadName,
             null,
             new DateTime(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc),
             null);
@@ -146,7 +151,7 @@ internal static class AfterMatchEmployerMessagesDemoHub
                     new AfterMatchMessageDto(
                         Guid.NewGuid(),
                         false,
-                        candidateName ?? "Kandidaat",
+                        threadName,
                         "Hoi, ik kan vrijdag om 09:00.",
                         new DateTime(2026, 10, 15, 14, 0, 0, DateTimeKind.Utc),
                         null,
