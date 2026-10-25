@@ -34,10 +34,10 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
     <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-step2opslaan44" />
-    <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261022-r6c" />
+    <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261025-acc1093" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-mini-footer" />
-    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-reis1" />
+    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-acc1093" />
 </HeadContent>
 
 @if (_loading)
@@ -103,15 +103,7 @@ else if (_step is >= 1 and <= 10)
         }
         <div class="ob-rustig" data-ob-rustig-screen="@($"step-{_step:D2}")">
             <div class="ob-rustig__layout @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
-                <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
-                    <img class="ob-rustig__logo-e"
-                         src="@BrandImages.MarkSvg"
-                         width="56"
-                         height="56"
-                         alt="Lobsy"
-                         decoding="async"
-                         data-logo-fallback="off"
-                         draggable="false" />
+                <aside class="ob-rustig__sidebar ob-wizard__sidebar ob-rustig__sidebar--no-logo" aria-label="Stappen">
                     @foreach (var item in OnboardingRustigSidebarNav.Items(_step))
                     {
                         var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
@@ -132,16 +124,6 @@ else if (_step is >= 1 and <= 10)
 
                 <div class="ob-rustig__main">
                     <header class="ob-rustig__chrome">
-                        <div class="ob-rustig__mobile-brand">
-                            <img class="ob-rustig__logo-e"
-                                 src="@BrandImages.MarkSvg"
-                                 width="40"
-                                 height="40"
-                                 alt=""
-                                 decoding="async"
-                                 data-logo-fallback="off"
-                                 draggable="false" />
-                        </div>
                         <div class="ob-rustig__chrome-row">
                             <span class="ob-rustig__link ob-rustig__link--spacer" aria-hidden="true">‹</span>
                             <div class="ob-rustig__segments"

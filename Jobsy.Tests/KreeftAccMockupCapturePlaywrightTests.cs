@@ -6,12 +6,11 @@ namespace Jobsy.Tests;
 
 /// <summary>
 /// Kreeft v4 acc layout captures vs docs/mockups/kandidaat/kreeft/renders (PR #878 @ 53863b26).
-/// Run: JOBSY_CAPTURE_KREEFT_ACC=1 dotnet test --filter Capture_kreeft_acc_mockups
+/// Run: JOBSY_CAPTURE_KREEFT_ACC=1 JOBSY_E2E_BASE_URL=https://acceptatie.lobsy.nl dotnet test --filter Capture_kreeft_acc_mockups
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class KreeftAccMockupCapturePlaywrightTests
 {
-    private const string BaseUrl = "http://127.0.0.1:5201";
     private const string Password = KbE2e.DefaultPassword;
     private const string OutputDir = "/cursor/stores/self/artifacts/kreeft-acc-captures";
     private const string MockupCommit = "53863b26";
@@ -37,10 +36,8 @@ public sealed class KreeftAccMockupCapturePlaywrightTests
             return;
         }
 
-        if (!await KbE2e.IsReachableAsync(BaseUrl))
-        {
-            throw new InvalidOperationException($"Stack not reachable at {BaseUrl}");
-        }
+        var baseUrl = await ResolveBaseUrlAsync()
+                      ?? throw new InvalidOperationException("JOBSY_E2E_BASE_URL unreachable (default https://acceptatie.lobsy.nl).");
 
         Directory.CreateDirectory(OutputDir);
         await ExtractMockupRendersAsync();
@@ -51,8 +48,19 @@ public sealed class KreeftAccMockupCapturePlaywrightTests
 
         foreach (var route in Routes)
         {
-            await CaptureRouteAsync(browser, route);
+            await CaptureRouteAsync(browser, route, baseUrl);
         }
+    }
+
+    private static async Task<string?> ResolveBaseUrlAsync()
+    {
+        var baseUrl = FunctionalE2eGate.TryBaseUrl() ?? "https://acceptatie.lobsy.nl";
+        if (FunctionalE2eGate.IsRequired)
+        {
+            return await FunctionalE2eGate.RequireReachableBaseUrlAsync();
+        }
+
+        return await KbE2e.IsReachableAsync(baseUrl) ? baseUrl : null;
     }
 
     private static async Task ExtractMockupRendersAsync()
@@ -94,7 +102,8 @@ public sealed class KreeftAccMockupCapturePlaywrightTests
 
     private static async Task CaptureRouteAsync(
         IBrowser browser,
-        (string Slug, string MockupDesk, string MockupMob, string Path, bool Auth) route)
+        (string Slug, string MockupDesk, string MockupMob, string Path, bool Auth) route,
+        string baseUrl)
     {
         var context = await browser.NewContextAsync(new()
         {
@@ -106,10 +115,10 @@ public sealed class KreeftAccMockupCapturePlaywrightTests
         if (route.Auth)
         {
             await CandidateJourneyE2e.EnsureTestAiConsentForE2eAsync(KbE2e.DefaultCompleteEmail);
-            Assert.True(await KbE2e.TryLoginAsync(page, BaseUrl, KbE2e.DefaultCompleteEmail, Password));
+            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.DefaultCompleteEmail, Password));
         }
 
-        await page.GotoAsync($"{BaseUrl}{route.Path}", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
+        await page.GotoAsync($"{baseUrl}{route.Path}", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
         await page.WaitForTimeoutAsync(800);
 
         foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })

@@ -70,6 +70,16 @@
     shell.querySelector("#lobsy-assistant-input").placeholder = cfg("data-placeholder", "");
     shell.querySelector(".lobsy-assistant__disclaimer").textContent = cfg("data-disclaimer", "");
 
+    var closeBtn = shell.querySelector("[data-ssr-assistant-close]");
+    if (closeBtn && closeBtn.dataset.ssrCloseBound !== "1") {
+      closeBtn.dataset.ssrCloseBound = "1";
+      closeBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        setOpen(false);
+      });
+    }
+
     return shell.querySelector("#lobsy-assistant-panel");
   }
 

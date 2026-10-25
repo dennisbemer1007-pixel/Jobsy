@@ -295,14 +295,12 @@ internal static class BanenkaartSsrShells
 
     private static void AppendNearbyHeroStrip(StringBuilder sb)
     {
-        sb.Append("<div class=\"rustig-hero kb-nearby-banner kb-nearby-banner--strip kb-banenkaart-header-strip\" data-testid=\"kb-nearby-banner\" aria-hidden=\"true\">");
-        sb.Append("<img class=\"desk\" src=\"")
-            .Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.BanenkaartDesk))
-            .Append("\" alt=\"\" width=\"1440\" height=\"150\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
-        sb.Append("<img class=\"mob\" src=\"")
-            .Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.BanenkaartMob))
-            .Append("\" alt=\"\" width=\"390\" height=\"90\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" />");
-        sb.Append("</div>");
+        KreeftHeaderStripHtml.Append(
+            sb,
+            KreeftHeaderStripAssets.BanenkaartDesk,
+            KreeftHeaderStripAssets.BanenkaartMob,
+            "banenkaart",
+            "kb-banenkaart-header-strip kreeft-header-strip");
     }
 
     private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)

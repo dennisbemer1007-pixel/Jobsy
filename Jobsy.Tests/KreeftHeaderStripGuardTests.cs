@@ -44,15 +44,17 @@ public sealed class KreeftHeaderStripGuardTests
     }
 
     [Fact]
-    public void Error_views_use_kreeft_illustrations_not_lobsy_mascot()
+    public void Error_views_use_kreeft_art_not_lobsy_mascot()
     {
         var root = FindRepoRoot();
-        foreach (var rel in new[] { "Components/Errors/NotFoundView.razor", "Components/Pages/Error.razor" })
-        {
-            var text = ReadWeb(root, rel);
-            Assert.Contains("KreeftErrorIllustrations", text, StringComparison.Ordinal);
-            Assert.DoesNotContain("LobsyMascot", text, StringComparison.Ordinal);
-        }
+        var notFound = ReadWeb(root, "Components/Errors/NotFoundView.razor");
+        Assert.Contains("KreeftHeaderStrip", notFound, StringComparison.Ordinal);
+        Assert.Contains("RouteKaartDesk", notFound, StringComparison.Ordinal);
+        Assert.DoesNotContain("LobsyMascot", notFound, StringComparison.Ordinal);
+
+        var errorPage = ReadWeb(root, "Components/Pages/Error.razor");
+        Assert.Contains("KreeftErrorIllustrations", errorPage, StringComparison.Ordinal);
+        Assert.DoesNotContain("LobsyMascot", errorPage, StringComparison.Ordinal);
     }
 
     private static string ReadApp(string root, string fileName)

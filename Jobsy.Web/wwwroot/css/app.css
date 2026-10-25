@@ -5477,11 +5477,6 @@ a.map-popup__apply.map-popup__cta:visited {
         display: none !important;
     }
 
-    .app-shell--banenkaart-shell .lobsy-coach-dock,
-    .app-shell--banenkaart-shell .lobsy-coach-cta {
-        display: none !important;
-    }
-
     .app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane {
         display: flex !important;
         visibility: visible !important;

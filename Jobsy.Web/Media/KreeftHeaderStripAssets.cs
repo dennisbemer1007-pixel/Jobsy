@@ -40,6 +40,31 @@ public static class KreeftHeaderStripAssets
             return name[..^"-mob.webp".Length];
         }
 
+        if (name.EndsWith("-desk.jpg", StringComparison.Ordinal))
+        {
+            return name[..^"-desk.jpg".Length];
+        }
+
+        if (name.EndsWith("-mob.jpg", StringComparison.Ordinal))
+        {
+            return name[..^"-mob.jpg".Length];
+        }
+
+        if (name.EndsWith("-desk", StringComparison.Ordinal))
+        {
+            return name[..^"-desk".Length];
+        }
+
+        if (name.EndsWith("-mob", StringComparison.Ordinal))
+        {
+            return name[..^"-mob".Length];
+        }
+
+        if (!string.IsNullOrEmpty(name) && name != file)
+        {
+            return name;
+        }
+
         return s;
     }
 

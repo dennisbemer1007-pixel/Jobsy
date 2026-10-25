@@ -9,7 +9,7 @@
 @if (!Embedded)
 {
     <HeadContent>
-        <link rel="stylesheet" href="css/features/candidate-header-strip.css?v=20261025-cand-strip4" />
+        <link rel="stylesheet" href="css/features/candidate-header-strip.css?v=20261025-acc1093" />
     </HeadContent>
 }
 
@@ -22,9 +22,9 @@
 <section class="err-hero @(Embedded ? "err-embed pub-theme" : "err-hero--kreeft-strip")" data-testid="not-found-view">
     @if (!Embedded)
     {
-        <KreeftHeaderStrip StripKey="landing"
-                           DeskUrl="@KreeftErrorIllustrations.NotFoundScene"
-                           MobUrl="@KreeftErrorIllustrations.NotFoundScene"
+        <KreeftHeaderStrip StripKey="route-kaart"
+                           DeskUrl="@KreeftHeaderStripAssets.RouteKaartDesk"
+                           MobUrl="@KreeftHeaderStripAssets.RouteKaartMob"
                            CssClass="err-kreeft-strip kreeft-header-strip" />
     }
     <div class="err-hero__text">

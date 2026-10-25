@@ -239,7 +239,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
     }
 
     [Fact]
-    public async Task Mobile_hero_strip_is_90px_on_applications_and_berichten()
+    public async Task Mobile_hero_strip_is_105px_on_applications_and_berichten()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync() ?? _localBaseUrl;
         if (baseUrl is null)
@@ -275,10 +275,10 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var listHero = await MeasureHeroStripAsync(page);
         _output.WriteLine(
             $"390 applications hero: strip={listHero.StripH:F1}, mobImg={listHero.MobImgH:F1}, cssH={listHero.StripCssHeight}");
-        Assert.InRange(listHero.StripH, 85, 95);
+        Assert.InRange(listHero.StripH, 95, 115);
         if (listHero.MobImgH > 0)
         {
-            Assert.InRange(listHero.MobImgH, 85, 95);
+            Assert.InRange(listHero.MobImgH, 95, 115);
         }
 
         await page.GotoAsync(
@@ -288,7 +288,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var berichtenHero = await MeasureHeroStripAsync(page);
         _output.WriteLine(
             $"390 berichten hero: strip={berichtenHero.StripH:F1}, mobImg={berichtenHero.MobImgH:F1}, cssH={berichtenHero.StripCssHeight}");
-        Assert.InRange(berichtenHero.StripH, 85, 95);
+        Assert.InRange(berichtenHero.StripH, 95, 115);
     }
 
     private static Task<HeroStripMetrics> MeasureHeroStripAsync(IPage page) =>

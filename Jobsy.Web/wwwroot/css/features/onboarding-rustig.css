@@ -92,6 +92,15 @@
   flex-shrink: 0;
 }
 
+.ob-wizard--rustig .ob-rustig__sidebar--no-logo .ob-rustig__logo-e,
+.ob-wizard--rustig .ob-rustig__sidebar.ob-rustig__sidebar--no-logo .ob-rustig__logo-e {
+  display: none !important;
+}
+
+.ob-wizard--rustig:has(.ob-rustig__sidebar--no-logo) .ob-rustig__mobile-brand {
+  display: none !important;
+}
+
 .ob-rustig__sidebar .ob-wizard__side-item strong {
   display: block;
   font-size: 0.875rem;

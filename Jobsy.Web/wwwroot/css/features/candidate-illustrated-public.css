@@ -18,7 +18,20 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding-top: calc(var(--pub-header-h, 4.75rem) + 0.5rem);
+  padding-top: 0;
+  min-height: 0;
+}
+
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated {
+  padding: 0;
+  align-items: stretch;
+  background: var(--pearl);
+}
+
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated .au-art-band,
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated .au-art--left,
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated .au-art--right {
+  display: none !important;
 }
 
 .pub-theme .au-stage--kreeft-strip .au-col {
@@ -503,10 +516,16 @@
     max-width: none;
   }
 
-  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-head {
-    background: var(--pearl);
-    padding-bottom: 0.35rem;
-  }
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-head {
+  background: var(--pearl);
+  padding-bottom: 0.35rem;
+  position: relative;
+  z-index: 2;
+}
+
+.pub-theme .pub-landing__hero-grid--reiskaart .pub-landing__hero-head .pub-pill {
+  max-width: 100%;
+}
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-art-band {
     display: block;

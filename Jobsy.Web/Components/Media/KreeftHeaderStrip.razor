@@ -31,9 +31,11 @@
 
     [Parameter] public string CssClass { get; set; } = "kreeft-header-strip";
 
-    private string ResolvedDesk => DeskUrl ?? KreeftHeaderStripAssets.Desk(StripKey);
+    private string ResolvedDesk =>
+        DeskUrl ?? KreeftHeaderStripAssets.Desk(KreeftHeaderStripAssets.NormalizeKey(StripKey));
 
-    private string ResolvedMob => MobUrl ?? KreeftHeaderStripAssets.Mob(StripKey);
+    private string ResolvedMob =>
+        MobUrl ?? KreeftHeaderStripAssets.Mob(KreeftHeaderStripAssets.NormalizeKey(StripKey));
 
     private string ImgStyle =>
         $"--kreeft-strip-pos:{KreeftHeaderStripObjectPosition.ForKey(StripKey)};object-position:{KreeftHeaderStripObjectPosition.ForKey(StripKey)}";
