@@ -32,17 +32,18 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchRescheduleSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("/after-match/reschedule-ssr", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-nav", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-rest", razor, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Panel_ssr_redirects_reschedule_to_reschedule_ssr()
+    public void Panel_ssr_redirects_reschedule_to_canonical_after_match()
     {
         var src = File.ReadAllText(Path.Combine(
             FindRepoRoot(),
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchPanelSsr.razor"));
         Assert.Contains("ShouldRedirectToRescheduleSsr", src, StringComparison.Ordinal);
-        Assert.Contains("/after-match/reschedule-ssr", src, StringComparison.Ordinal);
+        Assert.Contains("canonicalPath", src, StringComparison.Ordinal);
+        Assert.DoesNotContain("after-match/reschedule-ssr", src, StringComparison.Ordinal);
     }
 
     [Fact]

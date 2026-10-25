@@ -31,6 +31,9 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Timeline.Outcome", "Uitkomst", "Outcome");
         Add("AfterMatch.Timeline.Now", "nu", "now");
         Add("AfterMatch.Timeline.PlanNow", "22 okt", "22 Oct");
+        Add("AfterMatch.Timeline.PlanWaiting",
+            "momenten verstuurd, wacht op Sanne",
+            "times sent, waiting for Sanne");
         Add("AfterMatch.Employer.Timeline.OutcomeDone", "Verstuurd", "Sent");
 
         Add("AfterMatch.What.Plan.Title", "Gesprek plannen", "Plan the interview");

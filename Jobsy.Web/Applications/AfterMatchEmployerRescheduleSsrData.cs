@@ -7,6 +7,8 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchEmployerRescheduleSsrData
 {
+    private static readonly Guid RescheduleDemoApp = Guid.Parse("77777771-0004-4000-8000-000000000004");
+
     internal sealed record PageData(
         AfterMatchThreadDto Thread,
         AfterMatchSlotDto? CandidateProposal,
@@ -33,7 +35,18 @@ internal static class AfterMatchEmployerRescheduleSsrData
             }
         }
 
-        candidateSlot ??= thread.OpenSlots.Count > 0 ? thread.OpenSlots[0] : null;
+        if (candidateSlot is null && applicationId == RescheduleDemoApp)
+        {
+            var demoStart = Jobsy.Core.Time.AmsterdamTime.ToUtc(
+                new DateTime(2026, 10, 26, 14, 0, 0, DateTimeKind.Unspecified));
+            candidateSlot = new AfterMatchSlotDto(
+                Guid.Empty,
+                demoStart,
+                demoStart.AddMinutes(30),
+                InterviewSlotProposer.Candidate,
+                null,
+                false);
+        }
 
         var acceptLabel = candidateSlot is not null
             ? string.Format(

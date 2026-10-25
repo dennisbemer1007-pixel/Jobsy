@@ -48,7 +48,7 @@ internal static class AfterMatchEmployerBerichtenPresentation
         var role = thread.VacancyTitle;
         if (thread.ScheduledStartUtc is DateTime start)
         {
-            var when = start.ToLocalTime().ToString(
+            var when = AfterMatchMailSsrTime.ToAmsterdam(start).ToString(
                 "dddd d MMMM, HH:mm",
                 ApplicationsSsrData.FormatCulture(culture));
             return $"{role} · gesprek {when}";

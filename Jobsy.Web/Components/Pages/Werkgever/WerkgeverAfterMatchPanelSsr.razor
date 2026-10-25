@@ -28,19 +28,19 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-nav" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-nav" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-rest" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-rest" defer></script>
     @if (_includeMessagesScript)
     {
-        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-acc-nav" defer></script>
+        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-acc-rest" defer></script>
     }
     @if (_includeOutcomeScript)
     {
-        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-acc-nav" defer></script>
+        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-acc-rest" defer></script>
     }
     @if (_includeCancelScript)
     {
-        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-nav" defer></script>
+        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-rest" defer></script>
     }
 </HeadContent>
 
@@ -106,18 +106,18 @@ else if (_bodyHtml is not null)
                 return;
             }
 
-            _candidateName = thread.CandidateName;
+            _candidateName = AfterMatchEmployerEmployerPresentation.CandidateDisplayName(thread);
 
             if (AfterMatchEmployerSsrRouting.ShouldRedirectToRescheduleSsr(thread, panel))
             {
                 _redirecting = true;
-                var reschedulePath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/reschedule-ssr";
+                var canonicalPath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match";
                 if (http.Request.QueryString.HasValue)
                 {
-                    reschedulePath += http.Request.QueryString.Value;
+                    canonicalPath += http.Request.QueryString.Value;
                 }
 
-                http.Response.Redirect(reschedulePath);
+                http.Response.Redirect(canonicalPath);
                 return;
             }
 
@@ -258,6 +258,13 @@ else if (_bodyHtml is not null)
                         statusNote = Culture["AfterMatch.Screen12.SubmittedNote"];
                     }
 
+                    AfterMatchEmployerOutcomeSsrData.PageData? outcomeOverlay = null;
+                    if (AfterMatchEmployerSsrRouting.ShouldUseOutcomeScreen(thread))
+                    {
+                        outcomeOverlay = AfterMatchEmployerOutcomeSsrData.FromThread(Culture, thread, ApplicationId);
+                        _includeOutcomeScript = true;
+                    }
+
                     var data = new AfterMatchEmployerPanelSsrShells.PageData(
                         thread,
                         $"/werkgever/sollicitaties/{ApplicationId:D}",
@@ -268,13 +275,18 @@ else if (_bodyHtml is not null)
                         "Linda de Wit, eigenaar",
                         "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
                         isProposePanel ? "propose" : "",
-                        messagesHub);
+                        messagesHub,
+                        outcomeOverlay);
+
+                    var showPropose =
+                        AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread)
+                        && thread.OpenSlots.Count == 0;
 
                     _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildBody(
                         Culture,
                         data,
                         ApplicationId,
-                        showProposeAction: AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread));
+                        showProposeAction: showPropose);
                     break;
             }
         }
