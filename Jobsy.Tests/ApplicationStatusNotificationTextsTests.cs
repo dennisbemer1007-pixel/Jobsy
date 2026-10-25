@@ -45,4 +45,15 @@ public sealed class ApplicationStatusNotificationTextsTests
         Assert.Equal("Bevestiging", self.Title);
         Assert.Contains("verstuurd", self.Body, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void ApplicationOutcome_sm12_sm14_copy()
+    {
+        var offer = ApplicationStatusNotificationTexts.ApplicationOutcomeOffer("Acme", "Kassier", "nl");
+        Assert.Equal("Aanbod", offer.Title);
+        Assert.DoesNotContain("—", offer.Body, StringComparison.Ordinal);
+
+        var notNow = ApplicationStatusNotificationTexts.ApplicationOutcomeNotNow("Acme", "Kassier", "en");
+        Assert.Equal("Not now", notNow.Title);
+    }
 }
