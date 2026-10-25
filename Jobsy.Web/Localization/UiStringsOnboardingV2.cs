@@ -342,7 +342,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Step6.Suggest.RegionalTitle"] = english ? "Popular near you" : "Populair in de buurt";
         map["Onboarding.Step6.Suggest.ReasonProfile"] = english ? "Based on your background so far" : "Op basis van wat je tot nu toe invulde";
         map["Onboarding.Step6.Suggest.ReasonPopular"] = english ? "Often chosen in the region" : "Vaak gekozen in de regio";
-        map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who are you" : "Wie ben jij";
+        map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who you are" : "Wie ben jij";
         map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
         AddPresets(map, english);
         AddWorkStatuses(map, english);

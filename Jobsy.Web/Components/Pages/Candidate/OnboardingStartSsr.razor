@@ -112,7 +112,7 @@ else if (_step is >= 1 and <= 10)
                          decoding="async"
                          data-logo-fallback="off"
                          draggable="false" />
-                    @foreach (var item in OnboardingRustigSidebarNav.Items(_step))
+                    @foreach (var item in OnboardingRustigSidebarNav.Items(Culture, _step))
                     {
                         var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
                         <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"

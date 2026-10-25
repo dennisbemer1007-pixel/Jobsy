@@ -146,15 +146,25 @@ public static class UiStringsDiscovery
         Add("Discovery.Later",
             "Later verder", "Continue later", "Później dalej", "Mai târziu", "المتابعة لاحقاً");
         Add("Discovery.Zone.Beach",
-            "Het strand", "The beach", "Plaża", "Plaja", "الشاطئ");
+            "Strand", "Beach", "Strand", "Plajă", "الشاطئ");
         Add("Discovery.Zone.Coast",
-            "Aan de kust", "At the coast", "Przy brzegu", "La coastă", "على الساحل");
+            "Kust", "Coast", "Brzeg", "Coastă", "الساحل");
         Add("Discovery.Zone.Rocks",
-            "Tussen de rotsen", "Between the rocks", "Między skałami", "Între stânci", "بين الصخور");
+            "Rotsen", "Rocks", "Skały", "Stânci", "الصخور");
         Add("Discovery.Zone.Deep",
-            "In de diepte", "In the deep", "W głębinie", "În adânc", "في الأعماق");
+            "Diepte", "Depth", "Głębia", "Adânc", "الأعماق");
         Add("Discovery.Zone.Light",
-            "Naar het licht", "Toward the light", "Ku światłu", "Spre lumină", "نحو الضوء");
+            "Licht", "Light", "Światło", "Lumină", "الضوء");
+        Add("Discovery.Journey.Strand",
+            "Strand · Start", "Beach · Start", "Strand · Start", "Plajă · Start", "الشاطئ · البداية");
+        Add("Discovery.Journey.Kust",
+            "Kust · Over jou", "Coast · About you", "Brzeg · O tobie", "Coastă · Despre tine", "الساحل · عنك");
+        Add("Discovery.Journey.Rotsen",
+            "Rotsen · Achtergrond en Droom", "Rocks · Background and Dream", "Skały · Tło i marzenie", "Stânci · Fundal și vis", "الصخور · الخلفية والحلم");
+        Add("Discovery.Journey.Diepte",
+            "Diepte · Wie ben jij", "Depth · Who you are", "Głębia · Kim jesteś", "Adânc · Cine ești", "الأعماق · من أنت");
+        Add("Discovery.Journey.Licht",
+            "Licht · Jouw Kompas", "Light · Your Compass", "Światło · Twój kompas", "Lumină · Busola ta", "الضوء · بوصلتك");
         Add("Discovery.Rail.Title",
             "Jouw reis", "Your journey", "Twoja podróż", "Călătoria ta", "رحلتك");
         Add("Discovery.Rail.Aria",
@@ -710,15 +720,15 @@ public static class UiStringsDiscovery
         Add("Discovery.Passport.BackToJourney",
             "Terug naar je reis", "Back to your journey", "Wróć do podróży", "Înapoi la călătorie", "العودة إلى رحلتك");
         Add("Discovery.Overview.Phase.BeachLead",
-            "Start van je reis en toestemming.", "Start of your journey and consent.", "Start podróży i zgoda.", "Startul călătoriei și consimțământ.", "بداية رحلتك والموافقة.");
+            "Je stapt in.", "You step in.", "Wchodzisz.", "Faci primul pas.", "تخطو إلى الداخل.");
         Add("Discovery.Overview.Phase.CoastLead",
-            "Over jou en wanneer je kunt werken.", "About you and when you can work.", "O Tobie i kiedy możesz pracować.", "Despre tine și când poți lucra.", "عنك ومتى يمكنك العمل.");
+            "Wanneer, waar en hoe je kunt werken.", "When, where and how you can work.", "Kiedy, gdzie i jak możesz pracować.", "Când, unde și cum poți lucra.", "متى وأين وكيف يمكنك العمل.");
         Add("Discovery.Overview.Phase.RocksLead",
-            "Werk, leren en wat je leuk vindt.", "Work, learning and what you like.", "Praca, nauka i to, co lubisz.", "Muncă, învățare și ce îți place.", "العمل والتعلم وما تحب.");
+            "Wat je gedaan hebt en waar je naartoe wilt.", "What you have done and where you want to go.", "Co zrobiłeś i dokąd chcesz iść.", "Ce ai făcut și încotro vrei să mergi.", "ما فعلته وإلى أين تريد أن تذهب.");
         Add("Discovery.Overview.Phase.DeepLead",
-            "Vier tests in de reis.", "Four tests on the journey.", "Cztery testy w podróży.", "Patru teste în călătorie.", "أربعة اختبارات في الرحلة.");
+            "Vier korte testen.", "Four short tests.", "Cztery krótkie testy.", "Patru teste scurte.", "أربعة اختبارات قصيرة.");
         Add("Discovery.Overview.Phase.LightLead",
-            "Afronden en je paspoort bekijken.", "Finish and view your passport.", "Zakończ i zobacz paszport.", "Finalizează și vezi pașaportul.", "أنهِ واطلع على جوازك.");
+            "Alles samen in je paspoort.", "Everything together in your passport.", "Wszystko razem w twoim paszporcie.", "Totul la un loc în pașaportul tău.", "كل شيء معًا في جوازك.");
         Add("Discovery.Overview.Section.Start",
             "Start", "Start", "Start", "Start", "البداية");
         Add("Discovery.Overview.Section.Passport",
