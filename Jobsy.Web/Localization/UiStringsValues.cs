@@ -97,7 +97,7 @@ internal static class UiStringsValues
         map["ValuesScan.Cat.Connection.Hint"] = "How important are warm relationships with colleagues, customers, and a helpful atmosphere?";
         map["ValuesScan.Cat.Achievement"] = "Achievement & growth";
         map["ValuesScan.Cat.Achievement.Hint"] = "How strongly do you want visible results, goals, and self-improvement?";
-        map["ValuesScan.Cat.Stability"] = "Stability & tradition";
+        map["ValuesScan.Cat.Stability"] = "Security & clarity";
         map["ValuesScan.Cat.Stability.Hint"] = "How important are clear agreements, safety, and predictability?";
         map["ValuesScan.Cat.Impact"] = "Impact & fairness";
         map["ValuesScan.Cat.Impact.Hint"] = "How important is doing good for people and the environment through your work?";

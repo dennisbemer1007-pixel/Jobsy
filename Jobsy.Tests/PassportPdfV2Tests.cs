@@ -616,7 +616,7 @@ public class PassportPdfV2Tests
             new(PassportDnaLayer.Competence, true, done.AddDays(-7), ["Samen & aardig", "Kalm blijven", "Afmaken & netjes werken"], ["Samenwerken", "Stressbestendigheid", "Resultaatgerichtheid"]),
             new(PassportDnaLayer.Career, true, done.AddDays(-6), ["Aanpakken met je handen"], ["Realistic", "Conventional"]),
             new(PassportDnaLayer.Culture, true, done.AddDays(-3), ["Samenwerken"], ["Collaboration", "PeopleFirst"]),
-            new(PassportDnaLayer.Values, true, done, ["Zekerheid & traditie", "Verbinding & zorg"], ["Stability", "Connection"])
+            new(PassportDnaLayer.Values, true, done, ["Zekerheid & duidelijkheid", "Verbinding & zorg"], ["Stability", "Connection"])
         ];
         return PassportPdfFactsFactory.FromUser(user, prefs, dna, includeContact: true, phoneVerificationRequired: false, Generated);
     }
@@ -797,7 +797,7 @@ public class PassportPdfV2Tests
                 new(PassportDnaLayer.Competence, true, done, ["Samen & aardig", "Kalm blijven", "Nieuwe dingen proberen", "Afmaken & netjes werken"], ["Samenwerken", "Stressbestendigheid", "Innovatie", "Resultaatgerichtheid"]),
                 new(PassportDnaLayer.Career, true, done, ["Mensen helpen", "Aanpakken met je handen"], ["Social", "Realistic"]),
                 new(PassportDnaLayer.Culture, true, done, ["Mensen voorop", "Samenwerken"], ["PeopleFirst", "Collaboration"]),
-                new(PassportDnaLayer.Values, true, done, ["Verbinding & zorg", "Prestatie & groei", "Zekerheid & traditie", "Impact & rechtvaardigheid"], ["Connection", "Achievement", "Stability", "Impact"])
+                new(PassportDnaLayer.Values, true, done, ["Verbinding & zorg", "Prestatie & groei", "Zekerheid & duidelijkheid", "Impact & rechtvaardigheid"], ["Connection", "Achievement", "Stability", "Impact"])
             ]
         };
         return facts;
