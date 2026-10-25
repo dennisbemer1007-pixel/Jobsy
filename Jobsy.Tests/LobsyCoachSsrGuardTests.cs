@@ -18,6 +18,9 @@ public sealed class LobsyCoachSsrGuardTests
 
         var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/lobsy-coach-ssr.js"));
         Assert.Contains("/api/assistant-client/chat", js, StringComparison.Ordinal);
+        Assert.Contains("[data-ssr-assistant-form]", js, StringComparison.Ordinal);
+        Assert.Contains("document.addEventListener", js, StringComparison.Ordinal);
+        Assert.DoesNotContain("document.querySelector(\"[data-ssr-assistant-form]\")", js, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

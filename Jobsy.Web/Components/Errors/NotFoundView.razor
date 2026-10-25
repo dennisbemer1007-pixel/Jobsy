@@ -4,13 +4,13 @@
 @using Jobsy.Web.Media
 @using Jobsy.Core.Features
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
 @inject CultureState Culture
 @inject IConfiguration Configuration
 @if (!Embedded)
 {
     <HeadContent>
-        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft9" />
-        <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft11" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/errors.css")" />
     </HeadContent>
 }
 

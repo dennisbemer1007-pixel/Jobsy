@@ -29,7 +29,7 @@ public static class PageAssetCatalog
         "css/tokens.css?v=20261018-06",
         WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css"),
         WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
-        "css/app.min.css?v=20261025-kreeft11",
+        WwwrootAssetCatalog.Url("css/app.min.css"),
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/candidate-illustrated-decorative-layers.css?v=20261020-01",
@@ -437,7 +437,7 @@ public static class PageAssetCatalog
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>
     public static IReadOnlyList<string> BanenkaartAuthenticatedShellCss() =>
     [
-        "css/features/banenkaart-auth-chrome.css?v=20261025-kreeft9",
+        WwwrootAssetCatalog.Url("css/features/banenkaart-auth-chrome.css"),
         "css/features/form-fields.css?v=20261019-01",
         "css/features/nav-feedback.css?v=20261017-01",
         "css/features/candidate-header-tablet.css?v=20261021-01",
@@ -446,7 +446,7 @@ public static class PageAssetCatalog
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [
-        "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft8",
+        WwwrootAssetCatalog.Url("css/features/candidate-no-blazor-chrome.css"),
         WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css"),
         WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
     ];

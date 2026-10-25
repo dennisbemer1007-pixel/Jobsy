@@ -77,7 +77,7 @@
     <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261025-acc1093" />
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
-    <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
+    <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" />
     @if (LoadBlazorRuntime)
     {
         <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-02" data-reconnect-css />
@@ -145,7 +145,7 @@
                 <link rel="stylesheet" href="@href" />
             }
         }
-        <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft11" data-app-css />
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css")" data-app-css />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
     @if (LoadBlazorRuntime)
@@ -161,7 +161,7 @@
             <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
             <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261025-acc1093" />
             <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
-            <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
+            <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" />
             <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-02" />
         </noscript>
     }
