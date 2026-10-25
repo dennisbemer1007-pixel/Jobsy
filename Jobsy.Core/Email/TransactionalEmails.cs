@@ -164,6 +164,8 @@ public static partial class TransactionalEmails
             "mailtest" => MailTest(ctx.PublicWebBaseUrl, "acceptatie", "Resend", DateTime.UtcNow, c),
             "applicationconfirmation" => ApplicationConfirmation(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "applicationverificationcode" => ApplicationVerificationCode(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.VacancyId, ctx.OtpCode, c),
+            "applicationcvviewed" => ApplicationCvViewed(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId, c),
+            "applicationmutualyes" => ApplicationMutualYes(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId, c),
             "employerreactionaccepted" => EmployerReactionAccepted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "employerreactionrejected" => EmployerReactionRejected(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "employercontacting" => EmployerContacting(ctx.PublicWebBaseUrl, ctx.VacancyTitle, ctx.RecipientName, ctx.CompanyName, c),
