@@ -10,6 +10,23 @@
     return on ? on.getAttribute("data-slot-id") : null;
   }
 
+  function selectSlotButton(list, container, btn) {
+    list.querySelectorAll(".slot").forEach(function (el) {
+      el.classList.remove("on");
+      el.setAttribute("aria-pressed", "false");
+      var radio = el.querySelector(".radio");
+      if (radio) radio.classList.remove("on");
+    });
+    btn.classList.add("on");
+    btn.setAttribute("aria-pressed", "true");
+    var radioOn = btn.querySelector(".radio");
+    if (radioOn) radioOn.classList.add("on");
+    var confirm = container.querySelector("[data-ndm-confirm-slot]");
+    if (confirm) confirm.disabled = false;
+    var err = container.querySelector("[data-ndm-pick-slot-error]");
+    if (err) err.hidden = true;
+  }
+
   function bindSlots(container) {
     var list = container.querySelector("[data-ndm-slot-list]");
     if (!list) return;
@@ -17,18 +34,7 @@
     list.addEventListener("click", function (ev) {
       var btn = ev.target.closest(".slot[data-slot-id]");
       if (!btn || !list.contains(btn)) return;
-      list.querySelectorAll(".slot").forEach(function (el) {
-        el.classList.remove("on");
-        el.setAttribute("aria-pressed", "false");
-        var radio = el.querySelector(".radio");
-        if (radio) radio.classList.remove("on");
-      });
-      btn.classList.add("on");
-      btn.setAttribute("aria-pressed", "true");
-      var radioOn = btn.querySelector(".radio");
-      if (radioOn) radioOn.classList.add("on");
-      var confirm = container.querySelector("[data-ndm-confirm-slot]");
-      if (confirm) confirm.disabled = false;
+      selectSlotButton(list, container, btn);
     });
   }
 
@@ -76,6 +82,8 @@
         })
         .catch(function () {
           btn.disabled = false;
+          var err = container.querySelector("[data-ndm-pick-slot-error]");
+          if (err) err.hidden = false;
         });
     });
   }
