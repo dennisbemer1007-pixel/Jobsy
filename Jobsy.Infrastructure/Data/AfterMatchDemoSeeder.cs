@@ -223,9 +223,15 @@ internal static class AfterMatchDemoSeeder
                 ActorKind = ApplicationStatusActorKind.Employer
             });
         }
+        else
+        {
+            app.CandidateUserId = candidateUserId;
+        }
+
+        await ResetDemoInterviewGraphAsync(db, appId);
 
         var interview = await db.Interviews
-            .Include(i => i.Slots)
+            .AsNoTracking()
             .FirstOrDefaultAsync(i => i.ApplicationId == appId);
 
         if (interview is null)
@@ -331,6 +337,22 @@ internal static class AfterMatchDemoSeeder
                 BlockReason = ApplicationMessageBlockReason.None
             });
         }
+    }
+
+    private static async Task ResetDemoInterviewGraphAsync(JobsyDbContext db, Guid appId)
+    {
+        var interviewId = await db.Interviews.AsNoTracking()
+            .Where(i => i.ApplicationId == appId)
+            .Select(i => i.Id)
+            .FirstOrDefaultAsync();
+        if (interviewId == Guid.Empty)
+        {
+            return;
+        }
+
+        await db.InterviewChanges.Where(c => c.InterviewId == interviewId).ExecuteDeleteAsync();
+        await db.InterviewSlots.Where(s => s.InterviewId == interviewId).ExecuteDeleteAsync();
+        await db.Interviews.Where(i => i.Id == interviewId).ExecuteDeleteAsync();
     }
 
     private static InterviewSlot AddSlot(
