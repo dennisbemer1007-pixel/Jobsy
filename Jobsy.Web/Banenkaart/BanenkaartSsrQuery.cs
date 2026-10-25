@@ -433,6 +433,34 @@ internal static class BanenkaartSsrQuery
             1);
     }
 
+    /// <summary>Default list sort for banenkaart SSR + client catalog (logged-in candidate with fit).</summary>
+    internal static string ResolveEffectiveSort(
+        string sortFromState,
+        bool sortExplicitInUrl,
+        bool isCandidate,
+        bool showFitFilters,
+        bool hasOrigin)
+    {
+        if (sortExplicitInUrl && !string.IsNullOrWhiteSpace(sortFromState))
+        {
+            return sortFromState.Trim().ToLowerInvariant();
+        }
+
+        if (isCandidate && showFitFilters)
+        {
+            return "match";
+        }
+
+        if (hasOrigin)
+        {
+            return "distance";
+        }
+
+        return string.IsNullOrWhiteSpace(sortFromState) || string.Equals(sortFromState, "distance", StringComparison.OrdinalIgnoreCase)
+            ? "title"
+            : sortFromState.Trim().ToLowerInvariant();
+    }
+
     private static string? NormalizeTransport(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))

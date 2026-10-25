@@ -9,6 +9,7 @@
 
     var memory = null;
     var rows = null;
+    var fitByVacancyId = null;
     var lastEtag = null;
     var lastLoadedAt = 0;
     var networkInFlight = null;
@@ -295,9 +296,43 @@
         }
     }
 
+    function matchPercentForRow(row) {
+        if (!row) {
+            return -1;
+        }
+        if (row.matchPercent != null && isFinite(row.matchPercent)) {
+            return Number(row.matchPercent);
+        }
+        if (fitByVacancyId && row.id && fitByVacancyId[row.id] != null) {
+            return Number(fitByVacancyId[row.id]);
+        }
+        return -1;
+    }
+
+    function defaultSort(filters) {
+        if (filters && filters.showFitFilters) {
+            return "match";
+        }
+        if (filters && filters.originLat != null && filters.originLng != null) {
+            return "distance";
+        }
+        return "title";
+    }
+
     function sortRows(list, filters) {
-        var sort = filters && filters.sort ? String(filters.sort) : "distance";
+        var sort = filters && filters.sort ? String(filters.sort) : defaultSort(filters);
         var copy = list.slice();
+        if (sort === "match") {
+            copy.sort(function (a, b) {
+                var ma = matchPercentForRow(a);
+                var mb = matchPercentForRow(b);
+                if (ma !== mb) {
+                    return mb - ma;
+                }
+                return String(a.title || "").localeCompare(String(b.title || ""), "nl");
+            });
+            return copy;
+        }
         if (sort === "title") {
             copy.sort(function (a, b) {
                 return String(a.title || "").localeCompare(String(b.title || ""), "nl");
@@ -452,16 +487,33 @@
         return networkInFlight;
     }
 
-    function readBootFilters() {
+    function readBootPayload() {
         var node = document.getElementById("jobsy-map-boot");
         if (!node || !node.textContent) {
             return null;
         }
         try {
-            var parsed = JSON.parse(node.textContent);
-            return parsed && parsed.mapInit && parsed.mapInit.filters ? parsed.mapInit.filters : null;
+            return JSON.parse(node.textContent);
         } catch (e) {
             return null;
+        }
+    }
+
+    function readBootFilters() {
+        var parsed = readBootPayload();
+        return parsed && parsed.mapInit && parsed.mapInit.filters ? parsed.mapInit.filters : null;
+    }
+
+    function readBootFitMap() {
+        var parsed = readBootPayload();
+        return parsed && parsed.mapInit && parsed.mapInit.fitByVacancyId
+            ? parsed.mapInit.fitByVacancyId
+            : null;
+    }
+
+    function ensureFitMap() {
+        if (!fitByVacancyId) {
+            fitByVacancyId = readBootFitMap();
         }
     }
 
@@ -500,7 +552,8 @@
             originLat: hasOrigin ? originLat : (raw.originLat != null ? Number(raw.originLat) : null),
             originLng: hasOrigin ? originLng : (raw.originLng != null ? Number(raw.originLng) : null),
             originLabel: raw.originLabel || null,
-            sort: raw.sort || "distance"
+            sort: raw.sort || defaultSort(raw),
+            showFitFilters: !!raw.showFitFilters
         };
     }
 
@@ -529,7 +582,8 @@
                 originLat: hasOrigin ? lat : null,
                 originLng: hasOrigin ? lng : null,
                 originLabel: params.get("originLabel") || null,
-                sort: params.get("sort") || "distance"
+                sort: params.get("sort") || null,
+                showFitFilters: false
             });
         } catch (eUrl) {
             return normalizeFilters({});
@@ -548,6 +602,7 @@
     }
 
     function resolveFilters() {
+        ensureFitMap();
         if (urlHasFilterParams()) {
             return readFiltersFromUrl();
         }
@@ -570,7 +625,8 @@
             originLat: null,
             originLng: null,
             originLabel: null,
-            sort: "distance"
+            sort: null,
+            showFitFilters: false
         });
     }
 
