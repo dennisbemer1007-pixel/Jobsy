@@ -530,13 +530,11 @@
     public static bool UsesBanenkaartImmersiveChrome(string path, bool isAuthenticatedCandidate)
         => IsBanenkaartPath(path) && !isAuthenticatedCandidate;
 
-    /// <summary>Hide floating coach on paspoort/profile (inline tips, read-aloud, bottom nav).</summary>
+    /// <summary>Hide floating chrome on profile (paspoort keeps Lobsy-hulp).</summary>
     public static bool IsPassportOrProfileCoachHidden(string path)
     {
         path = path.TrimStart('/');
-        return path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("candidate/paspoort/", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
+        return path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>

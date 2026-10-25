@@ -215,8 +215,17 @@
     font-size: 0.86rem;
   }
 
+  .kreeft-reiskaart-wrap,
+  .ob-rustig__reiskaart,
+  .passport-layout__reiskaart,
+  .kompas-hub-layout__reiskaart {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .ob-rustig__body--with-reiskaart {
-    grid-template-columns: 1fr;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
@@ -234,18 +243,33 @@
   }
 
   .pub-landing__hero-grid--reiskaart,
-  .au-stage--reiskaart .au-reiskaart-grid {
-    grid-template-columns: 1fr;
+  .pub-theme .pub-landing__hero-grid--reiskaart,
+  .au-stage--reiskaart .au-reiskaart-grid,
+  .pub-theme .au-stage--reiskaart .au-reiskaart-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
   .pub-landing__hero-grid--reiskaart .kreeft-reiskaart-wrap,
-  .au-stage--reiskaart .kreeft-reiskaart-wrap {
+  .pub-landing__hero-grid--reiskaart > .kreeft-reiskaart-wrap,
+  .pub-landing__hero-grid--reiskaart > .ob-rustig__reiskaart,
+  .au-stage--reiskaart .kreeft-reiskaart-wrap,
+  .au-stage--reiskaart .au-reiskaart-grid > .kreeft-reiskaart-wrap {
     order: -1;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .pub-landing__hero-grid--reiskaart > .pub-landing__hero-copy,
+  .au-stage--reiskaart .au-reiskaart-grid > .au-card {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
   }
 
   .passport-layout__main--reiskaart {
-    grid-template-columns: 1fr;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
     gap: 14px;
   }
 
@@ -262,14 +286,34 @@
     grid-row: 2;
   }
 
+  .kompas-hub-layout--reiskaart {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
   .kompas-hub-layout--reiskaart > .kompas-hub-layout__reiskaart {
     grid-column: 1;
     grid-row: 1;
+    order: -1;
     position: static;
+    width: 100%;
+    max-width: 100%;
   }
 
   .kompas-hub-layout--reiskaart > .kompas-hub-layout__main {
     grid-column: 1;
     grid-row: 2;
+  }
+}
+
+/* Desktop: reiskaart always in the end column (right in LTR). */
+@media (min-width: 901px) {
+  .ob-rustig__body--with-reiskaart,
+  .passport-layout__main--reiskaart,
+  .kompas-hub-layout--reiskaart,
+  .pub-landing__hero-grid--reiskaart,
+  .au-stage--reiskaart .au-reiskaart-grid {
+    display: grid;
   }
 }

@@ -3,6 +3,7 @@
 :root {
   --cand-header-strip-h-desktop: 225px;
   --cand-header-strip-h-mobile: 105px;
+  --kreeft-strip-bleed: calc(50% - 50vw);
   --hero-d: var(--cand-header-strip-h-desktop);
   --hero-m: var(--cand-header-strip-h-mobile);
   --kb-header-strip-h: var(--cand-header-strip-h-desktop);
@@ -71,6 +72,31 @@
   max-width: none;
   overflow: hidden;
   background-repeat: no-repeat;
+}
+
+.passport-page-wrap > .sollicitaties-hero-strip,
+.passport-page-wrap > .kreeft-header-strip,
+.kompas-hub-page-wrap > .sollicitaties-hero-strip,
+.kompas-hub-page-wrap > .kreeft-header-strip,
+.ob-wizard--rustig > .ob-rustig .ob-rustig__hero-band,
+.err-hero--kreeft-strip > .sollicitaties-hero-strip,
+.pub-landing__hero--kreeft-strip > .pub-landing__kreeft-strip {
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: var(--kreeft-strip-bleed);
+  border-radius: 0;
+}
+
+.ob-wizard--rustig .ob-rustig__hero-band {
+  block-size: var(--cand-header-strip-h-mobile);
+  max-block-size: var(--cand-header-strip-h-mobile);
+}
+
+@media (min-width: 640px) {
+  .ob-wizard--rustig .ob-rustig__hero-band {
+    block-size: var(--cand-header-strip-h-desktop);
+    max-block-size: var(--cand-header-strip-h-desktop);
+  }
 }
 
 .sollicitaties-hero-strip__inner {

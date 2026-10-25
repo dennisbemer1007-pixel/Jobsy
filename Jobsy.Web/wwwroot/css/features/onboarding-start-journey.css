@@ -15,8 +15,14 @@
 }
 
 .ob-rustig--start-journey {
-  --ob-rustig-hero-h: 52px;
+  --ob-rustig-hero-h: var(--cand-header-strip-h-mobile, 105px);
   --ob-start-journey-route-h: clamp(10.25rem, 22vh, 11.25rem);
+}
+
+@media (min-width: 640px) {
+  .ob-rustig--start-journey {
+    --ob-rustig-hero-h: var(--cand-header-strip-h-desktop, 225px);
+  }
 }
 
 .ob-rustig--start-journey .ob-rustig__main {
@@ -83,13 +89,20 @@
   max-width: 42rem;
 }
 
-.ob-rustig__body--journey-start {
+.ob-rustig__body--journey-start:not(.ob-rustig__body--with-reiskaart) {
   padding: 0.35rem 1.15rem 0.35rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   overflow: visible;
   margin-block-start: 0.55rem;
+}
+
+.ob-rustig__body--with-reiskaart.ob-rustig__body--journey-start {
+  display: grid;
+  padding: 0.35rem 1.15rem 0.35rem;
+  margin-block-start: 0.55rem;
+  gap: 14px;
 }
 
 @media (min-width: 1024px) {
