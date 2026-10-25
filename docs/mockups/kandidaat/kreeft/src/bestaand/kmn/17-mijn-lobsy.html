@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · Mijn Lobsy</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css"><style>
+.home-grid{display:grid;grid-template-columns:1fr 330px;gap:20px;align-items:start}
+.next{display:grid;grid-template-columns:120px 1fr auto;gap:18px;align-items:center;padding:16px 20px}
+.next .art{width:120px;height:84px;border-radius:12px;background:url(img/hero-profiel.jpg) 30% 48%/360% no-repeat}
+.next h2{font-family:Fraunces,Georgia,serif;font-size:1.25rem;margin:2px 0 4px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tile{display:block;text-decoration:none;color:var(--text)}
+.tile .top{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.tile b{font-size:1rem}
+.tile p{margin:0 0 10px;font-size:.88rem;color:var(--muted);min-height:2.6em}
+.appt{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+.date{width:56px;border-radius:12px;border:1px solid var(--line);text-align:center;overflow:hidden;background:#fff}
+.date span{display:block;background:var(--brand);color:#fff;font-size:.7rem;font-weight:700;padding:3px 0;text-transform:uppercase}
+.date b{display:block;font-size:1.35rem;padding:4px 0 6px;font-family:Fraunces,Georgia,serif}
+.vacs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.vac{display:flex;flex-direction:column;gap:6px}
+.vac .t{font-weight:800;margin:0}
+.vac .c{margin:0;font-size:.86rem;color:var(--muted)}
+.vac .row{margin-top:auto;padding-top:8px}
+.mini h3{margin:0 0 4px}
+.mini p{margin:0 0 10px;font-size:.88rem}
+.pp-head{background:var(--brand);color:#fff;font-size:.72rem;letter-spacing:.06em;padding:9px 16px;display:flex;justify-content:space-between;border-radius:15px 15px 0 0;margin:-18px -20px 14px}
+.tip-art{height:110px;margin:-18px -20px 12px;border-radius:15px 15px 0 0;background:url(img/hero-mijn-lobsy.jpg) 26% 52%/240% no-repeat}
+@media (max-width:900px){
+ .home-grid{grid-template-columns:1fr}
+ .next{grid-template-columns:1fr;gap:10px}
+ .next .art{width:100%;height:96px;background-size:220%}
+ .next .btn{width:100%}
+ .tiles,.vacs{grid-template-columns:1fr}
+ .tile p{min-height:0}
+ .appt{grid-template-columns:auto 1fr}
+ .appt .btn{grid-column:1/-1}
+}
+</style><link rel="stylesheet" href="../../kreeft-inject.css"></head>
+<body><div class="page-shell">
+<header class="app-header">
+ <a class="brand" href="/home" aria-label="Lobsy, naar Mijn Lobsy"><img src="img/logo.svg" alt="Lobsy"></a>
+ <nav class="nav" aria-label="Hoofdmenu"><a href="/candidate/ontdekkingsreis">Reis</a><a href="/candidate/paspoort">Paspoort</a><a href="/banenkaart">Zoeken</a><a href="/candidate/applications">Sollicitaties</a><a href="/carriere">Carrière</a></nav>
+ <div class="utils">
+  <a class="util" href="/hoe-werkt-lobsy" aria-label="Uitleg over deze pagina">i</a>
+  <a class="util" href="/notifications" aria-label="Meldingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a>
+  <span class="lang"><img src="img/nl.svg" alt="">NL</span>
+  <button class="account" type="button" aria-haspopup="true"><span class="name">Roland van der Velde</span><span class="av">RV</span></button>
+ </div>
+ <div class="menu" role="menu">
+  <div class="who"><strong>Roland van der Velde</strong><span>roland@voorbeeld.nl</span></div>
+  <a href="/candidate/profile">Profiel</a><a href="/candidate/settings">Instellingen</a><a href="/hoe-werkt-lobsy">Hoe werkt Lobsy</a><a href="/feedback">Feedback</a><a class="out" href="/logout">Uitloggen</a>
+ </div>
+</header>
+<div class="kstrip" style="--dh:225px;--mh:105px" aria-hidden="true"><img class="desk" src="../../strips/mijn-lobsy-desk.jpg" alt=""><img class="mob" src="../../strips/mijn-lobsy-mob.jpg" alt=""></div>
+<main class="panel-page">
+<div class="head"><h1>Goedemorgen, Roland</h1><p class="lead">Fijn dat je er bent. Hier zie je in één oogopslag wat er voor je klaarstaat.</p><div class="kcoach"><div><b>Goed om te weten</b>Welkom terug. Kijk rustig wat er voor je klaarstaat.</div></div></div>
+<div class="home-grid">
+<div class="stack">
+ <section class="card next" aria-label="Je volgende stap">
+  <div class="art" aria-hidden="true"></div>
+  <div><p class="eyebrow">Je volgende stap</p><h2>Je Kompas en paspoort zijn klaar</h2><p class="muted small" style="margin:0">Kijk rustig wat werkgevers van je zien. Jij bepaalt wat je deelt.</p></div>
+  <a class="btn btn--primary" href="/candidate/ontdekkingsreis">Ga verder</a>
+ </section>
+
+ <section class="tiles" aria-label="Overzicht">
+  <a class="card tile" href="/candidate/applications"><div class="top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/></svg></span><b>Sollicitaties</b></div><p>5 lopend, waarvan 1 gesprek gepland.</p><span class="link">Bekijk sollicitaties</span></a>
+  <a class="card tile" href="/candidate/bewaard"><div class="top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><b>Bewaard</b></div><p>4 vacatures die je wilt onthouden.</p><span class="link">Bekijk bewaard</span></a>
+  <a class="card tile" href="/candidate/contactverzoeken"><div class="top"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><b>Contactverzoeken</b></div><p>1 werkgever wil kennismaken. Reageer voor zaterdag.</p><span class="link">Bekijk verzoek</span></a>
+ </section>
+
+ <section class="card">
+  <div class="between" style="margin-bottom:12px"><h2 class="sec" style="margin:0">Gepland</h2><span class="pill pill--blue">Volgende week</span></div>
+  <div class="appt">
+   <div class="date"><span>di</span><b>27</b></div>
+   <div><b>Kennismaking bij Groenland Hoveniers</b><div class="muted small">dinsdag 27 oktober, 10:30 · Rijswijk, Laan van Hoornwijck 12</div></div>
+   <a class="btn" href="/candidate/na-de-match/gesprek">Bereid je voor</a>
+  </div>
+ </section>
+
+ <section>
+  <div class="between" style="margin:6px 0 10px"><h2 class="sec" style="margin:0">Nieuw voor jou</h2><a class="link" href="/banenkaart">Naar de banenkaart</a></div>
+  <div class="vacs">
+   <article class="card vac"><span class="pill pill--ok" style="width:max-content">Past bij je werkstijl</span><p class="t">Medewerker groenvoorziening</p><p class="c">Groenland Hoveniers · Delft</p><p class="c">24 tot 32 uur · 12 minuten fietsen</p><div class="row"><a class="btn btn--sm btn--primary" href="/vacature/medewerker-groenvoorziening">Bekijk</a><a class="btn btn--sm" href="/candidate/bewaar?v=1">Bewaar</a></div></article>
+   <article class="card vac"><span class="pill pill--ok" style="width:max-content">Dicht bij huis</span><p class="t">Magazijnmedewerker</p><p class="c">Westhaven Logistiek · Rijswijk</p><p class="c">32 uur · 20 minuten fietsen</p><div class="row"><a class="btn btn--sm btn--primary" href="/vacature/magazijnmedewerker">Bekijk</a><a class="btn btn--sm" href="/candidate/bewaar?v=2">Bewaar</a></div></article>
+   <article class="card vac"><span class="pill pill--blue" style="width:max-content">Nieuw deze week</span><p class="t">Medewerker klantenservice</p><p class="c">Woonzorg Haaglanden · Delft</p><p class="c">24 uur · 8 minuten fietsen</p><div class="row"><a class="btn btn--sm btn--primary" href="/vacature/klantenservice">Bekijk</a><a class="btn btn--sm" href="/candidate/bewaar?v=3">Bewaar</a></div></article>
+  </div>
+ </section>
+</div>
+
+<aside class="stack">
+ <section class="card mini">
+  <div class="pp-head"><span>LOBSY PASPOORT</span><span>LB-61623</span></div>
+  <div class="row" style="margin-bottom:10px"><span class="av" style="width:44px;height:44px">RV</span><div><b>Roland van der Velde</b><div class="muted small">Delft · beschikbaar per direct</div></div></div>
+  <p class="muted">Je paspoort is compleet. Werkgevers zien alleen wat jij deelt.</p>
+  <a class="btn btn--sm" style="width:100%" href="/candidate/paspoort">Bekijk je paspoort</a>
+ </section>
+ <section class="card mini">
+  <h3>Mijn activiteiten</h3>
+  <p>Je afspraak is gehaald: 6 activiteiten gedaan, je afspraak is 4. Nog 9 dagen in deze periode.</p>
+  <a class="link" href="/candidate/applications/activiteiten">Bekijk je activiteiten</a>
+ </section>
+ <section class="card mini">
+  <div class="tip-art" aria-hidden="true"></div>
+  <h3>Tip van Lobsy</h3>
+  <p class="muted">Een korte motivatie bij je profiel helpt werkgevers om je beter te leren kennen.</p>
+  <a class="link" href="/candidate/profile#ervaring">Motivatie toevoegen</a>
+ </section>
+</aside>
+</div>
+</main>
+<footer class="footer"><nav aria-label="Juridisch"><a href="/privacy">Privacyverklaring</a><a href="/algemene-voorwaarden">Algemene voorwaarden</a><a href="/gebruiksvoorwaarden">Gebruiksvoorwaarden</a><a href="/wie-zijn-wij">Wie zijn wij</a><a href="/toegankelijkheid">Toegankelijkheid</a><a href="/bronnen">Bronnen</a></nav><span>© 2026 Lobsy</span></footer>
+</div><a class="kask" href="#hulp"><img src="../../lobsy-merkteken.svg" alt="">Lobsy-hulp</a></body></html>

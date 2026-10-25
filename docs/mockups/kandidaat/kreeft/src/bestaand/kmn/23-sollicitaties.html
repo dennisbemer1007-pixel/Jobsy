@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · Sollicitaties</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css"><style>
+.pill--ext{background:#efeaf6;color:#5b3f8c;border-color:#ddd2ec}
+.sol-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sol-actions .chips{margin:0}
+@media (max-width:900px){.sol-actions .btn{width:100%;justify-content:center}}
+.sol-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.week-left{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.app{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:start;text-decoration:none;color:var(--text)}
+.app.is-open{border-color:#c9b9a3;box-shadow:0 0 0 3px #efe7da}
+.app h3{margin:6px 0 2px;font-size:1rem}
+.app .c{margin:0;font-size:.86rem;color:var(--muted)}
+.app .s{margin:8px 0 0;font-size:.84rem;color:var(--muted)}
+.app .chev{color:var(--muted);width:20px;margin-top:12px}
+.steps{list-style:none;margin:10px 0 14px;padding:0}
+.steps li{display:grid;grid-template-columns:24px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.steps li::before{content:"";position:absolute;left:11px;top:22px;bottom:0;width:2px;background:var(--line)}
+.steps li:last-child::before{display:none}
+.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);background:#fff;display:grid;place-items:center}
+.dot.done{background:var(--success);border-color:var(--success);color:#fff}.dot.done svg{width:13px}
+.dot.now{border-color:var(--brand);box-shadow:inset 0 0 0 4px #fff;background:var(--brand)}
+.steps b{display:block;font-size:.92rem}.steps span{font-size:.82rem;color:var(--muted)}
+.acts{display:grid;gap:8px}
+.acts .btn{width:100%}
+.legend-q{font-size:.86rem}
+@media (max-width:900px){.detail{display:none}.app{grid-template-columns:44px 1fr 20px}}
+</style><link rel="stylesheet" href="../../kreeft-inject.css"></head>
+<body><div class="page-shell">
+<header class="app-header">
+ <a class="brand" href="/home" aria-label="Lobsy, naar Mijn Lobsy"><img src="img/logo.svg" alt="Lobsy"></a>
+ <nav class="nav" aria-label="Hoofdmenu"><a href="/candidate/ontdekkingsreis">Reis</a><a href="/candidate/paspoort">Paspoort</a><a href="/banenkaart">Zoeken</a><a href="/candidate/applications" class="is-active">Sollicitaties</a><a href="/carriere">Carrière</a></nav>
+ <div class="utils">
+  <a class="util" href="/hoe-werkt-lobsy" aria-label="Uitleg over deze pagina">i</a>
+  <a class="util" href="/notifications" aria-label="Meldingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a>
+  <span class="lang"><img src="img/nl.svg" alt="">NL</span>
+  <button class="account" type="button" aria-haspopup="true"><span class="name">Roland van der Velde</span><span class="av">RV</span></button>
+ </div>
+ <div class="menu" role="menu">
+  <div class="who"><strong>Roland van der Velde</strong><span>roland@voorbeeld.nl</span></div>
+  <a href="/candidate/profile">Profiel</a><a href="/candidate/settings">Instellingen</a><a href="/hoe-werkt-lobsy">Hoe werkt Lobsy</a><a href="/feedback">Feedback</a><a class="out" href="/logout">Uitloggen</a>
+ </div>
+</header>
+<div class="kstrip" style="--dh:225px;--mh:105px" aria-hidden="true"><img class="desk" src="../../strips/sollicitaties-desk.jpg" alt=""><img class="mob" src="../../strips/sollicitaties-mob.jpg" alt=""></div>
+<main class="panel-page"><div class="head"><p class="eyebrow">Sollicitaties</p><h1>Mijn sollicitaties</h1><p class="lead">Op vacatures en bij bedrijven waar je zelf aanklopte. Alles op één plek.</p></div>
+<div class="sol-top"><nav class="tabs" aria-label="Onderdelen"><a href="/candidate/applications" class="is-active">Sollicitaties</a><a href="/candidate/applications/activiteiten">Mijn activiteiten</a><a href="/candidate/bewaard">Bewaard <span class="pill" style="padding:1px 8px;margin-left:4px">4</span></a></nav><span class="week-left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 6 5"/></svg> Nog 2 van de 3 keer ‘Ik wil hier werken’ deze week</span></div>
+<div class="sol-actions"><div class="chips"><a class="chip is-active" href="?filter=alles">Alles · 7</a><a class="chip" href="?filter=vacature">Op vacature · 3</a><a class="chip" href="?filter=initiatief">Ik wil hier werken · 3</a><a class="chip" href="?filter=buiten">Buiten Lobsy · 1</a><a class="chip" href="?filter=afgerond">Afgerond · 1</a></div><a class="btn btn--primary" href="/candidate/external/add"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Sollicitatie toevoegen</a></div>
+<div class="grid-side">
+<div class="stack">
+ <a class="card app is-open" href="/candidate/applications/1"><span class="logo-sq">GH</span><div><span class="pill pill--init">Ik wil hier werken</span><h3>Team Groen en onderhoud</h3><p class="c">Groenland Hoveniers · Rijswijk</p><p class="s"><span class="pill pill--ok">Gesprek gepland</span>&nbsp; Kennismaking dinsdag 27 oktober, 10:30</p></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></a>
+ <a class="card app" href="/candidate/applications/2"><span class="logo-sq">BK</span><div><span class="pill">Op vacature</span><h3>Medewerker bakkerij</h3><p class="c">Bakkerij De Korenaar · Delft</p><p class="s"><span class="pill pill--blue">Gezien</span>&nbsp; Verstuurd 13 oktober · werkgever heeft je cv bekeken</p></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></a>
+ <a class="card app" href="/candidate/applications/3"><span class="logo-sq">WL</span><div><span class="pill">Op vacature</span><h3>Magazijnmedewerker</h3><p class="c">Westhaven Logistiek · Rijswijk</p><p class="s"><span class="pill pill">Verstuurd</span>&nbsp; Verstuurd 20 oktober · reactie uiterlijk 3 november</p></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></a>
+ <a class="card app" href="/candidate/applications/7"><span class="logo-sq">TH</span><div><span class="pill pill--ext">Buiten Lobsy</span><h3>Medewerker tuincentrum</h3><p class="c">Tuincentrum De Hoven · Den Hoorn</p><p class="s"><span class="pill pill">Verstuurd</span>&nbsp; Toegevoegd 22 oktober · je solliciteerde via de site van de werkgever</p></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></a>
+ <a class="card app" href="/candidate/applications/4"><span class="logo-sq">WH</span><div><span class="pill pill--init">Ik wil hier werken</span><h3>Algemene ingang</h3><p class="c">Woonzorg Haaglanden · Delft</p><p class="s"><span class="pill pill">Verstuurd</span>&nbsp; Verstuurd vandaag · reactie uiterlijk 30 oktober</p></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></a>
+ <a class="card app" href="/candidate/applications/5"><span class="logo-sq">TD</span><div><span class="pill pill--init">Ik wil hier werken</span><h3>Team Service en onderhoud</h3><p class="c">Techniek Delft · Delft</p><p class="s"><span class="pill pill--warn">Nu niet</span>&nbsp; Ze bewaren je profiel, je hoort het als er plek is</p></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></a>
+ <a class="card app" href="/candidate/applications/6"><span class="logo-sq">FS</span><div><span class="pill">Op vacature</span><h3>Medewerker fietsenwerkplaats</h3><p class="c">Fietsdokter Schie · Schiedam</p><p class="s"><span class="pill pill">Afgerond</span>&nbsp; Vacature gesloten op 9 oktober</p></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></a>
+</div>
+<aside class="card detail">
+ <span class="pill pill--init">Ik wil hier werken</span>
+ <h3 style="margin:8px 0 2px">Team Groen en onderhoud</h3>
+ <div class="muted small">Groenland Hoveniers · Rijswijk</div>
+ <ol class="steps">
+  <li><span class="dot done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m5 12 4 4 10-10"/></svg></span><div><b>Verstuurd</b><span>woensdag 7 oktober</span></div></li>
+  <li><span class="dot done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m5 12 4 4 10-10"/></svg></span><div><b>Gezien</b><span>donderdag 8 oktober</span></div></li>
+  <li><span class="dot now"></span><div><b>Gesprek</b><span>dinsdag 27 oktober, 10:30</span></div></li>
+  <li><span class="dot"></span><div><b>Uitkomst</b><span>Je hoort het na het gesprek</span></div></li>
+ </ol>
+ <div class="note" style="margin-bottom:14px"><span>Wat kun je nu doen? Oefen je gesprek en lees de tips voor een kennismaking.</span></div>
+ <div class="acts">
+  <a class="btn btn--primary" href="/candidate/na-de-match/gesprek">Bereid je gesprek voor</a>
+  <a class="btn" href="/candidate/applications/1/bericht">Je bericht bekijken</a>
+  <a class="btn" href="/bedrijf/groenland-hoveniers">Bedrijfspagina</a>
+  <a class="btn" href="/candidate/applications/1/cv">Lobsy-cv bekijken</a>
+  <a class="btn btn--danger" href="/candidate/applications/1/intrekken">Sollicitatie intrekken</a>
+ </div>
+</aside>
+</div>
+<p class="muted small" style="margin-top:16px">Tik op een sollicitatie om alle stappen te zien. Nog niets gevonden? <a href="/banenkaart">Naar de banenkaart</a></p>
+</main>
+<footer class="footer"><nav aria-label="Juridisch"><a href="/privacy">Privacyverklaring</a><a href="/algemene-voorwaarden">Algemene voorwaarden</a><a href="/gebruiksvoorwaarden">Gebruiksvoorwaarden</a><a href="/wie-zijn-wij">Wie zijn wij</a><a href="/toegankelijkheid">Toegankelijkheid</a><a href="/bronnen">Bronnen</a></nav><span>© 2026 Lobsy</span></footer>
+</div><a class="kask" href="#hulp"><img src="../../lobsy-merkteken.svg" alt="">Lobsy-hulp</a></body></html>

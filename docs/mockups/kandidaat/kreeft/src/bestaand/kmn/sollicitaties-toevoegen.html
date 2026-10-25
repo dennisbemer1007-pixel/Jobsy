@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · Sollicitatie toevoegen</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css"><style>
+.add-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.stepper{display:flex;gap:8px;align-items:center;margin-bottom:14px;font-size:.86rem;font-weight:700;color:var(--muted)}
+.stepper .n{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;background:#e6e0d6;color:var(--text);font-size:.78rem;margin-right:6px}
+.stepper .done .n{background:var(--success-soft);color:var(--success)}
+.stepper .now{color:var(--text)}.stepper .now .n{background:var(--brand);color:#fff}
+.stepper .sep{flex:0 0 28px;height:2px;background:var(--line)}
+.add-grid>*,.stack>*{min-width:0}.url-row{display:flex;gap:8px;min-width:0}.url-row .input{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.read-ok{display:flex;gap:8px;align-items:center;font-size:.86rem;color:var(--success);font-weight:700;margin:10px 0 0}
+.read-ok svg{width:16px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.input.ed{border-color:#c9d6e8;box-shadow:inset 0 0 0 1px #e9eff7}
+.after{list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:.88rem}
+.after li{display:grid;grid-template-columns:22px 1fr;gap:8px}
+.after svg{width:18px;color:var(--success);margin-top:2px}
+@media (max-width:900px){.add-grid,.f2{grid-template-columns:1fr}.url-row{flex-direction:column}.acts2 .btn{flex:1;justify-content:center}}
+</style></head>
+<body><div class="page-shell">
+<header class="app-header">
+ <a class="brand" href="/home" aria-label="Lobsy, naar Mijn Lobsy"><img src="img/logo.svg" alt="Lobsy"></a>
+ <nav class="nav" aria-label="Hoofdmenu"><a href="/candidate/ontdekkingsreis">Reis</a><a href="/candidate/paspoort">Paspoort</a><a href="/banenkaart">Zoeken</a><a href="/candidate/applications" class="is-active">Sollicitaties</a><a href="/carriere">Carrière</a></nav>
+ <div class="utils">
+  <a class="util" href="/hoe-werkt-lobsy" aria-label="Uitleg over deze pagina">i</a>
+  <a class="util" href="/notifications" aria-label="Meldingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a>
+  <span class="lang"><img src="img/nl.svg" alt="">NL</span>
+  <button class="account" type="button" aria-haspopup="true"><span class="name">Roland van der Velde</span><span class="av">RV</span></button>
+ </div>
+ <div class="menu" role="menu">
+  <div class="who"><strong>Roland van der Velde</strong><span>roland@voorbeeld.nl</span></div>
+  <a href="/candidate/profile">Profiel</a><a href="/candidate/settings">Instellingen</a><a href="/hoe-werkt-lobsy">Hoe werkt Lobsy</a><a href="/feedback">Feedback</a><a class="out" href="/logout">Uitloggen</a>
+ </div>
+</header>
+<div class="hero" style="--hi:url(img/hero-sollicitaties.jpg);--hp:center 46%;--mp:20% 55%;--ms:auto 240%" aria-hidden="true"></div>
+<main class="panel-page">
+<div class="head"><p class="eyebrow">Sollicitaties</p><h1>Sollicitatie toevoegen</h1><p class="lead">Solliciteerde je via een andere site? Plak de link van de vacature. Lobsy leest hem uit en zet hem bij je sollicitaties.</p></div>
+<div class="add-grid">
+<div class="stack">
+ <section class="card">
+  <div class="stepper"><span class="done"><span class="n"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m5 12 4 4 10-10"/></svg></span>Link plakken</span><span class="sep"></span><span class="now"><span class="n">2</span>Controleren</span></div>
+  <div class="field"><label for="url">Link naar de vacature</label>
+   <div class="url-row"><div class="input" id="url">https://www.voorbeeldvacatures.nl/vacature/medewerker-tuincentrum-den-hoorn</div><a class="btn" href="/candidate/external/add">Andere link</a></div></div>
+  <p class="read-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m5 12 4 4 10-10"/></svg> Gelezen. Klopt het? Je kunt alles nog aanpassen.</p>
+ </section>
+ <section class="card">
+  <h2 class="sec" style="margin-top:0">Dit heeft Lobsy gevonden</h2>
+  <div class="f2">
+   <div class="field"><label>Functie</label><div class="input ed">Medewerker tuincentrum</div></div>
+   <div class="field"><label>Werkgever</label><div class="input ed">Tuincentrum De Hoven</div></div>
+   <div class="field"><label>Plaats</label><div class="input ed">Den Hoorn</div></div>
+   <div class="field"><label>Uren per week</label><div class="input ed">24 tot 32 uur</div></div>
+   <div class="field"><label>Wanneer solliciteerde je?</label><div class="input ed">donderdag 22 oktober 2026</div></div>
+   <div class="field"><label>Hoe solliciteerde je?</label><div class="input ed">Online via de site van de werkgever</div></div>
+  </div>
+  <div class="row acts2" style="margin-top:6px"><a class="btn btn--primary" href="/candidate/applications?toegevoegd=7">Opslaan</a><a class="btn" href="/candidate/applications">Annuleren</a></div>
+ </section>
+</div>
+<aside class="card">
+ <h3 style="margin-top:0">Wat er daarna gebeurt</h3>
+ <ul class="after">
+  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m5 12 4 4 10-10"/></svg><span>Hij staat in je sollicitaties met het label <span class="pill pill--ext" style="background:#efeaf6;color:#5b3f8c;border-color:#ddd2ec">Buiten Lobsy</span></span></li>
+  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m5 12 4 4 10-10"/></svg><span>Hij telt vanzelf mee in Mijn activiteiten, voor je overzicht voor het UWV</span></li>
+  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m5 12 4 4 10-10"/></svg><span>Je houdt zelf bij wat de werkgever terugzegt</span></li>
+ </ul>
+ <div class="note" style="margin-top:14px">Tip: alleen openbare vacaturepagina’s werken. Inlogpagina’s kunnen we niet lezen. Op je telefoon kun je ook op Delen tikken en Lobsy kiezen.</div>
+</aside>
+</div>
+</main>
+<footer class="footer"><nav aria-label="Juridisch"><a href="/privacy">Privacyverklaring</a><a href="/algemene-voorwaarden">Algemene voorwaarden</a><a href="/gebruiksvoorwaarden">Gebruiksvoorwaarden</a><a href="/wie-zijn-wij">Wie zijn wij</a><a href="/toegankelijkheid">Toegankelijkheid</a><a href="/bronnen">Bronnen</a></nav><span>© 2026 Lobsy</span></footer>
+</div></body></html>
