@@ -273,11 +273,14 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-wg-page .g2.ndm-wg-g2>.ndm-wg-main{grid-column:1;grid-row:1;min-width:0}
 .ndm.ndm-wg-page .g2.ndm-wg-g2>[data-ndm-share-aside],.ndm.ndm-wg-page .g2.ndm-wg-g2>[data-ndm-wg-aside],.ndm.ndm-wg-page .g2.ndm-wg-g2>aside.wc.side{grid-column:2;grid-row:1;min-width:0}
 .ndm.ndm-wg-page .g2.ndm-wg-g2>[data-ndm-propose-panel]{grid-column:2;grid-row:1;min-width:0}
+.ndm.ndm-wg-page .g2.ndm-wg-g2>[data-ndm-cancel-panel]{grid-column:2;grid-row:1;min-width:0}
 .ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-share-aside]{display:none!important}
 .ndm.ndm-wg-page:not([data-ndm-panel=propose]) [data-ndm-propose-panel]{display:none!important}
 .ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-propose-panel]{display:block!important}
-.ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-wg-flow]{display:none!important}
-.ndm.ndm-wg-page[data-ndm-panel=cancel] [data-ndm-wg-flow]{display:none!important}
+.ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-share-aside]{display:none!important}
+.ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-wg-aside]{display:none!important}
+.ndm.ndm-wg-page[data-ndm-panel=cancel] [data-ndm-cancel-panel]{display:block!important}
+.ndm.ndm-wg-page[data-ndm-panel=cancel] [data-ndm-wg-aside]{display:none!important}
 .ndm.ndm-wg-page:not([data-ndm-panel=cancel]) [data-ndm-cancel-panel]{display:none!important}
 .ndm.ndm-wg-page[data-ndm-panel=cancel] [data-ndm-cancel-panel]{display:block!important}
 .ndm.ndm-wg-page[data-ndm-panel=messages] [data-ndm-wg-flow]{display:none!important}

@@ -60,7 +60,7 @@ internal static class AfterMatchEmployerMessagesSsrShells
     {
         var appId = row.Thread.ApplicationId;
         var active = appId == data.SelectedThreadId;
-        var href = AfterMatchEmployerSollicitatiesUrls.Messages(appId);
+        var href = AfterMatchEmployerSollicitatiesUrls.MessagesThread(data.ContextApplicationId, appId);
         var displayName = AfterMatchEmployerBerichtenPresentation.DisplayName(culture, row.Application);
         var unread = AfterMatchEmployerBerichtenPresentation.UnreadFromCandidate(row.Thread);
 

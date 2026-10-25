@@ -115,7 +115,14 @@ internal static class AfterMatchEmployerPanelSsrShells
 
         if (panel is not "propose")
         {
-            AppendWhatGrid(sb, culture);
+            if (scheduled)
+            {
+                AppendScheduledHomeGrid(sb, culture, thread);
+            }
+            else if (thread.InterviewStatus != InterviewStatus.Done)
+            {
+                AppendWhatGrid(sb, culture);
+            }
         }
 
         if (panel is "propose")
@@ -150,7 +157,7 @@ internal static class AfterMatchEmployerPanelSsrShells
                 sb.Append("<a class=\"btn\" href=\"");
                 sb.Append(WebUtility.HtmlEncode($"/werkgever/sollicitaties/{thread.ApplicationId:D}/after-match?panel=outcome"));
                 sb.Append("\" data-enhance-nav=\"false\">");
-                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.OutcomeAction"]));
                 sb.Append("</a>");
             }
 
@@ -166,6 +173,28 @@ internal static class AfterMatchEmployerPanelSsrShells
         }
 
         sb.Append("</div>");
+    }
+
+    private static void AppendScheduledHomeGrid(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)
+    {
+        var when = thread.ScheduledStartUtc is DateTime start
+            ? AfterMatchMailSsrTime.ToAmsterdam(start).ToString(
+                "dddd d MMMM, HH:mm",
+                CultureInfo.GetCultureInfo("nl-NL"))
+            : culture["AfterMatch.Employer.Scheduled.WhenFallback"];
+        sb.Append("<div class=\"what\"><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.Tile.When"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(when));
+        sb.Append("</p></div><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.Reminders"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.Tile.Reminders"]));
+        sb.Append("</p></div><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.Tile.Outcome"]));
+        sb.Append("</p></div></div>");
     }
 
     private static void AppendWhatGrid(StringBuilder sb, CultureState culture)
@@ -350,9 +379,15 @@ internal static class AfterMatchEmployerPanelSsrShells
 
     private static void AppendTimeline(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)
     {
+        var nl = CultureInfo.GetCultureInfo("nl-NL");
         var yesDate = thread.AcceptedAtUtc is DateTime accepted
-            ? AfterMatchMailSsrTime.ToAmsterdam(accepted).ToString("d MMM", CultureInfo.GetCultureInfo("nl-NL"))
+            ? AfterMatchMailSsrTime.ToAmsterdam(accepted).ToString("d MMM", nl)
             : null;
+        var interviewDate = thread.ScheduledStartUtc is DateTime scheduledStart
+            ? AfterMatchMailSsrTime.ToAmsterdam(scheduledStart).ToString("d MMM", nl)
+            : null;
+        var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
+
         sb.Append("<nav class=\"tl\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
         sb.Append("\"><div class=\"s done\"><i>");
@@ -366,17 +401,43 @@ internal static class AfterMatchEmployerPanelSsrShells
             sb.Append("</small>");
         }
 
-        sb.Append("</div><div class=\"s now\"><i>");
-        sb.Append(NdMIcons.Calendar);
+        sb.Append("</div><div class=\"s");
+        if (!isScheduled)
+        {
+            sb.Append(" now");
+        }
+        else
+        {
+            sb.Append(" done");
+        }
+
+        sb.Append("\"><i>");
+        if (isScheduled)
+        {
+            sb.Append(NdMIcons.Check);
+        }
+        else
+        {
+            sb.Append(NdMIcons.Calendar);
+        }
+
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
         sb.Append("<small>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Now"]));
-        sb.Append("</small></div><div class=\"s\"><i>");
+        sb.Append(WebUtility.HtmlEncode(isScheduled ? (interviewDate ?? yesDate ?? "") : culture["AfterMatch.Timeline.PlanNow"]));
+        sb.Append("</small></div><div class=\"s");
+        if (isScheduled)
+        {
+            sb.Append(" now");
+        }
+
+        sb.Append("\"><i>");
         sb.Append(NdMIcons.Handshake);
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Interview"]));
-        sb.Append("<small></small></div><div class=\"s\"><i>");
+        sb.Append("<small>");
+        sb.Append(WebUtility.HtmlEncode(interviewDate ?? ""));
+        sb.Append("</small></div><div class=\"s\"><i>");
         sb.Append(NdMIcons.Flag);
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));

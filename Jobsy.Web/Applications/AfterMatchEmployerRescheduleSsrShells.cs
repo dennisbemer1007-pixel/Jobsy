@@ -43,13 +43,7 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Title"]));
         sb.Append("\" data-ndm-lead-propose=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Lead"]));
-        sb.Append("\"><div data-ndm-wg-flow");
-        if (panel is "propose" or "cancel")
-        {
-            sb.Append(" hidden");
-        }
-
-        sb.Append("><div class=\"g2 ndm-wg-g2\"><div class=\"wc stack ndm-wg-main\">");
+        sb.Append("\"><div data-ndm-wg-flow><div class=\"g2 ndm-wg-g2\"><div class=\"wc stack ndm-wg-main\">");
         AppendCandidateHeader(sb, culture, thread);
         sb.Append("<div class=\"hr\"></div>");
         AppendTimeline(sb, culture, data);
@@ -59,7 +53,6 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         AppendFootnote(sb, culture);
         sb.Append("</div>");
         AppendWeekAside(sb, culture, data);
-        sb.Append("</div></div>");
 
         if (options.ProposeData is not null)
         {
@@ -68,7 +61,7 @@ internal static class AfterMatchEmployerRescheduleSsrShells
 
         if (options.CancelData is not null)
         {
-            sb.Append("<div class=\"wc side pop stack\" data-ndm-cancel-panel");
+            sb.Append("<aside class=\"wc side pop stack\" data-ndm-cancel-panel");
             if (panel is not "cancel")
             {
                 sb.Append(" hidden");
@@ -76,10 +69,10 @@ internal static class AfterMatchEmployerRescheduleSsrShells
 
             sb.Append('>');
             AfterMatchEmployerCancelSsrShells.AppendCancelFormOnly(sb, culture, options.CancelData);
-            sb.Append("</div>");
+            sb.Append("</aside>");
         }
 
-        sb.Append("</div>");
+        sb.Append("</div></div></div>");
         return sb.ToString();
     }
 

@@ -92,13 +92,14 @@ internal static class AfterMatchEmployerRescheduleSsrData
 
     private static string FormatSlotShort(AfterMatchSlotDto slot)
     {
-        var start = slot.StartUtc.ToLocalTime();
-        return start.ToString("dddd HH:mm", CultureInfo.GetCultureInfo("nl-NL"));
+        var start = AfterMatchMailSsrTime.ToAmsterdam(slot.StartUtc);
+        var nl = CultureInfo.GetCultureInfo("nl-NL");
+        return start.ToString("dddd d MMM HH:mm", nl);
     }
 
     private static string FormatSlotLong(AfterMatchSlotDto slot)
     {
-        var start = slot.StartUtc.ToLocalTime();
+        var start = AfterMatchMailSsrTime.ToAmsterdam(slot.StartUtc);
         return start.ToString("dddd d MMMM, HH:mm", CultureInfo.GetCultureInfo("nl-NL"));
     }
 
