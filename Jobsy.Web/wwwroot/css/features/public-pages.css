@@ -523,6 +523,79 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }}@media (min-width: 1024px) {.pub-theme .pp-how__steps {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }}.pub-theme .pp-about__zones {
+  margin-block-start: 1.75rem;
+  padding: 1.5rem;
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--pub-line) 85%, #f6d9bd);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, #fcf3e4 92%, var(--pub-card)) 0%,
+    var(--pub-card) 55%,
+    color-mix(in srgb, #f6d9bd 18%, var(--pub-card)) 100%
+  );
+  display: grid;
+  gap: 0.75rem;
+}.pub-theme .pp-about__zones-eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--pub-ink) 65%, #0f2d5c);
+}.pub-theme .pp-about__zones-title {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}.pub-theme .pp-about__zones-lead {
+  margin: 0;
+  max-width: 42rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--pub-ink) 82%, transparent);
+}.pub-theme .pp-about__zones-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr);
+}.pub-theme .pp-about__zones-item {
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--pub-line) 70%, transparent);
+  background: color-mix(in srgb, var(--pub-card) 88%, #fcf3e4);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
+}.pub-theme .pp-about__zones-item h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}.pub-theme .pp-about__zones-item p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--pub-ink) 78%, transparent);
+}.pub-theme .pp-about__zones-item--strand {
+  border-color: color-mix(in srgb, #f6d9bd 55%, var(--pub-line));
+}.pub-theme .pp-about__zones-item--kust {
+  border-color: color-mix(in srgb, #74a47e 35%, var(--pub-line));
+}.pub-theme .pp-about__zones-item--rotsen {
+  border-color: color-mix(in srgb, #0f2d5c 18%, var(--pub-line));
+}.pub-theme .pp-about__zones-item--diepte {
+  border-color: color-mix(in srgb, #0f2d5c 28%, var(--pub-line));
+  background: color-mix(in srgb, #0f2d5c 4%, var(--pub-card));
+}.pub-theme .pp-about__zones-item--licht {
+  border-color: color-mix(in srgb, #df5530 28%, var(--pub-line));
+  background: color-mix(in srgb, #df5530 6%, #fcf3e4);
+}@media (min-width: 720px) {.pub-theme .pp-about__zones-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pub-theme .pp-about__zones-item--licht {
+    grid-column: 1 / -1;
+  }}@media (min-width: 1024px) {.pub-theme .pp-about__zones-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .pub-theme .pp-about__zones-item--licht {
+    grid-column: auto;
   }}.pub-theme .pp-about__stories {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
