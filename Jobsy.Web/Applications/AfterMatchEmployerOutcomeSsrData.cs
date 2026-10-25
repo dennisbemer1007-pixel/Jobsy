@@ -10,11 +10,12 @@ internal static class AfterMatchEmployerOutcomeSsrData
         AfterMatchThreadDto Thread,
         string TalentPoolHref,
         string ApplicationDetailHref,
-        string DefaultReason,
+        string RejectionDemoReason,
         string? YesStepHint,
         string? PlanStepHint,
         string? InterviewStepHint,
-        IReadOnlyList<string> ReasonChips);
+        IReadOnlyList<string> OfferReasonChips,
+        IReadOnlyList<string> RejectionReasonChips);
 
     internal static PageData FromThread(CultureState culture, AfterMatchThreadDto thread, Guid applicationId)
     {
@@ -37,6 +38,12 @@ internal static class AfterMatchEmployerOutcomeSsrData
             yesHint,
             planHint,
             interviewHint,
+            [
+                culture["AfterMatch.Screen12.ReasonChip.OfferStart"],
+                culture["AfterMatch.Screen12.ReasonChip.OfferHours"],
+                culture["AfterMatch.Screen12.ReasonChip.OfferWelcome"],
+                culture["AfterMatch.Screen12.ReasonChip.OfferOther"]
+            ],
             [
                 culture["AfterMatch.Screen12.ReasonChip.Experience"],
                 culture["AfterMatch.Screen12.ReasonChip.Hours"],

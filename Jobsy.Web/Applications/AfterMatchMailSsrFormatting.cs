@@ -4,9 +4,16 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchMailSsrFormatting
 {
-    internal static string CandidateFirstName(AfterMatchThreadDto thread) =>
-        thread.CandidateName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
-        ?? thread.CandidateName;
+    internal static string CandidateFirstName(AfterMatchThreadDto thread)
+    {
+        if (string.IsNullOrWhiteSpace(thread.CandidateName))
+        {
+            return "kandidaat";
+        }
+
+        return thread.CandidateName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
+               ?? thread.CandidateName;
+    }
 
     internal static string WhenLabel(AfterMatchThreadDto thread)
     {
