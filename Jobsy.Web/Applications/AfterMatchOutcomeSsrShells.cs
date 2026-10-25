@@ -33,16 +33,7 @@ internal static class AfterMatchOutcomeSsrShells
     }
 
     private static void AppendHeroStrip(StringBuilder sb)
-    {
-        sb.Append("<div class=\"sollicitaties-hero-strip\" aria-hidden=\"true\"><div class=\"sollicitaties-hero-strip__inner\">");
-        sb.Append("<img class=\"sollicitaties-hero-strip__img desk\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp));
-        sb.Append("\" alt=\"\" width=\"1440\" height=\"150\" loading=\"eager\" decoding=\"async\" />");
-        sb.Append("<img class=\"sollicitaties-hero-strip__img mob\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripMobileWebp));
-        sb.Append("\" alt=\"\" width=\"390\" height=\"90\" loading=\"eager\" decoding=\"async\" />");
-        sb.Append("</div></div>");
-    }
+        => KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.NuNietDesk, KreeftHeaderStripAssets.NuNietMob);
 
     private static void AppendIntro(StringBuilder sb, CultureState culture, AfterMatchOutcomeSsrData.PageData data)
     {

@@ -24,7 +24,7 @@ internal static class ApplicationsSsrShells
 
         var sb = new StringBuilder();
         sb.Append("<div class=\"sollicitaties-page-wrap\">");
-        AppendHeroStrip(sb);
+        AppendHeroStrip(sb, data);
         sb.Append("<div class=\"panel-page sollicitaties-page");
         if (data.DetailView)
         {
@@ -41,24 +41,15 @@ internal static class ApplicationsSsrShells
         return sb.ToString();
     }
 
-    private static void AppendHeroStrip(StringBuilder sb)
+    private static void AppendHeroStrip(StringBuilder sb, ApplicationsSsrData.PageData data)
     {
-        sb.Append("<div class=\"sollicitaties-hero-strip\" aria-hidden=\"true\"><div class=\"sollicitaties-hero-strip__inner\">");
-        sb.Append("<img class=\"sollicitaties-hero-strip__img desk\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp));
-        sb.Append("\" srcset=\"");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp));
-        sb.Append(" 1x, ");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripDesktopWebp2x));
-        sb.Append(" 2x\" alt=\"\" width=\"1440\" height=\"150\" loading=\"eager\" decoding=\"async\" fetchpriority=\"high\" />");
-        sb.Append("<img class=\"sollicitaties-hero-strip__img mob\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripMobileWebp));
-        sb.Append("\" srcset=\"");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripMobileWebp));
-        sb.Append(" 1x, ");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SollicitatiesHeroStripMobileWebp2x));
-        sb.Append(" 2x\" alt=\"\" width=\"390\" height=\"90\" loading=\"eager\" decoding=\"async\" fetchpriority=\"high\" />");
-        sb.Append("</div></div>");
+        var (desk, mob) = data.Tab switch
+        {
+            ApplicationsSsrQuery.TabActiviteiten => (KreeftHeaderStripAssets.ActiviteitenDesk, KreeftHeaderStripAssets.ActiviteitenMob),
+            ApplicationsSsrQuery.TabBerichten => (KreeftHeaderStripAssets.BerichtenDesk, KreeftHeaderStripAssets.BerichtenMob),
+            _ => (KreeftHeaderStripAssets.SollicitatiesDesk, KreeftHeaderStripAssets.SollicitatiesMob),
+        };
+        KreeftHeaderStripHtml.Append(sb, desk, mob);
     }
 
     private static void AppendPageIntro(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
