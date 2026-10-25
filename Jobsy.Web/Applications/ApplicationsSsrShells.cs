@@ -10,7 +10,7 @@ namespace Jobsy.Web.Applications;
 
 internal static class ApplicationsSsrShells
 {
-    internal static string BuildBody(CultureState culture, ApplicationsSsrData.PageData data)
+    internal static string BuildBody(CultureState culture, ApplicationsSsrData.PageData data, string? detailReturnHref = null)
     {
         if (!data.IsAuthenticatedCandidate)
         {
@@ -35,7 +35,7 @@ internal static class ApplicationsSsrShells
         AppendPageIntro(sb, culture, data);
         sb.Append("<div class=\"sollicitaties-page__body\">");
         AppendTabsRow(sb, culture, data);
-        AppendAllTabPanels(sb, culture, data);
+        AppendAllTabPanels(sb, culture, data, detailReturnHref);
 
         sb.Append("</div></div></div></div>");
         return sb.ToString();
@@ -271,7 +271,11 @@ internal static class ApplicationsSsrShells
         sb.Append("</article></div>");
     }
 
-    private static void AppendAllTabPanels(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    private static void AppendAllTabPanels(
+        StringBuilder sb,
+        CultureState culture,
+        ApplicationsSsrData.PageData data,
+        string? detailReturnHref)
     {
         sb.Append("<div class=\"sollicitaties-tab-panels\" data-sollic-active-tab=\"");
         sb.Append(WebUtility.HtmlEncode(data.Tab));
@@ -291,7 +295,7 @@ internal static class ApplicationsSsrShells
         sb.Append('>');
         AppendToolbar(sb, culture, data);
         AppendEmpty(sb, culture, data, hidden: data.FilteredRows.Count > 0);
-        AppendLayout(sb, culture, data);
+        AppendLayout(sb, culture, data, detailReturnHref);
         sb.Append("</div>");
 
         if (data.AfterMatchEnabled)
@@ -324,7 +328,11 @@ internal static class ApplicationsSsrShells
         sb.Append("</div></div>");
     }
 
-    private static void AppendLayout(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
+    private static void AppendLayout(
+        StringBuilder sb,
+        CultureState culture,
+        ApplicationsSsrData.PageData data,
+        string? detailReturnHref)
     {
         SollicitationRow? selected = null;
         foreach (var row in data.AllRows)
@@ -377,7 +385,7 @@ internal static class ApplicationsSsrShells
             }
 
             sb.Append('>');
-            AppendDetailPanel(sb, culture, data, row);
+            AppendDetailPanel(sb, culture, data, row, detailReturnHref);
             sb.Append("</div>");
         }
 
@@ -509,13 +517,24 @@ internal static class ApplicationsSsrShells
         StringBuilder sb,
         CultureState culture,
         ApplicationsSsrData.PageData data,
-        SollicitationRow row)
+        SollicitationRow row,
+        string? detailReturnHref)
     {
         var listHref = ApplicationsSsrQuery.BuildUrl(
             ApplicationsSsrQuery.TabSollicitaties,
             data.Filter,
             null);
-        sb.Append("<div class=\"sollic-detail card detail\"><a class=\"sollic-detail__back back\" href=\"");
+        sb.Append("<div class=\"sollic-detail card detail\">");
+        if (!string.IsNullOrEmpty(detailReturnHref))
+        {
+            sb.Append("<a class=\"sollic-detail__back back sollic-detail__back--return\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(detailReturnHref));
+            sb.Append("\" data-enhance-nav=\"false\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Common.Back"]));
+            sb.Append("</a>");
+        }
+
+        sb.Append("<a class=\"sollic-detail__back back\" href=\"");
         sb.Append(WebUtility.HtmlEncode(listHref));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.BackAllApplications"]));

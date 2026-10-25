@@ -64,6 +64,11 @@ public sealed class NdmMessagesLayoutPlaywrightTests : IAsyncLifetime
         Assert.True(json.GetProperty("thr").GetProperty("width").GetDouble() > 0);
         Assert.True(json.GetProperty("hero").GetProperty("right").GetDouble() <= json.GetProperty("vw").GetDouble() + 1);
         Assert.True(json.GetProperty("thr").GetProperty("right").GetDouble() <= json.GetProperty("vw").GetDouble() + 1);
+
+        var selectedBg = await page.EvaluateAsync<string>(
+            "() => getComputedStyle(document.querySelector('.ti.on')).backgroundColor");
+        Assert.Equal("rgb(255, 255, 255)", selectedBg);
+
         await page.CloseAsync();
     }
 

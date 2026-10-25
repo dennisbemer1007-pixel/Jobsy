@@ -80,6 +80,8 @@ else if (_bodyHtml is not null)
             query.TryGetValue("filter", out var filterValues);
             query.TryGetValue("sel", out var selValues);
             query.TryGetValue("thread", out var threadValues);
+            query.TryGetValue("return", out var returnValues);
+            ApplicationsSsrQuery.TryGetSafeApplicationsReturn(returnValues.FirstOrDefault(), out var detailReturnHref);
             Guid? selectedId = null;
             if (Guid.TryParse(selValues.FirstOrDefault(), out var parsedSel))
             {
@@ -113,7 +115,10 @@ else if (_bodyHtml is not null)
                 mobileDetailShell,
                 berichtenThreadId);
 
-            _bodyHtml = ApplicationsSsrShells.BuildBody(Culture, data);
+            _bodyHtml = ApplicationsSsrShells.BuildBody(
+                Culture,
+                data,
+                string.IsNullOrEmpty(detailReturnHref) ? null : detailReturnHref);
         }
         catch
         {
