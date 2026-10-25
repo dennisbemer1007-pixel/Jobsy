@@ -1196,7 +1196,6 @@
   font-size: 0.95rem;
 }
 
-.app-shell:has(.panel-page--cand-ill) .lobsy-coach-dock,
 .app-shell:has(.panel-page--cand-ill) .lobsy-assistant-launcher,
 .app-shell:has(.panel-page--cand-ill) .lobsy-assistant-tab--edge {
   display: none !important;

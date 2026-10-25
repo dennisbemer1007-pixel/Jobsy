@@ -28,6 +28,8 @@ internal static class SavedSsrShells
         }
 
         var sb = new StringBuilder();
+        sb.Append("<div class=\"saved-page-wrap\">");
+        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.BewaardDesk, KreeftHeaderStripAssets.BewaardMob, "bewaard");
         sb.Append("<div class=\"panel-page kb-saved kb-saved--illustrated panel-page--cand-ill\" data-testid=\"saved-page-ssr\">");
         AppendHero(sb, culture);
         if (data.ShowJobListTabs)
@@ -60,25 +62,19 @@ internal static class SavedSsrShells
         }
 
         AppendFooterNav(sb, culture);
-        sb.Append("</div>");
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 
     private static void AppendHero(StringBuilder sb, CultureState culture)
     {
-        var art = KreeftHeaderStripAssets.BewaardDesk;
-        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--with-art\" style=\"");
-        sb.Append("--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\"><div class=\"cand-hero__copy\"><span class=\"cand-hero__eyebrow cand-hero__eyebrow--coral\">");
+        sb.Append("<header class=\"saved-ssr-intro\" data-testid=\"saved-hero\"><span class=\"saved-ssr-intro__eyebrow cand-hero__eyebrow cand-hero__eyebrow--coral\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.SavedTab"]));
         sb.Append("</span><h1 tabindex=\"-1\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Title"]));
         sb.Append("</h1><p class=\"cand-hero__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Lead"]));
-        sb.Append("</p></div><div class=\"cand-hero__media\" style=\"--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\" aria-hidden=\"true\"></div></header>");
+        sb.Append("</p></header>");
     }
 
     private static void AppendJobListTabs(StringBuilder sb, CultureState culture, int savedCount)

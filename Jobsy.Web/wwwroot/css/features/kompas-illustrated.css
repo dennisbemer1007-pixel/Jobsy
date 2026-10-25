@@ -122,7 +122,6 @@
   padding: 0.55rem 1rem;
 }
 
-.app-shell:has(.passport-page--illustrated) .lobsy-coach-dock,
 .app-shell:has(.passport-page--illustrated) .lobsy-coach-cta {
   display: none !important;
 }

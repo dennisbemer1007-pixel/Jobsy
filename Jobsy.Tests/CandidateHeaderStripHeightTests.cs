@@ -7,8 +7,8 @@ public sealed class CandidateHeaderStripHeightTests
     {
         var root = TestRepo.FindRoot();
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/candidate-header-strip.css"));
-        Assert.Contains("--cand-header-strip-h-desktop: 150px", css, StringComparison.Ordinal);
-        Assert.Contains("--cand-header-strip-h-mobile: 90px", css, StringComparison.Ordinal);
+        Assert.Contains("--cand-header-strip-h-desktop: 225px", css, StringComparison.Ordinal);
+        Assert.Contains("--cand-header-strip-h-mobile: 105px", css, StringComparison.Ordinal);
         Assert.Contains("object-fit: cover", css, StringComparison.Ordinal);
         Assert.Contains(".sollicitaties-hero-strip", css, StringComparison.Ordinal);
         Assert.Contains(".cand-hero", css, StringComparison.Ordinal);
@@ -18,12 +18,12 @@ public sealed class CandidateHeaderStripHeightTests
     public void Blazor_core_and_applications_route_load_shared_strip_css()
     {
         Assert.Contains(
-            "css/features/candidate-header-strip.css?v=20261025-cand-strip2",
+            "css/features/candidate-header-strip.css?v=20261025-cand-strip3",
             Jobsy.Web.Hosting.PageAssetCatalog.BlazorCoreCss,
             StringComparer.Ordinal);
         var appsCss = Jobsy.Web.Hosting.PageAssetCatalog.RouteStylesheets("/candidate/applications");
         Assert.Equal(
-            "css/features/candidate-header-strip.css?v=20261025-cand-strip2",
+            "css/features/candidate-header-strip.css?v=20261025-cand-strip3",
             appsCss[0]);
     }
 

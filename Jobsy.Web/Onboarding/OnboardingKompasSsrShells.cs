@@ -6,6 +6,7 @@ using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
+using Jobsy.Web.Media;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Onboarding;
@@ -49,6 +50,8 @@ internal static class OnboardingKompasSsrShells
     public static string BuildHubBody(CultureState culture, HubModel model)
     {
         var sb = new StringBuilder();
+        sb.Append("<div class=\"kompas-page-wrap\">");
+        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtKompasDesk, KreeftHeaderStripAssets.LichtKompasMob, "licht-kompas");
         sb.Append("<section class=\"kompas kompas--ssr\" aria-labelledby=\"kompas-title\" data-testid=\"candidate-kompas-ssr\">");
         sb.Append("<header class=\"kompas__intro\">");
         sb.Append("<h2 id=\"kompas-title\" class=\"kompas__heading\">");
@@ -92,7 +95,7 @@ internal static class OnboardingKompasSsrShells
             sb.Append("</a>");
         }
 
-        sb.Append("</div></section>");
+        sb.Append("</div></section></div>");
         return sb.ToString();
     }
 

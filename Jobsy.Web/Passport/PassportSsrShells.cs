@@ -19,6 +19,8 @@ internal static class PassportSsrShells
         string? openDataSection = null)
     {
         var sb = new StringBuilder();
+        sb.Append("<div class=\"passport-page-wrap\">");
+        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtPaspoortDesk, KreeftHeaderStripAssets.LichtPaspoortMob, "licht-paspoort");
         sb.Append("<div class=\"panel-page passport-page passport-page--illustrated\" data-testid=\"passport-page-ssr\">");
         sb.Append(BuildGreeting(culture, data.FirstName));
         sb.Append("<div class=\"passport-layout\">");
@@ -32,7 +34,7 @@ internal static class PassportSsrShells
         AppendTabs(sb, culture, data);
         AppendActivePanel(sb, culture, data, antiforgeryToken, openDataSection);
         AppendFooterNav(sb, culture);
-        sb.Append("</div></div></div></div>");
+        sb.Append("</div></div></div></div></div></div>");
         AppendBanenkaartPrefetchBoot(sb, data);
         return sb.ToString();
     }
@@ -83,18 +85,12 @@ internal static class PassportSsrShells
             greeting = culture.Format(key, firstName.Trim());
         }
 
-        var art = KreeftHeaderStripAssets.LichtPaspoortDesk;
         var sb = new StringBuilder();
-        sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--kompas-band cand-hero--with-art\" style=\"");
-        sb.Append("--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\"><div class=\"cand-hero__copy\"><h2 class=\"cand-hero__title\">");
+        sb.Append("<header class=\"passport-ssr-greeting\" data-testid=\"passport-greeting\"><h2 class=\"passport-ssr-greeting__title\">");
         sb.Append(WebUtility.HtmlEncode(greeting));
-        sb.Append("</h2><p class=\"cand-hero__lead\">");
+        sb.Append("</h2><p class=\"passport-ssr-greeting__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Greeting.Lead"]));
-        sb.Append("</p></div><div class=\"cand-hero__media\" style=\"--cand-hero-art:url('");
-        sb.Append(WebUtility.HtmlEncode(art));
-        sb.Append("');--cand-hero-pos:right center;\" aria-hidden=\"true\"></div></header>");
+        sb.Append("</p></header>");
         return sb.ToString();
     }
 

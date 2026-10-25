@@ -462,12 +462,8 @@
         }
 
         var hidePassportChrome = IsPassportOrProfileCoachHidden(path);
-        var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
-                        || IsVacancyOrNotificationsCoachHidden(path)
-                        || hidePassportChrome
-                        || IsStandaloneQuickScanCoachHidden(path)
-                        || IsIllustratedCandidateCoachHidden(path)
-                        || (_isCandidate && IsBanenkaartPath(path));
+        var hideCoach = IsLobsyCoachExcludedPath(path)
+                        || IsVacancyOrNotificationsCoachHidden(path);
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -556,16 +552,33 @@
         return path.StartsWith("vacancies/", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>#728 illustrated candidate shells: hero + inline copy; no floating coach over CTAs.</summary>
-    public static bool IsIllustratedCandidateCoachHidden(string path)
+    /// <summary>Lobsy-hulp uit op landing, inloggen en account-flow (mockup).</summary>
+    public static bool IsLobsyCoachExcludedPath(string path)
     {
         path = path.TrimStart('/');
-        return path.Equals("carriere", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/applications", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/liked", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/settings", StringComparison.OrdinalIgnoreCase);
+        if (string.IsNullOrEmpty(path))
+        {
+            return true;
+        }
+
+        if (path.Equals("login", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("inloggen", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.StartsWith("account-maken", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("account/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return path.Contains("/uwv-", StringComparison.OrdinalIgnoreCase)
+               || path.EndsWith("/uwv", StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>Legacy alias — coach stays visible on illustrated SSR pages.</summary>
+    public static bool IsIllustratedCandidateCoachHidden(string path) => false;
 
     /// <summary>Hide floating coach on standalone Quick-Scan shells (scene bubble + progress).</summary>
     public static bool IsStandaloneQuickScanCoachHidden(string path)

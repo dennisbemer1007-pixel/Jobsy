@@ -1,26 +1,19 @@
 @namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Media
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
-@using Jobsy.Web.Features
 @inject CultureState Loc
-@inject Jobsy.Web.Features.ICandidateHeroCompactPreviewGate HeroCompactPreview
 
-<CandidateIllustratedHero CompactHeroLayout="@CompactHeroLayout"
-                          Title="@Greeting"
-                        Lead="@Loc["Kompas.Greeting.Lead"]"
-                        ArtUrl="@KreeftHeaderStripAssets.ProfielDesk"
-                        ArtPosition="right center"
-                        CssClass="@CompactHeroCssClass" />
+<KreeftHeaderStrip StripKey="profiel"
+                   DeskUrl="@KreeftHeaderStripAssets.ProfielDesk"
+                   MobUrl="@KreeftHeaderStripAssets.ProfielMob" />
+
+<header class="kompas-greeting-band" data-testid="kompas-greeting">
+    <h2 class="kompas-greeting-band__title">@Greeting</h2>
+    <p class="kompas-greeting-band__lead">@Loc["Kompas.Greeting.Lead"]</p>
+</header>
 
 @code {
-    private bool UsePreviewC => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C;
-
-    private string CompactHeroLayout => UsePreviewC ? "onboarding" : "passport";
-
-    private string CompactHeroCssClass => UsePreviewC
-        ? (HeroCompactPreview.CandHeroCssClass ?? string.Empty).Trim()
-        : $"cand-hero--profession-band cand-hero--kompas-band {HeroCompactPreview.CandHeroCssClass}".Trim();
-
     [Parameter] public string? FirstName { get; set; }
 
     private string Greeting => BuildGreeting();

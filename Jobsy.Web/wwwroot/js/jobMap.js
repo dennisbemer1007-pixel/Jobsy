@@ -4600,6 +4600,10 @@ window.jobMap = (function () {
         if (!map || typeof map.addSource !== "function") {
             return;
         }
+        if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
+            clearTravelRings();
+            return;
+        }
         if (kkMode) {
             drawKkRadiusRing(lat, lng);
             return;
@@ -5366,6 +5370,11 @@ window.jobMap = (function () {
             type: "FeatureCollection",
             features: Object.keys(markersById).map(function (id) {
                 const record = markersById[id];
+                const lng = Number(record.lng);
+                const lat = Number(record.lat);
+                if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+                    return null;
+                }
                 const v = record.options.jobData || {};
                 const agency = (isAgencyPin(v) || (companyMapMode && v.isIntermediary === true)) ? 1 : 0;
                 const pinKind = pinKindForVacancy(v);
@@ -5383,7 +5392,7 @@ window.jobMap = (function () {
                 return {
                     type: "Feature",
                     id: id,
-                    geometry: { type: "Point", coordinates: [record.lng, record.lat] },
+                    geometry: { type: "Point", coordinates: [lng, lat] },
                     properties: {
                         id: String(id),
                         featured: (kansberoep || isFeaturedVacancy(v)) ? 1 : 0,
@@ -5399,7 +5408,7 @@ window.jobMap = (function () {
                         pinKind: pinKind
                     }
                 };
-            })
+            }).filter(Boolean)
         };
     }
 

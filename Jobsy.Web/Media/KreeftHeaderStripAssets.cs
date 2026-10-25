@@ -10,9 +10,47 @@ public static class KreeftHeaderStripAssets
 
     private const string Base = "/images/kreeft/strips";
 
-    public static string Desk(string key) => $"{Base}/{key}-desk.webp?v={Version}";
+    public static string Desk(string key) => UrlForVariant(NormalizeKey(key), desk: true);
 
-    public static string Mob(string key) => $"{Base}/{key}-mob.webp?v={Version}";
+    public static string Mob(string key) => UrlForVariant(NormalizeKey(key), desk: false);
+
+    /// <summary>Strip slug from a desk/mob URL or pass-through key (avoids double <c>/strips//strips/…</c> paths).</summary>
+    public static string NormalizeKey(string keyOrUrl)
+    {
+        if (string.IsNullOrWhiteSpace(keyOrUrl))
+        {
+            return keyOrUrl;
+        }
+
+        var s = keyOrUrl.Trim();
+        if (!s.StartsWith(Base, StringComparison.Ordinal))
+        {
+            return s;
+        }
+
+        var file = s.Split('?', '#')[0];
+        var name = Path.GetFileName(file);
+        if (name.EndsWith("-desk.webp", StringComparison.Ordinal))
+        {
+            return name[..^"-desk.webp".Length];
+        }
+
+        if (name.EndsWith("-mob.webp", StringComparison.Ordinal))
+        {
+            return name[..^"-mob.webp".Length];
+        }
+
+        return s;
+    }
+
+    public static string KeyFromDeskUrl(string deskUrl)
+        => NormalizeKey(deskUrl);
+
+    private static string UrlForVariant(string key, bool desk)
+    {
+        var suffix = desk ? "-desk.webp" : "-mob.webp";
+        return $"{Base}/{key}{suffix}?v={Version}";
+    }
 
     public static string LandingDesk => Desk("landing");
     public static string LandingMob => Mob("landing");

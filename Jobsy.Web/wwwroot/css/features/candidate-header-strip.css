@@ -1,9 +1,8 @@
-/* Shared candidate header illustration height (mockup Sollicitaties 01 / na-de-match 04: 150px desktop, 90px mobile).
-   Copy-only heroes (Paspoort/Bewaard/Carrière/Reis zonder strip): unchanged here; future strips use .cand-header-strip-h + these tokens. */
+/* Kreeft v4 header strips — mockup ~225px desktop, ~105px mobile (PR #878). */
 
 :root {
-  --cand-header-strip-h-desktop: 150px;
-  --cand-header-strip-h-mobile: 90px;
+  --cand-header-strip-h-desktop: 225px;
+  --cand-header-strip-h-mobile: 105px;
   --hero-d: var(--cand-header-strip-h-desktop);
   --hero-m: var(--cand-header-strip-h-mobile);
   --kb-header-strip-h: var(--cand-header-strip-h-desktop);
@@ -74,6 +73,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: var(--kreeft-strip-pos, center center);
 }
 
 @media (min-width: 640px) {
@@ -83,6 +83,45 @@
     height: var(--cand-header-strip-h-desktop);
     max-height: var(--cand-header-strip-h-desktop);
   }
+}
+
+.passport-ssr-greeting,
+.carriere-ssr-intro,
+.kompas-greeting-band,
+.saved-ssr-intro {
+  padding: 1rem 1.25rem 0.75rem;
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.passport-ssr-greeting__title,
+.kompas-greeting-band__title {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.passport-ssr-greeting__lead,
+.kompas-greeting-band__lead,
+.carriere-ssr-intro__lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 48rem;
+}
+
+.carriere-ssr-intro__title {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+}
+
+.passport-page-wrap .sollicitaties-hero-strip,
+.career-page-wrap .sollicitaties-hero-strip,
+.kompas-page-wrap .sollicitaties-hero-strip,
+.saved-page-wrap .sollicitaties-hero-strip {
+  max-width: none;
 }
 
 @media (max-width: 639px) {
