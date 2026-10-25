@@ -308,6 +308,10 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen12.ReasonChip.Hours", "Uren passen niet", "Hours do not match");
         Add("AfterMatch.Screen12.ReasonChip.Filled", "Plek al vervuld", "Role already filled");
         Add("AfterMatch.Screen12.ReasonChip.Other", "Iets anders", "Something else");
+        Add("AfterMatch.Screen12.ReasonChip.OfferStart", "We starten met een proefperiode", "We start with a trial period");
+        Add("AfterMatch.Screen12.ReasonChip.OfferHours", "Uren en salaris besproken", "Hours and pay discussed");
+        Add("AfterMatch.Screen12.ReasonChip.OfferWelcome", "We kijken ernaar uit je te verwelkomen", "We look forward to welcoming you");
+        Add("AfterMatch.Screen12.ReasonChip.OfferOther", "Iets anders", "Something else");
         Add("AfterMatch.Screen12.SubmittedNote", "De uitkomst is verstuurd. Sanne ziet je reden in de app.", "The outcome was sent. Sanne sees your reason in the app.");
         Add("AfterMatch.Screen12.Submit", "Uitkomst versturen", "Send outcome");
         Add("AfterMatch.Screen12.TalentPool", "Bewaren in talentpool", "Save to talent pool");
@@ -315,9 +319,13 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen13.PageTitle", "Uitkomst", "Outcome");
         Add("AfterMatch.Screen13.Eyebrow", "Sollicitaties · Uitkomst", "Applications · Outcome");
         Add("AfterMatch.Screen13.Hero.Title", "Dank je wel voor het gesprek", "Thank you for the interview");
+        Add("AfterMatch.Screen13.Hero.TitleOffer", "Gefeliciteerd, je bent aangenomen", "Congratulations, you got the job");
         Add("AfterMatch.Screen13.Hero.Lead",
             "Dit keer is het geen ja. Dat zegt niets over wie je bent. Je hebt een mooie stap gezet.",
             "This time it is not a yes. That says nothing about who you are. You took a meaningful step.");
+        Add("AfterMatch.Screen13.Hero.LeadOffer",
+            "De werkgever wil je aannemen. Lees hieronder wat ze met je delen.",
+            "The employer wants to hire you. Read what they share with you below.");
         Add("AfterMatch.Screen13.Similar", "Banen die erop lijken", "Jobs that look similar");
         Add("AfterMatch.Screen13.FeedbackTitleFmt", "Wat {0} zegt", "What {0} says");
         Add("AfterMatch.Screen13.Next", "Volgende stap", "Next step");

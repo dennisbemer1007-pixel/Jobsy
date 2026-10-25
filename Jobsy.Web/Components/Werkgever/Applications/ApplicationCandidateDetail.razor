@@ -55,7 +55,8 @@
     {
         <WgAppPhase2AcceptPanel ApplicationId="Item.Id"
                                 CanWrite="CanWritePhase2"
-                                OnChanged="OnPhase2Changed" />
+                                OnChanged="OnPhase2Changed"
+                                OnAcceptUiAvailable="OnPhase2AcceptUiChanged" />
     }
 
     <div class="wg-app-tabs" role="tablist">
@@ -168,6 +169,7 @@
     [Parameter] public EventCallback<string> TabChanged { get; set; }
     [Parameter] public bool CanWritePhase2 { get; set; }
     [Parameter] public EventCallback OnPhase2Changed { get; set; }
+    [Parameter] public EventCallback<bool> OnPhase2AcceptUiChanged { get; set; }
 
     private string DisplayName => Item is null
         ? ""
