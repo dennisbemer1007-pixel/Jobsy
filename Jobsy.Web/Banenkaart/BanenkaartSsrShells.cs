@@ -150,6 +150,15 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Discovery.Sort"]))
             .Append("</span><select class=\"results-meta__sort-select\" data-testid=\"kb-list-sort\" form=\"kb-filter-form\" name=\"sort\">");
         var sort = model.Query.SortMode;
+        if (model.ShowFitFilters)
+        {
+            sb.Append("<option value=\"match\"")
+                .Append(string.Equals(sort, "match", StringComparison.OrdinalIgnoreCase) ? " selected" : "")
+                .Append('>')
+                .Append(WebUtility.HtmlEncode(culture["Discovery.SortMatch"]))
+                .Append("</option>");
+        }
+
         if (model.Query.OriginLat is not null)
         {
             sb.Append("<option value=\"distance\"")
@@ -160,7 +169,7 @@ internal static class BanenkaartSsrShells
         }
 
         sb.Append("<option value=\"title\"")
-            .Append(string.Equals(sort, "title", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(sort) ? " selected" : "")
+            .Append(string.Equals(sort, "title", StringComparison.OrdinalIgnoreCase) ? " selected" : "")
             .Append('>')
             .Append(WebUtility.HtmlEncode(culture["Discovery.SortAlphaAsc"]))
             .Append("</option></select></label>");

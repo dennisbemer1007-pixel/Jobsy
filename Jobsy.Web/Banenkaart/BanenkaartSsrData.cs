@@ -44,6 +44,7 @@ internal static class BanenkaartSsrData
         BanenkaartSsrQuery.State query,
         bool isAuthenticated,
         bool isCandidate,
+        bool sortExplicitInUrl = false,
         bool explicitRadiusKm = false,
         CancellationToken cancellationToken = default)
     {
@@ -173,11 +174,18 @@ internal static class BanenkaartSsrData
             showStartPrompt = false;
         }
 
+        var useOriginForSort = originLat is not null && originLng is not null && query.CompanyIds.Count == 0;
         var effectiveQuery = query with
         {
             OriginLat = originLat,
             OriginLng = originLng,
-            OriginLabel = addressLabel
+            OriginLabel = addressLabel,
+            SortMode = BanenkaartSsrQuery.ResolveEffectiveSort(
+                query.SortMode,
+                sortExplicitInUrl,
+                isCandidate,
+                showFitFilters,
+                useOriginForSort),
         };
 
         var companyFocus = effectiveQuery.CompanyIds.Count > 0;
@@ -266,6 +274,12 @@ internal static class BanenkaartSsrData
 
         var catalogUrl = BanenkaartClientCatalog.AllPath;
         var highlightSeed = HashVacancyIds(vacancies.Select(v => v.Id));
+        var fitByVacancyId = isCandidate && showFitFilters
+            ? vacancies
+                .Select(v => (v.Id, Percent: v.FitPercent ?? v.MatchPercent))
+                .Where(x => x.Percent is int)
+                .ToDictionary(x => x.Id.ToString("D"), x => x.Percent!.Value)
+            : null;
         var bootJson = BanenkaartMapBoot.BuildJson(
             culture,
             effectiveQuery,
@@ -278,7 +292,9 @@ internal static class BanenkaartSsrData
             originLng,
             zoomOutsideTravel,
             highlightSeed,
-            explicitRadiusKm);
+            explicitRadiusKm,
+            fitByVacancyId,
+            showFitFilters);
 
         var defaults = new KbFilterDefaults(
             AgeYears: effectiveQuery.AgeYears,
@@ -310,7 +326,11 @@ internal static class BanenkaartSsrData
             : culture.Format("Kb.Filter.ResultCount", count);
 
         string? subtitle = null;
-        if (effectiveQuery.MaxTravelMinutes is int travelChipMinutes)
+        if (string.Equals(effectiveQuery.SortMode, "match", StringComparison.OrdinalIgnoreCase) && showFitFilters)
+        {
+            subtitle = culture["Kb.List.SubBestFirst"];
+        }
+        else if (effectiveQuery.MaxTravelMinutes is int travelChipMinutes)
         {
             subtitle = showEmptyTravel
                 ? culture.Format(

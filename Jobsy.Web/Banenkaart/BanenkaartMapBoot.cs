@@ -29,7 +29,9 @@ internal static class BanenkaartMapBoot
         double? originLng,
         bool zoomToPinsOutsideTravel,
         uint highlightSeed,
-        bool includeRadiusCap = false)
+        bool includeRadiusCap = false,
+        IReadOnlyDictionary<string, int>? fitByVacancyId = null,
+        bool showFitFilters = false)
     {
         var payload = new Dictionary<string, object?>
         {
@@ -55,8 +57,9 @@ internal static class BanenkaartMapBoot
                 ["catalogMode"] = true,
                 ["highlightSeed"] = highlightSeed,
                 ["travel"] = BuildTravelBoot(query, includeRadiusCap),
-                ["filters"] = BuildFilterState(query),
+                ["filters"] = BuildFilterState(query, showFitFilters),
                 ["labels"] = BuildLabels(culture, isAuthenticated, query),
+                ["fitByVacancyId"] = fitByVacancyId is { Count: > 0 } ? fitByVacancyId : null,
                 ["illustratedTravelSpot"] = CandidateIllustratedImages.PopupTravelAccent,
                 ["illustratedVacancySpots"] = CandidateIllustratedImages.BanenkaartIllustratedSpots
                     .ToDictionary(static kv => kv.Key, static kv => kv.Value, StringComparer.OrdinalIgnoreCase),
@@ -103,7 +106,7 @@ internal static class BanenkaartMapBoot
         return travel;
     }
 
-    internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query)
+    internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query, bool showFitFilters = false)
     {
         var originLat = query.OriginLat;
         var originLng = query.OriginLng;
@@ -133,6 +136,8 @@ internal static class BanenkaartMapBoot
             ["originLat"] = originLat,
             ["originLng"] = originLng,
             ["originLabel"] = originLabel,
+            ["sort"] = query.SortMode,
+            ["showFitFilters"] = showFitFilters,
         };
     }
 
