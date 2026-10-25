@@ -38,30 +38,35 @@ public static class AssistantClientEndpoints
             ? http.Request.Path.Value
             : body.PagePath;
 
-        if (messages.Count == 0 && warm && greetingGate.Enabled
-            && RoleClaimMatching.HasRole(http.User, JobsyRoles.Candidate))
+        if (messages.Count == 0)
         {
-            try
+            if (warm && greetingGate.Enabled
+                && RoleClaimMatching.HasRole(http.User, JobsyRoles.Candidate))
             {
-                var boot = await CandidateChatContextBuilder.BuildForPagePathAsync(
-                    api,
-                    pagePath ?? "/",
-                    culture,
-                    cancellationToken);
-                return Results.Json(new AssistantClientChatResponse
+                try
                 {
-                    Reply = boot.Greeting,
-                    PageContextLine = boot.PageContextLine,
-                    Chips = boot.Chips.Select(c => new AssistantClientChip(c.Label, c.Message)).ToList()
-                });
+                    var boot = await CandidateChatContextBuilder.BuildForPagePathAsync(
+                        api,
+                        pagePath ?? "/",
+                        culture,
+                        cancellationToken);
+                    return Results.Json(new AssistantClientChatResponse
+                    {
+                        Reply = boot.Greeting,
+                        PageContextLine = boot.PageContextLine,
+                        Chips = boot.Chips.Select(c => new AssistantClientChip(c.Label, c.Message)).ToList()
+                    });
+                }
+                catch
+                {
+                    // Fall through to static greeting (no upstream AI call on open).
+                }
             }
-            catch
+
+            return Results.Json(new AssistantClientChatResponse
             {
-                return Results.Json(new AssistantClientChatResponse
-                {
-                    Reply = culture["Assistant.Greeting"]
-                });
-            }
+                Reply = culture["Assistant.Greeting"]
+            });
         }
 
         try

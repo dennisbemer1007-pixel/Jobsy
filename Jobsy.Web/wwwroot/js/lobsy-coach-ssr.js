@@ -54,9 +54,10 @@
       '<div class="lobsy-assistant__actions" data-ssr-assistant-chips></div>' +
       '<form class="lobsy-assistant__compose" data-ssr-assistant-form>' +
       '<label class="visually-hidden" for="lobsy-assistant-input"></label>' +
+      '<div class="lobsy-assistant__compose-row">' +
       '<textarea id="lobsy-assistant-input" rows="1" maxlength="2000"></textarea>' +
-      '<button type="submit" class="lobsy-assistant__send"></button>' +
-      "</form>" +
+      '<button type="submit" class="lobsy-assistant__send" aria-label="">→</button>' +
+      "</div></form>" +
       '<p class="lobsy-assistant__disclaimer"></p>' +
       "</div>";
 
@@ -170,6 +171,15 @@
     });
   }
 
+  function showLocalGreeting() {
+    state.started = true;
+    var greeting = cfg("data-greeting", cfg("data-subtitle", ""));
+    if (greeting) {
+      state.messages.push({ role: "assistant", content: greeting });
+    }
+    renderMessages();
+  }
+
   function startChat() {
     state.busy = true;
     renderMessages();
@@ -188,11 +198,15 @@
             ctx.hidden = true;
           }
         }
-        state.messages.push({ role: "assistant", content: data.reply || "" });
+        if (state.messages.length === 0) {
+          state.messages.push({ role: "assistant", content: data.reply || "" });
+        }
         renderChips(data.chips || []);
       })
       .catch(function () {
-        state.messages.push({ role: "assistant", content: cfg("data-subtitle", "") });
+        if (state.messages.length === 0) {
+          state.messages.push({ role: "assistant", content: cfg("data-greeting", cfg("data-subtitle", "")) });
+        }
       })
       .finally(function () {
         state.busy = false;
@@ -237,7 +251,7 @@
           return;
         }
         setOpen(true);
-        if (!state.started) startChat();
+        if (!state.started) showLocalGreeting();
         return;
       }
 

@@ -216,14 +216,3 @@
   }
 }
 
-/* Fixronde 12: SSR kompas + banenkaart — panel anchor matches other candidate mobile surfaces. */
-@media (max-width: 1023px) {
-  .app-shell--banenkaart-shell #lobsy-assistant-ssr-shell.lobsy-assistant--coach:not([hidden]),
-  .app-shell--candidate:has(.kompas-page-wrap) #lobsy-assistant-ssr-shell.lobsy-assistant--coach:not([hidden]) {
-    inset-inline-start: 12px;
-    inset-inline-end: auto;
-    top: 368px;
-    bottom: auto;
-    align-items: flex-start;
-  }
-}

@@ -18,7 +18,8 @@ public sealed class OnboardingKompasSsrShellsMarkupTests
         Assert.True(intro > reis);
         Assert.Contains("kompas__eyebrow", hub, StringComparison.Ordinal);
         Assert.Contains("kompas__intro--hub-mockup", hub, StringComparison.Ordinal);
-        Assert.Contains("Kompas.Ssr.Eyebrow", hub, StringComparison.Ordinal);
+        Assert.Contains("Kompas.Ssr.EyebrowZone", hub, StringComparison.Ordinal);
+        Assert.Contains("kompas__eyebrow-zone", hub, StringComparison.Ordinal);
         Assert.Contains("Kompas.Ssr.HubTitle", hub, StringComparison.Ordinal);
         Assert.Contains("Kompas.Ssr.HubLead", hub, StringComparison.Ordinal);
         Assert.Contains("ob-rustig__kompas-tests--hub-mockup", hub, StringComparison.Ordinal);

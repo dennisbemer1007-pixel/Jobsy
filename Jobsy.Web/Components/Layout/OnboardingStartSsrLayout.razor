@@ -16,8 +16,9 @@
 @inject IFeatureFlags FeatureFlags
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/lobsy-coach-pill.css?v=20261025-kreeft11" />
-    <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft8" defer></script>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css")" />
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" defer></script>
 </HeadContent>
 
 <div class="app-shell app-shell--candidate has-bottom-nav app-shell--onboarding-ssr" dir="@(Culture.IsRightToLeft ? "rtl" : null)">

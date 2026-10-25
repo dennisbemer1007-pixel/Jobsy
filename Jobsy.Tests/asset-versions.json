@@ -412,16 +412,24 @@
     "sha256": "1a9fd99dcb0e5bf933dbced87154b849658ec3110b3b2833a9893fa298b58db9"
   },
   "css/features/kreeft-reiskaart.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "d3957bf71f94ce4e0332987637d76bfe5a3b2b3ca5285d06c18fca49d06c17ca"
+    "v": "20261025-kreeft13",
+    "sha256": "a4e8cf3182195b1f888425071e4ee65a902ff06362a754cb2d860368a922bda6"
   },
   "css/features/candidate-header-strip.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "d4316a8e1565f26e016d71774d3c313a09b211090e54d710b06fb7e60d088e6b"
+    "v": "20261025-kreeft13",
+    "sha256": "772c26b9860f8a3a4ca3ce6291fd230325d19e845fc7760dba62618e3d5e7c60"
   },
   "css/features/lobsy-coach-pill.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "4684654165071d8afbb73d79d4b19b0114d993e7ce1f15d90919720b35efc639"
+    "v": "20261025-kreeft13",
+    "sha256": "8a48bb649cc3da87e72ae358f790449e5694f16270f5772d8164133975ca8ace"
+  },
+  "css/features/lobsy-assistant-panel.css": {
+    "v": "20261025-kreeft13",
+    "sha256": "1e8509b4aa994987ace96c75fbb166488b659b23efd74a989fc586e228e7b63d"
+  },
+  "js/lobsy-coach-ssr.js": {
+    "v": "20261025-kreeft13",
+    "sha256": "c1fb2b019051faa6380db9be7f6feea3964a7890cdee5919c17e14930937aadd"
   },
   "css/features/banenkaart-page.css": {
     "v": "20261025-kreeft12",
