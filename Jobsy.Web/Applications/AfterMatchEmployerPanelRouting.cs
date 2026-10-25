@@ -18,7 +18,7 @@ internal static class AfterMatchEmployerPanelRouting
         return panel switch
         {
             "" => "/panel-ssr",
-            "propose" => "/propose-ssr",
+            "propose" => "/panel-ssr",
             _ => "/blazor",
         };
     }

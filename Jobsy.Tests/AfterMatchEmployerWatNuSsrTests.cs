@@ -31,8 +31,8 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchPanelSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-employer.js?v=20261028-ndm-wg02", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261028-ndm-wg02", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-employer.js?v=20261025-ndm-wg0203", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261025-ndm-wg0203", razor, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -46,9 +46,9 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
     }
 
     [Fact]
-    public void Employer_panel_routing_propose_goes_to_blazor()
+    public void Employer_panel_routing_propose_goes_to_panel_ssr()
     {
-        Assert.Equal("/propose-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
+        Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel(""));
         Assert.Equal("/blazor", AfterMatchEmployerPanelRouting.PathSuffixForPanel("messages"));
     }
@@ -94,8 +94,8 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
         var html = AfterMatchEmployerWatNuSsrShells.BuildBody(culture, data, appId);
         Assert.Contains("data-testid=\"ndm-werkgever-live\"", html, StringComparison.Ordinal);
         Assert.Contains("Sanne de Vries", html, StringComparison.Ordinal);
-        Assert.Contains("panel=propose", html, StringComparison.Ordinal);
-        Assert.Contains("panel=messages", html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-open-panel=\"propose\"", html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-open-panel=\"messages\"", html, StringComparison.Ordinal);
         Assert.Contains(culture["AfterMatch.Employer.Share.Title"], html, StringComparison.Ordinal);
     }
 

@@ -1,0 +1,330 @@
+using System.Globalization;
+using System.Net;
+using System.Text;
+using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
+using Jobsy.Web.Components.AfterMatch;
+using Jobsy.Web.Localization;
+
+namespace Jobsy.Web.Applications;
+
+internal static class AfterMatchEmployerPanelSsrShells
+{
+    internal sealed record PageData(
+        AfterMatchThreadDto Thread,
+        string ApplicationDetailHref,
+        string? StatusNote,
+        IReadOnlyList<DateTime> InitialSelectedUtc,
+        InterviewFormat InitialFormat,
+        string InitialLocation,
+        string InitialWithWhom,
+        string InitialNote,
+        string InitialPanel);
+
+    internal static string BuildBody(CultureState culture, PageData data, Guid applicationId)
+    {
+        var sb = new StringBuilder();
+        var panel = string.IsNullOrWhiteSpace(data.InitialPanel) ? "" : data.InitialPanel.Trim().ToLowerInvariant();
+        if (panel is "slots")
+        {
+            panel = "propose";
+        }
+
+        sb.Append("<div class=\"ndm ndm-wg ndm-wg-page\" data-testid=\"ndm-werkgever-live\" data-ndm-panel=\"");
+        sb.Append(WebUtility.HtmlEncode(panel));
+        sb.Append("\" data-ndm-employer-ssr=\"1\" data-application-id=\"");
+        sb.Append(applicationId.ToString("D"));
+        sb.Append("\" data-ndm-title-home=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen02.Hero.Title"]));
+        sb.Append("\" data-ndm-lead-home=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen02.Hero.Lead"]));
+        sb.Append("\" data-ndm-title-propose=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Title"]));
+        sb.Append("\" data-ndm-lead-propose=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Lead"]));
+        sb.Append("\"><div class=\"g2 ndm-wg-g2\">");
+        AppendMainCard(sb, culture, data, panel);
+        AppendShareAside(sb, culture, data.Thread);
+        AppendProposePanel(sb, culture, data);
+        sb.Append("</div><p style=\"margin-top:16px\"><a class=\"lk\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.ApplicationDetailHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
+        sb.Append("</a></p></div>");
+        return sb.ToString();
+    }
+
+    private static void AppendMainCard(StringBuilder sb, CultureState culture, PageData data, string panel)
+    {
+        var thread = data.Thread;
+        sb.Append("<div class=\"wc stack ndm-wg-main\" data-ndm-wg-main><div class=\"row\"><span class=\"av w\" style=\"width:46px;height:46px\">");
+        sb.Append(WebUtility.HtmlEncode(CandidateInitials(thread.CandidateName)));
+        sb.Append("</span><div><h3 style=\"font-size:1.25rem\">");
+        sb.Append(WebUtility.HtmlEncode(thread.CandidateName));
+        sb.Append("</h3><p class=\"small muted\">");
+        sb.Append(WebUtility.HtmlEncode(CandidateSubtitle(culture, thread)));
+        sb.Append("</p></div></div><div class=\"hr\"></div>");
+        AppendTimeline(sb, culture, thread);
+
+        if (panel is not "propose")
+        {
+            AppendWhatGrid(sb, culture);
+        }
+
+        if (panel is "propose")
+        {
+            sb.Append("<div class=\"note\" data-ndm-propose-info-note><span>");
+            sb.Append(NdMIcons.Info);
+            sb.Append("</span><span>");
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.CandidateNote"]));
+            sb.Append("</span></div>");
+        }
+        else if (!string.IsNullOrWhiteSpace(data.StatusNote))
+        {
+            sb.Append("<div class=\"note\"><span>");
+            sb.Append(NdMIcons.Info);
+            sb.Append("</span><span>");
+            sb.Append(WebUtility.HtmlEncode(data.StatusNote));
+            sb.Append("</span></div>");
+        }
+
+        if (panel is not "propose")
+        {
+            sb.Append("<div class=\"hr\"></div><div class=\"row wrapflex\"><button type=\"button\" class=\"btn\" data-ndm-open-panel=\"propose\">");
+            sb.Append(NdMIcons.Calendar);
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Propose"]));
+            sb.Append("</button><button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"messages\">");
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Messages"]));
+            sb.Append("</button><span class=\"sp\"></span><span class=\"small muted hide-m\">");
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Expectation"]));
+            sb.Append("</span></div>");
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static void AppendWhatGrid(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<div class=\"what\"><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.WhatNow.Slots.Title"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.WhatNow.Slots.Body"]));
+        sb.Append("</p></div><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.What.Interview.Title"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.WhatNow.Interview.Body"]));
+        sb.Append("</p></div><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.What.Outcome.Title"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.WhatNow.Outcome.Body"]));
+        sb.Append("</p></div></div>");
+    }
+
+    private static void AppendShareAside(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)
+    {
+        sb.Append("<aside class=\"wc stack\" data-ndm-share-aside><h2 style=\"font-size:1.15rem\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Share.Title"]));
+        sb.Append("</h2><div class=\"list\" style=\"margin-top:10px\"><div><span class=\"ico navy\">");
+        sb.Append(NdMIcons.User);
+        sb.Append("</span><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Share.Passport"]));
+        sb.Append("</p></div>");
+        if (!string.IsNullOrWhiteSpace(thread.CandidateEmail))
+        {
+            sb.Append("<div><span class=\"ico navy\">");
+            sb.Append(NdMIcons.Mail);
+            sb.Append("</span><p class=\"small\">");
+            sb.Append(WebUtility.HtmlEncode(thread.CandidateEmail));
+            sb.Append("</p></div>");
+        }
+
+        sb.Append("<div><span class=\"ico navy\">");
+        sb.Append(NdMIcons.Phone);
+        sb.Append("</span><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Share.Phone"]));
+        sb.Append("</p></div><div><span class=\"ico navy\">");
+        sb.Append(NdMIcons.Bank);
+        sb.Append("</span><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Share.Bank"]));
+        sb.Append("</p></div></div></aside>");
+    }
+
+    private static void AppendProposePanel(StringBuilder sb, CultureState culture, PageData data)
+    {
+        var panel = string.IsNullOrWhiteSpace(data.InitialPanel) ? "" : data.InitialPanel.Trim().ToLowerInvariant();
+        if (panel is "slots")
+        {
+            panel = "propose";
+        }
+
+        sb.Append("<aside class=\"wc side pop stack\" data-ndm-propose-panel");
+        if (panel is not "propose")
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><div class=\"shd\"><span class=\"ico navy\">");
+        sb.Append(NdMIcons.Calendar);
+        sb.Append("</span><div><h2>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Title"]));
+        sb.Append("</h2><p class=\"muted small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Lead"]));
+        sb.Append("</p></div><button type=\"button\" class=\"xbtn\" data-ndm-close-panel aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Close"]));
+        sb.Append("\">");
+        sb.Append(NdMIcons.Close);
+        sb.Append("</button></div><div class=\"row wrapflex\" style=\"gap:6px\" data-ndm-propose-mode-chips><button type=\"button\" class=\"chip on\" data-ndm-propose-mode=\"manual\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Manual"]));
+        sb.Append("</button><button type=\"button\" class=\"chip\" data-ndm-propose-mode=\"agenda\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.ShareAgenda"]));
+        sb.Append("</button></div><div data-ndm-manual-block><div data-ndm-picked-slots>");
+        foreach (var start in data.InitialSelectedUtc.OrderBy(d => d))
+        {
+            AppendPickedSlot(sb, start);
+        }
+
+        sb.Append("</div><button type=\"button\" class=\"lk small\" data-ndm-add-slot style=\"margin-top:4px\">");
+        sb.Append(NdMIcons.Plus);
+        sb.Append(' ');
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AddSlot"]));
+        sb.Append("</button><div class=\"stack\" data-ndm-add-slot-form hidden style=\"margin-top:8px\"><div class=\"row wrapflex\" style=\"gap:8px;align-items:flex-end\"><div><span class=\"lbl\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AddDate"]));
+        sb.Append("</span><input type=\"date\" class=\"inp\" data-ndm-add-date style=\"width:auto\" /></div><div><span class=\"lbl\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AddTime"]));
+        sb.Append("</span><input type=\"time\" class=\"inp\" data-ndm-add-time style=\"width:auto\" step=\"900\" /></div><button type=\"button\" class=\"btn sm\" data-ndm-confirm-add-slot>");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Add"]));
+        sb.Append("</button></div></div></div><div data-ndm-agenda-block hidden><p class=\"small muted\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AgendaPlaceholder"]));
+        sb.Append("</p></div><div><span class=\"lbl\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Format.OnSite"]));
+        sb.Append("</span><div class=\"row wrapflex\" style=\"gap:6px\" data-ndm-format-chips>");
+        AppendFormatChip(sb, culture, InterviewFormat.OnSite, data.InitialFormat);
+        AppendFormatChip(sb, culture, InterviewFormat.Online, data.InitialFormat);
+        AppendFormatChip(sb, culture, InterviewFormat.Phone, data.InitialFormat);
+        sb.Append("</div><input class=\"inp\" style=\"margin-top:8px;width:100%\" data-ndm-location placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Where"]));
+        sb.Append("\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(data.InitialLocation));
+        sb.Append("\" /></div><div><span class=\"lbl\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.WithWhom"]));
+        sb.Append("</span><input class=\"inp\" style=\"width:100%\" data-ndm-with-whom value=\"");
+        sb.Append(WebUtility.HtmlEncode(data.InitialWithWhom));
+        sb.Append("\" /></div><div><span class=\"lbl\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Note"]));
+        sb.Append("</span><textarea class=\"inp area\" style=\"width:100%\" data-ndm-note>");
+        sb.Append(WebUtility.HtmlEncode(data.InitialNote));
+        sb.Append("</textarea></div><div class=\"row wrapflex\"><button type=\"button\" class=\"btn\" data-ndm-submit-propose");
+        if (data.InitialSelectedUtc.Count is < 2 or > 3)
+        {
+            sb.Append(" disabled");
+        }
+
+        sb.Append('>');
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Submit"]));
+        sb.Append("</button><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Cancel"]));
+        sb.Append("</button></div></aside>");
+    }
+
+    private static void AppendFormatChip(
+        StringBuilder sb,
+        CultureState culture,
+        InterviewFormat fmt,
+        InterviewFormat selected)
+    {
+        var on = fmt == selected ? " on" : "";
+        sb.Append("<button type=\"button\" class=\"chip");
+        sb.Append(on);
+        sb.Append("\" data-ndm-format=\"");
+        sb.Append((int)fmt);
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(FormatLabel(culture, fmt)));
+        sb.Append("</button>");
+    }
+
+    internal static void AppendPickedSlot(StringBuilder sb, DateTime startUtc)
+    {
+        var start = AfterMatchMailSsrTime.ToAmsterdam(startUtc);
+        var end = start.AddMinutes(30);
+        var nl = CultureInfo.GetCultureInfo("nl-NL");
+        var dayLabel = CapitalizeFirst(start.ToString("dddd d MMMM", nl));
+        sb.Append("<div class=\"slot on\" data-ndm-picked-slot=\"");
+        sb.Append(WebUtility.HtmlEncode(startUtc.ToString("O")));
+        sb.Append("\"><span class=\"ico navy\">");
+        sb.Append(NdMIcons.Calendar);
+        sb.Append("</span><div class=\"sp\"><b>");
+        sb.Append(WebUtility.HtmlEncode(dayLabel));
+        sb.Append("</b><span class=\"small muted\">");
+        sb.Append(WebUtility.HtmlEncode($"{start:HH:mm} tot {end:HH:mm}"));
+        sb.Append("</span></div><button type=\"button\" class=\"xbtn\" data-ndm-remove-slot aria-label=\"Verwijderen\">");
+        sb.Append(NdMIcons.Close);
+        sb.Append("</button></div>");
+    }
+
+    private static string CapitalizeFirst(string value)
+        => string.IsNullOrEmpty(value) ? value : char.ToUpper(value[0], CultureInfo.GetCultureInfo("nl-NL")) + value[1..];
+
+    private static string FormatLabel(CultureState culture, InterviewFormat fmt) => fmt switch
+    {
+        InterviewFormat.Online => culture["AfterMatch.Screen03.Format.Online"],
+        InterviewFormat.Phone => culture["AfterMatch.Screen03.Format.Phone"],
+        _ => culture["AfterMatch.Screen03.Format.OnSite"],
+    };
+
+    private static void AppendTimeline(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)
+    {
+        var yesDate = thread.AcceptedAtUtc is DateTime accepted
+            ? AfterMatchMailSsrTime.ToAmsterdam(accepted).ToString("d MMM", CultureInfo.GetCultureInfo("nl-NL"))
+            : null;
+        sb.Append("<nav class=\"tl\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
+        sb.Append("\"><div class=\"s done\"><i>");
+        sb.Append(NdMIcons.Check);
+        sb.Append("</i>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Yes"]));
+        if (!string.IsNullOrWhiteSpace(yesDate))
+        {
+            sb.Append("<small>");
+            sb.Append(WebUtility.HtmlEncode(yesDate));
+            sb.Append("</small>");
+        }
+
+        sb.Append("</div><div class=\"s now\"><i>");
+        sb.Append(NdMIcons.Calendar);
+        sb.Append("</i>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
+        sb.Append("<small>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Now"]));
+        sb.Append("</small></div><div class=\"s\"><i>");
+        sb.Append(NdMIcons.Handshake);
+        sb.Append("</i>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Interview"]));
+        sb.Append("<small></small></div><div class=\"s\"><i>");
+        sb.Append(NdMIcons.Flag);
+        sb.Append("</i>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
+        sb.Append("<small></small></div></nav>");
+    }
+
+    private static string CandidateSubtitle(CultureState culture, AfterMatchThreadDto thread)
+    {
+        var yesDate = thread.AcceptedAtUtc is DateTime accepted
+            ? AfterMatchMailSsrTime.ToAmsterdam(accepted).ToString("d MMM", CultureInfo.GetCultureInfo("nl-NL"))
+            : null;
+        var yesPart = yesDate is not null
+            ? string.Format(culture["AfterMatch.Employer.YesOn"], yesDate)
+            : null;
+        return string.Join(
+            " · ",
+            new[] { thread.VacancyTitle, culture["AfterMatch.Demo.Team"], yesPart }
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
+
+    private static string CandidateInitials(string candidateName)
+    {
+        var parts = candidateName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+            : candidateName.Length >= 2 ? candidateName[..2].ToUpperInvariant() : "?";
+    }
+}

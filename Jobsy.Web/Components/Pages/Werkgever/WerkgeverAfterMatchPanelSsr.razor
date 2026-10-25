@@ -4,6 +4,7 @@
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Features
 @using Jobsy.Web.Applications
 @using Jobsy.Web.Components.Shared
@@ -16,8 +17,8 @@
 @inject CultureState Culture
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>@Culture["AfterMatch.Screen02.Hero.Title"] · Lobsy</PageTitle>
-<PageSeo Title="@Culture["AfterMatch.Screen02.Hero.Title"]" />
+<PageTitle>@_pageTitle · Lobsy</PageTitle>
+<PageSeo Title="@_pageTitle" />
 <HeadContent>
     @foreach (var href in PageAssetCatalog.StylesheetsFor(
                   PageAssetCatalog.Area.Werkgever,
@@ -25,8 +26,8 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261028-ndm-wg02" />
-    <script src="/js/ndm-employer.js?v=20261028-ndm-wg02" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg0203" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg0203" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -43,8 +44,8 @@ else if (!string.IsNullOrWhiteSpace(_fatalMessage))
 }
 else if (_bodyHtml is not null)
 {
-    <WgPageShell Title="@Culture["AfterMatch.Screen02.Hero.Title"]"
-                 Lead="@Culture["AfterMatch.Screen02.Hero.Lead"]"
+    <WgPageShell Title="@_heroTitle"
+                 Lead="@_heroLead"
                  CrumbDetail="@_candidateName">
         @((MarkupString)_bodyHtml)
     </WgPageShell>
@@ -58,6 +59,9 @@ else if (_bodyHtml is not null)
     private string? _fatalMessage;
     private string? _bodyHtml;
     private string? _candidateName;
+    private string _pageTitle = "";
+    private string _heroTitle = "";
+    private string _heroLead = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,8 +76,12 @@ else if (_bodyHtml is not null)
 
             http.Response.Headers.CacheControl = "no-store";
 
+            var panel = AfterMatchEmployerPanelRouting.ResolvePanel(http.Request.Query);
+            var isProposePanel = panel is "propose" or "slots";
+
             var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
-            if (!AfterMatchEmployerSsrRouting.ShouldUseWatNuScreen(thread))
+            if (!AfterMatchEmployerSsrRouting.ShouldUseWatNuScreen(thread)
+                && !(isProposePanel && AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread)))
             {
                 _redirecting = true;
                 var blazorPath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/blazor";
@@ -93,17 +101,26 @@ else if (_bodyHtml is not null)
             }
 
             _candidateName = thread.CandidateName;
-            var baseHref = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match";
-            var data = new AfterMatchEmployerWatNuSsrShells.PageData(
-                thread,
-                $"{baseHref}?panel=propose",
-                $"{baseHref}?panel=messages",
-                $"/werkgever/sollicitaties/{ApplicationId:D}",
-                thread.InterviewStatus == Core.Enums.InterviewStatus.Proposing
-                    ? "Sanne kiest zelf uit je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen."
-                    : null);
+            _heroTitle = isProposePanel
+                ? Culture["AfterMatch.Screen03.Hero.Title"]
+                : Culture["AfterMatch.Screen02.Hero.Title"];
+            _heroLead = isProposePanel
+                ? Culture["AfterMatch.Screen03.Hero.Lead"]
+                : Culture["AfterMatch.Screen02.Hero.Lead"];
+            _pageTitle = _heroTitle;
 
-            _bodyHtml = AfterMatchEmployerWatNuSsrShells.BuildBody(Culture, data, ApplicationId);
+            var data = new AfterMatchEmployerPanelSsrShells.PageData(
+                thread,
+                $"/werkgever/sollicitaties/{ApplicationId:D}",
+                null,
+                AfterMatchEmployerDemoSlots.InitialUtc,
+                InterviewFormat.OnSite,
+                "Loosduinseweg 120, Den Haag · ingang naast de winkel",
+                "Linda de Wit, eigenaar",
+                "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
+                panel);
+
+            _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildBody(Culture, data, ApplicationId);
         }
         catch
         {
