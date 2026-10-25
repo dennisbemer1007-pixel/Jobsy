@@ -77,7 +77,7 @@ public static class PageAssetCatalog
         "css/features/ontdekkingsreis.css?v=20261023-mobile-circle",
         "css/features/tests.css?v=20261020-r8",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
-        "css/features/carriere.css?v=20261021-08",
+        "css/features/carriere.css?v=20261028-carriere-hero1",
         "css/features/opleidingen.css?v=20261018-r12",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",
