@@ -100,33 +100,54 @@ internal static class AfterMatchDemoSeeder
         await db.SaveChangesAsync();
     }
 
+    private static async Task<Guid?> ResolveDemoCandidateUserIdAsync(JobsyDbContext db)
+    {
+        if (await db.Users.AsNoTracking().AnyAsync(u => u.Id == CandidateId))
+        {
+            return CandidateId;
+        }
+
+        foreach (var email in new[] { "kandidaat.denhaag@jobsy.local", "kandidaat@jobsy.local" })
+        {
+            var byEmail = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
+            if (byEmail is not null)
+            {
+                return byEmail.Id;
+            }
+        }
+
+        return null;
+    }
+
     private static async Task EnsureApplicationsAsync(JobsyDbContext db, ILogger logger)
     {
-        var candidate = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == CandidateId);
-        if (candidate is null)
+        var candidateUserId = await ResolveDemoCandidateUserIdAsync(db);
+        if (candidateUserId is null)
         {
+            logger.LogInformation("After-match demo seed skipped (no demo candidate user).");
             return;
         }
 
-        await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.WaitApp, InterviewStatus.Proposing, null, hasMessage: true);
-        await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.PickSlotsApp, InterviewStatus.Proposing, "slots", hasMessage: true);
-        await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.ScheduledApp, InterviewStatus.Scheduled, "scheduled", hasMessage: true);
-        await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.RescheduleApp, InterviewStatus.RescheduleRequested, "reschedule", hasMessage: true);
-        await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.NotNowApp, InterviewStatus.Done, "notnow", hasMessage: false, outcome: AfterMatchOutcomeKind.NotNow);
-        await UpsertAndSaveAppAsync(db, AfterMatchDemoIds.Verkoop4790App, InterviewStatus.Scheduled, "scheduled4790", hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.WaitApp, InterviewStatus.Proposing, null, hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.PickSlotsApp, InterviewStatus.Proposing, "slots", hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.ScheduledApp, InterviewStatus.Scheduled, "scheduled", hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.RescheduleApp, InterviewStatus.RescheduleRequested, "reschedule", hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.NotNowApp, InterviewStatus.Done, "notnow", hasMessage: false, outcome: AfterMatchOutcomeKind.NotNow);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.Verkoop4790App, InterviewStatus.Scheduled, "scheduled4790", hasMessage: true);
 
         logger.LogInformation("After-match demo applications ensured.");
     }
 
     private static async Task UpsertAndSaveAppAsync(
         JobsyDbContext db,
+        Guid candidateUserId,
         Guid appId,
         InterviewStatus interviewStatus,
         string? scenario,
         bool hasMessage,
         AfterMatchOutcomeKind? outcome = null)
     {
-        await UpsertAppAsync(db, appId, interviewStatus, scenario, hasMessage, outcome);
+        await UpsertAppAsync(db, candidateUserId, appId, interviewStatus, scenario, hasMessage, outcome);
         await db.SaveChangesAsync();
         if (scenario is "scheduled" or "scheduled4790" or "reschedule")
         {
@@ -155,6 +176,7 @@ internal static class AfterMatchDemoSeeder
 
     private static async Task UpsertAppAsync(
         JobsyDbContext db,
+        Guid candidateUserId,
         Guid appId,
         InterviewStatus interviewStatus,
         string? scenario,
@@ -171,7 +193,7 @@ internal static class AfterMatchDemoSeeder
             {
                 Id = appId,
                 VacancyId = AfterMatchDemoIds.VacancyForApplication(appId),
-                CandidateUserId = CandidateId,
+                CandidateUserId = candidateUserId,
                 CandidateName = "Sanne de Vries",
                 CandidateEmail = "sanne.devries@mail.nl",
                 CandidateCity = "Den Haag",
