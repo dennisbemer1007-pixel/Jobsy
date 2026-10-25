@@ -51,8 +51,18 @@
     }
 
     .app-shell--banenkaart-shell .app-header {
+        box-sizing: border-box;
+        height: 55px;
         min-height: 55px;
-        padding-block: 10px;
+        max-height: 55px;
+        padding: 8px 0.85rem;
+        overflow: hidden;
+    }
+
+    .app-shell--banenkaart-shell .app-header .brand__logo.lobsy-logo--horizontal,
+    .app-shell--banenkaart-shell .app-header .lobsy-logo__img {
+        max-height: 36px;
+        width: auto;
     }
 
     .app-shell--banenkaart-shell .account-menu__toggle .auth-user {
