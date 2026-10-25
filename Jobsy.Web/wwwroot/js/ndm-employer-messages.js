@@ -68,13 +68,44 @@
     });
   }
 
-  function messagesUrlForThread(threadId) {
-    var container = root();
-    var contextId =
-      (container && container.getAttribute("data-context-application-id")) || threadId;
+  function hostApplicationId(container) {
+    container = container || root();
+    if (container) {
+      var host = container.getAttribute("data-ndm-messages-host-id");
+      if (host) {
+        return host;
+      }
+    }
+    try {
+      var match = window.location.pathname.match(
+        /\/werkgever\/sollicitaties\/([0-9a-f-]{36})\/after-match/i
+      );
+      return match && match[1];
+    } catch (_e) {
+      return null;
+    }
+  }
+
+  function messagesListUrl() {
+    var hostId = hostApplicationId();
+    if (!hostId) {
+      return null;
+    }
     return (
       "/werkgever/sollicitaties/" +
-      encodeURIComponent(contextId) +
+      encodeURIComponent(hostId) +
+      "/after-match?panel=messages"
+    );
+  }
+
+  function messagesUrlForThread(threadId) {
+    var hostId = hostApplicationId();
+    if (!hostId) {
+      return null;
+    }
+    return (
+      "/werkgever/sollicitaties/" +
+      encodeURIComponent(hostId) +
       "/after-match?panel=messages&thread=" +
       encodeURIComponent(threadId)
     );
@@ -100,8 +131,6 @@
       }
     });
 
-    container.setAttribute("data-context-application-id", threadId);
-
     if (MOBILE.matches) {
       setThreadOpen(true);
     }
@@ -109,8 +138,10 @@
     if (options && (options.history === "push" || options.history === "replace")) {
       try {
         var url = messagesUrlForThread(threadId);
-        var fn = options.history === "push" ? "pushState" : "replaceState";
-        window.history[fn]({ ndmWgThread: threadId }, "", url);
+        if (url) {
+          var fn = options.history === "push" ? "pushState" : "replaceState";
+          window.history[fn]({ ndmWgThread: threadId }, "", url);
+        }
       } catch (_e) {
         /* ignore */
       }
@@ -213,14 +244,19 @@
   function onThreadClick(ev) {
     var link = ev.target && ev.target.closest && ev.target.closest("[data-ndm-thread-select]");
     if (!link) {
-      return;
+      return false;
+    }
+    var container = root();
+    if (!container || !container.contains(link) || !messagesPanelVisible(container)) {
+      return false;
     }
     var threadId = link.getAttribute("data-ndm-thread-id");
     if (!threadId) {
-      return;
+      return false;
     }
     ev.preventDefault();
     selectThread(threadId, { history: "push" });
+    return true;
   }
 
   function onQuickReply(ev) {
@@ -350,6 +386,40 @@
 
   window.NdmEmployerMessagesSyncLayout = syncMobileLayout;
 
+  function isMobileThreadOpen() {
+    var container = root();
+    return !!(container && MOBILE.matches && container.classList.contains("ndm-wg-messages-thread-open"));
+  }
+
+  function backToMobileList() {
+    var container = root();
+    if (!container || !MOBILE.matches) {
+      return false;
+    }
+    try {
+      var params = new URL(window.location.href).searchParams;
+      if (params.get("thread")) {
+        history.back();
+        return true;
+      }
+    } catch (_e) {
+      /* ignore */
+    }
+    showMobileListOnly(container);
+    try {
+      var listUrl = messagesListUrl();
+      if (listUrl) {
+        history.replaceState({ ndmWgPanel: "messages" }, "", listUrl);
+      }
+    } catch (_e2) {
+      /* ignore */
+    }
+    return true;
+  }
+
+  window.NdmEmployerMessagesBackToList = backToMobileList;
+  window.NdmEmployerMessagesIsMobileThreadOpen = isMobileThreadOpen;
+
   function bindPopstateOnce() {
     if (window.__ndmEmployerMessagesPopstateBound) {
       return;
@@ -394,7 +464,6 @@
     var firstBind = container.getAttribute("data-ndm-employer-messages-bound") !== "1";
     if (firstBind) {
       container.setAttribute("data-ndm-employer-messages-bound", "1");
-      container.addEventListener("click", onThreadClick);
       container.addEventListener("click", onQuickReply);
       container.addEventListener("input", onComposeInput);
       container.addEventListener("submit", onComposeSubmit);
@@ -442,19 +511,7 @@
       return;
     }
     window.__ndmEmployerMessagesCaptureBound = true;
-    document.addEventListener(
-      "click",
-      function (ev) {
-        var link = ev.target && ev.target.closest && ev.target.closest("[data-ndm-thread-select]");
-        if (!link || !root()) {
-          return;
-        }
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        onThreadClick(ev);
-      },
-      true
-    );
+    document.addEventListener("click", onThreadClick, true);
   }
 
   window.NdmEmployerMessagesInit = init;

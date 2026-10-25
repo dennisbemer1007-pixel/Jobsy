@@ -16,7 +16,9 @@ internal static class AfterMatchEmployerMessagesSsrShells
         bool showSelectedThreadPanel = true)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ndm ndm-wg ndm-wg-messages-page\" data-testid=\"ndm-werkgever-live\" data-ndm-view=\"messages\" data-ndm-employer-messages-ssr=\"1\" data-context-application-id=\"");
+        sb.Append("<div class=\"ndm ndm-wg ndm-wg-messages-page\" data-testid=\"ndm-werkgever-live\" data-ndm-view=\"messages\" data-ndm-employer-messages-ssr=\"1\" data-ndm-messages-host-id=\"");
+        sb.Append(contextApplicationId.ToString("D"));
+        sb.Append("\" data-context-application-id=\"");
         sb.Append(contextApplicationId.ToString("D"));
         sb.Append("\" data-messages-base=\"");
         sb.Append(WebUtility.HtmlEncode(data.MessagesBasePath));

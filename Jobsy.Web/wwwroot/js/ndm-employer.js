@@ -3,6 +3,7 @@
 
   var TZ = "Europe/Amsterdam";
   var SLOT_MS = 30 * 60000;
+  var MOBILE = window.matchMedia("(max-width: 600px)");
 
   function root() {
     return document.querySelector("[data-ndm-employer-ssr], [data-ndm-employer-reschedule-ssr]");
@@ -399,6 +400,17 @@
     });
   }
 
+  function closePanelOrMessagesList(container, push) {
+    if (
+      window.NdmEmployerMessagesIsMobileThreadOpen &&
+      window.NdmEmployerMessagesIsMobileThreadOpen()
+    ) {
+      window.NdmEmployerMessagesBackToList();
+      return;
+    }
+    setPanel(container, "", push);
+  }
+
   function bindPanelNav(container) {
     container.querySelectorAll("[data-ndm-open-panel]").forEach(function (btn) {
       if (btn.getAttribute("data-ndm-panel-bound") === "1") {
@@ -419,7 +431,7 @@
       btn.setAttribute("data-ndm-panel-bound", "1");
       btn.addEventListener("click", function (e) {
         e.preventDefault();
-        setPanel(container, "", true);
+        closePanelOrMessagesList(container, true);
       });
     });
   }
@@ -444,7 +456,7 @@
       }
       ev.preventDefault();
       ev.stopImmediatePropagation();
-      setPanel(container, "", true);
+      closePanelOrMessagesList(container, true);
     }
   }
 

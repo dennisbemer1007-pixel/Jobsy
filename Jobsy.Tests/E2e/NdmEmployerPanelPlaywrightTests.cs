@@ -266,6 +266,26 @@ public sealed class NdmEmployerPanelPlaywrightTests
         Assert.Equal(0, loads);
         Assert.Contains("thread=", page.Url, StringComparison.OrdinalIgnoreCase);
         await Assertions.Expect(page.Locator("[data-ndm-thread-panel]:not([hidden])")).ToBeVisibleAsync();
+
+        var messagesBack = page.Locator("[data-ndm-messages-panel]:not([hidden])").GetByRole(AriaRole.Button, new() { Name = "Terug" });
+        await messagesBack.ClickAsync();
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const u = new URL(location.href);
+              return u.searchParams.get('panel') === 'messages' && !u.searchParams.get('thread');
+            }
+            """,
+            null,
+            new() { Timeout = 10_000 });
+        Assert.Equal(0, loads);
+        await AssertMessagesMobileThreadListVisibleAsync(page);
+
+        await messagesBack.ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        Assert.Equal(0, loads);
+        await Assertions.Expect(page.Locator("[data-ndm-messages-panel]")).ToBeHiddenAsync();
+        await Assertions.Expect(page.Locator("[data-ndm-wg-main]")).ToBeVisibleAsync();
     }
 
     private static async Task AssertMessagesMobileThreadListVisibleAsync(IPage page)
