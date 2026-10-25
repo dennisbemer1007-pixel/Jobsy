@@ -488,7 +488,7 @@
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
         var immersive = onRoute && !_isCandidate;
         var candidateShell = onRoute;
-        var mockupTop = onRoute;
+        var mockupTop = onRoute && !_isCandidate;
         var changed = false;
         if (_banenkaartImmersive != immersive)
         {

@@ -270,6 +270,12 @@ internal static class UiStringsOnboardingV2
             : "Je maakt de tests later af via je paspoort of De ontdekkingsreis.";
         map["Onboarding.Welcome.Title"] = english ? "Hi {0}, nice to have you here" : "Hoi {0}, fijn dat je er bent";
         map["Onboarding.Welcome.TitleNoName"] = english ? "Hi, nice to have you here" : "Hoi, fijn dat je er bent";
+        map["Onboarding.Welcome.JourneyTitle"] = english ? "Welcome to your journey, {0}" : "Welkom bij je reis, {0}";
+        map["Onboarding.Welcome.JourneyTitleNoName"] = english ? "Welcome to your journey" : "Welkom bij je reis";
+        map["Onboarding.Welcome.BeforeStartTitle"] = english ? "Before you begin" : "Voor je begint";
+        map["Onboarding.Welcome.BeforeStartBody"] = english
+            ? "Everything is saved as you go. You can stop anytime and pick up where you left off."
+            : "Alles wordt onderweg bewaard. Stoppen mag, je gaat later verder waar je was.";
         map["Onboarding.Welcome.Lead"] = english ? "In about 12 minutes we make your start profile together. Then your Compass shows who you are and which work fits you." : "In ongeveer 12 minuten maken we samen je startprofiel. Daarna zie je in je Kompas wie je bent en welk werk bij je past.";
         map["Onboarding.Rustig.WelcomeLead"] = english
             ? "In about 12 minutes we go through ten short steps together. Then your Compass is ready and you see which work fits you."

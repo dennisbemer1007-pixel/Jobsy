@@ -37,7 +37,10 @@
     <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261025-acc1093" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
     <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-mini-footer" />
-    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-acc1093" />
+    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-kreeft6" />
+    <link rel="stylesheet" href="css/features/lobsy-coach-ssr-chrome.css?v=20261025-kreeft6" />
+    <link rel="stylesheet" href="css/features/onboarding-start-strand.css?v=20261025-kreeft6" />
+    <script src="/js/lobsy-coach-ssr.js?v=20261025-kreeft6" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -105,24 +108,7 @@ else if (_step is >= 1 and <= 10)
             <OnboardingRustigHero DesktopUrl="@heroDesktop"
                                   MobileUrl="@heroMobile" />
             <div class="ob-rustig__layout @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
-                <aside class="ob-rustig__sidebar ob-wizard__sidebar ob-rustig__sidebar--no-logo" aria-label="Stappen">
-                    @foreach (var item in OnboardingRustigSidebarNav.Items(_step))
-                    {
-                        var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
-                        <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"
-                           href="@OnboardingRustigSidebarNav.LinkHref(section)"
-                           data-enhance-nav="false">
-                            <span>@item.Number</span>
-                            <div>
-                                <strong>@item.Title</strong>
-                                @if (!string.IsNullOrWhiteSpace(item.Sub))
-                                {
-                                    <small>@item.Sub</small>
-                                }
-                            </div>
-                        </a>
-                    }
-                </aside>
+                <OnboardingKreeftZoneSidebar Zones="@OnboardingKreeftZoneSidebarNav.ForOnboardingStep(_step)" />
 
                 <div class="ob-rustig__main">
                     <header class="ob-rustig__chrome">

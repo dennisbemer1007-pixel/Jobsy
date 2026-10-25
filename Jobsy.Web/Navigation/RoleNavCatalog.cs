@@ -72,6 +72,8 @@ public static class RoleNavCatalog
             [
                 "/candidate/ontdekkingsreis/",
                 "/candidate/start",
+                "/candidate/kompas",
+                "/candidate/start/kompas",
                 "/candidate/ondernemerscheck",
                 "/candidate/wat-drijft-jou",
             ],

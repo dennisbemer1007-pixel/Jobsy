@@ -1,0 +1,95 @@
+/* Mockup 03-start-strand: full-bleed hero under app header, zone sidebar, reiskaart column. */
+
+.app-shell--onboarding-ssr .app-main__content {
+  max-inline-size: none;
+  padding-inline: 0;
+}
+
+.ob-rustig--start-strand {
+  --ob-rustig-hero-h: var(--cand-header-strip-h-mobile, 105px);
+}
+
+@media (min-width: 640px) {
+  .ob-rustig--start-strand {
+    --ob-rustig-hero-h: var(--cand-header-strip-h-desktop, 225px);
+  }
+}
+
+.app-shell--onboarding-ssr .ob-wizard__welcome .ob-rustig--start-strand .ob-rustig__hero-band,
+.app-shell--onboarding-ssr .ob-wizard__welcome .ob-start-strand-hero {
+  inline-size: 100vw;
+  max-inline-size: 100vw;
+  margin-inline: var(--kreeft-strip-bleed, calc(50% - 50vw));
+  block-size: var(--ob-rustig-hero-h);
+  max-block-size: var(--ob-rustig-hero-h);
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.ob-rustig--start-strand .ob-rustig__hero-img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: 32% 68%;
+}
+
+.ob-rustig--start-strand .ob-rustig__hero-img--desk {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .ob-rustig--start-strand .ob-rustig__hero-img--mob {
+    display: none;
+  }
+
+  .ob-rustig--start-strand .ob-rustig__hero-img--desk {
+    display: block;
+  }
+}
+
+.ob-rustig__sidebar--zones .ob-wizard__side-item--zone {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.ob-rustig__sidebar--zones .ob-wizard__zone-mark {
+  inline-size: 0.65rem;
+  block-size: 0.65rem;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--brand) 35%, var(--border));
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.ob-rustig__sidebar--zones .ob-wizard__side-item--zone.is-done .ob-wizard__zone-mark {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.ob-rustig__sidebar--zones .ob-wizard__side-item--zone.is-current .ob-wizard__zone-mark {
+  background: var(--surface);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+
+.ob-rustig__before-start {
+  margin-block-start: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent-soft) 8%);
+}
+
+.ob-rustig__before-start-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ob-rustig__before-start-body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--muted);
+}

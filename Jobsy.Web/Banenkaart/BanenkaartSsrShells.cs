@@ -56,7 +56,10 @@ internal static class BanenkaartSsrShells
                 .Append("</p>");
         }
 
-        AppendMockupTopBar(sb, culture, model, candidateDisplayName);
+        if (!model.IsAuthenticated)
+        {
+            AppendMockupTopBar(sb, culture, model, candidateDisplayName);
+        }
         sb.Append("<div class=\"main kb-lagen-main\">");
         AppendVacancyPane(sb, culture, model);
         AppendMapPane(sb, culture, model);
