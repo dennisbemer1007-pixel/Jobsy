@@ -1942,7 +1942,8 @@
                 _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
                 _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);
 
-                _profileHasAvailability = (prefs.Availability?.Count ?? 0) > 0;
+                _profileHasAvailability = prefs.FlexibleTimes == true
+                    || (prefs.Availability?.Count ?? 0) > 0;
                 _profileHasLicense = !_requiresDrivingLicense
                     || DrivingLicenseLabels.CandidateMeetsRequirement(
                         prefs.DrivingLicenses,

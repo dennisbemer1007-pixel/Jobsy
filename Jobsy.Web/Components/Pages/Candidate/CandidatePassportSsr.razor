@@ -63,6 +63,7 @@ else if (_bodyHtml is not null)
             query.TryGetValue("error", out var errorValues);
         query.TryGetValue("saved", out var savedValues);
         query.TryGetValue("from", out var fromValues);
+        query.TryGetValue("section", out var sectionValues);
         var error = errorValues.FirstOrDefault();
         var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
         var fromDiscovery = string.Equals(fromValues.FirstOrDefault(), "reis", StringComparison.OrdinalIgnoreCase);
@@ -83,7 +84,11 @@ else if (_bodyHtml is not null)
             }
 
             var tokens = Antiforgery.GetAndStoreTokens(http);
-            _bodyHtml = PassportSsrShells.BuildBody(Culture, data, tokens.RequestToken ?? "");
+            _bodyHtml = PassportSsrShells.BuildBody(
+                Culture,
+                data,
+                tokens.RequestToken ?? "",
+                sectionValues.FirstOrDefault());
         }
         catch
         {

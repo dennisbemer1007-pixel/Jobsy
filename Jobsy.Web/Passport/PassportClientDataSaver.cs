@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Navigation;
@@ -58,12 +59,73 @@ internal static class PassportClientDataSaver
         return SeeOther(url);
     }
 
-    internal static IResult RedirectWithError(string tab, string message)
+    internal static async Task<IResult> SaveAvailabilityAsync(
+        IFormCollection form,
+        JobsyApiClient api,
+        CultureState culture,
+        CancellationToken cancellationToken)
     {
+        var returnTab = PassportTabs.Normalize(form["returnTab"].ToString());
+        var openSection = (form["openSection"].ToString() ?? "availability").Trim();
+
+        try
+        {
+            var profile = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            var preferences = profile.Preferences ?? new CandidatePreferences();
+            var preset = (form["availabilityPreset"].ToString() ?? "").Trim();
+            var flexibleChecked = string.Equals(form["flexibleTimes"].ToString(), "true", StringComparison.Ordinal);
+
+            if (string.Equals(preset, CandidateAvailabilityPresets.Immediate, StringComparison.OrdinalIgnoreCase))
+            {
+                var patch = CandidateAvailabilityPresets.Apply(CandidateAvailabilityPresets.Immediate);
+                preferences.FlexibleTimes = patch.FlexibleTimes;
+                preferences.MinHoursPerWeek = patch.MinHoursPerWeek;
+                preferences.MaxHoursPerWeek = patch.MaxHoursPerWeek;
+                preferences.Availability = patch.Availability.ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value.ToList(),
+                    StringComparer.OrdinalIgnoreCase);
+            }
+            else if (flexibleChecked)
+            {
+                preferences.FlexibleTimes = true;
+                preferences.Availability = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                return RedirectWithError(returnTab, culture["Common.Error.TryAgain"], openSection);
+            }
+
+            await api.UpdateMyProfileAsync(preferences: preferences, ct: cancellationToken);
+        }
+        catch (ApiErrorException ex)
+        {
+            return RedirectWithError(returnTab, ex.UserMessage ?? culture["Common.Error.TryAgain"], openSection);
+        }
+        catch (Exception)
+        {
+            return RedirectWithError(returnTab, culture["Common.Error.TryAgain"], openSection);
+        }
+
         var url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
-            PassportRedirects.BuildPassportUrl(tab),
-            "error",
-            message);
+            PassportRedirects.BuildPassportUrl(returnTab),
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["saved"] = "1",
+                ["section"] = openSection,
+            });
+        return SeeOther(url);
+    }
+
+    internal static IResult RedirectWithError(string tab, string message, string? section = null)
+    {
+        var url = PassportRedirects.BuildPassportUrl(tab);
+        url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "error", message);
+        if (!string.IsNullOrWhiteSpace(section))
+        {
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "section", section);
+        }
+
         return SeeOther(url);
     }
 
