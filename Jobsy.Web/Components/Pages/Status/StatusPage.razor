@@ -90,7 +90,7 @@ else if (_status == StatusCodes.Status503ServiceUnavailable)
 else if (IsNotFound)
 {
     <PageTitle>@Heading · Lobsy</PageTitle>
-    <NotFoundView />
+    <NotFoundView SignedInCandidate="@_signedInCandidate" />
 }
 else
 {
@@ -125,6 +125,7 @@ else
     private const int MinMetaRefreshSeconds = 30;
 
     private int _status = StatusCodes.Status404NotFound;
+    private bool _signedInCandidate;
     private string _supportEmail = SupportContact.Default;
     private string _originalReturnUrl = "/home";
     private string _supportCode = string.Empty;
@@ -193,6 +194,9 @@ else
 
         var http = HttpContextAccessor.HttpContext;
         _originalReturnUrl = OriginalReturnUrl(http);
+        var user = http?.User;
+        _signedInCandidate = user?.Identity?.IsAuthenticated == true
+            && Jobsy.Core.Authorization.RoleClaimMatching.HasRole(user, Jobsy.Core.Authorization.JobsyRoles.Candidate);
 
         if (_status == StatusCodes.Status429TooManyRequests)
         {

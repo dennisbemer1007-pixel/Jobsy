@@ -28,6 +28,36 @@ public static class UiStringsStatus
             "404",
             "404",
             "٤٠٤");
+        Add("Status.NotFound.CodeLabel",
+            "Foutcode 404",
+            "Error code 404",
+            "Kod błędu 404",
+            "Cod eroare 404",
+            "رمز الخطأ 404");
+        Add("Status.NotFound.ToMyLobsy",
+            "Naar Mijn Lobsy",
+            "To My Lobsy",
+            "Do Mój Lobsy",
+            "Către My Lobsy",
+            "إلى My Lobsy");
+        Add("Status.NotFound.ToJourney",
+            "Naar je reis",
+            "To your journey",
+            "Do swojej podróży",
+            "Către călătoria ta",
+            "إلى رحلتك");
+        Add("Status.NotFound.GoodToKnow",
+            "Goed om te weten",
+            "Good to know",
+            "Warto wiedzieć",
+            "Bine de știut",
+            "معلومات مفيدة");
+        Add("Status.NotFound.GoodToKnowBody",
+            "Oude links of een typfout komen vaker voor. Je gegevens zijn veilig; kies een van de knoppen om verder te gaan.",
+            "Old links or typos happen often. Your data is safe; use a button below to continue.",
+            "Stare linki lub literówki zdarzają się często. Twoje dane są bezpieczne; wybierz przycisk poniżej.",
+            "Linkurile vechi sau greșelile de scriere apar des. Datele tale sunt în siguranță; folosește un buton de mai jos.",
+            "الروابط القديمة أو الأخطاء المطبعية شائعة. بياناتك آمنة؛ استخدم أحد الأزرار للمتابعة.");
         Add("Status.NotFound.Title",
             "Deze pagina bestaat niet",
             "This page does not exist",

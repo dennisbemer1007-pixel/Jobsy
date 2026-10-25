@@ -150,7 +150,7 @@ internal static class OnboardingClientStepShells
         sb.Append("<div style=\"display:grid;grid-template-columns:minmax(0,1fr) max-content;align-items:center;gap:8px;width:100%;max-width:100%;box-sizing:border-box\">");
         sb.Append("<input id=\"onboarding-available-from\" name=\"obAvailableFrom\" type=\"date\" autocomplete=\"off\" value=\"");
         sb.Append(WebUtility.HtmlEncode(fromIso));
-        sb.Append("\" style=\"height:44px;min-height:44px;flex:1 1 auto;min-width:0;box-sizing:border-box\" data-testid=\"onboarding-available-from\" onkeydown=\"if(event.key==='Enter'){event.preventDefault();var b=this.form.querySelector('[data-testid=&quot;onboarding-start-save&quot;]');if(b)b.click();}\" />");
+        sb.Append("\" style=\"height:44px;min-height:44px;flex:1 1 auto;min-width:0;box-sizing:border-box\" data-testid=\"onboarding-available-from\" data-ob-available-from-enter=\"1\" />");
         sb.Append("<button type=\"submit\" name=\"obAction\" value=\"saveStart\" style=\"");
         sb.Append(saveBtnStyle);
         sb.Append("\" data-testid=\"onboarding-start-save\">");

@@ -92,16 +92,22 @@
 
   function setOpen(on) {
     state.open = !!on;
-    var shell = document.getElementById("lobsy-assistant-ssr-shell");
     var btn = document.getElementById("lobsy-coach-btn");
-    if (shell) {
-      shell.hidden = !state.open;
-      shell.classList.toggle("is-open", state.open);
-    }
     if (btn) btn.setAttribute("aria-expanded", state.open ? "true" : "false");
     if (state.open) {
       var panel = ensurePanel();
+      var shell = document.getElementById("lobsy-assistant-ssr-shell");
+      if (shell) {
+        shell.hidden = false;
+        shell.classList.add("is-open");
+      }
       panel.focus();
+      return;
+    }
+    var shell = document.getElementById("lobsy-assistant-ssr-shell");
+    if (shell) {
+      shell.hidden = true;
+      shell.classList.remove("is-open");
     }
   }
 

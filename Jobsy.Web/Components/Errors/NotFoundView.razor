@@ -2,14 +2,14 @@
 @using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
-@using Jobsy.Web.Components.Media
+@using Jobsy.Core.Features
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 @inject IConfiguration Configuration
 @if (!Embedded)
 {
     <HeadContent>
-        <link rel="stylesheet" href="css/features/candidate-header-strip.css?v=20261025-acc1093" />
+        <link rel="stylesheet" href="css/features/errors.css?v=20261025-kreeft404" />
     </HeadContent>
 }
 
@@ -19,28 +19,32 @@
   No API or DB call: the employers switch is the cached feature flag the layout already uses.
 *@
 
-<section class="err-hero @(Embedded ? "err-embed pub-theme" : "err-hero--kreeft-strip")" data-testid="not-found-view">
-    @if (!Embedded)
-    {
-        <KreeftHeaderStrip StripKey="route-kaart"
-                           DeskUrl="@KreeftHeaderStripAssets.RouteKaartDesk"
-                           MobUrl="@KreeftHeaderStripAssets.RouteKaartMob"
-                           CssClass="err-kreeft-strip kreeft-header-strip" />
-    }
+<section class="err-hero @(Embedded ? "err-embed pub-theme" : null)" data-testid="not-found-view">
     <div class="err-hero__text">
-        <p class="pub-chip err-code">@Culture["Status.NotFound.Chip"]</p>
+        <p class="pub-chip err-code">@Culture["Status.NotFound.CodeLabel"]</p>
         <h1 class="err-hero__title">@Culture["Status.NotFound.Title"]</h1>
         <p class="err-hero__lead">@Culture["Status.NotFound.Lead"]</p>
 
         <div class="err-actions">
-            <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Landing">@Culture["Status.Common.Home"]</a>
-            <a class="pub-btn pub-btn--secondary" href="@PublicRoutes.Test">@Culture["Status.Common.FreeTest"]</a>
-            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Contact">@Culture["Status.Common.Contact"]</a>
+            <a class="pub-btn pub-btn--primary" href="@_myLobsyHref">@Culture["Status.NotFound.ToMyLobsy"]</a>
+            <a class="pub-btn pub-btn--secondary" href="@_journeyHref">@Culture["Status.NotFound.ToJourney"]</a>
         </div>
 
-        <p class="err-support">
-            @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
-        </p>
+        <aside class="err-aside" aria-label="@Culture["Status.NotFound.GoodToKnow"]">
+            <p class="err-aside__title">@Culture["Status.NotFound.GoodToKnow"]</p>
+            <p class="err-aside__body">@Culture["Status.NotFound.GoodToKnowBody"]</p>
+        </aside>
+
+        @if (!Embedded)
+        {
+            <p class="err-support">
+                @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+            </p>
+        }
+    </div>
+    <div class="err-hero__art err-hero__art--kreeft" aria-hidden="true">
+        <img class="err-kreeft-scene" src="@KreeftErrorIllustrations.NotFoundScene" alt="" loading="lazy" decoding="async" />
+        <img class="err-kreeft-figure" src="@KreeftErrorIllustrations.NotFoundCrab" alt="" loading="lazy" decoding="async" />
     </div>
 </section>
 
@@ -48,7 +52,11 @@
     /// <summary>True inside another page's layout (adds <c>err-embed pub-theme</c>).</summary>
     [Parameter] public bool Embedded { get; set; }
 
+    [Parameter] public bool SignedInCandidate { get; set; }
+
     private string _supportEmail = Jobsy.Web.Hosting.SupportContact.Default;
+    private string _myLobsyHref = PublicRoutes.Landing;
+    private string _journeyHref = OnboardingRoutes.KompasHubPath;
 
     private string SupportMailto => Jobsy.Web.Hosting.SupportContact.MailtoLink(_supportEmail);
 
@@ -59,6 +67,17 @@
     protected override Task OnInitializedAsync()
     {
         _supportEmail = Jobsy.Web.Hosting.SupportContact.Email(Configuration);
+        if (SignedInCandidate)
+        {
+            _myLobsyHref = FeatureRoutes.CandidateProfilePath;
+            _journeyHref = OnboardingRoutes.KompasHubPath;
+        }
+        else
+        {
+            _myLobsyHref = PublicRoutes.Landing;
+            _journeyHref = PublicRoutes.Test;
+        }
+
         return Task.CompletedTask;
     }
 

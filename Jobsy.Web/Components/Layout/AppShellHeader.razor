@@ -19,6 +19,23 @@
             }
         </a>
     </div>
+    @if (_showCandidatePrimaryNav)
+    {
+        <div class="candidate-header-nav-slot">
+            @if (_noBlazorRuntime)
+            {
+                <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Header" />
+            }
+            else
+            {
+                <AuthorizeView Roles="@JobsyRoles.Candidate">
+                    <Authorized>
+                        <CandidateHeaderNav />
+                    </Authorized>
+                </AuthorizeView>
+            }
+        </div>
+    }
     <div class="app-header__actions">
         @if (ShowCandidatePwaInstall)
         {
@@ -41,12 +58,17 @@
 
 @code {
     private bool _hideCandidateBrandTagline;
+    private bool _showCandidatePrimaryNav;
+    private bool _noBlazorRuntime;
 
     protected override void OnInitialized()
     {
         var http = HttpContextAccessor.HttpContext;
         var user = http?.User;
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
         _hideCandidateBrandTagline = user?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+        _showCandidatePrimaryNav = user?.Identity?.IsAuthenticated == true
             && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
     }
 

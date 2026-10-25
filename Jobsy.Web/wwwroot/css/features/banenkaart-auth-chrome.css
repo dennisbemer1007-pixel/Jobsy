@@ -41,10 +41,15 @@
     min-width: 0;
 }
 
-.app-shell--candidate .app-header .brand-tagline,
-.app-shell--candidate .candidate-header-nav-slot,
-.app-shell--candidate .candidate-header-nav {
+.app-shell--candidate .app-header .brand-tagline {
     display: none !important;
+}
+
+@media (max-width: 1023px) {
+    .app-shell--banenkaart-shell .candidate-header-nav-slot,
+    .app-shell--banenkaart-shell .candidate-header-nav {
+        display: none !important;
+    }
 }
 
 .account-menu {

@@ -153,9 +153,21 @@
 }.err-support__link {
   color: inherit;
 }.err-aside {
-  margin: 0.2rem 0 0;
+  margin: 0.75rem 0 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--r-md, 12px);
+  border: 1px solid var(--err-line);
+  background: color-mix(in srgb, var(--err-surface) 92%, var(--surface) 8%);
   font-size: 0.875rem;
   color: var(--err-muted);
+}.err-aside__title {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  color: var(--err-ink);
+  font-size: 0.9375rem;
+}.err-aside__body {
+  margin: 0;
+  line-height: 1.45;
 }.err-aside__link {
   display: inline-flex;
   align-items: center;

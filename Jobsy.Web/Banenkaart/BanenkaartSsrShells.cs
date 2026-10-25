@@ -20,6 +20,9 @@ internal static class BanenkaartSsrShells
         var q = model.Query;
         var viewModeClass = model.Query.DesktopListMode ? " show-list jobsy-discovery--list" : " show-map";
         var viewDataAttr = model.Query.DesktopListMode ? " data-kb-view=\"list\"" : " data-kb-view=\"map\"";
+        sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
+        AppendNearbyHeroStrip(sb);
+        sb.Append("</div>");
         sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen").Append(viewModeClass).Append(viewDataAttr);
         if (!string.IsNullOrWhiteSpace(q.Error))
         {
@@ -54,7 +57,6 @@ internal static class BanenkaartSsrShells
         }
 
         AppendMockupTopBar(sb, culture, model, candidateDisplayName);
-        AppendNearbyHeroStrip(sb);
         sb.Append("<div class=\"main kb-lagen-main\">");
         AppendVacancyPane(sb, culture, model);
         AppendMapPane(sb, culture, model);
