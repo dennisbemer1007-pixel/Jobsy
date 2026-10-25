@@ -79,7 +79,8 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
             [],
             "Sanne de Vries",
             null,
-            DateTime.UtcNow.AddDays(-10));
+            DateTime.UtcNow.AddDays(-10),
+            null);
 
         var data = new AfterMatchConfirmedSsrData.PageData(
             thread,
@@ -188,7 +189,8 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
             [],
             "Test",
             null,
-            DateTime.UtcNow);
+            DateTime.UtcNow,
+            null);
         Assert.Null(SollicitatiesBerichtenPresentation.SlotProposalSystemLine(culture, thread));
     }
 

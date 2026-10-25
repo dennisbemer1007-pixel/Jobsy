@@ -48,6 +48,11 @@ public static partial class PageSeoCatalog
             return Private("AfterMatch.Screen10.Hero.Title", "Seo.PrivateDescription");
         }
 
+        if (p.Contains("/after-match/outcome-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen13.PageTitle", "Seo.PrivateDescription");
+        }
+
         foreach (var (prefix, entry) in Prefixes)
         {
             if (p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))

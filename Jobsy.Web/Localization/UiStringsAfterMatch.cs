@@ -250,13 +250,40 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen12.Reason", "Korte uitleg voor de kandidaat", "Short explanation for the candidate");
         Add("AfterMatch.Screen12.Submit", "Uitkomst versturen", "Send outcome");
 
+        Add("AfterMatch.Screen13.PageTitle", "Uitkomst", "Outcome");
+        Add("AfterMatch.Screen13.Eyebrow", "Sollicitaties · Uitkomst", "Applications · Outcome");
         Add("AfterMatch.Screen13.Hero.Title", "Dank je wel voor het gesprek", "Thank you for the interview");
         Add("AfterMatch.Screen13.Hero.Lead",
-            "Het is nu niet doorgegaan. Hieronder zie je wat Linda schreef en banen die erop lijken.",
-            "It did not work out this time. Below you see what Linda wrote and jobs that look similar.");
+            "Dit keer is het geen ja. Dat zegt niets over wie je bent. Je hebt een mooie stap gezet.",
+            "This time it is not a yes. That says nothing about who you are. You took a meaningful step.");
         Add("AfterMatch.Screen13.Similar", "Banen die erop lijken", "Jobs that look similar");
-        Add("AfterMatch.Screen13.FeedbackTitle", "Wat Bakkerij De Korenaar zegt", "What Bakkerij De Korenaar says");
+        Add("AfterMatch.Screen13.FeedbackTitleFmt", "Wat {0} zegt", "What {0} says");
         Add("AfterMatch.Screen13.Next", "Volgende stap", "Next step");
+        Add("AfterMatch.Screen13.WhatNow", "Wat nu?", "What now?");
+        Add("AfterMatch.Screen13.WhatNowLead", "Deze banen lijken erop en zijn dichtbij.", "These jobs look similar and are nearby.");
+        Add("AfterMatch.Screen13.ViewJob", "Bekijken", "View");
+        Add("AfterMatch.Screen13.MoreJobs", "Meer banen zoals deze", "More jobs like these");
+        Add("AfterMatch.Screen13.LearnOven", "Leren werken met een oven", "Learn to work with an oven");
+        Add("AfterMatch.Screen13.ActivitiesPrefix", "Je sollicitatie en het gesprek staan al in ", "Your application and interview are already in ");
+        Add("AfterMatch.Screen13.ActivitiesSuffix", ". Daar hoef je niets voor te doen.", ". You do not need to do anything for that.");
+        Add("AfterMatch.Screen13.FeedbackAsideTitle", "Even iets kwijt?", "Need to share something?");
+        Add("AfterMatch.Screen13.FeedbackAsideLead", "Vraag het Lobsy, of praat erover met je begeleider als je die hebt.", "Ask Lobsy, or talk about it with your coach if you have one.");
+        Add("AfterMatch.Screen13.FeedbackPrompt", "Hoe was het gesprek voor jou?", "How was the interview for you?");
+        Add("AfterMatch.Screen13.FeedbackHint", "Alleen in woorden, gecontroleerd voor plaatsing.", "Words only, checked before posting.");
+        Add("AfterMatch.Screen13.Chip.Friendly", "Vriendelijk", "Friendly");
+        Add("AfterMatch.Screen13.Chip.Clear", "Duidelijk", "Clear");
+        Add("AfterMatch.Screen13.Chip.Quick", "Snel antwoord", "Quick reply");
+        Add("AfterMatch.Screen13.DemoReason",
+            "Je was heel zorgvuldig en vriendelijk. We kozen nu voor iemand die al zelfstandig aan de oven kan staan.",
+            "You were careful and friendly. We chose someone who can already work at the oven independently.");
+        Add("AfterMatch.Screen13.DemoJob1Initials", "BK", "BK");
+        Add("AfterMatch.Screen13.DemoJob1Title", "Medewerker brood en banket", "Bread and pastry assistant");
+        Add("AfterMatch.Screen13.DemoJob1Sub", "Bakker Bart Leyweg · 12 min fietsen", "Bakker Bart Leyweg · 12 min by bike");
+        Add("AfterMatch.Screen13.DemoJob1Hint", "Hier leer je de oven op de werkvloer", "Here you learn the oven on the job");
+        Add("AfterMatch.Screen13.DemoJob2Initials", "VK", "VK");
+        Add("AfterMatch.Screen13.DemoJob2Title", "Verkoper versafdeling", "Fresh produce sales assistant");
+        Add("AfterMatch.Screen13.DemoJob2Sub", "Supermarkt Loosduinen · 14 min fietsen", "Supermarket Loosduinen · 14 min by bike");
+        Add("AfterMatch.Screen13.DemoJob2Hint", "Vriendelijk en zorgvuldig, net als jij", "Friendly and careful, just like you");
 
         Add("AfterMatch.Messages.NewPill", "1 nieuw", "1 new");
         Add("AfterMatch.Messages.ReadBy", "Gelezen door {0}", "Read by {0}");

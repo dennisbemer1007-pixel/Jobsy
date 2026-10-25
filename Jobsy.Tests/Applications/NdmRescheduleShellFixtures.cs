@@ -47,7 +47,8 @@ internal static class NdmRescheduleShellFixtures
             [],
             "Sanne de Vries",
             null,
-            start.AddDays(-9));
+            start.AddDays(-9),
+            null);
 
         var data = new AfterMatchRescheduleSsrData.PageData(
             thread,

@@ -643,7 +643,8 @@ public sealed class AfterMatchService : IAfterMatchService
             similar,
             application.CandidateName,
             application.CandidateEmail,
-            acceptedAt);
+            acceptedAt,
+            outcome?.Reason);
     }
 
     private async Task<IReadOnlyList<AfterMatchSimilarVacancyDto>> LoadSimilarVacanciesAsync(

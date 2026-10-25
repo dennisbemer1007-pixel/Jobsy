@@ -43,6 +43,14 @@ internal static class AfterMatchSollicitatiesPresentation
                 "action-scheduled");
         }
 
+        if (status == InterviewStatus.Done)
+        {
+            return new CardAction(
+                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
+                culture["AfterMatch.Screen13.PageTitle"],
+                "action-outcome");
+        }
+
         return null;
     }
 
@@ -76,6 +84,15 @@ internal static class AfterMatchSollicitatiesPresentation
             return new DetailActions(
                 AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
                 culture["Apps.Ndm.ViewInterview"],
+                messagesHref,
+                summary.UnreadMessageCount);
+        }
+
+        if (status == InterviewStatus.Done)
+        {
+            return new DetailActions(
+                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
+                culture["AfterMatch.Screen13.PageTitle"],
                 messagesHref,
                 summary.UnreadMessageCount);
         }
