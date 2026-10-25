@@ -184,16 +184,16 @@ public sealed class KreeftAccLayoutPlaywrightTests
 
     private static async Task AssertCoachCloseAsync(IPage page, string label)
     {
-        var dock = page.Locator(".lobsy-coach-dock[data-ssr-coach], #lobsy-coach-btn").First;
-        if (await dock.CountAsync() == 0)
+        var openBtn = page.Locator("[data-ssr-coach-open], #lobsy-coach-btn").First;
+        if (await openBtn.CountAsync() == 0)
         {
             Assert.Fail($"{label}: Lobsy-hulp dock missing");
         }
 
-        await dock.ClickAsync(new() { Force = true });
-        await page.WaitForTimeoutAsync(600);
+        await openBtn.ScrollIntoViewIfNeededAsync();
+        await openBtn.ClickAsync(new() { Timeout = 15_000 });
         var shell = page.Locator("#lobsy-assistant-ssr-shell");
-        await shell.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+        await shell.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
         var close = page.Locator("[data-ssr-assistant-close]").First;
         await close.ClickAsync(new() { Force = true });
         await page.WaitForTimeoutAsync(300);

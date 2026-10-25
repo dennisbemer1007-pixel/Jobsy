@@ -219,31 +219,22 @@
   }
 
   function bind() {
-    var openBtn = document.querySelector("[data-ssr-coach-open]");
-    if (!openBtn || openBtn.dataset.ssrCoachBound === "1") return;
-    openBtn.dataset.ssrCoachBound = "1";
-
-    openBtn.addEventListener("click", function () {
-      if (state.open) {
-        setOpen(false);
-        return;
-      }
-      setOpen(true);
-      if (!state.started) startChat();
-    });
-
-    document.addEventListener("click", function (ev) {
-      if (!state.open) return;
-      var panel = document.getElementById("lobsy-assistant-ssr-shell");
-      var dock = document.querySelector(".lobsy-coach-dock[data-ssr-coach]");
-      if (!panel || panel.contains(ev.target) || (dock && dock.contains(ev.target))) return;
-    });
-
-    document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape" && state.open) setOpen(false);
-    });
+    if (document.documentElement.dataset.ssrCoachBound === "1") return;
+    document.documentElement.dataset.ssrCoachBound = "1";
 
     document.body.addEventListener("click", function (ev) {
+      var open = ev.target.closest("[data-ssr-coach-open]");
+      if (open) {
+        ev.preventDefault();
+        if (state.open) {
+          setOpen(false);
+          return;
+        }
+        setOpen(true);
+        if (!state.started) startChat();
+        return;
+      }
+
       var close = ev.target.closest("[data-ssr-assistant-close]");
       if (close) {
         ev.preventDefault();
@@ -257,6 +248,10 @@
         state.started = false;
         startChat();
       }
+    });
+
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && state.open) setOpen(false);
     });
 
     var form = document.querySelector("[data-ssr-assistant-form]");
