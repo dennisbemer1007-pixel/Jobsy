@@ -21,6 +21,21 @@
         <p class="pp-doc__lead">@Culture["About.Lead"]</p>
     </header>
 
+    <section class="pp-about__zones" aria-labelledby="about-zones-title">
+        <p class="pp-about__zones-eyebrow">@Culture["About.Zones.Label"]</p>
+        <h2 id="about-zones-title" class="pp-about__zones-title">@Culture["About.Zones.Title"]</h2>
+        <p class="pp-about__zones-lead">@Culture["About.Zones.Lead"]</p>
+        <ol class="pp-about__zones-list">
+            @foreach (var (headingKey, bodyKey, tone) in ZoneItems)
+            {
+                <li class="pp-about__zones-item pp-about__zones-item--@tone">
+                    <h3>@Culture[headingKey]</h3>
+                    <p>@Culture[bodyKey]</p>
+                </li>
+            }
+        </ol>
+    </section>
+
     <div class="pp-about__stories" aria-label="@Culture["About.Stories.Label"]">
         <article class="pp-about__story">
             <PubEmoji Glyph="🦞" />
@@ -68,6 +83,15 @@
 </section>
 
 @code {
+    private static readonly (string HeadingKey, string BodyKey, string Tone)[] ZoneItems =
+    [
+        ("About.Zones.Strand.Heading", "About.Zones.Strand.Body", "strand"),
+        ("About.Zones.Kust.Heading", "About.Zones.Kust.Body", "kust"),
+        ("About.Zones.Rotsen.Heading", "About.Zones.Rotsen.Body", "rotsen"),
+        ("About.Zones.Diepte.Heading", "About.Zones.Diepte.Body", "diepte"),
+        ("About.Zones.Licht.Heading", "About.Zones.Licht.Body", "licht"),
+    ];
+
     private string? _supportEmail;
 
     protected override async Task OnInitializedAsync()

@@ -105,6 +105,22 @@ public class AboutPageTests : BunitContext
     }
 
     [Fact]
+    public void The_five_zones_block_lists_each_step_in_order()
+    {
+        var cut = Render();
+        var section = cut.Find("section.pp-about__zones");
+
+        Assert.Equal(UiStrings.Get("About.Zones.Title"), section.QuerySelector("h2")!.TextContent.Trim());
+
+        var items = section.QuerySelectorAll("li.pp-about__zones-item").ToList();
+        Assert.Equal(5, items.Count);
+        Assert.Equal(UiStrings.Get("About.Zones.Strand.Heading"), items[0].QuerySelector("h3")!.TextContent.Trim());
+        Assert.Equal(UiStrings.Get("About.Zones.Strand.Body"), items[0].QuerySelector("p")!.TextContent.Trim());
+        Assert.Equal(UiStrings.Get("About.Zones.Licht.Heading"), items[4].QuerySelector("h3")!.TextContent.Trim());
+        Assert.Contains(UiStrings.Get("About.Story.Lobster.Body"), cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_founder_card_names_the_founder_and_falls_back_to_the_emoji_avatar()
     {
         var card = Render().Find("article.pp-about__founder");
