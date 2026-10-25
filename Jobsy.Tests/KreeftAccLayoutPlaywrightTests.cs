@@ -90,6 +90,11 @@ public sealed class KreeftAccLayoutPlaywrightTests
                 await AssertReiskaartAsync(page, width, tag, label);
             }
 
+            if (label == "kompas")
+            {
+                await AssertKompasStackAsync(page, tag);
+            }
+
             if (label == "login" && tag == "desk")
             {
                 await AssertLoginStripUnderHeaderAsync(page);
@@ -139,7 +144,7 @@ public sealed class KreeftAccLayoutPlaywrightTests
 
         if (tag == "mob")
         {
-            var copy = page.Locator(".pub-landing__hero-copy h1, .au-card h1, .ob-rustig__body-main h1, .passport-layout__main-flow h1, .kompas-hub-layout__main h1").First;
+            var copy = page.Locator(".pub-landing__hero-copy h1, .au-card h1, .ob-rustig__body-main h1, .passport-layout__main-flow h1, #kompas-title, .kompas-hub-layout__main h1").First;
             if (await copy.CountAsync() > 0)
             {
                 var cb = await copy.BoundingBoxAsync();
@@ -162,6 +167,37 @@ public sealed class KreeftAccLayoutPlaywrightTests
                     Assert.True(rb!.X > mb.X + mb.Width * 0.35, $"{label}: reiskaart should be in the right column on desktop");
                 }
             }
+        }
+    }
+
+    private static async Task AssertKompasStackAsync(IPage page, string tag)
+    {
+        var strip = page.Locator(".kompas-page-wrap [data-testid='kreeft-header-strip'], .kompas-page-wrap .kreeft-header-strip").First;
+        var reis = page.Locator("[data-testid='kreeft-reiskaart']").First;
+        var title = page.Locator("#kompas-title").First;
+        if (await strip.CountAsync() == 0 || await reis.CountAsync() == 0 || await title.CountAsync() == 0)
+        {
+            return;
+        }
+
+        var sb = await strip.BoundingBoxAsync();
+        var rb = await reis.BoundingBoxAsync();
+        var tb = await title.BoundingBoxAsync();
+        Assert.NotNull(sb);
+        Assert.NotNull(rb);
+        Assert.NotNull(tb);
+
+        if (tag == "mob")
+        {
+            Assert.InRange(sb!.Y, 40, 120);
+            Assert.True(rb!.Y >= sb.Y + sb.Height - 4, "kompas mobile: reiskaart should follow header strip");
+            Assert.True(tb!.Y >= rb.Y + rb.Height - 4, "kompas mobile: title should follow reiskaart");
+            Assert.True(sb.Y < 400, "kompas mobile: strip must not be pushed to page bottom (display:contents regression)");
+        }
+        else
+        {
+            var gap = tb!.Y - (sb!.Y + sb.Height);
+            Assert.InRange(gap, 18, 32);
         }
     }
 
