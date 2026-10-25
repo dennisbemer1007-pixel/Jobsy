@@ -272,8 +272,19 @@
   }
 
   function boot() {
-    if (!document.querySelector("[data-ssr-coach]")) return;
     bind();
+    if (!document.querySelector("[data-ssr-coach]")) {
+      var retry = 0;
+      var timer = setInterval(function () {
+        retry += 1;
+        if (document.querySelector("[data-ssr-coach]") || retry > 40) {
+          clearInterval(timer);
+          syncClearance();
+        }
+      }, 250);
+    } else {
+      syncClearance();
+    }
   }
 
   if (document.readyState === "loading") {
