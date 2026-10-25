@@ -5,7 +5,7 @@
   var SLOT_MS = 30 * 60000;
 
   function root() {
-    return document.querySelector("[data-ndm-employer-ssr]");
+    return document.querySelector("[data-ndm-employer-ssr], [data-ndm-employer-reschedule-ssr]");
   }
 
   function parseUtc(iso) {
@@ -93,6 +93,13 @@
 
   function baseAfterMatchUrl(el) {
     var appId = el.getAttribute("data-application-id");
+    if (el.hasAttribute("data-ndm-employer-reschedule-ssr")) {
+      return (
+        "/werkgever/sollicitaties/" +
+        encodeURIComponent(appId) +
+        "/after-match/reschedule-ssr"
+      );
+    }
     return "/werkgever/sollicitaties/" + encodeURIComponent(appId) + "/after-match";
   }
 
@@ -112,7 +119,8 @@
     var flow = el.querySelector("[data-ndm-wg-flow]");
     var messagesPanel = el.querySelector("[data-ndm-messages-panel]");
     var proposePanel = el.querySelector("[data-ndm-propose-panel]");
-    var shareAside = el.querySelector("[data-ndm-share-aside]");
+    var cancelPanel = el.querySelector("[data-ndm-cancel-panel]");
+    var shareAside = el.querySelector("[data-ndm-share-aside], [data-ndm-wg-aside]");
     var infoNote = el.querySelector("[data-ndm-propose-info-note]");
     var whatGrid = el.querySelector(".what");
     var actions = el.querySelector("[data-ndm-wg-main] .row.wrapflex");
@@ -125,18 +133,30 @@
         window.NdmEmployerMessagesInit();
       }
     } else if (panel === "propose") {
-      if (flow) flow.hidden = false;
+      if (flow) flow.hidden = true;
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = false;
+      if (cancelPanel) cancelPanel.hidden = true;
       if (shareAside) shareAside.hidden = true;
       if (infoNote) infoNote.hidden = false;
       if (whatGrid) whatGrid.hidden = true;
       if (actions) actions.hidden = true;
       syncHero("propose");
+    } else if (panel === "cancel") {
+      if (flow) flow.hidden = true;
+      if (messagesPanel) messagesPanel.hidden = true;
+      if (proposePanel) proposePanel.hidden = true;
+      if (cancelPanel) cancelPanel.hidden = false;
+      if (shareAside) shareAside.hidden = true;
+      if (infoNote) infoNote.hidden = true;
+      if (whatGrid) whatGrid.hidden = true;
+      if (actions) actions.hidden = true;
+      syncHero("");
     } else {
       if (flow) flow.hidden = false;
       if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = true;
+      if (cancelPanel) cancelPanel.hidden = true;
       if (shareAside) shareAside.hidden = false;
       if (infoNote) infoNote.hidden = true;
       if (whatGrid) whatGrid.hidden = false;

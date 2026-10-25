@@ -9,13 +9,47 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchEmployerRescheduleSsrShells
 {
-    internal static string BuildBody(CultureState culture, AfterMatchEmployerRescheduleSsrData.PageData data, Guid applicationId)
+    internal sealed record BuildOptions(
+        string InitialPanel,
+        AfterMatchEmployerPanelSsrShells.PageData? ProposeData,
+        AfterMatchEmployerCancelSsrShells.PageData? CancelData);
+
+    internal static string BuildBody(
+        CultureState culture,
+        AfterMatchEmployerRescheduleSsrData.PageData data,
+        Guid applicationId,
+        BuildOptions? options = null)
     {
+        options ??= new BuildOptions("", null, null);
+        var panel = string.IsNullOrWhiteSpace(options.InitialPanel) ? "reschedule" : options.InitialPanel.Trim().ToLowerInvariant();
+        if (panel is "slots")
+        {
+            panel = "propose";
+        }
+
         var sb = new StringBuilder();
         var thread = data.Thread;
-        sb.Append("<div class=\"ndm ndm-wg ndm-wg-page\" data-testid=\"ndm-werkgever-live\" data-ndm-panel=\"reschedule\" data-ndm-employer-ssr=\"1\" data-ndm-employer-reschedule-ssr=\"1\" data-application-id=\"");
+        sb.Append("<div class=\"ndm ndm-wg ndm-wg-page\" data-testid=\"ndm-werkgever-live\" data-ndm-panel=\"");
+        sb.Append(WebUtility.HtmlEncode(panel));
+        sb.Append("\" data-ndm-employer-ssr=\"1\" data-ndm-employer-reschedule-ssr=\"1\" data-ndm-employer-cancel-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
-        sb.Append("\"><div class=\"g2 ndm-wg-g2\"><div class=\"wc stack ndm-wg-main\">");
+        sb.Append("\" data-back-href=\"");
+        sb.Append(WebUtility.HtmlEncode($"/werkgever/sollicitaties/{applicationId:D}/after-match/reschedule-ssr"));
+        sb.Append("\" data-ndm-title-home=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen09.Hero.Title"]));
+        sb.Append("\" data-ndm-lead-home=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen09.Hero.Lead"]));
+        sb.Append("\" data-ndm-title-propose=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Title"]));
+        sb.Append("\" data-ndm-lead-propose=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Lead"]));
+        sb.Append("\"><div data-ndm-wg-flow");
+        if (panel is "propose" or "cancel")
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><div class=\"g2 ndm-wg-g2\"><div class=\"wc stack ndm-wg-main\">");
         AppendCandidateHeader(sb, culture, thread);
         sb.Append("<div class=\"hr\"></div>");
         AppendTimeline(sb, culture, data);
@@ -24,12 +58,28 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         AppendActions(sb, culture, data);
         AppendFootnote(sb, culture);
         sb.Append("</div>");
-        AppendWeekAside(sb, culture, thread);
-        sb.Append("</div><p style=\"margin-top:16px\"><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.ApplicationDetailHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
-        sb.Append("</a></p></div>");
+        AppendWeekAside(sb, culture, data);
+        sb.Append("</div></div>");
+
+        if (options.ProposeData is not null)
+        {
+            AfterMatchEmployerPanelSsrShells.AppendProposePanel(sb, culture, options.ProposeData);
+        }
+
+        if (options.CancelData is not null)
+        {
+            sb.Append("<div class=\"wc side pop stack\" data-ndm-cancel-panel");
+            if (panel is not "cancel")
+            {
+                sb.Append(" hidden");
+            }
+
+            sb.Append('>');
+            AfterMatchEmployerCancelSsrShells.AppendCancelFormOnly(sb, culture, options.CancelData);
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>");
         return sb.ToString();
     }
 
@@ -64,7 +114,7 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
         sb.Append("<small>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.PlanNow"]));
+        sb.Append(WebUtility.HtmlEncode(data.PlanStepHint ?? culture["AfterMatch.Timeline.PlanNow"]));
         sb.Append("</small></div><div class=\"s now\"><i>");
         sb.Append(NdMIcons.Handshake);
         sb.Append("</i>");
@@ -83,11 +133,11 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         CultureState culture,
         AfterMatchEmployerRescheduleSsrData.PageData data)
     {
+        var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(data.Thread);
         sb.Append("<div class=\"warnin\" style=\"background:#fbf1e4;border-color:#f0d3b4;color:#6b3a17\">");
         sb.Append(NdMIcons.Calendar);
         sb.Append("<div><b>");
-        sb.Append(WebUtility.HtmlEncode(
-            string.Format(culture["AfterMatch.Employer.Reschedule.WarningTitleFmt"], data.Thread.CandidateName)));
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Reschedule.WarningTitleFmt"], first)));
         sb.Append("</b><br>");
         sb.Append(data.WarningBodyHtml);
         sb.Append("</div></div>");
@@ -104,22 +154,12 @@ internal static class AfterMatchEmployerRescheduleSsrShells
             sb.Append(WebUtility.HtmlEncode(data.AcceptLabel));
             sb.Append("</button>");
         }
-        else
-        {
-            sb.Append("<span class=\"btn\">");
-            sb.Append(WebUtility.HtmlEncode(data.AcceptLabel));
-            sb.Append("</span>");
-        }
 
-        sb.Append("<a class=\"btn line\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.ProposeHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append("<button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"propose\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.Counter"]));
-        sb.Append("</a><span class=\"sp\"></span><a class=\"lk small\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.CancelHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append("</button><span class=\"sp\"></span><button type=\"button\" class=\"lk small\" data-ndm-open-panel=\"cancel\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.CancelLink"]));
-        sb.Append("</a></div>");
+        sb.Append("</button></div>");
     }
 
     private static void AppendFootnote(StringBuilder sb, CultureState culture)
@@ -129,8 +169,9 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         sb.Append("</p>");
     }
 
-    private static void AppendWeekAside(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)
+    private static void AppendWeekAside(StringBuilder sb, CultureState culture, AfterMatchEmployerRescheduleSsrData.PageData data)
     {
+        var thread = data.Thread;
         sb.Append("<aside class=\"wc side\" data-ndm-wg-aside><h2 style=\"font-size:1.15rem\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekAside"]));
         sb.Append("</h2><div class=\"list\" style=\"margin-top:10px\"><div><span class=\"ico navy\">");
@@ -141,6 +182,14 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.RequestLabel"]));
         sb.Append("</div></div><span class=\"pill warm\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.ActionPill"]));
+        sb.Append("</span></div><div><span class=\"ico navy\">");
+        sb.Append(NdMIcons.Calendar);
+        sb.Append("</span><div class=\"sp\"><b class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekRow4790Name"]));
+        sb.Append("</b><div class=\"xs muted\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekRow4790When"]));
+        sb.Append("</div></div><span class=\"pill ok\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekRow4790Status"]));
         sb.Append("</span></div></div></aside>");
     }
 

@@ -304,6 +304,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen12.ReasonChip.Hours", "Uren passen niet", "Hours do not match");
         Add("AfterMatch.Screen12.ReasonChip.Filled", "Plek al vervuld", "Role already filled");
         Add("AfterMatch.Screen12.ReasonChip.Other", "Iets anders", "Something else");
+        Add("AfterMatch.Screen12.SubmittedNote", "De uitkomst is verstuurd. Sanne ziet je reden in de app.", "The outcome was sent. Sanne sees your reason in the app.");
         Add("AfterMatch.Screen12.Submit", "Uitkomst versturen", "Send outcome");
         Add("AfterMatch.Screen12.TalentPool", "Bewaren in talentpool", "Save to talent pool");
 
@@ -450,6 +451,9 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Reschedule.WeekAside", "Gesprekken deze week", "Interviews this week");
         Add("AfterMatch.Employer.Reschedule.RequestLabel", "Verzoek om te verzetten", "Request to reschedule");
         Add("AfterMatch.Employer.Reschedule.ActionPill", "Actie", "Action");
+        Add("AfterMatch.Employer.Reschedule.WeekRow4790Name", "Kandidaat #4790", "Candidate #4790");
+        Add("AfterMatch.Employer.Reschedule.WeekRow4790When", "Vrijdag 23 okt, 09:00", "Friday 23 Oct, 09:00");
+        Add("AfterMatch.Employer.Reschedule.WeekRow4790Status", "Bevestigd", "Confirmed");
         Add("AfterMatch.Employer.Cancel.Lead",
             "Geef een korte reden. Sanne ziet die reden in Lobsy.",
             "Give a short reason. Sanne will see it in Lobsy.");

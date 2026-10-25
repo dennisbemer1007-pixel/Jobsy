@@ -22,7 +22,11 @@ internal static class AfterMatchEmployerPanelSsrShells
         string InitialPanel,
         AfterMatchEmployerMessagesSsrData.PageData? MessagesHub);
 
-    internal static string BuildBody(CultureState culture, PageData data, Guid applicationId)
+    internal static string BuildBody(
+        CultureState culture,
+        PageData data,
+        Guid applicationId,
+        bool showProposeAction = true)
     {
         var sb = new StringBuilder();
         var panel = string.IsNullOrWhiteSpace(data.InitialPanel) ? "" : data.InitialPanel.Trim().ToLowerInvariant();
@@ -54,14 +58,10 @@ internal static class AfterMatchEmployerPanelSsrShells
         }
 
         sb.Append("><div class=\"g2 ndm-wg-g2\">");
-        AppendMainCard(sb, culture, data, panel);
+        AppendMainCard(sb, culture, data, panel, showProposeAction);
         AppendShareAside(sb, culture, data.Thread);
         AppendProposePanel(sb, culture, data);
-        sb.Append("</div><p style=\"margin-top:16px\"><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.ApplicationDetailHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
-        sb.Append("</a></p></div>");
+        sb.Append("</div></div>");
 
         if (data.MessagesHub is not null)
         {
@@ -82,9 +82,28 @@ internal static class AfterMatchEmployerPanelSsrShells
         return sb.ToString();
     }
 
-    private static void AppendMainCard(StringBuilder sb, CultureState culture, PageData data, string panel)
+    internal static string BuildDoneSummaryBody(CultureState culture, AfterMatchThreadDto _, Guid applicationId)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ndm ndm-wg ndm-wg-page\" data-testid=\"ndm-werkgever-live\" data-ndm-panel=\"\" data-ndm-employer-ssr=\"1\" data-application-id=\"");
+        sb.Append(applicationId.ToString("D"));
+        sb.Append("\"><div class=\"wc stack\"><div class=\"note\"><span>");
+        sb.Append(NdMIcons.Info);
+        sb.Append("</span><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.SubmittedNote"]));
+        sb.Append("</span></div></div></div>");
+        return sb.ToString();
+    }
+
+    private static void AppendMainCard(
+        StringBuilder sb,
+        CultureState culture,
+        PageData data,
+        string panel,
+        bool showProposeAction)
     {
         var thread = data.Thread;
+        var scheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
         sb.Append("<div class=\"wc stack ndm-wg-main\" data-ndm-wg-main><div class=\"row\"><span class=\"av w\" style=\"width:46px;height:46px\">");
         sb.Append(WebUtility.HtmlEncode(CandidateInitials(thread.CandidateName)));
         sb.Append("</span><div><h3 style=\"font-size:1.25rem\">");
@@ -118,13 +137,31 @@ internal static class AfterMatchEmployerPanelSsrShells
 
         if (panel is not "propose")
         {
-            sb.Append("<div class=\"hr\"></div><div class=\"row wrapflex\"><button type=\"button\" class=\"btn\" data-ndm-open-panel=\"propose\">");
-            sb.Append(NdMIcons.Calendar);
-            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Propose"]));
-            sb.Append("</button><button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"messages\">");
+            sb.Append("<div class=\"hr\"></div><div class=\"row wrapflex\">");
+            if (showProposeAction)
+            {
+                sb.Append("<button type=\"button\" class=\"btn\" data-ndm-open-panel=\"propose\">");
+                sb.Append(NdMIcons.Calendar);
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Propose"]));
+                sb.Append("</button>");
+            }
+            else if (scheduled)
+            {
+                sb.Append("<a class=\"btn\" href=\"");
+                sb.Append(WebUtility.HtmlEncode($"/werkgever/sollicitaties/{thread.ApplicationId:D}/after-match?panel=outcome"));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
+                sb.Append("</a>");
+            }
+
+            sb.Append("<button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"messages\">");
             sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Messages"]));
             sb.Append("</button><span class=\"sp\"></span><span class=\"small muted hide-m\">");
-            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Expectation"]));
+            if (showProposeAction)
+            {
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Expectation"]));
+            }
+
             sb.Append("</span></div>");
         }
 
@@ -177,7 +214,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</p></div></div></aside>");
     }
 
-    private static void AppendProposePanel(StringBuilder sb, CultureState culture, PageData data)
+    internal static void AppendProposePanel(StringBuilder sb, CultureState culture, PageData data)
     {
         var panel = string.IsNullOrWhiteSpace(data.InitialPanel) ? "" : data.InitialPanel.Trim().ToLowerInvariant();
         if (panel is "slots")

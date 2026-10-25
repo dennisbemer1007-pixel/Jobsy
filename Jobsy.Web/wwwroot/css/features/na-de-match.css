@@ -276,6 +276,10 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-share-aside]{display:none!important}
 .ndm.ndm-wg-page:not([data-ndm-panel=propose]) [data-ndm-propose-panel]{display:none!important}
 .ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-propose-panel]{display:block!important}
+.ndm.ndm-wg-page[data-ndm-panel=propose] [data-ndm-wg-flow]{display:none!important}
+.ndm.ndm-wg-page[data-ndm-panel=cancel] [data-ndm-wg-flow]{display:none!important}
+.ndm.ndm-wg-page:not([data-ndm-panel=cancel]) [data-ndm-cancel-panel]{display:none!important}
+.ndm.ndm-wg-page[data-ndm-panel=cancel] [data-ndm-cancel-panel]{display:block!important}
 .ndm.ndm-wg-page[data-ndm-panel=messages] [data-ndm-wg-flow]{display:none!important}
 .ndm.ndm-wg-page[data-ndm-panel=messages] [data-ndm-messages-panel]{display:block!important}
 .ndm.ndm-wg-page:not([data-ndm-panel=messages]) [data-ndm-messages-panel]{display:none!important}

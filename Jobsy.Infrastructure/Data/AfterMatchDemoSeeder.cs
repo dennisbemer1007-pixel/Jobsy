@@ -14,9 +14,12 @@ internal static class AfterMatchDemoSeeder
     private static readonly Guid CandidateId = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222");
 
     private static readonly DateTime YesAt = new(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc);
-    private static readonly DateTime Slot1Start = new(2026, 10, 22, 8, 30, 0, DateTimeKind.Utc);
-    private static readonly DateTime Slot2Start = new(2026, 10, 23, 7, 0, 0, DateTimeKind.Utc);
-    private static readonly DateTime Slot3Start = new(2026, 10, 26, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Slot1Start = Jobsy.Core.Time.AmsterdamTime.ToUtc(
+        new DateTime(2026, 10, 22, 10, 30, 0, DateTimeKind.Unspecified));
+    private static readonly DateTime Slot2Start = Jobsy.Core.Time.AmsterdamTime.ToUtc(
+        new DateTime(2026, 10, 23, 9, 0, 0, DateTimeKind.Unspecified));
+    private static readonly DateTime Slot3Start = Jobsy.Core.Time.AmsterdamTime.ToUtc(
+        new DateTime(2026, 10, 26, 14, 0, 0, DateTimeKind.Unspecified));
 
     public static async Task EnsureAsync(JobsyDbContext db, ILogger logger)
     {
@@ -230,11 +233,19 @@ internal static class AfterMatchDemoSeeder
         {
             var chosen = AddSlot(interview, Slot1Start);
             chosen.IsSelected = true;
+            interview.ChosenSlotId = chosen.Id;
         }
 
         if (scenario == "reschedule")
         {
-            var candidateSlot = AddSlot(interview, Slot2Start.AddDays(2), InterviewSlotProposer.Candidate, "Ik ben die donderdag ziek geworden.");
+            var chosen = AddSlot(interview, Slot1Start);
+            chosen.IsSelected = true;
+            interview.ChosenSlotId = chosen.Id;
+            var candidateSlot = AddSlot(
+                interview,
+                Slot3Start,
+                InterviewSlotProposer.Candidate,
+                "zorg voor familie. \"Mijn zoon is ziek, ik kan donderdag niet weg.\"");
             interview.Status = InterviewStatus.RescheduleRequested;
             db.InterviewChanges.Add(new InterviewChange
             {
