@@ -7,6 +7,7 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Onboarding
 @using Jobsy.Web.Seo
 @using Jobsy.Web.Services
@@ -20,8 +21,8 @@
 <HeadContent>
     @if (_variant == LandingVariant.On)
     {
-        <link rel="stylesheet" href="css/features/candidate-header-strip.css?v=20261025-acc1093" />
-        <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-acc1093" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
     }
 </HeadContent>
 

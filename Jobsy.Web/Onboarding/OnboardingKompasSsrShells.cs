@@ -56,12 +56,15 @@ internal static class OnboardingKompasSsrShells
         sb.Append("<div class=\"kompas-hub-layout__reiskaart\">");
         KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(15));
         sb.Append("</div>");
-        sb.Append("<header class=\"kompas__intro\">");
-        sb.Append("<h2 id=\"kompas-title\" class=\"kompas__heading\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Title"]));
-        sb.Append("</h2>");
-        sb.Append("<p class=\"ob-wizard__lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.Lead"]));
+        sb.Append("<header class=\"kompas__intro kompas__intro--hub-mockup\">");
+        sb.Append("<p class=\"kompas__eyebrow\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.Eyebrow"]));
+        sb.Append("</p>");
+        sb.Append("<h1 id=\"kompas-title\" class=\"kompas__heading\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.HubTitle"]));
+        sb.Append("</h1>");
+        sb.Append("<p class=\"kompas__lead ob-wizard__lead\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Ssr.HubLead"]));
         sb.Append("</p></header>");
 
         sb.Append("<nav class=\"kompas-tabs admin-sublinks\" aria-label=\"");
@@ -80,7 +83,7 @@ internal static class OnboardingKompasSsrShells
         sb.Append("<div class=\"ob-rustig__canvas ob-rustig__kompas kompas--ssr-body\">");
         sb.Append("<section class=\"ob-finale ob-finale--no-hero ob-finale--hub\" data-testid=\"onboarding-finale-v2\">");
         sb.Append("<div class=\"ob-finale__wrap\">");
-        AppendKompasContent(sb, culture, model.Impression, model.MatchCount, model.MaxTravelMinutes, model.HomeLabel, model.CardsInput, includeFullTestsSection: true);
+        AppendKompasContent(sb, culture, model.Impression, model.MatchCount, model.MaxTravelMinutes, model.HomeLabel, model.CardsInput, includeFullTestsSection: true, skipTestsSectionHeading: true);
         sb.Append("</div></section></div>");
         sb.Append("</div></div>");
 
@@ -113,9 +116,10 @@ internal static class OnboardingKompasSsrShells
         int maxTravelMinutes,
         string? homeLabel,
         OnboardingFinaleCardsInput cardsInput,
-        bool includeFullTestsSection)
+        bool includeFullTestsSection,
+        bool skipTestsSectionHeading = false)
     {
-        AppendTestSummaries(sb, culture, impression);
+        AppendTestSummaries(sb, culture, impression, skipTestsSectionHeading);
         AppendDirections(sb, culture);
         AppendMatchBar(sb, culture, matchCount, maxTravelMinutes, homeLabel);
         AppendDoCards(sb, culture, cardsInput, homeLabel);
@@ -268,7 +272,7 @@ internal static class OnboardingKompasSsrShells
         sb.Append("</a>");
     }
 
-    private static void AppendTestSummaries(StringBuilder sb, CultureState culture, OnboardingImpression? impression)
+    private static void AppendTestSummaries(StringBuilder sb, CultureState culture, OnboardingImpression? impression, bool skipSectionHeading = false)
     {
         var summaries = OnboardingRustigKompasContent.TestSummaries(impression);
         if (summaries.Count == 0)
@@ -276,12 +280,29 @@ internal static class OnboardingKompasSsrShells
             return;
         }
 
-        sb.Append("<section class=\"ob-rustig__kompas-tests\" id=\"kompas-tests\" aria-labelledby=\"kompas-tests-h\">");
-        sb.Append("<h2 id=\"kompas-tests-h\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.Kompas.TestsTitle"]));
-        sb.Append("</h2><p class=\"ob-rustig__kompas-lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.Kompas.TestsLead"]));
-        sb.Append("</p><div class=\"ob-rustig__kompas-test-grid\">");
+        sb.Append("<section class=\"ob-rustig__kompas-tests");
+        if (skipSectionHeading)
+        {
+            sb.Append(" ob-rustig__kompas-tests--hub-mockup");
+        }
+
+        sb.Append("\" id=\"kompas-tests\" aria-labelledby=\"kompas-tests-h\">");
+        if (!skipSectionHeading)
+        {
+            sb.Append("<h2 id=\"kompas-tests-h\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.Kompas.TestsTitle"]));
+            sb.Append("</h2><p class=\"ob-rustig__kompas-lead\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.Kompas.TestsLead"]));
+            sb.Append("</p>");
+        }
+        else
+        {
+            sb.Append("<h2 id=\"kompas-tests-h\" class=\"visually-hidden\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.Kompas.TestsTitle"]));
+            sb.Append("</h2>");
+        }
+
+        sb.Append("<div class=\"ob-rustig__kompas-test-grid\">");
         foreach (var card in summaries)
         {
             sb.Append("<article class=\"ob-rustig__kompas-test-card\"><small>");

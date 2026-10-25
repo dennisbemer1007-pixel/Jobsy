@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/features/candidate-header-strip.css?v=20261025-kreeft11",
+        WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css"),
         "css/app.min.css?v=20261025-kreeft11",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
@@ -425,12 +425,12 @@ public static class PageAssetCatalog
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> banenkaart SSR (skip render-blocking app.min.css).</summary>
     public static IReadOnlyList<string> BanenkaartSsrStylesheets() =>
     [
-        "/css/features/candidate-header-strip.css?v=20261025-kreeft11",
-        "/css/features/banenkaart-page.css?v=20261025-kreeft8",
-        "/css/features/kandidaat-banen.css?v=20261024-listtoggle2",
-        "/css/features/banenkaart.css?v=20261023-acc9",
-        "/css/features/banenkaart-illustrated.css?v=20261025-acc1093",
-        "/css/features/banenkaart-lagen.css?v=20261025-kreeft11",
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-header-strip.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart-page.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/kandidaat-banen.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart-illustrated.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart-lagen.css"),
     ];
 
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>
@@ -446,7 +446,7 @@ public static class PageAssetCatalog
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [
         "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft8",
-        "css/features/lobsy-coach-pill.css?v=20261025-kreeft11",
+        WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css"),
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

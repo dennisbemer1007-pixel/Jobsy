@@ -1,0 +1,442 @@
+{
+  "brand/png/lobsy-apple-touch-icon-180.png": {
+    "sha256": "fbfbe90467ca5887879d642a0dc5fa6b48d4080b716b7b09c1ad198077dfa758",
+    "v": "20261018-23"
+  },
+  "brand/png/lobsy-favicon-16.png": {
+    "sha256": "0e24c4f8a8c96309f04ddd715f5c78d077155daf3d7b0d5fc525128b10104089",
+    "v": "20261018-23"
+  },
+  "brand/png/lobsy-favicon-32.png": {
+    "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
+    "v": "20261018-23"
+  },
+  "brand/png/lobsy-favicon-48.png": {
+    "sha256": "b4d98dfff0413e1c28dcda8dd3f5502658e9071eb78e9da4f484bf3daf6ad32b",
+    "v": "20261018-23"
+  },
+  "css/app.min.css": {
+    "sha256": "59fb31ea0bf402d3d9d20673713449468369a55c5f84cd7cda011db43b7387fd",
+    "v": "20261025-kreeft11"
+  },
+  "css/critical.css": {
+    "sha256": "3fd011f562fc141dac6c59c33aa57a2766d8e4f727f8249dbc93cae254ffc2c8",
+    "v": "20261023-regfix1"
+  },
+  "css/features/account-mfa.css": {
+    "sha256": "77ffff1997179f77bc2086c352bb23b7cea454b05c0fc555a8bcf4e6371f3df3",
+    "v": "20261004-10"
+  },
+  "css/features/admin.css": {
+    "sha256": "57d56bfc61f023d2789374e45b34743b446836ae16c848639f34e07d38b5cfa3",
+    "v": "20261018-11"
+  },
+  "css/features/applications.css": {
+    "sha256": "9d51d0b07d46beda10cc34bde1baae6e177220c6be61df3ac6244eb116017766",
+    "v": "20261024-apps720-scope3"
+  },
+  "css/features/sollicitaties-page.css": {
+    "sha256": "2a2c25c4d01193ae2808aa01bf50fb57454c69c604f7e086a5ae8733b83c3bc9",
+    "v": "20261025-sollic-mob90-gz"
+  },
+  "js/sollicitaties-actions.js": {
+    "sha256": "be2018921944e0f8c056dbd1351a6e886a6aad3a55f33a5516ef175231f1d42d",
+    "v": "20261024-mockup01-acc5"
+  },
+  "js/sollicitaties-berichten.js": {
+    "sha256": "dc2440ea41543be9819957d9b6e122891997fad949222a025877388896c8087e",
+    "v": "20261025-mark-read-bff2"
+  },
+  "js/sollicitaties-filter-chips.js": {
+    "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
+    "v": "20261024-mockup01-acc5"
+  },
+  "js/sollicitaties-rail.js": {
+    "sha256": "5eca56d0159de05451acb13268e361ec9d18fdf78e3290bc447b8c984af3b47d",
+    "v": "20261024-mockup01-acc5"
+  },
+  "css/features/auth.css": {
+    "sha256": "02384861b1eb4bccf28df6969d0559f18af7bca2a6b6af489c0fc0ea2835cdc7",
+    "v": "20261018-01"
+  },
+  "css/features/banenkaart.css": {
+    "v": "20261023-21",
+    "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
+  },
+  "css/features/bedrijvenkaart.css": {
+    "sha256": "7ffdb5503fe02cd7ce703cdd3f7c9b2ae55c0ae91f1d61adfedc3e2ddcd7271c",
+    "v": "20261019-09"
+  },
+  "css/features/candidate-hero-compact-preview.css": {
+    "sha256": "480e1e883f5ce9202353dd3b0043b79aa0351aa43a260ffaf4cf0a3c61a556d8",
+    "v": "20261022-reis-r7"
+  },
+  "css/features/candidate-hub.css": {
+    "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
+    "v": "20261012-01"
+  },
+  "css/features/candidate-illustrated-decorative-layers.css": {
+    "sha256": "900dc5e9bf425f86dfdb9012f4f7e9ced2baba54475bfabad71ee4adda830ce5",
+    "v": "20261020-01"
+  },
+  "css/features/candidate-illustrated-public.css": {
+    "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
+    "v": "20261018-02"
+  },
+  "css/features/carriere.css": {
+    "sha256": "4763da056911303c965424e922ca17737655acb43ae58e5f310a21d4024cddd1",
+    "v": "20261018-03"
+  },
+  "css/features/choice-tiles.css": {
+    "sha256": "2e74c596d55ddfa6f8fad147d36f25409e36f3dd2005b1d5a1d52437b5d0d1bd",
+    "v": "20261015-06"
+  },
+  "css/features/cookie-consent.css": {
+    "sha256": "aa0cc63194b7e334a9cfafc0298e159908ff9524502fea2a4a92d09de4152fa2",
+    "v": "20261017-05"
+  },
+  "css/features/enterprise-ui.css": {
+    "sha256": "4665d3c7ca5ac7e6602ef1deb250c9e2b3014cdb82ee3e0a9d3831b57135940f",
+    "v": "20261004-10"
+  },
+  "css/features/errors.css": {
+    "sha256": "f7747fb354a7ef7b211fb82aa974237d1f9a6268d850faac4c214b527e29d004",
+    "v": "20261004-10"
+  },
+  "css/features/form-fields.css": {
+    "sha256": "dee90194df3ce52e43bc9c9bd5c9aca798d30e6cbc498f217b7355e5d5ac75d1",
+    "v": "20261015-04"
+  },
+  "css/features/future-jobs.css": {
+    "sha256": "a4bb8e12f1e3bc07fc2d3cbe8a7686e26968aff22b1efe16e7c0c30f5defd863",
+    "v": "20261006-02"
+  },
+  "css/features/gevoelig-werkervaring.css": {
+    "sha256": "27db073965f754d9f2d81712ec3aaede06c59e7109f731dd48821759d1dab889",
+    "v": "20261018-16"
+  },
+  "css/features/gratis-dna.css": {
+    "sha256": "aa943c1f29e2cf27b9da96b9334c61672321f07227c3125bd1ff5eef60e7023f",
+    "v": "20261004-10"
+  },
+  "css/features/honest-advice.css": {
+    "sha256": "44b1f59854e8b64c07dfc43422ff428fbd19eb076430c8443a1bab86a4e8aedd",
+    "v": "20261005-07"
+  },
+  "css/features/kandidaat-banen.css": {
+    "v": "20261024-listtoggle2",
+    "sha256": "e2f5c139b319849f604ec0265d1c18e299212b5a6c8e441925da17a7fe68ab78"
+  },
+  "css/features/kandidaatinzichten.css": {
+    "sha256": "45758384a12b52fb030600210a4768cbd00560e003bcda2d8f43cd882bc77f26",
+    "v": "20261004-10"
+  },
+  "css/features/kb-external-vacancy.css": {
+    "sha256": "7831996af5de14d7471ee4653c5410bf1704822dbf2d9a878c3c8b683391ce36",
+    "v": "20261011-03"
+  },
+  "css/features/landing.css": {
+    "sha256": "ded9a240e72c6957942276ba6b110e53c0cd6bcb481942285ea8fa5d6ea4cb1d",
+    "v": "20261018-01"
+  },
+  "css/features/match-desktop.css": {
+    "sha256": "bf9760ca115f0730a129fcae7aaf97c78ff1ec780b316f29d700ec7b05a26fc0",
+    "v": "20261013-01"
+  },
+  "css/features/mijn-dna.css": {
+    "sha256": "dddf9ebaf598d621bce86bc00931b7395cb3bd874af874540c1356626619f26a",
+    "v": "20261004-10"
+  },
+  "css/features/mijn-paspoort.css": {
+    "sha256": "e9155e2d15ff59183fcfe6044e5d6413b1c3c8341b7e4dd8ef34727fdae41414",
+    "v": "20261015-09"
+  },
+  "css/features/na-de-match.css": {
+    "sha256": "27f30fec1e7faa31aee7330f9ff789f26ca3629e8dafd744317300744d54b256",
+    "v": "20261024-ndm-thr-scope"
+  },
+  "css/features/nav-feedback.css": {
+    "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",
+    "v": "20261004-10"
+  },
+  "css/features/occupation-day.css": {
+    "sha256": "67c63d1ebe8081d03e2760199b0d1419358d5b61bb5a10f5f92723c0b1170bb9",
+    "v": "20261005-23"
+  },
+  "css/features/onboarding-finale-v2.css": {
+    "sha256": "aaf49ede60c7b87d6140b779b9dfd71a8e7ce6889218cc3902958a6256c925e8",
+    "v": "20261018-15"
+  },
+  "css/features/onboarding-illustrated-step.css": {
+    "sha256": "3dd725e6f8d1efd345f1dc738fee6ec689ec2c53f233ae92b99c6c579c3d0fba",
+    "v": "20261019-r24"
+  },
+  "css/features/onboarding-rustig.css": {
+    "sha256": "7548dcb7725c386a15cffa800710b005d9b31289f80c63b5fed5d549a0e51769",
+    "v": "20261020-21"
+  },
+  "css/features/onboarding-test-blocks.css": {
+    "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
+    "v": "20261018-r2"
+  },
+  "css/features/onboarding-wizard-mobile-bar.css": {
+    "sha256": "f8b74a7eecc03112f2bbca9135c41b84a15f570b11143b3e454f39b29f40cae4",
+    "v": "20261016-02"
+  },
+  "css/features/onboarding-wizard-nearby-panel.css": {
+    "sha256": "0f602a345b1c2004158d7b2504704f77c03830d4d8c1d357110bf74abc6a0c30",
+    "v": "20261018-r4"
+  },
+  "css/features/onboarding-wizard-richting-a.css": {
+    "sha256": "6dd4532d9c4978fdbd3e09890bf94cfd09d2b50b3c1d03740f2dda204265dca0",
+    "v": "20261019-r25"
+  },
+  "css/features/onboarding-wizard-test-journey.css": {
+    "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
+    "v": "20261018-07"
+  },
+  "css/features/onboarding-wizard-vroeg-resultaat.css": {
+    "sha256": "c314b1f49152bd4af5e8e9d769ee6e8006aea2d0e187869ba1b724d721aa3dda",
+    "v": "20261017-01"
+  },
+  "css/features/onboarding-wizard.css": {
+    "sha256": "4d78aa19af1ba1e65e5c923168b35d854132b69d306449be6dbf0ddad36c96cc",
+    "v": "20261015-06"
+  },
+  "css/features/onboarding-work-history.css": {
+    "sha256": "cb9184ab0069f6073b89d8ca6d05ed305caaf92c4b61466c1016235c80873f2c",
+    "v": "20261018-08"
+  },
+  "css/features/ontdekkingsreis.css": {
+    "sha256": "6eca31dcb742de94d32bb3c3f6bf0a8b4973199739f91156ab088d1a7bb76a01",
+    "v": "20261022-reis-r2-r7"
+  },
+  "css/features/proactive-matching.css": {
+    "sha256": "8cdcd71b660f4aacf62188dc8f4a3ae0e61c47dbd0e01b7e5564edc965b1ba3c",
+    "v": "20261012-03"
+  },
+  "css/features/public-pages.css": {
+    "sha256": "9ba4aaa6229f47f132a7ce191fc780a40d102bb7da9ccd0693ce43ad2825408e",
+    "v": "20261016-01"
+  },
+  "css/features/public-theme.css": {
+    "sha256": "3ab3156159a9fc514e898e22eb1ceba6d7487f7e4089944b9b014249c7de9455",
+    "v": "20261018-09"
+  },
+  "css/features/questionnaire.css": {
+    "sha256": "098b16767133630bd1c2c4f4ffd17b7f321c9c5c718fbb5e83a6469c8def706f",
+    "v": "20261004-10"
+  },
+  "css/features/reconnect.css": {
+    "sha256": "67ce9f6f80aad3add1eaf411dc65d4d0e23f14a44690ef498d83cbc8bda4e95a",
+    "v": "20261021-02"
+  },
+  "css/features/sales.css": {
+    "sha256": "1f17cd2984d474f41d5b5c5e752db44482ed32d27e9fe639393193cbaa0c4784",
+    "v": "20261004-10"
+  },
+  "css/features/scholen.css": {
+    "sha256": "70d4c395d6b792dd17576b090ea148b4f4d33791f5d96183fb6bad8b056c5df3",
+    "v": "20261004-14"
+  },
+  "css/features/signup-static.css": {
+    "sha256": "2bef7a071ba7c93834490b922d243cd8b5c84db67293bdba244cc856ca3806bd",
+    "v": "20261017-02"
+  },
+  "css/features/stijl-a.css": {
+    "sha256": "9e388948163ff96b032e049d010daa40980593cb6c7f50445048e88da915eec9",
+    "v": "20261018-03"
+  },
+  "css/features/testresultaten.css": {
+    "sha256": "671e07055767dbe8e8002c1a333b232228e4b1cbad493d74b7d56f157242b514",
+    "v": "20261004-10"
+  },
+  "css/features/tests.css": {
+    "sha256": "4a14c2a587ec9d49f1561e8e2f778afe12870783e328cd50c463e2e90ea79fb6",
+    "v": "20261020-r8"
+  },
+  "css/features/vacancy-wizard.css": {
+    "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",
+    "v": "20261015-20"
+  },
+  "css/features/werkgever-aanmelding.css": {
+    "sha256": "aaa550e2f2d97b84e099682d163cdbf03c3c562fd8e833c986d3280e34649221",
+    "v": "20261016-06"
+  },
+  "css/features/werkgever.css": {
+    "sha256": "db1ce09af39dabe95aaf63f39fa6c065467b6c8d01433bbbf9672c57e5b8c822",
+    "v": "20261017-19"
+  },
+  "css/tokens.css": {
+    "sha256": "5ce0929c96b169830a30fc10283d80c6f8805715068cfcec698d571a9e07826e",
+    "v": "20261018-06"
+  },
+  "favicon.ico": {
+    "sha256": "b8f4025ded7aa6a6eb5ff0f8e82e1c5fcac343705e2d62883d00472b03029239",
+    "v": "20261018-23"
+  },
+  "favicon.png": {
+    "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
+    "v": "20261004-13"
+  },
+  "icons/apple-touch-icon.png": {
+    "sha256": "fbfbe90467ca5887879d642a0dc5fa6b48d4080b716b7b09c1ad198077dfa758",
+    "v": "20261004-13"
+  },
+  "images/brand/mascot-128.png": {
+    "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
+    "v": "20261004-13"
+  },
+  "js/app-core.js": {
+    "sha256": "4de415834ac296e6bb25135bebee31ad86daba6e0fc9cbc0ba06381515195f43",
+    "v": "20261024-25"
+  },
+  "js/app-extras.js": {
+    "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
+    "v": "20261015-pdfdl"
+  },
+  "js/app-public.js": {
+    "sha256": "64ec8e13b6a48873f2295e5161ec884cc861dc5cc19ccdac5006a75fb4e224c7",
+    "v": "20261016-04"
+  },
+  "js/blazor-boot.js": {
+    "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
+    "v": "20261021-15"
+  },
+  "js/discoveryHover.js": {
+    "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
+    "v": "20261002-kp01m"
+  },
+  "js/features/account-mfa.js": {
+    "sha256": "01fcae80a3439833ca143a9bbb11278e63d3d9d4fdb55be3136b9a4f035c63f5",
+    "v": "20260930-auth04"
+  },
+  "js/features/auth.js": {
+    "sha256": "abe562c0ae9e57649701c7512e6cddf34476ccd519d48caf51eff2677ab5a456",
+    "v": "20261004-13"
+  },
+  "js/features/kandidaatinzichten-map.js": {
+    "sha256": "bd853bbe861ea0034a2a1b52a0b73d3747d6b319ec1a6f7d9329795084f06a40",
+    "v": "20260928-insights"
+  },
+  "js/feedback.js": {
+    "sha256": "22dc7ae506a6078bbfddac9bc300ed45fbc0284251595b3c644e77c125a33cae",
+    "v": "20261002-ch10"
+  },
+  "js/gratis-dna.js": {
+    "sha256": "2cc0b16f3618167ffb562906e1e46ff66eea2a5a815a07e40a5ca916ada64d70",
+    "v": "20261004-13"
+  },
+  "js/jobMap.min.js": {
+    "v": "20261024-mobilewagetip11",
+    "sha256": "186f82175163fd4610db1f6302ed15c2022cd1503ea51083f80f8f84f5a2cb68"
+  },
+  "js/jobsyMapLibre.min.js": {
+    "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
+    "v": "20261023-lagen-compact1"
+  },
+  "js/landing.js": {
+    "sha256": "cd942514333ce9c3dbb100475127d528220b67555a53ce2c6d1d28f44c1a043f",
+    "v": "20261018-02"
+  },
+  "js/leerling-login.js": {
+    "sha256": "25521f1a69b2f38a757d8670e8d3f28befe0458b7a2ce2761f3a5d969eaec2d8",
+    "v": "20261004-13"
+  },
+  "js/lobsyPush.js": {
+    "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",
+    "v": "20261021-02"
+  },
+  "js/navFeedback.js": {
+    "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
+    "v": "20261004-13"
+  },
+  "js/public-pages.js": {
+    "sha256": "e5f1baab87e03d1ea0c7ccb09aa7851d5691ac44d0e38394a85f97d1796cd8a1",
+    "v": "20261004-13"
+  },
+  "js/read-aloud.js": {
+    "sha256": "48461623f48be4c5c47b4896ff7ccd38c1cc86f4a7e11922344f3941ce663044",
+    "v": "20261015-01"
+  },
+  "js/vacancy-wizard.js": {
+    "sha256": "e267d43b5e51a3a8972358357471c74fe7bf2ccf7ee4d1bed91f16a6c362f19d",
+    "v": "20261015-03"
+  },
+  "js/vacancyDetailMap.min.js": {
+    "sha256": "a27bfba641d379c14e28f13587e4264ea449a99a2dacaf6fd5aaf038d41199fd",
+    "v": "20261004-13"
+  },
+  "manifest.webmanifest": {
+    "sha256": "544284248f300ebea2efedac2ae97582f5fd7841e904a5f5a83c49801aac230d",
+    "v": "20261004-14"
+  },
+  "service-worker.js": {
+    "sha256": "ae5c60344ddeda3a88f1a3b433a1bad0593ea9b15081a551bce667a7c39108ca",
+    "v": "20261024-acc10"
+  },
+  "service-worker.published.js": {
+    "sha256": "7e226ca33f4061e1bae6f88a032710597405c8217bab7c64275b561a7bcdb3e0",
+    "v": "20261024-acc10"
+  },
+  "css/features/banenkaart-page.css": {
+    "v": "20261024-desktopsplit1",
+    "sha256": "48370ab9c3f817eeeeaccdaca5443088c10128a3b882fd48632aa72d1b72da1c"
+  },
+  "css/features/banenkaart-illustrated.css": {
+    "v": "20261023-21",
+    "sha256": "8d126e8a57996623d88a09c617866b493d67c26ca9c23e0a346ce998216d9da5"
+  },
+  "js/banenkaart-catalog.js": {
+    "v": "20261025-matchsort1",
+    "sha256": "a2e408bd958781c21263fca6f640316098f9953ed7bc62e862e2ca49c84d07a8"
+  },
+  "js/banenkaart-ssr.js": {
+    "v": "20261024-desktopsplit1",
+    "sha256": "a63c213367a54dcc099de8d7d798d82a21394fcaa0a08f2d1ab5e3cdef2213ad"
+  },
+  "js/banenkaart-prefetch.js": {
+    "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
+    "v": "20261023-19"
+  },
+  "js/jobsy-basemap-warm.js": {
+    "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
+    "v": "20261023-19"
+  },
+  "js/banenkaart-maps-boot.js": {
+    "v": "20261024-mobilewagetip11",
+    "sha256": "42e4646c963b399f64f3f62314ec20605dde9345aa9a8de12be867c582fa3a42"
+  },
+  "css/features/banenkaart-lagen.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "1a9fd99dcb0e5bf933dbced87154b849658ec3110b3b2833a9893fa298b58db9"
+  },
+  "css/features/kreeft-reiskaart.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "d3957bf71f94ce4e0332987637d76bfe5a3b2b3ca5285d06c18fca49d06c17ca"
+  },
+  "css/features/candidate-header-strip.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "d4316a8e1565f26e016d71774d3c313a09b211090e54d710b06fb7e60d088e6b"
+  },
+  "css/features/lobsy-coach-pill.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "4684654165071d8afbb73d79d4b19b0114d993e7ce1f15d90919720b35efc639"
+  },
+  "css/features/banenkaart-page.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "8b962163e1caf0d3e9bb432e3127a2b60fb6d629c03b99efcd623d23edf5947d"
+  },
+  "css/features/banenkaart-illustrated.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
+  },
+  "css/features/banenkaart.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
+  },
+  "css/features/kandidaat-banen.css": {
+    "v": "20261025-kreeft12",
+    "sha256": "e2f5c139b319849f604ec0265d1c18e299212b5a6c8e441925da17a7fe68ab78"
+  }
+}

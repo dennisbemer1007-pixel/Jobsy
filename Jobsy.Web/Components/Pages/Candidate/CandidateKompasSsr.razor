@@ -6,6 +6,7 @@
 @using Jobsy.Core.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Onboarding
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -14,8 +15,8 @@
 
 <PageTitle>@Culture["Kompas.Title"] · Lobsy</PageTitle>
 <HeadContent>
-    <link rel="stylesheet" href="css/features/candidate-header-strip.css?v=20261025-kreeft11" />
-    <link rel="stylesheet" href="css/features/kreeft-reiskaart.css?v=20261025-kreeft11" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
     <link rel="stylesheet" href="css/features/candidate-illustrated-app.css?v=20261018-91" />
     <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompas-chips" />
     <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />

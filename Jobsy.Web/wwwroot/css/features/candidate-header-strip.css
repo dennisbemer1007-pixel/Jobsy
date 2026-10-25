@@ -232,7 +232,11 @@
 
 @media (max-width: 900px) {
   .kompas-page-wrap .kompas--ssr-hub > .kompas-hub-layout__reiskaart {
-    margin-block: 0.75rem 0;
+    margin-block: 0 1rem;
+  }
+
+  .kompas-page-wrap .kompas--ssr-hub > .kompas__intro--hub-mockup {
+    margin-block-start: 0;
   }
 }
 
@@ -240,6 +244,45 @@
   .kompas-page-wrap .kompas--ssr-hub > .kompas__intro {
     padding-block-start: 1.5rem;
   }
+
+  .kompas-page-wrap .kompas--ssr-hub > .kompas-hub-layout__reiskaart {
+    margin-block-start: 10px;
+  }
+}
+
+.kompas__intro--hub-mockup .kompas__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.kompas__intro--hub-mockup .kompas__heading {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  color: var(--brand);
+}
+
+.kompas__intro--hub-mockup .kompas__lead {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--muted);
+  max-width: 48rem;
+}
+
+.kompas--ssr-hub .kompas-tabs {
+  margin-block-start: 0.75rem;
+}
+
+.kompas--ssr-hub .kompas--ssr-body {
+  margin-block-start: 0;
+}
+
+.kompas--ssr-hub .ob-rustig__kompas-tests--hub-mockup {
+  margin-block-start: 0;
 }
 
 @media (max-width: 639px) {
