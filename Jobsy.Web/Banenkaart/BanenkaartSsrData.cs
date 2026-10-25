@@ -236,7 +236,11 @@ internal static class BanenkaartSsrData
         }
 
         var discoverPage = await DiscoverAsync();
-        vacancies = discoverPage.Items;
+        vacancies = BanenkaartSsrQuery.OrderVacancies(
+            discoverPage.Items,
+            effectiveQuery.SortMode,
+            showFitFilters,
+            useOrigin);
         hasMoreList = discoverPage.HasMore;
         discoverTotal = discoverPage.TotalCount;
         var outsideTravelFallback = discoverPage.OutsideTravelFallback;

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Jobsy.Core.Rules;
 using Jobsy.Web.KandidaatBanen;
+using Jobsy.Web.Models;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace Jobsy.Web.Banenkaart;
@@ -459,6 +460,44 @@ internal static class BanenkaartSsrQuery
         return string.IsNullOrWhiteSpace(sortFromState) || string.Equals(sortFromState, "distance", StringComparison.OrdinalIgnoreCase)
             ? "title"
             : sortFromState.Trim().ToLowerInvariant();
+    }
+
+    internal static IReadOnlyList<VacancyListItem> OrderVacancies(
+        IReadOnlyList<VacancyListItem> items,
+        string sortMode,
+        bool showFitFilters,
+        bool hasOrigin)
+    {
+        if (items.Count <= 1)
+        {
+            return items;
+        }
+
+        var mode = (sortMode ?? "").Trim().ToLowerInvariant();
+        if (mode == "match" && showFitFilters)
+        {
+            return items
+                .OrderByDescending(v => v.FitPercent ?? v.MatchPercent ?? -1)
+                .ThenBy(v => v.Title, StringComparer.CurrentCulture)
+                .ToList();
+        }
+
+        if (mode == "distance" && hasOrigin)
+        {
+            return items
+                .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
+                .ThenBy(v => v.Title, StringComparer.CurrentCulture)
+                .ToList();
+        }
+
+        if (mode == "title")
+        {
+            return items
+                .OrderBy(v => v.Title, StringComparer.CurrentCulture)
+                .ToList();
+        }
+
+        return items;
     }
 
     private static string? NormalizeTransport(string? raw)
