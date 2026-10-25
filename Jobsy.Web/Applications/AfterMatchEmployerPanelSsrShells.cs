@@ -110,6 +110,7 @@ internal static class AfterMatchEmployerPanelSsrShells
     {
         var thread = data.Thread;
         var scheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
+        var slotsSent = thread.InterviewStatus == InterviewStatus.Proposing && thread.OpenSlots.Count > 0;
         sb.Append("<div class=\"wc stack ndm-wg-main\" data-ndm-wg-main><div class=\"row\"><span class=\"av w\" style=\"width:46px;height:46px\">");
         sb.Append(WebUtility.HtmlEncode(AfterMatchEmployerEmployerPresentation.CandidateInitials(thread)));
         sb.Append("</span><div><h3 style=\"font-size:1.25rem\">");
@@ -127,7 +128,14 @@ internal static class AfterMatchEmployerPanelSsrShells
             }
             else if (thread.InterviewStatus != InterviewStatus.Done)
             {
-                AppendWhatGrid(sb, culture);
+                if (slotsSent)
+                {
+                    AppendSlotsSentGrid(sb, culture);
+                }
+                else
+                {
+                    AppendWhatGrid(sb, culture);
+                }
             }
         }
 
@@ -198,6 +206,23 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
         sb.Append("</b><p class=\"small\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.Tile.Outcome"]));
+        sb.Append("</p></div></div>");
+    }
+
+    private static void AppendSlotsSentGrid(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<div class=\"what\"><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.SlotsSent.Title"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.SlotsSent.Body"]));
+        sb.Append("</p></div><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.What.Interview.Title"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.WhatNow.Interview.Body"]));
+        sb.Append("</p></div><div><b>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.What.Outcome.Title"]));
+        sb.Append("</b><p class=\"small\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.WhatNow.Outcome.Body"]));
         sb.Append("</p></div></div>");
     }
 
@@ -407,18 +432,19 @@ internal static class AfterMatchEmployerPanelSsrShells
             sb.Append("</small>");
         }
 
+        var slotsSent = isProposing && thread.OpenSlots.Count > 0;
         sb.Append("</div><div class=\"s");
-        if (!isScheduled)
-        {
-            sb.Append(" now");
-        }
-        else
+        if (isScheduled || slotsSent)
         {
             sb.Append(" done");
         }
+        else if (isProposing)
+        {
+            sb.Append(" now");
+        }
 
         sb.Append("\"><i>");
-        if (isScheduled)
+        if (isScheduled || slotsSent)
         {
             sb.Append(NdMIcons.Check);
         }
@@ -430,7 +456,6 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
         sb.Append("<small>");
-        var slotsSent = isProposing && thread.OpenSlots.Count > 0;
         sb.Append(WebUtility.HtmlEncode(
             isScheduled
                 ? (interviewDate ?? yesDate ?? "")
@@ -444,6 +469,10 @@ internal static class AfterMatchEmployerPanelSsrShells
         {
             sb.Append(" now");
         }
+        else if (slotsSent)
+        {
+            sb.Append(" now");
+        }
         else if (outcomeDone && !isProposing)
         {
             sb.Append(" done");
@@ -454,7 +483,12 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Interview"]));
         sb.Append("<small>");
-        sb.Append(WebUtility.HtmlEncode(isScheduled || outcomeDone ? (interviewDate ?? "") : ""));
+        sb.Append(WebUtility.HtmlEncode(
+            isScheduled || outcomeDone
+                ? (interviewDate ?? "")
+                : slotsSent
+                    ? culture["AfterMatch.Timeline.PlanWaiting"]
+                    : ""));
         sb.Append("</small></div><div class=\"s");
         if (outcomeDone)
         {

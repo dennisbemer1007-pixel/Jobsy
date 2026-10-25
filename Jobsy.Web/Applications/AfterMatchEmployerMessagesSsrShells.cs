@@ -64,13 +64,13 @@ internal static class AfterMatchEmployerMessagesSsrShells
         var displayName = AfterMatchEmployerBerichtenPresentation.DisplayName(culture, row.Application);
         var unread = AfterMatchEmployerBerichtenPresentation.UnreadFromCandidate(row.Thread);
 
-        sb.Append("<a class=\"ti ndm-wg-messages-ti");
+        sb.Append("<button type=\"button\" class=\"ti ndm-wg-messages-ti");
         if (active)
         {
             sb.Append(" on");
         }
 
-        sb.Append("\" data-ndm-thread-select href=\"");
+        sb.Append("\" data-ndm-thread-select data-ndm-thread-href=\"");
         sb.Append(WebUtility.HtmlEncode(href));
         sb.Append("\" data-ndm-thread-id=\"");
         sb.Append(appId.ToString("D"));
@@ -99,7 +99,7 @@ internal static class AfterMatchEmployerMessagesSsrShells
             sb.Append("</span>");
         }
 
-        sb.Append("</a>");
+        sb.Append("</button>");
     }
 
     private static void AppendSafeNote(

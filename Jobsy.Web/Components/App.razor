@@ -184,6 +184,7 @@
                     window.__lobsyEarlyNavGuard = true;
                     document.addEventListener("click", function (ev) {
                         if (document.documentElement.getAttribute("data-lobsy-circuit") === "ready") return;
+                        if (document.documentElement.getAttribute("data-enhance-nav") === "false") return;
                         var a = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
                         if (!a || a.target === "_blank" || a.getAttribute("data-enhance-nav") === "false") return;
                         if (a.getAttribute("data-lobsy-candidate-nav") === "true") return;

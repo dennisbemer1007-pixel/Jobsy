@@ -141,6 +141,9 @@
       if (messagesPanel) messagesPanel.hidden = false;
       if (outcomePanel) outcomePanel.hidden = true;
       syncHero("messages");
+      if (window.NdmEmployerMessagesResetMobileList) {
+        window.NdmEmployerMessagesResetMobileList();
+      }
       if (window.NdmEmployerMessagesInit) {
         window.NdmEmployerMessagesInit();
       }

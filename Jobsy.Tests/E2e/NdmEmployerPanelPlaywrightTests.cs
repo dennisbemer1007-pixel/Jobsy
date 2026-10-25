@@ -75,6 +75,17 @@ public sealed class NdmEmployerPanelPlaywrightTests
         await AssertScheduledHomeAsync(page, baseUrl);
         await AssertDemo0006LoadsAsync(page, baseUrl);
         await AssertOutcomeNotYetOnWaitAppAsync(page, baseUrl);
+        await AssertRescheduleCanonicalUrlNoRedirectLoopAsync(page, baseUrl);
+        await AssertPickSlotsWaitingCopyAsync(page, baseUrl);
+        await AssertScheduledOutcomeInPageAsync(page, baseUrl);
+
+        await using var mobileCtx = await browser.NewContextAsync(KbE2e.ContextFor(390, 844));
+        await PlaywrightCookieConsent.AcceptAsync(mobileCtx);
+        var mobilePage = await mobileCtx.NewPageAsync();
+        mobilePage.SetDefaultTimeout(60_000);
+        await PlaywrightCookieConsent.AcceptOnPageAsync(mobilePage);
+        Assert.True(await KbE2e.TryLoginAsync(mobilePage, baseUrl, EmployerEmail, Password));
+        await AssertMessagesMobileListReachableAsync(mobilePage, baseUrl);
     }
 
     private static async Task AssertAfterMatchSkipsBlazorRuntimeAsync(IPage page, string baseUrl)
@@ -107,8 +118,11 @@ public sealed class NdmEmployerPanelPlaywrightTests
 
     private static async Task AssertReschedulePanelsInPageAsync(IPage page, string baseUrl)
     {
-        var basePath = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.RescheduleApp:D}/after-match/reschedule-ssr";
-        await page.GotoAsync(basePath, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        var basePath = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.RescheduleApp:D}/after-match";
+        var response = await page.GotoAsync(basePath, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        Assert.NotNull(response);
+        Assert.False(response!.Status is >= 300 and < 400, "reschedule demo must not redirect-loop");
+        Assert.DoesNotContain("reschedule-ssr", page.Url, StringComparison.OrdinalIgnoreCase);
         await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Akkoord, maandag 26 okt 14:00" })).ToBeVisibleAsync();
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "09-reschedule-home.png"), FullPage = true });
 
@@ -134,7 +148,7 @@ public sealed class NdmEmployerPanelPlaywrightTests
     {
         var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=messages";
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
-        var threadLink = page.GetByRole(AriaRole.Link, new() { Name = "Kandidaat #4790" }).First;
+        var threadLink = page.GetByRole(AriaRole.Button, new() { Name = "Kandidaat #4790" }).First;
         await Assertions.Expect(threadLink).ToBeVisibleAsync();
 
         var loads = 0;
@@ -188,6 +202,45 @@ public sealed class NdmEmployerPanelPlaywrightTests
         await Assertions.Expect(page.Locator("[data-ndm-wg-main]")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator(".state-message")).ToHaveCountAsync(0);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "01-outcome-not-yet.png"), FullPage = true });
+    }
+
+    private static async Task AssertRescheduleCanonicalUrlNoRedirectLoopAsync(IPage page, string baseUrl)
+    {
+        var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.RescheduleApp:D}/after-match?x=1";
+        var response = await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        Assert.NotNull(response);
+        Assert.True(response!.Ok, $"expected 200, got {response.Status}");
+        await Assertions.Expect(page.Locator("[data-ndm-employer-ssr]")).ToBeVisibleAsync();
+    }
+
+    private static async Task AssertPickSlotsWaitingCopyAsync(IPage page, string baseUrl)
+    {
+        var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.PickSlotsApp:D}/after-match";
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await Assertions.Expect(page.Locator(".what")).ToContainTextAsync("Momenten verstuurd, wacht op Sanne");
+        await Assertions.Expect(page.Locator(".what")).Not.ToContainTextAsync("Nu: momenten voorstellen");
+    }
+
+    private static async Task AssertScheduledOutcomeInPageAsync(IPage page, string baseUrl)
+    {
+        var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.ScheduledApp:D}/after-match";
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        var loads = 0;
+        page.Load += (_, _) => loads++;
+        await page.GetByRole(AriaRole.Button, new() { Name = "Uitkomst invullen" }).ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        Assert.Equal(0, loads);
+        await Assertions.Expect(page.Locator("[data-ndm-outcome-panel]:not([hidden])")).ToBeVisibleAsync();
+        Assert.Contains("panel=outcome", page.Url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task AssertMessagesMobileListReachableAsync(IPage page, string baseUrl)
+    {
+        var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=messages";
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Kandidaat #4790" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Sanne de Vries" })).ToBeVisibleAsync();
+        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "11-messages-mobile-list.png"), FullPage = true });
     }
 
     private static async Task AssertDemo0006LoadsAsync(IPage page, string baseUrl)
