@@ -37,13 +37,11 @@
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-<section class="au-stage au-stage--illustrated"
-         style="@($"--au-art-left:url('{LoginLeft}');--au-art-right:url('{LoginRight}')")"
+<section class="au-stage au-stage--illustrated au-stage--kreeft-strip"
+         style="@($"--au-kreeft-strip-desk:url('{KreeftHeaderStripAssets.InloggenDesk}');--au-kreeft-strip-mob:url('{KreeftHeaderStripAssets.InloggenMob}')")"
          data-au-login
          @attributes="_stageAttrs">
-    <div class="au-art-band" aria-hidden="true"></div>
-    <div class="au-art au-art--left" aria-hidden="true"></div>
-    <div class="au-art au-art--right" aria-hidden="true"></div>
+    <div class="au-kreeft-header-strip" aria-hidden="true" data-testid="kreeft-header-strip"></div>
 
     <div class="au-col">
         <div class="au-card au-card--illustrated @(isPause ? "au-pause" : null)">

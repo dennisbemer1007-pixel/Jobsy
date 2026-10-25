@@ -1,15 +1,24 @@
+using Jobsy.Web.Media;
+
 namespace Jobsy.Web.Onboarding;
 
-/// <summary>Standalone Quick-Scan test header strips (kreeftreis v4, screens 10–14).</summary>
 public static class KreeftTestStripAssets
 {
-    public const string Version = OnboardingKreeftStripAssets.Version;
+    public static string Desktop(string slug) => slug switch
+    {
+        "hoe-je-werkt" => KreeftHeaderStripAssets.Desk("diepte-werken"),
+        "leuk" => KreeftHeaderStripAssets.Desk("diepte-leuk"),
+        "sfeer" => KreeftHeaderStripAssets.Desk("diepte-thuis"),
+        "waarden" => KreeftHeaderStripAssets.Desk("diepte-waarden"),
+        _ => KreeftHeaderStripAssets.Desk("diepte-werken"),
+    };
 
-    private const string Base = "/images/onboarding/kreeft-v4/tests";
-
-    public static string Desktop(string slug) =>
-        $"{Base}/bg-{slug}-desktop.webp?v={Version}";
-
-    public static string Mobile(string slug) =>
-        $"{Base}/bg-{slug}-mobile.webp?v={Version}";
+    public static string Mobile(string slug) => slug switch
+    {
+        "hoe-je-werkt" => KreeftHeaderStripAssets.Mob("diepte-werken"),
+        "leuk" => KreeftHeaderStripAssets.Mob("diepte-leuk"),
+        "sfeer" => KreeftHeaderStripAssets.Mob("diepte-thuis"),
+        "waarden" => KreeftHeaderStripAssets.Mob("diepte-waarden"),
+        _ => KreeftHeaderStripAssets.Mob("diepte-werken"),
+    };
 }

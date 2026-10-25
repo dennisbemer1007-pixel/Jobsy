@@ -10,6 +10,11 @@ public static class CompactHeroPreviewArt
             return artUrl;
         }
 
+        if (artUrl.Contains("/images/kreeft/strips/", StringComparison.Ordinal))
+        {
+            return artUrl;
+        }
+
         if (artUrl.Contains("opleiding.jpg", StringComparison.OrdinalIgnoreCase)
             || artUrl.Contains("leren-groeien-hero", StringComparison.OrdinalIgnoreCase))
         {
@@ -52,10 +57,16 @@ public static class CompactHeroPreviewArt
         return artUrl;
     }
 
-    /// <summary>Watercolor figures strip on phone when the page passes an explicit mobile art URL.</summary>
+    /// <summary>Mobile strip or watercolor figures for variant C compact hero.</summary>
     public static string? CandHeroMobileArtForVariantC(string? artUrl, string? mobileFiguresUrl)
     {
-        _ = artUrl;
+        if (!string.IsNullOrWhiteSpace(artUrl)
+            && artUrl.Contains("/images/kreeft/strips/", StringComparison.Ordinal)
+            && artUrl.Contains("-desk.webp", StringComparison.Ordinal))
+        {
+            return artUrl.Replace("-desk.webp", "-mob.webp", StringComparison.Ordinal);
+        }
+
         return string.IsNullOrWhiteSpace(mobileFiguresUrl) ? null : mobileFiguresUrl;
     }
 

@@ -79,7 +79,7 @@ internal static class PassportSsrShells
             greeting = culture.Format(key, firstName.Trim());
         }
 
-        var art = CandidateIllustratedImages.KompasHeroWide;
+        var art = KreeftHeaderStripAssets.LichtPaspoortDesk;
         var sb = new StringBuilder();
         sb.Append("<header class=\"cand-hero cand-hero--profession-band cand-hero--kompas-band cand-hero--with-art\" style=\"");
         sb.Append("--cand-hero-art:url('");

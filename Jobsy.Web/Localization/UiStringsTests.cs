@@ -52,7 +52,7 @@ public static class UiStringsTests
         Add("DeepPay.PaidTitle", "Betaald. Je kunt beginnen", "Paid. You can start", "Opłacone. Możesz zacząć", "Plătit. Poți începe", "تم الدفع. يمكنك البدء");
         Add("DeepPay.OpenedTitle", "Klaar om te beginnen", "Ready to start", "Możesz zaczynać", "Gata de început", "جاهز للبدء");
         Add("DeepPay.PriceFree", "Prijs: gratis (testaccount)", "Price: free (test account)", "Cena: za darmo (konto testowe)", "Preț: gratuit (cont de test)", "السعر: مجاناً (حساب تجريبي)");
-        Add("Coach.Ask", "Vraag het Lobsy", "Ask Lobsy", "Ask Lobsy", "Ask Lobsy", "Ask Lobsy");
+        Add("Coach.Ask", "Lobsy-hulp", "Lobsy help", "Lobsy help", "Lobsy help", "Lobsy help");
         Add("Coach.CloseTip", "Tip sluiten", "Close tip", "Zamknij podpowiedź", "Închide sfatul", "إغلاق النصيحة");
         Add("Coach.Feedback", "Feedback geven", "Give feedback", "Przekaż opinię", "Trimite feedback", "أرسل ملاحظات");
         Add("DeepPay.PaidMail", "Je krijgt de factuur ook per e-mail.", "You’ll also get the invoice by email.", "You’ll also get the faktura by email.", "You’ll also get the factură by email.", "You’ll also get the فاتورة by email.");

@@ -426,7 +426,7 @@ public static class UiStrings
             ["Vacancy.EnterDob"] = "Vul geboortedatum in",
             ["Vacancy.LikeRemoved"] = "Like verwijderd.",
             ["Assistant.Title"] = "Lobsy-assistent",
-            ["Assistant.SubtitleWarm"] = "Vraag het Lobsy",
+            ["Assistant.SubtitleWarm"] = "Lobsy-hulp",
             ["Assistant.SubtitleBusiness"] = "Antwoord op je vragen over Lobsy",
             ["Assistant.RateLimited"] = "Je stelt veel vragen achter elkaar. Wacht even en probeer het dan opnieuw.",
             ["Assistant.Lead"] = "Gerichte vragen over vacatures, sollicitaties of je account",
