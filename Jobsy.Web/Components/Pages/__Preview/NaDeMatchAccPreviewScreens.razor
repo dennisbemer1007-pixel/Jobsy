@@ -1,0 +1,55 @@
+@page "/preview/na-de-match/{ScreenId}"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<PageTitle>Na de match @ScreenId · Lobsy</PageTitle>
+<PageSeo Title="AfterMatch.Screen06.PageTitle" />
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.StylesheetsFor(
+                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
+                  "/preview/na-de-match"))
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261029-ndm-mail06" />
+</HeadContent>
+
+@if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+else
+{
+    <p class="state-message">Not found.</p>
+}
+
+@code {
+    [Parameter] public string ScreenId { get; set; } = "";
+
+    private string? _bodyHtml;
+
+    protected override void OnInitialized()
+    {
+        var id = ScreenId.Trim();
+        if (id is "06" or "6")
+        {
+            var demo = AfterMatchBevestigingSsrData.Demo();
+            _bodyHtml = AfterMatchBevestigingSsrShells.BuildBody(
+                Culture,
+                demo,
+                AfterMatchMailSsrDemoData.ScheduledApplicationId,
+                includeBackLink: false);
+            return;
+        }
+
+        _bodyHtml = null;
+    }
+}
