@@ -64,6 +64,22 @@
   }
 }
 
+.sollicitaties-hero-strip,
+.kreeft-header-strip {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  overflow: hidden;
+  background-repeat: no-repeat;
+}
+
+.sollicitaties-hero-strip__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 .sollicitaties-hero-strip .sollicitaties-hero-strip__img,
 .rustig-hero.kb-nearby-banner--strip img,
 .kb-banenkaart-header-strip__img,
@@ -72,8 +88,46 @@
   display: block;
   width: 100%;
   height: 100%;
+  max-width: none;
   object-fit: cover;
   object-position: var(--kreeft-strip-pos, center center);
+  background: none;
+  background-repeat: no-repeat;
+}
+
+.sollicitaties-hero-strip .sollicitaties-hero-strip__img.desk,
+.kreeft-header-strip .sollicitaties-hero-strip__img.desk {
+  object-position: var(--kreeft-strip-pos, center 46%);
+}
+
+.sollicitaties-hero-strip .sollicitaties-hero-strip__img.mob,
+.kreeft-header-strip .sollicitaties-hero-strip__img.mob {
+  display: none;
+  object-position: var(--kreeft-strip-pos, center 55%);
+}
+
+@media (max-width: 639px) {
+  .sollicitaties-hero-strip .sollicitaties-hero-strip__img.desk,
+  .kreeft-header-strip .sollicitaties-hero-strip__img.desk {
+    display: none;
+  }
+
+  .sollicitaties-hero-strip .sollicitaties-hero-strip__img.mob,
+  .kreeft-header-strip .sollicitaties-hero-strip__img.mob {
+    display: block;
+  }
+}
+
+@media (min-width: 640px) {
+  .sollicitaties-hero-strip .sollicitaties-hero-strip__img.desk,
+  .kreeft-header-strip .sollicitaties-hero-strip__img.desk {
+    display: block;
+  }
+
+  .sollicitaties-hero-strip .sollicitaties-hero-strip__img.mob,
+  .kreeft-header-strip .sollicitaties-hero-strip__img.mob {
+    display: none;
+  }
 }
 
 @media (min-width: 640px) {

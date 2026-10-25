@@ -501,7 +501,7 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("Feedback.CaptureFailed", feedback);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 45;\n    inset-inline-end: 24px;", css);
+        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 52;\n    inset-inline-end: 24px;", css);
         Assert.Contains(".lobsy-coach-dock__btn {\n    flex: none;\n    width: 56px;\n    height: 56px;", css);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
         Assert.Contains("pointer-events: none;", css);

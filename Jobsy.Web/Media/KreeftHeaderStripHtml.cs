@@ -9,7 +9,7 @@ internal static class KreeftHeaderStripHtml
     {
         var key = stripKey ?? KreeftHeaderStripAssets.KeyFromDeskUrl(deskUrl);
         var pos = KreeftHeaderStripObjectPosition.ForKey(key);
-        var style = $"--kreeft-strip-pos:{pos}";
+        var style = $"--kreeft-strip-pos:{pos};object-position:{pos}";
         sb.Append("<div class=\"");
         sb.Append(cssClass);
         sb.Append(" sollicitaties-hero-strip\" aria-hidden=\"true\" data-testid=\"kreeft-header-strip\" data-kreeft-strip=\"");

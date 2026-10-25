@@ -36,5 +36,5 @@
     private string ResolvedMob => MobUrl ?? KreeftHeaderStripAssets.Mob(StripKey);
 
     private string ImgStyle =>
-        $"--kreeft-strip-pos:{KreeftHeaderStripObjectPosition.ForKey(StripKey)}";
+        $"--kreeft-strip-pos:{KreeftHeaderStripObjectPosition.ForKey(StripKey)};object-position:{KreeftHeaderStripObjectPosition.ForKey(StripKey)}";
 }

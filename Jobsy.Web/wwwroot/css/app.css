@@ -13972,6 +13972,10 @@ a.apply-flow__secondary {
 
 
 /* Floating Lobsy assistant (role-based) */
+.lobsy-assistant[hidden] {
+    display: none !important;
+}
+
 .lobsy-assistant {
     position: fixed;
     right: 1rem;
@@ -21879,7 +21883,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 .lobsy-coach-dock {
     position: fixed;
-    z-index: 45;
+    z-index: 52;
     inset-inline-end: 24px;
     inset-inline-start: auto;
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));

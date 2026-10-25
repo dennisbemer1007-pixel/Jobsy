@@ -2,11 +2,18 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
+@using Jobsy.Web.Components.Media
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 
-<section class="pub-landing__hero @(Variant == LandingVariant.On ? "pub-landing__hero--illustrated" : null)" id="top"
-         style="@(Variant == LandingVariant.On ? $"--pub-hero-art:url('{KreeftHeaderStripAssets.LandingDesk}')" : null)">
+<section class="pub-landing__hero @(Variant == LandingVariant.On ? "pub-landing__hero--illustrated pub-landing__hero--kreeft-strip" : null)" id="top">
+    @if (Variant == LandingVariant.On)
+    {
+        <KreeftHeaderStrip StripKey="landing"
+                           DeskUrl="@KreeftHeaderStripAssets.LandingDesk"
+                           MobUrl="@KreeftHeaderStripAssets.LandingMob"
+                           CssClass="pub-landing__kreeft-strip kreeft-header-strip" />
+    }
     <div class="pub-landing__wrap @(Variant == LandingVariant.On ? (ReiskaartHtml is not null ? "pub-landing__hero-grid--reiskaart" : null) : $"pub-landing__hero-grid {HeroGridClass}")">
         <div class="pub-landing__hero-copy">
             <div class="pub-landing__hero-head">
