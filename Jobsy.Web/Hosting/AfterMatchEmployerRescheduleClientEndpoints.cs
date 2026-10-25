@@ -47,7 +47,7 @@ public static class AfterMatchEmployerRescheduleClientEndpoints
 
         var redirect = thread.InterviewStatus == InterviewStatus.Scheduled
             ? $"/werkgever/sollicitaties/{applicationId:D}/after-match"
-            : $"/werkgever/sollicitaties/{applicationId:D}/after-match/blazor";
+            : $"/werkgever/sollicitaties/{applicationId:D}/after-match/reschedule-ssr";
 
         return Results.Json(new { redirectUrl = redirect });
     }

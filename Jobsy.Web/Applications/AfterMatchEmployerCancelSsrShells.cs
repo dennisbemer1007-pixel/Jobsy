@@ -30,11 +30,7 @@ internal static class AfterMatchEmployerCancelSsrShells
         AppendCancelForm(sb, culture, data);
         sb.Append("</div>");
         AppendAside(sb, culture, thread);
-        sb.Append("</div><p style=\"margin-top:16px\"><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.ApplicationDetailHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
-        sb.Append("</a></p></div>");
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 
@@ -89,7 +85,10 @@ internal static class AfterMatchEmployerCancelSsrShells
         sb.Append("<small></small></div></nav>");
     }
 
-    private static void AppendCancelForm(StringBuilder sb, CultureState culture, PageData data)
+    internal static void AppendCancelFormOnly(StringBuilder sb, CultureState culture, PageData data)
+        => AppendCancelForm(sb, culture, data);
+
+    private static void AppendCancelForm(StringBuilder sb, CultureState culture, PageData _)
     {
         sb.Append("<div class=\"note warm\"><span>");
         sb.Append(NdMIcons.Info);
@@ -107,11 +106,9 @@ internal static class AfterMatchEmployerCancelSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.ReasonPlaceholder"]));
         sb.Append("\"></textarea><div class=\"row wrapflex\" style=\"margin-top:14px\"><button type=\"button\" class=\"btn\" data-ndm-employer-cancel-submit>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.CancelConfirm"]));
-        sb.Append("</button><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.BackHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append("</button><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.NeverMind"]));
-        sb.Append("</a></div><p class=\"xs muted\" style=\"margin-top:10px\">");
+        sb.Append("</button></div><p class=\"xs muted\" style=\"margin-top:10px\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.Footnote"]));
         sb.Append("</p>");
     }

@@ -22,7 +22,11 @@ internal static class AfterMatchEmployerPanelSsrShells
         string InitialPanel,
         AfterMatchEmployerMessagesSsrData.PageData? MessagesHub);
 
-    internal static string BuildBody(CultureState culture, PageData data, Guid applicationId)
+    internal static string BuildBody(
+        CultureState culture,
+        PageData data,
+        Guid applicationId,
+        bool showProposeAction = true)
     {
         var sb = new StringBuilder();
         var panel = string.IsNullOrWhiteSpace(data.InitialPanel) ? "" : data.InitialPanel.Trim().ToLowerInvariant();
@@ -54,14 +58,10 @@ internal static class AfterMatchEmployerPanelSsrShells
         }
 
         sb.Append("><div class=\"g2 ndm-wg-g2\">");
-        AppendMainCard(sb, culture, data, panel);
+        AppendMainCard(sb, culture, data, panel, showProposeAction);
         AppendShareAside(sb, culture, data.Thread);
         AppendProposePanel(sb, culture, data);
-        sb.Append("</div><p style=\"margin-top:16px\"><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.ApplicationDetailHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
-        sb.Append("</a></p></div>");
+        sb.Append("</div></div>");
 
         if (data.MessagesHub is not null)
         {
@@ -82,9 +82,28 @@ internal static class AfterMatchEmployerPanelSsrShells
         return sb.ToString();
     }
 
-    private static void AppendMainCard(StringBuilder sb, CultureState culture, PageData data, string panel)
+    internal static string BuildDoneSummaryBody(CultureState culture, AfterMatchThreadDto _, Guid applicationId)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"ndm ndm-wg ndm-wg-page\" data-testid=\"ndm-werkgever-live\" data-ndm-panel=\"\" data-ndm-employer-ssr=\"1\" data-application-id=\"");
+        sb.Append(applicationId.ToString("D"));
+        sb.Append("\"><div class=\"wc stack\"><div class=\"note\"><span>");
+        sb.Append(NdMIcons.Info);
+        sb.Append("</span><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.SubmittedNote"]));
+        sb.Append("</span></div></div></div>");
+        return sb.ToString();
+    }
+
+    private static void AppendMainCard(
+        StringBuilder sb,
+        CultureState culture,
+        PageData data,
+        string panel,
+        bool showProposeAction)
     {
         var thread = data.Thread;
+        var scheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
         sb.Append("<div class=\"wc stack ndm-wg-main\" data-ndm-wg-main><div class=\"row\"><span class=\"av w\" style=\"width:46px;height:46px\">");
         sb.Append(WebUtility.HtmlEncode(CandidateInitials(thread.CandidateName)));
         sb.Append("</span><div><h3 style=\"font-size:1.25rem\">");
@@ -118,13 +137,31 @@ internal static class AfterMatchEmployerPanelSsrShells
 
         if (panel is not "propose")
         {
-            sb.Append("<div class=\"hr\"></div><div class=\"row wrapflex\"><button type=\"button\" class=\"btn\" data-ndm-open-panel=\"propose\">");
-            sb.Append(NdMIcons.Calendar);
-            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Propose"]));
-            sb.Append("</button><button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"messages\">");
+            sb.Append("<div class=\"hr\"></div><div class=\"row wrapflex\">");
+            if (showProposeAction)
+            {
+                sb.Append("<button type=\"button\" class=\"btn\" data-ndm-open-panel=\"propose\">");
+                sb.Append(NdMIcons.Calendar);
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Propose"]));
+                sb.Append("</button>");
+            }
+            else if (scheduled)
+            {
+                sb.Append("<a class=\"btn\" href=\"");
+                sb.Append(WebUtility.HtmlEncode($"/werkgever/sollicitaties/{thread.ApplicationId:D}/after-match?panel=outcome"));
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
+                sb.Append("</a>");
+            }
+
+            sb.Append("<button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"messages\">");
             sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Action.Messages"]));
             sb.Append("</button><span class=\"sp\"></span><span class=\"small muted hide-m\">");
-            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Expectation"]));
+            if (showProposeAction)
+            {
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Expectation"]));
+            }
+
             sb.Append("</span></div>");
         }
 
@@ -177,7 +214,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</p></div></div></aside>");
     }
 
-    private static void AppendProposePanel(StringBuilder sb, CultureState culture, PageData data)
+    internal static void AppendProposePanel(StringBuilder sb, CultureState culture, PageData data)
     {
         var panel = string.IsNullOrWhiteSpace(data.InitialPanel) ? "" : data.InitialPanel.Trim().ToLowerInvariant();
         if (panel is "slots")
@@ -211,7 +248,7 @@ internal static class AfterMatchEmployerPanelSsrShells
             AppendPickedSlot(sb, start);
         }
 
-        sb.Append("</div><button type=\"button\" class=\"lk small\" data-ndm-add-slot style=\"margin-top:4px\">");
+        sb.Append("</div><button type=\"button\" class=\"lk small\" data-ndm-add-slot tabindex=\"-1\" style=\"margin-top:4px\">");
         sb.Append(NdMIcons.Plus);
         sb.Append(' ');
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AddSlot"]));
@@ -224,20 +261,24 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</button></div></div></div><div data-ndm-agenda-block hidden><p class=\"small muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.AgendaPlaceholder"]));
         sb.Append("</p></div><div><span class=\"lbl\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Format.OnSite"]));
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.Where"]));
         sb.Append("</span><div class=\"row wrapflex\" style=\"gap:6px\" data-ndm-format-chips>");
         AppendFormatChip(sb, culture, InterviewFormat.OnSite, data.InitialFormat);
         AppendFormatChip(sb, culture, InterviewFormat.Online, data.InitialFormat);
         AppendFormatChip(sb, culture, InterviewFormat.Phone, data.InitialFormat);
-        sb.Append("</div><input class=\"inp\" style=\"margin-top:8px;width:100%\" data-ndm-location placeholder=\"");
+        sb.Append("</div><div class=\"inp ndm-wg-inp-field\" style=\"margin-top:8px;width:100%\"><span class=\"ndm-wg-inp-ico\" aria-hidden=\"true\">");
+        sb.Append(NdMIcons.MapPin);
+        sb.Append("</span><input class=\"ndm-wg-inp-control\" data-ndm-location placeholder=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Where"]));
         sb.Append("\" value=\"");
         sb.Append(WebUtility.HtmlEncode(data.InitialLocation));
-        sb.Append("\" /></div><div><span class=\"lbl\">");
+        sb.Append("\" /></div></div><div><span class=\"lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.WithWhom"]));
-        sb.Append("</span><input class=\"inp\" style=\"width:100%\" data-ndm-with-whom value=\"");
+        sb.Append("</span><div class=\"inp ndm-wg-inp-field\" style=\"width:100%\"><span class=\"ndm-wg-inp-ico\" aria-hidden=\"true\">");
+        sb.Append(NdMIcons.User);
+        sb.Append("</span><input class=\"ndm-wg-inp-control\" data-ndm-with-whom value=\"");
         sb.Append(WebUtility.HtmlEncode(data.InitialWithWhom));
-        sb.Append("\" /></div><div><span class=\"lbl\">");
+        sb.Append("\" /></div></div><div><span class=\"lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.Note"]));
         sb.Append("</span><textarea class=\"inp area\" style=\"width:100%\" data-ndm-note>");
         sb.Append(WebUtility.HtmlEncode(data.InitialNote));
@@ -249,9 +290,9 @@ internal static class AfterMatchEmployerPanelSsrShells
 
         sb.Append('>');
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Submit"]));
-        sb.Append("</button><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
+        sb.Append("</button><a class=\"lk\" href=\"#\" data-ndm-close-panel>");
         sb.Append(WebUtility.HtmlEncode(culture["Common.Cancel"]));
-        sb.Append("</button></div></aside>");
+        sb.Append("</a></div></aside>");
     }
 
     private static void AppendFormatChip(
@@ -266,6 +307,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("\" data-ndm-format=\"");
         sb.Append((int)fmt);
         sb.Append("\">");
+        sb.Append(FormatIcon(fmt));
         sb.Append(WebUtility.HtmlEncode(FormatLabel(culture, fmt)));
         sb.Append("</button>");
     }
@@ -297,6 +339,13 @@ internal static class AfterMatchEmployerPanelSsrShells
         InterviewFormat.Online => culture["AfterMatch.Screen03.Format.Online"],
         InterviewFormat.Phone => culture["AfterMatch.Screen03.Format.Phone"],
         _ => culture["AfterMatch.Screen03.Format.OnSite"],
+    };
+
+    private static string FormatIcon(InterviewFormat fmt) => fmt switch
+    {
+        InterviewFormat.Online => NdMIcons.Video,
+        InterviewFormat.Phone => NdMIcons.Phone,
+        _ => NdMIcons.MapPin,
     };
 
     private static void AppendTimeline(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)

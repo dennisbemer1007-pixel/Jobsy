@@ -28,19 +28,19 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-stack" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-stack" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-interact" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-interact" defer></script>
     @if (_includeMessagesScript)
     {
-        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-stack" defer></script>
+        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-interact" defer></script>
     }
     @if (_includeOutcomeScript)
     {
-        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-stack" defer></script>
+        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-interact" defer></script>
     }
     @if (_includeCancelScript)
     {
-        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-stack" defer></script>
+        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-interact" defer></script>
     }
 </HeadContent>
 
@@ -108,8 +108,7 @@ else if (_bodyHtml is not null)
 
             _candidateName = thread.CandidateName;
 
-            if (AfterMatchEmployerSsrRouting.ShouldUseRescheduleScreen(thread)
-                && panel is not ("cancel" or "messages"))
+            if (AfterMatchEmployerSsrRouting.ShouldRedirectToRescheduleSsr(thread, panel))
             {
                 _redirecting = true;
                 var reschedulePath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/reschedule-ssr";
@@ -122,12 +121,19 @@ else if (_bodyHtml is not null)
                 return;
             }
 
+            if (!AfterMatchEmployerSsrRouting.ShouldUsePanelSsrDefault(thread, panel)
+                && panel is not ("messages" or "cancel" or "outcome"))
+            {
+                _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                return;
+            }
+
             switch (panel)
             {
                 case "cancel":
                     if (!AfterMatchEmployerSsrRouting.ShouldUseCancelScreen(thread))
                     {
-                        RedirectBlazor(http, ApplicationId);
+                        _fatalMessage = Culture["AfterMatch.Error.NotFound"];
                         return;
                     }
 
@@ -141,9 +147,16 @@ else if (_bodyHtml is not null)
                     break;
 
                 case "outcome":
+                    if (AfterMatchEmployerSsrRouting.ShouldUseDoneSummaryScreen(thread))
+                    {
+                        SetHero(Culture["AfterMatch.Screen12.Hero.Title"], Culture["AfterMatch.Screen12.Hero.Lead"]);
+                        _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildDoneSummaryBody(Culture, thread, ApplicationId);
+                        break;
+                    }
+
                     if (!AfterMatchEmployerSsrRouting.ShouldUseOutcomeScreen(thread))
                     {
-                        RedirectBlazor(http, ApplicationId);
+                        _fatalMessage = Culture["AfterMatch.Error.NotFound"];
                         return;
                     }
 
@@ -177,17 +190,25 @@ else if (_bodyHtml is not null)
                     break;
 
                 default:
-                    if (!AfterMatchEmployerSsrRouting.ShouldUseWatNuScreen(thread)
-                        && !(panel is "propose" && AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread)))
+                    if (!AfterMatchEmployerSsrRouting.ShouldUsePanelSsrDefault(thread, panel))
                     {
-                        RedirectBlazor(http, ApplicationId);
+                        _fatalMessage = Culture["AfterMatch.Error.NotFound"];
                         return;
                     }
 
-                    var isProposePanel = panel is "propose";
-                    SetHero(
-                        isProposePanel ? Culture["AfterMatch.Screen03.Hero.Title"] : Culture["AfterMatch.Screen02.Hero.Title"],
-                        isProposePanel ? Culture["AfterMatch.Screen03.Hero.Lead"] : Culture["AfterMatch.Screen02.Hero.Lead"]);
+                    var isProposePanel = panel is "propose" && AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread);
+                    if (isProposePanel)
+                    {
+                        SetHero(Culture["AfterMatch.Screen03.Hero.Title"], Culture["AfterMatch.Screen03.Hero.Lead"]);
+                    }
+                    else if (AfterMatchEmployerSsrRouting.ShouldUseScheduledHomeScreen(thread))
+                    {
+                        SetHero(Culture["AfterMatch.Screen05.Hero.Title"], Culture["AfterMatch.Screen05.Hero.Lead"]);
+                    }
+                    else
+                    {
+                        SetHero(Culture["AfterMatch.Screen02.Hero.Title"], Culture["AfterMatch.Screen02.Hero.Lead"]);
+                    }
 
                     AfterMatchEmployerMessagesSsrData.PageData? messagesHub = null;
                     if (AfterMatchEmployerBerichtenPresentation.ThreadEligible(thread))
@@ -204,19 +225,36 @@ else if (_bodyHtml is not null)
                         }
                     }
 
+                    string? statusNote = null;
+                    if (AfterMatchEmployerSsrRouting.ShouldUseScheduledHomeScreen(thread))
+                    {
+                        statusNote = string.Format(
+                            Culture["AfterMatch.Screen05.ScheduledSub"],
+                            thread.LocationOrLink ?? "",
+                            thread.WithWhom ?? "");
+                    }
+                    else if (AfterMatchEmployerSsrRouting.ShouldUseDoneSummaryScreen(thread))
+                    {
+                        statusNote = Culture["AfterMatch.Screen12.SubmittedNote"];
+                    }
+
                     var data = new AfterMatchEmployerPanelSsrShells.PageData(
                         thread,
                         $"/werkgever/sollicitaties/{ApplicationId:D}",
-                        null,
+                        statusNote,
                         AfterMatchEmployerDemoSlots.InitialUtc,
                         InterviewFormat.OnSite,
                         "Loosduinseweg 120, Den Haag · ingang naast de winkel",
                         "Linda de Wit, eigenaar",
                         "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
-                        panel,
+                        isProposePanel ? "propose" : "",
                         messagesHub);
 
-                    _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildBody(Culture, data, ApplicationId);
+                    _bodyHtml = AfterMatchEmployerPanelSsrShells.BuildBody(
+                        Culture,
+                        data,
+                        ApplicationId,
+                        showProposeAction: AfterMatchEmployerSsrRouting.ShouldUseProposeScreen(thread));
                     break;
             }
         }
@@ -237,15 +275,4 @@ else if (_bodyHtml is not null)
         _pageTitle = title;
     }
 
-    private void RedirectBlazor(HttpContext http, Guid applicationId)
-    {
-        _redirecting = true;
-        var blazorPath = $"/werkgever/sollicitaties/{applicationId:D}/after-match/blazor";
-        if (http.Request.QueryString.HasValue)
-        {
-            blazorPath += http.Request.QueryString.Value;
-        }
-
-        http.Response.Redirect(blazorPath);
-    }
 }

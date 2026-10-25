@@ -46,8 +46,8 @@ public static class AfterMatchEmployerOutcomeClientEndpoints
                 cancellationToken);
 
             var redirect = thread.Outcome is not null
-                ? $"/werkgever/sollicitaties/{applicationId:D}/after-match/blazor?panel=outcome"
-                : $"/werkgever/sollicitaties/{applicationId:D}/after-match/outcome-ssr";
+                ? $"/werkgever/sollicitaties/{applicationId:D}/after-match?panel=outcome"
+                : $"/werkgever/sollicitaties/{applicationId:D}/after-match?panel=outcome";
 
             return Results.Json(new { redirectUrl = redirect });
         }

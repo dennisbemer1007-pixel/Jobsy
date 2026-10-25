@@ -114,34 +114,12 @@
     private string ProposeHref => $"{BaseHref}?panel=propose";
     private string MessagesHref => $"{BaseHref}?panel=messages";
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
-        _loading = true;
-        _error = null;
-        _panel = (Panel ?? "").Trim().ToLowerInvariant();
-        if (_panel is "slots")
-        {
-            _panel = "propose";
-        }
-
-        try
-        {
-            _thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId);
-            ApplyHero(_thread);
-            if (_thread?.InterviewStatus == InterviewStatus.RescheduleRequested && string.IsNullOrEmpty(_panel))
-            {
-                _panel = "reschedule";
-            }
-        }
-        catch (Exception ex)
-        {
-            var uf = UserFacing.From(ex);
-            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
-        }
-        finally
-        {
-            _loading = false;
-        }
+        var uri = new Uri(Navigation.Uri);
+        var path = uri.AbsolutePath.Replace("/after-match/blazor", "/after-match", StringComparison.OrdinalIgnoreCase);
+        Navigation.NavigateTo(path + uri.Query, replace: true);
+        return Task.CompletedTask;
     }
 
     private void ApplyHero(AfterMatchThreadDto? thread)

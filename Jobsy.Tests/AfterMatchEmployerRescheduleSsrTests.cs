@@ -32,7 +32,7 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchRescheduleSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("/after-match/reschedule-ssr", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-employer-reschedule.js?v=20261030-ndm-wg09", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-employer-reschedule.js?v=20261025-ndm-wg-interact", razor, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
         var src = File.ReadAllText(Path.Combine(
             FindRepoRoot(),
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchPanelSsr.razor"));
-        Assert.Contains("ShouldUseRescheduleScreen", src, StringComparison.Ordinal);
+        Assert.Contains("ShouldRedirectToRescheduleSsr", src, StringComparison.Ordinal);
         Assert.Contains("/after-match/reschedule-ssr", src, StringComparison.Ordinal);
     }
 
@@ -100,7 +100,8 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
         Assert.Contains(slotId.ToString("D"), html, StringComparison.Ordinal);
         Assert.Contains(culture["AfterMatch.Employer.Reschedule.WeekAside"], html, StringComparison.Ordinal);
         Assert.Contains(culture["AfterMatch.Employer.Reschedule.Footnote"], html, StringComparison.Ordinal);
-        Assert.Contains("panel=propose", html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-open-panel=\"propose\"", html, StringComparison.Ordinal);
+        Assert.Contains("Kandidaat #4790", html, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -24,11 +24,7 @@ internal static class AfterMatchEmployerOutcomeSsrShells
         AppendOutcomeForm(sb, culture, data);
         sb.Append("</div>");
         AppendPreviewAside(sb, culture, data);
-        sb.Append("</div><p style=\"margin-top:16px\"><a class=\"lk\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(data.ApplicationDetailHref));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
-        sb.Append("</a></p></div>");
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 
@@ -85,20 +81,21 @@ internal static class AfterMatchEmployerOutcomeSsrShells
         sb.Append("<span class=\"lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.Question"]));
         sb.Append("</span><div class=\"outc\">");
-        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.Offer, thread.CandidateName, false);
-        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.NextRound, thread.CandidateName, false);
-        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.NotNow, thread.CandidateName, true);
+        var firstName = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
+        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.Offer, firstName, false);
+        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.NextRound, firstName, false);
+        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.NotNow, firstName, true);
         sb.Append("</div><span class=\"lbl\" style=\"margin-top:16px\">");
-        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Screen12.ReasonRequiredFmt"], thread.CandidateName)));
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Screen12.ReasonRequiredFmt"], firstName)));
         sb.Append("</span><div class=\"row wrapflex\" style=\"gap:6px\">");
-        var first = true;
+        var firstChip = true;
         foreach (var chip in data.ReasonChips)
         {
             sb.Append("<button type=\"button\" class=\"chip");
-            if (first)
+            if (firstChip)
             {
                 sb.Append(" on");
-                first = false;
+                firstChip = false;
             }
 
             sb.Append("\" data-ndm-outcome-chip>");
@@ -149,22 +146,23 @@ internal static class AfterMatchEmployerOutcomeSsrShells
     private static void AppendPreviewAside(StringBuilder sb, CultureState culture, AfterMatchEmployerOutcomeSsrData.PageData data)
     {
         var thread = data.Thread;
+        var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
         sb.Append("<aside class=\"wc side\" data-ndm-wg-aside><h2 style=\"font-size:1.1rem\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.PreviewTitle"]));
         sb.Append("</h2><div class=\"card\" style=\"margin-top:10px;background:#fbf6ef\" data-ndm-outcome-preview><div data-ndm-preview-pane=\"Offer\" hidden><b style=\"color:var(--brand)\">");
-        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewOfferTitleFmt"], thread.CandidateName)));
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewOfferTitleFmt"], first)));
         sb.Append("</b><p class=\"small\" style=\"margin-top:6px\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewOfferLeadFmt"], thread.CompanyName)));
         sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-offer\">\"");
         sb.Append(WebUtility.HtmlEncode(data.DefaultReason));
         sb.Append("\"</p></div><div data-ndm-preview-pane=\"NextRound\" hidden><b style=\"color:var(--brand)\">");
-        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNextTitleFmt"], thread.CandidateName)));
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNextTitleFmt"], first)));
         sb.Append("</b><p class=\"small\" style=\"margin-top:6px\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNextLeadFmt"], thread.CompanyName)));
         sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-nextround\">\"");
         sb.Append(WebUtility.HtmlEncode(data.DefaultReason));
         sb.Append("\"</p></div><div data-ndm-preview-pane=\"NotNow\"><b style=\"color:var(--brand)\">");
-        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNotNowTitleFmt"], thread.CandidateName)));
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNotNowTitleFmt"], first)));
         sb.Append("</b><p class=\"small\" style=\"margin-top:6px\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNotNowLeadFmt"], thread.CompanyName)));
         sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-notnow\">\"");
@@ -172,7 +170,7 @@ internal static class AfterMatchEmployerOutcomeSsrShells
         sb.Append("\"</p></div></div><p class=\"xs muted\" style=\"margin-top:10px\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.ToneNote"]));
         sb.Append("</p><div class=\"note\" style=\"margin-top:12px\"><span>");
-        sb.Append(NdMIcons.Info);
+        sb.Append(NdMIcons.Bank);
         sb.Append("</span><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.OfferNote"]));
         sb.Append("</span></div></aside>");

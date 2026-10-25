@@ -10,6 +10,11 @@ internal static class AfterMatchEmployerSsrRouting
         thread is not null
         && thread.InterviewStatus == InterviewStatus.Proposing;
 
+    /// <summary>Employer home when interview is scheduled (gesprek gepland).</summary>
+    internal static bool ShouldUseScheduledHomeScreen(AfterMatchThreadDto? thread) =>
+        thread is not null
+        && thread.InterviewStatus == InterviewStatus.Scheduled;
+
     /// <summary>Screen 03 (momenten voorstellen) SSR.</summary>
     internal static bool ShouldUseProposeScreen(AfterMatchThreadDto? thread) =>
         thread is not null
@@ -34,4 +39,41 @@ internal static class AfterMatchEmployerSsrRouting
         thread is not null
         && thread.Outcome is null
         && thread.InterviewStatus is InterviewStatus.Scheduled or InterviewStatus.Done;
+
+    internal static bool ShouldUseDoneSummaryScreen(AfterMatchThreadDto? thread) =>
+        thread is not null
+        && thread.Outcome is not null
+        && thread.InterviewStatus == InterviewStatus.Done;
+
+    internal static bool ShouldUsePanelSsrDefault(AfterMatchThreadDto thread, string panel)
+    {
+        panel = string.IsNullOrWhiteSpace(panel) ? "" : panel.Trim().ToLowerInvariant();
+        if (panel is "slots")
+        {
+            panel = "propose";
+        }
+
+        return panel switch
+        {
+            "propose" => ShouldUseProposeScreen(thread),
+            "messages" => true,
+            "cancel" => ShouldUseCancelScreen(thread),
+            "outcome" => ShouldUseOutcomeScreen(thread) || ShouldUseDoneSummaryScreen(thread),
+            _ => ShouldUseWatNuScreen(thread)
+                || ShouldUseScheduledHomeScreen(thread)
+                || ShouldUseDoneSummaryScreen(thread),
+        };
+    }
+
+    internal static bool ShouldRedirectToRescheduleSsr(AfterMatchThreadDto thread, string panel)
+    {
+        panel = string.IsNullOrWhiteSpace(panel) ? "" : panel.Trim().ToLowerInvariant();
+        if (panel is "slots")
+        {
+            panel = "propose";
+        }
+
+        return ShouldUseRescheduleScreen(thread)
+               && panel is not ("messages" or "cancel" or "propose");
+    }
 }

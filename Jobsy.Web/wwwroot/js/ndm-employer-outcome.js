@@ -48,7 +48,15 @@
   function bindReasonChips(container) {
     container.querySelectorAll("[data-ndm-outcome-chip]").forEach(function (chip) {
       chip.addEventListener("click", function () {
-        chip.classList.toggle("on");
+        container.querySelectorAll("[data-ndm-outcome-chip]").forEach(function (other) {
+          other.classList.remove("on");
+        });
+        chip.classList.add("on");
+        var reasonEl = container.querySelector("[data-ndm-outcome-reason]");
+        if (reasonEl) {
+          reasonEl.value = chip.textContent ? chip.textContent.trim() : "";
+          syncPreview(container);
+        }
       });
     });
   }

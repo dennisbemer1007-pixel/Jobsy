@@ -4,6 +4,7 @@
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Features
 @using Jobsy.Web.Applications
 @using Jobsy.Web.Components.Shared
@@ -25,16 +26,13 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261030-ndm-scroll1" />
-    <script src="/js/ndm-employer.js?v=20261028-ndm-wg02" defer></script>
-    <script src="/js/ndm-employer-reschedule.js?v=20261030-ndm-wg09" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-interact" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-interact" defer></script>
+    <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-interact" defer></script>
+    <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-interact" defer></script>
 </HeadContent>
 
 @if (_loading)
-{
-    <p class="state-message">@Culture["Common.Loading"]</p>
-}
-else if (_redirecting)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
@@ -55,7 +53,6 @@ else if (_bodyHtml is not null)
     [Parameter] public Guid ApplicationId { get; set; }
 
     private bool _loading = true;
-    private bool _redirecting;
     private string? _fatalMessage;
     private string? _bodyHtml;
     private string? _candidateName;
@@ -73,17 +70,16 @@ else if (_bodyHtml is not null)
 
             http.Response.Headers.CacheControl = "no-store";
 
+            var panel = AfterMatchEmployerPanelRouting.ResolvePanel(http.Request.Query);
+            if (panel is "slots")
+            {
+                panel = "propose";
+            }
+
             var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
             if (!AfterMatchEmployerSsrRouting.ShouldUseRescheduleScreen(thread))
             {
-                _redirecting = true;
-                var blazorPath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/blazor";
-                if (http.Request.QueryString.HasValue)
-                {
-                    blazorPath += http.Request.QueryString.Value;
-                }
-
-                http.Response.Redirect(blazorPath);
+                _fatalMessage = Culture["AfterMatch.Error.NotFound"];
                 return;
             }
 
@@ -95,7 +91,23 @@ else if (_bodyHtml is not null)
 
             _candidateName = thread.CandidateName;
             var data = AfterMatchEmployerRescheduleSsrData.FromThread(Culture, thread, ApplicationId);
-            _bodyHtml = AfterMatchEmployerRescheduleSsrShells.BuildBody(Culture, data, ApplicationId);
+            var proposeData = new AfterMatchEmployerPanelSsrShells.PageData(
+                thread,
+                $"/werkgever/sollicitaties/{ApplicationId:D}",
+                null,
+                AfterMatchEmployerDemoSlots.InitialUtc,
+                InterviewFormat.OnSite,
+                "Loosduinseweg 120, Den Haag · ingang naast de winkel",
+                "Linda de Wit, eigenaar",
+                "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
+                panel is "propose" ? "propose" : "",
+                null);
+            var cancelData = new AfterMatchEmployerCancelSsrShells.PageData(
+                thread,
+                $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/reschedule-ssr",
+                $"/werkgever/sollicitaties/{ApplicationId:D}");
+            var options = new AfterMatchEmployerRescheduleSsrShells.BuildOptions(panel, proposeData, cancelData);
+            _bodyHtml = AfterMatchEmployerRescheduleSsrShells.BuildBody(Culture, data, ApplicationId, options);
         }
         catch
         {

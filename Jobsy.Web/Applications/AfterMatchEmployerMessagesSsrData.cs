@@ -1,5 +1,6 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Features;
+using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 
@@ -29,54 +30,16 @@ internal static class AfterMatchEmployerMessagesSsrData
             return null;
         }
 
-        IReadOnlyList<EmployerApplicationItem> applications;
-        try
-        {
-            applications = await api.GetApplicationsAsync(ct: cancellationToken);
-        }
-        catch
-        {
-            return null;
-        }
-
-        var eligible = applications
-            .Where(a => AfterMatchEligible(a.Status))
-            .ToList();
-        if (eligible.Count == 0)
-        {
-            return null;
-        }
-
-        var loadTasks = eligible.Select(async item =>
-        {
-            try
-            {
-                var thread = await api.GetAfterMatchForEmployerAsync(item.Id, cancellationToken);
-                return thread is not null && AfterMatchEmployerBerichtenPresentation.ThreadEligible(thread)
-                    ? new ThreadRow(item, thread)
-                    : null;
-            }
-            catch
-            {
-                return null;
-            }
-        });
-
-        var threads = (await Task.WhenAll(loadTasks))
-            .Where(r => r is not null)
-            .Cast<ThreadRow>()
-            .OrderByDescending(r =>
-            {
-                var lastMessage = r.Thread.Messages.Count > 0 ? r.Thread.Messages[^1] : null;
-                return lastMessage?.CreatedAtUtc
-                       ?? r.Thread.AcceptedAtUtc
-                       ?? r.Application.CreatedAt;
-            })
-            .ToList();
+        var threads = await LoadThreadRowsAsync(api, cancellationToken);
+        threads = AfterMatchEmployerMessagesDemoHub.Augment(threads, contextApplicationId).ToList();
 
         if (threads.Count == 0)
         {
-            return null;
+            threads = await LoadContextOnlyAsync(api, contextApplicationId, cancellationToken);
+            if (threads.Count == 0)
+            {
+                return null;
+            }
         }
 
         var selected = threadId ?? contextApplicationId;
@@ -94,6 +57,103 @@ internal static class AfterMatchEmployerMessagesSsrData
             messagesBasePath,
             archiveHref,
             threads);
+    }
+
+    private static async Task<List<ThreadRow>> LoadThreadRowsAsync(
+        JobsyApiClient api,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyList<EmployerApplicationItem> applications;
+        try
+        {
+            applications = await LoadAllApplicationsAsync(api, cancellationToken);
+        }
+        catch
+        {
+            return [];
+        }
+
+        var eligible = applications
+            .Where(a => AfterMatchEligible(a.Status))
+            .ToList();
+        if (eligible.Count == 0)
+        {
+            return [];
+        }
+
+        var loadTasks = eligible.Select(async item =>
+        {
+            try
+            {
+                var thread = await api.GetAfterMatchForEmployerAsync(item.Id, cancellationToken);
+                return thread is not null && AfterMatchEmployerBerichtenPresentation.ThreadEligible(thread)
+                    ? new ThreadRow(item, thread)
+                    : null;
+            }
+            catch
+            {
+                return null;
+            }
+        });
+
+        return (await Task.WhenAll(loadTasks))
+            .Where(r => r is not null)
+            .Cast<ThreadRow>()
+            .ToList();
+    }
+
+    private static async Task<List<ThreadRow>> LoadContextOnlyAsync(
+        JobsyApiClient api,
+        Guid contextApplicationId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var thread = await api.GetAfterMatchForEmployerAsync(contextApplicationId, cancellationToken);
+            if (thread is null || !AfterMatchEmployerBerichtenPresentation.ThreadEligible(thread))
+            {
+                return [];
+            }
+
+            var item = new EmployerApplicationItem
+            {
+                Id = thread.ApplicationId,
+                VacancyTitle = thread.VacancyTitle,
+                CompanyName = thread.CompanyName,
+                CandidateName = thread.CandidateName,
+                Status = "Accepted",
+                PiiRevealed = !string.IsNullOrWhiteSpace(thread.CandidateName),
+                CreatedAt = thread.AcceptedAtUtc ?? DateTime.UtcNow,
+            };
+            return [new ThreadRow(item, thread)];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static async Task<IReadOnlyList<EmployerApplicationItem>> LoadAllApplicationsAsync(
+        JobsyApiClient api,
+        CancellationToken cancellationToken)
+    {
+        var all = new List<EmployerApplicationItem>();
+        for (var page = 1; page <= 5; page++)
+        {
+            var batch = await api.GetApplicationsAsync(page: page, pageSize: 100, ct: cancellationToken);
+            if (batch.Count == 0)
+            {
+                break;
+            }
+
+            all.AddRange(batch);
+            if (batch.Count < 100)
+            {
+                break;
+            }
+        }
+
+        return all;
     }
 
     private static bool AfterMatchEligible(string status)

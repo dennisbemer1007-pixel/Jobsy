@@ -90,6 +90,9 @@ public sealed class AfterMatchEmployerProposeSsrTests : BunitContext
         Assert.Contains(culture["AfterMatch.Screen03.Submit"], html, StringComparison.Ordinal);
         Assert.Contains(culture["AfterMatch.Employer.Propose.AddSlot"], html, StringComparison.Ordinal);
         Assert.Contains("Telefonisch", html, StringComparison.Ordinal);
+        Assert.Contains(culture["AfterMatch.Mail.Where"], html, StringComparison.Ordinal);
+        Assert.Contains("data-ndm-close-panel", html, StringComparison.Ordinal);
+        Assert.Contains("ndm-wg-inp-field", html, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

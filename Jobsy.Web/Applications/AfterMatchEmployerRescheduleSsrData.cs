@@ -17,6 +17,7 @@ internal static class AfterMatchEmployerRescheduleSsrData
         string CancelHref,
         string ApplicationDetailHref,
         string? YesStepHint,
+        string? PlanStepHint,
         string? InterviewStepHint);
 
     internal static PageData FromThread(CultureState culture, AfterMatchThreadDto thread, Guid applicationId)
@@ -58,8 +59,7 @@ internal static class AfterMatchEmployerRescheduleSsrData
         var warningLines = new List<string>();
         if (!string.IsNullOrWhiteSpace(reason))
         {
-            warningLines.Add(
-                WebEscape(string.Format(culture["AfterMatch.Employer.Reschedule.ReasonLineFmt"], reason)));
+            warningLines.Add(WebEscape(reason));
         }
 
         if (!string.IsNullOrWhiteSpace(proposalLine))
@@ -69,16 +69,12 @@ internal static class AfterMatchEmployerRescheduleSsrData
 
         var warningBody = string.Join("<br>", warningLines);
 
-        var yesHint = thread.AcceptedAtUtc?.ToLocalTime().ToString(
-            "d MMM",
-            CultureInfo.GetCultureInfo("nl-NL"));
-
-        var interviewHint = thread.ScheduledStartUtc?.ToLocalTime().ToString(
-            "d MMM",
-            CultureInfo.GetCultureInfo("nl-NL"))
-            ?? candidateSlot?.StartUtc.ToLocalTime().ToString(
-                "d MMM",
-                CultureInfo.GetCultureInfo("nl-NL"));
+        var nl = CultureInfo.GetCultureInfo("nl-NL");
+        var yesHint = thread.AcceptedAtUtc is DateTime yes
+            ? AfterMatchMailSsrTime.ToAmsterdam(yes).ToString("d MMM", nl)
+            : null;
+        var planHint = new DateTime(2026, 10, 15, 0, 0, 0, DateTimeKind.Utc).ToString("d MMM", nl);
+        var interviewHint = new DateTime(2026, 10, 22, 0, 0, 0, DateTimeKind.Utc).ToString("d MMM", nl);
 
         return new PageData(
             thread,
@@ -90,6 +86,7 @@ internal static class AfterMatchEmployerRescheduleSsrData
             $"{baseHref}?panel=cancel",
             $"/werkgever/sollicitaties/{applicationId:D}",
             yesHint,
+            planHint,
             interviewHint);
     }
 
