@@ -20,7 +20,7 @@ public sealed class AfterMatchServiceFlowTests
     public async Task Propose_slots_and_record_outcome_without_scheduling_mail()
     {
         await using var db = CreateDb();
-        var (service, appId, _, employerId) = await SeedThreadAsync(db);
+        var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
 
         var proposing = await service.ProposeEmployerSlotsAsync(
             appId,
@@ -45,6 +45,12 @@ public sealed class AfterMatchServiceFlowTests
                 "We kozen nu voor iemand met meer ervaring aan de oven."));
         Assert.Equal(AfterMatchOutcomeKind.NotNow, outcome.Outcome);
         Assert.Equal(InterviewStatus.Done, outcome.InterviewStatus);
+
+        var reread = await service.GetThreadForCandidateAsync(appId, candidateId);
+        Assert.NotNull(reread);
+        Assert.Equal(AfterMatchOutcomeKind.NotNow, reread!.Outcome);
+        Assert.Equal(InterviewStatus.Done, reread.InterviewStatus);
+        Assert.False(string.IsNullOrWhiteSpace(reread.OutcomeReason));
     }
 
     [Fact]

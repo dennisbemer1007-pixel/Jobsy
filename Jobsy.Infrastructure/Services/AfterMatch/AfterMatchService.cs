@@ -489,13 +489,32 @@ public sealed class AfterMatchService : IAfterMatchService
             }
         }
 
-        if (!AfterMatchInterviewRules.ApplicationEligible(application.Status))
+        if (!AfterMatchInterviewRules.ApplicationEligible(application.Status)
+            && !await IsRejectedAfterMatchReadableAsync(application, cancellationToken))
         {
             return null;
         }
 
         var interview = await EnsureInterviewEntityAsync(application, cancellationToken);
         return await MapThreadAsync(application, interview, userId, isEmployer, cancellationToken);
+    }
+
+    /// <summary>
+    /// After "Nu niet" the application is <see cref="ApplicationStatus.Rejected"/> but the candidate
+    /// must still open screen 13 (uitkomst) on acceptatie and production.
+    /// </summary>
+    private async Task<bool> IsRejectedAfterMatchReadableAsync(
+        Application application,
+        CancellationToken cancellationToken)
+    {
+        if (application.Status != ApplicationStatus.Rejected)
+        {
+            return false;
+        }
+
+        var interview = await _db.Interviews.AsNoTracking()
+            .FirstOrDefaultAsync(i => i.ApplicationId == application.Id, cancellationToken);
+        return interview?.Status == InterviewStatus.Done;
     }
 
     private async Task<Interview> EnsureInterviewEntityAsync(Application application, CancellationToken cancellationToken)

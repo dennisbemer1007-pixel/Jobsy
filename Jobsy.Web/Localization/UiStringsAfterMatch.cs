@@ -276,6 +276,11 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen13.DemoReason",
             "Je was heel zorgvuldig en vriendelijk. We kozen nu voor iemand die al zelfstandig aan de oven kan staan.",
             "You were careful and friendly. We chose someone who can already work at the oven independently.");
+        Add("AfterMatch.Screen13.FallbackReason",
+            "Bedankt voor je tijd en je openheid tijdens het gesprek. We delen de exacte tekst van de werkgever zodra die beschikbaar is.",
+            "Thank you for your time and openness during the interview. We will share the employer's exact message when it is available.");
+        Add("AfterMatch.Screen13.FallbackVacancyTitle", "Sollicitatie", "Application");
+        Add("AfterMatch.Screen13.FallbackCompany", "Werkgever", "Employer");
         Add("AfterMatch.Screen13.DemoJob1Initials", "BK", "BK");
         Add("AfterMatch.Screen13.DemoJob1Title", "Medewerker brood en banket", "Bread and pastry assistant");
         Add("AfterMatch.Screen13.DemoJob1Sub", "Bakker Bart Leyweg · 12 min fietsen", "Bakker Bart Leyweg · 12 min by bike");

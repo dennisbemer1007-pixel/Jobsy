@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
@@ -12,9 +13,16 @@ public sealed partial class JobsyApiClient
         Guid applicationId,
         CancellationToken ct = default)
     {
-        return await GetApiJsonAsync<AfterMatchThreadDto>(
+        using var response = await _http.GetAsync(
             $"api/me/applications/{applicationId:D}/after-match",
             ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<AfterMatchThreadDto>(response.Content, ct);
     }
 
     public async Task<AfterMatchThreadDto?> GetAfterMatchForEmployerAsync(

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
@@ -40,7 +41,7 @@ internal static class AfterMatchOutcomeSsrData
         CancellationToken cancellationToken = default)
     {
         var thread = await api.GetAfterMatchForCandidateAsync(applicationId, cancellationToken);
-        if (thread is null || thread.Outcome != AfterMatchOutcomeKind.NotNow)
+        if (thread is null || !AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread))
         {
             return null;
         }
@@ -79,6 +80,62 @@ internal static class AfterMatchOutcomeSsrData
             interviewDate,
             outcomeDate,
             ResolveSimilarJobs(culture, thread));
+    }
+
+    internal static PageData BuildFallback(
+        CultureState culture,
+        Guid applicationId,
+        string? returnUrl)
+    {
+        var backHref = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(returnUrl, out var safeReturn)
+            ? safeReturn
+            : KbRoutes.Applications;
+
+        var activitiesHref = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabActiviteiten,
+            ApplicationsSsrQuery.FilterAll,
+            null,
+            null);
+
+        const string candidateHow = "/candidate/hoe-werkt-lobsy";
+        var placeholder = new AfterMatchThreadDto(
+            applicationId,
+            Guid.Empty,
+            InterviewStatus.Done,
+            AfterMatchContactShareState.From(InterviewStatus.Done, AfterMatchOutcomeKind.NotNow),
+            AfterMatchOutcomeKind.NotNow,
+            culture["AfterMatch.Screen13.FallbackVacancyTitle"],
+            culture["AfterMatch.Screen13.FallbackCompany"],
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            null,
+            null,
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "",
+            null,
+            null,
+            null);
+
+        return new PageData(
+            placeholder,
+            backHref,
+            activitiesHref,
+            KbRoutes.Map,
+            candidateHow,
+            candidateHow,
+            culture["AfterMatch.Screen13.FallbackReason"],
+            "13 okt",
+            "15 okt",
+            "22 okt",
+            DateTime.UtcNow.ToLocalTime().ToString("d MMM", Nl),
+            ResolveSimilarJobs(culture, placeholder));
     }
 
     private static IReadOnlyList<SimilarJobRow> ResolveSimilarJobs(CultureState culture, AfterMatchThreadDto thread)

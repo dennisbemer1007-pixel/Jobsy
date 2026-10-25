@@ -52,6 +52,36 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
     }
 
     [Fact]
+    public void Outcome_screen_routing_accepts_done_interview_without_not_now_enum()
+    {
+        var thread = new AfterMatchThreadDto(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            InterviewStatus.Done,
+            AfterMatchContactShareState.From(InterviewStatus.Done, null),
+            null,
+            "Barista",
+            "Testbedrijf",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            null,
+            null,
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "",
+            null,
+            null,
+            null);
+        Assert.True(AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread));
+    }
+
+    [Fact]
     public void Shell_renders_not_now_mockup_blocks()
     {
         var culture = Culture;
