@@ -1,3 +1,5 @@
+using Jobsy.Web.Components.Layout;
+
 namespace Jobsy.Tests;
 
 public sealed class LobsyCoachSsrGuardTests
@@ -18,6 +20,10 @@ public sealed class LobsyCoachSsrGuardTests
 
         var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/lobsy-coach-ssr.js"));
         Assert.Contains("/api/assistant-client/chat", js, StringComparison.Ordinal);
+
+        Assert.DoesNotContain("(_isCandidate && IsBanenkaartPath(path))", layout, StringComparison.Ordinal);
+        Assert.False(MainLayout.IsPassportOrProfileCoachHidden("candidate/paspoort"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/paspoort"));
     }
 
     private static string FindRepoRoot()

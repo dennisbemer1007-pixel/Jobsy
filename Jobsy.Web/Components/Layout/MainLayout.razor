@@ -466,8 +466,7 @@
                         || IsVacancyOrNotificationsCoachHidden(path)
                         || hidePassportChrome
                         || IsStandaloneQuickScanCoachHidden(path)
-                        || IsIllustratedCandidateCoachHidden(path)
-                        || (_isCandidate && IsBanenkaartPath(path));
+                        || IsIllustratedCandidateCoachHidden(path);
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -534,13 +533,11 @@
     public static bool UsesBanenkaartImmersiveChrome(string path, bool isAuthenticatedCandidate)
         => IsBanenkaartPath(path) && !isAuthenticatedCandidate;
 
-    /// <summary>Hide floating coach on paspoort/profile (inline tips, read-aloud, bottom nav).</summary>
+    /// <summary>Hide floating coach on profile (paspoort uses SSR Lobsy dock per #1080).</summary>
     public static bool IsPassportOrProfileCoachHidden(string path)
     {
         path = path.TrimStart('/');
-        return path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("candidate/paspoort/", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
+        return path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>
@@ -562,7 +559,6 @@
         path = path.TrimStart('/');
         return path.Equals("carriere", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/applications", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/liked", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/settings", StringComparison.OrdinalIgnoreCase);
     }
