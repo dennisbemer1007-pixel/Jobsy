@@ -482,12 +482,45 @@
             }
             return visible;
         },
-        syncActiveClassesFromLocation: function (path) {
+        navLinkMatchesPath: function (el, path) {
             var p = this.normalizePath(path || location.pathname);
+            var href = el.getAttribute("href") || "";
+            var h = this.normalizePath(href);
+            if (h && p === h) {
+                return true;
+            }
+            if (h && h !== "/" && p.indexOf(h + "/") === 0) {
+                return true;
+            }
+            var prefixes = el.getAttribute("data-lobsy-active-prefixes");
+            if (!prefixes) {
+                return false;
+            }
+            var parts = prefixes.split(",");
+            for (var i = 0; i < parts.length; i++) {
+                var raw = parts[i].trim();
+                if (!raw) {
+                    continue;
+                }
+                if (raw === "/") {
+                    if (p === "/") {
+                        return true;
+                    }
+                    continue;
+                }
+                var pref = this.normalizePath(raw);
+                if (p === pref || p.indexOf(pref + "/") === 0) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        syncActiveClassesFromLocation: function (path) {
+            var p = path || location.pathname;
             var links = document.querySelectorAll('[data-lobsy-candidate-nav="true"]');
             for (var i = 0; i < links.length; i++) {
                 var el = links[i];
-                var match = this.normalizePath(el.getAttribute("href") || "") === p;
+                var match = this.navLinkMatchesPath(el, p);
                 el.classList.toggle("is-active", match);
                 if (match) {
                     el.setAttribute("aria-current", "page");

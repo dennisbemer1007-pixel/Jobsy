@@ -115,6 +115,7 @@ internal static class CandidateNavSsrShell
                 .Append("\" data-lobsy-candidate-nav=\"true\" data-enhance-nav=\"false\" data-lobsy-document-title=\"")
                 .Append(WebUtility.HtmlEncode(docTitle))
                 .Append('"');
+            AppendActivePrefixAttribute(sb, item);
             if (active)
             {
                 sb.Append(" aria-current=\"page\"");
@@ -146,6 +147,7 @@ internal static class CandidateNavSsrShell
             .Append("\" data-lobsy-candidate-nav=\"true\" data-enhance-nav=\"false\" data-lobsy-document-title=\"")
             .Append(WebUtility.HtmlEncode(docTitle))
             .Append('"');
+        AppendActivePrefixAttribute(sb, item);
 
         if (active)
         {
@@ -166,6 +168,18 @@ internal static class CandidateNavSsrShell
             .Append("</span><span class=\"bottom-nav__label bottom-nav__label--short\">")
             .Append(WebUtility.HtmlEncode(shortTitle))
             .Append("</span></a>");
+    }
+
+    private static void AppendActivePrefixAttribute(StringBuilder sb, NavItem item)
+    {
+        if (item.ExtraActivePaths is not { Length: > 0 })
+        {
+            return;
+        }
+
+        sb.Append(" data-lobsy-active-prefixes=\"")
+            .Append(WebUtility.HtmlEncode(string.Join(",", item.ExtraActivePaths)))
+            .Append('"');
     }
 
     private static string? HeaderNavTestId(NavItem item)

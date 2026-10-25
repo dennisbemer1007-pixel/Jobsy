@@ -33,8 +33,8 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchMessagesSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-messages.js?v=20261027-ndm-messages3", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261027-ndm-messages3", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-messages.js?v=20261027-ndm-messages4", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261027-ndm-messages4", razor, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -77,6 +77,14 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
         Assert.Contains($"/candidate/applications?sel={appId:D}", href, StringComparison.Ordinal);
         Assert.Contains("return=", href, StringComparison.Ordinal);
         Assert.Contains("panel%3Dmessages", href, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void App_public_nav_sync_uses_prefix_match_for_applications()
+    {
+        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-public.js"));
+        Assert.Contains("navLinkMatchesPath", src, StringComparison.Ordinal);
+        Assert.Contains("h + \"/\"", src, StringComparison.Ordinal);
     }
 
     [Fact]
