@@ -240,8 +240,8 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Screen09.Hero.Title", "Verzoek om te verzetten", "Request to reschedule");
         Add("AfterMatch.Screen09.Hero.Lead",
-            "Sanne vroeg om een ander moment. Reageer met nieuwe tijden of een bericht.",
-            "Sanne asked for another time. Reply with new times or a message.");
+            "Kies een nieuw moment of stel er zelf een voor.",
+            "Pick a new time or propose one yourself.");
 
         Add("AfterMatch.Screen10.Hero.Title", "Berichten", "Messages");
         Add("AfterMatch.Screen10.Hero.Eyebrow", "Sollicitaties · Berichten", "Applications · Messages");
@@ -407,7 +407,19 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen07.PageTitle", "Herinneringen", "Reminders");
         Add("AfterMatch.Employer.Reschedule.Note", "Sanne vroeg om een ander moment. Hieronder zie je de reden en het voorstel.", "Sanne asked for another time. See the reason and proposal below.");
         Add("AfterMatch.Employer.Reschedule.Accept", "Akkoord met voorstel", "Accept proposal");
+        Add("AfterMatch.Employer.Reschedule.AcceptSlotFmt", "Akkoord, {0}", "Accept, {0}");
         Add("AfterMatch.Employer.Reschedule.Counter", "Ander moment voorstellen", "Propose another time");
+        Add("AfterMatch.Employer.Reschedule.WarningTitleFmt", "{0} vraagt het gesprek te verzetten", "{0} asks to reschedule the interview");
+        Add("AfterMatch.Employer.Reschedule.ReasonLineFmt", "Reden: {0}", "Reason: {0}");
+        Add("AfterMatch.Employer.Reschedule.ProposalLineFmt", "Voorstel: {0} {1}", "Proposal: {0} {1}");
+        Add("AfterMatch.Employer.Reschedule.OwnSlotHint", "(een van je eigen momenten)", "(one of your own times)");
+        Add("AfterMatch.Employer.Reschedule.CancelLink", "Gesprek afzeggen", "Cancel interview");
+        Add("AfterMatch.Employer.Reschedule.Footnote",
+            "Zeg je zelf af of verzet je? Dan vraagt Lobsy ook jou om een korte reden. Sanne ziet die reden.",
+            "If you cancel or reschedule, Lobsy asks you for a short reason too. Sanne will see it.");
+        Add("AfterMatch.Employer.Reschedule.WeekAside", "Gesprekken deze week", "Interviews this week");
+        Add("AfterMatch.Employer.Reschedule.RequestLabel", "Verzoek om te verzetten", "Request to reschedule");
+        Add("AfterMatch.Employer.Reschedule.ActionPill", "Actie", "Action");
         Add("AfterMatch.Employer.Outcome.PreviewTitle", "Zo ziet Sanne het", "How Sanne sees it");
         Add("AfterMatch.Employer.Outcome.PreviewLead", "Dank je wel voor het gesprek. Hier komt je korte uitleg.", "Thank you for the interview. Your short explanation appears here.");
     }

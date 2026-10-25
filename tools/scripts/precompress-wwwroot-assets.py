@@ -23,6 +23,7 @@ DEFAULTS = [
     ROOT / "Jobsy.Web/wwwroot/js/ndm-reschedule.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-mail-chrome.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-herinneringen.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-reschedule.js",
 ]
 
 

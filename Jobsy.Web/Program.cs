@@ -666,6 +666,7 @@ app.MapAfterMatchPickSlotClientEndpoints();
 app.MapAfterMatchEmployerProposeClientEndpoints();
 app.MapAfterMatchConfirmedClientEndpoints();
 app.MapAfterMatchRescheduleClientEndpoints();
+app.MapAfterMatchEmployerRescheduleClientEndpoints();
 app.MapBanenkaartClientEndpoints();
 app.MapMapBasemapEndpoints();
 app.MapOnboardingStartFormEndpoints();

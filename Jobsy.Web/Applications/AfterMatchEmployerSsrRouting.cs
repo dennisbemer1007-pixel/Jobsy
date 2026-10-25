@@ -14,4 +14,9 @@ internal static class AfterMatchEmployerSsrRouting
     internal static bool ShouldUseProposeScreen(AfterMatchThreadDto? thread) =>
         thread is not null
         && thread.InterviewStatus == InterviewStatus.Proposing;
+
+    /// <summary>Screen 09 (verzetten) SSR — candidate asked to reschedule.</summary>
+    internal static bool ShouldUseRescheduleScreen(AfterMatchThreadDto? thread) =>
+        thread is not null
+        && thread.InterviewStatus == InterviewStatus.RescheduleRequested;
 }

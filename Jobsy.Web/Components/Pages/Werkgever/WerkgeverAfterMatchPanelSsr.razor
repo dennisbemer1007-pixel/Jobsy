@@ -73,6 +73,19 @@ else if (_bodyHtml is not null)
             http.Response.Headers.CacheControl = "no-store";
 
             var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
+            if (AfterMatchEmployerSsrRouting.ShouldUseRescheduleScreen(thread))
+            {
+                _redirecting = true;
+                var reschedulePath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/reschedule-ssr";
+                if (http.Request.QueryString.HasValue)
+                {
+                    reschedulePath += http.Request.QueryString.Value;
+                }
+
+                http.Response.Redirect(reschedulePath);
+                return;
+            }
+
             if (!AfterMatchEmployerSsrRouting.ShouldUseWatNuScreen(thread))
             {
                 _redirecting = true;
