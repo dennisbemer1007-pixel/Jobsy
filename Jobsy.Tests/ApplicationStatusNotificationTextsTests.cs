@@ -82,6 +82,16 @@ public sealed class ApplicationStatusNotificationTextsTests
     }
 
     [Fact]
+    public void ApplicationWithdrawn_sm15_copy()
+    {
+        var employer = ApplicationStatusNotificationTexts.CandidateWithdrawn("Jan", "Kassier", "nl");
+        Assert.Equal("Sollicitatie ingetrokken", employer.Title);
+
+        var self = ApplicationStatusNotificationTexts.ApplicationWithdrawnSelf("Acme", "Kassier", "en");
+        Assert.Equal("Confirmation", self.Title);
+    }
+
+    [Fact]
     public void ApplicationOutcome_sm12_sm14_copy()
     {
         var offer = ApplicationStatusNotificationTexts.ApplicationOutcomeOffer("Acme", "Kassier", "nl");
