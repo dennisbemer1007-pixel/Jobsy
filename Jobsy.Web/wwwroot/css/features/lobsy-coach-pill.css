@@ -184,3 +184,26 @@
   box-shadow: var(--shadow-lg);
   padding: 0.85rem 0.9rem 0.95rem;
 }
+
+/* Fixronde 9: candidate mobile pill baseline (bottom nav is interactive-only in DOM). */
+@media (max-width: 1023px) {
+  .app-shell--candidate:not(.app-shell--match):not(.app-shell--questionnaire) .lobsy-coach-dock[data-lobsy-coach],
+  .app-shell--candidate:not(.app-shell--match):not(.app-shell--questionnaire) .lobsy-coach-dock[data-ssr-coach],
+  .app-shell--error-ssr.app-shell--candidate .lobsy-coach-dock[data-lobsy-coach],
+  .app-shell--error-ssr.app-shell--candidate .lobsy-coach-dock[data-ssr-coach] {
+    bottom: calc(var(--bottom-nav-h, 4rem) + 22px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .lobsy-assistant__panel {
+    width: min(366px, calc(100vw - 1.5rem));
+    height: 396px;
+    min-height: 396px;
+    max-height: 396px;
+  }
+
+  .lobsy-assistant__chat {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+}

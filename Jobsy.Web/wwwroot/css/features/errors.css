@@ -115,16 +115,19 @@
   position: relative;
   display: block;
   inline-size: 100%;
-  block-size: var(--cand-header-strip-h-mobile, 105px);
-  max-block-size: var(--cand-header-strip-h-mobile, 105px);
+  block-size: auto;
+  min-block-size: 11rem;
+  max-block-size: none;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 20px;
   background: var(--bg, #f5f2ee);
 }.err-hero__art--kreeft .err-kreeft-scene {
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
   object-position: 52% 42%;
+  border-radius: 20px;
 }.err-hero__art--kreeft .err-kreeft-figure {
   display: block;
   position: absolute;
@@ -301,8 +304,11 @@
     min-block-size: var(--cand-header-strip-h-desktop, 225px);
 }.err-hero__art--kreeft {
   position: relative;
-  block-size: var(--cand-header-strip-h-desktop, 225px);
-  max-block-size: var(--cand-header-strip-h-desktop, 225px);
+  block-size: auto;
+  min-block-size: 12rem;
+  max-block-size: 16rem;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
 }.err-blob {
     inline-size: 20rem;
     block-size: 20rem;

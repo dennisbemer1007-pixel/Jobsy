@@ -436,7 +436,7 @@ public static class PageAssetCatalog
     /// <summary>Candidate header + shell chrome when banenkaart SSR runs without full Blazor app.min.css.</summary>
     public static IReadOnlyList<string> BanenkaartAuthenticatedShellCss() =>
     [
-        "css/features/banenkaart-auth-chrome.css?v=20261025-kreeft8",
+        "css/features/banenkaart-auth-chrome.css?v=20261025-kreeft9",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/nav-feedback.css?v=20261017-01",
         "css/features/candidate-header-tablet.css?v=20261021-01",
@@ -446,7 +446,7 @@ public static class PageAssetCatalog
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [
         "css/features/candidate-no-blazor-chrome.css?v=20261025-kreeft8",
-        "css/features/lobsy-coach-pill.css?v=20261025-kreeft8",
+        "css/features/lobsy-coach-pill.css?v=20261025-kreeft9",
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

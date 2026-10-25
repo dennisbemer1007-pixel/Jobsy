@@ -155,6 +155,7 @@
   margin: 0 0 0.75rem;
   font-family: var(--font-display, Fraunces, Georgia, serif);
   font-size: 1.15rem;
+  font-weight: 400;
   color: var(--brand);
 }
 
@@ -239,6 +240,25 @@
 
 .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-fields > label:not(.ob-wizard__check):first-of-type {
   margin-block-start: 0.35rem;
+}
+
+@media (min-width: 901px) {
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-wizard__card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.375rem;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-wizard__card > label:not(.ob-wizard__check),
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-wizard__card > fieldset,
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-wizard__card > .ob-fields__address,
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-wizard__card > .ob-wizard__field-row {
+    margin-block: 0;
+  }
+
+  .ob-rustig[data-ob-rustig-screen="step-01"] .ob-kreeft-qcard .ob-fields > label:not(.ob-wizard__check) {
+    margin-block: 0 0.5rem;
+  }
 }
 
 @media (max-width: 900px) {
