@@ -2,11 +2,6 @@ namespace Jobsy.Core.Notifications;
 
 public static partial class ApplicationStatusNotificationTexts
 {
-    public static Copy SelfConfirmation(string bodyNl, string bodyEn, string language)
-        => IsEnglish(language)
-            ? new Copy("Confirmation", bodyEn)
-            : new Copy("Bevestiging", bodyNl);
-
     public static Copy ApplicationNewMessage(string vacancyTitle, string language)
         => IsEnglish(language)
             ? new Copy(
