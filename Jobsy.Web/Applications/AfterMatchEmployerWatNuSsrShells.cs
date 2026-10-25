@@ -24,7 +24,8 @@ internal static class AfterMatchEmployerWatNuSsrShells
             "Loosduinseweg 120, Den Haag · ingang naast de winkel",
             "Linda de Wit, eigenaar",
             "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
-            "");
+            "",
+            null);
         return AfterMatchEmployerPanelSsrShells.BuildBody(culture, panelData, applicationId);
     }
 }

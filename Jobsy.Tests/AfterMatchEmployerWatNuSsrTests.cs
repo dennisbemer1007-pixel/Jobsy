@@ -31,8 +31,8 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchPanelSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-employer.js?v=20261025-ndm-wg0203", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261025-ndm-wg0203", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-employer.js?v=20261025-ndm-wg-stack", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261025-ndm-wg-stack", razor, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -50,7 +50,9 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
     {
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("propose"));
         Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel(""));
-        Assert.Equal("/blazor", AfterMatchEmployerPanelRouting.PathSuffixForPanel("messages"));
+        Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("messages"));
+        Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("outcome"));
+        Assert.Equal("/panel-ssr", AfterMatchEmployerPanelRouting.PathSuffixForPanel("cancel"));
     }
 
     [Fact]

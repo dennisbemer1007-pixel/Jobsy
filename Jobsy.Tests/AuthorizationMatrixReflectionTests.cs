@@ -78,6 +78,7 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("AfterMatchController", "PreviewMessage", "After-match message preview (role checked in service)"),
         ("AfterMatchController", "SendMessage", "After-match messaging (role checked in service)"),
         ("AfterMatchController", "MarkCandidateMessagesRead", "Candidate marks after-match thread read"),
+        ("AfterMatchController", "MarkEmployerMessagesRead", "Employer marks after-match thread read"),
     ];
 
     [Fact]

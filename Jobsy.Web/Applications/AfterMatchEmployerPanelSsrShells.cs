@@ -19,7 +19,8 @@ internal static class AfterMatchEmployerPanelSsrShells
         string InitialLocation,
         string InitialWithWhom,
         string InitialNote,
-        string InitialPanel);
+        string InitialPanel,
+        AfterMatchEmployerMessagesSsrData.PageData? MessagesHub);
 
     internal static string BuildBody(CultureState culture, PageData data, Guid applicationId)
     {
@@ -42,7 +43,17 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Title"]));
         sb.Append("\" data-ndm-lead-propose=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen03.Hero.Lead"]));
-        sb.Append("\"><div class=\"g2 ndm-wg-g2\">");
+        sb.Append("\" data-ndm-title-messages=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen11.Hero.Title"]));
+        sb.Append("\" data-ndm-lead-messages=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen11.Hero.Lead"]));
+        sb.Append("\"><div data-ndm-wg-flow");
+        if (panel is "messages")
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><div class=\"g2 ndm-wg-g2\">");
         AppendMainCard(sb, culture, data, panel);
         AppendShareAside(sb, culture, data.Thread);
         AppendProposePanel(sb, culture, data);
@@ -51,6 +62,23 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
         sb.Append("</a></p></div>");
+
+        if (data.MessagesHub is not null)
+        {
+            sb.Append("<div data-ndm-messages-panel");
+            if (panel is not "messages")
+            {
+                sb.Append(" hidden");
+            }
+
+            sb.Append("><p style=\"margin-bottom:12px\"><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
+            sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
+            sb.Append("</button></p>");
+            sb.Append(AfterMatchEmployerMessagesSsrShells.BuildBody(culture, data.MessagesHub, applicationId));
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>");
         return sb.ToString();
     }
 

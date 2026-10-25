@@ -109,13 +109,24 @@
     if (panel === "slots") panel = "propose";
     el.setAttribute("data-ndm-panel", panel);
 
+    var flow = el.querySelector("[data-ndm-wg-flow]");
+    var messagesPanel = el.querySelector("[data-ndm-messages-panel]");
     var proposePanel = el.querySelector("[data-ndm-propose-panel]");
     var shareAside = el.querySelector("[data-ndm-share-aside]");
     var infoNote = el.querySelector("[data-ndm-propose-info-note]");
     var whatGrid = el.querySelector(".what");
     var actions = el.querySelector("[data-ndm-wg-main] .row.wrapflex");
 
-    if (panel === "propose") {
+    if (panel === "messages") {
+      if (flow) flow.hidden = true;
+      if (messagesPanel) messagesPanel.hidden = false;
+      syncHero("messages");
+      if (window.NdmEmployerMessagesInit) {
+        window.NdmEmployerMessagesInit();
+      }
+    } else if (panel === "propose") {
+      if (flow) flow.hidden = false;
+      if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = false;
       if (shareAside) shareAside.hidden = true;
       if (infoNote) infoNote.hidden = false;
@@ -123,6 +134,8 @@
       if (actions) actions.hidden = true;
       syncHero("propose");
     } else {
+      if (flow) flow.hidden = false;
+      if (messagesPanel) messagesPanel.hidden = true;
       if (proposePanel) proposePanel.hidden = true;
       if (shareAside) shareAside.hidden = false;
       if (infoNote) infoNote.hidden = true;
@@ -143,9 +156,20 @@
     var titleEl = document.querySelector(".wtitle h1");
     var leadEl = document.querySelector(".wtitle p");
     if (!el || !titleEl || !leadEl) return;
-    var isPropose = panel === "propose";
-    var title = el.getAttribute(isPropose ? "data-ndm-title-propose" : "data-ndm-title-home");
-    var lead = el.getAttribute(isPropose ? "data-ndm-lead-propose" : "data-ndm-lead-home");
+    var titleKey =
+      panel === "propose"
+        ? "data-ndm-title-propose"
+        : panel === "messages"
+          ? "data-ndm-title-messages"
+          : "data-ndm-title-home";
+    var leadKey =
+      panel === "propose"
+        ? "data-ndm-lead-propose"
+        : panel === "messages"
+          ? "data-ndm-lead-messages"
+          : "data-ndm-lead-home";
+    var title = el.getAttribute(titleKey);
+    var lead = el.getAttribute(leadKey);
     if (title) titleEl.textContent = title;
     if (lead) leadEl.textContent = lead;
   }
@@ -312,12 +336,6 @@
     container.querySelectorAll("[data-ndm-open-panel]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var panel = btn.getAttribute("data-ndm-open-panel");
-        if (panel === "messages") {
-          var url = baseAfterMatchUrl(container) + "?panel=messages";
-          history.pushState({ ndmPanel: "messages" }, "", url);
-          window.location.assign(baseAfterMatchUrl(container).replace("/after-match", "/after-match/blazor?panel=messages"));
-          return;
-        }
         setPanel(container, panel, true);
       });
     });

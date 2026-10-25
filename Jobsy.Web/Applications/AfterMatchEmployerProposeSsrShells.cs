@@ -27,7 +27,8 @@ internal static class AfterMatchEmployerProposeSsrShells
             data.InitialLocation,
             data.InitialWithWhom,
             data.InitialNote,
-            "propose");
+            "propose",
+            null);
         return AfterMatchEmployerPanelSsrShells.BuildBody(culture, panelData, applicationId);
     }
 }
