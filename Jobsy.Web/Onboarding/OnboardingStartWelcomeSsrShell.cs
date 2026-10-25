@@ -48,15 +48,15 @@ internal static class OnboardingStartWelcomeSsrShell
 
         sb.Append("</ol><div class=\"ob-kreeft-before-card\"><h3>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.BeforeStartTitle"]));
-        sb.Append("</h3><div class=\"ob-kreeft-consent-opt\"><strong>");
+        sb.Append("</h3><div class=\"ob-kreeft-consent-opt ob-kreeft-consent-opt--on\"><i aria-hidden=\"true\"></i><div><strong>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentRequired"]));
         sb.Append("</strong><small>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentRequiredSub"]));
-        sb.Append("</small></div><div class=\"ob-kreeft-consent-opt ob-kreeft-consent-opt--optional\"><strong>");
+        sb.Append("</small></div></div><div class=\"ob-kreeft-consent-opt\"><i aria-hidden=\"true\"></i><div><strong>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentEmail"]));
         sb.Append("</strong><small>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentEmailSub"]));
-        sb.Append("</small></div><div class=\"ob-rustig__footer-actions ob-kreeft-before-actions\"><a class=\"ob-rustig__link ob-rustig__link--underline\" href=\"/privacy/data\" data-enhance-nav=\"false\">");
+        sb.Append("</small></div></div><div class=\"ob-rustig__footer-actions ob-kreeft-before-actions\"><a class=\"ob-rustig__link ob-rustig__link--underline\" href=\"/privacy/data\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.PrivacyLink"]));
         sb.Append("</a><button type=\"submit\" name=\"obNav\" value=\"begin\" class=\"ob-rustig__btn ob-rustig__btn--primary\" data-testid=\"onboarding-begin\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.CtaCoast"]));

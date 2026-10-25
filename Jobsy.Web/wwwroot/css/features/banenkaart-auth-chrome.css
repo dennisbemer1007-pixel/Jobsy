@@ -11,6 +11,63 @@
     flex-shrink: 0;
 }
 
+/* Match AppShellHeader + AuthHeader on other candidate NoBlazor pages (banenkaart skips app.min.css). */
+.app-shell--banenkaart-shell.app-shell--candidate .auth-user__name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 11rem;
+}
+
+.app-shell--banenkaart-shell .account-menu__av {
+    display: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    place-items: center;
+    flex: none;
+}
+
+.app-shell--banenkaart-shell .account-menu__toggle {
+    border: 0;
+    background: transparent;
+    padding: 0.2rem 0.15rem 0.2rem 0.35rem;
+}
+
+.app-shell--banenkaart-shell .account-menu__toggle .account-menu__icon {
+    display: inline-flex;
+}
+
+@media (max-width: 900px) {
+    .app-shell--banenkaart-shell {
+        --app-header-height: 55px;
+    }
+
+    .app-shell--banenkaart-shell .app-header {
+        min-height: 55px;
+        padding-block: 10px;
+    }
+
+    .app-shell--banenkaart-shell .account-menu__toggle .auth-user {
+        display: none;
+    }
+
+    .app-shell--banenkaart-shell .account-menu__toggle .account-menu__av {
+        display: grid;
+    }
+
+    .app-shell--banenkaart-shell .account-menu__toggle .account-menu__icon {
+        display: none;
+    }
+}
+
 .app-header__brand {
     flex: 0 0 auto;
     min-width: 0;
@@ -172,13 +229,18 @@
     color: var(--danger);
 }
 
-.account-menu__toggle,
 .notification-bell__toggle,
 .language-selector__toggle {
     border: 1.5px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
     background: color-mix(in srgb, var(--surface) 88%, var(--pearl-cool) 12%);
     border-radius: 999px;
     cursor: pointer;
+}
+
+.app-shell--banenkaart-shell .account-menu__toggle,
+.app-shell--banenkaart-shell .account-menu__toggle:hover {
+    border: 0;
+    background: transparent;
 }
 
 .notification-bell {
