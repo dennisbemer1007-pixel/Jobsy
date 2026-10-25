@@ -80,8 +80,9 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
 
         var about = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Tests/TestAboutPanel.razor"));
         Assert.Contains("data-testid=\"assessment-v2-transparency\"", about, StringComparison.Ordinal);
-        var gate = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Tests/TestConsentGate.razor"));
-        Assert.Contains("TestAboutPanel", gate, StringComparison.Ordinal);
+        var competency = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyTest.razor"));
+        Assert.Contains("TestAboutPanel", competency, StringComparison.Ordinal);
+        Assert.Contains("TestFlow.Measures.Competence", about, StringComparison.Ordinal);
     }
 
     [Theory]

@@ -1,14 +1,36 @@
 @namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Enums
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
 <details class="test-about" data-testid="assessment-v2-transparency">
     <summary class="test-about__summary">@Culture["Tests.WhatItMeans"]</summary>
     <div class="test-about__body">
-        <p>@Culture["AssessmentV2.Transparency.Lead"]</p>
-        <ul class="test-about__list">
-            <li>@Culture["AssessmentV2.Transparency.NotDiagnosis"]</li>
-            <li>@Culture["AssessmentV2.Transparency.MatchIndicative"]</li>
-        </ul>
+        @if (Kind is not null && !string.IsNullOrWhiteSpace(MeasuresKey))
+        {
+            <p class="test-about__measures">@Culture[MeasuresKey]</p>
+        }
+        @if (ShowTransparency)
+        {
+            <p>@Culture["AssessmentV2.Transparency.Lead"]</p>
+            <ul class="test-about__list">
+                <li>@Culture["AssessmentV2.Transparency.NotDiagnosis"]</li>
+                <li>@Culture["AssessmentV2.Transparency.MatchIndicative"]</li>
+            </ul>
+        }
     </div>
 </details>
+
+@code {
+    [Parameter] public AssessmentKind? Kind { get; set; }
+    [Parameter] public bool ShowTransparency { get; set; } = true;
+
+    private string? MeasuresKey => Kind switch
+    {
+        AssessmentKind.Competence => "TestFlow.Measures.Competence",
+        AssessmentKind.Career => "TestFlow.Measures.Career",
+        AssessmentKind.Culture => "TestFlow.Measures.Culture",
+        AssessmentKind.Values => "TestFlow.Measures.Values",
+        _ => null
+    };
+}

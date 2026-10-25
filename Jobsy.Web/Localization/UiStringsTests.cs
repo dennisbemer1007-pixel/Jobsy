@@ -92,6 +92,30 @@ public static class UiStringsTests
         Add("TestFlow.Lead.Career.V2", "{0} korte zinnen over werk dat je leuk vindt. Zo vinden we beroepen die bij je passen.", "{0} short sentences about work you like. We find careers that fit.", "{0} krótkich zdań o pracy, którą lubisz. Szukamy zawodów, które do ciebie pasują.", "{0} propoziții scurte despre munca care îți place. Găsim meserii care ți se potrivesc.", "{0} جملة قصيرة عن العمل الذي تحبه. نجد مهناً تناسبك.");
         Add("TestFlow.Lead.Culture.V2", "{0} korte zinnen over waar je graag werkt. Zo vinden we werkplekken waar je je thuis voelt.", "{0} short sentences about where you like to work. We find places where you feel at home.", "{0} krótkich zdań o tym, gdzie lubisz pracować. Szukamy miejsc, w których czujesz się dobrze.", "{0} propoziții scurte despre unde îți place să lucrezi. Găsim locuri unde te simți bine.", "{0} جملة قصيرة عن المكان الذي تحب العمل فيه. نجد أماكن تشعر فيها بالراحة.");
         Add("TestFlow.Lead.Values.V2", "{0} korte zinnen over wat je belangrijk vindt in werk.", "{0} short sentences about what matters to you at work.", "{0} krótkich zdań o tym, co jest dla ciebie ważne w pracy.", "{0} propoziții scurte despre ce este important pentru tine la muncă.", "{0} جملة قصيرة عما يهمك في العمل.");
+        Add("TestFlow.Measures.Competence",
+            "Deze test meet hoe je werkt: samenwerken, resultaatgerichtheid, omgaan met druk, innovatie en contact met anderen. Je ziet geen scores — wel een beeld voor passend werk.",
+            "This test measures how you work: collaboration, getting things done, handling pressure, trying new things, and connecting with others. You will not see scores — only a picture to match you with fitting work.",
+            "Ten test mierzy, jak pracujesz: współpraca, realizacja celów, radzenie sobie z presją, innowacje i kontakt z innymi. Bez wyników liczbowych — obraz dopasowanej pracy.",
+            "Acest test măsoară cum lucrezi: colaborare, orientare spre rezultate, gestionarea presiunii, inovație și legătura cu ceilalți. Fără scoruri — doar o imagine pentru muncă potrivită.",
+            "يقيس هذا الاختبار طريقة عملك: التعاون، إنجاز المهام، التعامل مع الضغط، التجديد، والتواصل مع الآخرين. بدون درجات — صورة للعمل المناسب.");
+        Add("TestFlow.Measures.Career",
+            "De beroepentest meet welk soort werk en taken je energie geven (beroepsinteresses). Geen cijfers — wel richting naar beroepen die bij je passen.",
+            "The career test measures what kinds of work and tasks energize you (vocational interests). No numbers — just direction toward careers that fit you.",
+            "Test zawodów mierzy, jaki rodzaj pracy i zadań dodaje ci energii (zainteresowania zawodowe). Bez liczb — kierunek do pasujących zawodów.",
+            "Testul de carieră măsoară ce fel de muncă și sarcini îți dau energie (interese vocaționale). Fără cifre — direcție spre meserii potrivite.",
+            "يقيس اختبار المهنة أنواع العمل والمهام التي تمنحك طاقة (الاهتمامات المهنية). بدون أرقام — اتجاه نحو مهن تناسبك.");
+        Add("TestFlow.Measures.Culture",
+            "Cultuur & persoonlijkheid meet waar je je thuis voelt op de werkvloer: sfeer, structuur en omgang met anderen. Geen scores — wel wat voor werkplek bij je past.",
+            "Culture & personality measures where you feel at home at work: atmosphere, structure, and how you relate to others. No scores — just what kind of workplace suits you.",
+            "Kultura i osobowość mierzą, gdzie czujesz się dobrze w pracy: atmosferę, strukturę i relacje z innymi. Bez wyników — jaki typ miejsca pracy do ciebie pasuje.",
+            "Cultura și personalitatea măsoară unde te simți acasă la job: atmosferă, structură și relația cu ceilalți. Fără scoruri — ce fel de loc de muncă ți se potrivește.",
+            "يقيس ثقافة العمل والشخصية أين تشعر بالراحة في العمل: الأجواء والبنية وعلاقتك بالآخرين. بدون درجات — نوع مكان العمل الذي يناسبك.");
+        Add("TestFlow.Measures.Values",
+            "Waarden op werk meet wat jij belangrijk vindt in werk en met wie je samenwerkt. Geen scores — wel wat voor baan en werkgever bij je past.",
+            "Work values measures what matters to you at work and in teams. No scores — just what jobs and employers fit you.",
+            "Wartości w pracy mierzą, co jest dla ciebie ważne w pracy i w zespole. Bez wyników — jakie oferty i pracodawcy pasują.",
+            "Valorile la muncă măsoară ce contează pentru tine la job și în echipă. Fără scoruri — ce joburi și angajatori ți se potrivesc.",
+            "يقيس قيم العمل ما يهمك في العمل وفي الفريق. بدون درجات — الوظائف وأصحاب العمل المناسبين.");
         Add("TestFlow.DepthPick", "Hoe diep wil je duiken?", "How deep do you want to dive?", "Jak głęboko chcesz zejść?", "Cât de adânc vrei să te scufunzi?", "إلى أي عمق تريد أن تغوص؟");
         Add("TestFlow.DepthMeta", "{0} vragen · + {1} min", "{0} questions · + {1} min", "{0} pytania · + {1} min", "{0} întrebări · + {1} min", "{0} أسئلة · + {1} min");
         Add("TestFlow.DepthMetaShort", "{0}", "{0}", "{0}", "{0}", "{0}");
