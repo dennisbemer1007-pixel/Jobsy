@@ -126,7 +126,7 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-pick-slot-page .intro h1{font-size:2rem}
 .ndm.ndm-pick-slot-page .intro p{color:#3d4e63;margin-top:6px;font-size:1rem;max-width:680px}
 .ndm.ndm-pick-slot-page .cal3{align-items:stretch;justify-items:stretch}
-.ndm.ndm-pick-slot-page .cal3 .slot{text-align:left;justify-content:flex-start;width:100%;cursor:pointer;font:inherit}
+.ndm.ndm-pick-slot-page .cal3 .slot{text-align:left;justify-content:flex-start;width:100%;cursor:pointer;font:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .ndm.ndm-pick-slot-page .askl{border:0;cursor:pointer;font:inherit}
 .ndm.ndm-pick-slot-page .wrap{max-width:1180px;margin:0 auto;padding:24px 28px 20px;box-sizing:border-box}
 .ndm.ndm-pick-slot-page .g2.ndm-pick-slot-g2{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start;width:100%}

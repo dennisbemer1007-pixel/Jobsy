@@ -25,7 +25,7 @@ internal static class AfterMatchPickSlotSsrShells
         sb.Append("\" alt=\"\" width=\"390\" height=\"90\" loading=\"eager\" decoding=\"async\" />");
         sb.Append("</div></div>");
 
-        sb.Append("<div class=\"ndm ndm-page ndm-pick-slot-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"pick-slot\" data-ndm-pick-slot-ssr=\"1\" data-application-id=\"");
+        sb.Append("<div class=\"ndm ndm-page ndm-pick-slot-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"pick-slot\" data-ndm-pick-slot-ssr=\"1\" data-enhance-nav=\"false\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
         sb.Append("\"><main class=\"wrap\">");
 
@@ -146,6 +146,9 @@ internal static class AfterMatchPickSlotSsrShells
         sb.Append("</button><button type=\"button\" class=\"lk\" data-ndm-scroll-propose style=\"background:none;border:0;padding:0;font:inherit;cursor:pointer\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen04.NoSlotFits"]));
         sb.Append("</button></div>");
+        sb.Append("<p class=\"state-message\" role=\"alert\" data-ndm-pick-slot-error hidden style=\"margin-top:12px\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Panel.ErrorInline"]));
+        sb.Append("</p>");
 
         AppendProposeForm(sb, culture, applicationId);
         sb.Append("</div>");

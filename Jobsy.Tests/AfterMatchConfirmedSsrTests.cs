@@ -124,12 +124,37 @@ public sealed class AfterMatchConfirmedSsrTests : BunitContext
     [Fact]
     public void Middleware_routes_default_after_match_to_confirmed_ssr()
     {
-        var root = FindRepoRoot();
-        var middleware = File.ReadAllText(Path.Combine(
-            root,
-            "Jobsy.Web/Middleware/AfterMatchPickSlotRouteRewriteMiddleware.cs"));
-        Assert.Contains("/confirmed-ssr", middleware, StringComparison.Ordinal);
-        Assert.Contains("\"reschedule\" or \"cancel\" => \"/reschedule-ssr\"", middleware, StringComparison.Ordinal);
+        Assert.Equal("/confirmed-ssr", AfterMatchPanelRouting.ConfirmedSsrSuffix);
+        Assert.Equal("/pick-slot-ssr", AfterMatchPanelRouting.PickSlotSsrSuffix);
+
+        var scheduled = new AfterMatchThreadDto(
+            AfterMatchDemoIds.ScheduledApp,
+            Guid.NewGuid(),
+            InterviewStatus.Scheduled,
+            AfterMatchContactShareState.From(InterviewStatus.Scheduled, null),
+            null,
+            "t",
+            "c",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddMinutes(30),
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "Sanne",
+            null,
+            DateTime.UtcNow,
+            null);
+
+        Assert.Equal(
+            AfterMatchPanelRouting.ConfirmedSsrSuffix,
+            AfterMatchPanelRouting.DispatchSuffixForThread(scheduled));
     }
 
     [Fact]

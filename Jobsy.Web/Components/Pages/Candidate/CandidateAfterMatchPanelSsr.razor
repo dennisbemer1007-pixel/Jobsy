@@ -5,6 +5,7 @@
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Features
 @using Jobsy.Web.Applications
 @using Jobsy.Web.Components.Shared
@@ -29,10 +30,6 @@
     }
     <link rel="stylesheet" href="css/features/sollicitaties-page.css?v=20261024-ndm-pick-slot2" />
     <link rel="stylesheet" href="css/features/na-de-match.css?v=20261028-ndm-outcome6" />
-    @if (_includeConfirmedScript)
-    {
-        <script src="/js/ndm-confirmed.js?v=20261026-ndm-confirmed5" defer></script>
-    }
     @if (_includeOutcomeScript)
     {
         <script src="/js/ndm-outcome.js?v=20261028-ndm-outcome4" defer></script>
@@ -64,7 +61,6 @@ else if (_bodyHtml is not null)
     private string? _fatalMessage;
     private string? _bodyHtml;
     private string _pageTitle = "";
-    private bool _includeConfirmedScript;
     private bool _includeOutcomeScript;
 
     protected override async Task OnInitializedAsync()
@@ -78,27 +74,50 @@ else if (_bodyHtml is not null)
                 return;
             }
 
+            http.Response.Headers.CacheControl = "no-store";
+
             var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
             query.TryGetValue("return", out var returnValues);
             var returnUrl = returnValues.FirstOrDefault();
+            var panel = AfterMatchPanelRouting.ResolvePanel(http.Request.Query);
 
-            var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId);
-            if (AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread))
+            if (panel is "messages")
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.MessagesSsrSuffix);
+                return;
+            }
+
+            if (panel is "pick-slot" or "propose-slot")
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
+                return;
+            }
+
+            if (panel is "reschedule" or "cancel")
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.RescheduleSsrSuffix);
+                return;
+            }
+
+            var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+
+            if (panel is "outcome" || AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread))
             {
                 await RenderOutcomeAsync(returnUrl);
                 return;
             }
 
-            var confirmed = await AfterMatchConfirmedSsrData.LoadAsync(
-                Api,
-                Culture,
-                ApplicationId,
-                returnUrl);
-            if (confirmed is not null)
+            var dispatch = AfterMatchPanelRouting.DispatchSuffixForThread(thread);
+            if (dispatch is not null)
             {
-                _pageTitle = Culture["AfterMatch.Screen05.PageTitle"];
-                _includeConfirmedScript = true;
-                _bodyHtml = AfterMatchConfirmedSsrShells.BuildBody(Culture, confirmed, ApplicationId);
+                RedirectToSsr(http, dispatch);
+                return;
+            }
+
+            if (thread is not null
+                && thread.InterviewStatus is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested)
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
                 return;
             }
 
@@ -125,6 +144,16 @@ else if (_bodyHtml is not null)
         {
             _loading = false;
         }
+    }
+
+    private static void RedirectToSsr(HttpContext http, string suffix)
+    {
+        var path = http.Request.Path.Value ?? "";
+        var prefix = path.Contains("/outcome-ssr", StringComparison.OrdinalIgnoreCase)
+            ? path.Replace("/outcome-ssr", "", StringComparison.OrdinalIgnoreCase)
+            : path.Replace("/panel-ssr", "", StringComparison.OrdinalIgnoreCase);
+        var target = prefix + suffix + (http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "");
+        http.Response.Redirect(target);
     }
 
     private async Task RenderOutcomeAsync(string? returnUrl)

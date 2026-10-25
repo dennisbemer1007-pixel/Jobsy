@@ -4,7 +4,9 @@ using Jobsy.Web.Applications;
 namespace Jobsy.Web.Middleware;
 
 /// <summary>
-/// Keeps public URL <c>/after-match</c> while routing pick-slot and confirmed interview to SSR and other panels to Blazor.
+/// Keeps public URL <c>/after-match</c> while routing panels to SSR.
+/// Candidate default (<c>panel=</c>) hits <see cref="AfterMatchPanelRouting.PanelSsrSuffix"/>, which redirects to
+/// <see cref="AfterMatchPanelRouting.ConfirmedSsrSuffix"/> or <see cref="AfterMatchPanelRouting.PickSlotSsrSuffix"/>.
 /// </summary>
 public sealed partial class AfterMatchPickSlotRouteRewriteMiddleware
 {
