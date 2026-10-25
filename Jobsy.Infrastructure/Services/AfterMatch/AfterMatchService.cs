@@ -5,6 +5,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -15,17 +16,20 @@ public sealed class AfterMatchService : IAfterMatchService
     private readonly JobsyDbContext _db;
     private readonly IApplicationStatusRecorder _statusRecorder;
     private readonly AfterMatchMailer _mailer;
+    private readonly ApplicationStatusNotifier _statusNotifier;
     private readonly IConfiguration _configuration;
 
     public AfterMatchService(
         JobsyDbContext db,
         IApplicationStatusRecorder statusRecorder,
         AfterMatchMailer mailer,
+        ApplicationStatusNotifier statusNotifier,
         IConfiguration configuration)
     {
         _db = db;
         _statusRecorder = statusRecorder;
         _mailer = mailer;
+        _statusNotifier = statusNotifier;
         _configuration = configuration;
     }
 
@@ -330,6 +334,7 @@ public sealed class AfterMatchService : IAfterMatchService
 
         _db.ApplicationMessages.Add(message);
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyApplicationNewMessageAsync(application, senderUserId, senderIsEmployer, cancellationToken);
         return await MapThreadAsync(application, interview, senderUserId, senderIsEmployer, cancellationToken);
     }
 

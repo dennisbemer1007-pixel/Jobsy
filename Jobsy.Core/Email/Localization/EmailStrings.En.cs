@@ -297,6 +297,8 @@ internal static class EmailStringsEn
         ["Email.ApplicationMutualYes.P1"] = "{0} wants to proceed with your application for {1}. You can plan an interview next.",
         ["Email.ApplicationMutualYes.Preheader"] = "{0} wants to proceed with your application.",
         ["Email.ApplicationMutualYes.Subject"] = "Mutual yes at {0}",
+        ["Email.ApplicationStatusAlert.Cta"] = "Open in Lobsy",
+        ["Email.ApplicationStatusAlert.Eyebrow"] = "Application",
         ["Email.EmployerReactionAccepted.Cta"] = "View your application",
         ["Email.EmployerReactionAccepted.Eyebrow"] = "Good news",
         ["Email.EmployerReactionAccepted.Heading"] = "{0} wants to continue with you",

@@ -50,4 +50,26 @@ public static partial class TransactionalEmails
             eyebrow: new EmailEyebrow(S(c, "Email.ApplicationMutualYes.Eyebrow"), EmailTone.Mint),
             culture: c), baseUrl);
     }
+
+    public static ComposedEmail ApplicationStatusAlert(
+        string? baseUrl,
+        string? recipientName,
+        string subject,
+        string body,
+        string relativeDeepLink,
+        EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        return Finish(Doc(
+            "ApplicationStatusAlert",
+            subject,
+            body,
+            subject,
+            [P(body)],
+            Button(S(c, "Email.ApplicationStatusAlert.Cta"), links.Absolute(relativeDeepLink)),
+            greeting: string.IsNullOrWhiteSpace(recipientName) ? null : GreetCandidate(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.ApplicationStatusAlert.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
+    }
 }

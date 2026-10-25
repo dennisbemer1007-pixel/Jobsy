@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Services;
 
-public sealed class ApplicationStatusNotifier
+public sealed partial class ApplicationStatusNotifier
 {
     private readonly JobsyDbContext _db;
     private readonly IUserNotificationService _notifications;

@@ -297,6 +297,8 @@ internal static class EmailStringsNl
         ["Email.ApplicationMutualYes.P1"] = "{0} wil verder met je sollicitatie voor {1}. Jullie kunnen nu een gesprek plannen.",
         ["Email.ApplicationMutualYes.Preheader"] = "{0} wil verder met je sollicitatie.",
         ["Email.ApplicationMutualYes.Subject"] = "Wederzijds ja bij {0}",
+        ["Email.ApplicationStatusAlert.Cta"] = "Open in Lobsy",
+        ["Email.ApplicationStatusAlert.Eyebrow"] = "Sollicitatie",
         ["Email.EmployerReactionAccepted.Cta"] = "Bekijk je sollicitatie",
         ["Email.EmployerReactionAccepted.Eyebrow"] = "Goed nieuws",
         ["Email.EmployerReactionAccepted.Heading"] = "{0} wil verder met je",

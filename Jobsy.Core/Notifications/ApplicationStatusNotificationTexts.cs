@@ -5,7 +5,7 @@ namespace Jobsy.Core.Notifications;
 /// <summary>
 /// In-app and push copy for sollicitatie statusmeldingen (see docs/meldingen/STATUSMELDINGEN.md).
 /// </summary>
-public static class ApplicationStatusNotificationTexts
+public static partial class ApplicationStatusNotificationTexts
 {
     public sealed record Copy(string Title, string Body);
 
@@ -27,6 +27,6 @@ public static class ApplicationStatusNotificationTexts
                 "Wederzijds ja",
                 $"{companyName} wil verder met je sollicitatie voor {vacancyTitle}. Jullie kunnen nu een gesprek plannen.");
 
-    private static bool IsEnglish(string language)
+    internal static bool IsEnglish(string language)
         => string.Equals(JobsyLanguages.Normalize(language), "en", StringComparison.OrdinalIgnoreCase);
 }

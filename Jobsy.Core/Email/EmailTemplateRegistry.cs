@@ -31,6 +31,8 @@ public static class EmailTemplateRegistry
             "CV bekeken", "Werkgever heeft de sollicitatie voor het eerst bekeken.", requiresEmployers: true),
         Def("ApplicationMutualYes", "ApplicationMutualYes", "Kandidaat", EmailKind.Essential, "Applied", true,
             "Wederzijds ja", "Werkgever wil verder; gesprek plannen.", requiresEmployers: true),
+        Def("ApplicationStatusAlert", "ApplicationStatusAlert", "Algemeen", EmailKind.Essential, "Bericht", false,
+            "Statusmelding", "Generieke statusmail voor Na de match (berichten, gesprek, uitkomst).", requiresEmployers: true),
         Def("EmployerReactionAccepted", "EmployerReaction", "Kandidaat", EmailKind.Essential, "Applied", true,
             "Sollicitatie geaccepteerd", "Werkgever heeft de sollicitatie geaccepteerd.", requiresEmployers: true),
         Def("EmployerReactionRejected", "EmployerReaction", "Kandidaat", EmailKind.Essential, "Applied", false,
