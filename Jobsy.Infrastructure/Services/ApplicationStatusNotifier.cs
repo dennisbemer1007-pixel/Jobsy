@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Services;
 
-public sealed class ApplicationStatusNotifier
+public sealed partial class ApplicationStatusNotifier
 {
     private readonly JobsyDbContext _db;
     private readonly IUserNotificationService _notifications;
@@ -93,14 +93,18 @@ public sealed class ApplicationStatusNotifier
         ApplicationStatusNotificationTexts.Copy copy,
         string category,
         string deepLink,
-        ComposedEmail mail,
+        ComposedEmail? mail,
         CancellationToken cancellationToken)
     {
         var absoluteLink = EmailLayout.Absolute(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
             deepLink);
 
-        await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
+        if (mail is not null)
+        {
+            await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
+        }
+
         await _push.SendAsync(
             new PushMessage(
                 application.CandidateEmail,

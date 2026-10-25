@@ -15,17 +15,20 @@ public sealed class AfterMatchService : IAfterMatchService
     private readonly JobsyDbContext _db;
     private readonly IApplicationStatusRecorder _statusRecorder;
     private readonly AfterMatchMailer _mailer;
+    private readonly ApplicationStatusNotifier _statusNotifier;
     private readonly IConfiguration _configuration;
 
     public AfterMatchService(
         JobsyDbContext db,
         IApplicationStatusRecorder statusRecorder,
         AfterMatchMailer mailer,
+        ApplicationStatusNotifier statusNotifier,
         IConfiguration configuration)
     {
         _db = db;
         _statusRecorder = statusRecorder;
         _mailer = mailer;
+        _statusNotifier = statusNotifier;
         _configuration = configuration;
     }
 
@@ -112,6 +115,7 @@ public sealed class AfterMatchService : IAfterMatchService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyEmployerSlotsProposedAsync(application, employerUserId, cancellationToken);
         return await MapThreadAsync(application, interview, employerUserId, isEmployer: true, cancellationToken);
     }
 
@@ -158,6 +162,7 @@ public sealed class AfterMatchService : IAfterMatchService
         });
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyCandidateAlternativeSlotProposedAsync(application, candidateUserId, cancellationToken);
         return await MapThreadAsync(application, interview, candidateUserId, isEmployer: false, cancellationToken);
     }
 
@@ -195,6 +200,9 @@ public sealed class AfterMatchService : IAfterMatchService
             application.Vacancy.Company.ContactEmail ?? "",
             cancellationToken);
 
+        await _statusNotifier.NotifyInterviewSlotChosenAsync(application, isEmployer, userId, cancellationToken);
+        await _statusNotifier.NotifyInterviewScheduledAsync(application, cancellationToken);
+
         return await MapThreadAsync(application, interview, userId, isEmployer, cancellationToken);
     }
 
@@ -230,6 +238,7 @@ public sealed class AfterMatchService : IAfterMatchService
         });
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyInterviewRescheduleRequestedAsync(application, isEmployer, userId, cancellationToken);
         return await MapThreadAsync(application, interview, userId, isEmployer, cancellationToken);
     }
 
@@ -264,6 +273,7 @@ public sealed class AfterMatchService : IAfterMatchService
         });
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _statusNotifier.NotifyInterviewCancelledAsync(application, isEmployer, userId, cancellationToken);
         return await MapThreadAsync(application, interview, userId, isEmployer, cancellationToken);
     }
 

@@ -7,6 +7,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Jobsy.Infrastructure.Services.AfterMatch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -212,7 +213,13 @@ public sealed class AfterMatchServiceFlowTests
 
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var mailer = new AfterMatchMailer(new NoOpMailer(), config, NullLogger<AfterMatchMailer>.Instance);
-        var service = new AfterMatchService(db, new NoOpStatusRecorder(), mailer, config);
+        var statusNotifier = new ApplicationStatusNotifier(
+            db,
+            new NoOpUserNotifications(),
+            new NoOpPush(),
+            new NoOpMailer(),
+            new AlwaysOnFeatures());
+        var service = new AfterMatchService(db, new NoOpStatusRecorder(), mailer, statusNotifier, config);
         await service.EnsureThreadAsync(appId);
         return (service, appId, candidateId, employerId);
     }
@@ -264,5 +271,47 @@ public sealed class AfterMatchServiceFlowTests
             DateTime nowUtc,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
+    }
+
+    private sealed class NoOpUserNotifications : IUserNotificationService
+    {
+        public Task<UserNotification> CreateAsync(NotificationCreateRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult(new UserNotification
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                Title = request.Title,
+                Body = request.Body,
+                Category = request.Category,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+
+        public Task CreateForEmailAsync(
+            string userEmail,
+            string title,
+            string body,
+            string category,
+            string? deepLink = null,
+            string? actionLabel = null,
+            string? actionUrl = null,
+            string? relatedEntityType = null,
+            Guid? relatedEntityId = null,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<IReadOnlyList<UserNotification>> ListForUserAsync(Guid userId, int take = 50, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<UserNotification>>([]);
+
+        public Task<int> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(0);
+
+        public Task<UserNotification?> MarkReadAsync(Guid userId, Guid notificationId, CancellationToken cancellationToken = default)
+            => Task.FromResult<UserNotification?>(null);
+
+        public Task<int> MarkAllReadAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    }
+
+    private sealed class NoOpPush : IPushNotificationService
+    {
+        public Task SendAsync(PushMessage message, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }
