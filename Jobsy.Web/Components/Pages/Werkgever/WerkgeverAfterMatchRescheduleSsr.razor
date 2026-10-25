@@ -26,10 +26,10 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-rest" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-rest" defer></script>
-    <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-rest" defer></script>
-    <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-rest" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-fix1" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+    <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+    <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-fix1" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -104,7 +104,7 @@ else if (_bodyHtml is not null)
                 null);
             var cancelData = new AfterMatchEmployerCancelSsrShells.PageData(
                 thread,
-                $"/werkgever/sollicitaties/{ApplicationId:D}/after-match/reschedule-ssr",
+                $"/werkgever/sollicitaties/{ApplicationId:D}/after-match",
                 $"/werkgever/sollicitaties/{ApplicationId:D}");
             var options = new AfterMatchEmployerRescheduleSsrShells.BuildOptions(panel, proposeData, cancelData);
             _bodyHtml = AfterMatchEmployerRescheduleSsrShells.BuildBody(Culture, data, ApplicationId, options);

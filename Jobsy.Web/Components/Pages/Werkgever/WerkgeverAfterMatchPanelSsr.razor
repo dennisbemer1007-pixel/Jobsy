@@ -28,27 +28,27 @@
     {
         <link rel="stylesheet" href="@href" />
     }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-rest" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-rest" defer></script>
+    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-fix1" />
+    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-fix1" defer></script>
     @if (_includeMessagesScript)
     {
-        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-acc-rest" defer></script>
+        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-acc-fix1" defer></script>
     }
     @if (_includeOutcomeScript)
     {
-        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-acc-rest" defer></script>
+        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-acc-fix1" defer></script>
     }
     @if (_includeCancelScript)
     {
-        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-rest" defer></script>
+        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+    }
+    @if (_includeRescheduleScript)
+    {
+        <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-fix1" defer></script>
     }
 </HeadContent>
 
 @if (_loading)
-{
-    <p class="state-message">@Culture["Common.Loading"]</p>
-}
-else if (_redirecting)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
@@ -69,7 +69,6 @@ else if (_bodyHtml is not null)
     [Parameter] public Guid ApplicationId { get; set; }
 
     private bool _loading = true;
-    private bool _redirecting;
     private string? _fatalMessage;
     private string? _bodyHtml;
     private string? _candidateName;
@@ -79,6 +78,7 @@ else if (_bodyHtml is not null)
     private bool _includeMessagesScript;
     private bool _includeOutcomeScript;
     private bool _includeCancelScript;
+    private bool _includeRescheduleScript;
 
     protected override async Task OnInitializedAsync()
     {
@@ -110,14 +110,34 @@ else if (_bodyHtml is not null)
 
             if (AfterMatchEmployerSsrRouting.ShouldRedirectToRescheduleSsr(thread, panel))
             {
-                _redirecting = true;
-                var canonicalPath = $"/werkgever/sollicitaties/{ApplicationId:D}/after-match";
-                if (http.Request.QueryString.HasValue)
-                {
-                    canonicalPath += http.Request.QueryString.Value;
-                }
-
-                http.Response.Redirect(canonicalPath);
+                _includeCancelScript = true;
+                _includeRescheduleScript = true;
+                SetHero(Culture["AfterMatch.Screen09.Hero.Title"], Culture["AfterMatch.Screen09.Hero.Lead"]);
+                var rescheduleData = AfterMatchEmployerRescheduleSsrData.FromThread(Culture, thread, ApplicationId);
+                var proposeData = new AfterMatchEmployerPanelSsrShells.PageData(
+                    thread,
+                    $"/werkgever/sollicitaties/{ApplicationId:D}",
+                    null,
+                    AfterMatchEmployerDemoSlots.InitialUtc,
+                    InterviewFormat.OnSite,
+                    "Loosduinseweg 120, Den Haag · ingang naast de winkel",
+                    "Linda de Wit, eigenaar",
+                    "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
+                    panel is "propose" ? "propose" : "",
+                    null);
+                var cancelData = new AfterMatchEmployerCancelSsrShells.PageData(
+                    thread,
+                    $"/werkgever/sollicitaties/{ApplicationId:D}/after-match",
+                    $"/werkgever/sollicitaties/{ApplicationId:D}");
+                var options = new AfterMatchEmployerRescheduleSsrShells.BuildOptions(
+                    panel is "propose" ? "propose" : "",
+                    proposeData,
+                    cancelData);
+                _bodyHtml = AfterMatchEmployerRescheduleSsrShells.BuildBody(
+                    Culture,
+                    rescheduleData,
+                    ApplicationId,
+                    options);
                 return;
             }
 

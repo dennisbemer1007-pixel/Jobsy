@@ -291,6 +291,20 @@
       });
   }
 
+  function showMobileListOnly(container) {
+    if (!container || !MOBILE.matches) {
+      return;
+    }
+    setThreadOpen(false);
+    container.querySelectorAll("[data-ndm-thread-panel]").forEach(function (panel) {
+      panel.hidden = true;
+    });
+    container.querySelectorAll("[data-ndm-thread-select]").forEach(function (item) {
+      item.classList.remove("on");
+      item.removeAttribute("aria-current");
+    });
+  }
+
   function syncMobileLayout() {
     var container = root();
     if (!container) {
@@ -300,9 +314,24 @@
       setThreadOpen(false);
       return;
     }
+    var params;
+    try {
+      params = new URL(window.location.href).searchParams;
+    } catch (_e) {
+      params = null;
+    }
+    var explicitThread = params && params.get("thread");
+    if (!explicitThread) {
+      showMobileListOnly(container);
+      return;
+    }
     var openPanel = container.querySelector("[data-ndm-thread-panel]:not([hidden])");
     setThreadOpen(!!openPanel);
   }
+
+  window.NdmEmployerMessagesResetMobileList = function () {
+    showMobileListOnly(root());
+  };
 
   function init() {
     var container = root();
@@ -344,8 +373,15 @@
     }
 
     syncMobileLayout();
+    var params;
+    try {
+      params = new URL(window.location.href).searchParams;
+    } catch (_e2) {
+      params = null;
+    }
+    var explicitThread = params && params.get("thread");
     var active = container.querySelector("[data-ndm-thread-panel]:not([hidden])");
-    if (active) {
+    if (active && explicitThread) {
       var threadId = active.getAttribute("data-ndm-thread-id");
       clearUnreadBadge(threadId);
       markThreadRead(threadId);

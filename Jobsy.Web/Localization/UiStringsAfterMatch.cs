@@ -377,6 +377,10 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Share.Phone", "Telefoon zie je na het gesprek, als Sanne dat wil", "Phone after the interview if Sanne agrees");
         Add("AfterMatch.Employer.Share.Bank", "Bankgegevens pas na een aanbod, voor je eigen administratie", "Bank details only after an offer");
         Add("AfterMatch.Employer.WhatNow.Slots.Title", "Nu: momenten voorstellen", "Now: propose times");
+        Add("AfterMatch.Employer.SlotsSent.Title", "Momenten verstuurd, wacht op Sanne", "Times sent, waiting for Sanne");
+        Add("AfterMatch.Employer.SlotsSent.Body",
+            "Sanne kiest één van je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen.",
+            "Sanne picks one of your times or suggests another. You will be notified once she has chosen.");
         Add("AfterMatch.Employer.WhatNow.Slots.Body", "Stel 2 of 3 momenten voor, of deel je agenda. Doe het liefst binnen twee werkdagen.", "Propose 2 or 3 times or share your calendar within two working days.");
         Add("AfterMatch.Employer.WhatNow.Interview.Body", "Lobsy stuurt jullie allebei een bevestiging en herinneringen.", "Lobsy sends both of you a confirmation and reminders.");
         Add("AfterMatch.Employer.WhatNow.Outcome.Body", "Na het gesprek geef je de uitkomst met een korte reden.", "After the interview record the outcome with a short reason.");
