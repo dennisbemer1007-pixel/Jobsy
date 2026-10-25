@@ -14,9 +14,16 @@ internal static class AfterMatchEmployerOutcomeSsrShells
         StringBuilder sb,
         CultureState culture,
         AfterMatchEmployerOutcomeSsrData.PageData data,
-        Guid applicationId)
+        Guid applicationId,
+        bool startVisible = false)
     {
-        sb.Append("<aside class=\"wc side pop stack\" data-ndm-outcome-panel hidden data-ndm-employer-outcome-ssr=\"1\" data-application-id=\"");
+        sb.Append("<aside class=\"wc side pop stack\" data-ndm-outcome-panel");
+        if (!startVisible)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append(" data-ndm-employer-outcome-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
         sb.Append("\"><p style=\"margin-bottom:12px\"><button type=\"button\" class=\"lk\" data-ndm-close-panel>");
         sb.Append(WebUtility.HtmlEncode(culture["WgApp.Back"]));
@@ -98,30 +105,18 @@ internal static class AfterMatchEmployerOutcomeSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.Question"]));
         sb.Append("</span><div class=\"outc\">");
         var firstName = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
-        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.Offer, firstName, false);
+        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.Offer, firstName, true);
         AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.NextRound, firstName, false);
-        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.NotNow, firstName, true);
-        sb.Append("</div><span class=\"lbl\" style=\"margin-top:16px\">");
+        AppendOutcomeOption(sb, culture, AfterMatchOutcomeKind.NotNow, firstName, false);
+        sb.Append("</div><span class=\"lbl\" style=\"margin-top:16px\" data-ndm-outcome-reason-label>");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Screen12.ReasonRequiredFmt"], firstName)));
-        sb.Append("</span><div class=\"row wrapflex\" style=\"gap:6px\">");
-        var firstChip = true;
-        foreach (var chip in data.ReasonChips)
-        {
-            sb.Append("<button type=\"button\" class=\"chip");
-            if (firstChip)
-            {
-                sb.Append(" on");
-                firstChip = false;
-            }
-
-            sb.Append("\" data-ndm-outcome-chip>");
-            sb.Append(WebUtility.HtmlEncode(chip));
-            sb.Append("</button>");
-        }
-
-        sb.Append("</div><textarea class=\"inp area\" style=\"margin-top:8px;width:100%;min-height:84px;resize:vertical;font-family:inherit\" data-ndm-outcome-reason rows=\"4\">");
-        sb.Append(WebUtility.HtmlEncode(data.DefaultReason));
-        sb.Append("</textarea><div class=\"row wrapflex\" style=\"margin-top:14px\"><button type=\"button\" class=\"btn\" data-ndm-outcome-submit>");
+        sb.Append("</span>");
+        AppendReasonChips(sb, "Offer", data.OfferReasonChips, visible: true);
+        AppendReasonChips(sb, "NextRound", data.OfferReasonChips, visible: false);
+        AppendReasonChips(sb, "NotNow", data.RejectionReasonChips, visible: false);
+        sb.Append("<textarea class=\"inp area\" style=\"margin-top:8px;width:100%;min-height:84px;resize:vertical;font-family:inherit\" data-ndm-outcome-reason rows=\"4\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.Reason"]));
+        sb.Append("\"></textarea><div class=\"row wrapflex\" style=\"margin-top:14px\"><button type=\"button\" class=\"btn\" data-ndm-outcome-submit>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.Submit"]));
         sb.Append("</button><a class=\"btn line\" href=\"");
         sb.Append(WebUtility.HtmlEncode(data.TalentPoolHref));
@@ -165,31 +160,56 @@ internal static class AfterMatchEmployerOutcomeSsrShells
         var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
         sb.Append("<aside class=\"wc side\" data-ndm-wg-aside><h2 style=\"font-size:1.1rem\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.PreviewTitle"]));
-        sb.Append("</h2><div class=\"card\" style=\"margin-top:10px;background:#fbf6ef\" data-ndm-outcome-preview><div data-ndm-preview-pane=\"Offer\" hidden><b style=\"color:var(--brand)\">");
+        sb.Append("</h2><div class=\"card\" style=\"margin-top:10px;background:#fbf6ef\" data-ndm-outcome-preview><div data-ndm-preview-pane=\"Offer\"><b style=\"color:var(--brand)\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewOfferTitleFmt"], first)));
         sb.Append("</b><p class=\"small\" style=\"margin-top:6px\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewOfferLeadFmt"], thread.CompanyName)));
-        sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-offer\">\"");
-        sb.Append(WebUtility.HtmlEncode(data.DefaultReason));
-        sb.Append("\"</p></div><div data-ndm-preview-pane=\"NextRound\" hidden><b style=\"color:var(--brand)\">");
+        sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-offer\">\"\"</p></div><div data-ndm-preview-pane=\"NextRound\" hidden><b style=\"color:var(--brand)\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNextTitleFmt"], first)));
         sb.Append("</b><p class=\"small\" style=\"margin-top:6px\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNextLeadFmt"], thread.CompanyName)));
-        sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-nextround\">\"");
-        sb.Append(WebUtility.HtmlEncode(data.DefaultReason));
-        sb.Append("\"</p></div><div data-ndm-preview-pane=\"NotNow\"><b style=\"color:var(--brand)\">");
+        sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-nextround\">\"\"</p></div><div data-ndm-preview-pane=\"NotNow\" hidden><b style=\"color:var(--brand)\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNotNowTitleFmt"], first)));
         sb.Append("</b><p class=\"small\" style=\"margin-top:6px\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Outcome.PreviewNotNowLeadFmt"], thread.CompanyName)));
-        sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-notnow\">\"");
-        sb.Append(WebUtility.HtmlEncode(data.DefaultReason));
-        sb.Append("\"</p></div></div><p class=\"xs muted\" style=\"margin-top:10px\">");
+        sb.Append("</p><p class=\"small\" style=\"margin-top:6px;font-style:italic\" data-ndm-preview-quote-notnow\">\"\"</p></div></div><p class=\"xs muted\" style=\"margin-top:10px\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.ToneNote"]));
         sb.Append("</p><div class=\"note\" style=\"margin-top:12px\"><span>");
         sb.Append(NdMIcons.Bank);
         sb.Append("</span><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.OfferNote"]));
         sb.Append("</span></div></aside>");
+    }
+
+    private static void AppendReasonChips(
+        StringBuilder sb,
+        string outcomeKind,
+        IReadOnlyList<string> chips,
+        bool visible)
+    {
+        sb.Append("<div class=\"row wrapflex\" style=\"gap:6px");
+        if (!visible)
+        {
+            sb.Append(";display:none");
+        }
+
+        sb.Append("\" data-ndm-outcome-chips=\"");
+        sb.Append(outcomeKind);
+        sb.Append("\">");
+        for (var i = 0; i < chips.Count; i++)
+        {
+            sb.Append("<button type=\"button\" class=\"chip");
+            if (visible && i == 0)
+            {
+                sb.Append(" on");
+            }
+
+            sb.Append("\" data-ndm-outcome-chip>");
+            sb.Append(WebUtility.HtmlEncode(chips[i]));
+            sb.Append("</button>");
+        }
+
+        sb.Append("</div>");
     }
 
     private static string CandidateSubtitle(CultureState culture, AfterMatchThreadDto thread)

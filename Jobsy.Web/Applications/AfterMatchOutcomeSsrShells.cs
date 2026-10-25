@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 using Jobsy.Web.Components.AfterMatch;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
@@ -49,9 +50,10 @@ internal static class AfterMatchOutcomeSsrShells
         sb.Append("</span><i>›</i><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.PageTitle"]));
         sb.Append("</span></nav><h1>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.Hero.Title"]));
+        var isOffer = thread.Outcome == AfterMatchOutcomeKind.Offer;
+        sb.Append(WebUtility.HtmlEncode(culture[isOffer ? "AfterMatch.Screen13.Hero.TitleOffer" : "AfterMatch.Screen13.Hero.Title"]));
         sb.Append("</h1><p>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen13.Hero.Lead"]));
+        sb.Append(WebUtility.HtmlEncode(culture[isOffer ? "AfterMatch.Screen13.Hero.LeadOffer" : "AfterMatch.Screen13.Hero.Lead"]));
         sb.Append("</p></section>");
     }
 

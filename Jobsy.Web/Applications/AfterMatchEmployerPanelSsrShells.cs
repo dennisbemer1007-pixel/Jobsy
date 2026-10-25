@@ -53,7 +53,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("\" data-ndm-lead-messages=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen11.Hero.Lead"]));
         sb.Append("\" data-enhance-nav=\"false\"><div data-ndm-wg-flow");
-        if (panel is "messages")
+        if (panel is "messages" or "outcome" or "cancel" or "propose")
         {
             sb.Append(" hidden");
         }
@@ -64,7 +64,12 @@ internal static class AfterMatchEmployerPanelSsrShells
         AppendProposePanel(sb, culture, data);
         if (data.OutcomeOverlay is not null)
         {
-            AfterMatchEmployerOutcomeSsrShells.AppendInlinePanel(sb, culture, data.OutcomeOverlay, applicationId);
+            AfterMatchEmployerOutcomeSsrShells.AppendInlinePanel(
+                sb,
+                culture,
+                data.OutcomeOverlay,
+                applicationId,
+                startVisible: panel == "outcome");
         }
 
         sb.Append("</div></div>");
@@ -421,7 +426,7 @@ internal static class AfterMatchEmployerPanelSsrShells
             : null;
         var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
         var isProposing = thread.InterviewStatus == InterviewStatus.Proposing;
-        var outcomeDone = thread.Outcome is not null || thread.InterviewStatus == InterviewStatus.Done;
+        var outcomeDone = thread.Outcome is not null;
 
         sb.Append("<nav class=\"tl\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));

@@ -17,7 +17,10 @@
   }
 
   function syncPreview(container) {
-    var kind = selectedOutcome(container) || "NotNow";
+    var kind = selectedOutcome(container);
+    if (!kind) {
+      return;
+    }
     var reasonEl = container.querySelector("[data-ndm-outcome-reason]");
     var reason = reasonEl ? reasonEl.value.trim() : "";
 
@@ -39,6 +42,18 @@
     }
   }
 
+  function syncReasonChips(container, kind) {
+    container.querySelectorAll("[data-ndm-outcome-chips]").forEach(function (row) {
+      var rowKind = row.getAttribute("data-ndm-outcome-chips");
+      var show = rowKind === kind || (kind === "NextRound" && rowKind === "Offer");
+      row.style.display = show ? "" : "none";
+    });
+    var reasonEl = container.querySelector("[data-ndm-outcome-reason]");
+    if (reasonEl && kind === "NotNow") {
+      /* keep typed reason */
+    }
+  }
+
   function bindOutcomeOptions(container) {
     container.querySelectorAll("[data-ndm-employer-outcome]").forEach(function (btn) {
       btn.addEventListener("click", function (ev) {
@@ -47,6 +62,8 @@
           other.classList.remove("on");
         });
         btn.classList.add("on");
+        var kind = btn.getAttribute("data-outcome-kind");
+        syncReasonChips(container, kind);
         syncPreview(container);
       });
     });
@@ -129,7 +146,11 @@
     bindReasonChips(el);
     bindReasonInput(el);
     bindSubmit(el);
-    syncPreview(el);
+    var kind = selectedOutcome(el);
+    if (kind) {
+      syncReasonChips(el, kind);
+      syncPreview(el);
+    }
   }
 
   function bindEnhancedNavRecovery() {
@@ -162,6 +183,8 @@
           other.classList.remove("on");
         });
         btn.classList.add("on");
+        var kind = btn.getAttribute("data-outcome-kind");
+        syncReasonChips(container, kind);
         syncPreview(container);
       },
       true

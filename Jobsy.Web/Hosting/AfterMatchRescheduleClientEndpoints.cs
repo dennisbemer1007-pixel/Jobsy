@@ -1,5 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
+using Jobsy.Web.Applications;
+using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -55,12 +57,14 @@ public static class AfterMatchRescheduleClientEndpoints
 
         try
         {
-            var thread = await api.CancelAfterMatchInterviewAsync(applicationId, body, cancellationToken);
-            return Results.Json(thread);
+            await api.CancelAfterMatchInterviewAsync(applicationId, body, cancellationToken);
         }
         catch
         {
             return Results.BadRequest();
         }
+
+        var redirect = KbRoutes.Applications;
+        return Results.Json(new { redirectUrl = redirect });
     }
 }

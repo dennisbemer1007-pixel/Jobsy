@@ -281,7 +281,8 @@
                                     Tab="@_drawerTab"
                                     TabChanged="OnDrawerTabChanged"
                                     CanWritePhase2="CanWrite"
-                                    OnPhase2Changed="ReloadSelectedAsync" />
+                                    OnPhase2Changed="ReloadSelectedAsync"
+                                    OnPhase2AcceptUiChanged="OnPhase2AcceptUiChanged" />
     </ChildContent>
     <Footer>
         <ApplicationCandidateActions Item="_selected"
@@ -378,6 +379,7 @@
     private bool _hireCloseVacancy = true;
     private bool _bulkRejectOpen;
     private bool _phase2Enabled;
+    private bool _phase2AcceptUi;
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
     private DateTime UtcNow => DateTime.UtcNow;
@@ -605,10 +607,16 @@
     }
 
     private bool Phase2HidesPrimary(EmployerApplicationItem? item)
-        => _phase2Enabled
+        => _phase2AcceptUi
            && CanWrite
            && item is not null
            && ApplicationPipelineRules.StatusOf(item) == ApplicationStatus.Pending;
+
+    private Task OnPhase2AcceptUiChanged(bool available)
+    {
+        _phase2AcceptUi = available;
+        return InvokeAsync(StateHasChanged);
+    }
 
     private async Task ReloadSelectedAsync()
     {

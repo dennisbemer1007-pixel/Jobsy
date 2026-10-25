@@ -58,9 +58,7 @@ internal static class AfterMatchOutcomeSsrData
 
         const string learnHref = "/carriere";
         const string assistantHref = "/candidate/hoe-werkt-lobsy";
-        var reason = string.IsNullOrWhiteSpace(thread.OutcomeReason)
-            ? culture["AfterMatch.Screen13.DemoReason"]
-            : thread.OutcomeReason.Trim();
+        var reason = ResolveOutcomeReason(culture, thread);
 
         var yesDate = thread.AcceptedAtUtc is DateTime acceptedAt
             ? AfterMatchMailSsrTime.ToAmsterdam(acceptedAt).ToString("d MMM", Nl)
@@ -85,6 +83,21 @@ internal static class AfterMatchOutcomeSsrData
             interviewDate,
             outcomeDate,
             ResolveSimilarJobs(culture, thread));
+    }
+
+    private static string ResolveOutcomeReason(CultureState culture, AfterMatchThreadDto thread)
+    {
+        if (!string.IsNullOrWhiteSpace(thread.OutcomeReason))
+        {
+            return thread.OutcomeReason.Trim();
+        }
+
+        return thread.Outcome switch
+        {
+            AfterMatchOutcomeKind.Offer => culture["AfterMatch.Screen13.FallbackReason"],
+            AfterMatchOutcomeKind.NextRound => culture["AfterMatch.Screen13.FallbackReason"],
+            _ => culture["AfterMatch.Screen13.FallbackReason"]
+        };
     }
 
     internal static PageData BuildFallback(

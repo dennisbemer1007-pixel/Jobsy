@@ -39,7 +39,8 @@ public static class AfterMatchEmployerCancelClientEndpoints
             return Results.BadRequest();
         }
 
-        var redirect = $"/werkgever/sollicitaties/{applicationId:D}/after-match";
+        var redirect =
+            $"/werkgever/sollicitaties/{applicationId:D}/after-match?panel=propose";
         return Results.Json(new { redirectUrl = redirect });
     }
 }

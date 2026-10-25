@@ -182,27 +182,40 @@ public sealed class AfterMatchService : IAfterMatchService
         var slot = interview.Slots.FirstOrDefault(s => s.Id == request.SlotId)
             ?? throw new InvalidOperationException("Slot not found.");
 
-        foreach (var s in interview.Slots)
+        var alreadyScheduled = interview.Status == InterviewStatus.Scheduled
+                               && interview.ChosenSlotId == slot.Id;
+
+        if (!alreadyScheduled)
         {
-            s.IsSelected = s.Id == slot.Id;
+            foreach (var s in interview.Slots)
+            {
+                s.IsSelected = s.Id == slot.Id;
+            }
+
+            interview.ChosenSlotId = slot.Id;
+            interview.Status = InterviewStatus.Scheduled;
+            interview.UpdatedAtUtc = DateTime.UtcNow;
+
+            await ScheduleRemindersAsync(interview, application, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                await _mailer.SendScheduledConfirmationAsync(
+                    interview,
+                    application,
+                    application.CandidateEmail,
+                    application.Vacancy.Company.ContactEmail ?? "",
+                    cancellationToken);
+            }
+            catch
+            {
+                // Mail failure must not undo a successful schedule (acc e2e P1-7).
+            }
+
+            await _statusNotifier.NotifyInterviewSlotChosenAsync(application, isEmployer, userId, cancellationToken);
+            await _statusNotifier.NotifyInterviewScheduledAsync(application, cancellationToken);
         }
-
-        interview.ChosenSlotId = slot.Id;
-        interview.Status = InterviewStatus.Scheduled;
-        interview.UpdatedAtUtc = DateTime.UtcNow;
-
-        await ScheduleRemindersAsync(interview, application, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
-
-        await _mailer.SendScheduledConfirmationAsync(
-            interview,
-            application,
-            application.CandidateEmail,
-            application.Vacancy.Company.ContactEmail ?? "",
-            cancellationToken);
-
-        await _statusNotifier.NotifyInterviewSlotChosenAsync(application, isEmployer, userId, cancellationToken);
-        await _statusNotifier.NotifyInterviewScheduledAsync(application, cancellationToken);
 
         return await MapThreadAsync(application, interview, userId, isEmployer, cancellationToken);
     }
@@ -259,9 +272,31 @@ public sealed class AfterMatchService : IAfterMatchService
             ? await RequireEmployerApplicationAsync(applicationId, userId, cancellationToken)
             : await RequireCandidateApplicationAsync(applicationId, userId, cancellationToken);
 
-        var interview = await EnsureInterviewEntityAsync(application, cancellationToken);
-        interview.Status = InterviewStatus.Cancelled;
+        var interview = await _db.Interviews
+            .Include(i => i.Slots)
+            .FirstAsync(i => i.ApplicationId == application.Id, cancellationToken);
+
+        interview.Status = InterviewStatus.Proposing;
+        interview.ChosenSlotId = null;
         interview.UpdatedAtUtc = DateTime.UtcNow;
+
+        foreach (var slot in interview.Slots)
+        {
+            slot.IsSelected = false;
+        }
+
+        if (isEmployer)
+        {
+            _db.InterviewSlots.RemoveRange(interview.Slots.ToList());
+        }
+
+        var reminders = await _db.InterviewReminders
+            .Where(r => r.InterviewId == interview.Id)
+            .ToListAsync(cancellationToken);
+        if (reminders.Count > 0)
+        {
+            _db.InterviewReminders.RemoveRange(reminders);
+        }
 
         _db.InterviewChanges.Add(new InterviewChange
         {

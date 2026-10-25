@@ -80,9 +80,13 @@ else if (_bodyHtml is not null)
             if (data is null)
             {
                 _redirecting = true;
+                var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+                var dispatch = AfterMatchPanelRouting.DispatchSuffixForThread(thread);
+                var suffix = dispatch ?? AfterMatchPanelRouting.PickSlotSsrSuffix;
                 var querySuffix = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
-                var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor{querySuffix}";
-                http.Response.Redirect(blazorPath);
+                var target =
+                    $"/candidate/applications/{ApplicationId:D}/after-match{suffix}{querySuffix}";
+                http.Response.Redirect(target);
                 return;
             }
 
