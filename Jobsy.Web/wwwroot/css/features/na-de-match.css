@@ -317,7 +317,7 @@ html[data-ndm-screenshot] .app-shell:has(.ndm-page) .app-main{padding-bottom:0!i
 .ndm.ndm-wg-messages-page [hidden]{display:none!important}
 .ndm.ndm-wg-messages-page .ndm-wg-messages-thr{display:grid;grid-template-columns:300px minmax(0,1fr);gap:0;border:1px solid var(--border);border-radius:var(--rL);overflow:hidden;background:#fff}
 .ndm.ndm-wg-messages-page .ndm-wg-messages-thr .tlist{background:#fbf6ef;border-right:1px solid var(--border)}
-.ndm.ndm-wg-messages-page .ndm-wg-messages-ti{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;align-items:center;width:100%;border-left:0;border-right:0;border-top:0;background:transparent;font:inherit;text-align:left;cursor:pointer}
+.ndm.ndm-wg-messages-page .ndm-wg-messages-ti{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;align-items:center;width:100%;border-left:0;border-right:0;border-top:0;background:transparent;font:inherit;text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .ndm.ndm-wg-messages-page .ndm-wg-messages-ti.on,.ndm.ndm-wg-messages-page .ndm-wg-messages-ti.on{background:#fff!important}
 .ndm.ndm-wg-messages-page .ndm-wg-messages-ti p{font-size:.82rem;color:var(--muted);margin:0}
 .ndm.ndm-wg-messages-page .ndm-wg-messages-ti b{font-size:.92rem;color:var(--brand)}
