@@ -270,6 +270,20 @@ public static class JobsyDbSeeder
     }
 
     /// <summary>Idempotent werkgever after-match demo apps (77777771-0001 … 0006) for acceptatie E2E.</summary>
-    public static Task EnsureAfterMatchDemoApplicationsAsync(JobsyDbContext db, ILogger logger)
-        => AfterMatchDemoSeeder.EnsureAsync(db, logger);
+    public static async Task EnsureAfterMatchDemoApplicationsAsync(JobsyDbContext db, ILogger logger)
+    {
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                await AfterMatchDemoSeeder.EnsureAsync(db, logger);
+                return;
+            }
+            catch (DbUpdateConcurrencyException ex) when (attempt < 3)
+            {
+                logger.LogWarning(ex, "After-match demo seed concurrency (attempt {Attempt}); retrying.", attempt);
+                db.ChangeTracker.Clear();
+            }
+        }
+    }
 }
