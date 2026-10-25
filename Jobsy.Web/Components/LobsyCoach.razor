@@ -7,7 +7,7 @@
 @inject AssistantChatHost ChatHost
 @inject IJSRuntime Js
 
-<div @ref="_dock" class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null)" data-lobsy-coach>
+<div @ref="_dock" class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null) @(HasBottomNav ? "lobsy-coach-dock--has-nav" : null)" data-lobsy-coach>
     @if (_showTip && !string.IsNullOrWhiteSpace(_tip))
     {
         <div class="lobsy-coach-dock__tip" role="status">
@@ -39,6 +39,7 @@
 
 @code {
     [Parameter] public bool Compact { get; set; }
+    [Parameter] public bool HasBottomNav { get; set; }
     [Parameter] public string AskLabel { get; set; } = "Lobsy-hulp";
     [Parameter] public string CloseLabel { get; set; } = "Tip sluiten";
 

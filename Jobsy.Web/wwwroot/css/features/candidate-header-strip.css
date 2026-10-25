@@ -230,6 +230,48 @@
   max-width: none;
 }
 
+@media (max-width: 900px) {
+  .kompas-page-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .kompas-page-wrap > section.kompas {
+    display: contents;
+  }
+
+  .kompas-page-wrap .kompas-hub-layout--reiskaart {
+    display: contents;
+  }
+
+  .kompas-page-wrap > .kreeft-header-strip,
+  .kompas-page-wrap > .sollicitaties-hero-strip {
+    order: 1;
+  }
+
+  .kompas-page-wrap .kompas-hub-layout__reiskaart {
+    order: 2;
+    margin-block: 0.75rem 0;
+  }
+
+  .kompas-page-wrap .kompas__intro {
+    order: 3;
+    padding-block-start: 0;
+  }
+
+  .kompas-page-wrap .kompas-tabs {
+    order: 4;
+  }
+
+  .kompas-page-wrap .kompas-hub-layout__main {
+    order: 5;
+  }
+
+  .kompas-page-wrap .kompas__ssr-actions {
+    order: 6;
+  }
+}
+
 @media (max-width: 639px) {
   .panel-page--cand-ill .cand-hero,
   .passport-page--illustrated .cand-hero,
