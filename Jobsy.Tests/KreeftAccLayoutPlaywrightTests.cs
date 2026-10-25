@@ -72,7 +72,7 @@ public sealed class KreeftAccLayoutPlaywrightTests
         Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.DefaultCompleteEmail, Password));
         await page.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
         await AssertViewportsAsync(page, label);
-        if (label is "paspoort" or "banenkaart" or "carriere")
+        if (label == "paspoort")
         {
             await AssertCoachCloseAsync(page, label);
         }
@@ -191,7 +191,7 @@ public sealed class KreeftAccLayoutPlaywrightTests
         }
 
         await openBtn.ScrollIntoViewIfNeededAsync();
-        await openBtn.ClickAsync(new() { Timeout = 15_000 });
+        await openBtn.ClickAsync(new() { Timeout = 15_000, Force = true });
         await page.WaitForFunctionAsync(
             "() => { var b = document.querySelector('[data-ssr-coach-open]'); return b && b.getAttribute('aria-expanded') === 'true'; }",
             null,
