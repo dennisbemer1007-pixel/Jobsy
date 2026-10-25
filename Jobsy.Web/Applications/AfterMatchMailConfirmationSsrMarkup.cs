@@ -9,76 +9,97 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchMailConfirmationSsrMarkup
 {
-    internal static void AppendGrid(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)
+    internal static void AppendGrid(
+        StringBuilder sb,
+        CultureState culture,
+        AfterMatchThreadDto thread,
+        AfterMatchMailConfirmationFields fields,
+        AfterMatchBevestigingSsrData.PageData links)
     {
-        var whenLabel = AfterMatchMailSsrFormatting.WhenLabel(thread);
         var firstName = AfterMatchMailSsrFormatting.CandidateFirstName(thread);
-        var outlookStart = AfterMatchMailSsrFormatting.OutlookStart(thread);
-        var outlookEnd = AfterMatchMailSsrFormatting.OutlookEnd(thread);
         var employerSubject = string.Format(culture["AfterMatch.Mail.EmployerSubject"], thread.CandidateName);
         var candidateTitle = string.Format(culture["AfterMatch.Mail.CandidateTitle"], firstName);
         var outlookEventTitle = string.Format(culture["AfterMatch.Mail.OutlookEventTitle"], thread.CompanyName);
-        var outlookBody = string.Format(
-            culture["AfterMatch.Mail.OutlookBody"],
-            thread.VacancyTitle,
-            thread.WithWhom ?? thread.CompanyName);
+        var calendarBtn = culture["AfterMatch.Screen05.CalendarRow"];
+        var logoHtml =
+            $"""<img src="{WebUtility.HtmlEncode(BrandImages.HorizontalSvg)}" alt="" style="height:28px" decoding="async" draggable="false">""";
 
         sb.Append("<div class=\"mgrid\"><div>");
         sb.Append("<span class=\"lbl\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.CandidateMail"]));
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.LabelCandidate"]));
         sb.Append("</span><div class=\"mclient\"><div class=\"mhead\"><b>Lobsy</b> &lt;gesprek@lobsy.nl&gt;<br><span class=\"muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.CandidateSubject"]));
-        sb.Append("</span></div><div class=\"mail\"><div class=\"mtop\"><span class=\"ndm-mail-logo\"><img src=\"");
-        sb.Append(WebUtility.HtmlEncode(BrandImages.MarkSvg));
-        sb.Append("\" alt=\"\" width=\"18\" height=\"18\" decoding=\"async\" draggable=\"false\"></span><span class=\"xs muted\">");
+        sb.Append("</span></div><div class=\"mail\"><div class=\"mtop\">");
+        sb.Append(logoHtml);
+        sb.Append("<span class=\"xs muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.PlannedTag"]));
         sb.Append("</span></div><h2>");
         sb.Append(WebUtility.HtmlEncode(candidateTitle));
         sb.Append("</h2><p class=\"small\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.CandidateLead"]));
         sb.Append("</p><div class=\"mbox\">");
-        AppendMboxRow(sb, culture["AfterMatch.Mail.When"], whenLabel);
-        AppendMboxRow(sb, culture["AfterMatch.Mail.Where"], thread.LocationOrLink ?? "");
-        AppendMboxRow(sb, culture["AfterMatch.Mail.With"], thread.WithWhom ?? thread.CompanyName);
-        if (!string.IsNullOrWhiteSpace(thread.TravelLabel))
+        AppendMboxRow(sb, culture["AfterMatch.Mail.When"], fields.WhenLabel);
+        AppendMboxRow(sb, culture["AfterMatch.Mail.Where"], fields.CandidateWhere);
+        AppendMboxRow(sb, culture["AfterMatch.Mail.With"], fields.WithWhomLabel);
+        if (!string.IsNullOrWhiteSpace(fields.TravelLabel))
         {
-            AppendMboxRow(sb, culture["AfterMatch.Mail.Travel"], thread.TravelLabel);
+            AppendMboxRow(sb, culture["AfterMatch.Mail.Travel"], fields.TravelLabel);
         }
 
-        sb.Append("</div><div class=\"addc\"><span class=\"btn sm\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen05.Calendar"]));
-        sb.Append("</span><span class=\"btn line sm\">Outlook</span><span class=\"btn line sm\">Google</span><span class=\"btn line sm\">Apple (.ics)</span></div></div></div>");
+        sb.Append("</div>");
+        AppendCalendarButtons(sb, calendarBtn);
+        sb.Append("<div class=\"mfoot\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.CandidateMfootLead"]));
+        sb.Append(" <a class=\"lk\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(links.RescheduleHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.CandidateMfootReschedule"]));
+        sb.Append("</a> ");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.CandidateMfootMid"]));
+        sb.Append(" · <a class=\"lk\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(links.TipsHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.CandidateMfootTips"]));
+        sb.Append("</a><br>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.MfootBrand"]));
+        sb.Append("</div></div></div>");
 
         sb.Append("<span class=\"lbl\" style=\"margin-top:18px\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.After.Title"]));
         sb.Append("</span>");
         AppendWhatHappensNext(sb, culture);
-        sb.Append("<div class=\"note\" style=\"margin-top:14px\"><span>");
-        sb.Append(NdMIcons.Shield);
-        sb.Append("</span><span>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen10.Privacy"]));
-        sb.Append("</span></div></div><div>");
+        sb.Append("</div><div>");
 
         sb.Append("<span class=\"lbl\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.EmployerMail"]));
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.LabelEmployer"]));
         sb.Append("</span><div class=\"mclient\"><div class=\"mhead\"><b>Lobsy</b> &lt;gesprek@lobsy.nl&gt;<br><span class=\"muted\">");
         sb.Append(WebUtility.HtmlEncode(employerSubject));
-        sb.Append("</span></div><div class=\"mail\"><div class=\"mtop\"><span class=\"ndm-mail-logo\"><img src=\"");
-        sb.Append(WebUtility.HtmlEncode(BrandImages.MarkSvg));
-        sb.Append("\" alt=\"\" width=\"18\" height=\"18\" decoding=\"async\" draggable=\"false\"></span><span class=\"xs muted\">");
+        sb.Append("</span></div><div class=\"mail\"><div class=\"mtop\">");
+        sb.Append(logoHtml);
+        sb.Append("<span class=\"xs muted\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.PlannedTag"]));
         sb.Append("</span></div><h2>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.EmployerTitle"]));
         sb.Append("</h2><p class=\"small\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.EmployerLead"]));
         sb.Append("</p><div class=\"mbox\">");
-        AppendMboxRow(sb, culture["AfterMatch.Mail.When"], whenLabel);
+        AppendMboxRow(sb, culture["AfterMatch.Mail.When"], fields.WhenLabel);
         AppendMboxRow(
             sb,
             culture["AfterMatch.Mail.Candidate"],
             $"{thread.CandidateName}, {thread.VacancyTitle}");
-        AppendMboxRow(sb, culture["AfterMatch.Mail.Where"], thread.LocationOrLink ?? "");
+        AppendMboxRow(sb, culture["AfterMatch.Mail.Where"], fields.EmployerWhere);
         AppendMboxRow(sb, culture["AfterMatch.Mail.After"], culture["AfterMatch.Mail.AfterBody"]);
+        sb.Append("</div>");
+        AppendCalendarButtons(sb, calendarBtn);
+        sb.Append("<div class=\"mfoot\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.EmployerMfootLead"]));
+        sb.Append(" · <a class=\"lk\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(links.OpenInterviewHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.EmployerMfootLink"]));
+        sb.Append("</a><br>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.MfootBrand"]));
         sb.Append("</div></div></div>");
 
         sb.Append("<span class=\"lbl\" style=\"margin-top:18px\">");
@@ -94,22 +115,31 @@ internal static class AfterMatchMailConfirmationSsrMarkup
         sb.Append("</div><div class=\"f\"><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.OutlookStart"]));
         sb.Append("</span><span>");
-        sb.Append(WebUtility.HtmlEncode(outlookStart));
+        sb.Append(WebUtility.HtmlEncode(fields.OutlookStart));
         sb.Append("</span><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.OutlookEnd"]));
         sb.Append("</span><span>");
-        sb.Append(WebUtility.HtmlEncode(outlookEnd));
+        sb.Append(WebUtility.HtmlEncode(fields.OutlookEnd));
         sb.Append("</span><span>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.Where"]));
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.OutlookLocation"]));
         sb.Append("</span><span>");
-        sb.Append(WebUtility.HtmlEncode(thread.LocationOrLink ?? ""));
+        sb.Append(WebUtility.HtmlEncode(fields.OutlookLocation));
         sb.Append("</span><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.OutlookReminder"]));
         sb.Append("</span><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Mail.OutlookReminderVal"]));
         sb.Append("</span></div><div style=\"margin-top:10px;border-top:1px solid #e1e5ea;padding-top:10px\">");
-        sb.Append(WebUtility.HtmlEncode(outlookBody));
+        sb.Append(WebUtility.HtmlEncode(fields.OutlookBodyPrimary));
+        sb.Append("<br>");
+        sb.Append(WebUtility.HtmlEncode(fields.OutlookRescheduleLine));
         sb.Append("</div></div></div></div></div>");
+    }
+
+    private static void AppendCalendarButtons(StringBuilder sb, string calendarBtn)
+    {
+        sb.Append("<div class=\"addc\"><span class=\"btn sm\">");
+        sb.Append(WebUtility.HtmlEncode(calendarBtn));
+        sb.Append("</span><span class=\"btn line sm\">Outlook</span><span class=\"btn line sm\">Google</span><span class=\"btn line sm\">Apple (.ics)</span></div>");
     }
 
     private static void AppendMboxRow(StringBuilder sb, string label, string value)
@@ -128,7 +158,11 @@ internal static class AfterMatchMailConfirmationSsrMarkup
         AppendWhatNextRow(sb, NdMIcons.Bell, culture["AfterMatch.WhatNext.Reminder2h"], culture["AfterMatch.WhatNext.Reminder2hBody"]);
         AppendWhatNextRow(sb, NdMIcons.Pin, culture["AfterMatch.WhatNext.Interview"], culture["AfterMatch.WhatNext.InterviewBody"]);
         AppendWhatNextRow(sb, NdMIcons.Flag, culture["AfterMatch.WhatNext.Outcome"], culture["AfterMatch.WhatNext.OutcomeBody"]);
-        sb.Append("</div></div>");
+        sb.Append("</div><div class=\"note\" style=\"margin-top:14px\"><span>");
+        sb.Append(NdMIcons.Shield);
+        sb.Append("</span><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.PrivacyNote"]));
+        sb.Append("</span></div></div>");
     }
 
     private static void AppendWhatNextRow(StringBuilder sb, string icon, string title, string body)

@@ -13,14 +13,14 @@ internal static class AfterMatchBevestigingSsrShells
         bool includeBackLink)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"ndm ndm-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"bevestiging\" data-ndm-bevestiging-ssr=\"1\" data-application-id=\"");
+        sb.Append("<div class=\"ndm ndm-page ndm-mail-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"bevestiging\" data-ndm-bevestiging-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
         sb.Append("\"><main class=\"wrap\"><p class=\"crumb\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.Crumb"]));
         sb.Append("</p><h1 style=\"font-size:1.8rem;margin-bottom:14px\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen06.PageTitle"]));
         sb.Append("</h1>");
-        AfterMatchMailConfirmationSsrMarkup.AppendGrid(sb, culture, data.Thread);
+        AfterMatchMailConfirmationSsrMarkup.AppendGrid(sb, culture, data.Thread, data.MailFields, data);
         if (includeBackLink)
         {
             sb.Append("<p style=\"margin-top:16px\"><a class=\"lk\" href=\"");
@@ -30,7 +30,9 @@ internal static class AfterMatchBevestigingSsrShells
             sb.Append("</a></p>");
         }
 
-        sb.Append("</main></div>");
+        sb.Append("</main>");
+        AfterMatchMailSsrChrome.AppendChatDock(sb, culture, data.AssistantHref);
+        sb.Append("</div>");
         return sb.ToString();
     }
 }
