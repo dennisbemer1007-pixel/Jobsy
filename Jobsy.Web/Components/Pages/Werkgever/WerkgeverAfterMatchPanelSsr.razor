@@ -299,7 +299,7 @@ else if (_bodyHtml is not null)
                         "Loosduinseweg 120, Den Haag · ingang naast de winkel",
                         "Linda de Wit, eigenaar",
                         "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
-                        isProposePanel ? "propose" : "",
+                        ResolveInitialPanel(panel, isProposePanel),
                         messagesHub,
                         outcomeOverlay);
 
@@ -330,6 +330,22 @@ else if (_bodyHtml is not null)
         _heroTitle = title;
         _heroLead = lead;
         _pageTitle = title;
+    }
+
+    private static string ResolveInitialPanel(string panel, bool isProposePanel)
+    {
+        panel = string.IsNullOrWhiteSpace(panel) ? "" : panel.Trim().ToLowerInvariant();
+        if (panel is "slots")
+        {
+            panel = "propose";
+        }
+
+        if (!string.IsNullOrWhiteSpace(panel))
+        {
+            return panel;
+        }
+
+        return isProposePanel ? "propose" : "";
     }
 
 }
