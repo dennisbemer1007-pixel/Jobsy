@@ -19,7 +19,7 @@ internal static class AfterMatchEmployerMessagesSsrShells
         sb.Append(contextApplicationId.ToString("D"));
         sb.Append("\" data-messages-base=\"");
         sb.Append(WebUtility.HtmlEncode(data.MessagesBasePath));
-        sb.Append("\"><div class=\"thr ndm-wg-messages-thr\" data-testid=\"ndm-employer-messages-hub\"><div class=\"tlist\">");
+        sb.Append("\" data-enhance-nav=\"false\"><div class=\"thr ndm-wg-messages-thr\" data-testid=\"ndm-employer-messages-hub\"><div class=\"tlist\">");
 
         var avatarIndex = 0;
         foreach (var row in data.Threads)

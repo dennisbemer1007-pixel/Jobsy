@@ -291,7 +291,10 @@
 
   function init() {
     var container = root();
-    if (!container || container.getAttribute("data-ndm-employer-messages-bound") === "1") {
+    if (!container) {
+      return;
+    }
+    if (container.getAttribute("data-ndm-employer-messages-bound") === "1") {
       return;
     }
     container.setAttribute("data-ndm-employer-messages-bound", "1");
@@ -334,7 +337,43 @@
     }
   }
 
+  function bindEnhancedNavRecovery() {
+    function onNav() {
+      var container = root();
+      if (container) {
+        container.removeAttribute("data-ndm-employer-messages-bound");
+      }
+      init();
+    }
+    document.addEventListener("enhancedload", onNav);
+    try {
+      if (window.Blazor && typeof window.Blazor.addEventListener === "function") {
+        window.Blazor.addEventListener("enhancedload", onNav);
+      }
+    } catch (_e) {
+      /* ignore */
+    }
+    if (window.__ndmEmployerMessagesCaptureBound) {
+      return;
+    }
+    window.__ndmEmployerMessagesCaptureBound = true;
+    document.addEventListener(
+      "click",
+      function (ev) {
+        var link = ev.target && ev.target.closest && ev.target.closest("[data-ndm-thread-select]");
+        if (!link || !root()) {
+          return;
+        }
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        onThreadClick(ev);
+      },
+      true
+    );
+  }
+
   window.NdmEmployerMessagesInit = init;
+  bindEnhancedNavRecovery();
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

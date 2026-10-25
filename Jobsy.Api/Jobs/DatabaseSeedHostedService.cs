@@ -165,6 +165,15 @@ public sealed class DatabaseSeedHostedService : BackgroundService
 
             using var scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            try
+            {
+                await JobsyDbSeeder.EnsureAfterMatchDemoApplicationsAsync(db, _logger);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Acceptatie after-match employer demo seed failed; continuing.");
+            }
+
             var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
                 db,
                 _configuration,

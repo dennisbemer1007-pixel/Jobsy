@@ -40,17 +40,46 @@
       });
   }
 
-  function init() {
-    var el = root();
-    if (!el) return;
-
-    el.querySelectorAll("[data-ndm-employer-accept-slot]").forEach(function (btn) {
+  function bindAcceptButtons(container) {
+    container.querySelectorAll("[data-ndm-employer-accept-slot]").forEach(function (btn) {
+      if (btn.getAttribute("data-ndm-reschedule-bound") === "1") {
+        return;
+      }
+      btn.setAttribute("data-ndm-reschedule-bound", "1");
       btn.addEventListener("click", function () {
         var slotId = btn.getAttribute("data-slot-id");
-        acceptSlot(el, slotId);
+        acceptSlot(container, slotId);
       });
     });
   }
+
+  function init() {
+    var el = root();
+    if (!el) return;
+    bindAcceptButtons(el);
+  }
+
+  window.NdmEmployerRescheduleInit = init;
+
+  function bindEnhancedNavRecovery() {
+    if (window.__ndmEmployerRescheduleEnhancedBound) {
+      return;
+    }
+    window.__ndmEmployerRescheduleEnhancedBound = true;
+    function onNav() {
+      init();
+    }
+    document.addEventListener("enhancedload", onNav);
+    try {
+      if (window.Blazor && typeof window.Blazor.addEventListener === "function") {
+        window.Blazor.addEventListener("enhancedload", onNav);
+      }
+    } catch (_e) {
+      /* ignore */
+    }
+  }
+
+  bindEnhancedNavRecovery();
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

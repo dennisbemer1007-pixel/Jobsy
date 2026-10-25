@@ -1,9 +1,10 @@
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Applications
 @using Jobsy.Web.Hosting
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
 <!DOCTYPE html>
-<html lang="@HtmlLang" dir="@HtmlDir">
+<html lang="@HtmlLang" dir="@HtmlDir" data-enhance-nav="@(DisableEnhancedNav ? "false" : null)">
 
 <head>
     <meta charset="utf-8" />
@@ -508,8 +509,12 @@
         && HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true
         && RoleClaimMatching.HasRole(HttpContextAccessor.HttpContext!.User, JobsyRoles.Candidate);
 
+    private bool DisableEnhancedNav =>
+        AfterMatchWerkgeverSsrPaths.ShouldDisableBlazorAndEnhancedNav(RequestPath);
+
     private bool SkipBlazorForPage =>
-        HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
+        HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null
+        || DisableEnhancedNav;
 
     private bool LoadBlazorRuntime =>
         !SkipBlazorForPage

@@ -51,7 +51,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen11.Hero.Title"]));
         sb.Append("\" data-ndm-lead-messages=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen11.Hero.Lead"]));
-        sb.Append("\"><div data-ndm-wg-flow");
+        sb.Append("\" data-enhance-nav=\"false\"><div data-ndm-wg-flow");
         if (panel is "messages")
         {
             sb.Append(" hidden");
@@ -87,7 +87,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         var sb = new StringBuilder();
         sb.Append("<div class=\"ndm ndm-wg ndm-wg-page\" data-testid=\"ndm-werkgever-live\" data-ndm-panel=\"\" data-ndm-employer-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
-        sb.Append("\"><div class=\"wc stack\"><div class=\"note\"><span>");
+        sb.Append("\" data-enhance-nav=\"false\"><div class=\"wc stack\"><div class=\"note\"><span>");
         sb.Append(NdMIcons.Info);
         sb.Append("</span><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.SubmittedNote"]));
@@ -387,6 +387,8 @@ internal static class AfterMatchEmployerPanelSsrShells
             ? AfterMatchMailSsrTime.ToAmsterdam(scheduledStart).ToString("d MMM", nl)
             : null;
         var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
+        var isProposing = thread.InterviewStatus == InterviewStatus.Proposing;
+        var outcomeDone = thread.Outcome is not null || thread.InterviewStatus == InterviewStatus.Done;
 
         sb.Append("<nav class=\"tl\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
@@ -424,11 +426,20 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Plan"]));
         sb.Append("<small>");
-        sb.Append(WebUtility.HtmlEncode(isScheduled ? (interviewDate ?? yesDate ?? "") : culture["AfterMatch.Timeline.PlanNow"]));
+        sb.Append(WebUtility.HtmlEncode(
+            isScheduled
+                ? (interviewDate ?? yesDate ?? "")
+                : isProposing
+                    ? culture["AfterMatch.Timeline.PlanNow"]
+                    : culture["AfterMatch.Timeline.PlanNow"]));
         sb.Append("</small></div><div class=\"s");
         if (isScheduled)
         {
             sb.Append(" now");
+        }
+        else if (outcomeDone && !isProposing)
+        {
+            sb.Append(" done");
         }
 
         sb.Append("\"><i>");
@@ -436,12 +447,32 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Interview"]));
         sb.Append("<small>");
-        sb.Append(WebUtility.HtmlEncode(interviewDate ?? ""));
-        sb.Append("</small></div><div class=\"s\"><i>");
-        sb.Append(NdMIcons.Flag);
+        sb.Append(WebUtility.HtmlEncode(isScheduled || outcomeDone ? (interviewDate ?? "") : ""));
+        sb.Append("</small></div><div class=\"s");
+        if (outcomeDone)
+        {
+            sb.Append(" done");
+        }
+
+        sb.Append("\"><i>");
+        if (outcomeDone)
+        {
+            sb.Append(NdMIcons.Check);
+        }
+        else
+        {
+            sb.Append(NdMIcons.Flag);
+        }
+
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
-        sb.Append("<small></small></div></nav>");
+        sb.Append("<small>");
+        if (outcomeDone)
+        {
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Timeline.OutcomeDone"]));
+        }
+
+        sb.Append("</small></div></nav>");
     }
 
     private static string CandidateSubtitle(CultureState culture, AfterMatchThreadDto thread)

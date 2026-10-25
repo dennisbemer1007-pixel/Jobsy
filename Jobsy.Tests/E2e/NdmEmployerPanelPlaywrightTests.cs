@@ -5,17 +5,23 @@ namespace Jobsy.Tests.E2e;
 
 /// <summary>
 /// Headless Chrome checks for werkgever after-match in-page panels (PR #1043 follow-up).
-/// Run: JOBSY_NDM_EMPLOYER_PANELS=1 JOBSY_E2E_BASE_URL=http://127.0.0.1:5201
+/// Run local: JOBSY_NDM_EMPLOYER_PANELS=1 JOBSY_E2E_BASE_URL=http://127.0.0.1:5201
+/// Run acceptatie: JOBSY_NDM_EMPLOYER_PANELS=1 JOBSY_NDM_EMPLOYER_ACC=1 JOBSY_E2E_BASE_URL=https://acceptatie.lobsy.nl
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class NdmEmployerPanelPlaywrightTests
 {
     private const string EnvRun = "JOBSY_NDM_EMPLOYER_PANELS";
+    private const string EnvAcc = "JOBSY_NDM_EMPLOYER_ACC";
+    private const string AccBaseUrl = "https://acceptatie.lobsy.nl";
     private const string EmployerEmail = "ondernemer@jobsy.local";
     private const string Password = "Jobsy123!";
 
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
+
+    private static bool RequireAcceptatie =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvAcc), "1", StringComparison.Ordinal);
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_NDM_EMPLOYER_ARTIFACTS"))
@@ -32,6 +38,10 @@ public sealed class NdmEmployerPanelPlaywrightTests
 
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync()
                       ?? throw new InvalidOperationException("JOBSY_E2E_BASE_URL unreachable");
+        if (RequireAcceptatie)
+        {
+            Assert.StartsWith(AccBaseUrl, baseUrl, StringComparison.OrdinalIgnoreCase);
+        }
 
         Directory.CreateDirectory(OutDir);
 
@@ -46,6 +56,7 @@ public sealed class NdmEmployerPanelPlaywrightTests
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, EmployerEmail, Password));
 
+        await AssertAfterMatchSkipsBlazorRuntimeAsync(page, baseUrl);
         await AssertProposePanelOpensInPageAsync(page, baseUrl);
         await AssertReschedulePanelsInPageAsync(page, baseUrl);
         await AssertMessagesThreadSwitchInPageAsync(page, baseUrl);
@@ -53,6 +64,14 @@ public sealed class NdmEmployerPanelPlaywrightTests
         await AssertScheduledHomeAsync(page, baseUrl);
         await AssertDemo0006LoadsAsync(page, baseUrl);
         await AssertOutcomeNotYetOnWaitAppAsync(page, baseUrl);
+    }
+
+    private static async Task AssertAfterMatchSkipsBlazorRuntimeAsync(IPage page, string baseUrl)
+    {
+        var url = $"{baseUrl}/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match";
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("data-enhance-nav", "false");
+        await Assertions.Expect(page.Locator("script[src*='blazor.web.js']")).ToHaveCountAsync(0);
     }
 
     private static async Task AssertProposePanelOpensInPageAsync(IPage page, string baseUrl)

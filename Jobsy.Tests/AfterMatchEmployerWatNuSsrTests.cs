@@ -31,8 +31,8 @@ public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchPanelSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-employer.js?v=20261025-ndm-wg-interact", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261025-ndm-wg-interact", razor, StringComparison.Ordinal);
+        Assert.Contains("ndm-employer.js?v=20261025-ndm-wg-acc-nav", razor, StringComparison.Ordinal);
+        Assert.Contains("na-de-match.css?v=20261025-ndm-wg-acc-nav", razor, StringComparison.Ordinal);
     }
 
     [Fact]

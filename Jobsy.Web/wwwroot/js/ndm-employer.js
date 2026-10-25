@@ -360,6 +360,10 @@
 
   function bindPanelNav(container) {
     container.querySelectorAll("[data-ndm-open-panel]").forEach(function (btn) {
+      if (btn.getAttribute("data-ndm-panel-bound") === "1") {
+        return;
+      }
+      btn.setAttribute("data-ndm-panel-bound", "1");
       btn.addEventListener("click", function (e) {
         e.preventDefault();
         var panel = btn.getAttribute("data-ndm-open-panel");
@@ -368,11 +372,58 @@
     });
 
     container.querySelectorAll("[data-ndm-close-panel]").forEach(function (btn) {
+      if (btn.getAttribute("data-ndm-panel-bound") === "1") {
+        return;
+      }
+      btn.setAttribute("data-ndm-panel-bound", "1");
       btn.addEventListener("click", function (e) {
         e.preventDefault();
         setPanel(container, "", true);
       });
     });
+  }
+
+  function handlePanelClick(ev) {
+    var openBtn = ev.target && ev.target.closest && ev.target.closest("[data-ndm-open-panel]");
+    if (openBtn) {
+      var el = root();
+      if (!el) {
+        return;
+      }
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      setPanel(el, openBtn.getAttribute("data-ndm-open-panel"), true);
+      return;
+    }
+    var closeBtn = ev.target && ev.target.closest && ev.target.closest("[data-ndm-close-panel]");
+    if (closeBtn) {
+      var container = root();
+      if (!container) {
+        return;
+      }
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      setPanel(container, "", true);
+    }
+  }
+
+  function bindEnhancedNavRecovery() {
+    if (window.__ndmEmployerEnhancedBound) {
+      return;
+    }
+    window.__ndmEmployerEnhancedBound = true;
+    document.addEventListener("click", handlePanelClick, true);
+    function onNav() {
+      init();
+    }
+    document.addEventListener("enhancedload", onNav);
+    try {
+      if (window.Blazor && typeof window.Blazor.addEventListener === "function") {
+        window.Blazor.addEventListener("enhancedload", onNav);
+      }
+    } catch (_e) {
+      /* ignore */
+    }
   }
 
   function init() {
@@ -390,10 +441,20 @@
     bindSubmit(el);
     updateSubmit(el);
 
-    window.addEventListener("popstate", function () {
-      setPanel(el, panelFromUrl(), false);
-    });
+    if (!window.__ndmEmployerPopstateBound) {
+      window.__ndmEmployerPopstateBound = true;
+      window.addEventListener("popstate", function () {
+        var current = root();
+        if (!current) {
+          return;
+        }
+        setPanel(current, panelFromUrl(), false);
+      });
+    }
   }
+
+  window.NdmEmployerInit = init;
+  bindEnhancedNavRecovery();
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
