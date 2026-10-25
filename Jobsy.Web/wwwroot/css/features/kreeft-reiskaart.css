@@ -316,4 +316,11 @@
   .au-stage--reiskaart .au-reiskaart-grid {
     display: grid;
   }
+
+  /* Step-specific rustig rules set flex column on .ob-rustig__body; keep reiskaart grid. */
+  .ob-wizard--rustig .ob-rustig__body.ob-rustig__body--with-reiskaart {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) min(280px, 30vw);
+    flex-direction: unset;
+  }
 }
