@@ -7,6 +7,7 @@ namespace Jobsy.Web.Saved;
 internal static class SavedClientUnsave
 {
     internal static async Task<IResult> PostAsync(
+        HttpContext http,
         IFormCollection form,
         JobsyApiClient api,
         CultureState culture,
@@ -16,18 +17,33 @@ internal static class SavedClientUnsave
         var sort = SavedSsrQuery.NormalizeSort(form["sort"].ToString());
         if (!Guid.TryParse(form["vacancyId"].ToString(), out var vacancyId))
         {
-            return RedirectWithError(filter, sort, culture["Common.Error.TryAgain"]);
+            return Fail(filter, sort, culture["Common.Error.TryAgain"], http);
         }
 
         try
         {
             await api.SetLikedAsync(vacancyId, liked: false, cancellationToken);
+            if (SavedClientJson.WantsJson(http))
+            {
+                return Results.Json(new { ok = true, vacancyId = vacancyId.ToString("D") });
+            }
+
             return SeeOther(SavedSsrQuery.BuildUrl(filter, sort, saved: true));
         }
         catch
         {
-            return RedirectWithError(filter, sort, culture["Common.Error.TryAgain"]);
+            return Fail(filter, sort, culture["Common.Error.TryAgain"], http);
         }
+    }
+
+    private static IResult Fail(string filter, string sort, string message, HttpContext http)
+    {
+        if (SavedClientJson.WantsJson(http))
+        {
+            return Results.Json(new { ok = false, error = message });
+        }
+
+        return RedirectWithError(filter, sort, message);
     }
 
     private static RedirectHttpResult RedirectWithError(string filter, string sort, string message)

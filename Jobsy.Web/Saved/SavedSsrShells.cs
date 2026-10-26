@@ -7,6 +7,7 @@ using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
 using Jobsy.Web.Models;
+using Jobsy.Web.Banenkaart;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Navigation;
 
@@ -31,7 +32,18 @@ internal static class SavedSsrShells
         var sb = new StringBuilder();
         sb.Append("<div class=\"saved-page-wrap\">");
         KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.BewaardDesk, KreeftHeaderStripAssets.BewaardMob, "bewaard");
-        sb.Append("<div class=\"panel-page kb-saved kb-saved--illustrated panel-page--cand-ill\" data-testid=\"saved-page-ssr\">");
+        sb.Append("<div class=\"panel-page kb-saved kb-saved--illustrated panel-page--cand-ill\" data-testid=\"saved-page-ssr\" data-saved-save-path=\"");
+        sb.Append(WebUtility.HtmlEncode(BanenkaartSsrQuery.SavePath));
+        sb.Append("\" data-saved-unsave-path=\"/api/saved-client/unsave\" data-saved-toast-template=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.UndoToast"]));
+        sb.Append("\" data-saved-undo-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Undo"]));
+        sb.Append("\" data-saved-error=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Error.TryAgain"]));
+        sb.Append("\">");
+        sb.Append("<input type=\"hidden\" id=\"saved-ssr-token\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
+        sb.Append("\" />");
         AppendHero(sb, culture);
         if (data.ShowJobListTabs)
         {
@@ -58,14 +70,18 @@ internal static class SavedSsrShells
         else
         {
             AppendToolbar(sb, culture, data);
-            AppendGrid(sb, culture, data, antiforgeryToken);
+            AppendGrid(sb, culture, data);
             AppendRail(sb, culture, data);
         }
 
         AppendFooterNav(sb, culture);
-        sb.Append("</div></div>");
+        sb.Append("<div class=\"kb-saved__toast\" data-saved-toast role=\"status\" hidden><span data-saved-toast-text></span><button type=\"button\" data-saved-undo hidden>");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Undo"]));
+        sb.Append("</button></div></div></div>");
         sb.Append("<script src=\"");
         sb.Append(WwwrootAssetCatalog.Url("js/saved-ssr-filters.js"));
+        sb.Append("\" defer></script><script src=\"");
+        sb.Append(WwwrootAssetCatalog.Url("js/saved-ssr-unsave.js"));
         sb.Append("\" defer></script>");
         return sb.ToString();
     }
@@ -180,7 +196,7 @@ internal static class SavedSsrShells
         sb.Append("</option>");
     }
 
-    private static void AppendGrid(StringBuilder sb, CultureState culture, SavedSsrData.PageData data, string antiforgeryToken)
+    private static void AppendGrid(StringBuilder sb, CultureState culture, SavedSsrData.PageData data)
     {
         sb.Append("<div class=\"kb-saved__body\">");
         sb.Append("<p class=\"state-message\" data-saved-filter-empty");
@@ -197,7 +213,7 @@ internal static class SavedSsrShells
         foreach (var item in SavedSsrData.SortedAll(data))
         {
             var visible = SavedSsrData.MatchesFilter(item, data.Filter);
-            AppendItem(sb, culture, data, item, antiforgeryToken, hidden: !visible);
+            AppendItem(sb, culture, item, hidden: !visible);
         }
 
         sb.Append("</div></div>");
@@ -206,9 +222,7 @@ internal static class SavedSsrShells
     private static void AppendItem(
         StringBuilder sb,
         CultureState culture,
-        SavedSsrData.PageData data,
         CandidateEngagementItem item,
-        string antiforgeryToken,
         bool hidden = false)
     {
         var closed = SavedSsrData.IsClosed(item);
@@ -224,7 +238,9 @@ internal static class SavedSsrShells
             sb.Append(" kb-saved-row--closed");
         }
 
-        sb.Append("\" data-saved-item data-saved-closed=\"");
+        sb.Append("\" data-saved-item data-saved-vacancy-id=\"");
+        sb.Append(item.VacancyId.ToString("D"));
+        sb.Append("\" data-saved-closed=\"");
         sb.Append(closedAttr);
         sb.Append('"');
         if (hidden)
@@ -243,7 +259,7 @@ internal static class SavedSsrShells
         sb.Append("</p>");
         AppendFitTags(sb, culture, item, row: true);
         sb.Append("</div>");
-        AppendUnsaveForm(sb, culture, data, item, antiforgeryToken, "kb-saved-row__heart", heart: true);
+        AppendUnsaveForm(sb, culture, item, "kb-saved-row__heart", heart: true);
         sb.Append("</article>");
 
         sb.Append("<article class=\"kb-saved-card");
@@ -252,7 +268,9 @@ internal static class SavedSsrShells
             sb.Append(" kb-saved-card--closed");
         }
 
-        sb.Append("\" data-saved-item data-saved-closed=\"");
+        sb.Append("\" data-saved-item data-saved-vacancy-id=\"");
+        sb.Append(item.VacancyId.ToString("D"));
+        sb.Append("\" data-saved-closed=\"");
         sb.Append(closedAttr);
         sb.Append('"');
         if (hidden)
@@ -274,7 +292,7 @@ internal static class SavedSsrShells
         AppendPhoto(sb, item, "kb-saved-card__photo", "(max-width: 1024px) 33vw, 25vw", 0, 0);
         sb.Append("</a>");
         AppendSavedState(sb, culture, item);
-        AppendUnsaveForm(sb, culture, data, item, antiforgeryToken, "kb-saved-card__heart", heart: true);
+        AppendUnsaveForm(sb, culture, item, "kb-saved-card__heart", heart: true);
         sb.Append("</div><div class=\"kb-saved-card__body\"><h2 class=\"kb-saved-card__title\"><a href=\"/vacancies/");
         sb.Append(item.VacancyId.ToString("D"));
         sb.Append("\" data-enhance-nav=\"false\">");
@@ -301,7 +319,7 @@ internal static class SavedSsrShells
             sb.Append("\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Similar"]));
             sb.Append("</a>");
-            AppendUnsaveForm(sb, culture, data, item, antiforgeryToken, "kb-saved-card__remove", heart: false, labelKey: "Kb.Saved.Remove");
+            AppendUnsaveForm(sb, culture, item, "kb-saved-card__remove", heart: false, labelKey: "Kb.Saved.Remove");
         }
         else if (item.HasApplied)
         {
@@ -436,30 +454,18 @@ internal static class SavedSsrShells
     private static void AppendUnsaveForm(
         StringBuilder sb,
         CultureState culture,
-        SavedSsrData.PageData data,
         CandidateEngagementItem item,
-        string antiforgeryToken,
         string cssClass,
         bool heart,
         string? labelKey = null)
     {
-        sb.Append("<form method=\"post\" action=\"/api/saved-client/unsave\" class=\"");
+        sb.Append("<button type=\"button\" class=\"");
         sb.Append(cssClass);
-        sb.Append(" kb-saved__inline-form\" data-enhance=\"false\" data-enhance-nav=\"false\" data-testid=\"");
-        sb.Append(UnsaveTestId(cssClass, item.VacancyId));
-        sb.Append("\">");
-        sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
-        sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
-        sb.Append("\" /><input type=\"hidden\" name=\"vacancyId\" value=\"");
+        sb.Append(" kb-saved__inline-form\" data-saved-unsave data-vacancy-id=\"");
         sb.Append(item.VacancyId.ToString("D"));
-        sb.Append("\" /><input type=\"hidden\" name=\"filter\" value=\"");
-        sb.Append(WebUtility.HtmlEncode(data.Filter));
-        sb.Append("\" /><input type=\"hidden\" name=\"sort\" value=\"");
-        sb.Append(WebUtility.HtmlEncode(data.Sort));
-        sb.Append("\" /><button type=\"submit\" class=\"");
-        sb.Append(cssClass);
-        sb.Append('"');
-        sb.Append(" aria-label=\"");
+        sb.Append("\" data-testid=\"");
+        sb.Append(UnsaveTestId(cssClass, item.VacancyId));
+        sb.Append("\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Unsave"]));
         sb.Append("\">");
         if (heart)
@@ -471,7 +477,7 @@ internal static class SavedSsrShells
             sb.Append(WebUtility.HtmlEncode(culture[labelKey ?? "Kb.Saved.Remove"]));
         }
 
-        sb.Append("</button></form>");
+        sb.Append("</button>");
     }
 
     private static void AppendRail(StringBuilder sb, CultureState culture, SavedSsrData.PageData data)
