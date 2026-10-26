@@ -48,8 +48,8 @@
     "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261026-kreeft25",
-    "sha256": "fbe3b51b84d328819a0accb2b9e9e2ba44f72308a81bfb4f56cde3e5f0f7514e"
+    "v": "20261026-26",
+    "sha256": "539f25886fbcc258730b90133f4a84cf1bd6314fb2d24b9fc70c2edf1274d767"
   },
   "css/features/banenkaart-page.css": {
     "v": "20261025-kreeft12",
@@ -364,8 +364,8 @@
     "sha256": "1b05b82d4323e08f40c5b37c128e9edafc8df0cbc3d74e170253b4d0e7cf6f5c"
   },
   "js/app-core.js": {
-    "sha256": "ec1ce737d7ddc98b6667b3a50bf8f28a9c62dd5de028f3a2da975f216b2c87aa",
-    "v": "20261026-kreeft24"
+    "sha256": "ad3bea026b57f15f6748fc4633cd2730cd21cf63a12ca87d42046e5949a41d1c",
+    "v": "20261026-kreeft26"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -376,8 +376,8 @@
     "v": "20261016-04"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261025-matchsort1",
-    "sha256": "a2e408bd958781c21263fca6f640316098f9953ed7bc62e862e2ca49c84d07a8"
+    "v": "20261026-26",
+    "sha256": "505cedf832541fd7fb228b3e9e1fd5651b6cc70a69b1e84f9c6b0776934672ab"
   },
   "js/banenkaart-map-icons.js": {
     "v": "20261025-kreeft15",
@@ -392,12 +392,12 @@
     "sha256": "a1abe8dcee5336aedb8c2d20e4b89a7128463c584f5e93bbb0459f3bf575659e"
   },
   "js/banenkaart-prefetch.js": {
-    "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
-    "v": "20261023-19"
+    "sha256": "2e25d74f9890a1115b3e0c71dfb301f7fa44d21c71513bbfe1227688c9f6afa3",
+    "v": "20261026-kreeft26"
   },
   "js/banenkaart-ssr.js": {
-    "v": "20261024-desktopsplit1",
-    "sha256": "a63c213367a54dcc099de8d7d798d82a21394fcaa0a08f2d1ab5e3cdef2213ad"
+    "v": "20261026-26",
+    "sha256": "48d7bc45f2136cab7d9d5be6891d94875c7a54f9f91ed69ec4c0d484c80d6b4d"
   },
   "js/blazor-boot.js": {
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",

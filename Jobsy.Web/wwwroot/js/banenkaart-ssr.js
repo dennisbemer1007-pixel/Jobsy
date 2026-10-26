@@ -240,7 +240,7 @@
             if (!target.closest("[data-banenkaart-ssr=\"1\"]")) {
                 return;
             }
-            if (isDesktopSplitBanenkaart()) {
+            if (isBanenkaartSplitRailOnly()) {
                 return;
             }
             if (target.closest("[data-testid=kb-view-kaart]")) {
@@ -440,8 +440,13 @@
         }
     }
 
+    /** 701–899px split rail only; ≥900px wide desktop supports Kaart/Lijst toggle. */
+    function isBanenkaartSplitRailOnly() {
+        return isDesktopSplitBanenkaart() && !isDesktopBanenkaart();
+    }
+
     function listModeFromUrl() {
-        if (isDesktopSplitBanenkaart()) {
+        if (isBanenkaartSplitRailOnly()) {
             return false;
         }
         try {
@@ -454,7 +459,7 @@
     function syncViewQueryParam(listMode) {
         try {
             var params = new URLSearchParams(window.location.search);
-            if (listMode && !isDesktopSplitBanenkaart()) {
+            if (listMode && !isBanenkaartSplitRailOnly()) {
                 params.set("weergave", "lijst");
             } else {
                 params.delete("weergave");
@@ -478,19 +483,22 @@
         }
     }
 
-    /** SSOT: same classes + data-kb-view as SSR markup (show-list/show-map; desktop split is always map). */
+    /** SSOT: same classes + data-kb-view as SSR markup (show-list/show-map; split rail 701–899 is always map). */
     function applyBanenkaartViewMode(root, mode, options) {
         if (!root || (mode !== "list" && mode !== "map")) {
             return;
         }
         var opts = options || {};
         var listMode = mode === "list";
-        if (isDesktopSplitBanenkaart()) {
+        if (isBanenkaartSplitRailOnly()) {
             listMode = false;
         }
         root.classList.remove("show-map", "show-list", "jobsy-discovery--list");
         if (listMode) {
             root.classList.add("show-list");
+            if (isDesktopBanenkaart()) {
+                root.classList.add("jobsy-discovery--list");
+            }
             root.setAttribute("data-kb-view", "list");
         } else {
             root.classList.add("show-map");
@@ -695,7 +703,7 @@
         }
         clearLegacyUiSession();
         var reload = isNavigationReload();
-        if (isDesktopSplitBanenkaart()) {
+        if (isBanenkaartSplitRailOnly()) {
             applyBanenkaartViewMode(root, "map", { updateUrl: true });
             writeUiState({ showMap: true, desktopList: false, filtersOpen: false });
             if (!isBackForwardNavigation()) {
@@ -764,8 +772,8 @@
         var state = { savedAt: Date.now() };
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (root) {
-            state.showMap = root.classList.contains("show-map") || isDesktopSplitBanenkaart();
-            state.desktopList = !isDesktopSplitBanenkaart()
+            state.showMap = root.classList.contains("show-map") || isBanenkaartSplitRailOnly();
+            state.desktopList = isDesktopBanenkaart()
                 && root.classList.contains("jobsy-discovery--list");
         }
         if (fromListVacancy) {
@@ -808,7 +816,7 @@
         }
         var root = qs("[data-banenkaart-ssr=\"1\"]");
         if (root) {
-            if (isDesktopSplitBanenkaart()) {
+            if (isBanenkaartSplitRailOnly()) {
                 if (!root.classList.contains("show-map") || root.classList.contains("show-list")) {
                     applyBanenkaartViewMode(root, "map", { updateUrl: true, skipMapSync: true });
                 } else {

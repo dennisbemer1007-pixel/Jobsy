@@ -1482,7 +1482,9 @@
             return false;
         }
         try {
-            if (window.matchMedia("(min-width: 701px)").matches) {
+            if (window.matchMedia("(min-width: 701px)").matches
+                && !(window.jobsyViewport && typeof window.jobsyViewport.isWide === "function"
+                    && window.jobsyViewport.isWide())) {
                 return false;
             }
         } catch (eSplit) { }
