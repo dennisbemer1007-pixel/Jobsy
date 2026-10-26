@@ -106,6 +106,59 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
     }
 
     [Fact]
+    public void Accept_shows_when_candidate_picked_employer_alternative_slot()
+    {
+        var culture = Culture;
+        var appId = AfterMatchDemoIds.RescheduleApp;
+        var slotId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var slotStart = new DateTime(2026, 10, 27, 10, 0, 0, DateTimeKind.Utc);
+        var thread = new AfterMatchThreadDto(
+            appId,
+            Guid.NewGuid(),
+            InterviewStatus.RescheduleRequested,
+            AfterMatchContactShareState.From(InterviewStatus.RescheduleRequested, null),
+            null,
+            "Medewerker bakkerij",
+            "Bakkerij De Korenaar",
+            null,
+            InterviewFormat.OnSite,
+            "Loosduinseweg 120, Den Haag",
+            "Linda de Wit",
+            null,
+            slotStart,
+            slotStart.AddMinutes(30),
+            [
+                new AfterMatchSlotDto(
+                    slotId,
+                    slotStart,
+                    slotStart.AddMinutes(30),
+                    InterviewSlotProposer.Employer,
+                    null,
+                    true)
+            ],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [
+                new AfterMatchChangeDto(
+                    InterviewChangeKind.Reschedule,
+                    "Candidate",
+                    "Kan die dag niet.",
+                    DateTime.UtcNow)
+            ],
+            [],
+            "Sanne de Vries",
+            null,
+            new DateTime(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc),
+            null);
+
+        var data = AfterMatchEmployerRescheduleSsrData.FromThread(culture, thread, appId);
+        var html = AfterMatchEmployerRescheduleSsrShells.BuildBody(culture, data, appId);
+        Assert.Contains("data-ndm-employer-accept-slot", html, StringComparison.Ordinal);
+        Assert.Contains(slotId.ToString("D"), html, StringComparison.Ordinal);
+        Assert.Contains(culture["AfterMatch.Employer.Reschedule.EmployerSlotHint"], html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Ssr_routing_only_reschedule_requested()
     {
         var baseThread = new AfterMatchThreadDto(

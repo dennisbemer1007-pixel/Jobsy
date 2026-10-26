@@ -770,6 +770,15 @@ public sealed class AfterMatchService : IAfterMatchService
             ? $"{application.EstimatedTravelMinutes} min fietsen"
             : null;
 
+        var openSlots = interview.Slots
+            .Where(s => !s.IsSelected
+                        || (isEmployer
+                            && interview.Status == InterviewStatus.RescheduleRequested
+                            && interview.ChosenSlotId == s.Id))
+            .Select(s => new AfterMatchSlotDto(
+                s.Id, s.StartUtc, s.EndUtc, s.ProposedBy, s.Reason, s.IsSelected))
+            .ToList();
+
         return new AfterMatchThreadDto(
             application.Id,
             interview.Id,
@@ -785,8 +794,7 @@ public sealed class AfterMatchService : IAfterMatchService
             interview.Note,
             interview.ChosenSlot?.StartUtc,
             interview.ChosenSlot?.EndUtc,
-            interview.Slots.Where(s => !s.IsSelected).Select(s => new AfterMatchSlotDto(
-                s.Id, s.StartUtc, s.EndUtc, s.ProposedBy, s.Reason, s.IsSelected)).ToList(),
+            openSlots,
             messages.Select(m => new AfterMatchMessageDto(
                 m.Id,
                 m.SenderUserId == viewerUserId,
