@@ -333,19 +333,7 @@ internal static class PassportSsrShells
 
     private static void AppendCareerPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
     {
-        sb.Append("<p class=\"login-lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Career"]));
-        sb.Append("</p>");
-        if (!string.IsNullOrWhiteSpace(data.DreamTitle))
-        {
-            sb.Append("<p><strong>");
-            sb.Append(WebUtility.HtmlEncode(data.DreamTitle));
-            sb.Append("</strong></p>");
-        }
-
-        sb.Append("<p><a href=\"/carriere\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Passport.Tab.Career"]));
-        sb.Append("</a></p>");
+        PassportSsrCareerHtml.Append(sb, culture, data.Flags.EmployersEnabled, data.CareerPanel);
     }
 
     private static void AppendProofPanel(

@@ -27,7 +27,8 @@ internal static class PassportSsrData
         string? DreamTitle,
         bool FromDiscovery,
         PassportSsrFitHtml.Panel? FitPanel,
-        bool ProactiveMatchingEnabled);
+        bool ProactiveMatchingEnabled,
+        PassportSsrCareerHtml.Panel CareerPanel);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
@@ -95,6 +96,8 @@ internal static class PassportSsrData
                 cancellationToken);
         }
 
+        var careerPanel = await PassportSsrCareerHtml.LoadPanelAsync(api, profile, cancellationToken);
+
         return new PageData(
             tab,
             errorMessage,
@@ -111,6 +114,7 @@ internal static class PassportSsrData
             string.IsNullOrWhiteSpace(career?.DreamTitle) ? null : career!.DreamTitle.Trim(),
             fromDiscovery,
             fitPanel,
-            flags.ProactiveMatchingEnabled);
+            flags.ProactiveMatchingEnabled,
+            careerPanel);
     }
 }

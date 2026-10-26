@@ -296,7 +296,7 @@ internal static class PassportSsrFitHtml
 
             if (panel.CourseSlots.Count > 0)
             {
-                AppendCourses(sb, culture, panel.CourseSkill, panel.CourseSlots);
+                AppendCourseSection(sb, culture, "Passport.Fit.CourseEyebrow", panel.CourseSkill, panel.CourseSlots);
             }
         }
 
@@ -423,16 +423,17 @@ internal static class PassportSsrFitHtml
         sb.Append("</aside>");
     }
 
-    private static void AppendCourses(
+    internal static void AppendCourseSection(
         StringBuilder sb,
         CultureState culture,
+        string eyebrowKey,
         string skillLabel,
         IReadOnlyList<PassportCourseCard> slots)
     {
         sb.Append("<section class=\"passport-course\" aria-labelledby=\"passport-fit-course-title\"><div class=\"passport-course__head\"><p class=\"passport-course__eyebrow\" id=\"passport-fit-course-title\"><span aria-hidden=\"true\">");
         sb.Append(NavIcons.Claw);
         sb.Append("</span>");
-        sb.Append(WebUtility.HtmlEncode(culture["Passport.Fit.CourseEyebrow"]));
+        sb.Append(WebUtility.HtmlEncode(culture[eyebrowKey]));
         sb.Append("</p></div><ul class=\"passport-course__list\">");
         foreach (var slot in slots)
         {
