@@ -23,6 +23,7 @@ public sealed partial class JobsyApiClient
             if (response.IsSuccessStatusCode)
             {
                 var overview = await response.Content.ReadFromJsonAsync<JobSearchActivityOverviewDto>(
+                    ApiJson,
                     cancellationToken: ct);
                 return new JobSearchActivitiesClientResult(overview, status, null, null);
             }
@@ -34,7 +35,11 @@ public sealed partial class JobsyApiClient
         catch (Exception ex)
         {
             ActivityLogClientDiagnostics.LogOverviewFailure(logger, HttpStatusCode.ServiceUnavailable, "client_exception", ex);
-            return new JobSearchActivitiesClientResult(null, (int)HttpStatusCode.ServiceUnavailable, "client_exception", ex.GetType().Name);
+            return new JobSearchActivitiesClientResult(
+                null,
+                (int)HttpStatusCode.ServiceUnavailable,
+                "client_exception",
+                ex.GetType().Name);
         }
     }
 

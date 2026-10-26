@@ -455,7 +455,6 @@ internal static class ApplicationsSsrData
                 t.OccurredAtUtc))
             .ToList();
 
-        var hint = BuildCardHint(culture, a, timeline);
         var sourceKey = a.IsInitiative ? "Initiative.Panel.Title" : "Bk.Apps.FilterVacancy";
         ApplicationAfterMatchSummary? afterMatch = null;
         if (a.AfterMatch is not null)
@@ -474,6 +473,10 @@ internal static class ApplicationsSsrData
                 a.AfterMatch.LastCancelReason,
                 a.AfterMatch.LastCancelByEmployer);
         }
+
+        var hint = afterMatch is not null
+            ? BuildCardHintFromAfterMatch(culture, afterMatch)
+            : BuildCardHint(culture, a, timeline);
 
         return new SollicitationRow(
             a.Id,
@@ -529,6 +532,11 @@ internal static class ApplicationsSsrData
                or ApplicationStatus.FilledElsewhere
                or ApplicationStatus.Withdrawn
                or ApplicationStatus.Hired;
+
+    private static string? BuildCardHintFromAfterMatch(
+        CultureState culture,
+        ApplicationAfterMatchSummary afterMatch)
+        => AfterMatchSollicitatiesPresentation.FormatListCardTimelineSummary(culture, afterMatch);
 
     private static string? BuildCardHint(
         CultureState culture,

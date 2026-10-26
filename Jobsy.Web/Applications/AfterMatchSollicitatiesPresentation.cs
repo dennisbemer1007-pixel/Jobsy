@@ -131,6 +131,41 @@ internal static class AfterMatchSollicitatiesPresentation
             summary.UnreadMessageCount);
     }
 
+    internal static string? FormatListCardTimelineSummary(
+        CultureState culture,
+        ApplicationAfterMatchSummary summary)
+    {
+        var steps = BuildAfterMatchTimeline(culture, summary);
+        var segments = new List<string>();
+        foreach (var step in steps)
+        {
+            if (string.Equals(step.State, "Upcoming", StringComparison.OrdinalIgnoreCase)
+                && step.OccurredAtUtc is null)
+            {
+                continue;
+            }
+
+            if (step.OccurredAtUtc is DateTime at)
+            {
+                var dateText = string.Equals(step.Key, "Interview", StringComparison.OrdinalIgnoreCase)
+                    ? ApplicationsSsrData.FormatShortDateTime(culture, at)
+                    : ApplicationsSsrData.FormatShortDate(culture, at);
+                segments.Add($"{step.Label} {dateText}");
+            }
+            else if (string.Equals(step.State, "Current", StringComparison.OrdinalIgnoreCase))
+            {
+                segments.Add($"{step.Label} {culture["AfterMatch.Timeline.Now"]}");
+            }
+
+            if (segments.Count >= 2)
+            {
+                break;
+            }
+        }
+
+        return segments.Count == 0 ? null : string.Join(", ", segments);
+    }
+
     internal static IReadOnlyList<SollicitationTimelineStep> BuildAfterMatchTimeline(
         CultureState culture,
         ApplicationAfterMatchSummary summary)

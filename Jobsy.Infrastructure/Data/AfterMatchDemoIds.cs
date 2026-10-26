@@ -24,6 +24,28 @@ public static class AfterMatchDemoIds
     /// <summary>Legacy single-vacancy id; prefer <see cref="VacancyForApplication"/>.</summary>
     public static readonly Guid DemoVacancyId = Guid.Parse("77777771-00aa-4000-8000-0000000000aa");
 
+    public static readonly Guid[] AllDemoApplicationIds =
+    [
+        WaitApp,
+        PickSlotsApp,
+        ScheduledApp,
+        RescheduleApp,
+        NotNowApp,
+        Verkoop4790App,
+    ];
+
+    public static string VacancyTitleForApplication(Guid applicationId) =>
+        applicationId switch
+        {
+            _ when applicationId == Verkoop4790App => "Verkoopmedewerker",
+            _ when applicationId == PickSlotsApp => "Hulp bakker",
+            _ when applicationId == ScheduledApp => "Medewerker bakkerij",
+            _ when applicationId == RescheduleApp => "Medewerker bakkerij · verzet",
+            _ when applicationId == WaitApp => "Medewerker bakkerij · wacht",
+            _ when applicationId == NotNowApp => "Medewerker bakkerij · uitkomst",
+            _ => "Medewerker bakkerij",
+        };
+
     public static Guid VacancyForApplication(Guid applicationId) =>
         applicationId switch
         {

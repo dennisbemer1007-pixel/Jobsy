@@ -99,28 +99,31 @@ internal static class AfterMatchDemoSeeder
         foreach (var appId in appIds)
         {
             var vacancyId = AfterMatchDemoIds.VacancyForApplication(appId);
-            if (await db.Vacancies.AnyAsync(v => v.Id == vacancyId))
+            var title = AfterMatchDemoIds.VacancyTitleForApplication(appId);
+            var vacancy = await db.Vacancies.FirstOrDefaultAsync(v => v.Id == vacancyId);
+            if (vacancy is null)
             {
-                continue;
+                db.Vacancies.Add(new Vacancy
+                {
+                    Id = vacancyId,
+                    CompanyId = WestlandId,
+                    Title = title,
+                    Description = "After-match demo vacancy.",
+                    HourlyWage = 14.5m,
+                    StartDate = start,
+                    EndDate = start.AddMonths(6),
+                    Status = VacancyStatus.Active,
+                    Location = new GeoPoint(52.0780, 4.3100),
+                    PublishedAtUtc = yesAt.AddDays(-7),
+                    CreatedAtUtc = yesAt.AddDays(-14)
+                });
             }
-
-            var title = appId == AfterMatchDemoIds.Verkoop4790App
-                ? "Verkoopmedewerker"
-                : "Medewerker bakkerij";
-            db.Vacancies.Add(new Vacancy
+            else
             {
-                Id = vacancyId,
-                CompanyId = WestlandId,
-                Title = title,
-                Description = "After-match demo vacancy.",
-                HourlyWage = 14.5m,
-                StartDate = start,
-                EndDate = start.AddMonths(6),
-                Status = VacancyStatus.Active,
-                Location = new GeoPoint(52.0780, 4.3100),
-                PublishedAtUtc = yesAt.AddDays(-7),
-                CreatedAtUtc = yesAt.AddDays(-14)
-            });
+                vacancy.CompanyId = WestlandId;
+                vacancy.Title = title;
+                vacancy.Status = VacancyStatus.Active;
+            }
         }
 
         var reassign = await db.Vacancies

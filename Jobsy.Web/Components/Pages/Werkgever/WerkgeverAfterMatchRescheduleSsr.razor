@@ -74,6 +74,7 @@ else if (_bodyHtml is not null)
 
             var weekThreads = await AfterMatchEmployerWeekAsideLoader.LoadScopeThreadsAsync(
                 Api,
+                ApplicationId,
                 http.RequestAborted);
             var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
             if (!AfterMatchEmployerSsrRouting.ShouldAllowEmployerRescheduleSsrRoute(thread))
