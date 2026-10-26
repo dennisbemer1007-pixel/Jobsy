@@ -32,6 +32,13 @@ internal static class AfterMatchEmployerDemoSlots
                 {
                     slots.Add(utc);
                     timeIndex++;
+                    day = day.AddDays(1);
+                    if (day.Year > anchor.Year + 1)
+                    {
+                        break;
+                    }
+
+                    continue;
                 }
             }
 

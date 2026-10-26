@@ -142,6 +142,12 @@ internal static class MatchSsrGateHtml
         sb.Append(KbRoutes.Map);
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Discovery.BackToSearch"]));
+        sb.Append("</a>.</p><p class=\"match-gate__hint match-gate__hint--transport\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Match.Gate.BikeSearchLead"]));
+        sb.Append(" <a class=\"match-gate__transport-link\" href=\"");
+        sb.Append(KbRoutes.Map);
+        sb.Append("?transport=Fiets\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Transport.Bike"]));
         sb.Append("</a>.</p>");
     }
 }

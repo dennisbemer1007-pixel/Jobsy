@@ -91,6 +91,12 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen04.Hero.LeadPick",
             "{0} van {1} stelt {2} momenten voor. Kies wat jou het beste uitkomt.",
             "{0} at {1} proposes {2} times. Pick what works best for you.");
+        Add("AfterMatch.Screen04.Hero.LeadPickOne",
+            "{0} van {1} stelt één moment voor. Kies wat jou het beste uitkomt.",
+            "{0} at {1} proposes one time. Pick what works best for you.");
+        Add("AfterMatch.Timeline.InterviewWaiting",
+            "wacht op gekozen moment",
+            "waiting for chosen time");
         Add("AfterMatch.Screen04.Hero.LeadCompact",
             "Kies een moment of stel zelf een ander voor.",
             "Pick a time or suggest another yourself.");
