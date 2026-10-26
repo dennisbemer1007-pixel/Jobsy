@@ -530,20 +530,43 @@ internal static class PassportSsrShells
         sb.Append(WebUtility.HtmlEncode(culture["Common.Save"]));
         sb.Append("</button></div></form></div>");
 
+        sb.Append("<div class=\"detail-card passport-data__item");
         if (openWorkStatus)
         {
-            sb.Append("<div class=\"detail-card passport-data__item is-open\" id=\"passport-data-work-status\" data-testid=\"passport-data-work-status\"><h3 class=\"passport-data__title\">");
-            sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Legend"]));
-            sb.Append("</h3><p class=\"passport-data__sub\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Apply.Gap.WorkStatus"]));
-            sb.Append("</p><p><a class=\"btn btn-primary\" href=\"");
-            var obReturn = safeReturn ?? "/candidate/applications";
-            sb.Append("/candidate/start?step=1&amp;returnUrl=");
-            sb.Append(Uri.EscapeDataString(obReturn));
-            sb.Append("\" data-enhance-nav=\"false\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Common.Continue"]));
-            sb.Append("</a></p></div>");
+            sb.Append(" is-open");
         }
+
+        sb.Append("\" id=\"passport-data-work-status\" data-testid=\"passport-data-work-status\"><h3 class=\"passport-data__title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Legend"]));
+        sb.Append("</h3><p class=\"passport-data__sub\">");
+        sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Hint"]));
+        sb.Append("</p>");
+        if (prefs.WorkStatuses is { Count: > 0 })
+        {
+            sb.Append("<ul class=\"passport-data__chips\">");
+            foreach (var code in prefs.WorkStatuses)
+            {
+                if (string.IsNullOrWhiteSpace(code))
+                {
+                    continue;
+                }
+
+                var labelKey = "WorkStatus." + code.Trim();
+                sb.Append("<li>");
+                sb.Append(WebUtility.HtmlEncode(culture[labelKey]));
+                sb.Append("</li>");
+            }
+
+            sb.Append("</ul>");
+        }
+
+        sb.Append("<p><a class=\"btn btn-primary\" href=\"");
+        var obReturn = safeReturn ?? "/candidate/applications";
+        sb.Append("/candidate/start?step=1&amp;returnUrl=");
+        sb.Append(Uri.EscapeDataString(obReturn));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Continue"]));
+        sb.Append("</a></p></div>");
 
         sb.Append("<p class=\"passport-ssr-nav-links\"><a href=\"");
         sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Proof, safeReturn));
