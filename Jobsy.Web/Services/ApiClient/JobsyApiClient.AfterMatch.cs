@@ -56,7 +56,11 @@ public sealed partial class JobsyApiClient
             $"api/me/applications/{applicationId:D}/after-match/slots/propose",
             request,
             ct);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+
         return (await ReadApiJsonAsync<AfterMatchThreadDto>(response.Content, ct))!;
     }
 

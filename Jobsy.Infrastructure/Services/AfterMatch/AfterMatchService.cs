@@ -141,8 +141,13 @@ public sealed class AfterMatchService : IAfterMatchService
 
         interview.Status = InterviewStatus.RescheduleRequested;
         interview.UpdatedAtUtc = DateTime.UtcNow;
-        _db.InterviewSlots.RemoveRange(interview.Slots.Where(s => !s.IsSelected));
-        interview.Slots.Add(new InterviewSlot
+        var slotsToRemove = interview.Slots.Where(s => !s.IsSelected).ToList();
+        if (slotsToRemove.Count > 0)
+        {
+            _db.InterviewSlots.RemoveRange(slotsToRemove);
+        }
+
+        _db.InterviewSlots.Add(new InterviewSlot
         {
             Id = Guid.NewGuid(),
             InterviewId = interview.Id,
