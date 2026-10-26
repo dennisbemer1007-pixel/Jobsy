@@ -30,7 +30,7 @@ internal static class AfterMatchSsrErrorShells
         sb.Append("</a></nav><h1>");
         sb.Append(WebUtility.HtmlEncode(culture[pageTitleKey]));
         sb.Append("</h1><p class=\"state-message\" role=\"alert\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Error.NotFound"]));
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.Sollicitation.Gone"]));
         sb.Append("</p><p style=\"margin-top:14px\"><a class=\"lk\" href=\"");
         sb.Append(WebUtility.HtmlEncode(backHref));
         sb.Append("\" data-enhance-nav=\"false\">");

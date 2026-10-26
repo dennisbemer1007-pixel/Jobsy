@@ -64,7 +64,7 @@ else if (_bodyHtml is not null)
             var http = HttpContextAccessor.HttpContext;
             if (http is null)
             {
-                _fatalMessage = Culture["Panel.ErrorInline"];
+                _fatalMessage = Culture["Apps.Sollicitation.Gone"];
                 return;
             }
 
@@ -187,7 +187,7 @@ else if (_bodyHtml is not null)
         var http = HttpContextAccessor.HttpContext;
         if (http is null)
         {
-            _fatalMessage = Culture["Panel.ErrorInline"];
+            _fatalMessage = Culture["Apps.Sollicitation.Gone"];
             return Task.CompletedTask;
         }
 

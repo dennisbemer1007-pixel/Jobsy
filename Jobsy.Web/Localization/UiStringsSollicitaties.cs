@@ -29,6 +29,13 @@ public static class UiStringsSollicitaties
             "Mijn activiteiten", "My activities",
             "Moje aktywności", "Activitățile mele", "نشاطاتي");
 
+        Add("Apps.Sollicitation.Gone",
+            "Deze sollicitatie bestaat niet meer.",
+            "This application no longer exists.",
+            "Ta aplikacja już nie istnieje.",
+            "Această aplicație nu mai există.",
+            "هذا الطلب لم يعد موجوداً.");
+
         Add("Apps.AddApplication",
             "Sollicitatie toevoegen", "Add application",
             "Dodaj aplikację", "Adaugă candidatură", "إضافة طلب");
