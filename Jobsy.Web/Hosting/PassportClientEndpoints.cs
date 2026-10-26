@@ -18,7 +18,32 @@ public static class PassportClientEndpoints
         app.MapPost("/api/passport-client/save-availability", SaveAvailabilityAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
 
+        app.MapPost("/api/passport-client/save-proof", SaveProofAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+
         return app;
+    }
+
+    private static async Task<IResult> SaveProofAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!http.Request.HasFormContentType)
+        {
+            return Results.BadRequest();
+        }
+
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return PassportClientDataSaver.RedirectWithError(
+                PassportTabs.Proof,
+                culture["Common.Error.TryAgain"]);
+        }
+
+        return await PassportClientProofSaver.SaveAsync(http, api, culture, cancellationToken);
     }
 
     private static async Task<IResult> SaveDataAsync(

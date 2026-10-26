@@ -43,6 +43,18 @@ public sealed class PassportSsrR3GuardTests
     }
 
     [Fact]
+    public void Passport_proof_tab_uses_ssr_html_and_sheets()
+    {
+        var root = FindRepoRoot();
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        var proof = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrProofHtml.cs"));
+        Assert.Contains("PassportSsrProofHtml.Append", shells, StringComparison.Ordinal);
+        Assert.Contains("passport-proof__sheet", proof, StringComparison.Ordinal);
+        Assert.Contains("passport-ssr-proof.js", proof, StringComparison.Ordinal);
+        Assert.Contains("save-proof", proof, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Passport_career_tab_uses_plan_view_builder_ssr()
     {
         var root = FindRepoRoot();
