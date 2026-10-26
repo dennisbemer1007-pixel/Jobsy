@@ -305,6 +305,7 @@
     if (submit) {
       submit.disabled = true;
     }
+    clearTimeout(previewTimer);
     fetch(SEND_PATH + "?applicationId=" + encodeURIComponent(appId), {
       method: "POST",
       credentials: "same-origin",

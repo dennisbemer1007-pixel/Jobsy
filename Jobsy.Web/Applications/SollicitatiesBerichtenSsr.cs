@@ -15,6 +15,8 @@ internal static class SollicitatiesBerichtenSsr
     {
         var threads = data.AllRows
             .Where(SollicitatiesBerichtenPresentation.RowHasMessageThread)
+            .GroupBy(r => r.ApplicationId)
+            .Select(g => g.OrderByDescending(r => r.AfterMatch!.LastMessageAtUtc ?? r.SortAtUtc).First())
             .OrderByDescending(r => r.AfterMatch!.LastMessageAtUtc ?? r.SortAtUtc)
             .ToList();
 

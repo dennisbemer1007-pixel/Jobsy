@@ -97,7 +97,7 @@
         postJson("/api/ndm-reschedule-client/reschedule", appId, reason)
           .then(function (res) {
             if (!res.ok) throw new Error("fail");
-            window.location.href = applicationsHref || backHref || window.location.pathname;
+            window.location.href = backHref || applicationsHref || window.location.pathname;
           })
           .catch(function () {
             rescheduleBtn.disabled = false;

@@ -64,7 +64,7 @@ public static class AfterMatchRescheduleClientEndpoints
             return Results.BadRequest();
         }
 
-        var redirect = KbRoutes.Applications;
+        var redirect = AfterMatchSollicitatiesUrls.AfterMatchBase(applicationId);
         return Results.Json(new { redirectUrl = redirect });
     }
 }
