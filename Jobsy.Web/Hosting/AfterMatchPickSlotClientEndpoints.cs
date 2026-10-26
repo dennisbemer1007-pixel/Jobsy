@@ -63,13 +63,13 @@ public static class AfterMatchPickSlotClientEndpoints
     {
         if (applicationId == Guid.Empty
             || string.IsNullOrWhiteSpace(body.DateLabel)
-            || string.IsNullOrWhiteSpace(body.TimeWindow)
-            || string.IsNullOrWhiteSpace(body.Note))
+            || string.IsNullOrWhiteSpace(body.TimeWindow))
         {
             return Results.BadRequest();
         }
 
-        var reason = $"{body.DateLabel.Trim()}, {body.TimeWindow.Trim()}. {body.Note.Trim()}";
+        var note = string.IsNullOrWhiteSpace(body.Note) ? "Voorstel kandidaat" : body.Note.Trim();
+        var reason = $"{body.DateLabel.Trim()}, {body.TimeWindow.Trim()}. {note}";
         var startLocal = DateTime.Now.AddDays(3).Date.AddHours(10);
         var endLocal = startLocal.AddMinutes(30);
         var startUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local).ToUniversalTime();
