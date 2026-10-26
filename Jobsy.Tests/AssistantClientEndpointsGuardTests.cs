@@ -24,5 +24,6 @@ public sealed class AssistantClientEndpointsGuardTests
         Assert.Contains("warm: true", js, StringComparison.Ordinal);
         Assert.Contains("pageContextLine", js, StringComparison.Ordinal);
         Assert.Contains("renderChips", js, StringComparison.Ordinal);
+        Assert.Contains("renderActionLinks", js, StringComparison.Ordinal);
     }
 }

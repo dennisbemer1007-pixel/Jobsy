@@ -5,6 +5,7 @@ using Jobsy.Web.Models;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Web.Hosting;
 
@@ -25,6 +26,7 @@ public static class AssistantClientEndpoints
         JobsyApiClient api,
         CultureState culture,
         IChatContextGreetingGate greetingGate,
+        ILogger<AssistantClientEndpointsMarker> logger,
         CancellationToken cancellationToken)
     {
         if (!AssistantChatHost.IsAvailableFor(http.User))
@@ -57,9 +59,12 @@ public static class AssistantClientEndpoints
                         Chips = boot.Chips.Select(c => new AssistantClientChip(c.Label, c.Message)).ToList()
                     });
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Fall through to static greeting (no upstream AI call on open).
+                    logger.LogWarning(
+                        ex,
+                        "Candidate chat context bootstrap failed for {PagePath}; using static greeting.",
+                        pagePath);
                 }
             }
 
@@ -104,4 +109,6 @@ public static class AssistantClientEndpoints
     }
 
     private sealed record AssistantClientChip(string Label, string Message);
+
+    private sealed class AssistantClientEndpointsMarker;
 }

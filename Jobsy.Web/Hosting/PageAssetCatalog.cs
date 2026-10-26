@@ -77,7 +77,6 @@ public static class PageAssetCatalog
         WwwrootAssetCatalog.Url("css/features/reference-verification.css"),
         WwwrootAssetCatalog.Url("css/features/ontdekkingsreis.css"),
         WwwrootAssetCatalog.Url("css/features/tests.css"),
-        WwwrootAssetCatalog.Url("css/features/candidate-illustrated-app.css"),
         WwwrootAssetCatalog.Url("css/features/carriere.css"),
         WwwrootAssetCatalog.Url("css/features/opleidingen.css"),
         WwwrootAssetCatalog.Url("css/features/occupation-day.css"),
@@ -361,6 +360,14 @@ public static class PageAssetCatalog
             ];
         }
 
+        if (path.Equals("/candidate/start/preview-strand", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css"),
+            ];
+        }
+
         if (RouteUsesCompactHeroCss(path))
         {
             return [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")];
@@ -438,6 +445,7 @@ public static class PageAssetCatalog
     public static IReadOnlyList<string> BanenkaartAuthenticatedShellCss() =>
     [
         WwwrootAssetCatalog.Url("css/features/banenkaart-auth-chrome.css"),
+        WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
         WwwrootAssetCatalog.Url("css/features/form-fields.css"),
         WwwrootAssetCatalog.Url("css/features/nav-feedback.css"),
         WwwrootAssetCatalog.Url("css/features/candidate-header-tablet.css"),
@@ -448,7 +456,6 @@ public static class PageAssetCatalog
     [
         WwwrootAssetCatalog.Url("css/features/candidate-no-blazor-chrome.css"),
         WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css"),
-        WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

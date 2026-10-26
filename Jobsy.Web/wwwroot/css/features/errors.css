@@ -280,6 +280,10 @@
   display: flex;
   flex-direction: column;
   min-block-size: 100dvh;
+}.app-shell--error-ssr .app-main.err-main {
+  inline-size: 100%;
+  max-inline-size: 72rem;
+  margin-inline: auto;
 }.err-layout--candidate-shell .err-main {
   flex: 1 1 auto;
 }.app-shell--error-ssr .err-footer--candidate {
