@@ -26,7 +26,7 @@ internal static class PassportSsrShells
         sb.Append("<div class=\"passport-page-wrap\">");
         KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtPaspoortDesk, KreeftHeaderStripAssets.LichtPaspoortMob, "licht-paspoort");
         sb.Append("<div class=\"panel-page passport-page passport-page--illustrated passport-page--compact-preview-c\" data-testid=\"passport-page-ssr\" data-passport-ssr=\"1\">");
-        sb.Append(BuildGreeting(culture, data.FirstName));
+        PassportSsrHeroHtml.Append(sb, culture, data.FirstName);
         sb.Append("<div class=\"passport-layout\">");
         AppendSidebarCard(sb, culture, data, compact: false);
         sb.Append("<div class=\"passport-layout__main\"><div class=\"passport-layout__main-flow\">");
@@ -68,39 +68,6 @@ internal static class PassportSsrShells
             .Append("\",\"maxMinutes\":")
             .Append(maxMinutes)
             .Append("}</script>");
-    }
-
-    private static string BuildGreeting(CultureState culture, string? firstName)
-    {
-        var hour = DateTime.Now.Hour;
-        string greeting;
-        if (string.IsNullOrWhiteSpace(firstName))
-        {
-            greeting = hour switch
-            {
-                < 12 => culture["Kompas.Greeting.PlainMorning"],
-                < 18 => culture["Kompas.Greeting.PlainAfternoon"],
-                _ => culture["Kompas.Greeting.PlainEvening"],
-            };
-        }
-        else
-        {
-            var key = hour switch
-            {
-                < 12 => "Kompas.Greeting.Morning",
-                < 18 => "Kompas.Greeting.Afternoon",
-                _ => "Kompas.Greeting.Evening",
-            };
-            greeting = culture.Format(key, firstName.Trim());
-        }
-
-        var sb = new StringBuilder();
-        sb.Append("<header class=\"kompas-greeting-band\" data-testid=\"passport-greeting\"><h2 class=\"kompas-greeting-band__title\">");
-        sb.Append(WebUtility.HtmlEncode(greeting));
-        sb.Append("</h2><p class=\"kompas-greeting-band__lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Greeting.Lead"]));
-        sb.Append("</p></header>");
-        return sb.ToString();
     }
 
     private static void AppendFooterNav(StringBuilder sb, CultureState culture)
@@ -215,7 +182,13 @@ internal static class PassportSsrShells
         sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Data));
         sb.Append("\" data-passport-tab-link=\"data\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Edit"]));
-        sb.Append("</a></div></aside></div>");
+        sb.Append("</a></div></aside>");
+        if (!compact)
+        {
+            PassportSsrPanelsHtml.AppendLobsyTipCard(sb, culture);
+        }
+
+        sb.Append("</div>");
     }
 
     private static void AppendTabs(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
