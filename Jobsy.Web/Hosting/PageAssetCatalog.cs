@@ -207,7 +207,8 @@ public static class PageAssetCatalog
             return Area.CandidatePublic | Area.CandidateApp;
         }
 
-        if (path.StartsWith("/werkgever/", StringComparison.Ordinal)
+        if (path is "/werkgever"
+            || path.StartsWith("/werkgever/", StringComparison.Ordinal)
             || path.StartsWith("/register/werkgever", StringComparison.OrdinalIgnoreCase))
         {
             return Area.Werkgever;
