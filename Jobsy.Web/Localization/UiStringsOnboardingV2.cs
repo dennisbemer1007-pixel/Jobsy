@@ -540,7 +540,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchWorkStatusPl(Dictionary<string, string> map)
     {
         map["WorkStatus.Legend"] = "Jaki jest Twój obecny status zawodowy?";
-        map["WorkStatus.Hint"] = "Opcjonalnie. Możesz wybrać więcej niż jedną opcję.";
+        map["WorkStatus.Hint"] = "Wymagane do aplikacji. Możesz wybrać więcej niż jedną opcję.";
         map["WorkStatus.scholier"] = "Uczeń";
         map["WorkStatus.student"] = "Student (zawodowe/technikum/studia)";
         map["WorkStatus.stagiair"] = "Stażysta / absolwent";
@@ -557,7 +557,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchWorkStatusRo(Dictionary<string, string> map)
     {
         map["WorkStatus.Legend"] = "Care este situația ta profesională actuală?";
-        map["WorkStatus.Hint"] = "Opțional. Poți alege mai multe opțiuni.";
+        map["WorkStatus.Hint"] = "Necesar pentru a aplica. Poți alege mai multe opțiuni.";
         map["WorkStatus.scholier"] = "Elev";
         map["WorkStatus.student"] = "Student (profesional / universitate)";
         map["WorkStatus.stagiair"] = "Stagiar / absolvent";
@@ -574,7 +574,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchWorkStatusAr(Dictionary<string, string> map)
     {
         map["WorkStatus.Legend"] = "‏ما وضعك المهني الحالي؟";
-        map["WorkStatus.Hint"] = "‏اختياري. يمكنك اختيار أكثر من خيار.";
+        map["WorkStatus.Hint"] = "‏مطلوب للتقديم. يمكنك اختيار أكثر من خيار.";
         map["WorkStatus.scholier"] = "‏طالب مدرسة";
         map["WorkStatus.student"] = "‏طالب (مهني / جامعي)";
         map["WorkStatus.stagiair"] = "‏متدرب / خريج";
