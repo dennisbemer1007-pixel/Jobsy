@@ -10,6 +10,7 @@ internal static class AfterMatchPanelRouting
     internal const string PickSlotSsrSuffix = "/pick-slot-ssr";
     internal const string MessagesSsrSuffix = "/messages-ssr";
     internal const string RescheduleSsrSuffix = "/reschedule-ssr";
+    internal const string CancelledSsrSuffix = "/cancelled-ssr";
     internal const string PanelSsrSuffix = "/panel-ssr";
     /// <summary>
     /// Resolves the after-match panel from the query string. <c>panel=messages</c> always wins when present
@@ -32,7 +33,8 @@ internal static class AfterMatchPanelRouting
     {
         "pick-slot" or "propose-slot" or "propose" => PickSlotSsrSuffix,
         "messages" => MessagesSsrSuffix,
-        "reschedule" or "cancel" => RescheduleSsrSuffix,
+        "reschedule" => RescheduleSsrSuffix,
+        "cancel" => CancelledSsrSuffix,
         "outcome" or "" => PanelSsrSuffix,
         _ => "/blazor",
     };
