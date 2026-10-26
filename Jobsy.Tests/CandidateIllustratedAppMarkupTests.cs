@@ -57,11 +57,13 @@ public class CandidateIllustratedAppMarkupTests
     [Fact]
     public void Settings_combined_layout_and_mail_panel()
     {
-        var settings = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/CandidateSettings.razor"));
-        Assert.Contains("cand-settings", settings, StringComparison.Ordinal);
-        Assert.Contains("CandidateMailSettingsPanel", settings, StringComparison.Ordinal);
-        Assert.Contains("Profile.Reset.Title", settings, StringComparison.Ordinal);
-        Assert.Contains("Profile.UnsubscribeTitle", settings, StringComparison.Ordinal);
+        var settings = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/CandidateSettingsSsr.razor"));
+        var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Settings/SettingsSsrShells.cs"));
+        Assert.Contains("[NoBlazorRuntime]", settings, StringComparison.Ordinal);
+        Assert.Contains("cand-settings", shells, StringComparison.Ordinal);
+        Assert.Contains("data-settings-danger=", shells, StringComparison.Ordinal);
+        Assert.Contains("Profile.Reset.Title", shells, StringComparison.Ordinal);
+        Assert.Contains("Profile.UnsubscribeTitle", shells, StringComparison.Ordinal);
     }
 
     [Fact]
