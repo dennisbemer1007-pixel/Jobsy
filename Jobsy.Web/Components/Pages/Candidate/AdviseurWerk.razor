@@ -1,36 +1,62 @@
 @page "/candidate/adviseur-werk"
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.Services
 @using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
-@using Jobsy.Web.Media
 @inject CultureState Culture
 @inject IUwvFeaturesGate UwvGate
+@inject JobsyApiClient Api
+@inject IUwvKansberoepenCatalog KansberoepenCatalog
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@UwvMockupCopy.Adviseur.Title(Culture.Language) · Lobsy</PageTitle>
+<HeadContent>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/uwv-adviseur-panel.js")}")" defer></script>
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="cards" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
 
 @code {
-    private bool _uwvOn;
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
 
     protected override async Task OnInitializedAsync()
     {
-        _uwvOn = await UwvGate.IsEnabledAsync();
-    }
-}
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
 
-@if (!_uwvOn)
-{
-    <div class="panel-page"><p class="state-message">@Culture["Common.Error"]</p></div>
-}
-else
-{
-    <div class="journey-page panel-page panel-page--cand-ill uwv-adviseur-page">
-        <div class="test-kreeft-strip uwv-adviseur-page__strip" aria-hidden="true" data-testid="kreeft-header-strip">
-            <img class="test-kreeft-strip__desk" src="@KreeftHeaderStripAssets.AdviseurDesk" width="1440" height="225" alt="" loading="lazy" decoding="async" />
-            <img class="test-kreeft-strip__mob" src="@KreeftHeaderStripAssets.AdviseurMob" width="780" height="105" alt="" loading="lazy" decoding="async" />
-        </div>
-        <UwvAdviseurSharePanel />
-    </div>
+            var data = await AdviseurWerkSsrData.LoadAsync(UwvGate, Api, Culture.Language, default);
+            _bodyHtml = AdviseurWerkSsrShells.BuildBody(Culture, data, KansberoepenCatalog);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
 }
