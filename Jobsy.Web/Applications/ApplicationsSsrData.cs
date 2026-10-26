@@ -9,9 +9,11 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Core.Ops;
 using Jobsy.Web.Navigation;
+using Jobsy.Core.Hosting;
 using Jobsy.Web.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Web.Applications;
 
@@ -44,7 +46,10 @@ internal static class ApplicationsSsrData
         IReadOnlyDictionary<Guid, AfterMatchThreadDto> BerichtenThreads,
         bool ActivityLogEnabled,
         bool ShowActiviteitenTab,
-        JobSearchActivityOverviewDto? ActiviteitenOverview);
+        JobSearchActivityOverviewDto? ActiviteitenOverview,
+        bool ActiviteitenAcceptatieDiagnostics,
+        int? ActiviteitenLoadHttpStatus,
+        string? ActiviteitenLoadErrorCode);
 
     internal static async Task<PageData> LoadAsync(
         JobsyApiClient api,
@@ -52,6 +57,7 @@ internal static class ApplicationsSsrData
         CultureState culture,
         IConfiguration configuration,
         IHostEnvironment hostEnvironment,
+        ILogger logger,
         bool isCandidate,
         string? tabRaw,
         string? filterRaw,
@@ -240,6 +246,9 @@ internal static class ApplicationsSsrData
         }
 
         JobSearchActivityOverviewDto? activiteitenOverview = null;
+        int? activiteitenLoadHttpStatus = null;
+        string? activiteitenLoadErrorCode = null;
+        var activiteitenAcceptatieDiagnostics = IsAcceptatieDeployment(configuration, hostEnvironment);
         var showActiviteitenTab = activityLogOn;
         if (!showActiviteitenTab
             && string.Equals(tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal))
@@ -252,13 +261,12 @@ internal static class ApplicationsSsrData
             && !readOnly
             && string.Equals(tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal))
         {
-            try
+            var fetch = await api.GetJobSearchActivitiesOverviewAsync(logger, cancellationToken);
+            activiteitenOverview = fetch.Overview;
+            if (fetch.Overview is null)
             {
-                activiteitenOverview = await api.GetJobSearchActivitiesOverviewAsync(cancellationToken);
-            }
-            catch
-            {
-                // tab shows Apps.Activiteiten.Unavailable
+                activiteitenLoadHttpStatus = fetch.HttpStatus;
+                activiteitenLoadErrorCode = fetch.ErrorCode ?? "overview_unavailable";
             }
         }
 
@@ -289,7 +297,17 @@ internal static class ApplicationsSsrData
             berichtenThreads,
             activityLogOn,
             showActiviteitenTab,
-            activiteitenOverview);
+            activiteitenOverview,
+            activiteitenAcceptatieDiagnostics,
+            activiteitenLoadHttpStatus,
+            activiteitenLoadErrorCode);
+    }
+
+    private static bool IsAcceptatieDeployment(IConfiguration configuration, IHostEnvironment hostEnvironment)
+    {
+        var deployment = configuration["Lobsy:DeploymentEnvironment"];
+        return string.Equals(deployment, DeploymentEnvironment.Acceptatie, StringComparison.OrdinalIgnoreCase)
+               || hostEnvironment.IsEnvironment("Acceptatie");
     }
 
     private const string AcceptatieDemoCandidateEmail = "lobsy-test@mail.grokbot.com";
@@ -378,6 +396,9 @@ internal static class ApplicationsSsrData
             new Dictionary<Guid, AfterMatchThreadDto>(),
             false,
             false,
+            null,
+            false,
+            null,
             null);
 
     private static (int All, int Vacancy, int Initiative, int External, int Done) CountByFilter(
