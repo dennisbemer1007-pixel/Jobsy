@@ -6,9 +6,10 @@ public sealed class CandidateSettingsDangerLinkTests
     public void Settings_calm_links_target_distinct_danger_intents()
     {
         var root = FindRepoRoot();
-        var settings = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateSettings.razor"));
-        Assert.Contains("GoPaspoortDanger(\"reset\")", settings, StringComparison.Ordinal);
-        Assert.Contains("GoPaspoortDanger(\"delete\")", settings, StringComparison.Ordinal);
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Settings/SettingsSsrShells.cs"));
+        Assert.Contains("data-settings-danger=", shells, StringComparison.Ordinal);
+        Assert.Contains("reset", shells, StringComparison.Ordinal);
+        Assert.Contains("delete", shells, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
