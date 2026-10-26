@@ -683,6 +683,10 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel,
         min-height: 0;
         max-height: none;
         overflow: auto;
+        z-index: 5;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane .kb-travel-legend {
         z-index: 2;
     }
 

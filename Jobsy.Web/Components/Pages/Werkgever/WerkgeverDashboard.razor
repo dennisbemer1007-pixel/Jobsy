@@ -397,12 +397,12 @@ else
 
         try
         {
-            var dashTask = Api.GetWerkgeverDashboardAsync(_period, Scope.CompanyIds);
-            var todoTask = Api.GetWerkgeverTodoAsync(Scope.CompanyIds, take: 20);
-            await Task.WhenAll(dashTask, todoTask);
-            _dash = dashTask.Result;
-            _todos = todoTask.Result.ToList();
-            await Counts.ForceRefreshAsync();
+            _dash = await Api.GetWerkgeverDashboardAsync(_period, Scope.CompanyIds);
+            _loadingDash = false;
+            StateHasChanged();
+
+            _todos = (await Api.GetWerkgeverTodoAsync(Scope.CompanyIds, take: 20)).ToList();
+            _ = Counts.ForceRefreshAsync();
         }
         finally
         {
@@ -543,7 +543,14 @@ else
         => delta == 0 ? null : (delta > 0 ? $"+{delta}" : delta.ToString());
 
     private static string? FormatPct(double? pct)
-        => pct is null ? null : (pct >= 0 ? $"+{pct:0.#}%" : $"{pct:0.#}%");
+    {
+        if (pct is null or > -0.05 and < 0.05)
+        {
+            return null;
+        }
+
+        return pct >= 0 ? $"+{pct:0.#}%" : $"{pct:0.#}%";
+    }
 
     private static string Tone(double? delta, bool invert = false)
     {
