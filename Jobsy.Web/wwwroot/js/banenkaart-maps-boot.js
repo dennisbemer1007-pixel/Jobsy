@@ -7,7 +7,7 @@ window.jobsyMaps = (function () {
     var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261026-kreeft21"
+        "/js/jobsyMapLibre.min.js?v=20261026-kreeft25"
     ];
     var discoveryScripts = ["/js/jobMap.min.js?v=20261026-kreeft24"];
 
