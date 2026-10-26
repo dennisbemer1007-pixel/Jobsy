@@ -560,7 +560,13 @@
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-map-legend-host {
     position: absolute;
-    inset: 0;
+    left: 0;
+    bottom: 0;
+    top: auto;
+    right: auto;
+    width: 0;
+    height: 0;
+    overflow: visible;
     pointer-events: none;
     z-index: 3;
 }
@@ -1913,9 +1919,41 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     display: none !important;
 }
 
-.app-shell--banenkaart-shell .jobsy-discovery--lagen .job-map .maplibregl-ctrl-attrib.maplibregl-compact {
-    min-height: 20px;
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .job-map .maplibregl-ctrl-attrib.maplibregl-compact,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact {
+    min-width: 24px;
+    min-height: 24px;
     padding: 0 6px;
+}
+
+/* Compact (i) — right of desktop legend (248px + 12px inset + 12px gap). */
+@media (min-width: 768px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-stage .maplibregl-ctrl-bottom-left {
+        left: 272px !important;
+        right: auto !important;
+        bottom: 10px !important;
+        z-index: 5 !important;
+        pointer-events: none;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-stage .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib {
+        pointer-events: auto;
+    }
+}
+
+/* Compact (i) — right of mobile “Uitleg kaart”, above bottom nav (not under Lobsy pill). */
+@media (max-width: 767px) {
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-stage .maplibregl-ctrl-bottom-left {
+        left: 164px !important;
+        right: auto !important;
+        bottom: calc(var(--bottom-nav-h, 75px) + env(safe-area-inset-bottom, 0px) + 18px) !important;
+        z-index: 5 !important;
+        pointer-events: none;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-stage .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib {
+        pointer-events: auto;
+    }
 }
 
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .job-map .maplibregl-ctrl-group button,
