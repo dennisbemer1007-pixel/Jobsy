@@ -25,19 +25,29 @@ internal static class PassportSsrCareerHtml
         try
         {
             var saved = await api.GetCareerPathAsync(cancellationToken);
+            var paths = new CareerPathService();
+            var evidence = CareerPlanViewBuilder.EvidenceFrom(profile.Preferences);
+            var years = CareerPlanViewBuilder.ExperienceYears(profile.Preferences?.Employers);
             if (saved is not null
                 && saved.Steps.Count > 0
                 && CareerPlanFreshness.StepsMatchDream(saved))
             {
-                var paths = new CareerPathService();
                 var model = paths.FromApi(saved);
-                var evidence = CareerPlanViewBuilder.EvidenceFrom(profile.Preferences);
-                var years = CareerPlanViewBuilder.ExperienceYears(profile.Preferences?.Employers);
+                view = CareerPlanViewBuilder.BuildPassport(model, evidence, years);
+            }
+            else if (saved is not null && !string.IsNullOrWhiteSpace(saved.DreamTitle))
+            {
+                var model = paths.GetDashboard(saved.DreamTitle);
+                if (model.Steps.Count > 0)
+                {
+                    model.HasPlan = true;
+                }
+
                 view = CareerPlanViewBuilder.BuildPassport(model, evidence, years);
             }
             else
             {
-                view = CareerPlanViewBuilder.BuildPassport(new CareerPathService().EmptyDashboard());
+                view = CareerPlanViewBuilder.BuildPassport(paths.EmptyDashboard(), evidence, years);
             }
         }
         catch

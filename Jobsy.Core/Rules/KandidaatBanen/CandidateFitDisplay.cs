@@ -86,6 +86,22 @@ public static class CandidateFitDisplay
         return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
     }
 
+    /// <summary>Strips scores and percentages from passport Fit copy for candidates.</summary>
+    public static string? SanitizePassportCandidateCopy(string? line)
+    {
+        line = SanitizeWhyForDetail(line);
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return line;
+        }
+
+        var trimmed = Regex.Replace(line, @"\d+\s*%", string.Empty);
+        trimmed = Regex.Replace(trimmed, @"\bscoor(t| je| jij)?\b", string.Empty, RegexOptions.IgnoreCase);
+        trimmed = Regex.Replace(trimmed, @"\bmatch(score)?\b", string.Empty, RegexOptions.IgnoreCase);
+        trimmed = Regex.Replace(trimmed, @"\s{2,}", " ").Trim().TrimEnd('·', '.', ',', ' ');
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
+    }
+
     public static KbFitBand BandFor(int percent)
     {
         if (percent >= StrongThreshold)
