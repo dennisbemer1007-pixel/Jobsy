@@ -16,5 +16,8 @@ public sealed class CareerSsrPageTests
         Assert.Contains("data-enhance-nav=", shells, StringComparison.Ordinal);
         Assert.Contains("carriere-segmented__tab", shells, StringComparison.Ordinal);
         Assert.Contains("/api/career-client/save-dream", shells, StringComparison.Ordinal);
+        Assert.Contains("career-ssr.js", shells, StringComparison.Ordinal);
+        Assert.Contains("data-career-tab", shells, StringComparison.Ordinal);
+        Assert.Contains("data-career-panel", shells, StringComparison.Ordinal);
     }
 }
