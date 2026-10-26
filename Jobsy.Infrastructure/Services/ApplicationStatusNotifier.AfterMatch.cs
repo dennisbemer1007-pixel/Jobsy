@@ -332,7 +332,7 @@ public sealed partial class ApplicationStatusNotifier
 
         var baseUrl = (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl;
         var candidateLink = CandidateAfterMatchPath(application.Id, "cancel");
-        var employerLink = EmployerAfterMatchPath(application.Id, "cancel");
+        var employerLink = EmployerAfterMatchPath(application.Id);
 
         if (actorIsEmployer)
         {
@@ -371,6 +371,7 @@ public sealed partial class ApplicationStatusNotifier
             return;
         }
 
+        var employerDossierLink = EmployerAfterMatchPath(application.Id);
         await NotifyAfterMatchCoreAsync(
             application,
             actorUserId,
@@ -386,8 +387,8 @@ public sealed partial class ApplicationStatusNotifier
                     application,
                     copy,
                     "InterviewCancelled",
-                    employerLink,
-                    BuildStatusAlertMail(baseUrl, application, copy, employerLink, lang),
+                    employerDossierLink,
+                    BuildStatusAlertMail(baseUrl, application, copy, employerDossierLink, lang),
                     ct);
             },
             candidateSelf: async (lang, ct) =>

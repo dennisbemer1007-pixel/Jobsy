@@ -282,6 +282,17 @@ else if (_bodyHtml is not null || !string.IsNullOrWhiteSpace(_fatalMessage))
                     {
                         statusNote = Culture["AfterMatch.Screen12.SubmittedNote"];
                     }
+                    else if (thread.InterviewStatus == InterviewStatus.Proposing)
+                    {
+                        var cancelChange = thread.RecentChanges
+                            .Where(c => c.Kind == InterviewChangeKind.Cancel)
+                            .OrderByDescending(c => c.CreatedAtUtc)
+                            .FirstOrDefault();
+                        if (cancelChange is not null && !string.IsNullOrWhiteSpace(cancelChange.Reason))
+                        {
+                            statusNote = cancelChange.Reason;
+                        }
+                    }
 
                     AfterMatchEmployerOutcomeSsrData.PageData? outcomeOverlay = null;
                     if (AfterMatchEmployerSsrRouting.ShouldUseOutcomeScreen(thread))
