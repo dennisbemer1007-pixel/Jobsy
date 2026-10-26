@@ -42,13 +42,24 @@ internal static class ExternalVacancyDetailSsrShells
             sb.Append("</span>");
         }
 
+        var title = string.IsNullOrWhiteSpace(detail.Title)
+            ? culture["ExtVac.Detail.Untitled"]
+            : detail.Title.Trim();
         sb.Append("<h1 class=\"kb-ext__title\">");
-        sb.Append(WebUtility.HtmlEncode(detail.Title));
-        sb.Append("</h1><p class=\"muted\">");
-        sb.Append(WebUtility.HtmlEncode(detail.CompanyName));
-        sb.Append(" · ");
-        sb.Append(WebUtility.HtmlEncode(detail.Place));
-        sb.Append("</p></div></div>");
+        sb.Append(WebUtility.HtmlEncode(title));
+        sb.Append("</h1>");
+        var subtitleParts = new[] { detail.CompanyName, detail.Place }
+            .Where(static p => !string.IsNullOrWhiteSpace(p))
+            .Select(static p => p!.Trim())
+            .ToList();
+        if (subtitleParts.Count > 0)
+        {
+            sb.Append("<p class=\"muted\">");
+            sb.Append(WebUtility.HtmlEncode(string.Join(" · ", subtitleParts)));
+            sb.Append("</p>");
+        }
+
+        sb.Append("</div></div>");
 
         if (detail.RequirementsBullets.Count > 0)
         {
@@ -98,29 +109,45 @@ internal static class ExternalVacancyDetailSsrShells
 
         sb.Append("</tbody></table></section>");
 
-        sb.Append("<section class=\"kb-ext__card\"><div class=\"kb-ext__match\"><div class=\"kb-ext__match-panel kb-ext__match-panel--good\"><h3>");
-        sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Strengths"]));
-        sb.Append("</h3><ul class=\"kb-ext__bullets\">");
-        foreach (var s in detail.MatchInsights.Strengths)
+        var strengths = detail.MatchInsights.Strengths.Where(static s => !string.IsNullOrWhiteSpace(s)).ToList();
+        var challenges = detail.MatchInsights.Challenges.Where(static c => !string.IsNullOrWhiteSpace(c)).ToList();
+        if (strengths.Count > 0 || challenges.Count > 0)
         {
-            sb.Append("<li>");
-            sb.Append(WebUtility.HtmlEncode(s));
-            sb.Append("</li>");
-        }
+            sb.Append("<section class=\"kb-ext__card\"><div class=\"kb-ext__match\">");
+            if (strengths.Count > 0)
+            {
+                sb.Append("<div class=\"kb-ext__match-panel kb-ext__match-panel--good\"><h3>");
+                sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Strengths"]));
+                sb.Append("</h3><ul class=\"kb-ext__bullets\">");
+                foreach (var s in strengths)
+                {
+                    sb.Append("<li>");
+                    sb.Append(WebUtility.HtmlEncode(s));
+                    sb.Append("</li>");
+                }
 
-        sb.Append("</ul></div><div class=\"kb-ext__match-panel\"><h3>");
-        sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Challenges"]));
-        sb.Append("</h3><ul class=\"kb-ext__bullets\">");
-        foreach (var c in detail.MatchInsights.Challenges)
-        {
-            sb.Append("<li>");
-            sb.Append(WebUtility.HtmlEncode(c));
-            sb.Append("</li>");
-        }
+                sb.Append("</ul></div>");
+            }
 
-        sb.Append("</ul></div></div><p class=\"kb-ext__privacy\">");
-        sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Privacy"]));
-        sb.Append("</p></section>");
+            if (challenges.Count > 0)
+            {
+                sb.Append("<div class=\"kb-ext__match-panel\"><h3>");
+                sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Challenges"]));
+                sb.Append("</h3><ul class=\"kb-ext__bullets\">");
+                foreach (var c in challenges)
+                {
+                    sb.Append("<li>");
+                    sb.Append(WebUtility.HtmlEncode(c));
+                    sb.Append("</li>");
+                }
+
+                sb.Append("</ul></div>");
+            }
+
+            sb.Append("</div><p class=\"kb-ext__privacy\">");
+            sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Privacy"]));
+            sb.Append("</p></section>");
+        }
 
         if (!string.IsNullOrWhiteSpace(detail.SourceUrl))
         {

@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Uwv;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
 using Jobsy.Web.UwvFeatures;
@@ -38,9 +39,8 @@ internal static class AdviseurWerkSsrShells
             pickOneMessage = UwvMockupCopy.IsEnglish(lang) ? "Select at least one section." : "Kies minimaal één onderdeel.",
             errorMessage = culture["Common.Error"],
         });
-        sb.Append("<script type=\"application/json\" id=\"uwv-adviseur-boot\">");
-        sb.Append(WebUtility.HtmlEncode(boot));
-        sb.Append("</script><div class=\"uwv-adviseur__main\"><div class=\"uwv-adviseur__intro\">");
+        JsonScriptEmbed.Append(sb, "uwv-adviseur-boot", boot);
+        sb.Append("<div class=\"uwv-adviseur__main\"><div class=\"uwv-adviseur__intro\">");
         sb.Append("<h1 id=\"uwv-adviseur-title\" class=\"uwv-block__title uwv-adviseur__h1\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Adviseur.Title(lang)));
         sb.Append("</h1><p class=\"uwv-block__lead\">");

@@ -1,4 +1,4 @@
-@page "/candidate/profile/bewerken"
+@page "/candidate/profile/bewerken/legacy"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
@@ -248,28 +248,6 @@
             {
                 _openSection = section;
             }
-        }
-
-        try
-        {
-            var flags = await FeatureFlags.GetAsync();
-            if (flags.CandidatePassportEnabled)
-            {
-                var section = _openSection ?? "personal";
-                var target = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
-                    "/candidate/paspoort",
-                    new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-                    {
-                        ["tab"] = "data",
-                        ["section"] = section,
-                    });
-                Navigation.NavigateTo(target, forceLoad: true, replace: true);
-                return;
-            }
-        }
-        catch
-        {
-            // Fall through to classic profile on flag lookup failure.
         }
 
         try
