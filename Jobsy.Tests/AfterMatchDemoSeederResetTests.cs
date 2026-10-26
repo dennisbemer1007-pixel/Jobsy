@@ -11,6 +11,7 @@ namespace Jobsy.Tests;
 public sealed class AfterMatchDemoSeederResetTests
 {
     private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid BranchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
 
     [Fact]
     public void Demo_slot_starts_are_in_the_future()
@@ -69,6 +70,15 @@ public sealed class AfterMatchDemoSeederResetTests
         });
         db.Users.Add(new User
         {
+            Id = BranchManagerId,
+            Email = "ondernemer@jobsy.local",
+            FullName = "Demo Filiaalmanager",
+            Role = UserRole.BranchManager,
+            CompanyId = WestlandId,
+            IsActive = true
+        });
+        db.Users.Add(new User
+        {
             Id = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222"),
             Email = "kandidaat.denhaag@jobsy.local",
             FullName = "Demo Kandidaat Den Haag",
@@ -113,5 +123,16 @@ public sealed class AfterMatchDemoSeederResetTests
         var interview = await db.Interviews.Include(i => i.Slots).SingleAsync(i => i.ApplicationId == app4790.Id);
         var chosen = interview.Slots.Single(s => s.IsSelected);
         Assert.True(chosen.StartUtc > DateTime.UtcNow.AddHours(-1));
+
+        Assert.True(await db.UserCompanies.AnyAsync(m =>
+            m.UserId == BranchManagerId && m.CompanyId == WestlandId));
+        var recentCutoff = DateTime.UtcNow.AddDays(-14);
+        Assert.All(
+            await db.Applications.Where(a => keepIds.Contains(a.Id)).ToListAsync(),
+            a =>
+            {
+                Assert.True(a.CreatedAt >= recentCutoff);
+                Assert.True(a.RespondedAt >= recentCutoff);
+            });
     }
 }
