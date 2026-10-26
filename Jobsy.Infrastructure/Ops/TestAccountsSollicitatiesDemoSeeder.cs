@@ -381,9 +381,34 @@ public static class TestAccountsSollicitatiesDemoSeeder
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public static bool IsAcceptatieDemoCandidateEmail(string? email)
-        => !string.IsNullOrWhiteSpace(email)
-           && string.Equals(email, AcceptatiePrimaryCandidateEmail, StringComparison.OrdinalIgnoreCase);
+    public static bool IsAcceptatieDemoCandidateEmail(string? email, IConfiguration? configuration = null)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return false;
+        }
+
+        if (string.Equals(email, AcceptatiePrimaryCandidateEmail, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(email, "kandidaat@jobsy.local", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (configuration is null)
+        {
+            return false;
+        }
+
+        var entry = TestAccountCatalog.FindByKey("Candidate");
+        if (entry is null)
+        {
+            return false;
+        }
+
+        var domain = configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+        var catalogEmail = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain);
+        return string.Equals(email, catalogEmail, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static bool IsAllowlistedPrimaryCandidate(User? candidate)
         => IsAcceptatieDemoCandidateEmail(candidate?.Email);
@@ -1164,6 +1189,17 @@ public static class TestAccountsSollicitatiesDemoSeeder
     /// <summary>
     /// Acc reset may target Grokbot primary while manual UAT uses <c>kandidaat@jobsy.local</c>; purge externals for all.
     /// </summary>
+    public static Task PurgeAcceptatieDemoExternalVacanciesAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+        => PurgeStaleExternalVacanciesForAcceptatieDemoLoginsAsync(
+            db,
+            configuration,
+            logger,
+            cancellationToken);
+
     private static async Task PurgeStaleExternalVacanciesForAcceptatieDemoLoginsAsync(
         JobsyDbContext db,
         IConfiguration configuration,

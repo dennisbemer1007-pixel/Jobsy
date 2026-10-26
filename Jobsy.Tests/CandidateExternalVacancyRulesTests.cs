@@ -16,6 +16,22 @@ public class CandidateExternalVacancyRulesTests
     }
 
     [Fact]
+    public void Filter_match_insights_omits_external_placeholders()
+    {
+        var filtered = CandidateExternalVacancyRules.FilterMatchInsightsForDisplay(
+            new Jobsy.Core.Contracts.ExternalVacancyMatchInsightsDto(
+                [
+                    CandidateExternalVacancyRules.MatchInsightCompetenciesPlaceholder,
+                    "Echte match op teamwork"
+                ],
+                [CandidateExternalVacancyRules.MatchInsightUnknown]));
+
+        Assert.Single(filtered.Strengths);
+        Assert.Equal("Echte match op teamwork", filtered.Strengths[0]);
+        Assert.Empty(filtered.Challenges);
+    }
+
+    [Fact]
     public void Rate_limit_constant_is_twenty_per_day()
     {
         Assert.Equal(20, CandidateExternalVacancyRules.MaxImportsPerUserPerDay);

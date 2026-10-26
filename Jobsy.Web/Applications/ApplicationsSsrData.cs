@@ -172,7 +172,7 @@ internal static class ApplicationsSsrData
 
         if (initMax is null or <= 0
             && isCandidate
-            && IsAcceptatieDemoCandidateEmail(candidateEmail))
+            && IsAcceptatieDemoCandidateEmail(candidateEmail, configuration))
         {
             initUsed = 1;
             initMax = 3;
@@ -317,11 +317,29 @@ internal static class ApplicationsSsrData
                || hostEnvironment.IsEnvironment("Acceptatie");
     }
 
-    private const string AcceptatieDemoCandidateEmail = "lobsy-test@mail.grokbot.com";
+    private static bool IsAcceptatieDemoCandidateEmail(string? email, IConfiguration configuration)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return false;
+        }
 
-    private static bool IsAcceptatieDemoCandidateEmail(string? email)
-        => !string.IsNullOrWhiteSpace(email)
-           && string.Equals(email, AcceptatieDemoCandidateEmail, StringComparison.OrdinalIgnoreCase);
+        if (string.Equals(email, "lobsy-test@mail.grokbot.com", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(email, "kandidaat@jobsy.local", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var entry = TestAccountCatalog.FindByKey("Candidate");
+        if (entry is null)
+        {
+            return false;
+        }
+
+        var domain = configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+        var catalogEmail = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain);
+        return string.Equals(email, catalogEmail, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsWithAcceptatieDemoRetryAsync(
         JobsyApiClient api,
@@ -335,7 +353,7 @@ internal static class ApplicationsSsrData
         var apps = await api.GetMyApplicationsAsync(cancellationToken);
         if (isCandidate
             && selectedId is Guid wanted
-            && IsAcceptatieDemoCandidateEmail(candidateEmail)
+            && IsAcceptatieDemoCandidateEmail(candidateEmail, configuration)
             && apps.All(a => a.Id != wanted))
         {
             await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
@@ -357,7 +375,7 @@ internal static class ApplicationsSsrData
         string? candidateEmail,
         CancellationToken cancellationToken)
     {
-        if (!IsAcceptatieDemoCandidateEmail(candidateEmail))
+        if (!IsAcceptatieDemoCandidateEmail(candidateEmail, configuration))
         {
             return;
         }

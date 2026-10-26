@@ -254,6 +254,21 @@ public sealed class TestAccountsSollicitatiesSeedTests
     }
 
     [Fact]
+    public void IsAcceptatieDemoCandidateEmail_includes_grokbot_kandidaat_and_catalog()
+    {
+        var config = BuildConfig();
+        Assert.True(TestAccountsSollicitatiesDemoSeeder.IsAcceptatieDemoCandidateEmail(
+            TestAccountsSollicitatiesDemoSeeder.AcceptatiePrimaryCandidateEmail,
+            config));
+        Assert.True(TestAccountsSollicitatiesDemoSeeder.IsAcceptatieDemoCandidateEmail(
+            "kandidaat@jobsy.local",
+            config));
+        Assert.False(TestAccountsSollicitatiesDemoSeeder.IsAcceptatieDemoCandidateEmail(
+            "random@example.com",
+            config));
+    }
+
+    [Fact]
     public async Task TryEnsure_uses_primary_grokbot_email_when_test_account()
     {
         var (db, _, branchManagerId) = await SeedUsersAsync(includeGrokbotCandidate: true);

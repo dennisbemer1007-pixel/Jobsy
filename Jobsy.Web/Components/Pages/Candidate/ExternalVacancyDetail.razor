@@ -4,6 +4,7 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Features
+@using Jobsy.Core.Rules
 @attribute [RequiresFeature(PlatformFeature.CandidateExternalVacancies)]
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.KandidaatBanen
@@ -90,29 +91,38 @@
             </table>
         </section>
 
-        <section class="kb-ext__card">
-            <div class="kb-ext__match">
-                <div class="kb-ext__match-panel kb-ext__match-panel--good">
-                    <h3>@Culture["ExtVac.Detail.Strengths"]</h3>
-                    <ul class="kb-ext__bullets">
-                        @foreach (var s in _detail.MatchInsights.Strengths)
-                        {
-                            <li>@s</li>
-                        }
-                    </ul>
+        @if (_displayInsights.Strengths.Count > 0 || _displayInsights.Challenges.Count > 0)
+        {
+            <section class="kb-ext__card">
+                <div class="kb-ext__match">
+                    @if (_displayInsights.Strengths.Count > 0)
+                    {
+                        <div class="kb-ext__match-panel kb-ext__match-panel--good">
+                            <h3>@Culture["ExtVac.Detail.Strengths"]</h3>
+                            <ul class="kb-ext__bullets">
+                                @foreach (var s in _displayInsights.Strengths)
+                                {
+                                    <li>@s</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (_displayInsights.Challenges.Count > 0)
+                    {
+                        <div class="kb-ext__match-panel">
+                            <h3>@Culture["ExtVac.Detail.Challenges"]</h3>
+                            <ul class="kb-ext__bullets">
+                                @foreach (var c in _displayInsights.Challenges)
+                                {
+                                    <li>@c</li>
+                                }
+                            </ul>
+                        </div>
+                    }
                 </div>
-                <div class="kb-ext__match-panel">
-                    <h3>@Culture["ExtVac.Detail.Challenges"]</h3>
-                    <ul class="kb-ext__bullets">
-                        @foreach (var c in _detail.MatchInsights.Challenges)
-                        {
-                            <li>@c</li>
-                        }
-                    </ul>
-                </div>
-            </div>
-            <p class="kb-ext__privacy">@Culture["ExtVac.Detail.Privacy"]</p>
-        </section>
+                <p class="kb-ext__privacy">@Culture["ExtVac.Detail.Privacy"]</p>
+            </section>
+        }
 
         @if (!string.IsNullOrWhiteSpace(_detail.SourceUrl))
         {
@@ -165,6 +175,7 @@
     [Parameter] public Guid Id { get; set; }
 
     private ExternalVacancyDetailDto? _detail;
+    private ExternalVacancyMatchInsightsDto _displayInsights = new([], []);
     private bool _loading = true;
     private bool _engagementBusy;
     private bool _dismissToastVisible;
@@ -196,6 +207,9 @@
         try
         {
             _detail = await Api.GetExternalVacancyAsync(Id);
+            _displayInsights = _detail is null
+                ? new ExternalVacancyMatchInsightsDto([], [])
+                : CandidateExternalVacancyRules.FilterMatchInsightsForDisplay(_detail.MatchInsights);
         }
         finally
         {

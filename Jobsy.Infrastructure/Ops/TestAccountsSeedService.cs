@@ -795,6 +795,12 @@ public sealed class TestAccountsSeedService
             MarkJourneyStepsDone(onboarding);
         }
 
+        await TestAccountsSollicitatiesDemoSeeder.PurgeAcceptatieDemoExternalVacanciesAsync(
+            _db,
+            _configuration,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+            cancellationToken);
+
         return true;
     }
 
