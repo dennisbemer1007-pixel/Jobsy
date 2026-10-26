@@ -22,29 +22,23 @@
 <PageTitle>@_pageTitle · Lobsy</PageTitle>
 <PageSeo Title="@_pageTitle" />
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.Werkgever,
-                  "/werkgever/sollicitaties"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-fix5" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-fix5" defer></script>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer.js")}")" defer></script>
     @if (_includeMessagesScript)
     {
-        <script src="/js/ndm-employer-messages.js?v=20261025-ndm-wg-acc-fix5" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer-messages.js")}")" defer></script>
     }
     @if (_includeOutcomeScript)
     {
-        <script src="/js/ndm-employer-outcome.js?v=20261025-ndm-wg-acc-fix5" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer-outcome.js")}")" defer></script>
     }
     @if (_includeCancelScript)
     {
-        <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-fix5" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer-cancel.js")}")" defer></script>
     }
     @if (_includeRescheduleScript)
     {
-        <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-fix5" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer-reschedule.js")}")" defer></script>
     }
 </HeadContent>
 

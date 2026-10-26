@@ -3,51 +3,99 @@ using System.Text.RegularExpressions;
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Kreeft asset SSOT: paths served via <see cref="Jobsy.Web.Hosting.WwwrootAssetCatalog"/>
-/// must not also appear as literal <c>?v=</c> strings in PageAssetCatalog or Razor hosts.
+/// Hosts must reference wwwroot css/js only via <see cref="Jobsy.Web.Hosting.WwwrootAssetCatalog"/>.
 /// </summary>
 public sealed class WwwrootAssetCatalogLiteralGuardTests
 {
-    private static readonly string[] CatalogManagedPaths =
-    [
-        "css/app.min.css",
-        "css/features/banenkaart-auth-chrome.css",
-        "css/features/candidate-no-blazor-chrome.css",
-        "css/features/candidate-header-strip.css",
-        "css/features/errors.css",
-        "css/features/kreeft-reiskaart.css",
-        "css/features/lobsy-assistant-panel.css",
-        "css/features/lobsy-coach-pill.css",
-        "css/features/onboarding-kreeft-mockup.css",
-        "css/features/onboarding-start-strand.css",
-        "js/lobsy-coach-ssr.js",
-    ];
+    private static readonly Regex LiteralWwwrootAsset = new(
+        @"(?<path>(?:css|js)/[^\s""']+\.(?:css|js))\?v=",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex DuplicateStylesheetFor = new(
+        @"@foreach\s*\(\s*var\s+href\s+in\s+PageAssetCatalog\.StylesheetsFor",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static IEnumerable<string> HostFiles(string root)
+    {
+        yield return Path.Combine(root, "Jobsy.Web", "Hosting", "PageAssetCatalog.cs");
+        foreach (var f in Directory.EnumerateFiles(
+                     Path.Combine(root, "Jobsy.Web", "Hosting"),
+                     "*.cs",
+                     SearchOption.TopDirectoryOnly))
+        {
+            if (Path.GetFileName(f) is "WwwrootAssetCatalog.cs" or "VersionedAssetCacheMiddleware.cs")
+            {
+                continue;
+            }
+
+            yield return f;
+        }
+
+        foreach (var f in Directory.EnumerateFiles(
+                     Path.Combine(root, "Jobsy.Web", "Components"),
+                     "*.razor",
+                     SearchOption.AllDirectories))
+        {
+            yield return f;
+        }
+
+        foreach (var f in new[]
+                 {
+                     Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"),
+                     Path.Combine(root, "Jobsy.Web", "Applications", "ApplicationsSsrShells.cs"),
+                     Path.Combine(root, "Jobsy.Web", "Discovery", "DiscoverySsrShells.cs"),
+                 })
+        {
+            if (File.Exists(f))
+            {
+                yield return f;
+            }
+        }
+    }
 
     [Fact]
-    public void PageAssetCatalog_and_razor_do_not_use_literal_v_for_catalog_managed_assets()
+    public void Razor_and_catalog_hosts_do_not_use_literal_css_js_v_query()
     {
         var root = TestRepo.FindRoot();
-        var files = new List<string>
-        {
-            Path.Combine(root, "Jobsy.Web", "Hosting", "PageAssetCatalog.cs"),
-        };
-        files.AddRange(Directory.EnumerateFiles(
-            Path.Combine(root, "Jobsy.Web", "Components"),
-            "*.razor",
-            SearchOption.AllDirectories));
-
         var problems = new List<string>();
-        foreach (var file in files)
+        foreach (var file in HostFiles(root))
         {
             var text = File.ReadAllText(file);
             var rel = Path.GetRelativePath(root, file).Replace('\\', '/');
-            foreach (var path in CatalogManagedPaths)
+            foreach (Match match in LiteralWwwrootAsset.Matches(text))
             {
-                var pattern = Regex.Escape(path) + @"\?v=";
-                if (Regex.IsMatch(text, pattern, RegexOptions.CultureInvariant))
+                var path = match.Groups["path"].Value;
+                if (path.StartsWith("_framework/", StringComparison.Ordinal))
                 {
-                    problems.Add($"{rel}: literal ?v= for {path}");
+                    continue;
                 }
+
+                problems.Add($"{rel}: literal ?v= on {path}");
+            }
+        }
+
+        Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
+    }
+
+    [Fact]
+    public void NoBlazor_SSR_pages_do_not_repeat_PageAssetCatalog_StylesheetsFor_in_HeadContent()
+    {
+        var root = TestRepo.FindRoot();
+        var problems = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(
+                     Path.Combine(root, "Jobsy.Web", "Components"),
+                     "*.razor",
+                     SearchOption.AllDirectories))
+        {
+            var text = File.ReadAllText(file);
+            if (!text.Contains("NoBlazorRuntime", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (DuplicateStylesheetFor.IsMatch(text))
+            {
+                problems.Add(Path.GetRelativePath(root, file).Replace('\\', '/'));
             }
         }
 

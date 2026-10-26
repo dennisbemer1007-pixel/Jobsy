@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
@@ -74,22 +75,22 @@ internal static class BanenkaartSsrShells
         var nonceAttr = string.IsNullOrWhiteSpace(scriptNonce)
             ? ""
             : " nonce=\"" + WebUtility.HtmlEncode(scriptNonce.Trim()) + "\"";
-        sb.Append("<script src=\"/js/jobsy-geo-lite.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/jobsy-geo-lite.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/jobsy-basemap-warm.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/jobsy-basemap-warm.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-map-icons.js?v=20261023-acc9\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-map-icons.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-catalog.js?v=20261025-matchsort1\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-catalog.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-map-layers.js?v=20261024-travelrings1\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-map-layers.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
-        sb.Append("<script src=\"/js/banenkaart-ssr.js?v=20261024-desktopsplit1\" crossorigin=\"anonymous\" defer")
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-ssr.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("</div>");

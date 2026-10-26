@@ -23,16 +23,6 @@
     <meta name="googlebot" content="noindex, nofollow" />
     @* Pages add their own head tags here; a second HeadContent would replace the noindex above. *@
     <Microsoft.AspNetCore.Components.Sections.SectionOutlet SectionName="@ErrorHeadSection" />
-    @if (_signedInCandidate)
-    {
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/app.min.css")" />
-        <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/errors.css")" />
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-no-blazor-chrome.css")" />
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css")" />
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css")" />
-        <script src="@($"/{WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" defer></script>
-    }
 </HeadContent>
 
 @if (_signedInCandidate)

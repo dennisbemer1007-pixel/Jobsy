@@ -26,18 +26,7 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/app.min.css")" />
-    <link rel="stylesheet" href="css/features/form-fields.css?v=20261019-01" />
-    <link rel="stylesheet" href="css/features/choice-tiles.css?v=20261022-step24fix" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261018-02" />
-    <link rel="stylesheet" href="css/features/candidate-illustrated-app.css?v=20261018-91" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
-    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-step2opslaan44" />
-    <link rel="stylesheet" href="css/features/onboarding-start-journey.css?v=20261025-acc1093" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-mini-footer" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-start-journey.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-kreeft-mockup.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-start-strand.css")" />
@@ -85,12 +74,12 @@ else if (_step is >= 1 and <= 10)
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
         @if (_step == 6)
         {
-            <script src="js/onboarding-ssr-fetch-save.js?v=20261022-step910" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-ssr-fetch-save.js")}")" defer></script>
         }
         @if (_step == 6)
         {
             <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
-            <script src="js/onboarding-step6-ssr.js?v=20261022-step78" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-step6-ssr.js")}")" defer></script>
         }
         @if (_step is >= 7 and <= 10)
         {

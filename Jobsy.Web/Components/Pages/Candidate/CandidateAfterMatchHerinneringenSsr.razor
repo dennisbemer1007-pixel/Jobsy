@@ -19,15 +19,9 @@
 <PageTitle>@Culture["AfterMatch.Screen07.PageTitle"] · Lobsy</PageTitle>
 <PageSeo Title="@Culture["AfterMatch.Screen07.PageTitle"]" />
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/candidate/applications"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261030-ndm-scroll2" />
-    <script src="/js/ndm-herinneringen.js?v=20261030-ndm-mail07" defer></script>
-    <script src="/js/ndm-mail-chrome.js?v=20261030-ndm-mail-chrome" defer></script>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-herinneringen.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-mail-chrome.js")}")" defer></script>
 </HeadContent>
 
 @if (_loading)

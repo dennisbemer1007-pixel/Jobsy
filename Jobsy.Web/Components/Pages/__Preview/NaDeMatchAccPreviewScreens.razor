@@ -13,17 +13,11 @@
 <PageTitle>Na de match @ScreenId · Lobsy</PageTitle>
 <PageSeo Title="AfterMatch.Screen06.PageTitle" />
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/preview/na-de-match"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261030-ndm-scroll2" />
-    <script src="/js/ndm-mail-chrome.js?v=20261030-ndm-mail-chrome" defer></script>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-mail-chrome.js")}")" defer></script>
     @if (_includeHerinneringenScript)
     {
-        <script src="/js/ndm-herinneringen.js?v=20261030-ndm-mail07" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-herinneringen.js")}")" defer></script>
     }
 </HeadContent>
 

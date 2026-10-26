@@ -7,13 +7,6 @@
 @using Jobsy.Web.Hosting
 @inject CultureState Culture
 @inject IConfiguration Configuration
-@if (!Embedded)
-{
-    <HeadContent>
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/errors.css")" />
-    </HeadContent>
-}
-
 @*
   404 content (errors 01 / E3). Shared by /status/404 and by pages that answer 404 while keeping
   their own route and layout (VacancyDetail), the way ClosedVacancyView is shared for 410.

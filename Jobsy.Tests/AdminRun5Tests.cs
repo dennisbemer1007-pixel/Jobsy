@@ -48,11 +48,11 @@ public class AdminRun5Tests
             out _));
 
         var app = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("js/app-core.js?v=20261021-01", app, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/app-core.js\")", app, StringComparison.Ordinal);
         var adminSheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(
             Jobsy.Web.Hosting.PageAssetCatalog.ResolveAreas("/admin/users"));
-        Assert.Contains("css/features/admin.css?v=20261018-11", adminSheets, StringComparer.Ordinal);
-        Assert.Contains("css/app.min.css?v=20261019-13", adminSheets, StringComparer.Ordinal);
+        Assert.Contains(Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/admin.css"), adminSheets, StringComparer.Ordinal);
+        Assert.Contains(Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/app.min.css"), adminSheets, StringComparer.Ordinal);
         Assert.True(string.CompareOrdinal("20261012-02", "20261011-03") > 0);
         Assert.True(string.CompareOrdinal("20261011-03", "20261010-01") > 0);
         Assert.True(string.CompareOrdinal("20261004-run5d", "20261004-run4b") > 0);

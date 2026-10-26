@@ -15,12 +15,6 @@
 @inject AuthenticationStateProvider AuthState
 @inject IFeatureFlags FeatureFlags
 
-<HeadContent>
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css")" />
-    <script src="@($"/{WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" defer></script>
-</HeadContent>
-
 <div class="app-shell app-shell--candidate has-bottom-nav app-shell--onboarding-ssr" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <AppShellHeader HomeHref="@_homeHref"
                     HeaderTagline="@Culture["Brand.Tagline"]"

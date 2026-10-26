@@ -20,15 +20,9 @@
 <PageTitle>@Culture["AfterMatch.Screen04.PageTitle"] · Lobsy</PageTitle>
 <PageSeo Title="@Culture["AfterMatch.Screen04.PageTitle"]" />
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/candidate/applications"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/sollicitaties-page.css?v=20261024-ndm-pick-slot2" />
-    <script src="/js/sollicitaties-mark-read-flush.js?v=20261025-mark-read-bff2" defer></script>
-    <script src="/js/ndm-pick-slot.js?v=20261025-ndm-pick-slot3" defer></script>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/sollicitaties-page.css")" />
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/sollicitaties-mark-read-flush.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-pick-slot.js")}")" defer></script>
 </HeadContent>
 
 @if (_loading)
