@@ -65,6 +65,15 @@ public static class JobsyDbSeeder
             await db.Database.MigrateAsync();
             await db.Database.ExecuteSqlRawAsync(Migrations.PupilPassportV2SchemaIdempotentSql.EnsureColumns);
             await db.Database.ExecuteSqlRawAsync(Migrations.JobSearchActivitySchemaIdempotentSql.EnsureSchema);
+            try
+            {
+                var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+                await AcceptatiePlatformFeatureEnsurer.EnsureActivityLogEnabledAsync(db, configuration, logger);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "Acceptatie ActivityLog feature sync failed; continuing.");
+            }
         }
         else
         {

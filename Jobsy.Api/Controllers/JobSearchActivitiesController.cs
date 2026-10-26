@@ -20,15 +20,18 @@ public sealed class JobSearchActivitiesController : ControllerBase
     private readonly IJobSearchActivityService _activities;
     private readonly IPlatformFeatureService _features;
     private readonly IUserLookupService _users;
+    private readonly ILogger<JobSearchActivitiesController> _logger;
 
     public JobSearchActivitiesController(
         IJobSearchActivityService activities,
         IPlatformFeatureService features,
-        IUserLookupService users)
+        IUserLookupService users,
+        ILogger<JobSearchActivitiesController> logger)
     {
         _activities = activities;
         _features = features;
         _users = users;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -54,6 +57,9 @@ public sealed class JobSearchActivitiesController : ControllerBase
         }
         catch (Exception ex) when (ex is DbException or InvalidOperationException)
         {
+            _logger.LogWarning(
+                ex,
+                "job_search_activities_overview_unavailable status=503 code=activity_log_unavailable");
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "activity_log_unavailable" });
         }
     }
@@ -170,6 +176,9 @@ public sealed class JobSearchActivitiesController : ControllerBase
         }
         catch (Exception ex) when (ex is DbException or InvalidOperationException)
         {
+            _logger.LogWarning(
+                ex,
+                "job_search_activities_pdf_unavailable status=503 code=activity_log_unavailable");
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "activity_log_unavailable" });
         }
     }

@@ -9,14 +9,22 @@ public sealed partial class JobsyApiClient
         CancellationToken ct = default)
     {
         var response = await _http.GetAsync("api/me/job-search-activities", ct);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound
-            || response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
+            ActivityLogApiTrace.LogDisabledOrMissing(response.StatusCode);
+            return null;
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden
+            || response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            ActivityLogApiTrace.LogAuthBlocked(response.StatusCode);
             return null;
         }
 
         if (!response.IsSuccessStatusCode)
         {
+            ActivityLogApiTrace.LogUnavailable(response.StatusCode);
             return null;
         }
 
@@ -47,6 +55,7 @@ public sealed partial class JobsyApiClient
         var response = await _http.GetAsync("api/me/job-search-activities/period.pdf", ct);
         if (!response.IsSuccessStatusCode)
         {
+            ActivityLogApiTrace.LogPdfFailed(response.StatusCode);
             return null;
         }
 
