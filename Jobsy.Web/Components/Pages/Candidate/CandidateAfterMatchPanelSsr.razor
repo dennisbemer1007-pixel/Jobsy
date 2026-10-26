@@ -83,13 +83,7 @@ else if (_bodyHtml is not null)
 
             if (panel is "cancel")
             {
-                var dossier = $"/candidate/applications?tab=sollicitaties&sel={ApplicationId:D}";
-                if (!string.IsNullOrWhiteSpace(returnUrl))
-                {
-                    dossier += "&return=" + Uri.EscapeDataString(returnUrl);
-                }
-
-                http.Response.Redirect(dossier);
+                RedirectToSsr(http, AfterMatchPanelRouting.CancelledSsrSuffix);
                 return;
             }
 
@@ -100,6 +94,13 @@ else if (_bodyHtml is not null)
             }
 
             var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+
+            if (thread is not null
+                && thread.RecentChanges.Any(c => c.Kind == InterviewChangeKind.Cancel))
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.CancelledSsrSuffix);
+                return;
+            }
 
             if (panel is "pick-slot" or "propose-slot" or "propose")
             {

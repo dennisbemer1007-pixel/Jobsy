@@ -1,0 +1,79 @@
+@page "/candidate/applications/{ApplicationId:guid}/after-match/cancelled-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["AfterMatch.InterviewCancelled.EmployerTitle"] · Lobsy</PageTitle>
+<PageSeo Title="@Culture["AfterMatch.InterviewCancelled.EmployerTitle"]" />
+<HeadContent>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/sollicitaties-page.css")" />
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("return", out var returnValues);
+            var returnUrl = returnValues.FirstOrDefault();
+
+            var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+            var data = AfterMatchCandidateCancelledSsrData.Load(Culture, thread, ApplicationId, returnUrl);
+            if (data is null)
+            {
+                _fatalMessage = Culture["AfterMatch.Error.NotFound"];
+                return;
+            }
+
+            _bodyHtml = AfterMatchCandidateCancelledSsrShells.BuildBody(Culture, data, ApplicationId);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

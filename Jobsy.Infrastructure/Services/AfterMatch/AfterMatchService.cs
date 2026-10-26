@@ -326,10 +326,7 @@ public sealed class AfterMatchService : IAfterMatchService
             slot.IsSelected = false;
         }
 
-        if (isEmployer)
-        {
-            _db.InterviewSlots.RemoveRange(interview.Slots.ToList());
-        }
+        _db.InterviewSlots.RemoveRange(interview.Slots.ToList());
 
         var reminders = await _db.InterviewReminders
             .Where(r => r.InterviewId == interview.Id)
