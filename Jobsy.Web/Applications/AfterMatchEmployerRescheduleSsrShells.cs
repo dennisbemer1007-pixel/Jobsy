@@ -175,22 +175,13 @@ internal static class AfterMatchEmployerRescheduleSsrShells
 
     private static void AppendWeekAside(StringBuilder sb, CultureState culture, AfterMatchEmployerRescheduleSsrData.PageData data)
     {
-        var thread = data.Thread;
-        var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled && thread.ScheduledStartUtc is not null;
-        var primaryWhen = AfterMatchTimelineLabels.WeekAsideWhen(thread);
-        var primaryPill = isScheduled
-            ? ("ok", culture["AfterMatch.Employer.Reschedule.WeekRow4790Status"])
-            : ("warm", culture["AfterMatch.Employer.Reschedule.ActionPill"]);
-
         sb.Append("<aside class=\"wc side\" data-ndm-wg-aside><h2 style=\"font-size:1.15rem\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekAside"]));
         sb.Append("</h2><div class=\"list\" style=\"margin-top:10px\">");
-        AppendWeekRow(
-            sb,
-            AfterMatchEmployerEmployerPresentation.CandidateDisplayName(thread),
-            primaryWhen,
-            primaryPill.Item1,
-            primaryPill.Item2);
+        foreach (var row in data.WeekRows)
+        {
+            AppendWeekRow(sb, row.Title, row.Subtitle, row.PillClass, row.PillLabel);
+        }
 
         sb.Append("</div></aside>");
     }

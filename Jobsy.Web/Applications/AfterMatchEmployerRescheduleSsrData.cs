@@ -21,7 +21,8 @@ internal static class AfterMatchEmployerRescheduleSsrData
         string ApplicationDetailHref,
         string? YesStepHint,
         string? PlanStepHint,
-        string? InterviewStepHint);
+        string? InterviewStepHint,
+        IReadOnlyList<AfterMatchEmployerWeekAsideRows.Row> WeekRows);
 
     internal static PageData FromThread(CultureState culture, AfterMatchThreadDto thread, Guid applicationId)
     {
@@ -106,7 +107,8 @@ internal static class AfterMatchEmployerRescheduleSsrData
             $"/werkgever/sollicitaties/{applicationId:D}",
             yesHint,
             planHint,
-            interviewHint);
+            interviewHint,
+            AfterMatchEmployerWeekAsideRows.Build(culture, thread));
     }
 
     private static string FormatSlotShort(AfterMatchSlotDto slot)
