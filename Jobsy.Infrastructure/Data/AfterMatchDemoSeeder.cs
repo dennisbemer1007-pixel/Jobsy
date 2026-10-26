@@ -13,7 +13,7 @@ internal static class AfterMatchDemoSeeder
 {
     private static readonly Guid DemoCompanyId = Guid.Parse("77777771-00bb-4000-8000-0000000000bb");
     private static readonly Guid BranchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
-    private static readonly Guid CandidateId = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222");
+    private static readonly Guid PrimaryCandidateId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
 
     private static readonly DateTime YesAt = new(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc);
 
@@ -101,7 +101,7 @@ internal static class AfterMatchDemoSeeder
             db.Vacancies.Add(new Vacancy
             {
                 Id = vacancyId,
-                CompanyId = DemoCompanyId,
+                CompanyId = WestlandId,
                 Title = title,
                 Description = "After-match demo vacancy.",
                 HourlyWage = 14.5m,
@@ -114,21 +114,29 @@ internal static class AfterMatchDemoSeeder
             });
         }
 
+        var reassign = await db.Vacancies
+            .Where(v => appIds.Contains(v.Id) && v.CompanyId != WestlandId)
+            .ToListAsync();
+        foreach (var vacancy in reassign)
+        {
+            vacancy.CompanyId = WestlandId;
+        }
+
         await db.SaveChangesAsync();
     }
 
     private static async Task<Guid?> ResolveDemoCandidateUserIdAsync(JobsyDbContext db)
     {
-        if (await db.Users.AsNoTracking().AnyAsync(u => u.Id == CandidateId))
+        if (await db.Users.AsNoTracking().AnyAsync(u => u.Id == PrimaryCandidateId))
         {
-            return CandidateId;
+            return PrimaryCandidateId;
         }
 
         foreach (var email in new[]
                  {
-                     "kandidaat.denhaag@jobsy.local",
                      "kandidaat@jobsy.local",
                      TestAccountsSollicitatiesDemoSeeder.AcceptatiePrimaryCandidateEmail,
+                     "kandidaat.denhaag@jobsy.local",
                  })
         {
             var byEmail = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
@@ -398,8 +406,9 @@ internal static class AfterMatchDemoSeeder
 
     private static async Task RemoveStaleRetailBranchApplicationsAsync(JobsyDbContext db, ILogger logger)
     {
+        var keep = KeepApplicationIds.ToHashSet();
         var staleIds = await db.Applications.AsNoTracking()
-            .Where(a => RetailBranchCompanyIds.Contains(a.Vacancy.CompanyId))
+            .Where(a => RetailBranchCompanyIds.Contains(a.Vacancy.CompanyId) && !keep.Contains(a.Id))
             .Select(a => a.Id)
             .ToListAsync();
         if (staleIds.Count == 0)
