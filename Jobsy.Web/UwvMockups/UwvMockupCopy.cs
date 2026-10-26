@@ -263,6 +263,14 @@ public static class UwvMockupCopy
             "Voorkeuren invullen",
             "Fill in preferences",
             lang);
+        public static string DreamCoachTitle(string? lang) => T(
+            "Goed om te weten",
+            "Good to know",
+            lang);
+        public static string DreamCoachBody(string? lang) => T(
+            "Je droom is een richting. Je zet er kleine stappen naartoe.",
+            "Your dream is a direction. You take small steps toward it.",
+            lang);
     }
 
     public static class StrongMatches
