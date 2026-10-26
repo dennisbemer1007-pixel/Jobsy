@@ -436,8 +436,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261026-kreeft24",
-    "sha256": "66ff21976b8a9367bd6439f785f510f433a139d309e7e9e19dfbff665d07089c"
+    "v": "20261026-r8b-deeplink",
+    "sha256": "ec3106add48984a652087ab51996297c569a0f1478ee7b9bdfe55cd867252bb5"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
