@@ -141,6 +141,11 @@ public static class BanenkaartClientEndpoints
         }
         catch
         {
+            if (WantsJson(http))
+            {
+                return Results.Json(new { ok = false, error = culture["Common.Error.TryAgain"] });
+            }
+
             var state = BanenkaartSsrQuery.Parse(http.Request.Query);
             return SeeOther(BanenkaartSsrQuery.BuildUrl(state, error: culture["Common.Error.TryAgain"]));
         }

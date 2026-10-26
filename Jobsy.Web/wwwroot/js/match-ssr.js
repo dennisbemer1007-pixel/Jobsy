@@ -202,7 +202,7 @@
     var card = activeCard(page);
     animateOut(card, "left", function () {
       showToast(page, page.getAttribute("data-toast-skipped"));
-      deferCard(page, boot, state, deferredOnce);
+      advance(page, boot, state, deferredOnce);
     });
   }
 
@@ -303,10 +303,18 @@
       resetCard(card);
     }
 
-    page.querySelectorAll("[data-match-card]:not(.swipe-card--backdrop)").forEach(function (card) {
-      card.style.touchAction = "none";
-      card.addEventListener("pointerdown", function (ev) {
-        if (ev.button !== 0 || card.classList.contains("swipe-card--backdrop")) {
+    page.addEventListener(
+      "pointerdown",
+      function (ev) {
+        if (ev.button !== 0) {
+          return;
+        }
+        var stage = page.querySelector("[data-match-stage]:not([hidden])");
+        if (!stage) {
+          return;
+        }
+        var card = ev.target.closest("[data-match-card]");
+        if (!card || !stage.contains(card) || card.classList.contains("swipe-card--backdrop")) {
           return;
         }
         drag = {
@@ -318,33 +326,47 @@
           pointerId: ev.pointerId
         };
         card.setPointerCapture(ev.pointerId);
-      });
-      card.addEventListener("pointermove", function (ev) {
+      },
+      true
+    );
+    page.addEventListener(
+      "pointermove",
+      function (ev) {
         if (!drag || ev.pointerId !== drag.pointerId) {
           return;
         }
         drag.lastX = ev.clientX;
         drag.lastY = ev.clientY;
         onMove(ev.clientX, ev.clientY);
-      });
-      card.addEventListener("pointerup", function (ev) {
+      },
+      true
+    );
+    page.addEventListener(
+      "pointerup",
+      function (ev) {
         if (!drag || ev.pointerId !== drag.pointerId) {
           return;
         }
+        var card = drag.card;
         try {
           card.releasePointerCapture(ev.pointerId);
         } catch (_e) {
           /* ignore */
         }
         onEnd();
-      });
-      card.addEventListener("pointercancel", function () {
+      },
+      true
+    );
+    page.addEventListener(
+      "pointercancel",
+      function () {
         if (drag) {
           resetCard(drag.card);
           drag = null;
         }
-      });
-    });
+      },
+      true
+    );
   }
 
   function bindKeys(page, boot, state, deferredOnce) {

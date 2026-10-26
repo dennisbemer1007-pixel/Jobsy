@@ -423,7 +423,8 @@ internal static class SavedSsrShells
         }
 
         if (!string.IsNullOrWhiteSpace(item.SavedStateKind)
-            && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal))
+            && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal)
+            && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Open), StringComparison.Ordinal))
         {
             sb.Append("<span class=\"");
             sb.Append(row ? "kb-saved-row__status kb-saved-row__status--" : "kb-saved-card__state kb-saved-card__state--");

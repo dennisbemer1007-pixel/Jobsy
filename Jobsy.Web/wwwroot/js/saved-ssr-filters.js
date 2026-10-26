@@ -130,6 +130,9 @@
     bindSort(page);
     bindFilters(page);
     applyFilter(page, parseFilterFromUrl(), false);
+    page.addEventListener("saved-ssr:visibility-changed", function () {
+      applyFilter(page, parseFilterFromUrl(), false);
+    });
     window.addEventListener("popstate", function () {
       applyFilter(page, parseFilterFromUrl(), false);
     });

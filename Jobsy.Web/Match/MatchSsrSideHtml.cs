@@ -54,10 +54,17 @@ internal static class MatchSsrSideHtml
     private static void AppendWhyCard(StringBuilder sb, CultureState culture, SwipeViewModel model, MatchProfileGateViewModel gate)
     {
         var dnaRows = MatchDnaRows.Build(model.FitDimensions, model.FitWhyKinds, includeMissing: true, maxWithData: 4, gate);
+        var allTodo = dnaRows.Count > 0 && dnaRows.All(r => r.Percent is null);
         sb.Append("<section class=\"match-side-card\" data-testid=\"match-side-why\"><h2>");
         sb.Append(WebUtility.HtmlEncode(culture["Match.WhyYouFit"]));
         sb.Append("</h2>");
-        if (dnaRows.Count > 0)
+        if (allTodo && !string.IsNullOrWhiteSpace(model.WhyYouFit))
+        {
+            sb.Append("<p class=\"muted\">");
+            sb.Append(WebUtility.HtmlEncode(model.WhyYouFit));
+            sb.Append("</p>");
+        }
+        else if (dnaRows.Count > 0)
         {
             sb.Append("<ul class=\"kb-dna kb-dna--match kb-dna--match-dialog\" role=\"list\">");
             foreach (var row in dnaRows)
