@@ -809,8 +809,15 @@ public sealed partial class JobsyApiClient
                 statusCode: response.StatusCode);
         }
 
-        var result = await response.Content.ReadFromJsonAsync<LikeStatus>(LikeJsonOptions, ct);
-        return result?.Liked == true;
+        try
+        {
+            var result = await response.Content.ReadFromJsonAsync<LikeStatus>(LikeJsonOptions, ct);
+            return result?.Liked ?? liked;
+        }
+        catch (JsonException)
+        {
+            return liked;
+        }
     }
 
     public async Task ShareVacancyAsync(

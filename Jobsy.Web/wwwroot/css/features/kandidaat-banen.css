@@ -1534,7 +1534,7 @@
   position: fixed;
   inset-inline: var(--space-4, 1rem);
   bottom: calc(5.75rem + env(safe-area-inset-bottom, 0));
-  z-index: 120;
+  z-index: 10060;
   background:var(--brand);
   color: var(--surface);
   border-radius:var(--r-md);

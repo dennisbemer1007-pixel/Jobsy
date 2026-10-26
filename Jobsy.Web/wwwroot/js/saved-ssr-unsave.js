@@ -113,14 +113,16 @@
               return;
             }
             hideVacancy(root, vacancyId);
+            root.dispatchEvent(new CustomEvent("saved-ssr:visibility-changed", { bubbles: true }));
             showUndoToast(root, vacancyId, function () {
               relike(root, vacancyId)
                 .then(function (data) {
-                  if (!data || (!data.ok && !data.liked && data.Liked !== true)) {
+                  if (!data || data.ok === false) {
                     window.alert(root.getAttribute("data-saved-error") || "Error");
                     return;
                   }
                   showVacancy(root, vacancyId);
+                  root.dispatchEvent(new CustomEvent("saved-ssr:visibility-changed", { bubbles: true }));
                   var box = toast(root);
                   if (box) {
                     box.hidden = true;

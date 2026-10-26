@@ -1032,6 +1032,8 @@
 .kb-saved-card__heart.kb-saved__inline-form {
   inline-size: 44px;
   block-size: 44px;
+  min-inline-size: 44px;
+  flex-shrink: 0;
   border-radius: var(--radius-pill);
   color: var(--coral, #f54a1b);
   font-size: 1.25rem;
