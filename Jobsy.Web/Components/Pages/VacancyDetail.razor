@@ -1129,6 +1129,7 @@
     private string? _originLabel;
     private ElementReference _mapWrapElement;
     private DotNetObjectReference<VacancyDetail>? _dotNetMapRef;
+    private bool _disposed;
     private bool _openingRoute;
     private Guid? _mappedVacancyId;
     private Guid? _loadedVacancyId;
@@ -1562,6 +1563,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
         Culture.Changed -= OnCultureChanged;
         _persistSubscription.Dispose();
         _dotNetMapRef?.Dispose();
@@ -1738,7 +1740,7 @@
 
     [JSInvokable]
     public Task OnMapVisibleAsync()
-        => EnsureDetailMapAsync();
+        => _disposed ? Task.CompletedTask : EnsureDetailMapAsync();
 
     /// <summary>
     /// Age for wages: stored banenkaart filter age, else none (“Alle” → full table).

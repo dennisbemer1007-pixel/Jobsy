@@ -451,11 +451,7 @@ internal static class PassportSsrShells
         var prefs = profile.Preferences ?? new Jobsy.Web.Models.CandidatePreferences();
         var openAvailability = string.Equals(openDataSection, "availability", StringComparison.OrdinalIgnoreCase);
         var openWorkStatus = string.Equals(openDataSection, "work-status", StringComparison.OrdinalIgnoreCase);
-        var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl);
-        if (string.IsNullOrWhiteSpace(safeReturn))
-        {
-            safeReturn = null;
-        }
+        var safeReturn = AuthRedirects.TrySafeLocalUrl(returnUrl);
         sb.Append("<div class=\"passport-data\"><p class=\"passport-data__intro\">");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Data"]));
         sb.Append("</p><form method=\"post\" action=\"/api/passport-client/save-data\" data-enhance=\"false\" data-enhance-nav=\"false\">");
@@ -525,7 +521,8 @@ internal static class PassportSsrShells
             sb,
             culture,
             PassportAvailabilityMatrix.ToSelectedKeys(prefs.Availability),
-            "passportMatrix");
+            "passportMatrix",
+            AvailabilityMatrixSsrHtml.MatrixInputMode.BatchCheckbox);
         sb.Append("</div></fieldset>");
         sb.Append("<div class=\"profile-save-bar\"><button type=\"submit\" name=\"availabilityPreset\" value=\"immediate\" class=\"btn btn-secondary\">");
         sb.Append(WebUtility.HtmlEncode(culture["Profile.PresetImmediate"]));
