@@ -16,7 +16,8 @@ internal static class MatchSsrShells
         CultureState culture,
         MatchDeck deck,
         string antiforgeryToken,
-        string onboardingStartPath)
+        string onboardingStartPath,
+        bool occupationDayInLifeEnabled)
     {
         var sb = new StringBuilder();
         var locked = !(deck.Gate.IsProfileComplete && deck.Gate.FitGateOpen);
@@ -51,7 +52,7 @@ internal static class MatchSsrShells
         sb.Append("\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Match.DialogTitle"]));
         sb.Append("\">");
-        AppendBody(sb, culture, deck, onboardingStartPath);
+        AppendBody(sb, culture, deck, onboardingStartPath, occupationDayInLifeEnabled);
         sb.Append("</section></div></div>");
         sb.Append("<input type=\"hidden\" id=\"match-ssr-token\" name=\"__RequestVerificationToken\" value=\"");
         sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
@@ -97,7 +98,12 @@ internal static class MatchSsrShells
         }
     }
 
-    private static void AppendBody(StringBuilder sb, CultureState culture, MatchDeck deck, string onboardingStartPath)
+    private static void AppendBody(
+        StringBuilder sb,
+        CultureState culture,
+        MatchDeck deck,
+        string onboardingStartPath,
+        bool occupationDayInLifeEnabled)
     {
         if (!deck.Gate.IsProfileComplete)
         {
@@ -146,7 +152,7 @@ internal static class MatchSsrShells
         var startIndex = deck.Index;
         sb.Append("<div class=\"match-page__grid\" data-match-deck>");
         MatchSsrSwipeHtml.AppendStack(sb, culture, deck.Items, startIndex);
-        MatchSsrSideHtml.AppendPanels(sb, culture, deck.Items, startIndex);
+        MatchSsrSideHtml.AppendPanels(sb, culture, deck.Items, startIndex, occupationDayInLifeEnabled);
         sb.Append("</div>");
         sb.Append("<p class=\"match-page__toast\" data-match-toast role=\"status\" hidden></p>");
     }

@@ -3,7 +3,9 @@
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
+@using Jobsy.Core.Careers
 @using Jobsy.Core.Features
+@using Jobsy.Core.Options
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
@@ -18,6 +20,7 @@
 @inject CultureState Culture
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Config
 
 <PageTitle>@Culture["Match.DialogTitle"] · Lobsy</PageTitle>
 
@@ -70,7 +73,8 @@ else if (_bodyHtml is not null)
                 showMatchPercentage: false);
 
             var tokens = Antiforgery.GetAndStoreTokens(http);
-            _bodyHtml = MatchSsrShells.BuildBody(Culture, deck, tokens.RequestToken ?? "", startPath);
+            var dayInLifeEnabled = OccupationDayInLifeGate.IsEnabled(Config[OccupationDayInLifeOptions.EnabledKey]);
+            _bodyHtml = MatchSsrShells.BuildBody(Culture, deck, tokens.RequestToken ?? "", startPath, dayInLifeEnabled);
         }
         catch
         {
