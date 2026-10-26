@@ -38,10 +38,14 @@ internal static class DemoVacancyTitleDedupe
         string title,
         CancellationToken cancellationToken)
     {
+        var demoVacancyIds = AfterMatchDemoIds.AllDemoApplicationIds
+            .Select(AfterMatchDemoIds.VacancyForApplication)
+            .ToHashSet();
         var rows = await db.Vacancies
             .Where(v => companyIds.Contains(v.CompanyId) && v.Title == title && v.Status == VacancyStatus.Active)
             .OrderBy(v => v.Id)
             .ToListAsync(cancellationToken);
+        rows = rows.Where(v => !demoVacancyIds.Contains(v.Id)).ToList();
         if (rows.Count <= 1)
         {
             return 0;
@@ -60,11 +64,15 @@ internal static class DemoVacancyTitleDedupe
         IReadOnlyList<Guid> companyIds,
         CancellationToken cancellationToken)
     {
+        var demoVacancyIds = AfterMatchDemoIds.AllDemoApplicationIds
+            .Select(AfterMatchDemoIds.VacancyForApplication)
+            .ToHashSet();
         var active = await db.Vacancies
             .Where(v => companyIds.Contains(v.CompanyId) && v.Status == VacancyStatus.Active)
             .OrderBy(v => v.Id)
             .Select(v => new { v.Id, v.CompanyId, v.Title })
             .ToListAsync(cancellationToken);
+        active = active.Where(v => !demoVacancyIds.Contains(v.Id)).ToList();
 
         var seen = new HashSet<(Guid CompanyId, string Title)>();
         var toArchive = new List<Guid>();

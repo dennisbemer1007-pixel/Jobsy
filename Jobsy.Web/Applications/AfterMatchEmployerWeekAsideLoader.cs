@@ -1,5 +1,4 @@
 using Jobsy.Core.Contracts;
-using Jobsy.Core.Enums;
 using Jobsy.Web.Services;
 
 namespace Jobsy.Web.Applications;
@@ -8,32 +7,57 @@ internal static class AfterMatchEmployerWeekAsideLoader
 {
     internal static async Task<IReadOnlyList<AfterMatchThreadDto>> LoadScopeThreadsAsync(
         JobsyApiClient api,
+        Guid contextApplicationId,
         CancellationToken cancellationToken)
     {
-        var applications = await LoadApplicationsAsync(api, cancellationToken);
         var threads = new List<AfterMatchThreadDto>();
-        foreach (var app in applications)
+        var seen = new HashSet<Guid>();
+
+        foreach (var app in await LoadApplicationsAsync(api, cancellationToken))
         {
             if (!IsAfterMatchEligible(app.Status))
             {
                 continue;
             }
 
-            try
+            await TryAddThreadAsync(api, app.Id, threads, seen, cancellationToken);
+        }
+
+        if (AfterMatchEmployerMessagesDemoHub.IsDemoApplication(contextApplicationId))
+        {
+            foreach (var demoId in AfterMatchEmployerMessagesDemoHub.AllDemoApplicationIds)
             {
-                var thread = await api.GetAfterMatchForEmployerAsync(app.Id, cancellationToken);
-                if (thread is not null)
-                {
-                    threads.Add(thread);
-                }
-            }
-            catch
-            {
-                // optional peer row
+                await TryAddThreadAsync(api, demoId, threads, seen, cancellationToken);
             }
         }
 
         return threads;
+    }
+
+    private static async Task TryAddThreadAsync(
+        JobsyApiClient api,
+        Guid applicationId,
+        List<AfterMatchThreadDto> threads,
+        HashSet<Guid> seen,
+        CancellationToken cancellationToken)
+    {
+        if (!seen.Add(applicationId))
+        {
+            return;
+        }
+
+        try
+        {
+            var thread = await api.GetAfterMatchForEmployerAsync(applicationId, cancellationToken);
+            if (thread is not null)
+            {
+                threads.Add(thread);
+            }
+        }
+        catch
+        {
+            // optional peer row
+        }
     }
 
     private static async Task<IReadOnlyList<Jobsy.Web.Models.EmployerApplicationItem>> LoadApplicationsAsync(

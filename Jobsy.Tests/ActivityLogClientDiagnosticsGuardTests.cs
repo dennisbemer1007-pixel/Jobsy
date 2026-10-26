@@ -22,6 +22,7 @@ public sealed class ActivityLogClientDiagnosticsGuardTests
         Assert.Contains("LogWarning", diagnostics, StringComparison.Ordinal);
         var apiClient = File.ReadAllText(Path.Combine(webServices, "ApiClient", "JobsyApiClient.Activities.cs"));
         Assert.Contains("ILogger", apiClient, StringComparison.Ordinal);
+        Assert.Contains("ApiJson", apiClient, StringComparison.Ordinal);
     }
 
     [Fact]

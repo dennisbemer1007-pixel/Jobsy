@@ -10,16 +10,24 @@ namespace Jobsy.Web.Applications;
 internal static class AfterMatchEmployerMessagesDemoHub
 {
     private static readonly Guid WaitApp = Guid.Parse("77777771-0001-4000-8000-000000000001");
+    private static readonly Guid PickSlotsApp = Guid.Parse("77777771-0002-4000-8000-000000000002");
+    private static readonly Guid ScheduledApp = Guid.Parse("77777771-0003-4000-8000-000000000003");
+    private static readonly Guid RescheduleApp = Guid.Parse("77777771-0004-4000-8000-000000000004");
     private static readonly Guid Verkoop4790App = Guid.Parse("77777771-0006-4000-8000-000000000006");
     private static readonly Guid NotNowApp = Guid.Parse("77777771-0005-4000-8000-000000000005");
 
+    internal static readonly Guid[] AllDemoApplicationIds =
+    [
+        WaitApp,
+        PickSlotsApp,
+        ScheduledApp,
+        RescheduleApp,
+        NotNowApp,
+        Verkoop4790App,
+    ];
+
     internal static bool IsDemoApplication(Guid applicationId) =>
-        applicationId == WaitApp
-        || applicationId == Guid.Parse("77777771-0002-4000-8000-000000000002")
-        || applicationId == Guid.Parse("77777771-0003-4000-8000-000000000003")
-        || applicationId == Verkoop4790App
-        || applicationId == Guid.Parse("77777771-0004-4000-8000-000000000004")
-        || applicationId == NotNowApp;
+        AllDemoApplicationIds.Contains(applicationId);
 
     internal static IReadOnlyList<AfterMatchEmployerMessagesSsrData.ThreadRow> Augment(
         IReadOnlyList<AfterMatchEmployerMessagesSsrData.ThreadRow> loaded,

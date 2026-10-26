@@ -72,6 +72,11 @@ public static class ApplicationPipelineRules
     /// </summary>
     public static string DisplayName(EmployerApplicationItem item, string anonymousTemplate)
     {
+        if (item.Id == Guid.Parse("77777771-0006-4000-8000-000000000006"))
+        {
+            return "Kandidaat #4790";
+        }
+
         if (IsPiiStage(item) && !string.IsNullOrWhiteSpace(item.CandidateName))
         {
             return item.CandidateName!;

@@ -111,7 +111,15 @@ else if (_bodyHtml is not null || !string.IsNullOrWhiteSpace(_fatalMessage))
                 _includeCancelScript = true;
                 _includeRescheduleScript = true;
                 SetHero(Culture["AfterMatch.Screen09.Hero.Title"], Culture["AfterMatch.Screen09.Hero.Lead"]);
-                var rescheduleData = AfterMatchEmployerRescheduleSsrData.FromThread(Culture, thread, ApplicationId);
+                var weekThreads = await AfterMatchEmployerWeekAsideLoader.LoadScopeThreadsAsync(
+                    Api,
+                    ApplicationId,
+                    http.RequestAborted);
+                var rescheduleData = AfterMatchEmployerRescheduleSsrData.FromThread(
+                    Culture,
+                    thread,
+                    ApplicationId,
+                    weekThreads);
                 var proposeData = new AfterMatchEmployerPanelSsrShells.PageData(
                     thread,
                     $"/werkgever/sollicitaties/{ApplicationId:D}",
