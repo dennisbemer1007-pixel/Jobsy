@@ -28,6 +28,10 @@ DEFAULTS = [
     ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-reschedule.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-cancel.js",
     ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-messages.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-pick-slot.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-outcome.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-messages.js",
+    ROOT / "Jobsy.Web/wwwroot/js/passport-availability-matrix.js",
 ]
 
 
