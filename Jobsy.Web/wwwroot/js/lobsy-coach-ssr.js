@@ -179,7 +179,7 @@
       count += 1;
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "engagement-btn lobsy-assistant__action";
+      btn.className = "lobsy-assistant__action";
       var label = action.label || action.Label || url || "→";
       btn.textContent = String(label).trim();
       btn.dataset.ssrActionUrl = url;

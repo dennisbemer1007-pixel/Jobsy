@@ -164,12 +164,12 @@
     "v": "20261018-01"
   },
   "css/features/lobsy-assistant-panel.css": {
-    "v": "20261026-kreeft21",
-    "sha256": "16ce4f80f14955d3afd78bdf005a973bcf277c3e661609e2fd26a3a06fc94e95"
+    "v": "20261026-kreeft22",
+    "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd"
   },
   "css/features/lobsy-coach-pill.css": {
-    "v": "20261026-kreeft20",
-    "sha256": "f9e0b4084fd5316b964d613c07938ea0ede42d0fbcca94aebd79aeda81519ca1"
+    "v": "20261026-kreeft22",
+    "sha256": "30be64d804502a897e243fa5644001ae7da5b0d202260579b77cb20766f22b8a"
   },
   "css/features/match-desktop.css": {
     "sha256": "bf9760ca115f0730a129fcae7aaf97c78ff1ec780b316f29d700ec7b05a26fc0",
@@ -388,8 +388,8 @@
     "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261026-kreeft21",
-    "sha256": "9195ce0262395fd46ac1c46de279baa5ed921b17354a9517a2db124f84e742bc"
+    "v": "20261026-kreeft22",
+    "sha256": "3b0dc2a352404a972ceed54692db62928b0e6bdb0b842b1d6f678fa44e5bb421"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -436,8 +436,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261026-kreeft21",
-    "sha256": "8132ce7f88f5f1a15818727d08e975643116cce485c6875209f5f79e6857aa20"
+    "v": "20261026-kreeft22",
+    "sha256": "60ef2633c6d00aaaa9e79bd997da2f19e17161f29b17948ad02f5b574a42cf9e"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
@@ -460,8 +460,8 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "v": "20261026-kreeft20",
-    "sha256": "7b825f459a4c197a0e7191a8a54324d9b4f0b862d755532b1320d3589f4d1178"
+    "v": "20261026-kreeft22",
+    "sha256": "059c766cf5d653fafe7750e1eda89641eb6bcebe50caa1357d419468721cac0b"
   },
   "js/lobsyPush.js": {
     "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",

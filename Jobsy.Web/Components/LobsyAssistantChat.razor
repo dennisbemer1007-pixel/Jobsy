@@ -140,7 +140,7 @@
                         <div class="lobsy-assistant__actions">
                             @foreach (var link in _actionLinks)
                             {
-                                <button type="button" class="engagement-btn lobsy-assistant__action" @onclick="() => FollowLink(link)">
+                                <button type="button" class="lobsy-assistant__action" @onclick="() => FollowLink(link)">
                                     @(link.Label ?? link.Url ?? "→")
                                 </button>
                             }

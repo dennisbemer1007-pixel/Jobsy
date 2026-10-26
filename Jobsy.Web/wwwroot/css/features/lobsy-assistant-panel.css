@@ -216,6 +216,14 @@
   cursor: pointer;
 }
 
+.lobsy-assistant__panel .lobsy-assistant__action,
+#lobsy-assistant-ssr-shell .lobsy-assistant__action {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
 .lobsy-assistant__disclaimer {
   margin: 0.35rem 0 0;
   padding: 0;
