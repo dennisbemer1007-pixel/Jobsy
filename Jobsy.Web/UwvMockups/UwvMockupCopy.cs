@@ -43,6 +43,39 @@ public static class UwvMockupCopy
         public static string VacanciesLink(string? lang, int count) => IsEnglish(lang)
             ? $"{count} vacancies on job map"
             : $"{count} vacatures op banenkaart";
+        public static string AsideTitle(string? lang) => T("Wat betekent dit?", "What does this mean?", lang);
+        public static string AsideLead(string? lang) => T(
+            "Het groene label laat zien dat werkgevers in jouw regio veel mensen zoeken voor dat beroep. Het is goed nieuws, geen oordeel over jou.",
+            "The green label shows that employers in your region are hiring for that occupation. It is good news, not a judgment about you.",
+            lang);
+        public static string AsideDemandTitle(string? lang) => T(
+            "Veel vraag in jouw regio",
+            "High demand in your region",
+            lang);
+        public static string AsideDemandLead(string? lang) => T(
+            "Volgens de lijst van UWV voor Haaglanden",
+            "Based on the UWV list for Haaglanden",
+            lang);
+        public static string AsideRetrainTitle(string? lang) => T(
+            "Hier kun je in omscholen",
+            "You can retrain for this",
+            lang);
+        public static string AsideRetrainLead(string? lang) => T(
+            "Opleidingen en leren en werken voor dat beroep",
+            "Courses and earn-while-you-learn for that occupation",
+            lang);
+        public static string AsideAdviseurLink(string? lang) => T(
+            "Bespreek het met je adviseur",
+            "Discuss it with your adviser",
+            lang);
+        public static string AsideAdviseurNote(string? lang) => T(
+            "Neem deze beroepen mee naar je gesprek.",
+            "Bring these occupations to your meeting.",
+            lang);
+        public static string SampleSourceFooter(string? lang) => T(
+            "Bron: UWV, regio Haaglanden. Voorbeelddata.",
+            "Source: UWV, Haaglanden region. Sample data.",
+            lang);
     }
 
     public static class Similar
