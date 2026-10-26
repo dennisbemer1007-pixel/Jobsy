@@ -126,13 +126,23 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         CultureState culture,
         AfterMatchEmployerRescheduleSsrData.PageData data)
     {
-        var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(data.Thread);
         sb.Append("<div class=\"warnin\" style=\"background:#fbf1e4;border-color:#f0d3b4;color:#6b3a17\">");
         sb.Append(NdMIcons.Calendar);
         sb.Append("<div><b>");
-        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Reschedule.WarningTitleFmt"], first)));
-        sb.Append("</b><br>");
-        sb.Append(data.WarningBodyHtml);
+        if (data.EmployerInitiatedReschedule)
+        {
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.EmployerInitiatedTitle"]));
+            sb.Append("</b><br>");
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.EmployerInitiatedLead"]));
+        }
+        else
+        {
+            var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(data.Thread);
+            sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.Reschedule.WarningTitleFmt"], first)));
+            sb.Append("</b><br>");
+            sb.Append(data.WarningBodyHtml);
+        }
+
         sb.Append("</div></div>");
     }
 
