@@ -218,7 +218,7 @@ public static class UiStringsPassport
             "Waarden op werk", "Values at work", "Wartości w pracy", "Valori la muncă", "قيم في العمل");
 
         Add("Passport.Shells.Title",
-            "Mijn schalen", "My shells", "Moje skorupy", "Cochiliile mele", "صدفاتي");
+            "Mijn schelpen", "My shells", "Moje skorupy", "Cochiliile mele", "صدفاتي");
         Add("Passport.Shells.Hint",
             "Stempels voor test, rapport en CV. De reis telt apart.",
             "Stamps for a test, a report and a CV. The journey counts separately.",
