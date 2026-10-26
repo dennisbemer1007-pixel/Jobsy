@@ -275,6 +275,8 @@
     justify-content: center;
 }@media (min-width: 1024px) {.wg-topbar__account-meta {
         display: inline;
+    }.wg-topbar__brand .wg-topbar__logo {
+        display: none;
     }.wg-shell__sidebar--desktop {
         display: flex;
     }}@media (max-width: 1023px) {.wg-shell__sidebar--desktop {

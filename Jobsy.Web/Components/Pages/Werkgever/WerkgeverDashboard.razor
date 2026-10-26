@@ -397,12 +397,12 @@ else
 
         try
         {
-            var dashTask = Api.GetWerkgeverDashboardAsync(_period, Scope.CompanyIds);
-            var todoTask = Api.GetWerkgeverTodoAsync(Scope.CompanyIds, take: 20);
-            await Task.WhenAll(dashTask, todoTask);
-            _dash = dashTask.Result;
-            _todos = todoTask.Result.ToList();
-            await Counts.ForceRefreshAsync();
+            _dash = await Api.GetWerkgeverDashboardAsync(_period, Scope.CompanyIds);
+            _loadingDash = false;
+            StateHasChanged();
+
+            _todos = (await Api.GetWerkgeverTodoAsync(Scope.CompanyIds, take: 20)).ToList();
+            _ = Counts.ForceRefreshAsync();
         }
         finally
         {
