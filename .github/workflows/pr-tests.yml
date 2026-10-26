@@ -7,7 +7,8 @@ on:
 
 concurrency:
   group: pr-tests-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Rapid merges to acceptatie must not cancel newer tip runs (see R8c acc deploy stall).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
