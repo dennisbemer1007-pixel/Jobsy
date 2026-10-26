@@ -37,7 +37,12 @@ internal static class AfterMatchPickSlotSsrShells
     private static void AppendIntro(StringBuilder sb, CultureState culture, AfterMatchPickSlotSsrData.PageData data)
     {
         var thread = data.Thread;
-        var lead = FormatLead(culture, thread);
+        var lead = data.CandidateProposalPending
+            ? FormatProposeSentLead(culture, thread)
+            : FormatLead(culture, thread);
+        var titleKey = data.CandidateProposalPending
+            ? "AfterMatch.Pick.ProposeSent.Title"
+            : "AfterMatch.Screen04.Hero.Title";
         sb.Append("<section class=\"intro\"><nav class=\"bc\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.Breadcrumb"]));
         sb.Append("\"><a href=\"");
@@ -49,10 +54,16 @@ internal static class AfterMatchPickSlotSsrShells
         sb.Append("</span><i>›</i><span>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen04.PageTitle"]));
         sb.Append("</span></nav><h1>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen04.Hero.Title"]));
+        sb.Append(WebUtility.HtmlEncode(culture[titleKey]));
         sb.Append("</h1><p>");
         sb.Append(WebUtility.HtmlEncode(lead));
         sb.Append("</p></section>");
+    }
+
+    private static string FormatProposeSentLead(CultureState culture, AfterMatchThreadDto thread)
+    {
+        var contact = string.IsNullOrWhiteSpace(thread.WithWhom) ? thread.CompanyName : thread.WithWhom!;
+        return string.Format(culture["AfterMatch.Pick.ProposeSent.Lead"], contact);
     }
 
     private static string FormatLead(CultureState culture, AfterMatchThreadDto thread)
@@ -81,6 +92,14 @@ internal static class AfterMatchPickSlotSsrShells
         sb.Append("</p></div></div><div class=\"hr\"></div>");
 
         AppendTimeline(sb, culture, yesDate);
+
+        if (data.CandidateProposalPending)
+        {
+            AppendCandidateProposalPending(sb, culture, data);
+            sb.Append("</div>");
+            return;
+        }
+
         sb.Append("<div class=\"hr\"></div><span class=\"lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen04.SlotsLabel"]));
         sb.Append("</span><div class=\"cal3\" data-ndm-slot-list>");
@@ -141,6 +160,33 @@ internal static class AfterMatchPickSlotSsrShells
 
         AppendProposeForm(sb, culture, applicationId);
         sb.Append("</div>");
+    }
+
+    private static void AppendCandidateProposalPending(
+        StringBuilder sb,
+        CultureState culture,
+        AfterMatchPickSlotSsrData.PageData data)
+    {
+        sb.Append("<div class=\"hr\"></div><div class=\"note warm\" data-testid=\"ndm-propose-sent\"><span>");
+        sb.Append(NdMIcons.Check);
+        sb.Append("</span><div><b style=\"color:var(--brand)\">");
+        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeSent.Confirmed"]));
+        sb.Append("</b><p class=\"small muted\">");
+        var contact = string.IsNullOrWhiteSpace(data.Thread.WithWhom)
+            ? data.Thread.CompanyName
+            : data.Thread.WithWhom!;
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Pick.ProposeSent.Body"], contact)));
+        sb.Append("</p>");
+        if (!string.IsNullOrWhiteSpace(data.CandidateProposalSummary))
+        {
+            sb.Append("<p class=\"small\" style=\"margin-top:8px\"><b>");
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.ProposeSent.YourMoment"]));
+            sb.Append("</b> ");
+            sb.Append(WebUtility.HtmlEncode(data.CandidateProposalSummary));
+            sb.Append("</p>");
+        }
+
+        sb.Append("</div></div>");
     }
 
     private static void AppendTimeline(StringBuilder sb, CultureState culture, string yesDate)
