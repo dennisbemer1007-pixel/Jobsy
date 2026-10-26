@@ -5,10 +5,15 @@
     return document.querySelector("[data-passport-fit]");
   }
 
-  function navigateFit() {
+  function navigateFit(jobTitle) {
     var u = new URL(window.location.href);
     u.searchParams.set("tab", "fit");
-    u.searchParams.delete("check");
+    var title = String(jobTitle || "").trim();
+    if (title.length >= 2) {
+      u.searchParams.set("check", title);
+    } else {
+      u.searchParams.delete("check");
+    }
     window.location.assign(u.pathname + u.search + u.hash);
   }
 
@@ -35,7 +40,7 @@
       postRoleFit(title)
         .then(function (res) {
           if (!res.ok) throw new Error("fit");
-          navigateFit();
+          navigateFit(title);
         })
         .catch(function () {
           if (btn) btn.disabled = false;
@@ -56,7 +61,7 @@
         postRoleFit(title)
           .then(function (res) {
             if (!res.ok) throw new Error("fit");
-            navigateFit();
+            navigateFit(title);
           })
           .catch(function () {
             btn.disabled = false;
@@ -76,7 +81,7 @@
         postRoleFit(title)
           .then(function (res) {
             if (!res.ok) throw new Error("fit");
-            navigateFit();
+            navigateFit(title);
           })
           .catch(function () {
             btn.disabled = false;

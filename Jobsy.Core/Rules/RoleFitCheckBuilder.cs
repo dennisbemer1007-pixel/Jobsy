@@ -223,10 +223,16 @@ public static class RoleFitCheckBuilder
         {
             foreach (var category in CulturePersonalityFitRules.NeededFacets(occupation))
             {
+                var label = CulturePersonalityCatalog.EverydayLabel(category);
+                if (string.IsNullOrWhiteSpace(label))
+                {
+                    continue;
+                }
+
                 var value = culture.Get(category);
                 if (value >= 70)
                 {
-                    lines.Add($"Bij {CulturePersonalityCatalog.EverydayLabel(category)} scoor je {value}%. Dat sluit aan bij hoe deze functie dagelijks loopt.");
+                    lines.Add($"Bij {label} sluit jouw profiel aan bij hoe deze functie dagelijks loopt.");
                 }
             }
         }
@@ -285,7 +291,13 @@ public static class RoleFitCheckBuilder
                 var value = culture.Get(category);
                 if (value < 55)
                 {
-                    lines.Add($"{CulturePersonalityCatalog.EverydayLabel(category)} scoort {value}%. In dit team wordt dat vaker gevraagd — een workshop helpt.");
+                    var label = CulturePersonalityCatalog.EverydayLabel(category);
+                    if (string.IsNullOrWhiteSpace(label))
+                    {
+                        continue;
+                    }
+
+                    lines.Add($"{label}: in dit team wordt dat vaker gevraagd, een workshop helpt.");
                 }
             }
         }

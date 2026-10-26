@@ -382,7 +382,7 @@ internal static class PassportSsrFitHtml
             else if (topMatches.Count == 0)
             {
                 sb.Append("<p class=\"muted\">");
-                sb.Append(WebUtility.HtmlEncode(culture["Competency.Matches.Empty"]));
+                sb.Append(WebUtility.HtmlEncode(culture["Passport.Fit.VacanciesEmpty"]));
                 sb.Append("</p>");
             }
             else

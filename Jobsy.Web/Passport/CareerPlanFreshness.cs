@@ -19,7 +19,7 @@ internal static class CareerPlanFreshness
         var anchor = OccupationTaxonomy.Resolve(dream);
         if (anchor is null)
         {
-            return true;
+            return false;
         }
 
         foreach (var step in plan.Steps)

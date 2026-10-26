@@ -98,6 +98,7 @@ public static class CandidateFitDisplay
         var trimmed = Regex.Replace(line, @"\d+\s*%", string.Empty);
         trimmed = Regex.Replace(trimmed, @"\bscoor(t| je| jij)?\b", string.Empty, RegexOptions.IgnoreCase);
         trimmed = Regex.Replace(trimmed, @"\bmatch(score)?\b", string.Empty, RegexOptions.IgnoreCase);
+        trimmed = trimmed.Replace(" — ", ", ", StringComparison.Ordinal);
         trimmed = Regex.Replace(trimmed, @"\s{2,}", " ").Trim().TrimEnd('·', '.', ',', ' ');
         return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
     }

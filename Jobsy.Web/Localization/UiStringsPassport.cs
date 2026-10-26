@@ -329,6 +329,12 @@ public static class UiStringsPassport
             "Nie największy kamień, lecz ten w twoim rozmiarze.",
             "Nu cea mai mare piatră, ci cea pe măsura ta.",
             "ليست أكبر صخرة، بل التي تناسب حجمك.");
+        Add("Passport.Fit.VacanciesEmpty",
+            "Nog geen passende vacatures in de buurt. Vul je locatie en voorkeuren aan; dan vullen we dit vanzelf aan.",
+            "No matching vacancies nearby yet. Add your location and preferences and this list will fill in.",
+            "Brak pasujących ofert w pobliżu. Uzupełnij lokalizację i preferencje.",
+            "Încă nu sunt joburi potrivite în apropiere. Completează locația și preferințele.",
+            "لا توجد وظائف مناسبة قريبة بعد. أضف موقعك وتفضيلاتك.");
         Add("Passport.Fit.Top10",
             "Top 10 ›", "See top 10 ›", "Zobacz top 10 ›", "Vezi top 10 ›", "أفضل 10 ›");
         Add("Passport.Fit.EmployersWant",
