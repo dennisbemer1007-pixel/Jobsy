@@ -4,6 +4,7 @@ using Jobsy.Core.Careers;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Web.Components.Candidate.Dna;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.KandidaatBanen;
@@ -494,13 +495,19 @@ internal static class PassportSsrFitHtml
 
     private static string TopStrengths(RoleFitCheckResult result)
     {
-        var parts = result.Strengths.Where(s => !string.IsNullOrWhiteSpace(s)).Take(2).ToList();
-        return parts.Count == 0 ? "-" : string.Join(", ", parts);
+        var parts = result.Strengths
+            .Select(CandidateFitDisplay.SanitizePassportCandidateCopy)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Take(2)
+            .ToList();
+        return parts.Count == 0 ? "-" : string.Join(", ", parts!);
     }
 
     private static string FirstLine(IReadOnlyList<string> lines)
     {
-        var first = lines.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+        var first = lines
+            .Select(CandidateFitDisplay.SanitizePassportCandidateCopy)
+            .FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
         return string.IsNullOrWhiteSpace(first) ? "-" : first!;
     }
 

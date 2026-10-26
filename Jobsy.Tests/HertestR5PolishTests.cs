@@ -14,6 +14,16 @@ public sealed class HertestR5PolishTests
     }
 
     [Fact]
+    public void SanitizePassportCandidateCopy_strips_score_phrases()
+    {
+        var raw = "Op Innovatie scoor jij 75%. Dat past goed — 60% match.";
+        var cleaned = CandidateFitDisplay.SanitizePassportCandidateCopy(raw);
+        Assert.NotNull(cleaned);
+        Assert.DoesNotContain("%", cleaned, StringComparison.Ordinal);
+        Assert.DoesNotContain("scoor", cleaned, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Program_redirects_vacancies_root_to_banenkaart()
     {
         var program = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web/Program.cs"));
