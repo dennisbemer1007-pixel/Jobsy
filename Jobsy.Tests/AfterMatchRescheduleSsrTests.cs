@@ -80,6 +80,7 @@ public sealed class AfterMatchRescheduleSsrTests : BunitContext
             "13 okt",
             "15 okt",
             "22 okt",
+            null,
             null);
 
         var html = AfterMatchRescheduleSsrShells.BuildBody(culture, data, appId, "reschedule");

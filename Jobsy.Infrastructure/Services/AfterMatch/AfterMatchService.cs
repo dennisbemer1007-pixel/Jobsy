@@ -236,10 +236,51 @@ public sealed class AfterMatchService : IAfterMatchService
             ? await RequireEmployerApplicationAsync(applicationId, userId, cancellationToken)
             : await RequireCandidateApplicationAsync(applicationId, userId, cancellationToken);
 
-        var interview = await EnsureInterviewEntityAsync(application, cancellationToken);
+        var interview = await _db.Interviews
+            .Include(i => i.Slots)
+            .FirstAsync(i => i.ApplicationId == application.Id, cancellationToken);
+
+        if (!isEmployer && request.AlternativeSlotId is Guid altSlotId)
+        {
+            var slot = interview.Slots.FirstOrDefault(s => s.Id == altSlotId);
+            if (slot is not null)
+            {
+                interview.Status = InterviewStatus.RescheduleRequested;
+                interview.ChosenSlotId = altSlotId;
+                interview.UpdatedAtUtc = DateTime.UtcNow;
+                foreach (var s in interview.Slots)
+                {
+                    s.IsSelected = s.Id == altSlotId;
+                }
+
+                _db.InterviewChanges.Add(new InterviewChange
+                {
+                    Id = Guid.NewGuid(),
+                    InterviewId = interview.Id,
+                    Kind = InterviewChangeKind.Reschedule,
+                    ActorRole = "Candidate",
+                    Reason = request.Reason.Trim(),
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+
+                await _db.SaveChangesAsync(cancellationToken);
+                await _statusNotifier.NotifyInterviewRescheduleRequestedAsync(
+                    application,
+                    actorIsEmployer: false,
+                    userId,
+                    cancellationToken);
+                return await MapThreadAsync(application, interview, userId, isEmployer, cancellationToken);
+            }
+        }
+
         interview.Status = InterviewStatus.RescheduleRequested;
         interview.ChosenSlotId = null;
         interview.UpdatedAtUtc = DateTime.UtcNow;
+
+        foreach (var s in interview.Slots)
+        {
+            s.IsSelected = false;
+        }
 
         _db.InterviewChanges.Add(new InterviewChange
         {

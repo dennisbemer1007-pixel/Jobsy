@@ -516,8 +516,8 @@
     "sha256": "b6d953a63ddeb3131d7424c6ce25ce6a9069bcd97f6d0f3994a2a8d02b67d344"
   },
   "js/ndm-reschedule.js": {
-    "v": "20261025-kreeft15",
-    "sha256": "2e93878eb872c9aed629b02063dbc61b3eb365eb1a2a95ceb13c24762414c879"
+    "v": "20261026-reschedule-alt1",
+    "sha256": "335b54a8ca3408c040c7c9c435967fa8c6cca64f9e89cbc23e724ba68da021d6"
   },
   "js/passport-availability-matrix.js": {
     "v": "20261026-passport-matrix1",

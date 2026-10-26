@@ -20,7 +20,8 @@ internal static class AfterMatchRescheduleSsrData
         string YesDateLabel,
         string PlanDateLabel,
         string InterviewDateLabel,
-        string? AlternateSlotLabel);
+        string? AlternateSlotLabel,
+        Guid? AlternateSlotId);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
@@ -67,9 +68,11 @@ internal static class AfterMatchRescheduleSsrData
         var interviewDate = startLocal.ToString("d MMM", nl);
 
         string? alternateSlotLabel = null;
+        Guid? alternateSlotId = null;
         if (thread.OpenSlots.Count > 0)
         {
             var slot = thread.OpenSlots[0];
+            alternateSlotId = slot.Id;
             var slotStart = AfterMatchMailSsrTime.ToAmsterdam(slot.StartUtc);
             var slotLabel = slotStart.ToString("dddd d MMMM, HH:mm", nl);
             if (slotLabel.Length > 0 && char.IsLower(slotLabel[0]))
@@ -94,7 +97,8 @@ internal static class AfterMatchRescheduleSsrData
             yesDate,
             planDate,
             interviewDate,
-            alternateSlotLabel);
+            alternateSlotLabel,
+            alternateSlotId);
     }
 
     private static string ContactShortName(AfterMatchThreadDto thread)
