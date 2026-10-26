@@ -88,12 +88,11 @@ internal static class AfterMatchEmployerRescheduleSsrData
 
         var warningBody = string.Join("<br>", warningLines);
 
-        var nl = CultureInfo.GetCultureInfo("nl-NL");
         var yesHint = thread.AcceptedAtUtc is DateTime yes
-            ? AfterMatchMailSsrTime.ToAmsterdam(yes).ToString("d MMM", nl)
+            ? AfterMatchTimelineLabels.ShortDate(yes)
             : null;
-        var planHint = new DateTime(2026, 10, 15, 0, 0, 0, DateTimeKind.Utc).ToString("d MMM", nl);
-        var interviewHint = new DateTime(2026, 10, 22, 0, 0, 0, DateTimeKind.Utc).ToString("d MMM", nl);
+        var planHint = AfterMatchTimelineLabels.PlanStep(thread);
+        var interviewHint = AfterMatchTimelineLabels.InterviewStep(thread);
 
         return new PageData(
             thread,
