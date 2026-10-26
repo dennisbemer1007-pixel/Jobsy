@@ -34,7 +34,8 @@ internal static class AfterMatchPanelRouting
         "pick-slot" or "propose-slot" or "propose" => PickSlotSsrSuffix,
         "messages" => MessagesSsrSuffix,
         "reschedule" => RescheduleSsrSuffix,
-        "cancel" => CancelledSsrSuffix,
+        "cancel" => RescheduleSsrSuffix,
+        "cancelled" => CancelledSsrSuffix,
         "outcome" or "" => PanelSsrSuffix,
         _ => "/blazor",
     };

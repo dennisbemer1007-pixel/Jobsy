@@ -64,6 +64,13 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
     }
 
     [Fact]
+    public void Candidate_cancel_panel_routes_to_reschedule_form_not_cancelled_screen()
+    {
+        Assert.Equal("/reschedule-ssr", AfterMatchPanelRouting.PathSuffixForPanel("cancel"));
+        Assert.Equal("/cancelled-ssr", AfterMatchPanelRouting.PathSuffixForPanel("cancelled"));
+    }
+
+    [Fact]
     public void Outcome_screen_routing_accepts_done_interview_without_not_now_enum()
     {
         var thread = new AfterMatchThreadDto(
