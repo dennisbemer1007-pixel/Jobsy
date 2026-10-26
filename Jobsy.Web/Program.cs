@@ -667,6 +667,7 @@ app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
 app.MapKbExtClientEndpoints();
 app.MapSollicitatiesClientEndpoints();
+app.MapUwvClientEndpoints();
 app.MapAfterMatchMessagesClientEndpoints();
 app.MapAfterMatchPickSlotClientEndpoints();
 app.MapAfterMatchEmployerProposeClientEndpoints();

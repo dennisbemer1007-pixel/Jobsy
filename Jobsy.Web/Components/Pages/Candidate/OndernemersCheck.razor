@@ -1,266 +1,68 @@
 @page "/candidate/ondernemerscheck"
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
-@using Jobsy.Core.Enums
-@using Jobsy.Core.Rules
-@using Jobsy.Web.Components.Candidate
-@using Jobsy.Web.Components.Candidate.Tests
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Media
 @using Jobsy.Web.Services
 @using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
 @inject IUwvFeaturesGate UwvGate
 @inject JobsyApiClient Api
-@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@UwvMockupCopy.Ondernemer.TestName(Culture.Language) · Lobsy</PageTitle>
+@if (_needsOndernemerScript)
+{
+    <HeadContent>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/uwv-ondernemer.js")}")" defer></script>
+    </HeadContent>
+}
 
-@if (!_uwvOn)
+@if (_loading)
 {
-    <div class="test-page journey-page"><p class="state-message">@Culture["Common.Error"]</p></div>
+    <PageContentSkeleton Variant="cards" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
 }
-else if (_phase == "intro")
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
 {
-    <div class="journey-page panel-page--cand-ill uwv-ondernemer-intro-page">
-        <div class="test-kreeft-strip uwv-ondernemer-intro-page__strip" aria-hidden="true" data-testid="kreeft-header-strip">
-            <img class="test-kreeft-strip__desk" src="@KreeftHeaderStripAssets.OndernemerDesk" width="1440" height="225" alt="" loading="lazy" decoding="async" />
-            <img class="test-kreeft-strip__mob" src="@KreeftHeaderStripAssets.OndernemerMob" width="780" height="105" alt="" loading="lazy" decoding="async" />
-        </div>
-        <div class="opl-wrap uwv-ondernemer-intro-layout">
-            <header class="uwv-ondernemer-intro-layout__head">
-                <p class="uwv-ondernemer-intro-layout__eyebrow">@(Culture.Format("TestFlow.Eyebrow.Intro", UwvMockupCopy.Ondernemer.TestName(Culture.Language)))</p>
-                <h1 class="uwv-ondernemer-intro-layout__title">@UwvMockupCopy.Ondernemer.TestName(Culture.Language)</h1>
-                <p class="uwv-ondernemer-intro-layout__lead">@IntroLead</p>
-            </header>
-            <section class="detail-card career-card uwv-ondernemer-intro-card__inner uwv-ondernemer-intro-layout__card">
-                <p>@UwvMockupCopy.Ondernemer.IntroLead(Culture.Language)</p>
-                <h2 class="uwv-ondernemer-intro-card__sub">@UwvMockupCopy.Ondernemer.IntroDiscoverTitle(Culture.Language)</h2>
-                <ul class="uwv-ondernemer-intro-card__list">
-                    @foreach (var item in UwvMockupCopy.Ondernemer.IntroDiscoverItems(Culture.Language))
-                    {
-                        <li>@item</li>
-                    }
-                </ul>
-                <footer class="test-shell__footer">
-                    <button type="button" class="btn btn-primary" @onclick="StartQuestions">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Start" : "Begin")</button>
-                </footer>
-            </section>
-            <section class="uwv-ondernemer-intro-layout__steps" aria-labelledby="uwv-ondernemer-how">
-                <h2 id="uwv-ondernemer-how" class="uwv-ondernemer-intro-layout__steps-title">@UwvMockupCopy.Ondernemer.HowItWorksTitle(Culture.Language)</h2>
-                <ol class="uwv-ondernemer-intro-layout__steps-list">
-                    @{ var step = 1; }
-                    @foreach (var item in UwvMockupCopy.Ondernemer.HowItWorksSteps(Culture.Language))
-                    {
-                        <li><span class="uwv-ondernemer-intro-layout__step-num" aria-hidden="true">@step</span>@item</li>
-                        step++;
-                    }
-                </ol>
-            </section>
-        </div>
-    </div>
+    <p class="state-message">@_fatalMessage</p>
 }
-else if (_phase == "question")
+else if (_bodyHtml is not null)
 {
-    var qNum = _questionIndex + 1;
-    <div class="journey-page uwv-ondernemer-test uwv-ondernemer-test--question">
-        <div class="uwv-ondernemer-test__shell">
-            <TestPageShell Kind="AssessmentKind.Career"
-                           Mode="TestPageShell.ShellMode.Question"
-                           H1="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
-                           TestName="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
-                           LevelName="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")"
-                           Answered="@qNum"
-                           TargetCount="6"
-                           QuickScanVersion="1"
-                           ActiveDepth="TestDepthLevel.First"
-                           ShowDepthSegments="false"
-                           BubbleText="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Take your time" : "Neem je tijd")">
-                <ChildContent>
-                    <div class="test-flow test-flow--compact uwv-ondernemer-test__flow">
-                        <div class="test-flow__progress-head">
-                            <p class="test-flow__counter">@Culture.Format("TestFlow.QuestionOf", qNum, 6)</p>
-                        </div>
-                        <div class="test-flow__bar uwv-ondernemer-test__bar" role="group" aria-label="@Culture.Format("TestFlow.QuestionOf", qNum, 6)">
-                            @for (var seg = 0; seg < 6; seg++)
-                            {
-                                var segIndex = seg;
-                                var cls = segIndex < _questionIndex
-                                    ? "is-done"
-                                    : segIndex == _questionIndex
-                                        ? "is-current"
-                                        : "is-todo";
-                                <span class="test-flow__seg @cls" aria-hidden="true"></span>
-                            }
-                        </div>
-                    </div>
-                    @if (_questionIndex > 0)
-                    {
-                        <p class="test-flow__back">
-                            <button type="button" class="btn btn-link" @onclick="PreviousQuestion">
-                                @(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back" : "Vorige")
-                            </button>
-                        </p>
-                    }
-                    else
-                    {
-                        <p class="test-flow__back">
-                            <a href="/candidate/ondernemerscheck?stap=intro">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back" : "Terug")</a>
-                        </p>
-                    }
-                    <p class="uwv-test-q">@CurrentQuestion</p>
-                    <div class="uwv-test-scale" role="group" aria-label="Likert">
-                        @for (var score = 1; score <= 5; score++)
-                        {
-                            var s = score;
-                            <button type="button" class="uwv-test-scale__btn" disabled="@_saving" @onclick="() => AnswerAsync(s)">@ScaleLabels.ElementAt(score - 1)</button>
-                        }
-                    </div>
-                </ChildContent>
-            </TestPageShell>
-        </div>
-    </div>
-}
-else
-{
-    var outcomeKey = _outcomeKey ?? "explore";
-    var (resultTitle, resultLead) = UwvMockupCopy.Ondernemer.ResultCopy(outcomeKey, Culture.Language);
-    <div class="journey-page uwv-ondernemer-test uwv-ondernemer-test--result">
-        <div class="uwv-ondernemer-test__shell">
-            <article class="detail-card career-card uwv-ondernemer-result__panel">
-                <div class="uwv-ondernemer-result__main">
-                    <p class="uwv-ondernemer-result__eyebrow">@Culture.Format("TestDone.Eyebrow", UwvMockupCopy.Ondernemer.TestName(Culture.Language), UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")</p>
-                    <h1 class="uwv-ondernemer-result__title" tabindex="-1">@resultTitle</h1>
-                    <p class="uwv-ondernemer-result__lead">@resultLead</p>
-                    <h2 class="uwv-ondernemer-result__steps-title">@UwvMockupCopy.Ondernemer.ResultNextStepsTitle(Culture.Language)</h2>
-                    <ol class="uwv-ondernemer-result__steps">
-                        @foreach (var step in UwvMockupCopy.Ondernemer.ResultNextSteps(Culture.Language))
-                        {
-                            <li>
-                                @if (step.External)
-                                {
-                                    <a class="uwv-ondernemer-result__step-link uwv-ondernemer-result__step-link--external"
-                                       href="@step.Href"
-                                       target="_blank"
-                                       rel="noopener noreferrer">@step.Label<span class="uwv-ondernemer-result__step-icon" aria-hidden="true">&nbsp;↗</span></a>
-                                }
-                                else
-                                {
-                                    <a class="uwv-ondernemer-result__step-link" href="@step.Href">@step.Label<span class="uwv-ondernemer-result__step-icon" aria-hidden="true">&nbsp;›</span></a>
-                                }
-                            </li>
-                        }
-                    </ol>
-                    <footer class="test-shell__footer uwv-ondernemer-result__footer">
-                        <a class="btn btn-ghost" href="/candidate/ontdekkingsreis">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back to discovery" : "Terug naar ontdekken")</a>
-                        <a class="btn btn-primary" href="/candidate/adviseur-werk">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Take to your work adviser" : "Neem mee naar je adviseur")</a>
-                    </footer>
-                    <p class="uwv-ondernemer-result__done muted">@UwvMockupCopy.Ondernemer.ResultDoneLine(Culture.Language)</p>
-                </div>
-                <figure class="uwv-ondernemer-result__scene" aria-hidden="true">
-                    <img src="@CandidateIllustratedImages.OndernemerResultScene"
-                         alt=""
-                         width="960"
-                         height="540"
-                         decoding="async"
-                         loading="lazy" />
-                </figure>
-            </article>
-        </div>
-    </div>
+    @((MarkupString)_bodyHtml)
 }
 
 @code {
     [SupplyParameterFromQuery(Name = "stap")] public string? Stap { get; set; }
-    private string _phase = "intro";
-    private bool _uwvOn;
-    private int _questionIndex;
-    private readonly List<int> _answers = [];
-    private string? _outcomeKey;
-    private bool _saving;
+
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+    private bool _needsOndernemerScript;
 
     protected override async Task OnInitializedAsync()
     {
-        _uwvOn = await UwvGate.IsEnabledAsync();
-        if (!_uwvOn)
-        {
-            return;
-        }
-
-        var state = await Api.GetUwvToolkitAsync();
-        _outcomeKey = state?.OndernemerOutcomeKey;
-    }
-
-    protected override void OnParametersSet()
-    {
-        _phase = (Stap ?? "intro").ToLowerInvariant() switch
-        {
-            "question" or "vraag" => "question",
-            "result" or "done" => "result",
-            _ => "intro"
-        };
-
-    }
-
-    private string IntroLead =>
-        $"{UwvMockupCopy.Ondernemer.IntroBenefit(Culture.Language)} · {UwvMockupCopy.Ondernemer.IntroDuration(Culture.Language)}";
-
-    private IEnumerable<string> ScaleLabels => UwvMockupCopy.IsEnglish(Culture.Language)
-        ? ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]
-        : ["Helemaal niet", "Niet", "Neutraal", "Wel", "Helemaal wel"];
-
-    private string CurrentQuestion =>
-        UwvMockupCopy.Ondernemer.Questions(Culture.Language).ElementAt(_questionIndex);
-
-    private void StartQuestions()
-    {
-        _answers.Clear();
-        _questionIndex = 0;
-        Navigation.NavigateTo("/candidate/ondernemerscheck?stap=question");
-    }
-
-    private void PreviousQuestion()
-    {
-        if (_questionIndex <= 0 || _answers.Count == 0)
-        {
-            return;
-        }
-
-        _answers.RemoveAt(_answers.Count - 1);
-        _questionIndex--;
-    }
-
-    private async Task AnswerAsync(int score)
-    {
-        if (_saving)
-        {
-            return;
-        }
-
-        _answers.Add(score);
-
-        if (_answers.Count < 6)
-        {
-            _questionIndex++;
-            StateHasChanged();
-            return;
-        }
-
-        _saving = true;
         try
         {
-            var saved = await Api.SaveUwvOndernemerAsync(_answers.Take(6).ToArray());
-            _outcomeKey = saved?.OndernemerOutcomeKey;
-            Navigation.NavigateTo("/candidate/ondernemerscheck?stap=result");
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
+
+            var data = await OndernemersCheckSsrData.LoadAsync(UwvGate, Api, Stap, default);
+            _needsOndernemerScript = data.UwvEnabled && data.Phase == "question";
+            _bodyHtml = OndernemersCheckSsrShells.BuildBody(Culture, data);
         }
         catch
         {
-            Navigation.NavigateTo("/candidate/ondernemerscheck?stap=result");
+            _fatalMessage = Culture["Panel.ErrorInline"];
         }
         finally
         {
-            _saving = false;
+            _loading = false;
         }
     }
 }
