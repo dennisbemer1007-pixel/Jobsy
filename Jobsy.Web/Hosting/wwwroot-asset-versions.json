@@ -48,8 +48,8 @@
     "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261026-kreeft23",
-    "sha256": "4c514b03ef3e3701dafebd683dee8a839047c4be0db5c9989af4e94ef4ede700"
+    "v": "20261026-kreeft24",
+    "sha256": "21218d675bea2ecdfcd1d6a2d1d05c92ea3d153feb2b16fcf3a1f15a4e5751a4"
   },
   "css/features/banenkaart-page.css": {
     "v": "20261025-kreeft12",
@@ -364,8 +364,8 @@
     "sha256": "1b05b82d4323e08f40c5b37c128e9edafc8df0cbc3d74e170253b4d0e7cf6f5c"
   },
   "js/app-core.js": {
-    "sha256": "4de415834ac296e6bb25135bebee31ad86daba6e0fc9cbc0ba06381515195f43",
-    "v": "20261024-25"
+    "sha256": "ec1ce737d7ddc98b6667b3a50bf8f28a9c62dd5de028f3a2da975f216b2c87aa",
+    "v": "20261026-kreeft24"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -388,8 +388,8 @@
     "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261026-kreeft23",
-    "sha256": "a61f7ad5f03323c74cf9bf768e0907ca930971620d660158b52cbd9a6ed4d5da"
+    "v": "20261026-kreeft24",
+    "sha256": "82be6620e731f6309f092f1adbc71ae015c3f4af244412456ec0a2afa03d0f3b"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -436,8 +436,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261026-kreeft23",
-    "sha256": "6c13dbf37a9128d304318ffb70189d90e14be6b2ed00c2af164c582770ef2809"
+    "v": "20261026-kreeft24",
+    "sha256": "66ff21976b8a9367bd6439f785f510f433a139d309e7e9e19dfbff665d07089c"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
