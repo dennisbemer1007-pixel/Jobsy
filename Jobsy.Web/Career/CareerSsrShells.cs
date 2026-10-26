@@ -302,7 +302,9 @@ internal static class CareerSsrShells
         sb.Append(WebUtility.HtmlEncode(data.KansDataset is null
             ? UwvMockupCopy.Kansberoepen.Source(lang)
             : En(lang, data.KansDataset.SourceLineEn, data.KansDataset.SourceLineNl)));
-        sb.Append("</span></p><section class=\"carriere-segmented__group\" aria-labelledby=\"carriere-group-kans\">");
+        sb.Append("</span></p><p class=\"carriere-segmented__lead uwv-block__lead\">");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Kansberoepen.Lead(lang)));
+        sb.Append("</p><section class=\"carriere-segmented__group\" aria-labelledby=\"carriere-group-kans\">");
         sb.Append("<div class=\"carriere-segmented__group-head\"><h2 id=\"carriere-group-kans\" class=\"carriere-segmented__group-title\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Kansberoepen.Title(lang)));
         sb.Append("</h2>");
