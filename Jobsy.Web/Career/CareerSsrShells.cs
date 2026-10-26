@@ -174,6 +174,11 @@ internal static class CareerSsrShells
         sb.Append("<button type=\"submit\" class=\"btn btn-primary\" data-testid=\"career-dream-save\">");
         sb.Append(WebUtility.HtmlEncode(culture["Common.Save"]));
         sb.Append("</button></form>");
+        sb.Append("<div class=\"career-note career-note--soft carriere-segmented__dream-coach\" role=\"note\"><p><strong>");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.CarriereSegmented.DreamCoachTitle(lang)));
+        sb.Append("</strong> ");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.CarriereSegmented.DreamCoachBody(lang)));
+        sb.Append("</p></div>");
 
         AppendSimilarJobs(sb, lang, culture, data);
         AppendStrongMatches(sb, lang, culture, data);
@@ -221,6 +226,11 @@ internal static class CareerSsrShells
             sb.Append("</p><p class=\"carriere-segmented__route muted\">");
             sb.Append(WebUtility.HtmlEncode(En(lang, job.RouteEn, job.RouteNl)));
             sb.Append("</p>");
+            if (job.Baangarantie)
+            {
+                AppendBaangarantieRouteBadge(sb, lang);
+            }
+
             if (job.MapLink)
             {
                 sb.Append("<a class=\"uwv-inline-link\" href=\"/banenkaart\" data-enhance-nav=\"false\">");
@@ -245,22 +255,35 @@ internal static class CareerSsrShells
         sb.Append("</h2>");
         AppendMeerButton(sb, culture, "omscholen", sectors.Count, data.ExpandedGroups);
         sb.Append("</div><ul class=\"carriere-segmented__cards\" data-career-card-group=\"omscholen\">");
-        foreach (var (sector, _) in sectors)
+        foreach (var (sector, icon) in sectors)
         {
-            sb.Append("<li class=\"carriere-segmented__card carriere-segmented__card--rich\" data-career-card-item><div class=\"carriere-segmented__card-body\"><h3>");
+            sb.Append("<li class=\"carriere-segmented__card carriere-segmented__card--rich\" data-career-card-item>");
+            CareerSsrSectorIcon.Append(sb, icon, "carriere-segmented__card-icon");
+            sb.Append("<div class=\"carriere-segmented__card-body\"><h3>");
             sb.Append(WebUtility.HtmlEncode(En(lang, sector.NameEn, sector.NameNl)));
             sb.Append(" · ");
             sb.Append(WebUtility.HtmlEncode(En(lang, sector.DetailEn, sector.DetailNl)));
-            sb.Append("</h3><a class=\"uwv-inline-link\" href=\"/banenkaart\" data-enhance-nav=\"false\">");
+            sb.Append("</h3>");
+            if (sector.HasBaangarantie)
+            {
+                AppendBaangarantieRouteBadge(sb, lang);
+            }
+
+            sb.Append("<a class=\"uwv-inline-link\" href=\"/banenkaart\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Omscholen.MapLink(lang)));
             sb.Append("</a></div></li>");
         }
 
         sb.Append("</ul></section>");
+        AppendLeerbanen(sb, lang, culture, data);
         sb.Append("<aside class=\"uwv-omscholen__aside carriere-segmented__aside\"><p>");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Omscholen.Werkcentrum(lang)));
         sb.Append(" <a href=\"https://www.werkcentrum.nl/\" rel=\"noopener noreferrer\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Omscholen.WerkcentrumLink(lang)));
+        sb.Append("</a></p><p class=\"uwv-omscholen__ww\">");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Omscholen.WwNote(lang)));
+        sb.Append(" <a href=\"https://www.uwv.nl/\" rel=\"noopener noreferrer\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Omscholen.WwLink(lang)));
         sb.Append("</a></p></aside></div>");
     }
 
@@ -273,6 +296,10 @@ internal static class CareerSsrShells
         sb.Append(WebUtility.HtmlEncode(data.KansDataset is null
             ? UwvMockupCopy.Kansberoepen.Region(lang)
             : En(lang, data.KansDataset.RegionKeyEn, data.KansDataset.RegionKeyNl)));
+        sb.Append("</span> <span class=\"uwv-block__source\">");
+        sb.Append(WebUtility.HtmlEncode(data.KansDataset is null
+            ? UwvMockupCopy.Kansberoepen.Source(lang)
+            : En(lang, data.KansDataset.SourceLineEn, data.KansDataset.SourceLineNl)));
         sb.Append("</span></p><section class=\"carriere-segmented__group\" aria-labelledby=\"carriere-group-kans\">");
         sb.Append("<div class=\"carriere-segmented__group-head\"><h2 id=\"carriere-group-kans\" class=\"carriere-segmented__group-title\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Kansberoepen.Title(lang)));
@@ -281,10 +308,20 @@ internal static class CareerSsrShells
         sb.Append("</div><ul class=\"carriere-segmented__cards\" data-career-card-group=\"kans\">");
         foreach (var job in entries)
         {
-            sb.Append("<li class=\"carriere-segmented__card carriere-segmented__card--rich\" data-career-card-item><div class=\"carriere-segmented__card-body\"><h3>");
+            sb.Append("<li class=\"carriere-segmented__card carriere-segmented__card--rich\" data-career-card-item>");
+            CareerSsrSectorIcon.Append(sb, job.SectorIcon, "carriere-segmented__card-icon");
+            sb.Append("<div class=\"carriere-segmented__card-body\"><h3>");
             sb.Append(WebUtility.HtmlEncode(En(lang, job.TitleEn, job.TitleNl)));
-            sb.Append("</h3><p>");
+            sb.Append("</h3>");
+            if (job.Baangarantie)
+            {
+                AppendBaangarantieBadge(sb, lang);
+            }
+
+            sb.Append("<p>");
             sb.Append(WebUtility.HtmlEncode(En(lang, job.ProspectEn, job.ProspectNl)));
+            sb.Append("</p><p class=\"carriere-segmented__route muted\">");
+            sb.Append(WebUtility.HtmlEncode(En(lang, job.RouteEn, job.RouteNl)));
             sb.Append("</p><a class=\"uwv-kans__map-link\" href=\"/banenkaart\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Kansberoepen.VacanciesLink(lang, job.VacancyCount)));
             sb.Append("</a></div></li>");
@@ -320,6 +357,45 @@ internal static class CareerSsrShells
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(isOpen ? culture["Training.LearnGrow.ShowLess"] : UwvMockupCopy.CarriereSegmented.Meer(lang)));
         sb.Append("</button>");
+    }
+
+    private static void AppendLeerbanen(StringBuilder sb, string lang, CultureState culture, CareerSsrData.PageData data)
+    {
+        var leerbanen = UwvMockupData.Leerbanen;
+        sb.Append("<section class=\"carriere-segmented__group\" aria-labelledby=\"carriere-group-leerbanen\">");
+        sb.Append("<div class=\"carriere-segmented__group-head\"><h2 id=\"carriere-group-leerbanen\" class=\"carriere-segmented__group-title\">");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.IsEnglish(lang) ? "Apprenticeships (BBL)" : "Leerbanen BBL"));
+        sb.Append("</h2>");
+        AppendMeerButton(sb, culture, "leerbanen", leerbanen.Count, data.ExpandedGroups);
+        sb.Append("</div><ul class=\"carriere-segmented__cards\" data-career-card-group=\"leerbanen\">");
+        foreach (var lb in leerbanen)
+        {
+            sb.Append("<li class=\"carriere-segmented__card\" data-career-card-item><h3>");
+            sb.Append(WebUtility.HtmlEncode(En(lang, lb.TitleEn, lb.TitleNl)));
+            sb.Append("</h3><p class=\"muted\">");
+            sb.Append(WebUtility.HtmlEncode(En(lang, lb.CompanyEn, lb.CompanyNl)));
+            sb.Append("</p><a class=\"uwv-inline-link\" href=\"");
+            sb.Append(WebUtility.HtmlEncode(lb.MapHref));
+            sb.Append("\" data-enhance-nav=\"false\">");
+            sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Omscholen.MapLink(lang)));
+            sb.Append("</a></li>");
+        }
+
+        sb.Append("</ul></section>");
+    }
+
+    private static void AppendBaangarantieRouteBadge(StringBuilder sb, string lang)
+    {
+        sb.Append("<span class=\"uwv-badge uwv-badge--guarantee\">");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.IsEnglish(lang) ? "Job guarantee route" : "Baangarantie-route"));
+        sb.Append("</span>");
+    }
+
+    private static void AppendBaangarantieBadge(StringBuilder sb, string lang)
+    {
+        sb.Append("<span class=\"uwv-badge uwv-badge--guarantee\">");
+        sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.IsEnglish(lang) ? "Job guarantee" : "Baangarantie"));
+        sb.Append("</span>");
     }
 
     private static string En(string lang, string en, string nl)
