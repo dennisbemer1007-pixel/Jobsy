@@ -61,14 +61,15 @@ public class CandidateProfileServiceTests
     }
 
     [Fact]
-    public void Profiel_page_redirects_to_kompas()
+    public void Profiel_page_is_ssr_hub_and_editor_on_bewerken()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfile.razor"));
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfileSsr.razor"));
         Assert.Contains("@page \"/profiel\"", page);
-        Assert.Contains("NavigateTo(\"/candidate/profile\"", page);
+        Assert.Contains("@page \"/candidate/profile\"", page);
         Assert.DoesNotContain("profile-hub-kompas", page);
-        Assert.DoesNotContain("CandidateProfileService", page);
+        var editor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        Assert.Contains("@page \"/candidate/profile/bewerken\"", editor);
 
         var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("Kompas.TabTests", kompas);

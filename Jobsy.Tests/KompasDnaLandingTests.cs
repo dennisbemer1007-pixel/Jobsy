@@ -142,9 +142,10 @@ public class KompasDnaLandingTests
     public void Profiel_redirects_to_candidate_profile_and_nav_points_there()
     {
         var root = RepoRoot.Find();
-        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfile.razor"));
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfileSsr.razor"));
         Assert.Contains("@page \"/profiel\"", page);
-        Assert.Contains("NavigateTo(\"/candidate/profile\"", page);
+        Assert.Contains("@page \"/candidate/profile\"", page);
+        Assert.Contains("[NoBlazorRuntime]", page);
         Assert.DoesNotContain("profile-hub-kompas", page);
 
         var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RoleNavCatalog.cs"));

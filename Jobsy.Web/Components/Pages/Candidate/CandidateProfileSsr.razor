@@ -1,0 +1,74 @@
+@page "/candidate/profile"
+@page "/profiel"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Profile
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Profile.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="profile" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            http.Response.Headers.CacheControl = "no-store";
+
+            var flags = await FeatureFlags.GetAsync(http.RequestAborted);
+            var legacyRedirect = ProfileSsrLegacyRedirects.TryGetRedirectUrl(
+                http.Request,
+                flags.CandidatePassportEnabled);
+            if (!string.IsNullOrEmpty(legacyRedirect))
+            {
+                http.Response.StatusCode = StatusCodes.Status303SeeOther;
+                http.Response.Headers.Location = legacyRedirect;
+                return;
+            }
+
+            var data = await ProfileSsrData.LoadAsync(Api, http.RequestAborted);
+            _bodyHtml = ProfileSsrShells.BuildBody(Culture, data);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -269,6 +269,8 @@ public static class PageAssetCatalog
             || path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/liked", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/profile", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/profiel", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/bedrijvenkaart", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/profiel/tests", StringComparison.OrdinalIgnoreCase)
@@ -305,6 +307,18 @@ public static class PageAssetCatalog
                 WwwrootAssetCatalog.Url("css/features/kandidaat-banen.css"),
                 WwwrootAssetCatalog.Url("css/features/banenkaart-illustrated.css"),
                 WwwrootAssetCatalog.Url("css/features/sollicitaties-page.css"),
+            ];
+        }
+
+        if (path.Equals("/profiel", StringComparison.OrdinalIgnoreCase)
+            || (path.StartsWith("/candidate/profile", StringComparison.OrdinalIgnoreCase)
+                && !path.StartsWith("/candidate/profile/bewerken", StringComparison.OrdinalIgnoreCase)
+                && !path.StartsWith("/candidate/profile/reset", StringComparison.OrdinalIgnoreCase)))
+        {
+            return
+            [
+                WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css"),
+                WwwrootAssetCatalog.Url("css/features/profiel-page.css"),
             ];
         }
 
