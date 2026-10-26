@@ -6266,12 +6266,24 @@ window.jobMap = (function () {
         }
 
         mapCreateCount += 1;
+        const lagenAttrib = !!(lagenLayout || catalogModeActive);
         map = window.jobsyMapLibre.createMap(el, {
             center: opening.center,
             zoom: opening.zoom,
             controlsPosition: "bottom-right",
-            compactAttribution: !!(lagenLayout || catalogModeActive)
+            attributionControl: lagenAttrib ? false : undefined,
+            compactAttribution: lagenAttrib
         });
+        if (lagenAttrib && typeof maplibregl !== "undefined") {
+            map.addControl(
+                new maplibregl.AttributionControl({
+                    compact: true,
+                    customAttribution:
+                        '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+                }),
+                "bottom-left"
+            );
+        }
         cameraLocked = opening.locked;
         firstSizedFit = true;
         applyBasemapZoomLimits();

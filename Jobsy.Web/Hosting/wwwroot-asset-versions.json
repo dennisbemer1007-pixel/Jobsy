@@ -16,8 +16,8 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "24426f6eb269be525fb08b97b6b4af39362f631f54ae4ad90359d063a743e715",
-    "v": "20261026-kreeft20"
+    "sha256": "766f1c6dbd3a36870e507502c5886c8e6e20167954b46b85e4046d2110978dff",
+    "v": "20261026-kreeft21"
   },
   "css/critical.css": {
     "sha256": "3fd011f562fc141dac6c59c33aa57a2766d8e4f727f8249dbc93cae254ffc2c8",
@@ -48,8 +48,8 @@
     "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261026-kreeft20",
-    "sha256": "1d9a8db0507dd08cf0209048f56f5308aad158ccd0e098a602e474d95796e3fb"
+    "v": "20261026-kreeft21",
+    "sha256": "1f97383ec51a25d0a3b86e9b2646c7148cfa59d6cf4070567293f951c6894709"
   },
   "css/features/banenkaart-page.css": {
     "v": "20261025-kreeft12",
@@ -164,8 +164,8 @@
     "v": "20261018-01"
   },
   "css/features/lobsy-assistant-panel.css": {
-    "v": "20261026-kreeft20",
-    "sha256": "dec1ecfc536f763654cc884a261c5325465bcda6c7292b91226ab9ce8e413a12"
+    "v": "20261026-kreeft21",
+    "sha256": "16ce4f80f14955d3afd78bdf005a973bcf277c3e661609e2fd26a3a06fc94e95"
   },
   "css/features/lobsy-coach-pill.css": {
     "v": "20261026-kreeft20",
@@ -388,8 +388,8 @@
     "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261026-kreeft20",
-    "sha256": "5683f6d0a4bec92db2c7d9927d6126f1648dc475909797b2483358670d25a4f0"
+    "v": "20261026-kreeft21",
+    "sha256": "9195ce0262395fd46ac1c46de279baa5ed921b17354a9517a2db124f84e742bc"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -436,8 +436,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261026-kreeft20",
-    "sha256": "d3ce02329af492407608e8ad264aef4aab79e4312e160edb2af6a81a84b2a8c8"
+    "v": "20261026-kreeft21",
+    "sha256": "8132ce7f88f5f1a15818727d08e975643116cce485c6875209f5f79e6857aa20"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
@@ -448,8 +448,8 @@
     "sha256": "0f4176373cb6884b260bcf0e4ed7d51c2aa3280a22a01e216127af7df17fee81"
   },
   "js/jobsyMapLibre.min.js": {
-    "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
-    "v": "20261023-lagen-compact1"
+    "sha256": "6cfd37e9640d8f992da6bf23f88395acf2a5317572ea502da175c0d063328f15",
+    "v": "20261026-kreeft21"
   },
   "js/landing.js": {
     "sha256": "cd942514333ce9c3dbb100475127d528220b67555a53ce2c6d1d28f44c1a043f",

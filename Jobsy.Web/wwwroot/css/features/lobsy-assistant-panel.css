@@ -134,6 +134,13 @@
   border-bottom: 1px solid var(--border, #ddd5cc);
 }
 
+#lobsy-assistant-ssr-shell .lobsy-assistant__panel .lobsy-assistant__chat,
+.lobsy-assistant .lobsy-assistant__panel .lobsy-assistant__chat {
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+}
+
 .lobsy-assistant__bubble {
   max-width: 94%;
   padding: 0.5rem 0.65rem;
