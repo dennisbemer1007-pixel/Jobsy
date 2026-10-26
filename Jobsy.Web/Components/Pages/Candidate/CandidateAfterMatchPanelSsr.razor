@@ -81,12 +81,6 @@ else if (_bodyHtml is not null)
                 return;
             }
 
-            if (panel is "pick-slot" or "propose-slot" or "propose")
-            {
-                RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
-                return;
-            }
-
             if (panel is "reschedule" or "cancel")
             {
                 RedirectToSsr(http, AfterMatchPanelRouting.RescheduleSsrSuffix);
@@ -94,6 +88,18 @@ else if (_bodyHtml is not null)
             }
 
             var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+
+            if (panel is "pick-slot" or "propose-slot" or "propose")
+            {
+                if (thread?.InterviewStatus == InterviewStatus.Scheduled)
+                {
+                    RedirectToSsr(http, AfterMatchPanelRouting.ConfirmedSsrSuffix);
+                    return;
+                }
+
+                RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
+                return;
+            }
 
             if (panel is "outcome" || AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread))
             {
