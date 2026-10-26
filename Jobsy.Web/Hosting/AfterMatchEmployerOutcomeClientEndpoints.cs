@@ -1,6 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -24,6 +25,7 @@ public static class AfterMatchEmployerOutcomeClientEndpoints
         Guid applicationId,
         RecordOutcomeBody body,
         JobsyApiClient api,
+        CultureState culture,
         CancellationToken cancellationToken)
     {
         if (applicationId == Guid.Empty
@@ -51,9 +53,23 @@ public static class AfterMatchEmployerOutcomeClientEndpoints
 
             return Results.Json(new { redirectUrl = redirect });
         }
+        catch (ApiErrorException ex) when (ex.UserMessage is not null)
+        {
+            return Results.Json(
+                new { errorKey = ex.Code, message = ex.UserMessage },
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            return Results.Json(
+                new { message = culture["AfterMatch.Employer.Outcome.BeforeInterviewTime"] },
+                statusCode: StatusCodes.Status400BadRequest);
+        }
         catch
         {
-            return Results.BadRequest();
+            return Results.Json(
+                new { message = culture["Common.Error.TryAgain"] },
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
