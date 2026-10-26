@@ -43,4 +43,14 @@ public sealed class AfterMatchMomentCopyTests : BunitContext
         var days = slots.Select(s => s.Date).Distinct().Count();
         Assert.Equal(3, days);
     }
+
+    [Fact]
+    public void Employer_demo_slots_are_never_in_the_past()
+    {
+        var notBefore = DateTime.UtcNow;
+        foreach (var slot in AfterMatchEmployerDemoSlots.InitialUtc(notBefore))
+        {
+            Assert.True(slot > notBefore);
+        }
+    }
 }
