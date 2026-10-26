@@ -66,8 +66,8 @@ internal static class AfterMatchOutcomeSsrData
         var interviewStart = thread.ScheduledStartUtc is DateTime sched
             ? AfterMatchMailSsrTime.ToAmsterdam(sched)
             : (DateTime?)null;
-        var planDate = interviewStart?.AddDays(-7).ToString("d MMM", Nl) ?? "15 okt";
-        var interviewDate = interviewStart?.ToString("d MMM", Nl) ?? "22 okt";
+        var planDate = interviewStart?.AddDays(-7).ToString("d MMM", Nl) ?? "—";
+        var interviewDate = AfterMatchTimelineLabels.InterviewStep(thread);
         var outcomeDate = AfterMatchMailSsrTime.ToAmsterdam(DateTime.UtcNow).ToString("d MMM", Nl);
 
         return new PageData(
@@ -150,9 +150,9 @@ internal static class AfterMatchOutcomeSsrData
             learnHref,
             assistantHref,
             culture["AfterMatch.Screen13.FallbackReason"],
-            "13 okt",
-            "15 okt",
-            "22 okt",
+            "—",
+            "—",
+            "—",
             AfterMatchMailSsrTime.ToAmsterdam(DateTime.UtcNow).ToString("d MMM", Nl),
             ResolveSimilarJobs(culture, placeholder));
     }
