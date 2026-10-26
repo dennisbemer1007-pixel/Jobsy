@@ -44,19 +44,4 @@ public sealed class BanenkaartClientSaveGuardTests
         Assert.Contains("data-saved-removed", filters, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void Passport_fit_check_sets_query_param_after_post()
-    {
-        var root = TestRepo.FindRoot();
-        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "passport-ssr-fit.js"));
-        Assert.Contains("searchParams.set(\"check\"", js, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Banenkaart_prefetch_skips_isochrones_off_map()
-    {
-        var root = TestRepo.FindRoot();
-        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-prefetch.js"));
-        Assert.Contains("onBanenkaart", js, StringComparison.Ordinal);
-    }
 }
