@@ -57,6 +57,21 @@ internal static class OnboardingSsrStepFormInteract
         return null;
     }
 
+    /// <summary>Apply step-2 start radios when the user clicks Volgende (no separate saveStart POST).</summary>
+    public static void MergeNavigationFields(
+        int step,
+        IFormCollection form,
+        OnboardingProfileDraft draft,
+        CultureState culture)
+    {
+        if (step != 2 || IsSaveStart(form))
+        {
+            return;
+        }
+
+        _ = TryApplyStartBlock(form, draft, culture, out _);
+    }
+
     public static bool HasInteract(int step, IFormCollection form)
     {
         if (step == 2)

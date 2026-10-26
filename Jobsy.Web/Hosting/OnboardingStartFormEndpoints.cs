@@ -233,6 +233,22 @@ public static class OnboardingStartFormEndpoints
             }
 
             var draftFromStore = OnboardingProfileDraftHydrator.FromProfile(profileFromStore);
+            if (OnboardingSsrStepFormInteract.TryApply(
+                    currentStep,
+                    http.Request.Form,
+                    draftFromStore,
+                    culture,
+                    out var inlineError)
+                && inlineError is not null)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), inlineError));
+            }
+
+            OnboardingSsrStepFormInteract.MergeNavigationFields(
+                currentStep,
+                http.Request.Form,
+                draftFromStore,
+                culture);
             body = OnboardingSsrStepFormInteract.BuildPersistBody(currentStep, draftFromStore);
         }
         else if (string.IsNullOrWhiteSpace(obPayload))
@@ -249,6 +265,28 @@ public static class OnboardingStartFormEndpoints
             catch (JsonException)
             {
                 return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
+            }
+
+            if (currentStep is >= 2 and <= 4)
+            {
+                MeProfile profileFromPayload;
+                try
+                {
+                    profileFromPayload = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+                }
+                catch (Exception)
+                {
+                    return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Common.Error.TryAgain"]));
+                }
+
+                var draftFromPayload = OnboardingProfileDraftHydrator.FromProfile(profileFromPayload);
+                OnboardingClientStepBridge.Apply(currentStep, draftFromPayload, obPayload);
+                OnboardingSsrStepFormInteract.MergeNavigationFields(
+                    currentStep,
+                    http.Request.Form,
+                    draftFromPayload,
+                    culture);
+                body = OnboardingSsrStepFormInteract.BuildPersistBody(currentStep, draftFromPayload);
             }
         }
 

@@ -513,7 +513,9 @@ internal static class UiStringsOnboardingV2
     private static void AddWorkStatuses(Dictionary<string, string> map, bool english)
     {
         map["WorkStatus.Legend"] = english ? "What is your current work status?" : "Wat is je huidige werkstatus?";
-        map["WorkStatus.Hint"] = english ? "Optional. You can choose more than one." : "Optioneel. Je mag er meer dan één kiezen.";
+        map["WorkStatus.Hint"] = english
+            ? "Required to apply. You can choose more than one."
+            : "Nodig om te solliciteren. Je mag er meer dan één kiezen.";
         foreach (var (code, nl, en) in WorkStatusLabelRows())
         {
             map[$"WorkStatus.{code}"] = english ? en : nl;

@@ -114,7 +114,7 @@ internal static class OnboardingClientStepShells
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Preset.Custom.GridHint"]));
         sb.Append("</p>");
         sb.Append("<div id=\"ob-matrix\" class=\"availability-matrix availability-matrix--touch ob-rustig__step2-matrix\" data-ob-client=\"matrix\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
-        AppendAvailabilityMatrix(sb, culture, availability);
+        AvailabilityMatrixSsrHtml.Append(sb, culture, availability, "obMatrix");
         sb.Append("</div>");
         sb.Append("<fieldset id=\"ob-start\" class=\"ob-rustig__step2-start\" style=\"width:100%;max-width:none;border:0;padding:0;margin:0 0 24px 0;box-sizing:border-box\"><legend class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AvailabilityStartSummary"]));
@@ -669,58 +669,6 @@ internal static class OnboardingClientStepShells
             }
 
             sb.Append("</button>");
-        }
-    }
-
-    private static void AppendAvailabilityMatrix(StringBuilder sb, CultureState culture, HashSet<string> selected)
-    {
-        var days = AvailabilityDayPartMatrixExport.Days;
-        var slots = AvailabilityDayPartMatrixExport.Slots;
-        sb.Append("<div class=\"availability-matrix__corner\"></div>");
-        foreach (var slot in slots)
-        {
-            sb.Append("<div class=\"availability-matrix__slot\">");
-            sb.Append(WebUtility.HtmlEncode(UiLabels.AvailabilitySlot(culture, slot)));
-            sb.Append("</div>");
-        }
-
-        foreach (var day in days)
-        {
-            sb.Append("<div class=\"availability-matrix__day\">");
-            sb.Append(WebUtility.HtmlEncode(UiLabels.Weekday(culture, day)));
-            sb.Append("</div>");
-            foreach (var slot in slots)
-            {
-                var key = day + ":" + slot;
-                var on = selected.Contains(key);
-                sb.Append("<button type=\"submit\" name=\"obMatrix\" class=\"availability-matrix__cell availability-matrix__cell--btn");
-                if (on)
-                {
-                    sb.Append(" is-on");
-                }
-
-                sb.Append("\" style=\"");
-                sb.Append(on
-                    ? "background:color-mix(in srgb, var(--brand) 20%, var(--surface));border:2px solid var(--brand);min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:var(--brand)"
-                    : "background:var(--surface);border:1px solid var(--border);min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:transparent");
-                sb.Append("\" value=\"");
-                sb.Append(WebUtility.HtmlEncode(key));
-                sb.Append("\" data-ob-key=\"");
-                sb.Append(WebUtility.HtmlEncode(key));
-                sb.Append("\" aria-pressed=\"");
-                sb.Append(on ? "true" : "false");
-                sb.Append("\" aria-label=\"");
-                sb.Append(WebUtility.HtmlEncode(UiLabels.Weekday(culture, day)));
-                sb.Append(' ');
-                sb.Append(WebUtility.HtmlEncode(UiLabels.AvailabilitySlot(culture, slot)));
-                sb.Append("\">");
-                if (on)
-                {
-                    sb.Append("<span class=\"availability-matrix__mark\" style=\"font-weight:700;font-size:1.125rem;line-height:1\" aria-hidden=\"true\">✓</span>");
-                }
-
-                sb.Append("</button>");
-            }
         }
     }
 
