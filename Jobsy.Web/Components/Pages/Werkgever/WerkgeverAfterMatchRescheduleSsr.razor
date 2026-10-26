@@ -98,7 +98,7 @@ else if (_bodyHtml is not null)
                 thread,
                 $"/werkgever/sollicitaties/{ApplicationId:D}",
                 null,
-                AfterMatchEmployerDemoSlots.InitialUtc(thread.ScheduledStartUtc),
+                AfterMatchEmployerDemoSlots.InitialUtc(DateTime.UtcNow, thread.ScheduledStartUtc),
                 InterviewFormat.OnSite,
                 "Loosduinseweg 120, Den Haag · ingang naast de winkel",
                 "Linda de Wit, eigenaar",

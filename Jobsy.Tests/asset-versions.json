@@ -555,6 +555,10 @@
     "v": "20261025-kreeft15",
     "sha256": "4869f4b1c931ad529168f3bf0bb783a66e55aa0d665e8938a29ca3447cf53d0d"
   },
+  "js/sollicitaties-activiteiten.js": {
+    "v": "20261026-activiteiten1",
+    "sha256": "d419a76a2f4f83edb59f9055a0ac2789e3f71fffb6837f466272c0ea66b47d57"
+  },
   "js/sollicitaties-filter-chips.js": {
     "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
     "v": "20261024-mockup01-acc5"

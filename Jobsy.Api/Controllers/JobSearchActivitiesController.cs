@@ -7,6 +7,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Data.Common;
 
 namespace Jobsy.Api.Controllers;
 
@@ -42,12 +43,19 @@ public sealed class JobSearchActivitiesController : ControllerBase
 
         var snap = await _features.GetAsync(cancellationToken);
         var culture = Request.Headers.AcceptLanguage.FirstOrDefault()?.Split(',').FirstOrDefault() ?? "nl";
-        var overview = await _activities.GetOverviewAsync(
-            user.Id,
-            snap.AfterMatchEnabled,
-            culture,
-            cancellationToken);
-        return Ok(overview);
+        try
+        {
+            var overview = await _activities.GetOverviewAsync(
+                user.Id,
+                snap.AfterMatchEnabled,
+                culture,
+                cancellationToken);
+            return Ok(overview);
+        }
+        catch (Exception ex) when (ex is DbException or InvalidOperationException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "activity_log_unavailable" });
+        }
     }
 
     [HttpPost]
@@ -151,12 +159,19 @@ public sealed class JobSearchActivitiesController : ControllerBase
 
         var snap = await _features.GetAsync(cancellationToken);
         var culture = Request.Headers.AcceptLanguage.FirstOrDefault()?.Split(',').FirstOrDefault() ?? "nl";
-        var bytes = await _activities.BuildPeriodPdfAsync(
-            user.Id,
-            snap.AfterMatchEnabled,
-            culture,
-            cancellationToken);
-        return File(bytes, "application/pdf", "lobsy-sollicitatieactiviteiten.pdf");
+        try
+        {
+            var bytes = await _activities.BuildPeriodPdfAsync(
+                user.Id,
+                snap.AfterMatchEnabled,
+                culture,
+                cancellationToken);
+            return File(bytes, "application/pdf", "lobsy-sollicitatieactiviteiten.pdf");
+        }
+        catch (Exception ex) when (ex is DbException or InvalidOperationException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "activity_log_unavailable" });
+        }
     }
 
     private async Task<Jobsy.Core.Entities.User?> ResolveCandidateAsync(CancellationToken cancellationToken)
