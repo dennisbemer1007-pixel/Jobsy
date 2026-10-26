@@ -68,7 +68,7 @@ public static class JobsyDbSeeder
             try
             {
                 var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-                await AcceptatiePlatformFeatureEnsurer.EnsureActivityLogEnabledAsync(db, configuration, logger);
+                await AcceptatiePlatformFeatureEnsurer.EnsureAcceptatieFeatureFlagsAsync(db, configuration, logger);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

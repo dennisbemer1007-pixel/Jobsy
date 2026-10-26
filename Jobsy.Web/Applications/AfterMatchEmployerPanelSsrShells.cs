@@ -449,6 +449,11 @@ internal static class AfterMatchEmployerPanelSsrShells
         var interviewDate = thread.ScheduledStartUtc is DateTime scheduledStart
             ? AfterMatchMailSsrTime.ToAmsterdam(scheduledStart).ToString("d MMM", nl)
             : null;
+        var planDate = AfterMatchTimelineLabels.PlanStep(thread);
+        if (planDate == "—" && !string.IsNullOrWhiteSpace(yesDate))
+        {
+            planDate = yesDate;
+        }
         var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
         var isProposing = thread.InterviewStatus == InterviewStatus.Proposing;
         var outcomeDone = thread.Outcome is not null;
@@ -492,7 +497,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("<small>");
         sb.Append(WebUtility.HtmlEncode(
             isScheduled
-                ? (interviewDate ?? yesDate ?? "")
+                ? planDate
                 : slotsSent
                     ? culture["AfterMatch.Timeline.PlanWaiting"]
                     : isProposing
