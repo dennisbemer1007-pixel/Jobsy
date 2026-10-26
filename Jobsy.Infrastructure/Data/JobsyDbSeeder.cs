@@ -64,6 +64,7 @@ public static class JobsyDbSeeder
         {
             await db.Database.MigrateAsync();
             await db.Database.ExecuteSqlRawAsync(Migrations.PupilPassportV2SchemaIdempotentSql.EnsureColumns);
+            await db.Database.ExecuteSqlRawAsync(Migrations.JobSearchActivitySchemaIdempotentSql.EnsureSchema);
         }
         else
         {
