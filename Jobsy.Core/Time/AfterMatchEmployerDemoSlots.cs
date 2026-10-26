@@ -1,13 +1,12 @@
-using Jobsy.Core.Time;
+namespace Jobsy.Core.Time;
 
-namespace Jobsy.Web.Applications;
-
-internal static class AfterMatchEmployerDemoSlots
+/// <summary>Deterministic future interview slots for after-match employer demo (Amsterdam workdays).</summary>
+public static class AfterMatchEmployerDemoSlots
 {
     private static readonly (int Hour, int Minute)[] SlotTimes = [(10, 30), (9, 0), (14, 0)];
 
-    /// <summary>Demo slots for werkgever screen 03 (next Amsterdam workdays).</summary>
-    internal static DateTime[] InitialUtc(DateTime? notBeforeUtc = null, DateTime? excludeUtc = null)
+    /// <summary>Three demo slots on upcoming Amsterdam workdays (optionally after <paramref name="notBeforeUtc"/>).</summary>
+    public static DateTime[] InitialUtc(DateTime? notBeforeUtc = null, DateTime? excludeUtc = null)
     {
         var anchor = notBeforeUtc is { } nb
             ? AmsterdamTime.ToLocal(nb)
