@@ -140,6 +140,17 @@ public class EmployerRun5FollowUpTests
     private static PlatformFeatureSnapshot Clone(PlatformFeatureSnapshot source)
         => JsonSerializer.Deserialize<PlatformFeatureSnapshot>(JsonSerializer.Serialize(source))!;
 
+    [Fact]
+    public void Vacancy_apply_gate_waits_for_profile_load_before_blocked_panel()
+    {
+        var detail = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
+        var blockedAt = detail.IndexOf("data-testid=\"apply-profile-blocked\"", StringComparison.Ordinal);
+        Assert.True(blockedAt > 0);
+        var prefix = detail[..blockedAt];
+        Assert.Contains("_candidateApplyGateLoaded", prefix, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"apply-profile-gate-loading\"", detail, StringComparison.Ordinal);
+    }
+
     private static string FindRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

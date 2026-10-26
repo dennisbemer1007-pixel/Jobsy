@@ -462,6 +462,12 @@
                                 <CandidatePwaInstallPostApplyCard />
                             </div>
                         }
+                        else if (!_candidateApplyGateLoaded)
+                        {
+                            <div class="apply-panel apply-panel--loading" data-testid="apply-profile-gate-loading" aria-busy="true">
+                                <p class="apply-panel__text state-message">@Culture["Common.Loading"]</p>
+                            </div>
+                        }
                         else if (!_profileReadyForApply)
                         {
                             <div class="apply-panel apply-panel--warn" data-testid="apply-profile-blocked">
