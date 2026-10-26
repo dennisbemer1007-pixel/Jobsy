@@ -1,5 +1,6 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Web.KandidaatBanen;
 
 namespace Jobsy.Web.Applications;
 
@@ -88,7 +89,7 @@ internal static class AfterMatchSollicitatiesUrls
     }
 
     internal static string Vacancy(Guid vacancyId)
-        => $"/vacancies/{vacancyId:D}";
+        => CandidateVacancyUrls.BanenkaartDetail(vacancyId);
 
     internal static string LobsyCvPdf(Guid applicationId)
         => $"/api/applications/{applicationId:D}/lobsy-cv.pdf";

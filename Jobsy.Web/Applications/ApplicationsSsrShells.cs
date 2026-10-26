@@ -806,7 +806,7 @@ internal static class ApplicationsSsrShells
 
         if (row.VacancyId is Guid vacId)
         {
-            return $"/vacancies/{vacId:D}";
+            return CandidateVacancyUrls.BanenkaartDetail(vacId);
         }
 
         return null;
