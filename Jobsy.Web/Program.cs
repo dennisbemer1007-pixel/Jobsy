@@ -665,6 +665,7 @@ app.MapOnboardingClientEndpoints();
 app.MapPassportClientEndpoints();
 app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
+app.MapKbExtClientEndpoints();
 app.MapSollicitatiesClientEndpoints();
 app.MapAfterMatchMessagesClientEndpoints();
 app.MapAfterMatchPickSlotClientEndpoints();
