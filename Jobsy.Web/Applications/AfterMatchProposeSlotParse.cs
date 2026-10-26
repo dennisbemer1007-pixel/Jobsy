@@ -63,7 +63,7 @@ internal static class AfterMatchProposeSlotParse
                 return false;
             }
 
-            start = single.ToDateTime(DateOnly.MinValue);
+            start = DateOnly.MinValue.ToDateTime(single);
             end = start.AddMinutes(30);
             return true;
         }
@@ -72,8 +72,8 @@ internal static class AfterMatchProposeSlotParse
             && TimeOnly.TryParse(parts[0], CultureInfo.InvariantCulture, DateTimeStyles.None, out var from)
             && TimeOnly.TryParse(parts[1], CultureInfo.InvariantCulture, DateTimeStyles.None, out var to))
         {
-            start = from.ToDateTime(DateOnly.MinValue);
-            end = to.ToDateTime(DateOnly.MinValue);
+            start = DateOnly.MinValue.ToDateTime(from);
+            end = DateOnly.MinValue.ToDateTime(to);
             return true;
         }
 
