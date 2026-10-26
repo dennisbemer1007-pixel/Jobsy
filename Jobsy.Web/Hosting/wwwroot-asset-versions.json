@@ -539,6 +539,10 @@
     "v": "20261026-passport-extras1",
     "sha256": "629316f185f12649e005c0a78ee7b6496a7d1a87bca5f0317388c59d840fb4d0"
   },
+  "js/saved-ssr-filters.js": {
+    "v": "20261026-bewaard-filters1",
+    "sha256": "3f17741a88558ad2c19ee93210b24f76459012e9afea5831ed35361564a10fd3"
+  },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",
     "sha256": "a9a963747051d11f9cd4c4d559d1736937d5f283e831677201cd85855d9cb7ce"

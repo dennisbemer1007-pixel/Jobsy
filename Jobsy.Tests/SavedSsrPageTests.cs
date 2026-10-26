@@ -16,5 +16,7 @@ public sealed class SavedSsrPageTests
         Assert.Contains("/api/saved-client/unsave", shells, StringComparison.Ordinal);
         Assert.Contains("data-enhance-nav=", shells, StringComparison.Ordinal);
         Assert.Contains("/carriere", shells, StringComparison.Ordinal);
+        Assert.Contains("saved-ssr-filters.js", shells, StringComparison.Ordinal);
+        Assert.Contains("data-saved-filter", shells, StringComparison.Ordinal);
     }
 }

@@ -97,7 +97,8 @@ public class KbSavedListBunitTests : BunitContext
                 fit: 74, band: "Good", state: nameof(KbSavedJobStateKind.Open))
         ]);
 
-        Assert.Contains("kb-saved__sort-link", html, StringComparison.Ordinal);
+        Assert.Contains("data-saved-sort", html, StringComparison.Ordinal);
+        Assert.Contains("data-saved-filter", html, StringComparison.Ordinal);
         Assert.Contains("kb-saved-card__media-link", html, StringComparison.Ordinal);
     }
 
