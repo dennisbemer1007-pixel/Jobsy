@@ -13,6 +13,8 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Infrastructure.Ops;
 
@@ -760,17 +762,33 @@ public sealed class TestAccountsSeedService
     }
 
     /// <summary>
-    /// Rewrites the seeded complete candidate's assessments when answers or scores
-    /// diverge from the canonical seed (placeholder 70/65/60/55/50, gaps, career "done" without scores).
-    /// Does not touch preferences or the new candidate. Caller saves.
+    /// Acceptatie seed-reset: remove user-added external sollicitaties (+ activity rows) for every allowlisted demo login.
+    /// Independent of Sollicitaties SSR / demo-ensure.
     /// </summary>
-    public async Task<bool> RepairCompleteCandidateAssessmentsAsync(CancellationToken cancellationToken = default)
+    public Task ApplyAcceptatieSeedResetExternalPurgeAsync(
+        ILogger? logger = null,
+        CancellationToken cancellationToken = default)
+        => TestAccountsSollicitatiesDemoSeeder.PurgeAcceptatieDemoExternalVacanciesAsync(
+            _db,
+            _configuration,
+            logger ?? NullLogger.Instance,
+            cancellationToken);
+
+    /// <summary>
+    /// Acceptatie seed-reset: external purge for all allowlisted candidates, then rewrite catalog candidate assessments when drifted.
+    /// Does not touch preferences or the new candidate. Caller saves assessment changes.
+    /// </summary>
+    public async Task<bool> RepairCompleteCandidateAssessmentsAsync(
+        ILogger? logger = null,
+        CancellationToken cancellationToken = default)
     {
+        await ApplyAcceptatieSeedResetExternalPurgeAsync(logger, cancellationToken);
+
         var domain = _configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
         var entry = TestAccountCatalog.FindByKey("Candidate");
         if (entry is null)
         {
-            return false;
+            return true;
         }
 
         var email = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain);
@@ -779,7 +797,7 @@ public sealed class TestAccountsSeedService
             cancellationToken);
         if (user is null)
         {
-            return false;
+            return true;
         }
 
         var now = DateTime.UtcNow;
@@ -794,12 +812,6 @@ public sealed class TestAccountsSeedService
         {
             MarkJourneyStepsDone(onboarding);
         }
-
-        await TestAccountsSollicitatiesDemoSeeder.PurgeAcceptatieDemoExternalVacanciesAsync(
-            _db,
-            _configuration,
-            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
-            cancellationToken);
 
         return true;
     }
