@@ -64,11 +64,11 @@
     var sideEls = sides(page);
     stageEls.forEach(function (stage) {
       var idx = parseInt(stage.getAttribute("data-match-stage"), 10);
-      var show = idx === index || idx === index + 1;
+      var show = idx === index;
       stage.hidden = !show;
       var card = stage.querySelector("[data-match-card]");
       if (card) {
-        card.classList.toggle("swipe-card--backdrop", idx === index + 1);
+        card.classList.toggle("swipe-card--backdrop", false);
         card.classList.toggle("swipe-card--enter", idx === index);
         if (idx === index) {
           card.style.transform = "";

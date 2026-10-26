@@ -66,7 +66,11 @@ internal static class MatchSsrShells
 
     private static void AppendHeader(StringBuilder sb, CultureState culture, MatchDeck deck)
     {
-        sb.Append("<header class=\"match-page__top\"><div class=\"match-page__brand\"><div><h1 class=\"match-page__title\">");
+        sb.Append("<header class=\"match-page__top\"><div class=\"match-page__brand\"><a class=\"match-page__logo-link\" href=\"/\" aria-label=\"Lobsy\" data-enhance-nav=\"false\"><img class=\"match-page__mascot\" src=\"");
+        sb.Append(WebUtility.HtmlEncode("/" + BrandImages.Png128));
+        sb.Append("\" srcset=\"");
+        sb.Append(WebUtility.HtmlEncode(BrandImages.SrcSet56));
+        sb.Append("\" sizes=\"56px\" width=\"40\" height=\"40\" alt=\"\" decoding=\"async\" /></a><div><h1 class=\"match-page__title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Match.DialogTitle"]));
         sb.Append("</h1>");
         if (deck.Gate.IsProfileComplete && deck.Gate.FitGateOpen && deck.Count > 0 && !deck.IsFinished)
@@ -151,8 +155,8 @@ internal static class MatchSsrShells
 
         var startIndex = deck.Index;
         sb.Append("<div class=\"match-page__grid\" data-match-deck>");
-        MatchSsrSwipeHtml.AppendStack(sb, culture, deck.Items, startIndex);
-        MatchSsrSideHtml.AppendPanels(sb, culture, deck.Items, startIndex, occupationDayInLifeEnabled);
+        MatchSsrSwipeHtml.AppendStack(sb, culture, deck.Items, startIndex, deck.Gate);
+        MatchSsrSideHtml.AppendPanels(sb, culture, deck.Items, startIndex, occupationDayInLifeEnabled, deck.Gate);
         sb.Append("</div>");
         sb.Append("<p class=\"match-page__toast\" data-match-toast role=\"status\" hidden></p>");
     }
@@ -171,8 +175,6 @@ internal static class MatchSsrShells
             vacancyIds = ids,
             savePath = BanenkaartSsrQuery.SavePath
         };
-        sb.Append("<script type=\"application/json\" id=\"match-ssr-boot\">");
-        sb.Append(WebUtility.HtmlEncode(JsonSerializer.Serialize(payload)));
-        sb.Append("</script>");
+        JsonScriptEmbed.Append(sb, "match-ssr-boot", JsonSerializer.Serialize(payload));
     }
 }

@@ -26,6 +26,11 @@ internal static class MatchOccupationDayResolve
             title = string.IsNullOrWhiteSpace(jobTitle) ? "dit beroep" : jobTitle.Trim();
         }
 
+        if (!Guid.TryParse(resolvedId, out _))
+        {
+            return null;
+        }
+
         var href = $"/candidate/beroep/{resolvedId}/dag?from=fit";
         var linkText = culture.Format("Day.Link", title);
         return new DayLink(href, linkText);

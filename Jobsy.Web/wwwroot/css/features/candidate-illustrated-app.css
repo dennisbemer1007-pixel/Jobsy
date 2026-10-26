@@ -910,6 +910,24 @@
     min-width: 0;
   }
 
+  .match-page--illustrated .match-page__side[hidden] {
+    display: none !important;
+  }
+
+  .match-page--illustrated .match-page__grid-main {
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+
+  .match-page--illustrated .swipe-actions--mobile {
+    position: sticky;
+    bottom: calc(var(--bottom-nav-clearance, 0px) + 0.35rem);
+    z-index: 2;
+    margin-top: 0.75rem;
+    padding-bottom: 0.25rem;
+    background: linear-gradient(to top, var(--bg, #f5f2ee) 70%, transparent);
+  }
+
   .match-page--illustrated .swipe-card__copy {
     display: none;
   }

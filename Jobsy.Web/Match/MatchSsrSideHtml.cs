@@ -13,12 +13,13 @@ internal static class MatchSsrSideHtml
         CultureState culture,
         IReadOnlyList<SwipeViewModel> items,
         int startIndex,
-        bool occupationDayInLifeEnabled)
+        bool occupationDayInLifeEnabled,
+        MatchProfileGateViewModel gate)
     {
         sb.Append("<div class=\"match-page__side-panels\" data-match-side-panels>");
         for (var i = 0; i < items.Count; i++)
         {
-            AppendSide(sb, culture, items[i], i, i == startIndex, occupationDayInLifeEnabled);
+            AppendSide(sb, culture, items[i], i, i == startIndex, occupationDayInLifeEnabled, gate);
         }
 
         sb.Append("</div>");
@@ -30,7 +31,8 @@ internal static class MatchSsrSideHtml
         SwipeViewModel model,
         int index,
         bool visible,
-        bool occupationDayInLifeEnabled)
+        bool occupationDayInLifeEnabled,
+        MatchProfileGateViewModel gate)
     {
         sb.Append("<aside class=\"match-page__side\" data-match-side data-match-side-index=\"");
         sb.Append(index);
@@ -43,15 +45,15 @@ internal static class MatchSsrSideHtml
         }
 
         sb.Append('>');
-        AppendWhyCard(sb, culture, model);
+        AppendWhyCard(sb, culture, model, gate);
         AppendInfoCard(sb, culture, model, occupationDayInLifeEnabled);
         AppendSavedCard(sb, culture);
         sb.Append("</aside>");
     }
 
-    private static void AppendWhyCard(StringBuilder sb, CultureState culture, SwipeViewModel model)
+    private static void AppendWhyCard(StringBuilder sb, CultureState culture, SwipeViewModel model, MatchProfileGateViewModel gate)
     {
-        var dnaRows = MatchDnaRows.Build(model.FitDimensions, model.FitWhyKinds, includeMissing: true, maxWithData: 4);
+        var dnaRows = MatchDnaRows.Build(model.FitDimensions, model.FitWhyKinds, includeMissing: true, maxWithData: 4, gate);
         sb.Append("<section class=\"match-side-card\" data-testid=\"match-side-why\"><h2>");
         sb.Append(WebUtility.HtmlEncode(culture["Match.WhyYouFit"]));
         sb.Append("</h2>");
@@ -80,7 +82,7 @@ internal static class MatchSsrSideHtml
                     sb.Append("<a class=\"kb-dna__todo\" href=\"");
                     sb.Append(WebUtility.HtmlEncode(row.TestHref));
                     sb.Append("\" data-enhance-nav=\"false\">");
-                    sb.Append(WebUtility.HtmlEncode(culture["Kb.Dna.NotDone"]));
+                    sb.Append(WebUtility.HtmlEncode(culture["Test.Status.NotDone"]));
                     sb.Append("</a>");
                 }
 
@@ -111,26 +113,38 @@ internal static class MatchSsrSideHtml
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.TravelTitle"]));
         sb.Append("</dt><dd>");
         MatchSsrTravelHtml.Append(sb, culture, model.TravelTimeMinutes, model.TransportMode, model.TravelToBureau);
-        sb.Append("</dd></div>");
+        sb.Append("</dd></div><div><dt>");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.HoursFact"]));
+        sb.Append("</dt><dd>");
         if (!string.IsNullOrWhiteSpace(model.HoursPrimary))
         {
-            sb.Append("<div><dt>");
-            sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.HoursFact"]));
-            sb.Append("</dt><dd>");
             sb.Append(WebUtility.HtmlEncode(model.HoursPrimary));
             sb.Append(' ');
             sb.Append(WebUtility.HtmlEncode(culture["Kb.Match.HoursUnit"]));
-            sb.Append("</dd></div>");
+        }
+        else
+        {
+            sb.Append('\u2014');
         }
 
+        sb.Append("</dd></div><div><dt>");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.WageFact"]));
+        sb.Append("</dt><dd>");
         if (!string.IsNullOrWhiteSpace(model.SalaryPrimary))
         {
-            sb.Append("<div><dt>");
-            sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.WageFact"]));
-            sb.Append("</dt><dd>");
             sb.Append(WebUtility.HtmlEncode(model.SalaryPrimary));
-            sb.Append("</dd></div>");
+            if (!string.IsNullOrWhiteSpace(model.SalarySecondary))
+            {
+                sb.Append(' ');
+                sb.Append(WebUtility.HtmlEncode(model.SalarySecondary));
+            }
         }
+        else
+        {
+            sb.Append('\u2014');
+        }
+
+        sb.Append("</dd></div>");
 
         sb.Append("<div><dt>");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.StartFact"]));
