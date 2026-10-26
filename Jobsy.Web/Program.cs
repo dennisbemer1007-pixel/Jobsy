@@ -653,6 +653,7 @@ app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
 app.MapCandidateProfileResetEndpoints();
 app.MapCandidatePassportPdfEndpoints();
+app.MapMeCandidateProxyEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();

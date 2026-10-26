@@ -255,7 +255,7 @@ internal static class PassportSsrPanelsHtml
         sb.Append("</div>");
     }
 
-    private static void AppendPoleSliders(
+    internal static void AppendPoleSliders(
         StringBuilder sb,
         IReadOnlyList<(string LowLabel, string HighLabel, int? Percent)> poles)
     {

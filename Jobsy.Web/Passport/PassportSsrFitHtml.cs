@@ -4,6 +4,7 @@ using Jobsy.Core.Careers;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
+using Jobsy.Web.Components.Candidate.Dna;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
@@ -330,6 +331,7 @@ internal static class PassportSsrFitHtml
             sb.Append("</h3><p class=\"passport-fit__sub muted\">");
             sb.Append(WebUtility.HtmlEncode(culture["Passport.Fit.CultureSub"]));
             sb.Append("</p>");
+            AppendCulturePoleSliders(sb, culture, kompas);
             if (result.CultureFitPercent is int culturePct)
             {
                 sb.Append("<span class=\"status-pill status-pill--");
@@ -360,7 +362,7 @@ internal static class PassportSsrFitHtml
             var openForWork = profile.OpenForWork;
             sb.Append("<section class=\"detail-card passport-fit__vacancies\" aria-labelledby=\"passport-fit-vacancies-title\"><header class=\"passport-fit__head\"><h3 id=\"passport-fit-vacancies-title\" class=\"passport-fit__h\">");
             sb.Append(WebUtility.HtmlEncode(culture["Passport.Fit.VacanciesTitle"]));
-            sb.Append("</h3><a class=\"btn btn-ghost\" href=\"/\" data-enhance-nav=\"false\">");
+            sb.Append("</h3><a class=\"btn btn-ghost\" href=\"/banenkaart\" data-enhance-nav=\"false\">");
             sb.Append(WebUtility.HtmlEncode(culture["Passport.Fit.Top10"]));
             sb.Append("</a></header><p class=\"passport-fit__sub\"><span class=\"passport-fit__sub-icon\" aria-hidden=\"true\">");
             sb.Append(NavIcons.Stone);
@@ -421,6 +423,25 @@ internal static class PassportSsrFitHtml
         }
 
         sb.Append("</aside>");
+    }
+
+    private static void AppendCulturePoleSliders(StringBuilder sb, CultureState culture, CandidateKompasState? kompas)
+    {
+        if (kompas is null)
+        {
+            return;
+        }
+
+        CandidateDnaViewBuilder.TextLookup t = k => culture[k];
+        CandidateDnaViewBuilder.TextFormat format = (k, args) => culture.Format(k, args);
+        var view = CandidateDnaViewBuilder.FromKompas(kompas, t, format, culture.Language);
+        var detail = view.CultureDetail;
+        if (detail is null || detail.IsGhost || detail.Poles.Count == 0)
+        {
+            return;
+        }
+
+        PassportSsrPanelsHtml.AppendPoleSliders(sb, detail.Poles.Take(6).ToList());
     }
 
     internal static void AppendCourseSection(

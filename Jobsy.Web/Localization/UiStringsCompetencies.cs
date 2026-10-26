@@ -395,7 +395,7 @@ internal static class UiStringsCompetencies
         ["Fit.Placeholder"] = "Bijv. verpleegkundige, juf, magazijnmedewerker…",
         ["Fit.Check"] = "Past dit bij mij?",
         ["Fit.CheckMyFit"] = "Check mijn fit",
-        ["Fit.NeedsRecheck"] = "Je profiel is gewijzigd — opnieuw checken?",
+        ["Fit.NeedsRecheck"] = "Je profiel is gewijzigd - opnieuw checken?",
         ["Insights.Updating"] = "Wordt bijgewerkt…",
         ["Fit.Match"] = "Match",
         ["Fit.Strengths"] = "Waar je op matcht",

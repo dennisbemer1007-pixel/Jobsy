@@ -395,6 +395,10 @@
             {
                 <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>
             }
+            @if (IncludePaspoortReadAloudScript)
+            {
+                <script src="@($"/{WwwrootAssetCatalog.Url("js/read-aloud.js")}")" nonce="@Nonce" defer></script>
+            }
             @if (IncludeBanenkaartClientScript)
             {
                 <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-maps-boot.js")}")" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
@@ -549,6 +553,11 @@
         SkipBlazorForPage
         && HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true
         && RoleClaimMatching.HasRole(HttpContextAccessor.HttpContext!.User, JobsyRoles.Candidate);
+
+    private bool IncludePaspoortReadAloudScript =>
+        !LoadBlazorRuntime
+        && IncludeCandidateNoBlazorChromeCss
+        && RequestPath.StartsWith("/candidate/paspoort", StringComparison.OrdinalIgnoreCase);
 
     private bool IncludeWerkgeverNoBlazorAfterMatchCss =>
         SkipBlazorForPage

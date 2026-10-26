@@ -25,7 +25,9 @@ internal static class PassportSsrCareerHtml
         try
         {
             var saved = await api.GetCareerPathAsync(cancellationToken);
-            if (saved is not null && saved.Steps.Count > 0)
+            if (saved is not null
+                && saved.Steps.Count > 0
+                && CareerPlanFreshness.StepsMatchDream(saved))
             {
                 var paths = new CareerPathService();
                 var model = paths.FromApi(saved);

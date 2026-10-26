@@ -1,4 +1,6 @@
-.passport-page {
+[hidden] {
+    display: none !important;
+}.passport-page {
     padding-block-end: var(--space-6);
 }.passport-layout {
     display: flex;
@@ -1250,6 +1252,9 @@
     inset: 0;
     z-index: 80;
     background:rgba(15, 23, 42, 0.45);
+}.passport-proof__sheet[hidden],
+.passport-proof__backdrop[hidden] {
+    display: none !important;
 }.passport-proof__sheet {
     position: fixed;
     z-index: 90;
@@ -1263,12 +1268,12 @@
     height: min(100dvh, 100vh);
     border-radius:0;
     padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
-}.app-shell:has(.passport-proof__sheet) .app-main {
+}.app-shell:has(.passport-proof__sheet:not([hidden])) .app-main {
     z-index: 100;
-}@media (max-width: 1023px) {.app-shell:has(.passport-proof__sheet) .bottom-nav,
-    .app-shell:has(.passport-proof__sheet) .cookie-consent {
+}@media (max-width: 1023px) {.app-shell:has(.passport-proof__sheet:not([hidden])) .bottom-nav,
+    .app-shell:has(.passport-proof__sheet:not([hidden])) .cookie-consent {
         display: none !important;
-    }}@media (min-width: 769px) {.passport-proof__sheet {
+    }}@media (min-width: 769px) {.passport-proof__sheet:not([hidden]) {
         display: flex;
         inset: auto;
         top: 50%;

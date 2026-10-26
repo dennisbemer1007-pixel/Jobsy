@@ -31,8 +31,8 @@ public class EmployerRun5FollowUpTests
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/mijn-paspoort.css"));
         Assert.Contains(".passport-proof__sheet", css, StringComparison.Ordinal);
         Assert.Contains(".passport-proof__backdrop", css, StringComparison.Ordinal);
-        Assert.Contains(".app-shell:has(.passport-proof__sheet) .app-main", css, StringComparison.Ordinal);
-        Assert.Contains(".app-shell:has(.passport-proof__sheet) .bottom-nav", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell:has(.passport-proof__sheet:not([hidden])) .app-main", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell:has(.passport-proof__sheet:not([hidden])) .bottom-nav", css, StringComparison.Ordinal);
         Assert.Contains("z-index: 100", css, StringComparison.Ordinal);
 
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
