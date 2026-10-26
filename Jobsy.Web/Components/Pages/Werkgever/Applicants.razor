@@ -386,9 +386,12 @@
 
     private IEnumerable<(Guid Id, string Title, string CompanyName)> VacancyOptions =>
         _vacancies
+            .Where(v => ManagedVacancyMapFilter.IsPublishedOpen(v.Status, v.FulfilledByApplicationId))
             .Where(v => string.IsNullOrWhiteSpace(_vacancySearch)
                         || v.Title.Contains(_vacancySearch, StringComparison.CurrentCultureIgnoreCase)
                         || (v.CompanyName?.Contains(_vacancySearch, StringComparison.CurrentCultureIgnoreCase) ?? false))
+            .GroupBy(v => $"{(v.CompanyName ?? "").Trim()}|{v.Title.Trim()}", StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderBy(v => v.Id).First())
             .Select(v => (v.Id, v.Title, v.CompanyName ?? ""))
             .OrderBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase);
 
