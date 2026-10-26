@@ -35,4 +35,35 @@ public class CareerPlanFreshnessTests
 
         Assert.True(CareerPlanFreshness.StepsMatchDream(plan));
     }
+
+    [Fact]
+    public void StepsMatchDream_false_when_pilot_steps_for_timmerman_dream()
+    {
+        var plan = new CareerPathPlanApiModel
+        {
+            DreamTitle = "Timmerman",
+            Steps =
+            [
+                new CareerPathStepApiModel { Order = 1, Title = "Vliegopleiding", Summary = "Cockpit" },
+                new CareerPathStepApiModel { Order = 2, Title = "Type rating", Summary = "Airline" }
+            ]
+        };
+
+        Assert.False(CareerPlanFreshness.StepsMatchDream(plan));
+    }
+
+    [Fact]
+    public void StepsMatchDream_false_when_dream_unknown_to_taxonomy()
+    {
+        var plan = new CareerPathPlanApiModel
+        {
+            DreamTitle = "XyzUnknownRole999",
+            Steps =
+            [
+                new CareerPathStepApiModel { Order = 1, Title = "Stap 1", Summary = "Summary" }
+            ]
+        };
+
+        Assert.False(CareerPlanFreshness.StepsMatchDream(plan));
+    }
 }
