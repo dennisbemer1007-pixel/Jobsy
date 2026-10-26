@@ -166,6 +166,11 @@ internal static class AfterMatchSollicitatiesPresentation
     {
         if (string.Equals(step.State, "Current", StringComparison.OrdinalIgnoreCase))
         {
+            if (string.Equals(step.Key, "Plan", StringComparison.OrdinalIgnoreCase))
+            {
+                return culture["AfterMatch.Candidate.ProposalPending.CardAction"];
+            }
+
             return culture["AfterMatch.Timeline.Now"];
         }
 
@@ -194,7 +199,7 @@ internal static class AfterMatchSollicitatiesPresentation
             return [];
         }
 
-        var yesAt = summary.RespondedAtUtc ?? summary.AcceptedAtUtc;
+        var yesAt = summary.AcceptedAtUtc ?? summary.RespondedAtUtc;
         DateTime? planAt = yesAt;
         if (status == InterviewStatus.Proposing && summary.OpenSlotCount > 0)
         {
@@ -202,7 +207,7 @@ internal static class AfterMatchSollicitatiesPresentation
         }
         else if (status == InterviewStatus.RescheduleRequested)
         {
-            planAt = null;
+            planAt = summary.LastMessageAtUtc ?? yesAt;
         }
         else if (status == InterviewStatus.Scheduled)
         {
@@ -215,7 +220,7 @@ internal static class AfterMatchSollicitatiesPresentation
             : status switch
             {
                 InterviewStatus.Proposing when summary.OpenSlotCount > 0 => "Current",
-                InterviewStatus.RescheduleRequested => "Current",
+                InterviewStatus.RescheduleRequested => "Done",
                 InterviewStatus.Scheduled or InterviewStatus.Done or InterviewStatus.Cancelled => "Done",
                 _ => "Upcoming"
             };
