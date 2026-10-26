@@ -128,6 +128,8 @@ public class ApplicationAfterMatchSummaryItem
     public string? LastMessagePreview { get; set; }
     public bool LastMessageFromCandidate { get; set; }
     public DateTime? LastMessageAtUtc { get; set; }
+    public string? LastCancelReason { get; set; }
+    public bool? LastCancelByEmployer { get; set; }
 }
 
 public class ApplicationTimelineStepItem

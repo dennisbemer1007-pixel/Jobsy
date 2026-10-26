@@ -250,6 +250,26 @@ else if (_bodyHtml is not null || !string.IsNullOrWhiteSpace(_fatalMessage))
                     {
                         SetHero(Culture["AfterMatch.Screen12.Hero.Title"], Culture["AfterMatch.Screen12.SubmittedNote"]);
                     }
+                    else if (thread.InterviewStatus == InterviewStatus.Proposing)
+                    {
+                        var candidateCancel = thread.RecentChanges
+                            .Where(c => c.Kind == InterviewChangeKind.Cancel
+                                        && string.Equals(c.ActorRole, "Candidate", StringComparison.OrdinalIgnoreCase))
+                            .OrderByDescending(c => c.CreatedAtUtc)
+                            .FirstOrDefault();
+                        if (candidateCancel is not null)
+                        {
+                            SetHero(
+                                Culture["AfterMatch.InterviewCancelled.EmployerTitle"],
+                                string.Format(
+                                    Culture["AfterMatch.InterviewCancelled.EmployerLeadFmt"],
+                                    candidateCancel.Reason ?? ""));
+                        }
+                        else
+                        {
+                            SetHero(Culture["AfterMatch.Screen02.Hero.Title"], Culture["AfterMatch.Screen02.Hero.Lead"]);
+                        }
+                    }
                     else
                     {
                         SetHero(Culture["AfterMatch.Screen02.Hero.Title"], Culture["AfterMatch.Screen02.Hero.Lead"]);

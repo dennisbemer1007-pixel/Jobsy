@@ -519,6 +519,15 @@ public partial class MeController : ControllerBase
                     .GroupBy(m => m.ApplicationId)
                     .ToDictionary(g => g.Key, g => g.First());
 
+                var interviewIds = interviews.Select(i => i.Id).ToList();
+                var cancelRows = await _db.InterviewChanges.AsNoTracking()
+                    .Where(c => interviewIds.Contains(c.InterviewId) && c.Kind == InterviewChangeKind.Cancel)
+                    .OrderByDescending(c => c.CreatedAtUtc)
+                    .ToListAsync(cancellationToken);
+                var latestCancelByInterview = cancelRows
+                    .GroupBy(c => c.InterviewId)
+                    .ToDictionary(g => g.Key, g => g.First());
+
                 for (var i = 0; i < items.Count; i++)
                 {
                     var item = items[i];
@@ -554,6 +563,18 @@ public partial class MeController : ControllerBase
                         lastAt = lastMsg.CreatedAtUtc;
                     }
 
+                    string? lastCancelReason = null;
+                    bool? lastCancelByEmployer = null;
+                    if (latestCancelByInterview.TryGetValue(interview.Id, out var cancelChange)
+                        && !string.IsNullOrWhiteSpace(cancelChange.Reason))
+                    {
+                        lastCancelReason = cancelChange.Reason.Trim();
+                        lastCancelByEmployer = string.Equals(
+                            cancelChange.ActorRole,
+                            "Employer",
+                            StringComparison.OrdinalIgnoreCase);
+                    }
+
                     items[i] = item with
                     {
                         AfterMatch = new ApplicationAfterMatchSummaryDto(
@@ -565,7 +586,9 @@ public partial class MeController : ControllerBase
                             acceptedAt,
                             lastPreview,
                             lastFromCandidate,
-                            lastAt)
+                            lastAt,
+                            lastCancelReason,
+                            lastCancelByEmployer)
                     };
                 }
             }

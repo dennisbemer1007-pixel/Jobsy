@@ -69,6 +69,15 @@ internal static class AfterMatchSollicitatiesPresentation
             ApplicationsSsrQuery.FilterAll,
             null,
             summary.ApplicationId);
+        if (!string.IsNullOrWhiteSpace(summary.LastCancelReason))
+        {
+            return new DetailActions(
+                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
+                culture["AfterMatch.InterviewCancelled.DossierCta"],
+                messagesHref,
+                summary.UnreadMessageCount);
+        }
+
         if (status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
             && summary.OpenSlotCount > 0)
         {
@@ -123,18 +132,23 @@ internal static class AfterMatchSollicitatiesPresentation
         }
 
         var yesAt = summary.AcceptedAtUtc;
-        var planState = status switch
-        {
-            InterviewStatus.Proposing or InterviewStatus.RescheduleRequested => "Current",
-            InterviewStatus.Scheduled or InterviewStatus.Done or InterviewStatus.Cancelled => "Done",
-            _ => "Upcoming"
-        };
-        var interviewState = status switch
-        {
-            InterviewStatus.Scheduled => "Current",
-            InterviewStatus.Done => "Done",
-            _ => "Upcoming"
-        };
+        var cancelled = !string.IsNullOrWhiteSpace(summary.LastCancelReason);
+        var planState = cancelled
+            ? "Done"
+            : status switch
+            {
+                InterviewStatus.Proposing or InterviewStatus.RescheduleRequested => "Current",
+                InterviewStatus.Scheduled or InterviewStatus.Done or InterviewStatus.Cancelled => "Done",
+                _ => "Upcoming"
+            };
+        var interviewState = cancelled
+            ? "Done"
+            : status switch
+            {
+                InterviewStatus.Scheduled => "Current",
+                InterviewStatus.Done => "Done",
+                _ => "Upcoming"
+            };
         var outcomeState = status == InterviewStatus.Done ? "Current" : "Upcoming";
 
         return
@@ -157,4 +171,6 @@ internal sealed record ApplicationAfterMatchSummary(
     DateTime? AcceptedAtUtc,
     string? LastMessagePreview,
     bool LastMessageFromCandidate,
-    DateTime? LastMessageAtUtc);
+    DateTime? LastMessageAtUtc,
+    string? LastCancelReason = null,
+    bool? LastCancelByEmployer = null);

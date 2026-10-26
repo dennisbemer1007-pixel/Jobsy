@@ -381,7 +381,9 @@ internal static class ApplicationsSsrData
                 a.AfterMatch.AcceptedAtUtc,
                 a.AfterMatch.LastMessagePreview,
                 a.AfterMatch.LastMessageFromCandidate,
-                a.AfterMatch.LastMessageAtUtc);
+                a.AfterMatch.LastMessageAtUtc,
+                a.AfterMatch.LastCancelReason,
+                a.AfterMatch.LastCancelByEmployer);
         }
 
         return new SollicitationRow(
