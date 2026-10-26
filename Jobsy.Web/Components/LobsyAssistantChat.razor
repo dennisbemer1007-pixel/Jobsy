@@ -506,7 +506,7 @@
             .Where(a => !string.IsNullOrWhiteSpace(a.Url))
             .GroupBy(a => a.Url)
             .Select(g => g.First())
-            .Take(6)
+            .Take(4)
             .ToList();
 
         var filter = actions.FirstOrDefault(a =>

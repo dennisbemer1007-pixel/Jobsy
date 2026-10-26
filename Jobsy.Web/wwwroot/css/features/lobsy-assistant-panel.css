@@ -193,6 +193,8 @@
   gap: 0.35rem;
   margin-top: 0.35rem;
   flex-shrink: 0;
+  max-height: 5.25rem;
+  overflow-y: auto;
 }
 
 .lobsy-assistant__action,

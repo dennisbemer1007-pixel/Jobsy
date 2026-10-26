@@ -25,6 +25,7 @@ public sealed class AssistantChatService : IAssistantChatService
 {
     public const int MaxHistoryMessages = 20;
     public const int MaxMessageChars = 1_500;
+    internal const int MaxAssistantPanelActions = 4;
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
@@ -159,7 +160,7 @@ public sealed class AssistantChatService : IAssistantChatService
 
             if (LooksLikeKompasHelp(text, context.PagePath))
             {
-                return CandidateKompasHelp(context);
+                return await CandidateKompasHelpAsync(context, cancellationToken);
             }
 
             if (LooksLikeHowLobsy(text))
@@ -517,6 +518,11 @@ public sealed class AssistantChatService : IAssistantChatService
 
         foreach (var m in matches)
         {
+            if (actions.Count >= MaxAssistantPanelActions)
+            {
+                break;
+            }
+
             actions.Add(new AssistantChatAction(
                 AssistantActionTypes.Navigate,
                 Url: $"/vacancies/{m.Id}",
@@ -670,12 +676,15 @@ public sealed class AssistantChatService : IAssistantChatService
         {
             var status = ApplicationStatusLabel(a.Status, lang);
             sb.AppendLine(FormatApplicationBullet(a.Vacancy.Title, a.Vacancy.Company.Name, status, lang));
-            actions.Add(new AssistantChatAction(
-                AssistantActionTypes.OpenApplication,
-                Url: $"/vacancies/{a.VacancyId}",
-                Label: a.Vacancy.Title,
-                ApplicationId: a.Id,
-                VacancyId: a.VacancyId));
+            if (actions.Count < MaxAssistantPanelActions)
+            {
+                actions.Add(new AssistantChatAction(
+                    AssistantActionTypes.OpenApplication,
+                    Url: $"/vacancies/{a.VacancyId}",
+                    Label: a.Vacancy.Title,
+                    ApplicationId: a.Id,
+                    VacancyId: a.VacancyId));
+            }
         }
 
         sb.AppendLine(lang == "en"
@@ -1806,8 +1815,18 @@ Verbetervoorstellen:
                 .Append(' ');
         }
 
-        sb.Append(
-            "Prefer answers about that screen or feature (e.g. banenkaart = job map, paspoort = passport, kompas = compass). ");
+        if (IsJobMapPage(context.PagePath))
+        {
+            sb.Append(
+                "Fixed page fact: the job map shows nearby vacancies within the user's travel time, not occupations or career titles. "
+                + "Never describe this screen as beroepen, occupations or job titles that fit the user. ");
+        }
+        else
+        {
+            sb.Append(
+                "Prefer answers about that screen or feature (e.g. banenkaart = job map, paspoort = passport, kompas = compass). ");
+        }
+
         return sb.ToString();
     }
 
@@ -1978,19 +1997,24 @@ Verbetervoorstellen:
             "woonplaats", "naam", "name", "wachtwoord", "password");
     }
 
-    private static AssistantChatResult CandidateKompasHelp(AssistantChatContext context)
+    private async Task<AssistantChatResult> CandidateKompasHelpAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
     {
         var lang = JobsyLanguages.Normalize(context.Language);
+        var onboarding = await _db.CandidateOnboardings.AsNoTracking()
+            .FirstOrDefaultAsync(o => o.UserId == context.UserId, cancellationToken);
+        var zoneIndex = KreeftJourneyZone.ResolveZoneIndex(onboarding);
+        var zone = KreeftJourneyZone.ZoneLabel(zoneIndex, lang);
+        var phaseDetail = KompasPhaseDetail(lang, zoneIndex);
         var reply = lang switch
         {
             "en" =>
                 "Your Compass is your start profile after onboarding. The travel-map shield has layers from coast to light. "
-                + "You are in the Light phase: four short tests summarised in words, without scores. "
-                + "Directions and your dream job link to your passport and the job map. Open your profile or passport for the full picture.",
+                + $"You are in the {zone} phase: {phaseDetail}",
             _ =>
                 "Je Kompas is je startprofiel na onboarding. Het reiskaartschild heeft lagen van kust tot licht. "
-                + "Je zit in de fase Licht · Jouw Kompas: vier korte tests samengevat in woorden, zonder cijfers. "
-                + "Richtingen en je droombaan sluiten aan op je paspoort en de banenkaart. Open je profiel of paspoort voor het volledige plaatje."
+                + $"Je zit in de fase {zone}: {phaseDetail}"
         };
         return new AssistantChatResult(
             reply,
@@ -2002,6 +2026,37 @@ Verbetervoorstellen:
                     Label: lang == "en" ? "My passport" : "Mijn paspoort")
             ]);
     }
+
+    private static string KompasPhaseDetail(string lang, int zoneIndex) =>
+        lang switch
+        {
+            "en" => zoneIndex switch
+            {
+                4 =>
+                    "four short tests summarised in words, without scores. Directions and your dream job link to your passport and the job map.",
+                3 =>
+                    "you are in the depth tests about how you work and what matters to you; Light · Your Compass follows next.",
+                2 =>
+                    "you are mid-onboarding; depth tests and your full Compass come next.",
+                1 =>
+                    "you started on the coast with basics about when and where you can work.",
+                _ =>
+                    "you are at the start of your journey; your Compass opens as you complete the steps."
+            },
+            _ => zoneIndex switch
+            {
+                4 =>
+                    "vier korte tests samengevat in woorden, zonder cijfers. Richtingen en je droombaan sluiten aan op je paspoort en de banenkaart.",
+                3 =>
+                    "je doorloopt de diepte-tests over hoe je werkt en wat je belangrijk vindt; daarna volgt Licht · Jouw Kompas.",
+                2 =>
+                    "je zit midden in onboarding; de diepte-tests en je volledige Kompas komen nog.",
+                1 =>
+                    "je bent net begonnen aan de kust met basisvragen over wanneer en waar je kunt werken.",
+                _ =>
+                    "je start aan het strand van je reis; je Kompas opent zich gaandeweg."
+            }
+        };
 
     private static AssistantChatResult CandidateJobMapHelp(AssistantChatContext context)
     {
@@ -2071,7 +2126,25 @@ Verbetervoorstellen:
     private static bool LooksLikeJobMapHelp(string text, string? pagePath) =>
         ContainsAny(text, "banenkaart", "job map", "banen kaart")
         || (IsJobMapPage(pagePath)
-            && ContainsAny(text, "hoe gebruik", "how do i use", "hoe werkt", "how does", "uitleg", "beste"));
+            && ContainsAny(
+                text,
+                "hoe gebruik",
+                "how do i use",
+                "hoe werkt",
+                "how does",
+                "uitleg",
+                "beste",
+                "wat zie ik",
+                "what do i see",
+                "what am i looking",
+                "wat is dit",
+                "what is this",
+                "wat betekent",
+                "what does this mean",
+                "wat kan ik hier",
+                "what can i do here",
+                "waar kijk ik",
+                "where am i"));
 
     private static bool LooksLikeHowLobsy(string text) =>
         !ContainsAny(text, "banenkaart", "job map")
