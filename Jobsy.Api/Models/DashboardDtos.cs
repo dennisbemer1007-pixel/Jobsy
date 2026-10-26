@@ -115,7 +115,9 @@ public record ApplicationAfterMatchSummaryDto(
     DateTime? AcceptedAtUtc,
     string? LastMessagePreview = null,
     bool LastMessageFromCandidate = false,
-    DateTime? LastMessageAtUtc = null);
+    DateTime? LastMessageAtUtc = null,
+    string? LastCancelReason = null,
+    bool? LastCancelByEmployer = null);
 
 /// <summary>Candidate timeline step (no actor ids).</summary>
 public record ApplicationTimelineStepDto(

@@ -493,6 +493,17 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Cancel.HeroLead",
             "Het gesprek wordt afgezegd. Sanne krijgt bericht met je reden.",
             "The interview will be cancelled. Sanne will be notified with your reason.");
+        Add("AfterMatch.InterviewCancelled.EmployerTitle", "Gesprek afgezegd", "Interview cancelled");
+        Add("AfterMatch.InterviewCancelled.EmployerLeadFmt",
+            "De kandidaat heeft het gesprek afgezegd. Reden: {0}",
+            "The candidate cancelled the interview. Reason: {0}");
+        Add("AfterMatch.InterviewCancelled.CandidateNoteEmployerFmt",
+            "Het gesprek is afgezegd door de werkgever. Reden: {0}",
+            "The employer cancelled the interview. Reason: {0}");
+        Add("AfterMatch.InterviewCancelled.CandidateNoteSelfFmt",
+            "Je hebt het gesprek afgezegd. Reden: {0}",
+            "You cancelled the interview. Reason: {0}");
+        Add("AfterMatch.InterviewCancelled.DossierCta", "Naar gesprek", "View conversation");
         Add("AfterMatch.Employer.Outcome.PreviewTitle", "Zo ziet Sanne het", "How Sanne sees it");
         Add("AfterMatch.Employer.Outcome.PreviewLead", "Dank je wel voor het gesprek. Hier komt je korte uitleg.", "Thank you for the interview. Your short explanation appears here.");
         Add("AfterMatch.Employer.Outcome.PreviewNotNowTitleFmt", "Dank je wel voor het gesprek, {0}", "Thank you for the interview, {0}");

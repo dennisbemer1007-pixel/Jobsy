@@ -540,6 +540,20 @@ internal static class ApplicationsSsrShells
         sb.Append("</p></div>");
         if (row.AfterMatch is not null)
         {
+            if (!string.IsNullOrWhiteSpace(row.AfterMatch.LastCancelReason))
+            {
+                sb.Append("<p class=\"sollic-detail__status-note state-message\" role=\"status\">");
+                sb.Append(WebUtility.HtmlEncode(
+                    row.AfterMatch.LastCancelByEmployer == true
+                        ? string.Format(
+                            culture["AfterMatch.InterviewCancelled.CandidateNoteEmployerFmt"],
+                            row.AfterMatch.LastCancelReason)
+                        : string.Format(
+                            culture["AfterMatch.InterviewCancelled.CandidateNoteSelfFmt"],
+                            row.AfterMatch.LastCancelReason)));
+                sb.Append("</p>");
+            }
+
             AppendAfterMatchTimeline(sb, culture, row.AfterMatch);
             AppendDetailTip(sb, culture, row);
             var detailReturn = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
