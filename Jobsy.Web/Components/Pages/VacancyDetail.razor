@@ -821,7 +821,11 @@
                             <span class="kb-dna__label">@Culture[row.LabelKey]</span>
                             @if (row.Percent is int barPct)
                             {
-                                <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]" aria-valuetext="@Culture[row.WhyKey]"></progress>
+                                if (!_hideDnaPercentForCandidate)
+                                {
+                                    <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]" aria-valuetext="@Culture[row.WhyKey]"></progress>
+                                }
+
                                 <span class="kb-dna__reason">@Culture[row.WhyKey]</span>
                             }
                             else
@@ -1115,6 +1119,7 @@
     private bool _showSafetyNet;
     private string? _safetyNetMessage;
     private int? _safetyNetPercent;
+    private bool _hideDnaPercentForCandidate;
     private bool _confirmSafetyNet;
     private int? _ageYears;
     private bool _mapReady;
@@ -1451,6 +1456,14 @@
         var keepPrerendered = _vacancy is not null && _vacancy.Id == Id;
         ResetApplyUiState();
         _loadedVacancyId = Id;
+        _hideDnaPercentForCandidate = false;
+        var httpUser = HttpContextAccessor.HttpContext?.User;
+        if (httpUser?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(httpUser, JobsyRoles.Candidate))
+        {
+            _hideDnaPercentForCandidate = true;
+        }
+
         _liked = false;
         _clickRecorded = false;
         _ageYears = null;
@@ -1598,6 +1611,7 @@
                     if (auth.User.Identity?.IsAuthenticated == true
                         && RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate))
                     {
+                        _hideDnaPercentForCandidate = true;
                         var profile = await SafeProfileAsync();
                         if (profile?.DateOfBirth is DateOnly dob
                             && AgeRules.AgeYearsFromDateOfBirth(dob) is int fromDob)
