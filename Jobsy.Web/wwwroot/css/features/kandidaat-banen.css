@@ -1925,9 +1925,31 @@
   gap: 8px;
   background:var(--pearl, #f7f4f0);
 }.kb-filter-bar__summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "count count"
+    "tools toggle";
   align-items: center;
   gap: 8px;
-  flex-wrap: nowrap;
+  row-gap: 8px;
+}.kb-filter-bar__summary .kb-filter-bar__count-block {
+  grid-area: count;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}.kb-filter-bar__summary .kb-filter-bar__count {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}.kb-filter-bar__summary .kb-match-button--icon,
+.kb-filter-bar__summary .uwv-kans-map-toggle {
+  grid-area: tools;
+  justify-self: start;
+}.kb-filter-bar__summary .kb-view-toggle--mobile {
+  grid-area: toggle;
+  margin-inline-start: 0;
+  justify-self: end;
 }.kb-match-button--icon {
   flex: 0 0 auto;
   width: 40px;
