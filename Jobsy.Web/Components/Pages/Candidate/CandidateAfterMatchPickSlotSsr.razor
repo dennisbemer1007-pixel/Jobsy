@@ -4,6 +4,7 @@
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Features
 @using Jobsy.Web.Applications
 @using Jobsy.Web.Components.Shared
@@ -59,6 +60,19 @@ else if (!string.IsNullOrWhiteSpace(_fatalMessage))
             var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
             query.TryGetValue("return", out var returnValues);
             var returnUrl = returnValues.FirstOrDefault();
+
+            var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+            if (thread?.InterviewStatus == InterviewStatus.Scheduled)
+            {
+                var confirmed = $"/candidate/applications/{ApplicationId:D}/after-match/confirmed-ssr";
+                if (!string.IsNullOrWhiteSpace(returnUrl))
+                {
+                    confirmed += "?return=" + Uri.EscapeDataString(returnUrl);
+                }
+
+                http.Response.Redirect(confirmed);
+                return;
+            }
 
             var data = await AfterMatchPickSlotSsrData.LoadAsync(
                 Api,
