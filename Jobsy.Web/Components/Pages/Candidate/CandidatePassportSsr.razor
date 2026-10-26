@@ -58,6 +58,10 @@ else if (_bodyHtml is not null)
         query.TryGetValue("saved", out var savedValues);
         query.TryGetValue("from", out var fromValues);
         query.TryGetValue("section", out var sectionValues);
+        query.TryGetValue("item", out var itemValues);
+        query.TryGetValue("returnUrl", out var returnUrlValues);
+        var returnUrl = returnUrlValues.FirstOrDefault();
+        var proofItem = itemValues.FirstOrDefault();
         var error = errorValues.FirstOrDefault();
         var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
         var fromDiscovery = string.Equals(fromValues.FirstOrDefault(), "reis", StringComparison.OrdinalIgnoreCase);
@@ -82,7 +86,9 @@ else if (_bodyHtml is not null)
                 Culture,
                 data,
                 tokens.RequestToken ?? "",
-                sectionValues.FirstOrDefault());
+                sectionValues.FirstOrDefault(),
+                returnUrl,
+                proofItem);
         }
         catch
         {
