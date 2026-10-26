@@ -543,6 +543,10 @@
     "v": "20261026-bewaard-filters1",
     "sha256": "3f17741a88558ad2c19ee93210b24f76459012e9afea5831ed35361564a10fd3"
   },
+  "js/match-ssr.js": {
+    "v": "20261026-match-ssr1",
+    "sha256": "9567bd272517038da2bbfdc85a0e1932f69534328fa5f1376d0a8c8c475536c2"
+  },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",
     "sha256": "a9a963747051d11f9cd4c4d559d1736937d5f283e831677201cd85855d9cb7ce"

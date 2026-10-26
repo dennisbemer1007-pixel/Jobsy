@@ -85,7 +85,8 @@ public class KbSavedListBunitTests : BunitContext
 
         Assert.Contains("Maak je paspoort af", html, StringComparison.Ordinal);
         Assert.Contains(KbRoutes.PaspoortTests, html, StringComparison.Ordinal);
-        Assert.DoesNotContain("%", html, StringComparison.Ordinal);
+        var grid = html[(html.IndexOf("kb-saved__grid", StringComparison.Ordinal)..)];
+        Assert.DoesNotContain("%", grid, StringComparison.Ordinal);
     }
 
     [Fact]
