@@ -202,7 +202,9 @@ internal static class AfterMatchEmployerRescheduleSsrShells
             primaryPill.Item2);
         if (thread.ApplicationId != Verkoop4790App)
         {
-            var demoWhen = culture["AfterMatch.Employer.Reschedule.WeekRow4790When"];
+            var demo4790Start = Jobsy.Core.Time.AfterMatchEmployerDemoSlots.InitialUtc(DateTime.UtcNow);
+            var demoWhen = FormatWeekSlot(
+                demo4790Start.Length > 1 ? demo4790Start[1] : demo4790Start[0]);
             if (thread.ScheduledStartUtc is DateTime demoStart
                 && thread.ApplicationId == RescheduleDemoApp)
             {

@@ -69,6 +69,15 @@ public static class TestAccountsSollicitatiesDemoSeeder
             a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null,
             cancellationToken);
 
+        try
+        {
+            await JobsyDbSeeder.EnsureAfterMatchDemoApplicationsAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Acceptatie after-match demo ensure failed during sollicitaties reset; continuing.");
+        }
+
         await RemoveStaleDemoApplicationsAsync(db, candidate.Id, logger, cancellationToken);
         await EnsureForCandidateAsync(db, candidate.Id, branchManager.Id, logger, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
@@ -147,21 +156,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return;
         }
 
-        var interviews = await db.Interviews.Where(i => staleIds.Contains(i.ApplicationId)).ToListAsync(cancellationToken);
-        var interviewIds = interviews.Select(i => i.Id).ToList();
-        if (interviewIds.Count > 0)
-        {
-            db.InterviewSlots.RemoveRange(await db.InterviewSlots.Where(s => interviewIds.Contains(s.InterviewId)).ToListAsync(cancellationToken));
-            db.InterviewChanges.RemoveRange(await db.InterviewChanges.Where(c => interviewIds.Contains(c.InterviewId)).ToListAsync(cancellationToken));
-            db.InterviewReminders.RemoveRange(await db.InterviewReminders.Where(r => interviewIds.Contains(r.InterviewId)).ToListAsync(cancellationToken));
-            db.Interviews.RemoveRange(interviews);
-        }
-
-        db.ApplicationMessages.RemoveRange(await db.ApplicationMessages.Where(m => staleIds.Contains(m.ApplicationId)).ToListAsync(cancellationToken));
-        db.ApplicationOutcomes.RemoveRange(await db.ApplicationOutcomes.Where(o => staleIds.Contains(o.ApplicationId)).ToListAsync(cancellationToken));
-        var staleApps = await db.Applications.Where(a => staleIds.Contains(a.Id)).ToListAsync(cancellationToken);
-        db.Applications.RemoveRange(staleApps);
-        await db.SaveChangesAsync(cancellationToken);
+        await AcceptatieApplicationDemoGraphRemover.RemoveApplicationsAsync(db, staleIds, cancellationToken);
         logger.LogInformation(
             "Acceptatie sollicitaties demo reset: removed {Count} stale applications for candidate {CandidateId}.",
             staleIds.Count,
