@@ -31,6 +31,8 @@ public sealed class ActivityLogClientDiagnosticsGuardTests
         var root = TestRepo.FindRoot();
         var service = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure", "Services", "JobSearchActivityService.cs"));
         Assert.Contains("job_search_activities_sync_failed", service, StringComparison.Ordinal);
+        Assert.Contains("RefreshExistingAutoActivityCopyAsync", service, StringComparison.Ordinal);
+        Assert.Contains("uitkomst", service, StringComparison.Ordinal);
     }
 
     [Fact]

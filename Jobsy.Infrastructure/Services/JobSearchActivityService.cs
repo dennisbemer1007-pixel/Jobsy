@@ -84,6 +84,8 @@ public sealed class JobSearchActivityService(
         bool afterMatchEnabled,
         CancellationToken cancellationToken = default)
     {
+        await RefreshExistingAutoActivityCopyAsync(candidateUserId, afterMatchEnabled, cancellationToken);
+
         var existing = await db.JobSearchActivities
             .Where(a => a.CandidateUserId == candidateUserId && a.Source == JobSearchActivitySource.Auto)
             .Select(a => new { a.SourceEntityType, a.SourceEntityId })
@@ -427,6 +429,81 @@ public sealed class JobSearchActivityService(
                 });
             });
         }).GeneratePdf();
+    }
+
+    private async Task RefreshExistingAutoActivityCopyAsync(
+        Guid candidateUserId,
+        bool afterMatchEnabled,
+        CancellationToken cancellationToken)
+    {
+        var rows = await db.JobSearchActivities
+            .Where(a => a.CandidateUserId == candidateUserId && a.Source == JobSearchActivitySource.Auto)
+            .ToListAsync(cancellationToken);
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        var now = time.GetUtcNow().UtcDateTime;
+        var dirty = false;
+        foreach (var row in rows)
+        {
+            if (row.SourceEntityType == EntityInterview && row.SourceEntityId is Guid interviewId && afterMatchEnabled)
+            {
+                var interview = await db.Interviews.AsNoTracking()
+                    .Include(i => i.Application)
+                    .ThenInclude(a => a.Vacancy)
+                    .ThenInclude(v => v.Company)
+                    .FirstOrDefaultAsync(i => i.Id == interviewId, cancellationToken);
+                if (interview is null)
+                {
+                    continue;
+                }
+
+                var title = interview.Application.Vacancy.Title;
+                var employer = interview.Application.Vacancy.Company?.Name ?? string.Empty;
+                if (!string.Equals(row.FunctionTitle, title, StringComparison.Ordinal)
+                    || !string.Equals(row.Employer, employer, StringComparison.Ordinal))
+                {
+                    row.FunctionTitle = title;
+                    row.Employer = employer;
+                    row.UpdatedAtUtc = now;
+                    dirty = true;
+                }
+
+                if (!string.IsNullOrWhiteSpace(row.Result)
+                    && row.Result.Contains("uitkomst", StringComparison.OrdinalIgnoreCase))
+                {
+                    row.Result = null;
+                    row.UpdatedAtUtc = now;
+                    dirty = true;
+                }
+            }
+            else if (row.SourceEntityType == EntityApplication && row.SourceEntityId is Guid appId)
+            {
+                var app = await db.Applications.AsNoTracking()
+                    .Include(a => a.Vacancy)
+                    .ThenInclude(v => v.Company)
+                    .FirstOrDefaultAsync(a => a.Id == appId, cancellationToken);
+                if (app is null)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(row.FunctionTitle, app.Vacancy.Title, StringComparison.Ordinal))
+                {
+                    row.FunctionTitle = app.Vacancy.Title;
+                    row.Employer = app.Vacancy.Company?.Name ?? string.Empty;
+                    row.UpdatedAtUtc = now;
+                    dirty = true;
+                }
+            }
+        }
+
+        if (dirty)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 
     private async Task<ActivityAgreement> EnsureAgreementAsync(Guid candidateUserId, CancellationToken cancellationToken)

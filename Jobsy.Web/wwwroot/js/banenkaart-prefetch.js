@@ -117,7 +117,10 @@
             warmMapAssets();
             warmCatalog();
             var origin = readPrefetchOrigin();
-            warmIsochrones(origin);
+            var onBanenkaart = /^\/banenkaart(\/|$)/.test(window.location.pathname || "");
+            if (onBanenkaart) {
+                warmIsochrones(origin);
+            }
             if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
                 var view = origin && origin.lat != null && origin.lng != null
                     ? { lat: origin.lat, lng: origin.lng, zoom: 11 }
