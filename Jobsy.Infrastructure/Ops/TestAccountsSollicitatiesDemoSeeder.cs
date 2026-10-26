@@ -285,6 +285,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
         await PurgeStaleExternalVacanciesAsync(db, candidate.Id, cancellationToken);
         await EnsureInitiativesAsync(db, candidate, companies, cancellationToken);
 
+        await JobSearchActivityAcceptatieRepair.PurgeStaleOutcomeCopyAsync(db, candidateId, logger, cancellationToken);
+
         logger.LogDebug("Sollicitaties demo rows ensured for candidate {CandidateId}.", candidateId);
     }
 

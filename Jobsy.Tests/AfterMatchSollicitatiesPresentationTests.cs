@@ -31,7 +31,7 @@ public sealed class AfterMatchSollicitatiesPresentationTests : BunitContext
             3,
             null,
             null,
-            messageAt,
+            yesAt,
             yesAt,
             null,
             false,
@@ -43,7 +43,7 @@ public sealed class AfterMatchSollicitatiesPresentationTests : BunitContext
 
         Assert.NotNull(hint);
         Assert.Contains("13", hint, StringComparison.Ordinal);
-        Assert.Contains(culture["AfterMatch.Timeline.Now"], hint, StringComparison.Ordinal);
+        Assert.Contains(culture["AfterMatch.Candidate.ProposalPending.CardAction"], hint, StringComparison.Ordinal);
         Assert.DoesNotContain("24", hint, StringComparison.Ordinal);
         Assert.DoesNotContain("11 ", hint, StringComparison.Ordinal);
     }

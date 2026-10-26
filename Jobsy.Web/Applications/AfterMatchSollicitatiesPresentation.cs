@@ -199,7 +199,7 @@ internal static class AfterMatchSollicitatiesPresentation
             return [];
         }
 
-        var yesAt = summary.AcceptedAtUtc ?? summary.RespondedAtUtc;
+        var yesAt = summary.RespondedAtUtc ?? summary.AcceptedAtUtc;
         DateTime? planAt = yesAt;
         if (status == InterviewStatus.Proposing && summary.OpenSlotCount > 0)
         {

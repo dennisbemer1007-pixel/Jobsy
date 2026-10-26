@@ -43,9 +43,11 @@
       };
     }
     box.hidden = false;
+    document.documentElement.classList.add("kb-saved-toast-open");
     window.clearTimeout(showUndoToast._t);
     showUndoToast._t = window.setTimeout(function () {
       box.hidden = true;
+      document.documentElement.classList.remove("kb-saved-toast-open");
       if (undoBtn) {
         undoBtn.hidden = true;
         undoBtn.onclick = null;
@@ -135,6 +137,7 @@
                   if (box) {
                     box.hidden = true;
                   }
+                  document.documentElement.classList.remove("kb-saved-toast-open");
                 })
                 .catch(function () {
                   window.alert(root.getAttribute("data-saved-error") || "Error");

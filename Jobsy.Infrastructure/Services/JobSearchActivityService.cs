@@ -457,6 +457,8 @@ public sealed class JobSearchActivityService(
                     .FirstOrDefaultAsync(i => i.Id == interviewId, cancellationToken);
                 if (interview is null)
                 {
+                    db.JobSearchActivities.Remove(row);
+                    dirty = true;
                     continue;
                 }
 
@@ -471,13 +473,7 @@ public sealed class JobSearchActivityService(
                     dirty = true;
                 }
 
-                if (!string.IsNullOrWhiteSpace(row.Result)
-                    && row.Result.Contains("uitkomst", StringComparison.OrdinalIgnoreCase))
-                {
-                    row.Result = null;
-                    row.UpdatedAtUtc = now;
-                    dirty = true;
-                }
+                dirty |= ClearOutcomeCopy(row, now);
             }
             else if (row.SourceEntityType == EntityApplication && row.SourceEntityId is Guid appId)
             {
@@ -497,6 +493,12 @@ public sealed class JobSearchActivityService(
                     row.UpdatedAtUtc = now;
                     dirty = true;
                 }
+
+                dirty |= ClearOutcomeCopy(row, now);
+            }
+            else
+            {
+                dirty |= ClearOutcomeCopy(row, now);
             }
         }
 
@@ -504,6 +506,37 @@ public sealed class JobSearchActivityService(
         {
             await db.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    private static bool ClearOutcomeCopy(JobSearchActivity row, DateTime now)
+    {
+        var dirty = false;
+        if (!string.IsNullOrWhiteSpace(row.Result)
+            && row.Result.Contains("uitkomst", StringComparison.OrdinalIgnoreCase))
+        {
+            row.Result = null;
+            row.UpdatedAtUtc = now;
+            dirty = true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(row.FunctionTitle)
+            && row.FunctionTitle.Contains("uitkomst", StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = row.FunctionTitle.Split('·', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            row.FunctionTitle = parts.Length > 0 ? parts[0] : row.FunctionTitle;
+            row.UpdatedAtUtc = now;
+            dirty = true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(row.ContactMethod)
+            && row.ContactMethod.Contains("uitkomst", StringComparison.OrdinalIgnoreCase))
+        {
+            row.ContactMethod = null;
+            row.UpdatedAtUtc = now;
+            dirty = true;
+        }
+
+        return dirty;
     }
 
     private async Task<ActivityAgreement> EnsureAgreementAsync(Guid candidateUserId, CancellationToken cancellationToken)

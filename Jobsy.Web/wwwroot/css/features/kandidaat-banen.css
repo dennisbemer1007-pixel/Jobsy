@@ -1540,7 +1540,7 @@
   position: fixed;
   inset-inline: var(--space-4, 1rem);
   bottom: calc(var(--lobsy-coach-scroll-pad, 5.75rem) + env(safe-area-inset-bottom, 0));
-  z-index: 10080;
+  z-index: 10090;
   background:var(--brand);
   color: var(--surface);
   border-radius:var(--r-md);
@@ -2097,3 +2097,18 @@
 @media (max-width: 1023px) {.kb-detail #apply.apply-flow {
     padding-bottom: calc(var(--bottom-nav-clearance, 4.5rem) + 4.25rem + env(safe-area-inset-bottom, 0px));
   }}
+
+@media (max-width: 639px) {
+  .kb-saved__toast {
+    bottom: calc(var(--bottom-nav-h, 64px) + 12px + env(safe-area-inset-bottom, 0));
+    z-index: 10090;
+  }
+
+  html.kb-saved-toast-open .lobsy-coach-dock[data-lobsy-coach],
+  html.kb-saved-toast-open .lobsy-coach-dock[data-ssr-coach] {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+}
