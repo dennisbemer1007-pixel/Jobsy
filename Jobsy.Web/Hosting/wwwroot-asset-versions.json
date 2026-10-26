@@ -48,7 +48,7 @@
     "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261026-match1",
+    "v": "20261026-26",
     "sha256": "539f25886fbcc258730b90133f4a84cf1bd6314fb2d24b9fc70c2edf1274d767"
   },
   "css/features/banenkaart-page.css": {
@@ -376,7 +376,7 @@
     "v": "20261016-04"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261026-match1",
+    "v": "20261026-26",
     "sha256": "505cedf832541fd7fb228b3e9e1fd5651b6cc70a69b1e84f9c6b0776934672ab"
   },
   "js/banenkaart-map-icons.js": {
@@ -396,7 +396,7 @@
     "v": "20261026-kreeft26"
   },
   "js/banenkaart-ssr.js": {
-    "v": "20261026-match1",
+    "v": "20261026-26",
     "sha256": "48d7bc45f2136cab7d9d5be6891d94875c7a54f9f91ed69ec4c0d484c80d6b4d"
   },
   "js/blazor-boot.js": {
