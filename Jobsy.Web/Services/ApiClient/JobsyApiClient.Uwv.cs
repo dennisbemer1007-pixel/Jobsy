@@ -52,16 +52,17 @@ public sealed partial class JobsyApiClient
 
     public async Task<UwvAdviseurShareViewDto?> GetUwvAdviseurSharePublicAsync(string token, CancellationToken ct = default)
     {
-        try
-        {
-            return await _http.GetFromJsonAsync<UwvAdviseurShareViewDto>(
-                $"api/uwv/adviseur-share/{Uri.EscapeDataString(token)}",
-                ct);
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        using var response = await _http.GetAsync(
+            $"api/uwv/adviseur-share/{Uri.EscapeDataString(token)}",
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return null;
         }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<UwvAdviseurShareViewDto>(cancellationToken: ct);
     }
 }
 

@@ -117,6 +117,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         private readonly FeatureFlagSnapshot _snap = new(
             EmployersEnabled: true,
             CandidatePassportEnabled: true,
+            CandidateExternalVacanciesEnabled: true,
             ProactiveMatchingEnabled: false,
             UwvFeaturesEnabled: uwvFeaturesEnabled);
 
@@ -185,6 +186,12 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 && !path.Contains("kompas", StringComparison.OrdinalIgnoreCase))
             {
                 await Task.Delay(20_000, cancellationToken);
+            }
+
+            if (path.Contains("/api/uwv/adviseur-share/", StringComparison.OrdinalIgnoreCase)
+                && !path.Contains("uwv-share-demo-token", StringComparison.Ordinal))
+            {
+                return new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
             }
 
             var json = IllustratedPagesApiStub.BuildJson(pathAndQuery, emptyAppsAndLikes, minimalPassportProfile);

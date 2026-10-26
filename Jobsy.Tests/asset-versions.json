@@ -590,5 +590,29 @@
   "service-worker.published.js": {
     "sha256": "7e226ca33f4061e1bae6f88a032710597405c8217bab7c64275b561a7bcdb3e0",
     "v": "20261024-acc10"
+  },
+  "css/features/profiel-page.css": {
+    "v": "20261026-r10-8736c219",
+    "sha256": "8736c219266b328ff31ffc67ddb48ad08491a573bc47a87004f0559efb8e6d35"
+  },
+  "js/candidate-settings.js": {
+    "v": "20261026-r10-1656b5c4",
+    "sha256": "1656b5c4f4400bf199fbb55cd8f8dee9c1c13cd197208a920c37e5295c72ff9b"
+  },
+  "js/kb-ext-add.js": {
+    "v": "20261026-r10-6b614a2e",
+    "sha256": "6b614a2eb4da0cd13a265a6c10d7a27002553f1fea76d304cd78b66a2aac779f"
+  },
+  "js/uwv-adviseur-deel.js": {
+    "v": "20261026-r10-1d30c869",
+    "sha256": "1d30c86962ad4c0f000b6e94211dc35323083698dced3ae3a8d4ccf3bffedd49"
+  },
+  "js/uwv-adviseur-panel.js": {
+    "v": "20261026-r10-229d8075",
+    "sha256": "229d807528dd967a38d44fbd2d64f094dbc9557f5ef5bcfcc0f0ac44c77a46b1"
+  },
+  "js/uwv-ondernemer.js": {
+    "v": "20261026-r10-e0ba4315",
+    "sha256": "e0ba4315043921c56efe2f6a865975f98b33ecce6e8c66255b3d978c684a2b06"
   }
 }

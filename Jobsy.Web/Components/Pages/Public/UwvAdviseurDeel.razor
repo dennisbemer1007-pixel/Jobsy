@@ -63,7 +63,10 @@
 
         if (string.IsNullOrWhiteSpace(Token) || Token.Length > 128)
         {
-            _problem = Culture["Common.Error"];
+            SetShareNotFound(http);
+            _problem = UwvMockupCopy.IsEnglish(Culture.Language)
+                ? "This share link is invalid or has expired."
+                : "Deze deellink is ongeldig of verlopen.";
             _loading = false;
             return;
         }
@@ -73,6 +76,7 @@
             var view = await Api.GetUwvAdviseurSharePublicAsync(Token);
             if (view is null)
             {
+                SetShareNotFound(http);
                 _problem = UwvMockupCopy.IsEnglish(Culture.Language)
                     ? "This share link is invalid or has expired."
                     : "Deze deellink is ongeldig of verlopen.";
@@ -92,11 +96,24 @@
         }
         catch
         {
-            _problem = Culture["Common.Error"];
+            SetShareNotFound(http);
+            _problem = UwvMockupCopy.IsEnglish(Culture.Language)
+                ? "This share link is invalid or has expired."
+                : "Deze deellink is ongeldig of verlopen.";
         }
         finally
         {
             _loading = false;
         }
+    }
+
+    private static void SetShareNotFound(HttpContext? http)
+    {
+        if (http is null || http.Response.HasStarted)
+        {
+            return;
+        }
+
+        http.Response.StatusCode = StatusCodes.Status404NotFound;
     }
 }
