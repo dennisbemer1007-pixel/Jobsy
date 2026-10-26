@@ -20,8 +20,13 @@ internal static class AfterMatchEmployerSsrRouting
         thread is not null
         && thread.InterviewStatus == InterviewStatus.Proposing;
 
-    /// <summary>Screen 09 (verzetten) SSR — candidate asked to reschedule or employer moves a confirmed slot.</summary>
+    /// <summary>Screen 09 (verzetten) SSR — candidate asked to reschedule.</summary>
     internal static bool ShouldUseRescheduleScreen(AfterMatchThreadDto? thread) =>
+        thread is not null
+        && thread.InterviewStatus == InterviewStatus.RescheduleRequested;
+
+    /// <summary>Direct `/reschedule-ssr` route (employer moves a confirmed slot from panel link).</summary>
+    internal static bool ShouldAllowEmployerRescheduleSsrRoute(AfterMatchThreadDto? thread) =>
         thread is not null
         && thread.InterviewStatus is InterviewStatus.RescheduleRequested or InterviewStatus.Scheduled;
 
@@ -74,6 +79,6 @@ internal static class AfterMatchEmployerSsrRouting
         }
 
         return thread.InterviewStatus == InterviewStatus.RescheduleRequested
-               && panel is not ("messages" or "cancel" or "propose");
+               && panel is not ("messages" or "cancel" or "propose" or "outcome");
     }
 }

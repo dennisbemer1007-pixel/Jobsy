@@ -136,6 +136,17 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
         Assert.True(AfterMatchEmployerSsrRouting.ShouldUseRescheduleScreen(baseThread));
         Assert.False(AfterMatchEmployerSsrRouting.ShouldUseRescheduleScreen(
             baseThread with { InterviewStatus = InterviewStatus.Proposing }));
+        Assert.False(AfterMatchEmployerSsrRouting.ShouldUseRescheduleScreen(
+            baseThread with { InterviewStatus = InterviewStatus.Scheduled }));
+        Assert.True(AfterMatchEmployerSsrRouting.ShouldAllowEmployerRescheduleSsrRoute(
+            baseThread with { InterviewStatus = InterviewStatus.Scheduled }));
+        Assert.False(AfterMatchEmployerSsrRouting.ShouldRedirectToRescheduleSsr(
+            baseThread with { InterviewStatus = InterviewStatus.Scheduled },
+            ""));
+        Assert.False(AfterMatchEmployerSsrRouting.ShouldRedirectToRescheduleSsr(
+            baseThread with { InterviewStatus = InterviewStatus.Scheduled },
+            "outcome"));
+        Assert.True(AfterMatchEmployerSsrRouting.ShouldRedirectToRescheduleSsr(baseThread, ""));
     }
 
     private static string FindRepoRoot()
