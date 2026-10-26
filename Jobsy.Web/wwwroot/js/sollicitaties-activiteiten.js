@@ -9,8 +9,21 @@
     return;
   }
 
+  function msg(attr, fallback) {
+    return root.getAttribute(attr) || fallback;
+  }
+
   function showFormError(message) {
     var el = root.querySelector(".sollic-activiteiten-form-error");
+    if (!el) {
+      return;
+    }
+    el.textContent = message || "";
+    el.hidden = !message;
+  }
+
+  function showAgreementError(message) {
+    var el = root.querySelector(".sollic-activiteiten-agreement-error");
     if (!el) {
       return;
     }
@@ -54,17 +67,32 @@
       return;
     }
 
-    if (ev.target.closest("[data-sollic-activ-adjust]")) {
+    if (ev.target.closest("[data-sollic-activ-adjust-toggle]")) {
       ev.preventDefault();
-      var current = root.querySelector("[data-sollic-activ-target]");
-      var def = current ? current.getAttribute("data-sollic-activ-target") : "4";
-      var raw = window.prompt("Hoeveel activiteiten per 4 weken?", def);
-      if (raw === null) {
-        return;
+      var panel = root.querySelector("[data-sollic-activ-agreement-panel]");
+      if (panel) {
+        panel.hidden = !panel.hidden;
+        showAgreementError("");
       }
-      var n = parseInt(raw, 10);
+      return;
+    }
+
+    if (ev.target.closest("[data-sollic-activ-agreement-cancel]")) {
+      ev.preventDefault();
+      var panelCancel = root.querySelector("[data-sollic-activ-agreement-panel]");
+      if (panelCancel) {
+        panelCancel.hidden = true;
+      }
+      showAgreementError("");
+      return;
+    }
+
+    if (ev.target.closest("[data-sollic-activ-agreement-save]")) {
+      ev.preventDefault();
+      var inputEl = root.querySelector("[data-sollic-activ-agreement-input]");
+      var n = inputEl ? parseInt(inputEl.value, 10) : NaN;
       if (!n || n < 1 || n > 20) {
-        window.alert("Kies een getal tussen 1 en 20.");
+        showAgreementError(msg("data-msg-agreement-invalid", "Choose a number between 1 and 20."));
         return;
       }
       fetch("/api/sollicitaties-client/activiteiten/agreement", {
@@ -80,7 +108,7 @@
         url.searchParams.set("tab", "activiteiten");
         window.location.assign(url.toString());
       }).catch(function () {
-        window.alert("Aanpassen is niet gelukt. Probeer het opnieuw.");
+        showAgreementError(msg("data-msg-agreement-failed", "Updating failed."));
       });
     }
   });
@@ -91,27 +119,19 @@
       ev.preventDefault();
       showFormError("");
       var fd = new FormData(form);
-      var kind = parseInt(fd.get("kind") || "1", 10);
+      var kind = fd.get("kind");
       var dateStr = fd.get("activityDate");
       var employer = (fd.get("employer") || "").toString().trim();
       var functionTitle = (fd.get("functionTitle") || "").toString().trim();
-      var result = (fd.get("result") || "").toString().trim();
       if (!dateStr || !employer || !functionTitle) {
-        showFormError("Vul datum, werkgever en functie in.");
+        showFormError(msg("data-msg-form-required", "Fill in date, employer and role."));
         return;
       }
-      var payload = {
-        kind: kind,
-        activityDate: dateStr,
-        employer: employer,
-        functionTitle: functionTitle,
-        result: result || null
-      };
       fetch("/api/sollicitaties-client/activiteiten", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
-        body: JSON.stringify(payload)
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        body: fd
       }).then(function (res) {
         if (!res.ok) {
           throw new Error("save");
@@ -120,7 +140,7 @@
         url.searchParams.set("tab", "activiteiten");
         window.location.assign(url.toString());
       }).catch(function () {
-        showFormError("Opslaan is niet gelukt. Probeer het opnieuw.");
+        showFormError(msg("data-msg-save-failed", "Saving failed."));
       });
     });
   }

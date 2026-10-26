@@ -20,10 +20,10 @@ public sealed partial class JobsyApiClient
     }
 
     public async Task<bool> TryAddManualJobSearchActivityAsync(
-        CreateManualJobSearchActivityRequest request,
+        MultipartFormDataContent content,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync("api/me/job-search-activities", request, ct);
+        var response = await _http.PostAsync("api/me/job-search-activities", content, ct);
         return response.IsSuccessStatusCode;
     }
 
@@ -47,5 +47,21 @@ public sealed partial class JobsyApiClient
         }
 
         return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task<(byte[] Content, string ContentType, string FileName)?> TryDownloadJobSearchActivityAttachmentAsync(
+        Guid activityId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/me/job-search-activities/{activityId:D}/attachment", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? "bijlage";
+        var type = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        return (bytes, type, fileName);
     }
 }

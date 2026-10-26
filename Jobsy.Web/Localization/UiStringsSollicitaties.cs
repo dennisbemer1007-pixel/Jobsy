@@ -192,6 +192,42 @@ public static class UiStringsSollicitaties
             "Gesprek", "Interview",
             "Rozmowa", "Interviu", "مقابلة");
 
+        Add("Apps.Activiteiten.AgreementField",
+            "Activiteiten per 4 weken", "Activities per 4 weeks",
+            "Aktywności na 4 tygodnie", "Activități la 4 săptămâni", "نشاطات كل 4 أسابيع");
+
+        Add("Apps.Activiteiten.AgreementSave",
+            "Opslaan", "Save",
+            "Zapisz", "Salvează", "حفظ");
+
+        Add("Apps.Activiteiten.AgreementCancel",
+            "Annuleren", "Cancel",
+            "Anuluj", "Anulează", "إلغاء");
+
+        Add("Apps.Activiteiten.FieldAttachment",
+            "Bijlage (pdf of foto, optioneel)", "Attachment (pdf or photo, optional)",
+            "Załącznik (pdf lub zdjęcie)", "Atașament (pdf sau foto)", "مرفق (pdf أو صورة)");
+
+        Add("Apps.Activiteiten.AttachmentLink",
+            "Bijlage bekijken", "View attachment",
+            "Zobacz załącznik", "Vezi atașamentul", "عرض المرفق");
+
+        Add("Apps.Activiteiten.Msg.FormRequired",
+            "Vul datum, werkgever en functie in.", "Fill in date, employer and role.",
+            "Uzupełnij datę, pracodawcę i stanowisko.", "Completează data, angajatorul și funcția.", "أكمل التاريخ وصاحب العمل والوظيفة.");
+
+        Add("Apps.Activiteiten.Msg.SaveFailed",
+            "Opslaan is niet gelukt. Probeer het opnieuw.", "Saving failed. Try again.",
+            "Zapis nie powiódł się.", "Salvarea a eșuat.", "فشل الحفظ.");
+
+        Add("Apps.Activiteiten.Msg.AgreementInvalid",
+            "Kies een getal tussen 1 en 20.", "Choose a number between 1 and 20.",
+            "Wybierz liczbę od 1 do 20.", "Alege un număr între 1 și 20.", "اختر رقماً بين 1 و 20.");
+
+        Add("Apps.Activiteiten.Msg.AgreementFailed",
+            "Aanpassen is niet gelukt. Probeer het opnieuw.", "Updating failed. Try again.",
+            "Aktualizacja nie powiodła się.", "Actualizarea a eșuat.", "فشل التعديل.");
+
         Add("Apps.CardPill.InterviewPlanned",
             "Gesprek gepland", "Interview scheduled",
             "Rozmowa zaplanowana", "Interviu programat", "مقابلة مجدولة");

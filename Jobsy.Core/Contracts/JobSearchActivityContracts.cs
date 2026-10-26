@@ -14,7 +14,8 @@ public sealed record JobSearchActivityItemDto(
     string? SourceEntityType,
     Guid? SourceEntityId,
     bool IsExternal,
-    string? StatusLabelKey);
+    string? StatusLabelKey,
+    bool HasAttachment);
 
 public sealed record JobSearchActivityWeekDto(
     DateOnly WeekStart,

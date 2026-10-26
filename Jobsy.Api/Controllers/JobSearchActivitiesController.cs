@@ -1,8 +1,10 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -50,8 +52,14 @@ public sealed class JobSearchActivitiesController : ControllerBase
 
     [HttpPost]
     [RequiresFeature(PlatformFeature.ActivityLog)]
+    [RequestSizeLimit(JobSearchActivityAttachmentRules.MaxBytes + 128_000)]
     public async Task<ActionResult<JobSearchActivityItemDto>> AddManual(
-        [FromBody] CreateManualJobSearchActivityRequest request,
+        [FromForm] int kind,
+        [FromForm] DateOnly activityDate,
+        [FromForm] string employer,
+        [FromForm] string functionTitle,
+        [FromForm] string? result,
+        IFormFile? attachment,
         CancellationToken cancellationToken)
     {
         var user = await ResolveCandidateAsync(cancellationToken);
@@ -60,16 +68,59 @@ public sealed class JobSearchActivitiesController : ControllerBase
             return Unauthorized();
         }
 
-        var culture = Request.Headers.AcceptLanguage.FirstOrDefault()?.Split(',').FirstOrDefault() ?? "nl";
+        var request = new CreateManualJobSearchActivityRequest(
+            (JobSearchActivityKind)kind,
+            activityDate,
+            employer,
+            functionTitle,
+            result);
+
+        ReadOnlyMemory<byte>? bytes = null;
+        string? fileName = null;
+        string? contentType = null;
+        if (attachment is { Length: > 0 })
+        {
+            await using var buffer = new MemoryStream();
+            await attachment.CopyToAsync(buffer, cancellationToken);
+            bytes = buffer.ToArray();
+            fileName = attachment.FileName;
+            contentType = attachment.ContentType;
+        }
+
         try
         {
-            var item = await _activities.AddManualAsync(user.Id, request, culture, cancellationToken);
+            var item = await _activities.AddManualAsync(
+                user.Id,
+                request,
+                fileName,
+                contentType,
+                bytes,
+                cancellationToken);
             return Ok(item);
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [HttpGet("{activityId:guid}/attachment")]
+    [RequiresFeature(PlatformFeature.ActivityLog)]
+    public async Task<IActionResult> DownloadAttachment(Guid activityId, CancellationToken cancellationToken)
+    {
+        var user = await ResolveCandidateAsync(cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var file = await _activities.GetAttachmentAsync(user.Id, activityId, cancellationToken);
+        if (file is null)
+        {
+            return NotFound();
+        }
+
+        return File(file.Value.Content, file.Value.ContentType, file.Value.FileName);
     }
 
     [HttpPut("agreement")]

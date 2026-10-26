@@ -43,6 +43,7 @@ public class JobsyDbContext : DbContext
     public DbSet<AfterMatchReminderPreference> AfterMatchReminderPreferences => Set<AfterMatchReminderPreference>();
     public DbSet<JobSearchActivity> JobSearchActivities => Set<JobSearchActivity>();
     public DbSet<ActivityAgreement> ActivityAgreements => Set<ActivityAgreement>();
+    public DbSet<JobSearchActivityAttachment> JobSearchActivityAttachments => Set<JobSearchActivityAttachment>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateDiplomaEvaluation> CandidateDiplomaEvaluations => Set<CandidateDiplomaEvaluation>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
@@ -719,6 +720,17 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.CandidateUser)
                 .WithOne()
                 .HasForeignKey<ActivityAgreement>(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<JobSearchActivityAttachment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FileName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.ContentType).HasMaxLength(100).IsRequired();
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

@@ -19,6 +19,7 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
     private const string EntityApplication = "Application";
     private const string EntityInterview = "Interview";
     private const string EntityExternalVacancy = "ExternalVacancy";
+    private const string EntityTrainingEnrollment = "TrainingEnrollment";
 
     static JobSearchActivityService()
     {
@@ -179,6 +180,53 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
             }
         }
 
+        var enrollments = await db.TrainingEnrollments.AsNoTracking()
+            .Include(e => e.Offer)
+            .ThenInclude(o => o.Provider)
+            .Where(e => e.UserId == candidateUserId
+                        && (e.Status == TrainingEnrollmentStatus.Completed
+                            || e.Status == TrainingEnrollmentStatus.Verified))
+            .ToListAsync(cancellationToken);
+
+        foreach (var enrollment in enrollments)
+        {
+            var hasCertificate = !string.IsNullOrWhiteSpace(enrollment.CertificateTitle)
+                                   || enrollment.VerifiedAtUtc is not null;
+            var isWorkshop = enrollment.Offer.Type == TrainingOfferType.Workshop;
+            if (!hasCertificate && !isWorkshop)
+            {
+                continue;
+            }
+
+            if (!existingKeys.Add((EntityTrainingEnrollment, enrollment.Id)))
+            {
+                continue;
+            }
+
+            var whenUtc = enrollment.VerifiedAtUtc
+                          ?? enrollment.CompletedAtUtc
+                          ?? enrollment.UpdatedAtUtc;
+            var title = !string.IsNullOrWhiteSpace(enrollment.CertificateTitle)
+                ? enrollment.CertificateTitle!
+                : enrollment.Offer.Title;
+            toAdd.Add(new JobSearchActivity
+            {
+                Id = Guid.NewGuid(),
+                CandidateUserId = candidateUserId,
+                ActivityDate = ToAmsterdamDate(whenUtc),
+                Kind = JobSearchActivityKind.Workshop,
+                Employer = enrollment.Offer.Provider.Name,
+                FunctionTitle = title,
+                ContactMethod = null,
+                Result = null,
+                Source = JobSearchActivitySource.Auto,
+                SourceEntityType = EntityTrainingEnrollment,
+                SourceEntityId = enrollment.Id,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
+            });
+        }
+
         if (toAdd.Count > 0)
         {
             db.JobSearchActivities.AddRange(toAdd);
@@ -189,7 +237,9 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
     public async Task<JobSearchActivityItemDto> AddManualAsync(
         Guid candidateUserId,
         CreateManualJobSearchActivityRequest request,
-        string cultureName,
+        string? attachmentFileName,
+        string? attachmentContentType,
+        ReadOnlyMemory<byte>? attachmentContent,
         CancellationToken cancellationToken = default)
     {
         var employer = (request.Employer ?? string.Empty).Trim();
@@ -226,9 +276,58 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
             UpdatedAtUtc = now
         };
 
+        if (attachmentContent is { Length: > 0 })
+        {
+            if (!JobSearchActivityAttachmentRules.TryNormalize(
+                    attachmentFileName,
+                    attachmentContentType,
+                    attachmentContent.Value.Span,
+                    out var safeName,
+                    out var normalizedType,
+                    out var fileError))
+            {
+                throw new InvalidOperationException(fileError ?? "file_invalid");
+            }
+
+            var attachmentId = Guid.NewGuid();
+            db.JobSearchActivityAttachments.Add(new JobSearchActivityAttachment
+            {
+                Id = attachmentId,
+                CandidateUserId = candidateUserId,
+                FileName = safeName,
+                ContentType = normalizedType,
+                SizeBytes = attachmentContent.Value.Length,
+                Content = attachmentContent.Value.ToArray(),
+                CreatedAtUtc = now
+            });
+            row.AttachmentId = attachmentId;
+        }
+
         db.JobSearchActivities.Add(row);
         await db.SaveChangesAsync(cancellationToken);
         return MapItem(row, isExternal: false);
+    }
+
+    public async Task<(string FileName, string ContentType, byte[] Content)?> GetAttachmentAsync(
+        Guid candidateUserId,
+        Guid activityId,
+        CancellationToken cancellationToken = default)
+    {
+        var activity = await db.JobSearchActivities.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == activityId && a.CandidateUserId == candidateUserId, cancellationToken);
+        if (activity?.AttachmentId is not Guid attachmentId)
+        {
+            return null;
+        }
+
+        var file = await db.JobSearchActivityAttachments.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == attachmentId && a.CandidateUserId == candidateUserId, cancellationToken);
+        if (file is null)
+        {
+            return null;
+        }
+
+        return (file.FileName, file.ContentType, file.Content);
     }
 
     public async Task UpdateAgreementAsync(
@@ -395,7 +494,8 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
             row.SourceEntityType,
             row.SourceEntityId,
             isExternal,
-            statusKey);
+            statusKey,
+            row.AttachmentId is not null);
     }
 
     private static DateOnly TodayAmsterdam()

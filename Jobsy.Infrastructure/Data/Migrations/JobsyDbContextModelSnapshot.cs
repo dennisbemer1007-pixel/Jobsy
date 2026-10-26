@@ -4861,6 +4861,42 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("JobSearchActivities");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.JobSearchActivityAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CandidateUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("SizeBytes")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CandidateUserId");
+
+                    b.ToTable("JobSearchActivityAttachments");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.KandidatenkaartInviteCampaign", b =>
                 {
                     b.Property<Guid>("Id")
@@ -11611,6 +11647,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.JobSearchActivity", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "CandidateUser")
+                        .WithMany()
+                        .HasForeignKey("CandidateUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CandidateUser");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.JobSearchActivityAttachment", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "CandidateUser")
                         .WithMany()

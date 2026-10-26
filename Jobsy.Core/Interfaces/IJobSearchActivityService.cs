@@ -18,7 +18,14 @@ public interface IJobSearchActivityService
     Task<JobSearchActivityItemDto> AddManualAsync(
         Guid candidateUserId,
         CreateManualJobSearchActivityRequest request,
-        string cultureName,
+        string? attachmentFileName,
+        string? attachmentContentType,
+        ReadOnlyMemory<byte>? attachmentContent,
+        CancellationToken cancellationToken = default);
+
+    Task<(string FileName, string ContentType, byte[] Content)?> GetAttachmentAsync(
+        Guid candidateUserId,
+        Guid activityId,
         CancellationToken cancellationToken = default);
 
     Task UpdateAgreementAsync(
