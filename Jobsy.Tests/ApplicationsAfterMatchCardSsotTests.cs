@@ -20,4 +20,12 @@ public sealed class ApplicationsAfterMatchCardSsotTests
         Assert.Contains("BuildDetailActions", shells, StringComparison.Ordinal);
         Assert.Contains("detail.PrimaryLabel", shells, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Banenkaart_prefetch_skips_isochrones_off_map()
+    {
+        var root = TestRepo.FindRoot();
+        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-prefetch.js"));
+        Assert.Contains("onBanenkaart", js, StringComparison.Ordinal);
+    }
 }
