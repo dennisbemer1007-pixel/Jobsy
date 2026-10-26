@@ -56,12 +56,141 @@ public static class UiStringsSollicitaties
             "Verstuurd {0}", "Sent {0}",
             "Wysłano {0}", "Trimis {0}", "أُرسل {0}");
 
-        Add("Apps.Activiteiten.Placeholder",
-            "Mijn activiteiten komt hier. Je ziet straks je wekelijkse zoekactiviteit en kunt die aanvullen.",
-            "My activities will appear here. You will soon see weekly job-search activity and can add to it.",
-            "Moje aktywności pojawią się tutaj. Wkrótce zobaczysz tygodniową aktywność i uzupełnisz ją.",
-            "Activitățile tale vor apărea aici. În curând vei vedea activitatea săptămânală.",
-            "ستظهر نشاطاتك هنا. قريباً سترى نشاط البحث الأسبوعي.");
+        Add("Apps.Activiteiten.PeriodPrefix",
+            "Deze periode:", "This period:",
+            "Ten okres:", "Această perioadă:", "هذه الفترة:");
+
+        Add("Apps.Activiteiten.TargetMet",
+            "Je afspraak is gehaald", "You reached your goal",
+            "Cel osiągnięty", "Ținta ta este atinsă", "حققت هدفك");
+
+        Add("Apps.Activiteiten.TargetNotMet",
+            "Nog niet genoeg activiteiten deze periode", "Not enough activities yet this period",
+            "Za mało aktywności w tym okresie", "Încă nu sunt destule activități", "لا توجد نشاطات كافية بعد");
+
+        Add("Apps.Activiteiten.DoneBadge",
+            "{0} activiteiten gedaan", "{0} activities done",
+            "{0} aktywności", "{0} activități făcute", "{0} نشاطات");
+
+        Add("Apps.Activiteiten.AgreementBadge",
+            "Je afspraak: {0} per 4 weken", "Your goal: {0} per 4 weeks",
+            "Twój cel: {0} na 4 tygodnie", "Obiectivul tău: {0} la 4 săptămâni", "هدفك: {0} كل 4 أسابيع");
+
+        Add("Apps.Activiteiten.DaysLeftBadge",
+            "Nog {0} dagen in deze periode", "{0} days left in this period",
+            "Zostało {0} dni", "Mai sunt {0} zile", "{0} أيام متبقية");
+
+        Add("Apps.Activiteiten.AdjustLead",
+            "Meer mag altijd. Klopt je afspraak met UWV niet?",
+            "Extra is always fine. Is your UWV agreement different?",
+            "Więcej jest OK. Inna umowa z UWV?", "Mai mult e OK. Altă înțelegere cu UWV?", "المزيد مسموح. هل اتفاق UWV مختلف؟");
+
+        Add("Apps.Activiteiten.AdjustLink",
+            "Aanpassen", "Adjust",
+            "Dostosuj", "Ajustează", "تعديل");
+
+        Add("Apps.Activiteiten.UwvDisclaimer",
+            "Lobsy geeft niets door aan het UWV. Je zet het overzicht zelf in Mijn UWV of in de Werkmap. Zo houd jij de regie.",
+            "Lobsy does not share anything with UWV. You add this overview yourself in Mijn UWV or your workbook. You stay in control.",
+            "Lobsy nie przekazuje nic UWV.", "Lobsy nu trimite nimic către UWV.", "Lobsy لا يشارك UWV أي شيء.");
+
+        Add("Apps.Activiteiten.DownloadPdf",
+            "Download overzicht (pdf)", "Download overview (pdf)",
+            "Pobierz PDF", "Descarcă PDF", "تنزيل PDF");
+
+        Add("Apps.Activiteiten.PerWeek",
+            "Per week", "Per week",
+            "Tygodniowo", "Pe săptămână", "أسبوعياً");
+
+        Add("Apps.Activiteiten.FilterAll",
+            "Alles", "All",
+            "Wszystko", "Tot", "الكل");
+
+        Add("Apps.Activiteiten.FilterApplications",
+            "Sollicitaties", "Applications",
+            "Aplikacje", "Candidaturi", "طلبات");
+
+        Add("Apps.Activiteiten.FilterInterviews",
+            "Gesprekken", "Interviews",
+            "Rozmowy", "Interviuri", "مقابلات");
+
+        Add("Apps.Activiteiten.FilterWorkshops",
+            "Workshops", "Workshops",
+            "Warsztaty", "Ateliere", "ورش");
+
+        Add("Apps.Activiteiten.WeekCount",
+            "{0} activiteiten", "{0} activities",
+            "{0} aktywności", "{0} activități", "{0} نشاطات");
+
+        Add("Apps.Activiteiten.Empty",
+            "Nog geen activiteiten. Sollicitaties en gesprekken via Lobsy verschijnen vanzelf. Voeg handmatig toe wat je buiten Lobsy deed.",
+            "No activities yet. Applications and interviews via Lobsy appear automatically. Add what you did outside Lobsy.",
+            "Brak aktywności.", "Încă nu sunt activități.", "لا نشاطات بعد.");
+
+        Add("Apps.Activiteiten.AutoTracked",
+            "Vanzelf bijgehouden", "Tracked automatically",
+            "Automatycznie", "Urmărit automat", "تتبع تلقائي");
+
+        Add("Apps.Activiteiten.Sent",
+            "Verstuurd", "Sent",
+            "Wysłano", "Trimis", "أُرسل");
+
+        Add("Apps.Activiteiten.AddTitle",
+            "Activiteit toevoegen", "Add activity",
+            "Dodaj aktywność", "Adaugă activitate", "إضافة نشاط");
+
+        Add("Apps.Activiteiten.AddLead",
+            "Iets gedaan buiten Lobsy? Zet het erbij.",
+            "Did something outside Lobsy? Add it here.",
+            "Coś poza Lobsy?", "Ceva în afara Lobsy?", "نشاط خارج Lobsy؟");
+
+        Add("Apps.Activiteiten.FieldDate",
+            "Datum", "Date",
+            "Data", "Dată", "التاريخ");
+
+        Add("Apps.Activiteiten.FieldEmployer",
+            "Werkgever", "Employer",
+            "Pracodawca", "Angajator", "صاحب العمل");
+
+        Add("Apps.Activiteiten.FieldFunction",
+            "Functie of onderwerp", "Role or topic",
+            "Stanowisko", "Funcție", "الوظيفة");
+
+        Add("Apps.Activiteiten.FieldResult",
+            "Wat kwam eruit (mag kort)", "Outcome (short is fine)",
+            "Wynik", "Rezultat", "النتيجة");
+
+        Add("Apps.Activiteiten.Save",
+            "Opslaan", "Save",
+            "Zapisz", "Salvează", "حفظ");
+
+        Add("Apps.Activiteiten.Kind.Applied",
+            "Gesolliciteerd", "Applied",
+            "Aplikacja", "Aplicat", "تقديم");
+
+        Add("Apps.Activiteiten.Kind.EmployerCalled",
+            "Werkgever gebeld", "Called employer",
+            "Telefon", "Apel", "اتصال");
+
+        Add("Apps.Activiteiten.Kind.Visited",
+            "Langsgegaan", "Visited in person",
+            "Wizyta", "Vizită", "زيارة");
+
+        Add("Apps.Activiteiten.Kind.TempAgency",
+            "Uitzendbureau", "Temp agency",
+            "Agencja", "Agenție", "وكالة");
+
+        Add("Apps.Activiteiten.Kind.Network",
+            "Netwerkgesprek", "Network conversation",
+            "Networking", "Rețea", "شبكة");
+
+        Add("Apps.Activiteiten.Kind.Workshop",
+            "Workshop", "Workshop",
+            "Warsztat", "Atelier", "ورشة");
+
+        Add("Apps.Activiteiten.Kind.Interview",
+            "Gesprek", "Interview",
+            "Rozmowa", "Interviu", "مقابلة");
 
         Add("Apps.CardPill.InterviewPlanned",
             "Gesprek gepland", "Interview scheduled",

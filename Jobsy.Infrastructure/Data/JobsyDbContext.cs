@@ -41,6 +41,8 @@ public class JobsyDbContext : DbContext
     public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
     public DbSet<ApplicationOutcome> ApplicationOutcomes => Set<ApplicationOutcome>();
     public DbSet<AfterMatchReminderPreference> AfterMatchReminderPreferences => Set<AfterMatchReminderPreference>();
+    public DbSet<JobSearchActivity> JobSearchActivities => Set<JobSearchActivity>();
+    public DbSet<ActivityAgreement> ActivityAgreements => Set<ActivityAgreement>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateDiplomaEvaluation> CandidateDiplomaEvaluations => Set<CandidateDiplomaEvaluation>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
@@ -690,6 +692,33 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<JobSearchActivity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Employer).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.FunctionTitle).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.ContactMethod).HasMaxLength(200);
+            entity.Property(e => e.Result).HasMaxLength(2000);
+            entity.Property(e => e.SourceEntityType).HasMaxLength(64);
+            entity.HasIndex(e => new { e.CandidateUserId, e.ActivityDate });
+            entity.HasIndex(e => new { e.CandidateUserId, e.Source, e.SourceEntityType, e.SourceEntityId })
+                .IsUnique()
+                .HasFilter("\"Source\" = 0 AND \"SourceEntityType\" IS NOT NULL AND \"SourceEntityId\" IS NOT NULL");
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ActivityAgreement>(entity =>
+        {
+            entity.HasKey(e => e.CandidateUserId);
+            entity.HasOne(e => e.CandidateUser)
+                .WithOne()
+                .HasForeignKey<ActivityAgreement>(e => e.CandidateUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

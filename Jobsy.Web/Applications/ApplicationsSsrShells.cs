@@ -315,7 +315,7 @@ internal static class ApplicationsSsrShells
         }
 
         sb.Append('>');
-        AppendActiviteitenPlaceholder(sb, culture);
+        ApplicationsActiviteitenSsrShells.AppendTab(sb, culture, data);
         sb.Append("</div></div>");
     }
 
@@ -772,13 +772,6 @@ internal static class ApplicationsSsrShells
                     ? culture["Apps.Detail.TipInterview"]
                     : culture[row.NextStepKey!])));
         sb.Append("</p></div>");
-    }
-
-    private static void AppendActiviteitenPlaceholder(StringBuilder sb, CultureState culture)
-    {
-        sb.Append("<p class=\"sollicitaties-activiteiten-placeholder state-message\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Apps.Activiteiten.Placeholder"]));
-        sb.Append("</p>");
     }
 
     private static string BuildGuestGate(CultureState culture)

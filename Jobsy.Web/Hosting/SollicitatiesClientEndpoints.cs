@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -8,6 +9,17 @@ public static class SollicitatiesClientEndpoints
 {
     public static IEndpointRouteBuilder MapSollicitatiesClientEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapPost("/api/sollicitaties-client/activiteiten", AddActiviteitAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
+            .DisableAntiforgery();
+
+        app.MapPut("/api/sollicitaties-client/activiteiten/agreement", UpdateAgreementAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
+            .DisableAntiforgery();
+
+        app.MapGet("/api/sollicitaties-client/activiteiten/period.pdf", DownloadActiviteitenPdfAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate });
+
         app.MapPost("/api/sollicitaties-client/berichten/mark-read", MarkBerichtenReadAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
             .DisableAntiforgery();
@@ -18,6 +30,34 @@ public static class SollicitatiesClientEndpoints
             .DisableAntiforgery();
 
         return app;
+    }
+
+    private static async Task<IResult> AddActiviteitAsync(
+        CreateManualJobSearchActivityRequest request,
+        JobsyApiClient api,
+        CancellationToken cancellationToken)
+    {
+        var ok = await api.TryAddManualJobSearchActivityAsync(request, cancellationToken);
+        return ok ? Results.NoContent() : Results.BadRequest();
+    }
+
+    private static async Task<IResult> UpdateAgreementAsync(
+        UpdateActivityAgreementRequest request,
+        JobsyApiClient api,
+        CancellationToken cancellationToken)
+    {
+        var ok = await api.TryUpdateJobSearchActivityAgreementAsync(request.ActivitiesPerPeriod, cancellationToken);
+        return ok ? Results.NoContent() : Results.BadRequest();
+    }
+
+    private static async Task<IResult> DownloadActiviteitenPdfAsync(
+        JobsyApiClient api,
+        CancellationToken cancellationToken)
+    {
+        var bytes = await api.TryDownloadJobSearchActivitiesPdfAsync(cancellationToken);
+        return bytes is null
+            ? Results.NotFound()
+            : Results.File(bytes, "application/pdf", "lobsy-sollicitatieactiviteiten.pdf");
     }
 
     private static async Task<IResult> MarkBerichtenReadAsync(

@@ -292,6 +292,18 @@ public static class UiStringsFeatureFlags
             "Wł. = katalog szans, test przedsiębiorcy, motywatory i udostępnianie doradcy na trasach kandydata. Wył. = ukryte.",
             "Pornit = ocupații cu șanse, test antreprenor, motivatori și partajare consilier pe rutele candidatului. Oprit = ascuns.",
             "تشغيل = فرص العمل واختبار ريادة الأعمال والدوافع ومشاركة المستشار على مسارات المرشح. إيقاف = مخفي.");
+        Add("AdminSettings.ActivityLog.Enabled.Title",
+            "Mijn activiteiten (UWV)",
+            "My activities (UWV)",
+            "Moje aktywności (UWV)",
+            "Activitățile mele (UWV)",
+            "نشاطاتي (UWV)");
+        Add("AdminSettings.ActivityLog.Enabled.Desc",
+            "Aan = tab Mijn activiteiten op Sollicitaties met teller, weeklijst en pdf. Uit = tab blijft, inhoud uit.",
+            "On = My activities tab on Applications with counter, weekly list and pdf. Off = tab stays, content off.",
+            "Wł. = zakładka Moje aktywności na Aplikacjach. Wył. = wyłączona treść.",
+            "Pornit = fila Activități pe Candidaturi. Oprit = conținut oprit.",
+            "تشغيل = تبويب النشاطات في الطلبات. إيقاف = المحتوى معطّل.");
         Add("AdminSettings.CompactTestPdf.Enabled.Desc",
             "Aan = het uitgebreide persoonlijke testrapport is ongeveer 4 pagina's met grafieken. Uit = de langere rapporten van nu.",
             "On = the extended personal test report is about 4 pages with charts. Off = today's longer reports.",

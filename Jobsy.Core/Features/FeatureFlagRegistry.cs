@@ -63,6 +63,7 @@ public static class FeatureFlagRegistry
             Def("WhatsAppRemindersEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.WhatsAppReminders, pub, false),
             Def("ReferenceVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ReferenceVerification, pub, false),
             Def("AfterMatchEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.AfterMatch, pub, false),
+            Def("ActivityLogEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ActivityLog, pub, false, "JobsyFeatures:ActivityLogEnabled"),
             Def("TestJourneyIllustrationEnabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false, "TestJourneyIllustrationEnabled"),
             Def("OnboardingFinaleV2Enabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false, "Onboarding:FinaleV2Enabled"),
 

@@ -510,6 +510,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     SensitiveExperienceEnabled: request.SensitiveExperienceEnabled,
                     TrainingPartnersEnabled: request.TrainingPartnersEnabled,
                     UwvFeaturesEnabled: request.UwvFeaturesEnabled,
+                    ActivityLogEnabled: request.ActivityLogEnabled,
                     ReferenceVerificationEnabled: request.ReferenceVerificationEnabled,
                     TestJourneyIllustrationEnabled: request.TestJourneyIllustrationEnabled,
                     OnboardingFinaleV2Enabled: request.OnboardingFinaleV2Enabled,
@@ -627,6 +628,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
         Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
         Add("UwvFeaturesEnabled", before.UwvFeaturesEnabled.ToString(), after.UwvFeaturesEnabled.ToString());
+        Add("ActivityLogEnabled", before.ActivityLogEnabled.ToString(), after.ActivityLogEnabled.ToString());
         Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
         Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
         Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
@@ -681,6 +683,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,
             trainingPartnersEnabled = snap.TrainingPartnersEnabled,
             uwvFeaturesEnabled = snap.UwvFeaturesEnabled,
+            activityLogEnabled = snap.ActivityLogEnabled,
             pupilPassportV2Enabled = snap.PupilPassportV2Enabled,
             studentPassportEnabled = snap.StudentPassportEnabled,
             testJourneyIllustrationEnabled = snap.TestJourneyIllustrationEnabled,
@@ -1016,6 +1019,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.SensitiveExperienceEnabled,
             snap.TrainingPartnersEnabled,
             snap.UwvFeaturesEnabled,
+            snap.ActivityLogEnabled,
             snap.ReferenceVerificationEnabled,
             snap.TestJourneyIllustrationEnabled,
             snap.OnboardingFinaleV2Enabled,
