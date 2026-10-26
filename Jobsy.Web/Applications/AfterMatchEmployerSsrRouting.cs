@@ -73,7 +73,7 @@ internal static class AfterMatchEmployerSsrRouting
             panel = "propose";
         }
 
-        return ShouldUseRescheduleScreen(thread)
+        return thread.InterviewStatus == InterviewStatus.RescheduleRequested
                && panel is not ("messages" or "cancel" or "propose");
     }
 }
