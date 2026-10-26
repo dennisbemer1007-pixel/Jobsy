@@ -811,10 +811,15 @@ public sealed partial class JobsyApiClient
 
         try
         {
+            if (response.Content.Headers.ContentLength == 0)
+            {
+                return liked;
+            }
+
             var result = await response.Content.ReadFromJsonAsync<LikeStatus>(LikeJsonOptions, ct);
             return result?.Liked ?? liked;
         }
-        catch (JsonException)
+        catch (Exception)
         {
             return liked;
         }
