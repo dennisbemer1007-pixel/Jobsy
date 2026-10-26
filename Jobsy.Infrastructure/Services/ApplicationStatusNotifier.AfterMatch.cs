@@ -322,6 +322,7 @@ public sealed partial class ApplicationStatusNotifier
         Application application,
         bool actorIsEmployer,
         Guid actorUserId,
+        string? cancelReason = null,
         CancellationToken cancellationToken = default)
     {
         if (application.Vacancy?.Company is null)
@@ -344,7 +345,8 @@ public sealed partial class ApplicationStatusNotifier
                 {
                     var copy = ApplicationStatusNotificationTexts.InterviewCancelled(
                         application.Vacancy.Title,
-                        lang);
+                        lang,
+                        cancelReason);
                     await DeliverToCandidateAsync(
                         application,
                         copy,
@@ -378,7 +380,8 @@ public sealed partial class ApplicationStatusNotifier
             {
                 var copy = ApplicationStatusNotificationTexts.InterviewCancelled(
                     application.Vacancy.Title,
-                    lang);
+                    lang,
+                    cancelReason);
                 await DeliverToEmployersAsync(
                     application,
                     copy,
