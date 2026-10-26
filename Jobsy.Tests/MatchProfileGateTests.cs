@@ -85,13 +85,16 @@ public class MatchProfileGateTests
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateMatchSsr.razor"));
-        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Match/MatchSsrGateHtml.cs"));
+        var gateHtml = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Match/MatchSsrGateHtml.cs"));
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Match/MatchSsrShells.cs"));
         Assert.Contains("MatchVacancyService", page, StringComparison.Ordinal);
         Assert.Contains("CandidateMatchProfileService", page, StringComparison.Ordinal);
         Assert.Contains("IsProfileComplete", shells, StringComparison.Ordinal);
         Assert.Contains("FitGateOpen", shells, StringComparison.Ordinal);
-        Assert.Contains("KbRoutes.Map", shells, StringComparison.Ordinal);
-        Assert.Contains("Match.Gate.AuthTitle", shells, StringComparison.Ordinal);
+        Assert.Contains("Match.Gate.Check.BasicsTitle", gateHtml, StringComparison.Ordinal);
+        Assert.Contains("whoami-checklist", gateHtml, StringComparison.Ordinal);
+        Assert.Contains("KbRoutes.Map", gateHtml, StringComparison.Ordinal);
+        Assert.Contains("Match.Gate.AuthTitle", gateHtml, StringComparison.Ordinal);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Program.cs"));
         Assert.Contains("CandidateMatchProfileService", program, StringComparison.Ordinal);
