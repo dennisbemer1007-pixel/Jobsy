@@ -145,6 +145,21 @@
         }
         <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" data-noblazor-route-css="true" />
     }
+    @if (!LoadBlazorRuntime && IncludeWerkgeverNoBlazorAfterMatchCss)
+    {
+        @foreach (var href in PageStylesheets)
+        {
+            if (href.StartsWith("css/app.min.css", StringComparison.Ordinal))
+            {
+                <link rel="stylesheet" href="@href" data-app-css data-noblazor-route-css="true" />
+            }
+            else
+            {
+                <link rel="stylesheet" href="@href" data-noblazor-route-css="true" />
+            }
+        }
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" data-noblazor-route-css="true" />
+    }
     @if (LoadBlazorRuntime)
     {
         @foreach (var href in PageStylesheets)
@@ -496,7 +511,8 @@
     /// <summary>Blazor or logged-in candidate SSR bundles already include tokens, stijl-a, and decorative layers.</summary>
     private bool UsesFullRouteStylesheetBundle =>
         LoadBlazorRuntime
-        || (IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript);
+        || (IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript)
+        || IncludeWerkgeverNoBlazorAfterMatchCss;
 
     private bool IncludeLandingScript =>
         PageAssetCatalog.IncludeLandingScript(RequestPath);
@@ -533,6 +549,11 @@
         SkipBlazorForPage
         && HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true
         && RoleClaimMatching.HasRole(HttpContextAccessor.HttpContext!.User, JobsyRoles.Candidate);
+
+    private bool IncludeWerkgeverNoBlazorAfterMatchCss =>
+        SkipBlazorForPage
+        && !IncludeBanenkaartClientScript
+        && AfterMatchWerkgeverSsrPaths.IsCanonicalOrInternalPath(RequestPath);
 
     private bool DisableEnhancedNav =>
         AfterMatchWerkgeverSsrPaths.ShouldDisableBlazorAndEnhancedNav(RequestPath);
