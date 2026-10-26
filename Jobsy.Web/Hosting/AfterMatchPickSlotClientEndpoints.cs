@@ -86,10 +86,22 @@ public static class AfterMatchPickSlotClientEndpoints
                 new ProposeCandidateSlotRequest(parsed.StartUtc, parsed.EndUtc, reason),
                 cancellationToken);
         }
-        catch
+        catch (ApiErrorException ex) when (ex.UserMessage is not null)
         {
             return Results.Json(
-                new { errorKey = "Common.Error.TryAgain", message = culture["Common.Error.TryAgain"] },
+                new { errorKey = ex.Code, message = ex.UserMessage },
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+        catch (ApiErrorException ex)
+        {
+            return Results.Json(
+                new { errorKey = ex.Code, message = culture["Common.Error.TryAgain"] },
+                statusCode: ex.StatusCode ?? StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            return Results.Json(
+                new { errorKey = "validation", message = ex.Message },
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
