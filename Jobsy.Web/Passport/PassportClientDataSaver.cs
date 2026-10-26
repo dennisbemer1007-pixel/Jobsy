@@ -75,11 +75,18 @@ internal static class PassportClientDataSaver
             var preferences = profile.Preferences ?? new CandidatePreferences();
             var preset = (form["availabilityPreset"].ToString() ?? "").Trim();
             var flexibleChecked = string.Equals(form["flexibleTimes"].ToString(), "true", StringComparison.Ordinal);
-            var matrixKey = (form["passportMatrix"].ToString() ?? "").Trim();
-
-            if (!string.IsNullOrWhiteSpace(matrixKey))
+            var matrixKeys = form["passportMatrix"].ToArray();
+            if (matrixKeys.Length > 0)
             {
-                var keys = PassportAvailabilityMatrix.ToggleKey(preferences.Availability, matrixKey);
+                var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var raw in matrixKeys)
+                {
+                    if (!string.IsNullOrWhiteSpace(raw))
+                    {
+                        keys.Add(raw.Trim());
+                    }
+                }
+
                 preferences.Availability = PassportAvailabilityMatrix.FromSelectedKeys(keys);
                 preferences.FlexibleTimes = false;
                 if (preferences.MinHoursPerWeek is not > 0)
@@ -148,7 +155,7 @@ internal static class PassportClientDataSaver
         IFormCollection form)
     {
         var returnUrl = (form["returnUrl"].ToString() ?? "").Trim();
-        var safe = AuthRedirects.SafeLocalUrl(returnUrl);
+        var safe = AuthRedirects.TrySafeLocalUrl(returnUrl);
         if (!string.IsNullOrWhiteSpace(safe))
         {
             var back = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(safe, "saved", "1");

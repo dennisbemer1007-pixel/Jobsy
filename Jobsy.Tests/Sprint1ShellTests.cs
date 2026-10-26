@@ -38,6 +38,14 @@ public class AuthRedirectsTests
         => Assert.Equal(expected, AuthRedirects.SafeLocalUrl(input));
 
     [Fact]
+    public void SafeLocalUrl_allows_fragment_in_banenkaart_return_urls()
+    {
+        var url = "/banenkaart?vacancyId=11111111-1111-1111-1111-111111111111#vacancy";
+        Assert.Equal(url, AuthRedirects.SafeLocalUrl(url));
+        Assert.Equal(url, AuthRedirects.TrySafeLocalUrl(url));
+    }
+
+    [Fact]
     public void SafeLocalUrl_normalizes_werkgever_after_match_internal_ssr_paths()
     {
         var app = "77777771-0001-4000-8000-000000000001";

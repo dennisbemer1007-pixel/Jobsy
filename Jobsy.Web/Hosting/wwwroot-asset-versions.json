@@ -519,6 +519,10 @@
     "v": "20261025-kreeft15",
     "sha256": "2e93878eb872c9aed629b02063dbc61b3eb365eb1a2a95ceb13c24762414c879"
   },
+  "js/passport-availability-matrix.js": {
+    "v": "20261026-passport-matrix1",
+    "sha256": "aa1edd53d19803ce1fa291143d16b90e1647ac53528fc184dce0c57532a2cad4"
+  },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",
     "sha256": "a9a963747051d11f9cd4c4d559d1736937d5f283e831677201cd85855d9cb7ce"
