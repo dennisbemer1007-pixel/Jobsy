@@ -21,7 +21,7 @@ internal static class AfterMatchEmployerWatNuSsrShells
             data.StatusNote,
             AfterMatchEmployerDemoSlots.InitialUtc(),
             InterviewFormat.OnSite,
-            "Loosduinseweg 120, Den Haag · ingang naast de winkel",
+            AfterMatchDemoLocation.OnSiteLine,
             "Linda de Wit, eigenaar",
             "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.",
             "",

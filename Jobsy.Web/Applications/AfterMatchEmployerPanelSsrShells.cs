@@ -521,7 +521,7 @@ internal static class AfterMatchEmployerPanelSsrShells
             isScheduled || outcomeDone
                 ? (interviewDate ?? "")
                 : slotsSent
-                    ? culture["AfterMatch.Timeline.PlanWaiting"]
+                    ? culture["AfterMatch.Timeline.InterviewWaiting"]
                     : ""));
         sb.Append("</small></div><div class=\"s");
         if (outcomeDone)

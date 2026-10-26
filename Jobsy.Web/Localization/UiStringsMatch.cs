@@ -124,6 +124,12 @@ public static class UiStringsMatch
             "Chcesz szukać szerzej lub innych ofert? Idź do mapy pracy.",
             "Vrei să cauți mai larg sau alte joburi? Mergi la harta joburilor.",
             "تريد بحثًا أوسع أو أنواع وظائف أخرى؟ اذهب إلى خريطة الوظائف.");
+        Add("Match.Gate.BikeSearchLead",
+            "Of start met",
+            "Or start with",
+            "Albo zacznij od",
+            "Sau începe cu",
+            "أو ابدأ بـ");
         Add("Match.DeckDone",
             "Je hebt ze allemaal gezien", "You've seen them all",
             "Widziałeś je wszystkie", "Le-ai văzut pe toate", "لقد شاهدتها كلها");

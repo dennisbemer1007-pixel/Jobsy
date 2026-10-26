@@ -132,6 +132,16 @@ internal static class AfterMatchSollicitatiesPresentation
         }
 
         var yesAt = summary.AcceptedAtUtc;
+        DateTime? planAt = yesAt;
+        if (status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested && summary.OpenSlotCount > 0)
+        {
+            planAt = summary.LastMessageAtUtc ?? yesAt;
+        }
+        else if (summary.ScheduledStartUtc is DateTime scheduled)
+        {
+            planAt = scheduled;
+        }
+
         var cancelled = !string.IsNullOrWhiteSpace(summary.LastCancelReason);
         var planState = cancelled
             ? "Done"
@@ -154,7 +164,7 @@ internal static class AfterMatchSollicitatiesPresentation
         return
         [
             new("Yes", "Done", culture["AfterMatch.Timeline.Yes"], yesAt),
-            new("Plan", planState, culture["AfterMatch.Timeline.Plan"], null),
+            new("Plan", planState, culture["AfterMatch.Timeline.Plan"], planAt),
             new("Interview", interviewState, culture["AfterMatch.Timeline.Interview"], summary.ScheduledStartUtc),
             new("Outcome", outcomeState, culture["AfterMatch.Timeline.Outcome"], null)
         ];

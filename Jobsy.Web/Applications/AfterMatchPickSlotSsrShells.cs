@@ -58,11 +58,7 @@ internal static class AfterMatchPickSlotSsrShells
     private static string FormatLead(CultureState culture, AfterMatchThreadDto thread)
     {
         var contact = string.IsNullOrWhiteSpace(thread.WithWhom) ? thread.CompanyName : thread.WithWhom!;
-        return string.Format(
-            culture["AfterMatch.Screen04.Hero.LeadPick"],
-            contact,
-            thread.CompanyName,
-            thread.OpenSlots.Count);
+        return AfterMatchMomentCopy.FormatLeadPick(culture, contact, thread.CompanyName, thread.OpenSlots.Count);
     }
 
     private static void AppendMainCard(

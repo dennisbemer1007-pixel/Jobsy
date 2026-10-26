@@ -733,7 +733,7 @@ internal static class ApplicationsSsrShells
         sb.Append("<a class=\"sollic-detail__more-link\" href=\"");
         sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.Vacancy(vacId)));
         sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Apps.Ndm.CompanyPage"]));
+        sb.Append(WebUtility.HtmlEncode(culture["Apps.MenuVacancy"]));
         sb.Append("</a><a class=\"sollic-detail__more-link\" href=\"");
         sb.Append(WebUtility.HtmlEncode(AfterMatchSollicitatiesUrls.LobsyCvPdf(appId)));
         sb.Append("\" data-enhance-nav=\"false\">");
