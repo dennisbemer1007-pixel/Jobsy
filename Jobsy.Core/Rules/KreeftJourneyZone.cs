@@ -35,7 +35,7 @@ public static class KreeftJourneyZone
     {
         if (row is null)
         {
-            return 4;
+            return 0;
         }
 
         var steps = OnboardingStepAnalytics.Parse(row.StepsJson);

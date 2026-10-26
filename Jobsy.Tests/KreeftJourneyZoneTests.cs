@@ -16,6 +16,13 @@ public sealed class KreeftJourneyZoneTests
     }
 
     [Fact]
+    public void Missing_onboarding_resolves_to_strand_zone()
+    {
+        Assert.Equal(0, KreeftJourneyZone.ResolveZoneIndex(null));
+        Assert.Equal("Strand", KreeftJourneyZone.ZoneLabel(0, "nl"));
+    }
+
+    [Fact]
     public void Finished_onboarding_resolves_to_licht_zone()
     {
         var row = new CandidateOnboarding

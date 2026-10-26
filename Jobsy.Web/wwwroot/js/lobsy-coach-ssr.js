@@ -92,10 +92,17 @@
     messages: []
   };
 
+  function syncDockOpenClass() {
+    var dock = document.querySelector(".lobsy-coach-dock[data-ssr-coach]");
+    if (!dock) return;
+    dock.classList.toggle("lobsy-coach-dock--chat-open", state.open);
+  }
+
   function setOpen(on) {
     state.open = !!on;
     var btn = document.getElementById("lobsy-coach-btn");
     if (btn) btn.setAttribute("aria-expanded", state.open ? "true" : "false");
+    syncDockOpenClass();
     if (state.open) {
       var panel = ensurePanel();
       var shell = document.getElementById("lobsy-assistant-ssr-shell");
