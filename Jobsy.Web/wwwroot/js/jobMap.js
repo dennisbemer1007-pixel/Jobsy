@@ -7981,6 +7981,41 @@ window.jobMap = (function () {
         });
     })();
 
+    function openVacancyById(id) {
+        const key = id != null ? String(id) : "";
+        const rec = key ? markersById[key] : null;
+        if (rec) {
+            openVacancyPopup(rec);
+            return true;
+        }
+
+        return false;
+    }
+
+    function tryOpenVacancyFromQuery() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("vacancyId");
+            if (!id) {
+                return;
+            }
+
+            let attempts = 0;
+            function tick() {
+                attempts += 1;
+                if (openVacancyById(id)) {
+                    return;
+                }
+
+                if (attempts < 48) {
+                    setTimeout(tick, 250);
+                }
+            }
+
+            tick();
+        } catch (eQuery) { }
+    }
+
     return {
         boot,
         init,
@@ -7994,6 +8029,8 @@ window.jobMap = (function () {
         setTravelOptions,
         clearOrigin,
         highlight,
+        openVacancyById,
+        tryOpenVacancyFromQuery,
         focus,
         focusCompany,
         dispose,
@@ -8009,15 +8046,7 @@ window.jobMap = (function () {
         },
         isAlive,
         /** @internal Playwright / diagnostics */
-        __testOpenVacancyById: function (id) {
-            const key = id != null ? String(id) : "";
-            const rec = key ? markersById[key] : null;
-            if (rec) {
-                openVacancyPopup(rec);
-                return true;
-            }
-            return false;
-        },
+        __testOpenVacancyById: openVacancyById,
         __testMapFocusRect: function () {
             return map && mapFocusRect();
         },

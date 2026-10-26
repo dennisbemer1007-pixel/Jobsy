@@ -283,6 +283,9 @@
         if (root) {
             root.dataset.banenkaartMapReady = "1";
         }
+        if (window.jobMap && typeof window.jobMap.tryOpenVacancyFromQuery === "function") {
+            window.jobMap.tryOpenVacancyFromQuery();
+        }
     }
 
     function whenMapIdle(cb) {
