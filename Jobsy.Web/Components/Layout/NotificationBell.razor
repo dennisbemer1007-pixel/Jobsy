@@ -143,6 +143,15 @@
         else
         {
             UnreadStore.EnsureStarted();
+            try
+            {
+                await UnreadStore.RefreshOnceAsync();
+            }
+            catch
+            {
+                // keep last known count from store
+            }
+
             _unread = UnreadStore.Unread;
         }
     }
@@ -208,8 +217,7 @@
         catch
         {
             _items = [];
-            _unread = 0;
-            UnreadStore.SetUnread(0);
+            _unread = UnreadStore.Unread;
         }
         finally
         {
