@@ -1,6 +1,7 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Time;
 using Jobsy.Web.Models;
 
 namespace Jobsy.Web.Applications;
