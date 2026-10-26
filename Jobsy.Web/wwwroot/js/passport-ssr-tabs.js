@@ -1,25 +1,55 @@
 (function () {
   "use strict";
 
+  var TAB_ONLY_PARAMS = ["check", "section", "item", "saved", "error"];
+
   function normalizeTab(raw) {
     if (!raw) return "dna";
     var t = String(raw).trim().toLowerCase();
     if (t === "wie-ben-ik" || t === "profile" || t === "profiel") return "dna";
     if (t === "functiefit" || t === "match") return "fit";
-    if (t === "carriere") return "career";
-    if (t === "bewijzen") return "proof";
+    if (t === "carriere" || t === "carrière" || t === "loopbaan") return "career";
+    if (t === "bewijzen" || t === "bewijs") return "proof";
     if (t === "gegevens") return "data";
     return t;
   }
 
+  function stripPassportQueryNoise(u, tab) {
+    TAB_ONLY_PARAMS.forEach(function (key) {
+      u.searchParams.delete(key);
+    });
+    if (tab !== "fit") {
+      u.searchParams.delete("check");
+    }
+    return u;
+  }
+
   function buildUrl(tab) {
     var u = new URL(window.location.href);
+    tab = normalizeTab(tab);
+    stripPassportQueryNoise(u, tab);
     if (!tab || tab === "dna") {
       u.searchParams.delete("tab");
     } else {
       u.searchParams.set("tab", tab);
     }
     return u.pathname + u.search + u.hash;
+  }
+
+  function tabFromPaspoortHref(href) {
+    if (!href) {
+      return null;
+    }
+    try {
+      var u = new URL(href, window.location.href);
+      var path = u.pathname.replace(/\/+$/, "");
+      if (path !== "/candidate/paspoort") {
+        return null;
+      }
+      return normalizeTab(u.searchParams.get("tab"));
+    } catch (_e) {
+      return null;
+    }
   }
 
   function setTab(root, tab, push) {
@@ -114,6 +144,29 @@
     });
   }
 
+  function bindPaspoortTabLinks(root) {
+    root.addEventListener(
+      "click",
+      function (e) {
+        var link = e.target.closest("a[href]");
+        if (!link || !root.contains(link)) {
+          return;
+        }
+        if (link.getAttribute("data-passport-tab-link")) {
+          return;
+        }
+        var tab = tabFromPaspoortHref(link.getAttribute("href"));
+        if (!tab) {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        setTab(root, tab, true);
+      },
+      true
+    );
+  }
+
   function init() {
     var root = document.querySelector("[data-passport-ssr]");
     if (!root) return;
@@ -122,10 +175,12 @@
     setTab(root, initial, false);
     bindStoryToggle(root);
     bindTabListKeys(root);
+    bindPaspoortTabLinks(root);
 
     root.querySelectorAll("[data-passport-tab]").forEach(function (btn) {
       btn.addEventListener("click", function (e) {
         e.preventDefault();
+        e.stopPropagation();
         setTab(root, btn.getAttribute("data-passport-tab"), true);
       });
     });
@@ -135,6 +190,7 @@
         var tab = link.getAttribute("data-passport-tab-link");
         if (!tab) return;
         e.preventDefault();
+        e.stopPropagation();
         setTab(root, tab, true);
       });
     });

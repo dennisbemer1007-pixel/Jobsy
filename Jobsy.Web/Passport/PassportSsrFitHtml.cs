@@ -375,7 +375,7 @@ internal static class PassportSsrFitHtml
             {
                 sb.Append("<div class=\"kb-open-for-work\" data-testid=\"open-for-work-prompt\" role=\"note\"><p>");
                 sb.Append(WebUtility.HtmlEncode(culture["Kb.OpenForWork.Required"]));
-                sb.Append("</p><a class=\"btn-compact btn-compact--primary\" href=\"/candidate/paspoort?tab=data&amp;section=availability\" data-enhance-nav=\"false\">");
+                sb.Append("</p><a class=\"btn-compact btn-compact--primary\" href=\"/candidate/paspoort?tab=data&amp;section=availability\" data-passport-tab-link=\"data\" data-enhance-nav=\"false\">");
                 sb.Append(WebUtility.HtmlEncode(culture["Kb.OpenForWork.Button"]));
                 sb.Append("</a></div>");
             }

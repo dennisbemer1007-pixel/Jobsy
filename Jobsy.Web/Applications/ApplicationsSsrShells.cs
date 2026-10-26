@@ -444,7 +444,7 @@ internal static class ApplicationsSsrShells
         sb.Append("</span><span class=\"sollic-card__meta c\">");
         sb.Append(WebUtility.HtmlEncode(CompanyPlace(row)));
         sb.Append("</span>");
-        if (row.AfterMatch is null && !string.IsNullOrWhiteSpace(row.CardHint))
+        if (!string.IsNullOrWhiteSpace(row.CardHint))
         {
             sb.Append("<span class=\"sollic-card__hint\">");
             sb.Append(WebUtility.HtmlEncode(row.CardHint));

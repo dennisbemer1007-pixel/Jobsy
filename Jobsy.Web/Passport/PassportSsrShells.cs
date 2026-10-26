@@ -496,7 +496,7 @@ internal static class PassportSsrShells
 
         sb.Append("<p class=\"passport-ssr-nav-links\"><a href=\"");
         sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Proof, safeReturn));
-        sb.Append("&item=experience\" data-enhance-nav=\"false\">");
+        sb.Append("&item=experience\" data-passport-tab-link=\"proof\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apply.Experience"]));
         sb.Append("</a> · <a href=\"");
         sb.Append(OnboardingRoutes.KompasHubPath);
