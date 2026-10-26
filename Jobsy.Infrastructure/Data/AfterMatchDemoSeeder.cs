@@ -22,10 +22,21 @@ internal static class AfterMatchDemoSeeder
     private static readonly DateTime Slot3Start = Jobsy.Core.Time.AmsterdamTime.ToUtc(
         new DateTime(2026, 10, 26, 14, 0, 0, DateTimeKind.Unspecified));
 
+    private static readonly Guid[] KeepApplicationIds =
+    [
+        AfterMatchDemoIds.WaitApp,
+        AfterMatchDemoIds.PickSlotsApp,
+        AfterMatchDemoIds.ScheduledApp,
+        AfterMatchDemoIds.RescheduleApp,
+        AfterMatchDemoIds.NotNowApp,
+        AfterMatchDemoIds.Verkoop4790App,
+    ];
+
     public static async Task EnsureAsync(JobsyDbContext db, ILogger logger)
     {
         await EnsureCompanyAsync(db);
         await EnsureDemoVacanciesAsync(db);
+        await RemoveStaleCompanyApplicationsAsync(db, logger);
         await EnsureApplicationsAsync(db, logger);
     }
 
@@ -344,18 +355,71 @@ internal static class AfterMatchDemoSeeder
             }
         }
 
-        if (hasMessage && !await db.ApplicationMessages.AnyAsync(m => m.ApplicationId == appId))
+        if (hasMessage)
         {
-            db.ApplicationMessages.Add(new ApplicationMessage
+            var existingMessages = await db.ApplicationMessages
+                .Where(m => m.ApplicationId == appId)
+                .OrderBy(m => m.CreatedAtUtc)
+                .ToListAsync();
+            if (existingMessages.Count > 1)
             {
-                Id = Guid.NewGuid(),
-                ApplicationId = appId,
-                SenderUserId = BranchManagerId,
-                Body = "Hoi Sanne, leuk dat je wilt komen kennismaken! Ik stuur je vandaag nog een paar momenten.",
-                CreatedAtUtc = YesAt.AddHours(3),
-                BlockReason = ApplicationMessageBlockReason.None
-            });
+                db.ApplicationMessages.RemoveRange(existingMessages.Skip(1));
+            }
+
+            if (existingMessages.Count == 0)
+            {
+                db.ApplicationMessages.Add(new ApplicationMessage
+                {
+                    Id = Guid.NewGuid(),
+                    ApplicationId = appId,
+                    SenderUserId = BranchManagerId,
+                    Body = "Hoi Sanne, leuk dat je wilt komen kennismaken! Ik stuur je vandaag nog een paar momenten.",
+                    CreatedAtUtc = YesAt.AddHours(3),
+                    BlockReason = ApplicationMessageBlockReason.None
+                });
+            }
         }
+        else
+        {
+            db.ApplicationMessages.RemoveRange(
+                await db.ApplicationMessages.Where(m => m.ApplicationId == appId).ToListAsync());
+        }
+    }
+
+    private static async Task RemoveStaleCompanyApplicationsAsync(JobsyDbContext db, ILogger logger)
+    {
+        var keep = KeepApplicationIds.ToHashSet();
+        var staleIds = await db.Applications.AsNoTracking()
+            .Where(a => a.Vacancy.CompanyId == DemoCompanyId && !keep.Contains(a.Id))
+            .Select(a => a.Id)
+            .ToListAsync();
+        if (staleIds.Count == 0)
+        {
+            return;
+        }
+
+        var interviews = await db.Interviews.Where(i => staleIds.Contains(i.ApplicationId)).ToListAsync();
+        var interviewIds = interviews.Select(i => i.Id).ToList();
+        if (interviewIds.Count > 0)
+        {
+            await db.InterviewSlots.Where(s => interviewIds.Contains(s.InterviewId)).ExecuteDeleteAsync();
+            await db.InterviewChanges.Where(c => interviewIds.Contains(c.InterviewId)).ExecuteDeleteAsync();
+            await db.InterviewReminders.Where(r => interviewIds.Contains(r.InterviewId)).ExecuteDeleteAsync();
+            db.Interviews.RemoveRange(interviews);
+        }
+
+        await db.ApplicationMessages.Where(m => staleIds.Contains(m.ApplicationId)).ExecuteDeleteAsync();
+        await db.ApplicationOutcomes.Where(o => staleIds.Contains(o.ApplicationId)).ExecuteDeleteAsync();
+        await db.UserNotifications
+            .Where(n => n.RelatedEntityType == "Application" && n.RelatedEntityId != null && staleIds.Contains(n.RelatedEntityId.Value))
+            .ExecuteDeleteAsync();
+        var staleApps = await db.Applications.Where(a => staleIds.Contains(a.Id)).ToListAsync();
+        db.Applications.RemoveRange(staleApps);
+        await db.SaveChangesAsync();
+        logger.LogInformation(
+            "After-match demo reset: removed {Count} stale applications for demo company {CompanyId}.",
+            staleIds.Count,
+            DemoCompanyId);
     }
 
     private static async Task ResetDemoInterviewGraphAsync(JobsyDbContext db, Guid appId)
