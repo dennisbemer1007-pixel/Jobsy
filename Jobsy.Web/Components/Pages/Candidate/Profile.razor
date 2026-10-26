@@ -1,4 +1,4 @@
-@page "/candidate/profile"
+@page "/candidate/profile/bewerken"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
@@ -177,6 +177,9 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery(Name = "section")]
+    public string? Section { get; set; }
+
     private bool _loading = true;
     private string? _returnUrl;
     private string _openSection = "personal";
@@ -235,9 +238,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ApiCalls.SetPath("/candidate/profile");
+        ApiCalls.SetPath("/candidate/profile/bewerken");
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         Editor.ReturnUrl = _returnUrl;
+        if (!string.IsNullOrWhiteSpace(Section))
+        {
+            var section = Section.Trim().ToLowerInvariant();
+            if (section is "personal" or "preferences" or "availability" or "experience")
+            {
+                _openSection = section;
+            }
+        }
 
         try
         {

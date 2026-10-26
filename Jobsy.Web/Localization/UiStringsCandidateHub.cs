@@ -76,6 +76,13 @@ public static class UiStringsCandidateHub
             "Confidențialitate, potrivire și călătoria ta.",
             "الخصوصية والمطابقة ورحلة الاكتشاف.");
 
+        Add("Profile.Hub.ViewPassport",
+            "Bekijk je paspoort", "View your passport",
+            "Zobacz paszport", "Vezi pașaportul", "اعرض جوازك");
+        Add("Profile.Hub.StatusComplete",
+            "Compleet", "Complete",
+            "Kompletny", "Complet", "مكتمل");
+
         Add("CandidatePrivacy.Title",
             "Privacy", "Privacy",
             "Prywatność", "Confidențialitate", "الخصوصية");
