@@ -99,15 +99,22 @@
       var timeEl = form.querySelector("[data-ndm-propose-time]");
       var noteEl = form.querySelector("[data-ndm-propose-note]");
       if (!dateEl || !timeEl || !noteEl) return;
-      if (!dateEl.value.trim() || !timeEl.value.trim() || !noteEl.value.trim()) return;
+      var dateLabel = dateEl.value.trim();
+      var timeWindow = timeEl.value.trim();
+      var note = noteEl.value.trim();
+      if (!dateLabel || !timeWindow) {
+        var err = container.querySelector("[data-ndm-pick-slot-error]");
+        if (err) err.hidden = false;
+        return;
+      }
       btn.disabled = true;
       postJson(
         "/api/ndm-pick-slot-client/propose-slot?applicationId=" +
           encodeURIComponent(appId),
         {
-          dateLabel: dateEl.value.trim(),
-          timeWindow: timeEl.value.trim(),
-          note: noteEl.value.trim(),
+          dateLabel: dateLabel,
+          timeWindow: timeWindow,
+          note: note || "Voorstel kandidaat",
         }
       )
         .then(function (res) {
