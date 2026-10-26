@@ -59,11 +59,16 @@
     });
 
     var visible = 0;
+    var counted = {};
     page.querySelectorAll("[data-saved-item]").forEach(function (el) {
       var show = matchesFilter(el, filter);
       el.hidden = !show;
       if (show) {
-        visible += 1;
+        var vid = el.getAttribute("data-saved-vacancy-id");
+        if (vid && !counted[vid]) {
+          counted[vid] = true;
+          visible += 1;
+        }
       }
     });
 

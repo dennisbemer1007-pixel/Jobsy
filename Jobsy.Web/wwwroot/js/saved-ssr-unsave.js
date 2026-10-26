@@ -114,13 +114,21 @@
             }
             hideVacancy(root, vacancyId);
             showUndoToast(root, vacancyId, function () {
-              relike(root, vacancyId).finally(function () {
-                showVacancy(root, vacancyId);
-                var box = toast(root);
-                if (box) {
-                  box.hidden = true;
-                }
-              });
+              relike(root, vacancyId)
+                .then(function (data) {
+                  if (!data || (!data.ok && !data.liked && data.Liked !== true)) {
+                    window.alert(root.getAttribute("data-saved-error") || "Error");
+                    return;
+                  }
+                  showVacancy(root, vacancyId);
+                  var box = toast(root);
+                  if (box) {
+                    box.hidden = true;
+                  }
+                })
+                .catch(function () {
+                  window.alert(root.getAttribute("data-saved-error") || "Error");
+                });
             });
           })
           .catch(function () {

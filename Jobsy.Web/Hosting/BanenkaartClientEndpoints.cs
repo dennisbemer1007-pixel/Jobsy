@@ -127,7 +127,7 @@ public static class BanenkaartClientEndpoints
             var savedLiked = await api.SetLikedAsync(vacancyId, liked, cancellationToken);
             if (WantsJson(http))
             {
-                return Results.Json(new { liked = savedLiked, Liked = savedLiked });
+                return Results.Json(new { ok = true, liked = savedLiked, Liked = savedLiked });
             }
 
             var returnQuery = form["returnQuery"].ToString();

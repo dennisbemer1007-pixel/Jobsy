@@ -999,7 +999,31 @@
 }
 
 .kb-saved__inline-form {
-  display: contents;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.kb-saved-row__heart.kb-saved__inline-form,
+.kb-saved-card__heart.kb-saved__inline-form {
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: var(--radius-pill);
+  color: var(--coral, #f54a1b);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.kb-saved-row__heart.kb-saved__inline-form:focus-visible,
+.kb-saved-card__heart.kb-saved__inline-form:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 .kb-saved__sort {
