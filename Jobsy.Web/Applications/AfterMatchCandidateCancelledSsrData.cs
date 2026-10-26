@@ -15,7 +15,8 @@ internal static class AfterMatchCandidateCancelledSsrData
 
     internal static PageData? Load(CultureState culture, AfterMatchThreadDto? thread, Guid applicationId, string? returnUrl)
     {
-        if (thread is null)
+        ArgumentNullException.ThrowIfNull(culture);
+        if (thread is null || thread.ApplicationId != applicationId)
         {
             return null;
         }

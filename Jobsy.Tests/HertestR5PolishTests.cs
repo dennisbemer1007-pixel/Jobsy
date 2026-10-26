@@ -10,7 +10,7 @@ public sealed class HertestR5PolishTests
         var raw = "Past bij je voorkeuren. Betrouwbaarheid van deze match: ongeveer 88%.";
         var cleaned = CandidateFitDisplay.SanitizeWhyForDetail(raw);
         Assert.StartsWith("Past bij je voorkeuren", cleaned, StringComparison.Ordinal);
-        Assert.DoesNotContain('%', cleaned!, StringComparison.Ordinal);
+        Assert.False(cleaned!.Contains('%', StringComparison.Ordinal));
     }
 
     [Fact]
