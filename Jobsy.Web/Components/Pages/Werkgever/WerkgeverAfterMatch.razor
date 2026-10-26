@@ -227,6 +227,11 @@
 
     private async Task RecordOutcomeAsync((AfterMatchOutcomeKind Outcome, string Reason) args)
     {
+        if (_busy)
+        {
+            return;
+        }
+
         _busy = true;
         try
         {
