@@ -1,3 +1,4 @@
+using Jobsy.Core.Hosting;
 using Jobsy.Web.Banenkaart;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
@@ -5,6 +6,7 @@ using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Web.Hosting;
 
@@ -18,7 +20,8 @@ public static class BanenkaartClientEndpoints
         app.MapPost(BanenkaartSsrQuery.ApplyPath, ApplyFiltersAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.ResetPath, ResetFiltersAsync).AllowAnonymous();
         app.MapPost(BanenkaartSsrQuery.SavePath, SaveVacancyAsync)
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .DisableAntiforgery();
 
         return app;
     }
@@ -96,9 +99,10 @@ public static class BanenkaartClientEndpoints
 
     private static async Task<IResult> SaveVacancyAsync(
         HttpContext http,
-        IAntiforgery antiforgery,
         JobsyApiClient api,
         CultureState culture,
+        ILoggerFactory loggerFactory,
+        DeploymentEnvironmentLabel deployment,
         CancellationToken cancellationToken)
     {
         if (!http.Request.HasFormContentType)
@@ -107,48 +111,15 @@ public static class BanenkaartClientEndpoints
         }
 
         var form = await http.Request.ReadFormAsync(cancellationToken);
-        if (!await antiforgery.IsRequestValidAsync(http))
-        {
-            var fallback = BanenkaartSsrQuery.Parse(http.Request.Query);
-            return SeeOther(BanenkaartSsrQuery.BuildUrl(fallback, error: culture["Common.Error.TryAgain"]));
-        }
-
-        if (!Guid.TryParse(form["vacancyId"].ToString(), out var vacancyId))
-        {
-            var fallback = BanenkaartSsrQuery.Parse(http.Request.Query);
-            return SeeOther(BanenkaartSsrQuery.BuildUrl(fallback, error: culture["Common.Error.TryAgain"]));
-        }
-
-        var liked = string.Equals(form["liked"].ToString(), "1", StringComparison.Ordinal)
-                    || string.Equals(form["liked"].ToString(), "true", StringComparison.OrdinalIgnoreCase);
-
-        try
-        {
-            var savedLiked = await api.SetLikedAsync(vacancyId, liked, cancellationToken);
-            if (WantsJson(http))
-            {
-                return Results.Json(new { ok = true, liked = savedLiked, Liked = savedLiked });
-            }
-
-            var returnQuery = form["returnQuery"].ToString();
-            if (!string.IsNullOrWhiteSpace(returnQuery) && returnQuery.StartsWith('?'))
-            {
-                return SeeOther("/banenkaart" + returnQuery + "&saved=1");
-            }
-
-            var state = BanenkaartSsrQuery.Parse(http.Request.Query);
-            return SeeOther(BanenkaartSsrQuery.BuildUrl(state, saved: true));
-        }
-        catch
-        {
-            if (WantsJson(http))
-            {
-                return Results.Json(new { ok = false, error = culture["Common.Error.TryAgain"] });
-            }
-
-            var state = BanenkaartSsrQuery.Parse(http.Request.Query);
-            return SeeOther(BanenkaartSsrQuery.BuildUrl(state, error: culture["Common.Error.TryAgain"]));
-        }
+        var logger = loggerFactory.CreateLogger(typeof(BanenkaartClientEndpoints));
+        return await BanenkaartClientSaveResult.ExecuteAsync(
+            http,
+            form,
+            api,
+            culture,
+            logger,
+            deployment,
+            cancellationToken);
     }
 
     private static async Task<IResult> AddressSuggestAsync(
@@ -183,23 +154,6 @@ public static class BanenkaartClientEndpoints
     }
 
     private sealed record AddressSuggestDto(string Label, double Latitude, double Longitude);
-
-    private static bool WantsJson(HttpContext http)
-    {
-        if (http.Request.Headers.TryGetValue("Accept", out var accept))
-        {
-            foreach (var value in accept)
-            {
-                if (!string.IsNullOrEmpty(value)
-                    && value.Contains("application/json", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return string.Equals(http.Request.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
-    }
 
     private static RedirectHttpResult SeeOther(string url)
         => TypedResults.Redirect(url, permanent: false, preserveMethod: false);

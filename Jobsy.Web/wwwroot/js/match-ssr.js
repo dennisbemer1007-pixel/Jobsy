@@ -30,6 +30,18 @@
     return page.querySelector("[data-match-toast]");
   }
 
+  function setSaveDiagnostics(page, status, code) {
+    if (!page) {
+      return;
+    }
+    if (typeof status === "number") {
+      page.setAttribute("data-lb-status", String(status));
+    }
+    if (code) {
+      page.setAttribute("data-lb-code", String(code));
+    }
+  }
+
   function showToast(page, message) {
     var el = toastEl(page);
     if (!el || !message) {
@@ -51,8 +63,12 @@
     return Array.prototype.slice.call(page.querySelectorAll("[data-match-side]"));
   }
 
+  function activeStage(page) {
+    return page.querySelector("[data-match-stage]:not([hidden])");
+  }
+
   function activeCard(page) {
-    var stage = page.querySelector("[data-match-stage]:not([hidden])");
+    var stage = activeStage(page);
     if (!stage) {
       return null;
     }
@@ -138,6 +154,21 @@
       },
       body: body.toString(),
       credentials: "same-origin"
+    }).then(function (res) {
+      return res
+        .json()
+        .catch(function () {
+          return { ok: false, status: res.status, code: "non_json" };
+        })
+        .then(function (data) {
+          if (data && typeof data.status !== "number") {
+            data.status = res.status;
+          }
+          if (data && data.ok === undefined && res.ok) {
+            data.ok = true;
+          }
+          return data;
+        });
     });
   }
 
@@ -214,12 +245,18 @@
     }
     animateOut(card, "right", function () {
       likeVacancy(boot, vacancyId)
-        .catch(function () {
-          showToast(page, page.getAttribute("data-toast-error"));
-        })
-        .finally(function () {
+        .then(function (data) {
+          setSaveDiagnostics(page, data && data.status, data && data.code);
+          if (!data || data.ok === false) {
+            showToast(page, page.getAttribute("data-toast-error"));
+            return;
+          }
           showToast(page, page.getAttribute("data-toast-liked"));
           advance(page, boot, state, deferredOnce);
+        })
+        .catch(function () {
+          setSaveDiagnostics(page, 500, "client_exception");
+          showToast(page, page.getAttribute("data-toast-error"));
         });
     });
   }
@@ -309,12 +346,18 @@
         if (ev.button !== 0) {
           return;
         }
-        var stage = page.querySelector("[data-match-stage]:not([hidden])");
+        var stage = activeStage(page);
         if (!stage) {
           return;
         }
-        var card = ev.target.closest("[data-match-card]");
-        if (!card || !stage.contains(card) || card.classList.contains("swipe-card--backdrop")) {
+        if (!stage.contains(ev.target)) {
+          return;
+        }
+        if (ev.target.closest("a, button, input, select, textarea")) {
+          return;
+        }
+        var card = stage.querySelector("[data-match-card]:not(.swipe-card--backdrop)");
+        if (!card) {
           return;
         }
         drag = {
@@ -326,6 +369,7 @@
           pointerId: ev.pointerId
         };
         card.setPointerCapture(ev.pointerId);
+        ev.preventDefault();
       },
       true
     );
@@ -370,8 +414,11 @@
   }
 
   function bindKeys(page, boot, state, deferredOnce) {
-    page.addEventListener("keydown", function (ev) {
-      if (ev.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/i.test(ev.target.tagName)) {
+    window.addEventListener("keydown", function (ev) {
+      if (!page.isConnected) {
+        return;
+      }
+      if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/i.test(ev.target.tagName)) {
         return;
       }
       if (ev.key === "ArrowLeft") {
@@ -421,7 +468,6 @@
     bindActions(page, boot, state, deferredOnce);
     bindSwipe(page, boot, state, deferredOnce);
     bindKeys(page, boot, state, deferredOnce);
-    page.focus({ preventScroll: true });
   }
 
   if (document.readyState === "loading") {

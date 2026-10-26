@@ -1038,6 +1038,17 @@
   color: var(--coral, #f54a1b);
   font-size: 1.25rem;
   line-height: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.kb-saved-card__heart.kb-saved__inline-form {
+  inline-size: 2rem;
+  block-size: 2rem;
+  min-inline-size: 2rem;
+  background: var(--coral, #f54a1b);
+  color: var(--surface);
 }
 
 .kb-saved-row__heart.kb-saved__inline-form:focus-visible,

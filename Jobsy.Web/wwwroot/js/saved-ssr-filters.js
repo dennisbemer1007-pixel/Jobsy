@@ -36,11 +36,18 @@
     return u.pathname + u.search + u.hash;
   }
 
+  function itemRemoved(el) {
+    return el.getAttribute("data-saved-removed") === "1";
+  }
+
   function itemClosed(el) {
     return el.getAttribute("data-saved-closed") === "1";
   }
 
   function matchesFilter(el, filter) {
+    if (itemRemoved(el)) {
+      return false;
+    }
     if (filter === "open") {
       return !itemClosed(el);
     }
@@ -48,6 +55,58 @@
       return itemClosed(el);
     }
     return true;
+  }
+
+  function countSavedVacancies(page) {
+    var ids = {};
+    page.querySelectorAll("[data-saved-item]").forEach(function (el) {
+      if (itemRemoved(el)) {
+        return;
+      }
+      var vid = el.getAttribute("data-saved-vacancy-id");
+      if (vid) {
+        ids[vid] = true;
+      }
+    });
+    return Object.keys(ids).length;
+  }
+
+  function updateTabCount(page, total) {
+    var tabCount = document.querySelector(".candidate-job-list-tabs__count");
+    if (!tabCount) {
+      return;
+    }
+    if (total <= 0) {
+      tabCount.remove();
+      return;
+    }
+    tabCount.textContent = String(total);
+  }
+
+  function updateFilterChipCounts(page, filter, visible) {
+    page.querySelectorAll("[data-saved-filter]").forEach(function (chip) {
+      var f = normalizeFilter(chip.getAttribute("data-saved-filter"));
+      var label = chip.textContent || "";
+      var base = label.split("·")[0].trim();
+      var count = f === filter ? visible : countForFilter(page, f);
+      chip.textContent = base + " · " + count;
+    });
+  }
+
+  function countForFilter(page, filter) {
+    var counted = {};
+    var n = 0;
+    page.querySelectorAll("[data-saved-item]").forEach(function (el) {
+      if (!matchesFilter(el, filter)) {
+        return;
+      }
+      var vid = el.getAttribute("data-saved-vacancy-id");
+      if (vid && !counted[vid]) {
+        counted[vid] = true;
+        n += 1;
+      }
+    });
+    return n;
   }
 
   function applyFilter(page, filter, push) {
@@ -71,6 +130,10 @@
         }
       }
     });
+
+    var totalSaved = countSavedVacancies(page);
+    updateTabCount(page, totalSaved);
+    updateFilterChipCounts(page, filter, visible);
 
     var countEl = page.querySelector("[data-saved-filter-count]");
     if (countEl && countEl.dataset.savedCountTemplate) {

@@ -10,15 +10,15 @@
     return el ? el.value : "";
   }
 
-  function hideVacancy(root, vacancyId) {
+  function markRemoved(root, vacancyId, removed) {
     root.querySelectorAll("[data-saved-vacancy-id=\"" + vacancyId + "\"]").forEach(function (el) {
-      el.hidden = true;
-    });
-  }
-
-  function showVacancy(root, vacancyId) {
-    root.querySelectorAll("[data-saved-vacancy-id=\"" + vacancyId + "\"]").forEach(function (el) {
-      el.hidden = false;
+      if (removed) {
+        el.setAttribute("data-saved-removed", "1");
+        el.hidden = true;
+      } else {
+        el.removeAttribute("data-saved-removed");
+        el.hidden = false;
+      }
     });
   }
 
@@ -68,9 +68,17 @@
       body: body.toString(),
       credentials: "same-origin"
     }).then(function (res) {
-      return res.json().catch(function () {
-        return { ok: false };
-      });
+      return res
+        .json()
+        .catch(function () {
+          return { ok: false, status: res.status, code: "non_json" };
+        })
+        .then(function (data) {
+          if (data && typeof data.status !== "number") {
+            data.status = res.status;
+          }
+          return data;
+        });
     });
   }
 
@@ -112,7 +120,7 @@
               window.alert(root.getAttribute("data-saved-error") || "Error");
               return;
             }
-            hideVacancy(root, vacancyId);
+            markRemoved(root, vacancyId, true);
             root.dispatchEvent(new CustomEvent("saved-ssr:visibility-changed", { bubbles: true }));
             showUndoToast(root, vacancyId, function () {
               relike(root, vacancyId)
@@ -121,7 +129,7 @@
                     window.alert(root.getAttribute("data-saved-error") || "Error");
                     return;
                   }
-                  showVacancy(root, vacancyId);
+                  markRemoved(root, vacancyId, false);
                   root.dispatchEvent(new CustomEvent("saved-ssr:visibility-changed", { bubbles: true }));
                   var box = toast(root);
                   if (box) {
