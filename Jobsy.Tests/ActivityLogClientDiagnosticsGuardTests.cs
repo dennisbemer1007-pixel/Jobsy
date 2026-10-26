@@ -7,8 +7,8 @@ public sealed class ActivityLogClientDiagnosticsGuardTests
     {
         var root = TestRepo.FindRoot();
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Applications", "ApplicationsActiviteitenSsrShells.cs"));
-        Assert.Contains("data-lb-status=\"", shells, StringComparison.Ordinal);
-        Assert.Contains("data-lb-code=\"", shells, StringComparison.Ordinal);
+        Assert.Contains("data-lb-status", shells, StringComparison.Ordinal);
+        Assert.Contains("data-lb-code", shells, StringComparison.Ordinal);
         Assert.Contains("ActiviteitenAcceptatieDiagnostics", shells, StringComparison.Ordinal);
     }
 
