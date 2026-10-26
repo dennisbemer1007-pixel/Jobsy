@@ -14,6 +14,24 @@ internal static class AfterMatchTimelineLabels
             ? "—"
             : AfterMatchMailSsrTime.ToAmsterdam(utc.Value).ToString("d MMM", Nl);
 
+    internal static string PlanStep(AfterMatchThreadDto thread)
+    {
+        if (thread.ScheduledStartUtc is DateTime scheduled)
+        {
+            return ShortDate(scheduled.AddDays(-7));
+        }
+
+        if (thread.OpenSlots.Count > 0)
+        {
+            var first = thread.OpenSlots.OrderBy(s => s.StartUtc).First();
+            return ShortDate(first.StartUtc.AddDays(-7));
+        }
+
+        return thread.AcceptedAtUtc is DateTime accepted
+            ? ShortDate(accepted.AddDays(2))
+            : "—";
+    }
+
     internal static string InterviewStep(AfterMatchThreadDto thread)
     {
         if (thread.ScheduledStartUtc is DateTime scheduled)

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Localization;
 
@@ -19,16 +18,15 @@ internal static class AfterMatchEmployerOutcomeSsrData
 
     internal static PageData FromThread(CultureState culture, AfterMatchThreadDto thread, Guid applicationId)
     {
-        var nl = CultureInfo.GetCultureInfo("nl-NL");
         var yesHint = thread.AcceptedAtUtc is DateTime accepted
-            ? AfterMatchMailSsrTime.ToAmsterdam(accepted).ToString("d MMM", nl)
+            ? AfterMatchTimelineLabels.ShortDate(accepted)
             : null;
-        var interviewHint = thread.ScheduledStartUtc is DateTime scheduled
-            ? AfterMatchMailSsrTime.ToAmsterdam(scheduled).ToString("d MMM", nl)
-            : null;
-        var planHint = thread.ScheduledStartUtc is DateTime planBase
-            ? AfterMatchMailSsrTime.ToAmsterdam(planBase).AddDays(-7).ToString("d MMM", nl)
-            : yesHint;
+        var interviewHint = AfterMatchTimelineLabels.InterviewStep(thread);
+        var planHint = AfterMatchTimelineLabels.PlanStep(thread);
+        if (planHint == "—")
+        {
+            planHint = yesHint;
+        }
 
         return new PageData(
             thread,
