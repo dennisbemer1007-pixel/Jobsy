@@ -36,6 +36,22 @@ public sealed class AcceptatieSollicitatiesDemoEnsureApiTests : IClassFixture<Ac
     }
 
     [Fact]
+    public async Task Ensure_seeds_mockup_rows_for_kandidaat_jobsy_local()
+    {
+        _ = _factory.CreateClient();
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(
+            _factory,
+            _factory.KandidaatJobsyLocalId,
+            _factory.KandidaatJobsyLocalSessionVersion);
+        var response = await client.PostAsync("api/me/acceptatie-sollicitaties-demo-ensure", null);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<EnsureDto>();
+        Assert.NotNull(body);
+        Assert.True(body.Applied);
+        Assert.True(body.VerifiedApplicationCount >= 6);
+    }
+
+    [Fact]
     public async Task Ensure_seeds_mockup_rows_for_grokbot_candidate()
     {
         _ = _factory.CreateClient();
@@ -65,6 +81,8 @@ public sealed class AcceptatieSollicitatiesDemoEnsureApiFactory : ApiWebApplicat
 {
     public Guid GrokbotCandidateId { get; private set; }
     public int GrokbotSessionVersion { get; private set; }
+    public Guid KandidaatJobsyLocalId { get; private set; }
+    public int KandidaatJobsyLocalSessionVersion { get; private set; }
     public Guid OtherCandidateId { get; private set; }
     public int OtherCandidateSessionVersion { get; private set; }
 
@@ -145,6 +163,19 @@ public sealed class AcceptatieSollicitatiesDemoEnsureApiFactory : ApiWebApplicat
         catalog.Email = TestAccountsSollicitatiesDemoSeeder.AcceptatiePrimaryCandidateEmail;
         GrokbotCandidateId = catalog.Id;
         GrokbotSessionVersion = catalog.SessionVersion;
+
+        var kandidaatLocal = new Jobsy.Core.Entities.User
+        {
+            Id = Guid.NewGuid(),
+            Email = "kandidaat@jobsy.local",
+            FullName = "Sanne de Vries",
+            Role = Jobsy.Core.Enums.UserRole.Candidate,
+            IsActive = true,
+            IsTestAccount = true
+        };
+        db.Users.Add(kandidaatLocal);
+        KandidaatJobsyLocalId = kandidaatLocal.Id;
+        KandidaatJobsyLocalSessionVersion = kandidaatLocal.SessionVersion;
 
         var other = new Jobsy.Core.Entities.User
         {

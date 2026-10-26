@@ -269,6 +269,81 @@ public sealed class TestAccountsSollicitatiesSeedTests
     }
 
     [Fact]
+    public async Task TryEnsure_seeds_requesting_kandidaat_jobsy_local_not_grokbot()
+    {
+        var (db, grokId, _) = await SeedUsersAsync(includeGrokbotCandidate: true);
+        await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+            db,
+            BuildConfig(),
+            TestAccountEnvironmentGuard.Evaluate(ValidAcceptatieGuardInput()),
+            NullLogger.Instance);
+        Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == grokId));
+
+        var kandidaatId = Guid.NewGuid();
+        db.Users.Add(new Jobsy.Core.Entities.User
+        {
+            Id = kandidaatId,
+            Email = "kandidaat@jobsy.local",
+            FullName = "Sanne de Vries",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            IsTestAccount = true
+        });
+        await db.SaveChangesAsync();
+
+        var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+            db,
+            BuildConfig(),
+            TestAccountEnvironmentGuard.Evaluate(ValidAcceptatieGuardInput()),
+            NullLogger.Instance,
+            kandidaatId);
+        Assert.True(applied);
+        Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == kandidaatId));
+        Assert.Equal(0, await db.Applications.CountAsync(a => a.CandidateUserId == grokId));
+    }
+
+    [Fact]
+    public async Task Purge_stale_external_removes_linked_job_search_activity()
+    {
+        var (db, candidateId, _) = await SeedUsersAsync();
+        var staleId = Guid.NewGuid();
+        db.CandidateExternalVacancies.Add(new Jobsy.Core.Entities.CandidateExternalVacancy
+        {
+            Id = staleId,
+            CandidateUserId = candidateId,
+            SourceUrl = "https://example.com/stale",
+            SourceHost = "example.com",
+            Title = "Stale",
+            CompanyName = "BV",
+            Status = CandidateExternalVacancyStatus.Applied,
+            SavedAtUtc = DateTime.UtcNow,
+        });
+        db.JobSearchActivities.Add(new Jobsy.Core.Entities.JobSearchActivity
+        {
+            Id = Guid.NewGuid(),
+            CandidateUserId = candidateId,
+            ActivityDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            Kind = JobSearchActivityKind.Applied,
+            Employer = "BV",
+            FunctionTitle = "Stale",
+            Source = JobSearchActivitySource.Auto,
+            SourceEntityType = "ExternalVacancy",
+            SourceEntityId = staleId,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        await TestAccountsSollicitatiesDemoSeeder.PurgeAcceptatieDemoExternalVacanciesAsync(
+            db,
+            BuildConfig(),
+            NullLogger.Instance);
+
+        Assert.False(await db.CandidateExternalVacancies.AnyAsync(v => v.Id == staleId));
+        Assert.False(await db.JobSearchActivities.AnyAsync(a => a.SourceEntityId == staleId));
+    }
+
+    [Fact]
     public async Task TryEnsure_uses_primary_grokbot_email_when_test_account()
     {
         var (db, _, branchManagerId) = await SeedUsersAsync(includeGrokbotCandidate: true);

@@ -123,8 +123,10 @@ else if (_bodyHtml is not null)
                 data,
                 string.IsNullOrEmpty(detailReturnHref) ? null : detailReturnHref);
         }
-        catch
+        catch (Exception ex)
         {
+            LoggerFactory.CreateLogger("CandidateApplicationsSsr")
+                .LogError(ex, "Candidate applications SSR failed.");
             _fatalMessage = Culture["Panel.ErrorInline"];
         }
         finally
