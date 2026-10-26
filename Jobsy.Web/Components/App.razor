@@ -61,23 +61,35 @@
         <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-catalog.js")}")" crossorigin="anonymous" nonce="@Nonce" defer></script>
         <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-prefetch.js")}")" crossorigin="anonymous" nonce="@Nonce" defer></script>
     }
-    @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
+    @if (!LoadBlazorRuntime && IncludeGratisDnaScript && !UsesFullRouteStylesheetBundle)
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/gratis-dna.css")" />
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/questionnaire.css")" />
     }
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/critical.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/tokens.css")" />
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/tokens.css")" />
+    }
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/public-theme.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/stijl-a.css")" />
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/stijl-a.css")" />
+    }
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/auth.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/landing.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-decorative-layers.css")" />
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-decorative-layers.css")" />
+    }
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-public.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/public-pages.css")" />
-    @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
-    <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" />
+    @* errors.css after app.min on candidate shells — see UsesFullRouteStylesheetBundle block below. *@
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" />
+    }
     @if (LoadBlazorRuntime)
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/reconnect.css")" data-reconnect-css />
@@ -131,6 +143,7 @@
         {
             <link rel="stylesheet" href="@href" data-noblazor-route-css="true" />
         }
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" data-noblazor-route-css="true" />
     }
     @if (LoadBlazorRuntime)
     {
@@ -146,6 +159,7 @@
             }
         }
         <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css")" data-app-css />
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" data-app-css />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
     @if (LoadBlazorRuntime)
@@ -478,6 +492,11 @@
 
     private IReadOnlyList<string> PageStylesheets =>
         PageAssetCatalog.StylesheetsFor(PageAreas, RequestPath);
+
+    /// <summary>Blazor or logged-in candidate SSR bundles already include tokens, stijl-a, and decorative layers.</summary>
+    private bool UsesFullRouteStylesheetBundle =>
+        LoadBlazorRuntime
+        || (IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript);
 
     private bool IncludeLandingScript =>
         PageAssetCatalog.IncludeLandingScript(RequestPath);

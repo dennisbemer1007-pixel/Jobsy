@@ -112,8 +112,8 @@
     "v": "20261004-10"
   },
   "css/features/errors.css": {
-    "sha256": "f05b72a2b3cdadf183afb863c32141583181c49d2c693aa500270062f4cf33eb",
-    "v": "20261025-kreeft14"
+    "sha256": "c5f42fc0b142d2472fc4dfb288cefffff2e46e244dde733a98ec555342757508",
+    "v": "20261026-kreeft16"
   },
   "css/features/form-fields.css": {
     "sha256": "dee90194df3ce52e43bc9c9bd5c9aca798d30e6cbc498f217b7355e5d5ac75d1",
@@ -460,8 +460,8 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "v": "20261025-kreeft15",
-    "sha256": "871f0aa175cd7ad4549ec3fb07fed89b7376bc9fd453f528a4f54b9c57a3b43f"
+    "v": "20261026-kreeft16",
+    "sha256": "8e297b3f04484869320f3c4b44927be10d954dccdc95e539fe21b05be67ffe93"
   },
   "js/lobsyPush.js": {
     "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",

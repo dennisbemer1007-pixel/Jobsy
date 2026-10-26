@@ -11,6 +11,13 @@ public sealed class WwwrootAssetCatalogLiteralGuardTests
         @"(?<path>(?:css|js)/[^\s""']+\.(?:css|js))\?v=",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly HashSet<string> AllowedLiteralAssetPaths = new(StringComparer.Ordinal)
+    {
+        "_framework/blazor.web.js",
+        "lib/maplibre/maplibre-gl.css",
+        "lib/maplibre/maplibre-gl-csp.js",
+    };
+
     private static readonly Regex DuplicateStylesheetFor = new(
         @"@foreach\s*\(\s*var\s+href\s+in\s+PageAssetCatalog\.StylesheetsFor",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -65,6 +72,11 @@ public sealed class WwwrootAssetCatalogLiteralGuardTests
             foreach (Match match in LiteralWwwrootAsset.Matches(text))
             {
                 var path = match.Groups["path"].Value;
+                if (AllowedLiteralAssetPaths.Contains(path))
+                {
+                    continue;
+                }
+
                 if (path.StartsWith("_framework/", StringComparison.Ordinal))
                 {
                     continue;

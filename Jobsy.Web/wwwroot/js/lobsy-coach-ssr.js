@@ -51,7 +51,8 @@
       "</div></header>" +
       '<p class="lobsy-assistant__context" data-ssr-assistant-context hidden role="status"></p>' +
       '<div class="lobsy-assistant__chat" data-ssr-assistant-chat></div>' +
-      '<div class="lobsy-assistant__actions" data-ssr-assistant-chips></div>' +
+      '<div class="lobsy-assistant__chips" data-ssr-assistant-chips></div>' +
+      '<div class="lobsy-assistant__actions" data-ssr-assistant-action-links></div>' +
       '<form class="lobsy-assistant__compose" data-ssr-assistant-form>' +
       '<label class="visually-hidden" for="lobsy-assistant-input"></label>' +
       '<div class="lobsy-assistant__compose-row">' +
@@ -150,9 +151,31 @@
     (chips || []).forEach(function (chip) {
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "lobsy-assistant__action";
+      btn.className = "lobsy-assistant__chip";
       btn.textContent = chip.label;
       btn.dataset.ssrChipMessage = chip.message;
+      host.appendChild(btn);
+    });
+  }
+
+  function renderActionLinks(actions) {
+    var host = document.querySelector("[data-ssr-assistant-action-links]");
+    if (!host) return;
+    host.innerHTML = "";
+    var seen = {};
+    var count = 0;
+    (actions || []).forEach(function (action) {
+      if (count >= 6) return;
+      var url = action && (action.url || action.Url);
+      if (!url || seen[url]) return;
+      seen[url] = true;
+      count += 1;
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "engagement-btn lobsy-assistant__action";
+      var label = action.label || action.Label || url || "→";
+      btn.textContent = String(label).trim();
+      btn.dataset.ssrActionUrl = url;
       host.appendChild(btn);
     });
   }
@@ -200,6 +223,7 @@
           state.messages.push({ role: "assistant", content: data.reply || "" });
         }
         renderChips(data.chips || []);
+        renderActionLinks(data.actions || []);
       })
       .catch(function () {
         if (state.messages.length === 0) {
@@ -218,6 +242,7 @@
     state.messages.push({ role: "user", content: text });
     state.busy = true;
     renderChips([]);
+    renderActionLinks([]);
     renderMessages();
     postChat({
       messages: state.messages,
@@ -233,7 +258,10 @@
         }
         if (data.chips && data.chips.length) {
           renderChips(data.chips);
+        } else {
+          renderChips([]);
         }
+        renderActionLinks(data.actions || []);
       })
       .catch(function () {
         state.messages.pop();
@@ -297,12 +325,18 @@
     );
 
     document.body.addEventListener("click", function (ev) {
-      var chip = ev.target.closest("[data-ssr-assistant-chips] .lobsy-assistant__action");
-      if (!chip || chip.disabled) return;
+      var chip = ev.target.closest("[data-ssr-assistant-chips] .lobsy-assistant__chip");
+      if (chip && !chip.disabled) {
+        ev.preventDefault();
+        var msg = chip.dataset.ssrChipMessage || (chip.textContent || "").trim();
+        if (msg) sendMessage(msg);
+        return;
+      }
+      var link = ev.target.closest("[data-ssr-assistant-action-links] .lobsy-assistant__action");
+      if (!link || link.disabled) return;
       ev.preventDefault();
-      var msg = chip.dataset.ssrChipMessage || (chip.textContent || "").trim();
-      if (!msg) return;
-      sendMessage(msg);
+      var url = link.dataset.ssrActionUrl;
+      if (url) window.location.assign(url);
     });
 
     syncClearance();
