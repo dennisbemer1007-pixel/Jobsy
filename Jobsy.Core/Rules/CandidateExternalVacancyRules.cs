@@ -123,6 +123,8 @@ public static class CandidateExternalVacancyRules
     public const string MatchInsightUnknown = "Dat weet ik niet";
     public const string MatchInsightCompetenciesPlaceholder = "Competenties beschikbaar";
     public const string MatchInsightCulturePlaceholder = "Cultuurprofiel beschikbaar";
+    public const string MatchInsightCultureMissing = "Cultuurprofiel ontbreekt";
+    public const string MatchInsightCompetenciesMissing = "Competenties ontbreekt";
 
     public static bool IsExternalMatchInsightPlaceholder(string? line)
     {
@@ -134,7 +136,9 @@ public static class CandidateExternalVacancyRules
         var trimmed = line.Trim();
         return string.Equals(trimmed, MatchInsightUnknown, StringComparison.OrdinalIgnoreCase)
                || string.Equals(trimmed, MatchInsightCompetenciesPlaceholder, StringComparison.OrdinalIgnoreCase)
-               || string.Equals(trimmed, MatchInsightCulturePlaceholder, StringComparison.OrdinalIgnoreCase);
+               || string.Equals(trimmed, MatchInsightCulturePlaceholder, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(trimmed, MatchInsightCultureMissing, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(trimmed, MatchInsightCompetenciesMissing, StringComparison.OrdinalIgnoreCase);
     }
 
     public static ExternalVacancyMatchInsightsDto FilterMatchInsightsForDisplay(

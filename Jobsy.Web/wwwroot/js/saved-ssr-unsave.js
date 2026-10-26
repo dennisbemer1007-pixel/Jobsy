@@ -23,7 +23,7 @@
   }
 
   function toast() {
-    return document.querySelector(".saved-page-wrap [data-saved-toast]");
+    return document.querySelector("[data-saved-toast]");
   }
 
   function showUndoToast(root, vacancyId, onUndo) {

@@ -29,6 +29,12 @@ public class CandidateExternalVacancyRulesTests
         Assert.Single(filtered.Strengths);
         Assert.Equal("Echte match op teamwork", filtered.Strengths[0]);
         Assert.Empty(filtered.Challenges);
+
+        var withMissingCulture = CandidateExternalVacancyRules.FilterMatchInsightsForDisplay(
+            new Jobsy.Core.Contracts.ExternalVacancyMatchInsightsDto(
+                [],
+                [CandidateExternalVacancyRules.MatchInsightCultureMissing]));
+        Assert.Empty(withMissingCulture.Challenges);
     }
 
     [Fact]

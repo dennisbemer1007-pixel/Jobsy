@@ -47,6 +47,8 @@ public sealed class R9cPaspoortBewaardGuardTests
         Assert.Contains("kb-saved-toast-open", js, StringComparison.Ordinal);
         Assert.Contains("kb-saved-toast-open", css, StringComparison.Ordinal);
         Assert.Contains("z-index: 10090", css, StringComparison.Ordinal);
+        Assert.Contains("document.querySelector(\"[data-saved-toast]\")", js, StringComparison.Ordinal);
+        Assert.DoesNotContain(".saved-page-wrap [data-saved-toast]", js, StringComparison.Ordinal);
     }
 
     [Fact]
