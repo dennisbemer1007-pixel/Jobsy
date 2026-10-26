@@ -60,7 +60,7 @@
                     {
                         <p class="muted notification-bell__empty">Berichten laden…</p>
                     }
-                    else if (_items.Count == 0 && _unread > 0)
+                    else if (_listLoadFailed)
                     {
                         <div class="notification-bell__empty-state">
                             <p class="notification-bell__empty-title">Berichten laden mislukt</p>
@@ -125,6 +125,7 @@
     private List<UserNotificationItem> _items = [];
     private string _allNotificationsHref = "/notifications";
     private bool _noBlazorRuntime;
+    private bool _listLoadFailed;
 
     protected override async Task OnInitializedAsync()
     {
@@ -193,13 +194,14 @@
     private async Task LoadListAsync()
     {
         _loading = true;
+        _listLoadFailed = false;
         try
         {
             for (var attempt = 0; attempt < 3; attempt++)
             {
                 try
                 {
-                    _items = (await Api.GetNotificationsAsync()).ToList();
+                    _items = (await Api.GetNotificationsAsync(take: 120)).ToList();
                     _unread = await Api.GetUnreadNotificationCountAsync();
                     UnreadStore.SetUnread(_unread);
                     return;
@@ -210,12 +212,14 @@
                 }
             }
 
+            _listLoadFailed = true;
             _items = [];
             _unread = await Api.GetUnreadNotificationCountAsync();
             UnreadStore.SetUnread(_unread);
         }
         catch
         {
+            _listLoadFailed = true;
             _items = [];
             _unread = UnreadStore.Unread;
         }
