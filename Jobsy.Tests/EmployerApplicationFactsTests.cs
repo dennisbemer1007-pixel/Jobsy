@@ -22,9 +22,19 @@ public sealed class EmployerApplicationFactsTests
 
         var rows = EmployerApplicationFacts.Build(app);
 
-        Assert.Single(rows);
-        Assert.Equal("Voorkeur", rows[0].Label);
-        Assert.Contains("Horeca", rows[0].Value, StringComparison.Ordinal);
-        Assert.DoesNotContain("Uren per week", rows[0].Value, StringComparison.Ordinal);
+        Assert.Contains(rows, r => r.Label == "Rollen" && r.Value.Contains("Horeca", StringComparison.Ordinal));
+        Assert.Contains(rows, r => r.Label == "Reistijd" && r.Value.Contains("30", StringComparison.Ordinal));
+        Assert.Contains(rows, r => r.Label == "Vervoer" && r.Value.Contains("Fiets", StringComparison.Ordinal));
+        Assert.DoesNotContain(rows, r => r.Value.Contains("max 30 min · Fiets", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ToHoursReadable_ignores_travel_fields()
+    {
+        const string json = """{"minHoursPerWeek":24,"maxHoursPerWeek":32,"maxTravelMinutes":30,"preferredTransport":"Fiets"}""";
+        var hours = ApplicationPreferenceRedaction.ToHoursReadable(json);
+        Assert.Contains("24", hours!, StringComparison.Ordinal);
+        Assert.Contains("32", hours!, StringComparison.Ordinal);
+        Assert.DoesNotContain("Fiets", hours!, StringComparison.Ordinal);
     }
 }

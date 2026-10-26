@@ -258,10 +258,7 @@ else
         status is "Accepted" or "EmployerContacting" or "Hired";
 
     private static string? HoursFact(EmployerApplicationItem item)
-    {
-        var prefs = ApplicationPreferenceRedaction.ToHumanReadable(item.PreferencesSummary);
-        return string.IsNullOrWhiteSpace(prefs) ? null : prefs;
-    }
+        => ApplicationPreferenceRedaction.ToHoursReadable(item.PreferencesSummary);
 
     private Task OnPhase2AcceptUiChanged(bool available)
     {
