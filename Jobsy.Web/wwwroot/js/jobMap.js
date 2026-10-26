@@ -7187,6 +7187,8 @@ window.jobMap = (function () {
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
         const filledOrigin = useStoredOriginForMapCamera(preferFilledLocation) ? readFilledOrigin() : null;
         const hasOrigin = !!(options && options.origin) || !!filledOrigin;
+        lagenLayout = readLagenLayoutFromOptions(options);
+        catalogModeActive = !!(options && options.catalogMode);
         let live = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
 
@@ -7243,7 +7245,6 @@ window.jobMap = (function () {
             pinsBaseUrl = stripViewportParams(nextPinsUrl);
             pinsUrl = pinsBaseUrl + viewportQueryString();
         }
-        lagenLayout = readLagenLayoutFromOptions(options);
         if (lagenLayout) {
             illustratedPopup = false;
         } else {
@@ -7256,7 +7257,6 @@ window.jobMap = (function () {
             ? options.illustratedVacancySpots
             : {};
 
-        catalogModeActive = !!(options && options.catalogMode);
         if (catalogModeActive) {
             clearPinsFetchState();
         }
