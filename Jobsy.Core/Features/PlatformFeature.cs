@@ -98,5 +98,8 @@ public enum PlatformFeature
     TestDepthValueMockup,
 
     /// <summary>UWV werkmap: kansberoepen, ondernemerstest, drijfveren, adviseur-deel. Default on (admin can disable).</summary>
-    UwvFeatures
+    UwvFeatures,
+
+    /// <summary>Mijn activiteiten (UWV werkmap). Default off; on on acceptatie via config.</summary>
+    ActivityLog
 }

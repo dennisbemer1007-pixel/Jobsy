@@ -1,8 +1,8 @@
 using System.Globalization;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
-using Jobsy.Core.Contracts;
 using Jobsy.Web.Bedrijvenkaart;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
@@ -41,7 +41,9 @@ internal static class ApplicationsSsrData
         int UnreadMessagesTotal,
         Guid? BerichtenThreadId,
         AfterMatchThreadDto? BerichtenThread,
-        IReadOnlyDictionary<Guid, AfterMatchThreadDto> BerichtenThreads);
+        IReadOnlyDictionary<Guid, AfterMatchThreadDto> BerichtenThreads,
+        bool ActivityLogEnabled,
+        JobSearchActivityOverviewDto? ActiviteitenOverview);
 
     internal static async Task<PageData> LoadAsync(
         JobsyApiClient api,
@@ -66,6 +68,7 @@ internal static class ApplicationsSsrData
         var employersOn = flags.EmployersEnabled;
         var externalOn = flags.CandidateExternalVacanciesEnabled;
         var afterMatchOn = flags.AfterMatchEnabled;
+        var activityLogOn = flags.IsEnabled(PlatformFeature.ActivityLog);
         if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal) && !afterMatchOn)
         {
             tab = ApplicationsSsrQuery.TabSollicitaties;
@@ -234,6 +237,22 @@ internal static class ApplicationsSsrData
             threadId = null;
         }
 
+        JobSearchActivityOverviewDto? activiteitenOverview = null;
+        if (activityLogOn
+            && isCandidate
+            && !readOnly
+            && string.Equals(tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal))
+        {
+            try
+            {
+                activiteitenOverview = await api.GetJobSearchActivitiesOverviewAsync(cancellationToken);
+            }
+            catch
+            {
+                // tab shows loading/error inline
+            }
+        }
+
         return new PageData(
             isCandidate || readOnly,
             true,
@@ -258,7 +277,9 @@ internal static class ApplicationsSsrData
             unreadTotal,
             threadId,
             berichtenThread,
-            berichtenThreads);
+            berichtenThreads,
+            activityLogOn,
+            activiteitenOverview);
     }
 
     private const string AcceptatieDemoCandidateEmail = "lobsy-test@mail.grokbot.com";
@@ -344,7 +365,9 @@ internal static class ApplicationsSsrData
             0,
             null,
             null,
-            new Dictionary<Guid, AfterMatchThreadDto>());
+            new Dictionary<Guid, AfterMatchThreadDto>(),
+            false,
+            null);
 
     private static (int All, int Vacancy, int Initiative, int External, int Done) CountByFilter(
         IReadOnlyList<SollicitationRow> rows)
