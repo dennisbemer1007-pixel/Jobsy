@@ -132,13 +132,36 @@ public sealed class UserNotificationService : IUserNotificationService
         CancellationToken cancellationToken = default)
     {
         take = Math.Clamp(take, 1, 100);
-        var rows = await _db.UserNotifications.AsNoTracking()
-            .Where(n => n.UserId == userId)
-            .OrderByDescending(n => n.CreatedAtUtc)
-            .Take(Math.Min(200, take * 4))
-            .ToListAsync(cancellationToken);
-        var live = await KeepLiveAsync(rows, cancellationToken);
-        return live.Take(take).ToList();
+        const int batchSize = 100;
+        const int maxScan = 2000;
+        var result = new List<UserNotification>();
+        var skip = 0;
+        while (result.Count < take && skip < maxScan)
+        {
+            var batch = await _db.UserNotifications.AsNoTracking()
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAtUtc)
+                .Skip(skip)
+                .Take(batchSize)
+                .ToListAsync(cancellationToken);
+            if (batch.Count == 0)
+            {
+                break;
+            }
+
+            skip += batch.Count;
+            var live = await KeepLiveAsync(batch, cancellationToken);
+            foreach (var row in live)
+            {
+                result.Add(row);
+                if (result.Count >= take)
+                {
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
     public async Task<int> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default)
