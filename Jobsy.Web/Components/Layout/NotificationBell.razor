@@ -127,6 +127,7 @@
     private string _allNotificationsHref = "/notifications";
     private bool _noBlazorRuntime;
     private bool _listLoadFailed;
+    private bool _listPrefetched;
 
     protected override async Task OnInitializedAsync()
     {
@@ -159,6 +160,16 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_noBlazorRuntime && !_listPrefetched)
+        {
+            _listPrefetched = true;
+            await LoadListAsync();
+            StateHasChanged();
+        }
+    }
+
     private void OnUnreadChanged()
         => InvokeAsync(() =>
         {
@@ -173,9 +184,13 @@
     {
         _open = !_open;
         _forceClosed = !_open;
-        if (_open)
+        if (_open && !_listReady)
         {
             await LoadListAsync();
+        }
+        else if (_open && _listReady)
+        {
+            _ = LoadListAsync();
         }
     }
 
