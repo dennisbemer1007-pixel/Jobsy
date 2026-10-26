@@ -83,7 +83,9 @@ public sealed class AfterMatchPickSlotSsrTests : BunitContext
             "/candidate/applications",
             "Terug",
             "/candidate/applications",
-            thread.OpenSlots.OrderBy(s => s.StartUtc).ToList());
+            thread.OpenSlots.OrderBy(s => s.StartUtc).ToList(),
+            CandidateProposalPending: false,
+            CandidateProposalSummary: null);
 
         var html = AfterMatchPickSlotSsrShells.BuildBody(culture, data, appId);
 
@@ -178,13 +180,69 @@ public sealed class AfterMatchPickSlotSsrTests : BunitContext
             returnHref,
             "Terug",
             returnHref,
-            thread.OpenSlots);
+            thread.OpenSlots,
+            CandidateProposalPending: false,
+            CandidateProposalSummary: null);
         var html = AfterMatchPickSlotSsrShells.BuildBody(culture, data, appId);
         Assert.Contains(WebUtility.HtmlEncode(returnHref), html, StringComparison.Ordinal);
         Assert.DoesNotContain("ndm-back", html, StringComparison.Ordinal);
         Assert.Contains("ndm-mockup-footer", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-propose-date", html, StringComparison.Ordinal);
         Assert.DoesNotContain("datetime-local", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Shell_shows_propose_sent_confirmation_without_selectable_slots()
+    {
+        var culture = Culture;
+        var appId = Guid.Parse("77777771-0002-4000-8000-000000000002");
+        var thread = new AfterMatchThreadDto(
+            appId,
+            Guid.NewGuid(),
+            InterviewStatus.RescheduleRequested,
+            AfterMatchContactShareState.From(InterviewStatus.RescheduleRequested, null),
+            null,
+            "Medewerker bakkerij",
+            "Bakkerij De Korenaar",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            "Linda de Wit",
+            null,
+            null,
+            null,
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [
+                new AfterMatchChangeDto(
+                    InterviewChangeKind.Reschedule,
+                    "Candidate",
+                    "dinsdag 27 oktober, 10:00-10:30. Op donderdag breng ik mijn zoon naar school.",
+                    DateTime.UtcNow),
+            ],
+            [],
+            "Sanne de Vries",
+            null,
+            DateTime.UtcNow.AddDays(-10),
+            null);
+
+        var data = new AfterMatchPickSlotSsrData.PageData(
+            thread,
+            "/candidate/applications",
+            "Terug",
+            "/candidate/applications",
+            [],
+            CandidateProposalPending: true,
+            CandidateProposalSummary: "dinsdag 27 oktober, 10:00-10:30");
+
+        var html = AfterMatchPickSlotSsrShells.BuildBody(culture, data, appId);
+
+        Assert.Contains("data-testid=\"ndm-propose-sent\"", html, StringComparison.Ordinal);
+        Assert.Contains("Voorstel verstuurd", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-ndm-slot-list", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("stelt 1 momenten voor", html, StringComparison.Ordinal);
+        Assert.Contains("dinsdag 27 oktober, 10:00-10:30", html, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -60,8 +60,12 @@ internal static class AfterMatchPanelRouting
             return ConfirmedSsrSuffix;
         }
 
-        if (thread.InterviewStatus is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
-            && thread.OpenSlots.Count > 0)
+        if (thread.InterviewStatus == InterviewStatus.Proposing && thread.OpenSlots.Count > 0)
+        {
+            return PickSlotSsrSuffix;
+        }
+
+        if (thread.InterviewStatus == InterviewStatus.RescheduleRequested)
         {
             return PickSlotSsrSuffix;
         }

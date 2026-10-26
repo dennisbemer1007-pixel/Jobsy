@@ -785,8 +785,12 @@ public sealed class AfterMatchService : IAfterMatchService
             interview.Note,
             interview.ChosenSlot?.StartUtc,
             interview.ChosenSlot?.EndUtc,
-            interview.Slots.Where(s => !s.IsSelected).Select(s => new AfterMatchSlotDto(
-                s.Id, s.StartUtc, s.EndUtc, s.ProposedBy, s.Reason, s.IsSelected)).ToList(),
+            interview.Slots
+                .Where(s => !s.IsSelected)
+                .Where(s => isEmployer || s.ProposedBy == InterviewSlotProposer.Employer)
+                .Select(s => new AfterMatchSlotDto(
+                    s.Id, s.StartUtc, s.EndUtc, s.ProposedBy, s.Reason, s.IsSelected))
+                .ToList(),
             messages.Select(m => new AfterMatchMessageDto(
                 m.Id,
                 m.SenderUserId == viewerUserId,
