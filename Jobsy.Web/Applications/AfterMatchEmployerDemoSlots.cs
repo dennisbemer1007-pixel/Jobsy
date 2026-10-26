@@ -9,9 +9,8 @@ internal static class AfterMatchEmployerDemoSlots
     /// <summary>Demo slots for werkgever screen 03 (next Amsterdam workdays).</summary>
     internal static DateTime[] InitialUtc(DateTime? notBeforeUtc = null)
     {
-        var anchor = notBeforeUtc is { } nb
-            ? AmsterdamTime.ToLocal(nb)
-            : AmsterdamTime.ToLocal(DateTime.UtcNow);
+        var notBefore = notBeforeUtc ?? DateTime.UtcNow;
+        var anchor = AmsterdamTime.ToLocal(notBefore);
 
         var day = DateOnly.FromDateTime(anchor.Date);
         if (anchor.TimeOfDay >= TimeSpan.FromHours(16))
@@ -28,7 +27,7 @@ internal static class AfterMatchEmployerDemoSlots
                 var (hour, minute) = SlotTimes[timeIndex % SlotTimes.Length];
                 var local = new DateTime(day.Year, day.Month, day.Day, hour, minute, 0, DateTimeKind.Unspecified);
                 var utc = AmsterdamTime.ToUtc(local);
-                if (notBeforeUtc is null || utc > notBeforeUtc.Value)
+                if (utc > notBefore)
                 {
                     slots.Add(utc);
                     timeIndex++;
