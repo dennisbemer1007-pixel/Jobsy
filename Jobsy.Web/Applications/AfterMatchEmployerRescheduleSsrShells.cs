@@ -3,7 +3,6 @@ using System.Net;
 using System.Text;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
-using Jobsy.Core.Time;
 using Jobsy.Web.Components.AfterMatch;
 using Jobsy.Web.Localization;
 
@@ -11,9 +10,6 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchEmployerRescheduleSsrShells
 {
-    private static readonly Guid Verkoop4790App = Guid.Parse("77777771-0006-4000-8000-000000000006");
-    private static readonly Guid RescheduleDemoApp = Guid.Parse("77777771-0004-4000-8000-000000000004");
-
     internal sealed record BuildOptions(
         string InitialPanel,
         AfterMatchEmployerPanelSsrShells.PageData? ProposeData,
@@ -180,13 +176,8 @@ internal static class AfterMatchEmployerRescheduleSsrShells
     private static void AppendWeekAside(StringBuilder sb, CultureState culture, AfterMatchEmployerRescheduleSsrData.PageData data)
     {
         var thread = data.Thread;
-        var scheduledStart = thread.ScheduledStartUtc;
-        var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled && scheduledStart is not null;
-        var primaryWhen = isScheduled
-            ? FormatWeekSlot(scheduledStart!.Value)
-            : data.CandidateProposal is { } proposal
-                ? FormatWeekSlot(proposal.StartUtc)
-                : culture["AfterMatch.Employer.Reschedule.RequestLabel"];
+        var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled && thread.ScheduledStartUtc is not null;
+        var primaryWhen = AfterMatchTimelineLabels.WeekAsideWhen(thread);
         var primaryPill = isScheduled
             ? ("ok", culture["AfterMatch.Employer.Reschedule.WeekRow4790Status"])
             : ("warm", culture["AfterMatch.Employer.Reschedule.ActionPill"]);
@@ -200,24 +191,6 @@ internal static class AfterMatchEmployerRescheduleSsrShells
             primaryWhen,
             primaryPill.Item1,
             primaryPill.Item2);
-        if (thread.ApplicationId != Verkoop4790App)
-        {
-            var demo4790Start = Jobsy.Core.Time.AfterMatchEmployerDemoSlots.InitialUtc(DateTime.UtcNow);
-            var demoWhen = FormatWeekSlot(
-                demo4790Start.Length > 1 ? demo4790Start[1] : demo4790Start[0]);
-            if (thread.ScheduledStartUtc is DateTime demoStart
-                && thread.ApplicationId == RescheduleDemoApp)
-            {
-                demoWhen = FormatWeekSlot(demoStart);
-            }
-
-            AppendWeekRow(
-                sb,
-                culture["AfterMatch.Employer.Reschedule.WeekRow4790Name"],
-                demoWhen,
-                "ok",
-                culture["AfterMatch.Employer.Reschedule.WeekRow4790Status"]);
-        }
 
         sb.Append("</div></aside>");
     }
@@ -240,12 +213,6 @@ internal static class AfterMatchEmployerRescheduleSsrShells
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(pillLabel));
         sb.Append("</span></div>");
-    }
-
-    private static string FormatWeekSlot(DateTime utc)
-    {
-        var local = AmsterdamTime.ToLocal(utc);
-        return local.ToString("dddd d MMM, HH:mm", CultureInfo.GetCultureInfo("nl-NL"));
     }
 
     private static string CandidateSubtitle(CultureState culture, AfterMatchThreadDto thread)

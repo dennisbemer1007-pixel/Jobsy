@@ -65,13 +65,16 @@ internal static class AfterMatchRescheduleSsrData
             ? AfterMatchMailSsrTime.ToAmsterdam(acceptedAt).ToString("d MMM", nl)
             : "13 okt";
         var planDate = startLocal.AddDays(-7).ToString("d MMM", nl);
-        var interviewDate = startLocal.ToString("d MMM", nl);
+        var interviewDate = AfterMatchTimelineLabels.InterviewStep(thread);
 
         string? alternateSlotLabel = null;
         Guid? alternateSlotId = null;
         if (thread.OpenSlots.Count > 0)
         {
-            var slot = thread.OpenSlots[0];
+            var slot = thread.OpenSlots
+                .OrderBy(s => s.StartUtc)
+                .FirstOrDefault(s => s.StartUtc != startUtc)
+                ?? thread.OpenSlots.OrderBy(s => s.StartUtc).First();
             alternateSlotId = slot.Id;
             var slotStart = AfterMatchMailSsrTime.ToAmsterdam(slot.StartUtc);
             var slotLabel = slotStart.ToString("dddd d MMMM, HH:mm", nl);
