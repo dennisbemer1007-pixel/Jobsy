@@ -115,6 +115,7 @@ public class Sprint5EmployerUiFoundationTests
         Assert.True(ApplicationPreferenceRedaction.LooksLikeJson(json));
         Assert.False(ApplicationPreferenceRedaction.LooksLikeJson(accepted));
         Assert.Equal("B, C", ApplicationPreferenceRedaction.ToHumanReadable("""["B","C"]"""));
+        Assert.Equal("24-32", ApplicationPreferenceRedaction.ToHoursReadable("""{"minHoursPerWeek":24,"maxHoursPerWeek":32}"""));
     }
 
     [Fact]

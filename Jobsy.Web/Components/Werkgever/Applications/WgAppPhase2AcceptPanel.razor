@@ -12,11 +12,7 @@
 @if (_phase2Flag && ApplicationId != Guid.Empty)
 {
     <section class="wg-phase2 @(_context is null && _loadFailed ? "wg-phase2--error" : null)" data-testid="wg-phase2-panel">
-        @if (_context is null && !_busy && _loadFailed)
-        {
-            <p class="state-message error" role="alert">@Culture["WgPhase2.LoadFailed"]</p>
-        }
-        else if (_context is not null)
+        @if (_context is not null)
         {
         @if (_context?.Facts is { Count: > 0 } facts)
         {
@@ -25,7 +21,20 @@
                 @foreach (var f in facts)
                 {
                     <li class="@(f.FitsWell ? "is-ok" : null)">
-                        <strong>@f.Label:</strong> @f.Value
+                        <strong>@f.Label:</strong>
+                        @if (string.Equals(f.Label, "Vervoer", StringComparison.Ordinal))
+                        {
+                            <button type="button"
+                                    class="wg-app-chip wg-phase2__transport-chip is-active"
+                                    disabled
+                                    aria-pressed="true">
+                                @f.Value
+                            </button>
+                        }
+                        else
+                        {
+                            @f.Value
+                        }
                     </li>
                 }
             </ul>
