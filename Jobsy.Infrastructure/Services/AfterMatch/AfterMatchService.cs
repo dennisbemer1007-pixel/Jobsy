@@ -115,6 +115,7 @@ public sealed class AfterMatchService : IAfterMatchService
             });
         }
 
+        await ClearInterviewCancelChangesAsync(interview.Id, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         await _statusNotifier.NotifyEmployerSlotsProposedAsync(application, employerUserId, cancellationToken);
         return await MapThreadAsync(application, interview, employerUserId, isEmployer: true, cancellationToken);
@@ -162,6 +163,7 @@ public sealed class AfterMatchService : IAfterMatchService
             CreatedAtUtc = DateTime.UtcNow
         });
 
+        await ClearInterviewCancelChangesAsync(interview.Id, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         await _statusNotifier.NotifyCandidateAlternativeSlotProposedAsync(application, candidateUserId, cancellationToken);
         return await MapThreadAsync(application, interview, candidateUserId, isEmployer: false, cancellationToken);
@@ -197,6 +199,7 @@ public sealed class AfterMatchService : IAfterMatchService
             interview.UpdatedAtUtc = DateTime.UtcNow;
 
             await ScheduleRemindersAsync(interview, application, cancellationToken);
+            await ClearInterviewCancelChangesAsync(interview.Id, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
             try
@@ -513,6 +516,8 @@ public sealed class AfterMatchService : IAfterMatchService
         outcome.ToneCheckOk = true;
         outcome.CreatedAtUtc = DateTime.UtcNow;
         outcome.RecordedByUserId = employerUserId;
+
+        await ClearInterviewCancelChangesAsync(interview.Id, cancellationToken);
 
         var newStatus = request.Outcome switch
         {
@@ -843,4 +848,9 @@ public sealed class AfterMatchService : IAfterMatchService
 
         return application;
     }
+
+    private Task ClearInterviewCancelChangesAsync(Guid interviewId, CancellationToken cancellationToken)
+        => _db.InterviewChanges
+            .Where(c => c.InterviewId == interviewId && c.Kind == InterviewChangeKind.Cancel)
+            .ExecuteDeleteAsync(cancellationToken);
 }

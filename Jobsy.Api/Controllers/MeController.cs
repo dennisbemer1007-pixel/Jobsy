@@ -566,7 +566,9 @@ public partial class MeController : ControllerBase
                     string? lastCancelReason = null;
                     bool? lastCancelByEmployer = null;
                     if (latestCancelByInterview.TryGetValue(interview.Id, out var cancelChange)
-                        && !string.IsNullOrWhiteSpace(cancelChange.Reason))
+                        && !string.IsNullOrWhiteSpace(cancelChange.Reason)
+                        && interview.Status == InterviewStatus.Proposing
+                        && openSlots == 0)
                     {
                         lastCancelReason = cancelChange.Reason.Trim();
                         lastCancelByEmployer = string.Equals(
