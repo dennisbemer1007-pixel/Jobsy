@@ -495,6 +495,18 @@ public sealed class AfterMatchService : IAfterMatchService
         var application = await RequireEmployerApplicationAsync(applicationId, employerUserId, cancellationToken);
         var interview = await EnsureInterviewEntityAsync(application, cancellationToken);
 
+        if (interview.Status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested or InterviewStatus.Cancelled)
+        {
+            throw new InvalidOperationException("Outcome is not allowed before a confirmed interview.");
+        }
+
+        if (interview.Status == InterviewStatus.Scheduled
+            && interview.ChosenSlot is { } slot
+            && slot.StartUtc > DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("Outcome is not allowed before the interview time.");
+        }
+
         if (interview.Status != InterviewStatus.Scheduled && interview.Status != InterviewStatus.Done)
         {
             interview.Status = InterviewStatus.Done;

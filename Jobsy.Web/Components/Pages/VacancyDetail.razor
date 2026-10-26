@@ -19,6 +19,7 @@
 @using Jobsy.Core.Media
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Rules
+@using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Components.Engagement
@@ -804,7 +805,7 @@
             return;
         }
 
-        var detailWhy = KbFitMapping.WhyLine(_vacancy, Culture);
+        var detailWhy = CandidateFitDisplay.SanitizeWhyForDetail(KbFitMapping.WhyLine(_vacancy, Culture));
         var detailRank = KbFitMapping.RankLowerLabel(_vacancy, Culture);
         var dnaRows = DnaRows(_vacancy);
 

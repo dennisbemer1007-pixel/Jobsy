@@ -533,11 +533,6 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</i>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Outcome"]));
         sb.Append("<small>");
-        if (outcomeDone)
-        {
-            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Timeline.OutcomeDone"]));
-        }
-
         sb.Append("</small></div></nav>");
     }
 
