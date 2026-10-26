@@ -8,13 +8,17 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.Time;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace Jobsy.Infrastructure.Services;
 
-public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider time) : IJobSearchActivityService
+public sealed class JobSearchActivityService(
+    JobsyDbContext db,
+    TimeProvider time,
+    ILogger<JobSearchActivityService> logger) : IJobSearchActivityService
 {
     private const string EntityApplication = "Application";
     private const string EntityInterview = "Interview";
@@ -32,7 +36,18 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
         string cultureName,
         CancellationToken cancellationToken = default)
     {
-        await SyncAutomaticActivitiesAsync(candidateUserId, afterMatchEnabled, cancellationToken);
+        try
+        {
+            await SyncAutomaticActivitiesAsync(candidateUserId, afterMatchEnabled, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "job_search_activities_sync_failed status=503 code=activity_sync_failed exception_type={ExceptionType}",
+                ex.GetType().Name);
+        }
+
         var agreement = await EnsureAgreementAsync(candidateUserId, cancellationToken);
         var culture = ResolveCulture(cultureName);
         var today = TodayAmsterdam();

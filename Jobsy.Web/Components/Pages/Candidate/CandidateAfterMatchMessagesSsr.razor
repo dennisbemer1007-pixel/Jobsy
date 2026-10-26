@@ -20,6 +20,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject IConfiguration Configuration
 @inject IHostEnvironment HostEnvironment
+@inject ILoggerFactory LoggerFactory
 
 <PageTitle>@Culture["AfterMatch.Screen10.Hero.Title"] · Lobsy</PageTitle>
 <PageSeo Title="@Culture["AfterMatch.Screen10.Hero.Title"]" />
@@ -85,6 +86,7 @@ else if (_bodyHtml is not null)
                 Culture,
                 Configuration,
                 HostEnvironment,
+                LoggerFactory.CreateLogger("CandidateAfterMatchMessagesSsr"),
                 ApplicationId,
                 returnUrl,
                 threadId,

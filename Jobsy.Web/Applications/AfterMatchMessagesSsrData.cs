@@ -5,6 +5,7 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Web.Applications;
 
@@ -24,6 +25,7 @@ internal static class AfterMatchMessagesSsrData
         CultureState culture,
         IConfiguration configuration,
         IHostEnvironment hostEnvironment,
+        ILogger logger,
         Guid contextApplicationId,
         string? returnUrl,
         Guid? threadId,
@@ -42,6 +44,7 @@ internal static class AfterMatchMessagesSsrData
             culture,
             configuration,
             hostEnvironment,
+            logger,
             isCandidate: true,
             tabRaw: ApplicationsSsrQuery.TabBerichten,
             filterRaw: ApplicationsSsrQuery.FilterAll,

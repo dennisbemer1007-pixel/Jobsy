@@ -1,34 +1,41 @@
+using System.Net;
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Web.Services;
 
 public sealed partial class JobsyApiClient
 {
-    public async Task<JobSearchActivityOverviewDto?> GetJobSearchActivitiesOverviewAsync(
+    public Task<JobSearchActivitiesClientResult> GetJobSearchActivitiesOverviewAsync(
+        ILogger logger,
+        CancellationToken ct = default)
+        => FetchJobSearchActivitiesOverviewAsync(logger, ct);
+
+    public async Task<JobSearchActivitiesClientResult> FetchJobSearchActivitiesOverviewAsync(
+        ILogger logger,
         CancellationToken ct = default)
     {
-        var response = await _http.GetAsync("api/me/job-search-activities", ct);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        try
         {
-            ActivityLogApiTrace.LogDisabledOrMissing(response.StatusCode);
-            return null;
-        }
+            var response = await _http.GetAsync("api/me/job-search-activities", ct);
+            var status = (int)response.StatusCode;
+            if (response.IsSuccessStatusCode)
+            {
+                var overview = await response.Content.ReadFromJsonAsync<JobSearchActivityOverviewDto>(
+                    cancellationToken: ct);
+                return new JobSearchActivitiesClientResult(overview, status, null, null);
+            }
 
-        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden
-            || response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            var code = await ActivityLogClientDiagnostics.ReadErrorCodeAsync(response, ct);
+            ActivityLogClientDiagnostics.LogOverviewFailure(logger, response.StatusCode, code);
+            return new JobSearchActivitiesClientResult(null, status, code, null);
+        }
+        catch (Exception ex)
         {
-            ActivityLogApiTrace.LogAuthBlocked(response.StatusCode);
-            return null;
+            ActivityLogClientDiagnostics.LogOverviewFailure(logger, HttpStatusCode.ServiceUnavailable, "client_exception", ex);
+            return new JobSearchActivitiesClientResult(null, (int)HttpStatusCode.ServiceUnavailable, "client_exception", ex.GetType().Name);
         }
-
-        if (!response.IsSuccessStatusCode)
-        {
-            ActivityLogApiTrace.LogUnavailable(response.StatusCode);
-            return null;
-        }
-
-        return await response.Content.ReadFromJsonAsync<JobSearchActivityOverviewDto>(cancellationToken: ct);
     }
 
     public async Task<bool> TryAddManualJobSearchActivityAsync(
@@ -50,16 +57,34 @@ public sealed partial class JobsyApiClient
         return response.IsSuccessStatusCode;
     }
 
-    public async Task<byte[]?> TryDownloadJobSearchActivitiesPdfAsync(CancellationToken ct = default)
+    public async Task<(byte[]? Bytes, int HttpStatus, string? ErrorCode)> TryDownloadJobSearchActivitiesPdfAsync(
+        ILogger logger,
+        CancellationToken ct = default)
     {
-        var response = await _http.GetAsync("api/me/job-search-activities/period.pdf", ct);
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            ActivityLogApiTrace.LogPdfFailed(response.StatusCode);
-            return null;
-        }
+            var response = await _http.GetAsync("api/me/job-search-activities/period.pdf", ct);
+            var status = (int)response.StatusCode;
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+                return (bytes, status, null);
+            }
 
-        return await response.Content.ReadAsByteArrayAsync(ct);
+            var code = await ActivityLogClientDiagnostics.ReadErrorCodeAsync(response, ct);
+            ActivityLogClientDiagnostics.LogPdfFailure(logger, response.StatusCode, code);
+            return (null, status, code);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "job_search_activities_pdf status={Status} code={Code} exception_type={ExceptionType}",
+                (int)HttpStatusCode.ServiceUnavailable,
+                "client_exception",
+                ex.GetType().Name);
+            return (null, (int)HttpStatusCode.ServiceUnavailable, "client_exception");
+        }
     }
 
     public async Task<(byte[] Content, string ContentType, string FileName)?> TryDownloadJobSearchActivityAttachmentAsync(

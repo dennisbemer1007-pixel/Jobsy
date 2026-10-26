@@ -21,6 +21,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject IConfiguration Configuration
 @inject IHostEnvironment HostEnvironment
+@inject ILoggerFactory LoggerFactory
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 <HeadContent>
@@ -106,6 +107,7 @@ else if (_bodyHtml is not null)
                 Culture,
                 Configuration,
                 HostEnvironment,
+                LoggerFactory.CreateLogger("CandidateApplicationsSsr"),
                 isCandidate,
                 tabValues.FirstOrDefault(),
                 filterValues.FirstOrDefault(),

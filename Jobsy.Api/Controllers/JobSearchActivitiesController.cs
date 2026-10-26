@@ -59,7 +59,8 @@ public sealed class JobSearchActivitiesController : ControllerBase
         {
             _logger.LogWarning(
                 ex,
-                "job_search_activities_overview_unavailable status=503 code=activity_log_unavailable");
+                "job_search_activities_overview_unavailable status=503 code=activity_log_unavailable exception_type={ExceptionType}",
+                ex.GetType().Name);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "activity_log_unavailable" });
         }
     }
@@ -178,7 +179,8 @@ public sealed class JobSearchActivitiesController : ControllerBase
         {
             _logger.LogWarning(
                 ex,
-                "job_search_activities_pdf_unavailable status=503 code=activity_log_unavailable");
+                "job_search_activities_pdf_unavailable status=503 code=activity_log_unavailable exception_type={ExceptionType}",
+                ex.GetType().Name);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "activity_log_unavailable" });
         }
     }

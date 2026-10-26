@@ -2,6 +2,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Web.Hosting;
 
@@ -91,12 +92,17 @@ public static class SollicitatiesClientEndpoints
 
     private static async Task<IResult> DownloadActiviteitenPdfAsync(
         JobsyApiClient api,
+        ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
-        var bytes = await api.TryDownloadJobSearchActivitiesPdfAsync(cancellationToken);
-        return bytes is null
-            ? Results.NotFound()
-            : Results.File(bytes, "application/pdf", "lobsy-sollicitatieactiviteiten.pdf");
+        var logger = loggerFactory.CreateLogger("SollicitatiesClientEndpoints");
+        var (bytes, status, _) = await api.TryDownloadJobSearchActivitiesPdfAsync(logger, cancellationToken);
+        if (bytes is null)
+        {
+            return Results.StatusCode(status > 0 ? status : StatusCodes.Status404NotFound);
+        }
+
+        return Results.File(bytes, "application/pdf", "lobsy-sollicitatieactiviteiten.pdf");
     }
 
     private static async Task<IResult> MarkBerichtenReadAsync(

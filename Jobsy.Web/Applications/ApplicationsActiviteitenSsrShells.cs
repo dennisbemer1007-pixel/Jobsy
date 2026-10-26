@@ -17,7 +17,15 @@ internal static class ApplicationsActiviteitenSsrShells
         var overview = data.ActiviteitenOverview;
         if (overview is null)
         {
-            sb.Append("<p class=\"state-message\" role=\"status\">");
+            sb.Append("<p class=\"state-message\" role=\"status\"");
+            if (data.ActiviteitenAcceptatieDiagnostics)
+            {
+                var status = data.ActiviteitenLoadHttpStatus ?? 0;
+                var code = WebUtility.HtmlEncode(data.ActiviteitenLoadErrorCode ?? "unknown");
+                sb.Append(" data-lb-status=\"").Append(status).Append("\" data-lb-code=\"").Append(code).Append('"');
+            }
+
+            sb.Append('>');
             sb.Append(WebUtility.HtmlEncode(culture["Apps.Activiteiten.Unavailable"]));
             sb.Append("</p>");
             return;
