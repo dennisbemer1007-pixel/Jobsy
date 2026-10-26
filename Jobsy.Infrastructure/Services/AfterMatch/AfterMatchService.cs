@@ -309,7 +309,12 @@ public sealed class AfterMatchService : IAfterMatchService
         });
 
         await _db.SaveChangesAsync(cancellationToken);
-        await _statusNotifier.NotifyInterviewCancelledAsync(application, isEmployer, userId, cancellationToken);
+        await _statusNotifier.NotifyInterviewCancelledAsync(
+            application,
+            isEmployer,
+            userId,
+            request.Reason.Trim(),
+            cancellationToken);
         return await MapThreadAsync(application, interview, userId, isEmployer, cancellationToken);
     }
 

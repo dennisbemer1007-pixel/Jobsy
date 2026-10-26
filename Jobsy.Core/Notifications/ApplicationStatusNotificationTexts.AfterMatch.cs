@@ -100,14 +100,22 @@ public static partial class ApplicationStatusNotificationTexts
             $"You asked to move the interview for {vacancyTitle}.",
             language);
 
-    public static Copy InterviewCancelled(string vacancyTitle, string language)
-        => IsEnglish(language)
-            ? new Copy(
-                "Interview cancelled",
-                $"The interview for {vacancyTitle} was cancelled. See the reason in the thread.")
-            : new Copy(
-                "Gesprek afgezegd",
-                $"Het gesprek voor {vacancyTitle} is afgezegd. Bekijk de reden in het dossier.");
+    public static Copy InterviewCancelled(string vacancyTitle, string language, string? reason = null)
+    {
+        var trimmedReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        if (IsEnglish(language))
+        {
+            var body = trimmedReason is null
+                ? $"The interview for {vacancyTitle} was cancelled. See the reason in the thread."
+                : $"The interview for {vacancyTitle} was cancelled. Reason: {trimmedReason}";
+            return new Copy("Interview cancelled", body);
+        }
+
+        var bodyNl = trimmedReason is null
+            ? $"Het gesprek voor {vacancyTitle} is afgezegd. Bekijk de reden in het dossier."
+            : $"Het gesprek voor {vacancyTitle} is afgezegd. Reden: {trimmedReason}";
+        return new Copy("Gesprek afgezegd", bodyNl);
+    }
 
     public static Copy InterviewCancelledSelf(string vacancyTitle, string language)
         => SelfConfirmation(

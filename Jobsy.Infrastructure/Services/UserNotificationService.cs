@@ -8,6 +8,20 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class UserNotificationService : IUserNotificationService
 {
+    /// <summary>
+    /// After-match status alerts reuse stable titles; 24h dedupe would suppress repeat events (2e voorstel, nieuw bericht, …).
+    /// </summary>
+    internal static bool SkipsDuplicateGuard(string? category)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return false;
+        }
+
+        return category.StartsWith("Interview", StringComparison.Ordinal)
+               || category.StartsWith("ApplicationNewMessage", StringComparison.Ordinal);
+    }
+
     private static readonly Regex VacancyLink = new(
         @"/vacancies/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -25,7 +39,8 @@ public sealed class UserNotificationService : IUserNotificationService
     {
         if (request.RelatedEntityId is Guid relatedId
             && !string.IsNullOrWhiteSpace(request.Category)
-            && !string.IsNullOrWhiteSpace(request.Title))
+            && !string.IsNullOrWhiteSpace(request.Title)
+            && !SkipsDuplicateGuard(request.Category))
         {
             var cutoff = DateTime.UtcNow.AddHours(-24);
             var duplicate = await _db.UserNotifications.AsNoTracking()

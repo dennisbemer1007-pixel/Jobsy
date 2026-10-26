@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -40,6 +41,81 @@ public class UserNotificationAndActionTokenTests
 
         await sut.MarkReadAsync(user.Id, list[0].Id);
         Assert.Equal(0, await sut.CountUnreadAsync(user.Id));
+    }
+
+    [Fact]
+    public async Task NotificationService_after_match_categories_allow_repeat_titles()
+    {
+        await using var db = CreateDb();
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "wg@example.com",
+            FullName = "Werkgever",
+            Role = UserRole.BranchManager,
+            IsActive = true
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var companyId = Guid.NewGuid();
+        var vacId = Guid.NewGuid();
+        var appId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Test BV",
+            KvkNumber = "12345678",
+            ContactEmail = "test@example.com",
+            Type = CompanyType.Employer,
+            Location = new GeoPoint(52.0, 4.3)
+        });
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacId,
+            CompanyId = companyId,
+            Title = "Test",
+            Description = "x",
+            HourlyWage = 10,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)),
+            Status = VacancyStatus.Active,
+            RequiredTransport = TransportMode.Bike,
+            WorkTypes = WorkType.Horeca,
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3)
+        });
+        db.Applications.Add(new Application
+        {
+            Id = appId,
+            VacancyId = vacId,
+            CandidateUserId = Guid.NewGuid(),
+            CandidateName = "Kandidaat",
+            Status = ApplicationStatus.Accepted,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new UserNotificationService(db);
+        var title = "Nieuwe momenten";
+        await sut.CreateAsync(new NotificationCreateRequest(
+            user.Id,
+            title,
+            "Eerste voorstel",
+            "InterviewSlotsProposed",
+            "/werkgever/sollicitaties",
+            RelatedEntityType: "Application",
+            RelatedEntityId: appId));
+        await sut.CreateAsync(new NotificationCreateRequest(
+            user.Id,
+            title,
+            "Tweede voorstel",
+            "InterviewSlotsProposed",
+            "/werkgever/sollicitaties",
+            RelatedEntityType: "Application",
+            RelatedEntityId: appId));
+
+        Assert.Equal(2, await sut.CountUnreadAsync(user.Id));
+        Assert.True(UserNotificationService.SkipsDuplicateGuard("InterviewSlotsProposed"));
     }
 
     [Fact]
