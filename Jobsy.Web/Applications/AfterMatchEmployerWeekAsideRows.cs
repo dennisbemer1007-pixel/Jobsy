@@ -29,8 +29,7 @@ internal static class AfterMatchEmployerWeekAsideRows
         }
 
         if (!byApp.ContainsKey(current.ApplicationId)
-            && (HasInterviewMomentThisWeek(current, weekStart, weekEnd)
-                || current.InterviewStatus == InterviewStatus.RescheduleRequested))
+            && HasInterviewMomentThisWeek(current, weekStart, weekEnd))
         {
             byApp[current.ApplicationId] = current;
         }
@@ -60,17 +59,12 @@ internal static class AfterMatchEmployerWeekAsideRows
             return scheduled >= weekStart && scheduled < weekEnd;
         }
 
-        if (thread.InterviewStatus == InterviewStatus.RescheduleRequested)
+        if (thread.InterviewStatus == InterviewStatus.RescheduleRequested
+            && thread.ScheduledStartUtc is DateTime prior
+            && prior >= weekStart
+            && prior < weekEnd)
         {
             return true;
-        }
-
-        foreach (var slot in thread.OpenSlots)
-        {
-            if (slot.StartUtc >= weekStart && slot.StartUtc < weekEnd)
-            {
-                return true;
-            }
         }
 
         return false;

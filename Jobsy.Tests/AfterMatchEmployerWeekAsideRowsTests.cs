@@ -42,8 +42,8 @@ public sealed class AfterMatchEmployerWeekAsideRowsTests : BunitContext
             null,
             null,
             null,
-            null,
-            null,
+            scheduledUtc,
+            scheduledUtc.AddMinutes(30),
             [],
             [],
             new AfterMatchReminderPreferenceDto(false, true, true),
@@ -83,5 +83,41 @@ public sealed class AfterMatchEmployerWeekAsideRowsTests : BunitContext
         Assert.Equal(2, rows.Count);
         Assert.Contains(rows, r => r.Subtitle.Contains("10:", StringComparison.Ordinal));
         Assert.DoesNotContain(rows, r => r.Title == "Kandidaat #4790");
+    }
+
+    [Fact]
+    public void Week_aside_omits_proposed_slots_without_confirmed_interview()
+    {
+        var culture = Services.GetRequiredService<CultureState>();
+        var weekStart = InitiativeWeekLimitRules.WeekStartAmsterdam(DateTime.UtcNow);
+        var proposedUtc = weekStart.AddDays(2).AddHours(10).AddMinutes(30);
+
+        var proposing = new AfterMatchThreadDto(
+            AfterMatchDemoIds.PickSlotsApp,
+            Guid.NewGuid(),
+            InterviewStatus.Proposing,
+            AfterMatchContactShareState.From(InterviewStatus.Proposing, null),
+            null,
+            "Hulp bakker",
+            "Den Haag",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            null,
+            null,
+            [new AfterMatchSlotDto(Guid.NewGuid(), proposedUtc, proposedUtc.AddMinutes(30), InterviewSlotProposer.Employer, null, false)],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "Roland",
+            null,
+            DateTime.UtcNow.AddDays(-2),
+            null);
+
+        var rows = AfterMatchEmployerWeekAsideRows.Build(culture, proposing, [proposing]);
+        Assert.Empty(rows);
     }
 }

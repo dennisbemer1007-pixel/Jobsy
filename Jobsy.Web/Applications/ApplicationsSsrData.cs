@@ -467,6 +467,7 @@ internal static class ApplicationsSsrData
                 a.AfterMatch.ScheduledStartUtc,
                 a.AfterMatch.ScheduledEndUtc,
                 a.AfterMatch.AcceptedAtUtc,
+                a.RespondedAt,
                 a.AfterMatch.LastMessagePreview,
                 a.AfterMatch.LastMessageFromCandidate,
                 a.AfterMatch.LastMessageAtUtc,
