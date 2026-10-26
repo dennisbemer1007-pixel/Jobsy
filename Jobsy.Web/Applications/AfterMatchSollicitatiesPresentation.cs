@@ -150,9 +150,9 @@ internal static class AfterMatchSollicitatiesPresentation
         {
             planAt = summary.LastMessageAtUtc ?? yesAt;
         }
-        else if (summary.ScheduledStartUtc is DateTime scheduled)
+        else if (status == InterviewStatus.Scheduled)
         {
-            planAt = scheduled;
+            planAt = summary.LastMessageAtUtc ?? yesAt?.AddDays(2);
         }
 
         var cancelled = !string.IsNullOrWhiteSpace(summary.LastCancelReason);

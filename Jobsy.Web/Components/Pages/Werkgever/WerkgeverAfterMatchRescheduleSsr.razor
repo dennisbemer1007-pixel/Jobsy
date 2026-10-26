@@ -72,6 +72,9 @@ else if (_bodyHtml is not null)
                 panel = "propose";
             }
 
+            var weekThreads = await AfterMatchEmployerWeekAsideLoader.LoadScopeThreadsAsync(
+                Api,
+                http.RequestAborted);
             var thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId, http.RequestAborted);
             if (!AfterMatchEmployerSsrRouting.ShouldAllowEmployerRescheduleSsrRoute(thread))
             {
@@ -86,7 +89,11 @@ else if (_bodyHtml is not null)
             }
 
             _candidateName = AfterMatchEmployerEmployerPresentation.CandidateDisplayName(thread);
-            var data = AfterMatchEmployerRescheduleSsrData.FromThread(Culture, thread, ApplicationId);
+            var data = AfterMatchEmployerRescheduleSsrData.FromThread(
+                Culture,
+                thread,
+                ApplicationId,
+                weekThreads);
             var pageTitle = data.EmployerInitiatedReschedule
                 ? Culture["AfterMatch.Employer.Reschedule.EmployerInitiatedTitle"]
                 : Culture["AfterMatch.Screen09.Hero.Title"];

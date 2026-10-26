@@ -105,7 +105,14 @@ internal static class ApplicationsSsrData
         var rows = new List<SollicitationRow>();
         try
         {
-            var apps = await api.GetMyApplicationsAsync(cancellationToken);
+            var apps = await GetMyApplicationsWithAcceptatieDemoRetryAsync(
+                api,
+                configuration,
+                hostEnvironment,
+                isCandidate,
+                candidateEmail,
+                selectedId,
+                cancellationToken);
             foreach (var a in apps)
             {
                 rows.Add(MapApplication(culture, a));
@@ -315,6 +322,33 @@ internal static class ApplicationsSsrData
     private static bool IsAcceptatieDemoCandidateEmail(string? email)
         => !string.IsNullOrWhiteSpace(email)
            && string.Equals(email, AcceptatieDemoCandidateEmail, StringComparison.OrdinalIgnoreCase);
+
+    private static async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsWithAcceptatieDemoRetryAsync(
+        JobsyApiClient api,
+        IConfiguration configuration,
+        IHostEnvironment hostEnvironment,
+        bool isCandidate,
+        string? candidateEmail,
+        Guid? selectedId,
+        CancellationToken cancellationToken)
+    {
+        var apps = await api.GetMyApplicationsAsync(cancellationToken);
+        if (isCandidate
+            && selectedId is Guid wanted
+            && IsAcceptatieDemoCandidateEmail(candidateEmail)
+            && apps.All(a => a.Id != wanted))
+        {
+            await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
+                api,
+                configuration,
+                hostEnvironment,
+                candidateEmail,
+                cancellationToken);
+            apps = await api.GetMyApplicationsAsync(cancellationToken);
+        }
+
+        return apps;
+    }
 
     private static async Task TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
         JobsyApiClient api,

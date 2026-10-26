@@ -24,7 +24,11 @@ internal static class AfterMatchEmployerRescheduleSsrData
         string? InterviewStepHint,
         IReadOnlyList<AfterMatchEmployerWeekAsideRows.Row> WeekRows);
 
-    internal static PageData FromThread(CultureState culture, AfterMatchThreadDto thread, Guid applicationId)
+    internal static PageData FromThread(
+        CultureState culture,
+        AfterMatchThreadDto thread,
+        Guid applicationId,
+        IReadOnlyList<AfterMatchThreadDto>? weekScopeThreads = null)
     {
         var baseHref = $"/werkgever/sollicitaties/{applicationId:D}/after-match";
         AfterMatchSlotDto? candidateSlot = null;
@@ -108,7 +112,9 @@ internal static class AfterMatchEmployerRescheduleSsrData
             yesHint,
             planHint,
             interviewHint,
-            AfterMatchEmployerWeekAsideRows.Build(culture, thread));
+            weekScopeThreads is { Count: > 0 }
+                ? AfterMatchEmployerWeekAsideRows.Build(culture, thread, weekScopeThreads)
+                : AfterMatchEmployerWeekAsideRows.Build(culture, thread, [thread]));
     }
 
     private static string FormatSlotShort(AfterMatchSlotDto slot)
