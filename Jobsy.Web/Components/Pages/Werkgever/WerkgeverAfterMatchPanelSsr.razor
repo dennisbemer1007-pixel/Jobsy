@@ -284,14 +284,7 @@ else if (_bodyHtml is not null || !string.IsNullOrWhiteSpace(_fatalMessage))
                     }
                     else if (thread.InterviewStatus == InterviewStatus.Proposing)
                     {
-                        var cancelChange = thread.RecentChanges
-                            .Where(c => c.Kind == InterviewChangeKind.Cancel)
-                            .OrderByDescending(c => c.CreatedAtUtc)
-                            .FirstOrDefault();
-                        if (cancelChange is not null && !string.IsNullOrWhiteSpace(cancelChange.Reason))
-                        {
-                            statusNote = cancelChange.Reason;
-                        }
+                        statusNote = AfterMatchChangeReasonPresentation.LatestReasonForEmployerPanelNote(thread);
                     }
 
                     AfterMatchEmployerOutcomeSsrData.PageData? outcomeOverlay = null;

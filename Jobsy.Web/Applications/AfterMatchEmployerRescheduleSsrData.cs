@@ -54,12 +54,7 @@ internal static class AfterMatchEmployerRescheduleSsrData
                 FormatSlotShort(candidateSlot))
             : culture["AfterMatch.Employer.Reschedule.Accept"];
 
-        string? changeReason = null;
-        if (thread.RecentChanges.Count > 0)
-        {
-            changeReason = thread.RecentChanges[0].Reason;
-        }
-
+        var changeReason = AfterMatchChangeReasonPresentation.LatestReasonForEmployerReschedule(thread);
         var reason = changeReason ?? candidateSlot?.Reason ?? "";
 
         var proposalLine = candidateSlot is not null
