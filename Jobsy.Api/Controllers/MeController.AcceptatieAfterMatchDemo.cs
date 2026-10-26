@@ -13,7 +13,7 @@ public partial class MeController
     public sealed record AcceptatieAfterMatchDemoEnsureResponse(bool Applied, string? SkipReason);
 
     /// <summary>
-    /// Acceptatie only: refresh werkgever after-match demo apps (77777771-0001 … 0006) with fixed Oct slots.
+    /// Acceptatie only: refresh werkgever after-match demo apps (77777771-0001 … 0006) and trim Den Haag Centrum inbox junk.
     /// </summary>
     [HttpPost("acceptatie-after-match-demo-ensure")]
     [Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]

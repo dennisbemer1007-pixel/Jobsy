@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Time;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Ops;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +16,12 @@ internal static class AfterMatchDemoSeeder
     private static readonly Guid CandidateId = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222");
 
     private static readonly DateTime YesAt = new(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc);
-    private static readonly DateTime Slot1Start = Jobsy.Core.Time.AmsterdamTime.ToUtc(
-        new DateTime(2026, 10, 22, 10, 30, 0, DateTimeKind.Unspecified));
-    private static readonly DateTime Slot2Start = Jobsy.Core.Time.AmsterdamTime.ToUtc(
-        new DateTime(2026, 10, 23, 9, 0, 0, DateTimeKind.Unspecified));
-    private static readonly DateTime Slot3Start = Jobsy.Core.Time.AmsterdamTime.ToUtc(
-        new DateTime(2026, 10, 26, 14, 0, 0, DateTimeKind.Unspecified));
+
+    private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid CafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
+    private static readonly Guid[] RetailBranchCompanyIds = [WestlandId, CafeId, SupermarketId];
 
     private static readonly Guid[] KeepApplicationIds =
     [
@@ -36,9 +37,13 @@ internal static class AfterMatchDemoSeeder
     {
         await EnsureCompanyAsync(db);
         await EnsureDemoVacanciesAsync(db);
+        await RemoveStaleRetailBranchApplicationsAsync(db, logger);
         await RemoveStaleCompanyApplicationsAsync(db, logger);
         await EnsureApplicationsAsync(db, logger);
     }
+
+    private static DateTime[] DemoSlotStartsUtc()
+        => AfterMatchEmployerDemoSlots.InitialUtc(DateTime.UtcNow);
 
     private static async Task EnsureCompanyAsync(JobsyDbContext db)
     {
@@ -297,32 +302,37 @@ internal static class AfterMatchDemoSeeder
         db.InterviewSlots.RemoveRange(interview.Slots);
         interview.Slots.Clear();
 
+        var slotStarts = DemoSlotStartsUtc();
+        var slot0 = slotStarts.Length > 0 ? slotStarts[0] : DateTime.UtcNow.AddDays(1);
+        var slot1 = slotStarts.Length > 1 ? slotStarts[1] : slot0.AddDays(1);
+        var slot2 = slotStarts.Length > 2 ? slotStarts[2] : slot1.AddDays(1);
+
         if (scenario is "slots" or "reschedule")
         {
-            AddSlot(interview, Slot1Start);
-            AddSlot(interview, Slot2Start);
-            AddSlot(interview, Slot3Start);
+            AddSlot(interview, slot0);
+            AddSlot(interview, slot1);
+            AddSlot(interview, slot2);
         }
 
         if (scenario == "scheduled")
         {
-            var chosen = AddSlot(interview, Slot1Start);
+            var chosen = AddSlot(interview, slot0);
             chosen.IsSelected = true;
         }
 
         if (scenario == "scheduled4790")
         {
-            var chosen = AddSlot(interview, Slot2Start);
+            var chosen = AddSlot(interview, slot1);
             chosen.IsSelected = true;
         }
 
         if (scenario == "reschedule")
         {
-            var chosen = AddSlot(interview, Slot1Start);
+            var chosen = AddSlot(interview, slot0);
             chosen.IsSelected = true;
             var candidateSlot = AddSlot(
                 interview,
-                Slot3Start,
+                slot2,
                 InterviewSlotProposer.Candidate,
                 "zorg voor familie. \"Mijn zoon is ziek, ik kan donderdag niet weg.\"");
             interview.Status = InterviewStatus.RescheduleRequested;
@@ -386,6 +396,23 @@ internal static class AfterMatchDemoSeeder
         }
     }
 
+    private static async Task RemoveStaleRetailBranchApplicationsAsync(JobsyDbContext db, ILogger logger)
+    {
+        var staleIds = await db.Applications.AsNoTracking()
+            .Where(a => RetailBranchCompanyIds.Contains(a.Vacancy.CompanyId))
+            .Select(a => a.Id)
+            .ToListAsync();
+        if (staleIds.Count == 0)
+        {
+            return;
+        }
+
+        await AcceptatieApplicationDemoGraphRemover.RemoveApplicationsAsync(db, staleIds);
+        logger.LogInformation(
+            "Acceptatie employer demo reset: removed {Count} applications on retail branch companies (Den Haag Centrum inbox).",
+            staleIds.Count);
+    }
+
     private static async Task RemoveStaleCompanyApplicationsAsync(JobsyDbContext db, ILogger logger)
     {
         var keep = KeepApplicationIds.ToHashSet();
@@ -398,24 +425,7 @@ internal static class AfterMatchDemoSeeder
             return;
         }
 
-        var interviews = await db.Interviews.Where(i => staleIds.Contains(i.ApplicationId)).ToListAsync();
-        var interviewIds = interviews.Select(i => i.Id).ToList();
-        if (interviewIds.Count > 0)
-        {
-            await db.InterviewSlots.Where(s => interviewIds.Contains(s.InterviewId)).ExecuteDeleteAsync();
-            await db.InterviewChanges.Where(c => interviewIds.Contains(c.InterviewId)).ExecuteDeleteAsync();
-            await db.InterviewReminders.Where(r => interviewIds.Contains(r.InterviewId)).ExecuteDeleteAsync();
-            db.Interviews.RemoveRange(interviews);
-        }
-
-        await db.ApplicationMessages.Where(m => staleIds.Contains(m.ApplicationId)).ExecuteDeleteAsync();
-        await db.ApplicationOutcomes.Where(o => staleIds.Contains(o.ApplicationId)).ExecuteDeleteAsync();
-        await db.UserNotifications
-            .Where(n => n.RelatedEntityType == "Application" && n.RelatedEntityId != null && staleIds.Contains(n.RelatedEntityId.Value))
-            .ExecuteDeleteAsync();
-        var staleApps = await db.Applications.Where(a => staleIds.Contains(a.Id)).ToListAsync();
-        db.Applications.RemoveRange(staleApps);
-        await db.SaveChangesAsync();
+        await AcceptatieApplicationDemoGraphRemover.RemoveApplicationsAsync(db, staleIds);
         logger.LogInformation(
             "After-match demo reset: removed {Count} stale applications for demo company {CompanyId}.",
             staleIds.Count,
