@@ -128,6 +128,17 @@ internal static class SavedSsrData
         => string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Closed), StringComparison.OrdinalIgnoreCase)
            || string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Fulfilled), StringComparison.OrdinalIgnoreCase);
 
+    internal static bool MatchesFilter(CandidateEngagementItem item, string filter)
+        => filter switch
+        {
+            SavedSsrQuery.FilterOpen => !IsClosed(item),
+            SavedSsrQuery.FilterClosed => IsClosed(item),
+            _ => true,
+        };
+
+    internal static IReadOnlyList<CandidateEngagementItem> SortedAll(PageData data)
+        => ApplyFilterSort(data.Items, SavedSsrQuery.FilterAll, data.Sort);
+
     private static List<CandidateEngagementItem> ApplyFilterSort(
         IReadOnlyList<CandidateEngagementItem> items,
         string filter,

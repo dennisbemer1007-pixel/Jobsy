@@ -7,6 +7,7 @@ using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
 using Jobsy.Web.Models;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Saved;
@@ -63,6 +64,9 @@ internal static class SavedSsrShells
 
         AppendFooterNav(sb, culture);
         sb.Append("</div></div>");
+        sb.Append("<script src=\"");
+        sb.Append(WwwrootAssetCatalog.Url("js/saved-ssr-filters.js"));
+        sb.Append("\" defer></script>");
         return sb.ToString();
     }
 
@@ -120,15 +124,19 @@ internal static class SavedSsrShells
         AppendFilterChip(sb, data, SavedSsrQuery.FilterAll, culture["Kb.Saved.FilterAll"], data.Items.Count);
         AppendFilterChip(sb, data, SavedSsrQuery.FilterOpen, culture["Kb.Saved.FilterOpen"], data.CountOpen);
         AppendFilterChip(sb, data, SavedSsrQuery.FilterClosed, culture["Kb.Saved.FilterClosed"], data.CountClosed);
-        sb.Append("</div><div class=\"kb-saved__meta\"><span class=\"kb-saved__count\">");
+        sb.Append("</div><div class=\"kb-saved__meta\"><span class=\"kb-saved__count\" data-saved-filter-count data-saved-count-template=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Count"]));
+        sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(string.Format(culture["Kb.Saved.Count"], data.Filtered.Count)));
-        sb.Append("</span><nav class=\"kb-saved__sort\" aria-label=\"");
+        sb.Append("</span><label class=\"kb-saved__sort\"><span class=\"visually-hidden\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Filter.Sort"]));
+        sb.Append("</span><select data-saved-sort data-enhance-nav=\"false\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Filter.Sort"]));
         sb.Append("\">");
-        AppendSortLink(sb, data, SavedSsrQuery.SortNewest, culture["Kb.Saved.SortNewest"]);
-        AppendSortLink(sb, data, SavedSsrQuery.SortFit, culture["Kb.Saved.SortBestFit"]);
-        AppendSortLink(sb, data, SavedSsrQuery.SortClosing, culture["Kb.Saved.SortClosing"]);
-        sb.Append("</nav></div></div>");
+        AppendSortOption(sb, data, SavedSsrQuery.SortNewest, culture["Kb.Saved.SortNewest"]);
+        AppendSortOption(sb, data, SavedSsrQuery.SortFit, culture["Kb.Saved.SortBestFit"]);
+        AppendSortOption(sb, data, SavedSsrQuery.SortClosing, culture["Kb.Saved.SortClosing"]);
+        sb.Append("</select></label></div></div>");
     }
 
     private static void AppendFilterChip(
@@ -139,51 +147,57 @@ internal static class SavedSsrShells
         int count)
     {
         var active = string.Equals(data.Filter, filter, StringComparison.Ordinal);
-        sb.Append("<a class=\"kb-chip");
+        sb.Append("<button type=\"button\" class=\"kb-chip");
         if (active)
         {
             sb.Append(" is-selected");
         }
 
-        sb.Append("\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(SavedSsrQuery.BuildUrl(filter, data.Sort)));
-        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append("\" data-saved-filter=\"");
+        sb.Append(WebUtility.HtmlEncode(filter));
+        sb.Append("\" aria-pressed=\"");
+        sb.Append(active ? "true" : "false");
+        sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(label));
         sb.Append(" · ");
         sb.Append(count);
-        sb.Append("</a>");
+        sb.Append("</button>");
     }
 
-    private static void AppendSortLink(StringBuilder sb, SavedSsrData.PageData data, string sort, string label)
+    private static void AppendSortOption(StringBuilder sb, SavedSsrData.PageData data, string sort, string label)
     {
         var active = string.Equals(data.Sort, sort, StringComparison.Ordinal);
-        sb.Append("<a class=\"kb-saved__sort-link");
+        sb.Append("<option value=\"");
+        sb.Append(WebUtility.HtmlEncode(sort));
+        sb.Append('"');
         if (active)
         {
-            sb.Append(" is-active");
+            sb.Append(" selected");
         }
 
-        sb.Append("\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(SavedSsrQuery.BuildUrl(data.Filter, sort)));
-        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append('>');
         sb.Append(WebUtility.HtmlEncode(label));
-        sb.Append("</a>");
+        sb.Append("</option>");
     }
 
     private static void AppendGrid(StringBuilder sb, CultureState culture, SavedSsrData.PageData data, string antiforgeryToken)
     {
         sb.Append("<div class=\"kb-saved__body\">");
-        if (data.Filtered.Count == 0)
+        sb.Append("<p class=\"state-message\" data-saved-filter-empty");
+        if (data.Filtered.Count > 0)
         {
-            sb.Append("<p class=\"state-message\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.FilterEmpty"]));
-            sb.Append("</p>");
+            sb.Append(" hidden");
         }
 
+        sb.Append('>');
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.FilterEmpty"]));
+        sb.Append("</p>");
+
         sb.Append("<div class=\"kb-saved__grid\">");
-        foreach (var item in data.Filtered)
+        foreach (var item in SavedSsrData.SortedAll(data))
         {
-            AppendItem(sb, culture, data, item, antiforgeryToken);
+            var visible = SavedSsrData.MatchesFilter(item, data.Filter);
+            AppendItem(sb, culture, data, item, antiforgeryToken, hidden: !visible);
         }
 
         sb.Append("</div></div>");
@@ -194,9 +208,11 @@ internal static class SavedSsrShells
         CultureState culture,
         SavedSsrData.PageData data,
         CandidateEngagementItem item,
-        string antiforgeryToken)
+        string antiforgeryToken,
+        bool hidden = false)
     {
         var closed = SavedSsrData.IsClosed(item);
+        var closedAttr = closed ? "1" : "0";
         var rowHref = closed ? SimilarHref(item) : $"/vacancies/{item.VacancyId:D}";
         var companyPlace = string.IsNullOrWhiteSpace(item.LocationLabel)
             ? item.CompanyName
@@ -208,7 +224,15 @@ internal static class SavedSsrShells
             sb.Append(" kb-saved-row--closed");
         }
 
-        sb.Append("\"><div class=\"kb-saved-row__thumb\">");
+        sb.Append("\" data-saved-item data-saved-closed=\"");
+        sb.Append(closedAttr);
+        sb.Append('"');
+        if (hidden)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><div class=\"kb-saved-row__thumb\">");
         AppendPhoto(sb, item, "kb-saved-row__photo", "72px", 72, 72);
         sb.Append("</div><div class=\"kb-saved-row__body\"><h2 class=\"kb-saved-row__title\"><a class=\"kb-saved-row__link\" href=\"");
         sb.Append(WebUtility.HtmlEncode(rowHref));
@@ -228,7 +252,15 @@ internal static class SavedSsrShells
             sb.Append(" kb-saved-card--closed");
         }
 
-        sb.Append("\"><div class=\"kb-saved-card__media");
+        sb.Append("\" data-saved-item data-saved-closed=\"");
+        sb.Append(closedAttr);
+        sb.Append('"');
+        if (hidden)
+        {
+            sb.Append(" hidden");
+        }
+
+        sb.Append("><div class=\"kb-saved-card__media");
         if (string.IsNullOrWhiteSpace(item.ImageUrl) && string.IsNullOrWhiteSpace(item.CompanyLogoUrl))
         {
             sb.Append(" kb-saved-card__media--illustrated\" style=\"--kb-saved-illustrated:url('");
