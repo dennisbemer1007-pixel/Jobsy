@@ -93,6 +93,25 @@
     });
   }
 
+  function showOutcomeError(container, message) {
+    var el = container.querySelector("[data-ndm-outcome-error]");
+    if (!el) {
+      el = document.createElement("p");
+      el.setAttribute("data-ndm-outcome-error", "1");
+      el.setAttribute("role", "alert");
+      el.className = "state-message";
+      el.style.marginTop = "12px";
+      var submit = container.querySelector("[data-ndm-outcome-submit]");
+      if (submit && submit.parentNode) {
+        submit.parentNode.insertBefore(el, submit);
+      } else {
+        container.appendChild(el);
+      }
+    }
+    el.textContent = message;
+    el.hidden = false;
+  }
+
   function recordOutcome(container) {
     if (container.getAttribute("data-ndm-outcome-submitting") === "1") {
       return;
@@ -122,8 +141,16 @@
       }
     )
       .then(function (res) {
-        if (!res.ok) throw new Error("fail");
-        return res.json();
+        return res.json().then(function (data) {
+          if (!res.ok) {
+            var msg =
+              (data && data.message) ||
+              "De uitkomst kun je invullen na afloop van het gesprek.";
+            showOutcomeError(container, msg);
+            throw new Error("fail");
+          }
+          return data;
+        });
       })
       .then(function (data) {
         if (data && data.redirectUrl) {
