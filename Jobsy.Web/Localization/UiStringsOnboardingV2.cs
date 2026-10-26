@@ -270,6 +270,63 @@ internal static class UiStringsOnboardingV2
             : "Je maakt de tests later af via je paspoort of De ontdekkingsreis.";
         map["Onboarding.Welcome.Title"] = english ? "Hi {0}, nice to have you here" : "Hoi {0}, fijn dat je er bent";
         map["Onboarding.Welcome.TitleNoName"] = english ? "Hi, nice to have you here" : "Hoi, fijn dat je er bent";
+        map["Onboarding.Welcome.JourneyTitle"] = english ? "Welcome to your journey, {0}" : "Welkom bij je reis, {0}";
+        map["Onboarding.Welcome.JourneyTitleNoName"] = english ? "Welcome to your journey" : "Welkom bij je reis";
+        map["Onboarding.Welcome.BeforeStartTitle"] = english ? "Before you begin" : "Voor je begint";
+        map["Onboarding.Welcome.BeforeStartBody"] = english
+            ? "Everything is saved as you go. You can stop anytime and pick up where you left off."
+            : "Alles wordt onderweg bewaard. Stoppen mag, je gaat later verder waar je was.";
+        map["Onboarding.Kreeft.Welcome.Lead"] = english
+            ? "You walk five calm stretches from the beach to the light. Along the way you get to know yourself better."
+            : "Je loopt in vijf rustige stukken van het strand naar het licht. Onderweg leer je jezelf beter kennen.";
+        map["Onboarding.Kreeft.Welcome.ZoneTagSub"] = english ? "Start · welcome and consent" : "Start · welkom en toestemming";
+        map["Onboarding.Kreeft.Welcome.Z1Title"] = english ? "Beach · Start" : "Strand · Start";
+        map["Onboarding.Kreeft.Welcome.Z1Body"] = english
+            ? "This is where you begin. You read what happens to your data."
+            : "Hier begin je. Je leest wat er met je gegevens gebeurt.";
+        map["Onboarding.Kreeft.Welcome.Z2Title"] = english ? "Coast · About you" : "Kust · Over jou";
+        map["Onboarding.Kreeft.Welcome.Z2Body"] = english
+            ? "A few basics: when and where you can work."
+            : "Een paar basisvragen: wanneer en waar je kunt werken.";
+        map["Onboarding.Kreeft.Welcome.Z3Title"] = english ? "Rocks · Background and Dream" : "Rotsen · Achtergrond en Droom";
+        map["Onboarding.Kreeft.Welcome.Z3Body"] = english
+            ? "What you have done and where you want to go."
+            : "Wat je al hebt gedaan en waar je naartoe wilt.";
+        map["Onboarding.Kreeft.Welcome.Z4Title"] = english ? "Depth · Who you are" : "Diepte · Wie ben jij";
+        map["Onboarding.Kreeft.Welcome.Z4Body"] = english
+            ? "Four short tests about how you work and what matters to you."
+            : "Vier korte tests over hoe je werkt en wat je belangrijk vindt.";
+        map["Onboarding.Kreeft.Welcome.Z5Title"] = english ? "Light · Your Compass" : "Licht · Jouw Kompas";
+        map["Onboarding.Kreeft.Welcome.Z5Body"] = english
+            ? "You see what fits you and your passport is ready."
+            : "Je ziet wat bij je past en je paspoort is klaar.";
+        map["Onboarding.Kreeft.Welcome.ConsentRequired"] = english
+            ? "I understand that Lobsy uses my answers to find work that fits me."
+            : "Ik snap dat Lobsy mijn antwoorden gebruikt om werk te vinden dat bij me past.";
+        map["Onboarding.Kreeft.Welcome.ConsentRequiredSub"] = english
+            ? "Employers only see something when you agree."
+            : "Werkgevers zien pas iets als jij dat goed vindt.";
+        map["Onboarding.Kreeft.Welcome.ConsentEmail"] = english
+            ? "Lobsy may send me an occasional tip by email."
+            : "Lobsy mag me af en toe een tip sturen per e-mail.";
+        map["Onboarding.Kreeft.Welcome.ConsentEmailSub"] = english
+            ? "Not required. You can change this later."
+            : "Niet verplicht. Je kunt dit later aanpassen.";
+        map["Onboarding.Kreeft.Welcome.PrivacyLink"] = english
+            ? "Read what happens to your data"
+            : "Lees wat er met je gegevens gebeurt";
+        map["Onboarding.Kreeft.Welcome.CtaCoast"] = english ? "Start on the coast" : "Begin aan de kust";
+        map["Onboarding.Kreeft.Rail.Strand"] = english ? "Beach · Start" : "Strand · Start";
+        map["Onboarding.Kreeft.Rail.StrandSub"] = english ? "Welcome and consent" : "Welkom en toestemming";
+        map["Onboarding.Kreeft.Rail.Kust"] = english ? "Coast · About you" : "Kust · Over jou";
+        map["Onboarding.Kreeft.Rail.KustSubIdle"] = english ? "3 steps" : "3 stappen";
+        map["Onboarding.Kreeft.Rail.Rotsen"] = english ? "Rocks · Background and Dream" : "Rotsen · Achtergrond en Droom";
+        map["Onboarding.Kreeft.Rail.RotsenSubIdle"] = english ? "3 steps" : "3 stappen";
+        map["Onboarding.Kreeft.Rail.Diepte"] = english ? "Depth · Who you are" : "Diepte · Wie ben jij";
+        map["Onboarding.Kreeft.Rail.DiepteSubIdle"] = english ? "4 short tests" : "4 korte tests";
+        map["Onboarding.Kreeft.Rail.Licht"] = english ? "Light · Your Compass" : "Licht · Jouw Kompas";
+        map["Onboarding.Kreeft.Rail.LichtSubIdle"] = english ? "your result" : "je resultaat";
+        map["Onboarding.Kreeft.Rail.StepLine"] = english ? "Step {0} · {1}" : "Stap {0} · {1}";
         map["Onboarding.Welcome.Lead"] = english ? "In about 12 minutes we make your start profile together. Then your Compass shows who you are and which work fits you." : "In ongeveer 12 minuten maken we samen je startprofiel. Daarna zie je in je Kompas wie je bent en welk werk bij je past.";
         map["Onboarding.Rustig.WelcomeLead"] = english
             ? "In about 12 minutes we go through ten short steps together. Then your Compass is ready and you see which work fits you."
@@ -318,6 +375,14 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Rustig.Kompas.Dir.Team.Body"] = english
             ? "Structure, overview and contact with a team."
             : "Structuur, overzicht en contact met een team.";
+        map["Kompas.Ssr.EyebrowZone"] = english ? "Light" : "Licht";
+        map["Kompas.Ssr.EyebrowRest"] = english
+            ? " · Your Compass · onboarding and tests complete"
+            : " · Jouw Kompas · onboarding en tests afgerond";
+        map["Kompas.Ssr.HubTitle"] = english ? "Your Compass" : "Jouw Kompas";
+        map["Kompas.Ssr.HubLead"] = english
+            ? "What your four tests show together. No scores, just words that fit you."
+            : "Wat je vier tests samen laten zien. Geen cijfers, wel woorden die bij je passen.";
         map["Kompas.Ssr.Lead"] = english
             ? "Open your profile for the full Compass experience, or go straight to your passport."
             : "Open je profiel voor het volledige Kompas, of ga direct naar je paspoort.";
@@ -448,7 +513,9 @@ internal static class UiStringsOnboardingV2
     private static void AddWorkStatuses(Dictionary<string, string> map, bool english)
     {
         map["WorkStatus.Legend"] = english ? "What is your current work status?" : "Wat is je huidige werkstatus?";
-        map["WorkStatus.Hint"] = english ? "Optional. You can choose more than one." : "Optioneel. Je mag er meer dan één kiezen.";
+        map["WorkStatus.Hint"] = english
+            ? "Required to apply. You can choose more than one."
+            : "Nodig om te solliciteren. Je mag er meer dan één kiezen.";
         foreach (var (code, nl, en) in WorkStatusLabelRows())
         {
             map[$"WorkStatus.{code}"] = english ? en : nl;
@@ -473,7 +540,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchWorkStatusPl(Dictionary<string, string> map)
     {
         map["WorkStatus.Legend"] = "Jaki jest Twój obecny status zawodowy?";
-        map["WorkStatus.Hint"] = "Opcjonalnie. Możesz wybrać więcej niż jedną opcję.";
+        map["WorkStatus.Hint"] = "Wymagane do aplikacji. Możesz wybrać więcej niż jedną opcję.";
         map["WorkStatus.scholier"] = "Uczeń";
         map["WorkStatus.student"] = "Student (zawodowe/technikum/studia)";
         map["WorkStatus.stagiair"] = "Stażysta / absolwent";
@@ -490,7 +557,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchWorkStatusRo(Dictionary<string, string> map)
     {
         map["WorkStatus.Legend"] = "Care este situația ta profesională actuală?";
-        map["WorkStatus.Hint"] = "Opțional. Poți alege mai multe opțiuni.";
+        map["WorkStatus.Hint"] = "Necesar pentru a aplica. Poți alege mai multe opțiuni.";
         map["WorkStatus.scholier"] = "Elev";
         map["WorkStatus.student"] = "Student (profesional / universitate)";
         map["WorkStatus.stagiair"] = "Stagiar / absolvent";
@@ -507,7 +574,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchWorkStatusAr(Dictionary<string, string> map)
     {
         map["WorkStatus.Legend"] = "‏ما وضعك المهني الحالي؟";
-        map["WorkStatus.Hint"] = "‏اختياري. يمكنك اختيار أكثر من خيار.";
+        map["WorkStatus.Hint"] = "‏مطلوب للتقديم. يمكنك اختيار أكثر من خيار.";
         map["WorkStatus.scholier"] = "‏طالب مدرسة";
         map["WorkStatus.student"] = "‏طالب (مهني / جامعي)";
         map["WorkStatus.stagiair"] = "‏متدرب / خريج";

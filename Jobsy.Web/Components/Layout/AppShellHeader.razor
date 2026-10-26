@@ -10,21 +10,7 @@
 <header class="app-header" data-testid="app-shell-header">
     <div class="app-header__brand">
         <a class="brand" href="@HomeHref" aria-label="Lobsy">
-            @if (_useOnboardingBrandMark)
-            {
-                <img class="brand__logo brand__logo--app-icon"
-                     src="@BrandImages.AppIconSvg"
-                     width="48"
-                     height="48"
-                     alt=""
-                     decoding="async"
-                     data-logo-fallback="off"
-                     draggable="false" />
-            }
-            else
-            {
-                <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
-            }
+            <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
             @if (!_hideCandidateBrandTagline)
             {
                 <span class="brand__text">
@@ -33,6 +19,23 @@
             }
         </a>
     </div>
+    @if (_showCandidatePrimaryNav)
+    {
+        <div class="candidate-header-nav-slot">
+            @if (_noBlazorRuntime)
+            {
+                <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Header" />
+            }
+            else
+            {
+                <AuthorizeView Roles="@JobsyRoles.Candidate">
+                    <Authorized>
+                        <CandidateHeaderNav />
+                    </Authorized>
+                </AuthorizeView>
+            }
+        </div>
+    }
     <div class="app-header__actions">
         @if (ShowCandidatePwaInstall)
         {
@@ -54,20 +57,19 @@
 </header>
 
 @code {
-    private bool _useOnboardingBrandMark;
     private bool _hideCandidateBrandTagline;
+    private bool _showCandidatePrimaryNav;
+    private bool _noBlazorRuntime;
 
     protected override void OnInitialized()
     {
         var http = HttpContextAccessor.HttpContext;
         var user = http?.User;
-        var path = http?.Request.Path.Value ?? "";
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
         _hideCandidateBrandTagline = user?.Identity?.IsAuthenticated == true
             && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
-        _useOnboardingBrandMark = path.Contains("/candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/banen", StringComparison.OrdinalIgnoreCase);
+        _showCandidatePrimaryNav = user?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
     }
 
     [Parameter, EditorRequired]

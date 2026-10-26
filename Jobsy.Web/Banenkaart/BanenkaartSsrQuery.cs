@@ -1,6 +1,7 @@
 using System.Globalization;
 using Jobsy.Core.Rules;
 using Jobsy.Web.KandidaatBanen;
+using Jobsy.Web.Models;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace Jobsy.Web.Banenkaart;
@@ -14,7 +15,7 @@ internal static class BanenkaartSsrQuery
     internal sealed record State(
         string? SearchQuery,
         IReadOnlyList<string> WorkTypes,
-        int MaxTravelMinutes,
+        int? MaxTravelMinutes,
         string Transport,
         int RadiusKm,
         int MinHoursPerWeek,
@@ -32,7 +33,38 @@ internal static class BanenkaartSsrQuery
         string? OriginLabel,
         string? Error,
         bool Saved,
-        int Page = 1);
+        int Page = 1,
+        bool UrlOriginAbsentByQuery = false);
+
+    /// <summary>
+    /// URL carries filter params but no origin — origin must not be restored from cookie/profile (URL SSOT).
+    /// </summary>
+    internal static int DiscoverMaxMinutes(int? maxTravelMinutes)
+        => maxTravelMinutes ?? 90;
+
+    internal static bool UrlOmitsOriginWhileFiltered(IQueryCollection query)
+    {
+        if (query.ContainsKey("originLat") || query.ContainsKey("originLng"))
+        {
+            return false;
+        }
+
+        return query.ContainsKey("maxMinutes")
+               || query.ContainsKey("transport")
+               || query.ContainsKey("minHours")
+               || query.ContainsKey("maxHours")
+               || query.ContainsKey("q")
+               || query.ContainsKey("categoryId")
+               || query.ContainsKey("workType")
+               || query.ContainsKey("sort")
+               || query.ContainsKey("minWage")
+               || query.ContainsKey("maxWage")
+               || query.ContainsKey("age")
+               || query.ContainsKey("minMatchPercent")
+               || query.ContainsKey("companyId")
+               || query.ContainsKey("radiusKm")
+               || query.ContainsKey("weergave");
+    }
 
     internal static State Parse(IQueryCollection query)
     {
@@ -46,7 +78,8 @@ internal static class BanenkaartSsrQuery
         query.TryGetValue("workType", out var workTypeValues);
         var workTypes = WorkTypeLabels.NormalizeFilterLabels(workTypeValues).ToList();
 
-        var maxMinutes = KbMapStart.DefaultMaxTravelMinutes;
+        var hasOriginInUrl = query.ContainsKey("originLat") || query.ContainsKey("originLng");
+        int? maxMinutes = hasOriginInUrl ? null : KbMapStart.DefaultMaxTravelMinutes;
         if (query.TryGetValue("maxMinutes", out var minValues)
             && int.TryParse(minValues.FirstOrDefault(), out var parsedMinutes))
         {
@@ -220,9 +253,9 @@ internal static class BanenkaartSsrQuery
             q.Add($"workType={Uri.EscapeDataString(wt)}");
         }
 
-        if (state.MaxTravelMinutes != KbMapStart.DefaultMaxTravelMinutes)
+        if (state.MaxTravelMinutes is int travelMinutes)
         {
-            q.Add($"maxMinutes={state.MaxTravelMinutes}");
+            q.Add($"maxMinutes={travelMinutes}");
         }
 
         if (!string.Equals(state.Transport, KbMapStart.DefaultTransport, StringComparison.Ordinal))
@@ -326,7 +359,7 @@ internal static class BanenkaartSsrQuery
 
         var workTypes = form["workType"].Select(v => v?.Trim()).Where(v => !string.IsNullOrWhiteSpace(v)).Cast<string>().ToList();
 
-        var maxMinutes = int.TryParse(form["maxMinutes"], out var mm) ? Math.Clamp(mm, 5, 90) : fallback.MaxTravelMinutes;
+        int? maxMinutes = int.TryParse(form["maxMinutes"], out var mm) ? Math.Clamp(mm, 5, 90) : fallback.MaxTravelMinutes;
         var transport = NormalizeTransport(form["transport"]) ?? fallback.Transport;
         var radiusKm = int.TryParse(form["radiusKm"], out var rk) ? Math.Clamp(rk, 1, 50) : fallback.RadiusKm;
         var minHours = int.TryParse(form["minHours"], out var minH) ? Math.Clamp(minH, 0, 40) : fallback.MinHoursPerWeek;
@@ -399,6 +432,72 @@ internal static class BanenkaartSsrQuery
             null,
             false,
             1);
+    }
+
+    /// <summary>Default list sort for banenkaart SSR + client catalog (logged-in candidate with fit).</summary>
+    internal static string ResolveEffectiveSort(
+        string sortFromState,
+        bool sortExplicitInUrl,
+        bool isCandidate,
+        bool showFitFilters,
+        bool hasOrigin)
+    {
+        if (sortExplicitInUrl && !string.IsNullOrWhiteSpace(sortFromState))
+        {
+            return sortFromState.Trim().ToLowerInvariant();
+        }
+
+        if (isCandidate && showFitFilters)
+        {
+            return "match";
+        }
+
+        if (hasOrigin)
+        {
+            return "distance";
+        }
+
+        return string.IsNullOrWhiteSpace(sortFromState) || string.Equals(sortFromState, "distance", StringComparison.OrdinalIgnoreCase)
+            ? "title"
+            : sortFromState.Trim().ToLowerInvariant();
+    }
+
+    internal static IReadOnlyList<VacancyListItem> OrderVacancies(
+        IReadOnlyList<VacancyListItem> items,
+        string sortMode,
+        bool showFitFilters,
+        bool hasOrigin)
+    {
+        if (items.Count <= 1)
+        {
+            return items;
+        }
+
+        var mode = (sortMode ?? "").Trim().ToLowerInvariant();
+        if (mode == "match" && showFitFilters)
+        {
+            return items
+                .OrderByDescending(v => v.FitPercent ?? v.MatchPercent ?? -1)
+                .ThenBy(v => v.Title, StringComparer.CurrentCulture)
+                .ToList();
+        }
+
+        if (mode == "distance" && hasOrigin)
+        {
+            return items
+                .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
+                .ThenBy(v => v.Title, StringComparer.CurrentCulture)
+                .ToList();
+        }
+
+        if (mode == "title")
+        {
+            return items
+                .OrderBy(v => v.Title, StringComparer.CurrentCulture)
+                .ToList();
+        }
+
+        return items;
     }
 
     private static string? NormalizeTransport(string? raw)

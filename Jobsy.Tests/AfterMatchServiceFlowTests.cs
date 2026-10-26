@@ -7,6 +7,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Jobsy.Infrastructure.Services.AfterMatch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +21,7 @@ public sealed class AfterMatchServiceFlowTests
     public async Task Propose_slots_and_record_outcome_without_scheduling_mail()
     {
         await using var db = CreateDb();
-        var (service, appId, _, employerId) = await SeedThreadAsync(db);
+        var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
 
         var proposing = await service.ProposeEmployerSlotsAsync(
             appId,
@@ -45,6 +46,12 @@ public sealed class AfterMatchServiceFlowTests
                 "We kozen nu voor iemand met meer ervaring aan de oven."));
         Assert.Equal(AfterMatchOutcomeKind.NotNow, outcome.Outcome);
         Assert.Equal(InterviewStatus.Done, outcome.InterviewStatus);
+
+        var reread = await service.GetThreadForCandidateAsync(appId, candidateId);
+        Assert.NotNull(reread);
+        Assert.Equal(AfterMatchOutcomeKind.NotNow, reread!.Outcome);
+        Assert.Equal(InterviewStatus.Done, reread.InterviewStatus);
+        Assert.False(string.IsNullOrWhiteSpace(reread.OutcomeReason));
     }
 
     [Fact]
@@ -60,6 +67,88 @@ public sealed class AfterMatchServiceFlowTests
             isEmployer: false,
             new RescheduleRequest("Ik ben die dag onverwacht ziek geworden."));
         Assert.Equal(InterviewStatus.RescheduleRequested, rescheduled.InterviewStatus);
+    }
+
+    [Fact]
+    public async Task OpenSlots_excludes_past_unselected_slots()
+    {
+        await using var db = CreateDb();
+        var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
+        var interview = await db.Interviews.Include(i => i.Slots).FirstAsync(i => i.ApplicationId == appId);
+        db.InterviewSlots.AddRange(
+            new InterviewSlot
+            {
+                Id = Guid.NewGuid(),
+                InterviewId = interview.Id,
+                StartUtc = DateTime.UtcNow.AddDays(-2),
+                EndUtc = DateTime.UtcNow.AddDays(-2).AddMinutes(30),
+                ProposedBy = InterviewSlotProposer.Employer
+            },
+            new InterviewSlot
+            {
+                Id = Guid.NewGuid(),
+                InterviewId = interview.Id,
+                StartUtc = DateTime.UtcNow.AddDays(3),
+                EndUtc = DateTime.UtcNow.AddDays(3).AddMinutes(30),
+                ProposedBy = InterviewSlotProposer.Employer
+            },
+            new InterviewSlot
+            {
+                Id = Guid.NewGuid(),
+                InterviewId = interview.Id,
+                StartUtc = DateTime.UtcNow.AddDays(4),
+                EndUtc = DateTime.UtcNow.AddDays(4).AddMinutes(30),
+                ProposedBy = InterviewSlotProposer.Employer
+            });
+        interview.Status = InterviewStatus.Proposing;
+        await db.SaveChangesAsync();
+
+        var thread = await service.GetThreadForCandidateAsync(appId, candidateId);
+        Assert.NotNull(thread);
+        Assert.Equal(2, thread!.OpenSlots.Count);
+        Assert.All(thread.OpenSlots, s => Assert.True(s.StartUtc > DateTime.UtcNow));
+    }
+
+    [Fact]
+    public async Task MarkCandidateMessagesRead_sets_ReadAtUtc_on_inbound_messages()
+    {
+        await using var db = CreateDb();
+        var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
+        db.ApplicationMessages.Add(new ApplicationMessage
+        {
+            Id = Guid.NewGuid(),
+            ApplicationId = appId,
+            SenderUserId = employerId,
+            Body = "Hoi",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await service.MarkCandidateMessagesReadAsync(appId, candidateId);
+
+        var message = await db.ApplicationMessages.SingleAsync(m => m.ApplicationId == appId);
+        Assert.NotNull(message.ReadAtUtc);
+    }
+
+    [Fact]
+    public async Task MarkEmployerMessagesRead_sets_ReadAtUtc_on_candidate_messages()
+    {
+        await using var db = CreateDb();
+        var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
+        db.ApplicationMessages.Add(new ApplicationMessage
+        {
+            Id = Guid.NewGuid(),
+            ApplicationId = appId,
+            SenderUserId = candidateId,
+            Body = "Hoi werkgever",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await service.MarkEmployerMessagesReadAsync(appId, employerId);
+
+        var message = await db.ApplicationMessages.SingleAsync(m => m.ApplicationId == appId);
+        Assert.NotNull(message.ReadAtUtc);
     }
 
     [Fact]
@@ -164,7 +253,14 @@ public sealed class AfterMatchServiceFlowTests
 
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var mailer = new AfterMatchMailer(new NoOpMailer(), config, NullLogger<AfterMatchMailer>.Instance);
-        var service = new AfterMatchService(db, new NoOpStatusRecorder(), mailer, config);
+        var statusNotifier = new ApplicationStatusNotifier(
+            db,
+            new NoOpUserNotifications(),
+            new NoOpPush(),
+            new NoOpMailer(),
+            new AlwaysOnFeatures(),
+            new AllowAllDispatchGate());
+        var service = new AfterMatchService(db, new NoOpStatusRecorder(), mailer, statusNotifier, config);
         await service.EnsureThreadAsync(appId);
         return (service, appId, candidateId, employerId);
     }
@@ -216,5 +312,56 @@ public sealed class AfterMatchServiceFlowTests
             DateTime nowUtc,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
+    }
+
+    private sealed class NoOpUserNotifications : IUserNotificationService
+    {
+        public Task<UserNotification> CreateAsync(NotificationCreateRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult(new UserNotification
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                Title = request.Title,
+                Body = request.Body,
+                Category = request.Category,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+
+        public Task CreateForEmailAsync(
+            string userEmail,
+            string title,
+            string body,
+            string category,
+            string? deepLink = null,
+            string? actionLabel = null,
+            string? actionUrl = null,
+            string? relatedEntityType = null,
+            Guid? relatedEntityId = null,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<IReadOnlyList<UserNotification>> ListForUserAsync(Guid userId, int take = 50, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<UserNotification>>([]);
+
+        public Task<int> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(0);
+
+        public Task<UserNotification?> MarkReadAsync(Guid userId, Guid notificationId, CancellationToken cancellationToken = default)
+            => Task.FromResult<UserNotification?>(null);
+
+        public Task<int> MarkAllReadAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(0);
+    }
+
+    private sealed class NoOpPush : IPushNotificationService
+    {
+        public Task SendAsync(PushMessage message, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class AllowAllDispatchGate : IStatusNotificationDispatchGate
+    {
+        public Task<StatusNotificationDispatchDecision> EvaluateAsync(
+            Guid userId,
+            string category,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new StatusNotificationDispatchDecision(true, true, true));
     }
 }

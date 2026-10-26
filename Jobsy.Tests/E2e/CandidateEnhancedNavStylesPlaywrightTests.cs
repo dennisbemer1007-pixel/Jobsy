@@ -18,7 +18,7 @@ public sealed class CandidateEnhancedNavStylesPlaywrightTests
         ("/candidate/ontdekkingsreis", "ontdekkingsreis.css", ".journey-scene__sun", "Ontdekkingsreis"),
         ("/candidate/paspoort", "mijn-paspoort.css", ".passport-page--illustrated, .passport-page", "Paspoort"),
         ("/banenkaart", "banenkaart.css", ".jobsy-discovery", "Banenkaart"),
-        ("/candidate/applications", "applications.css", ".apps-page, .app-main", "Sollicitaties"),
+        ("/candidate/applications", "sollicitaties-page.css", ".sollicitaties-page, .app-main", "Sollicitaties"),
         ("/carriere", "carriere.css", ".panel-page, .career-card", "Carrière"),
     ];
 

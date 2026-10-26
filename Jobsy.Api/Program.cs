@@ -8,9 +8,11 @@ using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
 using Jobsy.Core.Localization;
+using Jobsy.Infrastructure.Hosting;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Ops;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
@@ -28,6 +30,7 @@ if (args.Length > 0 && args[0] == "proactive-matching")
 }
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJobsyAcceptatieAppSettings();
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];
 if (!string.IsNullOrWhiteSpace(sentryDsn))
@@ -51,6 +54,9 @@ if (!builder.Environment.IsDevelopment()
 }
 
 Jobsy.Core.Security.VerificationCodes.ConfigurePepper(otpPepper);
+
+builder.Services.Configure<Jobsy.Core.Options.AuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.AuthOptions.SectionName));
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -431,8 +437,7 @@ app.Use(async (context, next) =>
         && context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.StatusCode = StatusCodes.Status200OK;
-        context.Response.ContentType = "application/json; charset=utf-8";
-        await context.Response.WriteAsync("""{"status":"ok"}""", context.RequestAborted);
+        await context.Response.WriteAsJsonAsync(ApiHealthEndpoints.BuildPayload(), context.RequestAborted);
         return;
     }
 
@@ -498,13 +503,7 @@ app.UseMiddleware<Jobsy.Api.Security.MaintenanceApiMiddleware>();
 app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
 app.UseMiddleware<Jobsy.Api.Middleware.TestAccountScopeMiddleware>();
 
-app.MapGet("/health", () => Results.Ok(new
-{
-    status = "ok",
-    commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
-            ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
-            ?? "local"
-}))
+app.MapGet("/health", () => Results.Ok(ApiHealthEndpoints.BuildPayload()))
     .AllowAnonymous();
 
 // Partner OpenAPI for the external vacancy API (X-API-Key). Development only —

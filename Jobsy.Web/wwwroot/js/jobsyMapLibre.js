@@ -177,7 +177,14 @@ window.jobsyMapLibre = (function () {
         var compact = preferCompactAttribution();
         if (compact) {
             attrib.classList.add("maplibregl-compact");
-            attrib.classList.remove("maplibregl-compact-show");
+            if (isLagenBanenkaartPage()) {
+                if (attrib.dataset.jobsyCompactInit !== "1") {
+                    attrib.classList.remove("maplibregl-compact-show");
+                    attrib.dataset.jobsyCompactInit = "1";
+                }
+            } else {
+                attrib.classList.remove("maplibregl-compact-show");
+            }
         } else {
             attrib.classList.remove("maplibregl-compact");
             attrib.classList.add("maplibregl-compact-show");
@@ -407,10 +414,12 @@ window.jobsyMapLibre = (function () {
                 }
                 return { url: url };
             },
-            attributionControl: {
-                compact: options.compactAttribution === true || preferCompactAttribution(),
-                customAttribution: OSM_ATTRIBUTION
-            },
+            attributionControl: options.attributionControl === false
+                ? false
+                : {
+                    compact: options.compactAttribution === true || preferCompactAttribution(),
+                    customAttribution: OSM_ATTRIBUTION
+                },
             maplibreLogo: false,
             cooperativeGestures: false,
             fadeDuration: 0,

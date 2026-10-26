@@ -1,0 +1,27 @@
+@page "/werkgever/sollicitaties/{ApplicationId:guid}/after-match/outcome-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Redirect · Lobsy</PageTitle>
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+        http.Response.Redirect($"/werkgever/sollicitaties/{ApplicationId:D}/after-match?panel=outcome");
+    }
+}

@@ -35,26 +35,26 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
-    <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
-    <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-08" />
-    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-test-blocks.css?v=20261018-r2" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-r4" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-mobile-bar.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-richting-a.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-vroeg-resultaat.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-work-history.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-illustrated-step.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-test-blocks.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-nearby-panel.css")" />
     @if (TestJourneyIllustration.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-test-journey.css")" />
     }
     @if (_finaleV2)
     {
-        <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-finale-v2.css")" />
     }
     @if (OnboardingRustig.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261020-21" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css")" />
     }
-    <link rel="stylesheet" href="css/features/onboarding-client-nav.css?v=20261022-nav" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-client-nav.css")" />
 </HeadContent>
 
 <div class="ob-wizard ob-wizard--richting-a @(OnboardingRustig.Enabled ? "ob-wizard--rustig" : null) @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)"

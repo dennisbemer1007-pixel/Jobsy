@@ -55,6 +55,10 @@ public sealed class NotificationUnreadStore : IAsyncDisposable
         _ = BootstrapAsync(_cts!.Token);
     }
 
+    /// <summary>One-shot unread refresh (e.g. bell mount before first poll).</summary>
+    public Task RefreshOnceAsync(CancellationToken ct = default)
+        => RefreshAsync(ct);
+
     public void SetUnread(int value)
     {
         lock (_gate)

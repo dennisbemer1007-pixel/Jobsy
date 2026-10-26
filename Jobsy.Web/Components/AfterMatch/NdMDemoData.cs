@@ -51,5 +51,6 @@ internal static class NdMDemoData
             [],
             "Sanne de Vries",
             "sanne.devries@mail.nl",
-            new DateTime(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc));
+            new DateTime(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc),
+            null);
 }

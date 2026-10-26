@@ -47,6 +47,7 @@ public class ApplicationsController : ControllerBase
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly ISupportAccessService _supportAccess;
     private readonly IApplicationStatusRecorder _statusRecorder;
+    private readonly ApplicationStatusNotifier _statusNotifier;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -63,7 +64,8 @@ public class ApplicationsController : ControllerBase
         IVacancyDiscoveryIndex discoveryIndex,
         IPersonalDataAccessLogger accessLog,
         ISupportAccessService supportAccess,
-        IApplicationStatusRecorder statusRecorder)
+        IApplicationStatusRecorder statusRecorder,
+        ApplicationStatusNotifier statusNotifier)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -80,6 +82,7 @@ public class ApplicationsController : ControllerBase
         _accessLog = accessLog;
         _supportAccess = supportAccess;
         _statusRecorder = statusRecorder;
+        _statusNotifier = statusNotifier;
     }
 
     [HttpGet]
@@ -1055,9 +1058,8 @@ public class ApplicationsController : ControllerBase
                     return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw." });
                 }
 
-                await SendApplicationConfirmationAsync(
-                    candidate, vacancy, application, authenticatorStubUsed, cancellationToken);
-                await NotifyEmployersOfNewApplicationAsync(vacancy, application, cancellationToken);
+                await _statusNotifier.NotifyApplicationSubmittedAsync(
+                    application, vacancy, candidate.FullName, cancellationToken);
 
                 var immediateDto = new ApplicationDto(
                     application.Id,
@@ -1213,10 +1215,8 @@ public class ApplicationsController : ControllerBase
         existing.WorkPermitConfirmed = request.WorkPermitConfirmed;
         await _db.SaveChangesAsync(cancellationToken);
 
-        await SendApplicationConfirmationAsync(
-            candidate, vacancy, existing, authenticatorStubUsed, cancellationToken);
-
-        await NotifyEmployersOfNewApplicationAsync(vacancy, existing, cancellationToken);
+        await _statusNotifier.NotifyApplicationSubmittedAsync(
+            existing, vacancy, candidate.FullName, cancellationToken);
 
         var dto = new ApplicationDto(
             existing.Id,
@@ -1358,7 +1358,7 @@ public class ApplicationsController : ControllerBase
             .FirstOrDefaultAsync(v => v.Id == application.VacancyId, cancellationToken);
         if (vacancy is not null)
         {
-            await NotifyEmployersOfWithdrawalAsync(vacancy, application, cancellationToken);
+            await _statusNotifier.NotifyApplicationWithdrawnAsync(application, vacancy, cancellationToken);
         }
 
         return NoContent();
@@ -1452,27 +1452,7 @@ public class ApplicationsController : ControllerBase
         }
         else
         {
-            var acceptSubject = $"Je sollicitatie is geaccepteerd: {application.Vacancy.Title}";
-            var acceptBody =
-                $"{application.Vacancy.Company.Name}: je sollicitatie is geaccepteerd.";
-            var acceptMail = TransactionalEmails.EmployerReactionAccepted(
-                baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
-            await _mailer.SendAsync(acceptMail, application.CandidateEmail, cancellationToken: cancellationToken);
-
-            await _push.SendAsync(new PushMessage(
-                application.CandidateEmail,
-                "Positief nieuws over je sollicitatie",
-                acceptBody,
-                appsLink,
-                "EmployerReaction"), cancellationToken);
-
-            await NotifyCandidateAsync(
-                application,
-                acceptSubject,
-                acceptBody,
-                "EmployerReaction",
-                "/candidate/applications",
-                cancellationToken);
+            await _statusNotifier.NotifyMutualYesAsync(application, actor?.Id, cancellationToken);
         }
 
         return Ok(MapEmployerDto(application));
@@ -1825,32 +1805,6 @@ public class ApplicationsController : ControllerBase
         return DiplomaEvaluationRules.SerializeSnapshot(rows);
     }
 
-    private async Task SendApplicationConfirmationAsync(
-        Core.Entities.User candidate,
-        Core.Entities.Vacancy vacancy,
-        Core.Entities.Application application,
-        bool authenticatorStubUsed,
-        CancellationToken cancellationToken)
-    {
-        _ = authenticatorStubUsed; // logged by callers if needed; never shown in mail (05.3)
-        var subject = $"Sollicitatie bevestigd: {vacancy.Title}";
-        var body = ApplicationRules.ConfirmationNoticeBody(vacancy.Company.Name);
-        var mail = TransactionalEmails.ApplicationConfirmation(
-            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            candidate.FullName,
-            vacancy.Title,
-            vacancy.Company.Name);
-        await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
-
-        await NotifyCandidateAsync(
-            application,
-            subject,
-            body,
-            "ApplicationConfirmation",
-            "/candidate/applications",
-            cancellationToken);
-    }
-
     private async Task SendVerificationCodeAsync(
         Core.Entities.User candidate,
         Core.Entities.Vacancy vacancy,
@@ -1915,94 +1869,6 @@ public class ApplicationsController : ControllerBase
                 "Application",
                 application.Id),
             cancellationToken);
-    }
-
-    private async Task NotifyEmployersOfNewApplicationAsync(
-        Core.Entities.Vacancy vacancy,
-        Core.Entities.Application application,
-        CancellationToken cancellationToken)
-    {
-        var deepLink = await BuildDeepLinkAsync("/branch/applicants", cancellationToken);
-        var contacts = await _db.Users
-            .AsNoTracking()
-            .Where(u =>
-                u.IsActive
-                && u.Role != UserRole.Candidate
-                && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
-            .Select(u => new { u.Id, u.Email })
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var subject = $"Nieuwe sollicitatie: {vacancy.Title}";
-        var body = $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}";
-        var mail = TransactionalEmails.EmployerNewApplication(
-            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title,
-            branchName: vacancy.Company.Name,
-            applicationId: application.Id,
-            receivedAtUtc: application.CreatedAt,
-            matchPercent: null,
-            companyName: vacancy.Company.Name);
-        foreach (var contact in contacts)
-        {
-            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
-
-            await _push.SendAsync(new PushMessage(
-                contact.Email,
-                "Nieuwe sollicitatie",
-                body,
-                deepLink,
-                "EmployerNewApplication"), cancellationToken);
-
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    contact.Id,
-                    subject,
-                    body,
-                    "EmployerNewApplication",
-                    "/branch/applicants",
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
-                cancellationToken);
-        }
-    }
-
-    private async Task NotifyEmployersOfWithdrawalAsync(
-        Core.Entities.Vacancy vacancy,
-        Core.Entities.Application application,
-        CancellationToken cancellationToken)
-    {
-        var contacts = await _db.Users
-            .AsNoTracking()
-            .Where(u =>
-                u.IsActive
-                && u.Role != UserRole.Candidate
-                && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
-            .Select(u => new { u.Id, u.Email })
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var subject = $"Sollicitatie ingetrokken: {vacancy.Title}";
-        var body = "Een kandidaat heeft de sollicitatie ingetrokken.";
-        var mail = TransactionalEmails.CandidateWithdrawn(
-            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title,
-            companyName: vacancy.Company.Name);
-        foreach (var contact in contacts)
-        {
-            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
-
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    contact.Id,
-                    subject,
-                    body,
-                    "CandidateWithdrawn",
-                    "/branch/applicants",
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
-                cancellationToken);
-        }
     }
 
     private static string BuildCompactPreferencesSummary(CandidatePreferencesDto preferences)
@@ -2111,10 +1977,24 @@ public class ApplicationsController : ControllerBase
             return;
         }
 
-        await _statusRecorder.TryRecordEmployerViewedAsync(
+        var recorded = await _statusRecorder.TryRecordEmployerViewedAsync(
             application.Id,
             actorUserId,
             nowUtc,
             cancellationToken);
+        if (!recorded)
+        {
+            return;
+        }
+
+        if (application.Vacancy is null)
+        {
+            application = await _db.Applications
+                .Include(a => a.Vacancy)
+                .ThenInclude(v => v.Company)
+                .FirstAsync(a => a.Id == application.Id, cancellationToken);
+        }
+
+        await _statusNotifier.NotifyCvViewedAsync(application, actorUserId, cancellationToken);
     }
 }

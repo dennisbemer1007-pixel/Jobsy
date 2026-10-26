@@ -7,6 +7,8 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Onboarding
 @using Jobsy.Web.Seo
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -16,8 +18,16 @@
 @inject PageSeoContext Seo
 @inject IHttpContextAccessor HttpContextAccessor
 
+<HeadContent>
+    @if (_variant == LandingVariant.On)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
+    }
+</HeadContent>
+
 <div class="pub-landing @(_variant == LandingVariant.On ? "pub-landing--combo pub-landing--calm" : "")" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
-    <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" />
+    <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" ReiskaartHtml="@(_variant == LandingVariant.On ? KreeftReiskaartMarkup.ForScreen(Culture, 1) : null)" />
     @if (_variant == LandingVariant.On)
     {
         <LandingIllustratedSteps Variant="_variant" />

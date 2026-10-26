@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Write .br (quality 11) and .gz sidecars next to large static JS/CSS assets."""
+"""Write .br (quality 11) and .gz sidecars next to large static JS/CSS assets.
+
+Run after regenerating jobMap.min.js (terser). PrecompressedStaticAssetTests fails if
+sidecars do not decompress to the same bytes as the source file.
+"""
 from __future__ import annotations
 
 import brotli
@@ -12,6 +16,22 @@ DEFAULTS = [
     ROOT / "Jobsy.Web/wwwroot/lib/maplibre/maplibre-gl-csp.js",
     ROOT / "Jobsy.Web/wwwroot/lib/maplibre/maplibre-gl-csp-worker.js",
     ROOT / "Jobsy.Web/wwwroot/js/jobMap.min.js",
+    ROOT / "Jobsy.Web/wwwroot/css/features/sollicitaties-page.css",
+    ROOT / "Jobsy.Web/wwwroot/css/features/applications.css",
+    ROOT / "Jobsy.Web/wwwroot/css/features/na-de-match.css",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-confirmed.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-reschedule.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-outcome.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-mail-chrome.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-herinneringen.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-reschedule.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-cancel.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-employer-messages.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-pick-slot.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-outcome.js",
+    ROOT / "Jobsy.Web/wwwroot/js/ndm-messages.js",
+    ROOT / "Jobsy.Web/wwwroot/js/passport-availability-matrix.js",
 ]
 
 

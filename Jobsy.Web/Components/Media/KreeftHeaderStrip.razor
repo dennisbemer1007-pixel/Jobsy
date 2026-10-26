@@ -1,0 +1,42 @@
+@namespace Jobsy.Web.Components.Media
+@using Jobsy.Web.Media
+
+<div class="@CssClass sollicitaties-hero-strip" aria-hidden="true" data-testid="kreeft-header-strip" data-kreeft-strip="@StripKey">
+    <div class="sollicitaties-hero-strip__inner">
+        <img class="sollicitaties-hero-strip__img desk"
+             src="@ResolvedDesk"
+             alt=""
+             width="1440"
+             height="225"
+             loading="lazy"
+             decoding="async"
+             style="@ImgStyle" />
+        <img class="sollicitaties-hero-strip__img mob"
+             src="@ResolvedMob"
+             alt=""
+             width="780"
+             height="105"
+             loading="lazy"
+             decoding="async"
+             style="@ImgStyle" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public string StripKey { get; set; } = "";
+
+    [Parameter] public string? DeskUrl { get; set; }
+
+    [Parameter] public string? MobUrl { get; set; }
+
+    [Parameter] public string CssClass { get; set; } = "kreeft-header-strip";
+
+    private string ResolvedDesk =>
+        DeskUrl ?? KreeftHeaderStripAssets.Desk(KreeftHeaderStripAssets.NormalizeKey(StripKey));
+
+    private string ResolvedMob =>
+        MobUrl ?? KreeftHeaderStripAssets.Mob(KreeftHeaderStripAssets.NormalizeKey(StripKey));
+
+    private string ImgStyle =>
+        $"--kreeft-strip-pos:{KreeftHeaderStripObjectPosition.ForKey(StripKey)};object-position:{KreeftHeaderStripObjectPosition.ForKey(StripKey)}";
+}

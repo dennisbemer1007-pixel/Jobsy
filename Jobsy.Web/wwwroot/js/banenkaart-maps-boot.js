@@ -7,9 +7,9 @@ window.jobsyMaps = (function () {
     var css = ["/lib/maplibre/maplibre-gl.css?v=20260820-r166"];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261023-lagen-compact1"
+        "/js/jobsyMapLibre.min.js?v=20261026-kreeft25"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261024-heart1"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261026-kreeft24"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -208,6 +208,67 @@ window.jobsyMaps = (function () {
         }
     }
 
+    function deferMapBootWhileListMode() {
+        var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+        if (!root) {
+            return false;
+        }
+        var listMode = root.getAttribute("data-kb-view") === "list"
+            || (root.classList.contains("show-list") && !root.classList.contains("show-map"));
+        if (!listMode) {
+            return false;
+        }
+        try {
+            return window.matchMedia("(max-width: 700px)").matches;
+        } catch (eMq) {
+            return false;
+        }
+    }
+
+    function applyCatalogToMapWhenReady() {
+        if (!window.jobsyBanenkaartCatalog || typeof window.jobsyBanenkaartCatalog.applyToMap !== "function") {
+            return;
+        }
+        var filters = typeof window.jobsyBanenkaartCatalog.resolveFilters === "function"
+            ? window.jobsyBanenkaartCatalog.resolveFilters()
+            : null;
+        if (window.jobsyBanenkaartCatalog.isReady && window.jobsyBanenkaartCatalog.isReady()) {
+            window.jobsyBanenkaartCatalog.applyToMap(filters);
+        }
+    }
+
+    function whenMapIdle(cb) {
+        if (!window.jobMap || typeof window.jobMap.__testGetMap !== "function") {
+            cb();
+            return;
+        }
+        var m = window.jobMap.__testGetMap();
+        if (!m || typeof m.once !== "function") {
+            cb();
+            return;
+        }
+        if (typeof m.isStyleLoaded === "function" && m.isStyleLoaded()) {
+            m.once("idle", cb);
+            return;
+        }
+        m.once("load", function () {
+            m.once("idle", cb);
+        });
+    }
+
+    function startDiscoveryMapAfterVisible() {
+        bootDiscoveryMap();
+        whenMapIdle(function () {
+            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
+                window.jobMap.invalidate();
+            }
+            if (window.jobMap && typeof window.jobMap.fitToOriginRings === "function") {
+                window.jobMap.fitToOriginRings(false);
+            }
+            applyCatalogToMapWhenReady();
+        });
+    }
+
     function warmBoot() {
         var parsed = readBootPayload();
         if (!parsed) {
@@ -227,19 +288,30 @@ window.jobsyMaps = (function () {
         if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
             window.jobsyBasemapWarm.warm(view).catch(function () { });
         }
+        function onMapPaneVisible() {
+            if (typeof requestAnimationFrame === "function") {
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(startDiscoveryMapAfterVisible);
+                });
+            } else {
+                startDiscoveryMapAfterVisible();
+            }
+        }
+
+        if (document.documentElement.dataset.bkMapRevealListen !== "1") {
+            document.documentElement.dataset.bkMapRevealListen = "1";
+            document.addEventListener("jobsy-bk-map-pane-visible", onMapPaneVisible);
+        }
+
         ensure("discovery").then(function () {
-            bootDiscoveryMap();
-            if (window.jobMap && typeof window.jobMap.invalidate === "function") {
-                window.jobMap.invalidate();
-            }
-            if (window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.applyToMap === "function") {
-                var filters = typeof window.jobsyBanenkaartCatalog.resolveFilters === "function"
-                    ? window.jobsyBanenkaartCatalog.resolveFilters()
-                    : null;
-                if (window.jobsyBanenkaartCatalog.isReady && window.jobsyBanenkaartCatalog.isReady()) {
-                    window.jobsyBanenkaartCatalog.applyToMap(filters);
+            if (deferMapBootWhileListMode()) {
+                var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+                if (root && root.getAttribute("data-kb-view") === "map") {
+                    onMapPaneVisible();
                 }
+                return;
             }
+            startDiscoveryMapAfterVisible();
         }).catch(function () { });
     }
 

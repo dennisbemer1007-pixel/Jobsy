@@ -20,14 +20,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
-<HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/candidate/ontdekkingsreis"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-</HeadContent>
+
 
 @if (_bodyHtml is not null)
 {

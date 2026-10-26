@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
@@ -12,9 +13,16 @@ public sealed partial class JobsyApiClient
         Guid applicationId,
         CancellationToken ct = default)
     {
-        return await GetApiJsonAsync<AfterMatchThreadDto>(
+        using var response = await _http.GetAsync(
             $"api/me/applications/{applicationId:D}/after-match",
             ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<AfterMatchThreadDto>(response.Content, ct);
     }
 
     public async Task<AfterMatchThreadDto?> GetAfterMatchForEmployerAsync(
@@ -48,7 +56,11 @@ public sealed partial class JobsyApiClient
             $"api/me/applications/{applicationId:D}/after-match/slots/propose",
             request,
             ct);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+
         return (await ReadApiJsonAsync<AfterMatchThreadDto>(response.Content, ct))!;
     }
 
@@ -121,6 +133,28 @@ public sealed partial class JobsyApiClient
         return (await ReadApiJsonAsync<AfterMatchThreadDto>(response.Content, ct))!;
     }
 
+    public async Task<bool> TryMarkCandidateAfterMatchMessagesReadAsync(
+        Guid applicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/applications/{applicationId:D}/after-match/messages/read",
+            content: null,
+            ct);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> TryMarkEmployerAfterMatchMessagesReadAsync(
+        Guid applicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/werkgever/applications/{applicationId:D}/after-match/messages/read",
+            content: null,
+            ct);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<AfterMatchThreadDto> RecordAfterMatchOutcomeAsync(
         Guid applicationId,
         RecordOutcomeRequest request,
@@ -153,5 +187,17 @@ public sealed partial class JobsyApiClient
             js,
             "lobsy-gesprek.ics",
             ct);
+    }
+
+    public async Task<byte[]?> TryDownloadAfterMatchCalendarAsync(
+        Guid applicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/applications/{applicationId:D}/after-match/calendar.ics",
+            ct);
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadAsByteArrayAsync(ct)
+            : null;
     }
 }

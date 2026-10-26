@@ -1,0 +1,133 @@
+@page "/candidate/applications"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Hosting
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@inject IConfiguration Configuration
+@inject IHostEnvironment HostEnvironment
+
+<PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
+<HeadContent>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/sollicitaties-mark-read-flush.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/sollicitaties-client-nav.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/sollicitaties-rail.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/sollicitaties-berichten.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/sollicitaties-actions.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/sollicitaties-activiteiten.js")}")" defer></script>
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="3" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            var isCandidate = user.Identity?.IsAuthenticated == true
+                              && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+            var readOnly = user.Identity?.IsAuthenticated == true && !isCandidate;
+            string? givenName = null;
+            string? candidateEmail = null;
+            if (isCandidate)
+            {
+                givenName = user.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value
+                            ?? user.FindFirst("given_name")?.Value;
+                candidateEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                                 ?? user.FindFirst("email")?.Value;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("tab", out var tabValues);
+            query.TryGetValue("filter", out var filterValues);
+            query.TryGetValue("sel", out var selValues);
+            query.TryGetValue("thread", out var threadValues);
+            query.TryGetValue("return", out var returnValues);
+            ApplicationsSsrQuery.TryGetSafeApplicationsReturn(returnValues.FirstOrDefault(), out var detailReturnHref);
+            Guid? selectedId = null;
+            if (Guid.TryParse(selValues.FirstOrDefault(), out var parsedSel))
+            {
+                selectedId = parsedSel;
+            }
+
+            Guid? berichtenThreadId = null;
+            if (Guid.TryParse(threadValues.FirstOrDefault(), out var parsedThread))
+            {
+                berichtenThreadId = parsedThread;
+            }
+
+            var userAgent = HttpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "";
+            var mobileDetailShell = userAgent.Contains("Mobile", StringComparison.OrdinalIgnoreCase)
+                || userAgent.Contains("Android", StringComparison.OrdinalIgnoreCase)
+                || userAgent.Contains("iPhone", StringComparison.OrdinalIgnoreCase);
+
+            var data = await ApplicationsSsrData.LoadAsync(
+                Api,
+                FeatureFlags,
+                Culture,
+                Configuration,
+                HostEnvironment,
+                isCandidate,
+                tabValues.FirstOrDefault(),
+                filterValues.FirstOrDefault(),
+                selectedId,
+                givenName,
+                readOnly,
+                candidateEmail,
+                mobileDetailShell,
+                berichtenThreadId);
+
+            _bodyHtml = ApplicationsSsrShells.BuildBody(
+                Culture,
+                data,
+                string.IsNullOrEmpty(detailReturnHref) ? null : detailReturnHref);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

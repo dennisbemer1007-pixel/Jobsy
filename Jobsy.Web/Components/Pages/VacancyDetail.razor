@@ -19,6 +19,7 @@
 @using Jobsy.Core.Media
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Rules
+@using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Components.Engagement
@@ -462,6 +463,12 @@
                                 <CandidatePwaInstallPostApplyCard />
                             </div>
                         }
+                        else if (!_candidateApplyGateLoaded)
+                        {
+                            <div class="apply-panel apply-panel--loading" data-testid="apply-profile-gate-loading" aria-busy="true">
+                                <p class="apply-panel__text state-message">@Culture["Common.Loading"]</p>
+                            </div>
+                        }
                         else if (!_profileReadyForApply)
                         {
                             <div class="apply-panel apply-panel--warn" data-testid="apply-profile-blocked">
@@ -798,7 +805,7 @@
             return;
         }
 
-        var detailWhy = KbFitMapping.WhyLine(_vacancy, Culture);
+        var detailWhy = CandidateFitDisplay.SanitizeWhyForDetail(KbFitMapping.WhyLine(_vacancy, Culture));
         var detailRank = KbFitMapping.RankLowerLabel(_vacancy, Culture);
         var dnaRows = DnaRows(_vacancy);
 
@@ -821,7 +828,11 @@
                             <span class="kb-dna__label">@Culture[row.LabelKey]</span>
                             @if (row.Percent is int barPct)
                             {
-                                <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]" aria-valuetext="@Culture[row.WhyKey]"></progress>
+                                if (!_hideDnaPercentForCandidate)
+                                {
+                                    <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]" aria-valuetext="@Culture[row.WhyKey]"></progress>
+                                }
+
                                 <span class="kb-dna__reason">@Culture[row.WhyKey]</span>
                             }
                             else
@@ -1115,6 +1126,7 @@
     private bool _showSafetyNet;
     private string? _safetyNetMessage;
     private int? _safetyNetPercent;
+    private bool _hideDnaPercentForCandidate;
     private bool _confirmSafetyNet;
     private int? _ageYears;
     private bool _mapReady;
@@ -1124,6 +1136,7 @@
     private string? _originLabel;
     private ElementReference _mapWrapElement;
     private DotNetObjectReference<VacancyDetail>? _dotNetMapRef;
+    private bool _disposed;
     private bool _openingRoute;
     private Guid? _mappedVacancyId;
     private Guid? _loadedVacancyId;
@@ -1451,6 +1464,14 @@
         var keepPrerendered = _vacancy is not null && _vacancy.Id == Id;
         ResetApplyUiState();
         _loadedVacancyId = Id;
+        _hideDnaPercentForCandidate = false;
+        var httpUser = HttpContextAccessor.HttpContext?.User;
+        if (httpUser?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(httpUser, JobsyRoles.Candidate))
+        {
+            _hideDnaPercentForCandidate = true;
+        }
+
         _liked = false;
         _clickRecorded = false;
         _ageYears = null;
@@ -1549,6 +1570,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
         Culture.Changed -= OnCultureChanged;
         _persistSubscription.Dispose();
         _dotNetMapRef?.Dispose();
@@ -1598,6 +1620,7 @@
                     if (auth.User.Identity?.IsAuthenticated == true
                         && RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate))
                     {
+                        _hideDnaPercentForCandidate = true;
                         var profile = await SafeProfileAsync();
                         if (profile?.DateOfBirth is DateOnly dob
                             && AgeRules.AgeYearsFromDateOfBirth(dob) is int fromDob)
@@ -1724,7 +1747,7 @@
 
     [JSInvokable]
     public Task OnMapVisibleAsync()
-        => EnsureDetailMapAsync();
+        => _disposed ? Task.CompletedTask : EnsureDetailMapAsync();
 
     /// <summary>
     /// Age for wages: stored banenkaart filter age, else none (“Alle” → full table).
@@ -1942,7 +1965,8 @@
                 _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
                 _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);
 
-                _profileHasAvailability = (prefs.Availability?.Count ?? 0) > 0;
+                _profileHasAvailability = prefs.FlexibleTimes == true
+                    || (prefs.Availability?.Count ?? 0) > 0;
                 _profileHasLicense = !_requiresDrivingLicense
                     || DrivingLicenseLabels.CandidateMeetsRequirement(
                         prefs.DrivingLicenses,

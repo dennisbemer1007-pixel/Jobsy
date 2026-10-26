@@ -77,6 +77,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         }
 
         await TryRepairAcceptatieTestCandidateAsync(stoppingToken);
+        await TryEnsureAcceptatieSollicitatiesDemoAsync(stoppingToken);
 
         try
         {
@@ -125,6 +126,91 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Test-account assessment repair failed; API continues.");
+        }
+    }
+
+    /// <summary>
+    /// Acceptatie only: idempotent sollicitaties mockup rows for the CLI test candidate
+    /// (incl. <c>lobsy-test@mail.grokbot.com</c> when flagged as test account).
+    /// </summary>
+    private async Task TryEnsureAcceptatieSollicitatiesDemoAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            var input = TestAccountGuardInputFactory.FromConfiguration(
+                _configuration, _environment, isWebRuntime: false);
+            _logger.LogInformation(
+                "Acceptatie sollicitaties demo probe: service={Service} deployment={Deployment} testAccountsEnabled={TestAccountsEnabled} dbName={DatabaseName} dbParseFailed={DbParseFailed} apiHost={ApiHost} (web SSR uses ApiBaseUrl → same API DB when configured for lobsy-acc-api).",
+                input.RenderServiceName,
+                input.DeploymentEnvironment,
+                input.TestAccountsEnabled,
+                input.DatabaseName ?? "(null)",
+                input.ConnectionStringParseFailed,
+                input.ApiBaseUrlHost ?? "(null)");
+            var guard = TestAccountEnvironmentGuard.Evaluate(input);
+            if (!guard.Allowed)
+            {
+                AcceptatieSollicitatiesDemoStartupState.Record(
+                    "skipped_guard:" + guard.CodesSummary());
+                foreach (var failure in guard.Failures)
+                {
+                    _logger.LogInformation(
+                        "Acceptatie sollicitaties demo skipped: {Code} — {Message}",
+                        failure.Code,
+                        failure.Message);
+                }
+
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            try
+            {
+                await JobsyDbSeeder.EnsureAfterMatchDemoApplicationsAsync(db, _logger);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Acceptatie after-match employer demo seed failed; continuing.");
+            }
+
+            var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+                db,
+                _configuration,
+                guard,
+                _logger,
+                stoppingToken);
+            if (!applied)
+            {
+                AcceptatieSollicitatiesDemoStartupState.Record("skipped_no_candidate_or_manager");
+                _logger.LogInformation(
+                    "Acceptatie sollicitaties demo skipped (no allowlisted candidate or branch manager).");
+            }
+            else
+            {
+                var candidate = await TestAccountsSollicitatiesDemoSeeder.FindAcceptatieDemoCandidateAsync(
+                    db,
+                    _configuration,
+                    _logger,
+                    stoppingToken);
+                if (candidate is not null)
+                {
+                    var outcome = await TestAccountsSollicitatiesDemoSeeder.BuildDemoHealthOutcomeAsync(
+                        db,
+                        candidate.Id,
+                        stoppingToken);
+                    AcceptatieSollicitatiesDemoStartupState.Record(outcome);
+                }
+                else
+                {
+                    AcceptatieSollicitatiesDemoStartupState.Record("applied");
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            AcceptatieSollicitatiesDemoStartupState.RecordError(ex);
+            _logger.LogError(ex, "Acceptatie sollicitaties demo ensure failed; API continues.");
         }
     }
 }

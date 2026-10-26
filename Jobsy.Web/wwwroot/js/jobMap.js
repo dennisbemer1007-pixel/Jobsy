@@ -29,6 +29,7 @@ window.jobMap = (function () {
     let ringRedrawBound = false;
     let ringStyleHandlerBound = false;
     let ringRedrawTries = 0;
+    let ringIdleRetryCount = 0;
     let deferMapReveal = false;
     let kkMode = false;
     let companyMapMode = false;
@@ -1060,20 +1061,8 @@ window.jobMap = (function () {
         return current + " van " + total;
     }
 
-    function normalizeLagenWageBands(v) {
-        if (Array.isArray(v.wageBands) && v.wageBands.length) {
-            return v.wageBands.slice();
-        }
-        if (Array.isArray(v.wageByAge) && v.wageByAge.length) {
-            return v.wageByAge.map(function (b) {
-                return {
-                    ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
-                    hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
-                    label: b.label || b.Label || ""
-                };
-            });
-        }
-        const adult = Number(v.wage);
+    function buildLagenYouthWageBandsFromAdult(adultHourly) {
+        const adult = Number(adultHourly);
         if (!Number.isFinite(adult) || adult <= 0) {
             return [];
         }
@@ -1095,6 +1084,33 @@ window.jobMap = (function () {
         });
     }
 
+    function lagenFallbackAdultHourlyWage() {
+        const fromLabels = uiLabels.wageFallbackAdultHourly != null
+            ? Number(uiLabels.wageFallbackAdultHourly)
+            : NaN;
+        return Number.isFinite(fromLabels) && fromLabels > 0 ? fromLabels : 14.06;
+    }
+
+    function normalizeLagenWageBands(v) {
+        if (Array.isArray(v.wageBands) && v.wageBands.length) {
+            return v.wageBands.slice();
+        }
+        if (Array.isArray(v.wageByAge) && v.wageByAge.length) {
+            return v.wageByAge.map(function (b) {
+                return {
+                    ageYears: b.ageYears != null ? b.ageYears : b.AgeYears,
+                    hourlyRate: b.hourlyRate != null ? b.hourlyRate : b.HourlyRate,
+                    label: b.label || b.Label || ""
+                };
+            });
+        }
+        const adult = Number(v.wage);
+        if (Number.isFinite(adult) && adult > 0) {
+            return buildLagenYouthWageBandsFromAdult(adult);
+        }
+        return buildLagenYouthWageBandsFromAdult(lagenFallbackAdultHourlyWage());
+    }
+
     function lagenHighlightBandAge(bands, candidateAge) {
         const age = Number(candidateAge);
         if (!Number.isFinite(age)) {
@@ -1111,7 +1127,7 @@ window.jobMap = (function () {
         return match;
     }
 
-    function lagenWageTooltipHtml(v, open) {
+    function lagenWageTooltipHtml(v, open, extraTipClass) {
         const bands = normalizeLagenWageBands(v);
         if (!bands.length) {
             return "";
@@ -1146,7 +1162,8 @@ window.jobMap = (function () {
             return "<div class=\"" + cls + "\"><span>" + escapeHtml(lagenWageAgeLabel(r.ageYears)) +
                 "</span><span>€ " + formatWage(r.hourlyRate) + "</span></div>";
         }).join("");
-        return "<div class=\"tip\" role=\"tooltip\"" + (open ? "" : " hidden") + "><b>" + escapeHtml(title) +
+        const tipClass = "tip" + (extraTipClass || "");
+        return "<div class=\"" + tipClass + "\" role=\"tooltip\"" + (open ? "" : " hidden") + "><b>" + escapeHtml(title) +
             "</b>" + body + "</div>";
     }
 
@@ -1215,7 +1232,7 @@ window.jobMap = (function () {
         }
         const url = lagenMapPopupPhotoUrl(job.id, mobile);
         if (!url) {
-            slot.classList.add("fph--empty");
+            slot.outerHTML = lagenCategoryPhotoPlaceholderHtml(job);
             return;
         }
         const started = typeof performance !== "undefined" && performance.now
@@ -1236,6 +1253,9 @@ window.jobMap = (function () {
                 return res.blob();
             })
             .then(function (blob) {
+                if (!blob || !blob.size) {
+                    throw new Error("photo-empty");
+                }
                 const ms = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - started);
                 lastLagenPopupPhotoMetrics = {
                     vacancyId: String(job.id),
@@ -1245,9 +1265,15 @@ window.jobMap = (function () {
                     ms: ms,
                     url: url
                 };
+                function showCategoryFallback() {
+                    if (slot.parentNode) {
+                        slot.outerHTML = lagenCategoryPhotoPlaceholderHtml(job);
+                    }
+                }
                 img.onload = function () {
                     slot.classList.remove("fph--loading");
                 };
+                img.onerror = showCategoryFallback;
                 img.src = URL.createObjectURL(blob);
                 slot.appendChild(img);
             })
@@ -1342,11 +1368,12 @@ window.jobMap = (function () {
                     lagenChevronRightSvg() + "</button>" +
             "</div>"
             : "";
-        const tip = lagenWageTooltipHtml(v, wageOpen);
+        const tip = lagenWageTooltipHtml(v, wageOpen, "");
         const euroBtn = tip
             ? "<button type=\"button\" class=\"fb euro" + (wageOpen ? " on" : "") + "\" data-lagen-wage aria-expanded=\"" +
                 (wageOpen ? "true" : "false") + "\" aria-label=\"" +
-                escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" + tip + "</button>"
+                escapeAttr(lagenPopupIsEnglish() ? "View hourly wage" : "Uurloon bekijken") + "\">€" +
+                tip + "</button>"
             : "<span class=\"fb euro is-disabled\" aria-hidden=\"true\">€</span>";
         const photoBlock = lagenWorkplacePhotoShell(v);
         const bodyInner = mobile
@@ -2530,6 +2557,73 @@ window.jobMap = (function () {
         };
     }
 
+    function clearLagenMobileWageTipLayout(tip) {
+        if (!tip) {
+            return;
+        }
+        tip.classList.remove("tip--mobile-fixed", "tip--mobile-fixed-full");
+        tip.style.top = "";
+        tip.style.right = "";
+        tip.style.bottom = "";
+        tip.style.left = "";
+        tip.style.width = "";
+        tip.style.maxWidth = "";
+        tip.style.maxHeight = "";
+        tip.style.overflowY = "";
+        tip.style.overflowX = "";
+        tip.style.zIndex = "";
+        tip.style.position = "";
+        tip.querySelectorAll(".tr2").forEach(function (row) {
+            row.style.minHeight = "";
+            row.style.lineHeight = "";
+            row.style.fontSize = "";
+        });
+    }
+
+    function clampLagenMobileWageTip(fcw) {
+        if (!fcw || !isNarrowViewport()) {
+            return;
+        }
+        const tip = fcw.querySelector(".fb.euro .tip");
+        const btn = fcw.querySelector("[data-lagen-wage]");
+        if (!tip || !btn || tip.hasAttribute("hidden")) {
+            return;
+        }
+        const header = document.querySelector(".app-header");
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+        const btnRect = btn.getBoundingClientRect();
+        const gap = 8;
+        const rows = tip.querySelectorAll(".tr2");
+        const rowCount = rows.length || 8;
+        const avail = Math.max(140, btnRect.top - gap - (headerBottom + 6));
+        const titleReserve = 34;
+        const targetRowH = Math.min(
+            22,
+            Math.max(18, Math.floor((avail - titleReserve) / rowCount))
+        );
+
+        clearLagenMobileWageTipLayout(tip);
+        tip.classList.add("tip--mobile-fixed", "tip--mobile-fixed-full");
+        rows.forEach(function (row) {
+            row.style.minHeight = targetRowH + "px";
+            row.style.lineHeight = targetRowH + "px";
+            row.style.fontSize = "0.72rem";
+        });
+
+        tip.style.position = "fixed";
+        tip.style.zIndex = "39";
+        tip.style.bottom = Math.max(0, Math.round(window.innerHeight - btnRect.top + gap)) + "px";
+        tip.style.right = Math.max(8, Math.round(window.innerWidth - btnRect.right)) + "px";
+        tip.style.left = "auto";
+        tip.style.top = "auto";
+        tip.style.width = "210px";
+        tip.style.maxWidth = "calc(100vw - 24px)";
+        tip.style.maxHeight = "none";
+        tip.style.height = "auto";
+        tip.style.overflowY = "visible";
+        tip.style.overflowX = "hidden";
+    }
+
     function setLagenWageTipOpen(root, open) {
         if (!root) {
             return;
@@ -2542,7 +2636,7 @@ window.jobMap = (function () {
         }
         fcw.classList.toggle("lagen-wage-open", !!open);
         const btn = fcw.querySelector("[data-lagen-wage]");
-        const tip = fcw.querySelector(".tip");
+        const tip = fcw.querySelector(".fb.euro .tip") || fcw.querySelector(".tip");
         if (btn) {
             btn.classList.toggle("on", !!open);
             btn.setAttribute("aria-expanded", open ? "true" : "false");
@@ -2550,8 +2644,13 @@ window.jobMap = (function () {
         if (tip) {
             if (open) {
                 tip.removeAttribute("hidden");
+                clearLagenMobileWageTipLayout(tip);
+                requestAnimationFrame(function () {
+                    clampLagenMobileWageTip(fcw);
+                });
             } else {
                 tip.setAttribute("hidden", "");
+                clearLagenMobileWageTipLayout(tip);
             }
         }
         if (clusterUiState) {
@@ -2571,6 +2670,10 @@ window.jobMap = (function () {
             if (closeBtn) {
                 closeBtn.addEventListener("click", function (ev) {
                     stopEvent(ev);
+                    if (isNarrowViewport() && fcw.classList.contains("lagen-wage-open")) {
+                        setLagenWageTipOpen(fcw, false);
+                        return;
+                    }
                     closeActivePopup();
                 });
             }
@@ -2931,6 +3034,57 @@ window.jobMap = (function () {
         return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     }
 
+    const MAP_TOP_CHROME_MARGIN_PX = 12;
+
+    /** Lagen desktop job-card strip above the map (live DOM), or legacy highlight carousel. */
+    function mapTopChromeStripEl(pane) {
+        if (!pane) {
+            return null;
+        }
+        const host = pane.querySelector("[data-testid=kb-map-top-chrome]");
+        if (host) {
+            const strip = host.querySelector(".strip:not(.strip--empty)");
+            if (strip) {
+                return strip;
+            }
+        }
+        const carousel = pane.querySelector(".highlight-carousel--map");
+        if (carousel) {
+            return carousel;
+        }
+        return null;
+    }
+
+    function lagenDesktopMapTopChromeActive(pane) {
+        if (!pane || isNarrowViewport()) {
+            return false;
+        }
+        return !!pane.closest(".jobsy-discovery--lagen");
+    }
+
+    function mapTopChromeBottomViewport(pane, mapRect) {
+        const chrome = mapTopChromeStripEl(pane);
+        if (!chrome) {
+            return mapRect.top;
+        }
+        const cr = chrome.getBoundingClientRect();
+        if (cr.bottom <= mapRect.top || cr.top >= mapRect.bottom) {
+            return mapRect.top;
+        }
+        return cr.bottom + MAP_TOP_CHROME_MARGIN_PX;
+    }
+
+    function lagenDesktopMapTopPaddingPx() {
+        if (!map) {
+            return 80;
+        }
+        const container = map.getContainer();
+        const mapRect = container.getBoundingClientRect();
+        const pane = container.closest(".map-pane");
+        const bottomVp = mapTopChromeBottomViewport(pane, mapRect);
+        return Math.max(12, Math.ceil(bottomVp - mapRect.top));
+    }
+
     function mapFocusRect() {
         const container = map.getContainer();
         const mapRect = container.getBoundingClientRect();
@@ -2938,12 +3092,9 @@ window.jobMap = (function () {
         let bottom = mapRect.bottom;
         const pane = container.closest(".map-pane");
         if (pane) {
-            const carousel = pane.querySelector(".highlight-carousel--map");
-            if (carousel && carousel.offsetParent !== null && !pane.classList.contains("is-cluster-open")) {
-                const cr = carousel.getBoundingClientRect();
-                if (cr.bottom > top && cr.top < mapRect.bottom) {
-                    top = Math.max(top, cr.bottom);
-                }
+            const chromeBottom = mapTopChromeBottomViewport(pane, mapRect);
+            if (chromeBottom > top) {
+                top = Math.max(top, chromeBottom);
             }
             const chip = pane.querySelector(".map-cluster-chip");
             if (chip && !chip.hidden && chip.offsetParent !== null) {
@@ -2975,6 +3126,13 @@ window.jobMap = (function () {
         };
     }
 
+    function lagenDesktopPopupFitElement(popEl) {
+        if (!popEl || !lagenUsesFundaPopup() || isNarrowViewport()) {
+            return popEl;
+        }
+        return popEl.querySelector("[data-lagen-fcw]") || popEl.querySelector(".fcw") || popEl;
+    }
+
     function centerPopupInView(popup, instant, layoutAttempt) {
         if (!map || !popup) {
             return;
@@ -2989,7 +3147,7 @@ window.jobMap = (function () {
             if (!map || activeClusterPopup !== popup) {
                 return;
             }
-            const pr = el.getBoundingClientRect();
+            const pr = lagenDesktopPopupFitElement(el).getBoundingClientRect();
             const vr = mapFocusRect();
             if (pr.width < 8 || pr.height < 8 || vr.width < 32 || vr.height < 32) {
                 if (layoutAttempt < 10) {
@@ -3059,6 +3217,30 @@ window.jobMap = (function () {
         }
     }
 
+    const BK_VIEW_STATE_KEY = "jobsy.bk.view.v1";
+
+    function isBackForwardNavigation() {
+        try {
+            const nav = performance.getEntriesByType("navigation")[0];
+            return !!(nav && nav.type === "back_forward");
+        } catch (eNav) {
+            return false;
+        }
+    }
+
+    function shouldSkipMapPopupRestoreFromViewState() {
+        try {
+            const raw = sessionStorage.getItem(BK_VIEW_STATE_KEY);
+            if (!raw) {
+                return false;
+            }
+            const state = JSON.parse(raw);
+            return !!(state && state.skipMapPopupRestore);
+        } catch (eSkip) {
+            return false;
+        }
+    }
+
     function readStoredBanenkaartMapView() {
         try {
             const raw = sessionStorage.getItem(BK_MAP_VIEW_KEY);
@@ -3111,6 +3293,13 @@ window.jobMap = (function () {
             return false;
         }
         banenkaartMapRestoreAttempted = true;
+        const allowPopup = isBackForwardNavigation()
+            && stored.popupOpen
+            && !shouldSkipMapPopupRestoreFromViewState();
+        if (!isBackForwardNavigation()) {
+            closeActivePopup();
+            return false;
+        }
         window.__jobsyBkRestoringView = true;
         originHasBeenFramed = true;
         try {
@@ -3123,7 +3312,7 @@ window.jobMap = (function () {
         finishOpeningFrame();
         if (stored.vacancyId && markersById[stored.vacancyId]) {
             const rec = markersById[stored.vacancyId];
-            if (stored.popupOpen) {
+            if (allowPopup) {
                 openVacancyPopup(rec);
                 if (clusterUiState && stored.popupPage > 1 && clusterUiState.pageCount >= stored.popupPage) {
                     renderClusterPage(
@@ -3801,8 +3990,22 @@ window.jobMap = (function () {
         return rings.slice(-3);
     }
 
+    function lagenTravelTimeFilterActive() {
+        return lagenLayout && travelOptions.maxMinutes != null;
+    }
+
     function chosenRingMinutes() {
+        if (lagenLayout && travelOptions.maxMinutes == null) {
+            return null;
+        }
         return Math.max(5, Number(travelOptions.maxMinutes) || 30);
+    }
+
+    function lagenFitMinutes() {
+        if (travelOptions.maxMinutes != null) {
+            return Math.max(5, Number(travelOptions.maxMinutes) || 20);
+        }
+        return 30;
     }
 
     function readLagenLayoutFromOptions(options) {
@@ -3818,6 +4021,16 @@ window.jobMap = (function () {
 
     function lagenTravelRingMinutes() {
         return [10, 20, 30];
+    }
+
+    function visibleTravelRingMinutes() {
+        if (!lagenLayout) {
+            return [chosenRingMinutes()];
+        }
+        if (travelOptions.maxMinutes == null) {
+            return lagenTravelRingMinutes();
+        }
+        return [Math.max(5, Number(travelOptions.maxMinutes) || 20)];
     }
 
     function travelRingLineDashPaint() {
@@ -3905,7 +4118,7 @@ window.jobMap = (function () {
     function maxRingRadiusMeters() {
         const speed = metersPerMinute(travelOptions.transport || "Fiets");
         const maxMin = lagenLayout
-            ? Math.max(30, Number(travelOptions.maxMinutes) || 30)
+            ? Math.max(30, lagenFitMinutes())
             : (Number(travelOptions.maxMinutes) || 30);
         const travelMeters = maxMin * speed;
         const radiusKm = Number(travelOptions.radiusKm);
@@ -3945,11 +4158,11 @@ window.jobMap = (function () {
     }
 
     function scheduleTravelRingRedraw() {
-        if (!map || ringRedrawBound || ringRedrawTries >= 12) {
+        if (!map || ringRedrawBound || ringIdleRetryCount >= 12) {
             return;
         }
         ringRedrawBound = true;
-        ringRedrawTries += 1;
+        ringIdleRetryCount += 1;
         map.once("idle", function () {
             ringRedrawBound = false;
             if (lastOrigin) {
@@ -3961,10 +4174,10 @@ window.jobMap = (function () {
     function eachTravelRing(lat, lng, fn) {
         if (lagenLayout) {
             const chosen = chosenRingMinutes();
-            lagenTravelRingMinutes().forEach(function (mins, index) {
+            visibleTravelRingMinutes().forEach(function (mins, index) {
                 const radius = ringRadiusForMinutes(mins);
                 if (radius >= 40) {
-                    fn(mins, index, radius, mins === chosen);
+                    fn(mins, index, radius, chosen != null && mins === chosen);
                 }
             });
             return;
@@ -3985,8 +4198,8 @@ window.jobMap = (function () {
                 properties: {
                     index: index,
                     minutes: mins,
-                    chosen: isChosen || mins === chosen ? 1 : 0,
-                    outer: isChosen ? 1 : 0
+                    chosen: (chosen != null && (isChosen || mins === chosen)) ? 1 : 0,
+                    outer: (chosen != null && isChosen) ? 1 : 0
                 },
                 geometry: { type: "Polygon", coordinates: circlePolygon(lat, lng, radius) }
             });
@@ -4004,7 +4217,7 @@ window.jobMap = (function () {
 
     function fetchIsochrones(lat, lng) {
         const mode = canonicalTransport(travelOptions.transport || "Fiets");
-        const minutes = lagenLayout ? lagenTravelRingMinutes() : [chosenRingMinutes()];
+        const minutes = lagenLayout ? visibleTravelRingMinutes() : [chosenRingMinutes()];
         const key = isochroneCacheKey(lat, lng, mode, minutes);
         if (isochroneCache[key]) {
             return Promise.resolve(isochroneCache[key]);
@@ -4018,14 +4231,28 @@ window.jobMap = (function () {
             "&lng=" + encodeURIComponent(lng) +
             "&mode=" + encodeURIComponent(mode) +
             "&minutes=" + encodeURIComponent(minutes.join(","));
-        isochroneCache[key] = fetch(url, {
+        const isoOpts = {
             credentials: "same-origin",
             headers: { Accept: "application/geo+json, application/json" }
-        }).then(function (res) {
-            if (!res.ok) {
+        };
+        function fetchIsoOnce() {
+            return fetch(url, isoOpts);
+        }
+        isochroneCache[key] = fetchIsoOnce().then(function (res) {
+            if (res.ok) {
+                return res.json();
+            }
+            if (!isRetryableStatus(res.status)) {
                 return null;
             }
-            return res.json();
+            return sleepMs(retryAfterMs(res)).then(function () {
+                return fetchIsoOnce().then(function (retryRes) {
+                    if (!retryRes.ok) {
+                        return null;
+                    }
+                    return retryRes.json();
+                });
+            });
         }).then(function (fc) {
             if (!fc || !Array.isArray(fc.features) || !fc.features.length) {
                 return null;
@@ -4039,6 +4266,10 @@ window.jobMap = (function () {
 
     function featuresFromIsochroneFc(fc) {
         const chosen = chosenRingMinutes();
+        const visible = {};
+        visibleTravelRingMinutes().forEach(function (m) {
+            visible[m] = true;
+        });
         const features = (fc.features || []).map(function (f, index) {
             const mins = Number((f.properties && (f.properties.minutes != null
                 ? f.properties.minutes
@@ -4048,13 +4279,13 @@ window.jobMap = (function () {
                 properties: {
                     index: index,
                     minutes: mins,
-                    chosen: mins === chosen ? 1 : 0,
-                    outer: mins === chosen ? 1 : 0
+                    chosen: (chosen != null && mins === chosen) ? 1 : 0,
+                    outer: (chosen != null && mins === chosen) ? 1 : 0
                 },
                 geometry: f.geometry
             };
         }).filter(function (f) {
-            return f.geometry && f.properties.minutes > 0;
+            return f.geometry && f.properties.minutes > 0 && !!visible[f.properties.minutes];
         });
         features.sort(function (a, b) {
             return (b.properties.minutes || 0) - (a.properties.minutes || 0);
@@ -4368,6 +4599,7 @@ window.jobMap = (function () {
             const ids = ensureTravelRingLayers(sourceId);
             travelRingGeo = { sourceId: sourceId, ids: ids };
             ringRedrawTries = 0;
+            ringIdleRetryCount = 0;
             placeTravelRingLabels(lat, lng, features);
             try {
                 const pinSrc = map.getSource(PIN_SOURCE);
@@ -4384,6 +4616,10 @@ window.jobMap = (function () {
         if (!map || typeof map.addSource !== "function") {
             return;
         }
+        if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
+            clearTravelRings();
+            return;
+        }
         if (kkMode) {
             drawKkRadiusRing(lat, lng);
             return;
@@ -4394,7 +4630,7 @@ window.jobMap = (function () {
         }
 
         const ringKey = String(lat) + "," + String(lng) + "|"
-            + (lagenLayout ? "lagen:10,20,30" : String(travelOptions.maxMinutes)) + "|"
+            + (lagenLayout ? "lagen:" + visibleTravelRingMinutes().join(",") : String(travelOptions.maxMinutes)) + "|"
             + String(travelOptions.transport || "");
         if (ringKey === lastRingDrawKey && travelRingGeo) {
             return;
@@ -4410,9 +4646,7 @@ window.jobMap = (function () {
             }
             if (!fc) {
                 if (lagenLayout) {
-                    clearTravelRings();
-                    lastRingDrawKey = ringKey;
-                    setIsoMode("none");
+                    setIsoMode("approx");
                 } else {
                     try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
                     setIsoMode("approx");
@@ -4422,9 +4656,7 @@ window.jobMap = (function () {
             const isoFeatures = featuresFromIsochroneFc(fc);
             if (!isoFeatures.length) {
                 if (lagenLayout) {
-                    clearTravelRings();
-                    lastRingDrawKey = ringKey;
-                    setIsoMode("none");
+                    setIsoMode("approx");
                 } else {
                     setIsoMode("approx");
                 }
@@ -4437,14 +4669,6 @@ window.jobMap = (function () {
 
         function loadIsochronesWhenIdle() {
             fetchIsochrones(lat, lng).then(applyIsochroneFc);
-        }
-
-        if (lagenLayout) {
-            clearTravelRings();
-            lastRingDrawKey = ringKey;
-            setIsoMode("pending");
-            scheduleIsoLoad(loadIsochronesWhenIdle);
-            return;
         }
 
         // Circles first, swap isochrones when they arrive (no flash).
@@ -4497,7 +4721,7 @@ window.jobMap = (function () {
                 const bottom = sheet && sheet.offsetHeight > 0 ? sheet.offsetHeight + 16 : 48;
                 return { top: 22, right: 4, bottom: bottom, left: 4 };
             }
-            return { top: 80, left: 150, right: 0, bottom: 0 };
+            return { top: lagenDesktopMapTopPaddingPx(), left: 150, right: 0, bottom: 0 };
         }
         const edge = 36;
         const padding = { top: edge, right: edge, bottom: edge, left: edge };
@@ -4505,12 +4729,13 @@ window.jobMap = (function () {
             return padding;
         }
         const container = map.getContainer();
+        const mapRect = container.getBoundingClientRect();
         const pane = container && container.closest ? container.closest(".map-pane") : null;
         if (pane) {
-            const carousel = pane.querySelector(".highlight-carousel--map");
-            if (carousel && carousel.offsetParent !== null && carousel.offsetHeight > 0
-                && !pane.classList.contains("is-cluster-open")) {
-                padding.top = Math.max(padding.top, carousel.offsetHeight + 28);
+            const topPad = Math.ceil(mapTopChromeBottomViewport(pane, mapRect) - mapRect.top);
+            if (topPad > edge && (!pane.classList.contains("is-cluster-open")
+                || lagenDesktopMapTopChromeActive(pane))) {
+                padding.top = Math.max(padding.top, topPad);
             }
             const sheet = pane.querySelector(".map-cluster-sheet");
             if (sheet && sheet.offsetParent !== null && sheet.offsetHeight > 0) {
@@ -4564,7 +4789,7 @@ window.jobMap = (function () {
         }
         let radius = maxRingRadiusMeters() * 1.12;
         if (lagenLayout) {
-            const chosenM = chosenRingMinutes();
+            const chosenM = lagenFitMinutes();
             if (isNarrowViewport()) {
                 radius = ringRadiusForMinutes(Math.max(chosenM, 30)) * 1.14;
             } else {
@@ -4628,8 +4853,12 @@ window.jobMap = (function () {
 
     function normalizeTravelOptions(options) {
         if (!options) return;
-        if (options.maxMinutes != null) {
-            travelOptions.maxMinutes = Number(options.maxMinutes) || travelOptions.maxMinutes;
+        if (Object.prototype.hasOwnProperty.call(options, "maxMinutes")) {
+            if (options.maxMinutes == null || options.maxMinutes === "") {
+                travelOptions.maxMinutes = null;
+            } else {
+                travelOptions.maxMinutes = Number(options.maxMinutes) || travelOptions.maxMinutes;
+            }
         }
         if (options.transport) {
             travelOptions.transport = String(options.transport);
@@ -4717,7 +4946,7 @@ window.jobMap = (function () {
     }
 
     function openingCamera(openingPoints, openingView, preferFilledLocation) {
-        if (preferFilledLocation !== false) {
+        if (useStoredOriginForMapCamera(preferFilledLocation)) {
             const filled = readFilledOrigin();
             if (filled) {
                 return { center: [filled.lng, filled.lat], zoom: filled.zoom, locked: true };
@@ -4809,12 +5038,10 @@ window.jobMap = (function () {
         if (!attrib) {
             return;
         }
-        if (isNarrowViewport()) {
-            attrib.classList.remove("maplibregl-compact");
-            attrib.classList.add("maplibregl-compact-show");
-        } else {
-            attrib.classList.add("maplibregl-compact");
+        attrib.classList.add("maplibregl-compact");
+        if (isNarrowViewport() && attrib.dataset.jobsyCompactInit !== "1") {
             attrib.classList.remove("maplibregl-compact-show");
+            attrib.dataset.jobsyCompactInit = "1";
         }
     }
 
@@ -4849,7 +5076,7 @@ window.jobMap = (function () {
             }
             fitLagenDesktopPopup(popup, lngLat, pass > 0);
             pass += 1;
-            if (pass < 2) {
+            if (pass < 8) {
                 if (typeof requestAnimationFrame === "function") {
                     requestAnimationFrame(function () {
                         requestAnimationFrame(tick);
@@ -5145,6 +5372,11 @@ window.jobMap = (function () {
             type: "FeatureCollection",
             features: Object.keys(markersById).map(function (id) {
                 const record = markersById[id];
+                const lng = Number(record.lng);
+                const lat = Number(record.lat);
+                if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+                    return null;
+                }
                 const v = record.options.jobData || {};
                 const agency = (isAgencyPin(v) || (companyMapMode && v.isIntermediary === true)) ? 1 : 0;
                 const pinKind = pinKindForVacancy(v);
@@ -5162,7 +5394,7 @@ window.jobMap = (function () {
                 return {
                     type: "Feature",
                     id: id,
-                    geometry: { type: "Point", coordinates: [record.lng, record.lat] },
+                    geometry: { type: "Point", coordinates: [lng, lat] },
                     properties: {
                         id: String(id),
                         featured: (kansberoep || isFeaturedVacancy(v)) ? 1 : 0,
@@ -5178,7 +5410,7 @@ window.jobMap = (function () {
                         pinKind: pinKind
                     }
                 };
-            })
+            }).filter(Boolean)
         };
     }
 
@@ -6039,12 +6271,24 @@ window.jobMap = (function () {
         }
 
         mapCreateCount += 1;
+        const lagenAttrib = !!(lagenLayout || catalogModeActive);
         map = window.jobsyMapLibre.createMap(el, {
             center: opening.center,
             zoom: opening.zoom,
             controlsPosition: "bottom-right",
-            compactAttribution: !!(lagenLayout || catalogModeActive)
+            attributionControl: lagenAttrib ? false : undefined,
+            compactAttribution: lagenAttrib
         });
+        if (lagenAttrib && typeof maplibregl !== "undefined") {
+            map.addControl(
+                new maplibregl.AttributionControl({
+                    compact: true,
+                    customAttribution:
+                        '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+                }),
+                "bottom-left"
+            );
+        }
         cameraLocked = opening.locked;
         firstSizedFit = true;
         applyBasemapZoomLimits();
@@ -6236,7 +6480,7 @@ window.jobMap = (function () {
             const pins = parsed && Array.isArray(parsed.pins) ? parsed.pins : [];
             let view = parsed ? readOpeningView(parsed.view) : null;
             const preferFilledLocation = !parsed || parsed.preferFilledLocation !== false;
-            if (preferFilledLocation) {
+            if (useStoredOriginForMapCamera(preferFilledLocation)) {
                 const filled = readFilledOrigin();
                 if (filled) {
                     view = filled;
@@ -6259,6 +6503,40 @@ window.jobMap = (function () {
         } catch (e) {
             return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
+    }
+
+    function urlHasOriginInQuery() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            return params.has("originLat") || params.has("originLng");
+        } catch (eUrl) {
+            return false;
+        }
+    }
+
+    function useStoredOriginForMapCamera(preferFilledLocation) {
+        return preferFilledLocation !== false && urlHasOriginInQuery();
+    }
+
+    function urlOmitsOriginWhileFiltered() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("originLat") || params.has("originLng")) {
+                return false;
+            }
+            return params.has("maxMinutes") || params.has("transport")
+                || params.has("minHours") || params.has("maxHours") || params.has("q")
+                || params.has("categoryId") || params.has("workType") || params.has("sort")
+                || params.has("minWage") || params.has("maxWage") || params.has("age")
+                || params.has("minMatchPercent") || params.has("companyId") || params.has("radiusKm")
+                || params.has("weergave");
+        } catch (eUrl) {
+            return false;
+        }
+    }
+
+    function bootOriginFromFiltersAllowed() {
+        return !urlOmitsOriginWhileFiltered();
     }
 
     function reconcileBootFromDom() {
@@ -6285,7 +6563,7 @@ window.jobMap = (function () {
             normalizeTravelOptions(travel);
         }
         let origin = bootPayload.origin || null;
-        if (!origin && mapInit && mapInit.filters
+        if (!origin && bootOriginFromFiltersAllowed() && mapInit && mapInit.filters
             && mapInit.filters.originLat != null
             && mapInit.filters.originLng != null) {
             origin = {
@@ -6297,6 +6575,10 @@ window.jobMap = (function () {
             try {
                 setOrigin(origin.lat, origin.lng, travel || travelOptions);
             } catch (eOrigin) { }
+        } else if (!origin && typeof clearOrigin === "function") {
+            try {
+                clearOrigin();
+            } catch (eClearOrigin) { }
         }
         if (catalogModeActive) {
             syncCatalogToMap();
@@ -6336,7 +6618,7 @@ window.jobMap = (function () {
             if (mapInit.travel) {
                 travel = mapInit.travel;
             }
-            if (!origin && mapInit.filters
+            if (!origin && bootOriginFromFiltersAllowed() && mapInit.filters
                 && mapInit.filters.originLat != null
                 && mapInit.filters.originLng != null) {
                 origin = {
@@ -6908,8 +7190,10 @@ window.jobMap = (function () {
         const openingPoints = collectVacancyPoints(vacancies || []);
         const openingView = options && options.view ? options.view : null;
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
-        const filledOrigin = preferFilledLocation ? readFilledOrigin() : null;
+        const filledOrigin = useStoredOriginForMapCamera(preferFilledLocation) ? readFilledOrigin() : null;
         const hasOrigin = !!(options && options.origin) || !!filledOrigin;
+        lagenLayout = readLagenLayoutFromOptions(options);
+        catalogModeActive = !!(options && options.catalogMode);
         let live = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
 
@@ -6966,7 +7250,6 @@ window.jobMap = (function () {
             pinsBaseUrl = stripViewportParams(nextPinsUrl);
             pinsUrl = pinsBaseUrl + viewportQueryString();
         }
-        lagenLayout = readLagenLayoutFromOptions(options);
         if (lagenLayout) {
             illustratedPopup = false;
         } else {
@@ -6979,7 +7262,6 @@ window.jobMap = (function () {
             ? options.illustratedVacancySpots
             : {};
 
-        catalogModeActive = !!(options && options.catalogMode);
         if (catalogModeActive) {
             clearPinsFetchState();
         }
@@ -7699,6 +7981,84 @@ window.jobMap = (function () {
         });
     })();
 
+    function recordFromVacancyPin(v) {
+        if (!v || v.id == null) {
+            return null;
+        }
+        const pt = pointFromVacancy(normalizePin(v) || v);
+        if (!pt) {
+            return null;
+        }
+        const lat = pt[0];
+        const lng = pt[1];
+        return {
+            id: v.id,
+            lat: lat,
+            lng: lng,
+            marker: null,
+            element: null,
+            options: { jobData: normalizePin(v) || v },
+            getLatLng: function () { return { lat: lat, lng: lng }; },
+            getLngLat: function () { return { lng: lng, lat: lat }; }
+        };
+    }
+
+    function openVacancyById(id) {
+        const key = id != null ? String(id) : "";
+        const rec = key ? markersById[key] : null;
+        if (rec) {
+            openVacancyPopup(rec);
+            return true;
+        }
+
+        fetchVacancyCard(key).then(function (card) {
+            if (!card || card.id == null) {
+                window.location.href = "/vacancies/" + encodeURIComponent(key);
+                return;
+            }
+            const fallback = recordFromVacancyPin(card);
+            if (!fallback) {
+                window.location.href = "/vacancies/" + encodeURIComponent(key);
+                return;
+            }
+            if (map && typeof map.easeTo === "function") {
+                try {
+                    map.easeTo({
+                        center: [fallback.lng, fallback.lat],
+                        zoom: Math.max(map.getZoom(), 12),
+                        duration: 600
+                    });
+                } catch (ePan) { }
+            }
+            openVacancyPopup(fallback);
+        });
+        return true;
+    }
+
+    function tryOpenVacancyFromQuery() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("vacancyId");
+            if (!id) {
+                return;
+            }
+
+            let attempts = 0;
+            function tick() {
+                attempts += 1;
+                if (openVacancyById(id)) {
+                    return;
+                }
+
+                if (attempts < 48) {
+                    setTimeout(tick, 250);
+                }
+            }
+
+            tick();
+        } catch (eQuery) { }
+    }
+
     return {
         boot,
         init,
@@ -7712,23 +8072,84 @@ window.jobMap = (function () {
         setTravelOptions,
         clearOrigin,
         highlight,
+        openVacancyById,
+        tryOpenVacancyFromQuery,
         focus,
         focusCompany,
         dispose,
         initKandidatenkaart,
         setKandidatenkaartAreas,
         invalidate,
+        dismissPopups: closeActivePopup,
         notifyFilterDrawerToggle,
+        refitDesktopPopupAfterTopChrome: function () {
+            if (activeClusterPopup && lagenLayout && !isNarrowViewport()) {
+                scheduleLagenDesktopPopupFit(activeClusterPopup);
+            }
+        },
         isAlive,
         /** @internal Playwright / diagnostics */
-        __testOpenVacancyById: function (id) {
+        __testOpenVacancyById: openVacancyById,
+        __testMapFocusRect: function () {
+            return map && mapFocusRect();
+        },
+        __testPopupInMapFocus: function () {
+            const pop = document.querySelector(".maplibregl-popup.kb-popup-lagen-pop");
+            if (!pop || !map) {
+                return false;
+            }
+            const pr = lagenDesktopPopupFitElement(pop).getBoundingClientRect();
+            const vr = mapFocusRect();
+            if (!vr || vr.width < 32 || vr.height < 32) {
+                return false;
+            }
+            return pr.top >= vr.top - 2 && pr.left >= vr.left - 2
+                && pr.right <= vr.right + 2 && pr.bottom <= vr.bottom + 2;
+        },
+        __testOpenVacancyNearMapTop: function (id) {
             const key = id != null ? String(id) : "";
             const rec = key ? markersById[key] : null;
-            if (rec) {
-                openVacancyPopup(rec);
-                return true;
+            if (!rec || !map) {
+                return false;
             }
-            return false;
+            const pane = map.getContainer().closest(".map-pane");
+            const mapRect = map.getContainer().getBoundingClientRect();
+            const chromeBottom = mapTopChromeBottomViewport(pane, mapRect);
+            const targetY = chromeBottom + 36;
+            const pt = map.project([rec.lng, rec.lat]);
+            const dy = Math.round(pt.y - targetY);
+            if (Math.abs(dy) > 2) {
+                map.panBy([0, dy], { duration: 0 });
+            }
+            return this.__testOpenVacancyById(key);
+        },
+        __testOpenTopRenderedPin: function () {
+            if (!map) {
+                return false;
+            }
+            let bestId = null;
+            let bestY = Infinity;
+            const seenIds = {};
+            Object.keys(markersById).forEach(function (key) {
+                const rec = markersById[key];
+                if (!rec || rec.id == null || rec.lng == null || rec.lat == null) {
+                    return;
+                }
+                const id = String(rec.id);
+                if (seenIds[id]) {
+                    return;
+                }
+                seenIds[id] = true;
+                const pt = map.project([rec.lng, rec.lat]);
+                if (pt.y < bestY) {
+                    bestY = pt.y;
+                    bestId = id;
+                }
+            });
+            if (!bestId) {
+                return false;
+            }
+            return this.__testOpenVacancyNearMapTop(bestId);
         },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
@@ -7833,6 +8254,25 @@ window.jobMap = (function () {
         __testGetViewportNotifyCount: function () { return viewportNotifyCount; },
         __testResetViewportNotifyCount: function () { viewportNotifyCount = 0; },
         __testGetTravelRingDrawCount: function () { return travelRingDrawCount; },
+        __testGetTravelRingFeatureCount: function () {
+            if (!map) {
+                return 0;
+            }
+            try {
+                const src = map.getSource("jobsy-travel-rings");
+                const data = src && typeof src.serialize === "function" ? src.serialize().data : null;
+                if (data && Array.isArray(data.features)) {
+                    return data.features.length;
+                }
+            } catch (eSer) { }
+            if (typeof map.querySourceFeatures === "function") {
+                try {
+                    return (map.querySourceFeatures("jobsy-travel-rings") || []).length;
+                } catch (eCount) { }
+            }
+            return 0;
+        },
+        __testLagenTravelTimeFilterActive: function () { return lagenTravelTimeFilterActive(); },
         __testFitAllPins: function () {
             if (!map) {
                 return;

@@ -273,7 +273,7 @@
     object-fit: contain;
   }
 
-  .app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock {
+  .app-shell:not(.app-shell--onboarding-ssr):has(.ob-wizard--richting-a) .lobsy-coach-dock:not([data-ssr-coach]) {
     display: none !important;
   }
 

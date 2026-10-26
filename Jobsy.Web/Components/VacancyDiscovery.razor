@@ -31,7 +31,7 @@
 
 <PageSeo JsonLd="@JobListJsonLd" />
 <HeadContent>
-    <script src="js/discoveryHover.js?v=20261002-kp01m" defer data-discovery-hover="true"></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/discoveryHover.js")}")" defer data-discovery-hover="true"></script>
 </HeadContent>
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null) @(_desktopListMode && _wideViewport ? "jobsy-discovery--list" : null) @(_showStartPrompt ? "kb-start-prompt-open" : null)">
     <div class="jobsy-chrome">

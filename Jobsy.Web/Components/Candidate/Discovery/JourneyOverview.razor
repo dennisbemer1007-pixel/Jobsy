@@ -328,7 +328,7 @@
         {
             _routeModule ??= await Js.InvokeAsync<IJSObjectReference>(
                 "import",
-                $"./js/discoveryJourneyRoute.js?v={Jobsy.Web.Media.DiscoveryOverviewIllustrationAssets.Version}");
+                $"./{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/discoveryJourneyRoute.js")}");
             await _routeModule.InvokeVoidAsync("bindResize", _canvasRef);
             await _routeModule.InvokeVoidAsync("bindResize", _mobileCanvasRef);
             await _routeModule.InvokeVoidAsync("refreshById", "discovery-route-canvas-mobile");

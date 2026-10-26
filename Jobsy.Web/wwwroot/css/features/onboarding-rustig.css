@@ -2,7 +2,7 @@
 
 .ob-wizard--rustig {
   --ob-rustig-sidebar: 230px;
-  --ob-rustig-hero-h: 92px;
+  --ob-rustig-hero-h: 105px;
   background: var(--bg);
 }
 
@@ -25,19 +25,21 @@
 }
 
 @media (max-width: 1023px) {
-  .app-shell:has(.ob-wizard--rustig) > .app-header,
   .app-shell:has(.ob-wizard--rustig) > .app-footer {
     display: none;
-  }
-
-  /* Kompas finish: keep global header so account/uitloggen match baseline behaviour. */
-  .app-shell:has([data-ob-rustig-screen="kompas"]) > .app-header {
-    display: flex;
   }
 
   .app-shell:has(.ob-wizard--rustig) .app-main {
     min-block-size: 100dvh;
   }
+}
+
+.ob-wizard--rustig > .ob-rustig > .ob-rustig__hero-band,
+.ob-wizard--rustig > .ob-rustig > .ob-rustig__illustrated-frame {
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: var(--kreeft-strip-bleed, calc(50% - 50vw));
+  border-radius: 0;
 }
 
 @media (min-width: 1024px) {
@@ -90,6 +92,15 @@
   block-size: 56px;
   object-fit: contain;
   flex-shrink: 0;
+}
+
+.ob-wizard--rustig .ob-rustig__sidebar--no-logo .ob-rustig__logo-e,
+.ob-wizard--rustig .ob-rustig__sidebar.ob-rustig__sidebar--no-logo .ob-rustig__logo-e {
+  display: none !important;
+}
+
+.ob-wizard--rustig:has(.ob-rustig__sidebar--no-logo) .ob-rustig__mobile-brand {
+  display: none !important;
 }
 
 .ob-rustig__sidebar .ob-wizard__side-item strong {
@@ -405,7 +416,7 @@
 
   .ob-rustig[data-ob-rustig-screen="step-09"] .ob-rustig__hero-band,
   .ob-rustig[data-ob-rustig-screen="step-10"] .ob-rustig__hero-band {
-    --ob-rustig-hero-h: 92px;
+    --ob-rustig-hero-h: 105px;
   }
 
   .ob-rustig[data-ob-rustig-screen="step-09"] .ob-rustig__hero-img,
@@ -471,7 +482,7 @@
 
 @media (min-width: 1024px) {
   .ob-wizard--rustig {
-    --ob-rustig-hero-h: 170px;
+    --ob-rustig-hero-h: 225px;
   }
 
   .ob-rustig[data-ob-rustig-screen="start"] .ob-rustig__hero-img--desk {
@@ -1412,10 +1423,10 @@
 .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
   display: block;
   inline-size: 100%;
-  block-size: auto;
-  min-block-size: 0;
-  max-block-size: 200px;
-  aspect-ratio: 390 / 140;
+  block-size: var(--cand-header-strip-h-mobile, 90px);
+  min-block-size: var(--cand-header-strip-h-mobile, 90px);
+  max-block-size: var(--cand-header-strip-h-mobile, 90px);
+  aspect-ratio: auto;
   overflow: hidden;
   border-block-end: none;
   background: color-mix(in srgb, var(--accent-soft) 40%, var(--bg));
@@ -1447,10 +1458,10 @@
 
 @media (min-width: 1024px) {
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame {
-    aspect-ratio: 1280 / 280;
-    max-block-size: 280px;
-    min-block-size: 0;
-    block-size: auto;
+    aspect-ratio: auto;
+    block-size: var(--cand-header-strip-h-desktop, 150px);
+    min-block-size: var(--cand-header-strip-h-desktop, 150px);
+    max-block-size: var(--cand-header-strip-h-desktop, 150px);
   }
 
   .ob-rustig[data-ob-rustig-screen="kompas"] .ob-rustig__illustrated-frame img {
@@ -2359,7 +2370,7 @@
 
 @media (max-width: 1023px) {
   .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-band {
-    --ob-rustig-hero-h: 92px;
+    --ob-rustig-hero-h: 105px;
   }
 
   .ob-rustig[data-ob-rustig-screen="step-08"] .ob-rustig__hero-img {

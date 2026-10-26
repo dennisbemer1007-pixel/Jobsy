@@ -11,6 +11,7 @@
 @using Jobsy.Web.Media
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Onboarding
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -20,14 +21,9 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
-    <link rel="stylesheet" href="css/app.min.css?v=20261021-14" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261018-02" />
-    <link rel="stylesheet" href="css/features/candidate-illustrated-app.css?v=20261018-91" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261019-r25" />
-    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261019-r24" />
-    <link rel="stylesheet" href="css/features/onboarding-rustig.css?v=20261022-kompasc-hero" />
-    <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-finale-v2.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
 </HeadContent>
 
 @if (_loading)
@@ -40,10 +36,17 @@ else
     var pageLead = Culture["Onboarding.FinaleV2.Lead"];
     <div class="ob-wizard ob-wizard--richting-a ob-wizard--rustig">
         <div class="ob-rustig" data-ob-rustig-screen="kompas">
+            <OnboardingRustigIllustratedHero DesktopUrl="@OnboardingRustigKompasIllustrationAssets.DesktopJpg"
+                                              MobileUrl="@OnboardingRustigKompasIllustrationAssets.MobileJpg"
+                                              ImgLoading="eager"
+                                              ImgDecoding="sync"
+                                              FetchPriority="high"
+                                              ImgWidth="1280"
+                                              ImgHeight="280" />
             <div class="ob-rustig__layout">
                 <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
                     <img class="ob-rustig__logo-e"
-                         src="@BrandImages.AppIconSvg"
+                         src="@BrandImages.MarkSvg"
                          width="56"
                          height="56"
                          alt="Lobsy"
@@ -71,7 +74,7 @@ else
                     <header class="ob-rustig__chrome">
                         <div class="ob-rustig__mobile-brand">
                             <img class="ob-rustig__logo-e"
-                                 src="@BrandImages.AppIconSvg"
+                                 src="@BrandImages.MarkSvg"
                                  width="40"
                                  height="40"
                                  alt=""
@@ -108,21 +111,16 @@ else
                         </div>
                     </header>
 
-                    <OnboardingRustigIllustratedHero DesktopUrl="@OnboardingRustigKompasIllustrationAssets.DesktopJpg"
-                                                      MobileUrl="@OnboardingRustigKompasIllustrationAssets.MobileJpg"
-                                                      ImgLoading="eager"
-                                                      ImgDecoding="sync"
-                                                      FetchPriority="high"
-                                                      ImgWidth="1280"
-                                                      ImgHeight="280" />
-
                     <div class="ob-rustig__page-head">
                         <h1 tabindex="-1">@pageTitle</h1>
                         <p class="ob-rustig__lead">@pageLead</p>
                     </div>
 
-                    <div class="ob-rustig__body">
-                        @((MarkupString)_bodyHtml)
+                    <div class="ob-rustig__body ob-rustig__body--with-reiskaart">
+                        @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 15))
+                        <div class="ob-rustig__body-main">
+                            @((MarkupString)_bodyHtml)
+                        </div>
                     </div>
                 </div>
             </div>

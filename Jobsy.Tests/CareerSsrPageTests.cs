@@ -16,5 +16,18 @@ public sealed class CareerSsrPageTests
         Assert.Contains("data-enhance-nav=", shells, StringComparison.Ordinal);
         Assert.Contains("carriere-segmented__tab", shells, StringComparison.Ordinal);
         Assert.Contains("/api/career-client/save-dream", shells, StringComparison.Ordinal);
+        Assert.Contains("career-ssr.js", shells, StringComparison.Ordinal);
+        Assert.Contains("data-career-tab", shells, StringComparison.Ordinal);
+        Assert.Contains("data-career-panel", shells, StringComparison.Ordinal);
+        Assert.Contains("carriere-segmented__dream-coach", shells, StringComparison.Ordinal);
+        Assert.Contains("carriere-group-leerbanen", shells, StringComparison.Ordinal);
+        Assert.Contains("CareerSsrSectorIcon", File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "Career", "CareerSsrSectorIcon.cs")), StringComparison.Ordinal);
+        Assert.Contains("carriere-kans-layout", shells, StringComparison.Ordinal);
+        Assert.Contains("CareerSsrKansAsideHtml", shells, StringComparison.Ordinal);
+        Assert.Contains("carriere-kans-aside", File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "Career", "CareerSsrKansAsideHtml.cs")), StringComparison.Ordinal);
     }
 }

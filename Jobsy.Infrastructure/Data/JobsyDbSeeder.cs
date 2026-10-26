@@ -64,6 +64,16 @@ public static class JobsyDbSeeder
         {
             await db.Database.MigrateAsync();
             await db.Database.ExecuteSqlRawAsync(Migrations.PupilPassportV2SchemaIdempotentSql.EnsureColumns);
+            await db.Database.ExecuteSqlRawAsync(Migrations.JobSearchActivitySchemaIdempotentSql.EnsureSchema);
+            try
+            {
+                var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+                await AcceptatiePlatformFeatureEnsurer.EnsureActivityLogEnabledAsync(db, configuration, logger);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "Acceptatie ActivityLog feature sync failed; continuing.");
+            }
         }
         else
         {
@@ -266,6 +276,24 @@ public static class JobsyDbSeeder
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Partial seed failure after companies/users; continuing.");
+        }
+    }
+
+    /// <summary>Idempotent werkgever after-match demo apps (77777771-0001 … 0006) for acceptatie E2E.</summary>
+    public static async Task EnsureAfterMatchDemoApplicationsAsync(JobsyDbContext db, ILogger logger)
+    {
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                await AfterMatchDemoSeeder.EnsureAsync(db, logger);
+                return;
+            }
+            catch (DbUpdateConcurrencyException ex) when (attempt < 3)
+            {
+                logger.LogWarning(ex, "After-match demo seed concurrency (attempt {Attempt}); retrying.", attempt);
+                db.ChangeTracker.Clear();
+            }
         }
     }
 }

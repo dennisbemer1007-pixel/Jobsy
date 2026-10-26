@@ -93,13 +93,14 @@ else
                 </div>
             </dl>
 
-            <WgAppPhase2AcceptPanel ApplicationId="a.Id"
+            <WgAppPhase2AcceptPanel ApplicationId="@a.Id"
                                     CanWrite="CanWrite"
-                                    OnChanged="ReloadSelfAsync" />
+                                    OnChanged="ReloadSelfAsync"
+                                    OnAcceptUiAvailable="OnPhase2AcceptUiChanged" />
 
             @if (_afterMatchEnabled && AfterMatchEligible(a.Status))
             {
-                <a class="btn-compact" href="/werkgever/sollicitaties/@(a.Id)/after-match">@Culture["AfterMatch.Link.Open"]</a>
+                <a class="btn-compact" href="/werkgever/sollicitaties/@(a.Id)/after-match" data-enhance-nav="false">@Culture["AfterMatch.Link.Open"]</a>
             }
 
             <section>
@@ -139,7 +140,7 @@ else
             <div class="wg-app-cand__footer" data-testid="wg-app-mobile-footer">
                 <ApplicationCandidateActions Item="a"
                                              CanWrite="CanWrite"
-                                             HidePrimary="_phase2Enabled && CanWrite && ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending"
+                                             HidePrimary="_phase2AcceptUi && CanWrite && ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending"
                                              Busy="_busy"
                                              OnPrimary="HandlePrimary"
                                              OnReject="HandleReject"
@@ -200,6 +201,7 @@ else
     private bool _hireOpen;
     private string? _message;
     private bool _phase2Enabled;
+    private bool _phase2AcceptUi;
     private bool _afterMatchEnabled;
 
     private string EmployerHistory(int count)
@@ -223,8 +225,7 @@ else
             var flags = await FeatureFlags.GetAsync();
             _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
             _afterMatchEnabled = flags.IsEnabled(PlatformFeature.AfterMatch);
-            var items = await Api.GetApplicationsAsync();
-            _item = items.FirstOrDefault(a => a.Id == ApplicationId);
+            _item = await FindApplicationAsync(ApplicationId);
         }
         catch
         {
@@ -257,9 +258,12 @@ else
         status is "Accepted" or "EmployerContacting" or "Hired";
 
     private static string? HoursFact(EmployerApplicationItem item)
+        => ApplicationPreferenceRedaction.ToHoursReadable(item.PreferencesSummary);
+
+    private Task OnPhase2AcceptUiChanged(bool available)
     {
-        var prefs = ApplicationPreferenceRedaction.ToHumanReadable(item.PreferencesSummary);
-        return string.IsNullOrWhiteSpace(prefs) ? null : prefs;
+        _phase2AcceptUi = available;
+        return InvokeAsync(StateHasChanged);
     }
 
     private Task HandlePrimary()
@@ -358,7 +362,26 @@ else
 
     private async Task ReloadSelfAsync()
     {
-        var items = await Api.GetApplicationsAsync();
-        _item = items.FirstOrDefault(a => a.Id == ApplicationId);
+        _item = await FindApplicationAsync(ApplicationId);
+    }
+
+    private async Task<EmployerApplicationItem?> FindApplicationAsync(Guid applicationId)
+    {
+        for (var page = 1; page <= 5; page++)
+        {
+            var items = await Api.GetApplicationsAsync(page: page, pageSize: 100);
+            var hit = items.FirstOrDefault(a => a.Id == applicationId);
+            if (hit is not null)
+            {
+                return hit;
+            }
+
+            if (items.Count < 100)
+            {
+                break;
+            }
+        }
+
+        return null;
     }
 }

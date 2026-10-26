@@ -21,19 +21,24 @@ public class CandidateIllustratedAppMarkupTests
     [Fact]
     public void Match_page_has_desktop_side_panel()
     {
-        var match = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/MatchPage.razor"));
+        var match = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Match/MatchSsrShells.cs"));
         Assert.Contains("match-page--illustrated", match, StringComparison.Ordinal);
-        Assert.Contains("MatchDesktopSide", match, StringComparison.Ordinal);
+        Assert.Contains("match-page__side", match, StringComparison.Ordinal);
         Assert.Contains("match-page__grid", match, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Applications_has_desktop_detail_rail()
     {
-        var apps = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/Applications.razor"));
-        Assert.Contains("kb-apps--illustrated", apps, StringComparison.Ordinal);
-        Assert.Contains("kb-apps__detail-rail", apps, StringComparison.Ordinal);
-        Assert.Contains("_appsWide", apps, StringComparison.Ordinal);
+        var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
+        Assert.Contains("sollicitaties-page", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-intro", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
+        Assert.Contains("AppendDetailPanel", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-layout", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-empty-card", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-ndm-tl", File.ReadAllText(Path.Combine(Root, "Jobsy.Web", "Applications", "ApplicationsSsrShells.cs")), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -42,10 +47,11 @@ public class CandidateIllustratedAppMarkupTests
         var liked = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/CandidateLikedSsr.razor"));
         var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Saved/SavedSsrShells.cs"));
         Assert.Contains("[NoBlazorRuntime]", liked, StringComparison.Ordinal);
-        Assert.Contains("saved-page-ssr", liked, StringComparison.Ordinal);
+        Assert.Contains("SavedSsrShells", liked, StringComparison.Ordinal);
+        Assert.Contains("saved-page-ssr", shells, StringComparison.Ordinal);
         Assert.Contains("kb-saved-rail", shells, StringComparison.Ordinal);
         Assert.Contains("kb-saved-card__media--illustrated", shells, StringComparison.Ordinal);
-        Assert.Contains("SavedNoPhotoArt", shells, StringComparison.Ordinal);
+        Assert.Contains("CandidateIllustratedImages.SavedNoPhotoArt", shells, StringComparison.Ordinal);
     }
 
     [Fact]

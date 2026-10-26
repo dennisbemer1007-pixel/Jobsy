@@ -1,3 +1,6 @@
+using System.Text;
+using System.Text.Json;
+using Jobsy.Web.Banenkaart;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -149,7 +152,7 @@ public sealed class BanenkaartFiltersUrlSyncPlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Travel_chip_remove_resets_minutes_but_keeps_address()
+    public async Task Travel_chip_remove_clears_time_filter_but_keeps_address()
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
@@ -165,24 +168,97 @@ public sealed class BanenkaartFiltersUrlSyncPlaywrightTests : IAsyncLifetime
 
         await page.Locator("[data-testid=kb-active-tag-travel]").ClickAsync();
         await page.WaitForFunctionAsync(
-            "() => !window.location.search.includes('maxMinutes=60')",
+            """
+            () => {
+              const btn = document.querySelector('[data-testid=kb-active-tag-travel]');
+              return btn && (btn.hidden || btn.style.display === 'none');
+            }
+            """,
             null,
             new() { Timeout = 15_000 });
 
         var url = page.Url;
         Assert.Contains("originLat=51.9944", url, StringComparison.Ordinal);
         Assert.Contains("originLng=4.2097", url, StringComparison.Ordinal);
+        Assert.DoesNotContain("maxMinutes=", url, StringComparison.Ordinal);
 
         var address = await page.Locator("[data-kb-address]").First.InputValueAsync();
         Assert.Contains("Naaldwijk", address, StringComparison.OrdinalIgnoreCase);
 
-        var chip = await page.Locator("[data-testid=kb-active-tag-travel]").InnerTextAsync();
-        Assert.Contains("20", chip, StringComparison.Ordinal);
-        Assert.Contains("fiets", chip, StringComparison.OrdinalIgnoreCase);
+        var filters = await page.EvaluateAsync<JsonElement>(
+            "() => window.jobsyBanenkaartCatalog.resolveFilters()");
+        Assert.True(filters.TryGetProperty("maxMinutes", out var maxEl));
+        Assert.Equal(JsonValueKind.Null, maxEl.ValueKind);
 
         var sliderVal = await page.EvaluateAsync<string>(
             "() => document.querySelector('[data-testid=kb-sheet-travel-slider]')?.value || ''");
         Assert.Equal("20", sliderVal);
+    }
+
+    [Fact]
+    public async Task MaxMinutes_without_origin_keeps_address_empty_despite_stored_filter_cookie()
+    {
+        var cookiePayload = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+        {
+            maxTravelMinutes = 60,
+            transport = "Auto",
+            originLat = 51.99389784,
+            originLng = 4.37897242,
+            originLabel = "Delft, Delft",
+        })));
+
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+
+        var host = new Uri(_baseUrl).Host;
+        await context.AddCookiesAsync([
+            new Cookie
+            {
+                Name = BanenkaartFilterCookie.CookieName,
+                Value = cookiePayload,
+                Domain = host,
+                Path = "/",
+                HttpOnly = true,
+                Secure = _baseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase),
+            }
+        ]);
+
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + "/banenkaart?maxMinutes=30", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => window.jobsyBanenkaartCatalog?.isReady?.() === true",
+            null,
+            new() { Timeout = 90_000 });
+
+        var address = await page.Locator("[data-kb-address]").First.InputValueAsync();
+        Assert.True(string.IsNullOrWhiteSpace(address));
+
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const el = document.querySelector('.results-meta__sub');
+              return !el || !String(el.textContent || '').trim();
+            }
+            """,
+            null,
+            new() { Timeout = 15_000 });
+
+        var travelChipVisible = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const btn = document.querySelector('[data-testid=kb-active-tag-travel]');
+              if (!btn) return false;
+              return !btn.hidden && btn.style.display !== 'none';
+            }
+            """);
+        Assert.False(travelChipVisible);
+
+        var url = page.Url;
+        Assert.Contains("maxMinutes=30", url, StringComparison.Ordinal);
+        Assert.DoesNotContain("originLat=", url, StringComparison.Ordinal);
     }
 
     [Fact]

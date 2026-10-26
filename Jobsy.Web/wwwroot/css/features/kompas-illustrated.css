@@ -122,7 +122,6 @@
   padding: 0.55rem 1rem;
 }
 
-.app-shell:has(.passport-page--illustrated) .lobsy-coach-dock,
 .app-shell:has(.passport-page--illustrated) .lobsy-coach-cta {
   display: none !important;
 }
@@ -131,8 +130,16 @@
   padding-inline-end: var(--space-4, 1rem);
 }
 
-.app-shell:has(.passport-page--illustrated) .app-main__content {
-  padding-bottom: var(--space-4, 1rem);
+@media (max-width: 1023px) {
+  .app-shell--candidate.has-bottom-nav:has(.passport-page--illustrated) .app-main__content {
+    padding-bottom: calc(var(--bottom-nav-h, 64px) + 72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-shell:has(.passport-page--illustrated) .app-main__content {
+    padding-bottom: var(--space-4, 1rem);
+  }
 }
 
 .passport-page--illustrated {

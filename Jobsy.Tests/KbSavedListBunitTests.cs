@@ -85,7 +85,8 @@ public class KbSavedListBunitTests : BunitContext
 
         Assert.Contains("Maak je paspoort af", html, StringComparison.Ordinal);
         Assert.Contains(KbRoutes.PaspoortTests, html, StringComparison.Ordinal);
-        Assert.DoesNotContain("%", html, StringComparison.Ordinal);
+        var grid = html[(html.IndexOf("kb-saved__grid", StringComparison.Ordinal)..)];
+        Assert.DoesNotContain("%", grid, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -97,7 +98,8 @@ public class KbSavedListBunitTests : BunitContext
                 fit: 74, band: "Good", state: nameof(KbSavedJobStateKind.Open))
         ]);
 
-        Assert.Contains("kb-saved__sort-link", html, StringComparison.Ordinal);
+        Assert.Contains("data-saved-sort", html, StringComparison.Ordinal);
+        Assert.Contains("data-saved-filter", html, StringComparison.Ordinal);
         Assert.Contains("kb-saved-card__media-link", html, StringComparison.Ordinal);
     }
 

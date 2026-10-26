@@ -1,5 +1,51 @@
 /* Candidate tests stack — tokens only; logical properties; journey-page focus. */
 
+.test-kreeft-strip {
+  display: block;
+  inline-size: 100%;
+  block-size: 6.5625rem;
+  overflow: hidden;
+  margin-block-end: 0.75rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg);
+}
+
+.test-kreeft-strip img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.test-kreeft-strip__mob {
+  display: block;
+}
+
+.test-kreeft-strip__desk {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .test-kreeft-strip {
+    block-size: 14.0625rem;
+  }
+
+  .test-kreeft-strip__mob {
+    display: none;
+  }
+
+  .test-kreeft-strip__desk {
+    display: block;
+  }
+}
+
+.test-block-stage:has(.test-kreeft-strip) {
+  --test-block-band-image: none;
+  --test-block-hero-figure-image: none;
+  --test-block-mobile-hero-image: none;
+}
+
 .journey-page h1:focus:not(:focus-visible) {
   outline: none;
 }

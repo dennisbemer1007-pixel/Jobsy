@@ -11,6 +11,7 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Ops;
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
@@ -21,6 +22,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Api.Controllers;
 
@@ -44,6 +46,7 @@ public class AuthController : ControllerBase
     private readonly ISystemAdminSettings _systemAdmin;
     private readonly SystemAdminLoginNotifier _systemAdminLoginNotifier;
     private readonly ILogger<AuthController> _logger;
+    private readonly AuthOptions _authOptions;
 
     public AuthController(
         JobsyDbContext db,
@@ -61,7 +64,8 @@ public class AuthController : ControllerBase
         ITestAccountsRuntime testAccounts,
         ISystemAdminSettings systemAdmin,
         SystemAdminLoginNotifier systemAdminLoginNotifier,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IOptions<AuthOptions> authOptions)
     {
         _db = db;
         _configuration = configuration;
@@ -79,19 +83,27 @@ public class AuthController : ControllerBase
         _systemAdmin = systemAdmin;
         _systemAdminLoginNotifier = systemAdminLoginNotifier;
         _logger = logger;
+        _authOptions = authOptions.Value;
     }
 
     private bool IsTestAccountExempt(User user)
         => user.IsTestAccount && _testAccounts.IsActive;
 
     private bool RequiresLocalPasswordMfa(User user)
-        => MfaPolicy.IsLocalPasswordMfaStepRequired(
+    {
+        if (MfaPolicy.ShouldSkipMandatoryMfaForSeedAccount(user.Email, _authOptions.SkipMfaForSeedAccounts))
+        {
+            return false;
+        }
+
+        return MfaPolicy.IsLocalPasswordMfaStepRequired(
             user.IsSystemAdminAccount,
             user.Role,
             user.IsTestAccount,
             _testAccounts.IsActive,
             user.AuthenticatorEnabled,
             _systemAdmin.RequireTwoFactor);
+    }
 
     private string? ClientIpAddress()
         => HttpContext.Connection.RemoteIpAddress?.ToString();

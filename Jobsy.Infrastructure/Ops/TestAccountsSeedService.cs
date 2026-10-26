@@ -394,6 +394,16 @@ public sealed class TestAccountsSeedService
             progress.Step = "candidate";
             progress.AccountKey = "Candidate";
             await EnsureCompleteCandidateAsync(candidate, cancellationToken);
+            if (usersByKey.TryGetValue("BranchManager", out var branchManager))
+            {
+                progress.Step = "sollicitaties-demo";
+                await TestAccountsSollicitatiesDemoSeeder.EnsureForCandidateAsync(
+                    _db,
+                    candidate.Id,
+                    branchManager.Id,
+                    Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+                    cancellationToken);
+            }
         }
 
         if (usersByKey.TryGetValue("CandidateNew", out var candidateNew))
@@ -674,7 +684,17 @@ public sealed class TestAccountsSeedService
         candidate.HomeLocation = new GeoPoint(52.0780, 4.3100);
         candidate.DateOfBirth = new DateOnly(1998, 4, 12);
         candidate.PreferencesJson =
-            """{"roles":["horeca","retail"],"maxTravelMinutes":30,"educations":["MBO"]}""";
+            """
+            {
+              "roles":["horeca","retail"],
+              "maxTravelMinutes":30,
+              "educations":["MBO"],
+              "flexibleTimes":true,
+              "minHoursPerWeek":16,
+              "maxHoursPerWeek":40,
+              "employers":[{"employerName":"Demo Horeca BV","role":"Bediening","years":2,"startMonth":"2022-03","endMonth":"2024-08","isCurrent":false}]
+            }
+            """;
         candidate.CandidateHowToCompletedAt ??= DateTime.UtcNow;
         candidate.TalentPoolConsentAt ??= DateTime.UtcNow;
         candidate.TalentPoolConsentVersion = PrivacyConstants.CurrentConsentVersion;
@@ -711,27 +731,6 @@ public sealed class TestAccountsSeedService
         MarkJourneyStepsDone(onboarding);
 
         await EnsureCompletedProfileAsync(candidate.Id, cancellationToken);
-
-        if (!await _db.Applications.AnyAsync(a => a.Id == TestAccountsIds.Application, cancellationToken))
-        {
-            _db.Applications.Add(new Application
-            {
-                Id = TestAccountsIds.Application,
-                VacancyId = TestAccountsIds.VacancyHaag1,
-                CandidateUserId = candidate.Id,
-                CandidateName = candidate.FullName,
-                CandidateEmail = candidate.Email,
-                CandidateCity = "Den Haag",
-                PreferredTransport = "Bike",
-                EstimatedTravelMinutes = 15,
-                Status = ApplicationStatus.Pending,
-                ConsentAcceptedAt = DateTime.UtcNow,
-                ConsentVersion = PrivacyConstants.CurrentConsentVersion,
-                WorkPermitConfirmed = true,
-                EmailVerifiedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
     }
 
     private static void MarkJourneyStepsDone(CandidateOnboarding onboarding)

@@ -473,7 +473,7 @@ public static class AuthServiceCollectionExtensions
 
             if (allowDemoLogin && users.TryAuthenticate(email, password, out var user) && user is not null)
             {
-                principal = CreateLocalPrincipal(user);
+                principal = CreateLocalPrincipal(user, configuration);
             }
             else
             {
@@ -514,18 +514,22 @@ public static class AuthServiceCollectionExtensions
                 }
 
                 apiProfile = outcome.Profile;
-                if (apiProfile?.RequiresMfa == true
-                    && !string.IsNullOrWhiteSpace(apiProfile.MfaChallengeToken))
+                if (apiProfile is not null
+                    && MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                        configuration,
+                        email,
+                        apiProfile.RequiresMfa,
+                        apiProfile.MfaChallengeToken))
                 {
                     MfaTrustCookie.Clear(http);
-                    SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken, safeReturn);
+                    SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken!, safeReturn);
                     var mfaPath = apiProfile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
                     return Results.Redirect(mfaPath);
                 }
 
                 if (apiProfile is not null)
                 {
-                    principal = CreatePrincipalFromProfile(apiProfile, "local-registration");
+                    principal = CreatePrincipalFromProfile(configuration, apiProfile, "local-registration");
                 }
             }
 
@@ -664,9 +668,14 @@ public static class AuthServiceCollectionExtensions
                 rememberDevice,
                 http.Request.Headers.UserAgent.ToString());
 
-            if (profile?.RequiresMfa == true && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            if (profile is not null
+                && MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                    configuration,
+                    profile.Email,
+                    profile.RequiresMfa,
+                    profile.MfaChallengeToken))
             {
-                SetMfaChallengeCookies(http, profile.MfaChallengeToken, payload.ReturnUrl ?? safeReturn);
+                SetMfaChallengeCookies(http, profile.MfaChallengeToken!, payload.ReturnUrl ?? safeReturn);
                 EmailCodeCookie.Clear(http);
                 var mfaPath = profile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
                 return Results.Redirect(mfaPath);
@@ -695,7 +704,7 @@ public static class AuthServiceCollectionExtensions
             }
 
             EmailCodeCookie.Clear(http);
-            var principal = CreatePrincipalFromProfile(profile, "email-code");
+            var principal = CreatePrincipalFromProfile(configuration, profile, "email-code");
             return await SignInFromApiProfileAsync(
                 http,
                 configuration,
@@ -774,7 +783,7 @@ public static class AuthServiceCollectionExtensions
             }
 
             var profile = outcome.Profile!;
-            var principal = CreatePrincipalFromProfile(profile, "password+totp");
+            var principal = CreatePrincipalFromProfile(configuration, profile, "password+totp");
             if (principal.Identity is ClaimsIdentity identity)
             {
                 if (profile.DeviceSessionId is Guid deviceId
@@ -949,7 +958,7 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
-            var principal = CreateLocalPrincipal(user);
+            var principal = CreateLocalPrincipal(user, configuration);
             var showHowTo = principal.HasClaim(c =>
                 c.Type == "show_candidate_how_to" && c.Value == "1");
             if (showHowTo
@@ -1140,14 +1149,18 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect("/login?error=retry");
             }
 
-            if (profile.RequiresMfa && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            if (MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                    configuration,
+                    profile.Email,
+                    profile.RequiresMfa,
+                    profile.MfaChallengeToken))
             {
                 var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl ?? "/home");
-                SetMfaChallengeCookies(http, profile.MfaChallengeToken, safeReturn);
+                SetMfaChallengeCookies(http, profile.MfaChallengeToken!, safeReturn);
                 return Results.Redirect(profile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup");
             }
 
-            var principal = CreatePrincipalFromProfile(profile, "local-registration");
+            var principal = CreatePrincipalFromProfile(configuration, profile, "local-registration");
             if (principal.Identity is ClaimsIdentity identity)
             {
                 AuthPrincipalFactory.StampSessionVersion(identity, profile.SessionVersion);
@@ -1398,7 +1411,7 @@ public static class AuthServiceCollectionExtensions
                || configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
     }
 
-    private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)
+    private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user, IConfiguration configuration)
     {
         var role = NormalizeRole(user.Role);
         var subject = user.UserId is Guid uid && uid != Guid.Empty
@@ -1411,11 +1424,15 @@ public static class AuthServiceCollectionExtensions
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Role, role),
             new("auth_method", "password"),
-            new(JobsyClaimTypes.SessionVersion, "0"),
-            // Demo login is Development-only (never Production). The claim lets the
-            // CI admin smoke stay on /admin; real accounts still enroll at /account/mfa.
-            new(JobsyClaimTypes.MfaVerified, "1")
+            new(JobsyClaimTypes.SessionVersion, "0")
         };
+
+        if (MfaSeedAccountBypass.AppliesTo(configuration, user.Email)
+            || MfaPolicy.IsJobsyLocalSeedEmail(user.Email))
+        {
+            // DemoUser store is @jobsy.local only; Acceptatie uses Auth:SkipMfaForSeedAccounts.
+            claims.Add(new Claim(JobsyClaimTypes.MfaVerified, "1"));
+        }
 
         if (!string.IsNullOrWhiteSpace(user.CompanyId))
         {
@@ -1468,6 +1485,7 @@ public static class AuthServiceCollectionExtensions
 
         if (principal.Identity is ClaimsIdentity identity)
         {
+            MfaSeedAccountBypass.EnsureMfaVerifiedClaim(identity, configuration, email);
             if (apiProfile?.DeviceSessionId is Guid deviceId
                 && !string.IsNullOrWhiteSpace(apiProfile.DeviceRefreshToken)
                 && apiProfile.DeviceExpiresAtUtc is DateTime deviceExp)
@@ -2017,11 +2035,16 @@ public static class AuthServiceCollectionExtensions
                 return;
             }
 
-            if (profile.RequiresMfa && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            var configuration = http.RequestServices.GetRequiredService<IConfiguration>();
+            if (MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                    configuration,
+                    profile.Email,
+                    profile.RequiresMfa,
+                    profile.MfaChallengeToken))
             {
                 SetMfaChallengeCookies(
                     http,
-                    profile.MfaChallengeToken,
+                    profile.MfaChallengeToken!,
                     AuthRedirects.SafeLocalUrl(properties?.RedirectUri ?? "/home"));
                 if (properties is not null)
                 {
@@ -2032,6 +2055,7 @@ public static class AuthServiceCollectionExtensions
             }
 
             ApplyProfileClaims(identity, profile, $"external:{provider}");
+            MfaSeedAccountBypass.EnsureMfaVerifiedClaim(identity, configuration, profile.Email);
 
             var featureFlags = await ResolveFeatureFlagsAsync(
                 http.RequestServices.GetService<IFeatureFlags>(),
@@ -2101,7 +2125,10 @@ public static class AuthServiceCollectionExtensions
         }
     }
 
-    private static ClaimsPrincipal CreatePrincipalFromProfile(LocalApiLoginProfile profile, string authMethod)
+    private static ClaimsPrincipal CreatePrincipalFromProfile(
+        IConfiguration configuration,
+        LocalApiLoginProfile profile,
+        string authMethod)
     {
         var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
         var subject = profile.UserId is Guid uid && uid != Guid.Empty
@@ -2112,6 +2139,7 @@ public static class AuthServiceCollectionExtensions
         identity.AddClaim(new Claim(ClaimTypes.Name, profile.FullName));
         identity.AddClaim(new Claim("auth_method", authMethod));
         ApplyProfileClaims(identity, profile, authMethod);
+        MfaSeedAccountBypass.EnsureMfaVerifiedClaim(identity, configuration, profile.Email);
         return new ClaimsPrincipal(identity);
     }
 

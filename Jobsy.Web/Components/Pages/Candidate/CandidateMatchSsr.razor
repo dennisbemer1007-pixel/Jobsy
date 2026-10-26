@@ -1,0 +1,88 @@
+@page "/candidate/match"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Features
+@using Jobsy.Core.Options
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Match
+@using Jobsy.Web.Onboarding
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Antiforgery
+@inject CandidateMatchProfileService MatchProfile
+@inject MatchVacancyService MatchVacancies
+@inject IFeatureFlags FeatureFlags
+@inject CultureState Culture
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Config
+
+<PageTitle>@Culture["Match.DialogTitle"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="match" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Panel.ErrorInline"];
+                return;
+            }
+
+            var startPath = OnboardingRoutes.ClassicStartPath;
+            try
+            {
+                var flags = await FeatureFlags.GetAsync();
+                startPath = OnboardingRoutes.StartPath(flags);
+            }
+            catch
+            {
+                /* classic */
+            }
+
+            var deck = new MatchDeck();
+            await deck.LoadAsync(
+                MatchProfile,
+                MatchVacancies,
+                take: 24,
+                orderByMatch: false,
+                showMatchPercentage: false);
+
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            var dayInLifeEnabled = OccupationDayInLifeGate.IsEnabled(Config[OccupationDayInLifeOptions.EnabledKey]);
+            _bodyHtml = MatchSsrShells.BuildBody(Culture, deck, tokens.RequestToken ?? "", startPath, dayInLifeEnabled);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

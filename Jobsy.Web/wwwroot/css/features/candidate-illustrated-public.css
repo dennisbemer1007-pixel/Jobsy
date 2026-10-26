@@ -1,5 +1,64 @@
 /* Candidate illustrated public pages — login + start (scoped under .pub-theme) */
 
+.pub-theme .au-stage--kreeft-strip .au-art--left,
+.pub-theme .au-stage--kreeft-strip .au-art--right,
+.pub-theme .au-stage--kreeft-strip .au-art-band {
+  display: none !important;
+}
+
+.pub-theme .au-stage--kreeft-strip .au-kreeft-header-strip {
+  position: relative;
+  inset-inline: 0;
+  inline-size: 100%;
+  margin-block-end: 0.75rem;
+  pointer-events: none;
+}
+
+.pub-theme .au-stage--kreeft-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding-top: 0;
+  min-height: 0;
+}
+
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated {
+  padding: 0;
+  align-items: stretch;
+  background: var(--pearl);
+}
+
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated .au-art-band,
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated .au-art--left,
+.pub-theme .au-stage--kreeft-strip.au-stage--illustrated .au-art--right {
+  display: none !important;
+}
+
+.pub-theme .au-stage--kreeft-strip .au-col {
+  inline-size: 100%;
+  max-inline-size: min(1120px, 100%);
+  margin-inline: auto;
+  padding-inline: 1rem;
+  box-sizing: border-box;
+}
+
+.pub-theme .au-stage--kreeft-strip.au-stage--reiskaart {
+  align-items: stretch;
+  overflow: visible;
+}
+
+.pub-theme .au-stage--kreeft-strip .au-kreeft-header-strip,
+.pub-theme .au-stage--kreeft-strip .kreeft-header-strip {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  flex-shrink: 0;
+}
+
+.pub-theme .au-stage--reiskaart .au-reiskaart-grid {
+  width: 100%;
+}
+
 .pub-theme .au-stage--illustrated {
   align-items: center;
   padding: 4.5rem 1.5rem 3rem;
@@ -109,21 +168,30 @@
   display: none;
 }
 
-.pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
-  position: relative;
-  min-height: 520px;
+.pub-theme .pub-landing__hero--kreeft-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   padding: 0;
-  background: color-mix(in srgb, var(--gold) 8%, var(--surface)) var(--pub-hero-art) no-repeat center top / min(1440px, 100%) auto;
+  background: var(--pearl);
 }
 
-.pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 90px;
-  background: linear-gradient(transparent, var(--pearl));
-  pointer-events: none;
+.pub-theme .pub-landing__hero--kreeft-strip .pub-landing__kreeft-strip {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: none;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated.pub-landing__hero--kreeft-strip {
+  position: relative;
+  min-height: 0;
+  padding: 0;
+  background: var(--pearl);
+  background-image: none;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated.pub-landing__hero--kreeft-strip::after {
+  display: none;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
@@ -448,19 +516,26 @@
     max-width: none;
   }
 
-  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-head {
-    background: var(--pearl);
-    padding-bottom: 0.35rem;
-  }
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-head {
+  background: var(--pearl);
+  padding-bottom: 0.35rem;
+  position: relative;
+  z-index: 2;
+}
+
+.pub-theme .pub-landing__hero-grid--reiskaart .pub-landing__hero-head .pub-pill {
+  max-width: 100%;
+}
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-art-band {
     display: block;
     width: 100vw;
     max-width: none;
     margin-inline: calc(50% - 50vw);
-    height: clamp(180px, 54vw, 220px);
+    height: var(--cand-header-strip-h-mobile, 105px);
+    max-height: var(--cand-header-strip-h-mobile, 105px);
     flex-shrink: 0;
-    background: var(--pub-hero-art) no-repeat center 38% / auto 108%;
+    background: var(--pub-hero-art) no-repeat 68% 52% / cover;
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,

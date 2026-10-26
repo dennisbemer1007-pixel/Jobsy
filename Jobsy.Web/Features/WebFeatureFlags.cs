@@ -86,7 +86,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestEditModeEnabled ?? false,
                 dto?.SamplePdfEnabled ?? false,
                 dto?.TestDepthValueMockupEnabled ?? true,
-                dto?.UwvFeaturesEnabled ?? true);
+                dto?.UwvFeaturesEnabled ?? true,
+                dto?.ActivityLogEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -210,5 +211,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("uwvFeaturesEnabled")]
         public bool UwvFeaturesEnabled { get; set; } = true;
+
+        [JsonPropertyName("activityLogEnabled")]
+        public bool ActivityLogEnabled { get; set; }
     }
 }

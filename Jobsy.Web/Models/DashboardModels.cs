@@ -114,6 +114,22 @@ public class ApplicationItem
     public bool IsInitiative { get; set; }
     public bool IsAutoDeclinedInitiative { get; set; }
     public string? TimelineClosingKey { get; set; }
+    public ApplicationAfterMatchSummaryItem? AfterMatch { get; set; }
+}
+
+public class ApplicationAfterMatchSummaryItem
+{
+    public string InterviewStatus { get; set; } = string.Empty;
+    public int UnreadMessageCount { get; set; }
+    public int OpenSlotCount { get; set; }
+    public DateTime? ScheduledStartUtc { get; set; }
+    public DateTime? ScheduledEndUtc { get; set; }
+    public DateTime? AcceptedAtUtc { get; set; }
+    public string? LastMessagePreview { get; set; }
+    public bool LastMessageFromCandidate { get; set; }
+    public DateTime? LastMessageAtUtc { get; set; }
+    public string? LastCancelReason { get; set; }
+    public bool? LastCancelByEmployer { get; set; }
 }
 
 public class ApplicationTimelineStepItem

@@ -44,6 +44,7 @@ internal static class BanenkaartSsrData
         BanenkaartSsrQuery.State query,
         bool isAuthenticated,
         bool isCandidate,
+        bool sortExplicitInUrl = false,
         bool explicitRadiusKm = false,
         CancellationToken cancellationToken = default)
     {
@@ -129,7 +130,10 @@ internal static class BanenkaartSsrData
                 {
                     openForWork = profile.OpenForWork;
                     showFitFilters = openForWork;
-                    if (originLat is null && profile.HomeLatitude is double hLat && profile.HomeLongitude is double hLng)
+                    if (originLat is null
+                        && !query.UrlOriginAbsentByQuery
+                        && profile.HomeLatitude is double hLat
+                        && profile.HomeLongitude is double hLng)
                     {
                         var resolved = KbMapStart.Resolve(new KbMapStart.Input(
                             UrlOrStateOrigin: null,
@@ -170,11 +174,18 @@ internal static class BanenkaartSsrData
             showStartPrompt = false;
         }
 
+        var useOriginForSort = originLat is not null && originLng is not null && query.CompanyIds.Count == 0;
         var effectiveQuery = query with
         {
             OriginLat = originLat,
             OriginLng = originLng,
-            OriginLabel = addressLabel
+            OriginLabel = addressLabel,
+            SortMode = BanenkaartSsrQuery.ResolveEffectiveSort(
+                query.SortMode,
+                sortExplicitInUrl,
+                isCandidate,
+                showFitFilters,
+                useOriginForSort),
         };
 
         var companyFocus = effectiveQuery.CompanyIds.Count > 0;
@@ -201,7 +212,7 @@ internal static class BanenkaartSsrData
                     useOrigin ? originLat : null,
                     useOrigin ? originLng : null,
                     effectiveQuery.Transport,
-                    effectiveQuery.MaxTravelMinutes,
+                    BanenkaartSsrQuery.DiscoverMaxMinutes(effectiveQuery.MaxTravelMinutes),
                     discoverRadius,
                     companyFocus ? null : effectiveQuery.AgeYears,
                     companyFocus ? null : minWage,
@@ -225,7 +236,11 @@ internal static class BanenkaartSsrData
         }
 
         var discoverPage = await DiscoverAsync();
-        vacancies = discoverPage.Items;
+        vacancies = BanenkaartSsrQuery.OrderVacancies(
+            discoverPage.Items,
+            effectiveQuery.SortMode,
+            showFitFilters,
+            useOrigin);
         hasMoreList = discoverPage.HasMore;
         discoverTotal = discoverPage.TotalCount;
         var outsideTravelFallback = discoverPage.OutsideTravelFallback;
@@ -235,10 +250,12 @@ internal static class BanenkaartSsrData
             zoomOutsideTravel = true;
         }
 
-        var pinCentroid = VacancyMapViewCalculator.FromPoints(
-            vacancies
-                .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
-                .Select(v => (v.Latitude, v.Longitude)));
+        var pinPoints = vacancies
+            .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
+            .Select(v => (v.Latitude, v.Longitude));
+        var pinCentroid = useOrigin
+            ? VacancyMapViewCalculator.FromPoints(pinPoints)
+            : VacancyMapViewCalculator.FromPointsNetherlandsOrFallback(pinPoints);
 
         if (mapView is null || !mapView.HasPins)
         {
@@ -253,7 +270,7 @@ internal static class BanenkaartSsrData
             region?.Latitude,
             region?.Longitude,
             companyFocus,
-            effectiveQuery.MaxTravelMinutes,
+            BanenkaartSsrQuery.DiscoverMaxMinutes(effectiveQuery.MaxTravelMinutes),
             effectiveQuery.Transport,
             effectiveQuery.RadiusKm);
 
@@ -261,19 +278,27 @@ internal static class BanenkaartSsrData
 
         var catalogUrl = BanenkaartClientCatalog.AllPath;
         var highlightSeed = HashVacancyIds(vacancies.Select(v => v.Id));
+        var fitByVacancyId = isCandidate && showFitFilters
+            ? vacancies
+                .Select(v => (v.Id, Percent: v.FitPercent ?? v.MatchPercent))
+                .Where(x => x.Percent is int)
+                .ToDictionary(x => x.Id.ToString("D"), x => x.Percent!.Value)
+            : null;
         var bootJson = BanenkaartMapBoot.BuildJson(
             culture,
             effectiveQuery,
             opening,
             bootPins,
             catalogUrl,
-            preferFilledLocation: !companyFocus,
+            preferFilledLocation: !companyFocus && useOrigin,
             isAuthenticated,
             originLat,
             originLng,
             zoomOutsideTravel,
             highlightSeed,
-            explicitRadiusKm);
+            explicitRadiusKm,
+            fitByVacancyId,
+            showFitFilters);
 
         var defaults = new KbFilterDefaults(
             AgeYears: effectiveQuery.AgeYears,
@@ -283,7 +308,7 @@ internal static class BanenkaartSsrData
         var activeFilters = KbFilterBadge.Count(
             new KbFilterState(
                 effectiveQuery.Transport,
-                effectiveQuery.MaxTravelMinutes,
+                BanenkaartSsrQuery.DiscoverMaxMinutes(effectiveQuery.MaxTravelMinutes),
                 effectiveQuery.RadiusKm,
                 effectiveQuery.AgeYears,
                 effectiveQuery.MinHoursPerWeek,
@@ -304,17 +329,25 @@ internal static class BanenkaartSsrData
             ? culture["Kb.Map.NoVacanciesInTravel"]
             : culture.Format("Kb.Filter.ResultCount", count);
 
-        string? subtitle = showEmptyTravel
-            ? culture.Format(
-                "Kb.Filter.ResultWithin",
-                effectiveQuery.MaxTravelMinutes,
-                UiLabels.TransportVerb(culture, effectiveQuery.Transport))
-            : originLat is not null
+        string? subtitle = null;
+        if (string.Equals(effectiveQuery.SortMode, "match", StringComparison.OrdinalIgnoreCase) && showFitFilters)
+        {
+            subtitle = culture["Kb.List.SubBestFirst"];
+        }
+        else if (effectiveQuery.MaxTravelMinutes is int travelChipMinutes)
+        {
+            subtitle = showEmptyTravel
                 ? culture.Format(
                     "Kb.Filter.ResultWithin",
-                    effectiveQuery.MaxTravelMinutes,
+                    travelChipMinutes,
                     UiLabels.TransportVerb(culture, effectiveQuery.Transport))
-                : null;
+                : originLat is not null
+                    ? culture.Format(
+                        "Kb.Filter.ResultWithin",
+                        travelChipMinutes,
+                        UiLabels.TransportVerb(culture, effectiveQuery.Transport))
+                    : null;
+        }
 
         return new PageModel(
             effectiveQuery,

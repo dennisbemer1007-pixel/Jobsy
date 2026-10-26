@@ -1,9 +1,10 @@
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Applications
 @using Jobsy.Web.Hosting
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
 <!DOCTYPE html>
-<html lang="@HtmlLang" dir="@HtmlDir">
+<html lang="@HtmlLang" dir="@HtmlDir" data-enhance-nav="@(DisableEnhancedNav ? "false" : null)">
 
 <head>
     <meta charset="utf-8" />
@@ -38,7 +39,7 @@
     }
     @if (LoadBlazorRuntime)
     {
-        <link rel="preload" href="js/app-core.js?v=20261023-bkssr2" as="script" crossorigin />
+        <link rel="preload" href="@WwwrootAssetCatalog.Url("js/app-core.js")" as="script" crossorigin />
         <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
     }
     else if (IncludeBanenkaartClientScript)
@@ -55,40 +56,52 @@
         <link rel="prefetch" href="/lib/maplibre/maplibre-gl.css?v=20260820-r166" as="style" crossorigin="anonymous" />
         <link rel="prefetch" href="/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180" as="script" crossorigin="anonymous" />
         <link rel="preload" href="https://tiles.openfreemap.org/styles/liberty" as="fetch" crossorigin="anonymous" />
-        <link rel="prefetch" href="/js/jobsyMapLibre.min.js?v=20261023-maxzoom1" as="script" crossorigin="anonymous" />
-        <script src="/js/jobsy-basemap-warm.js?v=20261023-19" crossorigin="anonymous" nonce="@Nonce" defer></script>
-        <script src="/js/banenkaart-catalog.js?v=20261024-filters3" crossorigin="anonymous" nonce="@Nonce" defer></script>
-        <script src="/js/banenkaart-prefetch.js?v=20261023-19" crossorigin="anonymous" nonce="@Nonce" defer></script>
+        <link rel="prefetch" href="@($"/{WwwrootAssetCatalog.Url("js/jobsyMapLibre.min.js")}")" as="script" crossorigin="anonymous" />
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/jobsy-basemap-warm.js")}")" crossorigin="anonymous" nonce="@Nonce" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-catalog.js")}")" crossorigin="anonymous" nonce="@Nonce" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-prefetch.js")}")" crossorigin="anonymous" nonce="@Nonce" defer></script>
     }
-    @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
+    @if (!LoadBlazorRuntime && IncludeGratisDnaScript && !UsesFullRouteStylesheetBundle)
     {
-        <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-10" />
-        <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/gratis-dna.css")" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/questionnaire.css")" />
     }
-    <link rel="stylesheet" href="css/critical.css?v=20261023-regfix1" />
-    <link rel="stylesheet" href="css/tokens.css?v=20261018-06" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/critical.css")" />
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/tokens.css")" />
+    }
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
-    <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
-    <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
-    <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
-    <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
-    <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
-    <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
-    <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
-    @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
-    <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/public-theme.css")" />
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/stijl-a.css")" />
+    }
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/auth.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/landing.css")" />
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-decorative-layers.css")" />
+    }
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-public.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/public-pages.css")" />
+    @* errors.css after app.min on candidate shells — see UsesFullRouteStylesheetBundle block below. *@
+    @if (!UsesFullRouteStylesheetBundle)
+    {
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" />
+    }
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-02" data-reconnect-css />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/reconnect.css")" data-reconnect-css />
     }
     @if (!LoadBlazorRuntime)
     {
         @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
-        <link rel="stylesheet" href="css/features/cookie-consent.css?v=20261017-05" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/cookie-consent.css")" />
     }
     @if (!LoadBlazorRuntime && IncludeSignupStaticCss)
     {
-        <link rel="stylesheet" href="css/features/signup-static.css?v=20261017-02" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/signup-static.css")" />
     }
     @if (!LoadBlazorRuntime && IncludeBanenkaartClientScript)
     {
@@ -111,6 +124,42 @@
             }
         }
     }
+    @* Logged-in candidate [NoBlazorRuntime] SSR (sollicitaties, bewaard, paspoort, …): render-blocking route bundles in head — not late HeadContent. *@
+    @if (!LoadBlazorRuntime && IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript)
+    {
+        @foreach (var href in PageStylesheets)
+        {
+            if (href.StartsWith("css/app.min.css", StringComparison.Ordinal))
+            {
+                <link rel="stylesheet" href="@href" data-app-css data-noblazor-route-css="true" />
+            }
+            else
+            {
+                <link rel="stylesheet" href="@href" data-noblazor-route-css="true" />
+            }
+        }
+        @* After app.min: bottom nav + header chrome (app.min hides .bottom-nav on desktop). *@
+        @foreach (var href in PageAssetCatalog.CandidateNoBlazorChromeCss())
+        {
+            <link rel="stylesheet" href="@href" data-noblazor-route-css="true" />
+        }
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" data-noblazor-route-css="true" />
+    }
+    @if (!LoadBlazorRuntime && IncludeWerkgeverNoBlazorAfterMatchCss)
+    {
+        @foreach (var href in PageStylesheets)
+        {
+            if (href.StartsWith("css/app.min.css", StringComparison.Ordinal))
+            {
+                <link rel="stylesheet" href="@href" data-app-css data-noblazor-route-css="true" />
+            }
+            else
+            {
+                <link rel="stylesheet" href="@href" data-noblazor-route-css="true" />
+            }
+        }
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" data-noblazor-route-css="true" />
+    }
     @if (LoadBlazorRuntime)
     {
         @foreach (var href in PageStylesheets)
@@ -124,6 +173,8 @@
                 <link rel="stylesheet" href="@href" />
             }
         }
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css")" data-app-css />
+        <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" data-app-css />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
     @if (LoadBlazorRuntime)
@@ -133,14 +184,14 @@
             {
                 @:<link rel="stylesheet" href="@href" />
             }
-            <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
-            <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
-            <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
-            <link rel="stylesheet" href="css/features/candidate-illustrated-decorative-layers.css?v=20261020-01" />
-            <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
-            <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
-            <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
-            <link rel="stylesheet" href="css/features/reconnect.css?v=20261021-02" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/public-theme.css")" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/auth.css")" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/landing.css")" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-decorative-layers.css")" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-public.css")" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/public-pages.css")" />
+            <link rel="stylesheet" href="@Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/errors.css")" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/reconnect.css")" />
         </noscript>
     }
     <script nonce="@Nonce">
@@ -163,6 +214,7 @@
                     window.__lobsyEarlyNavGuard = true;
                     document.addEventListener("click", function (ev) {
                         if (document.documentElement.getAttribute("data-lobsy-circuit") === "ready") return;
+                        if (document.documentElement.getAttribute("data-enhance-nav") === "false") return;
                         var a = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
                         if (!a || a.target === "_blank" || a.getAttribute("data-enhance-nav") === "false") return;
                         if (a.getAttribute("data-lobsy-candidate-nav") === "true") return;
@@ -331,42 +383,46 @@
     }
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261023-bkssr2" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
-            <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
-            <script src="js/lobsyPush.js?v=20261021-02" nonce="@Nonce" defer></script>
-            <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/app-core.js")}")" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/navFeedback.js")}")" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/lobsyPush.js")}")" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/read-aloud.js")}")" nonce="@Nonce" defer></script>
         }
         else
         {
-            <script src="/js/app-public.js?v=20261023-acc9" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/app-public.js")}")" nonce="@Nonce" defer></script>
+            @if (IncludeCandidateNoBlazorChromeCss || BanenkaartAuthenticatedShell)
+            {
+                <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>
+            }
             @if (IncludeBanenkaartClientScript)
             {
-                <script src="/js/banenkaart-maps-boot.js?v=20261024-pop11" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+                <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-maps-boot.js")}")" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             }
         }
         @if (!IncludeBanenkaartClientScript)
         {
-            <script src="js/public-pages.js?v=20261004-13" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/public-pages.js")}")" nonce="@Nonce" defer></script>
         }
         @if (IncludeLandingScript)
         {
-            <script src="js/landing.js?v=20261018-02" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/landing.js")}")" nonce="@Nonce" defer></script>
         }
         @if (IncludeGratisDnaScript)
         {
-            <script src="js/gratis-dna.js?v=20261004-13" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/gratis-dna.js")}")" nonce="@Nonce" defer></script>
         }
         @if (IncludeLeerlingLoginScript)
         {
-            <script src="js/leerling-login.js?v=20261004-13" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/leerling-login.js")}")" nonce="@Nonce" defer></script>
         }
         @if (IncludeVacancyWizardScript)
         {
-            <script src="js/vacancy-wizard.js?v=20261015-03" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/vacancy-wizard.js")}")" nonce="@Nonce" defer></script>
         }
         @if (IncludeOnboardingClientScript)
         {
-            <script src="js/onboarding-client-form.js?v=20261022-step24b" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-client-form.js")}")" nonce="@Nonce" defer></script>
         }
     @if (LoadBlazorRuntime)
     {
@@ -393,7 +449,7 @@
         </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261021-17" nonce="@Nonce" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/blazor-boot.js")}")" nonce="@Nonce" defer></script>
     }
 </body>
 
@@ -452,6 +508,12 @@
     private IReadOnlyList<string> PageStylesheets =>
         PageAssetCatalog.StylesheetsFor(PageAreas, RequestPath);
 
+    /// <summary>Blazor or logged-in candidate SSR bundles already include tokens, stijl-a, and decorative layers.</summary>
+    private bool UsesFullRouteStylesheetBundle =>
+        LoadBlazorRuntime
+        || (IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript)
+        || IncludeWerkgeverNoBlazorAfterMatchCss;
+
     private bool IncludeLandingScript =>
         PageAssetCatalog.IncludeLandingScript(RequestPath);
 
@@ -488,8 +550,17 @@
         && HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true
         && RoleClaimMatching.HasRole(HttpContextAccessor.HttpContext!.User, JobsyRoles.Candidate);
 
+    private bool IncludeWerkgeverNoBlazorAfterMatchCss =>
+        SkipBlazorForPage
+        && !IncludeBanenkaartClientScript
+        && AfterMatchWerkgeverSsrPaths.IsCanonicalOrInternalPath(RequestPath);
+
+    private bool DisableEnhancedNav =>
+        AfterMatchWerkgeverSsrPaths.ShouldDisableBlazorAndEnhancedNav(RequestPath);
+
     private bool SkipBlazorForPage =>
-        HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
+        HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null
+        || DisableEnhancedNav;
 
     private bool LoadBlazorRuntime =>
         !SkipBlazorForPage

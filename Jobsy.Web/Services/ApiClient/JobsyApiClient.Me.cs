@@ -8,6 +8,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Http;
 using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Services;
@@ -38,11 +39,31 @@ public sealed partial class JobsyApiClient
     public async Task<MeProfile?> UploadMyCvAsync(IBrowserFile file, CancellationToken ct = default)
     {
         await using var stream = file.OpenReadStream(CandidateCvFileRules.MaxBytes, ct);
+        return await UploadMyCvStreamAsync(stream, file.Name, file.ContentType, ct);
+    }
+
+    public async Task<MeProfile?> UploadMyCvFromFormAsync(IFormFile file, CancellationToken ct = default)
+    {
+        if (file.Length <= 0 || file.Length > CandidateCvFileRules.MaxBytes)
+        {
+            throw new InvalidOperationException("CV upload mislukt.");
+        }
+
+        await using var stream = file.OpenReadStream();
+        return await UploadMyCvStreamAsync(stream, file.FileName, file.ContentType, ct);
+    }
+
+    private async Task<MeProfile?> UploadMyCvStreamAsync(
+        Stream stream,
+        string fileName,
+        string? contentType,
+        CancellationToken ct)
+    {
         using var content = new MultipartFormDataContent();
         using var fileContent = new StreamContent(stream);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(
-            string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
-        content.Add(fileContent, "file", file.Name);
+            string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType);
+        content.Add(fileContent, "file", fileName);
         var response = await _http.PostAsync("api/me/cv", content, ct);
         if (!response.IsSuccessStatusCode)
         {

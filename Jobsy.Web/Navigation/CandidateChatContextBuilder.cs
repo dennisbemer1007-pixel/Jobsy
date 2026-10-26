@@ -18,13 +18,20 @@ public sealed record CandidateChatBootstrap(
 /// </summary>
 public static class CandidateChatContextBuilder
 {
-    public static async Task<CandidateChatBootstrap> BuildAsync(
+    public static Task<CandidateChatBootstrap> BuildAsync(
         JobsyApiClient api,
         NavigationManager navigation,
         CultureState culture,
         CancellationToken ct = default)
+        => BuildForPagePathAsync(api, RoutePath(navigation.Uri), culture, ct);
+
+    public static async Task<CandidateChatBootstrap> BuildForPagePathAsync(
+        JobsyApiClient api,
+        string path,
+        CultureState culture,
+        CancellationToken ct = default)
     {
-        var path = RoutePath(navigation.Uri);
+        path = NormalizePagePath(path);
         MeProfile? profile = null;
         IReadOnlyList<ApplicationItem> apps = [];
 
@@ -135,6 +142,28 @@ public static class CandidateChatContextBuilder
                 culture["Assistant.Chip.ApplyHelp"],
                 culture["Assistant.Chip.ApplyHelpMessage"]));
         }
+        else if (path.StartsWith("/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
+                 || path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)
+                 || path.Equals("/banen", StringComparison.OrdinalIgnoreCase))
+        {
+            list.Add(new ChatSuggestionChip(
+                culture["Assistant.Chip.JobMapHelp"],
+                culture["Assistant.Chip.JobMapHelpMessage"]));
+        }
+        else if (path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+                 || path.StartsWith("/carriere/", StringComparison.OrdinalIgnoreCase))
+        {
+            list.Add(new ChatSuggestionChip(
+                culture["Assistant.Chip.CareerRoute"],
+                culture["Assistant.Chip.CareerRouteMessage"]));
+        }
+        else if (path.StartsWith("/candidate/kompas", StringComparison.OrdinalIgnoreCase)
+                 || path.StartsWith("/candidate/start/kompas", StringComparison.OrdinalIgnoreCase))
+        {
+            list.Add(new ChatSuggestionChip(
+                culture["Assistant.Chip.KompasExplain"],
+                culture["Assistant.Chip.KompasExplainMessage"]));
+        }
         else
         {
             list.Add(new ChatSuggestionChip(
@@ -170,6 +199,18 @@ public static class CandidateChatContextBuilder
         if (path.StartsWith("/candidate/vacancies", StringComparison.OrdinalIgnoreCase))
         {
             return culture["Assistant.Page.MyVacancies"];
+        }
+
+        if (path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/carriere/", StringComparison.OrdinalIgnoreCase))
+        {
+            return culture["Assistant.Page.Career"];
+        }
+
+        if (path.StartsWith("/candidate/kompas", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/start/kompas", StringComparison.OrdinalIgnoreCase))
+        {
+            return culture["Assistant.Page.Kompas"];
         }
 
         return null;
@@ -256,10 +297,43 @@ public static class CandidateChatContextBuilder
     {
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed))
         {
-            return uri;
+            return NormalizePagePath(uri);
         }
 
         return parsed.AbsolutePath.TrimEnd('/').ToLowerInvariant();
+    }
+
+    private static string NormalizePagePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = path.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absolute))
+        {
+            return absolute.AbsolutePath.TrimEnd('/').ToLowerInvariant();
+        }
+
+        var q = trimmed.IndexOf('?', StringComparison.Ordinal);
+        if (q >= 0)
+        {
+            trimmed = trimmed[..q];
+        }
+
+        var hash = trimmed.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0)
+        {
+            trimmed = trimmed[..hash];
+        }
+
+        if (!trimmed.StartsWith('/'))
+        {
+            trimmed = "/" + trimmed;
+        }
+
+        return trimmed.TrimEnd('/').ToLowerInvariant();
     }
 
     private static string Format(CultureState culture, string key, string arg)

@@ -148,54 +148,75 @@ public class MobileSaasUxTests
     [Fact]
     public void Candidate_applications_use_cards_with_current_status_and_bar_stepper()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Applications.razor"));
-        Assert.Contains("panel-page apps-page kb-apps", razor, StringComparison.Ordinal);
-        Assert.Contains("application-counters", razor);
-        Assert.Contains("application-card-list", razor);
-        Assert.Contains("application-card", razor);
-        Assert.Contains("application-card__title", razor);
-        Assert.Contains("application-card__img", razor);
-        Assert.Contains("application-card__progress", razor);
-        Assert.Contains("kb-timeline", razor);
-        Assert.Contains("application-card__company", razor);
-        Assert.Contains("application-card--hired", razor);
-        Assert.Contains("Kb.Apps.FilterRunning", razor);
-        Assert.Contains("Apps.WithdrawConfirm", razor);
-        Assert.Contains("LobsyFriendlyDialog", razor);
-        Assert.Contains("aria-haspopup=\"menu\"", razor);
-        Assert.DoesNotContain("apps-tabs", razor);
-        Assert.DoesNotContain("application-stepper", razor);
-        Assert.DoesNotContain("class=\"table-list\"", razor);
-        Assert.DoesNotContain("<table", razor);
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/CandidateApplicationsSsr.razor"));
+        var shells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
+        Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
+        Assert.Contains("applications-page-ssr", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-page-wrap", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-vsteps vsteps", shells, StringComparison.Ordinal);
+        Assert.Contains("ApplicationsSsrQuery.TabBerichten", shells, StringComparison.Ordinal);
+        var berichtenShells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/SollicitatiesBerichtenSsr.cs"));
+        Assert.Contains("sollicitaties-berichten-tab", berichtenShells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-segment", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-card--app", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-card", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-ndm-tl tl", shells, StringComparison.Ordinal);
+        Assert.Contains("Bk.Apps.FilterVacancy", shells, StringComparison.Ordinal);
+        Assert.Contains("Bk.Apps.FilterInitiative", shells, StringComparison.Ordinal);
+        Assert.Contains("Apps.AddApplication", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("LobsyFriendlyDialog", razor, StringComparison.Ordinal);
+        Assert.DoesNotContain("aria-haspopup=\"menu\"", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("<table", shells, StringComparison.Ordinal);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/applications.css"));
-        Assert.Contains(".application-counters", css);
-        Assert.Contains(".application-card__img", css);
-        Assert.Contains(".application-card__progress", css);
-        Assert.Contains(".application-card--hired", css);
-        // Mobile truncation: title up to 2 lines; status chip never ellipsized; company 1 line.
-        Assert.Contains("line-clamp: 2", css);
-        Assert.Contains("-webkit-line-clamp: 2", css);
-        Assert.Contains("flex-shrink: 0", css);
-        Assert.Contains("flex-wrap: wrap", css);
-        Assert.Contains(".application-card__status", css);
-        Assert.Contains("@media (max-width: 430px)", css);
-        Assert.Contains(".application-card__company", css);
-        Assert.Contains(
-            ".application-card__company {\n    margin: 0;\n    font-size: var(--text-sm);\n    color: var(--muted);\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;",
-            css);
-        Assert.DoesNotContain(
-            ".application-card__title {\n    margin: 0;\n    font-size: var(--text-md);\n    font-weight: 600;\n    color: var(--text);\n    line-height: 1.25;\n    white-space: nowrap;",
-            css);
-        Assert.DoesNotContain(
-            ".application-card__pill {\n    display: inline-flex;\n    align-items: center;\n    gap: 5px;\n    block-size: 24px;\n    padding-inline: 8px;\n    border-radius: var(--radius-pill);\n    font-size: var(--text-xs);\n    font-weight: 600;\n    white-space: nowrap;\n    flex: 0 1 auto;\n    min-inline-size: 0;\n    max-inline-size: 100%;\n    overflow: hidden;\n    text-overflow: ellipsis;",
-            css);
-        Assert.Contains("aria-haspopup", razor);
-        Assert.DoesNotContain("application-stepper", css);
-        Assert.DoesNotContain("application-card__actions", css);
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/sollicitaties-page.css"));
+        Assert.Contains(".sollic-berichten.thr", css, StringComparison.Ordinal);
+        Assert.Contains(".sollicitaties-segment", css);
+        Assert.Contains(".sollic-card", css);
+        Assert.Contains(".sollicitaties-detail", css);
+        Assert.Contains("grid-template-columns: minmax(0, 1fr) !important", css, StringComparison.Ordinal);
+        Assert.Contains(".sollicitaties-page .kb-apps__layout", css, StringComparison.Ordinal);
+        Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
+        Assert.Contains("grid-template-columns: minmax(0, 1fr) 340px !important", css, StringComparison.Ordinal);
+        Assert.Contains(".sollicitaties-detail", css, StringComparison.Ordinal);
+        Assert.Contains(".sollicitaties-page--detail .sollicitaties-detail", css, StringComparison.Ordinal);
+        Assert.Contains("display: block !important", css, StringComparison.Ordinal);
+        Assert.Contains("font-size: 2rem", css, StringComparison.Ordinal);
+        Assert.Contains(".sollicitaties-toolbar__filters {\n    display: flex;\n    flex-wrap: nowrap;", css, StringComparison.Ordinal);
+
+        var applicationsRazor = File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/Components/Pages/Candidate/CandidateApplicationsSsr.razor"));
+        Assert.Contains("scroll-padding-inline: var(--sollic-inline-pad, 16px)", css, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
+        Assert.Contains("sollic-ndm-tl", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-client-nav.js?v=20261024-unread-badge1", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-berichten.js?v=20261025-mark-read-bff2", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains("/api/sollicitaties-client/berichten/mark-read", File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/wwwroot/js/sollicitaties-berichten.js")), StringComparison.Ordinal);
+        Assert.Contains("MapSollicitatiesClientEndpoints", File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/Program.cs")), StringComparison.Ordinal);
+        Assert.Contains("data-sollic-unread-threads", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("sollicitaties-actions.js", shells, StringComparison.Ordinal);
+        Assert.Contains("data-sollic-app-id", shells, StringComparison.Ordinal);
+        Assert.Contains("data-sollic-berichten-back", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/SollicitatiesBerichtenSsr.cs")), StringComparison.Ordinal);
+        Assert.Contains("data-sollic-tab-panel", shells, StringComparison.Ordinal);
+        Assert.Contains("data-sollic-filters", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-rail.js", applicationsRazor, StringComparison.Ordinal);
+        Assert.Contains(".sollic-berichten.ti.sollic-berichten-ti--mob", css, StringComparison.Ordinal);
+        Assert.Contains(".sollic-berichten-ti-preview", css, StringComparison.Ordinal);
+        var berichtenPresentation = File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/Applications/SollicitatiesBerichtenPresentation.cs"));
+        Assert.Contains("RowHasMessageThread", berichtenPresentation, StringComparison.Ordinal);
+        var ndmCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/na-de-match.css"));
+        Assert.Contains(".ndm .thr .tlist{display:none}", ndmCss, StringComparison.Ordinal);
+        Assert.Contains("[data-testid=\"sollicitaties-berichten-tab\"] .sollic-berichten.tlist", css, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
-        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/applications.css");
+        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/sollicitaties-page.css");
 
         var appCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.DoesNotContain(".apps-tabs.admin-sublinks", appCss);
@@ -480,7 +501,7 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("Feedback.CaptureFailed", feedback);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 45;\n    inset-inline-end: 24px;", css);
+        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 52;\n    inset-inline-end: 24px;", css);
         Assert.Contains(".lobsy-coach-dock__btn {\n    flex: none;\n    width: 56px;\n    height: 56px;", css);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
         Assert.Contains("pointer-events: none;", css);

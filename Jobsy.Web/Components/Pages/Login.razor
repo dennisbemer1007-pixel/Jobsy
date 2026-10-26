@@ -10,8 +10,11 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
+@using Jobsy.Web.Components.Media
 @using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Onboarding
 @using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.DataProtection
@@ -37,15 +40,21 @@
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-<section class="au-stage au-stage--illustrated"
-         style="@($"--au-art-left:url('{LoginLeft}');--au-art-right:url('{LoginRight}')")"
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
+</HeadContent>
+
+<section class="au-stage au-stage--illustrated au-stage--kreeft-strip au-stage--reiskaart"
          data-au-login
          @attributes="_stageAttrs">
-    <div class="au-art-band" aria-hidden="true"></div>
-    <div class="au-art au-art--left" aria-hidden="true"></div>
-    <div class="au-art au-art--right" aria-hidden="true"></div>
+    <KreeftHeaderStrip StripKey="inloggen"
+                       DeskUrl="@KreeftHeaderStripAssets.InloggenDesk"
+                       MobUrl="@KreeftHeaderStripAssets.InloggenMob"
+                       CssClass="au-kreeft-header-strip kreeft-header-strip" />
 
     <div class="au-col">
+        <div class="au-reiskaart-grid">
         <div class="au-card au-card--illustrated @(isPause ? "au-pause" : null)">
 
             @if (isPause)
@@ -254,6 +263,8 @@
                 </div>
             }
         </div>
+        @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 2))
+        </div>
 
         <div class="au-below">
             <p>
@@ -263,7 +274,7 @@
     </div>
 </section>
 
-<script src="js/features/auth.js?v=20261004-13" nonce="@nonce" defer></script>
+<script src="@($"/{WwwrootAssetCatalog.Url("js/features/auth.js")}")" nonce="@nonce" defer></script>
 
 @code {
     private string _returnUrl = "/home";

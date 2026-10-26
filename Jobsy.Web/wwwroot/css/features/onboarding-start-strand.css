@@ -1,0 +1,62 @@
+/* Full-bleed start strip directly under app header (mockup 03). */
+
+.ob-wizard__welcome:has(.ob-rustig--start-strand) {
+  inline-size: 100%;
+  max-inline-size: min(75rem, 100%);
+  margin-inline: auto;
+  padding: 0;
+}
+
+.ob-rustig--start-strand {
+  --ob-rustig-hero-h: var(--cand-header-strip-h-mobile, 105px);
+}
+
+@media (min-width: 640px) {
+  .ob-rustig--start-strand {
+    --ob-rustig-hero-h: var(--cand-header-strip-h-desktop, 225px);
+  }
+}
+
+.ob-rustig--start-strand .ob-rustig__hero-band.ob-start-strand-hero,
+.ob-rustig--start-strand .ob-start-strand-hero {
+  inline-size: 100vw;
+  max-inline-size: 100vw;
+  margin-inline: var(--kreeft-strip-bleed, calc(50% - 50vw));
+  margin-block-start: 0;
+  block-size: var(--ob-rustig-hero-h);
+  max-block-size: var(--ob-rustig-hero-h);
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.ob-rustig--start-strand .ob-rustig__hero-img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: 32% 68%;
+}
+
+.ob-rustig--start-strand .ob-rustig__hero-img--desk {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .ob-rustig--start-strand .ob-rustig__hero-img--mob {
+    display: none;
+  }
+
+  .ob-rustig--start-strand .ob-rustig__hero-img--desk {
+    display: block;
+  }
+}
+
+/* Mockup 03 — primary CTA pill (not default ob-rustig rounded rect). */
+.ob-rustig--start-strand .ob-kreeft-before-actions .ob-rustig__btn--primary {
+  border-radius: 999px;
+  padding-inline: 1.35rem;
+  min-inline-size: 10.5rem;
+  justify-content: center;
+  font-weight: 700;
+  font-family: var(--font-body, var(--font, "Nunito Sans", system-ui, sans-serif));
+}

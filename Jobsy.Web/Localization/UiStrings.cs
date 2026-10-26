@@ -426,7 +426,7 @@ public static class UiStrings
             ["Vacancy.EnterDob"] = "Vul geboortedatum in",
             ["Vacancy.LikeRemoved"] = "Like verwijderd.",
             ["Assistant.Title"] = "Lobsy-assistent",
-            ["Assistant.SubtitleWarm"] = "Vraag het Lobsy",
+            ["Assistant.SubtitleWarm"] = "Lobsy-hulp",
             ["Assistant.SubtitleBusiness"] = "Antwoord op je vragen over Lobsy",
             ["Assistant.RateLimited"] = "Je stelt veel vragen achter elkaar. Wacht even en probeer het dan opnieuw.",
             ["Assistant.Lead"] = "Gerichte vragen over vacatures, sollicitaties of je account",
@@ -443,7 +443,7 @@ public static class UiStrings
             ["Assistant.Greeting"] = "Hoi! Ik ben Lobsy. Stel me een gerichte vraag binnen jouw rol over vacatures, sollicitaties of je account.",
             ["Assistant.GreetingNamed"] = "Hoi {0}.",
             ["Assistant.GreetingNeutral"] = "Hoi.",
-            ["Assistant.Context.OnPage"] = "Je bekijkt nu {0}, ik denk met je mee",
+            ["Assistant.Context.OnPage"] = "Je bekijkt nu {0}. Ik denk met je mee.",
             ["Assistant.ContextGreeting.Interview"] = "{0} Je hebt {1} een gesprek bij {2}, mooi zeg. Zal ik je helpen het voor te bereiden?",
             ["Assistant.ContextGreeting.Vacancy"] = "{0} Je bekijkt {1}. Waar kan ik je mee helpen?",
             ["Assistant.ContextGreeting.FallbackTail"] = "Waar kan ik je mee helpen?",
@@ -452,6 +452,14 @@ public static class UiStrings
             ["Assistant.Page.JobMap"] = "de banenkaart",
             ["Assistant.Page.Passport"] = "je paspoort",
             ["Assistant.Page.MyVacancies"] = "je vacatures",
+            ["Assistant.Page.Career"] = "Carrière",
+            ["Assistant.Page.Kompas"] = "Kompas",
+            ["Assistant.Chip.JobMapHelp"] = "Hoe werkt de banenkaart?",
+            ["Assistant.Chip.JobMapHelpMessage"] = "Hoe gebruik ik de banenkaart het beste?",
+            ["Assistant.Chip.CareerRoute"] = "Help me een route kiezen",
+            ["Assistant.Chip.CareerRouteMessage"] = "Hoe kies ik een route in Carrière?",
+            ["Assistant.Chip.KompasExplain"] = "Leg mijn Kompas uit",
+            ["Assistant.Chip.KompasExplainMessage"] = "Wat zegt mijn Kompas over mij?",
             ["Assistant.Chip.PrepareInterview"] = "Ja, help me voorbereiden",
             ["Assistant.Chip.PrepareInterviewMessage"] = "Help me me voor te bereiden op mijn gesprek",
             ["Assistant.Chip.SeenMeaning"] = "Wat betekent 'Bekeken'?",
@@ -542,7 +550,7 @@ public static class UiStrings
             ["Pwa.Card.AfterApply.Lead"] = "Deel vacatures vanuit je browser rechtstreeks naar Lobsy — handig als je vaker solliciteert.",
             ["Pwa.Hint.ShareVacancies"] = "Tip: deel vacatures vanuit je browser direct naar Lobsy",
             ["Circuit.ErrorTitle"] = "Even iets misgegaan",
-            ["Circuit.ErrorLead"] = "De pagina reageerde niet goed. Probeer het opnieuw — je voortgang blijft meestal bewaard.",
+            ["Circuit.ErrorLead"] = "De pagina reageerde niet goed. Probeer het opnieuw. Je voortgang blijft meestal bewaard.",
             ["Circuit.ErrorRetry"] = "Opnieuw proberen",
             ["Panel.ErrorInline"] = "Dit onderdeel laadt even niet",
             ["Panel.ErrorRetry"] = "Opnieuw",
@@ -1197,7 +1205,7 @@ public static class UiStrings
             ["Assistant.Greeting"] = "Hi! I'm Lobsy. Ask me a targeted question within your role about vacancies, applications, or your account.",
             ["Assistant.GreetingNamed"] = "Hi {0}.",
             ["Assistant.GreetingNeutral"] = "Hi.",
-            ["Assistant.Context.OnPage"] = "You're viewing {0} — I'm here to help",
+            ["Assistant.Context.OnPage"] = "You're viewing {0}. I'm here to help.",
             ["Assistant.ContextGreeting.Interview"] = "{0} You have an interview at {2} on {1}. Want help preparing?",
             ["Assistant.ContextGreeting.Vacancy"] = "{0} You're viewing {1}. What can I help with?",
             ["Assistant.ContextGreeting.FallbackTail"] = "What can I help you with?",
@@ -1206,6 +1214,14 @@ public static class UiStrings
             ["Assistant.Page.JobMap"] = "the job map",
             ["Assistant.Page.Passport"] = "your passport",
             ["Assistant.Page.MyVacancies"] = "your vacancies",
+            ["Assistant.Page.Career"] = "Career",
+            ["Assistant.Page.Kompas"] = "Compass",
+            ["Assistant.Chip.JobMapHelp"] = "How does the job map work?",
+            ["Assistant.Chip.JobMapHelpMessage"] = "How do I get the most from the job map?",
+            ["Assistant.Chip.CareerRoute"] = "Help me pick a route",
+            ["Assistant.Chip.CareerRouteMessage"] = "How do I choose a route in Career?",
+            ["Assistant.Chip.KompasExplain"] = "Explain my Compass",
+            ["Assistant.Chip.KompasExplainMessage"] = "What does my Compass say about me?",
             ["Assistant.Chip.PrepareInterview"] = "Yes, help me prepare",
             ["Assistant.Chip.PrepareInterviewMessage"] = "Help me prepare for my interview",
             ["Assistant.Chip.SeenMeaning"] = "What does 'Viewed' mean?",
@@ -3808,6 +3824,7 @@ public static class UiStrings
         UiStringsResearch.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyCandidate.MergeAll(nl, en, pl, ro, ar);
         UiStringsOnboardingV2.MergeAll(nl, en, pl, ro, ar);
+        UiStringsKreeftReiskaart.MergeAll(nl, en, pl, ro, ar);
         UiStringsGratisDna.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateInsights.MergeAll(nl, en, pl, ro, ar);
         UiStringsKandidatenkaart.MergeAll(nl, en, pl, ro, ar);
@@ -3830,6 +3847,7 @@ public static class UiStrings
         UiStringsWerkgeverAanmelding.MergeAll(nl, en, pl, ro, ar);
         UiStringsKandidaatBanen.MergeAll(nl, en, pl, ro, ar);
         UiStringsExternalVacancy.MergeAll(nl, en, pl, ro, ar);
+        UiStringsSollicitaties.MergeAll(nl, en, pl, ro, ar);
         UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
         UiStringsSensitiveExperience.MergeAll(nl, en, pl, ro, ar);
         UiStringsTrainingPartners.MergeAll(nl, en, pl, ro, ar);

@@ -4,6 +4,21 @@ namespace Jobsy.Core.Security;
 
 public static class MfaPolicy
 {
+    public const string JobsyLocalSeedEmailSuffix = "@jobsy.local";
+
+    /// <summary>
+    /// Demo / seed accounts created by <c>DemoUsersSeeder</c> and related fixtures.
+    /// </summary>
+    public static bool IsJobsyLocalSeedEmail(string? email)
+        => !string.IsNullOrWhiteSpace(email)
+           && email.Trim().EndsWith(JobsyLocalSeedEmailSuffix, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Acceptatie-only bypass when <see cref="Options.AuthOptions.SkipMfaForSeedAccounts"/> is enabled.
+    /// </summary>
+    public static bool ShouldSkipMandatoryMfaForSeedAccount(string? email, bool skipMfaForSeedAccounts)
+        => skipMfaForSeedAccounts && IsJobsyLocalSeedEmail(email);
+
     /// <summary>
     /// Local-password MFA is required for privileged roles. External IdP logins skip Lobsy 2FA.
     /// Ambassadeur is intentionally out (Dennis D5).

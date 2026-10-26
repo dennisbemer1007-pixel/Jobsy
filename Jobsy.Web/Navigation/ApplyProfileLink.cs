@@ -29,7 +29,9 @@ public static class ApplyProfileLink
             Experience or Education or References =>
                 PassportRedirects.BuildPassportUrl(PassportTabs.Proof, returnPath)
                 + "&item=" + Uri.EscapeDataString(kind),
-            "license" or "personal" or "name" or "birthdate" or "location" or "work-status" =>
+            "work-status" =>
+                PassportRedirects.BuildPassportUrl(PassportTabs.Data, returnPath) + "&section=work-status",
+            "license" or "personal" or "name" or "birthdate" or "location" =>
                 PassportRedirects.BuildPassportUrl(PassportTabs.Data, returnPath) + "&section=personal",
             "hours" or "availability" or "availability-start" or "open-for-work" =>
                 PassportRedirects.BuildPassportUrl(PassportTabs.Data, returnPath) + "&section=availability",
@@ -41,7 +43,8 @@ public static class ApplyProfileLink
         => field switch
         {
             ApplyBasicsField.Name or ApplyBasicsField.BirthDate => "personal",
-            ApplyBasicsField.Location or ApplyBasicsField.WorkStatus => "location",
+            ApplyBasicsField.Location => "location",
+            ApplyBasicsField.WorkStatus => "work-status",
             ApplyBasicsField.Hours or ApplyBasicsField.Availability
                 or ApplyBasicsField.AvailabilityStart or ApplyBasicsField.OpenForWork => "availability",
             _ => "personal"

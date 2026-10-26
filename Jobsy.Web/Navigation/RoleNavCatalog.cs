@@ -35,7 +35,7 @@ public static class RoleNavCatalog
     [
         new("Nav.Search", "/banenkaart", NavIcons.Search, ["/"]),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
-        new("Nav.Applications", "/candidate/applications", NavIcons.Applications),
+        new("Nav.Applications", "/candidate/applications", NavIcons.Applications, ["/candidate/applications/"]),
         new("Nav.CareerPath", "/carriere", NavIcons.Career),
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"])
     ];
@@ -44,33 +44,36 @@ public static class RoleNavCatalog
     /// Zoeken / banenkaart. Match stays a map button (not a nav item) but marks Zoeken active.
     /// </summary>
     public static readonly NavItem SearchItem =
-        new("Nav.Search", "/banenkaart", NavIcons.Search, ["/", "/candidate/match"]);
+        new("Nav.Search", "/banenkaart", NavIcons.Search, ["/", "/candidate/match", "/banenkaart/"]);
 
     public static readonly NavItem SavedItem =
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]);
 
     public static readonly NavItem ApplicationsItem =
-        new("Nav.Applications", "/candidate/applications", NavIcons.Applications);
+        new("Nav.Applications", "/candidate/applications", NavIcons.Applications, ["/candidate/applications/"]);
 
     public static readonly NavItem CareerItem =
-        new("Nav.CareerPath", "/carriere", NavIcons.Career, ["/carriere/leren"]);
+        new("Nav.CareerPath", "/carriere", NavIcons.Career, ["/carriere/"]);
 
     public static readonly NavItem HoursItem =
-        new("Nav.Hours", "/candidate/uren", NavIcons.Clock, ShortTitleKey: "Nav.Hours.Short");
+        new("Nav.Hours", "/candidate/uren", NavIcons.Clock, ["/candidate/uren/"], ShortTitleKey: "Nav.Hours.Short");
 
     public static readonly NavItem ProfileItem =
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"]);
 
     public static readonly NavItem PassportItem =
         new("Nav.Passport", "/candidate/paspoort", NavIcons.Profile,
-            ["/candidate/profile", "/profiel", "/home", "/candidate/adviseur-werk"],
+            ["/candidate/paspoort/", "/candidate/profile", "/profiel", "/home", "/candidate/adviseur-werk"],
             ShortTitleKey: "Nav.Passport.Short");
 
     /// <summary>De ontdekkingsreis — filled in file 08 (§N Discovery slot).</summary>
     public static readonly NavItem DiscoveryItem =
         new("Nav.Discovery", "/candidate/ontdekkingsreis", NavIcons.Compass,
             [
+                "/candidate/ontdekkingsreis/",
                 "/candidate/start",
+                "/candidate/kompas",
+                "/candidate/start/kompas",
                 "/candidate/ondernemerscheck",
                 "/candidate/wat-drijft-jou",
             ],
@@ -79,7 +82,7 @@ public static class RoleNavCatalog
     /// <summary>Sollicitaties with Bewaard URLs as active aliases (passport-ON order).</summary>
     public static readonly NavItem ApplicationsWithSavedAliases =
         new("Nav.Applications", "/candidate/applications", NavIcons.Applications,
-            ["/candidate/liked", "/candidate/shared"]);
+            ["/candidate/liked", "/candidate/shared", "/candidate/applications/"]);
     public static readonly NavItem MyApplicationsReadOnly =
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
 

@@ -1,9 +1,10 @@
-@page "/werkgever/sollicitaties/{ApplicationId:guid}/after-match"
+@page "/werkgever/sollicitaties/{ApplicationId:guid}/after-match/blazor"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Features
+@using Jobsy.Web.Applications
 @using Jobsy.Web.Components.AfterMatch
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
@@ -114,34 +115,12 @@
     private string ProposeHref => $"{BaseHref}?panel=propose";
     private string MessagesHref => $"{BaseHref}?panel=messages";
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
-        _loading = true;
-        _error = null;
-        _panel = (Panel ?? "").Trim().ToLowerInvariant();
-        if (_panel is "slots")
-        {
-            _panel = "propose";
-        }
-
-        try
-        {
-            _thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId);
-            ApplyHero(_thread);
-            if (_thread?.InterviewStatus == InterviewStatus.RescheduleRequested && string.IsNullOrEmpty(_panel))
-            {
-                _panel = "reschedule";
-            }
-        }
-        catch (Exception ex)
-        {
-            var uf = UserFacing.From(ex);
-            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
-        }
-        finally
-        {
-            _loading = false;
-        }
+        var uri = new Uri(Navigation.Uri);
+        var path = uri.AbsolutePath.Replace("/after-match/blazor", "/after-match", StringComparison.OrdinalIgnoreCase);
+        Navigation.NavigateTo(path + uri.Query, replace: true);
+        return Task.CompletedTask;
     }
 
     private void ApplyHero(AfterMatchThreadDto? thread)
@@ -189,8 +168,14 @@
         _panel == "propose"
             ? Culture["AfterMatch.Employer.Propose.PickHint"]
             : _thread?.InterviewStatus == InterviewStatus.Proposing
-                ? "Sanne kiest zelf uit je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen."
+                ? FormatProposingWaitNote(_thread)
                 : null;
+
+    private string? FormatProposingWaitNote(AfterMatchThreadDto thread)
+    {
+        var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
+        return string.Format(Culture["AfterMatch.Employer.Propose.CandidateNoteFmt"], first, first);
+    }
 
     private static int TimelineStep(AfterMatchThreadDto t) => t.InterviewStatus switch
     {
@@ -249,6 +234,11 @@
 
     private async Task RecordOutcomeAsync((AfterMatchOutcomeKind Outcome, string Reason) args)
     {
+        if (_busy)
+        {
+            return;
+        }
+
         _busy = true;
         try
         {

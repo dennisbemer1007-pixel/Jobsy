@@ -220,7 +220,8 @@ public class SystemAdminAccountTests
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings { RequireTwoFactor = requireTwoFactor },
             notifier,
-            NullLogger<AuthController>.Instance)
+            NullLogger<AuthController>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AuthOptions()))
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };

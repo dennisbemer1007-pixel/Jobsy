@@ -20,13 +20,7 @@
 
 <PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/candidate/paspoort"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/candidate-hero-compact-preview.css?v=20261018-01" />
+    <script src="@WwwrootAssetCatalog.Url("js/passport-availability-matrix.js")" defer></script>
 </HeadContent>
 
 @if (_loading)
@@ -63,6 +57,13 @@ else if (_bodyHtml is not null)
             query.TryGetValue("error", out var errorValues);
         query.TryGetValue("saved", out var savedValues);
         query.TryGetValue("from", out var fromValues);
+        query.TryGetValue("section", out var sectionValues);
+        query.TryGetValue("item", out var itemValues);
+        query.TryGetValue("returnUrl", out var returnUrlValues);
+        query.TryGetValue("check", out var checkValues);
+        var returnUrl = returnUrlValues.FirstOrDefault();
+        var checkTitle = checkValues.FirstOrDefault();
+        var proofItem = itemValues.FirstOrDefault();
         var error = errorValues.FirstOrDefault();
         var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
         var fromDiscovery = string.Equals(fromValues.FirstOrDefault(), "reis", StringComparison.OrdinalIgnoreCase);
@@ -74,7 +75,8 @@ else if (_bodyHtml is not null)
                 tabValues.FirstOrDefault(),
                 string.IsNullOrWhiteSpace(error) ? null : error,
                 saved,
-                fromDiscovery);
+                fromDiscovery,
+                string.IsNullOrWhiteSpace(checkTitle) ? null : checkTitle);
 
             if (data is null)
             {
@@ -83,7 +85,13 @@ else if (_bodyHtml is not null)
             }
 
             var tokens = Antiforgery.GetAndStoreTokens(http);
-            _bodyHtml = PassportSsrShells.BuildBody(Culture, data, tokens.RequestToken ?? "");
+            _bodyHtml = PassportSsrShells.BuildBody(
+                Culture,
+                data,
+                tokens.RequestToken ?? "",
+                sectionValues.FirstOrDefault(),
+                returnUrl,
+                proofItem);
         }
         catch
         {

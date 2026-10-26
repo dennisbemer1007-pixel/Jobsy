@@ -11,11 +11,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WWW = ROOT / "Jobsy.Web" / "wwwroot"
 OUT = ROOT / "Jobsy.Tests" / "asset-versions.json"
+WEB_MANIFEST = ROOT / "Jobsy.Web" / "Hosting" / "wwwroot-asset-versions.json"
 
 HTML_REF = re.compile(
     r"""(?i)(?:src|href)\s*=\s*["'](?!https?:|//|data:)([^"']+\?v=[^"']+)["']"""
 )
 JS_REF = re.compile(r"""["'](/(?:js|css|service-worker)[^"']+\?v=[^"']+)["']""")
+CATALOG_REF = re.compile(
+    r"""WwwrootAssetCatalog\.Url(?:LeadingSlash)?\(\s*["']([^"']+)["']\s*\)"""
+)
 JOB_MAP_MIN = "js/jobMap.min.js"
 MAPS_BOOT_JS = "js/banenkaart-maps-boot.js"
 JOB_MAP_REF = re.compile(r"(jobMap\.min\.js\?v=)([^\"'\s]+)")
@@ -29,6 +33,7 @@ def collect_sources() -> list[Path]:
     files.extend(
         [
             ROOT / "Jobsy.Web" / "Banenkaart" / "BanenkaartSsrShells.cs",
+            ROOT / "Jobsy.Web" / "Applications" / "ApplicationsSsrShells.cs",
             WWW / "js" / "app-core.js",
             WWW / "js" / "app-public.js",
             WWW / "js" / "lobsyPush.js",
@@ -70,6 +75,23 @@ def main() -> int:
                 return 1
             found[path_part] = version
 
+        for m in CATALOG_REF.finditer(text):
+            path_part = m.group(1).lstrip("~/")
+            if path_part.startswith("_framework/"):
+                continue
+            physical = WWW / path_part
+            if not physical.is_file():
+                continue
+            version = found.get(path_part) or existing.get(path_part, {}).get("v")
+            if not version:
+                print(f"catalog ref missing version: {path_part} in {src}", file=sys.stderr)
+                return 1
+            prev = found.get(path_part)
+            if prev is not None and prev != version:
+                print(f"conflict: {path_part} has ?v={prev} and ?v={version}", file=sys.stderr)
+                return 1
+            found[path_part] = version
+
     # Keep previously tracked keys (e.g. loader-only) and refresh hashes.
     keys = sorted(set(existing) | set(found))
     manifest: dict[str, dict[str, str]] = {}
@@ -83,8 +105,12 @@ def main() -> int:
         manifest[path] = {"sha256": digest, "v": version}
 
     tie_maps_boot_version_to_jobmap(manifest)
-    OUT.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    payload = json.dumps(manifest, indent=2) + "\n"
+    OUT.write_text(payload, encoding="utf-8")
+    WEB_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+    WEB_MANIFEST.write_text(payload, encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)} ({len(manifest)} entries)")
+    print(f"wrote {WEB_MANIFEST.relative_to(ROOT)}")
     sync_job_map_min_refs(manifest)
     sync_banenkaart_maps_boot_app_razor(manifest)
     return 0

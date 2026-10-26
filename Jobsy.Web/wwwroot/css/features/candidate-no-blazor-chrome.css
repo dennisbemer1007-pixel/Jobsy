@@ -10,6 +10,10 @@
 }
 
 .bottom-nav[data-testid="candidate-bottom-nav-ssr"] {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     box-sizing: border-box;
     z-index: 50;
     width: 100%;
@@ -89,18 +93,40 @@
 }
 
 @media (min-width: 1024px) {
+    /* Mockup kreeft v4: primary nav in app-header; bottom bar mobile only. */
     .app-shell--candidate .bottom-nav[data-testid="candidate-bottom-nav-ssr"] {
-        left: 0;
-        right: 0;
-        transform: none;
-        width: 100%;
-        max-width: 100%;
-        border-radius: 0;
-        box-shadow: none;
+        display: none !important;
     }
 
     .app-shell--candidate.has-bottom-nav .app-main {
-        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: 0;
+    }
+
+    .app-shell--candidate.has-bottom-nav .app-footer,
+    .app-shell--candidate:has(.bottom-nav) .app-footer {
+        padding-bottom: 0;
+    }
+
+    .app-header:has(.candidate-header-nav) {
+        display: grid;
+        grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+        align-items: center;
+        column-gap: 0.75rem;
+    }
+
+    .app-header:has(.candidate-header-nav) .candidate-header-nav-slot {
+        grid-column: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .app-header:has(.candidate-header-nav) .candidate-header-nav {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 0.15rem;
     }
 }
 

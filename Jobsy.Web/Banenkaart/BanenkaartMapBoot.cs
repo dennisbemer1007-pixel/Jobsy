@@ -29,7 +29,9 @@ internal static class BanenkaartMapBoot
         double? originLng,
         bool zoomToPinsOutsideTravel,
         uint highlightSeed,
-        bool includeRadiusCap = false)
+        bool includeRadiusCap = false,
+        IReadOnlyDictionary<string, int>? fitByVacancyId = null,
+        bool showFitFilters = false)
     {
         var payload = new Dictionary<string, object?>
         {
@@ -55,8 +57,9 @@ internal static class BanenkaartMapBoot
                 ["catalogMode"] = true,
                 ["highlightSeed"] = highlightSeed,
                 ["travel"] = BuildTravelBoot(query, includeRadiusCap),
-                ["filters"] = BuildFilterState(query),
+                ["filters"] = BuildFilterState(query, showFitFilters),
                 ["labels"] = BuildLabels(culture, isAuthenticated, query),
+                ["fitByVacancyId"] = fitByVacancyId is { Count: > 0 } ? fitByVacancyId : null,
                 ["illustratedTravelSpot"] = CandidateIllustratedImages.PopupTravelAccent,
                 ["illustratedVacancySpots"] = CandidateIllustratedImages.BanenkaartIllustratedSpots
                     .ToDictionary(static kv => kv.Key, static kv => kv.Value, StringComparer.OrdinalIgnoreCase),
@@ -103,32 +106,47 @@ internal static class BanenkaartMapBoot
         return travel;
     }
 
-    internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query) => new()
+    internal static Dictionary<string, object?> BuildFilterState(BanenkaartSsrQuery.State query, bool showFitFilters = false)
     {
-        ["q"] = query.SearchQuery,
-        ["workTypes"] = query.WorkTypes,
-        ["maxMinutes"] = query.MaxTravelMinutes,
-        ["transport"] = query.Transport,
-        ["radiusKm"] = query.RadiusKm,
-        ["minHours"] = query.MinHoursPerWeek,
-        ["maxHours"] = query.MaxHoursPerWeek,
-        ["minWageCents"] = query.MinHourlyWageCents,
-        ["maxWageCents"] = query.MaxHourlyWageCents,
-        ["age"] = query.AgeYears,
-        ["minMatchPercent"] = query.MinMatchPercent,
-        ["categoryIds"] = query.CategoryIds.Select(id => id.ToString("D")).ToList(),
-        ["companyIds"] = query.CompanyIds.Select(id => id.ToString("D")).ToList(),
-        ["originLat"] = query.OriginLat,
-        ["originLng"] = query.OriginLng,
-        ["originLabel"] = query.OriginLabel,
-    };
+        var originLat = query.OriginLat;
+        var originLng = query.OriginLng;
+        var originLabel = query.OriginLabel;
+        if (query.UrlOriginAbsentByQuery)
+        {
+            originLat = null;
+            originLng = null;
+            originLabel = null;
+        }
+
+        return new Dictionary<string, object?>
+        {
+            ["q"] = query.SearchQuery,
+            ["workTypes"] = query.WorkTypes,
+            ["maxMinutes"] = query.MaxTravelMinutes,
+            ["transport"] = query.Transport,
+            ["radiusKm"] = query.RadiusKm,
+            ["minHours"] = query.MinHoursPerWeek,
+            ["maxHours"] = query.MaxHoursPerWeek,
+            ["minWageCents"] = query.MinHourlyWageCents,
+            ["maxWageCents"] = query.MaxHourlyWageCents,
+            ["age"] = query.AgeYears,
+            ["minMatchPercent"] = query.MinMatchPercent,
+            ["categoryIds"] = query.CategoryIds.Select(id => id.ToString("D")).ToList(),
+            ["companyIds"] = query.CompanyIds.Select(id => id.ToString("D")).ToList(),
+            ["originLat"] = originLat,
+            ["originLng"] = originLng,
+            ["originLabel"] = originLabel,
+            ["sort"] = query.SortMode,
+            ["showFitFilters"] = showFitFilters,
+        };
+    }
 
     internal static string BuildPinsApiUrl(BanenkaartSsrQuery.State query, bool isCandidate)
     {
         var qs = new List<string>
         {
             $"transport={Uri.EscapeDataString(query.Transport)}",
-            $"maxMinutes={query.MaxTravelMinutes}"
+            $"maxMinutes={BanenkaartSsrQuery.DiscoverMaxMinutes(query.MaxTravelMinutes)}"
         };
 
         if (query.OriginLat is double lat && query.OriginLng is double lng)
@@ -250,6 +268,7 @@ internal static class BanenkaartMapBoot
         ["canSave"] = isAuthenticated,
         ["wageTooltipTitle"] = culture["Employer.WageByAge"],
         ["wageTooltipTitleEn"] = "Hourly wage (gross)",
-        ["candidateAgeYears"] = query.AgeYears ?? 21
+        ["candidateAgeYears"] = query.AgeYears ?? 21,
+        ["wageFallbackAdultHourly"] = 14.06m
     };
 }

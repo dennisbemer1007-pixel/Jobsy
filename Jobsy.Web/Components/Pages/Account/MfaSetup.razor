@@ -144,7 +144,7 @@
     </div>
 </section>
 
-<script src="js/features/account-mfa.js?v=20260930-auth04" nonce="@nonce" defer></script>
+<script src="@($"/{WwwrootAssetCatalog.Url("js/features/account-mfa.js")}")" nonce="@nonce" defer></script>
 
 @code {
     private string _antiforgeryFieldName = string.Empty;

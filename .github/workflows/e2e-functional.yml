@@ -12,7 +12,7 @@ on:
 
 concurrency:
   group: e2e-functional-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   e2e-functional:
@@ -37,6 +37,9 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Python brotli (wwwroot precompress)
+        run: pip install brotli
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

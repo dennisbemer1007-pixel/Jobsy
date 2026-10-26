@@ -230,13 +230,16 @@ public static class UiStringsKandidaatBanen
             "Verstuurd", "Sent",
             "Wysłano", "Trimis", "أُرسل");
         Add("Kb.Timeline.Seen",
-            "Gezien door werkgever", "Seen by employer",
-            "Widziane przez pracodawcę", "Văzut de angajator", "شاهده صاحب العمل");
+            "Gezien", "Seen",
+            "Widziane", "Văzut", "شوهد");
+        Add("Kb.Timeline.SeenSub",
+            "Gezien op {0}", "Seen on {0}",
+            "Widziane {0}", "Văzut pe {0}", "شوهد في {0}");
         Add("Kb.Timeline.Interview",
             "Gesprek", "Interview",
             "Rozmowa", "Interviu", "مقابلة");
         Add("Kb.Timeline.Outcome",
-            "Uitslag", "Outcome",
+            "Uitkomst", "Outcome",
             "Wynik", "Rezultat", "النتيجة");
         Add("Kb.Timeline.StatusChanged",
             "Status bijgewerkt", "Status updated",

@@ -102,7 +102,22 @@ public record ApplicationDto(
     IReadOnlyList<ApplicationTimelineStepDto>? Timeline = null,
     string? NextStepKey = null,
     bool LegacyNoHistory = false,
-    bool VacancyClosed = false);
+    bool VacancyClosed = false,
+    ApplicationAfterMatchSummaryDto? AfterMatch = null);
+
+/// <summary>Na de match card/rail hints for Sollicitaties (candidate list).</summary>
+public record ApplicationAfterMatchSummaryDto(
+    string InterviewStatus,
+    int UnreadMessageCount,
+    int OpenSlotCount,
+    DateTime? ScheduledStartUtc,
+    DateTime? ScheduledEndUtc,
+    DateTime? AcceptedAtUtc,
+    string? LastMessagePreview = null,
+    bool LastMessageFromCandidate = false,
+    DateTime? LastMessageAtUtc = null,
+    string? LastCancelReason = null,
+    bool? LastCancelByEmployer = null);
 
 /// <summary>Candidate timeline step (no actor ids).</summary>
 public record ApplicationTimelineStepDto(

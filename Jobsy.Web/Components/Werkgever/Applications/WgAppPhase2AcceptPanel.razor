@@ -12,11 +12,7 @@
 @if (_phase2Flag && ApplicationId != Guid.Empty)
 {
     <section class="wg-phase2 @(_context is null && _loadFailed ? "wg-phase2--error" : null)" data-testid="wg-phase2-panel">
-        @if (_context is null && !_busy && _loadFailed)
-        {
-            <p class="state-message error" role="alert">@Culture["WgPhase2.LoadFailed"]</p>
-        }
-        else if (_context is not null)
+        @if (_context is not null)
         {
         @if (_context?.Facts is { Count: > 0 } facts)
         {
@@ -25,7 +21,20 @@
                 @foreach (var f in facts)
                 {
                     <li class="@(f.FitsWell ? "is-ok" : null)">
-                        <strong>@f.Label:</strong> @f.Value
+                        <strong>@f.Label:</strong>
+                        @if (string.Equals(f.Label, "Vervoer", StringComparison.Ordinal))
+                        {
+                            <button type="button"
+                                    class="wg-app-chip wg-phase2__transport-chip is-active"
+                                    disabled
+                                    aria-pressed="true">
+                                @f.Value
+                            </button>
+                        }
+                        else
+                        {
+                            @f.Value
+                        }
                     </li>
                 }
             </ul>
@@ -89,6 +98,7 @@
     [Parameter] public Guid ApplicationId { get; set; }
     [Parameter] public bool CanWrite { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnAcceptUiAvailable { get; set; }
 
     private EmployerPhase2ApplicationContextItem? _context;
     private bool _phase2Flag;
@@ -103,6 +113,7 @@
         _loadFailed = false;
         _context = null;
         _error = null;
+        await NotifyAcceptUiAsync(false);
 
         if (ApplicationId == Guid.Empty)
         {
@@ -130,6 +141,9 @@
         {
             _loadFailed = true;
         }
+
+        await NotifyAcceptUiAsync(
+            _context is { HasPlacement: false, Status: ApplicationStatus.Pending });
     }
 
     private async Task AcceptAsync()
@@ -191,6 +205,16 @@
     {
         _context = await Api.GetEmployerPhase2ContextAsync(ApplicationId);
         _loadFailed = _context is null;
+        await NotifyAcceptUiAsync(
+            _context is { HasPlacement: false, Status: ApplicationStatus.Pending });
+    }
+
+    private async Task NotifyAcceptUiAsync(bool available)
+    {
+        if (OnAcceptUiAvailable.HasDelegate)
+        {
+            await OnAcceptUiAvailable.InvokeAsync(available);
+        }
     }
 
     private static string FormatCost(decimal? tokens)

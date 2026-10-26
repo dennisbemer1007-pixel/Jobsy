@@ -1,5 +1,7 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
+using Jobsy.Web.Auth;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Http;
@@ -58,12 +60,127 @@ internal static class PassportClientDataSaver
         return SeeOther(url);
     }
 
-    internal static IResult RedirectWithError(string tab, string message)
+    internal static async Task<IResult> SaveAvailabilityAsync(
+        IFormCollection form,
+        JobsyApiClient api,
+        CultureState culture,
+        CancellationToken cancellationToken)
     {
+        var returnTab = PassportTabs.Normalize(form["returnTab"].ToString());
+        var openSection = (form["openSection"].ToString() ?? "availability").Trim();
+
+        try
+        {
+            var profile = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            var preferences = profile.Preferences ?? new CandidatePreferences();
+            var preset = (form["availabilityPreset"].ToString() ?? "").Trim();
+            var flexibleChecked = string.Equals(form["flexibleTimes"].ToString(), "true", StringComparison.Ordinal);
+            var matrixKeys = form["passportMatrix"].ToArray();
+            if (matrixKeys.Length > 0)
+            {
+                var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var raw in matrixKeys)
+                {
+                    if (!string.IsNullOrWhiteSpace(raw))
+                    {
+                        keys.Add(raw.Trim());
+                    }
+                }
+
+                preferences.Availability = PassportAvailabilityMatrix.FromSelectedKeys(keys);
+                preferences.FlexibleTimes = false;
+                if (preferences.MinHoursPerWeek is not > 0)
+                {
+                    preferences.MinHoursPerWeek = 8;
+                }
+
+                if (preferences.MaxHoursPerWeek is not decimal maxHours
+                    || maxHours < (preferences.MinHoursPerWeek ?? 8))
+                {
+                    preferences.MaxHoursPerWeek = Math.Max(preferences.MinHoursPerWeek ?? 8, 24);
+                }
+
+                await api.UpdateMyProfileAsync(preferences: preferences, ct: cancellationToken);
+                return RedirectAfterAvailabilitySave(returnTab, openSection, form);
+            }
+
+            if (string.Equals(preset, CandidateAvailabilityPresets.Immediate, StringComparison.OrdinalIgnoreCase))
+            {
+                var patch = CandidateAvailabilityPresets.Apply(CandidateAvailabilityPresets.Immediate);
+                preferences.FlexibleTimes = patch.FlexibleTimes;
+                preferences.MinHoursPerWeek = patch.MinHoursPerWeek;
+                preferences.MaxHoursPerWeek = patch.MaxHoursPerWeek;
+                preferences.Availability = patch.Availability.ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value.ToList(),
+                    StringComparer.OrdinalIgnoreCase);
+
+                await api.UpdateMyProfileAsync(
+                    preferences: preferences,
+                    openForWork: true,
+                    clearAvailableFromDate: true,
+                    ct: cancellationToken);
+                return RedirectAfterAvailabilitySave(returnTab, openSection, form);
+            }
+            else if (flexibleChecked)
+            {
+                preferences.FlexibleTimes = true;
+            }
+            else if (PassportAvailabilityMatrix.ToSelectedKeys(preferences.Availability).Count > 0)
+            {
+                preferences.FlexibleTimes = false;
+            }
+            else
+            {
+                return RedirectWithError(returnTab, culture["Common.Error.TryAgain"], openSection);
+            }
+
+            await api.UpdateMyProfileAsync(preferences: preferences, ct: cancellationToken);
+        }
+        catch (ApiErrorException ex)
+        {
+            return RedirectWithError(returnTab, ex.UserMessage ?? culture["Common.Error.TryAgain"], openSection);
+        }
+        catch (Exception)
+        {
+            return RedirectWithError(returnTab, culture["Common.Error.TryAgain"], openSection);
+        }
+
+        return RedirectAfterAvailabilitySave(returnTab, openSection, form);
+    }
+
+    private static RedirectHttpResult RedirectAfterAvailabilitySave(
+        string returnTab,
+        string openSection,
+        IFormCollection form)
+    {
+        var returnUrl = (form["returnUrl"].ToString() ?? "").Trim();
+        var safe = AuthRedirects.TrySafeLocalUrl(returnUrl);
+        if (!string.IsNullOrWhiteSpace(safe))
+        {
+            var back = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(safe, "saved", "1");
+            return TypedResults.Redirect(back);
+        }
+
         var url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
-            PassportRedirects.BuildPassportUrl(tab),
-            "error",
-            message);
+            PassportRedirects.BuildPassportUrl(returnTab),
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["saved"] = "1",
+                ["section"] = openSection,
+            });
+        return SeeOther(url);
+    }
+
+    internal static IResult RedirectWithError(string tab, string message, string? section = null)
+    {
+        var url = PassportRedirects.BuildPassportUrl(tab);
+        url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "error", message);
+        if (!string.IsNullOrWhiteSpace(section))
+        {
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "section", section);
+        }
+
         return SeeOther(url);
     }
 

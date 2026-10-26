@@ -99,6 +99,8 @@ public static class DependencyInjection
         services.AddScoped<IPlatformErrorLog, PlatformErrorLog>();
         services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
         services.AddScoped<IApplicationStatusRecorder, ApplicationStatusRecorder>();
+        services.AddScoped<IStatusNotificationDispatchGate, StatusNotificationDispatchGate>();
+        services.AddScoped<ApplicationStatusNotifier>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ISupportAccessService, SupportAccessService>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
@@ -688,6 +690,7 @@ public static class DependencyInjection
         services.AddScoped<ITalentPoolService, TalentPoolService>();
         services.AddScoped<AfterMatchMailer>();
         services.AddScoped<IAfterMatchService, AfterMatchService>();
+        services.AddScoped<IJobSearchActivityService, JobSearchActivityService>();
         services.Configure<Jobsy.Core.Options.ProactiveMatchingOptions>(
             configuration.GetSection(Jobsy.Core.Options.ProactiveMatchingOptions.SectionName));
         services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();

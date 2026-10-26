@@ -55,6 +55,12 @@ public class EmailLinksTests
         var links = EmailLinks.For("https://lobsy.nl");
         var id = Guid.Parse("11111111-1111-1111-1111-111111111111");
         Assert.Equal("https://lobsy.nl/candidate/applications", links.CandidateApplications);
+        Assert.Equal(
+            $"https://lobsy.nl/candidate/applications?tab=sollicitaties&sel={id:D}",
+            links.CandidateApplicationDetail(id));
+        Assert.Equal(
+            $"https://lobsy.nl/candidate/applications/{id:D}/after-match",
+            links.CandidateAfterMatch(id));
         Assert.Equal($"https://lobsy.nl/vacancies/{id}", links.Vacancy(id));
         Assert.Equal("https://lobsy.nl/login", links.Login);
         Assert.Equal("https://lobsy.nl/privacy/data", links.PrivacyData);

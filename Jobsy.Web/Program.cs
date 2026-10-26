@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
 using Jobsy.Core.Localization;
+using Jobsy.Web.Hosting;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
 using Jobsy.Core.Security;
@@ -8,16 +9,17 @@ using Jobsy.Web.Auth;
 using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
 using Jobsy.Web.Discovery;
-using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Middleware;
 using Jobsy.Web.Security;
 using Jobsy.Web.Seo;
+using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJobsyAcceptatieAppSettings();
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];
 if (!string.IsNullOrWhiteSpace(sentryDsn))
@@ -53,6 +55,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 builder.Services.Configure<Jobsy.Core.Options.SessionAuthOptions>(
     builder.Configuration.GetSection(Jobsy.Core.Options.SessionAuthOptions.SectionName));
+builder.Services.Configure<Jobsy.Core.Options.AuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.AuthOptions.SectionName));
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
 
 builder.Services.AddSingleton<ITestAccountsRuntime>(_ =>
@@ -560,6 +564,7 @@ app.UseWebSockets(new WebSocketOptions
 app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseAdminLegacyRedirects();
 app.UseCandidateLegacyRedirects();
+app.UseAfterMatchPickSlotRouteRewrite();
 app.UseResponseCompression();
 
 // Development keeps the developer exception page; tests opt in with Errors:ForceHandler.
@@ -659,7 +664,18 @@ app.MapOnboardingClientEndpoints();
 app.MapPassportClientEndpoints();
 app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
+app.MapSollicitatiesClientEndpoints();
+app.MapAfterMatchMessagesClientEndpoints();
+app.MapAfterMatchPickSlotClientEndpoints();
+app.MapAfterMatchEmployerProposeClientEndpoints();
+app.MapAfterMatchConfirmedClientEndpoints();
+app.MapAfterMatchRescheduleClientEndpoints();
+app.MapAfterMatchEmployerRescheduleClientEndpoints();
+app.MapAfterMatchEmployerCancelClientEndpoints();
+app.MapWerkgeverClientEndpoints();
+app.MapAfterMatchEmployerOutcomeClientEndpoints();
 app.MapBanenkaartClientEndpoints();
+app.MapAssistantClientEndpoints();
 app.MapMapBasemapEndpoints();
 app.MapOnboardingStartFormEndpoints();
 app.MapDiscoveryClientFormEndpoints();
@@ -667,6 +683,7 @@ app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));
+app.MapGet("/vacancies", () => Results.Redirect(KbRoutes.Map, permanent: false));
 app.UseE2eDevPaths();
 // Banenkaart same-origin API proxies — must be before MapRazorComponents.
 app.MapVacancyMapProxyEndpoints();

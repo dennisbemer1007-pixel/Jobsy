@@ -96,3 +96,16 @@ Na merge + Dashboard env vars (`TestAccounts__Enabled`, `TestAccounts__Password_
 3. Cleanup: `dotnet Jobsy.Api.dll test-accounts cleanup` then `--execute --expect-users <n>`.
 
 Never put real passwords in tests or docs. Automated coverage lives under `Jobsy.Tests/TestAccounts/`.
+
+### Sollicitaties mockup demo data (acceptatie)
+
+When the **test-accounts guard** is active (`Lobsy__DeploymentEnvironment=Acceptatie`, `TestAccounts__Enabled=true`, `lobsy-acc-*`, stub payments, etc.), the API runs **`TestAccountsSollicitatiesDemoSeeder`** on **every startup** (after migrate). It is idempotent and only touches **`IsTestAccount`** candidates:
+
+- Primary lookup: `lobsy-test@mail.grokbot.com` (auto-marked `IsTestAccount` on acceptatie when the guard passes)
+- Fallback: catalog candidate e-mail (`test-kandidaat@<TestAccounts__EmailDomain>`)
+
+It adds fake employers (e.g. **Testbedrijf Groen**), vacancy applications (Verstuurd/Gezien, **Kies een moment** with open slots, gesprek gepland, unread berichten, afgerond), **Buiten Lobsy** external applied, and **Ik wil hier werken** initiatives.
+
+**First deploy / empty DB:** run `dotnet Jobsy.Api.dll test-accounts seed` once on `lobsy-acc-api` so the candidate + branch manager exist; subsequent acc deploys refresh demo rows automatically at startup.
+
+Manual re-run without redeploy: run `test-accounts seed` again (same guard).

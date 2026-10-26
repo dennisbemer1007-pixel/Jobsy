@@ -1,6 +1,6 @@
-@page "/candidate/applications"
-@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; no CandidateJobListTabs *@
+@* Route moved to CandidateApplicationsSsr.razor (mockup SSR). Legacy interactive markup kept for reference. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [ExcludeFromInteractiveRouting]
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]
@@ -248,7 +248,7 @@
         var rejected = IsRejected(a.Status);
         var hired = string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase);
         var menuOpen = _openMenuId == a.Id;
-        var vacancyHref = $"/vacancies/{a.VacancyId}";
+        var vacancyHref = CandidateVacancyUrls.BanenkaartDetail(a.VacancyId);
         var pictureUrl = ApplicationThumbUrl(a.PictureUrl);
         var steps = a.Timeline ?? [];
         <article class="application-card kb-apps__card @(hired ?"application-card--hired" : "") @(rejected ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
@@ -332,14 +332,14 @@
                         </p>
                     </div>
                 </button>
-                @RenderMenu(a, $"/vacancies/{a.VacancyId}")
+                @RenderMenu(a, CandidateVacancyUrls.BanenkaartDetail(a.VacancyId))
             </div>
         </article>
     };
 
     private RenderFragment RenderDetailActions(ApplicationItem a) => __builder =>
     {
-        var vacancyHref = $"/vacancies/{a.VacancyId}";
+        var vacancyHref = CandidateVacancyUrls.BanenkaartDetail(a.VacancyId);
         <div class="kb-apps__detail-actions">
             @if (!_readOnly)
             {

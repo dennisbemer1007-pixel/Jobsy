@@ -60,7 +60,7 @@ public static class DimensionLabels
             SchwartzValuesCatalog.Autonomy => "Zelf kiezen en uitdaging",
             SchwartzValuesCatalog.Connection => "Verbinding & zorg",
             SchwartzValuesCatalog.Achievement => "Prestatie & groei",
-            SchwartzValuesCatalog.Stability => "Zekerheid & traditie",
+            SchwartzValuesCatalog.Stability => "Zekerheid & duidelijkheid",
             SchwartzValuesCatalog.Impact => "Impact & rechtvaardigheid",
             CulturePersonalityCatalog.Informal => "Informele sfeer",
             CulturePersonalityCatalog.Collaboration => "Samenwerken",
@@ -91,7 +91,7 @@ public static class DimensionLabels
         var key = value.Trim();
         return key.ToLowerInvariant() switch
         {
-            "zekerheid en voorspelbaarheid" => For(SchwartzValuesCatalog.Stability),
+            "zekerheid en voorspelbaarheid" or "zekerheid & traditie" => For(SchwartzValuesCatalog.Stability),
             "eigen regie en nieuwe uitdagingen" => For(SchwartzValuesCatalog.Autonomy),
             "warme band met collega's en klanten" or "warme band met collega’s en klanten" => For(SchwartzValuesCatalog.Connection),
             "resultaat en groei" => For(SchwartzValuesCatalog.Achievement),
@@ -130,7 +130,7 @@ public static class DimensionLabels
         SchwartzValuesCatalog.Autonomy => "Choosing for yourself",
         SchwartzValuesCatalog.Connection => "Connection and care",
         SchwartzValuesCatalog.Achievement => "Achievement and growth",
-        SchwartzValuesCatalog.Stability => "Security and tradition",
+        SchwartzValuesCatalog.Stability => "Security and clarity",
         SchwartzValuesCatalog.Impact => "Making a difference",
         _ => null
     };
@@ -161,7 +161,7 @@ public static class DimensionLabels
         SchwartzValuesCatalog.Autonomy => "Własny wybór",
         SchwartzValuesCatalog.Connection => "Bliskość i troska",
         SchwartzValuesCatalog.Achievement => "Wyniki i rozwój",
-        SchwartzValuesCatalog.Stability => "Pewność i tradycja",
+        SchwartzValuesCatalog.Stability => "Pewność i jasność",
         SchwartzValuesCatalog.Impact => "Wpływ na innych",
         _ => null
     };
@@ -192,7 +192,7 @@ public static class DimensionLabels
         SchwartzValuesCatalog.Autonomy => "Alegere proprie",
         SchwartzValuesCatalog.Connection => "Legătură și grijă",
         SchwartzValuesCatalog.Achievement => "Rezultate și creștere",
-        SchwartzValuesCatalog.Stability => "Siguranță și tradiție",
+        SchwartzValuesCatalog.Stability => "Siguranță și claritate",
         SchwartzValuesCatalog.Impact => "Efect asupra altora",
         _ => null
     };

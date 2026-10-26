@@ -239,6 +239,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
         ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
         ApplyAdminBoolUpdate(row, "UwvFeaturesEnabled", update.UwvFeaturesEnabled, v => row.UwvFeaturesEnabled = v);
+        ApplyAdminBoolUpdate(row, "ActivityLogEnabled", update.ActivityLogEnabled, v => row.ActivityLogEnabled = v);
         ApplyAdminBoolUpdate(row, "TestJourneyIllustrationEnabled", update.TestJourneyIllustrationEnabled, v => row.TestJourneyIllustrationEnabled = v);
         ApplyAdminBoolUpdate(row, "OnboardingFinaleV2Enabled", update.OnboardingFinaleV2Enabled, v => row.OnboardingFinaleV2Enabled = v);
         ApplyAdminBoolUpdate(row, "OccupationDayInLifeEnabled", update.OccupationDayInLifeEnabled, v => row.OccupationDayInLifeEnabled = v);
@@ -371,6 +372,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
 
     private bool ResolveUwvFeaturesEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "UwvFeaturesEnabled", row?.UwvFeaturesEnabled ?? true, true, "Features:UwvFeatures");
+
+    private bool ResolveActivityLogEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "ActivityLogEnabled", row?.ActivityLogEnabled ?? _options.ActivityLogEnabled, false, "JobsyFeatures:ActivityLogEnabled");
 
     private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
     {
@@ -572,6 +576,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),
             ResolveUwvFeaturesEnabled(row),
+            ResolveActivityLogEnabled(row),
             ResolveTestJourneyIllustrationEnabled(row),
             ResolveOnboardingFinaleV2Enabled(row),
             ResolveOccupationDayInLifeEnabled(row),

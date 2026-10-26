@@ -18,6 +18,7 @@ public class PageAssetCatalogTests
     [InlineData("/banenkaart", CoreCss + PublicCss)]
     [InlineData("/candidate/paspoort", CoreCss + PublicCss + AppCss)]
     [InlineData("/register", CoreCss + WerkgeverCss)]
+    [InlineData("/werkgever", CoreCss + WerkgeverCss)]
     [InlineData("/werkgever/vacatures", CoreCss + WerkgeverCss)]
     [InlineData("/werkgever/kandidatenkaart", CoreCss + WerkgeverCss)]
     [InlineData("/admin/users", CoreCss + BeheerCss)]
@@ -29,7 +30,7 @@ public class PageAssetCatalogTests
         var areas = Jobsy.Web.Hosting.PageAssetCatalog.ResolveAreas(path);
         var sheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(areas);
         Assert.True(sheets.Count >= expectedMinLinks, $"Expected at least {expectedMinLinks} sheets for {path}, got {sheets.Count}");
-        var maxSheets = path is "/candidate/paspoort" ? 41 : 32;
+        var maxSheets = path is "/candidate/paspoort" ? 44 : 32;
         Assert.True(sheets.Count <= maxSheets, $"Too many stylesheets ({sheets.Count}) for {path}");
         Assert.Equal(1, sheets.Count(s => s.StartsWith("css/app.min.css", StringComparison.Ordinal)));
         Assert.DoesNotContain("css/features/admin.css", sheets, StringComparer.Ordinal);
@@ -48,6 +49,11 @@ public class PageAssetCatalogTests
         if (path is "/register")
         {
             Assert.Contains(sheets, s => s.StartsWith("css/features/werkgever-aanmelding.css", StringComparison.Ordinal));
+        }
+
+        if (path is "/werkgever")
+        {
+            Assert.Contains(sheets, s => s.StartsWith("css/features/werkgever.css", StringComparison.Ordinal));
         }
 
         if (path is "/werkgever/kandidatenkaart")

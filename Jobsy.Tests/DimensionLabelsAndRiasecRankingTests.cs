@@ -5,7 +5,7 @@ namespace Jobsy.Tests;
 public class DimensionLabelsAndRiasecRankingTests
 {
     [Theory]
-    [InlineData(SchwartzValuesCatalog.Stability, "Zekerheid & traditie")]
+    [InlineData(SchwartzValuesCatalog.Stability, "Zekerheid & duidelijkheid")]
     [InlineData(SchwartzValuesCatalog.Impact, "Impact & rechtvaardigheid")]
     [InlineData(CompetencyTestCatalog.Stressbestendigheid, "Kalm blijven")]
     [InlineData(CompetencyTestCatalog.Innovatie, "Nieuwe dingen proberen")]
@@ -24,7 +24,8 @@ public class DimensionLabelsAndRiasecRankingTests
     }
 
     [Theory]
-    [InlineData("zekerheid en voorspelbaarheid", "Zekerheid & traditie")]
+    [InlineData("zekerheid en voorspelbaarheid", "Zekerheid & duidelijkheid")]
+    [InlineData("Zekerheid & traditie", "Zekerheid & duidelijkheid")]
     [InlineData("Stressbestendigheid", "Kalm blijven")]
     [InlineData("Innovatie", "Nieuwe dingen proberen")]
     public void MapStored_rewrites_legacy_outcome_phrases(string stored, string expected)

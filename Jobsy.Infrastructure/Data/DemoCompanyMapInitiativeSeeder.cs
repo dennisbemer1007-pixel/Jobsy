@@ -265,6 +265,12 @@ internal static class DemoCompanyMapInitiativeSeeder
                 s => s.SetProperty(v => v.ImageUrl, VacancyImageBakkerij),
                 cancellationToken);
 
+        await DemoVacancyTitleDedupe.ArchiveDuplicateTitlesAsync(
+            db,
+            [WestlandId, SupermarketId, CafeId],
+            logger,
+            cancellationToken);
+
         logger.LogInformation("Bakkerij De Korenaar demo branding applied (KVK 12345678).");
     }
 }

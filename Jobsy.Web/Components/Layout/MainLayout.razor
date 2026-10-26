@@ -71,9 +71,13 @@
     }
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
     {
-        <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
+        <LobsyCoach Compact="_isQuestionnairePage" HasBottomNav="_hasBottomNav" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" UiVariant="AssistantChatUiVariant.Warm" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+    }
+    else if (_noBlazorRuntime && _ssrCoachAvailable && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
+    {
+        <LobsyCoachSsr HasBottomNav="_hasBottomNav" AskLabel="@Culture["Coach.Ask"]" />
     }
     else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage && !_hideFloatingChrome)
     {
@@ -122,6 +126,7 @@
     private bool _pwaSheetOpen;
     private bool _noBlazorRuntime;
     private bool _noBlazorCandidateNav;
+    private bool _ssrCoachAvailable;
 
     private bool ShowInstallBanner =>
         RendererInfo.IsInteractive
@@ -365,16 +370,19 @@
         if (user?.Identity?.IsAuthenticated != true)
         {
             _noBlazorCandidateNav = false;
+            _ssrCoachAvailable = false;
             return;
         }
 
         if (!RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
             _noBlazorCandidateNav = false;
+            _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
             return;
         }
 
         _isCandidate = true;
+        _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
         _noBlazorCandidateNav = _noBlazorRuntime;
         if (_noBlazorCandidateNav && !_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
         {
@@ -454,12 +462,8 @@
         }
 
         var hidePassportChrome = IsPassportOrProfileCoachHidden(path);
-        var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
-                        || IsVacancyOrNotificationsCoachHidden(path)
-                        || hidePassportChrome
-                        || IsStandaloneQuickScanCoachHidden(path)
-                        || IsIllustratedCandidateCoachHidden(path)
-                        || (_isCandidate && IsBanenkaartPath(path));
+        var hideCoach = IsLobsyCoachExcludedPath(path)
+                        || IsVacancyOrNotificationsCoachHidden(path);
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -483,8 +487,8 @@
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
         var immersive = onRoute && !_isCandidate;
-        var candidateShell = onRoute && _isCandidate;
-        var mockupTop = onRoute;
+        var candidateShell = onRoute;
+        var mockupTop = onRoute && !_isCandidate;
         var changed = false;
         if (_banenkaartImmersive != immersive)
         {
@@ -526,13 +530,11 @@
     public static bool UsesBanenkaartImmersiveChrome(string path, bool isAuthenticatedCandidate)
         => IsBanenkaartPath(path) && !isAuthenticatedCandidate;
 
-    /// <summary>Hide floating coach on paspoort/profile (inline tips, read-aloud, bottom nav).</summary>
+    /// <summary>Hide floating chrome on profile (paspoort keeps Lobsy-hulp).</summary>
     public static bool IsPassportOrProfileCoachHidden(string path)
     {
         path = path.TrimStart('/');
-        return path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("candidate/paspoort/", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
+        return path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>
@@ -548,16 +550,33 @@
         return path.StartsWith("vacancies/", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>#728 illustrated candidate shells: hero + inline copy; no floating coach over CTAs.</summary>
-    public static bool IsIllustratedCandidateCoachHidden(string path)
+    /// <summary>Lobsy-hulp uit op landing, inloggen en account-flow (mockup).</summary>
+    public static bool IsLobsyCoachExcludedPath(string path)
     {
         path = path.TrimStart('/');
-        return path.Equals("carriere", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/applications", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/liked", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/settings", StringComparison.OrdinalIgnoreCase);
+        if (string.IsNullOrEmpty(path))
+        {
+            return true;
+        }
+
+        if (path.Equals("login", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("inloggen", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.StartsWith("account-maken", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("account/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return path.Contains("/uwv-", StringComparison.OrdinalIgnoreCase)
+               || path.EndsWith("/uwv", StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>Legacy alias — coach stays visible on illustrated SSR pages.</summary>
+    public static bool IsIllustratedCandidateCoachHidden(string path) => false;
 
     /// <summary>Hide floating coach on standalone Quick-Scan shells (scene bubble + progress).</summary>
     public static bool IsStandaloneQuickScanCoachHidden(string path)

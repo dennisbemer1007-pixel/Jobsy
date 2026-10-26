@@ -47,7 +47,7 @@ internal static class BanenkaartClientPins
         {
             pins = await api.GetVacancyPinsAsync(
                 query.Transport,
-                query.MaxTravelMinutes,
+                BanenkaartSsrQuery.DiscoverMaxMinutes(query.MaxTravelMinutes),
                 pinOriginLat,
                 pinOriginLng,
                 pinRadius,

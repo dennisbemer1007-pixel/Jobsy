@@ -1,3 +1,4 @@
+using Jobsy.Web.Hosting;
 using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Components.Pages.Werkgever;
@@ -7,7 +8,7 @@ internal static class CandidateInsightsMapInterop
     public static Task EnsureLoadedAsync(IJSRuntime js)
         => js.InvokeVoidAsync(
             "jobsyDom.ensureScript",
-            "js/features/kandidaatinzichten-map.js?v=20261004-14",
+            WwwrootAssetCatalog.Url("js/features/kandidaatinzichten-map.js"),
             "JobsyCandidateInsightsMap").AsTask();
 
     public static Task MountAsync(IJSRuntime js, string elementId, object options)

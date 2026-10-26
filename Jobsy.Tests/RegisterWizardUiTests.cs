@@ -91,8 +91,11 @@ public class RegisterWizardUiTests
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
-        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/app.min.css");
-        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/werkgever-aanmelding.css");
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/app.min.css\")", catalog, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/features/werkgever-aanmelding.css\")", catalog, StringComparison.Ordinal);
+        Assert.Equal(
+            AssetVersions.Version("css/app.min.css"),
+            Jobsy.Web.Hosting.WwwrootAssetCatalog.Version("css/app.min.css"));
         Assert.Contains("name=\"lobsy-commit\"", app);
         Assert.Contains("RENDER_GIT_COMMIT", app);
     }

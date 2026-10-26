@@ -6,6 +6,7 @@ namespace Jobsy.Tests;
 /// <summary>
 /// Desktop lagen: Funda popup on the map (mockup c8ee9298) — not the docked cluster sheet.
 /// </summary>
+[Collection("BanenkaartPlaywright")]
 public sealed class BanenkaartLagenDesktopPopupPlaywrightTests : IAsyncLifetime
 {
     private const string BanenkaartPath =
@@ -37,6 +38,80 @@ public sealed class BanenkaartLagenDesktopPopupPlaywrightTests : IAsyncLifetime
 
         _playwright?.Dispose();
         _web?.Dispose();
+    }
+
+    [Fact]
+    public async Task Desktop_1280_top_pin_popup_below_strip_and_close_clickable()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1280, Height = 800 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.Locator("[data-testid=kb-map-top-chrome] .strip .sc").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
+        await page.WaitForFunctionAsync(
+            "() => (window.jobMap?.__testGetPinCount?.() ?? 0) > 0",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync(
+            """
+            (vid) => {
+              const j = window.jobMap;
+              if (!j) return;
+              if (j.__testOpenTopRenderedPin?.()) return;
+              j.__testOpenVacancyNearMapTop?.(vid);
+            }
+            """,
+            VacancyWithPhoto);
+
+        await page.Locator(".maplibregl-popup.kb-popup-lagen-pop").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 15_000
+        });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              window.jobMap?.refitDesktopPopupAfterTopChrome?.();
+              const pop = document.querySelector('.maplibregl-popup.kb-popup-lagen-pop');
+              const strip = document.querySelector('[data-testid=kb-map-top-chrome] .strip:not(.strip--empty)');
+              if (!pop || !strip) return false;
+              const card = pop.querySelector('[data-lagen-fcw]') || pop;
+              const pr = card.getBoundingClientRect();
+              const sr = strip.getBoundingClientRect();
+              return pr.top >= sr.bottom - 1;
+            }
+            """,
+            null,
+            new() { Timeout = 12_000 });
+
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              window.jobMap?.refitDesktopPopupAfterTopChrome?.();
+              const btn = document.querySelector('.kb-popup-lagen-pop [data-lagen-close]');
+              if (!btn) return false;
+              const r = btn.getBoundingClientRect();
+              const x = r.left + r.width / 2;
+              const y = r.top + r.height / 2;
+              const hit = document.elementFromPoint(x, y);
+              return !!(hit && (hit === btn || btn.contains(hit)
+                || (hit.closest && hit.closest('[data-lagen-close]'))));
+            }
+            """,
+            null,
+            new() { Timeout = 12_000 });
     }
 
     [Fact]
@@ -137,29 +212,11 @@ public sealed class BanenkaartLagenDesktopPopupPlaywrightTests : IAsyncLifetime
             State = WaitForSelectorState.Visible,
             Timeout = 15_000
         });
-
-        var inFocus = await page.EvaluateAsync<bool>(
-            """
-            () => {
-              const pop = document.querySelector('.maplibregl-popup.kb-popup-lagen-pop');
-              const carousel = document.querySelector('.highlight-carousel--map');
-              if (!pop) return false;
-              const pr = pop.getBoundingClientRect();
-              const map = document.querySelector('#job-map');
-              if (!map) return false;
-              const mr = map.getBoundingClientRect();
-              let top = mr.top + 12;
-              if (carousel) {
-                const cr = carousel.getBoundingClientRect();
-                if (cr.bottom > top) top = cr.bottom + 8;
-              }
-              const left = mr.left + 12;
-              const right = mr.right - 12;
-              const bottom = mr.bottom - 12;
-              return pr.top >= top - 2 && pr.left >= left - 2 && pr.right <= right + 2 && pr.bottom <= bottom + 2;
-            }
-            """);
-        Assert.True(inFocus, "Desktop popup should sit fully inside the map area below the carousel.");
+        await page.EvaluateAsync("() => window.jobMap?.refitDesktopPopupAfterTopChrome?.()");
+        await page.WaitForTimeoutAsync(600);
+        Assert.True(await page.EvaluateAsync<bool>(
+            "() => window.jobMap?.__testPopupInMapFocus?.() ?? false"),
+            "Desktop popup should sit fully inside the map area below the job-card strip.");
 
         var heart = page.Locator("[data-lagen-heart]").First;
         await heart.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
@@ -411,29 +468,11 @@ public sealed class BanenkaartLagenDesktopPopupPlaywrightTests : IAsyncLifetime
                 State = WaitForSelectorState.Visible,
                 Timeout = 15_000
             });
-            await page.WaitForTimeoutAsync(450);
-            var inFocus = await page.EvaluateAsync<bool>(
-                """
-                () => {
-                  const pop = document.querySelector('.maplibregl-popup.kb-popup-lagen-pop');
-                  const carousel = document.querySelector('.highlight-carousel--map');
-                  if (!pop) return false;
-                  const pr = pop.getBoundingClientRect();
-                  const map = document.querySelector('#job-map');
-                  if (!map) return false;
-                  const mr = map.getBoundingClientRect();
-                  let top = mr.top + 12;
-                  if (carousel) {
-                    const cr = carousel.getBoundingClientRect();
-                    if (cr.bottom > top) top = cr.bottom + 8;
-                  }
-                  const left = mr.left + 12;
-                  const right = mr.right - 12;
-                  const bottom = mr.bottom - 12;
-                  return pr.top >= top - 2 && pr.left >= left - 2 && pr.right <= right + 2 && pr.bottom <= bottom + 2;
-                }
-                """);
-            Assert.True(inFocus, "Popup should stay fully visible below the carousel on every open (id=" + id + ").");
+            await page.EvaluateAsync("() => window.jobMap?.refitDesktopPopupAfterTopChrome?.()");
+            await page.WaitForTimeoutAsync(600);
+            Assert.True(await page.EvaluateAsync<bool>(
+                "() => window.jobMap?.__testPopupInMapFocus?.() ?? false"),
+                "Popup should stay fully visible below the strip on every open (id=" + id + ").");
             await page.Locator("[data-lagen-close]").First.ClickAsync();
             await page.WaitForFunctionAsync(
                 "() => !document.querySelector('.maplibregl-popup.kb-popup-lagen-pop')",

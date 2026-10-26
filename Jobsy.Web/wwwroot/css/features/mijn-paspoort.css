@@ -342,9 +342,7 @@
     color: var(--gold-ink);
     font-size: var(--text-xs);
     font-weight: 600;
-}@media (max-width: 1023px) {.app-shell:has(.passport-page) .lobsy-coach-dock {
-        display: none !important;
-    }}@media (max-width: 639px) {.app-shell:has(.passport-page) .app-main {
+}@media (max-width: 639px) {.app-shell:has(.passport-page) .app-main {
         padding-bottom: calc(
             var(--bottom-nav-h, 4.75rem) + 3.5rem + env(safe-area-inset-bottom, 0px)
         );

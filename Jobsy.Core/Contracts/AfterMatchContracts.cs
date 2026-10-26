@@ -25,7 +25,8 @@ public sealed record AfterMatchThreadDto(
     IReadOnlyList<AfterMatchSimilarVacancyDto> SimilarVacancies,
     string CandidateName,
     string? CandidateEmail,
-    DateTime? AcceptedAtUtc);
+    DateTime? AcceptedAtUtc,
+    string? OutcomeReason);
 
 public sealed record AfterMatchSlotDto(
     Guid Id,
@@ -78,7 +79,7 @@ public sealed record ProposeCandidateSlotRequest(
 
 public sealed record SelectSlotRequest(Guid SlotId);
 
-public sealed record RescheduleRequest(string Reason);
+public sealed record RescheduleRequest(string Reason, Guid? AlternativeSlotId = null);
 
 public sealed record SendMessageRequest(string Body, bool ConfirmSensitive);
 

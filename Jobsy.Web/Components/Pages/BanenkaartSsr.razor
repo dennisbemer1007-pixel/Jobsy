@@ -25,12 +25,6 @@
 @inject ILogger<BanenkaartSsr> Logger
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
-<HeadContent>
-    @foreach (var href in PageAssetCatalog.BanenkaartSsrStylesheets())
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-</HeadContent>
 
 @if (!string.IsNullOrWhiteSpace(_fatalMessage))
 {
@@ -81,6 +75,7 @@ else if (_bodyHtml is not null)
             query,
             isAuthenticated,
             isCandidate,
+            http.Request.Query.ContainsKey("sort"),
             explicitRadiusKm,
             http.RequestAborted);
 

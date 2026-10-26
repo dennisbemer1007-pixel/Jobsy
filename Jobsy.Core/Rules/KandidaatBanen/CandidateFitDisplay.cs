@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Jobsy.Core.Rules.KandidaatBanen;
 
 /// <summary>
@@ -64,6 +66,24 @@ public static class CandidateFitDisplay
             WhyKinds = whyKinds,
             Dimensions = dimensions
         };
+    }
+
+    /// <summary>Removes calibration confidence percentages from candidate-facing copy.</summary>
+    public static string? SanitizeWhyForDetail(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return line;
+        }
+
+        var trimmed = Regex.Replace(line, @"\(\s*\d+\s*%\s*\)", string.Empty).Trim();
+        var idx = trimmed.IndexOf("Betrouwbaarheid", StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+        {
+            trimmed = trimmed[..idx].Trim().TrimEnd('·', '.', ' ');
+        }
+
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
     }
 
     public static KbFitBand BandFor(int percent)

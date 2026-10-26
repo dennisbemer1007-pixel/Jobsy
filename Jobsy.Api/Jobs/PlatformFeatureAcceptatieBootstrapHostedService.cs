@@ -28,7 +28,9 @@ public sealed class PlatformFeatureAcceptatieBootstrapHostedService(
             await using var scope = scopeFactory.CreateAsyncScope();
             var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
             var snap = await features.GetAsync(cancellationToken);
-            if (snap.SensitiveExperienceEnabled && snap.TrainingPartnersEnabled)
+            if (snap.SensitiveExperienceEnabled
+                && snap.TrainingPartnersEnabled
+                && snap.AfterMatchEnabled)
             {
                 return;
             }
@@ -36,10 +38,11 @@ public sealed class PlatformFeatureAcceptatieBootstrapHostedService(
             await features.UpdateAsync(
                 new PlatformFeatureUpdate(
                     SensitiveExperienceEnabled: true,
-                    TrainingPartnersEnabled: true),
+                    TrainingPartnersEnabled: true,
+                    AfterMatchEnabled: true),
                 cancellationToken);
             logger.LogInformation(
-                "Acceptatie platform feature bootstrap: SensitiveExperienceEnabled and TrainingPartnersEnabled set ON (admin override).");
+                "Acceptatie platform feature bootstrap: SensitiveExperience, TrainingPartners and AfterMatch set ON (admin override).");
         }
         catch (Exception ex)
         {
