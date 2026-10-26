@@ -28,7 +28,8 @@ internal static class PassportSsrData
         bool FromDiscovery,
         PassportSsrFitHtml.Panel? FitPanel,
         bool ProactiveMatchingEnabled,
-        PassportSsrCareerHtml.Panel CareerPanel);
+        PassportSsrCareerHtml.Panel CareerPanel,
+        PassportSsrProofHtml.Panel ProofPanel);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
@@ -97,6 +98,16 @@ internal static class PassportSsrData
         }
 
         var careerPanel = await PassportSsrCareerHtml.LoadPanelAsync(api, profile, cancellationToken);
+        var proofPanelRaw = await PassportSsrProofHtml.LoadPanelAsync(
+            api,
+            profile,
+            flags,
+            kompas,
+            cancellationToken);
+        var proofPanel = proofPanelRaw with
+        {
+            HintText = PassportSsrProofHtml.FormatHint(culture, proofPanelRaw.Strength)
+        };
 
         return new PageData(
             tab,
@@ -115,6 +126,7 @@ internal static class PassportSsrData
             fromDiscovery,
             fitPanel,
             flags.ProactiveMatchingEnabled,
-            careerPanel);
+            careerPanel,
+            proofPanel);
     }
 }

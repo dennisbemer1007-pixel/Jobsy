@@ -265,7 +265,8 @@ internal static class PassportSsrShells
         AppendPanelShell(sb, PassportTabs.Tests, data.ActiveTab, () => AppendTestsPanel(sb, culture, data));
         AppendPanelShell(sb, PassportTabs.Fit, data.ActiveTab, () => AppendFitPanel(sb, culture, data));
         AppendPanelShell(sb, PassportTabs.Career, data.ActiveTab, () => AppendCareerPanel(sb, culture, data));
-        AppendPanelShell(sb, PassportTabs.Proof, data.ActiveTab, () => AppendProofPanel(sb, culture, openProofItem, returnUrl));
+        AppendPanelShell(sb, PassportTabs.Proof, data.ActiveTab, () =>
+            AppendProofPanel(sb, culture, data, antiforgeryToken, openProofItem));
         if (data.Flags.ReferenceVerificationEnabled)
         {
             AppendPanelShell(sb, PassportTabs.References, data.ActiveTab, () => AppendReferencesPanel(sb, culture));
@@ -339,33 +340,17 @@ internal static class PassportSsrShells
     private static void AppendProofPanel(
         StringBuilder sb,
         CultureState culture,
-        string? openProofItem,
-        string? returnUrl)
+        PassportSsrData.PageData data,
+        string antiforgeryToken,
+        string? openProofItem)
     {
-        var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl);
-        sb.Append("<p class=\"login-lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Proof"]));
-        sb.Append("</p>");
-        if (string.Equals(openProofItem, ApplyProfileLink.Experience, StringComparison.OrdinalIgnoreCase))
-        {
-            sb.Append("<div class=\"detail-card passport-data__item is-open\" id=\"passport-proof-experience\" data-testid=\"passport-proof-experience\"><h3 class=\"passport-data__title\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Apply.Experience"]));
-            sb.Append("</h3><p class=\"passport-data__sub\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Step4.Lead"]));
-            sb.Append("</p><p><a class=\"btn btn-primary\" href=\"");
-            var back = string.IsNullOrWhiteSpace(safeReturn) ? "/candidate/applications" : safeReturn;
-            sb.Append("/candidate/start?step=4&amp;returnUrl=");
-            sb.Append(Uri.EscapeDataString(back));
-            sb.Append("\" data-enhance-nav=\"false\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Common.Continue"]));
-            sb.Append("</a></p></div>");
-        }
-
-        sb.Append("<p><a href=\"");
-        sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Proof, safeReturn));
-        sb.Append("\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Passport.Tab.Proof"]));
-        sb.Append("</a></p>");
+        PassportSsrProofHtml.Append(
+            sb,
+            culture,
+            data.Profile,
+            data.ProofPanel,
+            antiforgeryToken,
+            openProofItem);
     }
 
     private static void AppendReferencesPanel(StringBuilder sb, CultureState culture)
