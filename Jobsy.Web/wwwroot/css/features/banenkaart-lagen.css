@@ -1940,16 +1940,20 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact.maplibregl-compact-show .maplibregl-ctrl-attrib-inner {
         display: block !important;
         position: absolute;
-        left: 0;
-        bottom: calc(100% + 6px);
+        left: -162px;
+        bottom: calc(100% + 26px);
         white-space: nowrap;
-        max-width: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: min(196px, calc(100vw - 12px));
         width: max-content;
+        box-sizing: border-box;
         background: rgba(255, 255, 255, 0.98);
         border-radius: 12px;
         padding: 2px 8px;
         box-shadow: 0 4px 12px -6px rgba(31, 47, 85, 0.28);
         border: 1px solid var(--kb-line);
+        z-index: 6;
     }
 }
 

@@ -110,6 +110,71 @@ public sealed class BanenkaartAttributionPlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Mobile_expanded_attribution_chip_avoids_lobsy_help_and_stays_on_screen()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + MapPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await WaitMapReadyAsync(page);
+
+        await page.Locator(".jobsy-discovery--lagen .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib").ClickAsync();
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('.jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner')",
+            null,
+            new() { Timeout = 10_000 });
+
+        var chip = await page.EvaluateAsync<ChipProbe>(
+            """
+            () => {
+              const inner = document.querySelector('.jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner');
+              if (!inner) return { ok: false, reason: 'missing-inner' };
+              const r = inner.getBoundingClientRect();
+              const coach = document.querySelector('#lobsy-coach-btn') || document.querySelector('.lobsy-coach-dock[data-lobsy-coach]');
+              const zoomOut = document.querySelector('.jobsy-discovery--lagen .maplibregl-ctrl-zoom-out');
+              const ringLabel = document.querySelector('.jobsy-discovery--lagen .map-iso-label.kb-rl');
+              function overlaps(a, b) {
+                if (!a || !b) return false;
+                return !(a.right <= b.left + 2 || a.left >= b.right - 2 || a.bottom <= b.top + 2 || a.top >= b.bottom - 2);
+              }
+              const coachR = coach ? coach.getBoundingClientRect() : null;
+              const zoomR = zoomOut ? zoomOut.getBoundingClientRect() : null;
+              const ringR = ringLabel ? ringLabel.getBoundingClientRect() : null;
+              const onScreen = r.left >= 0 && r.right <= window.innerWidth;
+              const clearCoach = !overlaps(r, coachR);
+              const clearZoom = !overlaps(r, zoomR);
+              const clearRing = !overlaps(r, ringR);
+              return {
+                ok: onScreen && clearCoach && clearZoom && clearRing,
+                left: r.left,
+                top: r.top,
+                right: r.right,
+                bottom: r.bottom,
+                onScreen,
+                clearCoach,
+                clearZoom,
+                clearRing
+              };
+            }
+            """);
+
+        Assert.True(chip.Ok, System.Text.Json.JsonSerializer.Serialize(chip));
+
+        await page.SetViewportSizeAsync(390, 800);
+        await page.WaitForTimeoutAsync(200);
+        var stillOpen = await page.EvaluateAsync<bool>(
+            "() => document.querySelector('.jobsy-discovery--lagen .maplibregl-ctrl-attrib.maplibregl-compact-show') !== null");
+        Assert.True(stillOpen, "Attribution should stay expanded after viewport resize on lagen banenkaart.");
+    }
+
+    [Fact]
     public async Task Mobile_first_load_shows_20_min_ring_and_label()
     {
         await using var context = await _browser!.NewContextAsync(new()
@@ -144,6 +209,20 @@ public sealed class BanenkaartAttributionPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
+    }
+
+    private sealed class ChipProbe
+    {
+        public bool Ok { get; set; }
+        public string Reason { get; set; } = "";
+        public double Left { get; set; }
+        public double Top { get; set; }
+        public double Right { get; set; }
+        public double Bottom { get; set; }
+        public bool OnScreen { get; set; }
+        public bool ClearCoach { get; set; }
+        public bool ClearZoom { get; set; }
+        public bool ClearRing { get; set; }
     }
 
     private sealed class LegendProbe

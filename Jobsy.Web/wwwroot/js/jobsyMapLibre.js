@@ -177,7 +177,14 @@ window.jobsyMapLibre = (function () {
         var compact = preferCompactAttribution();
         if (compact) {
             attrib.classList.add("maplibregl-compact");
-            attrib.classList.remove("maplibregl-compact-show");
+            if (isLagenBanenkaartPage()) {
+                if (attrib.dataset.jobsyCompactInit !== "1") {
+                    attrib.classList.remove("maplibregl-compact-show");
+                    attrib.dataset.jobsyCompactInit = "1";
+                }
+            } else {
+                attrib.classList.remove("maplibregl-compact-show");
+            }
         } else {
             attrib.classList.remove("maplibregl-compact");
             attrib.classList.add("maplibregl-compact-show");
