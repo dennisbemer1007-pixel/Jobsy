@@ -28,7 +28,7 @@ internal static class MatchSsrShells
             sb.Append(" match-page--locked");
         }
 
-        sb.Append("\" data-testid=\"match-page-ssr\" data-match-ssr=\"1\" data-progress-format=\"");
+        sb.Append("\" data-testid=\"match-page-ssr\" data-match-ssr=\"1\" tabindex=\"-1\" data-progress-format=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Match.DialogProgress"]));
         sb.Append("\" data-toast-liked=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Match.ToastLiked"]));
