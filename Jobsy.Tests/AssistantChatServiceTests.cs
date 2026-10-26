@@ -420,7 +420,7 @@ public class AssistantChatServiceTests
             CancellationToken.None);
 
         Assert.Contains("Kees Kandidaat", result.Reply);
-        Assert.Contains("Open for work", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Beschikbaar voor werk", result.Reply, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(result.Actions, a => a.Url == "/candidate/profile");
     }
 
@@ -716,6 +716,108 @@ public class AssistantChatServiceTests
             Assert.DoesNotContain("@", logged.Message, StringComparison.Ordinal);
             Assert.DoesNotContain("leeg@test.nl", logged.Message, StringComparison.OrdinalIgnoreCase);
         });
+    }
+
+    [Fact]
+    public async Task Kompas_chip_message_wins_over_over_mij_profile_intent()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "kompas@test.local",
+            FullName = "Kompas Test",
+            Role = UserRole.Candidate,
+            OpenForWork = true
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(userId, JobsyRoles.Candidate, "nl", null, "/candidate/kompas", null),
+            [new AssistantChatMessage("user", "Wat zegt mijn Kompas over mij?")],
+            CancellationToken.None);
+
+        Assert.Contains("Kompas", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("reiskaart", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Binnen jouw kandidatenprofiel", result.Reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("—", result.Reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("–", result.Reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", result.Reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Banenkaart_help_mentions_vacancies_and_travel_not_occupations()
+    {
+        await using var db = CreateDb();
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(Guid.NewGuid(), JobsyRoles.Candidate, "nl", null, "/banenkaart", null),
+            [new AssistantChatMessage("user", "Hoe gebruik ik de banenkaart het beste?")],
+            CancellationToken.None);
+
+        Assert.Contains("vacatures", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("reistijd", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("beroepen", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("—", result.Reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Candidate_application_list_uses_dutch_status_labels_without_em_dash()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Test BV",
+            Address = "Straat 1",
+            Type = CompanyType.Employer,
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
+        var vacancyId = Guid.NewGuid();
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacancyId,
+            CompanyId = companyId,
+            Title = "Magazijnmedewerker",
+            Description = "Test",
+            Status = VacancyStatus.Active,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
+            WorkTypes = WorkType.Logistiek,
+            WorkTypeLabels = "Logistiek",
+            Location = new GeoPoint(52, 4)
+        });
+        db.Applications.Add(new Application
+        {
+            Id = Guid.NewGuid(),
+            CandidateUserId = userId,
+            VacancyId = vacancyId,
+            CandidateName = "Test Kandidaat",
+            CandidateEmail = "test@test.local",
+            Status = ApplicationStatus.Hired,
+            EmailVerifiedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(userId, JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "Wat is de status van mijn sollicitaties?")],
+            CancellationToken.None);
+
+        Assert.Contains("Aangenomen", result.Reply, StringComparison.Ordinal);
+        Assert.Contains("bij Test BV", result.Reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("Hired", result.Reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("—", result.Reply, StringComparison.Ordinal);
     }
 
     private static AssistantChatService CreateSut(

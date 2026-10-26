@@ -152,6 +152,16 @@ public sealed class AssistantChatService : IAssistantChatService
         if (string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
         {
             var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+            if (LooksLikeJobMapHelp(text, context.PagePath))
+            {
+                return CandidateJobMapHelp(context);
+            }
+
+            if (LooksLikeKompasHelp(text, context.PagePath))
+            {
+                return CandidateKompasHelp(context);
+            }
+
             if (LooksLikeHowLobsy(text))
             {
                 var lang = JobsyLanguages.Normalize(context.Language);
@@ -457,13 +467,13 @@ public sealed class AssistantChatService : IAssistantChatService
                 sb.AppendLine(lang switch
                 {
                     "en" => $"There are {count} vacancies in this sector overall — the map applies your travel filter.",
-                    _ => $"Er zijn {count} vacatures in deze branche — de kaart past jouw reistijdfilter toe."
+                    _ => $"Er zijn {count} vacatures in deze branche: de kaart past jouw reistijdfilter toe."
                 });
             }
 
             foreach (var m in matches.Take(5))
             {
-                sb.AppendLine($"• {m.Title} — {m.Company}");
+                sb.AppendLine(FormatVacancyBullet(m.Title, m.Company, lang));
             }
         }
         else if (count == 0)
@@ -484,7 +494,7 @@ public sealed class AssistantChatService : IAssistantChatService
 
             foreach (var m in matches)
             {
-                sb.AppendLine($"• {m.Title} — {m.Company}");
+                sb.AppendLine(FormatVacancyBullet(m.Title, m.Company, lang));
             }
 
             if (count > matches.Count)
@@ -658,8 +668,8 @@ public sealed class AssistantChatService : IAssistantChatService
 
         foreach (var a in apps)
         {
-            var status = a.Status.ToString();
-            sb.AppendLine($"• {a.Vacancy.Title} — {a.Vacancy.Company.Name}: {status}");
+            var status = ApplicationStatusLabel(a.Status, lang);
+            sb.AppendLine(FormatApplicationBullet(a.Vacancy.Title, a.Vacancy.Company.Name, status, lang));
             actions.Add(new AssistantChatAction(
                 AssistantActionTypes.OpenApplication,
                 Url: $"/vacancies/{a.VacancyId}",
@@ -710,7 +720,7 @@ public sealed class AssistantChatService : IAssistantChatService
             if (user is not null)
             {
                 sb.AppendLine($"• Naam: {user.FullName}");
-                sb.AppendLine($"• Open for work: {(user.OpenForWork ? "ja" : "nee")}");
+                sb.AppendLine($"• Beschikbaar voor werk: {(user.OpenForWork ? "ja" : "nee")}");
             }
 
             sb.AppendLine($"Activiteit ({periodLabel}):");
@@ -726,7 +736,11 @@ public sealed class AssistantChatService : IAssistantChatService
             sb.AppendLine(lang == "en" ? "Recent applications:" : "Recente sollicitaties:");
             foreach (var a in apps)
             {
-                sb.AppendLine($"• {a.Vacancy.Title} — {a.Vacancy.Company.Name}: {a.Status}");
+                sb.AppendLine(FormatApplicationBullet(
+                    a.Vacancy.Title,
+                    a.Vacancy.Company.Name,
+                    ApplicationStatusLabel(a.Status, lang),
+                    lang));
             }
         }
         else
@@ -1964,8 +1978,104 @@ Verbetervoorstellen:
             "woonplaats", "naam", "name", "wachtwoord", "password");
     }
 
+    private static AssistantChatResult CandidateKompasHelp(AssistantChatContext context)
+    {
+        var lang = JobsyLanguages.Normalize(context.Language);
+        var reply = lang switch
+        {
+            "en" =>
+                "Your Compass is your start profile after onboarding. The travel-map shield has layers from coast to light. "
+                + "You are in the Light phase: four short tests summarised in words, without scores. "
+                + "Directions and your dream job link to your passport and the job map. Open your profile or passport for the full picture.",
+            _ =>
+                "Je Kompas is je startprofiel na onboarding. Het reiskaartschild heeft lagen van kust tot licht. "
+                + "Je zit in de fase Licht · Jouw Kompas: vier korte tests samengevat in woorden, zonder cijfers. "
+                + "Richtingen en je droombaan sluiten aan op je paspoort en de banenkaart. Open je profiel of paspoort voor het volledige plaatje."
+        };
+        return new AssistantChatResult(
+            reply,
+            false,
+            [
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/kompas",
+                    Label: lang == "en" ? "My Compass" : "Mijn Kompas"),
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/paspoort",
+                    Label: lang == "en" ? "My passport" : "Mijn paspoort")
+            ]);
+    }
+
+    private static AssistantChatResult CandidateJobMapHelp(AssistantChatContext context)
+    {
+        var lang = JobsyLanguages.Normalize(context.Language);
+        var reply = lang switch
+        {
+            "en" =>
+                "On the job map you see vacancies nearby, within your travel time. Set your location and travel time, "
+                + "filter by sector or work type, and tap a pin for details. Save what appeals to you and apply from the vacancy.",
+            _ =>
+                "Op de banenkaart zie je vacatures in de buurt, binnen je reistijd. Zet je locatie en reistijd, "
+                + "filter op sector of type werk, en tik op een pin voor details. Bewaar wat je aanspreekt en solliciteer vanuit de vacature."
+        };
+        var mapUrl = string.Equals(context.PagePath, "/banen", StringComparison.OrdinalIgnoreCase)
+            ? "/banen"
+            : "/banenkaart";
+        return new AssistantChatResult(
+            reply,
+            false,
+            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: mapUrl, Label: lang == "en" ? "Job map" : "Banenkaart")]);
+    }
+
+    private static string FormatVacancyBullet(string title, string company, string lang)
+        => lang == "en"
+            ? $"• {title} — {company}"
+            : $"• {title} bij {company}";
+
+    private static string FormatApplicationBullet(string title, string company, string status, string lang)
+        => lang == "en"
+            ? $"• {title} — {company}: {status}"
+            : $"• {title} bij {company}: {status}";
+
+    private static string ApplicationStatusLabel(ApplicationStatus status, string lang)
+    {
+        if (lang == "en")
+        {
+            return status.ToString();
+        }
+
+        return status switch
+        {
+            ApplicationStatus.Pending => "In behandeling",
+            ApplicationStatus.Accepted => "Geaccepteerd",
+            ApplicationStatus.Rejected => "Afgewezen",
+            ApplicationStatus.EmployerContacting => "Werkgever neemt contact op",
+            ApplicationStatus.Hired => "Aangenomen",
+            ApplicationStatus.FilledElsewhere => "Ingevuld elders",
+            ApplicationStatus.Withdrawn => "Ingetrokken",
+            _ => status.ToString()
+        };
+    }
+
+    private static bool IsKompasPage(string? pagePath) =>
+        !string.IsNullOrWhiteSpace(pagePath)
+        && (pagePath.StartsWith("/candidate/kompas", StringComparison.OrdinalIgnoreCase)
+            || pagePath.StartsWith("/candidate/start/kompas", StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsJobMapPage(string? pagePath) =>
+        string.Equals(pagePath, "/banenkaart", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(pagePath, "/banen", StringComparison.OrdinalIgnoreCase);
+
+    private static bool LooksLikeKompasHelp(string text, string? pagePath) =>
+        ContainsAny(text, "kompas", "compass")
+        || (IsKompasPage(pagePath)
+            && ContainsAny(text, "over mij", "about me", "uitleg", "leg uit", "wat zegt", "explain"));
+
+    private static bool LooksLikeJobMapHelp(string text, string? pagePath) =>
+        ContainsAny(text, "banenkaart", "job map", "banen kaart")
+        || (IsJobMapPage(pagePath)
+            && ContainsAny(text, "hoe gebruik", "how do i use", "hoe werkt", "how does", "uitleg", "beste"));
+
     private static bool LooksLikeHowLobsy(string text) =>
-        ContainsAny(text, "hoe werkt", "how does lobsy", "how lobsy", "uitleg", "how to use");
+        !ContainsAny(text, "banenkaart", "job map")
+        && ContainsAny(text, "hoe werkt", "how does lobsy", "how lobsy", "uitleg", "how to use");
 
     private static bool LooksLikeApplicationStatus(string text) =>
         ContainsAny(text, "sollicitatie", "application status", "mijn sollicitat", "status van mijn", "my application");
@@ -2342,7 +2452,8 @@ Verbetervoorstellen:
             "voor mij doen", "wie ben ik", "who am i");
 
     private static bool LooksLikeCandidateProfile(string text) =>
-        ContainsAny(text,
+        !ContainsAny(text, "kompas", "compass")
+        && ContainsAny(text,
             "mijn profiel", "my profile", "binnen mijn", "in mijn account", "over mij", "about me",
             "open for work", "mijn gegevens", "my details", "wat staat er in mijn", "alles over mijn");
 
