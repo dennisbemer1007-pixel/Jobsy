@@ -40,9 +40,9 @@ public static class AfterMatchDemoIds
             _ when applicationId == Verkoop4790App => "Verkoopmedewerker",
             _ when applicationId == PickSlotsApp => "Hulp bakker",
             _ when applicationId == ScheduledApp => "Medewerker bakkerij",
-            _ when applicationId == RescheduleApp => "Medewerker bakkerij · verzet",
-            _ when applicationId == WaitApp => "Medewerker bakkerij · wacht",
-            _ when applicationId == NotNowApp => "Medewerker bakkerij · uitkomst",
+            _ when applicationId == RescheduleApp => "Broodmedewerker",
+            _ when applicationId == WaitApp => "Medewerker bakkerij",
+            _ when applicationId == NotNowApp => "Chef-konditor",
             _ => "Medewerker bakkerij",
         };
 

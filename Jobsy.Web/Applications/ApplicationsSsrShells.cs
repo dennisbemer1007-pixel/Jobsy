@@ -686,23 +686,11 @@ internal static class ApplicationsSsrShells
             sb.Append(MockupTimelineIcon(step.Key));
             sb.Append("</i>");
             sb.Append(WebUtility.HtmlEncode(step.Label));
-            if (step.OccurredAtUtc is DateTime at)
+            var subtitle = AfterMatchSollicitatiesPresentation.FormatTimelineStepSubtitle(culture, step);
+            if (!string.IsNullOrEmpty(subtitle))
             {
                 sb.Append("<small>");
-                sb.Append(WebUtility.HtmlEncode(FormatTimelineDate(culture, at, step)));
-                sb.Append("</small>");
-            }
-            else if (string.Equals(step.State, "Current", StringComparison.OrdinalIgnoreCase))
-            {
-                sb.Append("<small>");
-                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Timeline.Now"]));
-                sb.Append("</small>");
-            }
-            else if (string.Equals(step.Key, "Outcome", StringComparison.OrdinalIgnoreCase)
-                     && string.Equals(step.State, "Upcoming", StringComparison.OrdinalIgnoreCase))
-            {
-                sb.Append("<small>");
-                sb.Append(WebUtility.HtmlEncode(culture["Kb.Timeline.AfterInterview"]));
+                sb.Append(WebUtility.HtmlEncode(subtitle));
                 sb.Append("</small>");
             }
 

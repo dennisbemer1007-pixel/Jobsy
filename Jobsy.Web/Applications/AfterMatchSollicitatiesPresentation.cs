@@ -145,17 +145,13 @@ internal static class AfterMatchSollicitatiesPresentation
                 continue;
             }
 
-            if (step.OccurredAtUtc is DateTime at)
+            var subtitle = FormatTimelineStepSubtitle(culture, step);
+            if (subtitle is null)
             {
-                var dateText = string.Equals(step.Key, "Interview", StringComparison.OrdinalIgnoreCase)
-                    ? ApplicationsSsrData.FormatShortDateTime(culture, at)
-                    : ApplicationsSsrData.FormatShortDate(culture, at);
-                segments.Add($"{step.Label} {dateText}");
+                continue;
             }
-            else if (string.Equals(step.State, "Current", StringComparison.OrdinalIgnoreCase))
-            {
-                segments.Add($"{step.Label} {culture["AfterMatch.Timeline.Now"]}");
-            }
+
+            segments.Add($"{step.Label} {subtitle}");
 
             if (segments.Count >= 2)
             {
@@ -164,6 +160,29 @@ internal static class AfterMatchSollicitatiesPresentation
         }
 
         return segments.Count == 0 ? null : string.Join(", ", segments);
+    }
+
+    internal static string? FormatTimelineStepSubtitle(CultureState culture, SollicitationTimelineStep step)
+    {
+        if (string.Equals(step.State, "Current", StringComparison.OrdinalIgnoreCase))
+        {
+            return culture["AfterMatch.Timeline.Now"];
+        }
+
+        if (step.OccurredAtUtc is DateTime at)
+        {
+            return string.Equals(step.Key, "Interview", StringComparison.OrdinalIgnoreCase)
+                ? ApplicationsSsrData.FormatShortDateTime(culture, at)
+                : ApplicationsSsrData.FormatShortDate(culture, at);
+        }
+
+        if (string.Equals(step.Key, "Outcome", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(step.State, "Upcoming", StringComparison.OrdinalIgnoreCase))
+        {
+            return culture["Kb.Timeline.AfterInterview"];
+        }
+
+        return null;
     }
 
     internal static IReadOnlyList<SollicitationTimelineStep> BuildAfterMatchTimeline(
@@ -175,15 +194,15 @@ internal static class AfterMatchSollicitatiesPresentation
             return [];
         }
 
-        var yesAt = summary.AcceptedAtUtc;
+        var yesAt = summary.RespondedAtUtc ?? summary.AcceptedAtUtc;
         DateTime? planAt = yesAt;
         if (status == InterviewStatus.Proposing && summary.OpenSlotCount > 0)
         {
-            planAt = summary.LastMessageAtUtc ?? yesAt;
+            planAt = null;
         }
         else if (status == InterviewStatus.RescheduleRequested)
         {
-            planAt = summary.LastMessageAtUtc ?? yesAt;
+            planAt = null;
         }
         else if (status == InterviewStatus.Scheduled)
         {
@@ -229,6 +248,7 @@ internal sealed record ApplicationAfterMatchSummary(
     DateTime? ScheduledStartUtc,
     DateTime? ScheduledEndUtc,
     DateTime? AcceptedAtUtc,
+    DateTime? RespondedAtUtc,
     string? LastMessagePreview,
     bool LastMessageFromCandidate,
     DateTime? LastMessageAtUtc,
