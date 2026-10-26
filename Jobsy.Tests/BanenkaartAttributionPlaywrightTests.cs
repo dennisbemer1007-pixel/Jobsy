@@ -93,6 +93,20 @@ public sealed class BanenkaartAttributionPlaywrightTests : IAsyncLifetime
 
         Assert.True(probe.Ok, System.Text.Json.JsonSerializer.Serialize(probe));
         Assert.True(probe.Width >= 24 && probe.Height >= 24, System.Text.Json.JsonSerializer.Serialize(probe));
+
+        if (width >= 768)
+        {
+            var legend = await page.EvaluateAsync<LegendProbe>(
+                """
+                () => {
+                  const el = document.querySelector('[data-testid=kb-map-legend]');
+                  if (!el) return { ok: false, reason: 'missing-legend' };
+                  const r = el.getBoundingClientRect();
+                  return { ok: r.width >= 200 && r.height >= 120 && r.height <= 280, width: r.width, height: r.height };
+                }
+                """);
+            Assert.True(legend.Ok, System.Text.Json.JsonSerializer.Serialize(legend));
+        }
     }
 
     [Fact]
@@ -130,6 +144,14 @@ public sealed class BanenkaartAttributionPlaywrightTests : IAsyncLifetime
             null,
             new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
+    }
+
+    private sealed class LegendProbe
+    {
+        public bool Ok { get; set; }
+        public string Reason { get; set; } = "";
+        public double Width { get; set; }
+        public double Height { get; set; }
     }
 
     private sealed class AttribProbe

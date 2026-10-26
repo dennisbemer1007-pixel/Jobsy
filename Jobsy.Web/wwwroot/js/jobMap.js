@@ -4231,14 +4231,28 @@ window.jobMap = (function () {
             "&lng=" + encodeURIComponent(lng) +
             "&mode=" + encodeURIComponent(mode) +
             "&minutes=" + encodeURIComponent(minutes.join(","));
-        isochroneCache[key] = fetch(url, {
+        const isoOpts = {
             credentials: "same-origin",
             headers: { Accept: "application/geo+json, application/json" }
-        }).then(function (res) {
-            if (!res.ok) {
+        };
+        function fetchIsoOnce() {
+            return fetch(url, isoOpts);
+        }
+        isochroneCache[key] = fetchIsoOnce().then(function (res) {
+            if (res.ok) {
+                return res.json();
+            }
+            if (!isRetryableStatus(res.status)) {
                 return null;
             }
-            return res.json();
+            return sleepMs(retryAfterMs(res)).then(function () {
+                return fetchIsoOnce().then(function (retryRes) {
+                    if (!retryRes.ok) {
+                        return null;
+                    }
+                    return retryRes.json();
+                });
+            });
         }).then(function (fc) {
             if (!fc || !Array.isArray(fc.features) || !fc.features.length) {
                 return null;
@@ -4632,9 +4646,7 @@ window.jobMap = (function () {
             }
             if (!fc) {
                 if (lagenLayout) {
-                    clearTravelRings();
-                    lastRingDrawKey = ringKey;
-                    setIsoMode("none");
+                    setIsoMode("approx");
                 } else {
                     try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
                     setIsoMode("approx");
@@ -4644,9 +4656,7 @@ window.jobMap = (function () {
             const isoFeatures = featuresFromIsochroneFc(fc);
             if (!isoFeatures.length) {
                 if (lagenLayout) {
-                    clearTravelRings();
-                    lastRingDrawKey = ringKey;
-                    setIsoMode("none");
+                    setIsoMode("approx");
                 } else {
                     setIsoMode("approx");
                 }
@@ -4659,14 +4669,6 @@ window.jobMap = (function () {
 
         function loadIsochronesWhenIdle() {
             fetchIsochrones(lat, lng).then(applyIsochroneFc);
-        }
-
-        if (lagenLayout) {
-            clearTravelRings();
-            lastRingDrawKey = ringKey;
-            setIsoMode("pending");
-            scheduleIsoLoad(loadIsochronesWhenIdle);
-            return;
         }
 
         // Circles first, swap isochrones when they arrive (no flash).
@@ -5037,8 +5039,9 @@ window.jobMap = (function () {
             return;
         }
         attrib.classList.add("maplibregl-compact");
-        if (isNarrowViewport()) {
+        if (isNarrowViewport() && attrib.dataset.jobsyCompactInit !== "1") {
             attrib.classList.remove("maplibregl-compact-show");
+            attrib.dataset.jobsyCompactInit = "1";
         }
     }
 
