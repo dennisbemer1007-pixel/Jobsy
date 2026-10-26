@@ -69,6 +69,17 @@ public static class EmployerApplicationFacts
 
                     return rows;
                 }
+
+                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    var readable = ApplicationPreferenceRedaction.ToHumanReadable(summary);
+                    if (!string.IsNullOrWhiteSpace(readable))
+                    {
+                        rows.Add(new Row("Voorkeur", readable, true));
+                    }
+
+                    return rows;
+                }
             }
             catch (JsonException)
             {

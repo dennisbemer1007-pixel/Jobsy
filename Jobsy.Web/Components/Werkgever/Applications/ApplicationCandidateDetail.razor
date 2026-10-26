@@ -53,7 +53,7 @@
 
     @if (Item is not null)
     {
-        <WgAppPhase2AcceptPanel ApplicationId="Item.Id"
+        <WgAppPhase2AcceptPanel ApplicationId="@Item.Id"
                                 CanWrite="CanWritePhase2"
                                 OnChanged="OnPhase2Changed"
                                 OnAcceptUiAvailable="OnPhase2AcceptUiChanged" />
