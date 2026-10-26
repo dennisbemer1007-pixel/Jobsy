@@ -15,7 +15,8 @@ internal static class AfterMatchDemoSeeder
     private static readonly Guid BranchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
     private static readonly Guid PrimaryCandidateId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
 
-    private static readonly DateTime YesAt = new(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc);
+    private static DateTime DemoYesAtUtc() =>
+        DateTime.UtcNow.Date.AddDays(-2).AddHours(10);
 
     private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid CafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -66,9 +67,16 @@ internal static class AfterMatchDemoSeeder
             });
         }
 
-        if (!await db.UserCompanies.AnyAsync(m => m.UserId == BranchManagerId && m.CompanyId == DemoCompanyId))
+        // ondernemer@jobsy.local (BranchManager) must access Den Haag Centrum / Westland demo apps.
+        if (!await db.UserCompanies.AnyAsync(m => m.UserId == BranchManagerId && m.CompanyId == WestlandId))
         {
-            db.UserCompanies.Add(new UserCompany { UserId = BranchManagerId, CompanyId = DemoCompanyId });
+            db.UserCompanies.Add(new UserCompany { UserId = BranchManagerId, CompanyId = WestlandId });
+        }
+
+        var branchManager = await db.Users.FirstOrDefaultAsync(u => u.Id == BranchManagerId);
+        if (branchManager is not null && branchManager.CompanyId != WestlandId)
+        {
+            branchManager.CompanyId = WestlandId;
         }
 
         await db.SaveChangesAsync();
@@ -76,7 +84,8 @@ internal static class AfterMatchDemoSeeder
 
     private static async Task EnsureDemoVacanciesAsync(JobsyDbContext db)
     {
-        var start = DateOnly.FromDateTime(YesAt);
+        var yesAt = DemoYesAtUtc();
+        var start = DateOnly.FromDateTime(yesAt);
         var appIds = new[]
         {
             AfterMatchDemoIds.WaitApp,
@@ -109,8 +118,8 @@ internal static class AfterMatchDemoSeeder
                 EndDate = start.AddMonths(6),
                 Status = VacancyStatus.Active,
                 Location = new GeoPoint(52.0780, 4.3100),
-                PublishedAtUtc = YesAt.AddDays(-7),
-                CreatedAtUtc = YesAt.AddDays(-14)
+                PublishedAtUtc = yesAt.AddDays(-7),
+                CreatedAtUtc = yesAt.AddDays(-14)
             });
         }
 
@@ -177,7 +186,8 @@ internal static class AfterMatchDemoSeeder
         bool hasMessage,
         AfterMatchOutcomeKind? outcome = null)
     {
-        await UpsertAppAsync(db, candidateUserId, appId, interviewStatus, scenario, hasMessage, outcome);
+        var yesAt = DemoYesAtUtc();
+        await UpsertAppAsync(db, candidateUserId, appId, interviewStatus, scenario, hasMessage, outcome, yesAt);
         await db.SaveChangesAsync();
         if (scenario is "scheduled" or "scheduled4790" or "reschedule")
         {
@@ -211,8 +221,10 @@ internal static class AfterMatchDemoSeeder
         InterviewStatus interviewStatus,
         string? scenario,
         bool hasMessage,
-        AfterMatchOutcomeKind? outcome = null)
+        AfterMatchOutcomeKind? outcome = null,
+        DateTime? yesAtUtc = null)
     {
+        var yesAt = yesAtUtc ?? DemoYesAtUtc();
         var app = await db.Applications
             .Include(a => a.Vacancy)
             .FirstOrDefaultAsync(a => a.Id == appId);
@@ -231,9 +243,9 @@ internal static class AfterMatchDemoSeeder
                 EstimatedTravelMinutes = 9,
                 DistanceKm = 2.1,
                 Status = ApplicationStatus.Accepted,
-                CreatedAt = YesAt.AddDays(-2),
-                RespondedAt = YesAt,
-                EmailVerifiedAt = YesAt
+                CreatedAt = yesAt.AddDays(-2),
+                RespondedAt = yesAt,
+                EmailVerifiedAt = yesAt
             };
             db.Applications.Add(app);
             db.ApplicationStatusHistories.Add(new ApplicationStatusHistory
@@ -243,13 +255,16 @@ internal static class AfterMatchDemoSeeder
                 Kind = ApplicationStatusEventKind.StatusChanged,
                 FromStatus = ApplicationStatus.Pending,
                 ToStatus = ApplicationStatus.Accepted,
-                OccurredAtUtc = YesAt,
+                OccurredAtUtc = yesAt,
                 ActorKind = ApplicationStatusActorKind.Employer
             });
         }
         else
         {
             app.CandidateUserId = candidateUserId;
+            app.CreatedAt = yesAt.AddDays(-2);
+            app.RespondedAt = yesAt;
+            app.EmailVerifiedAt = yesAt;
         }
 
         var candidateUser = await db.Users.AsNoTracking()
@@ -284,8 +299,8 @@ internal static class AfterMatchDemoSeeder
                 Id = Guid.NewGuid(),
                 ApplicationId = appId,
                 CalendarUid = $"demo-interview-{appId:N}@lobsy.nl",
-                CreatedAtUtc = YesAt,
-                UpdatedAtUtc = YesAt,
+                CreatedAtUtc = yesAt,
+                UpdatedAtUtc = yesAt,
                 Format = InterviewFormat.OnSite,
                 LocationOrLink = "Loosduinseweg 120, Den Haag",
                 WithWhom = "Linda de Wit, eigenaar",
@@ -392,7 +407,7 @@ internal static class AfterMatchDemoSeeder
                     ApplicationId = appId,
                     SenderUserId = BranchManagerId,
                     Body = "Hoi Sanne, leuk dat je wilt komen kennismaken! Ik stuur je vandaag nog een paar momenten.",
-                    CreatedAtUtc = YesAt.AddHours(3),
+                    CreatedAtUtc = yesAt.AddHours(3),
                     BlockReason = ApplicationMessageBlockReason.None
                 });
             }
