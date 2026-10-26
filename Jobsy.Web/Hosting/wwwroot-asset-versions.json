@@ -16,8 +16,8 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "59fb31ea0bf402d3d9d20673713449468369a55c5f84cd7cda011db43b7387fd",
-    "v": "20261025-kreeft11"
+    "sha256": "24426f6eb269be525fb08b97b6b4af39362f631f54ae4ad90359d063a743e715",
+    "v": "20261026-kreeft20"
   },
   "css/critical.css": {
     "sha256": "3fd011f562fc141dac6c59c33aa57a2766d8e4f727f8249dbc93cae254ffc2c8",
@@ -48,8 +48,8 @@
     "sha256": "826bcdacf4825fd899fb54e4ff34e240bafcd97d8228caaabefbd4700e7a085c"
   },
   "css/features/banenkaart-lagen.css": {
-    "v": "20261025-kreeft12",
-    "sha256": "1a9fd99dcb0e5bf933dbced87154b849658ec3110b3b2833a9893fa298b58db9"
+    "v": "20261026-kreeft20",
+    "sha256": "1d9a8db0507dd08cf0209048f56f5308aad158ccd0e098a602e474d95796e3fb"
   },
   "css/features/banenkaart-page.css": {
     "v": "20261025-kreeft12",
@@ -164,12 +164,12 @@
     "v": "20261018-01"
   },
   "css/features/lobsy-assistant-panel.css": {
-    "v": "20261026-kreeft19",
-    "sha256": "09e6fb14ccd5173e0c475528863c6dd4293813ece1f15dff07591561c2b7296a"
+    "v": "20261026-kreeft20",
+    "sha256": "dec1ecfc536f763654cc884a261c5325465bcda6c7292b91226ab9ce8e413a12"
   },
   "css/features/lobsy-coach-pill.css": {
-    "v": "20261025-kreeft13",
-    "sha256": "8a48bb649cc3da87e72ae358f790449e5694f16270f5772d8164133975ca8ace"
+    "v": "20261026-kreeft20",
+    "sha256": "f9e0b4084fd5316b964d613c07938ea0ede42d0fbcca94aebd79aeda81519ca1"
   },
   "css/features/match-desktop.css": {
     "sha256": "bf9760ca115f0730a129fcae7aaf97c78ff1ec780b316f29d700ec7b05a26fc0",
@@ -388,8 +388,8 @@
     "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261024-mobilewagetip11",
-    "sha256": "42e4646c963b399f64f3f62314ec20605dde9345aa9a8de12be867c582fa3a42"
+    "v": "20261026-kreeft20",
+    "sha256": "5683f6d0a4bec92db2c7d9927d6126f1648dc475909797b2483358670d25a4f0"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "050ef0e22ebbb005b95e20a251be2ea90c326a6802436f1ed7d29bfbf1109960",
@@ -436,8 +436,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261024-mobilewagetip11",
-    "sha256": "186f82175163fd4610db1f6302ed15c2022cd1503ea51083f80f8f84f5a2cb68"
+    "v": "20261026-kreeft20",
+    "sha256": "d3ce02329af492407608e8ad264aef4aab79e4312e160edb2af6a81a84b2a8c8"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
@@ -460,8 +460,8 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "v": "20261026-kreeft19",
-    "sha256": "5684f28c1e7630a863cb4698ae3cd7b66dc0bfc86ebc820fee4e6f76c5a3dfe5"
+    "v": "20261026-kreeft20",
+    "sha256": "7b825f459a4c197a0e7191a8a54324d9b4f0b862d755532b1320d3589f4d1178"
   },
   "js/lobsyPush.js": {
     "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",

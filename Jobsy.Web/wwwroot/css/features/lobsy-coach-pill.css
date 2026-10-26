@@ -120,6 +120,12 @@
 }
 
 @media (max-width: 1023px) {
+  .lobsy-coach-dock--chat-open[data-lobsy-coach],
+  .lobsy-coach-dock--chat-open[data-ssr-coach] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .lobsy-coach-dock[data-lobsy-coach],
   .lobsy-coach-dock[data-ssr-coach] {
     inset-inline-end: 14px;

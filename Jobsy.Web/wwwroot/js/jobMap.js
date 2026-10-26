@@ -5034,12 +5034,9 @@ window.jobMap = (function () {
         if (!attrib) {
             return;
         }
+        attrib.classList.add("maplibregl-compact");
         if (isNarrowViewport()) {
-            attrib.classList.add("maplibregl-compact");
             attrib.classList.remove("maplibregl-compact-show");
-        } else {
-            attrib.classList.remove("maplibregl-compact");
-            attrib.classList.add("maplibregl-compact-show");
         }
     }
 
