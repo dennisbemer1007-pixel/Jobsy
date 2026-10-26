@@ -481,6 +481,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Reschedule.ReasonLineFmt", "Reden: {0}", "Reason: {0}");
         Add("AfterMatch.Employer.Reschedule.ProposalLineFmt", "Voorstel: {0} {1}", "Proposal: {0} {1}");
         Add("AfterMatch.Employer.Reschedule.OwnSlotHint", "(een van je eigen momenten)", "(one of your own times)");
+        Add("AfterMatch.Employer.Reschedule.EmployerSlotHint", "(jouw voorgestelde moment)", "(your proposed time slot)");
         Add("AfterMatch.Employer.Reschedule.CancelLink", "Gesprek afzeggen", "Cancel interview");
         Add("AfterMatch.Employer.Reschedule.Footnote",
             "Zeg je zelf af of verzet je? Dan vraagt Lobsy ook jou om een korte reden. De kandidaat ziet die reden.",

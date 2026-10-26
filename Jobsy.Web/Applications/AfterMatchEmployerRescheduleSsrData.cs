@@ -36,6 +36,13 @@ internal static class AfterMatchEmployerRescheduleSsrData
             }
         }
 
+        if (candidateSlot is null
+            && thread.InterviewStatus == InterviewStatus.RescheduleRequested)
+        {
+            candidateSlot = thread.OpenSlots.FirstOrDefault(s =>
+                s is { IsSelected: true, ProposedBy: InterviewSlotProposer.Employer });
+        }
+
         if (candidateSlot is null && applicationId == RescheduleDemoApp)
         {
             var demoStart = Jobsy.Core.Time.AmsterdamTime.ToUtc(
@@ -63,7 +70,9 @@ internal static class AfterMatchEmployerRescheduleSsrData
             ? string.Format(
                 culture["AfterMatch.Employer.Reschedule.ProposalLineFmt"],
                 FormatSlotLong(candidateSlot),
-                culture["AfterMatch.Employer.Reschedule.OwnSlotHint"])
+                candidateSlot.ProposedBy == InterviewSlotProposer.Employer
+                    ? culture["AfterMatch.Employer.Reschedule.EmployerSlotHint"]
+                    : culture["AfterMatch.Employer.Reschedule.OwnSlotHint"])
             : "";
 
         var warningLines = new List<string>();
