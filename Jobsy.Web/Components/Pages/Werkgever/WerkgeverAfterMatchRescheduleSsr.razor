@@ -82,7 +82,7 @@ else if (_bodyHtml is not null)
                 return;
             }
 
-            _candidateName = thread.CandidateName;
+            _candidateName = AfterMatchEmployerEmployerPresentation.CandidateDisplayName(thread);
             var data = AfterMatchEmployerRescheduleSsrData.FromThread(Culture, thread, ApplicationId);
             var proposeData = new AfterMatchEmployerPanelSsrShells.PageData(
                 thread,
