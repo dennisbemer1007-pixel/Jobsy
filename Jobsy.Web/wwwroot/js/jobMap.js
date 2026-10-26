@@ -29,6 +29,7 @@ window.jobMap = (function () {
     let ringRedrawBound = false;
     let ringStyleHandlerBound = false;
     let ringRedrawTries = 0;
+    let ringIdleRetryCount = 0;
     let deferMapReveal = false;
     let kkMode = false;
     let companyMapMode = false;
@@ -4157,11 +4158,11 @@ window.jobMap = (function () {
     }
 
     function scheduleTravelRingRedraw() {
-        if (!map || ringRedrawBound || ringRedrawTries >= 12) {
+        if (!map || ringRedrawBound || ringIdleRetryCount >= 12) {
             return;
         }
         ringRedrawBound = true;
-        ringRedrawTries += 1;
+        ringIdleRetryCount += 1;
         map.once("idle", function () {
             ringRedrawBound = false;
             if (lastOrigin) {
@@ -4584,6 +4585,7 @@ window.jobMap = (function () {
             const ids = ensureTravelRingLayers(sourceId);
             travelRingGeo = { sourceId: sourceId, ids: ids };
             ringRedrawTries = 0;
+            ringIdleRetryCount = 0;
             placeTravelRingLabels(lat, lng, features);
             try {
                 const pinSrc = map.getSource(PIN_SOURCE);
