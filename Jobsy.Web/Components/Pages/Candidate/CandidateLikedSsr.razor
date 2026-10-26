@@ -21,15 +21,6 @@
 @inject AuthenticationStateProvider AuthState
 
 <PageTitle>@Culture["Kb.Saved.Title"] · Lobsy</PageTitle>
-<HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/candidate/liked"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/candidate-hero-compact-preview.css?v=20261022-saved" />
-</HeadContent>
 
 @if (_loading)
 {

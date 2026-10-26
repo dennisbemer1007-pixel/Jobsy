@@ -17,15 +17,6 @@
 @inject IUwvKansberoepenCatalog KansCatalog
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
-<HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/carriere"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-</HeadContent>
-
 @if (_loading)
 {
     <PageContentSkeleton Variant="profile" LoadingLabel="@Culture["Common.Loading"]" />

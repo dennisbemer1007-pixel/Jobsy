@@ -226,6 +226,14 @@
     })
       .then(function (data) {
         state.messages.push({ role: "assistant", content: data.reply || "" });
+        var ctx = document.querySelector("[data-ssr-assistant-context]");
+        if (ctx && data.pageContextLine) {
+          ctx.textContent = data.pageContextLine;
+          ctx.hidden = false;
+        }
+        if (data.chips && data.chips.length) {
+          renderChips(data.chips);
+        }
       })
       .catch(function () {
         state.messages.pop();
@@ -249,7 +257,7 @@
           return;
         }
         setOpen(true);
-        if (!state.started) showLocalGreeting();
+        if (!state.started) startChat();
         return;
       }
 

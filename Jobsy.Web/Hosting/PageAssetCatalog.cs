@@ -26,110 +26,110 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
-        "css/tokens.css?v=20261018-06",
+        WwwrootAssetCatalog.Url("css/tokens.css"),
         WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css"),
         WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
         WwwrootAssetCatalog.Url("css/app.min.css"),
-        "css/features/stijl-a.css?v=20261018-03",
-        "css/features/form-fields.css?v=20261019-01",
-        "css/features/candidate-illustrated-decorative-layers.css?v=20261020-01",
-        "css/features/nav-feedback.css?v=20261017-01",
-        "css/features/candidate-header-tablet.css?v=20261021-01",
+        WwwrootAssetCatalog.Url("css/features/stijl-a.css"),
+        WwwrootAssetCatalog.Url("css/features/form-fields.css"),
+        WwwrootAssetCatalog.Url("css/features/candidate-illustrated-decorative-layers.css"),
+        WwwrootAssetCatalog.Url("css/features/nav-feedback.css"),
+        WwwrootAssetCatalog.Url("css/features/candidate-header-tablet.css"),
     ];
 
     public static readonly string[] CandidatePublicCss =
     [
-        "css/features/banenkaart.css?v=20261019-01",
+        WwwrootAssetCatalog.Url("css/features/banenkaart.css"),
         WwwrootAssetCatalog.Url("css/features/banenkaart-illustrated.css"),
-        "css/features/bedrijvenkaart.css?v=20261019-10",
-        "css/features/candidate-illustrated-app.css?v=20261018-91",
-        "css/features/kandidaat-banen.css?v=20261019-01",
-        "css/features/match-desktop.css?v=20261018-02",
-                "css/features/applications.css?v=20261024-apps720-scope3",
-        "css/features/kb-external-vacancy.css?v=20261011-03",
+        WwwrootAssetCatalog.Url("css/features/bedrijvenkaart.css"),
+        WwwrootAssetCatalog.Url("css/features/candidate-illustrated-app.css"),
+        WwwrootAssetCatalog.Url("css/features/kandidaat-banen.css"),
+        WwwrootAssetCatalog.Url("css/features/match-desktop.css"),
+                WwwrootAssetCatalog.Url("css/features/applications.css"),
+        WwwrootAssetCatalog.Url("css/features/kb-external-vacancy.css"),
     ];
 
     private static readonly string[] UwvMockupRouteCss =
     [
-        "css/features/uwv-mockups.css?v=20261019-r8",
-        "css/features/banenkaart.css?v=20261018-02",
+        WwwrootAssetCatalog.Url("css/features/uwv-mockups.css"),
+        WwwrootAssetCatalog.Url("css/features/banenkaart.css"),
         WwwrootAssetCatalog.Url("css/features/banenkaart-illustrated.css"),
     ];
 
     public static readonly string[] CandidateAppCss =
     [
-        "css/features/notifications.css?v=20261017-14",
-        "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/onboarding-wizard.css?v=20261018-02",
-        "css/features/onboarding-illustrated-step.css?v=20261019-r24",
-        "css/features/onboarding-test-blocks.css?v=20261018-r2",
-        "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
-        "css/features/onboarding-wizard-richting-a.css?v=20261019-r25",
-        "css/features/onboarding-work-history.css?v=20261018-08",
-        "css/features/questionnaire.css?v=20261004-10",
-        "css/features/mijn-dna.css?v=20261004-10",
-        "css/features/gratis-dna.css?v=20261004-10",
-        "css/features/kandidaatinzichten.css?v=20261004-10",
-        "css/features/testresultaten.css?v=20261019-r5billus",
-        "css/features/mijn-paspoort.css?v=20261018-06",
-        "css/features/kompas-illustrated.css?v=20261022-passport-mobile",
-        "css/features/reference-verification-hero.css?v=20261018-16",
-        "css/features/reference-verification.css?v=20261018-16",
-        "css/features/ontdekkingsreis.css?v=20261023-mobile-circle",
-        "css/features/tests.css?v=20261020-r8",
-        "css/features/candidate-illustrated-app.css?v=20261018-91",
-        "css/features/carriere.css?v=20261028-carriere-hero1",
-        "css/features/opleidingen.css?v=20261018-r12",
-        "css/features/occupation-day.css?v=20261005-23",
-        "css/features/honest-advice.css?v=20261005-07",
-        "css/features/future-jobs.css?v=20261006-02",
-        "css/features/proactive-matching.css?v=20261012-03",
-        "css/features/candidate-hub.css?v=20261012-01",
-        "css/features/na-de-match.css?v=20261024-ndm-pick-slot2",
+        WwwrootAssetCatalog.Url("css/features/notifications.css"),
+        WwwrootAssetCatalog.Url("css/features/choice-tiles.css"),
+        WwwrootAssetCatalog.Url("css/features/onboarding-wizard.css"),
+        WwwrootAssetCatalog.Url("css/features/onboarding-illustrated-step.css"),
+        WwwrootAssetCatalog.Url("css/features/onboarding-test-blocks.css"),
+        WwwrootAssetCatalog.Url("css/features/onboarding-wizard-mobile-bar.css"),
+        WwwrootAssetCatalog.Url("css/features/onboarding-wizard-richting-a.css"),
+        WwwrootAssetCatalog.Url("css/features/onboarding-work-history.css"),
+        WwwrootAssetCatalog.Url("css/features/questionnaire.css"),
+        WwwrootAssetCatalog.Url("css/features/mijn-dna.css"),
+        WwwrootAssetCatalog.Url("css/features/gratis-dna.css"),
+        WwwrootAssetCatalog.Url("css/features/kandidaatinzichten.css"),
+        WwwrootAssetCatalog.Url("css/features/testresultaten.css"),
+        WwwrootAssetCatalog.Url("css/features/mijn-paspoort.css"),
+        WwwrootAssetCatalog.Url("css/features/kompas-illustrated.css"),
+        WwwrootAssetCatalog.Url("css/features/reference-verification-hero.css"),
+        WwwrootAssetCatalog.Url("css/features/reference-verification.css"),
+        WwwrootAssetCatalog.Url("css/features/ontdekkingsreis.css"),
+        WwwrootAssetCatalog.Url("css/features/tests.css"),
+        WwwrootAssetCatalog.Url("css/features/candidate-illustrated-app.css"),
+        WwwrootAssetCatalog.Url("css/features/carriere.css"),
+        WwwrootAssetCatalog.Url("css/features/opleidingen.css"),
+        WwwrootAssetCatalog.Url("css/features/occupation-day.css"),
+        WwwrootAssetCatalog.Url("css/features/honest-advice.css"),
+        WwwrootAssetCatalog.Url("css/features/future-jobs.css"),
+        WwwrootAssetCatalog.Url("css/features/proactive-matching.css"),
+        WwwrootAssetCatalog.Url("css/features/candidate-hub.css"),
+        WwwrootAssetCatalog.Url("css/features/na-de-match.css"),
     ];
 
     public static readonly string[] WerkgeverCss =
     [
-        "css/features/notifications.css?v=20261017-14",
-        "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/werkgever.css?v=20261017-19",
-        "css/features/vacancy-wizard.css?v=20261017-02",
-        "css/features/werkgever-aanmelding.css?v=20261016-06",
-        "css/features/enterprise-ui.css?v=20261004-10",
-        "css/features/na-de-match.css?v=20261024-ndm-pick-slot2",
+        WwwrootAssetCatalog.Url("css/features/notifications.css"),
+        WwwrootAssetCatalog.Url("css/features/choice-tiles.css"),
+        WwwrootAssetCatalog.Url("css/features/werkgever.css"),
+        WwwrootAssetCatalog.Url("css/features/vacancy-wizard.css"),
+        WwwrootAssetCatalog.Url("css/features/werkgever-aanmelding.css"),
+        WwwrootAssetCatalog.Url("css/features/enterprise-ui.css"),
+        WwwrootAssetCatalog.Url("css/features/na-de-match.css"),
     ];
 
     public static readonly string[] KandidatenkaartCss =
     [
-        "css/features/kandidaatinzichten.css?v=20261004-10",
-        "css/features/kandidatenkaart.css?v=20261018-22",
+        WwwrootAssetCatalog.Url("css/features/kandidaatinzichten.css"),
+        WwwrootAssetCatalog.Url("css/features/kandidatenkaart.css"),
     ];
 
     public static readonly string[] BeheerCss =
     [
-        "css/features/admin.css?v=20261018-11",
-        "css/features/enterprise-ui.css?v=20261004-10",
+        WwwrootAssetCatalog.Url("css/features/admin.css"),
+        WwwrootAssetCatalog.Url("css/features/enterprise-ui.css"),
     ];
 
     public static readonly string[] SalesCss =
     [
-        "css/features/sales.css?v=20261004-10",
+        WwwrootAssetCatalog.Url("css/features/sales.css"),
     ];
 
     public static readonly string[] SchoolCss =
     [
-        "css/features/scholen.css?v=20261004-14",
+        WwwrootAssetCatalog.Url("css/features/scholen.css"),
     ];
 
     public static readonly string[] AccountCss =
     [
-        "css/features/account-mfa.css?v=20261004-10",
+        WwwrootAssetCatalog.Url("css/features/account-mfa.css"),
     ];
 
     public static readonly string[] GratisDnaCss =
     [
-        "css/features/gratis-dna.css?v=20261004-10",
-        "css/features/questionnaire.css?v=20261004-10",
+        WwwrootAssetCatalog.Url("css/features/gratis-dna.css"),
+        WwwrootAssetCatalog.Url("css/features/questionnaire.css"),
     ];
 
     public static Area ResolveAreas(string? rawPath)
@@ -294,7 +294,7 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-10"];
+            return [WwwrootAssetCatalog.Url("css/features/bedrijvenkaart.css")];
         }
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
@@ -302,23 +302,23 @@ public static class PageAssetCatalog
             return
             [
                 WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css"),
-                "css/features/kandidaat-banen.css?v=20261024-listtoggle2",
+                WwwrootAssetCatalog.Url("css/features/kandidaat-banen.css"),
                 WwwrootAssetCatalog.Url("css/features/banenkaart-illustrated.css"),
-                "css/features/sollicitaties-page.css?v=20261027-detail-return1",
+                WwwrootAssetCatalog.Url("css/features/sollicitaties-page.css"),
             ];
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-10"];
+            return [WwwrootAssetCatalog.Url("css/features/bedrijvenkaart.css")];
         }
 
         if (path.StartsWith("/werk-referentie/", StringComparison.OrdinalIgnoreCase))
         {
             return
             [
-                "css/features/reference-verification-hero.css?v=20261018-16",
-                "css/features/reference-verification.css?v=20261018-16"
+                WwwrootAssetCatalog.Url("css/features/reference-verification-hero.css"),
+                WwwrootAssetCatalog.Url("css/features/reference-verification.css")
             ];
         }
 
@@ -331,7 +331,7 @@ public static class PageAssetCatalog
             || path.Equals("/banen", StringComparison.OrdinalIgnoreCase))
         {
             return RouteUsesCompactHeroCss(path)
-                ? ["css/features/candidate-hero-compact-preview.css?v=20261022-reis-r7"]
+                ? [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")]
                 : [];
         }
 
@@ -345,7 +345,7 @@ public static class PageAssetCatalog
             var uwvCss = new List<string>(UwvMockupRouteCss);
             if (RouteUsesCompactHeroCss(path))
             {
-                uwvCss.Add("css/features/candidate-hero-compact-preview.css?v=20261022-reis-r7");
+                uwvCss.Add(WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css"));
             }
 
             return uwvCss;
@@ -355,15 +355,15 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/candidate-hero-compact-preview.css?v=20261022-reis-r7",
-                "css/features/onboarding-rustig.css?v=20261020-21",
-                "css/features/onboarding-client-nav.css?v=20261022-nav",
+                WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css"),
+                WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css"),
+                WwwrootAssetCatalog.Url("css/features/onboarding-client-nav.css"),
             ];
         }
 
         if (RouteUsesCompactHeroCss(path))
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261022-reis-r7"];
+            return [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")];
         }
 
         return [];
@@ -438,9 +438,9 @@ public static class PageAssetCatalog
     public static IReadOnlyList<string> BanenkaartAuthenticatedShellCss() =>
     [
         WwwrootAssetCatalog.Url("css/features/banenkaart-auth-chrome.css"),
-        "css/features/form-fields.css?v=20261019-01",
-        "css/features/nav-feedback.css?v=20261017-01",
-        "css/features/candidate-header-tablet.css?v=20261021-01",
+        WwwrootAssetCatalog.Url("css/features/form-fields.css"),
+        WwwrootAssetCatalog.Url("css/features/nav-feedback.css"),
+        WwwrootAssetCatalog.Url("css/features/candidate-header-tablet.css"),
     ];
 
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>

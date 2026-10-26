@@ -20,16 +20,10 @@
 <PageTitle>@Culture["AfterMatch.Screen09.Hero.Title"] · Lobsy</PageTitle>
 <PageSeo Title="@Culture["AfterMatch.Screen09.Hero.Title"]" />
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.Werkgever,
-                  "/werkgever/sollicitaties"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261025-ndm-wg-acc-fix1" />
-    <script src="/js/ndm-employer.js?v=20261025-ndm-wg-acc-fix1" defer></script>
-    <script src="/js/ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-fix1" defer></script>
-    <script src="/js/ndm-employer-cancel.js?v=20261025-ndm-wg-acc-fix1" defer></script>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer-reschedule.js")}")" defer></script>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-employer-cancel.js")}")" defer></script>
 </HeadContent>
 
 @if (_loading)

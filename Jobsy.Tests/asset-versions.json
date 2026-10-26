@@ -67,6 +67,10 @@
     "v": "20261025-kreeft13",
     "sha256": "772c26b9860f8a3a4ca3ce6291fd230325d19e845fc7760dba62618e3d5e7c60"
   },
+  "css/features/candidate-header-tablet.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "6c744fe548e736ce71c13c693ed22e601376b703c149502bca41aa685d7db81b"
+  },
   "css/features/candidate-hero-compact-preview.css": {
     "sha256": "480e1e883f5ce9202353dd3b0043b79aa0351aa43a260ffaf4cf0a3c61a556d8",
     "v": "20261022-reis-r7"
@@ -74,6 +78,10 @@
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
+  },
+  "css/features/candidate-illustrated-app.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "848927d542b23d8bb451090a3d808d0d56b6d082c31e15be58aa864d0adfdcc9"
   },
   "css/features/candidate-illustrated-decorative-layers.css": {
     "sha256": "900dc5e9bf425f86dfdb9012f4f7e9ced2baba54475bfabad71ee4adda830ce5",
@@ -135,13 +143,21 @@
     "sha256": "45758384a12b52fb030600210a4768cbd00560e003bcda2d8f43cd882bc77f26",
     "v": "20261004-10"
   },
+  "css/features/kandidatenkaart.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "202d088a9b5be7f601caded47bcbd5447d63012ddca7ce464b476e2558f5d66d"
+  },
   "css/features/kb-external-vacancy.css": {
     "sha256": "7831996af5de14d7471ee4653c5410bf1704822dbf2d9a878c3c8b683391ce36",
     "v": "20261011-03"
   },
+  "css/features/kompas-illustrated.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "23dc6508631854dbb272cf7c7318ef29e534c3a0395b2ca033b3ef0941e79738"
+  },
   "css/features/kreeft-reiskaart.css": {
-    "v": "20261025-kreeft14",
-    "sha256": "13d07db838af1735804ebd2a3a2f5f4017dbcdb02fe215b22d762f6d9ef2edc7"
+    "v": "20261025-kreeft15",
+    "sha256": "362fce9ed8d110b6d80f10f2d57996e54516ef8b14e056389049011b305c9205"
   },
   "css/features/landing.css": {
     "sha256": "ded9a240e72c6957942276ba6b110e53c0cd6bcb481942285ea8fa5d6ea4cb1d",
@@ -175,9 +191,17 @@
     "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",
     "v": "20261004-10"
   },
+  "css/features/notifications.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "e3f7efad883d6e9ffa22ea12c123c1cfe55ff11a1a425093bab4ed62f45a32d7"
+  },
   "css/features/occupation-day.css": {
     "sha256": "67c63d1ebe8081d03e2760199b0d1419358d5b61bb5a10f5f92723c0b1170bb9",
     "v": "20261005-23"
+  },
+  "css/features/onboarding-client-nav.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "7d4d69517c5309f9357c16a5f1da21a242091293f1af43423623d9cb63584dbc"
   },
   "css/features/onboarding-finale-v2.css": {
     "sha256": "aaf49ede60c7b87d6140b779b9dfd71a8e7ce6889218cc3902958a6256c925e8",
@@ -192,8 +216,12 @@
     "sha256": "c118af817e65f27409d6144462022bc7dc8890afb16bc8e95e0efaeeb8a2a301"
   },
   "css/features/onboarding-rustig.css": {
-    "sha256": "7548dcb7725c386a15cffa800710b005d9b31289f80c63b5fed5d549a0e51769",
-    "v": "20261022-step2opslaan44"
+    "sha256": "59646fa58f6b518e0639a2d274c9bf40672a9222a100ec9e6a647ffe1baf4890",
+    "v": "20261025-kreeft15"
+  },
+  "css/features/onboarding-start-journey.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "82ffd9c0956ea7dbb80ef36613700a6b6da7aee1c3a0121d120cef8278bbf433"
   },
   "css/features/onboarding-start-strand.css": {
     "v": "20261025-kreeft8",
@@ -235,6 +263,10 @@
     "sha256": "6eca31dcb742de94d32bb3c3f6bf0a8b4973199739f91156ab088d1a7bb76a01",
     "v": "20261022-reis-r2-r7"
   },
+  "css/features/opleidingen.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "c2e784e4b16be9f645a9a01000dc863b5258d855466898be9c44b0269932efa7"
+  },
   "css/features/proactive-matching.css": {
     "sha256": "8cdcd71b660f4aacf62188dc8f4a3ae0e61c47dbd0e01b7e5564edc965b1ba3c",
     "v": "20261012-03"
@@ -254,6 +286,14 @@
   "css/features/reconnect.css": {
     "sha256": "67ce9f6f80aad3add1eaf411dc65d4d0e23f14a44690ef498d83cbc8bda4e95a",
     "v": "20261021-02"
+  },
+  "css/features/reference-verification-hero.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "5bb99c758420796b125b0393d4eb12f014b0fd362008ae5b5ae39a69b3de11d5"
+  },
+  "css/features/reference-verification.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "e9522552a65d5b2e61bafbd863f251230c0c5b50a944d3644b1c079130f475c2"
   },
   "css/features/sales.css": {
     "sha256": "1f17cd2984d474f41d5b5c5e752db44482ed32d27e9fe639393193cbaa0c4784",
@@ -282,6 +322,10 @@
   "css/features/tests.css": {
     "sha256": "4a14c2a587ec9d49f1561e8e2f778afe12870783e328cd50c463e2e90ea79fb6",
     "v": "20261020-r8"
+  },
+  "css/features/uwv-mockups.css": {
+    "v": "20261025-kreeft15",
+    "sha256": "78118be23ea3b2ab5623262a0e27c374b78ba538bc0d21b02fc22e2120c32a59"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",
@@ -315,6 +359,10 @@
     "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
     "v": "20261004-13"
   },
+  "js/admin-shell.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "1b05b82d4323e08f40c5b37c128e9edafc8df0cbc3d74e170253b4d0e7cf6f5c"
+  },
   "js/app-core.js": {
     "sha256": "4de415834ac296e6bb25135bebee31ad86daba6e0fc9cbc0ba06381515195f43",
     "v": "20261024-25"
@@ -330,6 +378,14 @@
   "js/banenkaart-catalog.js": {
     "v": "20261025-matchsort1",
     "sha256": "a2e408bd958781c21263fca6f640316098f9953ed7bc62e862e2ca49c84d07a8"
+  },
+  "js/banenkaart-map-icons.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "5b00111b16de7f348e45b021286aad973760de1dc69a5ddf1e68ce82c0b06255"
+  },
+  "js/banenkaart-map-layers.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
     "v": "20261024-mobilewagetip11",
@@ -347,9 +403,17 @@
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
     "v": "20261021-15"
   },
+  "js/discovery-ssr-haltes.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "72499557c39785fe589b21208f66fed1bbc685402f0a3bba02d326c904bfc656"
+  },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
     "v": "20261002-kp01m"
+  },
+  "js/discoveryJourneyRoute.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "18fdffb12271b2d79c68810dbbe8e16b1eacc4643dcaace8fe9aee5231180d7a"
   },
   "js/features/account-mfa.js": {
     "sha256": "01fcae80a3439833ca143a9bbb11278e63d3d9d4fdb55be3136b9a4f035c63f5",
@@ -379,6 +443,10 @@
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
     "v": "20261023-19"
   },
+  "js/jobsy-geo-lite.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "0f4176373cb6884b260bcf0e4ed7d51c2aa3280a22a01e216127af7df17fee81"
+  },
   "js/jobsyMapLibre.min.js": {
     "sha256": "1bbb3a426e9da06f3234ba1f06f0f5f43f7bec8cb2cb590e0eeba7550c316d1a",
     "v": "20261023-lagen-compact1"
@@ -392,8 +460,8 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "v": "20261025-kreeft14",
-    "sha256": "edbb6dbcd357aa2c8de086836cbe31fa714fd675364245ef4195e905c03c8650"
+    "v": "20261025-kreeft15",
+    "sha256": "871f0aa175cd7ad4549ec3fb07fed89b7376bc9fd453f528a4f54b9c57a3b43f"
   },
   "js/lobsyPush.js": {
     "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",
@@ -402,6 +470,66 @@
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
     "v": "20261004-13"
+  },
+  "js/ndm-confirmed.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "c568f44f85427466ce074494ff7017f81f818794486e315e8e7fac3e7ab8ddc6"
+  },
+  "js/ndm-employer-cancel.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "df891447d1114523fd1a27429c1b140407a44c29fd0a890304f13d3501624e7a"
+  },
+  "js/ndm-employer-messages.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "9236608e010c4c88d40d8a56cabf47ffe8210415708a183a92fd451a86837fde"
+  },
+  "js/ndm-employer-outcome.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "249244c55fa3a81a3ceb9abb3efa5a003e2e1901b80c243cbbab705381230e92"
+  },
+  "js/ndm-employer-reschedule.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "b61043bcf844923882b67d0103bc8508a25e2a9f062db7b7cf1d989349952ad7"
+  },
+  "js/ndm-employer.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "baa0655d2daae1dafd234f4a0c25552043fefea2c5edd290668d270a11be9efc"
+  },
+  "js/ndm-herinneringen.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "c15f42bba7da761ab72b8e8cfa46f8affec23d1832199e0011cc600b2019188d"
+  },
+  "js/ndm-mail-chrome.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "144ce9b67cea1860d06a3871227d4dcb5d89f031c13f3da5dfd38c08650a37f0"
+  },
+  "js/ndm-messages.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "876cf4f9c6d8b86bbd8b2c602def404b7ffd8ed77d30277b22e499ee5030d639"
+  },
+  "js/ndm-outcome.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "7a93f2a9504970930837603cbd7d2875ac02de58bdf5d2d7d057243a9e8621b1"
+  },
+  "js/ndm-pick-slot.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "b6d953a63ddeb3131d7424c6ce25ce6a9069bcd97f6d0f3994a2a8d02b67d344"
+  },
+  "js/ndm-reschedule.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "2e93878eb872c9aed629b02063dbc61b3eb365eb1a2a95ceb13c24762414c879"
+  },
+  "js/onboarding-client-form.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "a9a963747051d11f9cd4c4d559d1736937d5f283e831677201cd85855d9cb7ce"
+  },
+  "js/onboarding-ssr-fetch-save.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "a0576d5c44918fd9336c4ea495a5d476ab6f54a48e3bc3b6bb4a67831ec221a1"
+  },
+  "js/onboarding-step6-ssr.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "6ed308de3acb5a77a229b053fadb27696563f5d4a3f023013b760cb60908d59c"
   },
   "js/public-pages.js": {
     "sha256": "e5f1baab87e03d1ea0c7ccb09aa7851d5691ac44d0e38394a85f97d1796cd8a1",
@@ -419,9 +547,17 @@
     "sha256": "dc2440ea41543be9819957d9b6e122891997fad949222a025877388896c8087e",
     "v": "20261025-mark-read-bff2"
   },
+  "js/sollicitaties-client-nav.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "4869f4b1c931ad529168f3bf0bb783a66e55aa0d665e8938a29ca3447cf53d0d"
+  },
   "js/sollicitaties-filter-chips.js": {
     "sha256": "fbe2254eda0d9f196564b0b01130c1c6b16408311f4753392e4dddb9c7dc271c",
     "v": "20261024-mockup01-acc5"
+  },
+  "js/sollicitaties-mark-read-flush.js": {
+    "v": "20261025-kreeft15",
+    "sha256": "99710382d097f1ed8b7fb021e53e2016150679ce7fb70e8e60fe044ad8eda423"
   },
   "js/sollicitaties-rail.js": {
     "sha256": "5eca56d0159de05451acb13268e361ec9d18fdf78e3290bc447b8c984af3b47d",

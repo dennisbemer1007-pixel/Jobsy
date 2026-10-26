@@ -22,17 +22,11 @@
 <PageTitle>@_pageTitle · Lobsy</PageTitle>
 <PageSeo Title="@_pageTitle" />
 <HeadContent>
-    @foreach (var href in PageAssetCatalog.StylesheetsFor(
-                  PageAssetCatalog.Area.CandidatePublic | PageAssetCatalog.Area.CandidateApp,
-                  "/candidate/applications"))
-    {
-        <link rel="stylesheet" href="@href" />
-    }
-    <link rel="stylesheet" href="css/features/sollicitaties-page.css?v=20261024-ndm-pick-slot2" />
-    <link rel="stylesheet" href="css/features/na-de-match.css?v=20261028-ndm-outcome6" />
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/sollicitaties-page.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
     @if (_includeOutcomeScript)
     {
-        <script src="/js/ndm-outcome.js?v=20261028-ndm-outcome4" defer></script>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-outcome.js")}")" defer></script>
     }
 </HeadContent>
 

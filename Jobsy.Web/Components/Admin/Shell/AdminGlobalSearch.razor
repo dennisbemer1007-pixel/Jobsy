@@ -73,7 +73,9 @@
             _dotNetRef = DotNetObjectReference.Create(this);
             try
             {
-                _module = await Js.InvokeAsync<IJSObjectReference>("import", "./js/admin-shell.js?v=20260929-admin");
+                _module = await Js.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    $"./{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/admin-shell.js")}");
                 await _module.InvokeVoidAsync("bindAdminSearchShortcuts", _dotNetRef);
             }
             catch

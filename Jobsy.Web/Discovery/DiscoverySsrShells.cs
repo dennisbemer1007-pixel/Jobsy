@@ -389,7 +389,9 @@ internal static class DiscoverySsrShells
             sb.Append("</div></div>");
         }
 
-        sb.Append("</div></div><script src=\"/js/discovery-ssr-haltes.js?v=20261023-haltes2\" defer></script></div>");
+        sb.Append("</div></div><script src=\"")
+            .Append(Jobsy.Web.Hosting.WwwrootAssetCatalog.UrlLeadingSlash("js/discovery-ssr-haltes.js"))
+            .Append("\" defer></script></div>");
     }
 
     private static int PhasePanelOrder(string phaseId) => phaseId switch
