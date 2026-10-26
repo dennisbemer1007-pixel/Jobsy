@@ -535,6 +535,10 @@
     "v": "20261026-passport-proof1",
     "sha256": "398007640d5dde9d7cb33d068694c5543253b3e679d7ad9a5b8107eb24a00943"
   },
+  "js/passport-ssr-extras.js": {
+    "v": "20261026-passport-extras1",
+    "sha256": "629316f185f12649e005c0a78ee7b6496a7d1a87bca5f0317388c59d840fb4d0"
+  },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",
     "sha256": "a9a963747051d11f9cd4c4d559d1736937d5f283e831677201cd85855d9cb7ce"

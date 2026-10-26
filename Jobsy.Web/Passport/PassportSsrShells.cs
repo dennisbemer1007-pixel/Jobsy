@@ -43,6 +43,8 @@ internal static class PassportSsrShells
         sb.Append("</div></div></div></div></div>");
         sb.Append("<script src=\"");
         sb.Append(WwwrootAssetCatalog.Url("js/passport-ssr-tabs.js"));
+        sb.Append("\" defer></script><script src=\"");
+        sb.Append(WwwrootAssetCatalog.Url("js/passport-ssr-extras.js"));
         sb.Append("\" defer></script>");
         AppendBanenkaartPrefetchBoot(sb, data);
         return sb.ToString();
@@ -164,6 +166,7 @@ internal static class PassportSsrShells
         if (!compact)
         {
             PassportSsrPanelsHtml.AppendCardFacts(sb, culture, card, compact: false);
+            PassportSsrEmployerPreviewHtml.Append(sb, culture, data.Profile, data.ProofPanel);
         }
 
         sb.Append("<div class=\"passport-card__actions");

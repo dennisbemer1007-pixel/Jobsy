@@ -53,7 +53,8 @@ internal static class PassportSsrData
         var kompasTask = api.GetMyKompasResultAsync(cancellationToken);
         var profileTask = api.GetMyProfileAsync(cancellationToken);
         var careerTask = api.GetCareerPathAsync(cancellationToken);
-        await Task.WhenAll(dnaTask, kompasTask, profileTask, careerTask);
+        var applicationsTask = api.GetMyApplicationsAsync(cancellationToken);
+        await Task.WhenAll(dnaTask, kompasTask, profileTask, careerTask, applicationsTask);
 
         var dnaResult = await dnaTask;
         var kompasResult = await kompasTask;
@@ -70,7 +71,14 @@ internal static class PassportSsrData
             dna,
             flags.EmployersEnabled);
         var overview = PassportSsrDisplay.BuildOverview(culture, kompas, dna);
-        var dnaPanel = PassportSsrDisplay.BuildDnaPanel(culture, profile, kompas, dna);
+        var applicationCount = (await applicationsTask).Count;
+        var dnaPanel = PassportSsrDisplay.BuildDnaPanel(
+            culture,
+            profile,
+            kompas,
+            dna,
+            applicationCount,
+            flags.EmployersEnabled);
         var firstName = string.IsNullOrWhiteSpace(profile.FirstName)
             ? profile.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
             : profile.FirstName.Trim();
