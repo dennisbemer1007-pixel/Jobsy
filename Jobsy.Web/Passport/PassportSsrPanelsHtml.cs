@@ -4,12 +4,28 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Dna;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Media;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Passport;
 
 internal static class PassportSsrPanelsHtml
 {
+    internal static void AppendLobsyTipCard(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<aside class=\"kompas-tip\" aria-labelledby=\"kompas-tip-title\" data-testid=\"passport-lobsy-tip\"><div class=\"kompas-tip__art\" style=\"background-image:url('");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.TipVragen));
+        sb.Append("')\" aria-hidden=\"true\"></div><div class=\"kompas-tip__body\"><p class=\"kompas-tip__eyebrow\" id=\"kompas-tip-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Eyebrow"]));
+        sb.Append("</p><p class=\"kompas-tip__text\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Body"]));
+        sb.Append("</p><a class=\"btn btn-primary kompas-tip__cta\" href=\"");
+        sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Tests));
+        sb.Append("\" data-passport-tab-link=\"tests\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Cta"]));
+        sb.Append("</a></div></aside>");
+    }
+
     internal static void AppendOverview(StringBuilder sb, CultureState culture, PassportSsrDisplay.OverviewModel o)
     {
         sb.Append("<section class=\"passport-overview\" aria-labelledby=\"passport-overview-title\">");
