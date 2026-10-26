@@ -1,5 +1,6 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Http;
 
 namespace Jobsy.Web.Applications;
@@ -12,6 +13,7 @@ internal static class AfterMatchPanelRouting
     internal const string RescheduleSsrSuffix = "/reschedule-ssr";
     internal const string CancelledSsrSuffix = "/cancelled-ssr";
     internal const string PanelSsrSuffix = "/panel-ssr";
+    internal const string WaitSsrSuffix = "/wait-ssr";
     /// <summary>
     /// Resolves the after-match panel from the query string. <c>panel=messages</c> always wins when present
     /// (avoids a trailing unencoded <c>return=...?panel=cancel</c> overriding messages).
@@ -61,10 +63,15 @@ internal static class AfterMatchPanelRouting
             return ConfirmedSsrSuffix;
         }
 
-        if (thread.InterviewStatus is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+        if (AfterMatchCandidateSlotRules.MayPickOpenSlots(thread.InterviewStatus)
             && thread.OpenSlots.Count > 0)
         {
             return PickSlotSsrSuffix;
+        }
+
+        if (thread.InterviewStatus == InterviewStatus.RescheduleRequested)
+        {
+            return WaitSsrSuffix;
         }
 
         return null;

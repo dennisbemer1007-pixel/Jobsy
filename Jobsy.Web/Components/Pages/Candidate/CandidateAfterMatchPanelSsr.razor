@@ -6,6 +6,7 @@
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
 @using Jobsy.Core.Features
 @using Jobsy.Web.Applications
 @using Jobsy.Web.Components.Shared
@@ -128,9 +129,16 @@ else if (_bodyHtml is not null)
             }
 
             if (thread is not null
-                && thread.InterviewStatus is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested)
+                && AfterMatchCandidateSlotRules.MayPickOpenSlots(thread.InterviewStatus)
+                && thread.OpenSlots.Count > 0)
             {
                 RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
+                return;
+            }
+
+            if (thread?.InterviewStatus == InterviewStatus.RescheduleRequested)
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.WaitSsrSuffix);
                 return;
             }
 

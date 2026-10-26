@@ -207,7 +207,8 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             "15 okt",
             "22 okt",
             null,
-            null);
+            null,
+            $"/candidate/applications/{appId:D}/after-match/wait-ssr");
 
         using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;

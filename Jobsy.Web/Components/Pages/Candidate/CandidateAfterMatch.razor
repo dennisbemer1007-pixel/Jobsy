@@ -376,6 +376,7 @@ else
     {
         InterviewStatus.Scheduled => NdMSchedulingMode.Scheduled,
         InterviewStatus.Proposing when t.OpenSlots.Count > 0 => NdMSchedulingMode.CandidatePick,
+        InterviewStatus.RescheduleRequested => NdMSchedulingMode.Waiting,
         _ => NdMSchedulingMode.Waiting
     };
 

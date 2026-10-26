@@ -39,13 +39,18 @@ internal static class AfterMatchTimelineLabels
             return ShortDate(scheduled);
         }
 
-        if (thread.InterviewStatus is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested)
+        if (thread.InterviewStatus == InterviewStatus.Proposing)
         {
             var open = thread.OpenSlots.OrderBy(s => s.StartUtc).FirstOrDefault();
             if (open is not null)
             {
                 return ShortDate(open.StartUtc);
             }
+        }
+
+        if (thread.InterviewStatus == InterviewStatus.RescheduleRequested)
+        {
+            return "—";
         }
 
         return "—";

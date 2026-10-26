@@ -21,7 +21,8 @@ internal static class AfterMatchRescheduleSsrData
         string PlanDateLabel,
         string InterviewDateLabel,
         string? AlternateSlotLabel,
-        Guid? AlternateSlotId);
+        Guid? AlternateSlotId,
+        string SubmitSuccessHref);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
@@ -88,6 +89,12 @@ internal static class AfterMatchRescheduleSsrData
                 slotLabel);
         }
 
+        var waitHref = $"/candidate/applications/{applicationId:D}/after-match/wait-ssr";
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+        {
+            waitHref += "?return=" + Uri.EscapeDataString(returnUrl);
+        }
+
         return new PageData(
             thread,
             backHref,
@@ -101,7 +108,8 @@ internal static class AfterMatchRescheduleSsrData
             planDate,
             interviewDate,
             alternateSlotLabel,
-            alternateSlotId);
+            alternateSlotId,
+            waitHref);
     }
 
     private static string ContactShortName(AfterMatchThreadDto thread)

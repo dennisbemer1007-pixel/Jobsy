@@ -76,7 +76,10 @@ else if (_bodyHtml is not null)
                 _redirecting = true;
                 var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
                 var dispatch = AfterMatchPanelRouting.DispatchSuffixForThread(thread);
-                var suffix = dispatch ?? AfterMatchPanelRouting.PickSlotSsrSuffix;
+                var suffix = dispatch
+                    ?? (thread?.InterviewStatus == InterviewStatus.RescheduleRequested
+                        ? AfterMatchPanelRouting.WaitSsrSuffix
+                        : AfterMatchPanelRouting.PickSlotSsrSuffix);
                 var querySuffix = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
                 var target =
                     $"/candidate/applications/{ApplicationId:D}/after-match{suffix}{querySuffix}";

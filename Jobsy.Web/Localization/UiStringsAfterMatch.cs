@@ -61,6 +61,21 @@ public static class UiStringsAfterMatch
             "Je krijgt een melding zodra ze er zijn. Meestal binnen twee werkdagen.",
             "You get a notification when they are ready. Usually within two working days.");
         Add("AfterMatch.Screen01.Preference", "Mijn voorkeur doorgeven", "Share my preference");
+        Add("AfterMatch.Candidate.ProposalPending.Title",
+            "Je voorstel ligt bij de werkgever",
+            "Your proposal is with the employer");
+        Add("AfterMatch.Candidate.ProposalPending.Lead",
+            "Je hoort het zodra {0} reageert. Tot die tijd hoef je niets te doen.",
+            "You will hear back once {0} responds. Nothing to do until then.");
+        Add("AfterMatch.Candidate.ProposalPending.Body",
+            "We sturen je een melding zodra er een reactie is. Je hoeft geen moment te kiezen.",
+            "We notify you when they respond. You do not need to pick a time slot.");
+        Add("AfterMatch.Candidate.ProposalPending.PlanHint",
+            "wacht op reactie",
+            "waiting for response");
+        Add("AfterMatch.Candidate.ProposalPending.CardAction",
+            "Wacht op reactie werkgever",
+            "Waiting for employer");
 
         Add("AfterMatch.Screen02.Hero.Title", "Na de match", "After the match");
         Add("AfterMatch.Screen02.Hero.Lead",

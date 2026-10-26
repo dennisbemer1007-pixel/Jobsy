@@ -81,7 +81,8 @@ public sealed class AfterMatchRescheduleSsrTests : BunitContext
             "15 okt",
             "22 okt",
             null,
-            null);
+            null,
+            $"/candidate/applications/{appId:D}/after-match/wait-ssr");
 
         var html = AfterMatchRescheduleSsrShells.BuildBody(culture, data, appId, "reschedule");
         var htmlCancel = AfterMatchRescheduleSsrShells.BuildBody(culture, data, appId, "cancel");
@@ -99,6 +100,8 @@ public sealed class AfterMatchRescheduleSsrTests : BunitContext
         Assert.Contains("Verstuur naar Linda", html, StringComparison.Ordinal);
         Assert.Contains("Toch niet", html, StringComparison.Ordinal);
         Assert.Contains("data-back-href=", html, StringComparison.Ordinal);
+        Assert.Contains("data-success-href=", html, StringComparison.Ordinal);
+        Assert.Contains("wait-ssr", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-when-block", html, StringComparison.Ordinal);
 
         Assert.Contains("data-ndm-submit-cancel", htmlCancel, StringComparison.Ordinal);

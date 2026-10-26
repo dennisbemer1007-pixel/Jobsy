@@ -536,8 +536,8 @@ public partial class MeController : ControllerBase
                         continue;
                     }
 
-                    var openSlots = interview.Status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
-                        ? interview.Slots.Count(s => !s.IsSelected)
+                    var openSlots = AfterMatchCandidateSlotRules.MayPickOpenSlots(interview.Status)
+                        ? interview.Slots.Count(s => !s.IsSelected && s.StartUtc > DateTime.UtcNow)
                         : 0;
                     DateTime? start = interview.ChosenSlot?.StartUtc;
                     DateTime? end = interview.ChosenSlot?.EndUtc;
