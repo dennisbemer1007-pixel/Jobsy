@@ -1,42 +1,57 @@
 @page "/candidate/wat-drijft-jou"
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
-@using Jobsy.Web.Components.Candidate
-@using Jobsy.Web.Components.UwvMockups
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Media
+@using Jobsy.Web.Services
 @using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
 @inject IUwvFeaturesGate UwvGate
+@inject JobsyApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@UwvMockupCopy.Drijfveren.ResultsTitle(Culture.Language) · Lobsy</PageTitle>
 
-@if (!_uwvOn)
+@if (_loading)
 {
-    <div class="panel-page"><p class="state-message">@Culture["Common.Error"]</p></div>
+    <PageContentSkeleton Variant="cards" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
 }
-else
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
 {
-    <div class="journey-page panel-page--cand-ill">
-        <CandidateIllustratedHero Eyebrow="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "My results" : "Mijn resultaten")"
-                                  Title="@UwvMockupCopy.Drijfveren.ResultsTitle(Culture.Language)"
-                                  Lead="@UwvMockupCopy.Drijfveren.Lead(Culture.Language)"
-                                  ArtUrl="@KreeftHeaderStripAssets.WatDrijftDesk"
-                                  ArtPosition="right center"
-                                  ArtPositionDesktop="right center"
-                                  CssClass="cand-hero--kompas-band cand-hero--with-art" />
-        <div class="opl-wrap">
-            <UwvDrijfverenResults />
-        </div>
-    </div>
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
 }
 
 @code {
-    private bool _uwvOn;
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
 
     protected override async Task OnInitializedAsync()
     {
-        _uwvOn = await UwvGate.IsEnabledAsync();
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
+
+            var data = await WatDrijftJouSsrData.LoadAsync(UwvGate, Api, default);
+            _bodyHtml = WatDrijftJouSsrShells.BuildBody(Culture, data);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 }
