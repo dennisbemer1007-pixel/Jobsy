@@ -8,15 +8,19 @@ namespace Jobsy.Web.Match;
 
 internal static class MatchSsrSwipeHtml
 {
-    internal static void AppendStack(StringBuilder sb, CultureState culture, IReadOnlyList<SwipeViewModel> items, int startIndex)
+    internal static void AppendStack(
+        StringBuilder sb,
+        CultureState culture,
+        IReadOnlyList<SwipeViewModel> items,
+        int startIndex,
+        MatchProfileGateViewModel gate)
     {
         sb.Append("<div class=\"match-page__grid-main\"><div class=\"swipe-stack\" data-match-stack>");
         for (var i = 0; i < items.Count; i++)
         {
-            var backdrop = i == startIndex + 1;
             var active = i == startIndex;
-            var hidden = i > startIndex + 1;
-            AppendCardStage(sb, culture, items[i], i, backdrop, active, hidden);
+            var hidden = i != startIndex;
+            AppendCardStage(sb, culture, items[i], i, backdrop: false, active, hidden, gate);
         }
 
         sb.Append("</div>");
@@ -39,7 +43,8 @@ internal static class MatchSsrSwipeHtml
         int index,
         bool backdrop,
         bool active,
-        bool hidden)
+        bool hidden,
+        MatchProfileGateViewModel gate)
     {
         sb.Append("<div class=\"swipe-card-stage");
         if (backdrop)
@@ -50,7 +55,7 @@ internal static class MatchSsrSwipeHtml
         sb.Append("\" data-match-stage=\"");
         sb.Append(index);
         sb.Append('"');
-        if (hidden || (!active && !backdrop))
+        if (hidden)
         {
             sb.Append(" hidden");
         }
@@ -134,14 +139,14 @@ internal static class MatchSsrSwipeHtml
 
         sb.Append("</div>");
         AppendRankLower(sb, culture, model);
-        AppendWhyBlock(sb, culture, model);
+        AppendWhyBlock(sb, culture, model, gate);
         AppendTags(sb, model);
         sb.Append("</article></div>");
     }
 
-    private static void AppendWhyBlock(StringBuilder sb, CultureState culture, SwipeViewModel model)
+    private static void AppendWhyBlock(StringBuilder sb, CultureState culture, SwipeViewModel model, MatchProfileGateViewModel gate)
     {
-        var dnaRows = MatchDnaRows.Build(model.FitDimensions, model.FitWhyKinds, includeMissing: false, maxWithData: 3);
+        var dnaRows = MatchDnaRows.Build(model.FitDimensions, model.FitWhyKinds, includeMissing: false, maxWithData: 3, gate);
         if (dnaRows.Count == 0 && string.IsNullOrWhiteSpace(model.WhyYouFit))
         {
             return;

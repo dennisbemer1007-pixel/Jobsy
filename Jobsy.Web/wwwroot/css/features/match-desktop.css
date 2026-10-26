@@ -334,6 +334,10 @@
     align-items: center;
     gap: 0.65rem;
     min-width: 0;
+}.match-page__logo-link {
+    display: inline-flex;
+    flex: none;
+    line-height: 0;
 }.match-page__mascot {
     width: 2.5rem;
     height: 2.5rem;

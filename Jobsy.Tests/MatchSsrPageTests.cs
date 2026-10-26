@@ -19,6 +19,8 @@ public sealed class MatchSsrPageTests
         Assert.Contains("match-ssr.js", shells, StringComparison.Ordinal);
         Assert.Contains("data-match-action", swipe, StringComparison.Ordinal);
         Assert.Contains("BanenkaartSsrQuery.SavePath", shells, StringComparison.Ordinal);
+        Assert.Contains("JsonScriptEmbed.Append", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("HtmlEncode(JsonSerializer.Serialize", shells, StringComparison.Ordinal);
         Assert.Contains("match-page__keyboard-hint", swipe, StringComparison.Ordinal);
         Assert.Contains("tabindex=\\\"-1\\\"", shells, StringComparison.Ordinal);
     }
