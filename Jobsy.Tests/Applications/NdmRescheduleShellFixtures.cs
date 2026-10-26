@@ -63,7 +63,8 @@ internal static class NdmRescheduleShellFixtures
             "15 okt",
             "22 okt",
             null,
-            null);
+            null,
+            $"/candidate/applications/{appId:D}/after-match/wait-ssr");
 
         var body = AfterMatchRescheduleSsrShells.BuildBody(culture, data, appId, mode);
         var root = FindRepoRoot();

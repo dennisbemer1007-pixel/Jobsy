@@ -27,6 +27,8 @@ internal static class AfterMatchRescheduleSsrShells
         sb.Append(WebUtility.HtmlEncode(data.ConfirmedHref));
         sb.Append("\" data-applications-href=\"");
         sb.Append(WebUtility.HtmlEncode(data.SollicitatiesHref));
+        sb.Append("\" data-success-href=\"");
+        sb.Append(WebUtility.HtmlEncode(data.SubmitSuccessHref));
         sb.Append("\" data-propose-href=\"");
         sb.Append(WebUtility.HtmlEncode(data.ProposeSlotHref));
         sb.Append('"');

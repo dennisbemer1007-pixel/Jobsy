@@ -781,6 +781,18 @@ public sealed class AfterMatchService : IAfterMatchService
                 s.Id, s.StartUtc, s.EndUtc, s.ProposedBy, s.Reason, s.IsSelected))
             .ToList();
 
+        if (!isEmployer && !AfterMatchCandidateSlotRules.MayPickOpenSlots(interview.Status))
+        {
+            openSlots = [];
+        }
+
+        var scheduledStart = interview.Status == InterviewStatus.Scheduled
+            ? interview.ChosenSlot?.StartUtc
+            : null;
+        var scheduledEnd = interview.Status == InterviewStatus.Scheduled
+            ? interview.ChosenSlot?.EndUtc
+            : null;
+
         return new AfterMatchThreadDto(
             application.Id,
             interview.Id,
@@ -794,8 +806,8 @@ public sealed class AfterMatchService : IAfterMatchService
             interview.LocationOrLink,
             interview.WithWhom,
             interview.Note,
-            interview.ChosenSlot?.StartUtc,
-            interview.ChosenSlot?.EndUtc,
+            scheduledStart,
+            scheduledEnd,
             openSlots,
             messages.Select(m => new AfterMatchMessageDto(
                 m.Id,

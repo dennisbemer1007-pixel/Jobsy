@@ -1,4 +1,5 @@
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Web.Applications;
@@ -23,13 +24,21 @@ internal static class AfterMatchSollicitatiesPresentation
             return null;
         }
 
-        if (status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+        if (AfterMatchCandidateSlotRules.MayPickOpenSlots(status)
             && summary.OpenSlotCount > 0)
         {
             return new CardAction(
                 AfterMatchSollicitatiesUrls.PickSlot(summary.ApplicationId, returnUrl),
                 culture["Apps.Ndm.PickSlot"],
                 "action-pick");
+        }
+
+        if (status == InterviewStatus.RescheduleRequested)
+        {
+            return new CardAction(
+                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
+                culture["AfterMatch.Candidate.ProposalPending.CardAction"],
+                "action-wait");
         }
 
         if (status == InterviewStatus.Scheduled && summary.ScheduledStartUtc is DateTime start)
@@ -78,12 +87,21 @@ internal static class AfterMatchSollicitatiesPresentation
                 summary.UnreadMessageCount);
         }
 
-        if (status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+        if (AfterMatchCandidateSlotRules.MayPickOpenSlots(status)
             && summary.OpenSlotCount > 0)
         {
             return new DetailActions(
                 AfterMatchSollicitatiesUrls.PickSlot(summary.ApplicationId, returnUrl),
                 culture["Apps.Ndm.PickSlot"],
+                messagesHref,
+                summary.UnreadMessageCount);
+        }
+
+        if (status == InterviewStatus.RescheduleRequested)
+        {
+            return new DetailActions(
+                AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
+                culture["AfterMatch.Candidate.ProposalPending.Title"],
                 messagesHref,
                 summary.UnreadMessageCount);
         }
@@ -106,15 +124,6 @@ internal static class AfterMatchSollicitatiesPresentation
                 summary.UnreadMessageCount);
         }
 
-        if (status == InterviewStatus.RescheduleRequested)
-        {
-            return new DetailActions(
-                AfterMatchSollicitatiesUrls.Reschedule(summary.ApplicationId, returnUrl),
-                culture["AfterMatch.Screen08.Reschedule"],
-                messagesHref,
-                summary.UnreadMessageCount);
-        }
-
         return new DetailActions(
             AfterMatchSollicitatiesUrls.AfterMatchBase(summary.ApplicationId, returnUrl),
             culture["AfterMatch.Link.Open"],
@@ -133,7 +142,11 @@ internal static class AfterMatchSollicitatiesPresentation
 
         var yesAt = summary.AcceptedAtUtc;
         DateTime? planAt = yesAt;
-        if (status is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested && summary.OpenSlotCount > 0)
+        if (status == InterviewStatus.Proposing && summary.OpenSlotCount > 0)
+        {
+            planAt = summary.LastMessageAtUtc ?? yesAt;
+        }
+        else if (status == InterviewStatus.RescheduleRequested)
         {
             planAt = summary.LastMessageAtUtc ?? yesAt;
         }
@@ -147,7 +160,8 @@ internal static class AfterMatchSollicitatiesPresentation
             ? "Done"
             : status switch
             {
-                InterviewStatus.Proposing or InterviewStatus.RescheduleRequested => "Current",
+                InterviewStatus.Proposing when summary.OpenSlotCount > 0 => "Current",
+                InterviewStatus.RescheduleRequested => "Current",
                 InterviewStatus.Scheduled or InterviewStatus.Done or InterviewStatus.Cancelled => "Done",
                 _ => "Upcoming"
             };
@@ -157,6 +171,7 @@ internal static class AfterMatchSollicitatiesPresentation
             {
                 InterviewStatus.Scheduled => "Current",
                 InterviewStatus.Done => "Done",
+                InterviewStatus.RescheduleRequested => "Upcoming",
                 _ => "Upcoming"
             };
         var outcomeState = status == InterviewStatus.Done ? "Current" : "Upcoming";
