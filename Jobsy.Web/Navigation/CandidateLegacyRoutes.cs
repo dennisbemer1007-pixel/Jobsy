@@ -5,6 +5,8 @@ public static class CandidateLegacyRoutes
 {
     public const string LegacySettingsPrefix = "/candidate/instellingen";
     public const string SettingsPath = "/candidate/settings";
+    public const string LegacyNotificationsPath = "/candidate/meldingen";
+    public const string NotificationsPath = "/notifications";
 
     public static bool TryMap(string path, out string destination)
     {
@@ -18,6 +20,12 @@ public static class CandidateLegacyRoutes
         if (normalized.Length == 0)
         {
             normalized = "/";
+        }
+
+        if (string.Equals(normalized, LegacyNotificationsPath, StringComparison.OrdinalIgnoreCase))
+        {
+            destination = NotificationsPath;
+            return true;
         }
 
         if (string.Equals(normalized, LegacySettingsPrefix, StringComparison.OrdinalIgnoreCase))

@@ -8,6 +8,8 @@ public sealed class CandidateInstellingenRedirectTests
     [InlineData("/candidate/instellingen", "/candidate/settings")]
     [InlineData("/candidate/instellingen/", "/candidate/settings")]
     [InlineData("/candidate/instellingen/mail", "/candidate/settings/mail")]
+    [InlineData("/candidate/meldingen", "/notifications")]
+    [InlineData("/candidate/meldingen/", "/notifications")]
     public void Legacy_instellingen_maps_to_settings(string path, string expected)
     {
         Assert.True(CandidateLegacyRoutes.TryMap(path, out var dest));
