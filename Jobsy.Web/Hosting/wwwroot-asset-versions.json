@@ -551,6 +551,10 @@
     "v": "20261026-match-swipe1",
     "sha256": "7c32873888fc95c36f72ef683f9c4bed49970a5de86c3468bc1ca22758278c22"
   },
+  "js/career-ssr.js": {
+    "v": "20261026-carriere-tabs1",
+    "sha256": "bde82b7ba1756108da45287c9b838f753a8e4c147a0fa19960ae0023ba97756b"
+  },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",
     "sha256": "a9a963747051d11f9cd4c4d559d1736937d5f283e831677201cd85855d9cb7ce"
