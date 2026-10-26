@@ -13,6 +13,7 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Middleware;
 using Jobsy.Web.Security;
 using Jobsy.Web.Seo;
+using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -682,6 +683,7 @@ app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));
+app.MapGet("/vacancies", () => Results.Redirect(KbRoutes.Map, permanent: false));
 app.UseE2eDevPaths();
 // Banenkaart same-origin API proxies — must be before MapRazorComponents.
 app.MapVacancyMapProxyEndpoints();

@@ -107,7 +107,8 @@ internal static class SollicitatiesBerichtenSsr
         sb.Append("\" data-enhance-nav=\"false\"><span class=\"logo-sq\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><div><b>");
-        sb.Append(WebUtility.HtmlEncode(row.CompanyName));
+        sb.Append(WebUtility.HtmlEncode(
+            !string.IsNullOrWhiteSpace(row.Title) ? row.Title : row.CompanyName));
         sb.Append("</b><p>");
         sb.Append(WebUtility.HtmlEncode(
             SollicitatiesBerichtenPresentation.ThreadSubtitle(culture, row, threadDto)));
@@ -136,7 +137,8 @@ internal static class SollicitatiesBerichtenSsr
         sb.Append("\" data-enhance-nav=\"false\"><span class=\"logo-sq\">");
         sb.Append(WebUtility.HtmlEncode(ApplicationsSsrData.CompanyInitials(row.CompanyName)));
         sb.Append("</span><div><b>");
-        sb.Append(WebUtility.HtmlEncode(row.CompanyName));
+        sb.Append(WebUtility.HtmlEncode(
+            !string.IsNullOrWhiteSpace(row.Title) ? row.Title : row.CompanyName));
         sb.Append("</b><p>");
         sb.Append(WebUtility.HtmlEncode(
             SollicitatiesBerichtenPresentation.ThreadSubtitle(culture, row, threadDto)));

@@ -32,8 +32,8 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Timeline.Now", "nu", "now");
         Add("AfterMatch.Timeline.PlanNow", "22 okt", "22 Oct");
         Add("AfterMatch.Timeline.PlanWaiting",
-            "momenten verstuurd, wacht op Sanne",
-            "times sent, waiting for Sanne");
+            "momenten verstuurd, wacht op de kandidaat",
+            "times sent, waiting for the candidate");
         Add("AfterMatch.Employer.Timeline.OutcomeDone", "Verstuurd", "Sent");
 
         Add("AfterMatch.What.Plan.Title", "Gesprek plannen", "Plan the interview");
@@ -51,11 +51,11 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Screen01.Hero.Title", "Bakkerij De Korenaar zei ja", "Bakkerij De Korenaar said yes");
         Add("AfterMatch.Screen01.Hero.Lead",
-            "Mooi, Sanne. Zo gaat het verder. Je ziet steeds waar je staat en wat je kunt verwachten.",
-            "Nice, Sanne. This is what happens next. You always see where you are and what to expect.");
+            "Mooi. Zo gaat het verder. Je ziet steeds waar je staat en wat je kunt verwachten.",
+            "Nice. This is what happens next. You always see where you are and what to expect.");
         Add("AfterMatch.Screen01.Hero.LeadCompact",
-            "Mooi, Sanne. Zo gaat het verder.",
-            "Nice, Sanne. This is what happens next.");
+            "Mooi. Zo gaat het verder.",
+            "Nice. This is what happens next.");
         Add("AfterMatch.Screen01.Wait.Title", "Wacht op momenten van Linda", "Waiting for times from Linda");
         Add("AfterMatch.Screen01.Wait.Body",
             "Je krijgt een melding zodra ze er zijn. Meestal binnen twee werkdagen.",
@@ -72,7 +72,7 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Screen03.Hero.Title", "Gesprek plannen", "Plan interview");
         Add("AfterMatch.Screen03.Hero.Lead",
-            "Stel een paar momenten voor. Sanne kiest er één.",
+            "Stel een paar momenten voor. De kandidaat kiest er één.",
             "Propose a few times. Sanne will pick one.");
         Add("AfterMatch.Screen03.Format.OnSite", "Op locatie", "On site");
         Add("AfterMatch.Screen03.Format.Online", "Online", "Online");
@@ -316,7 +316,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen12.ReasonChip.OfferHours", "Uren en salaris besproken", "Hours and pay discussed");
         Add("AfterMatch.Screen12.ReasonChip.OfferWelcome", "We kijken ernaar uit je te verwelkomen", "We look forward to welcoming you");
         Add("AfterMatch.Screen12.ReasonChip.OfferOther", "Iets anders", "Something else");
-        Add("AfterMatch.Screen12.SubmittedNote", "De uitkomst is verstuurd. Sanne ziet je reden in de app.", "The outcome was sent. Sanne sees your reason in the app.");
+        Add("AfterMatch.Screen12.SubmittedNote", "De uitkomst is verstuurd. De kandidaat ziet je reden in de app.", "The outcome was sent. The candidate sees your reason in the app.");
         Add("AfterMatch.Screen12.Submit", "Uitkomst versturen", "Send outcome");
         Add("AfterMatch.Screen12.TalentPool", "Bewaren in talentpool", "Save to talent pool");
 
@@ -384,16 +384,16 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Demo.Team", "Team Bakkerij", "Bakery team");
         Add("AfterMatch.Employer.YesOn", "ja gezegd op {0}", "said yes on {0}");
-        Add("AfterMatch.Employer.Share.Title", "Wat Sanne deelt", "What Sanne shares");
+        Add("AfterMatch.Employer.Share.Title", "Wat de kandidaat deelt", "What the candidate shares");
         Add("AfterMatch.Employer.Share.Passport", "Paspoort, met onderschreven competenties", "Passport with endorsed competencies");
-        Add("AfterMatch.Employer.Share.Phone", "Telefoon zie je na het gesprek, als Sanne dat wil", "Phone after the interview if Sanne agrees");
+        Add("AfterMatch.Employer.Share.Phone", "Telefoon zie je na het gesprek, als de kandidaat dat wil", "Phone after the interview if the candidate agrees");
         Add("AfterMatch.Employer.Share.Bank", "Bankgegevens pas na een aanbod, voor je eigen administratie", "Bank details only after an offer");
         Add("AfterMatch.Employer.WhatNow.Slots.Title", "Nu: momenten voorstellen", "Now: propose times");
-        Add("AfterMatch.Employer.SlotsSent.Title", "Momenten verstuurd, wacht op Sanne", "Times sent, waiting for Sanne");
+        Add("AfterMatch.Employer.SlotsSent.Title", "Momenten verstuurd, wacht op de kandidaat", "Times sent, waiting for the candidate");
         Add("AfterMatch.Employer.SlotsSent.TitleFmt", "Momenten verstuurd, wacht op {0}", "Times sent, waiting for {0}");
         Add("AfterMatch.Employer.SlotsSent.Body",
-            "Sanne kiest één van je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen.",
-            "Sanne picks one of your times or suggests another. You will be notified once she has chosen.");
+            "De kandidaat kiest één van je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen.",
+            "The candidate picks one of your times or suggests another. You will be notified once she has chosen.");
         Add("AfterMatch.Employer.SlotsSent.BodyFmt",
             "{0} kiest één van je momenten, of stelt een ander moment voor. Je krijgt bericht zodra {1} heeft gekozen.",
             "{0} picks one of your times or suggests another. You will be notified once {1} has chosen.");
@@ -407,8 +407,8 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Propose.PickHint", "Klik in de weekweergave om momenten te selecteren (2–3).", "Click the week view to select 2–3 times.");
         Add("AfterMatch.Employer.Propose.AgendaSoon", "Agenda koppelen komt later. Gebruik intussen de weekweergave om handmatig momenten te kiezen.", "Calendar linking comes later. Use the week view to pick times manually for now.");
         Add("AfterMatch.Employer.Propose.CandidateNote",
-            "Sanne kiest zelf uit je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen.",
-            "Sanne picks from your times or suggests another. You will be notified when she has chosen.");
+            "De kandidaat kiest zelf uit je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen.",
+            "The candidate picks from your times or suggests another. You will be notified when she has chosen.");
         Add("AfterMatch.Employer.Propose.CandidateNoteFmt",
             "{0} kiest zelf uit je momenten, of stelt een ander moment voor. Je krijgt bericht zodra {1} heeft gekozen.",
             "{0} picks from your times or suggests another. You will be notified when {1} has chosen.");
@@ -429,7 +429,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Scheduled.WhenFallback", "Donderdag 22 oktober, 10:30", "Thursday 22 October, 10:30");
         Add("AfterMatch.Employer.Action.Propose", "Momenten voorstellen", "Propose times");
         Add("AfterMatch.Employer.Action.Messages", "Bericht sturen", "Send message");
-        Add("AfterMatch.Employer.Expectation", "Sanne verwacht je voorstel · rond 22–26 okt", "Sanne expects your proposal · around 22–26 Oct");
+        Add("AfterMatch.Employer.Expectation", "De kandidaat verwacht je voorstel · rond 22–26 okt", "The candidate expects your proposal · around 22–26 Oct");
 
         Add("AfterMatch.Mail.CandidateSubject", "Onderwerp: Je gesprek bij Bakkerij De Korenaar staat erin", "Subject: Your interview at Bakkerij De Korenaar is booked");
         Add("AfterMatch.Mail.EmployerSubject", "Onderwerp: Gesprek met {0} gepland", "Subject: Interview with {0} scheduled");
@@ -443,8 +443,8 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Mail.Candidate", "Kandidaat", "Candidate");
         Add("AfterMatch.Mail.After", "Na afloop", "Afterwards");
         Add("AfterMatch.Mail.AfterBody", "Geef binnen 5 werkdagen de uitkomst", "Record the outcome within 5 working days");
-        Add("AfterMatch.Mail.EmployerTitle", "Sanne komt donderdag", "Sanne is coming Thursday");
-        Add("AfterMatch.Mail.EmployerLead", "Sanne koos een van je momenten. Het gesprek staat ook in Lobsy onder Gesprekken.", "Sanne picked one of your times. The interview is also in Lobsy under Interviews.");
+        Add("AfterMatch.Mail.EmployerTitle", "De kandidaat komt donderdag", "The candidate is coming Thursday");
+        Add("AfterMatch.Mail.EmployerLead", "De kandidaat koos een van je momenten. Het gesprek staat ook in Lobsy onder Gesprekken.", "The candidate picked one of your times. The interview is also in Lobsy under Interviews.");
         Add("AfterMatch.Mail.OutlookTitle", "Zo ziet het agenda-item eruit in Outlook", "How the calendar item looks in Outlook");
         Add("AfterMatch.Mail.OutlookSave", "Opslaan en sluiten", "Save and close");
         Add("AfterMatch.Mail.OutlookDelete", "Verwijderen", "Delete");
@@ -469,7 +469,7 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Screen06.PageTitle", "Bevestiging voor allebei, met agenda-item", "Confirmation for both, with calendar item");
         Add("AfterMatch.Screen07.PageTitle", "Herinneringen", "Reminders");
-        Add("AfterMatch.Employer.Reschedule.Note", "Sanne vroeg om een ander moment. Hieronder zie je de reden en het voorstel.", "Sanne asked for another time. See the reason and proposal below.");
+        Add("AfterMatch.Employer.Reschedule.Note", "De kandidaat vroeg om een ander moment. Hieronder zie je de reden en het voorstel.", "The candidate asked for another time. See the reason and proposal below.");
         Add("AfterMatch.Employer.Reschedule.Accept", "Akkoord met voorstel", "Accept proposal");
         Add("AfterMatch.Employer.Reschedule.AcceptSlotFmt", "Akkoord, {0}", "Accept, {0}");
         Add("AfterMatch.Employer.Reschedule.Counter", "Ander moment voorstellen", "Propose another time");
@@ -479,8 +479,8 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Reschedule.OwnSlotHint", "(een van je eigen momenten)", "(one of your own times)");
         Add("AfterMatch.Employer.Reschedule.CancelLink", "Gesprek afzeggen", "Cancel interview");
         Add("AfterMatch.Employer.Reschedule.Footnote",
-            "Zeg je zelf af of verzet je? Dan vraagt Lobsy ook jou om een korte reden. Sanne ziet die reden.",
-            "If you cancel or reschedule, Lobsy asks you for a short reason too. Sanne will see it.");
+            "Zeg je zelf af of verzet je? Dan vraagt Lobsy ook jou om een korte reden. De kandidaat ziet die reden.",
+            "If you cancel or reschedule, Lobsy asks you for a short reason too. The candidate will see it.");
         Add("AfterMatch.Employer.Reschedule.WeekAside", "Gesprekken deze week", "Interviews this week");
         Add("AfterMatch.Employer.Reschedule.RequestLabel", "Verzoek om te verzetten", "Request to reschedule");
         Add("AfterMatch.Employer.Reschedule.ActionPill", "Actie", "Action");
@@ -488,11 +488,11 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Reschedule.WeekRow4790When", "Vrijdag 23 okt, 09:00", "Friday 23 Oct, 09:00");
         Add("AfterMatch.Employer.Reschedule.WeekRow4790Status", "Bevestigd", "Confirmed");
         Add("AfterMatch.Employer.Cancel.Lead",
-            "Geef een korte reden. Sanne ziet die reden in Lobsy.",
-            "Give a short reason. Sanne will see it in Lobsy.");
+            "Geef een korte reden. De kandidaat ziet die reden in Lobsy.",
+            "Give a short reason. The candidate will see it in Lobsy.");
         Add("AfterMatch.Employer.Cancel.HeroLead",
             "Het gesprek wordt afgezegd. Sanne krijgt bericht met je reden.",
-            "The interview will be cancelled. Sanne will be notified with your reason.");
+            "The interview will be cancelled. The candidate will be notified with your reason.");
         Add("AfterMatch.InterviewCancelled.EmployerTitle", "Gesprek afgezegd", "Interview cancelled");
         Add("AfterMatch.InterviewCancelled.EmployerLeadFmt",
             "De kandidaat heeft het gesprek afgezegd. Reden: {0}",
@@ -504,7 +504,7 @@ public static class UiStringsAfterMatch
             "Je hebt het gesprek afgezegd. Reden: {0}",
             "You cancelled the interview. Reason: {0}");
         Add("AfterMatch.InterviewCancelled.DossierCta", "Naar gesprek", "View conversation");
-        Add("AfterMatch.Employer.Outcome.PreviewTitle", "Zo ziet Sanne het", "How Sanne sees it");
+        Add("AfterMatch.Employer.Outcome.PreviewTitle", "Zo ziet Sanne het", "How The candidate sees it");
         Add("AfterMatch.Employer.Outcome.PreviewLead", "Dank je wel voor het gesprek. Hier komt je korte uitleg.", "Thank you for the interview. Your short explanation appears here.");
         Add("AfterMatch.Employer.Outcome.PreviewNotNowTitleFmt", "Dank je wel voor het gesprek, {0}", "Thank you for the interview, {0}");
         Add("AfterMatch.Employer.Outcome.PreviewNotNowLeadFmt", "{0} kiest nu voor iemand anders. Dit zeggen ze erover:", "{0} is choosing someone else for now. They say:");
@@ -513,6 +513,6 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Outcome.PreviewNextTitleFmt", "Nog een gesprek, {0}", "Another interview, {0}");
         Add("AfterMatch.Employer.Outcome.PreviewNextLeadFmt", "{0} wil graag nog een gesprek met je. Dit staat erbij:", "{0} would like another interview. They add:");
         Add("AfterMatch.Employer.Outcome.ToneNote", "Lobsy controleert reden-teksten op toon voordat ze verstuurd worden.", "Lobsy checks reason texts for tone before they are sent.");
-        Add("AfterMatch.Employer.Outcome.OfferNote", "Kies je Aanbod? Dan kan Sanne daarna haar bankgegevens met je delen.", "Choosing Offer lets Sanne share bank details with you afterwards.");
+        Add("AfterMatch.Employer.Outcome.OfferNote", "Kies je Aanbod? Dan kan Sanne daarna haar bankgegevens met je delen.", "Choosing Offer lets the candidate share bank details with you afterwards.");
     }
 }
