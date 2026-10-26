@@ -1537,14 +1537,65 @@
   }
 }
 
-/* SSR carrière tabs are full-page links, not Blazor buttons. */
-a.carriere-segmented__tab {
-  text-decoration: none;
-  color: inherit;
-}
-
 .carriere-segmented__nav {
   overflow-x: auto;
   touch-action: pan-x;
   -webkit-overflow-scrolling: touch;
+}
+
+.carriere-kans-layout {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .carriere-kans-layout {
+    grid-template-columns: minmax(0, 1fr) min(400px, 36%);
+  }
+}
+
+.carriere-kans-aside {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.carriere-kans-aside__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  color: var(--brand);
+}
+
+.carriere-kans-aside__lead {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.carriere-kans-aside__list {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.carriere-kans-aside__list li {
+  display: grid;
+  gap: 2px;
+}
+
+.carriere-kans-aside__adviseur {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.carriere-kans-aside__source {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.carriere-segmented__dream-coach {
+  margin: var(--space-4) 0 var(--space-5);
 }
