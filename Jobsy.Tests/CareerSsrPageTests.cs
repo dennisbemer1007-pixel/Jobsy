@@ -25,6 +25,9 @@ public sealed class CareerSsrPageTests
             TestRepo.FindRoot(),
             "Jobsy.Web", "Career", "CareerSsrSectorIcon.cs")), StringComparison.Ordinal);
         Assert.Contains("carriere-kans-layout", shells, StringComparison.Ordinal);
-        Assert.Contains("carriere-kans-aside", shells, StringComparison.Ordinal);
+        Assert.Contains("CareerSsrKansAsideHtml", shells, StringComparison.Ordinal);
+        Assert.Contains("carriere-kans-aside", File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "Career", "CareerSsrKansAsideHtml.cs")), StringComparison.Ordinal);
     }
 }
