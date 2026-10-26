@@ -104,8 +104,8 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
         Assert.Contains("data-ndm-open-panel=\"propose\"", html, StringComparison.Ordinal);
         Assert.DoesNotContain("15 okt", html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(AfterMatchTimelineLabels.InterviewStep(thread), html, StringComparison.Ordinal);
-        Assert.Contains("Kandidaat #4790", html, StringComparison.Ordinal);
         Assert.Contains(culture["AfterMatch.Employer.Reschedule.RequestLabel"], html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Kandidaat #4790", html, StringComparison.Ordinal);
     }
 
     [Fact]

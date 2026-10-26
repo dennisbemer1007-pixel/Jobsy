@@ -2,6 +2,7 @@ using Bunit;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Time;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
@@ -22,10 +23,13 @@ public sealed class AfterMatchEmployerWeekAsideRowsTests : BunitContext
     }
 
     [Fact]
-    public void Demo_reschedule_includes_4790_row_when_slot_falls_in_current_week()
+    public void Week_aside_lists_scheduled_peers_in_current_week_without_hardcoded_4790()
     {
         var culture = Services.GetRequiredService<CultureState>();
-        var thread = new AfterMatchThreadDto(
+        var weekStart = InitiativeWeekLimitRules.WeekStartAmsterdam(DateTime.UtcNow);
+        var scheduledUtc = weekStart.AddDays(1).AddHours(10);
+
+        var reschedule = new AfterMatchThreadDto(
             AfterMatchDemoIds.RescheduleApp,
             Guid.NewGuid(),
             InterviewStatus.RescheduleRequested,
@@ -50,8 +54,34 @@ public sealed class AfterMatchEmployerWeekAsideRowsTests : BunitContext
             DateTime.UtcNow.AddDays(-2),
             null);
 
-        var rows = AfterMatchEmployerWeekAsideRows.Build(culture, thread);
-        Assert.True(rows.Count >= 2);
-        Assert.Contains(rows, r => r.Title == culture["AfterMatch.Employer.Reschedule.WeekRow4790Name"]);
+        var scheduledPeer = new AfterMatchThreadDto(
+            AfterMatchDemoIds.ScheduledApp,
+            Guid.NewGuid(),
+            InterviewStatus.Scheduled,
+            AfterMatchContactShareState.From(InterviewStatus.Scheduled, null),
+            null,
+            "Medewerker bakkerij",
+            "Den Haag Centrum",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            scheduledUtc,
+            scheduledUtc.AddMinutes(30),
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "Sanne de Vries",
+            null,
+            DateTime.UtcNow.AddDays(-2),
+            null);
+
+        var rows = AfterMatchEmployerWeekAsideRows.Build(culture, reschedule, [reschedule, scheduledPeer]);
+        Assert.Equal(2, rows.Count);
+        Assert.Contains(rows, r => r.Subtitle.Contains("10:", StringComparison.Ordinal));
+        Assert.DoesNotContain(rows, r => r.Title == "Kandidaat #4790");
     }
 }

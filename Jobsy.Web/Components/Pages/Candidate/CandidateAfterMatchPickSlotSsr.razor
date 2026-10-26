@@ -61,7 +61,7 @@ else if (!string.IsNullOrWhiteSpace(_fatalMessage))
             query.TryGetValue("return", out var returnValues);
             var returnUrl = returnValues.FirstOrDefault();
 
-            var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+            var thread = await GetAfterMatchThreadWithRetryAsync(http.RequestAborted);
             if (thread?.InterviewStatus == InterviewStatus.RescheduleRequested)
             {
                 var wait = $"/candidate/applications/{ApplicationId:D}/after-match/wait-ssr";
@@ -112,5 +112,18 @@ else if (!string.IsNullOrWhiteSpace(_fatalMessage))
         {
             _loading = false;
         }
+    }
+
+    private async Task<Jobsy.Core.Contracts.AfterMatchThreadDto?> GetAfterMatchThreadWithRetryAsync(
+        CancellationToken cancellationToken)
+    {
+        var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, cancellationToken);
+        if (thread is not null)
+        {
+            return thread;
+        }
+
+        await Task.Delay(350, cancellationToken);
+        return await Api.GetAfterMatchForCandidateAsync(ApplicationId, cancellationToken);
     }
 }

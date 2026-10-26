@@ -267,7 +267,9 @@ internal static class AfterMatchDemoSeeder
             app.EmailVerifiedAt = yesAt;
         }
 
-        app.Status = ApplicationStatus.Accepted;
+        app.Status = interviewStatus == InterviewStatus.Scheduled
+            ? ApplicationStatus.EmployerContacting
+            : ApplicationStatus.Accepted;
         app.VacancyId = AfterMatchDemoIds.VacancyForApplication(appId);
         var vacancy = await db.Vacancies.FirstOrDefaultAsync(v => v.Id == app.VacancyId);
         if (vacancy is not null)

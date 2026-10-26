@@ -418,7 +418,7 @@ else
         var list = new List<RenderFragment>
         {
             Kpi(Culture["WgDash.Kpi.ActiveVacancies"], k.ActiveVacancies.ToString(), FormatDelta(k.ActiveVacanciesDelta), Tone(k.ActiveVacanciesDelta), k.ActiveVacanciesSpark.Points),
-            Kpi(Culture["WgDash.Kpi.NewApplications"], k.NewApplications.ToString(), FormatPct(k.NewApplicationsDeltaPercent), Tone(k.NewApplicationsDeltaPercent), k.NewApplicationsSpark.Points),
+            Kpi(Culture["WgDash.Kpi.NewApplications"], k.NewApplications.ToString(), null, "neutral", k.NewApplicationsSpark.Points),
             Kpi(Culture["WgDash.Kpi.FirstResponse"], FormatResponse(k.AvgFirstResponseHours), FormatResponseDelta(k.AvgFirstResponseHoursDelta), Tone(k.AvgFirstResponseHoursDelta, invert: true), k.AvgFirstResponseSpark.Points, tip: k.AvgFirstResponseHours is null ? Culture["WgDash.Kpi.FirstResponseTip"] : null),
             Kpi(Culture["WgDash.Kpi.Hired"], k.Hired.ToString(), FormatDelta(k.HiredDelta), Tone(k.HiredDelta), k.HiredSpark.Points),
         };
@@ -463,7 +463,7 @@ else
         return
         [
             Kpi(Culture["WgDash.Kpi.ActiveVacancies"], k.ActiveVacancies.ToString(), FormatDelta(k.ActiveVacanciesDelta), Tone(k.ActiveVacanciesDelta), null),
-            Kpi(Culture["WgDash.Kpi.NewApplications"], k.NewApplications.ToString(), FormatPct(k.NewApplicationsDeltaPercent), Tone(k.NewApplicationsDeltaPercent), null),
+            Kpi(Culture["WgDash.Kpi.NewApplications"], k.NewApplications.ToString(), null, "neutral", null),
             Kpi(Culture["WgDash.Kpi.FirstResponseShort"], FormatResponse(k.AvgFirstResponseHours), FormatResponseDelta(k.AvgFirstResponseHoursDelta), Tone(k.AvgFirstResponseHoursDelta, invert: true), null),
             Kpi(tokenLabel, tokenValue, tokenDelta, "neutral", null, href: "/werkgever/tokens"),
         ];
