@@ -76,20 +76,23 @@
             </p>
         }
 
-        <section class="kb-ext__card">
-            <h2 class="kb-ext__method-title">@Culture["ExtVac.Detail.Facts"]</h2>
-            <table class="kb-ext__facts">
-                <tbody>
-                    @foreach (var row in FactRows(_detail))
-                    {
-                        <tr>
-                            <th scope="row">@row.Label</th>
-                            <td class="@(row.Unknown ? "is-unknown" : null)">@row.Value</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </section>
+        @if (FactRows(_detail).Any(static r => !r.Unknown))
+        {
+            <section class="kb-ext__card">
+                <h2 class="kb-ext__method-title">@Culture["ExtVac.Detail.Facts"]</h2>
+                <table class="kb-ext__facts">
+                    <tbody>
+                        @foreach (var row in FactRows(_detail).Where(static r => !r.Unknown))
+                        {
+                            <tr>
+                                <th scope="row">@row.Label</th>
+                                <td>@row.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        }
 
         @if (_displayInsights.Strengths.Count > 0 || _displayInsights.Challenges.Count > 0)
         {

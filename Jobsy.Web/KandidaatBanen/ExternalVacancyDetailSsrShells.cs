@@ -90,25 +90,23 @@ internal static class ExternalVacancyDetailSsrShells
             sb.Append("</p>");
         }
 
-        sb.Append("<section class=\"kb-ext__card\"><h2 class=\"kb-ext__method-title\">");
-        sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Facts"]));
-        sb.Append("</h2><table class=\"kb-ext__facts\"><tbody>");
-        foreach (var row in FactRows(culture, detail))
+        var factRows = FactRows(culture, detail).Where(static r => !r.Unknown).ToList();
+        if (factRows.Count > 0)
         {
-            sb.Append("<tr><th scope=\"row\">");
-            sb.Append(WebUtility.HtmlEncode(row.Label));
-            sb.Append("</th><td");
-            if (row.Unknown)
+            sb.Append("<section class=\"kb-ext__card\"><h2 class=\"kb-ext__method-title\">");
+            sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Detail.Facts"]));
+            sb.Append("</h2><table class=\"kb-ext__facts\"><tbody>");
+            foreach (var row in factRows)
             {
-                sb.Append(" class=\"is-unknown\"");
+                sb.Append("<tr><th scope=\"row\">");
+                sb.Append(WebUtility.HtmlEncode(row.Label));
+                sb.Append("</th><td>");
+                sb.Append(WebUtility.HtmlEncode(row.Value));
+                sb.Append("</td></tr>");
             }
 
-            sb.Append('>');
-            sb.Append(WebUtility.HtmlEncode(row.Value));
-            sb.Append("</td></tr>");
+            sb.Append("</tbody></table></section>");
         }
-
-        sb.Append("</tbody></table></section>");
 
         var insights = CandidateExternalVacancyRules.FilterMatchInsightsForDisplay(detail.MatchInsights);
         var strengths = insights.Strengths;
