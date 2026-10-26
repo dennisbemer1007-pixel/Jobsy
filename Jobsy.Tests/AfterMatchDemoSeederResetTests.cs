@@ -61,6 +61,14 @@ public sealed class AfterMatchDemoSeederResetTests
         });
         db.Users.Add(new User
         {
+            Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
+            Email = "kandidaat@jobsy.local",
+            FullName = "Sanne de Vries",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        db.Users.Add(new User
+        {
             Id = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222"),
             Email = "kandidaat.denhaag@jobsy.local",
             FullName = "Demo Kandidaat Den Haag",
@@ -83,7 +91,6 @@ public sealed class AfterMatchDemoSeederResetTests
 
         await AfterMatchDemoSeeder.EnsureAsync(db, logger);
 
-        Assert.Equal(0, await db.Applications.CountAsync(a => a.Vacancy.CompanyId == WestlandId));
         var keepIds = new[]
         {
             AfterMatchDemoIds.WaitApp,
@@ -93,7 +100,13 @@ public sealed class AfterMatchDemoSeederResetTests
             AfterMatchDemoIds.NotNowApp,
             AfterMatchDemoIds.Verkoop4790App
         };
+        Assert.Equal(0, await db.Applications.CountAsync(a =>
+            a.Vacancy.CompanyId == WestlandId && !keepIds.Contains(a.Id)));
         Assert.Equal(6, await db.Applications.CountAsync(a => keepIds.Contains(a.Id)));
+        Assert.All(
+            await db.Applications.Where(a => keepIds.Contains(a.Id)).Select(a => a.CandidateUserId).ToListAsync(),
+            id => Assert.Equal(Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"), id));
+        Assert.Equal(6, await db.Applications.CountAsync(a => a.Vacancy.CompanyId == WestlandId));
 
         var app4790 = await db.Applications.Include(a => a.Vacancy)
             .SingleAsync(a => a.Id == AfterMatchDemoIds.Verkoop4790App);
