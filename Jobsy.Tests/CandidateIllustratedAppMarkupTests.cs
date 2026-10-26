@@ -21,9 +21,9 @@ public class CandidateIllustratedAppMarkupTests
     [Fact]
     public void Match_page_has_desktop_side_panel()
     {
-        var match = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/MatchPage.razor"));
+        var match = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Match/MatchSsrShells.cs"));
         Assert.Contains("match-page--illustrated", match, StringComparison.Ordinal);
-        Assert.Contains("MatchDesktopSide", match, StringComparison.Ordinal);
+        Assert.Contains("match-page__side", match, StringComparison.Ordinal);
         Assert.Contains("match-page__grid", match, StringComparison.Ordinal);
     }
 

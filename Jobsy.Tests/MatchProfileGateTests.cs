@@ -84,14 +84,14 @@ public class MatchProfileGateTests
     public void Match_page_wires_unlock_gate_and_services()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/MatchPage.razor"));
-        Assert.Contains("MatchUnlockPanel", page, StringComparison.Ordinal);
-        Assert.Contains("IsProfileComplete", page, StringComparison.Ordinal);
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateMatchSsr.razor"));
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Match/MatchSsrGateHtml.cs"));
         Assert.Contains("MatchVacancyService", page, StringComparison.Ordinal);
         Assert.Contains("CandidateMatchProfileService", page, StringComparison.Ordinal);
-        Assert.Contains("KbRoutes.Map", page, StringComparison.Ordinal);
-        Assert.Contains("MatchUnlockPanel", page, StringComparison.Ordinal);
-        Assert.Contains("FitGateOpen", page, StringComparison.Ordinal);
+        Assert.Contains("IsProfileComplete", shells, StringComparison.Ordinal);
+        Assert.Contains("FitGateOpen", shells, StringComparison.Ordinal);
+        Assert.Contains("KbRoutes.Map", shells, StringComparison.Ordinal);
+        Assert.Contains("Match.Gate.AuthTitle", shells, StringComparison.Ordinal);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Program.cs"));
         Assert.Contains("CandidateMatchProfileService", program, StringComparison.Ordinal);

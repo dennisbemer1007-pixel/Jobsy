@@ -31,6 +31,7 @@ public sealed class MatchDeck
         MatchVacancyService vacancies,
         int take = 24,
         bool orderByMatch = false,
+        bool showMatchPercentage = true,
         CancellationToken cancellationToken = default)
     {
         _items.Clear();
@@ -54,7 +55,7 @@ public sealed class MatchDeck
 
                 foreach (var item in ordered)
                 {
-                    _items.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: true));
+                    _items.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: showMatchPercentage));
                 }
             }
         }

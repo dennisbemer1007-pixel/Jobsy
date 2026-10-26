@@ -70,6 +70,27 @@ public static class UiStringsMatch
             "Odrzucenie przenosi ofertę na koniec tej rundy. Nie znika.",
             "Renunțarea o mută la finalul rundei. Nu dispare.",
             "التخطي ينقلها إلى نهاية هذه الجولة. لا تختفي.");
+        Add("Match.Gate.AuthTitle",
+            "Ontgrendel Match", "Unlock Match",
+            "Odblokuj Match", "Deblochează Match", "فعّل المطابقة");
+        Add("Match.Gate.AuthLead",
+            "Log in als kandidaat en rond je startprofiel af om relevante vacatures te swipen.",
+            "Sign in as a candidate and finish your starter profile to swipe relevant vacancies.",
+            "Zaloguj się jako kandydat i dokończ profil startowy, aby przesuwać oferty.",
+            "Autentifică-te ca candidat și finalizează profilul de start pentru a da swipe.",
+            "سجّل الدخول كمرشح وأكمل ملف البداية لتمرير الوظائف.");
+        Add("Match.Gate.ProfileTitle",
+            "Maak Match compleet", "Complete Match",
+            "Dokończ Match", "Finalizează Match", "أكمل المطابقة");
+        Add("Match.Gate.ProfileLead",
+            "Rond je startprofiel af (ongeveer 6 minuten). Daarna tonen we vacatures die bij jou passen. Opleiding mag Geen zijn.",
+            "Finish your starter profile (about 6 minutes). Then we show vacancies that fit you. Education may be None.",
+            "Dokończ profil startowy (ok. 6 min). Potem pokażemy pasujące oferty. Wykształcenie może być Brak.",
+            "Finalizează profilul de start (circa 6 min). Apoi arătăm joburi potrivite. Studiile pot fi Niciunul.",
+            "أكمل ملف البداية (حوالي 6 دقائق). ثم نعرض وظائف تناسبك. يمكن أن تكون المؤهلات «لا شيء».");
+        Add("Match.Gate.Progress",
+            "{0} van {1} klaar", "{0} of {1} done",
+            "{0} z {1} gotowe", "{0} din {1} gata", "{0} من {1} جاهزة");
         Add("Match.DeckDone",
             "Je hebt ze allemaal gezien", "You've seen them all",
             "Widziałeś je wszystkie", "Le-ai văzut pe toate", "لقد شاهدتها كلها");
