@@ -316,27 +316,7 @@ internal static class PassportSsrShells
             sb.Append("</a></p>");
         }
 
-        sb.Append("<p class=\"login-lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Tests"]));
-        sb.Append("</p><ul class=\"passport-ssr-links\">");
-        foreach (var (label, href) in TestLinks(culture))
-        {
-            sb.Append("<li><a href=\"");
-            sb.Append(WebUtility.HtmlEncode(href));
-            sb.Append("\" data-enhance-nav=\"false\">");
-            sb.Append(WebUtility.HtmlEncode(label));
-            sb.Append("</a></li>");
-        }
-
-        sb.Append("</ul>");
-    }
-
-    private static IEnumerable<(string Label, string Href)> TestLinks(CultureState culture)
-    {
-        yield return (culture["Test.Competence.Title"], "/profiel/tests/competence");
-        yield return (culture["Test.Career.Title"], "/profiel/tests/career");
-        yield return (culture["Test.Culture.Title"], "/profiel/tests/culture");
-        yield return (culture["Test.Values.Title"], "/profiel/tests/values");
+        PassportSsrTestsHtml.Append(sb, culture, data.Kompas);
     }
 
     private static void AppendFitPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)

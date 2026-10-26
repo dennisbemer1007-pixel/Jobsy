@@ -18,6 +18,17 @@ public sealed class PassportSsrR3GuardTests
     }
 
     [Fact]
+    public void Passport_tests_tab_uses_overview_builder_ssr()
+    {
+        var root = FindRepoRoot();
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        var tests = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrTestsHtml.cs"));
+        Assert.Contains("PassportSsrTestsHtml.Append", shells, StringComparison.Ordinal);
+        Assert.Contains("passport-tests__layout", tests, StringComparison.Ordinal);
+        Assert.Contains("TestsOverviewBuilder.FromKompas", tests, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Passport_ssr_tabs_script_is_registered()
     {
         var root = FindRepoRoot();
