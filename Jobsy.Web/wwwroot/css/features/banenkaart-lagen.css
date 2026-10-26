@@ -575,6 +575,14 @@
     pointer-events: auto;
 }
 
+/* Keep map legend below vacancy popup / mobile sheet (host stays z-index 3). */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-stage:has(.maplibregl-popup) .kb-map-legend-host .legend,
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-pane.is-cluster-open .kb-map-legend-host .legend {
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-pane__top-chrome {
     position: absolute;
     left: 0;
