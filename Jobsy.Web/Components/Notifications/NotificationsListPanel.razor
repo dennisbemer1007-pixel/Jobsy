@@ -1,6 +1,7 @@
 @using Jobsy.Core.Time
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -98,7 +99,7 @@ else
             : n.ActionUrl;
         if (!string.IsNullOrWhiteSpace(target))
         {
-            Navigation.NavigateTo(target);
+            NotificationNavigation.Go(Navigation, target);
         }
     }
 

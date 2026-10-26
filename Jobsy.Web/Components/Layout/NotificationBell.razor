@@ -1,5 +1,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Features
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
 @inherits CultureAwareComponentBase
@@ -7,6 +9,7 @@
 @inject NotificationUnreadStore UnreadStore
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
 
 <AuthorizeView>
     <Authorized>
@@ -121,15 +124,27 @@
     private int _unread;
     private List<UserNotificationItem> _items = [];
     private string _allNotificationsHref = "/notifications";
+    private bool _noBlazorRuntime;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        var http = HttpContextAccessor.HttpContext;
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null
+            || AfterMatchWerkgeverSsrPaths.ShouldDisableBlazorAndEnhancedNav(http?.Request.Path);
+
         var state = await AuthState.GetAuthenticationStateAsync();
         _allNotificationsHref = RoleNavCatalog.NotificationsHrefFor(state.User);
         UnreadStore.Changed += OnUnreadChanged;
-        UnreadStore.EnsureStarted();
-        _unread = UnreadStore.Unread;
+        if (_noBlazorRuntime)
+        {
+            await LoadListAsync();
+        }
+        else
+        {
+            UnreadStore.EnsureStarted();
+            _unread = UnreadStore.Unread;
+        }
     }
 
     private void OnUnreadChanged()
@@ -206,9 +221,10 @@
     {
         await MarkReadQuietAsync(n);
         _open = false;
-        if (!string.IsNullOrWhiteSpace(n.DeepLink))
+        var target = !string.IsNullOrWhiteSpace(n.DeepLink) ? n.DeepLink : n.ActionUrl;
+        if (!string.IsNullOrWhiteSpace(target))
         {
-            Navigation.NavigateTo(n.DeepLink);
+            NotificationNavigation.Go(Navigation, target);
         }
     }
 
