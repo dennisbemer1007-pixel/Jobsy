@@ -7981,6 +7981,28 @@ window.jobMap = (function () {
         });
     })();
 
+    function recordFromVacancyPin(v) {
+        if (!v || v.id == null) {
+            return null;
+        }
+        const pt = pointFromVacancy(normalizePin(v) || v);
+        if (!pt) {
+            return null;
+        }
+        const lat = pt[0];
+        const lng = pt[1];
+        return {
+            id: v.id,
+            lat: lat,
+            lng: lng,
+            marker: null,
+            element: null,
+            options: { jobData: normalizePin(v) || v },
+            getLatLng: function () { return { lat: lat, lng: lng }; },
+            getLngLat: function () { return { lng: lng, lat: lat }; }
+        };
+    }
+
     function openVacancyById(id) {
         const key = id != null ? String(id) : "";
         const rec = key ? markersById[key] : null;
@@ -7989,7 +8011,28 @@ window.jobMap = (function () {
             return true;
         }
 
-        return false;
+        fetchVacancyCard(key).then(function (card) {
+            if (!card || card.id == null) {
+                window.location.href = "/vacancies/" + encodeURIComponent(key);
+                return;
+            }
+            const fallback = recordFromVacancyPin(card);
+            if (!fallback) {
+                window.location.href = "/vacancies/" + encodeURIComponent(key);
+                return;
+            }
+            if (map && typeof map.easeTo === "function") {
+                try {
+                    map.easeTo({
+                        center: [fallback.lng, fallback.lat],
+                        zoom: Math.max(map.getZoom(), 12),
+                        duration: 600
+                    });
+                } catch (ePan) { }
+            }
+            openVacancyPopup(fallback);
+        });
+        return true;
     }
 
     function tryOpenVacancyFromQuery() {
