@@ -191,7 +191,7 @@
                 try
                 {
                     _items = (await Api.GetNotificationsAsync()).ToList();
-                    _unread = _items.Count(n => !n.IsRead);
+                    _unread = await Api.GetUnreadNotificationCountAsync();
                     UnreadStore.SetUnread(_unread);
                     return;
                 }
