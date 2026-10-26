@@ -386,7 +386,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Demo.Contact", "Linda de Wit", "Linda de Wit");
 
         Add("AfterMatch.Error.Load", "Gesprek laden mislukt. Probeer het later opnieuw.", "Could not load the interview. Try again later.");
-        Add("AfterMatch.Error.NotFound", "Geen gesprek gevonden voor deze sollicitatie.", "No interview found for this application.");
+        Add("AfterMatch.Error.NotFound", "Deze sollicitatie bestaat niet meer.", "This application no longer exists.");
 
         Add("AfterMatch.Demo.Team", "Team Bakkerij", "Bakery team");
         Add("AfterMatch.Employer.YesOn", "ja gezegd op {0}", "said yes on {0}");

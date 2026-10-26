@@ -49,7 +49,7 @@ else if (!string.IsNullOrWhiteSpace(_fatalMessage))
             var http = HttpContextAccessor.HttpContext;
             if (http is null)
             {
-                _fatalMessage = Culture["Panel.ErrorInline"];
+                _fatalMessage = Culture["Apps.Sollicitation.Gone"];
                 return;
             }
 
@@ -69,7 +69,7 @@ else if (!string.IsNullOrWhiteSpace(_fatalMessage))
         }
         catch
         {
-            _fatalMessage = Culture["Panel.ErrorInline"];
+            _fatalMessage = Culture["Apps.Sollicitation.Gone"];
         }
         finally
         {
