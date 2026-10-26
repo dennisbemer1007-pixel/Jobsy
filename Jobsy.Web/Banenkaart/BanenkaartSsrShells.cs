@@ -199,7 +199,7 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Kb.View.ToggleAria"]))
             .Append("\" data-testid=\"kb-view-toggle\" data-kb-view-toggle-desktop=\"1\">");
         sb.Append("<button type=\"button\" class=\"kb-view-toggle__btn")
-            .Append(model.Query.DesktopListMode ? "" : " on is-active")
+            .Append(model.Query.DesktopListMode ? "" : " is-active")
             .Append("\" role=\"radio\" aria-checked=\"")
             .Append(model.Query.DesktopListMode ? "false" : "true")
             .Append("\" data-testid=\"kb-view-kaart\">")

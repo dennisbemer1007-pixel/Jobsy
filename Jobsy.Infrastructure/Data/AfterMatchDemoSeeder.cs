@@ -267,6 +267,15 @@ internal static class AfterMatchDemoSeeder
             app.EmailVerifiedAt = yesAt;
         }
 
+        app.Status = ApplicationStatus.Accepted;
+        app.VacancyId = AfterMatchDemoIds.VacancyForApplication(appId);
+        var vacancy = await db.Vacancies.FirstOrDefaultAsync(v => v.Id == app.VacancyId);
+        if (vacancy is not null)
+        {
+            vacancy.CompanyId = WestlandId;
+            vacancy.Status = VacancyStatus.Active;
+        }
+
         var candidateUser = await db.Users.AsNoTracking()
             .Where(u => u.Id == candidateUserId)
             .Select(u => new { u.FullName, u.Email })

@@ -506,10 +506,12 @@
         }
         qsa("[data-testid=kb-view-kaart]").forEach(function (btn) {
             btn.classList.toggle("is-active", !listMode);
+            btn.classList.toggle("on", !listMode);
             btn.setAttribute("aria-checked", listMode ? "false" : "true");
         });
         qsa("[data-testid=kb-view-lijst]").forEach(function (btn) {
             btn.classList.toggle("is-active", listMode);
+            btn.classList.toggle("on", listMode);
             btn.setAttribute("aria-checked", listMode ? "true" : "false");
         });
         if (opts.updateUrl !== false) {

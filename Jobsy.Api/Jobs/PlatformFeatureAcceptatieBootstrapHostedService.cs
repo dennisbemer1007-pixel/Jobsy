@@ -1,3 +1,4 @@
+using Jobsy.Infrastructure.Data;
 using Jobsy.Core.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,13 @@ public sealed class PlatformFeatureAcceptatieBootstrapHostedService(
         try
         {
             await using var scope = scopeFactory.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            await AcceptatiePlatformFeatureEnsurer.EnsureAcceptatieFeatureFlagsAsync(
+                db,
+                configuration,
+                logger,
+                cancellationToken);
+
             var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
             var snap = await features.GetAsync(cancellationToken);
             if (snap.SensitiveExperienceEnabled
