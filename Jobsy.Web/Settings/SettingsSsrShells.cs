@@ -150,6 +150,7 @@ internal static class SettingsSsrShells
         }
 
         sb.Append("<form method=\"post\" action=\"/account/mail-instellingen\" class=\"login-form\" data-enhance=\"false\">");
+        sb.Append("<input type=\"hidden\" name=\"settings_return\" value=\"/candidate/settings?pane=mail\" />");
         sb.Append("<input type=\"hidden\" name=\"");
         sb.Append(WebUtility.HtmlEncode(antiforgeryFieldName));
         sb.Append("\" value=\"");

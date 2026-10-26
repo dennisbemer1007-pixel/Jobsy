@@ -23,12 +23,12 @@ public static class MailSettingsEndpoints
         {
             if (http.User.Identity?.IsAuthenticated != true)
             {
-                return Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString("/account/mail-instellingen"));
+                return Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString("/candidate/settings?pane=mail"));
             }
 
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.Redirect("/account/mail-instellingen");
+                return Results.Redirect(MailSettingsRedirect.Resolve(http, saved: false, error: false));
             }
 
             var form = await http.Request.ReadFormAsync();
@@ -66,7 +66,7 @@ public static class MailSettingsEndpoints
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect("/account/mail-instellingen?error=1");
+                return Results.Redirect(MailSettingsRedirect.Resolve(http, saved: false, error: true));
             }
 
             if (form.ContainsKey("whatsapp_shown"))
@@ -88,13 +88,65 @@ public static class MailSettingsEndpoints
                 var whatsAppResponse = await client.SendAsync(whatsApp);
                 if (!whatsAppResponse.IsSuccessStatusCode)
                 {
-                    return Results.Redirect("/account/mail-instellingen?error=1");
+                    return Results.Redirect(MailSettingsRedirect.Resolve(http, saved: false, error: true));
                 }
             }
 
-            return Results.Redirect("/account/mail-instellingen?saved=1");
+            return Results.Redirect(MailSettingsRedirect.Resolve(http, saved: true, error: false));
         }).RequireAuthorization().WithOrder(-1000);
 
         return app;
+    }
+}
+
+internal static class MailSettingsRedirect
+{
+    internal static string Resolve(HttpContext http, bool saved, bool error)
+    {
+        var candidateSettings = "/candidate/settings?pane=mail";
+        var formReturn = http.Request.HasFormContentType
+            ? http.Request.Form["settings_return"].ToString()
+            : string.Empty;
+        if (IsCandidateSettingsReturn(formReturn))
+        {
+            return AppendQuery(formReturn, saved, error);
+        }
+
+        var referer = http.Request.Headers.Referer.ToString();
+        if (!string.IsNullOrWhiteSpace(referer)
+            && Uri.TryCreate(referer, UriKind.Absolute, out var refererUri)
+            && string.Equals(refererUri.Host, http.Request.Host.Host, StringComparison.OrdinalIgnoreCase)
+            && refererUri.AbsolutePath.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppendQuery(refererUri.PathAndQuery, saved, error);
+        }
+
+        if (saved || error)
+        {
+            return AppendQuery(candidateSettings, saved, error);
+        }
+
+        return "/account/mail-instellingen";
+    }
+
+    private static bool IsCandidateSettingsReturn(string? pathAndQuery)
+        => !string.IsNullOrWhiteSpace(pathAndQuery)
+           && pathAndQuery.StartsWith("/candidate/settings", StringComparison.OrdinalIgnoreCase)
+           && !pathAndQuery.Contains("//", StringComparison.Ordinal);
+
+    private static string AppendQuery(string pathAndQuery, bool saved, bool error)
+    {
+        var separator = pathAndQuery.Contains('?', StringComparison.Ordinal) ? '&' : '?';
+        if (saved)
+        {
+            return pathAndQuery + separator + "saved=1";
+        }
+
+        if (error)
+        {
+            return pathAndQuery + separator + "error=1";
+        }
+
+        return pathAndQuery;
     }
 }

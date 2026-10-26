@@ -28,6 +28,7 @@ public static class UiStringsExternalVacancy
         Add("ExtVac.Promo.Link", "Vacature van een andere site?", "Vacancy from another site?", "Oferta z innej strony?", "Job de pe alt site?", "وظيفة من موقع آخر؟");
 
         Add("ExtVac.Detail.Saved", "Bewaard", "Saved", "Zapisane", "Salvat", "محفوظ");
+        Add("ExtVac.Detail.Untitled", "Vacature zonder titel", "Untitled vacancy", "Oferta bez tytułu", "Job fără titlu", "وظيفة بدون عنوان");
         Add("ExtVac.Detail.Requirements", "Wat ze vragen", "What they ask for", "Czego oczekują", "Ce cer", "ما يطلبونه");
         Add("ExtVac.Detail.Facts", "Feiten", "Facts", "Fakty", "Date", "حقائق");
         Add("ExtVac.Detail.Unknown", "Dat weet ik niet", "I don't know", "Nie wiem", "Nu știu", "لا أعرف");

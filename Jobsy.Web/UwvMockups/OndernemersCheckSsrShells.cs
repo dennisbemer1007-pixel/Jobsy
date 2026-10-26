@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
 
@@ -83,9 +84,8 @@ internal static class OndernemersCheckSsrShells
 
         var sb = new StringBuilder(2048);
         sb.Append("<div class=\"journey-page uwv-ondernemer-test uwv-ondernemer-test--question\" data-uwv-ondernemer-question=\"1\">");
-        sb.Append("<script type=\"application/json\" id=\"uwv-ondernemer-boot\">");
-        sb.Append(WebUtility.HtmlEncode(boot));
-        sb.Append("</script><div class=\"uwv-ondernemer-test__shell\" data-uwv-ondernemer-mount></div></div>");
+        JsonScriptEmbed.Append(sb, "uwv-ondernemer-boot", boot);
+        sb.Append("<div class=\"uwv-ondernemer-test__shell\" data-uwv-ondernemer-mount></div></div>");
         return sb.ToString();
     }
 

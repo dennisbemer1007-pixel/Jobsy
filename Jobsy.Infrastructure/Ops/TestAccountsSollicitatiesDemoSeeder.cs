@@ -78,6 +78,12 @@ public static class TestAccountsSollicitatiesDemoSeeder
             logger.LogWarning(ex, "Acceptatie after-match demo ensure failed during sollicitaties reset; continuing.");
         }
 
+        await PurgeStaleExternalVacanciesForAcceptatieDemoLoginsAsync(
+            db,
+            configuration,
+            logger,
+            cancellationToken);
+
         await RemoveStaleDemoApplicationsAsync(db, candidate.Id, logger, cancellationToken);
         await EnsureForCandidateAsync(db, candidate.Id, branchManager.Id, logger, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
@@ -1151,6 +1157,46 @@ public static class TestAccountsSollicitatiesDemoSeeder
             CreatedAtUtc = DemoAnchorUtc.AddDays(3),
             RecordedByUserId = branchManagerId
         });
+    }
+
+    /// <summary>
+    /// Acc reset may target Grokbot primary while manual UAT uses <c>kandidaat@jobsy.local</c>; purge externals for all.
+    /// </summary>
+    private static async Task PurgeStaleExternalVacanciesForAcceptatieDemoLoginsAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var emails = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            AcceptatiePrimaryCandidateEmail,
+            "kandidaat@jobsy.local",
+        };
+
+        var entry = TestAccountCatalog.FindByKey("Candidate");
+        if (entry is not null)
+        {
+            var domain = configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+            emails.Add(TestAccountCatalog.BuildEmail(entry.EmailSlug, domain));
+        }
+
+        foreach (var email in emails)
+        {
+            var user = await db.Users.FirstOrDefaultAsync(
+                u => u.Email != null && u.Email.ToLower() == email.ToLowerInvariant(),
+                cancellationToken);
+            if (user is null)
+            {
+                continue;
+            }
+
+            await PurgeStaleExternalVacanciesAsync(db, user.Id, cancellationToken);
+            logger.LogInformation(
+                "Acceptatie external vacancy purge for demo login {Email} (userId={UserId}).",
+                user.Email,
+                user.Id);
+        }
     }
 
     private static async Task PurgeStaleExternalVacanciesAsync(
