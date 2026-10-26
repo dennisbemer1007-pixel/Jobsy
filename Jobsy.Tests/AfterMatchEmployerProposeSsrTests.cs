@@ -2,6 +2,8 @@ using Bunit;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using System.Globalization;
+using Jobsy.Core.Time;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
@@ -75,7 +77,7 @@ public sealed class AfterMatchEmployerProposeSsrTests : BunitContext
             thread,
             $"/werkgever/sollicitaties/{appId:D}/after-match",
             $"/werkgever/sollicitaties/{appId:D}",
-            AfterMatchEmployerDemoSlots.InitialUtc,
+            AfterMatchEmployerDemoSlots.InitialUtc(),
             InterviewFormat.OnSite,
             "Loc",
             "Linda",
@@ -84,9 +86,14 @@ public sealed class AfterMatchEmployerProposeSsrTests : BunitContext
         var html = AfterMatchEmployerProposeSsrShells.BuildBody(culture, data, appId);
         Assert.Contains("data-ndm-panel=\"propose\"", html, StringComparison.Ordinal);
         Assert.Contains("data-ndm-propose-panel", html, StringComparison.Ordinal);
-        Assert.Contains("Donderdag 22 oktober", html, StringComparison.Ordinal);
-        Assert.Contains("Vrijdag 23 oktober", html, StringComparison.Ordinal);
-        Assert.Contains("Maandag 26 oktober", html, StringComparison.Ordinal);
+        var nl = CultureInfo.GetCultureInfo("nl-NL");
+        foreach (var slot in AfterMatchEmployerDemoSlots.InitialUtc())
+        {
+            var local = AmsterdamTime.ToLocal(slot);
+            var raw = local.ToString("dddd d MMMM", nl);
+            var dayLabel = char.ToUpper(raw[0], nl) + raw[1..];
+            Assert.Contains(dayLabel, html, StringComparison.Ordinal);
+        }
         Assert.Contains(culture["AfterMatch.Screen03.Submit"], html, StringComparison.Ordinal);
         Assert.Contains(culture["AfterMatch.Employer.Propose.AddSlot"], html, StringComparison.Ordinal);
         Assert.Contains("Telefonisch", html, StringComparison.Ordinal);
