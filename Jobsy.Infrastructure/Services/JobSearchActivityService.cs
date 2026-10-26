@@ -34,7 +34,7 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
     {
         await SyncAutomaticActivitiesAsync(candidateUserId, afterMatchEnabled, cancellationToken);
         var agreement = await EnsureAgreementAsync(candidateUserId, cancellationToken);
-        var culture = CultureInfo.GetCultureInfo(cultureName);
+        var culture = ResolveCulture(cultureName);
         var today = TodayAmsterdam();
         var (periodStart, periodEnd) = JobSearchActivityPeriodRules.CurrentPeriod(agreement.PeriodStart, today);
 
@@ -348,7 +348,7 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
         CancellationToken cancellationToken = default)
     {
         var overview = await GetOverviewAsync(candidateUserId, afterMatchEnabled, cultureName, cancellationToken);
-        var culture = CultureInfo.GetCultureInfo(cultureName);
+        var culture = ResolveCulture(cultureName);
         var isNl = culture.TwoLetterISOLanguageName.Equals("nl", StringComparison.OrdinalIgnoreCase);
 
         var rows = overview.Weeks.SelectMany(w => w.Items)
@@ -553,5 +553,25 @@ public sealed class JobSearchActivityService(JobsyDbContext db, TimeProvider tim
             JobSearchActivityKind.Interview => isNl ? "Gesprek" : "Interview",
             _ => kind.ToString()
         };
+    }
+
+    private static CultureInfo ResolveCulture(string? cultureName)
+    {
+        var key = cultureName?.Split(',').FirstOrDefault()?.Trim().ToLowerInvariant();
+        try
+        {
+            return key switch
+            {
+                "en" or "en-gb" or "en-us" => CultureInfo.GetCultureInfo("en-GB"),
+                "pl" or "pl-pl" => CultureInfo.GetCultureInfo("pl-PL"),
+                "ro" or "ro-ro" => CultureInfo.GetCultureInfo("ro-RO"),
+                "ar" or "ar-sa" => CultureInfo.GetCultureInfo("ar-SA"),
+                _ => CultureInfo.GetCultureInfo("nl-NL"),
+            };
+        }
+        catch (CultureNotFoundException)
+        {
+            return CultureInfo.GetCultureInfo("nl-NL");
+        }
     }
 }

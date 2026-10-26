@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Time;
 using Jobsy.Web.Components.AfterMatch;
 using Jobsy.Web.Localization;
 
@@ -9,6 +11,9 @@ namespace Jobsy.Web.Applications;
 
 internal static class AfterMatchEmployerRescheduleSsrShells
 {
+    private static readonly Guid Verkoop4790App = Guid.Parse("77777771-0006-4000-8000-000000000006");
+    private static readonly Guid RescheduleDemoApp = Guid.Parse("77777771-0004-4000-8000-000000000004");
+
     internal sealed record BuildOptions(
         string InitialPanel,
         AfterMatchEmployerPanelSsrShells.PageData? ProposeData,
@@ -175,25 +180,70 @@ internal static class AfterMatchEmployerRescheduleSsrShells
     private static void AppendWeekAside(StringBuilder sb, CultureState culture, AfterMatchEmployerRescheduleSsrData.PageData data)
     {
         var thread = data.Thread;
+        var scheduledStart = thread.ScheduledStartUtc;
+        var isScheduled = thread.InterviewStatus == InterviewStatus.Scheduled && scheduledStart is not null;
+        var primaryWhen = isScheduled
+            ? FormatWeekSlot(scheduledStart!.Value)
+            : data.CandidateProposal is { } proposal
+                ? FormatWeekSlot(proposal.StartUtc)
+                : culture["AfterMatch.Employer.Reschedule.RequestLabel"];
+        var primaryPill = isScheduled
+            ? ("ok", culture["AfterMatch.Employer.Reschedule.WeekRow4790Status"])
+            : ("warm", culture["AfterMatch.Employer.Reschedule.ActionPill"]);
+
         sb.Append("<aside class=\"wc side\" data-ndm-wg-aside><h2 style=\"font-size:1.15rem\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekAside"]));
-        sb.Append("</h2><div class=\"list\" style=\"margin-top:10px\"><div><span class=\"ico navy\">");
+        sb.Append("</h2><div class=\"list\" style=\"margin-top:10px\">");
+        AppendWeekRow(
+            sb,
+            AfterMatchEmployerEmployerPresentation.CandidateDisplayName(thread),
+            primaryWhen,
+            primaryPill.Item1,
+            primaryPill.Item2);
+        if (thread.ApplicationId != Verkoop4790App)
+        {
+            var demoWhen = culture["AfterMatch.Employer.Reschedule.WeekRow4790When"];
+            if (thread.ScheduledStartUtc is DateTime demoStart
+                && thread.ApplicationId == RescheduleDemoApp)
+            {
+                demoWhen = FormatWeekSlot(demoStart);
+            }
+
+            AppendWeekRow(
+                sb,
+                culture["AfterMatch.Employer.Reschedule.WeekRow4790Name"],
+                demoWhen,
+                "ok",
+                culture["AfterMatch.Employer.Reschedule.WeekRow4790Status"]);
+        }
+
+        sb.Append("</div></aside>");
+    }
+
+    private static void AppendWeekRow(
+        StringBuilder sb,
+        string title,
+        string subtitle,
+        string pillClass,
+        string pillLabel)
+    {
+        sb.Append("<div><span class=\"ico navy\">");
         sb.Append(NdMIcons.Calendar);
         sb.Append("</span><div class=\"sp\"><b class=\"small\">");
-        sb.Append(WebUtility.HtmlEncode(thread.CandidateName));
+        sb.Append(WebUtility.HtmlEncode(title));
         sb.Append("</b><div class=\"xs muted\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.RequestLabel"]));
-        sb.Append("</div></div><span class=\"pill warm\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.ActionPill"]));
-        sb.Append("</span></div><div><span class=\"ico navy\">");
-        sb.Append(NdMIcons.Calendar);
-        sb.Append("</span><div class=\"sp\"><b class=\"small\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekRow4790Name"]));
-        sb.Append("</b><div class=\"xs muted\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekRow4790When"]));
-        sb.Append("</div></div><span class=\"pill ok\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Reschedule.WeekRow4790Status"]));
-        sb.Append("</span></div></div></aside>");
+        sb.Append(WebUtility.HtmlEncode(subtitle));
+        sb.Append("</div></div><span class=\"pill ");
+        sb.Append(pillClass);
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(pillLabel));
+        sb.Append("</span></div>");
+    }
+
+    private static string FormatWeekSlot(DateTime utc)
+    {
+        var local = AmsterdamTime.ToLocal(utc);
+        return local.ToString("dddd d MMM, HH:mm", CultureInfo.GetCultureInfo("nl-NL"));
     }
 
     private static string CandidateSubtitle(CultureState culture, AfterMatchThreadDto thread)

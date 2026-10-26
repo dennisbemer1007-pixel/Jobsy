@@ -43,6 +43,7 @@ internal static class ApplicationsSsrData
         AfterMatchThreadDto? BerichtenThread,
         IReadOnlyDictionary<Guid, AfterMatchThreadDto> BerichtenThreads,
         bool ActivityLogEnabled,
+        bool ShowActiviteitenTab,
         JobSearchActivityOverviewDto? ActiviteitenOverview);
 
     internal static async Task<PageData> LoadAsync(
@@ -68,11 +69,12 @@ internal static class ApplicationsSsrData
         var employersOn = flags.EmployersEnabled;
         var externalOn = flags.CandidateExternalVacanciesEnabled;
         var afterMatchOn = flags.AfterMatchEnabled;
-        var activityLogOn = flags.IsEnabled(PlatformFeature.ActivityLog);
         if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal) && !afterMatchOn)
         {
             tab = ApplicationsSsrQuery.TabSollicitaties;
         }
+
+        var activityLogOn = flags.IsEnabled(PlatformFeature.ActivityLog);
 
         if (!employersOn)
         {
@@ -238,7 +240,14 @@ internal static class ApplicationsSsrData
         }
 
         JobSearchActivityOverviewDto? activiteitenOverview = null;
-        if (activityLogOn
+        var showActiviteitenTab = activityLogOn;
+        if (!showActiviteitenTab
+            && string.Equals(tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal))
+        {
+            tab = ApplicationsSsrQuery.TabSollicitaties;
+        }
+
+        if (showActiviteitenTab
             && isCandidate
             && !readOnly
             && string.Equals(tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal))
@@ -249,7 +258,7 @@ internal static class ApplicationsSsrData
             }
             catch
             {
-                // tab shows loading/error inline
+                // tab shows Apps.Activiteiten.Unavailable
             }
         }
 
@@ -279,6 +288,7 @@ internal static class ApplicationsSsrData
             berichtenThread,
             berichtenThreads,
             activityLogOn,
+            showActiviteitenTab,
             activiteitenOverview);
     }
 
@@ -366,6 +376,7 @@ internal static class ApplicationsSsrData
             null,
             null,
             new Dictionary<Guid, AfterMatchThreadDto>(),
+            false,
             false,
             null);
 

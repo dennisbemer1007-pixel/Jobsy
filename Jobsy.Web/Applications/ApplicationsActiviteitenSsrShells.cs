@@ -14,19 +14,11 @@ internal static class ApplicationsActiviteitenSsrShells
         CultureState culture,
         ApplicationsSsrData.PageData data)
     {
-        if (!data.ActivityLogEnabled)
-        {
-            sb.Append("<p class=\"state-message\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Panel.ErrorInline"]));
-            sb.Append("</p>");
-            return;
-        }
-
         var overview = data.ActiviteitenOverview;
         if (overview is null)
         {
-            sb.Append("<p class=\"state-message\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Common.Loading"]));
+            sb.Append("<p class=\"state-message\" role=\"status\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Apps.Activiteiten.Unavailable"]));
             sb.Append("</p>");
             return;
         }
@@ -314,7 +306,7 @@ internal static class ApplicationsActiviteitenSsrShells
     private static string FormatActivityDate(CultureState culture, DateOnly date)
     {
         var dt = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
-        var ci = CultureInfo.GetCultureInfo(culture.Language);
+        var ci = ApplicationsSsrData.FormatCulture(culture);
         return dt.ToString("dddd d MMMM", ci);
     }
 }

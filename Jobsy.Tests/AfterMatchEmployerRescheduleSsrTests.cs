@@ -32,7 +32,7 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
             "Jobsy.Web/Components/Pages/Werkgever/WerkgeverAfterMatchRescheduleSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("/after-match/reschedule-ssr", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-employer-reschedule.js?v=20261025-ndm-wg-acc-fix1", razor, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/ndm-employer-reschedule.js\")", razor, StringComparison.Ordinal);
     }
 
     [Fact]

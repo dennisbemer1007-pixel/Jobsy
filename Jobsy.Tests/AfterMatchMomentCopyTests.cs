@@ -43,4 +43,12 @@ public sealed class AfterMatchMomentCopyTests : BunitContext
         var days = slots.Select(s => s.Date).Distinct().Count();
         Assert.Equal(3, days);
     }
+
+    [Fact]
+    public void Employer_demo_slots_exclude_previous_scheduled_moment()
+    {
+        var exclude = AfterMatchEmployerDemoSlots.InitialUtc()[0];
+        var slots = AfterMatchEmployerDemoSlots.InitialUtc(DateTime.UtcNow, exclude);
+        Assert.DoesNotContain(slots, s => Math.Abs((s - exclude).TotalMinutes) < 1);
+    }
 }

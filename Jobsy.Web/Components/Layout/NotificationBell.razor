@@ -56,7 +56,7 @@
                         </div>
                     </div>
 
-                    @if (_loading)
+                    @if (_loading || !_listReady)
                     {
                         <p class="muted notification-bell__empty">Berichten laden…</p>
                     }
@@ -119,7 +119,8 @@
 @code {
     private bool _open;
     private bool _forceClosed;
-    private bool _loading;
+    private bool _loading = true;
+    private bool _listReady;
     private bool _busy;
     private int _unread;
     private List<UserNotificationItem> _items = [];
@@ -143,6 +144,7 @@
         }
         else
         {
+            _loading = false;
             UnreadStore.EnsureStarted();
             try
             {
@@ -226,6 +228,7 @@
         finally
         {
             _loading = false;
+            _listReady = true;
         }
     }
 

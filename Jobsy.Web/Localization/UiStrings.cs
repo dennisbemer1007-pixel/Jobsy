@@ -550,7 +550,7 @@ public static class UiStrings
             ["Pwa.Card.AfterApply.Lead"] = "Deel vacatures vanuit je browser rechtstreeks naar Lobsy — handig als je vaker solliciteert.",
             ["Pwa.Hint.ShareVacancies"] = "Tip: deel vacatures vanuit je browser direct naar Lobsy",
             ["Circuit.ErrorTitle"] = "Even iets misgegaan",
-            ["Circuit.ErrorLead"] = "De pagina reageerde niet goed. Probeer het opnieuw — je voortgang blijft meestal bewaard.",
+            ["Circuit.ErrorLead"] = "De pagina reageerde niet goed. Probeer het opnieuw. Je voortgang blijft meestal bewaard.",
             ["Circuit.ErrorRetry"] = "Opnieuw proberen",
             ["Panel.ErrorInline"] = "Dit onderdeel laadt even niet",
             ["Panel.ErrorRetry"] = "Opnieuw",

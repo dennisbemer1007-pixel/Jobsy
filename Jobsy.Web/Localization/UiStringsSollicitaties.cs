@@ -127,6 +127,11 @@ public static class UiStringsSollicitaties
             "No activities yet. Applications and interviews via Lobsy appear automatically. Add what you did outside Lobsy.",
             "Brak aktywności.", "Încă nu sunt activități.", "لا نشاطات بعد.");
 
+        Add("Apps.Activiteiten.Unavailable",
+            "Mijn activiteiten is tijdelijk niet beschikbaar. Je sollicitaties en berichten blijven gewoon zichtbaar.",
+            "My activities is temporarily unavailable. Your applications and messages stay visible.",
+            "Moje aktywności są chwilowo niedostępne.", "Activitățile mele nu sunt disponibile momentan.", "نشاطاتي غير متاحة مؤقتاً.");
+
         Add("Apps.Activiteiten.AutoTracked",
             "Vanzelf bijgehouden", "Tracked automatically",
             "Automatycznie", "Urmărit automat", "تتبع تلقائي");

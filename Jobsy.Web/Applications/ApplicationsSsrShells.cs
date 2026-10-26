@@ -97,12 +97,15 @@ internal static class ApplicationsSsrShells
                 badge: data.UnreadMessagesTotal > 0 ? data.UnreadMessagesTotal : null);
         }
 
-        AppendSegmentTab(
-            sb,
-            data,
-            ApplicationsSsrQuery.TabActiviteiten,
-            culture["Nav.ActivitiesTab"],
-            badge: null);
+        if (data.ShowActiviteitenTab)
+        {
+            AppendSegmentTab(
+                sb,
+                data,
+                ApplicationsSsrQuery.TabActiviteiten,
+                culture["Nav.ActivitiesTab"],
+                badge: null);
+        }
         sb.Append("<a class=\"sollicitaties-segment__tab");
         sb.Append("\" href=\"/candidate/liked\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.SavedTab"]));
@@ -305,18 +308,23 @@ internal static class ApplicationsSsrShells
             sb.Append("</div>");
         }
 
-        var activiteitenActive = string.Equals(data.Tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal);
-        sb.Append("<div class=\"sollicitaties-tab-panel\" data-sollic-tab-panel=\"");
-        sb.Append(ApplicationsSsrQuery.TabActiviteiten);
-        sb.Append('"');
-        if (!activiteitenActive)
+        if (data.ShowActiviteitenTab)
         {
-            sb.Append(" hidden");
+            var activiteitenActive = string.Equals(data.Tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal);
+            sb.Append("<div class=\"sollicitaties-tab-panel\" data-sollic-tab-panel=\"");
+            sb.Append(ApplicationsSsrQuery.TabActiviteiten);
+            sb.Append('"');
+            if (!activiteitenActive)
+            {
+                sb.Append(" hidden");
+            }
+
+            sb.Append('>');
+            ApplicationsActiviteitenSsrShells.AppendTab(sb, culture, data);
+            sb.Append("</div>");
         }
 
-        sb.Append('>');
-        ApplicationsActiviteitenSsrShells.AppendTab(sb, culture, data);
-        sb.Append("</div></div>");
+        sb.Append("</div>");
     }
 
     private static void AppendLayout(

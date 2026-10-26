@@ -15,7 +15,11 @@ public sealed partial class JobsyApiClient
             return null;
         }
 
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
         return await response.Content.ReadFromJsonAsync<JobSearchActivityOverviewDto>(cancellationToken: ct);
     }
 
