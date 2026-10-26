@@ -59,7 +59,7 @@ internal static class AfterMatchEmployerPanelSsrShells
         }
 
         sb.Append("><div class=\"g2 ndm-wg-g2\">");
-        AppendMainCard(sb, culture, data, panel, showProposeAction);
+        AppendMainCard(sb, culture, data, panel, showProposeAction, applicationId);
         AppendShareAside(sb, culture, data.Thread);
         AppendProposePanel(sb, culture, data);
         if (data.OutcomeOverlay is not null)
@@ -115,7 +115,8 @@ internal static class AfterMatchEmployerPanelSsrShells
         CultureState culture,
         PageData data,
         string panel,
-        bool showProposeAction)
+        bool showProposeAction,
+        Guid applicationId)
     {
         var thread = data.Thread;
         var scheduled = thread.InterviewStatus == InterviewStatus.Scheduled;
@@ -177,7 +178,15 @@ internal static class AfterMatchEmployerPanelSsrShells
             }
             else if (scheduled)
             {
-                sb.Append("<button type=\"button\" class=\"btn\" data-ndm-open-panel=\"outcome\">");
+                sb.Append("<a class=\"btn line\" href=\"");
+                sb.Append($"/werkgever/sollicitaties/{applicationId:D}/after-match/reschedule-ssr");
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Reschedule"]));
+                sb.Append("</a><a class=\"btn line\" href=\"");
+                sb.Append($"/werkgever/sollicitaties/{applicationId:D}/after-match?panel=cancel");
+                sb.Append("\" data-enhance-nav=\"false\">");
+                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Cancel"]));
+                sb.Append("</a><button type=\"button\" class=\"btn\" data-ndm-open-panel=\"outcome\">");
                 sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.OutcomeAction"]));
                 sb.Append("</button>");
             }
