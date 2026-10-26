@@ -94,6 +94,10 @@
   }
 
   function recordOutcome(container) {
+    if (container.getAttribute("data-ndm-outcome-submitting") === "1") {
+      return;
+    }
+
     var appId = container.getAttribute("data-application-id");
     var outcome = selectedOutcome(container);
     var reasonEl = container.querySelector("[data-ndm-outcome-reason]");
@@ -101,6 +105,7 @@
     if (!appId || !outcome || !reason) return;
 
     var submit = container.querySelector("[data-ndm-outcome-submit]");
+    container.setAttribute("data-ndm-outcome-submitting", "1");
     if (submit) submit.disabled = true;
 
     fetch(
@@ -127,13 +132,15 @@
         }
       })
       .catch(function () {
+        container.removeAttribute("data-ndm-outcome-submitting");
         if (submit) submit.disabled = false;
       });
   }
 
   function bindSubmit(container) {
     var submit = container.querySelector("[data-ndm-outcome-submit]");
-    if (!submit) return;
+    if (!submit || submit.getAttribute("data-ndm-outcome-bound") === "1") return;
+    submit.setAttribute("data-ndm-outcome-bound", "1");
     submit.addEventListener("click", function () {
       recordOutcome(container);
     });
@@ -141,7 +148,8 @@
 
   function init() {
     var el = root();
-    if (!el) return;
+    if (!el || el.getAttribute("data-ndm-outcome-init") === "1") return;
+    el.setAttribute("data-ndm-outcome-init", "1");
     bindOutcomeOptions(el);
     bindReasonChips(el);
     bindReasonInput(el);
