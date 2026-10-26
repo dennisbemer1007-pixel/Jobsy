@@ -55,6 +55,15 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_legend_hides_while_vacancy_popup_or_sheet_open()
+    {
+        var root = FindRepoRoot();
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "banenkaart-lagen.css"));
+        Assert.Contains(".map-stage:has(.maplibregl-popup) .kb-map-legend-host .legend", css, StringComparison.Ordinal);
+        Assert.Contains(".map-pane.is-cluster-open .kb-map-legend-host .legend", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_map_strip_supports_lazy_vacancy_photos()
     {
         var root = FindRepoRoot();
