@@ -81,7 +81,19 @@ else if (_bodyHtml is not null)
                 return;
             }
 
-            if (panel is "reschedule" or "cancel")
+            if (panel is "cancel")
+            {
+                var dossier = $"/candidate/applications?tab=sollicitaties&sel={ApplicationId:D}";
+                if (!string.IsNullOrWhiteSpace(returnUrl))
+                {
+                    dossier += "&return=" + Uri.EscapeDataString(returnUrl);
+                }
+
+                http.Response.Redirect(dossier);
+                return;
+            }
+
+            if (panel is "reschedule")
             {
                 RedirectToSsr(http, AfterMatchPanelRouting.RescheduleSsrSuffix);
                 return;

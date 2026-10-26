@@ -331,7 +331,7 @@ public sealed partial class ApplicationStatusNotifier
         }
 
         var baseUrl = (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl;
-        var candidateLink = CandidateAfterMatchPath(application.Id, "cancel");
+        var candidateLink = CandidateApplicationsSelPath(application.Id);
         var employerLink = EmployerAfterMatchPath(application.Id);
 
         if (actorIsEmployer)
