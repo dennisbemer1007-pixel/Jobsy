@@ -27,7 +27,9 @@ internal static class SollicitatiesBerichtenPresentation
             contact = row.CompanyName;
         }
 
-        var role = row.Title;
+        var role = !string.IsNullOrWhiteSpace(thread?.VacancyTitle)
+            ? thread!.VacancyTitle
+            : row.Title;
         var scheduled = thread?.ScheduledStartUtc ?? row.AfterMatch?.ScheduledStartUtc;
         if (scheduled is DateTime start)
         {

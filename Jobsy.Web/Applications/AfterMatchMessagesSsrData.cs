@@ -59,6 +59,8 @@ internal static class AfterMatchMessagesSsrData
 
         var threads = apps.AllRows
             .Where(SollicitatiesBerichtenPresentation.RowHasMessageThread)
+            .GroupBy(r => r.ApplicationId)
+            .Select(g => g.OrderByDescending(r => r.AfterMatch!.LastMessageAtUtc ?? r.SortAtUtc).First())
             .ToList();
         if (threads.Count == 0)
         {
