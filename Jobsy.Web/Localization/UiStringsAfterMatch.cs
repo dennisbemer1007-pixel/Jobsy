@@ -230,7 +230,7 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen08.Reason", "Korte reden", "Short reason");
         Add("AfterMatch.Screen08.ReasonLong", "Waarom (verplicht, mag kort)", "Why (required, keep it short)");
         Add("AfterMatch.Screen08.ReasonPlaceholder",
-            "Mijn zoon is ziek, ik kan donderdag niet weg.",
+            "Mijn zoon is ziek; ik kan op dat moment niet weg.",
             "My son is sick, I cannot leave on Thursday.");
         Add("AfterMatch.Screen08.SideTitle.Reschedule", "Gesprek verzetten", "Reschedule interview");
         Add("AfterMatch.Screen08.SideTitle.Cancel", "Gesprek afzeggen", "Cancel interview");

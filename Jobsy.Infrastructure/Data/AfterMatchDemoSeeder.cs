@@ -330,7 +330,7 @@ internal static class AfterMatchDemoSeeder
         var slot1 = slotStarts.Length > 1 ? slotStarts[1] : slot0.AddDays(1);
         var slot2 = slotStarts.Length > 2 ? slotStarts[2] : slot1.AddDays(1);
 
-        if (scenario is "slots" or "reschedule")
+        if (scenario == "slots")
         {
             AddSlot(interview, slot0);
             AddSlot(interview, slot1);
@@ -351,13 +351,15 @@ internal static class AfterMatchDemoSeeder
 
         if (scenario == "reschedule")
         {
-            var chosen = AddSlot(interview, slot0);
-            chosen.IsSelected = true;
+            var scheduled = AddSlot(interview, slot0);
+            scheduled.IsSelected = true;
+            interview.ChosenSlotId = scheduled.Id;
+            AddSlot(interview, slot1);
             var candidateSlot = AddSlot(
                 interview,
                 slot2,
                 InterviewSlotProposer.Candidate,
-                "zorg voor familie. \"Mijn zoon is ziek, ik kan donderdag niet weg.\"");
+                "zorg voor familie. \"Mijn zoon is ziek; ik kan op dat moment niet weg.\"");
             interview.Status = InterviewStatus.RescheduleRequested;
             db.InterviewChanges.Add(new InterviewChange
             {

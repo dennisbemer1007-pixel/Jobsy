@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Rules;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
@@ -35,7 +36,7 @@ internal static class AfterMatchPickSlotSsrData
             ? culture["AfterMatch.Link.BackBerichten"]
             : culture["AfterMatch.Link.BackPickSlot"];
 
-        var slots = thread.OpenSlots.OrderBy(s => s.StartUtc).ToList();
+        var slots = AfterMatchOpenSlotDedupe.ByStartUtc(thread.OpenSlots);
         return new PageData(
             thread,
             backHref,

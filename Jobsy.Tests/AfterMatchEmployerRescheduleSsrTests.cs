@@ -74,7 +74,7 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
                     slotStart,
                     slotStart.AddMinutes(30),
                     InterviewSlotProposer.Candidate,
-                    "Mijn zoon is ziek, ik kan donderdag niet weg.",
+                    "Mijn zoon is ziek; ik kan op dat moment niet weg.",
                     false)
             ],
             [],
@@ -83,7 +83,7 @@ public sealed class AfterMatchEmployerRescheduleSsrTests : BunitContext
                 new AfterMatchChangeDto(
                     InterviewChangeKind.Reschedule,
                     "Candidate",
-                    "zorg voor familie. \"Mijn zoon is ziek, ik kan donderdag niet weg.\"",
+                    "zorg voor familie. \"Mijn zoon is ziek; ik kan op dat moment niet weg.\"",
                     DateTime.UtcNow)
             ],
             [],

@@ -781,6 +781,8 @@ public sealed class AfterMatchService : IAfterMatchService
                 s.Id, s.StartUtc, s.EndUtc, s.ProposedBy, s.Reason, s.IsSelected))
             .ToList();
 
+        openSlots = AfterMatchOpenSlotDedupe.ByStartUtc(openSlots).ToList();
+
         return new AfterMatchThreadDto(
             application.Id,
             interview.Id,
