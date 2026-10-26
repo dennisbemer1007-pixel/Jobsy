@@ -70,6 +70,46 @@ public sealed class AfterMatchServiceFlowTests
     }
 
     [Fact]
+    public async Task OpenSlots_excludes_past_unselected_slots()
+    {
+        await using var db = CreateDb();
+        var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
+        var interview = await db.Interviews.Include(i => i.Slots).FirstAsync(i => i.ApplicationId == appId);
+        db.InterviewSlots.AddRange(
+            new InterviewSlot
+            {
+                Id = Guid.NewGuid(),
+                InterviewId = interview.Id,
+                StartUtc = DateTime.UtcNow.AddDays(-2),
+                EndUtc = DateTime.UtcNow.AddDays(-2).AddMinutes(30),
+                ProposedBy = InterviewSlotProposer.Employer
+            },
+            new InterviewSlot
+            {
+                Id = Guid.NewGuid(),
+                InterviewId = interview.Id,
+                StartUtc = DateTime.UtcNow.AddDays(3),
+                EndUtc = DateTime.UtcNow.AddDays(3).AddMinutes(30),
+                ProposedBy = InterviewSlotProposer.Employer
+            },
+            new InterviewSlot
+            {
+                Id = Guid.NewGuid(),
+                InterviewId = interview.Id,
+                StartUtc = DateTime.UtcNow.AddDays(4),
+                EndUtc = DateTime.UtcNow.AddDays(4).AddMinutes(30),
+                ProposedBy = InterviewSlotProposer.Employer
+            });
+        interview.Status = InterviewStatus.Proposing;
+        await db.SaveChangesAsync();
+
+        var thread = await service.GetThreadForCandidateAsync(appId, candidateId);
+        Assert.NotNull(thread);
+        Assert.Equal(2, thread!.OpenSlots.Count);
+        Assert.All(thread.OpenSlots, s => Assert.True(s.StartUtc > DateTime.UtcNow));
+    }
+
+    [Fact]
     public async Task MarkCandidateMessagesRead_sets_ReadAtUtc_on_inbound_messages()
     {
         await using var db = CreateDb();

@@ -770,7 +770,9 @@ public sealed class AfterMatchService : IAfterMatchService
             ? $"{application.EstimatedTravelMinutes} min fietsen"
             : null;
 
+        var nowUtc = DateTime.UtcNow;
         var openSlots = interview.Slots
+            .Where(s => s.StartUtc > nowUtc)
             .Where(s => !s.IsSelected
                         || (isEmployer
                             && interview.Status == InterviewStatus.RescheduleRequested
