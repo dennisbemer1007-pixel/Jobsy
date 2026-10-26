@@ -73,7 +73,39 @@ internal static class SettingsSsrShells
         AppendNavLink(sb, data, "privacy", culture["CandidatePrivacy.Policy.Title"], culture["CandidatePrivacy.Policy.Desc"], href: "/privacy");
         AppendNavLink(sb, data, "data", culture["CandidatePrivacy.Data.Title"], culture["CandidatePrivacy.Data.Desc"], href: "/privacy/data");
         AppendNavLink(sb, data, "consent", culture["CandidatePrivacy.Consent.Title"], culture["CandidatePrivacy.Consent.Desc"], href: "/candidate/paspoort?tab=data#consent");
-        sb.Append("</div></nav>");
+        AppendNavLink(sb, data, "mail", culture["CandidatePrivacy.Mail.Title"], culture["CandidatePrivacy.Mail.Desc"]);
+        sb.Append("</div>");
+        AppendAccountGroup(sb, culture);
+        sb.Append("</nav>");
+    }
+
+    private static void AppendAccountGroup(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<div class=\"cand-settings__nav-group\"><h2>");
+        sb.Append(WebUtility.HtmlEncode(culture["CandidateSettings.NavAccount"]));
+        sb.Append("</h2>");
+        AppendAccountAction(
+            sb,
+            culture["Profile.Reset.Title"],
+            culture["Profile.Reset.Lead"],
+            "reset");
+        AppendAccountAction(
+            sb,
+            culture["Profile.UnsubscribeTitle"],
+            culture["Profile.UnsubscribeLead"],
+            "delete");
+        sb.Append("</div>");
+    }
+
+    private static void AppendAccountAction(StringBuilder sb, string title, string desc, string dangerIntent)
+    {
+        sb.Append("<button type=\"button\" class=\"cand-settings__nav-action\" data-settings-danger=\"");
+        sb.Append(WebUtility.HtmlEncode(dangerIntent));
+        sb.Append("\"><span><span class=\"cand-settings__nav-title\">");
+        sb.Append(WebUtility.HtmlEncode(title));
+        sb.Append("</span><span class=\"cand-settings__nav-desc\">");
+        sb.Append(WebUtility.HtmlEncode(desc));
+        sb.Append("</span></span></button>");
     }
 
     private static void AppendNavLink(
@@ -118,7 +150,6 @@ internal static class SettingsSsrShells
             sb.Append(WebUtility.HtmlEncode(culture["CandidateSettings.Mail.Desc"]));
             sb.Append("</p></div></div>");
             AppendMailForm(sb, culture, data.Mail, antiforgeryFieldName, antiforgeryToken);
-            AppendCalmLinks(sb, culture);
         }
         else
         {
@@ -283,16 +314,6 @@ internal static class SettingsSsrShells
         }
 
         sb.Append(" /></label></div>");
-    }
-
-    private static void AppendCalmLinks(StringBuilder sb, CultureState culture)
-    {
-        sb.Append("<div class=\"cand-settings__calm-links\">");
-        sb.Append("<button type=\"button\" class=\"cand-settings__calm-link\" data-settings-danger=\"reset\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Profile.Reset.Title"]));
-        sb.Append("</button><button type=\"button\" class=\"cand-settings__calm-link\" data-settings-danger=\"delete\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Profile.UnsubscribeTitle"]));
-        sb.Append("</button></div>");
     }
 
     private static string LabelFor(CultureState culture, string key) => key switch
