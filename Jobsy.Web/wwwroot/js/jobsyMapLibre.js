@@ -407,10 +407,12 @@ window.jobsyMapLibre = (function () {
                 }
                 return { url: url };
             },
-            attributionControl: {
-                compact: options.compactAttribution === true || preferCompactAttribution(),
-                customAttribution: OSM_ATTRIBUTION
-            },
+            attributionControl: options.attributionControl === false
+                ? false
+                : {
+                    compact: options.compactAttribution === true || preferCompactAttribution(),
+                    customAttribution: OSM_ATTRIBUTION
+                },
             maplibreLogo: false,
             cooperativeGestures: false,
             fadeDuration: 0,
