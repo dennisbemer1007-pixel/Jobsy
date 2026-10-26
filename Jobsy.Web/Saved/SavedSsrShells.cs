@@ -70,8 +70,7 @@ internal static class SavedSsrShells
         else
         {
             AppendToolbar(sb, culture, data);
-            AppendGrid(sb, culture, data);
-            AppendRail(sb, culture, data);
+            AppendBodyWithRail(sb, culture, data);
         }
 
         AppendFooterNav(sb, culture);
@@ -88,13 +87,24 @@ internal static class SavedSsrShells
 
     private static void AppendHero(StringBuilder sb, CultureState culture)
     {
-        sb.Append("<header class=\"saved-ssr-intro\" data-testid=\"saved-hero\"><span class=\"saved-ssr-intro__eyebrow cand-hero__eyebrow cand-hero__eyebrow--coral\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Nav.SavedTab"]));
-        sb.Append("</span><h1 tabindex=\"-1\">");
+        var band = CompactHeroPreviewCream.PageCreamFallback;
+        var artDesktop = CandidateIllustratedImages.BewaardHeroBandC;
+        var artMobile = CandidateIllustratedImages.MobileFigureUrl(artDesktop) ?? artDesktop;
+
+        sb.Append("<header class=\"cand-hero cand-compact-hero cand-hero--compact-preview-c\" data-testid=\"saved-hero\" style=\"--cand-compact-hero-band:");
+        sb.Append(band);
+        sb.Append("\"><div class=\"cand-compact-hero__copy cand-hero__copy\"><h1 tabindex=\"-1\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Title"]));
         sb.Append("</h1><p class=\"cand-hero__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Lead"]));
-        sb.Append("</p></header>");
+        sb.Append("</p></div><div class=\"cand-compact-hero__art cand-hero__compact-c-art\" aria-hidden=\"true\">");
+        sb.Append("<img class=\"cand-compact-hero__art-img cand-compact-hero__art-img--desktop\" src=\"");
+        sb.Append(WebUtility.HtmlEncode(artDesktop));
+        sb.Append("\" alt=\"\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" />");
+        sb.Append("<img class=\"cand-compact-hero__art-img cand-compact-hero__art-img--mobile\" src=\"");
+        sb.Append(WebUtility.HtmlEncode(artMobile));
+        sb.Append("\" alt=\"\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" data-testid=\"cand-compact-hero-mobile-art\" />");
+        sb.Append("</div></header>");
     }
 
     private static void AppendJobListTabs(StringBuilder sb, CultureState culture, int savedCount)
@@ -196,7 +206,7 @@ internal static class SavedSsrShells
         sb.Append("</option>");
     }
 
-    private static void AppendGrid(StringBuilder sb, CultureState culture, SavedSsrData.PageData data)
+    private static void AppendBodyWithRail(StringBuilder sb, CultureState culture, SavedSsrData.PageData data)
     {
         sb.Append("<div class=\"kb-saved__body\">");
         sb.Append("<p class=\"state-message\" data-saved-filter-empty");
@@ -216,7 +226,9 @@ internal static class SavedSsrShells
             AppendItem(sb, culture, item, hidden: !visible);
         }
 
-        sb.Append("</div></div>");
+        sb.Append("</div>");
+        AppendRail(sb, culture, data);
+        sb.Append("</div>");
     }
 
     private static void AppendItem(
@@ -439,7 +451,8 @@ internal static class SavedSsrShells
     private static void AppendSavedState(StringBuilder sb, CultureState culture, CandidateEngagementItem item)
     {
         if (string.IsNullOrWhiteSpace(item.SavedStateKind)
-            || string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal))
+            || string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal)
+            || string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Open), StringComparison.Ordinal))
         {
             return;
         }

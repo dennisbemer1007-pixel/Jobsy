@@ -1528,11 +1528,13 @@
   cursor: pointer;
   text-decoration: none;
   padding: 0;
+}.kb-saved__toast[hidden] {
+  display: none !important;
 }.kb-saved__toast {
   position: fixed;
   inset-inline: var(--space-4, 1rem);
-  bottom: calc(4.5rem + env(safe-area-inset-bottom, 0));
-  z-index: 30;
+  bottom: calc(5.75rem + env(safe-area-inset-bottom, 0));
+  z-index: 120;
   background:var(--brand);
   color: var(--surface);
   border-radius:var(--r-md);
