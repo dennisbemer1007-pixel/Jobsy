@@ -1456,6 +1456,14 @@
         var keepPrerendered = _vacancy is not null && _vacancy.Id == Id;
         ResetApplyUiState();
         _loadedVacancyId = Id;
+        _hideDnaPercentForCandidate = false;
+        var httpUser = HttpContextAccessor.HttpContext?.User;
+        if (httpUser?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(httpUser, JobsyRoles.Candidate))
+        {
+            _hideDnaPercentForCandidate = true;
+        }
+
         _liked = false;
         _clickRecorded = false;
         _ageYears = null;
