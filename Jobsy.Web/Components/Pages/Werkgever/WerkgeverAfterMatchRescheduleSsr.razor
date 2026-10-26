@@ -35,8 +35,8 @@ else if (!string.IsNullOrWhiteSpace(_fatalMessage))
 }
 else if (_bodyHtml is not null)
 {
-    <WgPageShell Title="@Culture["AfterMatch.Screen09.Hero.Title"]"
-                 Lead="@Culture["AfterMatch.Screen09.Hero.Lead"]"
+    <WgPageShell Title="@_pageTitle"
+                 Lead="@_pageLead"
                  CrumbDetail="@_candidateName">
         @((MarkupString)_bodyHtml)
     </WgPageShell>
@@ -49,6 +49,8 @@ else if (_bodyHtml is not null)
     private string? _fatalMessage;
     private string? _bodyHtml;
     private string? _candidateName;
+    private string _pageTitle = "";
+    private string _pageLead = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -84,6 +86,14 @@ else if (_bodyHtml is not null)
 
             _candidateName = AfterMatchEmployerEmployerPresentation.CandidateDisplayName(thread);
             var data = AfterMatchEmployerRescheduleSsrData.FromThread(Culture, thread, ApplicationId);
+            var pageTitle = data.EmployerInitiatedReschedule
+                ? Culture["AfterMatch.Employer.Reschedule.EmployerInitiatedTitle"]
+                : Culture["AfterMatch.Screen09.Hero.Title"];
+            var pageLead = data.EmployerInitiatedReschedule
+                ? Culture["AfterMatch.Employer.Reschedule.EmployerInitiatedLead"]
+                : Culture["AfterMatch.Screen09.Hero.Lead"];
+            _pageTitle = pageTitle;
+            _pageLead = pageLead;
             var proposeData = new AfterMatchEmployerPanelSsrShells.PageData(
                 thread,
                 $"/werkgever/sollicitaties/{ApplicationId:D}",

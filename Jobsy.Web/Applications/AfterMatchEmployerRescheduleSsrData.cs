@@ -11,6 +11,7 @@ internal static class AfterMatchEmployerRescheduleSsrData
 
     internal sealed record PageData(
         AfterMatchThreadDto Thread,
+        bool EmployerInitiatedReschedule,
         AfterMatchSlotDto? CandidateProposal,
         string AcceptLabel,
         string WarningBodyHtml,
@@ -54,8 +55,9 @@ internal static class AfterMatchEmployerRescheduleSsrData
                 FormatSlotShort(candidateSlot))
             : culture["AfterMatch.Employer.Reschedule.Accept"];
 
+        var employerInitiated = thread.InterviewStatus == InterviewStatus.Scheduled;
         var changeReason = AfterMatchChangeReasonPresentation.LatestReasonForEmployerReschedule(thread);
-        var reason = changeReason ?? candidateSlot?.Reason ?? "";
+        var reason = employerInitiated ? "" : changeReason ?? candidateSlot?.Reason ?? "";
 
         var proposalLine = candidateSlot is not null
             ? string.Format(
@@ -86,6 +88,7 @@ internal static class AfterMatchEmployerRescheduleSsrData
 
         return new PageData(
             thread,
+            employerInitiated,
             candidateSlot,
             acceptLabel,
             warningBody,

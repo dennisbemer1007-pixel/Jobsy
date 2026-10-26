@@ -474,6 +474,10 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Reschedule.AcceptSlotFmt", "Akkoord, {0}", "Accept, {0}");
         Add("AfterMatch.Employer.Reschedule.Counter", "Ander moment voorstellen", "Propose another time");
         Add("AfterMatch.Employer.Reschedule.WarningTitleFmt", "{0} vraagt het gesprek te verzetten", "{0} asks to reschedule the interview");
+        Add("AfterMatch.Employer.Reschedule.EmployerInitiatedTitle", "Gesprek verzetten", "Reschedule interview");
+        Add("AfterMatch.Employer.Reschedule.EmployerInitiatedLead",
+            "Je start zelf een verzet. Kies nieuwe momenten of zeg het gesprek af.",
+            "You are rescheduling yourself. Pick new times or cancel the interview.");
         Add("AfterMatch.Employer.Reschedule.ReasonLineFmt", "Reden: {0}", "Reason: {0}");
         Add("AfterMatch.Employer.Reschedule.ProposalLineFmt", "Voorstel: {0} {1}", "Proposal: {0} {1}");
         Add("AfterMatch.Employer.Reschedule.OwnSlotHint", "(een van je eigen momenten)", "(one of your own times)");
