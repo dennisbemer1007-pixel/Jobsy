@@ -48,6 +48,56 @@
     }
   }
 
+  function tabOrder(root) {
+    var list = root.querySelector("[data-passport-tab-order]");
+    if (!list) return [];
+    var raw = list.getAttribute("data-passport-tab-order") || "";
+    return raw
+      .split(",")
+      .map(function (t) {
+        return normalizeTab(t);
+      })
+      .filter(Boolean);
+  }
+
+  function neighborTab(root, current, delta) {
+    var order = tabOrder(root);
+    if (order.length === 0) return current;
+    var idx = order.indexOf(normalizeTab(current));
+    if (idx < 0) idx = 0;
+    var next = (idx + delta + order.length) % order.length;
+    return order[next];
+  }
+
+  function bindTabListKeys(root) {
+    var tablist = root.querySelector("[data-passport-tab-order]");
+    if (!tablist || tablist.getAttribute("data-passport-tab-keys") === "1") return;
+    tablist.setAttribute("data-passport-tab-keys", "1");
+    tablist.addEventListener("keydown", function (e) {
+      var key = e.key;
+      if (key !== "ArrowLeft" && key !== "ArrowRight" && key !== "Home" && key !== "End") return;
+      var active = root.querySelector("[data-passport-tab][aria-selected=\"true\"]");
+      if (!active || !tablist.contains(document.activeElement)) return;
+      var current = active.getAttribute("data-passport-tab");
+      var target = current;
+      if (key === "ArrowLeft") target = neighborTab(root, current, -1);
+      else if (key === "ArrowRight") target = neighborTab(root, current, 1);
+      else if (key === "Home") {
+        var order = tabOrder(root);
+        target = order[0] || current;
+      } else if (key === "End") {
+        var endOrder = tabOrder(root);
+        target = endOrder[endOrder.length - 1] || current;
+      }
+      if (target && target !== current) {
+        e.preventDefault();
+        setTab(root, target, true);
+        var btn = root.querySelector('[data-passport-tab="' + target + '"]');
+        if (btn) btn.focus();
+      }
+    });
+  }
+
   function bindStoryToggle(root) {
     root.querySelectorAll("[data-passport-story-toggle]").forEach(function (btn) {
       if (btn.getAttribute("data-passport-story-bound") === "1") return;
@@ -71,6 +121,7 @@
     var initial = normalizeTab(new URL(window.location.href).searchParams.get("tab"));
     setTab(root, initial, false);
     bindStoryToggle(root);
+    bindTabListKeys(root);
 
     root.querySelectorAll("[data-passport-tab]").forEach(function (btn) {
       btn.addEventListener("click", function () {
