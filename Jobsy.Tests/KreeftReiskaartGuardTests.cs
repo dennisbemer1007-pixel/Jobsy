@@ -35,7 +35,6 @@ public sealed class KreeftReiskaartGuardTests
             Path.Combine(root, "Jobsy.Web", "Onboarding", "OnboardingStartWelcomeSsrShell.cs"),
             Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Login.razor"),
             Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Landing.razor"),
-            Path.Combine(root, "Jobsy.Web", "Passport", "PassportSsrShells.cs"),
             Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Candidate", "OnboardingKompasReadySsr.razor"),
         };
 

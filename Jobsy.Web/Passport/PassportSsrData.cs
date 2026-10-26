@@ -21,6 +21,7 @@ internal static class PassportSsrData
         CandidateDnaSummary? Dna,
         PassportSsrDisplay.CardModel Card,
         PassportSsrDisplay.OverviewModel Overview,
+        PassportSsrDisplay.DnaPanelModel DnaPanel,
         string? FirstName,
         int TestsNextStepCount,
         string? DreamTitle,
@@ -64,6 +65,7 @@ internal static class PassportSsrData
             dna,
             flags.EmployersEnabled);
         var overview = PassportSsrDisplay.BuildOverview(culture, kompas, dna);
+        var dnaPanel = PassportSsrDisplay.BuildDnaPanel(culture, profile, kompas, dna);
         var firstName = string.IsNullOrWhiteSpace(profile.FirstName)
             ? profile.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
             : profile.FirstName.Trim();
@@ -87,6 +89,7 @@ internal static class PassportSsrData
             dna,
             card,
             overview,
+            dnaPanel,
             firstName,
             testsNext,
             string.IsNullOrWhiteSpace(career?.DreamTitle) ? null : career!.DreamTitle.Trim(),
