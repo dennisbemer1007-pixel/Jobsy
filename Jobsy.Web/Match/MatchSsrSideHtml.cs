@@ -12,18 +12,25 @@ internal static class MatchSsrSideHtml
         StringBuilder sb,
         CultureState culture,
         IReadOnlyList<SwipeViewModel> items,
-        int startIndex)
+        int startIndex,
+        bool occupationDayInLifeEnabled)
     {
         sb.Append("<div class=\"match-page__side-panels\" data-match-side-panels>");
         for (var i = 0; i < items.Count; i++)
         {
-            AppendSide(sb, culture, items[i], i, i == startIndex);
+            AppendSide(sb, culture, items[i], i, i == startIndex, occupationDayInLifeEnabled);
         }
 
         sb.Append("</div>");
     }
 
-    private static void AppendSide(StringBuilder sb, CultureState culture, SwipeViewModel model, int index, bool visible)
+    private static void AppendSide(
+        StringBuilder sb,
+        CultureState culture,
+        SwipeViewModel model,
+        int index,
+        bool visible,
+        bool occupationDayInLifeEnabled)
     {
         sb.Append("<aside class=\"match-page__side\" data-match-side data-match-side-index=\"");
         sb.Append(index);
@@ -37,7 +44,7 @@ internal static class MatchSsrSideHtml
 
         sb.Append('>');
         AppendWhyCard(sb, culture, model);
-        AppendInfoCard(sb, culture, model);
+        AppendInfoCard(sb, culture, model, occupationDayInLifeEnabled);
         AppendSavedCard(sb, culture);
         sb.Append("</aside>");
     }
@@ -92,7 +99,11 @@ internal static class MatchSsrSideHtml
         sb.Append("</section>");
     }
 
-    private static void AppendInfoCard(StringBuilder sb, CultureState culture, SwipeViewModel model)
+    private static void AppendInfoCard(
+        StringBuilder sb,
+        CultureState culture,
+        SwipeViewModel model,
+        bool occupationDayInLifeEnabled)
     {
         sb.Append("<section class=\"match-side-card match-side-card--info\" data-testid=\"match-side-more\"><h2>");
         sb.Append(WebUtility.HtmlEncode(culture["Match.MoreInfo"]));
@@ -125,7 +136,17 @@ internal static class MatchSsrSideHtml
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.StartFact"]));
         sb.Append("</dt><dd>");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Detail.StartFlexible"]));
-        sb.Append("</dd></div></dl><div class=\"match-side-links\">");
+        sb.Append("</dd></div></dl>");
+        if (MatchOccupationDayResolve.TryBuild(culture, occupationDayInLifeEnabled, model.EscoId, model.JobTitle) is { } dayLink)
+        {
+            sb.Append("<p class=\"day-in-life-link\"><a href=\"");
+            sb.Append(WebUtility.HtmlEncode(dayLink.Href));
+            sb.Append("\" data-enhance-nav=\"false\">");
+            sb.Append(WebUtility.HtmlEncode(dayLink.LinkText));
+            sb.Append("</a></p>");
+        }
+
+        sb.Append("<div class=\"match-side-links\">");
         if (model.VacancyId is Guid id)
         {
             sb.Append("<a class=\"match-side-links__link\" href=\"/vacancies/");
