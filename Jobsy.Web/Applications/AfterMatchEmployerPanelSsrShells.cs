@@ -139,7 +139,7 @@ internal static class AfterMatchEmployerPanelSsrShells
             {
                 if (slotsSent)
                 {
-                    AppendSlotsSentGrid(sb, culture);
+                    AppendSlotsSentGrid(sb, culture, thread);
                 }
                 else
                 {
@@ -153,7 +153,7 @@ internal static class AfterMatchEmployerPanelSsrShells
             sb.Append("<div class=\"note\" data-ndm-propose-info-note><span>");
             sb.Append(NdMIcons.Info);
             sb.Append("</span><span>");
-            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Propose.CandidateNote"]));
+            sb.Append(WebUtility.HtmlEncode(FormatCandidateWaitNote(culture, thread)));
             sb.Append("</span></div>");
         }
         else if (!string.IsNullOrWhiteSpace(data.StatusNote))
@@ -218,12 +218,19 @@ internal static class AfterMatchEmployerPanelSsrShells
         sb.Append("</p></div></div>");
     }
 
-    private static void AppendSlotsSentGrid(StringBuilder sb, CultureState culture)
+    private static string FormatCandidateWaitNote(CultureState culture, AfterMatchThreadDto thread)
     {
+        var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
+        return string.Format(culture["AfterMatch.Employer.Propose.CandidateNoteFmt"], first, first);
+    }
+
+    private static void AppendSlotsSentGrid(StringBuilder sb, CultureState culture, AfterMatchThreadDto thread)
+    {
+        var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
         sb.Append("<div class=\"what\"><div><b>");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.SlotsSent.Title"]));
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.SlotsSent.TitleFmt"], first)));
         sb.Append("</b><p class=\"small\">");
-        sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.SlotsSent.Body"]));
+        sb.Append(WebUtility.HtmlEncode(string.Format(culture["AfterMatch.Employer.SlotsSent.BodyFmt"], first, first)));
         sb.Append("</p></div><div><b>");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.What.Interview.Title"]));
         sb.Append("</b><p class=\"small\">");

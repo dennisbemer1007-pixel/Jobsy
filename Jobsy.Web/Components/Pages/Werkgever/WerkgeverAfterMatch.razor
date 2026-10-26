@@ -4,6 +4,7 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Features
+@using Jobsy.Web.Applications
 @using Jobsy.Web.Components.AfterMatch
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
@@ -167,8 +168,14 @@
         _panel == "propose"
             ? Culture["AfterMatch.Employer.Propose.PickHint"]
             : _thread?.InterviewStatus == InterviewStatus.Proposing
-                ? "Sanne kiest zelf uit je momenten, of stelt een ander moment voor. Je krijgt bericht zodra ze heeft gekozen."
+                ? FormatProposingWaitNote(_thread)
                 : null;
+
+    private string? FormatProposingWaitNote(AfterMatchThreadDto thread)
+    {
+        var first = AfterMatchEmployerEmployerPresentation.CandidateFirstName(thread);
+        return string.Format(Culture["AfterMatch.Employer.Propose.CandidateNoteFmt"], first, first);
+    }
 
     private static int TimelineStep(AfterMatchThreadDto t) => t.InterviewStatus switch
     {

@@ -228,6 +228,25 @@ internal static class AfterMatchDemoSeeder
             app.CandidateUserId = candidateUserId;
         }
 
+        var candidateUser = await db.Users.AsNoTracking()
+            .Where(u => u.Id == candidateUserId)
+            .Select(u => new { u.FullName, u.Email })
+            .FirstOrDefaultAsync();
+        if (candidateUser is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(candidateUser.FullName)
+                && appId != AfterMatchDemoIds.Verkoop4790App)
+            {
+                app.CandidateName = candidateUser.FullName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(candidateUser.Email)
+                && appId != AfterMatchDemoIds.Verkoop4790App)
+            {
+                app.CandidateEmail = candidateUser.Email;
+            }
+        }
+
         await ResetDemoInterviewGraphAsync(db, appId);
 
         var interview = await db.Interviews
