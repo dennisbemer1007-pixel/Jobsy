@@ -1,46 +1,44 @@
 @page "/deel/uwv-adviseur/{Token}"
 @attribute [AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
 @layout PublicLayout
-@using System.Net.Http.Json
-@using Jobsy.Core.Uwv
 @using Jobsy.Web.Components.Layout.Public
-@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
+@using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
-@inject IHttpClientFactory HttpClientFactory
-@inject IConfiguration Configuration
-@inject IJSRuntime Js
+@inject JobsyApiClient Api
+@inject IUwvKansberoepenCatalog KansberoepenCatalog
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Summary for adviser" : "Samenvatting voor adviseur") · Lobsy</PageTitle>
+<HeadContent>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/uwv-adviseur-deel.js")}")" defer></script>
+</HeadContent>
 
 <section class="pub-section uwv-adviseur-deel-page" aria-labelledby="uwv-deel-title">
     <div class="pub-card uwv-adviseur-deel-card">
         <PublicLangMenu ReturnPath="@ReturnPath" />
-        @if (_problem is not null)
+        @if (!string.IsNullOrWhiteSpace(_problem))
         {
             <h1 id="uwv-deel-title">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Link expired" : "Link verlopen")</h1>
             <p role="alert">@_problem</p>
         }
-        else if (_view is null)
+        else if (_loading)
         {
             <p role="status">@Culture["Common.Loading"]</p>
         }
-        else
+        else if (_documentHtml is not null)
         {
             <div class="uwv-adviseur-deel__actions no-print">
-                <button type="button" class="btn btn-primary" @onclick="PrintAsync">
-                    @UwvMockupCopy.Adviseur.Print(_view.Language)
+                <button type="button" class="btn btn-primary" data-uwv-adviseur-print="1">
+                    @UwvMockupCopy.Adviseur.Print(_viewLanguage)
                 </button>
             </div>
-            <UwvAdviseurShareDocument Lang="@_view.Language"
-                                      CandidateDisplayName="@_view.CandidateDisplayName"
-                                      Sections="@_view.Sections"
-                                      OndernemerOutcomeKey="@_view.OndernemerOutcomeKey"
-                                      DrijfverenDriverKeys="@_view.DrijfverenDriverKeys"
-                                      EndorsedCompetences="@_view.EndorsedCompetences" />
+            @((MarkupString)_documentHtml)
         }
     </div>
 </section>
@@ -48,37 +46,57 @@
 @code {
     [Parameter] public string Token { get; set; } = "";
 
-    private UwvAdviseurShareViewDto? _view;
+    private bool _loading = true;
     private string? _problem;
+    private string? _documentHtml;
+    private string _viewLanguage = "nl";
 
     private string ReturnPath => "/deel/uwv-adviseur/" + Token;
 
     protected override async Task OnInitializedAsync()
     {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            http.Response.Headers.CacheControl = "no-store";
+        }
+
         if (string.IsNullOrWhiteSpace(Token) || Token.Length > 128)
         {
             _problem = Culture["Common.Error"];
+            _loading = false;
             return;
         }
 
         try
         {
-            var apiBase = (Configuration["ApiBaseUrl"] ?? Configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
-            var client = HttpClientFactory.CreateClient();
-            _view = await client.GetFromJsonAsync<UwvAdviseurShareViewDto>(
-                $"{apiBase}/api/uwv/adviseur-share/{Uri.EscapeDataString(Token)}");
-            if (_view is null)
+            var view = await Api.GetUwvAdviseurSharePublicAsync(Token);
+            if (view is null)
             {
                 _problem = UwvMockupCopy.IsEnglish(Culture.Language)
                     ? "This share link is invalid or has expired."
                     : "Deze deellink is ongeldig of verlopen.";
+                return;
             }
+
+            _viewLanguage = string.IsNullOrWhiteSpace(view.Language) ? "nl" : view.Language;
+            var labels = UwvAdviseurShareDocumentHtml.CompetenceLabelsFromView(view);
+            _documentHtml = UwvAdviseurShareDocumentHtml.Build(
+                _viewLanguage,
+                view.CandidateDisplayName,
+                view.Sections,
+                view.OndernemerOutcomeKey,
+                view.DrijfverenDriverKeys,
+                labels,
+                KansberoepenCatalog);
         }
         catch
         {
             _problem = Culture["Common.Error"];
         }
+        finally
+        {
+            _loading = false;
+        }
     }
-
-    private Task PrintAsync() => Js.InvokeVoidAsync("print").AsTask();
 }
