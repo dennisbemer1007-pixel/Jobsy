@@ -1,4 +1,6 @@
 using Bunit;
+using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +17,37 @@ public sealed class ExternalVacancyAddSsrTests : BunitContext
             sp.GetRequiredService<IJSRuntime>(),
             sp,
             sp.GetRequiredService<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>()));
+    }
+
+    [Fact]
+    public void Detail_page_shell_renders_facts_and_apply_link()
+    {
+        var culture = Services.GetRequiredService<CultureState>();
+        var detail = new Jobsy.Core.Contracts.ExternalVacancyDetailDto(
+            Guid.Parse("96d18a1b-0000-4000-8000-000000000001"),
+            "https://example.com/job",
+            "Test extern",
+            "BV",
+            "Den Haag",
+            "",
+            "",
+            "",
+            "",
+            [],
+            new Dictionary<string, string> { ["bedrijf"] = "BV" },
+            new Jobsy.Core.Contracts.ExternalVacancyMatchInsightsDto(["Sterk"], ["Gap"]),
+            null,
+            Jobsy.Core.Enums.CandidateExternalVacancyStatus.Saved,
+            DateTime.UtcNow,
+            true,
+            [],
+            false,
+            false);
+
+        var html = ExternalVacancyDetailSsrShells.BuildBody(culture, detail);
+        Assert.Contains("data-testid=\"kb-ext-detail\"", html, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"kb-ext-apply-cta\"", html, StringComparison.Ordinal);
+        Assert.Contains("Sterk", html, StringComparison.Ordinal);
     }
 
     [Fact]

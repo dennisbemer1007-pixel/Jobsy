@@ -255,12 +255,16 @@
             var flags = await FeatureFlags.GetAsync();
             if (flags.CandidatePassportEnabled)
             {
-                var target = PassportRedirects.TryToPassportUrl(Navigation.Uri);
-                if (target is not null)
-                {
-                    Navigation.NavigateTo(target, replace: true);
-                    return;
-                }
+                var section = _openSection ?? "personal";
+                var target = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
+                    "/candidate/paspoort",
+                    new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["tab"] = "data",
+                        ["section"] = section,
+                    });
+                Navigation.NavigateTo(target, forceLoad: true, replace: true);
+                return;
             }
         }
         catch

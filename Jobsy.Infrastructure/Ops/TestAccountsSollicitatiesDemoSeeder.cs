@@ -276,6 +276,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
             cancellationToken);
 
         await EnsureExternalAppliedAsync(db, candidate, cancellationToken);
+        await PurgeStaleExternalVacanciesAsync(db, candidate.Id, cancellationToken);
         await EnsureInitiativesAsync(db, candidate, companies, cancellationToken);
 
         logger.LogDebug("Sollicitaties demo rows ensured for candidate {CandidateId}.", candidateId);
@@ -1150,6 +1151,23 @@ public static class TestAccountsSollicitatiesDemoSeeder
             CreatedAtUtc = DemoAnchorUtc.AddDays(3),
             RecordedByUserId = branchManagerId
         });
+    }
+
+    private static async Task PurgeStaleExternalVacanciesAsync(
+        JobsyDbContext db,
+        Guid candidateUserId,
+        CancellationToken cancellationToken)
+    {
+        var stale = await db.CandidateExternalVacancies
+            .Where(v => v.CandidateUserId == candidateUserId && v.Id != TestAccountsIds.SollicDemoExternalVacancy)
+            .ToListAsync(cancellationToken);
+        if (stale.Count == 0)
+        {
+            return;
+        }
+
+        db.CandidateExternalVacancies.RemoveRange(stale);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static async Task EnsureExternalAppliedAsync(
