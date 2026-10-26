@@ -321,19 +321,14 @@ internal static class PassportSsrShells
 
     private static void AppendFitPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
     {
-        if (!data.Flags.EmployersEnabled && !data.Flags.FutureJobsForYouEnabled)
-        {
-            sb.Append("<p class=\"login-lead\" data-testid=\"passport-fit-soon\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Passport.Fit.Soon"]));
-            sb.Append("</p>");
-            return;
-        }
-
-        sb.Append("<p class=\"login-lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Fit"]));
-        sb.Append("</p><p><a href=\"/candidate/vacancies\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Nav.Search"]));
-        sb.Append("</a></p>");
+        PassportSsrFitHtml.Append(
+            sb,
+            culture,
+            data.Flags,
+            data.Profile,
+            data.Kompas,
+            data.FitPanel,
+            data.ProactiveMatchingEnabled);
     }
 
     private static void AppendCareerPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)

@@ -29,6 +29,18 @@ public sealed class PassportSsrR3GuardTests
     }
 
     [Fact]
+    public void Passport_fit_tab_uses_ssr_html_builder()
+    {
+        var root = FindRepoRoot();
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        var fit = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrFitHtml.cs"));
+        Assert.Contains("PassportSsrFitHtml.Append", shells, StringComparison.Ordinal);
+        Assert.Contains("passport-fit__layout", fit, StringComparison.Ordinal);
+        Assert.Contains("passport-ssr-fit.js", fit, StringComparison.Ordinal);
+        Assert.DoesNotContain("MatchPercent%", fit, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Passport_ssr_tabs_script_is_registered()
     {
         var root = FindRepoRoot();

@@ -527,6 +527,10 @@
     "v": "20261026-passport-tabs1",
     "sha256": "e58fb20702da70fc8c82734383e813b384d8f4dca68a00c16e8e44a5ba765fdd"
   },
+  "js/passport-ssr-fit.js": {
+    "v": "20261026-passport-fit1",
+    "sha256": "7a1a648ca0ae41f63aa5446fb2fb619d9c21cdaaebd77cd1284bc38fb4fd6626"
+  },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",
     "sha256": "a9a963747051d11f9cd4c4d559d1736937d5f283e831677201cd85855d9cb7ce"
