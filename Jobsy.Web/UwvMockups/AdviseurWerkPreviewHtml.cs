@@ -2,25 +2,22 @@ using System.Net;
 using System.Text;
 using Jobsy.Core.Uwv;
 using Jobsy.Web.Media;
-using Jobsy.Web.Services;
 using Jobsy.Web.UwvFeatures;
 
 namespace Jobsy.Web.UwvMockups;
 
-/// <summary>Static HTML for the UWV adviseur A4 print preview (shared by deel SSR and adviseur panel).</summary>
-public static class UwvAdviseurShareDocumentHtml
+/// <summary>A4 preview markup for the adviseur panel only (deellink HTML lives in #1234).</summary>
+internal static class AdviseurWerkPreviewHtml
 {
-    public static string Build(
+    internal static string BuildPanelPreview(
         string lang,
         string candidateDisplayName,
-        IReadOnlyList<string> sections,
+        IReadOnlyList<string> selectedSections,
         string? ondernemerOutcomeKey,
         IReadOnlyList<string> drijfverenDriverKeys,
         IReadOnlyList<string> competenceLabels,
-        IUwvKansberoepenCatalog kansberoepenCatalog,
-        IReadOnlyList<string>? visibleSections = null)
+        IUwvKansberoepenCatalog kansberoepenCatalog)
     {
-        visibleSections ??= sections;
         var sb = new StringBuilder(2048);
         var previewTitle = WebUtility.HtmlEncode(UwvMockupCopy.Adviseur.PreviewTitle(lang));
         sb.Append("<article class=\"uwv-a4-preview uwv-adviseur-print\" aria-label=\"");
@@ -36,37 +33,8 @@ public static class UwvAdviseurShareDocumentHtml
         sb.Append(WebUtility.HtmlEncode(candidateDisplayName));
         sb.Append("</h2></div></header><div class=\"uwv-a4-preview__body\">");
 
-        void BeginSection(string key)
+        AppendSection(sb, lang, UwvAdviseurSectionKeys.Career, selectedSections, () =>
         {
-            if (visibleSections is null)
-            {
-                return;
-            }
-
-            sb.Append("<div data-uwv-section=\"");
-            sb.Append(WebUtility.HtmlEncode(key));
-            sb.Append('"');
-            if (!visibleSections.Contains(key, StringComparer.Ordinal))
-            {
-                sb.Append(" hidden");
-            }
-
-            sb.Append('>');
-        }
-
-        void EndSection()
-        {
-            if (visibleSections is null)
-            {
-                return;
-            }
-
-            sb.Append("</div>");
-        }
-
-        if (sections.Contains(UwvAdviseurSectionKeys.Career, StringComparer.Ordinal))
-        {
-            BeginSection(UwvAdviseurSectionKeys.Career);
             sb.Append("<h3>");
             sb.Append(WebUtility.HtmlEncode(
                 UwvMockupCopy.IsEnglish(lang) ? "Self-employment check" : "Ondernemerscheck"));
@@ -74,12 +42,10 @@ public static class UwvAdviseurShareDocumentHtml
             var (title, lead) = UwvMockupCopy.Ondernemer.ResultCopy(ondernemerOutcomeKey, lang);
             sb.Append("<p><strong>").Append(WebUtility.HtmlEncode(title)).Append("</strong></p>");
             sb.Append("<p>").Append(WebUtility.HtmlEncode(lead)).Append("</p>");
-            EndSection();
-        }
+        });
 
-        if (sections.Contains(UwvAdviseurSectionKeys.Kansberoepen, StringComparer.Ordinal))
+        AppendSection(sb, lang, UwvAdviseurSectionKeys.Kansberoepen, selectedSections, () =>
         {
-            BeginSection(UwvAdviseurSectionKeys.Kansberoepen);
             var catalog = kansberoepenCatalog.GetDefault();
             sb.Append("<h3>");
             sb.Append(WebUtility.HtmlEncode(
@@ -96,12 +62,10 @@ public static class UwvAdviseurShareDocumentHtml
             sb.Append(WebUtility.HtmlEncode(
                 UwvMockupCopy.IsEnglish(lang) ? catalog.SourceLineEn : catalog.SourceLineNl));
             sb.Append("</p>");
-            EndSection();
-        }
+        });
 
-        if (sections.Contains(UwvAdviseurSectionKeys.Drijfveren, StringComparer.Ordinal))
+        AppendSection(sb, lang, UwvAdviseurSectionKeys.Drijfveren, selectedSections, () =>
         {
-            BeginSection(UwvAdviseurSectionKeys.Drijfveren);
             sb.Append("<h3>");
             sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Drijfveren.ResultsTitle(lang)));
             sb.Append("</h3>");
@@ -122,13 +86,10 @@ public static class UwvAdviseurShareDocumentHtml
                     sb.Append("</p>");
                 }
             }
+        });
 
-            EndSection();
-        }
-
-        if (sections.Contains(UwvAdviseurSectionKeys.Competences, StringComparer.Ordinal))
+        AppendSection(sb, lang, UwvAdviseurSectionKeys.Competences, selectedSections, () =>
         {
-            BeginSection(UwvAdviseurSectionKeys.Competences);
             sb.Append("<h3>");
             sb.Append(WebUtility.HtmlEncode(
                 UwvMockupCopy.IsEnglish(lang) ? "Competencies" : "Competenties"));
@@ -156,13 +117,10 @@ public static class UwvAdviseurShareDocumentHtml
                         : "Nog geen bevestigde competenties."));
                 sb.Append("</p>");
             }
+        });
 
-            EndSection();
-        }
-
-        if (sections.Contains(UwvAdviseurSectionKeys.Banenkaart, StringComparer.Ordinal))
+        AppendSection(sb, lang, UwvAdviseurSectionKeys.Banenkaart, selectedSections, () =>
         {
-            BeginSection(UwvAdviseurSectionKeys.Banenkaart);
             sb.Append("<h3>");
             sb.Append(WebUtility.HtmlEncode(
                 UwvMockupCopy.IsEnglish(lang) ? "Jobs on the map" : "Banen op de kaart"));
@@ -172,40 +130,31 @@ public static class UwvAdviseurShareDocumentHtml
                     ? "Selection of saved and matching vacancies on your banenkaart (sample)."
                     : "Selectie van opgeslagen en passende vacatures op je banenkaart (voorbeeld)."));
             sb.Append("</p>");
-            EndSection();
-        }
+        });
 
         sb.Append("</div></article>");
         return sb.ToString();
     }
 
-    /// <summary>Renders all sections; toggles hide blocks via <c>data-uwv-section</c> + <c>hidden</c>.</summary>
-    public static string BuildAdviseurPanelPreview(
+    private static void AppendSection(
+        StringBuilder sb,
         string lang,
-        string candidateDisplayName,
+        string sectionKey,
         IReadOnlyList<string> selectedSections,
-        string? ondernemerOutcomeKey,
-        IReadOnlyList<string> drijfverenDriverKeys,
-        IReadOnlyList<string> competenceLabels,
-        IUwvKansberoepenCatalog kansberoepenCatalog)
-        => Build(
-            lang,
-            candidateDisplayName,
-            UwvAdviseurSectionKeys.All,
-            ondernemerOutcomeKey,
-            drijfverenDriverKeys,
-            competenceLabels,
-            kansberoepenCatalog,
-            selectedSections);
-
-    public static IReadOnlyList<string> CompetenceLabelsFromView(UwvAdviseurShareViewDto view)
+        Action writeBody)
     {
-        if (view.EndorsedCompetences.Count > 0)
+        _ = lang;
+        sb.Append("<div data-uwv-section=\"");
+        sb.Append(WebUtility.HtmlEncode(sectionKey));
+        sb.Append('"');
+        if (!selectedSections.Contains(sectionKey, StringComparer.Ordinal))
         {
-            return view.EndorsedCompetences.Select(c => c.Label).ToList();
+            sb.Append(" hidden");
         }
 
-        return [];
+        sb.Append('>');
+        writeBody();
+        sb.Append("</div>");
     }
 
     private static void AppendMarkLogo(StringBuilder sb)

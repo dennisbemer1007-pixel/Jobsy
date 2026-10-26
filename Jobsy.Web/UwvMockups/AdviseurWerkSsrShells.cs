@@ -74,7 +74,7 @@ internal static class AdviseurWerkSsrShells
         sb.Append("</fieldset></div><div class=\"uwv-adviseur__preview-wrap\"><p class=\"uwv-adviseur__preview-label\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.Adviseur.PreviewTitle(lang)));
         sb.Append("</p><div data-uwv-adviseur-preview=\"1\">");
-        sb.Append(UwvAdviseurShareDocumentHtml.BuildAdviseurPanelPreview(
+        sb.Append(AdviseurWerkPreviewHtml.BuildPanelPreview(
             lang,
             data.CandidateDisplayName,
             data.DefaultSelectedSections,
