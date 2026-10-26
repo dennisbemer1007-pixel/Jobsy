@@ -3,6 +3,17 @@ namespace Jobsy.Tests;
 public sealed class ApplicationsAfterMatchCardSsotTests
 {
     [Fact]
+    public void Sollic_demo_ensure_does_not_purge_all_allowlisted_externals_on_load()
+    {
+        var root = TestRepo.FindRoot();
+        var seeder = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure", "Ops", "TestAccountsSollicitatiesDemoSeeder.cs"));
+        Assert.DoesNotContain(
+            "PurgeStaleExternalVacanciesForAcceptatieDemoLoginsAsync",
+            seeder[(seeder.IndexOf("TryEnsureForAcceptatieAsync", StringComparison.Ordinal)..seeder.IndexOf("public static Task<User?> FindAcceptatieDemoCandidateAsync", StringComparison.Ordinal))],
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Acceptatie_demo_ensure_runs_only_when_list_empty_or_sel_missing()
     {
         var root = TestRepo.FindRoot();

@@ -176,9 +176,13 @@ public class TestAccountsCommandTests
         var end = seed.IndexOf("private static bool SameAnswers", StringComparison.Ordinal);
         Assert.True(start > 0 && end > start);
         var slice = seed[start..end];
+        Assert.Contains("ApplyAcceptatieSeedResetExternalPurgeAsync", slice, StringComparison.Ordinal);
         Assert.Contains("FindByKey(\"Candidate\")", slice, StringComparison.Ordinal);
         Assert.DoesNotContain("kandidaat-nieuw", slice, StringComparison.Ordinal);
         Assert.DoesNotContain("PreferencesJson", slice, StringComparison.Ordinal);
+
+        var cmd = File.ReadAllText(Path.Combine(root, "Jobsy.Api", "Ops", "TestAccountsCommand.cs"));
+        Assert.Contains("RepairCompleteCandidateAssessmentsAsync", cmd, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

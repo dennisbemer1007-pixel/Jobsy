@@ -84,12 +84,6 @@ public static class TestAccountsSollicitatiesDemoSeeder
             logger.LogWarning(ex, "Acceptatie after-match demo ensure failed during sollicitaties reset; continuing.");
         }
 
-        await PurgeStaleExternalVacanciesForAcceptatieDemoLoginsAsync(
-            db,
-            configuration,
-            logger,
-            cancellationToken);
-
         await ReleaseSharedDemoApplicationsFromOtherCandidatesAsync(
             db,
             candidate.Id,

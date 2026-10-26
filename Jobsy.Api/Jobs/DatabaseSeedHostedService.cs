@@ -113,7 +113,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             using var scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
             var seeder = new TestAccountsSeedService(db, _configuration);
-            var repaired = await seeder.RepairCompleteCandidateAssessmentsAsync(stoppingToken);
+            var repaired = await seeder.RepairCompleteCandidateAssessmentsAsync(_logger, stoppingToken);
             if (!repaired)
             {
                 _logger.LogInformation("Test-account assessment repair skipped (account missing).");
