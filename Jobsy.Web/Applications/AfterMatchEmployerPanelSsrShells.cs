@@ -186,9 +186,18 @@ internal static class AfterMatchEmployerPanelSsrShells
                 sb.Append($"/werkgever/sollicitaties/{applicationId:D}/after-match?panel=cancel");
                 sb.Append("\" data-enhance-nav=\"false\">");
                 sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen08.Cancel"]));
-                sb.Append("</a><button type=\"button\" class=\"btn\" data-ndm-open-panel=\"outcome\">");
-                sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.OutcomeAction"]));
-                sb.Append("</button>");
+                if (AfterMatchEmployerSsrRouting.CanRecordOutcomeNow(thread))
+                {
+                    sb.Append("</a><button type=\"button\" class=\"btn\" data-ndm-open-panel=\"outcome\">");
+                    sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Scheduled.OutcomeAction"]));
+                    sb.Append("</button>");
+                }
+                else
+                {
+                    sb.Append("</a><p class=\"small muted\" style=\"margin:0;flex:1 1 100%\" role=\"status\">");
+                    sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.BeforeInterviewTime"]));
+                    sb.Append("</p>");
+                }
             }
 
             sb.Append("<button type=\"button\" class=\"btn line\" data-ndm-open-panel=\"messages\">");

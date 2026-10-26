@@ -422,6 +422,9 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Employer.Propose.WithWhom", "Met wie", "With whom");
         Add("AfterMatch.Employer.Propose.Note", "Bericht erbij (mag kort)", "Short note (optional)");
         Add("AfterMatch.Employer.Outcome.NotYet", "De uitkomst kun je invullen na het gesprek. Stel eerst momenten voor of stuur een bericht.", "You can record the outcome after the interview. Propose times or send a message first.");
+        Add("AfterMatch.Employer.Outcome.BeforeInterviewTime",
+            "De uitkomst kun je invullen na afloop van het gesprek. Tot die tijd hoef je niets te doen.",
+            "You can record the outcome after the interview has taken place. Nothing to do until then.");
         Add("AfterMatch.Employer.Scheduled.Tile.When", "Gesprek", "Interview");
         Add("AfterMatch.Employer.Scheduled.Tile.Reminders", "Jullie krijgen bevestiging en herinneringen via Lobsy.", "You both get confirmation and reminders via Lobsy.");
         Add("AfterMatch.Employer.Scheduled.Tile.Outcome", "Na het gesprek geef je binnen vijf werkdagen de uitkomst.", "After the interview, record the outcome within five working days.");

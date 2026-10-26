@@ -101,6 +101,16 @@ internal static class AfterMatchEmployerOutcomeSsrShells
     private static void AppendOutcomeForm(StringBuilder sb, CultureState culture, AfterMatchEmployerOutcomeSsrData.PageData data)
     {
         var thread = data.Thread;
+        if (!AfterMatchEmployerSsrRouting.CanRecordOutcomeNow(thread))
+        {
+            sb.Append("<div class=\"note\" role=\"status\"><span>");
+            sb.Append(NdMIcons.Info);
+            sb.Append("</span><span>");
+            sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Employer.Outcome.BeforeInterviewTime"]));
+            sb.Append("</span></div>");
+            return;
+        }
+
         sb.Append("<span class=\"lbl\">");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Screen12.Question"]));
         sb.Append("</span><div class=\"outc\">");

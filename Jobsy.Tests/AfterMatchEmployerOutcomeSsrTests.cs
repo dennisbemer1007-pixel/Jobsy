@@ -110,6 +110,44 @@ public sealed class AfterMatchEmployerOutcomeSsrTests : BunitContext
     }
 
     [Fact]
+    public void Outcome_blocked_before_interview_start()
+    {
+        var futureStart = DateTime.UtcNow.AddDays(2);
+        var scheduled = new AfterMatchThreadDto(
+            AfterMatchDemoIds.ScheduledApp,
+            Guid.NewGuid(),
+            InterviewStatus.Scheduled,
+            AfterMatchContactShareState.From(InterviewStatus.Scheduled, null),
+            null,
+            "T",
+            "C",
+            null,
+            InterviewFormat.OnSite,
+            null,
+            null,
+            null,
+            futureStart,
+            futureStart.AddMinutes(30),
+            [],
+            [],
+            new AfterMatchReminderPreferenceDto(false, true, true),
+            [],
+            [],
+            "Sanne",
+            null,
+            null,
+            null);
+
+        Assert.False(AfterMatchEmployerSsrRouting.CanRecordOutcomeNow(scheduled));
+
+        var culture = Culture;
+        var data = AfterMatchEmployerOutcomeSsrData.FromThread(culture, scheduled, AfterMatchDemoIds.ScheduledApp);
+        var html = AfterMatchEmployerOutcomeSsrShells.BuildBody(culture, data, AfterMatchDemoIds.ScheduledApp);
+        Assert.Contains("na afloop van het gesprek", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("data-ndm-outcome-submit", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Seo_catalog_maps_werkgever_outcome_ssr_to_screen12()
     {
         var entry = Jobsy.Web.Seo.PageSeoCatalog.Resolve(

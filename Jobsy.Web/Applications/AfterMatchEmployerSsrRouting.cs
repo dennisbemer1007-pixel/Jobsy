@@ -40,6 +40,13 @@ internal static class AfterMatchEmployerSsrRouting
         contextThread is not null
         && AfterMatchEmployerBerichtenPresentation.ThreadEligible(contextThread);
 
+    internal static bool CanRecordOutcomeNow(AfterMatchThreadDto thread) =>
+        thread.Outcome is null
+        && (thread.InterviewStatus == InterviewStatus.Done
+            || (thread.InterviewStatus == InterviewStatus.Scheduled
+                && thread.ScheduledStartUtc is DateTime start
+                && start <= DateTime.UtcNow));
+
     internal static bool ShouldUseOutcomeScreen(AfterMatchThreadDto? thread) =>
         thread is not null
         && thread.Outcome is null
