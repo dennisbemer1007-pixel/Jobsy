@@ -1,6 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Applications;
+using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -58,33 +59,38 @@ public static class AfterMatchPickSlotClientEndpoints
         Guid applicationId,
         ProposeSlotBody body,
         JobsyApiClient api,
+        CultureState culture,
         HttpContext http,
         CancellationToken cancellationToken)
     {
-        if (applicationId == Guid.Empty
-            || string.IsNullOrWhiteSpace(body.DateLabel)
-            || string.IsNullOrWhiteSpace(body.TimeWindow))
+        if (applicationId == Guid.Empty)
         {
             return Results.BadRequest();
         }
 
+        var parsed = AfterMatchProposeSlotParse.TryParse(body.DateLabel, body.TimeWindow);
+        if (parsed.ErrorKey is not null)
+        {
+            return Results.Json(
+                new { errorKey = parsed.ErrorKey, message = culture[parsed.ErrorKey] },
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
         var note = string.IsNullOrWhiteSpace(body.Note) ? "Voorstel kandidaat" : body.Note.Trim();
         var reason = $"{body.DateLabel.Trim()}, {body.TimeWindow.Trim()}. {note}";
-        var startLocal = DateTime.Now.AddDays(3).Date.AddHours(10);
-        var endLocal = startLocal.AddMinutes(30);
-        var startUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local).ToUniversalTime();
-        var endUtc = DateTime.SpecifyKind(endLocal, DateTimeKind.Local).ToUniversalTime();
 
         try
         {
             await api.ProposeCandidateAfterMatchSlotAsync(
                 applicationId,
-                new ProposeCandidateSlotRequest(startUtc, endUtc, reason),
+                new ProposeCandidateSlotRequest(parsed.StartUtc, parsed.EndUtc, reason),
                 cancellationToken);
         }
         catch
         {
-            return Results.BadRequest();
+            return Results.Json(
+                new { errorKey = "Common.Error.TryAgain", message = culture["Common.Error.TryAgain"] },
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var returnUrl = http.Request.Query["return"].ToString();

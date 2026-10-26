@@ -111,6 +111,10 @@ public static class UiStringsAfterMatch
             "On Thursday and Friday I take my son to school.");
         Add("AfterMatch.Pick.ProposeDatePlaceholder", "Dinsdag 27 oktober", "Tuesday 27 October");
         Add("AfterMatch.Pick.ProposeTimePlaceholder", "Ochtend, na 9:30", "Morning, after 9:30 a.m.");
+        Add("AfterMatch.Pick.ProposeError.Required", "Vul datum en tijd in.", "Enter date and time.");
+        Add("AfterMatch.Pick.ProposeError.Date", "De datum herkennen we niet. Gebruik bijvoorbeeld: dinsdag 27 oktober.", "We could not read that date. Try e.g. Tuesday 27 October.");
+        Add("AfterMatch.Pick.ProposeError.Time", "De tijd herkennen we niet. Gebruik bijvoorbeeld: 10:00-10:30.", "We could not read that time. Try e.g. 10:00-10:30.");
+        Add("AfterMatch.Pick.ProposeError.Past", "Kies een moment in de toekomst.", "Pick a time in the future.");
         Add("AfterMatch.Pick.Breadcrumb", "Kruimelpad", "Breadcrumb");
         Add("AfterMatch.Pick.GoodToKnow.Title", "Goed om te weten", "Good to know");
         Add("AfterMatch.Pick.GoodToKnow.Reminders",
