@@ -10,6 +10,7 @@ public sealed class UwvAdviseurDeelSsrTests
         Assert.Contains("[ExcludeFromInteractiveRouting]", source, StringComparison.Ordinal);
         Assert.DoesNotContain("IJSRuntime", source, StringComparison.Ordinal);
         Assert.Contains("data-uwv-adviseur-print", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("PublicLangMenu", source, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -26,6 +27,8 @@ public sealed class UwvAdviseurDeelSsrTests
             catalog);
         Assert.Contains("Ondernemerscheck", html, StringComparison.Ordinal);
         Assert.Contains("Test Kandidaat", html, StringComparison.Ordinal);
+        Assert.Contains("lobsy-logo-horizontaal.svg", html, StringComparison.Ordinal);
+        Assert.Contains("lobsy-logo--horizontal", html, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

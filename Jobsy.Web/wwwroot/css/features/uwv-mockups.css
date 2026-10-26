@@ -858,9 +858,10 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   border-radius: 4px 4px 0 0;
 }
 
-.uwv-a4-preview__logo.lobsy-logo--mark {
-  width: 48px;
-  height: 48px;
+.uwv-a4-preview__logo.lobsy-logo--horizontal {
+  height: 44px;
+  width: auto;
+  max-width: min(168px, 42vw);
   flex: none;
 }
 

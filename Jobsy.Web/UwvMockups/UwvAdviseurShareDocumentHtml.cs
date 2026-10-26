@@ -24,7 +24,7 @@ public static class UwvAdviseurShareDocumentHtml
         sb.Append("<article class=\"uwv-a4-preview uwv-adviseur-print\" aria-label=\"");
         sb.Append(previewTitle);
         sb.Append("\"><header class=\"uwv-a4-preview__head\">");
-        AppendMarkLogo(sb);
+        AppendHorizontalLogo(sb);
         sb.Append("<div class=\"uwv-a4-preview__head-copy\"><p class=\"uwv-a4-preview__eyebrow\">");
         sb.Append(WebUtility.HtmlEncode(
             UwvMockupCopy.IsEnglish(lang)
@@ -147,14 +147,13 @@ public static class UwvAdviseurShareDocumentHtml
         return [];
     }
 
-    private static void AppendMarkLogo(StringBuilder sb)
+    private static void AppendHorizontalLogo(StringBuilder sb)
     {
-        var src = BrandImages.ForVariant(LobsyLogoVariant.Mark);
-        var css = BrandImages.CssModifier(LobsyLogoVariant.Mark);
+        var src = BrandImages.ForVariant(LobsyLogoVariant.Horizontal);
+        var css = BrandImages.CssModifier(LobsyLogoVariant.Horizontal);
         sb.Append("<span class=\"lobsy-logo ").Append(css).Append(" uwv-a4-preview__logo\" aria-hidden=\"true\">");
         sb.Append("<img class=\"lobsy-logo__img\" src=\"").Append(WebUtility.HtmlEncode(src));
-        sb.Append("\" srcset=\"").Append(WebUtility.HtmlEncode(BrandImages.SrcSet56));
-        sb.Append("\" sizes=\"56px\" alt=\"\" width=\"56\" height=\"56\" decoding=\"async\" draggable=\"false\" />");
+        sb.Append("\" alt=\"\" width=\"154\" height=\"44\" decoding=\"async\" draggable=\"false\" />");
         sb.Append("</span>");
     }
 
