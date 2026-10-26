@@ -292,6 +292,8 @@ internal static class CareerSsrShells
         var lang = culture.Language;
         var entries = data.KansDataset?.Entries ?? [];
         BeginPanel(sb, CareerSsrTabs.Kansberoepen, activeTab, "career-tab-kansberoepen");
+        sb.Append("<div class=\"carriere-kans-layout\">");
+        sb.Append("<div class=\"carriere-kans-layout__main\">");
         sb.Append("<p class=\"carriere-segmented__meta\"><span class=\"uwv-kans__region\">");
         sb.Append(WebUtility.HtmlEncode(data.KansDataset is null
             ? UwvMockupCopy.Kansberoepen.Region(lang)
@@ -328,6 +330,8 @@ internal static class CareerSsrShells
         }
 
         sb.Append("</ul></section></div>");
+        CareerSsrKansAsideHtml.Append(sb, lang);
+        sb.Append("</div></div>");
     }
 
     private static void AppendMeerButton(
