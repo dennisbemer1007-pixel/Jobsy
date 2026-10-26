@@ -57,6 +57,13 @@ public sealed class AfterMatchOutcomeSsrTests : BunitContext
     }
 
     [Fact]
+    public void Candidate_propose_panel_deeplink_routes_to_pick_slot_ssr()
+    {
+        Assert.Equal("/pick-slot-ssr", AfterMatchPanelRouting.PathSuffixForPanel("propose"));
+        Assert.Equal("/pick-slot-ssr", AfterMatchPanelRouting.PathSuffixForPanel("pick-slot"));
+    }
+
+    [Fact]
     public void Outcome_screen_routing_accepts_done_interview_without_not_now_enum()
     {
         var thread = new AfterMatchThreadDto(

@@ -81,7 +81,7 @@ else if (_bodyHtml is not null)
                 return;
             }
 
-            if (panel is "pick-slot" or "propose-slot")
+            if (panel is "pick-slot" or "propose-slot" or "propose")
             {
                 RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
                 return;

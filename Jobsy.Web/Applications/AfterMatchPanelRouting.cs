@@ -30,7 +30,7 @@ internal static class AfterMatchPanelRouting
 
     internal static string PathSuffixForPanel(string panel) => panel switch
     {
-        "pick-slot" or "propose-slot" => PickSlotSsrSuffix,
+        "pick-slot" or "propose-slot" or "propose" => PickSlotSsrSuffix,
         "messages" => MessagesSsrSuffix,
         "reschedule" or "cancel" => RescheduleSsrSuffix,
         "outcome" or "" => PanelSsrSuffix,
