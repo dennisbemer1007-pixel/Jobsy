@@ -106,7 +106,7 @@ public static class AfterMatchPickSlotClientEndpoints
         }
 
         var returnUrl = http.Request.Query["return"].ToString();
-        var redirect = AfterMatchSollicitatiesUrls.AfterMatchBase(applicationId, returnUrl);
+        var redirect = AfterMatchSollicitatiesUrls.PickSlot(applicationId, returnUrl);
         return Results.Json(new { redirectUrl = redirect });
     }
 

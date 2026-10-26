@@ -121,6 +121,15 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Pick.ProposeError.Date", "De datum herkennen we niet. Gebruik bijvoorbeeld: dinsdag 27 oktober.", "We could not read that date. Try e.g. Tuesday 27 October.");
         Add("AfterMatch.Pick.ProposeError.Time", "De tijd herkennen we niet. Gebruik bijvoorbeeld: 10:00-10:30.", "We could not read that time. Try e.g. 10:00-10:30.");
         Add("AfterMatch.Pick.ProposeError.Past", "Kies een moment in de toekomst.", "Pick a time in the future.");
+        Add("AfterMatch.Pick.ProposeSent.Title", "Voorstel verstuurd", "Proposal sent");
+        Add("AfterMatch.Pick.ProposeSent.Lead",
+            "{0} bekijkt je voorstel en laat weten of het past.",
+            "{0} will review your proposal and let you know if it works.");
+        Add("AfterMatch.Pick.ProposeSent.Confirmed", "Je voorstel is verstuurd", "Your proposal was sent");
+        Add("AfterMatch.Pick.ProposeSent.Body",
+            "Je hoeft nu niets te doen. Zodra {0} reageert, krijg je bericht in Lobsy.",
+            "Nothing to do for now. When they respond, you will get a message in Lobsy.");
+        Add("AfterMatch.Pick.ProposeSent.YourMoment", "Jouw moment:", "Your time:");
         Add("AfterMatch.Pick.Breadcrumb", "Kruimelpad", "Breadcrumb");
         Add("AfterMatch.Pick.GoodToKnow.Title", "Goed om te weten", "Good to know");
         Add("AfterMatch.Pick.GoodToKnow.Reminders",

@@ -794,7 +794,9 @@ public sealed class AfterMatchService : IAfterMatchService
             interview.Note,
             interview.ChosenSlot?.StartUtc,
             interview.ChosenSlot?.EndUtc,
-            openSlots,
+            openSlots
+                .Where(s => isEmployer || s.ProposedBy == InterviewSlotProposer.Employer)
+                .ToList(),
             messages.Select(m => new AfterMatchMessageDto(
                 m.Id,
                 m.SenderUserId == viewerUserId,
