@@ -8,17 +8,32 @@ namespace Jobsy.Tests;
 
 public sealed class PrecompressedStaticAssetTests
 {
+    /// <summary>Keep in sync with <c>tools/scripts/precompress-wwwroot-assets.py</c> DEFAULTS.</summary>
+    public static TheoryData<string> PrecompressAssetPaths { get; } = new()
+    {
+        "lib/maplibre/maplibre-gl-csp.js",
+        "lib/maplibre/maplibre-gl-csp-worker.js",
+        "js/jobMap.min.js",
+        "css/features/sollicitaties-page.css",
+        "css/features/applications.css",
+        "css/features/na-de-match.css",
+        "js/ndm-confirmed.js",
+        "js/ndm-reschedule.js",
+        "js/ndm-employer.js",
+        "js/ndm-employer-outcome.js",
+        "js/ndm-mail-chrome.js",
+        "js/ndm-herinneringen.js",
+        "js/ndm-employer-reschedule.js",
+        "js/ndm-employer-cancel.js",
+        "js/ndm-employer-messages.js",
+        "js/ndm-pick-slot.js",
+        "js/ndm-outcome.js",
+        "js/ndm-messages.js",
+        "js/passport-availability-matrix.js",
+    };
+
     [Theory]
-    [InlineData("lib/maplibre/maplibre-gl-csp.js")]
-    [InlineData("lib/maplibre/maplibre-gl-csp-worker.js")]
-    [InlineData("js/jobMap.min.js")]
-    [InlineData("css/features/sollicitaties-page.css")]
-    [InlineData("css/features/applications.css")]
-    [InlineData("css/features/na-de-match.css")]
-    [InlineData("js/ndm-confirmed.js")]
-    [InlineData("js/ndm-reschedule.js")]
-    [InlineData("js/ndm-employer.js")]
-    [InlineData("js/ndm-employer-outcome.js")]
+    [MemberData(nameof(PrecompressAssetPaths))]
     public void Precompressed_brotli_is_smaller_than_gzip(string relativePath)
     {
         var root = FindRepoRoot();
@@ -36,16 +51,7 @@ public sealed class PrecompressedStaticAssetTests
     }
 
     [Theory]
-    [InlineData("lib/maplibre/maplibre-gl-csp.js")]
-    [InlineData("lib/maplibre/maplibre-gl-csp-worker.js")]
-    [InlineData("js/jobMap.min.js")]
-    [InlineData("css/features/sollicitaties-page.css")]
-    [InlineData("css/features/applications.css")]
-    [InlineData("css/features/na-de-match.css")]
-    [InlineData("js/ndm-confirmed.js")]
-    [InlineData("js/ndm-reschedule.js")]
-    [InlineData("js/ndm-employer.js")]
-    [InlineData("js/ndm-employer-outcome.js")]
+    [MemberData(nameof(PrecompressAssetPaths))]
     public void Precompressed_sidecars_match_source_bytes(string relativePath)
     {
         var root = FindRepoRoot();
@@ -89,6 +95,24 @@ public sealed class PrecompressedStaticAssetTests
             var text = System.Text.Encoding.UTF8.GetString(raw);
             Assert.Contains("function setPanel", text, StringComparison.Ordinal);
             Assert.Contains("data-ndm-open-panel", text, StringComparison.Ordinal);
+        }
+
+        if (relativePath == "js/ndm-reschedule.js")
+        {
+            var text = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.Contains("alternativeSlotId", text, StringComparison.Ordinal);
+        }
+
+        if (relativePath == "js/ndm-employer-outcome.js")
+        {
+            var text = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.Contains("data-ndm-outcome-submitting", text, StringComparison.Ordinal);
+        }
+
+        if (relativePath == "js/ndm-employer-messages.js")
+        {
+            var text = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.Contains("data-ndm-sensitive-warning", text, StringComparison.Ordinal);
         }
     }
 

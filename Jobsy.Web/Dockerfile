@@ -13,7 +13,11 @@ COPY Jobsy.Core/ Jobsy.Core/
 COPY Jobsy.Web/ Jobsy.Web/
 # Jobsy.Core embeds this file from outside the project tree (see Jobsy.Core.csproj).
 COPY tools/occupations/ilo_tasks_nl.json tools/occupations/ilo_tasks_nl.json
-# Sidecars (.br/.gz) are committed under wwwroot; precompress script is not copied into this image.
+COPY tools/scripts/precompress-wwwroot-assets.py tools/scripts/precompress-wwwroot-assets.py
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip \
+    && pip3 install --break-system-packages brotli \
+    && python3 tools/scripts/precompress-wwwroot-assets.py \
+    && rm -rf /var/lib/apt/lists/*
 RUN dotnet publish Jobsy.Web/Jobsy.Web.csproj -c Release -o /app/publish /p:UseAppHost=false /p:SkipPrecompressStaticJs=true
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
