@@ -106,6 +106,7 @@
 
     var submit = container.querySelector("[data-ndm-outcome-submit]");
     container.setAttribute("data-ndm-outcome-submitting", "1");
+    window.__ndmEmployerOutcomeInFlight = appId;
     if (submit) submit.disabled = true;
 
     fetch(
@@ -133,6 +134,9 @@
       })
       .catch(function () {
         container.removeAttribute("data-ndm-outcome-submitting");
+        if (window.__ndmEmployerOutcomeInFlight === appId) {
+          window.__ndmEmployerOutcomeInFlight = null;
+        }
         if (submit) submit.disabled = false;
       });
   }
@@ -141,7 +145,9 @@
     var submit = container.querySelector("[data-ndm-outcome-submit]");
     if (!submit || submit.getAttribute("data-ndm-outcome-bound") === "1") return;
     submit.setAttribute("data-ndm-outcome-bound", "1");
-    submit.addEventListener("click", function () {
+    submit.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
       recordOutcome(container);
     });
   }

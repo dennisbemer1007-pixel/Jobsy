@@ -484,8 +484,8 @@
     "sha256": "9236608e010c4c88d40d8a56cabf47ffe8210415708a183a92fd451a86837fde"
   },
   "js/ndm-employer-outcome.js": {
-    "v": "20261025-kreeft15",
-    "sha256": "249244c55fa3a81a3ceb9abb3efa5a003e2e1901b80c243cbbab705381230e92"
+    "v": "20261026-outcome-once1",
+    "sha256": "5ac39e0bd5409ab81468ec1a743cd02d4c2dbfad2376c9d036776c9a487f7587"
   },
   "js/ndm-employer-reschedule.js": {
     "v": "20261025-kreeft15",
