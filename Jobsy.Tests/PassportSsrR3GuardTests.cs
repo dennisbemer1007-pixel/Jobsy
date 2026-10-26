@@ -64,6 +64,19 @@ public sealed class PassportSsrR3GuardTests
     }
 
     [Fact]
+    public void Passport_dna_polish_shells_poles_and_preview()
+    {
+        var root = FindRepoRoot();
+        var panels = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrPanelsHtml.cs"));
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        Assert.Contains("passport-shells__row", panels, StringComparison.Ordinal);
+        Assert.Contains("pole-sliders", panels, StringComparison.Ordinal);
+        Assert.Contains("data-read-aloud-text", panels, StringComparison.Ordinal);
+        Assert.Contains("PassportSsrEmployerPreviewHtml", shells, StringComparison.Ordinal);
+        Assert.Contains("passport-ssr-extras.js", shells, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Passport_ssr_tabs_script_is_registered()
     {
         var root = FindRepoRoot();
