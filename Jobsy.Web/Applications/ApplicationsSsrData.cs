@@ -476,7 +476,7 @@ internal static class ApplicationsSsrData
         }
 
         var hint = afterMatch is not null
-            ? BuildCardHintFromAfterMatch(culture, afterMatch)
+            ? null
             : BuildCardHint(culture, a, timeline);
 
         return new SollicitationRow(
@@ -533,11 +533,6 @@ internal static class ApplicationsSsrData
                or ApplicationStatus.FilledElsewhere
                or ApplicationStatus.Withdrawn
                or ApplicationStatus.Hired;
-
-    private static string? BuildCardHintFromAfterMatch(
-        CultureState culture,
-        ApplicationAfterMatchSummary afterMatch)
-        => AfterMatchSollicitatiesPresentation.FormatListCardTimelineSummary(culture, afterMatch);
 
     private static string? BuildCardHint(
         CultureState culture,

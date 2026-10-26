@@ -124,7 +124,8 @@
     bindTabListKeys(root);
 
     root.querySelectorAll("[data-passport-tab]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
         setTab(root, btn.getAttribute("data-passport-tab"), true);
       });
     });

@@ -469,15 +469,17 @@ internal static class ApplicationsSsrShells
         else
         {
             var cardReturn = ApplicationsSsrQuery.BuildUrl(data.Tab, data.Filter, row.RowId);
-            var cardAction = AfterMatchSollicitatiesPresentation.BuildCardAction(culture, row.AfterMatch, cardReturn);
-            if (cardAction is not null)
+            var detail = AfterMatchSollicitatiesPresentation.BuildDetailActions(culture, row.AfterMatch, cardReturn);
+            if (detail is not null)
             {
+                var pickSlot = AfterMatchSollicitatiesPresentation.BuildCardAction(culture, row.AfterMatch, cardReturn);
+                var modifier = pickSlot?.Modifier == "action-pick" ? "do" : "ok";
                 sb.Append("<a class=\"sollic-card__ndm-act act act--");
-                sb.Append(cardAction.Modifier == "action-pick" ? "do" : "ok");
+                sb.Append(modifier);
                 sb.Append("\" href=\"");
-                sb.Append(WebUtility.HtmlEncode(cardAction.Href));
+                sb.Append(WebUtility.HtmlEncode(detail.PrimaryHref));
                 sb.Append("\" data-enhance-nav=\"false\">");
-                sb.Append(WebUtility.HtmlEncode(cardAction.Label));
+                sb.Append(WebUtility.HtmlEncode(detail.PrimaryLabel));
                 sb.Append("</a>");
             }
             else
@@ -486,13 +488,6 @@ internal static class ApplicationsSsrShells
                 sb.Append(WebUtility.HtmlEncode(row.StatusModifier));
                 sb.Append("\">");
                 sb.Append(WebUtility.HtmlEncode(row.StatusLabel));
-                sb.Append("</span>");
-            }
-
-            if (!string.IsNullOrWhiteSpace(row.CardHint))
-            {
-                sb.Append("<span class=\"sollic-card__step\">");
-                sb.Append(WebUtility.HtmlEncode(row.CardHint));
                 sb.Append("</span>");
             }
         }
