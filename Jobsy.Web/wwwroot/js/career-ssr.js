@@ -17,6 +17,9 @@
   function parseTabFromUrl() {
     try {
       var u = new URL(window.location.href);
+      if (u.pathname.replace(/\/+$/, "") === "/carriere/kansberoepen") {
+        return "kansberoepen";
+      }
       return normalizeTab(u.searchParams.get("tab"));
     } catch (_e) {
       return "voor-jou";
@@ -25,9 +28,14 @@
 
   function buildUrl(tab, meer) {
     var u = new URL(window.location.href);
-    if (!tab || tab === "voor-jou") {
+    if (tab === "kansberoepen") {
+      u.pathname = "/carriere/kansberoepen";
+      u.searchParams.delete("tab");
+    } else if (!tab || tab === "voor-jou") {
+      u.pathname = "/carriere";
       u.searchParams.delete("tab");
     } else {
+      u.pathname = "/carriere";
       u.searchParams.set("tab", tab);
     }
     if (meer && meer.length) {
