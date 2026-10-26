@@ -3,6 +3,12 @@ namespace Jobsy.Api.Models;
 public sealed class AssistantChatRequestDto
 {
     public List<AssistantChatMessageDto> Messages { get; set; } = [];
+
+    /// <summary>Current Blazor/SSR path (e.g. /banenkaart) for page-aware replies.</summary>
+    public string? PagePath { get; set; }
+
+    /// <summary>Localized line shown in the assistant panel (e.g. "Je bekijkt nu je paspoort…").</summary>
+    public string? PageContextLine { get; set; }
 }
 
 public sealed class AssistantChatMessageDto

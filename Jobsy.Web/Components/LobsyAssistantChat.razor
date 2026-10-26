@@ -444,7 +444,11 @@
         try
         {
             var history = AssistantChatHistory.ForRequest(_messages).ToList();
-            var reply = await Api.SendAssistantChatAsync(history, timeout.Token);
+            var reply = await Api.SendAssistantChatAsync(
+                history,
+                CurrentPagePath(),
+                _pageContextLine,
+                timeout.Token);
             if (generation != _sendGeneration)
             {
                 return;
@@ -520,5 +524,16 @@
         {
             Navigation.NavigateTo(link.Url, forceLoad: false);
         }
+    }
+
+    private string CurrentPagePath()
+    {
+        if (!Uri.TryCreate(Navigation.Uri, UriKind.Absolute, out var uri))
+        {
+            return "/";
+        }
+
+        var path = uri.AbsolutePath.TrimEnd('/');
+        return string.IsNullOrEmpty(path) ? "/" : path.ToLowerInvariant();
     }
 }
