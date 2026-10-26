@@ -62,6 +62,7 @@ internal static class NdmRescheduleShellFixtures
             "13 okt",
             "15 okt",
             "22 okt",
+            null,
             null);
 
         var body = AfterMatchRescheduleSsrShells.BuildBody(culture, data, appId, mode);

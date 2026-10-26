@@ -44,7 +44,11 @@
     }
   }
 
-  function postJson(path, appId, reason) {
+  function postJson(path, appId, reason, alternativeSlotId) {
+    var payload = { reason: reason };
+    if (alternativeSlotId) {
+      payload.alternativeSlotId = alternativeSlotId;
+    }
     return fetch(path + "?applicationId=" + encodeURIComponent(appId), {
       method: "POST",
       credentials: "same-origin",
@@ -52,8 +56,16 @@
         "Content-Type": "application/json",
         "X-Requested-With": "XMLHttpRequest",
       },
-      body: JSON.stringify({ reason: reason }),
+      body: JSON.stringify(payload),
     });
+  }
+
+  function selectedAlternateSlotId(container) {
+    var on = container.querySelector("[data-ndm-alternate-slot].on[data-slot-id]");
+    if (on) {
+      return on.getAttribute("data-slot-id");
+    }
+    return container.getAttribute("data-default-alternate-slot-id") || null;
   }
 
   function bindReasonChips(container) {
@@ -94,10 +106,11 @@
         var reason = reasonOrAlert();
         if (!reason) return;
         rescheduleBtn.disabled = true;
-        postJson("/api/ndm-reschedule-client/reschedule", appId, reason)
+        var altSlotId = selectedAlternateSlotId(container);
+        postJson("/api/ndm-reschedule-client/reschedule", appId, reason, altSlotId)
           .then(function (res) {
             if (!res.ok) throw new Error("fail");
-            window.location.href = applicationsHref || backHref || window.location.pathname;
+            window.location.href = backHref || applicationsHref || window.location.pathname;
           })
           .catch(function () {
             rescheduleBtn.disabled = false;

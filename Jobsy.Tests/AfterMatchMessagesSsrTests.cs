@@ -206,6 +206,7 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             "13 okt",
             "15 okt",
             "22 okt",
+            null,
             null);
 
         using var ctx = new BunitContext();

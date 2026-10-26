@@ -29,7 +29,15 @@ internal static class AfterMatchRescheduleSsrShells
         sb.Append(WebUtility.HtmlEncode(data.SollicitatiesHref));
         sb.Append("\" data-propose-href=\"");
         sb.Append(WebUtility.HtmlEncode(data.ProposeSlotHref));
-        sb.Append("\"><main class=\"wrap\">");
+        sb.Append('"');
+        if (data.AlternateSlotId is Guid altId)
+        {
+            sb.Append(" data-default-alternate-slot-id=\"");
+            sb.Append(altId.ToString("D"));
+            sb.Append('"');
+        }
+
+        sb.Append("><main class=\"wrap\">");
 
         AppendIntro(sb, culture, data);
         sb.Append("<div class=\"g2 ndm-reschedule-g2\">");
