@@ -118,7 +118,12 @@
         }
       )
         .then(function (res) {
-          if (!res.ok) throw new Error("propose failed");
+          if (!res.ok) {
+            return res.json().then(function (body) {
+              showProposeError(container, (body && body.message) || null);
+              throw new Error("propose failed");
+            });
+          }
           return res.json();
         })
         .then(function (data) {
@@ -128,8 +133,20 @@
         })
         .catch(function () {
           btn.disabled = false;
+          var err = container.querySelector("[data-ndm-pick-slot-error]");
+          if (err) {
+            err.hidden = false;
+            err.textContent = "Voorstel versturen is niet gelukt. Controleer datum en tijd.";
+          }
         });
     });
+  }
+
+  function showProposeError(container, message) {
+    var err = container.querySelector("[data-ndm-pick-slot-error]");
+    if (!err) return;
+    err.hidden = false;
+    err.textContent = message || err.textContent;
   }
 
   function bindAskLobsy(container) {
