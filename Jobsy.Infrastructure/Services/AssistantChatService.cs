@@ -1765,7 +1765,36 @@ Verbetervoorstellen:
             "A sentence about demand until 2030 or about AI changing tasks may only be copied from the Vooruitblik lines. Do not invent another outlook. " +
             "Honest advice about a job may only be copied from the Eerlijk advies lines. Do not invent another opinion about how AI changes that work. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
+            PageContextPromptSuffix(context) +
             $"Scoped facts:\n{facts}";
+    }
+
+    private static string PageContextPromptSuffix(AssistantChatContext context)
+    {
+        if (string.IsNullOrWhiteSpace(context.PagePath)
+            && string.IsNullOrWhiteSpace(context.PageContextLine))
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        sb.Append("The user is in the Lobsy web UI");
+        if (!string.IsNullOrWhiteSpace(context.PagePath))
+        {
+            sb.Append(" on path ").Append(context.PagePath.Trim());
+        }
+
+        sb.Append(". ");
+        if (!string.IsNullOrWhiteSpace(context.PageContextLine))
+        {
+            sb.Append("Panel context (trust this over guessing): ")
+                .Append(context.PageContextLine.Trim())
+                .Append(' ');
+        }
+
+        sb.Append(
+            "Prefer answers about that screen or feature (e.g. banenkaart = job map, paspoort = passport, kompas = compass). ");
+        return sb.ToString();
     }
 
     private static string Greeting(AssistantChatContext context, bool employersOn = true)

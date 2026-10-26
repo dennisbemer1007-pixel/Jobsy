@@ -782,11 +782,15 @@ public sealed partial class JobsyApiClient
 
     public async Task<AssistantChatReply> SendAssistantChatAsync(
         IReadOnlyList<AssistantChatMessage> messages,
+        string? pagePath = null,
+        string? pageContextLine = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/assistant/chat", new
         {
-            messages = messages.Select(m => new { role = m.Role, content = m.Content })
+            messages = messages.Select(m => new { role = m.Role, content = m.Content }),
+            pagePath,
+            pageContextLine
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

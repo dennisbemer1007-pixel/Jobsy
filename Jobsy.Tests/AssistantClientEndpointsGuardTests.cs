@@ -26,4 +26,13 @@ public sealed class AssistantClientEndpointsGuardTests
         Assert.Contains("renderChips", js, StringComparison.Ordinal);
         Assert.Contains("renderActionLinks", js, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Non_empty_chat_forwards_page_context_to_upstream_assistant()
+    {
+        var src = File.ReadAllText(Path.Combine(TestRepo.FindRoot(), "Jobsy.Web", "Hosting", "AssistantClientEndpoints.cs"));
+        Assert.Contains("ResolvePageContextForAssistantAsync", src, StringComparison.Ordinal);
+        Assert.Contains("SendAssistantChatAsync(", src, StringComparison.Ordinal);
+        Assert.Contains("pageContextLine", src, StringComparison.Ordinal);
+    }
 }

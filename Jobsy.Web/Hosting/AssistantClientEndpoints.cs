@@ -77,7 +77,19 @@ public static class AssistantClientEndpoints
         try
         {
             var history = AssistantChatHistory.ForRequest(messages).ToList();
-            var reply = await api.SendAssistantChatAsync(history, cancellationToken);
+            var (resolvedPath, pageContextLine) = await ResolvePageContextForAssistantAsync(
+                api,
+                culture,
+                greetingGate,
+                http.User,
+                pagePath,
+                logger,
+                cancellationToken);
+            var reply = await api.SendAssistantChatAsync(
+                history,
+                resolvedPath,
+                pageContextLine,
+                cancellationToken);
             return Results.Json(new AssistantClientChatResponse
             {
                 Reply = reply.Reply,
@@ -111,4 +123,37 @@ public static class AssistantClientEndpoints
     private sealed record AssistantClientChip(string Label, string Message);
 
     private sealed class AssistantClientEndpointsMarker;
+
+    private static async Task<(string? PagePath, string? PageContextLine)> ResolvePageContextForAssistantAsync(
+        JobsyApiClient api,
+        CultureState culture,
+        IChatContextGreetingGate greetingGate,
+        System.Security.Claims.ClaimsPrincipal user,
+        string? pagePath,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        if (!greetingGate.Enabled || !RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            return (pagePath, null);
+        }
+
+        try
+        {
+            var boot = await CandidateChatContextBuilder.BuildForPagePathAsync(
+                api,
+                pagePath ?? "/",
+                culture,
+                cancellationToken);
+            return (pagePath, boot.PageContextLine);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Candidate chat context bootstrap failed for {PagePath}; continuing without page context line.",
+                pagePath);
+            return (pagePath, null);
+        }
+    }
 }
