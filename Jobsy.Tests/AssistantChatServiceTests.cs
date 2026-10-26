@@ -748,6 +748,55 @@ public class AssistantChatServiceTests
     }
 
     [Fact]
+    public async Task Banenkaart_wat_zie_ik_on_page_uses_scripted_map_help()
+    {
+        await using var db = CreateDb();
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(Guid.NewGuid(), JobsyRoles.Candidate, "nl", null, "/banenkaart", null),
+            [new AssistantChatMessage("user", "Wat zie ik hier?")],
+            CancellationToken.None);
+
+        Assert.Contains("vacatures", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("reistijd", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("beroepen", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.False(result.UsedAi);
+    }
+
+    [Fact]
+    public async Task Kompas_help_uses_onboarding_zone_not_always_licht()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "zone@test.local",
+            FullName = "Zone Test",
+            Role = UserRole.Candidate
+        });
+        db.CandidateOnboardings.Add(new CandidateOnboarding
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CurrentStep = 1,
+            StartedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+            StepsJson = "[]"
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(userId, JobsyRoles.Candidate, "nl", null, "/candidate/kompas", null),
+            [new AssistantChatMessage("user", "Leg mijn Kompas uit")],
+            CancellationToken.None);
+
+        Assert.Contains("fase Kust", result.Reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("fase Licht", result.Reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Banenkaart_help_mentions_vacancies_and_travel_not_occupations()
     {
         await using var db = CreateDb();

@@ -165,7 +165,7 @@
     var seen = {};
     var count = 0;
     (actions || []).forEach(function (action) {
-      if (count >= 6) return;
+      if (count >= 4) return;
       var url = action && (action.url || action.Url);
       if (!url || seen[url]) return;
       seen[url] = true;
