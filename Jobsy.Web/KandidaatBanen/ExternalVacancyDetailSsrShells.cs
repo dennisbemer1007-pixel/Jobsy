@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Web.KandidaatBanen;
@@ -109,8 +110,9 @@ internal static class ExternalVacancyDetailSsrShells
 
         sb.Append("</tbody></table></section>");
 
-        var strengths = detail.MatchInsights.Strengths.Where(static s => !string.IsNullOrWhiteSpace(s)).ToList();
-        var challenges = detail.MatchInsights.Challenges.Where(static c => !string.IsNullOrWhiteSpace(c)).ToList();
+        var insights = CandidateExternalVacancyRules.FilterMatchInsightsForDisplay(detail.MatchInsights);
+        var strengths = insights.Strengths;
+        var challenges = insights.Challenges;
         if (strengths.Count > 0 || challenges.Count > 0)
         {
             sb.Append("<section class=\"kb-ext__card\"><div class=\"kb-ext__match\">");

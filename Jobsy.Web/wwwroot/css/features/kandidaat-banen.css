@@ -1541,6 +1541,7 @@
   inset-inline: var(--space-4, 1rem);
   bottom: calc(var(--lobsy-coach-scroll-pad, 5.75rem) + env(safe-area-inset-bottom, 0));
   z-index: 10090;
+  pointer-events: auto;
   background:var(--brand);
   color: var(--surface);
   border-radius:var(--r-md);
@@ -1550,6 +1551,9 @@
   align-items: center;
   justify-content: space-between;
 }.kb-saved__toast button {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
   background:transparent;
   border: 1px solid currentColor;
   color: inherit;
@@ -2107,8 +2111,13 @@
   html.kb-saved-toast-open .lobsy-coach-dock[data-lobsy-coach],
   html.kb-saved-toast-open .lobsy-coach-dock[data-ssr-coach] {
     opacity: 0;
-    pointer-events: none;
+    pointer-events: none !important;
     transform: translateY(12px);
     transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  html.kb-saved-toast-open .lobsy-coach-dock[data-lobsy-coach] *,
+  html.kb-saved-toast-open .lobsy-coach-dock[data-ssr-coach] * {
+    pointer-events: none !important;
   }
 }

@@ -74,9 +74,10 @@ internal static class SavedSsrShells
         }
 
         AppendFooterNav(sb, culture);
+        sb.Append("</div></div>");
         sb.Append("<div class=\"kb-saved__toast\" data-saved-toast role=\"status\" hidden><span data-saved-toast-text></span><button type=\"button\" data-saved-undo hidden>");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Undo"]));
-        sb.Append("</button></div></div></div>");
+        sb.Append("</button></div>");
         sb.Append("<script src=\"");
         sb.Append(WwwrootAssetCatalog.Url("js/saved-ssr-filters.js"));
         sb.Append("\" defer></script><script src=\"");

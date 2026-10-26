@@ -20,6 +20,38 @@ public sealed class ExternalVacancyAddSsrTests : BunitContext
     }
 
     [Fact]
+    public void Detail_page_hides_match_block_when_only_placeholders()
+    {
+        var culture = Services.GetRequiredService<CultureState>();
+        var detail = new ExternalVacancyDetailDto(
+            Guid.Parse("96d18a1b-0000-4000-8000-000000000002"),
+            "https://example.com/job",
+            "Test extern",
+            "BV",
+            "Den Haag",
+            "",
+            "",
+            "",
+            "",
+            [],
+            new Dictionary<string, string> { ["bedrijf"] = "BV" },
+            new ExternalVacancyMatchInsightsDto(
+                ["Competenties beschikbaar", "Cultuurprofiel beschikbaar"],
+                ["Dat weet ik niet"]),
+            null,
+            CandidateExternalVacancyStatus.Saved,
+            DateTime.UtcNow,
+            true,
+            [],
+            false,
+            false);
+
+        var html = ExternalVacancyDetailSsrShells.BuildBody(culture, detail);
+        Assert.DoesNotContain("Hier scoor je goed op", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("kb-ext__match-panel--good", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Detail_page_shell_renders_facts_and_apply_link()
     {
         var culture = Services.GetRequiredService<CultureState>();

@@ -120,12 +120,46 @@ public static class CandidateExternalVacancyRules
         return structuredFacts.Keys.Where(k => set.Contains(k)).ToList();
     }
 
+    public const string MatchInsightUnknown = "Dat weet ik niet";
+    public const string MatchInsightCompetenciesPlaceholder = "Competenties beschikbaar";
+    public const string MatchInsightCulturePlaceholder = "Cultuurprofiel beschikbaar";
+
+    public static bool IsExternalMatchInsightPlaceholder(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return true;
+        }
+
+        var trimmed = line.Trim();
+        return string.Equals(trimmed, MatchInsightUnknown, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(trimmed, MatchInsightCompetenciesPlaceholder, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(trimmed, MatchInsightCulturePlaceholder, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static ExternalVacancyMatchInsightsDto FilterMatchInsightsForDisplay(
+        ExternalVacancyMatchInsightsDto? insights)
+    {
+        if (insights is null)
+        {
+            return new ExternalVacancyMatchInsightsDto([], []);
+        }
+
+        var strengths = insights.Strengths
+            .Where(s => !IsExternalMatchInsightPlaceholder(s))
+            .ToList();
+        var challenges = insights.Challenges
+            .Where(c => !IsExternalMatchInsightPlaceholder(c))
+            .ToList();
+        return new ExternalVacancyMatchInsightsDto(strengths, challenges);
+    }
+
     public static ExternalVacancyMatchInsightsDto SanitizeMatchInsights(
         IReadOnlyList<string>? strengths,
         IReadOnlyList<string>? challenges,
         CandidateFactSheet sheet)
     {
-        const string unknown = "Dat weet ik niet";
+        const string unknown = MatchInsightUnknown;
         var cleanStrengths = SanitizeLines(strengths, sheet, unknown);
         var cleanChallenges = SanitizeLines(challenges, sheet, unknown);
         return new ExternalVacancyMatchInsightsDto(cleanStrengths, cleanChallenges);

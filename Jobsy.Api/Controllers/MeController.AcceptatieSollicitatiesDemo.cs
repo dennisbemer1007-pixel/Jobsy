@@ -33,12 +33,12 @@ public partial class MeController
             return Unauthorized();
         }
 
-        if (!TestAccountsSollicitatiesDemoSeeder.IsAcceptatieDemoCandidateEmail(user.Email))
+        var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+        if (!TestAccountsSollicitatiesDemoSeeder.IsAcceptatieDemoCandidateEmail(user.Email, configuration))
         {
             return NotFound();
         }
 
-        var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
         var input = TestAccountGuardInputFactory.FromConfiguration(configuration, _environment, isWebRuntime: false);
         var guard = TestAccountEnvironmentGuard.Evaluate(input);
         if (!guard.Allowed)

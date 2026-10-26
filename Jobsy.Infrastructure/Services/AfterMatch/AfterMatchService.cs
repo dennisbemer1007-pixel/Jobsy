@@ -765,6 +765,7 @@ public sealed class AfterMatchService : IAfterMatchService
             .OrderBy(h => h.OccurredAtUtc)
             .Select(h => (DateTime?)h.OccurredAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
+        var employerYesAtUtc = application.RespondedAt ?? acceptedAt;
 
         var travel = application.EstimatedTravelMinutes > 0
             ? $"{application.EstimatedTravelMinutes} min fietsen"
@@ -826,7 +827,7 @@ public sealed class AfterMatchService : IAfterMatchService
             similar,
             application.CandidateName,
             application.CandidateEmail,
-            acceptedAt,
+            employerYesAtUtc,
             outcome?.Reason);
     }
 

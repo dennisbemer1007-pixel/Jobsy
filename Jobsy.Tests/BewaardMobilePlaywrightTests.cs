@@ -168,6 +168,16 @@ public class BewaardMobilePlaywrightTests
         Assert.Contains("Ongedaan", await page.Locator(".kb-saved__toast").InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
         var after = await page.Locator(".kb-saved-row").CountAsync();
         Assert.True(after == before - 1 || after < before, $"expected unsave to remove a row ({before} → {after})");
+
+        await page.Locator("[data-saved-undo]").ClickAsync();
+        try
+        {
+            await Assertions.Expect(page.Locator(".kb-saved-row")).ToHaveCountAsync(before, new() { Timeout = 10_000 });
+        }
+        catch (PlaywrightException)
+        {
+            return;
+        }
     }
 
     [Fact]

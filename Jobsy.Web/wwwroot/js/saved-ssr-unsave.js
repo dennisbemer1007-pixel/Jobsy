@@ -22,12 +22,12 @@
     });
   }
 
-  function toast(root) {
-    return root.querySelector("[data-saved-toast]");
+  function toast() {
+    return document.querySelector(".saved-page-wrap [data-saved-toast]");
   }
 
   function showUndoToast(root, vacancyId, onUndo) {
-    var box = toast(root);
+    var box = toast();
     if (!box) {
       return;
     }
@@ -133,7 +133,7 @@
                   }
                   markRemoved(root, vacancyId, false);
                   root.dispatchEvent(new CustomEvent("saved-ssr:visibility-changed", { bubbles: true }));
-                  var box = toast(root);
+                  var box = toast();
                   if (box) {
                     box.hidden = true;
                   }
