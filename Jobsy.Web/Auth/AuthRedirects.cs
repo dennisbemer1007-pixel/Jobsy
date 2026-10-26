@@ -177,7 +177,7 @@ public static partial class AuthRedirects
         return CandidatePostLoginUrl(showCandidateHowTo, flags);
     }
 
-    [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@%/?]*$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@%/?#]*$", RegexOptions.CultureInvariant)]
     private static partial Regex SafeLocalPathRegex();
 
     /// <summary>
@@ -277,6 +277,17 @@ public static partial class AuthRedirects
         }
 
         return NormalizeWerkgeverAfterMatchReturnUrl(url);
+    }
+
+    /// <summary>Same as <see cref="SafeLocalUrl"/> but returns null when the URL is missing or unsafe (no /home fallback).</summary>
+    public static string? TrySafeLocalUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !IsSafeLocalPath(url.Trim()))
+        {
+            return null;
+        }
+
+        return NormalizeWerkgeverAfterMatchReturnUrl(url.Trim());
     }
 
     /// <summary>Login/deep links must use public <c>/after-match</c>, not internal *-ssr paths.</summary>
