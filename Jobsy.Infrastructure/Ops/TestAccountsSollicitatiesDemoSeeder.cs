@@ -69,6 +69,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
             a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null,
             cancellationToken);
 
+        await RemoveStaleDemoApplicationsAsync(db, candidate.Id, logger, cancellationToken);
         await EnsureForCandidateAsync(db, candidate.Id, branchManager.Id, logger, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
 
@@ -120,6 +121,53 @@ public static class TestAccountsSollicitatiesDemoSeeder
         return counts.Outcome;
     }
 
+    private static readonly Guid[] DemoApplicationIds =
+    [
+        TestAccountsIds.SollicDemoAppSent,
+        TestAccountsIds.SollicDemoAppSeen,
+        TestAccountsIds.SollicDemoAppPick,
+        TestAccountsIds.SollicDemoAppScheduled,
+        TestAccountsIds.SollicDemoAppMessages,
+        TestAccountsIds.SollicDemoAppDone,
+    ];
+
+    private static async Task RemoveStaleDemoApplicationsAsync(
+        JobsyDbContext db,
+        Guid candidateUserId,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var keep = DemoApplicationIds.ToHashSet();
+        var staleIds = await db.Applications.AsNoTracking()
+            .Where(a => a.CandidateUserId == candidateUserId && !keep.Contains(a.Id))
+            .Select(a => a.Id)
+            .ToListAsync(cancellationToken);
+        if (staleIds.Count == 0)
+        {
+            return;
+        }
+
+        var interviews = await db.Interviews.Where(i => staleIds.Contains(i.ApplicationId)).ToListAsync(cancellationToken);
+        var interviewIds = interviews.Select(i => i.Id).ToList();
+        if (interviewIds.Count > 0)
+        {
+            db.InterviewSlots.RemoveRange(await db.InterviewSlots.Where(s => interviewIds.Contains(s.InterviewId)).ToListAsync(cancellationToken));
+            db.InterviewChanges.RemoveRange(await db.InterviewChanges.Where(c => interviewIds.Contains(c.InterviewId)).ToListAsync(cancellationToken));
+            db.InterviewReminders.RemoveRange(await db.InterviewReminders.Where(r => interviewIds.Contains(r.InterviewId)).ToListAsync(cancellationToken));
+            db.Interviews.RemoveRange(interviews);
+        }
+
+        db.ApplicationMessages.RemoveRange(await db.ApplicationMessages.Where(m => staleIds.Contains(m.ApplicationId)).ToListAsync(cancellationToken));
+        db.ApplicationOutcomes.RemoveRange(await db.ApplicationOutcomes.Where(o => staleIds.Contains(o.ApplicationId)).ToListAsync(cancellationToken));
+        var staleApps = await db.Applications.Where(a => staleIds.Contains(a.Id)).ToListAsync(cancellationToken);
+        db.Applications.RemoveRange(staleApps);
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Acceptatie sollicitaties demo reset: removed {Count} stale applications for candidate {CandidateId}.",
+            staleIds.Count,
+            candidateUserId);
+    }
+
     public static async Task EnsureForCandidateAsync(
         JobsyDbContext db,
         Guid candidateId,
@@ -144,6 +192,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
                 "Acceptatie sollicitaties demo: marked allowlisted candidate {Email} as test account.",
                 candidate.Email);
         }
+
+        await RemoveStaleDemoApplicationsAsync(db, candidateId, logger, cancellationToken);
 
         try
         {

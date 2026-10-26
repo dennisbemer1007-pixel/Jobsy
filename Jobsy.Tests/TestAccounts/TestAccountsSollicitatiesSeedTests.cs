@@ -331,6 +331,31 @@ public sealed class TestAccountsSollicitatiesSeedTests
     }
 
     [Fact]
+    public async Task Ensure_removes_stale_applications_before_reseeding_demo_rows()
+    {
+        var staleId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa9999");
+        var (db, candidateId, branchManagerId) = await SeedUsersAsync();
+        db.Applications.Add(new Jobsy.Core.Entities.Application
+        {
+            Id = staleId,
+            VacancyId = TestAccountsIds.SollicDemoVacancySent,
+            CandidateUserId = candidateId,
+            CandidateName = "Stale",
+            Status = ApplicationStatus.Pending,
+            CreatedAt = DateTime.UtcNow,
+            EmailVerifiedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        await TestAccountsSollicitatiesDemoSeeder.EnsureForCandidateAsync(
+            db, candidateId, branchManagerId, NullLogger.Instance);
+        await db.SaveChangesAsync();
+
+        Assert.Equal(6, await db.Applications.CountAsync(a => a.CandidateUserId == candidateId));
+        Assert.False(await db.Applications.AnyAsync(a => a.Id == staleId));
+    }
+
+    [Fact]
     public async Task Ensure_skips_non_test_candidate()
     {
         var (db, _, branchManagerId) = await SeedUsersAsync();
