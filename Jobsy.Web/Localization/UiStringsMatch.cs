@@ -91,6 +91,39 @@ public static class UiStringsMatch
         Add("Match.Gate.Progress",
             "{0} van {1} klaar", "{0} of {1} done",
             "{0} z {1} gotowe", "{0} din {1} gata", "{0} من {1} جاهزة");
+        Add("Match.Gate.Check.BasicsTitle",
+            "Basisgegevens", "Basic details",
+            "Dane podstawowe", "Date de bază", "البيانات الأساسية");
+        Add("Match.Gate.Check.BasicsLead",
+            "Naam, beschikbaarheid en reistijd of vervoer",
+            "Name, availability, and travel time or transport",
+            "Imię, dostępność i czas dojazdu lub transport",
+            "Nume, disponibilitate și timp de călătorie sau transport",
+            "الاسم والتوفر ووقت السفر أو وسيلة النقل");
+        Add("Match.Gate.Check.EducationTitle",
+            "Opleidingsniveau", "Education level",
+            "Poziom wykształcenia", "Nivel de studii", "المستوى التعليمي");
+        Add("Match.Gate.Check.EducationLead",
+            "Kies je niveau of Geen",
+            "Choose your level or None",
+            "Wybierz poziom lub Brak",
+            "Alege nivelul sau Niciunul",
+            "اختر مستواك أو لا شيء");
+        Add("Match.Gate.Check.WizardTitle",
+            "Startprofiel", "Starter profile",
+            "Profil startowy", "Profil de start", "ملف البداية");
+        Add("Match.Gate.Check.WizardLead",
+            "Korte wizard met mini-tests voor je eerste indruk",
+            "Short wizard with mini tests for your first impression",
+            "Krótki kreator z mini testami na pierwsze wrażenie",
+            "Scurt wizard cu mini-teste pentru prima impresie",
+            "معالج قصير مع اختبارات مصغرة لانطباعك الأول");
+        Add("Match.Gate.BroaderSearch",
+            "Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de banenkaart.",
+            "Want to search more broadly or find other vacancy types? Go to the job map.",
+            "Chcesz szukać szerzej lub innych ofert? Idź do mapy pracy.",
+            "Vrei să cauți mai larg sau alte joburi? Mergi la harta joburilor.",
+            "تريد بحثًا أوسع أو أنواع وظائف أخرى؟ اذهب إلى خريطة الوظائف.");
         Add("Match.DeckDone",
             "Je hebt ze allemaal gezien", "You've seen them all",
             "Widziałeś je wszystkie", "Le-ai văzut pe toate", "لقد شاهدتها كلها");
