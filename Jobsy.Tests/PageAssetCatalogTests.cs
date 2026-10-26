@@ -18,6 +18,7 @@ public class PageAssetCatalogTests
     [InlineData("/banenkaart", CoreCss + PublicCss)]
     [InlineData("/candidate/paspoort", CoreCss + PublicCss + AppCss)]
     [InlineData("/register", CoreCss + WerkgeverCss)]
+    [InlineData("/werkgever", CoreCss + WerkgeverCss)]
     [InlineData("/werkgever/vacatures", CoreCss + WerkgeverCss)]
     [InlineData("/werkgever/kandidatenkaart", CoreCss + WerkgeverCss)]
     [InlineData("/admin/users", CoreCss + BeheerCss)]
@@ -48,6 +49,11 @@ public class PageAssetCatalogTests
         if (path is "/register")
         {
             Assert.Contains(sheets, s => s.StartsWith("css/features/werkgever-aanmelding.css", StringComparison.Ordinal));
+        }
+
+        if (path is "/werkgever")
+        {
+            Assert.Contains(sheets, s => s.StartsWith("css/features/werkgever.css", StringComparison.Ordinal));
         }
 
         if (path is "/werkgever/kandidatenkaart")
