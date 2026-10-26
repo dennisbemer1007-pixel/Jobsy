@@ -39,7 +39,7 @@ public sealed class KreeftHeaderStripGuardTests
         var root = FindRepoRoot();
         Assert.Contains("KreeftHeaderStripAssets.ToevoegenDesk", ReadWeb(root, "Components/Pages/Candidate/ExternalVacancyAdd.razor"), StringComparison.Ordinal);
         Assert.Contains("KreeftHeaderStripAssets.AdviseurDesk", ReadWeb(root, "Components/Pages/Candidate/AdviseurWerk.razor"), StringComparison.Ordinal);
-        Assert.Contains("KreeftHeaderStripAssets.MatchDesk", ReadWeb(root, "Components/Pages/Candidate/MatchPage.razor"), StringComparison.Ordinal);
+        Assert.Contains("KreeftHeaderStripAssets.MatchDesk", ReadWeb(root, "Match/MatchSsrShells.cs"), StringComparison.Ordinal);
         Assert.Contains("KreeftHeaderStripAssets.OndernemerDesk", ReadWeb(root, "Components/Pages/Candidate/OndernemersCheck.razor"), StringComparison.Ordinal);
     }
 

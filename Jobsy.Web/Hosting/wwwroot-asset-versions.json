@@ -524,8 +524,32 @@
     "sha256": "aa1edd53d19803ce1fa291143d16b90e1647ac53528fc184dce0c57532a2cad4"
   },
   "js/passport-ssr-tabs.js": {
-    "v": "20261026-passport-tabs1",
-    "sha256": "e58fb20702da70fc8c82734383e813b384d8f4dca68a00c16e8e44a5ba765fdd"
+    "v": "20261026-passport-tabs2",
+    "sha256": "94ce68e8b4f91bd42548cb1e5247ffa1916f357d0479b096f1bb03424c7a12c7"
+  },
+  "js/passport-ssr-fit.js": {
+    "v": "20261026-passport-fit1",
+    "sha256": "7a1a648ca0ae41f63aa5446fb2fb619d9c21cdaaebd77cd1284bc38fb4fd6626"
+  },
+  "js/passport-ssr-proof.js": {
+    "v": "20261026-passport-proof1",
+    "sha256": "398007640d5dde9d7cb33d068694c5543253b3e679d7ad9a5b8107eb24a00943"
+  },
+  "js/passport-ssr-extras.js": {
+    "v": "20261026-passport-extras1",
+    "sha256": "629316f185f12649e005c0a78ee7b6496a7d1a87bca5f0317388c59d840fb4d0"
+  },
+  "js/saved-ssr-filters.js": {
+    "v": "20261026-bewaard-filters1",
+    "sha256": "3f17741a88558ad2c19ee93210b24f76459012e9afea5831ed35361564a10fd3"
+  },
+  "js/saved-ssr-unsave.js": {
+    "v": "20261026-bewaard-unsave1",
+    "sha256": "eb7ed55b45ea4364559588d0bcde4e46485cf60801333918c4c880b86f97aa7b"
+  },
+  "js/match-ssr.js": {
+    "v": "20261026-match-swipe1",
+    "sha256": "7c32873888fc95c36f72ef683f9c4bed49970a5de86c3468bc1ca22758278c22"
   },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",

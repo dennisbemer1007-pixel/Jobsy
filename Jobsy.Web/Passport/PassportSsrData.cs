@@ -25,7 +25,11 @@ internal static class PassportSsrData
         string? FirstName,
         int TestsNextStepCount,
         string? DreamTitle,
-        bool FromDiscovery);
+        bool FromDiscovery,
+        PassportSsrFitHtml.Panel? FitPanel,
+        bool ProactiveMatchingEnabled,
+        PassportSsrCareerHtml.Panel CareerPanel,
+        PassportSsrProofHtml.Panel ProofPanel);
 
     internal static async Task<PageData?> LoadAsync(
         JobsyApiClient api,
@@ -35,6 +39,7 @@ internal static class PassportSsrData
         string? errorMessage,
         bool saved,
         bool fromDiscovery = false,
+        string? checkTitle = null,
         CancellationToken cancellationToken = default)
     {
         var flags = await featureFlags.GetAsync(cancellationToken);
@@ -48,7 +53,8 @@ internal static class PassportSsrData
         var kompasTask = api.GetMyKompasResultAsync(cancellationToken);
         var profileTask = api.GetMyProfileAsync(cancellationToken);
         var careerTask = api.GetCareerPathAsync(cancellationToken);
-        await Task.WhenAll(dnaTask, kompasTask, profileTask, careerTask);
+        var applicationsTask = api.GetMyApplicationsAsync(cancellationToken);
+        await Task.WhenAll(dnaTask, kompasTask, profileTask, careerTask, applicationsTask);
 
         var dnaResult = await dnaTask;
         var kompasResult = await kompasTask;
@@ -65,7 +71,14 @@ internal static class PassportSsrData
             dna,
             flags.EmployersEnabled);
         var overview = PassportSsrDisplay.BuildOverview(culture, kompas, dna);
-        var dnaPanel = PassportSsrDisplay.BuildDnaPanel(culture, profile, kompas, dna);
+        var applicationCount = (await applicationsTask).Count;
+        var dnaPanel = PassportSsrDisplay.BuildDnaPanel(
+            culture,
+            profile,
+            kompas,
+            dna,
+            applicationCount,
+            flags.EmployersEnabled);
         var firstName = string.IsNullOrWhiteSpace(profile.FirstName)
             ? profile.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
             : profile.FirstName.Trim();
@@ -78,6 +91,31 @@ internal static class PassportSsrData
             var view = CandidateDnaViewBuilder.FromKompas(kompas, t, format, culture.Language);
             testsNext = view.Cards.Count(c => !c.Completed);
         }
+
+        PassportSsrFitHtml.Panel? fitPanel = null;
+        if (flags.EmployersEnabled || flags.FutureJobsForYouEnabled)
+        {
+            fitPanel = await PassportSsrFitHtml.LoadPanelAsync(
+                api,
+                culture,
+                flags,
+                profile,
+                kompas,
+                checkTitle,
+                cancellationToken);
+        }
+
+        var careerPanel = await PassportSsrCareerHtml.LoadPanelAsync(api, profile, cancellationToken);
+        var proofPanelRaw = await PassportSsrProofHtml.LoadPanelAsync(
+            api,
+            profile,
+            flags,
+            kompas,
+            cancellationToken);
+        var proofPanel = proofPanelRaw with
+        {
+            HintText = PassportSsrProofHtml.FormatHint(culture, proofPanelRaw.Strength)
+        };
 
         return new PageData(
             tab,
@@ -93,6 +131,10 @@ internal static class PassportSsrData
             firstName,
             testsNext,
             string.IsNullOrWhiteSpace(career?.DreamTitle) ? null : career!.DreamTitle.Trim(),
-            fromDiscovery);
+            fromDiscovery,
+            fitPanel,
+            flags.ProactiveMatchingEnabled,
+            careerPanel,
+            proofPanel);
     }
 }

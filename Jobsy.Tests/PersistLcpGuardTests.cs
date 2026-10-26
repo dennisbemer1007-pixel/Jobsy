@@ -21,6 +21,7 @@ public class PersistLcpGuardTests
     {
         var root = FindRepoRoot();
         var testDetail = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Candidate", "TestDetail.razor"));
+        var matchSsr = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateMatchSsr.razor"));
         var matchPage = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Candidate", "MatchPage.razor"));
 
         Assert.Contains("OnAfterRenderAsync", testDetail, StringComparison.Ordinal);
@@ -30,6 +31,8 @@ public class PersistLcpGuardTests
         Assert.DoesNotContain("DeepState = _deepState", testDetail, StringComparison.Ordinal);
         Assert.DoesNotContain("CompetenceReport = _competenceReport", testDetail, StringComparison.Ordinal);
 
+        Assert.Contains("[NoBlazorRuntime]", matchSsr, StringComparison.Ordinal);
+        Assert.DoesNotContain("PersistentComponentState", matchSsr, StringComparison.Ordinal);
         Assert.Contains("VacancyIds", matchPage, StringComparison.Ordinal);
         Assert.Contains("SlimGate", matchPage, StringComparison.Ordinal);
         Assert.DoesNotContain("Deck = _deck.ToList()", matchPage, StringComparison.Ordinal);

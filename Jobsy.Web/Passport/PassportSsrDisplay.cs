@@ -49,7 +49,8 @@ internal static class PassportSsrDisplay
         DateTime? StoryGeneratedAt,
         IReadOnlyList<string> Hobbies,
         int CompletedTests,
-        bool ShowEncourageBanner);
+        bool ShowEncourageBanner,
+        PassportShellRules.ShellProgress Shells);
 
     internal static CardModel BuildCard(
         CultureState culture,
@@ -181,7 +182,9 @@ internal static class PassportSsrDisplay
         CultureState culture,
         MeProfile? profile,
         CandidateKompasState? kompas,
-        CandidateDnaSummary? dna)
+        CandidateDnaSummary? dna,
+        int applicationCount,
+        bool employersEnabled)
     {
         CandidateDnaViewBuilder.TextLookup t = k => culture[k];
         CandidateDnaViewBuilder.TextFormat format = (k, args) => culture.Format(k, args);
@@ -212,8 +215,50 @@ internal static class PassportSsrDisplay
         var completeness = CandidateDnaViewBuilder.EffectiveCompletenessPercent(kompas, dna);
         var filled = KompasProfileCompleteness.FilledSteps(completeness);
         var showEncourage = filled < KompasProfileCompleteness.StepCount;
+        var cards = view?.Cards ?? [];
+        var remaining = view is not null ? CandidateDnaViewBuilder.NearestUnfinishedRemaining(cards) : 0;
+        var extendedReports = CountExtendedReports(kompas);
+        var hasCv = profile?.UploadedCv is not null;
+        var shells = PassportShellRules.Evaluate(
+            completed,
+            extendedReports,
+            hasCv,
+            applicationCount,
+            employersEnabled,
+            remaining);
 
-        return new DnaPanelModel(view, story, storyAt, hobbies, completed, showEncourage);
+        return new DnaPanelModel(view, story, storyAt, hobbies, completed, showEncourage, shells);
+    }
+
+    private static int CountExtendedReports(CandidateKompasState? kompas)
+    {
+        if (kompas is null)
+        {
+            return 0;
+        }
+
+        var n = 0;
+        if (kompas.CompetenceDeep?.ReportGeneratedAtUtc is not null)
+        {
+            n++;
+        }
+
+        if (kompas.CareerDeep?.ReportGeneratedAtUtc is not null)
+        {
+            n++;
+        }
+
+        if (kompas.CultureDeep?.ReportGeneratedAtUtc is not null)
+        {
+            n++;
+        }
+
+        if (kompas.ValuesDeep?.ReportGeneratedAtUtc is not null)
+        {
+            n++;
+        }
+
+        return n;
     }
 
     internal static string StatusLabel(CultureState culture, CandidateDnaViewBuilder.DnaCard card)

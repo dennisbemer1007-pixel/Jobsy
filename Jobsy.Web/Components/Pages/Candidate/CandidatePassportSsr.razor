@@ -60,7 +60,9 @@ else if (_bodyHtml is not null)
         query.TryGetValue("section", out var sectionValues);
         query.TryGetValue("item", out var itemValues);
         query.TryGetValue("returnUrl", out var returnUrlValues);
+        query.TryGetValue("check", out var checkValues);
         var returnUrl = returnUrlValues.FirstOrDefault();
+        var checkTitle = checkValues.FirstOrDefault();
         var proofItem = itemValues.FirstOrDefault();
         var error = errorValues.FirstOrDefault();
         var saved = string.Equals(savedValues.FirstOrDefault(), "1", StringComparison.Ordinal);
@@ -73,7 +75,8 @@ else if (_bodyHtml is not null)
                 tabValues.FirstOrDefault(),
                 string.IsNullOrWhiteSpace(error) ? null : error,
                 saved,
-                fromDiscovery);
+                fromDiscovery,
+                string.IsNullOrWhiteSpace(checkTitle) ? null : checkTitle);
 
             if (data is null)
             {

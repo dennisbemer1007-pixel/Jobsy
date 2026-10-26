@@ -4,12 +4,28 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Dna;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Media;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Passport;
 
 internal static class PassportSsrPanelsHtml
 {
+    internal static void AppendLobsyTipCard(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<aside class=\"kompas-tip\" aria-labelledby=\"kompas-tip-title\" data-testid=\"passport-lobsy-tip\"><div class=\"kompas-tip__art\" style=\"background-image:url('");
+        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.TipVragen));
+        sb.Append("')\" aria-hidden=\"true\"></div><div class=\"kompas-tip__body\"><p class=\"kompas-tip__eyebrow\" id=\"kompas-tip-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Eyebrow"]));
+        sb.Append("</p><p class=\"kompas-tip__text\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Body"]));
+        sb.Append("</p><a class=\"btn btn-primary kompas-tip__cta\" href=\"");
+        sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Tests));
+        sb.Append("\" data-passport-tab-link=\"tests\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Cta"]));
+        sb.Append("</a></div></aside>");
+    }
+
     internal static void AppendOverview(StringBuilder sb, CultureState culture, PassportSsrDisplay.OverviewModel o)
     {
         sb.Append("<section class=\"passport-overview\" aria-labelledby=\"passport-overview-title\">");
@@ -60,6 +76,15 @@ internal static class PassportSsrPanelsHtml
         PassportSsrDisplay.DnaPanelModel dna,
         IReadOnlyList<string> keywords)
     {
+        AppendDnaPanelCore(sb, culture, dna, keywords);
+    }
+
+    private static void AppendDnaPanelCore(
+        StringBuilder sb,
+        CultureState culture,
+        PassportSsrDisplay.DnaPanelModel dna,
+        IReadOnlyList<string> keywords)
+    {
         var view = dna.View;
         var highlights = view?.Highlights ?? [];
         var testsComplete = dna.CompletedTests >= 4;
@@ -105,7 +130,17 @@ internal static class PassportSsrPanelsHtml
 
         sb.Append("<section class=\"detail-card passport-dna__card\" aria-labelledby=\"passport-dna-story-title\"><div class=\"passport-dna__story-head\"><h3 id=\"passport-dna-story-title\" class=\"passport-dna__h\">");
         sb.Append(WebUtility.HtmlEncode(culture["Dna.StoryTitle"]));
-        sb.Append("</h3></div>");
+        sb.Append("</h3>");
+        if (!string.IsNullOrWhiteSpace(dna.Story))
+        {
+            sb.Append("<button type=\"button\" class=\"read-aloud read-aloud--icon\" data-read-aloud-text=\"");
+            sb.Append(WebUtility.HtmlEncode(dna.Story));
+            sb.Append("\" aria-label=\"");
+            sb.Append(WebUtility.HtmlEncode(culture["ReadAloud.Play"]));
+            sb.Append("\"><span class=\"read-aloud__icon\" aria-hidden=\"true\">🔊</span></button>");
+        }
+
+        sb.Append("</div>");
         if (string.IsNullOrWhiteSpace(dna.Story))
         {
             sb.Append("<p class=\"login-lead\">");
@@ -194,6 +229,7 @@ internal static class PassportSsrPanelsHtml
         }
         else
         {
+            AppendPoleSliders(sb, cultureDetail.Poles.Take(2).ToList());
             sb.Append("<p class=\"passport-dna__values-head\">");
             sb.Append(WebUtility.HtmlEncode(culture["Passport.Dna.ValuesProvisional"]));
             sb.Append(" <span class=\"muted\">· ");
@@ -214,7 +250,72 @@ internal static class PassportSsrPanelsHtml
             }
         }
 
-        sb.Append("</section></div></div>");
+        sb.Append("</section></div>");
+        AppendShellsSection(sb, culture, dna.Shells);
+        sb.Append("</div>");
+    }
+
+    private static void AppendPoleSliders(
+        StringBuilder sb,
+        IReadOnlyList<(string LowLabel, string HighLabel, int? Percent)> poles)
+    {
+        if (poles.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append("<div class=\"pole-sliders\">");
+        foreach (var item in poles)
+        {
+            sb.Append("<div class=\"pole-sliders__row\"><span class=\"pole-sliders__end pole-sliders__end--low\">");
+            sb.Append(WebUtility.HtmlEncode(item.LowLabel));
+            sb.Append("</span><div class=\"pole-sliders__track\" aria-hidden=\"true\">");
+            if (item.Percent is int pct)
+            {
+                sb.Append("<span class=\"pole-sliders__dot\" style=\"--p:");
+                sb.Append(pct);
+                sb.Append("%\"></span>");
+            }
+
+            sb.Append("</div><span class=\"pole-sliders__end pole-sliders__end--high\">");
+            sb.Append(WebUtility.HtmlEncode(item.HighLabel));
+            sb.Append("</span></div>");
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static void AppendShellsSection(StringBuilder sb, CultureState culture, PassportShellRules.ShellProgress shells)
+    {
+        sb.Append("<section class=\"detail-card passport-shells\" aria-labelledby=\"passport-shells-title\"><div class=\"passport-shells__head\"><div><h3 id=\"passport-shells-title\" class=\"passport-dna__h\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Shells.Title"]));
+        sb.Append("</h3><p class=\"passport-shells__sub\">");
+        sb.Append(WebUtility.HtmlEncode(culture.Format("Passport.Shells.Sub", shells.EarnedCount, shells.TotalVisible)));
+        sb.Append("</p><p class=\"muted\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Shells.Hint"]));
+        sb.Append("</p></div><div class=\"passport-shells__aside\"><p>");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Shells.Tagline"]));
+        sb.Append("</p>");
+        if (shells.QuestionsUntilNextShell > 0 && shells.EarnedCount < shells.TotalVisible)
+        {
+            sb.Append("<p class=\"passport-shells__next\">");
+            sb.Append(WebUtility.HtmlEncode(culture.Format("Passport.Shells.Next", shells.QuestionsUntilNextShell)));
+            sb.Append("</p>");
+        }
+
+        sb.Append("</div></div><ul class=\"passport-shells__row\">");
+        foreach (var shell in shells.Shells)
+        {
+            sb.Append("<li class=\"passport-shell ");
+            sb.Append(shell.Earned ? "passport-shell--earned" : "passport-shell--locked");
+            sb.Append("\"><span class=\"passport-shell__ring\" aria-hidden=\"true\">");
+            sb.Append(NavIcons.Shell);
+            sb.Append("</span><span class=\"passport-shell__label\">");
+            sb.Append(WebUtility.HtmlEncode(culture[shell.TitleKey]));
+            sb.Append("</span></li>");
+        }
+
+        sb.Append("</ul></section>");
     }
 
     internal static void AppendCardFacts(StringBuilder sb, CultureState culture, PassportSsrDisplay.CardModel card, bool compact)

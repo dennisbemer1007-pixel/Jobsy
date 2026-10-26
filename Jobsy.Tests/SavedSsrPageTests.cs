@@ -13,8 +13,12 @@ public sealed class SavedSsrPageTests
             "Jobsy.Web", "Saved", "SavedSsrShells.cs"));
         Assert.Contains("@page \"/candidate/liked\"", page, StringComparison.Ordinal);
         Assert.Contains("[NoBlazorRuntime]", page, StringComparison.Ordinal);
-        Assert.Contains("/api/saved-client/unsave", shells, StringComparison.Ordinal);
+        Assert.Contains("data-saved-unsave-path", shells, StringComparison.Ordinal);
+        Assert.Contains("saved-ssr-unsave.js", shells, StringComparison.Ordinal);
+        Assert.Contains("data-saved-unsave", shells, StringComparison.Ordinal);
         Assert.Contains("data-enhance-nav=", shells, StringComparison.Ordinal);
         Assert.Contains("/carriere", shells, StringComparison.Ordinal);
+        Assert.Contains("saved-ssr-filters.js", shells, StringComparison.Ordinal);
+        Assert.Contains("data-saved-filter", shells, StringComparison.Ordinal);
     }
 }
