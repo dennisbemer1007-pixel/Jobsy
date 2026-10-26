@@ -35,6 +35,12 @@ public class CandidateExternalVacancyRulesTests
                 [],
                 [CandidateExternalVacancyRules.MatchInsightCultureMissing]));
         Assert.Empty(withMissingCulture.Challenges);
+
+        var withCultureUnavailable = CandidateExternalVacancyRules.FilterMatchInsightsForDisplay(
+            new Jobsy.Core.Contracts.ExternalVacancyMatchInsightsDto(
+                [],
+                ["Cultuurprofiel niet beschikbaar", "Competenties niet beschikbaar"]));
+        Assert.Empty(withCultureUnavailable.Challenges);
     }
 
     [Fact]

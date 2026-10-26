@@ -126,6 +126,10 @@ public static class CandidateExternalVacancyRules
     public const string MatchInsightCultureMissing = "Cultuurprofiel ontbreekt";
     public const string MatchInsightCompetenciesMissing = "Competenties ontbreekt";
 
+    private static readonly Regex MatchInsightGenericPlaceholderRegex = new(
+        @"^(Competenties|Cultuurprofiel)\s+(niet\s+beschikbaar|ontbreekt|beschikbaar)\.?$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static bool IsExternalMatchInsightPlaceholder(string? line)
     {
         if (string.IsNullOrWhiteSpace(line))
@@ -138,7 +142,8 @@ public static class CandidateExternalVacancyRules
                || string.Equals(trimmed, MatchInsightCompetenciesPlaceholder, StringComparison.OrdinalIgnoreCase)
                || string.Equals(trimmed, MatchInsightCulturePlaceholder, StringComparison.OrdinalIgnoreCase)
                || string.Equals(trimmed, MatchInsightCultureMissing, StringComparison.OrdinalIgnoreCase)
-               || string.Equals(trimmed, MatchInsightCompetenciesMissing, StringComparison.OrdinalIgnoreCase);
+               || string.Equals(trimmed, MatchInsightCompetenciesMissing, StringComparison.OrdinalIgnoreCase)
+               || MatchInsightGenericPlaceholderRegex.IsMatch(trimmed);
     }
 
     public static ExternalVacancyMatchInsightsDto FilterMatchInsightsForDisplay(

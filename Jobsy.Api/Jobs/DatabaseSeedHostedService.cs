@@ -179,7 +179,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
                 _configuration,
                 guard,
                 _logger,
-                stoppingToken);
+                cancellationToken: stoppingToken);
             if (!applied)
             {
                 AcceptatieSollicitatiesDemoStartupState.Record("skipped_no_candidate_or_manager");

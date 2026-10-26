@@ -92,16 +92,6 @@ internal static class ApplicationsSsrData
             return Empty(tab, filter, selectedId, givenName, readOnly, isCandidate, employersOn, externalOn);
         }
 
-        if (isCandidate)
-        {
-            await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
-                api,
-                configuration,
-                hostEnvironment,
-                candidateEmail,
-                cancellationToken);
-        }
-
         var rows = new List<SollicitationRow>();
         try
         {
@@ -351,18 +341,20 @@ internal static class ApplicationsSsrData
         CancellationToken cancellationToken)
     {
         var apps = await api.GetMyApplicationsAsync(cancellationToken);
-        if (isCandidate
-            && selectedId is Guid wanted
-            && IsAcceptatieDemoCandidateEmail(candidateEmail, configuration)
-            && apps.All(a => a.Id != wanted))
+        if (isCandidate && IsAcceptatieDemoCandidateEmail(candidateEmail, configuration))
         {
-            await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
-                api,
-                configuration,
-                hostEnvironment,
-                candidateEmail,
-                cancellationToken);
-            apps = await api.GetMyApplicationsAsync(cancellationToken);
+            var needsEnsure = apps.Count == 0
+                              || (selectedId is Guid wanted && apps.All(a => a.Id != wanted));
+            if (needsEnsure)
+            {
+                await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(
+                    api,
+                    configuration,
+                    hostEnvironment,
+                    candidateEmail,
+                    cancellationToken);
+                apps = await api.GetMyApplicationsAsync(cancellationToken);
+            }
         }
 
         return apps;

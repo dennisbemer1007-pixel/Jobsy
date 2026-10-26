@@ -3,6 +3,18 @@ namespace Jobsy.Tests;
 public sealed class ApplicationsAfterMatchCardSsotTests
 {
     [Fact]
+    public void Acceptatie_demo_ensure_runs_only_when_list_empty_or_sel_missing()
+    {
+        var root = TestRepo.FindRoot();
+        var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Applications", "ApplicationsSsrData.cs"));
+        Assert.Contains("apps.Count == 0", data, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(\n                api,\n                configuration,\n                hostEnvironment,\n                candidateEmail,\n                cancellationToken);\n        }\n\n        var rows = new List<SollicitationRow>();",
+            data,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void After_match_rows_skip_timeline_card_hint()
     {
         var root = TestRepo.FindRoot();

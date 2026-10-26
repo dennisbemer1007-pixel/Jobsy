@@ -41,6 +41,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
         IConfiguration configuration,
         TestAccountGuardResult guard,
         ILogger logger,
+        Guid? requestingUserId = null,
         CancellationToken cancellationToken = default)
     {
         if (!guard.Allowed)
@@ -48,7 +49,12 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return false;
         }
 
-        var candidate = await ResolveAcceptatieDemoCandidateAsync(db, configuration, logger, cancellationToken);
+        var candidate = await ResolveAcceptatieDemoCandidateForEnsureAsync(
+            db,
+            configuration,
+            logger,
+            requestingUserId,
+            cancellationToken);
         if (candidate is null)
         {
             logger.LogInformation(
@@ -81,6 +87,12 @@ public static class TestAccountsSollicitatiesDemoSeeder
         await PurgeStaleExternalVacanciesForAcceptatieDemoLoginsAsync(
             db,
             configuration,
+            logger,
+            cancellationToken);
+
+        await ReleaseSharedDemoApplicationsFromOtherCandidatesAsync(
+            db,
+            candidate.Id,
             logger,
             cancellationToken);
 
@@ -145,6 +157,32 @@ public static class TestAccountsSollicitatiesDemoSeeder
         TestAccountsIds.SollicDemoAppMessages,
         TestAccountsIds.SollicDemoAppDone,
     ];
+
+    /// <summary>
+    /// Demo application ids are global PKs; drop rows owned by other allowlisted logins before reseeding.
+    /// </summary>
+    private static async Task ReleaseSharedDemoApplicationsFromOtherCandidatesAsync(
+        JobsyDbContext db,
+        Guid targetCandidateUserId,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var demoIds = DemoApplicationIds.ToHashSet();
+        var foreignIds = await db.Applications.AsNoTracking()
+            .Where(a => demoIds.Contains(a.Id) && a.CandidateUserId != targetCandidateUserId)
+            .Select(a => a.Id)
+            .ToListAsync(cancellationToken);
+        if (foreignIds.Count == 0)
+        {
+            return;
+        }
+
+        await AcceptatieApplicationDemoGraphRemover.RemoveApplicationsAsync(db, foreignIds, cancellationToken);
+        logger.LogInformation(
+            "Acceptatie sollicitaties demo: released {Count} shared demo application ids from other candidates (target={TargetId}).",
+            foreignIds.Count,
+            targetCandidateUserId);
+    }
 
     private static async Task RemoveStaleDemoApplicationsAsync(
         JobsyDbContext db,
@@ -293,6 +331,30 @@ public static class TestAccountsSollicitatiesDemoSeeder
     /// <summary>
     /// Acceptatie-only allowlist: primary Grokbot login, else catalog CLI candidate. Marks <see cref="User.IsTestAccount"/>.
     /// </summary>
+    private static async Task<User?> ResolveAcceptatieDemoCandidateForEnsureAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        Guid? requestingUserId,
+        CancellationToken cancellationToken)
+    {
+        if (requestingUserId is Guid reqId)
+        {
+            var requesting = await db.Users.FirstOrDefaultAsync(u => u.Id == reqId, cancellationToken);
+            if (IsAcceptatieDemoCandidateEmail(requesting?.Email, configuration))
+            {
+                if (requesting is not null)
+                {
+                    await EnsureDemoCandidateTestFlagAsync(requesting, logger);
+                }
+
+                return requesting;
+            }
+        }
+
+        return await ResolveAcceptatieDemoCandidateAsync(db, configuration, logger, cancellationToken);
+    }
+
     private static async Task<User?> ResolveAcceptatieDemoCandidateAsync(
         JobsyDbContext db,
         IConfiguration configuration,
@@ -1237,6 +1299,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
         }
     }
 
+    private const string JobSearchActivityExternalEntity = "ExternalVacancy";
+
     private static async Task PurgeStaleExternalVacanciesAsync(
         JobsyDbContext db,
         Guid candidateUserId,
@@ -1248,6 +1312,18 @@ public static class TestAccountsSollicitatiesDemoSeeder
         if (stale.Count == 0)
         {
             return;
+        }
+
+        var staleIds = stale.Select(v => v.Id).ToList();
+        var orphanActivities = await db.JobSearchActivities
+            .Where(a => a.CandidateUserId == candidateUserId
+                        && a.SourceEntityType == JobSearchActivityExternalEntity
+                        && a.SourceEntityId != null
+                        && staleIds.Contains(a.SourceEntityId.Value))
+            .ToListAsync(cancellationToken);
+        if (orphanActivities.Count > 0)
+        {
+            db.JobSearchActivities.RemoveRange(orphanActivities);
         }
 
         db.CandidateExternalVacancies.RemoveRange(stale);

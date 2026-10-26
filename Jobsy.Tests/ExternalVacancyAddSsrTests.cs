@@ -82,6 +82,38 @@ public sealed class ExternalVacancyAddSsrTests : BunitContext
     }
 
     [Fact]
+    public void Detail_page_hides_generic_culture_unavailable_challenge()
+    {
+        var culture = Services.GetRequiredService<CultureState>();
+        var detail = new ExternalVacancyDetailDto(
+            Guid.Parse("96d18a1b-0000-4000-8000-000000000004"),
+            "https://example.com/job",
+            "Test extern",
+            "BV",
+            "Den Haag",
+            "",
+            "",
+            "",
+            "",
+            [],
+            new Dictionary<string, string> { ["bedrijf"] = "BV" },
+            new ExternalVacancyMatchInsightsDto(
+                ["Echte kracht"],
+                ["Cultuurprofiel niet beschikbaar"]),
+            null,
+            CandidateExternalVacancyStatus.Saved,
+            DateTime.UtcNow,
+            true,
+            [],
+            false,
+            false);
+
+        var html = ExternalVacancyDetailSsrShells.BuildBody(culture, detail);
+        Assert.Contains("Echte kracht", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Cultuurprofiel niet beschikbaar", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Detail_page_shell_renders_facts_and_apply_link()
     {
         var culture = Services.GetRequiredService<CultureState>();

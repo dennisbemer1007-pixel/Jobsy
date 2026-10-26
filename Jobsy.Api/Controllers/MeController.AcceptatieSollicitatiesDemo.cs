@@ -51,6 +51,7 @@ public partial class MeController
             configuration,
             guard,
             _logger,
+            user.Id,
             cancellationToken);
 
         var count = await _db.Applications.CountAsync(
