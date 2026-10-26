@@ -548,8 +548,8 @@
     "sha256": "eb7ed55b45ea4364559588d0bcde4e46485cf60801333918c4c880b86f97aa7b"
   },
   "js/match-ssr.js": {
-    "v": "20261026-match-ssr1",
-    "sha256": "9567bd272517038da2bbfdc85a0e1932f69534328fa5f1376d0a8c8c475536c2"
+    "v": "20261026-match-swipe1",
+    "sha256": "7c32873888fc95c36f72ef683f9c4bed49970a5de86c3468bc1ca22758278c22"
   },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",

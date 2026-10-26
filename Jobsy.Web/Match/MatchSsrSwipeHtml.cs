@@ -23,6 +23,12 @@ internal static class MatchSsrSwipeHtml
         AppendActions(sb, culture);
         sb.Append("<p class=\"match-page__swipe-hint\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Match.SwipeHint"]));
+        sb.Append("</p><p class=\"match-page__keyboard-hint lobsy-dialog--match__hints\" aria-hidden=\"true\"><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Match.KeyboardLead"]));
+        sb.Append("</span> <kbd>←</kbd> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Match.Reject"]));
+        sb.Append(" · <kbd>→</kbd> / <kbd>Enter</kbd> ");
+        sb.Append(WebUtility.HtmlEncode(culture["Match.Interest"]));
         sb.Append("</p></div>");
     }
 

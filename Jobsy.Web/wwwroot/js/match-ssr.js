@@ -2,6 +2,8 @@
   "use strict";
 
   var STORAGE_KEY = "jobsy.matchSsr.v1";
+  var SWIPE_MS = 280;
+  var THRESHOLD = 100;
 
   function readBoot() {
     var el = document.getElementById("match-ssr-boot");
@@ -49,14 +51,12 @@
     return Array.prototype.slice.call(page.querySelectorAll("[data-match-side]"));
   }
 
-  function visibleIndex(stagesList) {
-    for (var i = 0; i < stagesList.length; i++) {
-      if (!stagesList[i].hidden) {
-        var idx = parseInt(stagesList[i].getAttribute("data-match-stage"), 10);
-        return isNaN(idx) ? i : idx;
-      }
+  function activeCard(page) {
+    var stage = page.querySelector("[data-match-stage]:not([hidden])");
+    if (!stage) {
+      return null;
     }
-    return 0;
+    return stage.querySelector("[data-match-card]:not(.swipe-card--backdrop)");
   }
 
   function syncView(page, index, boot) {
@@ -70,6 +70,10 @@
       if (card) {
         card.classList.toggle("swipe-card--backdrop", idx === index + 1);
         card.classList.toggle("swipe-card--enter", idx === index);
+        if (idx === index) {
+          card.style.transform = "";
+          card.classList.remove("swipe-card--out-left", "swipe-card--out-right", "is-dragging");
+        }
       }
     });
     sideEls.forEach(function (side) {
@@ -113,7 +117,7 @@
   }
 
   function currentVacancyId(page) {
-    var card = page.querySelector("[data-match-card]:not(.swipe-card--backdrop)");
+    var card = activeCard(page);
     return card ? card.getAttribute("data-vacancy-id") : null;
   }
 
@@ -139,15 +143,17 @@
 
   function advance(page, boot, state, deferredOnce) {
     var index = state.index;
-    var vacancyId = boot.vacancyIds[index];
     if (index + 1 >= boot.count) {
       window.location.reload();
       return;
     }
     state.index = index + 1;
     syncView(page, state.index, boot);
-    if (typeof deferredOnce === "object" && vacancyId) {
-      deferredOnce[vacancyId] = true;
+    if (typeof deferredOnce === "object") {
+      var vacancyId = boot.vacancyIds[index];
+      if (vacancyId) {
+        deferredOnce[vacancyId] = true;
+      }
     }
   }
 
@@ -173,31 +179,186 @@
     syncView(page, index, boot);
   }
 
+  function animateOut(card, direction, done) {
+    if (!card) {
+      done();
+      return;
+    }
+    card.classList.remove("is-dragging");
+    card.style.transform = "";
+    card.classList.add(direction === "left" ? "swipe-card--out-left" : "swipe-card--out-right");
+    var stampNo = card.querySelector(".swipe-card__stamp--no");
+    var stampYes = card.querySelector(".swipe-card__stamp--yes");
+    if (direction === "left" && stampNo) {
+      stampNo.classList.add("is-on");
+    }
+    if (direction === "right" && stampYes) {
+      stampYes.classList.add("is-on");
+    }
+    window.setTimeout(done, SWIPE_MS);
+  }
+
+  function runReject(page, boot, state, deferredOnce) {
+    var card = activeCard(page);
+    animateOut(card, "left", function () {
+      showToast(page, page.getAttribute("data-toast-skipped"));
+      deferCard(page, boot, state, deferredOnce);
+    });
+  }
+
+  function runInterest(page, boot, state, deferredOnce) {
+    var vacancyId = currentVacancyId(page);
+    var card = activeCard(page);
+    if (!vacancyId) {
+      return;
+    }
+    animateOut(card, "right", function () {
+      likeVacancy(boot, vacancyId)
+        .catch(function () {
+          showToast(page, page.getAttribute("data-toast-error"));
+        })
+        .finally(function () {
+          showToast(page, page.getAttribute("data-toast-liked"));
+          advance(page, boot, state, deferredOnce);
+        });
+    });
+  }
+
   function bindActions(page, boot, state, deferredOnce) {
     page.querySelectorAll("[data-match-action]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var action = btn.getAttribute("data-match-action");
-        var vacancyId = currentVacancyId(page);
-        if (action === "more" && vacancyId) {
-          window.location.href = "/vacancies/" + vacancyId;
+        if (action === "more") {
+          var vacancyId = currentVacancyId(page);
+          if (vacancyId) {
+            window.location.href = "/vacancies/" + vacancyId;
+          }
           return;
         }
-        if (action === "interest" && vacancyId) {
-          likeVacancy(boot, vacancyId)
-            .catch(function () {
-              showToast(page, page.getAttribute("data-toast-error"));
-            })
-            .finally(function () {
-              showToast(page, page.getAttribute("data-toast-liked"));
-              advance(page, boot, state, deferredOnce);
-            });
+        if (action === "interest") {
+          runInterest(page, boot, state, deferredOnce);
           return;
         }
         if (action === "reject") {
-          showToast(page, page.getAttribute("data-toast-skipped"));
-          deferCard(page, boot, state, deferredOnce);
+          runReject(page, boot, state, deferredOnce);
         }
       });
+    });
+  }
+
+  function bindSwipe(page, boot, state, deferredOnce) {
+    var drag = null;
+
+    function resetCard(card) {
+      if (!card) {
+        return;
+      }
+      card.classList.remove("is-dragging");
+      card.style.transform = "";
+      var stampNo = card.querySelector(".swipe-card__stamp--no");
+      var stampYes = card.querySelector(".swipe-card__stamp--yes");
+      if (stampNo) {
+        stampNo.classList.remove("is-on");
+      }
+      if (stampYes) {
+        stampYes.classList.remove("is-on");
+      }
+    }
+
+    function onMove(clientX, clientY) {
+      if (!drag) {
+        return;
+      }
+      var dx = clientX - drag.startX;
+      var dy = (clientY - drag.startY) * 0.35;
+      drag.card.classList.add("is-dragging");
+      var rotate = Math.max(-12, Math.min(12, dx / 14));
+      drag.card.style.transform =
+        "translate3d(" + dx + "px, " + dy + "px, 0) rotate(" + rotate + "deg)";
+      var stampNo = drag.card.querySelector(".swipe-card__stamp--no");
+      var stampYes = drag.card.querySelector(".swipe-card__stamp--yes");
+      if (stampNo) {
+        stampNo.classList.toggle("is-on", dx < -40);
+      }
+      if (stampYes) {
+        stampYes.classList.toggle("is-on", dx > 40);
+      }
+    }
+
+    function onEnd() {
+      if (!drag) {
+        return;
+      }
+      var dx = drag.lastX - drag.startX;
+      var card = drag.card;
+      drag = null;
+      if (Math.abs(dx) >= THRESHOLD) {
+        if (dx < 0) {
+          runReject(page, boot, state, deferredOnce);
+        } else {
+          runInterest(page, boot, state, deferredOnce);
+        }
+        return;
+      }
+      resetCard(card);
+    }
+
+    page.querySelectorAll("[data-match-card]:not(.swipe-card--backdrop)").forEach(function (card) {
+      card.style.touchAction = "none";
+      card.addEventListener("pointerdown", function (ev) {
+        if (ev.button !== 0 || card.classList.contains("swipe-card--backdrop")) {
+          return;
+        }
+        drag = {
+          card: card,
+          startX: ev.clientX,
+          startY: ev.clientY,
+          lastX: ev.clientX,
+          lastY: ev.clientY,
+          pointerId: ev.pointerId
+        };
+        card.setPointerCapture(ev.pointerId);
+      });
+      card.addEventListener("pointermove", function (ev) {
+        if (!drag || ev.pointerId !== drag.pointerId) {
+          return;
+        }
+        drag.lastX = ev.clientX;
+        drag.lastY = ev.clientY;
+        onMove(ev.clientX, ev.clientY);
+      });
+      card.addEventListener("pointerup", function (ev) {
+        if (!drag || ev.pointerId !== drag.pointerId) {
+          return;
+        }
+        try {
+          card.releasePointerCapture(ev.pointerId);
+        } catch (_e) {
+          /* ignore */
+        }
+        onEnd();
+      });
+      card.addEventListener("pointercancel", function () {
+        if (drag) {
+          resetCard(drag.card);
+          drag = null;
+        }
+      });
+    });
+  }
+
+  function bindKeys(page, boot, state, deferredOnce) {
+    page.addEventListener("keydown", function (ev) {
+      if (ev.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/i.test(ev.target.tagName)) {
+        return;
+      }
+      if (ev.key === "ArrowLeft") {
+        ev.preventDefault();
+        runReject(page, boot, state, deferredOnce);
+      } else if (ev.key === "ArrowRight" || ev.key === "Enter") {
+        ev.preventDefault();
+        runInterest(page, boot, state, deferredOnce);
+      }
     });
   }
 
@@ -236,6 +397,9 @@
     var deferredOnce = {};
     syncView(page, state.index, boot);
     bindActions(page, boot, state, deferredOnce);
+    bindSwipe(page, boot, state, deferredOnce);
+    bindKeys(page, boot, state, deferredOnce);
+    page.focus({ preventScroll: true });
   }
 
   if (document.readyState === "loading") {
