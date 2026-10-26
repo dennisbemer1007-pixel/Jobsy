@@ -197,7 +197,9 @@ internal static class PassportSsrShells
             data.Flags.EmployersEnabled,
             data.Flags.FutureJobsForYouEnabled,
             data.Flags.ReferenceVerificationEnabled);
-        sb.Append("<div class=\"passport-tabs-shell\"><div class=\"passport-tabs\" role=\"tablist\" aria-label=\"");
+        sb.Append("<div class=\"passport-tabs-shell\"><div class=\"passport-tabs\" role=\"tablist\" data-passport-tab-order=\"");
+        sb.Append(WebUtility.HtmlEncode(string.Join(",", tabs)));
+        sb.Append("\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Title"]));
         sb.Append("\">");
         foreach (var tab in tabs)

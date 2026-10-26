@@ -13,6 +13,8 @@ public sealed class PassportSsrR3GuardTests
         Assert.Contains("data-passport-tab", shells, StringComparison.Ordinal);
         Assert.Contains("data-passport-panel", shells, StringComparison.Ordinal);
         Assert.Contains("passport-ssr-tabs.js", shells, StringComparison.Ordinal);
+        Assert.Contains("data-passport-tab-order", shells, StringComparison.Ordinal);
+        Assert.Contains("bindTabListKeys", File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/passport-ssr-tabs.js")), StringComparison.Ordinal);
         Assert.DoesNotContain("KreeftReiskaartHtml", shells, StringComparison.Ordinal);
         Assert.Contains("passport-card__facts", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrPanelsHtml.cs")), StringComparison.Ordinal);
     }

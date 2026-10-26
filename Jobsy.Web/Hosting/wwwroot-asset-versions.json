@@ -524,8 +524,8 @@
     "sha256": "aa1edd53d19803ce1fa291143d16b90e1647ac53528fc184dce0c57532a2cad4"
   },
   "js/passport-ssr-tabs.js": {
-    "v": "20261026-passport-tabs1",
-    "sha256": "e58fb20702da70fc8c82734383e813b384d8f4dca68a00c16e8e44a5ba765fdd"
+    "v": "20261026-passport-tabs2",
+    "sha256": "94ce68e8b4f91bd42548cb1e5247ffa1916f357d0479b096f1bb03424c7a12c7"
   },
   "js/passport-ssr-fit.js": {
     "v": "20261026-passport-fit1",
