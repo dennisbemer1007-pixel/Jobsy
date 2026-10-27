@@ -75,15 +75,6 @@ internal static class PupilPassportGroep78PdfRenderer
                 col.Item().AlignRight().Text(m.Date.ToString("d MMM yyyy", nl)).FontSize(7f).FontColor(Colors.White);
                 col.Item().AlignRight().Text(m.DisplayCode).FontFamily(Fonts.CourierNew).FontSize(7.5f).FontColor(Colors.White);
             });
-            row.ConstantItem(14);
-            row.ConstantItem(52).Width(52).AlignMiddle().Border(1.5f).BorderColor(Color.FromHex("#ffc9b8"))
-                .Padding(4).Column(col =>
-                {
-                    col.Item().AlignCenter().Text($"{m.WorldsCompleted}/{m.WorldsTotal}")
-                        .FontFamily(PupilPassportFonts.Fredoka).FontSize(13).FontColor(Colors.White).SemiBold();
-                    col.Item().AlignCenter().Text("werelden").FontSize(5.5f).FontColor(Color.FromHex("#ffe3da"));
-                    col.Item().AlignCenter().Text("ontdekt").FontSize(5.5f).FontColor(Color.FromHex("#ffe3da"));
-                });
         });
     }
 
@@ -156,7 +147,6 @@ internal static class PupilPassportGroep78PdfRenderer
             if (!string.IsNullOrWhiteSpace(m.DreamJobTitle))
             {
                 col.Item().Text(m.DreamJobTitle!).FontFamily(PupilPassportFonts.Fredoka).FontSize(15).FontColor(Purple);
-                col.Item().PaddingTop(2).Text(PupilVerhaalCopy.Get("LeerlingDroom.Progress")).FontSize(6.5f).FontColor(Muted);
                 col.Item().PaddingTop(3).Row(r =>
                 {
                     r.RelativeItem().Column(left =>
@@ -209,7 +199,7 @@ internal static class PupilPassportGroep78PdfRenderer
                 for (var i = 0; i < steps.Count; i++)
                 {
                     var step = steps[i];
-                    var shortTitle = RouteShortTitle(step.Title, step.IsGoal);
+                    var shortTitle = RouteShortTitle(step.Title);
                     var detail = RouteShortDetail(step.Detail);
                     row.RelativeItem().Column(x =>
                     {
@@ -222,7 +212,13 @@ internal static class PupilPassportGroep78PdfRenderer
                                 }
                                 else
                                 {
-                                    inner.Text((i + 1).ToString()).FontSize(8).FontColor(Purple).SemiBold();
+                                    var phaseKey = i switch
+                                    {
+                                        0 => "LeerlingPassport.Route.Phase.Now",
+                                        1 => "LeerlingPassport.Route.Phase.Next",
+                                        _ => "LeerlingPassport.Route.Phase.Later"
+                                    };
+                                    inner.Text(PupilPassportCopy.Get(phaseKey)[..1]).FontSize(7).FontColor(Purple).SemiBold();
                                 }
                             });
                         x.Item().PaddingTop(3).AlignCenter().Text(shortTitle).FontSize(9f).SemiBold().LineHeight(1.1f);
@@ -236,7 +232,7 @@ internal static class PupilPassportGroep78PdfRenderer
         });
     }
 
-    private static string RouteShortTitle(string title, bool isGoal)
+    private static string RouteShortTitle(string title)
     {
         var part = title.Split('·', 2, StringSplitOptions.TrimEntries)[0];
         var colon = part.IndexOf(':');
@@ -260,10 +256,7 @@ internal static class PupilPassportGroep78PdfRenderer
             _ => part
         };
 
-        if (isGoal && !part.EndsWith('!'))
-        {
-            part = part.TrimEnd('.') + "!";
-        }
+        part = part.TrimEnd('!', '.');
 
         return part.Length > 24 ? part[..24].Trim() : part;
     }

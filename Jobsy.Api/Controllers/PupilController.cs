@@ -1,6 +1,7 @@
 using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
@@ -148,6 +149,15 @@ public sealed class PupilController : ControllerBase
     {
         NoStore();
         var (ok, error, status) = await _portal.SaveVoPassportAsync(User, request, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("passport/g78")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> G78Passport([FromQuery] string? naam, CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.GetG78PassportWebAsync(User, naam, cancellationToken);
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 

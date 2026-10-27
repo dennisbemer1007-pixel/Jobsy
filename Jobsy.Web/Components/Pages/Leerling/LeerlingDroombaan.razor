@@ -12,6 +12,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IServiceProvider Services
+@implements IDisposable
 <PageTitle>@Culture["LeerlingDroom.Title"] · Lobsy</PageTitle>
 
 @if (_loading)
@@ -41,8 +42,9 @@ else
             <label class="ll-field">
                 <span class="visually-hidden">@Culture["LeerlingDroom.Search"]</span>
                 <input type="search"
-                       value="@_search"
-                       @oninput="OnSearch"
+                       @bind="_search"
+                       @bind:event="oninput"
+                       @bind:after="ScheduleMatchUpdate"
                        placeholder="@Culture["LeerlingDroom.Search"]"
                        autocomplete="off"
                        enterkeyhint="search" />
@@ -146,7 +148,7 @@ else
             ? $"{_dream.JobTitle}? Mooi."
             : Culture["Leerling.Coach.Dream"];
 
-    private bool _searchTouched;
+    private CancellationTokenSource? _matchDebounce;
 
     private string Spoken
     {
@@ -199,17 +201,6 @@ else
 
             _result = outcome.Value;
             _dream = _result.DreamJob;
-            if (!_searchTouched
-                && !string.IsNullOrWhiteSpace(_result.DreamJobKey)
-                && !string.Equals(_result.DreamJobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
-            {
-                var job = DreamJobCatalog.All.FirstOrDefault(j =>
-                    string.Equals(j.Key, _result.DreamJobKey, StringComparison.OrdinalIgnoreCase));
-                if (job is not null)
-                {
-                    _search = job.TitleNl;
-                }
-            }
         }
         finally
         {
@@ -217,11 +208,28 @@ else
         }
     }
 
-    private void OnSearch(ChangeEventArgs e)
+    private void ScheduleMatchUpdate()
     {
-        _searchTouched = true;
-        _search = e.Value?.ToString() ?? "";
-        _matches = string.IsNullOrWhiteSpace(_search) ? [] : DreamJobCatalog.Search(_search, 8);
+        _matchDebounce?.Cancel();
+        _matchDebounce?.Dispose();
+        _matchDebounce = new CancellationTokenSource();
+        var token = _matchDebounce.Token;
+        _ = UpdateMatchesDebouncedAsync(token);
+    }
+
+    private async Task UpdateMatchesDebouncedAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(200, cancellationToken);
+            var query = _search;
+            _matches = string.IsNullOrWhiteSpace(query) ? [] : DreamJobCatalog.Search(query, 8);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException)
+        {
+            // superseded by a newer keystroke
+        }
     }
 
     private async Task SelectJob(string key)
@@ -248,5 +256,11 @@ else
         {
             _error = "Kon droombaan niet bewaren.";
         }
+    }
+
+    public void Dispose()
+    {
+        _matchDebounce?.Cancel();
+        _matchDebounce?.Dispose();
     }
 }

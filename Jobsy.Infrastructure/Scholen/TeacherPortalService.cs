@@ -74,6 +74,12 @@ public interface ITeacherPortalService
         Guid classId,
         Guid codeId,
         CancellationToken cancellationToken = default);
+
+    Task<PupilG78PassportWebDto?> GetG78PassportWebForCodeAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class TeacherPortalService : ITeacherPortalService
@@ -496,6 +502,48 @@ public sealed class TeacherPortalService : ITeacherPortalService
 
         await LogPupilCodePdfAsync(user, codeId, cancellationToken);
         return (bytes, $"lobsy-ontdekkingsreis-{safeClass.ToLowerInvariant()}.pdf", null);
+    }
+
+    public async Task<PupilG78PassportWebDto?> GetG78PassportWebForCodeAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _scope.CanSeePerCodeDetailAsync(user, classId, cancellationToken))
+        {
+            return null;
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        if (!features.PupilPassportV2Enabled)
+        {
+            return new PupilG78PassportWebDto(Enabled: false);
+        }
+
+        var code = await _db.PupilCodes.AsNoTracking()
+            .Include(c => c.Result)
+            .Include(c => c.Progress)
+            .Include(c => c.SchoolClass)!.ThenInclude(c => c!.School)
+            .FirstOrDefaultAsync(c => c.Id == codeId && c.SchoolClassId == classId, cancellationToken);
+        if (code?.SchoolClass?.School is null
+            || code.SchoolClass.QuestionSet != PupilQuestionSet.Groep78
+            || code.Status != PupilCodeStatus.Completed
+            || code.Result is null)
+        {
+            return null;
+        }
+
+        var display = _codes.Unprotect(code.CodeProtected) is { } raw
+            ? PupilCodeFormat.Display(raw)
+            : "******";
+        var passportModel = _passportModelBuilder.Build(
+            code,
+            code.SchoolClass,
+            code.SchoolClass.School.Name,
+            display,
+            displayNameOnPdf: null);
+        return PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true);
     }
 
     private static string ChipDutch(string key) => key switch

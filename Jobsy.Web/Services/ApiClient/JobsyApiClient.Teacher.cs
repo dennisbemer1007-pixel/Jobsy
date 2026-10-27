@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Services;
@@ -20,6 +21,13 @@ public sealed partial class JobsyApiClient
 
     public async Task<TeacherDreamJobsDto?> GetTeacherDreamJobsAsync(Guid classId, CancellationToken ct = default)
         => await GetApiJsonAsync<TeacherDreamJobsDto>($"api/teacher/classes/{classId}/dreamjobs", ct);
+
+    public async Task<PupilG78PassportWebDto?> GetTeacherG78PassportAsync(
+        Guid classId,
+        Guid codeId,
+        CancellationToken ct = default)
+        => await GetApiJsonAsync<PupilG78PassportWebDto>(
+            $"api/teacher/classes/{classId:D}/codes/{codeId:D}/passport/g78", ct);
 
     public async Task<TeacherCodeDetailDto?> GetTeacherCodeDetailAsync(
         Guid classId,

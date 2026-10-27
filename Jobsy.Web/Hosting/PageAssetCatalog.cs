@@ -119,6 +119,7 @@ public static class PageAssetCatalog
     [
         WwwrootAssetCatalog.Url("css/features/enterprise-ui.css"),
         WwwrootAssetCatalog.Url("css/features/scholen.css"),
+        WwwrootAssetCatalog.Url("css/features/leerling-paspoort-g78.css"),
     ];
 
     public static readonly string[] AccountCss =
