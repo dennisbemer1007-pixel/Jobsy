@@ -5,8 +5,20 @@
     return document.querySelector('[data-bedrijvenkaart-ssr="1"]');
   }
 
-  function readPins() {
-    var el = document.getElementById("bedrijvenkaart-ssr-pins");
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escapeAttr(value) {
+    return escapeHtml(value).replace(/'/g, "&#39;");
+  }
+
+  function readJsonScript(id) {
+    var el = document.getElementById(id);
     if (!el) {
       return [];
     }
@@ -16,6 +28,17 @@
     } catch (e) {
       return [];
     }
+  }
+
+  function writeJsonScript(id, pins) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.textContent = JSON.stringify(pins);
+    }
+  }
+
+  function readAllPins() {
+    return readJsonScript("bedrijvenkaart-ssr-pins-all");
   }
 
   function radiusKm() {
@@ -46,7 +69,7 @@
   }
 
   function pinsUrl(km) {
-    return "/api/company-map-initiative/pins?radiusKm=" + encodeURIComponent(String(km));
+    return "/api/bedrijvenkaart-client/pins?radiusKm=" + encodeURIComponent(String(km));
   }
 
   function ensureMaps() {
@@ -68,6 +91,9 @@
     if (typeof window.jobMap.invalidate === "function") {
       window.requestAnimationFrame(function () {
         window.jobMap.invalidate();
+        window.requestAnimationFrame(function () {
+          window.jobMap.invalidate();
+        });
       });
     }
   }
@@ -134,11 +160,91 @@
     return pins;
   }
 
-  function refreshFromPins(pins, km) {
-    var filtered = applyClientFilters(pins);
-    var script = document.getElementById("bedrijvenkaart-ssr-pins");
-    if (script) {
-      script.textContent = JSON.stringify(filtered);
+  function initials(name) {
+    var parts = String(name || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (parts.length === 0) {
+      return "?";
+    }
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function buildCardHtml(pin) {
+    var id = String(pin.companyId || pin.CompanyId || "");
+    var name = pin.name || pin.Name || "";
+    var city = pin.city || pin.City || "Nederland";
+    var sector = pin.sectorLabel || pin.SectorLabel || "Bedrijf";
+    var path = pin.publicPath || pin.PublicPath || "";
+    var tag = path ? "a" : "article";
+    var href = path ? ' href="' + escapeAttr(path) + '"' : "";
+    var linkClass = path ? " bk-card--link" : "";
+    var open = pin.openForInitiative || pin.OpenForInitiative;
+    var vac = pin.vacancyCount != null ? pin.vacancyCount : pin.VacancyCount;
+    var chips =
+      (open ? '<span class="bk-chip bk-chip--open">Open voor initiatief</span>' : "") +
+      (vac > 0
+        ? '<span class="bk-chip">' + escapeHtml(String(vac)) + " vacatures</span>"
+        : '<span class="bk-chip">Geen vacatures</span>');
+    return (
+      "<" +
+      tag +
+      ' class="bk-card' +
+      linkClass +
+      '"' +
+      href +
+      ' role="listitem" data-bk-company-id="' +
+      escapeAttr(id) +
+      '">' +
+      '<div class="bk-card__row"><div class="bk-card__avatar">' +
+      escapeHtml(initials(name)) +
+      "</div><div>" +
+      '<h2 class="bk-card__title">' +
+      escapeHtml(name) +
+      "</h2>" +
+      '<p class="bk-card__meta">' +
+      escapeHtml(sector) +
+      " • " +
+      escapeHtml(city) +
+      "</p>" +
+      chips +
+      "</div></div></" +
+      tag +
+      ">"
+    );
+  }
+
+  function renderList(pins) {
+    var list = root() && root().querySelector(".bk-list");
+    if (!list) {
+      return;
+    }
+    list.innerHTML = (pins || []).map(buildCardHtml).join("");
+  }
+
+  function syncListVisibility(filteredPins) {
+    var ids = {};
+    (filteredPins || []).forEach(function (p) {
+      ids[String(p.companyId || p.CompanyId || "")] = true;
+    });
+    root().querySelectorAll(".bk-card[data-bk-company-id]").forEach(function (card) {
+      var id = card.getAttribute("data-bk-company-id");
+      card.hidden = !ids[id];
+    });
+  }
+
+  function refreshFromPins(allPins, km, reRenderList) {
+    var filtered = applyClientFilters(allPins);
+    writeJsonScript("bedrijvenkaart-ssr-pins", filtered);
+    if (reRenderList) {
+      renderList(allPins);
+      syncListVisibility(filtered);
+    } else {
+      syncListVisibility(filtered);
     }
     initMap(toMarkers(filtered), km);
     updateMeta(filtered.length, km, openCount(filtered));
@@ -160,10 +266,11 @@
     setRadiusActive(km);
     fetchPins(km)
       .then(function (pins) {
-        refreshFromPins(pins, km);
+        writeJsonScript("bedrijvenkaart-ssr-pins-all", pins);
+        refreshFromPins(pins, km, true);
       })
       .catch(function () {
-        refreshFromPins(readPins(), km);
+        refreshFromPins(readAllPins(), km, false);
       });
   }
 
@@ -173,8 +280,8 @@
     }
     ensureMaps()
       .then(function () {
-        var pins = readPins();
-        initMap(toMarkers(applyClientFilters(pins)), radiusKm());
+        var all = readAllPins();
+        refreshFromPins(all, radiusKm(), false);
         document.dispatchEvent(new CustomEvent("jobsy-bk-map-pane-visible"));
       })
       .catch(function () { });
@@ -206,7 +313,7 @@
         var pressed = chip.getAttribute("aria-pressed") === "true";
         chip.setAttribute("aria-pressed", pressed ? "false" : "true");
         chip.classList.toggle("is-active", !pressed);
-        refreshFromPins(readPins(), radiusKm());
+        refreshFromPins(readAllPins(), radiusKm(), false);
       }
     });
   }

@@ -59,7 +59,7 @@ public sealed class BedrijvenkaartSsrMapPlaywrightTests : IAsyncLifetime
             new() { Timeout = 90_000 });
 
         var pinsReq = page.WaitForResponseAsync(r =>
-            r.Url.Contains("/api/company-map-initiative/pins", StringComparison.OrdinalIgnoreCase)
+            r.Url.Contains("/api/bedrijvenkaart-client/pins", StringComparison.OrdinalIgnoreCase)
             && r.Ok);
         await page.Locator("[data-bk-radius-km=\"10\"]").ClickAsync();
         await pinsReq;

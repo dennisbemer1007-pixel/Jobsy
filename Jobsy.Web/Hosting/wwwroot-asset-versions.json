@@ -60,8 +60,8 @@
     "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
   },
   "css/features/bedrijvenkaart.css": {
-    "sha256": "72f6c72570ce5e8cc575b7a17903784ee4ad84dae4b45dc9e62a9f5e2ae2b8bb",
-    "v": "20261027-bk-pr2"
+    "sha256": "b12c568848d4abec7fed04946e95f252e0f0889c31faa9bbeb6066d60f5ba3f5",
+    "v": "20261027-bk-map-e"
   },
   "css/features/candidate-header-strip.css": {
     "v": "20261025-kreeft13",
@@ -404,8 +404,8 @@
     "sha256": "a8cc3a3b17430a04477111139ff2281856f1f2aa12da83d8f98967c460720be5"
   },
   "js/bedrijvenkaart-ssr-map.js": {
-    "v": "20261027-bk-map-pr3",
-    "sha256": "fe92044371b883e8850cb6f0e33aaa51f0e6a579188f11b8202ee683687b560a"
+    "v": "20261027-bk-map-e",
+    "sha256": "f3866e3ab1595e41c06de7c00aabc9368e193faf6f37e72422da6b235a6fb60a"
   },
   "js/blazor-boot.js": {
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",

@@ -66,6 +66,9 @@ internal static class BedrijvenkaartSsrShells
         sb.Append("<div>Alle bedrijven op Lobsy</div>");
         sb.Append("<div>Uitzendbureau vestiging</div>");
         sb.Append("</div></div></div></div>");
+        sb.Append("<script type=\"application/json\" id=\"bedrijvenkaart-ssr-pins-all\">");
+        sb.Append(JsonSerializer.Serialize(model.Pins));
+        sb.Append("</script>");
         sb.Append("<script type=\"application/json\" id=\"bedrijvenkaart-ssr-pins\">");
         sb.Append(JsonSerializer.Serialize(model.Pins));
         sb.Append("</script></div>");
@@ -120,7 +123,14 @@ internal static class BedrijvenkaartSsrShells
 
     private static void AppendCard(StringBuilder sb, CultureState culture, CompanyMapPinDto pin)
     {
-        sb.Append("<article class=\"bk-card\" role=\"listitem\" data-bk-company-id=\"")
+        var tag = !string.IsNullOrWhiteSpace(pin.PublicPath) ? "a" : "article";
+        var extraClass = tag == "a" ? " bk-card--link" : "";
+        var href = tag == "a"
+            ? " href=\"" + WebUtility.HtmlEncode(pin.PublicPath!) + "\""
+            : "";
+        sb.Append('<').Append(tag).Append(" class=\"bk-card").Append(extraClass).Append('"')
+            .Append(href)
+            .Append(" role=\"listitem\" data-bk-company-id=\"")
             .Append(WebUtility.HtmlEncode(pin.CompanyId.ToString("D")))
             .Append("\">");
         sb.Append("<div class=\"bk-card__row\"><div class=\"bk-card__avatar\">")
@@ -157,7 +167,7 @@ internal static class BedrijvenkaartSsrShells
                 .Append("</span>");
         }
 
-        sb.Append("</div></div></article>");
+        sb.Append("</div></div></").Append(tag).Append('>');
     }
 
     private static string Initials(string name)
