@@ -771,6 +771,12 @@
     display: none;
 }.wg-app__list-mobile {
     display: block;
+}[data-wg-list-ssr="1"] {
+    max-width: 100%;
+    overflow-x: clip;
+}[data-wg-list-ssr="1"] .ent-data-table {
+    width: 100%;
+    table-layout: fixed;
 }.wg-app__col {
     display: flex;
     flex-direction: column;

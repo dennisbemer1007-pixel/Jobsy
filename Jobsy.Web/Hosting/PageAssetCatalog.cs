@@ -294,6 +294,11 @@ public static class PageAssetCatalog
             return KandidatenkaartCss;
         }
 
+        if (path.Equals("/werkgever/sollicitaties", StringComparison.OrdinalIgnoreCase))
+        {
+            return [];
+        }
+
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
         {
             return [WwwrootAssetCatalog.Url("css/features/bedrijvenkaart.css")];
@@ -478,6 +483,9 @@ public static class PageAssetCatalog
         var path = PageSeoCatalog.Normalize(rawPath);
         return path.StartsWith("/werkgever/vacatures", StringComparison.Ordinal);
     }
+
+    public static bool IncludeWerkgeverApplicationsListScript(string? rawPath)
+        => Werkgever.WerkgeverApplicationsListSsrPaths.IsListHostPath(PageSeoCatalog.Normalize(rawPath));
 
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
     {

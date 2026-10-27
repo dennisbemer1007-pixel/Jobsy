@@ -336,8 +336,8 @@
     "v": "20261016-06"
   },
   "css/features/werkgever.css": {
-    "sha256": "db1ce09af39dabe95aaf63f39fa6c065467b6c8d01433bbbf9672c57e5b8c822",
-    "v": "20261017-19"
+    "sha256": "9f056fc264f7a7e953a68851b351458ce64aa7f8b272d11bd112dab32075b3db",
+    "v": "20261027-r11b"
   },
   "css/tokens.css": {
     "sha256": "5ce0929c96b169830a30fc10283d80c6f8805715068cfcec698d571a9e07826e",
@@ -646,5 +646,9 @@
   "js/uwv-ondernemer.js": {
     "v": "20261026-r10-e0ba4315",
     "sha256": "e0ba4315043921c56efe2f6a865975f98b33ecce6e8c66255b3d978c684a2b06"
+  },
+  "js/wg-applications-list-ssr.js": {
+    "v": "20261027-r11b-7ee9dafa",
+    "sha256": "7ee9dafa4fbc370e76b1b7cdbec985b16a2edcd1c0e6a4849d26bd0878989687"
   }
 }
