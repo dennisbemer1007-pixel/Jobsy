@@ -110,6 +110,16 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
              && !page.Url.Contains("/leerling/droombaan", StringComparison.OrdinalIgnoreCase); step++)
         {
             Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
+            if (page.Url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" }).ClickAsync();
+                await page.WaitForURLAsync(
+                    url => url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
+                    UrlCommitted);
+                continue;
+            }
+
             if (page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
             {
                 var likes = page.Locator("fieldset.ll-chips").Nth(0);
@@ -236,8 +246,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
-        var island = await SeedGroep78AtAsync(3, answered: 30, chipsSaved: false);
-        var last = await SeedGroep78AtAsync(3, answered: 59, chipsSaved: true);
+        var island = await SeedGroep78AtAsync(3, answered: 30, chipsSaved: false, completeActivePuzzleGate: true);
+        var last = await SeedGroep78AtAsync(3, answered: 59, chipsSaved: true, completeActivePuzzleGate: true);
         var baseUrl = EnsureWeb();
         foreach (var seed in island)
         {
@@ -418,6 +428,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await page.WaitForURLAsync(
                     url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
                     UrlCommitted);
@@ -516,7 +527,41 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
     }
 
-    private async Task<IReadOnlyList<Seed>> SeedGroep78AtAsync(int pupils, int answered, bool chipsSaved)
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task Groep78_schelpenrij_puzzle_loads_under_3_seconds(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 15, chipsSaved: false);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.SetDefaultNavigationTimeout(90_000);
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        var started = DateTime.UtcNow;
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", UrlCommitted);
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+        var elapsedMs = (DateTime.UtcNow - started).TotalMilliseconds;
+        Assert.True(elapsedMs < 3_000, $"puzzle load took {elapsedMs:F0} ms at {width}x{height}");
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" })).ToBeVisibleAsync();
+        await page.CloseAsync();
+    }
+
+    private async Task<IReadOnlyList<Seed>> SeedGroep78AtAsync(
+        int pupils,
+        int answered,
+        bool chipsSaved,
+        bool completeActivePuzzleGate = false)
     {
         await using var scope = _api.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
@@ -557,6 +602,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var bank = registry.Get(PupilQuestionSet.Groep78).Bank;
         var answers = bank.AllItems.Take(answered).ToDictionary(i => i.Id, _ => 4);
         var answersJson = System.Text.Json.JsonSerializer.Serialize(answers);
+        var puzzlesJson = BuildPuzzlesJson(registry.Get(PupilQuestionSet.Groep78), answered, completeActivePuzzleGate);
         var now = DateTime.UtcNow;
         foreach (var code in generated)
         {
@@ -564,6 +610,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             {
                 PupilCodeId = code.Id,
                 AnswersJson = answersJson,
+                PuzzlesJson = puzzlesJson,
                 CurrentIndex = answered,
                 LikesJson = "[]",
                 DislikesJson = "[]",
@@ -661,6 +708,21 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         }
 
         return new TeacherSeed(schoolId, cls.Id, teacherId);
+    }
+
+    private static string BuildPuzzlesJson(PupilQuestionSetDef def, int answered, bool completeActiveGate)
+    {
+        var map = new Dictionary<string, int>();
+        foreach (var slot in def.PuzzleSlots)
+        {
+            if (slot.AfterItem < answered
+                || (completeActiveGate && slot.AfterItem <= answered))
+            {
+                map[slot.PuzzleKey] = (int)PupilPuzzleStatus.Done;
+            }
+        }
+
+        return System.Text.Json.JsonSerializer.Serialize(map);
     }
 
     private sealed record Seed(Guid SchoolId, Guid ClassId, string PlainCode);

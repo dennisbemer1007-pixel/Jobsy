@@ -7664,6 +7664,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PuzzlesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("StartedAtUtc")
                         .HasColumnType("timestamp with time zone");
 

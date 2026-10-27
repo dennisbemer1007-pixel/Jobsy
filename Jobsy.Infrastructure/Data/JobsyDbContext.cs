@@ -3298,6 +3298,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.AnswersJson).IsRequired();
             entity.Property(e => e.LikesJson).IsRequired();
             entity.Property(e => e.DislikesJson).IsRequired();
+            entity.Property(e => e.PuzzlesJson).IsRequired();
             entity.Property(e => e.LikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DislikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DreamJobKey).HasMaxLength(64);

@@ -46,12 +46,14 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
         PupilAnswerResponse? lastBody = null;
         for (var i = 0; i < 30; i++)
         {
+            await CompletePendingPuzzleAsync(client);
             var r = await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
                 new PupilAnswerRequest(5));
             Assert.Equal(HttpStatusCode.OK, r.StatusCode);
         }
 
+        await CompletePendingPuzzleAsync(client);
         var chips = await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
             ["tekenen", "dieren"],
             ["voor-de-klas"],
@@ -61,6 +63,7 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
 
         for (var i = 30; i < 60; i++)
         {
+            await CompletePendingPuzzleAsync(client);
             var r = await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
                 new PupilAnswerRequest(3));
@@ -115,11 +118,13 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
         var bank = new PupilQuestionBank();
         for (var i = 0; i < 30; i++)
         {
+            await CompletePendingPuzzleAsync(client);
             Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
                 new PupilAnswerRequest(5))).StatusCode);
         }
 
+        await CompletePendingPuzzleAsync(client);
         Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
             ["tekenen", "dieren"],
             ["voor-de-klas"],
@@ -129,6 +134,7 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
         PupilAnswerResponse? lastBody = null;
         for (var i = 30; i < 60; i++)
         {
+            await CompletePendingPuzzleAsync(client);
             var r = await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
                 new PupilAnswerRequest(3));
@@ -341,6 +347,22 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
 
             return _inner.BuildAsync(pupilCodeId, cancellationToken);
         }
+    }
+
+    private static async Task CompletePendingPuzzleAsync(HttpClient client)
+    {
+        var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
+        if (progress is null
+            || !string.Equals(progress.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(progress.NextPuzzleKey))
+        {
+            return;
+        }
+
+        var puzzle = await client.PutAsJsonAsync(
+            $"api/pupil/progress/puzzles/{Uri.EscapeDataString(progress.NextPuzzleKey)}",
+            new PupilPuzzleRequest("done"));
+        Assert.Equal(HttpStatusCode.OK, puzzle.StatusCode);
     }
 
     private sealed class CollectingLoggerProvider : ILoggerProvider

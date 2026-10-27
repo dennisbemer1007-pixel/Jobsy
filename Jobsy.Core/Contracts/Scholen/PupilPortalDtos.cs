@@ -80,6 +80,17 @@ public sealed record PupilChipsResponse(
     string NextStep = "question",
     string? NextPuzzleKey = null);
 
+public sealed record PupilPuzzleRequest(string Status = "done");
+
+public sealed record PupilPuzzleResponse(
+    bool Ok,
+    int CurrentIndex,
+    string? NextItemId,
+    string? NextWorldKey,
+    bool NeedsIsland,
+    string NextStep = "question",
+    string? NextPuzzleKey = null);
+
 public sealed record PupilErrorDto(
     string Error,
     string Message,

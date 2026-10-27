@@ -151,7 +151,9 @@ public class PupilCircuitAuthorizationTests
     {
         Assert.Equal("Ingelogd", UiStrings.Get("School.Status.LoggedIn", "nl"));
         Assert.Equal("Nog niet gestart", UiStrings.Get("School.Status.NotStarted", "nl"));
-        Assert.False(PupilPuzzleRoutes.IsBuilt("schelpenrij"));
+        Assert.True(PupilPuzzleRoutes.IsBuilt("schelpenrij"));
+        Assert.True(PupilPuzzleRoutes.IsBuilt("schatkaart"));
+        Assert.True(PupilPuzzleRoutes.IsBuilt("vuurtorenlampen"));
         Assert.False(PupilPuzzleRoutes.IsBuilt(null));
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling", "LeerlingReis.razor"));

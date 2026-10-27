@@ -46,6 +46,12 @@ public interface IPupilPortalService
         PupilChipsRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilPuzzleResponse? Ok, PupilErrorDto? Error, int StatusCode)> SavePuzzleAsync(
+        ClaimsPrincipal pupil,
+        string puzzleKey,
+        PupilPuzzleRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<(PupilResultPageDto? Ok, PupilErrorDto? Error, int StatusCode)> GetResultAsync(
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default);
@@ -386,13 +392,14 @@ public sealed class PupilPortalService : IPupilPortalService
         var total = def.Bank.AllItems.Count;
         var answered = answers.Count;
         var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
+        var puzzles = ParsePuzzles(code.Progress?.PuzzlesJson);
         var completed = code.Status == PupilCodeStatus.Completed
                         || code.Progress?.CompletedAtUtc is not null
                         || code.Result is not null;
         var windowOpen = schoolClass.TestWindow == TestWindowState.Open;
         var step = completed
             ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
-            : PupilFlow.Next(def, answers, islandDone);
+            : PupilFlow.Next(def, answers, islandDone, puzzles);
         var nextStep = PupilFlow.ToNextStepToken(step.Kind);
         var needsIsland = step.Kind == PupilFlowStepKind.Island;
         var currentIndex = step.Kind == PupilFlowStepKind.Done
@@ -493,7 +500,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var answers = ParseAnswers(progress.AnswersJson);
         var islandDone = progress.ChipsSavedAtUtc is not null;
-        var step = PupilFlow.Next(def, answers, islandDone);
+        var puzzles = ParsePuzzles(progress.PuzzlesJson);
+        var step = PupilFlow.Next(def, answers, islandDone, puzzles);
         var alreadyAnswered = answers.ContainsKey(item.Id);
         var allowed =
             alreadyAnswered
@@ -564,7 +572,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var nextStep = completed
             ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
-            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null);
+            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null, ParsePuzzles(progress.PuzzlesJson));
         var needsIsland = nextStep.Kind == PupilFlowStepKind.Island;
         string? nextId = nextStep.Kind == PupilFlowStepKind.Question ? nextStep.ItemId : null;
         string? nextWorld = nextStep.Kind == PupilFlowStepKind.Island
@@ -646,7 +654,7 @@ public sealed class PupilPortalService : IPupilPortalService
         await _db.SaveChangesAsync(cancellationToken);
 
         var answers = ParseAnswers(progress.AnswersJson);
-        var step = PupilFlow.Next(def, answers, islandDone: true);
+        var step = PupilFlow.Next(def, answers, islandDone: true, ParsePuzzles(progress.PuzzlesJson));
         return (new PupilChipsResponse(
             true,
             step.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : step.Index,
@@ -654,6 +662,86 @@ public sealed class PupilPortalService : IPupilPortalService
             step.WorldKey,
             PupilFlow.ToNextStepToken(step.Kind),
             step.PuzzleKey), null, 200);
+    }
+
+    public async Task<(PupilPuzzleResponse? Ok, PupilErrorDto? Error, int StatusCode)> SavePuzzleAsync(
+        ClaimsPrincipal pupil,
+        string puzzleKey,
+        PupilPuzzleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(puzzleKey))
+        {
+            return (null, new PupilErrorDto("validation", "Puzzel ontbreekt."), 400);
+        }
+
+        puzzleKey = puzzleKey.Trim();
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        var def = _registry.ForClass(schoolClass);
+        if (def.Set != PupilQuestionSet.Groep78
+            || !def.PuzzleSlots.Any(s => string.Equals(s.PuzzleKey, puzzleKey, StringComparison.OrdinalIgnoreCase)))
+        {
+            return (null, new PupilErrorDto("not_found", "Deze puzzel hoort niet bij jouw test."), 404);
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
+        {
+            return (null, new PupilErrorDto("already_completed", "Je reis is al klaar."), 409);
+        }
+
+        if (schoolClass.TestWindow != TestWindowState.Open)
+        {
+            return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
+                PupilCopy.AnswersSavedWindow(schoolClass.QuestionSet)), 409);
+        }
+
+        var progress = code.Progress;
+        if (progress is null)
+        {
+            return (null, new PupilErrorDto("not_started", "Begin eerst met de reis."), 409);
+        }
+
+        var answers = ParseAnswers(progress.AnswersJson);
+        var islandDone = progress.ChipsSavedAtUtc is not null;
+        var puzzles = ParsePuzzles(progress.PuzzlesJson);
+        var step = PupilFlow.Next(def, answers, islandDone, puzzles);
+        if (step.Kind != PupilFlowStepKind.Puzzle
+            || !string.Equals(step.PuzzleKey, puzzleKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return (null, new PupilErrorDto(
+                "step_pending",
+                "Deze puzzel is nu niet aan de beurt.",
+                PupilFlow.ToNextStepToken(step.Kind),
+                step.PuzzleKey), 409);
+        }
+
+        var status = string.Equals(request.Status, "skipped", StringComparison.OrdinalIgnoreCase)
+            ? PupilPuzzleStatus.Skipped
+            : PupilPuzzleStatus.Done;
+        puzzles[puzzleKey] = status;
+        progress.PuzzlesJson = JsonSerializer.Serialize(
+            puzzles.ToDictionary(kv => kv.Key, kv => (int)kv.Value, StringComparer.Ordinal));
+        progress.UpdatedAtUtc = now;
+        code.LastSeenAtUtc = now;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var next = PupilFlow.Next(def, answers, islandDone, puzzles);
+        return (new PupilPuzzleResponse(
+            true,
+            next.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : next.Index,
+            next.ItemId,
+            next.WorldKey,
+            next.Kind == PupilFlowStepKind.Island,
+            PupilFlow.ToNextStepToken(next.Kind),
+            next.PuzzleKey), null, 200);
     }
 
     public async Task<(PupilResultPageDto? Ok, PupilErrorDto? Error, int StatusCode)> GetResultAsync(
@@ -1208,6 +1296,38 @@ public sealed class PupilPortalService : IPupilPortalService
             .Select(c => (PupilQuestionSet?)c.QuestionSet)
             .FirstOrDefaultAsync(cancellationToken);
         return set ?? PupilQuestionSet.Groep78;
+    }
+
+    private static Dictionary<string, PupilPuzzleStatus> ParsePuzzles(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        try
+        {
+            var raw = JsonSerializer.Deserialize<Dictionary<string, int>>(json);
+            if (raw is null)
+            {
+                return new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            var map = new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (key, value) in raw)
+            {
+                if (Enum.IsDefined(typeof(PupilPuzzleStatus), value))
+                {
+                    map[key] = (PupilPuzzleStatus)value;
+                }
+            }
+
+            return map;
+        }
+        catch (JsonException)
+        {
+            return new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+        }
     }
 
     private static Dictionary<string, int> ParseAnswers(string? json)

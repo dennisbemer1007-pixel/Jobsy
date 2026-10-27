@@ -9,5 +9,10 @@ public static class PupilPuzzleRoutes
     public static bool IsBuilt(string? key)
         => !string.IsNullOrWhiteSpace(key) && Known.Contains(key);
 
-    private static readonly HashSet<string> Known = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> Known = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "schelpenrij",
+        "schatkaart",
+        "vuurtorenlampen",
+    };
 }

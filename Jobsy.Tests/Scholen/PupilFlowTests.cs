@@ -28,10 +28,25 @@ public class PupilFlowTests
     }
 
     [Fact]
-    public void Thirty_answered_without_island_yields_island()
+    public void Thirty_answered_at_gate_yields_schatkaart_puzzle()
     {
         var answers = Fill(30);
-        var step = PupilFlow.Next(_g78, answers, islandDone: false);
+        var puzzles = new Dictionary<string, PupilPuzzleStatus>
+        {
+            ["schelpenrij"] = PupilPuzzleStatus.Done
+        };
+        var step = PupilFlow.Next(_g78, answers, islandDone: false, puzzles);
+        Assert.Equal(PupilFlowStepKind.Puzzle, step.Kind);
+        Assert.Equal(30, step.Index);
+        Assert.Equal("schatkaart", step.PuzzleKey);
+    }
+
+    [Fact]
+    public void Thirty_answered_without_island_yields_island_after_puzzles()
+    {
+        var answers = Fill(30);
+        var puzzles = G78PuzzlesThroughGate(30);
+        var step = PupilFlow.Next(_g78, answers, islandDone: false, puzzles);
         Assert.Equal(PupilFlowStepKind.Island, step.Kind);
         Assert.Equal(30, step.Index);
         Assert.Equal("pauze-eiland", step.WorldKey);
@@ -41,7 +56,8 @@ public class PupilFlowTests
     public void Island_done_yields_question_30()
     {
         var answers = Fill(30);
-        var step = PupilFlow.Next(_g78, answers, islandDone: true);
+        var puzzles = G78PuzzlesThroughGate(30);
+        var step = PupilFlow.Next(_g78, answers, islandDone: true, puzzles);
         Assert.Equal(PupilFlowStepKind.Question, step.Kind);
         Assert.Equal(30, step.Index);
         Assert.Equal("9031", step.ItemId);
@@ -144,6 +160,20 @@ public class PupilFlowTests
         }
 
         throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+
+    private static Dictionary<string, PupilPuzzleStatus> G78PuzzlesThroughGate(int answered)
+    {
+        var map = new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+        foreach (var slot in new PupilQuestionSetRegistry().Get(Jobsy.Core.Enums.PupilQuestionSet.Groep78).PuzzleSlots)
+        {
+            if (slot.AfterItem <= answered)
+            {
+                map[slot.PuzzleKey] = PupilPuzzleStatus.Done;
+            }
+        }
+
+        return map;
     }
 
     private Dictionary<string, int> Fill(int count) => Fill(_g78, count);
