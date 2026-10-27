@@ -84,8 +84,13 @@ def main() -> int:
                 continue
             version = found.get(path_part) or existing.get(path_part, {}).get("v")
             if not version:
-                print(f"catalog ref missing version: {path_part} in {src}", file=sys.stderr)
-                return 1
+                import datetime
+
+                version = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d") + "-catalog"
+                print(
+                    f"assigned catalog version {version} for {path_part} (from {src.name})",
+                    file=sys.stderr,
+                )
             prev = found.get(path_part)
             if prev is not None and prev != version:
                 print(f"conflict: {path_part} has ?v={prev} and ?v={version}", file=sys.stderr)

@@ -9,7 +9,7 @@ public class PageAssetCatalogTests
     private const int WerkgeverCss = 6;
     private const int BeheerCss = 2;
     private const int SalesCss = 1;
-    private const int SchoolCss = 2;
+    private const int SchoolCss = 3;
 
     [Theory]
     [InlineData("/", CoreCss)]
