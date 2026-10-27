@@ -31,11 +31,17 @@
                 }
 
                 var n = PupilWorldCatalog.TestWorldNumber(w.Key);
+                var titleKey = _visualTheme is not null
+                    ? PupilJourneyTheme.WorldTitleKey(_visualTheme, w.Key)
+                    : w.TitleKey;
+                var subKey = _visualTheme is not null
+                    ? PupilJourneyTheme.WorldSubtitleKey(_visualTheme, w.Key)
+                    : w.SubtitleKey;
                 <li>
                     <span class="ll-worlds__n">@n</span>
                     <div>
-                        <strong>@Culture[w.TitleKey]</strong>
-                        <small>@Culture[w.SubtitleKey]</small>
+                        <strong>@Culture[titleKey]</strong>
+                        <small>@Culture[subKey]</small>
                     </div>
                 </li>
             }
@@ -45,12 +51,20 @@
             <li>@Culture["Leerling.Start.NoteNoWrong"]</li>
             <li>@Culture["Leerling.Start.NotePause"]</li>
         </ul>
+        @if (_canChangeTheme)
+        {
+            <p class="ll-start__theme">
+                <a href="/leerling/werelden">@Culture["Leerling.Theme.Change"]</a>
+            </p>
+        }
         <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Start.Begin"]</a>
     </section>
 </div>
 
 @code {
     private PupilQuestionSetDef? _def;
+    private string? _visualTheme;
+    private bool _canChangeTheme;
 
     private string Spoken => SpokenText.Join(
         Culture["Leerling.Start.Title"],
@@ -67,6 +81,14 @@
             if (progress is not null)
             {
                 _def = Registry.Get(progress.QuestionSet);
+                if (PupilJourneyTheme.RequiresThemeChoice(progress.QuestionSet, progress.VisualThemeKey))
+                {
+                    Nav.NavigateTo("/leerling/werelden");
+                    return;
+                }
+
+                _visualTheme = progress.VisualThemeKey;
+                _canChangeTheme = progress.CanChangeVisualTheme;
             }
         }
         catch

@@ -56,6 +56,11 @@ public interface IPupilPortalService
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilVisualThemeResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveVisualThemeAsync(
+        ClaimsPrincipal pupil,
+        string themeKey,
+        CancellationToken cancellationToken = default);
+
     Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
         ClaimsPrincipal pupil,
         string? key,
@@ -340,11 +345,15 @@ public sealed class PupilPortalService : IPupilPortalService
             }
         }
 
+        var themeKey = code.Progress?.VisualThemeKey;
+        var needsTheme = PupilJourneyTheme.RequiresThemeChoice(schoolClass.QuestionSet, themeKey);
         var redirect = completed
             ? "/leerling/dit-ben-jij"
-            : code.Status == PupilCodeStatus.NotStarted && (code.Progress is null || currentIndex == 0)
-                ? "/leerling/start"
-                : "/leerling/reis";
+            : needsTheme
+                ? "/leerling/werelden"
+                : code.Status == PupilCodeStatus.NotStarted && (code.Progress is null || currentIndex == 0)
+                    ? "/leerling/start"
+                    : "/leerling/reis";
 
         var display = PupilCodeFormat.Display(normalized);
         var response = new PupilLoginResponse(
@@ -416,6 +425,14 @@ public sealed class PupilPortalService : IPupilPortalService
         var plates = def.PlatesShed(answered);
         var likes = ParseTagList(code.Progress?.LikesJson);
         var dislikes = ParseTagList(code.Progress?.DislikesJson);
+        var canChangeTheme = PupilJourneyTheme.CanChangeVisualTheme(
+            schoolClass.QuestionSet,
+            code.Status,
+            code.Progress?.CompletedAtUtc,
+            answers,
+            islandDone,
+            def,
+            puzzles);
 
         return (new PupilProgressStateDto(
             code.Id,
@@ -440,7 +457,81 @@ public sealed class PupilPortalService : IPupilPortalService
             code.Progress?.DislikeOtherWord,
             schoolClass.QuestionSet,
             nextStep,
-            step.PuzzleKey), null, 200);
+            step.PuzzleKey,
+            code.Progress?.VisualThemeKey,
+            canChangeTheme), null, 200);
+    }
+
+    public async Task<(PupilVisualThemeResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveVisualThemeAsync(
+        ClaimsPrincipal pupil,
+        string themeKey,
+        CancellationToken cancellationToken = default)
+    {
+        var normalized = PupilJourneyTheme.Normalize(themeKey);
+        if (!PupilJourneyTheme.All.Contains(normalized))
+        {
+            return (null, new PupilErrorDto("validation", "Onbekende wereld."), 400);
+        }
+
+        var ctx = await ResolveSessionAsync(pupil, includeResult: false, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        if (schoolClass.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            return (null, new PupilErrorDto("wrong_set", "Themakeuze geldt alleen voor groep 7/8."), 400);
+        }
+
+        if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
+        {
+            return (null, new PupilErrorDto("already_completed", "Je reis is al klaar."), 409);
+        }
+
+        var def = _registry.ForClass(schoolClass);
+        var answers = ParseAnswers(code.Progress?.AnswersJson);
+        var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
+        var puzzles = ParsePuzzles(code.Progress?.PuzzlesJson);
+        if (!PupilJourneyTheme.CanChangeVisualTheme(
+                schoolClass.QuestionSet,
+                code.Status,
+                code.Progress?.CompletedAtUtc,
+                answers,
+                islandDone,
+                def,
+                puzzles))
+        {
+            return (null, new PupilErrorDto("theme_locked", "Wisselen kan alleen vóór je start of op het Pauze-eiland."), 409);
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var progress = code.Progress;
+        if (progress is null)
+        {
+            progress = new PupilProgress
+            {
+                PupilCodeId = code.Id,
+                AnswersJson = "{}",
+                CurrentIndex = 0,
+                StartedAtUtc = now,
+                UpdatedAtUtc = now,
+                VisualThemeKey = normalized,
+            };
+            _db.PupilProgresses.Add(progress);
+            code.Progress = progress;
+        }
+        else
+        {
+            progress.VisualThemeKey = normalized;
+            progress.UpdatedAtUtc = now;
+        }
+
+        code.LastSeenAtUtc = now;
+        await _db.SaveChangesAsync(cancellationToken);
+        return (new PupilVisualThemeResponse(normalized), null, 200);
     }
 
     public async Task<(PupilAnswerResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveAnswerAsync(

@@ -1,0 +1,142 @@
+@page "/leerling/werelden"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Layout
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@Culture["Leerling.Theme.Choose.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_wrongSet)
+{
+    <section class="ll-card">
+        <p>@Culture["Leerling.Puzzle.Unknown"]</p>
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Start.Begin"]</a>
+    </section>
+}
+else if (_locked)
+{
+    <section class="ll-card">
+        <p>@Culture["Leerling.Theme.Locked"]</p>
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Puzzle.BackReis"]</a>
+    </section>
+}
+else
+{
+    <div class="ll-werelden" data-testid="ll-werelden">
+        <section class="ll-werelden__hero" style="background-image:url('/images/leerling/werelden/keuze-strip.jpg')"></section>
+        <section class="ll-card ll-werelden__card">
+            <div class="lp-g78-page-tools">
+                <LanguageSelector />
+            </div>
+            <p class="ll-werelden__kicker">@Culture["Leerling.Theme.Choose.Kicker"]</p>
+            <h1>@Culture["Leerling.Theme.Choose.Title"]</h1>
+            <p class="muted">@Culture["Leerling.Theme.Choose.Lead"]</p>
+            <LeerlingCoachCue Text="@Culture["Leerling.Theme.Coach"]" />
+
+            <div class="ll-werelden__grid" role="list">
+                @foreach (var theme in PupilJourneyTheme.All)
+                {
+                    var selected = string.Equals(_current, theme, StringComparison.OrdinalIgnoreCase);
+                    <button type="button"
+                            class="ll-werelden__pick @(selected ? "is-selected" : null)"
+                            role="listitem"
+                            disabled="@_busy"
+                            data-testid="ll-theme-@theme"
+                            @onclick="() => PickAsync(theme)">
+                        <span class="ll-werelden__img" style="background-image:url('@PupilJourneyTheme.ThemeHeroImage(theme)')"></span>
+                        <span class="ll-werelden__body">
+                            <strong>@Culture[PupilJourneyTheme.ThemeCardTitleKey(theme)]</strong>
+                            <span>@Culture[PupilJourneyTheme.ThemeCardLeadKey(theme)]</span>
+                            <span class="ll-werelden__go">@Culture["Leerling.Theme.Choose.Pick"]</span>
+                        </span>
+                    </button>
+                }
+            </div>
+
+            <p class="ll-werelden__same">@Culture["Leerling.Theme.Choose.Same"]</p>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="ll-error" role="alert">@_error</p>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _wrongSet;
+    private bool _locked;
+    private bool _busy;
+    private string? _current;
+    private string? _error;
+    private PupilCodeStatus _status = PupilCodeStatus.NotStarted;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            if (progress is null)
+            {
+                _error = Culture["Leerling.Reis.Offline"];
+                return;
+            }
+
+            if (progress.QuestionSet != PupilQuestionSet.Groep78)
+            {
+                _wrongSet = true;
+                return;
+            }
+
+            _current = progress.VisualThemeKey;
+            _status = progress.Status;
+            _locked = !progress.CanChangeVisualTheme;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task PickAsync(string theme)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var resp = await Api.SavePupilVisualThemeAsync(theme);
+            if (resp is null)
+            {
+                _error = Culture["Leerling.Reis.SaveFailed"];
+                return;
+            }
+
+            _current = resp.ThemeKey;
+            var dest = _status == PupilCodeStatus.NotStarted
+                ? "/leerling/start"
+                : "/leerling/reis";
+            Nav.NavigateTo(dest);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

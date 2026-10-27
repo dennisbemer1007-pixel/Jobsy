@@ -7,6 +7,8 @@ public class PupilProgress
     public PupilCode? PupilCode { get; set; }
     /// <summary>JSON map item id → Likert 1..5.</summary>
     public string AnswersJson { get; set; } = "{}";
+    /// <summary>Groep 7/8 visual theme (<see cref="Scholen.PupilJourneyTheme"/>), null until chosen.</summary>
+    public string? VisualThemeKey { get; set; }
     public int CurrentIndex { get; set; }
     /// <summary>JSON array of hobby chip keys.</summary>
     public string LikesJson { get; set; } = "[]";

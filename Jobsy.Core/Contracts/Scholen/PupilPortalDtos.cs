@@ -50,7 +50,9 @@ public sealed record PupilProgressStateDto(
     string? DislikeOtherWord,
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo,
     string NextStep = "question",
-    string? NextPuzzleKey = null);
+    string? NextPuzzleKey = null,
+    string? VisualThemeKey = null,
+    bool CanChangeVisualTheme = false);
 
 public sealed record PupilAnswerRequest(int Value);
 
@@ -109,6 +111,10 @@ public sealed record PupilResultPageDto(
     string? DreamJobKey,
     int TotalItems = 60,
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo);
+
+public sealed record PupilVisualThemeRequest(string ThemeKey);
+
+public sealed record PupilVisualThemeResponse(string ThemeKey);
 
 public sealed record PupilDreamJobRequest(string? Key);
 

@@ -4,14 +4,16 @@
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Security
 @using Jobsy.Web.Services
+@using Jobsy.Core.Scholen
 @inherits LayoutComponentBase
 @inject CultureState Culture
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 @inject AuthenticationStateProvider AuthState
+@inject JobsyApiClient Api
 @implements IDisposable
 
-<div class="ll-shell" lang="@Culture.Language">
+<div class="ll-shell @_themeClass" lang="@Culture.Language">
     <header class="ll-topbar">
         <a class="ll-topbar__brand" href="/leerling">
             <img class="ll-topbar__logo" src="@("/" + Jobsy.Web.Media.BrandImages.Webp64)" width="28" height="28" alt="" />
@@ -42,6 +44,7 @@
 @code {
     private string _chip = "";
     private bool _showPause;
+    private string _themeClass = PupilJourneyTheme.CssClass(PupilJourneyTheme.Zee);
     private IDisposable? _displayLanguage;
 
     protected override async Task OnParametersSetAsync()
@@ -50,7 +53,8 @@
         var onPassport = path.StartsWith("leerling/paspoort", StringComparison.OrdinalIgnoreCase);
         var onLoginGate = path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
                           || path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase);
-        if (onPassport)
+        var onWerelden = path.StartsWith("leerling/werelden", StringComparison.OrdinalIgnoreCase);
+        if (onPassport || onWerelden)
         {
             _displayLanguage?.Dispose();
             _displayLanguage = null;
@@ -85,6 +89,19 @@
         if (pupil is null)
         {
             return;
+        }
+
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            if (progress?.VisualThemeKey is not null)
+            {
+                _themeClass = PupilJourneyTheme.CssClass(progress.VisualThemeKey);
+            }
+        }
+        catch
+        {
+            // Offline / prerender: default zee theme.
         }
 
         var cls = pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
