@@ -1203,6 +1203,7 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         IQueryable<PupilCode> query = _db.PupilCodes
+            .AsSplitQuery()
             .Include(c => c.Progress)
             .Include(c => c.SchoolClass)!.ThenInclude(sc => sc!.School);
         if (includeResult)

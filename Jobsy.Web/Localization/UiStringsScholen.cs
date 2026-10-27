@@ -451,6 +451,7 @@ public static class UiStringsScholen
         nl["Leerling.Puzzle.Vuurtoren.Hint"] = "Kijk goed, daarna tik jij de lampen in dezelfde volgorde.";
         nl["Leerling.Puzzle.Vuurtoren.Watch"] = "Kijk goed…";
         nl["Leerling.Puzzle.Vuurtoren.YourTurn"] = "Jouw beurt";
+        nl["Leerling.Puzzle.Vuurtoren.Done"] = "Goed gedaan. Het patroon klopt.";
         nl["Leerling.Puzzle.Vuurtoren.Lamp"] = "Lamp {0}";
         // —— Pauze-eiland chips ——
         nl["Leerling.Island.Title"] = "Pauze-eiland";
