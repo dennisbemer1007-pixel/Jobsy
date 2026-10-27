@@ -348,6 +348,76 @@
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: var(--space-3);
     margin-bottom: var(--space-5);
+}.sch-class-progress {
+    margin-bottom: var(--space-4);
+}.sch-class-progress h2 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-md, 1rem);
+}.sch-class-progress__bar {
+    display: flex;
+    width: 100%;
+    height: 1.375rem;
+    border-radius: var(--r-sm);
+    overflow: hidden;
+    background: color-mix(in srgb, var(--muted) 18%, transparent);
+}.sch-class-progress__bar > span {
+    display: block;
+    height: 100%;
+    min-width: 0;
+}.sch-class-progress__bar .is-done {
+    background: #33505f;
+}.sch-class-progress__bar .is-busy {
+    background: var(--brand, #0f5b66);
+}.sch-class-progress__bar .is-idle {
+    background: #ddd8cf;
+}.sch-class-progress__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    font-size: var(--text-sm);
+    color: var(--muted);
+}.sch-class-progress__legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}.sch-class-progress__legend i {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 2px;
+    display: inline-block;
+}.sch-class-progress__legend i.is-done {
+    background: #33505f;
+}.sch-class-progress__legend i.is-busy {
+    background: var(--brand, #0f5b66);
+}.sch-class-progress__legend i.is-idle {
+    background: #ddd8cf;
+}.sch-pending-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}.sch-pending-list li {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-sm);
+}.sch-pending-list li:last-child {
+    border-bottom: none;
+}.sch-pending-list code {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    letter-spacing: 0.02em;
+}.sch-pending-list small {
+    display: block;
+    color: var(--muted);
+    margin-top: 2px;
 }.sch-overview-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
