@@ -33,6 +33,9 @@ public static class UiStringsCandidateHub
         Add("CandidateSettings.NavPrivacy",
             "Privacy", "Privacy",
             "Prywatność", "Confidențialitate", "الخصوصية");
+        Add("CandidateSettings.NavAccount",
+            "Account", "Account",
+            "Konto", "Cont", "الحساب");
         Add("CandidateSettings.PickPane",
             "Kies links wat je wilt bekijken. Op desktop staat mail hier direct open.",
             "Pick a section on the left. On desktop, mail settings open here by default.",

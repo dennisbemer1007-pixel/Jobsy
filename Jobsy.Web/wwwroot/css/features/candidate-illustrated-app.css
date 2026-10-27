@@ -558,6 +558,17 @@
   padding-inline: 1.25rem;
 }
 
+[data-testid="candidate-settings-ssr"] > .sollicitaties-intro.cand-settings-intro {
+  padding-inline: 1.25rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  [data-testid="candidate-settings-ssr"] > .sollicitaties-intro.cand-settings-intro {
+    padding-inline: 28px;
+  }
+}
+
 @media (max-width: 639px) {
   .cand-band {
     flex-direction: column-reverse;
@@ -1212,6 +1223,26 @@
 .cand-settings__nav a.is-active {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--coral) 35%, var(--border));
+}
+
+.cand-settings__nav-action {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  border-radius: 12px;
+  text-align: start;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cand-settings__nav-action:hover {
+  background: color-mix(in srgb, var(--hover) 65%, transparent);
 }
 
 .cand-settings__nav-title {
