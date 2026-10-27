@@ -3,6 +3,7 @@ using Jobsy.Core.Features;
 using Jobsy.Web.Features;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Web.Bedrijvenkaart;
@@ -18,12 +19,15 @@ internal static class BedrijvenkaartSsrData
     internal static async Task<PageModel?> LoadAsync(
         JobsyApiClient api,
         IFeatureFlags featureFlags,
+        IConfiguration configuration,
         IWebHostEnvironment environment,
         int radiusKm,
         CancellationToken ct = default)
     {
         var flags = await featureFlags.GetAsync(ct);
-        if (!flags.IsEnabled(PlatformFeature.CompanyMapInitiative))
+        var initiativeOn = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
+        var previewOn = BedrijvenkaartSsrPreview.IsEnabled(configuration);
+        if (!initiativeOn && !previewOn)
         {
             return null;
         }
@@ -44,6 +48,6 @@ internal static class BedrijvenkaartSsrData
         }
 
         var openCount = pins.Count(p => p.OpenForInitiative);
-        return new PageModel(pins, radiusKm, openCount, true);
+        return new PageModel(pins, radiusKm, openCount, initiativeOn);
     }
 }
