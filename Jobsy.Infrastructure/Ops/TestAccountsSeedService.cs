@@ -1172,12 +1172,12 @@ public sealed class TestAccountsSeedService
             {
                 Id = TestAccountsIds.SchoolClassGroep78,
                 SchoolId = school.Id,
-                Name = "7A",
+                Name = "2A",
                 Level = SchoolLevel.Groep78,
                 QuestionSet = PupilQuestionSet.Groep78,
-                Year = 7,
+                Year = 8,
                 SchoolYearStart = schoolYearStart,
-                PupilCount = 5,
+                PupilCount = 10,
                 IsTestData = true,
                 CreatedAtUtc = DateTime.UtcNow
             };
@@ -1186,12 +1186,12 @@ public sealed class TestAccountsSeedService
         else
         {
             groepClass.IsTestData = true;
-            groepClass.Name = "7A";
+            groepClass.Name = "2A";
             groepClass.Level = SchoolLevel.Groep78;
             groepClass.QuestionSet = PupilQuestionSet.Groep78;
-            groepClass.Year = 7;
+            groepClass.Year = 8;
             groepClass.SchoolYearStart = schoolYearStart;
-            groepClass.PupilCount = 5;
+            groepClass.PupilCount = 10;
         }
 
         await EnsurePupilCodesAsync(groepClass, insertedGroep, dryRun, cancellationToken);

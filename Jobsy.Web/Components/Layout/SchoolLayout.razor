@@ -26,7 +26,10 @@
             }
             else
             {
-                <EntScopeChip Label="@_scopeLabel" SubLabel="@_roleLabel" />
+                <div class="sch-topbar__scope-text">
+                    <span class="sch-topbar__scope-name">@_scopeLabel</span>
+                    <span class="sch-topbar__scope-role">@_roleLabel</span>
+                </div>
             }
         </div>
         <div class="sch-topbar__account">
@@ -81,7 +84,7 @@
     <nav class="sch-bottom-nav" aria-label="@Culture["Nav.Main"]">
         @foreach (var item in _bottom)
         {
-            var active = IsActive(item.Href);
+            var active = IsBottomNavActive(item.LabelKey, item.Href);
             <a class="sch-bottom-nav__item @(active ? "is-active" : null)" href="@item.Href">@Culture[item.LabelKey]</a>
         }
     </nav>
@@ -242,6 +245,22 @@
         if (path == "/")
         {
             path = HomeHref;
+        }
+
+        return ScholenNavRouting.IsNavActive(path, href);
+    }
+
+    private bool IsBottomNavActive(string labelKey, string href)
+    {
+        var path = CurrentPath();
+        if (path == "/")
+        {
+            path = HomeHref;
+        }
+
+        if (HomeHref.Equals("/school", StringComparison.OrdinalIgnoreCase))
+        {
+            return ScholenNavRouting.IsSchoolBottomNavActive(path, labelKey, href);
         }
 
         return ScholenNavRouting.IsNavActive(path, href);

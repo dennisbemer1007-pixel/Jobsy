@@ -1,7 +1,9 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Hosting;
 using Jobsy.Infrastructure.Ops;
+using Jobsy.Infrastructure.Scholen;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -78,6 +80,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
 
         await TryRepairAcceptatieTestCandidateAsync(stoppingToken);
         await TryEnsureAcceptatieSollicitatiesDemoAsync(stoppingToken);
+        await TryEnsureAcceptatieScholenClass2ACodesAsync(stoppingToken);
 
         try
         {
@@ -133,6 +136,38 @@ public sealed class DatabaseSeedHostedService : BackgroundService
     /// Acceptatie only: idempotent sollicitaties mockup rows for the CLI test candidate
     /// (incl. <c>lobsy-test@mail.grokbot.com</c> when flagged as test account).
     /// </summary>
+    private async Task TryEnsureAcceptatieScholenClass2ACodesAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var pupilCodes = scope.ServiceProvider.GetService<IPupilCodeService>();
+            if (pupilCodes is null)
+            {
+                _logger.LogInformation(
+                    "Acceptatie scholen 2A codes: skipped (Scholen:CodeHmacKey / IPupilCodeService unavailable).");
+                return;
+            }
+
+            await AcceptatieScholenClass2APupilCodesEnsurer.TryEnsureAsync(
+                db,
+                pupilCodes,
+                _configuration,
+                _logger,
+                stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Acceptatie scholen 2A pupil codes ensure failed; API continues.");
+        }
+    }
+
     private async Task TryEnsureAcceptatieSollicitatiesDemoAsync(CancellationToken stoppingToken)
     {
         try

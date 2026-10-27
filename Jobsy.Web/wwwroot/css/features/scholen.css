@@ -21,6 +21,24 @@
 }.sch-topbar__scope {
     flex: 1;
     min-width: 0;
+}.sch-topbar__scope-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    max-width: 100%;
+}.sch-topbar__scope-name {
+    font-weight: 600;
+    font-size: var(--text-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}.sch-topbar__scope-role {
+    font-size: var(--text-xs, 0.75rem);
+    opacity: 0.85;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }.sch-topbar .ent-scope-chip,
 .sch-topbar .ent-scope-chip__btn {
     max-width: 100%;
