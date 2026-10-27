@@ -20,10 +20,12 @@
 }
 else if (!_enabled)
 {
-    <section class="ll-card">
-        <p class="muted">@Culture["School.FeatureDisabled"]</p>
-        <a class="btn-primary" href="/leerling/dit-ben-jij">@Culture["LeerlingPassport.Page.Back"]</a>
-    </section>
+    <div class="ll-reis" data-testid="leerling-paspoort-disabled">
+        <section class="ll-card">
+            <p class="muted">@Culture["LeerlingPassport.FeatureDisabled"]</p>
+            <a class="btn-primary" href="/leerling/dit-ben-jij">@Culture["LeerlingPassport.Page.Back"]</a>
+        </section>
+    </div>
 }
 else if (_model is null)
 {

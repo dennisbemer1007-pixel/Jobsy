@@ -77,7 +77,7 @@ public static class FeatureFlagRegistry
             Def("VacancyContentModerationEnabled", FeatureFlagAdminGroup.Werkgever, null, exposedOnPublicEndpoint: false, defaultValue: true),
 
             Def("SchoolsEnabled", FeatureFlagAdminGroup.Scholen, PlatformFeature.Schools, pub, false),
-            Def("PupilPassportV2Enabled", FeatureFlagAdminGroup.Scholen, PlatformFeature.PupilPassportV2, pub, false, "Jobsy:PupilPassportV2Enabled"),
+            Def("PupilPassportV2Enabled", FeatureFlagAdminGroup.Scholen, PlatformFeature.PupilPassportV2, pub, false, "JobsyFeatures:PupilPassportV2Enabled"),
             Def("StudentPassportEnabled", FeatureFlagAdminGroup.Scholen, PlatformFeature.StudentPassport, pub, false, "Jobsy:StudentPassportEnabled"),
 
             Def("TestsV2Enabled", FeatureFlagAdminGroup.Tests, PlatformFeature.TestsV2, pub, false),

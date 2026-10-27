@@ -116,4 +116,41 @@ public sealed class AcceptatieActivityLogEnsurerTests
             "SchoolsEnabled",
             PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson));
     }
+
+    [Fact]
+    public async Task EnsurePupilPassportV2Enabled_turns_on_locked_off_acceptatie_row()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        await using var db = new JobsyDbContext(options);
+
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            PupilPassportV2Enabled = false,
+            AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(null, "PupilPassportV2Enabled")
+        });
+        await db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Lobsy:DeploymentEnvironment"] = "Acceptatie",
+                ["JobsyFeatures:SchoolsEnabled"] = "true",
+                ["JobsyFeatures:PupilPassportV2Enabled"] = "true"
+            })
+            .Build();
+
+        await AcceptatiePlatformFeatureEnsurer.EnsurePupilPassportV2EnabledAsync(
+            db,
+            config,
+            NullLogger.Instance);
+
+        var row = await db.PlatformFeatureSettings.SingleAsync();
+        Assert.True(row.PupilPassportV2Enabled);
+        Assert.DoesNotContain(
+            "PupilPassportV2Enabled",
+            PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson));
+    }
 }

@@ -349,6 +349,32 @@ else
             ApplySaveResponse(predicted, itemId, value);
         }
 
+        if (predicted is not null
+            && (predicted.Completed || string.Equals(predicted.NextStep, "done", StringComparison.OrdinalIgnoreCase)))
+        {
+            _leaving = true;
+            Nav.NavigateTo("/leerling/dit-ben-jij");
+            _busy = true;
+            try
+            {
+                await Api.SavePupilAnswerAsync(itemId, value);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                _windowClosed = true;
+            }
+            catch
+            {
+                _saveError = Culture["Leerling.Reis.SaveFailed"];
+            }
+            finally
+            {
+                _busy = false;
+            }
+
+            return;
+        }
+
         _busy = true;
         try
         {
@@ -477,12 +503,22 @@ else
         }
 
         var step = PupilFlow.Next(_def, answers, _state.IslandDone, puzzles);
+        var answeredCount = answers.Count;
         if (step.Kind is PupilFlowStepKind.Done)
         {
-            return null;
+            return new PupilAnswerResponse(
+                first,
+                answeredCount,
+                _def.PlatesShed(answeredCount),
+                Completed: true,
+                NextItemId: null,
+                NextWorldKey: null,
+                NeedsIsland: false,
+                ResultPending: false,
+                NextStep: "done",
+                NextPuzzleKey: null);
         }
 
-        var answeredCount = answers.Count;
         return new PupilAnswerResponse(
             step.Kind == PupilFlowStepKind.Question ? step.Index : first,
             answeredCount,
