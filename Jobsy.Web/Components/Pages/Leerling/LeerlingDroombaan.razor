@@ -1,19 +1,22 @@
 @page "/leerling/droombaan"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @layout LeerlingLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Rules
 @using Jobsy.Core.Scholen
+@using Microsoft.AspNetCore.Antiforgery
+@using System.Net
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IServiceProvider Services
-@implements IDisposable
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
 <PageTitle>@Culture["LeerlingDroom.Title"] · Lobsy</PageTitle>
 
 @if (_loading)
@@ -40,34 +43,61 @@ else
             <h1>@Culture["LeerlingDroom.Lead"]</h1>
             <LeerlingSpeak Text="@Spoken" SpeechKey="ll-dream" />
 
-            <label class="ll-field">
-                <span class="visually-hidden">@Culture["LeerlingDroom.Search"]</span>
-                <input type="search"
-                       value="@_search"
-                       @oninput="OnSearchInput"
-                       placeholder="@Culture["LeerlingDroom.Search"]"
-                       autocomplete="off"
-                       enterkeyhint="search"
-                       data-testid="leerling-droombaan-search" />
-            </label>
-
-            @if (_matches.Count > 0)
+            @if (!string.IsNullOrEmpty(_formError))
             {
-                <ul class="ll-dream__matches">
-                    @foreach (var job in _matches)
-                    {
-                        <li>
-                            <button type="button" class="ll-dream__pick" @onclick="() => SelectJob(job.Key)">
-                                @job.TitleNl
-                            </button>
-                        </li>
-                    }
-                </ul>
+                <p class="ll-error" role="alert">@_formError</p>
             }
 
-            <button type="button" class="btn-secondary ll-dream__undecided" @onclick="() => SelectJob(PupilDreamJobFit.UndecidedKey)">
-                @Culture["LeerlingDroom.Undecided"]
-            </button>
+            <form method="post"
+                  action="@PupilDroombaanFormEndpoints.Path"
+                  class="ll-dream__form"
+                  data-enhance="false"
+                  autocomplete="off">
+                @if (_antiforgery is not null)
+                {
+                    @((MarkupString)_antiforgery)
+                }
+                <label class="ll-field">
+                    <span class="visually-hidden">@Culture["LeerlingDroom.Search"]</span>
+                    <input type="search"
+                           name="jobTitle"
+                           value="@_inputValue"
+                           list="leerling-droombaan-datalist"
+                           placeholder="@Culture["LeerlingDroom.Search"]"
+                           autocomplete="off"
+                           enterkeyhint="search"
+                           data-testid="leerling-droombaan-search" />
+                </label>
+                <datalist id="leerling-droombaan-datalist">
+                    @foreach (var job in DreamJobCatalog.All)
+                    {
+                        <option value="@job.TitleNl"></option>
+                    }
+                </datalist>
+                <button type="submit" name="action" value="save" class="btn-primary ll-dream__save">
+                    @Culture["LeerlingDroom.Save"]
+                </button>
+                <button type="submit" name="action" value="undecided" class="btn-secondary ll-dream__undecided">
+                    @Culture["LeerlingDroom.Undecided"]
+                </button>
+            </form>
+
+            <p class="ll-dream__pick-label">@Culture["LeerlingDroom.PickFromList"]</p>
+            <ul class="ll-dream__matches">
+                @foreach (var job in DreamJobCatalog.All.Take(12))
+                {
+                    <li>
+                        <form method="post" action="@PupilDroombaanFormEndpoints.Path" data-enhance="false">
+                            @if (_antiforgery is not null)
+                            {
+                                @((MarkupString)_antiforgery)
+                            }
+                            <input type="hidden" name="key" value="@job.Key" />
+                            <button type="submit" name="action" value="pick" class="ll-dream__pick">@job.TitleNl</button>
+                        </form>
+                    </li>
+                }
+            </ul>
 
             @if (_dream is not null && !string.IsNullOrWhiteSpace(_dream.JobKey)
                  && !string.Equals(_dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
@@ -117,11 +147,6 @@ else
                 </div>
                 <p>@Culture[PupilCopy.Key(_result.QuestionSet, "LeerlingDroom.UndecidedHint")]</p>
             }
-
-            @if (!string.IsNullOrEmpty(_error))
-            {
-                <p class="ll-error" role="alert">@_error</p>
-            }
         </section>
 
         <div class="ll-result__actions">
@@ -140,18 +165,14 @@ else
     private bool _sessionLost;
     private PupilResultPageDto? _result;
     private DreamJobRouteStubDto? _dream;
-    private string _search = "";
-    private bool _contentReady;
-    private Task? _initialLoadTask;
-    private IReadOnlyList<DreamJob> _matches = [];
-    private string? _error;
+    private string _inputValue = "";
+    private string? _formError;
+    private string? _antiforgery;
 
     private string CoachHint =>
         !string.IsNullOrWhiteSpace(_dream?.JobTitle)
             ? $"{_dream.JobTitle}? Mooi."
             : Culture["Leerling.Coach.Dream"];
-
-    private CancellationTokenSource? _matchDebounce;
 
     private string Spoken
     {
@@ -178,23 +199,33 @@ else
         }
     }
 
-    protected override Task OnInitializedAsync()
-        => _initialLoadTask ??= LoadAsync(isInitial: true);
-
-    private Task RetryLoadAsync() => LoadAsync(isInitial: false);
-
-    private async Task LoadAsync(bool isInitial = false)
+    protected override async Task OnInitializedAsync()
     {
-        if (isInitial && _contentReady)
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
         {
-            return;
+            _antiforgery = Antiforgery.GetAndStoreTokens(http).RequestToken is { } token
+                ? $"""<input type="hidden" name="{AntiforgeryFieldName}" value="{WebUtility.HtmlEncode(token)}" />"""
+                : null;
+            _formError = http.Request.Query["error"].ToString() switch
+            {
+                "unknown" => "Kies een beroep uit de lijst of typ een bekende titel.",
+                "save" => "Kon droombaan niet bewaren.",
+                "retry" => Culture["Common.Error.TryAgain"],
+                _ => null
+            };
         }
 
-        if (!_contentReady)
-        {
-            _loading = true;
-        }
+        await LoadAsync();
+    }
 
+    private const string AntiforgeryFieldName = "__RequestVerificationToken";
+
+    private Task RetryLoadAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
         _sessionLost = false;
         try
         {
@@ -216,7 +247,7 @@ else
 
             _result = outcome.Value;
             _dream = _result.DreamJob;
-            _contentReady = true;
+            _inputValue = ResolveInputValue(_dream);
         }
         finally
         {
@@ -224,63 +255,18 @@ else
         }
     }
 
-    private void OnSearchInput(ChangeEventArgs e)
+    private static string ResolveInputValue(DreamJobRouteStubDto? dream)
     {
-        _search = e.Value?.ToString() ?? "";
-        ScheduleMatchUpdate();
-    }
-
-    private void ScheduleMatchUpdate()
-    {
-        _matchDebounce?.Cancel();
-        _matchDebounce?.Dispose();
-        _matchDebounce = new CancellationTokenSource();
-        var token = _matchDebounce.Token;
-        _ = UpdateMatchesDebouncedAsync(token);
-    }
-
-    private async Task UpdateMatchesDebouncedAsync(CancellationToken cancellationToken)
-    {
-        try
+        if (dream is null || string.IsNullOrWhiteSpace(dream.JobKey))
         {
-            await Task.Delay(250, cancellationToken);
-            var query = _search;
-            _matches = string.IsNullOrWhiteSpace(query) ? [] : DreamJobCatalog.Search(query, 8);
-            if (!cancellationToken.IsCancellationRequested)
-            {
-                await InvokeAsync(StateHasChanged);
-            }
+            return "";
         }
-        catch (OperationCanceledException)
-        {
-            // superseded by a newer keystroke
-        }
-    }
 
-    private async Task SelectJob(string key)
-    {
-        _error = null;
-        try
+        if (string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
         {
-            var resp = await Api.SavePupilDreamJobAsync(key);
-            if (resp is null)
-            {
-                _error = "Kon droombaan niet bewaren.";
-                return;
-            }
-
-            _dream = resp.DreamJob;
-            _matches = [];
+            return "";
         }
-        catch
-        {
-            _error = "Kon droombaan niet bewaren.";
-        }
-    }
 
-    public void Dispose()
-    {
-        _matchDebounce?.Cancel();
-        _matchDebounce?.Dispose();
+        return dream.JobTitle?.Trim() ?? "";
     }
 }

@@ -94,7 +94,7 @@ public static class PupilPassportCopy
         return Get($"LeerlingPassport.Vo.Archetype.{pair}");
     }
 
-    private static char JobRiasecLetter(string jobKey)
+    public static char JobRiasecLetter(string jobKey)
     {
         foreach (var (letter, jobs) in PupilRiasecJobIdeas.ByLetter)
         {

@@ -74,7 +74,7 @@ public class LettermintRequestTests
 
 public class MailRecipientAllowListTests
 {
-    private const string Pattern = @"^test-[^@]+@lobsy\.nl$";
+    private const string Pattern = @"^(test-[^@]+@lobsy\.nl|.+@mail\.grokbot\.com)$";
 
     public MailRecipientAllowListTests() => MailRecipientAllowList.ResetForTests();
 
@@ -94,6 +94,8 @@ public class MailRecipientAllowListTests
     [InlineData("Lobsy <test-beheer@lobsy.nl>", false)]
     [InlineData("jan@lobsy.nl", true)]
     [InlineData("test-jan@example.com", true)]
+    [InlineData("lobsy-test+s14@mail.grokbot.com", false)]
+    [InlineData("other@gmail.com", true)]
     public void Acceptatie_pattern_allows_only_test_addresses(string recipient, bool blocked)
     {
         var decision = MailRecipientAllowList.Evaluate(recipient, new MailOptions

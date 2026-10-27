@@ -339,7 +339,7 @@ projects:
               - key: Cors__AllowedOrigins__1
                 value: "https://acceptatie.lobsy.nl"
               # Acceptatie mail: Lettermint. Without the key, mail is not sent (no Resend fallback).
-              # Only test-*@lobsy.nl (and one extra address) may receive mail.
+              # test-*@lobsy.nl, E2E grokbot inboxes (+tags), and one extra address may receive mail.
               - key: Mail__Provider
                 value: Lettermint
               - key: Mail__ResendApiKey
@@ -349,7 +349,7 @@ projects:
               - key: Lettermint__ApiKey
                 sync: false
               - key: Mail__AllowedRecipientPattern
-                value: '^test-[^@]+@lobsy\.nl$'
+                value: '^(test-[^@]+@lobsy\.nl|.+@mail\.grokbot\.com)$'
               - key: Mail__AllowedRecipientAddresses__0
                 sync: false
               # AI provider for Acceptatie. Leave unset to stay on OpenAI.

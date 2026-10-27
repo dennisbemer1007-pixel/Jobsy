@@ -299,6 +299,8 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.Title"] = "Droombaan-checker";
         d["LeerlingDroom.Lead"] = "Wat wil jij later worden?";
         d["LeerlingDroom.Search"] = "Zoek een beroep";
+        d["LeerlingDroom.Save"] = "Bewaar";
+        d["LeerlingDroom.PickFromList"] = "Of kies uit de lijst (klik = direct bewaren):";
         d["LeerlingDroom.Undecided"] = "Weet ik nog niet";
         d["LeerlingDroom.UndecidedHint"] = "Praat erover met je leraar.";
         d["LeerlingDroom.UndecidedHint.Vo"] = "Praat erover met je docent of mentor.";

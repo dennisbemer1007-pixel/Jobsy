@@ -62,7 +62,9 @@ internal static class PupilPassportGroep78PdfRenderer
 
     private static void Header(IContainer c, PupilPassportPdfModel m)
     {
-        var nl = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
+        var dateCulture = PupilVerhaalLocalized.IsEnglish(m.Language)
+            ? System.Globalization.CultureInfo.GetCultureInfo("en-GB")
+            : System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
         c.Background(Purple).Padding(10).Row(row =>
         {
             row.RelativeItem().Column(col =>
@@ -75,7 +77,7 @@ internal static class PupilPassportGroep78PdfRenderer
             {
                 col.Item().AlignRight().Text(m.ClassLabel).FontSize(8f).FontColor(Colors.White);
                 col.Item().AlignRight().Text(m.SchoolName).FontSize(7.5f).FontColor(Colors.White).LineHeight(1.15f);
-                col.Item().AlignRight().Text(m.Date.ToString("d MMM yyyy", nl)).FontSize(7f).FontColor(Colors.White);
+                col.Item().AlignRight().Text(m.Date.ToString("d MMM yyyy", dateCulture)).FontSize(7f).FontColor(Colors.White);
                 col.Item().AlignRight().Text(m.DisplayCode).FontFamily(Fonts.CourierNew).FontSize(7.5f).FontColor(Colors.White);
             });
         });
@@ -157,7 +159,7 @@ internal static class PupilPassportGroep78PdfRenderer
                         left.Item().Row(h =>
                         {
                             h.ConstantItem(9).Svg(PupilPassportIcons.Icon("check", Color.FromHex("#16865a"), 9));
-                            h.RelativeItem().Text(PupilVerhaalCopy.Get("LeerlingDroom.HaveTitle")).SemiBold().FontSize(7.5f);
+                            h.RelativeItem().Text(T(m, "LeerlingDroom.HaveTitle")).SemiBold().FontSize(7.5f);
                         });
                         foreach (var h in m.DreamHaveItems.Take(3))
                         {
@@ -169,7 +171,7 @@ internal static class PupilPassportGroep78PdfRenderer
                         right.Item().Row(h =>
                         {
                             h.ConstantItem(9).Svg(PupilPassportIcons.Icon("arrow", Color.FromHex("#d9452f"), 9));
-                            h.RelativeItem().Text(PupilVerhaalCopy.Get("LeerlingDroom.NeedTitle")).SemiBold().FontSize(7.5f);
+                            h.RelativeItem().Text(T(m, "LeerlingDroom.NeedTitle")).SemiBold().FontSize(7.5f);
                         });
                         foreach (var n in m.DreamLearnItems.Take(2))
                         {
@@ -202,7 +204,7 @@ internal static class PupilPassportGroep78PdfRenderer
                 for (var i = 0; i < steps.Count; i++)
                 {
                     var step = steps[i];
-                    var shortTitle = RouteShortTitle(step.Title);
+                    var shortTitle = RouteShortTitle(step.Title, m.Language);
                     var detail = RouteShortDetail(step.Detail);
                     row.RelativeItem().Column(x =>
                     {
@@ -235,7 +237,7 @@ internal static class PupilPassportGroep78PdfRenderer
         });
     }
 
-    private static string RouteShortTitle(string title)
+    private static string RouteShortTitle(string title, string language)
     {
         var part = title.Split('·', 2, StringSplitOptions.TrimEntries)[0];
         var colon = part.IndexOf(':');
@@ -250,14 +252,17 @@ internal static class PupilPassportGroep78PdfRenderer
             part = part[..dash].Trim();
         }
 
-        part = part switch
+        part = part.TrimEnd('!', '.');
+        part = PupilPassportLocalizedCopy.RouteStepTitle(part, language);
+
+        if (part.Contains("Dierenarts", StringComparison.Ordinal) && !PupilVerhaalLocalized.IsEnglish(language))
         {
-            var p when p.Contains("groep 8", StringComparison.OrdinalIgnoreCase) => "Groep 8",
-            var p when p.Contains("Diergeneeskunde", StringComparison.Ordinal) => "Studie",
-            var p when p.Contains("havo", StringComparison.OrdinalIgnoreCase) || p.Contains("vwo", StringComparison.OrdinalIgnoreCase) => "Havo/vwo",
-            var p when p.Contains("Dierenarts", StringComparison.Ordinal) => "Dierenarts!",
-            _ => part
-        };
+            part = "Dierenarts!";
+        }
+        else if (part.Contains("Dierenarts", StringComparison.OrdinalIgnoreCase))
+        {
+            part = "Vet!";
+        }
 
         part = part.TrimEnd('!', '.');
 

@@ -44,7 +44,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             .ToList();
 
         var jobKeys = keys.JobIdeaKeys;
-        var cards = PupilPassportJobCards.Build(jobKeys, likes, ctx.Set);
+        var cards = PupilPassportJobCards.Build(jobKeys, likes, ctx.Set, lang);
         var strengths = PupilPassportStrengths.For(result, lang);
         var discovery = PupilPassportLocalizedCopy.DiscoveryQuestions(dream.JobKey, holland, lang);
         var tips = PupilPassportLocalizedCopy.HomeClassTips(dream.JobKey, riasecLetter, lang);

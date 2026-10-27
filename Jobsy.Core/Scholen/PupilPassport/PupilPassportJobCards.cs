@@ -8,15 +8,16 @@ public static class PupilPassportJobCards
     public static IReadOnlyList<PupilPassportOccupationCard> Build(
         IReadOnlyList<string> jobKeys,
         IReadOnlyList<string> likeLabels,
-        PupilQuestionSet set)
+        PupilQuestionSet set,
+        string language = "nl")
     {
         var cards = new List<PupilPassportOccupationCard>();
         var rank = 1;
         foreach (var key in jobKeys.Take(3))
         {
-            var title = PupilRiasecJobIdeas.TitleFor(key);
-            var domain = PupilPassportCopy.JobDomain(key);
-            var blurb = PupilPassportCopy.JobBlurb(key, set);
+            var title = PupilPassportLocalizedCopy.JobTitle(key, language);
+            var domain = PupilPassportLocalizedCopy.JobDomain(key, language);
+            var blurb = PupilPassportLocalizedCopy.JobBlurb(key, set, language);
             var tags = FitTags(likeLabels);
             cards.Add(new PupilPassportOccupationCard(
                 rank,
