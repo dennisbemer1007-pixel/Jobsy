@@ -58,7 +58,7 @@ internal static class EmployerApplicationsListSsrShells
         var actionBase = action.Split('?', 2)[0];
         sb.Append("<form method=\"get\" action=\"");
         sb.Append(WebUtility.HtmlEncode(actionBase));
-        sb.Append("\" class=\"ent-filter-bar\" data-enhance=\"false\">");
+        sb.Append("\" class=\"ent-filter-bar\" data-wg-list-filter-form=\"1\" data-enhance=\"false\">");
         sb.Append("<input type=\"hidden\" name=\"view\" value=\"");
         sb.Append(ApplicationPipelineRules.ViewList);
         sb.Append("\" />");
@@ -71,7 +71,7 @@ internal static class EmployerApplicationsListSsrShells
 
         sb.Append("<label class=\"ent-filter-bar__select\"><span class=\"visually-hidden\">");
         sb.Append(WebUtility.HtmlEncode(culture["WgApp.Filter.Vacancy"]));
-        sb.Append("</span><select name=\"vacancyId\" onchange=\"this.form.submit()\">");
+        sb.Append("</span><select name=\"vacancyId\">");
         sb.Append("<option value=\"\">");
         sb.Append(WebUtility.HtmlEncode(culture["WgApp.Filter.Vacancy"]));
         sb.Append("</option>");
@@ -99,7 +99,7 @@ internal static class EmployerApplicationsListSsrShells
             sb.Append(" checked");
         }
 
-        sb.Append(" onchange=\"this.form.submit()\" /> ");
+        sb.Append(" /> ");
         sb.Append(WebUtility.HtmlEncode(culture["WgApp.Filter.Overdue"]));
         sb.Append("</label></form>");
     }

@@ -646,5 +646,9 @@
   "js/uwv-ondernemer.js": {
     "v": "20261026-r10-e0ba4315",
     "sha256": "e0ba4315043921c56efe2f6a865975f98b33ecce6e8c66255b3d978c684a2b06"
+  },
+  "js/wg-applications-list-ssr.js": {
+    "v": "20261027-r11b-7ee9dafa",
+    "sha256": "7ee9dafa4fbc370e76b1b7cdbec985b16a2edcd1c0e6a4849d26bd0878989687"
   }
 }

@@ -1,5 +1,6 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Applications
+@using Jobsy.Web.Werkgever
 @using Jobsy.Web.Hosting
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
@@ -424,6 +425,10 @@
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/vacancy-wizard.js")}")" nonce="@Nonce" defer></script>
         }
+        @if (IncludeWerkgeverApplicationsListScript)
+        {
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/wg-applications-list-ssr.js")}")" nonce="@Nonce" defer></script>
+        }
         @if (IncludeOnboardingClientScript)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-client-form.js")}")" nonce="@Nonce" defer></script>
@@ -533,6 +538,9 @@
     private bool IncludeVacancyWizardScript =>
         PageAssetCatalog.IncludeVacancyWizardScript(RequestPath);
 
+    private bool IncludeWerkgeverApplicationsListScript =>
+        PageAssetCatalog.IncludeWerkgeverApplicationsListScript(RequestPath);
+
     private bool IncludeOnboardingClientScript =>
         PageAssetCatalog.IncludeOnboardingClientScript(RequestPath);
 
@@ -562,7 +570,8 @@
     private bool IncludeWerkgeverNoBlazorAfterMatchCss =>
         SkipBlazorForPage
         && !IncludeBanenkaartClientScript
-        && AfterMatchWerkgeverSsrPaths.IsCanonicalOrInternalPath(RequestPath);
+        && (AfterMatchWerkgeverSsrPaths.IsCanonicalOrInternalPath(RequestPath)
+            || WerkgeverApplicationsListSsrPaths.IsListHostPath(RequestPath));
 
     private bool DisableEnhancedNav =>
         AfterMatchWerkgeverSsrPaths.ShouldDisableBlazorAndEnhancedNav(RequestPath);
