@@ -1172,7 +1172,7 @@ public sealed class TestAccountsSeedService
             {
                 Id = TestAccountsIds.SchoolClassGroep78,
                 SchoolId = school.Id,
-                Name = "2A",
+                Name = DemoSchoolIds.ClassGroep78Name,
                 Level = SchoolLevel.Groep78,
                 QuestionSet = PupilQuestionSet.Groep78,
                 Year = 8,
@@ -1186,7 +1186,7 @@ public sealed class TestAccountsSeedService
         else
         {
             groepClass.IsTestData = true;
-            groepClass.Name = "2A";
+            groepClass.Name = DemoSchoolIds.ClassGroep78Name;
             groepClass.Level = SchoolLevel.Groep78;
             groepClass.QuestionSet = PupilQuestionSet.Groep78;
             groepClass.Year = 8;

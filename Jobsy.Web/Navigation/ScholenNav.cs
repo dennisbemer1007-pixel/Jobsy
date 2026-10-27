@@ -90,7 +90,7 @@ public static class ScholenNav
     public static readonly (string LabelKey, string Href)[] SchoolBottomNav =
     [
         ("School.Nav.Dashboard", "/school"),
-        ("School.Nav.Classes", "/school/klassen"),
+        ("School.Nav.ClassesBottom", "/school/klassen"),
         ("School.Nav.Results", "/school/resultaten"),
         ("School.Nav.More", "/school"),
     ];

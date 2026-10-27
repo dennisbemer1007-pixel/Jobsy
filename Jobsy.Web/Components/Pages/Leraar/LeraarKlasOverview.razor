@@ -64,7 +64,7 @@ else
             <p class="sch-pill sch-pill--ok">@Culture["School.TestWindow.StatusOpen"] · @Culture["School.TestWindow.Until"] @until.ToString("dd-MM-yyyy")</p>
         }
         <div class="sch-admin-toolbar sch-toolbar-wrap">
-            <button type="button" class="btn-compact" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
+            <button type="button" class="btn-compact" @ref="_windowTrigger" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
             <button type="button" class="btn-compact" @onclick="DownloadPdf" disabled="@_busy">@Culture["School.CodeList.Pdf"]</button>
             <button type="button" class="btn-compact" @onclick="DownloadCsv" disabled="@_busy">@Culture["School.CodeList.Csv"]</button>
         </div>
@@ -194,6 +194,7 @@ else
                   ClosesOn="_overview?.TestWindowClosesOn"
                   Busy="_busy"
                   Error="@_windowError"
+                  RestoreFocusTo="_windowTrigger"
                   OnAction="OnWindowAction" />
 
 @code {
@@ -203,6 +204,7 @@ else
     private bool _loading = true;
     private bool _busy;
     private bool _windowOpen;
+    private ElementReference _windowTrigger;
     private string? _actionError;
     private string? _loadError;
     private string? _windowError;

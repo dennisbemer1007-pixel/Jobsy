@@ -12,7 +12,8 @@ using Microsoft.Extensions.Logging;
 namespace Jobsy.Infrastructure.Ops;
 
 /// <summary>
-/// Acceptatie: idempotent demo pupil codes for <c>leraar@jobsy.local</c> klas 2A (≥10 codes).
+/// Acceptatie: idempotent groep 7/8 demo for <c>leraar@jobsy.local</c> (≥10 pupil codes, testvenster open).
+/// VMBO klas 2A blijft apart; G78 demo is o.a. <see cref="DemoSchoolIds.ClassGroep78Name"/> op demo college.
 /// </summary>
 public static class AcceptatieScholenClass2APupilCodesEnsurer
 {
@@ -36,50 +37,45 @@ public static class AcceptatieScholenClass2APupilCodesEnsurer
             return false;
         }
 
-        var teacher = await db.Users.AsNoTracking()
+        var teacher = await db.Users
             .FirstOrDefaultAsync(
                 u => u.Email == LeraarEmail && u.Role == UserRole.Teacher,
                 cancellationToken);
         if (teacher?.SchoolId is null)
         {
             logger.LogInformation(
-                "Acceptatie scholen 2A codes: skipped (teacher {Email} missing).",
+                "Acceptatie scholen G78 codes: skipped (teacher {Email} missing).",
                 LeraarEmail);
             return false;
         }
 
-        var schoolClass = await db.SchoolClasses
-            .FirstOrDefaultAsync(
-                c => c.Id == TestAccountsIds.SchoolClassGroep78 && c.SchoolId == teacher.SchoolId,
-                cancellationToken);
-        if (schoolClass is null)
-        {
-            schoolClass = await db.SchoolClasses
-                .FirstOrDefaultAsync(
-                    c => c.SchoolId == teacher.SchoolId
-                         && c.Name == "2A"
-                         && c.Level == SchoolLevel.Groep78,
-                    cancellationToken);
-        }
-
+        var schoolClass = await ResolveGroep78ClassAsync(db, teacher.SchoolId.Value, cancellationToken);
         if (schoolClass is null)
         {
             logger.LogInformation(
-                "Acceptatie scholen 2A codes: skipped (no Groep78 class 2A for school {SchoolId}).",
+                "Acceptatie scholen G78 codes: skipped (no groep 7/8 class for school {SchoolId}).",
                 teacher.SchoolId);
             return false;
         }
 
         var changed = false;
-        if (!string.Equals(schoolClass.Name, "2A", StringComparison.Ordinal))
-        {
-            schoolClass.Name = "2A";
-            changed = true;
-        }
-
         if (schoolClass.PupilCount < MinimumPupilCodes)
         {
             schoolClass.PupilCount = MinimumPupilCodes;
+            changed = true;
+        }
+
+        if (schoolClass.TestWindow != TestWindowState.Open)
+        {
+            schoolClass.TestWindow = TestWindowState.Open;
+            changed = true;
+        }
+
+        if (schoolClass.QuestionSet != PupilQuestionSet.Groep78
+            || schoolClass.Level != SchoolLevel.Groep78)
+        {
+            schoolClass.QuestionSet = PupilQuestionSet.Groep78;
+            schoolClass.Level = SchoolLevel.Groep78;
             changed = true;
         }
 
@@ -101,21 +97,97 @@ public static class AcceptatieScholenClass2APupilCodesEnsurer
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        var existing = await db.PupilCodes.CountAsync(
-            c => c.SchoolClassId == schoolClass.Id,
-            cancellationToken);
-        var missing = schoolClass.PupilCount - existing;
+        var unused = await CountUnusedCodesAsync(db, schoolClass.Id, cancellationToken);
+        var missing = MinimumPupilCodes - unused;
         if (missing <= 0)
         {
-            return false;
+            return changed;
+        }
+
+        var total = await db.PupilCodes.CountAsync(c => c.SchoolClassId == schoolClass.Id, cancellationToken);
+        if (schoolClass.PupilCount < total + missing)
+        {
+            schoolClass.PupilCount = total + missing;
+            await db.SaveChangesAsync(cancellationToken);
         }
 
         await pupilCodes.GenerateAsync(missing, schoolClass, cancellationToken);
         logger.LogInformation(
-            "Acceptatie scholen 2A codes: generated {Count} codes for class {ClassId} (total target {Target}).",
+            "Acceptatie scholen G78 codes: generated {Count} unused codes for class {ClassId} ({Name}, unused now {Target}).",
             missing,
             schoolClass.Id,
-            schoolClass.PupilCount);
+            schoolClass.Name,
+            MinimumPupilCodes);
         return true;
     }
+
+    internal static async Task<SchoolClass?> ResolveGroep78ClassAsync(
+        JobsyDbContext db,
+        Guid schoolId,
+        CancellationToken cancellationToken)
+    {
+        if (schoolId == DemoSchoolIds.SchoolId)
+        {
+            var demo = await db.SchoolClasses
+                .FirstOrDefaultAsync(c => c.Id == DemoSchoolIds.ClassGroep78Id, cancellationToken);
+            if (demo is not null)
+            {
+                return demo;
+            }
+        }
+
+        if (schoolId == TestAccountsIds.School)
+        {
+            var test = await db.SchoolClasses
+                .FirstOrDefaultAsync(c => c.Id == TestAccountsIds.SchoolClassGroep78, cancellationToken);
+            if (test is not null)
+            {
+                return test;
+            }
+        }
+
+        var byName = await db.SchoolClasses
+            .Where(c => c.SchoolId == schoolId && c.Level == SchoolLevel.Groep78)
+            .OrderBy(c => c.Name == DemoSchoolIds.ClassGroep78Name ? 0 : 1)
+            .ThenBy(c => c.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (byName is not null)
+        {
+            return byName;
+        }
+
+        if (schoolId != DemoSchoolIds.SchoolId)
+        {
+            return null;
+        }
+
+        var yearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));
+        var created = new SchoolClass
+        {
+            Id = DemoSchoolIds.ClassGroep78Id,
+            SchoolId = schoolId,
+            Name = DemoSchoolIds.ClassGroep78Name,
+            Level = SchoolLevel.Groep78,
+            QuestionSet = PupilQuestionSet.Groep78,
+            Year = 8,
+            SchoolYearStart = yearStart,
+            PupilCount = MinimumPupilCodes,
+            TestWindow = TestWindowState.Open,
+            IsTestData = true,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.SchoolClasses.Add(created);
+        await db.SaveChangesAsync(cancellationToken);
+        return created;
+    }
+
+    internal static async Task<int> CountUnusedCodesAsync(
+        JobsyDbContext db,
+        Guid schoolClassId,
+        CancellationToken cancellationToken)
+        => await db.PupilCodes.CountAsync(
+            c => c.SchoolClassId == schoolClassId
+                 && c.Status == PupilCodeStatus.NotStarted
+                 && c.Progress == null,
+            cancellationToken);
 }

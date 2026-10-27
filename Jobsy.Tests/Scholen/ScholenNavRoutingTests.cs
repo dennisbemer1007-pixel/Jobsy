@@ -24,6 +24,7 @@ public sealed class ScholenNavRoutingTests
     [InlineData("/school/te-doen", "School.Nav.More", true)]
     [InlineData("/school/leraren", "School.Nav.More", true)]
     [InlineData("/school/klassen", "School.Nav.Classes", true)]
+    [InlineData("/school/klassen", "School.Nav.ClassesBottom", true)]
     public void IsSchoolBottomNavActive_separates_dashboard_and_meer(string path, string labelKey, bool expected)
     {
         var href = labelKey switch
@@ -31,6 +32,7 @@ public sealed class ScholenNavRoutingTests
             "School.Nav.Dashboard" => "/school",
             "School.Nav.More" => "/school",
             "School.Nav.Classes" => "/school/klassen",
+            "School.Nav.ClassesBottom" => "/school/klassen",
             _ => "/school"
         };
         var actual = Jobsy.Web.Navigation.ScholenNavRouting.IsSchoolBottomNavActive(path, labelKey, href);

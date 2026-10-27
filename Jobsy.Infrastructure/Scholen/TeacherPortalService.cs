@@ -136,7 +136,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
 
         var classes = await _db.SchoolClasses.AsNoTracking()
             .Where(c => classIds.Contains(c.Id) && c.SchoolYearStart == year)
-            .OrderBy(c => c.Name)
+            .OrderByDescending(c => c.Level == SchoolLevel.Groep78)
+            .ThenBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
         return classes

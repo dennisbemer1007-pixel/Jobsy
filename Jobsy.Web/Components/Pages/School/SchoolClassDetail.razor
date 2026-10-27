@@ -54,7 +54,7 @@ else
             <button type="button" class="btn-compact" @onclick="DownloadPdf" disabled="@_busy">@Culture["School.CodeList.Pdf"]</button>
             <button type="button" class="btn-compact" @onclick="DownloadCsv" disabled="@_busy">@Culture["School.CodeList.Csv"]</button>
             <button type="button" class="btn-compact" @onclick="AddCodes" disabled="@_busy">@Culture["School.CodeList.Add"]</button>
-            <button type="button" class="btn-primary" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
+            <button type="button" class="btn-primary" @ref="_windowTrigger" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
         </div>
         @if (!string.IsNullOrEmpty(_actionError))
         {
@@ -139,7 +139,8 @@ else
     </section>
 }
 
-<TestWindowDialog @bind-Open="_windowOpen"
+<TestWindowDialog RestoreFocusTo="_windowTrigger"
+                  @bind-Open="_windowOpen"
                   State="@(_detail?.TestWindow ?? TestWindowState.NotOpen)"
                   ClosesOn="_detail?.TestWindowClosesOn"
                   Busy="_busy"
@@ -173,6 +174,7 @@ else
     private bool _loading = true;
     private bool _busy;
     private bool _windowOpen;
+    private ElementReference _windowTrigger;
     private bool _editOpen;
     private bool _parentsCheck;
     private string? _actionError;

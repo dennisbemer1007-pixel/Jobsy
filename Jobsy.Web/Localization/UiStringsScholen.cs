@@ -228,6 +228,7 @@ public static class UiStringsScholen
         nl["School.Nav.Todo"] = "Te doen";
         nl["School.Nav.Pupils"] = "Leerlingen";
         nl["School.Nav.Classes"] = "Klassen & codes";
+        nl["School.Nav.ClassesBottom"] = "Klassen";
         nl["School.Nav.Results"] = "Resultaten";
         nl["School.Nav.Team"] = "Team";
         nl["School.Nav.Teachers"] = "Leraren";
