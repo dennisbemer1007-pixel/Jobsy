@@ -523,7 +523,7 @@ public class PupilStoryAndDreamJobTests
                 var dream = _renderer.RenderDreamRoute(result, progress, ctx);
                 Assert.NotEmpty(dream.RouteSteps);
                 Assert.StartsWith(
-                    "Nu: " + PupilDreamJobRoutes.NowLabel(ctx) + " — ",
+                    "Nu: " + PupilDreamJobRoutes.NowLabel(ctx) + " · ",
                     dream.RouteSteps[0],
                     StringComparison.Ordinal);
                 var blob = string.Join(" ", dream.RouteSteps.Concat(dream.HaveItems).Concat(dream.LearnItems)

@@ -159,6 +159,60 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Droombaan_search_keeps_fast_typing_right_after_load()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedCompletedWithDreamJobAsync("kok");
+        var baseUrl = EnsureWeb();
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 }
+        });
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var search = page.Locator("[data-testid=leerling-droombaan-search]");
+        await search.WaitForAsync();
+        await search.ClickAsync();
+        await search.FillAsync("");
+        const string typed = "Dierenarts";
+        await search.PressSequentiallyAsync(typed, new LocatorPressSequentiallyOptions { Delay = 60 });
+        await page.WaitForTimeoutAsync(500);
+        await Assertions.Expect(search).ToHaveValueAsync(typed);
+    }
+
+    [Fact(Timeout = 300_000)]
+    public async Task Paspoort_double_visit_and_english_switch_keep_session()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        await EnablePassportV2Async();
+        var seed = await SeedCompletedWithDreamJobAsync("dierenarts");
+        var baseUrl = EnsureWeb();
+        var page = await _browser!.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+
+        for (var i = 0; i < 2; i++)
+        {
+            await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
+            Assert.DoesNotContain("error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
+        }
+
+        await page.GotoAsync($"{baseUrl}/taal/en?return=/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
+        Assert.DoesNotContain("error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/leerling?error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Question_card_is_painted_above_the_scene_at_1366_and_390()
     {
         _ = TestContext.Current.CancellationToken;
@@ -487,6 +541,28 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await db.SaveChangesAsync();
     }
 
+    private async Task EnablePassportV2Async()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync();
+        if (row is null)
+        {
+            db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+            {
+                Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                SchoolsEnabled = true,
+                PupilPassportV2Enabled = true
+            });
+        }
+        else
+        {
+            row.PupilPassportV2Enabled = true;
+        }
+
+        await db.SaveChangesAsync();
+    }
+
     private async Task<Seed> SeedOpenClassAsync()
     {
         await using var scope = _api.Services.CreateAsyncScope();
@@ -624,6 +700,63 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         return generated
             .Select(code => new Seed(school.Id, cls.Id, codes.Unprotect(code.CodeProtected)!))
             .ToList();
+    }
+
+    private async Task<Seed> SeedCompletedWithDreamJobAsync(string dreamKey)
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var school = new School
+        {
+            Id = Guid.NewGuid(),
+            Name = "Done " + Guid.NewGuid().ToString("N")[..6],
+            City = "Naaldwijk",
+            AllowedEmailDomains = "[\"voorbeeldcollege.nl\"]",
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "8A",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = 1,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        await db.SaveChangesAsync();
+        var generated = await codes.GenerateAsync(1, cls);
+        var code = generated[0];
+        var registry = scope.ServiceProvider.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bank = registry.Get(PupilQuestionSet.Groep78).Bank;
+        var answers = bank.AllItems.ToDictionary(i => i.Id, _ => 4);
+        var now = DateTime.UtcNow;
+        db.PupilProgresses.Add(new PupilProgress
+        {
+            PupilCodeId = code.Id,
+            AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers),
+            CurrentIndex = bank.AllItems.Count,
+            LikesJson = """["dieren"]""",
+            DislikesJson = """["lang-stilzitten"]""",
+            DreamJobKey = dreamKey,
+            StartedAtUtc = now.AddMinutes(-30),
+            UpdatedAtUtc = now,
+            CompletedAtUtc = now
+        });
+        code.Status = PupilCodeStatus.Completed;
+        await db.SaveChangesAsync();
+        var builder = scope.ServiceProvider.GetRequiredService<IPupilResultBuilder>();
+        await builder.BuildAsync(code.Id);
+        return new Seed(school.Id, cls.Id, codes.Unprotect(code.CodeProtected)!);
     }
 
     private async Task<TeacherSeed> SeedFiveFinishedGroep78Async()
@@ -852,7 +985,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
     private sealed class SchoolsOnFlags : IFeatureFlags
     {
-        private static readonly FeatureFlagSnapshot Snap = new(false, false, SchoolsEnabled: true);
+        private static readonly FeatureFlagSnapshot Snap = new(
+            false,
+            false,
+            SchoolsEnabled: true,
+            PupilPassportV2Enabled: true);
 
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult(Snap);

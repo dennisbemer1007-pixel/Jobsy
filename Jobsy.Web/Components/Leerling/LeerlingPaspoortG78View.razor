@@ -26,7 +26,7 @@
                     @Culture["LeerlingPassport.NameIntro"]
                     @if (AllowNameEdit)
                     {
-                        <input type="text" maxlength="48" value="@_name" @oninput="OnNameInput" aria-label="@Culture["LeerlingPassport.Page.NamePlaceholder"]" />
+                        <input type="text" maxlength="48" value="@_name" @oninput="OnNameInput" @onfocus="() => _nameEditing = true" aria-label="@Culture["LeerlingPassport.Page.NamePlaceholder"]" />
                     }
                     else if (!string.IsNullOrWhiteSpace(Model.DisplayName))
                     {
@@ -236,6 +236,7 @@
     [Parameter] public EventCallback<string?> DisplayNameChanged { get; set; }
 
     private string? _name;
+    private bool _nameEditing;
 
     private string DreamBubbleText
     {
@@ -250,6 +251,11 @@
 
     protected override void OnParametersSet()
     {
+        if (_nameEditing)
+        {
+            return;
+        }
+
         _name = DisplayName ?? Model?.DisplayName;
     }
 
