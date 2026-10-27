@@ -1555,6 +1555,42 @@
     }
 
     var listPhotoObserver = null;
+    var mapPopupPhotoQueue = [];
+    var mapPopupPhotosInFlight = 0;
+    var MAP_POPUP_PHOTO_MAX = 2;
+
+    function enqueueMapPopupPhotoLoad(img, src) {
+        mapPopupPhotoQueue.push({ img: img, src: src });
+        drainMapPopupPhotoQueue();
+    }
+
+    function drainMapPopupPhotoQueue() {
+        while (mapPopupPhotosInFlight < MAP_POPUP_PHOTO_MAX && mapPopupPhotoQueue.length) {
+            var job = mapPopupPhotoQueue.shift();
+            if (!job || !job.img || job.img.getAttribute("data-photo-loaded") === "1") {
+                continue;
+            }
+            mapPopupPhotosInFlight += 1;
+            job.img.setAttribute("data-photo-loaded", "1");
+            job.img.addEventListener(
+                "load",
+                function () {
+                    mapPopupPhotosInFlight = Math.max(0, mapPopupPhotosInFlight - 1);
+                    drainMapPopupPhotoQueue();
+                },
+                { once: true }
+            );
+            job.img.addEventListener(
+                "error",
+                function () {
+                    mapPopupPhotosInFlight = Math.max(0, mapPopupPhotosInFlight - 1);
+                    drainMapPopupPhotoQueue();
+                },
+                { once: true }
+            );
+            job.img.src = job.src;
+        }
+    }
 
     function observeLazyListPhotos(root) {
         if (!root || typeof IntersectionObserver !== "function") {
@@ -1581,9 +1617,8 @@
                     if (!src) {
                         return;
                     }
-                    img.setAttribute("data-photo-loaded", "1");
-                    img.src = src;
                     listPhotoObserver.unobserve(img);
+                    enqueueMapPopupPhotoLoad(img, src);
                 });
             }, { root: null, rootMargin: "120px 0px", threshold: 0.01 });
         }

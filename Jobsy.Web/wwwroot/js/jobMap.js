@@ -1818,11 +1818,6 @@ window.jobMap = (function () {
 
     function preloadClusterImages(jobs, fromPage) {
         if (lagenUsesFundaPopup()) {
-            const page = Math.max(1, fromPage || 1);
-            const next = jobs && jobs[page];
-            if (next) {
-                prefetchLagenPopupPhoto(next, isNarrowViewport());
-            }
             return;
         }
         const start = Math.max(0, (fromPage || 1) - 1);
@@ -2234,10 +2229,6 @@ window.jobMap = (function () {
                     bindLagenFundaInteractions(host || parent, childMarkers);
                     if (state.root) {
                         loadLagenPopupPhoto(state.root, resolved || job, { mobile: mobile });
-                    }
-                    const nextJob = jobs[current];
-                    if (nextJob) {
-                        prefetchLagenPopupPhoto(nextJob, isNarrowViewport());
                     }
                     if (!mobile && activeClusterPopup && !state.docked) {
                         scheduleLagenDesktopPopupFit(activeClusterPopup);
