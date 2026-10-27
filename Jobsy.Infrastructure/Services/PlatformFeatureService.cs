@@ -359,7 +359,10 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     }
 
     private bool ResolvePupilPassportV2Enabled(PlatformFeatureSettings? row)
-        => ResolveAdminBool(row, "PupilPassportV2Enabled", row?.PupilPassportV2Enabled ?? false, false, "Jobsy:PupilPassportV2Enabled");
+    {
+        var stored = row?.PupilPassportV2Enabled ?? false;
+        return ResolveAdminBool(row, "PupilPassportV2Enabled", stored, stored, "JobsyFeatures:PupilPassportV2Enabled");
+    }
 
     private bool ResolveStudentPassportEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "StudentPassportEnabled", row?.StudentPassportEnabled ?? false, false, "Jobsy:StudentPassportEnabled");

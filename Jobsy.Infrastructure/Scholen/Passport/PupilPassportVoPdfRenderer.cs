@@ -178,14 +178,14 @@ internal static class PupilPassportVoPdfRenderer
     {
         c.Row(row =>
         {
-            row.RelativeItem().Padding(2).Element(x => MiniCard(x, "Niveau", m.LevelLine ?? "—", m.LevelInfoSubline, SoftPeach));
+            row.RelativeItem().Padding(2).Element(x => MiniCard(x, "Niveau", m.LevelLine ?? "n.v.t.", m.LevelInfoSubline, SoftPeach));
             row.RelativeItem().Padding(2).Element(x => MiniCard(x, "Leukste vakken",
-                m.FavoriteSubjects is { Count: > 0 } ? string.Join(" · ", m.FavoriteSubjects) : "—",
+                m.FavoriteSubjects is { Count: > 0 } ? string.Join(" · ", m.FavoriteSubjects) : "n.v.t.",
                 m.FavoriteSubjectsSubline, SoftPurple));
             row.RelativeItem().Padding(2).Element(x => MiniCard(x, "Bijbaan",
-                m.SideJobAvailabilityLine ?? "—", m.SideJobInfoSubline, SoftPeach));
+                m.SideJobAvailabilityLine ?? "n.v.t.", m.SideJobInfoSubline, SoftPeach));
             row.RelativeItem().Padding(2).Element(x => MiniCard(x, "Vervoer",
-                m.TravelLine ?? "—", m.TravelInfoSubline, SoftPurple));
+                m.TravelLine ?? "n.v.t.", m.TravelInfoSubline, SoftPurple));
         });
     }
 

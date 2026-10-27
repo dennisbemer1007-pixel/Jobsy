@@ -27,7 +27,7 @@ else if (_sessionLost)
 }
 else if (_result is null)
 {
-    <LeerlingOfflineRetry OnRetry="LoadAsync" />
+    <LeerlingOfflineRetry OnRetry="RetryLoadAsync" />
 }
 else
 {
@@ -42,12 +42,12 @@ else
             <label class="ll-field">
                 <span class="visually-hidden">@Culture["LeerlingDroom.Search"]</span>
                 <input type="search"
-                       @bind="_search"
-                       @bind:event="oninput"
-                       @bind:after="ScheduleMatchUpdate"
+                       value="@_search"
+                       @oninput="OnSearchInput"
                        placeholder="@Culture["LeerlingDroom.Search"]"
                        autocomplete="off"
-                       enterkeyhint="search" />
+                       enterkeyhint="search"
+                       data-testid="leerling-droombaan-search" />
             </label>
 
             @if (_matches.Count > 0)
@@ -140,6 +140,9 @@ else
     private PupilResultPageDto? _result;
     private DreamJobRouteStubDto? _dream;
     private string _search = "";
+    private bool _searchTouched;
+    private bool _contentReady;
+    private Task? _initialLoadTask;
     private IReadOnlyList<DreamJob> _matches = [];
     private string? _error;
 
@@ -175,11 +178,23 @@ else
         }
     }
 
-    protected override Task OnInitializedAsync() => LoadAsync();
+    protected override Task OnInitializedAsync()
+        => _initialLoadTask ??= LoadAsync(isInitial: true);
 
-    private async Task LoadAsync()
+    private Task RetryLoadAsync() => LoadAsync(isInitial: false);
+
+    private async Task LoadAsync(bool isInitial = false)
     {
-        _loading = true;
+        if (isInitial && _contentReady)
+        {
+            return;
+        }
+
+        if (!_contentReady)
+        {
+            _loading = true;
+        }
+
         _sessionLost = false;
         try
         {
@@ -201,11 +216,34 @@ else
 
             _result = outcome.Value;
             _dream = _result.DreamJob;
+            _contentReady = true;
+            HydrateSearchFromDream();
         }
         finally
         {
             _loading = false;
         }
+    }
+
+    private void HydrateSearchFromDream()
+    {
+        if (_searchTouched || !string.IsNullOrWhiteSpace(_search))
+        {
+            return;
+        }
+
+        var title = _dream?.JobTitle;
+        if (!string.IsNullOrWhiteSpace(title))
+        {
+            _search = title;
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _searchTouched = true;
+        _search = e.Value?.ToString() ?? "";
+        ScheduleMatchUpdate();
     }
 
     private void ScheduleMatchUpdate()
@@ -247,6 +285,7 @@ else
             _dream = resp.DreamJob;
             if (!string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
             {
+                _searchTouched = false;
                 _search = resp.DreamJob.JobTitle ?? _search;
             }
 

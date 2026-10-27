@@ -11,7 +11,7 @@
 @inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
-<div class="ll-shell" lang="nl">
+<div class="ll-shell" lang="@Culture.Language">
     <header class="ll-topbar">
         <a class="ll-topbar__brand" href="/leerling">
             <img class="ll-topbar__logo" src="@("/" + Jobsy.Web.Media.BrandImages.Webp64)" width="28" height="28" alt="" />
@@ -46,8 +46,20 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Dutch UI only. Do not persist: viewing /leerling must not rewrite a signed-in user's language.
-        _displayLanguage ??= Culture.PushDisplayLanguage("nl");
+        var path = Nav.ToBaseRelativePath(Nav.Uri);
+        var onPassport = path.StartsWith("leerling/paspoort", StringComparison.OrdinalIgnoreCase);
+        if (onPassport)
+        {
+            _displayLanguage?.Dispose();
+            _displayLanguage = null;
+            await Culture.InitializeAsync();
+        }
+        else
+        {
+            // Dutch UI only. Do not persist: viewing /leerling must not rewrite a signed-in user's language.
+            _displayLanguage ??= Culture.PushDisplayLanguage("nl");
+        }
+
         _chip = "";
         _showPause = false;
         // Prerender: the middleware stored the principal. The circuit has no request
@@ -74,7 +86,6 @@
             _chip = $"{cls} · {code}";
         }
 
-        var path = Nav.ToBaseRelativePath(Nav.Uri);
         _showPause = !path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
                      && !path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase)
                      && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);

@@ -12,7 +12,7 @@
 @inject IFeatureFlags Features
 @inject JobsyApiClient Api
 
-<div class="sch-shell" lang="nl">
+<div class="sch-shell" lang="@Culture.Language">
     <header class="sch-topbar">
         <a class="sch-topbar__brand" href="@HomeHref">@Culture["School.ProductLabel"]</a>
         <div class="sch-topbar__scope">
@@ -112,7 +112,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Culture.SetLanguageAsync("nl");
+        await Culture.InitializeAsync();
         _featureOff = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         var state = await AuthState.GetAuthenticationStateAsync();
         var user = state.User;

@@ -240,6 +240,7 @@ public static class UiStringsScholen
         nl["School.Nav.Help"] = "Hulp voor scholen";
         nl["School.Footer.NoNames"] = "Lobsy kent geen leerlingnamen. Alleen codes. De namenlijst houdt de school zelf.";
         nl["School.FeatureDisabled"] = "Scholen is nog niet ingeschakeld.";
+        nl["LeerlingPassport.FeatureDisabled"] = "Het DNA-paspoort is nog niet ingeschakeld op dit platform.";
 
         // —— Leraar shell ——
         nl["Leraar.RoleChip"] = "Leraar";

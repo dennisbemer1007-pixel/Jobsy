@@ -71,6 +71,44 @@ public sealed class FeatureFlagResolutionTests
         Assert.True(on.IsEnabled(PlatformFeature.ReferenceVerification));
     }
 
+    [Fact]
+    public async Task Pupil_passport_v2_uses_JobsyFeatures_config_and_stored_row_when_no_override()
+    {
+        await using var db = CreateDb();
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            PupilPassportV2Enabled = true
+        });
+        await db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JobsyFeatures:PupilPassportV2Enabled"] = "true"
+            })
+            .Build();
+
+        var snap = await CreateService(db, config).GetAsync();
+        Assert.True(snap.PupilPassportV2Enabled);
+    }
+
+    [Fact]
+    public async Task Pupil_passport_v2_honors_stored_row_when_acceptatie_config_key_missing()
+    {
+        await using var db = CreateDb();
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            PupilPassportV2Enabled = true
+        });
+        await db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder().Build();
+        var snap = await CreateService(db, config).GetAsync();
+        Assert.True(snap.PupilPassportV2Enabled);
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

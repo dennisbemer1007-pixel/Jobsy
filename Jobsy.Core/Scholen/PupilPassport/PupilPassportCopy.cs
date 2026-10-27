@@ -113,9 +113,9 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Header.G78"] = "MIJN DNA-PASPOORT";
         d["LeerlingPassport.Header.Vo"] = "DNA-paspoort · middelbare school";
         d["LeerlingPassport.Brand.Sub"] = "Expeditie · DNA-paspoort";
-        d["LeerlingPassport.Kicker"] = "Expeditie klaar · alle vragen beantwoord";
-        d["LeerlingPassport.Badge.Title"] = "Schild compleet";
-        d["LeerlingPassport.Badge.Sub"] = "Alle werelden ontdekt";
+        d["LeerlingPassport.Kicker"] = "Expeditie afgerond";
+        d["LeerlingPassport.Badge.Title"] = "Expeditie afgerond";
+        d["LeerlingPassport.Badge.Sub"] = "Je route is compleet";
         d["LeerlingPassport.NameIntro"] = "Dit paspoort is van";
         d["LeerlingPassport.NamePrivacy"] = "Je naam schrijf je zelf op. Lobsy bewaart geen namen.";
         d["LeerlingPassport.Section.DitBenIk"] = "Dit ben jij";
@@ -165,8 +165,8 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Card.Domain.S"] = "Zorg & dieren";
         d["LeerlingPassport.Card.Domain.E"] = "Ondernemen";
         d["LeerlingPassport.Card.Domain.C"] = "Precies & netjes";
-        d["LeerlingPassport.Card.Blurb.Generic.G78"] = "Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.";
-        d["LeerlingPassport.Card.Blurb.Generic.Vo"] = "Past bij jouw interesses — om verder te verkennen, geen vacature.";
+        d["LeerlingPassport.Card.Blurb.Generic.G78"] = "Een beroep om over na te denken. Geen vacature, wel een idee om verder te ontdekken.";
+        d["LeerlingPassport.Card.Blurb.Generic.Vo"] = "Past bij jouw interesses. Om verder te verkennen, geen vacature.";
 
         d["LeerlingPassport.Card.dierenverzorger.Blurb"] =
             "Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.";
@@ -190,11 +190,11 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Discover.Letter.I.1"] = "Welk vraagstuk zou jij willen uitzoeken?";
         d["LeerlingPassport.Discover.Letter.I.2"] = "Welke proef of onderzoeksopdracht vond je leuk?";
         d["LeerlingPassport.Discover.Letter.I.3"] = "Welk vak geeft je het meeste 'weten hoe het zit'?";
-        d["LeerlingPassport.Tip.Letter.S.1"] = "Praat thuis over momenten waarop je iemand hielp — wat deed je precies?";
+        d["LeerlingPassport.Tip.Letter.S.1"] = "Praat thuis over momenten waarop je iemand hielp. Wat deed je precies?";
         d["LeerlingPassport.Tip.Generic.2"] = "Er is geen goed of fout antwoord; het gaat om ontdekken.";
 
-        d["LeerlingPassport.Vo.Archetype.Default"] = "Nieuwsgierige ontdekker — leert door te proberen";
-        d["LeerlingPassport.Vo.Archetype.SI"] = "Zorgzame onderzoeker — wil weten hoe het zit én helpt graag";
+        d["LeerlingPassport.Vo.Archetype.Default"] = "Nieuwsgierige ontdekker. Leert door te proberen";
+        d["LeerlingPassport.Vo.Archetype.SI"] = "Zorgzame onderzoeker. Wil weten hoe het zit en helpt graag";
         d["LeerlingPassport.Vo.Section.Interests"] = "Mijn interesses";
         d["LeerlingPassport.Vo.Likes"] = "Dit vind ik leuk";
         d["LeerlingPassport.Vo.Dislikes"] = "Liever niet";
@@ -226,28 +226,28 @@ public static class PupilPassportCopy
 
         d["LeerlingPassport.Vo.SideJob.kinderboerderij.Title"] = "Hulp op een kinderboerderij";
         d["LeerlingPassport.Vo.SideJob.kinderboerderij.Sub"] = "dieren & buiten";
-        d["LeerlingPassport.Vo.SideJob.kinderboerderij.Why"] = "Past bij zorgzaam zijn en dieren — rustig meelopen en vragen stellen.";
+        d["LeerlingPassport.Vo.SideJob.kinderboerderij.Why"] = "Past bij zorgzaam zijn en dieren. Rustig meelopen en vragen stellen.";
         d["LeerlingPassport.Vo.SideJob.dierenkliniek-snuffel.Title"] = "Snuffelstage dierenkliniek";
         d["LeerlingPassport.Vo.SideJob.dierenkliniek-snuffel.Sub"] = "kort kijken · geen vacature";
-        d["LeerlingPassport.Vo.SideJob.dierenkliniek-snuffel.Why"] = "Om te ontdekken hoe een dierenarts werkt — vaak vanaf 15 jaar met begeleiding.";
+        d["LeerlingPassport.Vo.SideJob.dierenkliniek-snuffel.Why"] = "Om te ontdekken hoe een dierenarts werkt. Vaak vanaf 15 jaar met begeleiding.";
         d["LeerlingPassport.Vo.SideJob.drogisterij-vakken.Title"] = "Vakkenvuller drogisterij";
         d["LeerlingPassport.Vo.SideJob.drogisterij-vakken.Sub"] = "netjes & zorgvuldig";
         d["LeerlingPassport.Vo.SideJob.drogisterij-vakken.Why"] = "Leuk als je van ordenen houdt; let op tijden (tot 19:00 als je 15 bent).";
         d["LeerlingPassport.Vo.SideJob.bibliotheek.Title"] = "Hulp in de bibliotheek";
         d["LeerlingPassport.Vo.SideJob.bibliotheek.Sub"] = "rustig & netjes";
-        d["LeerlingPassport.Vo.SideJob.bibliotheek.Why"] = "Past bij lezen en puzzels — boeken terugzetten en lezers helpen.";
+        d["LeerlingPassport.Vo.SideJob.bibliotheek.Why"] = "Past bij lezen en puzzels. Boeken terugzetten en lezers helpen.";
         d["LeerlingPassport.Vo.SideJob.sportclub.Title"] = "Assistent bij een sportclub";
         d["LeerlingPassport.Vo.SideJob.sportclub.Sub"] = "team & buiten";
-        d["LeerlingPassport.Vo.SideJob.sportclub.Why"] = "Leuk als je van sport houdt — meehelpen met training of wedstrijddag.";
+        d["LeerlingPassport.Vo.SideJob.sportclub.Why"] = "Leuk als je van sport houdt. Meehelpen met training of wedstrijddag.";
         d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Title"] = "Snuffelen in een werkplaats";
         d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Sub"] = "techniek · kort kijken";
-        d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Why"] = "Om te zien hoe monteurs of makers werken — vaak met begeleiding.";
+        d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Why"] = "Om te zien hoe monteurs of makers werken. Vaak met begeleiding.";
         d["LeerlingPassport.Vo.SideJob.horeca-help.Title"] = "Hulp in de horeca";
         d["LeerlingPassport.Vo.SideJob.horeca-help.Sub"] = "avond · vanaf 16 jaar (13–15: niet 's avonds)";
-        d["LeerlingPassport.Vo.SideJob.horeca-help.Why"] = "Past bij koken en contact — vaak in de avond, let op schooltijden.";
+        d["LeerlingPassport.Vo.SideJob.horeca-help.Why"] = "Past bij koken en contact. Vaak in de avond, let op schooltijden.";
         d["LeerlingPassport.Vo.SideJob.zorg-thuis.Title"] = "Hulp bij thuiszorg (indirect)";
         d["LeerlingPassport.Vo.SideJob.zorg-thuis.Sub"] = "zorg · 16+";
-        d["LeerlingPassport.Vo.SideJob.zorg-thuis.Why"] = "Alleen via erkende organisaties — om te ontdekken of zorg bij je past.";
+        d["LeerlingPassport.Vo.SideJob.zorg-thuis.Why"] = "Alleen via erkende organisaties. Om te ontdekken of zorg bij je past.";
         d["LeerlingPassport.Vo.SideJob.Meta.Weekend"] = "zaterdag";
         d["LeerlingPassport.Vo.SideJob.Meta.Weekday"] = "wo-middag";
         d["LeerlingPassport.Vo.SideJob.Meta.FromAge"] = "vanaf {0} jaar";
