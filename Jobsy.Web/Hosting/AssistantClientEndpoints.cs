@@ -68,6 +68,19 @@ public static class AssistantClientEndpoints
                 }
             }
 
+            if (warm)
+            {
+                var employerBoot = await TryWarmEmployerAssistantBootAsync(
+                    api,
+                    http.User,
+                    pagePath,
+                    cancellationToken);
+                if (employerBoot is not null)
+                {
+                    return Results.Json(employerBoot);
+                }
+            }
+
             return Results.Json(new AssistantClientChatResponse
             {
                 Reply = culture["Assistant.Greeting"]
@@ -123,6 +136,33 @@ public static class AssistantClientEndpoints
     private sealed record AssistantClientChip(string Label, string Message);
 
     private sealed class AssistantClientEndpointsMarker;
+
+    private static async Task<AssistantClientChatResponse?> TryWarmEmployerAssistantBootAsync(
+        JobsyApiClient api,
+        System.Security.Claims.ClaimsPrincipal user,
+        string? pagePath,
+        CancellationToken cancellationToken)
+    {
+        if (!AssistantChatHost.IsAvailableFor(user)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            return null;
+        }
+
+        try
+        {
+            var reply = await api.SendAssistantChatAsync([], pagePath ?? "/", null, cancellationToken);
+            return new AssistantClientChatResponse
+            {
+                Reply = reply.Reply,
+                Actions = reply.Actions ?? []
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static async Task<(string? PagePath, string? PageContextLine)> ResolvePageContextForAssistantAsync(
         JobsyApiClient api,

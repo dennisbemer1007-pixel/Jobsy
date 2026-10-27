@@ -84,7 +84,13 @@
     shell.querySelector(".lobsy-assistant__lead").textContent = cfg("data-subtitle", "");
     shell.querySelector("[data-ssr-assistant-close]").setAttribute("aria-label", cfg("data-close", "Close"));
     shell.querySelector("[data-ssr-assistant-new]").setAttribute("aria-label", cfg("data-new-chat", "New chat"));
-    shell.querySelector(".lobsy-assistant__send").textContent = cfg("data-send", "Send");
+    var sendBtn = shell.querySelector(".lobsy-assistant__send");
+    if (business) {
+      sendBtn.setAttribute("aria-label", cfg("data-send", "Send"));
+      sendBtn.innerHTML = '<span aria-hidden="true">→</span>';
+    } else {
+      sendBtn.textContent = cfg("data-send", "Send");
+    }
     shell.querySelector("#lobsy-assistant-input").placeholder = cfg("data-placeholder", "");
     var disclaimer = shell.querySelector(".lobsy-assistant__disclaimer");
     disclaimer.textContent = cfg("data-disclaimer", "") + " ";
@@ -193,7 +199,12 @@
         readBtn.setAttribute("data-read-aloud-text", msg.content);
         readBtn.setAttribute("aria-label", cfg("data-read-aloud-aria", ""));
         readBtn.setAttribute("title", cfg("data-read-aloud-play", ""));
-        readBtn.innerHTML = '<span class="read-aloud__icon" aria-hidden="true">🔊</span>';
+        readBtn.innerHTML =
+          '<span class="read-aloud__icon" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
+          '<path d="M11 5 6 9H3v6h3l5 4V5Z"/>' +
+          '<path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>' +
+          "</svg></span>";
         bubble.appendChild(readBtn);
       }
       chat.appendChild(bubble);
