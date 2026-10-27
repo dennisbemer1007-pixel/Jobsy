@@ -10,20 +10,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "PuzzlesJson",
-                table: "PupilProgresses",
-                type: "text",
-                nullable: false,
-                defaultValue: "");
+            // AddPupilPassportV2Flags replays EnsureColumns at apply time (IF NOT EXISTS), so avoid plain AddColumn.
+            migrationBuilder.Sql(
+                """
+                ALTER TABLE "PupilProgresses" ADD COLUMN IF NOT EXISTS "PuzzlesJson" text NOT NULL DEFAULT '{}';
+                """);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "PuzzlesJson",
-                table: "PupilProgresses");
+            migrationBuilder.Sql(
+                """
+                ALTER TABLE "PupilProgresses" DROP COLUMN IF EXISTS "PuzzlesJson";
+                """);
         }
     }
 }
