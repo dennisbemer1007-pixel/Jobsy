@@ -64,7 +64,7 @@
     <textarea @ref="_descriptionRef"
               class="vac-wizard-richtext__area"
               rows="14"
-              value="@Value"
+              value="@_draft"
               @oninput="OnInput"
               required="@Required"
               data-testid="vacancy-description-input"></textarea>
@@ -77,8 +77,18 @@
 
     private ElementReference _descriptionRef;
     private string? _align;
+    private string _draft = "";
+    private bool _userEdited;
 
-    private int CharacterCount => string.IsNullOrEmpty(Value) ? 0 : Value.Length;
+    protected override void OnParametersSet()
+    {
+        if (!_userEdited && !string.Equals(_draft, Value, StringComparison.Ordinal))
+        {
+            _draft = Value ?? "";
+        }
+    }
+
+    private int CharacterCount => string.IsNullOrEmpty(_draft) ? 0 : _draft.Length;
 
     private string DescriptionCharCountLabel
     {
@@ -98,12 +108,31 @@
 
     private async Task OnInput(ChangeEventArgs e)
     {
+        _userEdited = true;
         var next = e.Value?.ToString() ?? "";
         if (next.Length > 4000)
         {
             next = next[..4000];
         }
 
+        _draft = next;
+        await ValueChanged.InvokeAsync(next);
+    }
+
+    private async Task CommitDraftAsync(string? next)
+    {
+        if (next is null)
+        {
+            return;
+        }
+
+        if (next.Length > 4000)
+        {
+            next = next[..4000];
+        }
+
+        _userEdited = true;
+        _draft = next;
         await ValueChanged.InvokeAsync(next);
     }
 
@@ -111,20 +140,14 @@
     {
         await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, $"<{tag}>", $"</{tag}>", "tekst");
-        if (next is not null)
-        {
-            await ValueChanged.InvokeAsync(next);
-        }
+        await CommitDraftAsync(next);
     }
 
     private async Task HeadingAsync(string tag)
     {
         await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, $"<{tag}>", $"</{tag}>", "Kop");
-        if (next is not null)
-        {
-            await ValueChanged.InvokeAsync(next);
-        }
+        await CommitDraftAsync(next);
     }
 
     private async Task AlignAsync(string align)
@@ -137,10 +160,7 @@
             $"<p style=\"text-align:{align}\">",
             "</p>",
             "tekst");
-        if (next is not null)
-        {
-            await ValueChanged.InvokeAsync(next);
-        }
+        await CommitDraftAsync(next);
     }
 
     private async Task ColorAsync(string hex)
@@ -161,10 +181,7 @@
         }
 
         var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, before, after, "tekst");
-        if (next is not null)
-        {
-            await ValueChanged.InvokeAsync(next);
-        }
+        await CommitDraftAsync(next);
     }
 
     private async Task InsertListAsync()
@@ -176,19 +193,13 @@
             "<ul>\n<li>",
             "</li>\n</ul>",
             "Punt");
-        if (next is not null)
-        {
-            await ValueChanged.InvokeAsync(next);
-        }
+        await CommitDraftAsync(next);
     }
 
     private async Task InsertLinkAsync()
     {
         await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>("jobsyRichtext.insertLink", _descriptionRef);
-        if (next is not null)
-        {
-            await ValueChanged.InvokeAsync(next);
-        }
+        await CommitDraftAsync(next);
     }
 }
