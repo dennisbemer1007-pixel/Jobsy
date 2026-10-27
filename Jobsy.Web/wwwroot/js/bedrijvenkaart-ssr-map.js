@@ -97,6 +97,10 @@
     return Promise.reject(new Error("jobsyMaps missing"));
   }
 
+  function mapAlive() {
+    return !!(window.jobMap && typeof window.jobMap.isAlive === "function" && window.jobMap.isAlive());
+  }
+
   function initMap(markers, km) {
     if (!window.jobMap || typeof window.jobMap.init !== "function") {
       return;
@@ -122,6 +126,26 @@
     }
   }
 
+  function syncMapPins(markers, km) {
+    if (!mapAlive()) {
+      initMap(markers, km);
+      return;
+    }
+    if (typeof window.jobMap.setTravelOptions === "function") {
+      window.jobMap.setTravelOptions({ radiusKm: km });
+    }
+    window.jobMap.setVacancies(markers);
+    if (typeof window.jobMap.reloadPins === "function") {
+      window.jobMap.reloadPins(pinsUrl(km));
+    }
+    if (typeof window.jobMap.fitToOriginRings === "function") {
+      window.jobMap.fitToOriginRings(true);
+    }
+    if (typeof window.jobMap.invalidate === "function") {
+      window.jobMap.invalidate();
+    }
+  }
+
   function setRadiusActive(km) {
     var host = root();
     if (!host) {
@@ -137,11 +161,17 @@
   }
 
   function toggleEmptyState(count) {
-    var empty = root() && root().querySelector("[data-bk-empty-state]");
-    if (!empty) {
+    var host = root();
+    if (!host) {
       return;
     }
-    empty.hidden = count > 0;
+    var empty = host.querySelector("[data-bk-empty-state]");
+    if (empty) {
+      empty.hidden = count > 0;
+    }
+    var listEmpty = count === 0;
+    host.toggleAttribute("data-bk-list-empty", listEmpty);
+    host.setAttribute("data-bk-list-empty", listEmpty ? "1" : "0");
   }
 
   function nextRadiusKm(current) {
@@ -186,6 +216,18 @@
     var host = root();
     if (!host) {
       return pins;
+    }
+    var sector = host.getAttribute("data-bk-selected-sector") || "";
+    if (sector) {
+      pins = pins.filter(function (p) {
+        return String(p.sectorLabel || p.SectorLabel || "") === sector;
+      });
+    }
+    var field = host.getAttribute("data-bk-selected-field") || "";
+    if (field) {
+      pins = pins.filter(function (p) {
+        return String(p.sectorLabel || p.SectorLabel || "") === field;
+      });
     }
     var openOnly = host.querySelector('[data-bk-filter="openOnly"]');
     if (openOnly && openOnly.getAttribute("aria-pressed") === "true") {
@@ -289,10 +331,7 @@
       syncListVisibility(filtered);
     }
     var markers = toMarkers(filtered);
-    if (window.jobMap && typeof window.jobMap.setVacancies === "function") {
-      window.jobMap.setVacancies(markers);
-    }
-    initMap(markers, km);
+    syncMapPins(markers, km);
     updateMeta(filtered.length, km, openCount(filtered));
     toggleEmptyState(filtered.length);
   }
@@ -315,6 +354,7 @@
       .then(function (pins) {
         writeJsonScript("bedrijvenkaart-ssr-pins-all", pins);
         refreshFromPins(pins, km, true);
+        rebuildFilterMenus();
       })
       .catch(function () {
         refreshFromPins(readAllPins(), km, false);
@@ -327,11 +367,91 @@
     }
     ensureMaps()
       .then(function () {
+        rebuildFilterMenus();
         var all = readAllPins();
         refreshFromPins(all, radiusKm(), false);
         document.dispatchEvent(new CustomEvent("jobsy-bk-map-pane-visible"));
       })
       .catch(function () { });
+  }
+
+  function uniqueSectorLabels(pins) {
+    var seen = {};
+    var out = [];
+    (pins || []).forEach(function (p) {
+      var label = String(p.sectorLabel || p.SectorLabel || "").trim();
+      if (!label || seen[label]) {
+        return;
+      }
+      seen[label] = true;
+      out.push(label);
+    });
+    out.sort(function (a, b) {
+      return a.localeCompare(b, "nl");
+    });
+    return out;
+  }
+
+  function rebuildFilterMenus() {
+    var host = root();
+    if (!host) {
+      return;
+    }
+    var sectors = uniqueSectorLabels(readAllPins());
+    ["sector", "field"].forEach(function (kind) {
+      var panel = host.querySelector('[data-bk-filter-menu-panel="' + kind + '"]');
+      var trigger = host.querySelector('[data-bk-filter-menu="' + kind + '"]');
+      if (!panel || !trigger) {
+        return;
+      }
+      var allLabel = trigger.getAttribute("data-bk-filter-all-label") || "Alle";
+      var selected =
+        kind === "sector"
+          ? host.getAttribute("data-bk-selected-sector") || ""
+          : host.getAttribute("data-bk-selected-field") || "";
+      trigger.textContent = selected || allLabel;
+      trigger.classList.toggle("is-active", !selected);
+      trigger.setAttribute("aria-pressed", selected ? "false" : "true");
+      var html =
+        '<button type="button" role="option" class="bk-filter-menu__item' +
+        (selected ? "" : " is-active") +
+        '" data-bk-filter-menu-value="" data-bk-filter-menu-kind="' +
+        kind +
+        '">' +
+        escapeHtml(allLabel) +
+        "</button>";
+      sectors.forEach(function (label) {
+        html +=
+          '<button type="button" role="option" class="bk-filter-menu__item' +
+          (selected === label ? " is-active" : "") +
+          '" data-bk-filter-menu-value="' +
+          escapeAttr(label) +
+          '" data-bk-filter-menu-kind="' +
+          kind +
+          '">' +
+          escapeHtml(label) +
+          "</button>";
+      });
+      panel.innerHTML = html;
+    });
+  }
+
+  function closeFilterMenus(exceptPanel) {
+    var host = root();
+    if (!host) {
+      return;
+    }
+    host.querySelectorAll("[data-bk-filter-menu-panel]").forEach(function (panel) {
+      if (panel === exceptPanel) {
+        return;
+      }
+      panel.hidden = true;
+      var id = panel.getAttribute("data-bk-filter-menu-panel");
+      var trigger = host.querySelector('[data-bk-filter-menu="' + id + '"]');
+      if (trigger) {
+        trigger.setAttribute("aria-expanded", "false");
+      }
+    });
   }
 
   function bindFilters() {
@@ -340,10 +460,64 @@
     }
     document.documentElement.setAttribute("data-bk-ssr-map-bound", "1");
 
+    if (!window._jobsyBkPageHideBound) {
+      window._jobsyBkPageHideBound = true;
+      window.addEventListener(
+        "pagehide",
+        function () {
+          if (window.jobMap && typeof window.jobMap.dispose === "function") {
+            window.jobMap.dispose();
+          }
+        },
+        { capture: true }
+      );
+    }
+
     document.body.addEventListener("click", function (ev) {
       var host = ev.target.closest('[data-bedrijvenkaart-ssr="1"]');
       if (!host) {
+        closeFilterMenus(null);
         return;
+      }
+      var menuItem = ev.target.closest("[data-bk-filter-menu-value]");
+      if (menuItem) {
+        ev.preventDefault();
+        var kind = menuItem.getAttribute("data-bk-filter-menu-kind");
+        var value = menuItem.getAttribute("data-bk-filter-menu-value") || "";
+        if (kind === "sector") {
+          if (value) {
+            host.setAttribute("data-bk-selected-sector", value);
+          } else {
+            host.removeAttribute("data-bk-selected-sector");
+          }
+        } else if (kind === "field") {
+          if (value) {
+            host.setAttribute("data-bk-selected-field", value);
+          } else {
+            host.removeAttribute("data-bk-selected-field");
+          }
+        }
+        closeFilterMenus(null);
+        rebuildFilterMenus();
+        refreshFromPins(readAllPins(), radiusKm(), false);
+        return;
+      }
+      var menuTrigger = ev.target.closest("[data-bk-filter-menu]");
+      if (menuTrigger) {
+        ev.preventDefault();
+        var menuKind = menuTrigger.getAttribute("data-bk-filter-menu");
+        var panel = host.querySelector('[data-bk-filter-menu-panel="' + menuKind + '"]');
+        if (!panel) {
+          return;
+        }
+        var open = panel.hidden;
+        closeFilterMenus(open ? panel : null);
+        panel.hidden = !open;
+        menuTrigger.setAttribute("aria-expanded", open ? "true" : "false");
+        return;
+      }
+      if (!ev.target.closest("[data-bk-filter-menu-panel]")) {
+        closeFilterMenus(null);
       }
       var radiusBtn = ev.target.closest("button[data-bk-radius-km]");
       if (radiusBtn) {

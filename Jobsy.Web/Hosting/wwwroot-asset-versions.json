@@ -60,8 +60,8 @@
     "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d"
   },
   "css/features/bedrijvenkaart.css": {
-    "sha256": "b12c568848d4abec7fed04946e95f252e0f0889c31faa9bbeb6066d60f5ba3f5",
-    "v": "20261027-bk-map-e"
+    "sha256": "8c8dbfa038dee4eae15ded22f7d678a8fa3e716a08389c99650679977e29b4fa",
+    "v": "20261027-17"
   },
   "css/features/candidate-header-strip.css": {
     "v": "20261025-kreeft13",
@@ -404,8 +404,8 @@
     "sha256": "a8cc3a3b17430a04477111139ff2281856f1f2aa12da83d8f98967c460720be5"
   },
   "js/bedrijvenkaart-ssr-map.js": {
-    "v": "20261027-bk4-g",
-    "sha256": "7eb194e6c55fc43e9b15e84d985af7d3d6370380c3aaf88981e497261c7e6de9"
+    "v": "20261027-18",
+    "sha256": "04d03cdeee401ba267e84f3611ff5e58a57bdb05a449e5251e27d6310223bf9c"
   },
   "js/blazor-boot.js": {
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
@@ -444,8 +444,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261027-bk5-g2",
-    "sha256": "37e1046b4a77c33b44173c0420131de2950d6b1363cbbf89f08c60d9ddcdde10"
+    "v": "20261027-19",
+    "sha256": "2a09bf9298d446c3f47b684c984d9e6b811b8f38b97597b58e5bf66219b8984e"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",

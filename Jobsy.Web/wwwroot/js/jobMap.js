@@ -5963,6 +5963,7 @@ window.jobMap = (function () {
                 ],
                 layout: {
                     "text-field": ["coalesce", ["get", "glyph"], ""],
+                    "text-font": ["Noto Sans Regular"],
                     "text-size": 10,
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
@@ -7952,6 +7953,7 @@ window.jobMap = (function () {
         window.removeEventListener("resize", invalidate);
         closeActivePopup();
         openCallback = null;
+        viewportListDotNet = null;
         clearTravelRings();
         lastOrigin = null;
         originMarker = null;
