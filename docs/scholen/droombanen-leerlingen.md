@@ -107,7 +107,7 @@ Route:
 - Nu: {nu}|Kies straks consumptief of economie
 - Vmbo of havo|Praktijkervaring telt mee
 - Mbo Kok|Mbo niveau 2 tot 4 · 2 tot 4 jaar
-- Goal: Kok!|In een restaurant, keuken of catering
+- Goal: Kok|In een restaurant, keuken of catering
 - Alt: Via mbo Kok of Gastheer/-vrouw kun je snel aan de slag.
 
 ## Brandweerman/-vrouw (`brandweer`)
