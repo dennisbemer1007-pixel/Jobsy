@@ -132,8 +132,10 @@ window.jobsyMapLibre = (function () {
             return url;
         }
         var next = url;
-        if (/Open%20Sans|Open\+Sans|Open%20Sans%20Regular/i.test(next)) {
-            next = next.replace(/Open%20Sans[^/]*/gi, "Noto%20Sans%20Regular");
+        if (/Open%20Sans|Open\+Sans|Open%20Sans%20Regular|Open%20Sans%20Bold/i.test(next)) {
+            next = next.replace(/Open%20Sans(?:%20(?:Regular|Bold|Italic|SemiBold))?[^/]*/gi, function (match) {
+                return /bold|semi|black|heavy/i.test(match) ? "Noto%20Sans%20Bold" : "Noto%20Sans%20Regular";
+            });
         }
         if (/Arial%20Unicode/i.test(next)) {
             next = next.replace(/Arial%20Unicode%20MS%20Regular,?\/?/gi, "");
