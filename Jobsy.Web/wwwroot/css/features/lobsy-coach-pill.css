@@ -10,6 +10,35 @@
   --lobsy-coach-pill-font: 0.92rem;
 }
 
+.lobsy-assistant-tab {
+  pointer-events: none;
+}
+
+.lobsy-assistant-tab__btn {
+  pointer-events: auto;
+}
+
+/* Keep header tokens / map tabs above the fixed coach pill footprint. */
+.app-header__actions .token-wallet,
+.app-header__actions .token-wallet-chip,
+.bk-map-toggle,
+.bk-map-toggle--banen,
+.jobsy-discovery .bk-map-toggle--banen {
+  position: relative;
+  z-index: 62;
+}
+
+.pub-theme .pp-company__aside,
+.pub-theme .pp-company__list .job-card,
+.pub-theme .pp-company__list a,
+.wg-shell .wg-filter-bar,
+.wg-shell [data-wg-filter-role],
+.kb-map-top-chrome .strip,
+.kb-lagen-travel-chip {
+  position: relative;
+  z-index: 62;
+}
+
 .lobsy-coach-dock[data-lobsy-coach],
 .lobsy-coach-dock[data-ssr-coach] {
   position: fixed;

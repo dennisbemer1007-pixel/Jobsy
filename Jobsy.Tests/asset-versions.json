@@ -168,8 +168,8 @@
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd"
   },
   "css/features/lobsy-coach-pill.css": {
-    "v": "20261026-kreeft22",
-    "sha256": "30be64d804502a897e243fa5644001ae7da5b0d202260579b77cb20766f22b8a"
+    "v": "20261027-20",
+    "sha256": "cef4c79ad37d2b8d272043e6209901f7b508bf6d9d2fa2a9627e40717b678eb3"
   },
   "css/features/match-desktop.css": {
     "sha256": "bf9760ca115f0730a129fcae7aaf97c78ff1ec780b316f29d700ec7b05a26fc0",
@@ -376,8 +376,8 @@
     "v": "20261016-04"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261026-26",
-    "sha256": "505cedf832541fd7fb228b3e9e1fd5651b6cc70a69b1e84f9c6b0776934672ab"
+    "v": "20261027-21",
+    "sha256": "9835071af90a023f82a3d58eeaa408fe2ad4cd420476d5a1c165d56ef8623e1b"
   },
   "js/banenkaart-map-icons.js": {
     "v": "20261025-kreeft15",
@@ -388,8 +388,8 @@
     "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261027-bk4-h",
-    "sha256": "6a26ed9a1b42573963dc444703043289385907e3ff60c9f9486b3ed6da338f14"
+    "v": "20261027-24",
+    "sha256": "55c246f8301ea802a0680ac0f77b28c0931a8b1fa7cf63728e4baef3873d89d5"
   },
   "js/banenkaart-prefetch.js": {
     "v": "20261027-bk4-h",
@@ -444,8 +444,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261027-bk5-g2",
-    "sha256": "37e1046b4a77c33b44173c0420131de2950d6b1363cbbf89f08c60d9ddcdde10"
+    "v": "20261027-23",
+    "sha256": "50f21f41eba5c912e7c3cb28222046c799d937932dfe546ed74991ff868a0b4e"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",

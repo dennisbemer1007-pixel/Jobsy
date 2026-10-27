@@ -45,6 +45,19 @@
         if (ev.target.closest("[data-wg-meer-close]") || ev.target.closest("[data-wg-meer-backdrop]")) {
             ev.preventDefault();
             setMeerOpen(false);
+            return;
+        }
+
+        if (ev.target.closest("[data-wg-meer-panel] a[href]")) {
+            setMeerOpen(false);
+            return;
+        }
+
+        var panel = qs("[data-wg-meer-panel]");
+        if (panel && !panel.hidden
+            && !ev.target.closest("[data-wg-meer-panel]")
+            && !ev.target.closest("[data-wg-meer-toggle]")) {
+            setMeerOpen(false);
         }
     }
 
