@@ -343,8 +343,15 @@ internal static class ApplicationsSsrData
         var apps = await api.GetMyApplicationsAsync(cancellationToken);
         if (isCandidate && IsAcceptatieDemoCandidateEmail(candidateEmail, configuration))
         {
-            var needsEnsure = apps.Count == 0
-                              || (selectedId is Guid wanted && apps.All(a => a.Id != wanted));
+            var needsEnsure = apps.Count == 0;
+            if (!needsEnsure
+                && selectedId is Guid wanted
+                && apps.All(a => a.Id != wanted)
+                && AcceptatieSollicDemoCatalog.IsDemoApplicationId(wanted))
+            {
+                needsEnsure = true;
+            }
+
             if (needsEnsure)
             {
                 await TryEnsureAcceptatieSollicitatiesDemoViaWebAsync(

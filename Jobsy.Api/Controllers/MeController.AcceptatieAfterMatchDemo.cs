@@ -1,6 +1,7 @@
 using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Ops;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +42,10 @@ public partial class MeController
 
         try
         {
+            var seedService = new TestAccountsSeedService(_db, configuration);
+            await seedService.ApplyAcceptatieSeedResetExternalPurgeAsync(_logger, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+
             await JobsyDbSeeder.EnsureAfterMatchDemoApplicationsAsync(_db, _logger);
             return Ok(new AcceptatieAfterMatchDemoEnsureResponse(true, null));
         }
