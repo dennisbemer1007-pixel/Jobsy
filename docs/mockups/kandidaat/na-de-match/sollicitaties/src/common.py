@@ -40,10 +40,10 @@ def page(title, active, hero, hp, mp, body, ms='auto 250%', extra_css=''):
   <a class="util" href="/hoe-werkt-lobsy" aria-label="Uitleg over deze pagina">i</a>
   <a class="util" href="/notifications" aria-label="Meldingen">{I('bell')}</a>
   <span class="lang"><img src="img/nl.svg" alt="">NL</span>
-  <button class="account" type="button" aria-haspopup="true"><span class="name">Roland van der Velde</span><span class="av">RV</span></button>
+  <button class="account" type="button" aria-haspopup="true"><span class="name">Sam de Wit</span><span class="av">SW</span></button>
  </div>
  <div class="menu" role="menu">
-  <div class="who"><strong>Roland van der Velde</strong><span>roland@voorbeeld.nl</span></div>
+  <div class="who"><strong>Sam de Wit</strong><span>sam@voorbeeld.nl</span></div>
   <a href="/candidate/profile">Profiel</a><a href="/candidate/settings">Instellingen</a><a href="/hoe-werkt-lobsy">Hoe werkt Lobsy</a><a href="/feedback">Feedback</a><a class="out" href="/logout">Uitloggen</a>
  </div>
 </header>

@@ -7,7 +7,7 @@ L.append('''# Lobsy kandidaatreis · jij bent de kreeft
 
 Mockupset voor de hele kandidaatreis van Lobsy. De kreeft in aquarel is geen gids of mascotte: **de kandidaat is de kreeft**. Vanaf moment 0 op het strand loop je zelf de reis: langs de kust, over de rotsen, de diepte in voor de tests, en naar het licht bij de vuurtoren, waar je uit je schild bent. Daarna kom je aan in de haven: de app zelf.
 
-Bedoeld voor `docs/mockups/kandidaat/kreeft/` in PR #878. Alle namen, adressen en bedrijven zijn verzonnen (kandidaat: Roland van der Velde, Delft).
+Bedoeld voor `docs/mockups/kandidaat/kreeft/` in PR #878. Alle namen, adressen en bedrijven zijn verzonnen (kandidaat: Sam de Wit, Delft).
 
 ## Zo bekijk je het
 

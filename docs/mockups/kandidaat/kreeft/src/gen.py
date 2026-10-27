@@ -28,7 +28,7 @@ def header(active='', loggedin=True):
     nav=''.join(f'<a href="{u}"{" class=\"is-active\"" if n==active else ""}>{n}</a>' for n,u in NAV)
     return f'''<header class="app-header"><a class="brand" href="/home"><img src="lobsy-logo-horizontaal.svg" alt="Lobsy"></a>
 <nav class="nav">{nav}</nav>
-<div class="utils"><a class="util" href="#">i</a><a class="util" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a><span class="lang"><img src="nl.svg" alt="">NL</span><span class="account"><span class="name">Roland van der Velde</span><span class="av">RV</span></span></div></header>'''
+<div class="utils"><a class="util" href="#">i</a><a class="util" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a><span class="lang"><img src="nl.svg" alt="">NL</span><span class="account"><span class="name">Sam de Wit</span><span class="av">SW</span></span></div></header>'''
 
 FOOT='<footer class="footer"><nav><a href="#">Privacyverklaring</a><a href="#">Algemene voorwaarden</a><a href="#">Toegankelijkheid</a><a href="#">Contact</a></nav><span>© 2026 Lobsy</span></footer>'
 
@@ -120,7 +120,7 @@ T('Log in met je e-mailadres. Nog geen account? Dat maak je in een minuut.','Log
 body=header(loggedin=False)+strip('inloggen')+f'''<main class="wrap"><div class="login">
 <section class="qcard"><div class="tabs"><a class="is-active" href="#">Inloggen</a><a href="#">Account maken</a></div>
 <h1 class="k" style="margin-top:18px">Fijn dat je er bent</h1><p class="lead">Log in met je e-mailadres. Nog geen account? Dat maak je in een minuut.</p>
-{field('E-mailadres','roland@voorbeeld.nl')}{field('Wachtwoord','••••••••••')}
+{field('E-mailadres','sam@voorbeeld.nl')}{field('Wachtwoord','••••••••••')}
 <div class="between" style="margin:6px 0 18px"><span class="small"><span class="sw on" style="display:inline-block;vertical-align:middle;margin-right:8px;transform:scale(.8)"></span>Ingelogd blijven</span><a class="link" href="#">Wachtwoord vergeten?</a></div>
 <a class="btn btn--primary" style="width:100%" href="#">Inloggen</a>
 <p class="muted small" style="margin:16px 0 0;text-align:center">Lukt het niet? Je adviseur of de helpdesk helpt je graag.</p></section>
@@ -140,7 +140,7 @@ zl=[('Strand · Start','Hier begin je. Je leest wat er met je gegevens gebeurt.'
 for a,b,e in zl: T(b,e,'zone '+a,c)
 zh=''.join(f'<li><b>{a}</b><span>{b}</span></li>' for a,b,e in zl)
 body=header('Reis')+strip('route-kaart')+f'''<main class="wrap"><div class="startg"><div>
-<p class="zonetag"><b>Strand</b>Start · welkom en toestemming</p><h1 class="k">Welkom bij je reis, Roland</h1>
+<p class="zonetag"><b>Strand</b>Start · welkom en toestemming</p><h1 class="k">Welkom bij je reis, Sam</h1>
 <p class="lead">Je loopt in vijf rustige stukken van het strand naar het licht. Onderweg leer je jezelf beter kennen.</p>
 <ol class="zl">{zh}</ol>
 <div class="card" style="margin-top:18px"><h3>Voor je begint</h3>
@@ -155,7 +155,7 @@ add(3,'start-strand','Onboarding','Strand · Start','Na het inloggen: de route i
 ob_page(4,'kust-kennismaken',1,'Stap 1 · Even kennismaken','stap 1 van 3',0,'meelopen','kust-kennismaken','',
  'Even kennismaken',"Let's get acquainted",'Eerst wat basisgegevens.','First some basic details.',
  'Je begint rustig: alleen je naam en waar je woont.','You start calmly: just your name and where you live.',
- '<div class="g2">'+field('Voornaam','Roland')+field('Achternaam','van der Velde')+'</div><div class="g2">'+field('Postcode','2611 AB')+field('Woonplaats','Delft')+'</div>'+field('Hoe wil je aangesproken worden?','Roland')+'<p class="qlabel">Welke taal spreek je het liefst?</p><div class="chips"><span class="chip is-active">Nederlands</span><span class="chip">English</span><span class="chip">Beide</span></div>',
+ '<div class="g2">'+field('Voornaam','Sam')+field('Achternaam','de Wit')+'</div><div class="g2">'+field('Postcode','2611 AB')+field('Woonplaats','Delft')+'</div>'+field('Hoe wil je aangesproken worden?','Sam')+'<p class="qlabel">Welke taal spreek je het liefst?</p><div class="chips"><span class="chip is-active">Nederlands</span><span class="chip">English</span><span class="chip">Beide</span></div>',
  'kust-kennismaken.jpg','Een dorpsstraat met verschillende voordeuren: je stelt je voor bij de buren. Kennismaken, waar je woont.',back=False)
 ob_page(5,'kust-wanneer',1,'Stap 2 · Wanneer kun je werken?','stap 2 van 3',1,'meelopen','kust-wanneer','',
  'Wanneer kun je werken?','When can you work?','Kies wat nu bij je leven past. Je kunt het later altijd aanpassen.','Choose what fits your life now. You can always change it later.',
@@ -237,8 +237,8 @@ T('Je paspoort','Your passport','titel',c)
 body=header('Paspoort')+strip('licht-paspoort')+f'''<main class="wrap"><div class="kg"><div>
 <p class="zonetag"><b>Licht</b>Paspoort · klaar om te delen</p><h1 class="k">Je paspoort</h1><p class="lead">Dit is wie je bent, in je eigen woorden. Jij bepaalt wat werkgevers zien.</p>
 <div class="pp"><div class="pph"><span>LOBSY PASPOORT</span><span>Bijgewerkt 25 oktober 2026</span></div>
-<div class="ppb"><div class="ppimg"><div class="seal"><img src="lobsy-merkteken.svg" alt=""><b>RV</b><span>Delft · 2026</span></div></div><div>
-<h2 class="sec-t" style="margin:0 0 4px">Roland van der Velde</h2><p class="muted small" style="margin:0 0 14px">Delft · fiets en ov, tot 30 minuten · 16 tot 32 uur</p>
+<div class="ppb"><div class="ppimg"><div class="seal"><img src="lobsy-merkteken.svg" alt=""><b>SW</b><span>Delft · 2026</span></div></div><div>
+<h2 class="sec-t" style="margin:0 0 4px">Sam de Wit</h2><p class="muted small" style="margin:0 0 14px">Delft · fiets en ov, tot 30 minuten · 16 tot 32 uur</p>
 <dl class="kv"><dt>Werkervaring</dt><dd>Magazijnmedewerker, vrijwilliger voedselbank</dd><dt>Opleiding</dt><dd>Vmbo, heftruckcertificaat, EHBO</dd><dt>Droom</dt><dd>Coördinator in de zorg</dd><dt>Beschikbaar</dt><dd>Zo snel mogelijk, overdag en weekend</dd></dl>
 </div></div>
 <div class="ppw"><div><b>Zo werk ik</b><br><span class="word">Planner</span><span class="word">Teamspeler</span><span class="word">Zorgvuldig</span></div><div><b>Dit vind ik leuk</b><br><span class="word">Helpen</span><span class="word">Regelen</span><span class="word">Met je handen</span></div><div><b>Hier voel ik me thuis</b><br><span class="word">Levendig team</span><span class="word">Meedenkende leiding</span></div><div><b>Dit vind ik belangrijk</b><br><span class="word">Zekerheid</span><span class="word">Betekenis</span><span class="word">Collega's</span></div></div></div>
@@ -255,7 +255,7 @@ PROJ={'kmn':('/workspace/kandidaat-mockups-nieuw/_bron-html',None),'ndm':('/work
 IGN=shutil.ignore_patterns('node_modules','*.py','*.mjs','package*.json','__pycache__','*.png')
 if os.path.exists(BEST): shutil.rmtree(BEST)
 for k,(p,_) in PROJ.items(): shutil.copytree(p,f'{BEST}/{k}',ignore=IGN)
-_pj=f'{BEST}/bk/parts.js'; _t=open(_pj).read(); open(_pj,'w').write(_t.replace('src="logo.png"','src="../../lobsy-merkteken.svg"').replace('Sanne de Vries','Roland van der Velde').replace('>SV<','>RV<'))
+_pj=f'{BEST}/bk/parts.js'; _t=open(_pj).read(); open(_pj,'w').write(_t.replace('src="logo.png"','src="../../lobsy-merkteken.svg"').replace('Sanne de Vries','Sam de Wit').replace('>SV<','>SW<'))
 # kmn: nieuwe illustraties onder de oude bestandsnamen, zodat ook kaartjes in de pagina het nieuwe beeld tonen
 for old,new in [('hero-mijn-lobsy','mijn-lobsy'),('hero-profiel','profiel'),('hero-sollicitaties','sollicitaties'),('hero-adviseur','adviseur'),('hero-instellingen','instellingen'),('hero-wat-drijft-jou','wat-drijft'),('hero-ondernemerscheck','ondernemer')]:
     shutil.copy(f'../illustraties/{new}.jpg',f'{BEST}/kmn/img/{old}.jpg')
@@ -278,13 +278,13 @@ def inject(proj,fname,num,slug,chapter,title,caption,stripname,coachtxt=None,ill
         cn=coach(coachtxt[0],coachtxt[1],f'{num:02d}',rel)
         s,c3=re.subn(r'(</h1>\s*(<p[^>]*>.*?</p>)?)',lambda m:m.group(1)+cn,s,count=1,flags=re.S)
     for a_,b_ in [('Maak je reis af: Naar het licht','Je Kompas en paspoort zijn klaar'),('Nog één test, dan is je paspoort helemaal compleet. Duurt ongeveer 5 minuten.','Kijk rustig wat werkgevers van je zien. Jij bepaalt wat je deelt.'),('Je paspoort is bijna compleet.','Je paspoort is compleet.')]: s=s.replace(a_,b_)
-    s=s.replace('Sam Voorbeeld','Roland van der Velde').replace('src="logo.png"','src="../../lobsy-merkteken.svg"')
+    s=s.replace('Sam Voorbeeld','Sam de Wit').replace('src="logo.png"','src="../../lobsy-merkteken.svg"')
     # geen scores of percentages; kansberoep heet 'Veel vraag in jouw regio'
     s=re.sub(r'(<td data-l="Match met vacature">)\d+%(</td>)',r'\1Past goed\2',s)
     for a_,b_ in [('Match met vacature','Past bij jou'),('Kansberoepen en omscholingsideeën','Beroepen met veel vraag in jouw regio en omscholingsideeën'),('Kansberoep (Haaglanden)','Veel vraag in jouw regio'),('>Veel kans op werk in de regio<','>Ja<'),('>Geen kansberoep<','>Nee<'),
       ('Past bij jou: hoe goed de vacature past bij je reistijd, uren en dagdelen. Kansberoep: hoeveel vraag er in de regio Haaglanden is naar dit beroep, volgens open cijfers van CBS en de UWV-kansberoepen. ‘Geen kansberoep’: het beroep staat niet op de lijst kansberoepen.','Past bij jou: de vacature past bij je reistijd, uren en dagdelen. Veel vraag in jouw regio: werkgevers in Haaglanden zoeken veel mensen voor dit beroep, volgens open gegevens van CBS en UWV.')]: s=s.replace(a_,b_)
     s=s.replace('Vraag het Lobsy, of','Vraag het via Lobsy-hulp, of')
-    s=s.replace('Sanne de Vries','Roland van der Velde').replace('>SV<','>RV<').replace('Sanne','Roland')
+    s=s.replace('Sanne de Vries','Sam de Wit').replace('>SV<','>SW<').replace('Sanne','Sam')
     newf=f'{BEST}/{proj}/{num:02d}-{slug}.html'
     s=s.replace('node_modules/maplibre-gl/dist/','../../vendor/maplibre/')
     open(newf,'w').write(s)
@@ -399,14 +399,14 @@ add(39,'matches-leeg','Lege staten en hulp','Geen matches','Lege staat: nog geen
 c='40'
 T('Lobsy-hulp','Lobsy help','titel',c)
 T('Hulp bij de app en je reis','Help with the app and your journey','paneel',c)
-T('Hoi Roland. Waar wil je hulp bij?','Hi Roland. What would you like help with?','hulp',c)
+T('Hoi Sam. Waar wil je hulp bij?','Hi Sam. What would you like help with?','hulp',c)
 T('Dat betekent dat werkgevers bij jou in de buurt veel mensen zoeken voor dit werk. Je maakt daar vaak sneller kans op een gesprek.','It means employers near you are looking for many people for this work. You often get an interview sooner there.','hulp',c)
 T('Lobsy-hulp is een digitale hulp. Voor persoonlijk advies kun je altijd je adviseur vragen.','Lobsy help is a digital helper. For personal advice you can always ask your advisor.','paneel',c)
 bg=open('18-match-vacature.html').read()
 mainpart=re.search(r'<main.*?</main>',bg,re.S).group(0)
 body=header('Zoeken')+strip('match')+mainpart+f'''<div class="dim"></div><aside class="kpanel" aria-label="Lobsy-hulp">
 <div class="kph"><img src="lobsy-merkteken.svg" alt=""><div><b>Lobsy-hulp</b><span>Hulp bij de app en je reis</span></div><span class="x">×</span></div>
-<div class="kpb"><div class="msg l">Hoi Roland. Waar wil je hulp bij?</div>
+<div class="kpb"><div class="msg l">Hoi Sam. Waar wil je hulp bij?</div>
 <div class="chips" style="margin:4px 0 14px"><span class="chip">Hoe werkt solliciteren?</span><span class="chip">Wat ziet een werkgever?</span><span class="chip">Ik wil even pauzeren</span></div>
 <div class="msg r">Wat betekent Veel vraag in jouw regio?</div>
 <div class="msg l">Dat betekent dat werkgevers bij jou in de buurt veel mensen zoeken voor dit werk. Je maakt daar vaak sneller kans op een gesprek.</div>

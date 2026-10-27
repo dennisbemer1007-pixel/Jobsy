@@ -120,7 +120,7 @@ DETAIL_HTML=f'''<aside class="card detail">
 EMPTY=f'''<aside class="card detail"><div class="empty"><div class="ic">{I('brief')}</div><b style="color:var(--text)">Kies een sollicitatie</b><p class="small" style="margin:4px 0 0">Dan zie je waar je staat en wat je nu kunt doen.</p></div></aside>'''
 HINT=f'<p class="muted small foot-hint" style="margin-top:16px">Tik op een sollicitatie om alle stappen te zien. Nog niets gevonden? <a href="/banenkaart">Naar de banenkaart</a></p>'
 def fix(h,cls=''):
-    h=h.replace('Roland van der Velde','Sanne de Vries').replace('roland@voorbeeld.nl','sanne@voorbeeld.nl').replace('<span class="av">RV</span>','<span class="av">SV</span>')
+    h=h.replace('Sam de Wit','Sanne de Vries').replace('sam@voorbeeld.nl','sanne@voorbeeld.nl').replace('<span class="av">SW</span>','<span class="av">SV</span>')
     if cls: h=h.replace('<body>',f'<body class="{cls}">')
     return h
 def P(body,cls=''): return fix(page('Sollicitaties','Sollicitaties','hero-sollicitaties.jpg','center 46%','20% 55%',body,'auto 240%',css),cls)

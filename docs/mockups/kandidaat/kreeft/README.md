@@ -2,7 +2,7 @@
 
 Mockupset voor de hele kandidaatreis van Lobsy. De kreeft in aquarel is geen gids of mascotte: **de kandidaat is de kreeft**. Vanaf moment 0 op het strand loop je zelf de reis: langs de kust, over de rotsen, de diepte in voor de tests, en naar het licht bij de vuurtoren, waar je uit je schild bent. Daarna kom je aan in de haven: de app zelf.
 
-Bedoeld voor `docs/mockups/kandidaat/kreeft/` in PR #878. Alle namen, adressen en bedrijven zijn verzonnen (kandidaat: Roland van der Velde, Delft).
+Bedoeld voor `docs/mockups/kandidaat/kreeft/` in PR #878. Alle namen, adressen en bedrijven zijn verzonnen (kandidaat: Sam de Wit, Delft).
 
 ## Zo bekijk je het
 
@@ -322,7 +322,7 @@ Titels, intro's, tips, reiskaartzinnen, notities en zonezinnen. Overige UI-tekst
 | 39 | notitie | Maak je reis af, dan zie je meer vacatures. Het licht staat al aan. | Finish your journey and you will see more vacancies. The light is already on. |
 | 40 | titel | Lobsy-hulp | Lobsy help |
 | 40 | paneel | Hulp bij de app en je reis | Help with the app and your journey |
-| 40 | hulp | Hoi Roland. Waar wil je hulp bij? | Hi Roland. What would you like help with? |
+| 40 | hulp | Hoi Sam. Waar wil je hulp bij? | Hi Sam. What would you like help with? |
 | 40 | hulp | Dat betekent dat werkgevers bij jou in de buurt veel mensen zoeken voor dit werk. Je maakt daar vaak sneller kans op een gesprek. | It means employers near you are looking for many people for this work. You often get an interview sooner there. |
 | 40 | paneel | Lobsy-hulp is een digitale hulp. Voor persoonlijk advies kun je altijd je adviseur vragen. | Lobsy help is a digital helper. For personal advice you can always ask your advisor. |
 | 41 | titel | Deze pagina bestaat niet (meer) | This page does not exist (anymore) |
