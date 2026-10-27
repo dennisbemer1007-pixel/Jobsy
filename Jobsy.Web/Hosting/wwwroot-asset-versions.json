@@ -108,8 +108,8 @@
     "v": "20261017-05"
   },
   "css/features/enterprise-ui.css": {
-    "sha256": "4665d3c7ca5ac7e6602ef1deb250c9e2b3014cdb82ee3e0a9d3831b57135940f",
-    "v": "20261004-10"
+    "sha256": "ae1ddc6d138fa27447b9765220154e282134822ef11f305f3b8ef7232e2e1565",
+    "v": "20261027-r11e"
   },
   "css/features/errors.css": {
     "sha256": "c5f42fc0b142d2472fc4dfb288cefffff2e46e244dde733a98ec555342757508",
@@ -460,8 +460,8 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "v": "20261026-kreeft22",
-    "sha256": "059c766cf5d653fafe7750e1eda89641eb6bcebe50caa1357d419468721cac0b"
+    "v": "20261027-r11e",
+    "sha256": "9328a9bf4973d3bd988ccb64e0b20349b39e00dfff5048ea8ca58f2ecd446096"
   },
   "js/lobsyPush.js": {
     "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",
@@ -650,5 +650,9 @@
   "js/wg-applications-list-ssr.js": {
     "v": "20261027-r11b-7ee9dafa",
     "sha256": "7ee9dafa4fbc370e76b1b7cdbec985b16a2edcd1c0e6a4849d26bd0878989687"
+  },
+  "js/wg-bottom-nav-ssr.js": {
+    "v": "20261027-r11e",
+    "sha256": "3edb587d29bca65de14df7cf23124830d83366020a70bf8c6e542e0d5e6ed7ad"
   }
 }

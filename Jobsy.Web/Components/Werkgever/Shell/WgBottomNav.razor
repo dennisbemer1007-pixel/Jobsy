@@ -2,12 +2,14 @@
 @using Jobsy.Web.Components.Ui.Enterprise
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Http
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
 @inject NavigationManager Navigation
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject WerkgeverCountsState Counts
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <nav class="wg-bottom-nav" aria-label="@Culture["WgShell.BottomNav"]">
@@ -20,11 +22,26 @@
             <li>
                 @if (isMeer)
                 {
-                    <button type="button" class="wg-bottom-nav__link @(_meerOpen ? "is-active" : null)"
-                            @onclick="() => _meerOpen = true">
-                        <span class="wg-bottom-nav__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
-                        <span>@Culture[item.LabelKeyFor(Role)]</span>
-                    </button>
+                    @if (StaticChrome)
+                    {
+                        <button type="button"
+                                class="wg-bottom-nav__link"
+                                data-wg-meer-toggle="1"
+                                aria-haspopup="dialog"
+                                aria-expanded="false"
+                                aria-controls="wg-meer-panel">
+                            <span class="wg-bottom-nav__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                            <span>@Culture[item.LabelKeyFor(Role)]</span>
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="wg-bottom-nav__link @(_meerOpen ? "is-active" : null)"
+                                @onclick="() => _meerOpen = true">
+                            <span class="wg-bottom-nav__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                            <span>@Culture[item.LabelKeyFor(Role)]</span>
+                        </button>
+                    }
                 }
                 else
                 {
@@ -44,23 +61,62 @@
     </ul>
 </nav>
 
-<EntDrawer Open="_meerOpen" OpenChanged="OnMeerChanged" Title="@Culture["WgShell.MoreSheet"]" FullSheet="true" Placement="start">
-    @foreach (var group in SidebarGroups)
-    {
-        <p class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</p>
-        <ul class="wg-sidebar__items">
-            @foreach (var item in group.Items)
+@if (StaticChrome)
+{
+    <div class="ent-drawer-backdrop" data-wg-meer-backdrop hidden></div>
+    <aside id="wg-meer-panel"
+           class="ent-drawer ent-drawer--start ent-drawer--sheet"
+           data-wg-meer-panel
+           role="dialog"
+           aria-modal="true"
+           aria-label="@Culture["WgShell.MoreSheet"]"
+           hidden>
+        <header class="ent-drawer__header">
+            <h2 class="ent-drawer__title">@Culture["WgShell.MoreSheet"]</h2>
+            <button type="button" class="ent-drawer__close" data-wg-meer-close="1"
+                    aria-label="@Culture["EntUi.CloseDrawer"]">
+                <span aria-hidden="true">@((MarkupString)NavIcons.Close)</span>
+            </button>
+        </header>
+        <div class="ent-drawer__body">
+            @foreach (var group in SidebarGroups)
             {
-                <li>
-                    <a class="wg-sidebar__link" href="@item.Href" @onclick="CloseMeer">
-                        <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
-                        @Culture[item.LabelKeyFor(Role)]
-                    </a>
-                </li>
+                <p class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</p>
+                <ul class="wg-sidebar__items">
+                    @foreach (var item in group.Items)
+                    {
+                        <li>
+                            <a class="wg-sidebar__link" href="@item.Href">
+                                <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                                @Culture[item.LabelKeyFor(Role)]
+                            </a>
+                        </li>
+                    }
+                </ul>
             }
-        </ul>
-    }
-</EntDrawer>
+        </div>
+    </aside>
+}
+else
+{
+    <EntDrawer Open="_meerOpen" OpenChanged="OnMeerChanged" Title="@Culture["WgShell.MoreSheet"]" FullSheet="true" Placement="start">
+        @foreach (var group in SidebarGroups)
+        {
+            <p class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</p>
+            <ul class="wg-sidebar__items">
+                @foreach (var item in group.Items)
+                {
+                    <li>
+                        <a class="wg-sidebar__link" href="@item.Href" @onclick="CloseMeer">
+                            <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                            @Culture[item.LabelKeyFor(Role)]
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </EntDrawer>
+}
 
 @code {
     private bool _meerOpen;
@@ -68,7 +124,8 @@
     private bool _kandidatenkaartEnabled;
     private bool _companyMapInitiativeEnabled;
 
-    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private bool StaticChrome => !RendererInfo.IsInteractive;
+    private EmployerRole Role => Scope.DisplayRole(HttpContextAccessor.HttpContext?.User);
     private WerkgeverNavContext Ctx => new(
         CandidateInsightsEnabled: true,
         KandidatenkaartEnabled: _kandidatenkaartEnabled,

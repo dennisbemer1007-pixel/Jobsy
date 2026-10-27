@@ -127,7 +127,11 @@
     margin: var(--space-1) 0 0;
     font-size: var(--text-xs);
     color: var(--muted);
-}.ent-kpi-card__delta--up { color: var(--success); }.ent-kpi-card__delta--down { color: var(--danger); }.ent-drawer-backdrop {
+}.ent-kpi-card__delta--up { color: var(--success); }.ent-kpi-card__delta--down { color: var(--danger); }.ent-drawer-backdrop[hidden],
+.ent-drawer[hidden] {
+    display: none !important;
+    pointer-events: none !important;
+}.ent-drawer-backdrop {
     position: fixed;
     inset: 0;
     background:rgba(18, 32, 51, 0.4);
