@@ -37,6 +37,9 @@ public static class UiStringsKandidatenkaart
         Add("Kk.Area.Meta", "{0} kandidaten · {1} boven 80%", "{0} candidates · {1} above 80%");
         Add("Kk.Area.ActiveWeek", "Actief deze week", "Active this week");
         Add("Kk.BelowThreshold", "Met deze filters zijn er geen gebieden met minimaal 30 kandidaten.", "No areas have at least 30 candidates with these filters.");
+        Add("Kk.NoVacancy.Title", "Nog geen gepubliceerde vacature", "No published vacancy yet");
+        Add("Kk.NoVacancy.Body", "Publiceer eerst een vacature. Daarna zie je op de kaart geaggregeerde kandidatengebieden rond die functie.", "Publish a vacancy first. Then you'll see aggregated candidate areas around that role on the map.");
+        Add("Kk.NoVacancy.Cta", "Vacature plaatsen", "Post vacancy");
         Add("Kk.Map.Legend", "≥ 30 kandidaten", "≥ 30 candidates");
         Add("Kk.Mobile.AreasPeek", "Gebieden in de buurt van je vacature", "Areas near your vacancy");
         Add("Kk.Invite.Open", "Uitnodigen om te solliciteren", "Invite to apply");
