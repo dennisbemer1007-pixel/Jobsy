@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 
 namespace Jobsy.Web.Services;
 
@@ -73,6 +74,20 @@ public sealed partial class JobsyApiClient
         }
 
         return await ReadApiJsonAsync<PupilDreamJobResponse>(response.Content, ct);
+    }
+
+    public async Task<bool> GetPupilG78PassportEnabledAsync(CancellationToken ct = default)
+    {
+        var dto = await GetApiJsonAsync<PupilG78PassportWebDto>("api/pupil/passport/g78", ct);
+        return dto?.Enabled == true;
+    }
+
+    public async Task<PupilG78PassportWebDto?> GetPupilG78PassportAsync(string? displayName = null, CancellationToken ct = default)
+    {
+        var q = string.IsNullOrWhiteSpace(displayName)
+            ? "api/pupil/passport/g78"
+            : $"api/pupil/passport/g78?naam={Uri.EscapeDataString(displayName)}";
+        return await GetApiJsonAsync<PupilG78PassportWebDto>(q, ct);
     }
 
     public async Task<PupilVoPassportDto?> GetPupilVoPassportAsync(CancellationToken ct = default)

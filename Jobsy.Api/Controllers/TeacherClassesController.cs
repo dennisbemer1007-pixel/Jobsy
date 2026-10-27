@@ -1,6 +1,7 @@
 using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -71,6 +72,17 @@ public sealed class TeacherClassesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var dto = await _portal.GetCodeDetailAsync(User, classId, codeId, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpGet("{classId:guid}/codes/{codeId:guid}/passport/g78")]
+    public async Task<ActionResult<PupilG78PassportWebDto>> G78Passport(
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken)
+    {
+        var dto = await _portal.GetG78PassportWebForCodeAsync(User, classId, codeId, cancellationToken);
+        Response.Headers.CacheControl = "no-store";
         return dto is null ? NotFound() : Ok(dto);
     }
 

@@ -31,6 +31,17 @@ public static class UiStringsLeerlingPaspoort
     private static string En(string key, string nl) => key switch
     {
         "LeerlingPassport.Header.G78" => "MY DNA PASSPORT",
+        "LeerlingPassport.Brand.Sub" => "Expedition · DNA passport",
+        "LeerlingPassport.Kicker" => "Expedition complete · all questions answered",
+        "LeerlingPassport.Badge.Title" => "Shield complete",
+        "LeerlingPassport.Badge.Sub" => "All worlds discovered",
+        "LeerlingPassport.Section.DitBenIk" => "This is you",
+        "LeerlingPassport.Section.DitBenIk.Who" => "What Lobsy learned along the way",
+        "LeerlingPassport.Section.Likes" => "I enjoy this",
+        "LeerlingPassport.Page.Title" => "My DNA passport",
+        "LeerlingPassport.Page.Back" => "Back to This is you",
+        "LeerlingPassport.Page.Pdf" => "Download PDF",
+        "LeerlingPassport.NamePrivacy" => "Write your name yourself. Lobsy does not store names.",
         "LeerlingPassport.Header.Vo" => "DNA passport · secondary school",
         "LeerlingPassport.Vo.Form.Title" => "Extra for your DNA passport",
         "LeerlingPassport.Vo.Form.Lead" => "Optional · shown on your PDF when filled in",

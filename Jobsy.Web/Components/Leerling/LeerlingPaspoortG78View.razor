@@ -1,0 +1,253 @@
+@using Jobsy.Core.Scholen.PupilPassport
+@inject CultureState Culture
+
+@if (Model is not null && Model.Enabled)
+{
+<div class="lp-g78" data-testid="leerling-paspoort-g78">
+    <header class="lp-g78__top">
+        <div class="lp-g78__brand">
+            <img src="/images/leerling-paspoort-g78/g78-embleem.png" width="28" height="28" alt="" />
+            Lobsy
+            <small>@Culture["LeerlingPassport.Brand.Sub"]</small>
+        </div>
+        <div class="lp-g78__meta">
+            <b>@Model.ClassLabel</b> · @Model.SchoolName<br />
+            @Model.DateLabel
+            <span class="lp-g78__code">@Model.DisplayCode</span>
+        </div>
+    </header>
+    <div class="lp-g78__strip" role="presentation"></div>
+    <div class="lp-g78__body">
+        <div class="lp-g78__title-row">
+            <div>
+                <div class="lp-g78__kicker">@Culture["LeerlingPassport.Kicker"]</div>
+                <h1>@Culture["LeerlingPassport.Page.Title"]</h1>
+                <div class="lp-g78__nameline">
+                    @Culture["LeerlingPassport.NameIntro"]
+                    @if (AllowNameEdit)
+                    {
+                        <input type="text" maxlength="48" value="@_name" @oninput="OnNameInput" aria-label="@Culture["LeerlingPassport.Page.NamePlaceholder"]" />
+                    }
+                    else if (!string.IsNullOrWhiteSpace(Model.DisplayName))
+                    {
+                        <span class="lp-g78__own"><b>@Model.DisplayName</b></span>
+                    }
+                </div>
+                <p class="lp-g78__note">@Culture["LeerlingPassport.NamePrivacy"]</p>
+            </div>
+            <img class="lp-g78__kreeft" src="/images/leerling-paspoort-g78/g78-kreeft-kijker.png" alt="" />
+            <div class="lp-g78__badge">
+                <span class="lp-g78__badge-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"><path d="M5 12l5 5 9-10" /></svg>
+                </span>
+                <div>
+                    <b>@Culture["LeerlingPassport.Badge.Title"]</b>
+                    <span>@Culture["LeerlingPassport.Badge.Sub"]</span>
+                </div>
+            </div>
+        </div>
+
+        <section class="lp-g78__card">
+            <h3>
+                @Culture["LeerlingPassport.Section.DitBenIk"]
+                <span class="lp-g78__who">@Culture["LeerlingPassport.Section.DitBenIk.Who"]</span>
+            </h3>
+            <p>@Model.StoryBody</p>
+        </section>
+
+        @if (Model.Worlds is { Count: > 0 })
+        {
+            <div class="lp-g78__worlds">
+                @foreach (var w in Model.Worlds)
+                {
+                    <article class="lp-g78__world">
+                        <span class="lp-g78__world-ok" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"><path d="M5 12l5 5 9-10" /></svg>
+                        </span>
+                        <div class="lp-g78__world-img" style="@($"background-image:url(/images/leerling-paspoort-g78/{w.ImageFile})")"></div>
+                        <div class="lp-g78__world-text">
+                            <div class="lp-g78__world-k">@w.SectionLabel</div>
+                            <h4>@w.Headline</h4>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+        <div class="lp-g78__grid3">
+            <section class="lp-g78__card lp-g78__like">
+                <h3>@Culture["LeerlingPassport.Section.Likes"]</h3>
+                <div class="lp-g78__chips">
+                    @foreach (var chip in Model.Likes ?? [])
+                    {
+                        <span class="lp-g78__chip is-on">@chip</span>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.LikeOwnWord))
+                {
+                    <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.LikeOwnWord</b></div>
+                }
+            </section>
+            <section class="lp-g78__card lp-g78__dis">
+                <h3>@Culture["LeerlingPassport.Section.Dislikes"]</h3>
+                <div class="lp-g78__chips">
+                    @foreach (var chip in Model.Dislikes ?? [])
+                    {
+                        <span class="lp-g78__chip is-no">@chip</span>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.DislikeOwnWord))
+                {
+                    <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.DislikeOwnWord</b></div>
+                }
+            </section>
+            <section class="lp-g78__card lp-g78__str">
+                <h3>@Culture["LeerlingPassport.Section.Strengths"]</h3>
+                @foreach (var s in Model.Strengths ?? [])
+                {
+                    <div class="lp-g78__strength">
+                        <span class="lp-g78__strength-ic" aria-hidden="true">●</span>
+                        <div><b>@s.Title</b> <span>@s.Subtitle</span></div>
+                    </div>
+                }
+            </section>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.DreamJobTitle))
+        {
+            <section class="lp-g78__card">
+                <div class="lp-g78__dream-head">
+                    <span class="lp-g78__dream-hand">@Culture["LeerlingPassport.Section.Droom"]</span>
+                    <h3 class="lp-g78__dream-job">@Model.DreamJobTitle</h3>
+                    @if (!string.IsNullOrWhiteSpace(Model.DreamEncouragement))
+                    {
+                        <span class="lp-g78__dream-bub">@Model.DreamEncouragement</span>
+                    }
+                    <img class="lp-g78__dream-lob" src="/images/leerling-paspoort-g78/g78-kreeft-kaart.png" alt="" />
+                </div>
+                @if (Model.RouteSteps is { Count: > 0 })
+                {
+                    <div class="lp-g78__route">
+                        @foreach (var step in Model.RouteSteps)
+                        {
+                            <div class="lp-g78__route-step">
+                                <div class="phase">@step.PhaseLabel</div>
+                                <b>@step.Title</b>
+                                @if (!string.IsNullOrWhiteSpace(step.Detail))
+                                {
+                                    <span>@step.Detail</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="lp-g78__have">
+                    @if (Model.DreamHaveItems is { Count: > 0 })
+                    {
+                        <div>
+                            <h4>@Culture["LeerlingDroom.HaveTitle"]</h4>
+                            <ul>
+                                @foreach (var item in Model.DreamHaveItems)
+                                {
+                                    <li>@item</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (Model.DreamLearnItems is { Count: > 0 })
+                    {
+                        <div>
+                            <h4>@Culture["LeerlingDroom.NeedTitle"]</h4>
+                            <ul>
+                                @foreach (var item in Model.DreamLearnItems)
+                                {
+                                    <li>@item</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.AltRouteNote))
+                    {
+                        <p class="lp-g78__alt">@Model.AltRouteNote</p>
+                    }
+                </div>
+            </section>
+        }
+
+        @if (Model.OccupationCards is { Count: > 0 })
+        {
+            <h2 style="font-size:1rem;color:var(--lp-navy);margin:12px 0 8px;">
+                @Culture["LeerlingPassport.Section.Cards"]
+                <small style="font-weight:400;font-size:0.75rem;color:var(--lp-muted);">@Culture["LeerlingPassport.Cards.Sub"]</small>
+            </h2>
+            <div class="lp-g78__jobs">
+                @foreach (var job in Model.OccupationCards)
+                {
+                    <article class="lp-g78__card lp-g78__job">
+                        <div class="lp-g78__job-k">@job.DomainLabel</div>
+                        <h4>@job.Title</h4>
+                        <p>@job.Blurb</p>
+                        @if (job.FitTags is { Count: > 0 })
+                        {
+                            <div class="lp-g78__fit"><b>@Culture["LeerlingPassport.Cards.Fit"]:</b> @string.Join(", ", job.FitTags)</div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+
+        <div class="lp-g78__grid2">
+            @if (Model.DiscoveryQuestions is { Count: > 0 })
+            {
+                <section class="lp-g78__card lp-g78__disc">
+                    <h3>@Culture["LeerlingPassport.Section.Discover"]</h3>
+                    <ul>
+                        @foreach (var q in Model.DiscoveryQuestions)
+                        {
+                            <li><span class="box"></span>@q</li>
+                        }
+                    </ul>
+                </section>
+            }
+            @if (Model.HomeClassTips is { Count: > 0 })
+            {
+                <section class="lp-g78__card">
+                    <h3>@Culture["LeerlingPassport.Section.Tip"]</h3>
+                    @foreach (var tip in Model.HomeClassTips)
+                    {
+                        <p>@tip</p>
+                    }
+                </section>
+            }
+        </div>
+
+        <footer class="lp-g78__foot">
+            <span>@Model.FooterPrivacy</span>
+            <span><b>lobsy.nl</b> @Model.DateLabel</span>
+        </footer>
+    </div>
+</div>
+}
+
+@code {
+    [Parameter] public PupilG78PassportWebDto? Model { get; set; }
+    [Parameter] public bool AllowNameEdit { get; set; }
+    [Parameter] public string? DisplayName { get; set; }
+    [Parameter] public EventCallback<string?> DisplayNameChanged { get; set; }
+
+    private string? _name;
+
+    protected override void OnParametersSet()
+    {
+        _name = DisplayName ?? Model?.DisplayName;
+    }
+
+    private async Task OnNameInput(ChangeEventArgs e)
+    {
+        _name = e.Value?.ToString();
+        if (DisplayNameChanged.HasDelegate)
+        {
+            await DisplayNameChanged.InvokeAsync(string.IsNullOrWhiteSpace(_name) ? null : _name.Trim());
+        }
+    }
+}

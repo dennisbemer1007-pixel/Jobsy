@@ -112,12 +112,25 @@ public static class PupilPassportCopy
         var d = new Dictionary<string, string>(StringComparer.Ordinal);
         d["LeerlingPassport.Header.G78"] = "MIJN DNA-PASPOORT";
         d["LeerlingPassport.Header.Vo"] = "DNA-paspoort · middelbare school";
-        d["LeerlingPassport.Stamp"] = "{0}/{1} werelden ontdekt";
+        d["LeerlingPassport.Brand.Sub"] = "Expeditie · DNA-paspoort";
+        d["LeerlingPassport.Kicker"] = "Expeditie klaar · alle vragen beantwoord";
+        d["LeerlingPassport.Badge.Title"] = "Schild compleet";
+        d["LeerlingPassport.Badge.Sub"] = "Alle werelden ontdekt";
         d["LeerlingPassport.NameIntro"] = "Dit paspoort is van";
-        d["LeerlingPassport.NamePrivacy"] = "je naam schrijf je zelf op · Lobsy bewaart geen namen";
-        d["LeerlingPassport.Section.DitBenIk"] = "Dit ben ik!";
+        d["LeerlingPassport.NamePrivacy"] = "Je naam schrijf je zelf op. Lobsy bewaart geen namen.";
+        d["LeerlingPassport.Section.DitBenIk"] = "Dit ben jij";
+        d["LeerlingPassport.Section.DitBenIk.Who"] = "Wat Lobsy onderweg leerde";
         d["LeerlingPassport.Section.Droom"] = "Hier droom ik van…";
-        d["LeerlingPassport.Section.Likes"] = "Jaaa, leuk!";
+        d["LeerlingPassport.Dream.Bubble"] = "{0}? Sterke keuze. Dit is je route.";
+        d["LeerlingPassport.Section.Likes"] = "Dit vind ik leuk";
+        d["LeerlingPassport.Route.Phase.Now"] = "Nu";
+        d["LeerlingPassport.Route.Phase.Next"] = "Straks";
+        d["LeerlingPassport.Route.Phase.Later"] = "Daarna";
+        d["LeerlingPassport.Route.Phase.Goal"] = "Doel";
+        d["LeerlingPassport.Page.Title"] = "Mijn DNA-paspoort";
+        d["LeerlingPassport.Page.Back"] = "Terug naar Dit ben jij";
+        d["LeerlingPassport.Page.Pdf"] = "Download PDF";
+        d["LeerlingPassport.Page.NamePlaceholder"] = "Naam (optioneel, alleen op scherm en PDF)";
         d["LeerlingPassport.Section.Dislikes"] = "Liever niet";
         d["LeerlingPassport.OwnWord"] = "mijn eigen woord:";
         d["LeerlingPassport.Section.Strengths"] = "Hier ben ik goed in";
@@ -169,7 +182,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Discover.dierenarts.3"] = "Ben ik ook goed in iets maken met mijn handen?";
         d["LeerlingPassport.Tip.dierenarts.1"] =
             "Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.";
-        d["LeerlingPassport.Tip.dierenarts.2"] = "Vraag wat het leukst was. Er is geen goed of fout!";
+        d["LeerlingPassport.Tip.dierenarts.2"] = "Vraag wat het leukst was. Er is geen goed of fout antwoord.";
 
         d["LeerlingPassport.Discover.Letter.S.1"] = "Bij welk beroep help je anderen het meest?";
         d["LeerlingPassport.Discover.Letter.S.2"] = "Wanneer voel jij je het meest nuttig?";

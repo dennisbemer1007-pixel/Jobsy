@@ -1,0 +1,79 @@
+@page "/leerling/paspoort"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Core.Scholen.PupilPassport
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IFeatureFlags Features
+
+<PageTitle>@Culture["LeerlingPassport.Page.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!_enabled)
+{
+    <section class="ll-card">
+        <p class="muted">@Culture["School.FeatureDisabled"]</p>
+        <a class="btn-primary" href="/leerling/dit-ben-jij">@Culture["LeerlingPassport.Page.Back"]</a>
+    </section>
+}
+else if (_model is null)
+{
+    <section class="ll-card">
+        <p class="ll-error" role="alert">@Culture["Leerling.Reis.ResultPending"]</p>
+        <a class="btn-primary" href="/leerling/dit-ben-jij">@Culture["LeerlingPassport.Page.Back"]</a>
+    </section>
+}
+else
+{
+    <div class="ll-reis" data-testid="leerling-paspoort-page">
+        <LeerlingPaspoortG78View Model="_model"
+                                 AllowNameEdit="true"
+                                 DisplayName="_displayName"
+                                 DisplayNameChanged="OnNameChanged" />
+        <div class="ll-result__actions">
+            <a class="btn-secondary" href="/leerling/dit-ben-jij">@Culture["LeerlingPassport.Page.Back"]</a>
+            <a class="btn-secondary" href="@PdfHref">@Culture["LeerlingPassport.Page.Pdf"]</a>
+            <a class="btn-primary" href="/leerling/droombaan">@Culture["LeerlingStory.CheckDream"]</a>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _enabled;
+    private PupilG78PassportWebDto? _model;
+    private string? _displayName;
+
+    private string PdfHref => string.IsNullOrWhiteSpace(_displayName)
+        ? "/leerling/pdf"
+        : $"/leerling/pdf?naam={Uri.EscapeDataString(_displayName)}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await Features.GetAsync();
+        _enabled = flags.PupilPassportV2Enabled;
+        if (!_enabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        _model = await Api.GetPupilG78PassportAsync();
+        _enabled = _model?.Enabled == true;
+        _displayName = _model?.DisplayName;
+        _loading = false;
+    }
+
+    private Task OnNameChanged(string? name)
+    {
+        _displayName = name;
+        return Task.CompletedTask;
+    }
+}

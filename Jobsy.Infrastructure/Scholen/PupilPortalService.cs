@@ -75,6 +75,11 @@ public interface IPupilPortalService
         string? displayNameOnPdf = null,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilG78PassportWebDto? Ok, PupilErrorDto? Error, int StatusCode)> GetG78PassportWebAsync(
+        ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
+        CancellationToken cancellationToken = default);
+
     Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
         ClaimsPrincipal staff,
         Guid classId,
@@ -964,6 +969,42 @@ public sealed class PupilPortalService : IPupilPortalService
             ? $"lobsy-dna-paspoort-{SanitizeFilePart(schoolClass.Name)}.pdf"
             : $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
         return (bytes, fileName, null, 200);
+    }
+
+    public async Task<(PupilG78PassportWebDto? Ok, PupilErrorDto? Error, int StatusCode)> GetG78PassportWebAsync(
+        ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        var features = await _features.GetAsync(cancellationToken);
+        if (!features.PupilPassportV2Enabled
+            || schoolClass.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            return (new PupilG78PassportWebDto(Enabled: false), null, 200);
+        }
+
+        if (code.Status != PupilCodeStatus.Completed || code.Result is null)
+        {
+            return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
+        var schoolName = await _db.Schools.AsNoTracking()
+            .Where(s => s.Id == schoolClass.SchoolId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync(cancellationToken) ?? "";
+        var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
+        displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
+        var passportModel = _passportModelBuilder.Build(
+            code, schoolClass, schoolName, display, displayNameOnPdf);
+        return (PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true), null, 200);
     }
 
     private static string? SanitizeDisplayName(string? name)

@@ -24,6 +24,7 @@ public static class AcceptatiePlatformFeatureEnsurer
         await EnsureEmployersEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsureActivityLogEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsureSchoolsEnabledAsync(db, configuration, logger, cancellationToken);
+        await EnsurePupilPassportV2EnabledAsync(db, configuration, logger, cancellationToken);
     }
 
     internal static async Task EnsureEmployersEnabledAsync(
@@ -144,6 +145,51 @@ public static class AcceptatiePlatformFeatureEnsurer
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation(
                 "Acceptatie: synced SchoolsEnabled=true (removed admin override lock when present).");
+        }
+    }
+
+    internal static async Task EnsurePupilPassportV2EnabledAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(configuration))
+        {
+            return;
+        }
+
+        if (!configuration.GetValue("JobsyFeatures:SchoolsEnabled", false))
+        {
+            return;
+        }
+
+        if (!configuration.GetValue("JobsyFeatures:PupilPassportV2Enabled", true))
+        {
+            return;
+        }
+
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings { Id = PlatformSettingsId };
+            row.PupilPassportV2Enabled = true;
+            db.PlatformFeatureSettings.Add(row);
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Acceptatie: created platform settings with PupilPassportV2Enabled=true.");
+            return;
+        }
+
+        var overrides = PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson);
+        var lockedOff = overrides.Contains("PupilPassportV2Enabled") && !row.PupilPassportV2Enabled;
+        if (!row.PupilPassportV2Enabled || lockedOff)
+        {
+            row.PupilPassportV2Enabled = true;
+            row.AdminFlagOverridesJson =
+                PlatformFeatureFlagOverrides.RemoveKey(row.AdminFlagOverridesJson, "PupilPassportV2Enabled");
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Acceptatie: synced PupilPassportV2Enabled=true (removed admin override lock when present).");
         }
     }
 }
