@@ -101,7 +101,11 @@ else
                     </button>
                 }
             </div>
-            @if (_lampPlayMode)
+            @if (_solved)
+            {
+                <p class="ll-puzzle__status ll-puzzle__status--calm" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.Done"]</p>
+            }
+            else if (_lampPlayMode)
             {
                 <p class="ll-puzzle__status" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.Watch"]</p>
             }

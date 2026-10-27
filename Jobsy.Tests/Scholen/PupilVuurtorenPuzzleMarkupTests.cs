@@ -34,5 +34,6 @@ public sealed class PupilVuurtorenPuzzleMarkupTests
         Assert.DoesNotContain("disabled=\"@_busy", block, StringComparison.Ordinal);
         Assert.DoesNotContain("False ||", block, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Leerling.Puzzle.Vuurtoren.Lamp", block, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Puzzle.Vuurtoren.Done", src, StringComparison.Ordinal);
     }
 }

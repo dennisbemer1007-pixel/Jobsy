@@ -20,6 +20,8 @@ public sealed class PupilUiNoNumericProgressTests
             "Culture[\"Leerling.Island.Progress\"]",
             "Culture[\"LeerlingDroom.Progress\"]",
             "ll-stars",
+            "ll-stepper",
+            "ll-progress-dots",
         };
 
         foreach (var path in LeerlingRazorPaths())

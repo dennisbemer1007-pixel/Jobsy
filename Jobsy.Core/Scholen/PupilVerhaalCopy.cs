@@ -282,7 +282,7 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Tile.Cult.Innovation.Explain"] = "Hier voel je je thuis.";
         d["LeerlingStory.Tile.Cult.PeopleFirst"] = "Klein groepje, rustig";
         d["LeerlingStory.Tile.Cult.PeopleFirst.Explain"] = "Hier voel je je thuis.";
-        d["LeerlingStory.Title"] = "Dit ben jij!";
+        d["LeerlingStory.Title"] = "Dit ben jij";
         d["LeerlingStory.DonePill"] = "Klaar";
         d["LeerlingStory.Lobster"] = "Kijk, mijn nieuwe schaal glimt! En dit ben jij.";
         d["LeerlingStory.LikesTitle"] = "Je houdt van";
@@ -699,7 +699,7 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.Route.kok.1"] = "Nu: {nu}|Kies straks consumptief of economie";
         d["LeerlingDroom.Route.kok.2"] = "Vmbo of havo|Praktijkervaring telt mee";
         d["LeerlingDroom.Route.kok.3"] = "Mbo Kok|Mbo niveau 2 tot 4 · 2 tot 4 jaar";
-        d["LeerlingDroom.Route.kok.Goal"] = "Kok!|In een restaurant, keuken of catering";
+        d["LeerlingDroom.Route.kok.Goal"] = "Kok|In een restaurant, keuken of catering";
         d["LeerlingDroom.Alt.kok"] = "Via mbo Kok of Gastheer/-vrouw kun je snel aan de slag.";
         d["LeerlingDroom.Route.brandweer.1"] = "Nu: {nu}|Blijf sporten en samenwerken oefenen";
         d["LeerlingDroom.Route.brandweer.2"] = "Diploma middelbaar|Vmbo, havo of vwo";

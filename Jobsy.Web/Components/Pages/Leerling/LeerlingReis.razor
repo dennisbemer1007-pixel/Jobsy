@@ -342,6 +342,13 @@ else
         _saveError = null;
         _saved = false;
         _infoOpen = false;
+        var predicted = TryPredictAnswerResponse(itemId, value);
+        if (predicted is not null
+            && string.Equals(predicted.NextStep, "question", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplySaveResponse(predicted, itemId, value);
+        }
+
         _busy = true;
         try
         {
@@ -449,6 +456,44 @@ else
 
         var pct = 100.0 * _state.AnsweredCount / _state.TotalItems;
         return pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%";
+    }
+
+    private PupilAnswerResponse? TryPredictAnswerResponse(string itemId, int value)
+    {
+        if (_state is null || _def is null)
+        {
+            return null;
+        }
+
+        var answers = new Dictionary<string, int>(_state.Answers) { [itemId] = value };
+        var first = PupilFlow.FirstUnansweredIndex(_def, answers);
+        var puzzles = new Dictionary<string, PupilPuzzleStatus>();
+        foreach (var slot in _def.PuzzleSlots)
+        {
+            if (slot.AfterItem < first)
+            {
+                puzzles[slot.PuzzleKey] = PupilPuzzleStatus.Done;
+            }
+        }
+
+        var step = PupilFlow.Next(_def, answers, _state.IslandDone, puzzles);
+        if (step.Kind is PupilFlowStepKind.Done)
+        {
+            return null;
+        }
+
+        var answeredCount = answers.Count;
+        return new PupilAnswerResponse(
+            step.Kind == PupilFlowStepKind.Question ? step.Index : first,
+            answeredCount,
+            _def.PlatesShed(answeredCount),
+            Completed: false,
+            step.ItemId,
+            step.WorldKey,
+            step.Kind == PupilFlowStepKind.Island,
+            ResultPending: false,
+            PupilFlow.ToNextStepToken(step.Kind),
+            step.PuzzleKey);
     }
 
     private void ApplySaveResponse(PupilAnswerResponse result, string itemId, int value)
