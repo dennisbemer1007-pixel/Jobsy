@@ -11,6 +11,17 @@ public sealed class UwvAdviseurDeelSsrTests
         Assert.DoesNotContain("IJSRuntime", source, StringComparison.Ordinal);
         Assert.Contains("data-uwv-adviseur-print", source, StringComparison.Ordinal);
         Assert.DoesNotContain("PublicLangMenu", source, StringComparison.Ordinal);
+        Assert.Contains("pub-btn pub-btn--primary", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Public_layout_hides_lang_menu_on_uwv_deel_route()
+    {
+        var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/PublicLayout.razor"));
+        Assert.Contains("HideLangMenu", layout, StringComparison.Ordinal);
+        Assert.Contains("/deel/uwv-adviseur/", layout, StringComparison.Ordinal);
+        var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/Public/PublicHeader.razor"));
+        Assert.Contains("pub-header--no-lang", header, StringComparison.Ordinal);
     }
 
     [Fact]

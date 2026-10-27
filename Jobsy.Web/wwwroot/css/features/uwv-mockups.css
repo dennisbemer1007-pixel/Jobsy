@@ -1397,6 +1397,10 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   margin-bottom: 1rem;
 }
 
+.uwv-adviseur-deel__actions .pub-btn {
+  min-width: 10rem;
+}
+
 @media print {
   .no-print,
   .app-header,
