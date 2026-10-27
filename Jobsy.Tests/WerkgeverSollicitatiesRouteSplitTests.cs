@@ -25,12 +25,23 @@ public sealed class WerkgeverSollicitatiesRouteSplitTests
     }
 
     [Fact]
+    public void Entry_loads_list_data_via_api_for_list_view()
+    {
+        var entry = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/WerkgeverSollicitatiesEntry.razor"));
+        Assert.Contains("EmployerApplicationsListSsrData.LoadAsync", entry, StringComparison.Ordinal);
+        Assert.Contains("EmployerApplicationsListSsrShells.BuildBody", entry, StringComparison.Ordinal);
+        Assert.DoesNotContain("BuildRouteShell", entry, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void List_ssr_shell_exposes_testid_and_view_toggle()
     {
         var shells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Werkgever/EmployerApplicationsListSsrShells.cs"));
         Assert.Contains("wg-applications-list-ssr", shells, StringComparison.Ordinal);
         Assert.Contains("/werkgever/sollicitaties/pipeline", shells, StringComparison.Ordinal);
         Assert.Contains("view=lijst", shells, StringComparison.Ordinal);
+        Assert.Contains("ent-data-table", shells, StringComparison.Ordinal);
+        Assert.Contains("EmployerApplicationsListSsrData", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Werkgever/EmployerApplicationsListSsrData.cs")), StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
