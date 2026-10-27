@@ -42,7 +42,8 @@ public class LeerlingAnswerScaleTests : BunitContext
         Assert.Contains("Niet echt", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Soms", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Best wel", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Ja!", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Ja", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ja!", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -79,7 +80,7 @@ public class LeerlingAnswerScaleTests : BunitContext
         Assert.Equal(1, radios.Count(r => r.GetAttribute("tabindex") == "0"));
         Assert.Equal("true", radios[1].GetAttribute("aria-checked"));
         Assert.Equal(1, radios.Count(r => r.GetAttribute("aria-checked") == "true"));
-        Assert.Contains("2 van 5", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain(" van 5", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

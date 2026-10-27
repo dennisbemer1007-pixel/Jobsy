@@ -283,7 +283,7 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Tile.Cult.PeopleFirst"] = "Klein groepje, rustig";
         d["LeerlingStory.Tile.Cult.PeopleFirst.Explain"] = "Hier voel je je thuis.";
         d["LeerlingStory.Title"] = "Dit ben jij!";
-        d["LeerlingStory.DonePill"] = "Klaar · {0} van {0}";
+        d["LeerlingStory.DonePill"] = "Klaar";
         d["LeerlingStory.Lobster"] = "Kijk, mijn nieuwe schaal glimt! En dit ben jij.";
         d["LeerlingStory.LikesTitle"] = "Je houdt van";
         d["LeerlingStory.DislikesTitle"] = "Niet zo leuk vind je";
@@ -304,7 +304,8 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.UndecidedHint.Vo"] = "Praat erover met je docent of mentor.";
         d["LeerlingDroom.HaveTitle"] = "Dit heb je al";
         d["LeerlingDroom.NeedTitle"] = "Wat heb je nodig?";
-        d["LeerlingDroom.Progress"] = "{0} van 5 heb je al!";
+        d["LeerlingDroom.Progress"] = "Je bent al een eind op weg.";
+        d["LeerlingDroom.ProgressLabel"] = "Voortgang droombaan";
         d["LeerlingDroom.OtherJob"] = "Andere baan";
         d["LeerlingDroom.SavePdf"] = "Bewaar als PDF";
         d["LeerlingDroom.Have.Curious"] = "Je bent nieuwsgierig — daarom kijk je hier. Dat is een goed begin.";
@@ -312,7 +313,7 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.Cheer.Low.Vo"] = "Het is een lange reis, maar jij hebt al een goede start. Een kreeft groeit ook stap voor stap. Vraag je docent of mentor wat je nu al kunt doen.";
         d["LeerlingDroom.Cheer.Mid"] = "Mooi! Je hebt al een paar dingen te pakken. Blijf oefenen en praat met je leraar over de volgende stap.";
         d["LeerlingDroom.Cheer.Mid.Vo"] = "Mooi! Je hebt al een paar dingen te pakken. Blijf oefenen en praat met je docent of mentor over de volgende stap.";
-        d["LeerlingDroom.Cheer.High"] = "Wauw, jij past hier al goed bij. Blijf nieuwsgierig — stap voor stap kom je er.";
+        d["LeerlingDroom.Cheer.High"] = "Jij past hier al goed bij. Blijf nieuwsgierig — stap voor stap kom je er.";
         d["LeerlingDroom.Lobster.Generic"] = "Welk beroep past bij jou? Laten we kijken.";
         d["LeerlingPdf.Header"] = "Mijn ontdekkingsreis";
         d["LeerlingPdf.Subheader"] = "Lobsy voor scholen · {0}";
