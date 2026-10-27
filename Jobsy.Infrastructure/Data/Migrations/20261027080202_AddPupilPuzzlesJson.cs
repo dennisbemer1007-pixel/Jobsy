@@ -13,7 +13,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
             // AddPupilPassportV2Flags replays EnsureColumns at apply time (IF NOT EXISTS), so avoid plain AddColumn.
             migrationBuilder.Sql(
                 """
-                ALTER TABLE "PupilProgresses" ADD COLUMN IF NOT EXISTS "PuzzlesJson" text NOT NULL DEFAULT '{}';
+                ALTER TABLE "PupilProgresses" ADD COLUMN IF NOT EXISTS "PuzzlesJson" text NOT NULL DEFAULT '{{}}';
                 """);
         }
 

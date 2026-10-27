@@ -290,6 +290,21 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
                 continue;
             }
 
+            if (string.Equals(progress.Body.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(progress.Body.NextPuzzleKey))
+            {
+                var puzzle = new HttpRequestMessage(
+                    HttpMethod.Put,
+                    "/api/pupil/progress/puzzles/" + Uri.EscapeDataString(progress.Body.NextPuzzleKey))
+                {
+                    Content = JsonContent.Create(new PupilPuzzleRequest("done"), options: JobsyApiClient.ApiJson)
+                };
+                puzzle.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+                var savedPuzzle = await api.SendAsync(puzzle);
+                Assert.Equal(HttpStatusCode.OK, savedPuzzle.StatusCode);
+                continue;
+            }
+
             Assert.False(string.IsNullOrWhiteSpace(progress.Body.CurrentItemId));
             var saved = await PutAnswerAsync(api, apiTicket, progress.Body.CurrentItemId!, 3);
             Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
