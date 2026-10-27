@@ -61,6 +61,21 @@ public class PupilPdfProxyTests
     }
 
     [Fact]
+    public async Task Pdf_proxy_forwards_lang_query_to_api()
+    {
+        await using var app = await StartAsync(schoolsEnabled: true);
+        var client = app.GetTestClient();
+        var cookie = await SignInAsync(client);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/leerling/pdf?lang=en&naam=Alex");
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("/leerling/pdf?lang=en&naam=Alex", app.Services.GetRequiredService<PdfHandler>().RequestPath);
+    }
+
+    [Fact]
     public async Task Anonymous_pdf_request_goes_to_the_pupil_login()
     {
         await using var app = await StartAsync(schoolsEnabled: true);
@@ -168,11 +183,19 @@ public class PupilPdfProxyTests
     {
         public string? Path { get; private set; }
 
+        public string? RequestPath =>
+            string.IsNullOrEmpty(Path)
+                ? null
+                : Path + (string.IsNullOrEmpty(Query) ? "" : Query);
+
+        public string? Query { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             Path = request.RequestUri!.AbsolutePath;
+            Query = request.RequestUri.Query;
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new ByteArrayContent(PdfBytes)

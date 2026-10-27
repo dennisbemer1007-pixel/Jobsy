@@ -119,9 +119,11 @@ public sealed partial class JobsyApiClient
     /// so the pupil link does not 404 on the web origin.
     /// </summary>
     public async Task<(byte[]? Bytes, string FileName, int StatusCode)> GetPupilStoryPdfAsync(
+        string? queryString = null,
         CancellationToken ct = default)
     {
-        using var response = await _http.GetAsync("leerling/pdf", ct);
+        var path = string.IsNullOrWhiteSpace(queryString) ? "leerling/pdf" : $"leerling/pdf{queryString}";
+        using var response = await _http.GetAsync(path, ct);
         if (!response.IsSuccessStatusCode)
         {
             return (null, "lobsy-verhaal.pdf", (int)response.StatusCode);

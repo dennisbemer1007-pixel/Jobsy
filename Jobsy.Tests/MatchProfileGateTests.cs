@@ -19,6 +19,19 @@ public class MatchProfileGateTests
     }
 
     [Fact]
+    public void FitGateOpen_accepts_provisional_scores_after_wizard()
+    {
+        var gate = new MatchProfileGateViewModel
+        {
+            WizardCompleted = true,
+            HasProvisionalScores = true,
+            CultureCompleted = false,
+            ValuesCompleted = false
+        };
+        Assert.True(gate.FitGateOpen);
+    }
+
+    [Fact]
     public void HasEducationLevel_accepts_geen_as_answered()
     {
         Assert.True(MatchProfileCompleteness.HasEducationLevel(["Geen"]));

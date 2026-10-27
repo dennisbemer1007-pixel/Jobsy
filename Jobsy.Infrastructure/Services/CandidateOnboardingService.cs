@@ -86,6 +86,7 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         if (request.FinishReached == true)
         {
             row.FinishReached = true;
+            row.CompletedAtUtc ??= now;
         }
 
         if (!string.IsNullOrWhiteSpace(request.Source))
@@ -100,13 +101,12 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         OnboardingWizardCompletion.ApplyStickyFinish(row);
         row.UpdatedAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
-        CandidateOnboardingImpressionDto? impression = null;
         if (row.FinishReached)
         {
-            impression = await BuildImpressionAsync(userId, cancellationToken);
+            _insightsQueue.TryEnqueue(userId);
         }
 
-        return ToDto(row, await ShouldShowWizardAsync(userId, cancellationToken), impression);
+        return ToDto(row, await ShouldShowWizardAsync(userId, cancellationToken), impression: null);
     }
 
     public async Task<CandidateOnboardingStateDto> CompleteAsync(

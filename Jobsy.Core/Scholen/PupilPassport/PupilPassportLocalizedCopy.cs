@@ -59,6 +59,46 @@ public static class PupilPassportLocalizedCopy
         "LeerlingPassport.Card.Domain.S" => "Care & animals",
         "LeerlingPassport.Card.Domain.E" => "Business",
         "LeerlingPassport.Card.Domain.C" => "Precise & tidy",
+        "LeerlingPassport.Strength.Samenwerken.Title" => "Working together",
+        "LeerlingPassport.Strength.Samenwerken.Sub" => "I listen and think along",
+        "LeerlingPassport.Strength.Resultaat.Title" => "Getting things done",
+        "LeerlingPassport.Strength.Resultaat.Sub" => "I work towards a goal",
+        "LeerlingPassport.Strength.Stress.Title" => "Staying calm",
+        "LeerlingPassport.Strength.Stress.Sub" => "I stay calm when it is busy",
+        "LeerlingPassport.Strength.Innovatie.Title" => "New ideas",
+        "LeerlingPassport.Strength.Innovatie.Sub" => "I like coming up with new things",
+        "LeerlingPassport.Strength.Extraversie.Title" => "With people",
+        "LeerlingPassport.Strength.Extraversie.Sub" => "I like talking with others",
+        "LeerlingPassport.Strength.Zorgvuldig.Title" => "Careful work",
+        "LeerlingPassport.Strength.Zorgvuldig.Sub" => "I do things neatly",
+        "LeerlingPassport.Strength.Helpen.Title" => "Helping",
+        "LeerlingPassport.Strength.Helpen.Sub" => "I notice when someone is stuck",
+        "LeerlingPassport.Strength.Onderzoek.Title" => "Exploring",
+        "LeerlingPassport.Strength.Onderzoek.Sub" => "I want to know how things work",
+        "LeerlingPassport.Strength.Praktisch.Title" => "Hands-on",
+        "LeerlingPassport.Strength.Praktisch.Sub" => "I like to get stuck in myself",
+        "LeerlingPassport.Strength.Verbinding.Title" => "Connection",
+        "LeerlingPassport.Strength.Verbinding.Sub" => "I prefer working together",
+        "LeerlingPassport.Strength.Doelen.Title" => "Goals",
+        "LeerlingPassport.Strength.Doelen.Sub" => "I like a clear goal",
+        "LeerlingPassport.Strength.Impact.Title" => "Making a difference",
+        "LeerlingPassport.Strength.Impact.Sub" => "I want to mean something to others",
+        "LeerlingPassport.Strength.Betrouwbaar.Title" => "Reliable",
+        "LeerlingPassport.Strength.Betrouwbaar.Sub" => "You can count on me to keep promises",
+        "LeerlingDroom.HaveTitle" => "What you already have",
+        "LeerlingDroom.NeedTitle" => "What do you still need?",
+        "LeerlingPassport.Discover.dierenarts.1" => "What does a day as a vet look like?",
+        "LeerlingPassport.Discover.dierenarts.2" => "Which subjects fit biology in secondary school?",
+        "LeerlingPassport.Discover.dierenarts.3" => "Am I also good at making things with my hands?",
+        "LeerlingPassport.Discover.kok.1" => "What does a chef do in a kitchen every day?",
+        "LeerlingPassport.Discover.kok.2" => "Which subjects help with cooking and hospitality?",
+        "LeerlingPassport.Discover.kok.3" => "Do I like working with my hands and with people?",
+        "LeerlingPassport.Discover.Letter.I.1" => "Which question would you like to investigate?",
+        "LeerlingPassport.Discover.Letter.I.2" => "Which experiment or research task did you enjoy?",
+        "LeerlingPassport.Discover.Letter.I.3" => "Which subject gives you the most “knowing how it works”?",
+        "LeerlingPassport.Discover.Letter.S.1" => "In which job do you help others the most?",
+        "LeerlingPassport.Discover.Letter.S.2" => "When do you feel most useful?",
+        "LeerlingPassport.Discover.Letter.S.3" => "Which outing or internship fits care or animals?",
         _ when key.StartsWith("LeerlingPassport.Tip.", StringComparison.Ordinal) && EnTips.TryGetValue(key, out var tip) => tip,
         _ => nl
     };
@@ -116,10 +156,32 @@ public static class PupilPassportLocalizedCopy
             return PupilPassportCopy.DiscoveryQuestions(dreamJobKey, hollandCode);
         }
 
-        var nl = PupilPassportCopy.DiscoveryQuestions(dreamJobKey, hollandCode);
-        return nl.Select(q => q
-            .Replace("Wat ", "What ", StringComparison.Ordinal)
-            .Replace("welke ", "which ", StringComparison.OrdinalIgnoreCase)
-            .Replace("hoe ", "how ", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (!string.IsNullOrWhiteSpace(dreamJobKey)
+            && !string.Equals(dreamJobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+        {
+            var list = new List<string>();
+            for (var i = 1; i <= 3; i++)
+            {
+                var key = $"LeerlingPassport.Discover.{dreamJobKey}.{i}";
+                var q = Get(key, language);
+                if (!string.Equals(q, PupilPassportCopy.Get(key), StringComparison.Ordinal) || i == 1)
+                {
+                    list.Add(q);
+                }
+            }
+
+            if (list.Count >= 2)
+            {
+                return list;
+            }
+        }
+
+        var letter = string.IsNullOrWhiteSpace(hollandCode) ? 'S' : char.ToUpperInvariant(hollandCode[0]);
+        return
+        [
+            Get($"LeerlingPassport.Discover.Letter.{letter}.1", language),
+            Get($"LeerlingPassport.Discover.Letter.{letter}.2", language),
+            Get($"LeerlingPassport.Discover.Letter.{letter}.3", language)
+        ];
     }
 }
