@@ -14,7 +14,5 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditLevel>moderate</NuGetAuditLevel>
-    <!-- ImageSharp 4.x (security fixes): set repo secret SIXLABORS_LICENSE_KEY or SixLaborsLicenseKey locally. -->
-    <SixLaborsLicenseKey Condition="'$(SixLaborsLicenseKey)' == ''">$(SIXLABORS_LICENSE_KEY)</SixLaborsLicenseKey>
   </PropertyGroup>
 </Project>
