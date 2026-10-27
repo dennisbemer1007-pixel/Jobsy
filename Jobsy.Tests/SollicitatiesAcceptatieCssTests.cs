@@ -13,7 +13,7 @@ public sealed class SollicitatiesAcceptatieCssTests
     public async Task Acc_serves_scope3_applications_css_with_sollicitaties_override()
     {
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-        var url = $"{AccBase}/css/features/applications.css?v=20261024-apps720-scope3";
+        var url = $"{AccBase}/css/features/applications.css?v=20261027-02";
         var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.TryAddWithoutValidation("Accept-Encoding", "identity");
         using var resp = await client.SendAsync(req);
