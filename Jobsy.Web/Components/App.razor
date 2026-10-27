@@ -120,7 +120,7 @@
                 <link rel="stylesheet" href="@href" />
             }
         }
-        @if (BanenkaartAuthenticatedShell)
+        @if (DiscoveryMapAuthenticatedShell)
         {
             @foreach (var href in PageAssetCatalog.BanenkaartAuthenticatedShellCss())
             {
@@ -406,7 +406,7 @@
         else
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/app-public.js")}")" nonce="@Nonce" defer></script>
-            @if (IncludeCandidateNoBlazorChromeCss || BanenkaartAuthenticatedShell)
+            @if (IncludeCandidateNoBlazorChromeCss || DiscoveryMapAuthenticatedShell)
             {
                 <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>
             }
@@ -583,8 +583,8 @@
     private bool IncludeBanenkaartPrefetch =>
         PageAssetCatalog.IncludeBanenkaartPrefetch(RequestPath);
 
-    private bool BanenkaartAuthenticatedShell =>
-        IncludeBanenkaartClientScript
+    private bool DiscoveryMapAuthenticatedShell =>
+        IncludeKandidaatDiscoveryMapSsr
         && HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
 
     private bool IncludeCandidateNoBlazorChromeCss =>
