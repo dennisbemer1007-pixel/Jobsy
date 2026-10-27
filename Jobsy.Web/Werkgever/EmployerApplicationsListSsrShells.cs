@@ -132,19 +132,15 @@ internal static class EmployerApplicationsListSsrShells
     private static void AppendDesktopTable(StringBuilder sb, CultureState culture, EmployerApplicationsListSsrData.PageData data)
     {
         sb.Append("<div class=\"wg-app__list-desktop\"><table class=\"ent-data-table\"><thead><tr>");
+        AppendSortHeader(sb, data, "candidate", culture["WgApp.List.Candidate"]);
+        AppendSortHeader(sb, data, "vacancy", culture["WgApp.List.Vacancy"]);
         sb.Append("<th scope=\"col\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.List.Candidate"]));
-        sb.Append("</th><th scope=\"col\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.List.Vacancy"]));
-        sb.Append("</th><th scope=\"col\">");
         sb.Append(WebUtility.HtmlEncode(culture["WgApp.List.Branch"]));
-        sb.Append("</th><th scope=\"col\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.List.Status"]));
-        sb.Append("</th><th scope=\"col\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.List.Applied"]));
-        sb.Append("</th><th scope=\"col\">");
-        sb.Append(WebUtility.HtmlEncode(culture["WgApp.List.FirstResponse"]));
-        sb.Append("</th><th scope=\"col\"><span class=\"visually-hidden\">");
+        sb.Append("</th>");
+        AppendSortHeader(sb, data, "status", culture["WgApp.List.Status"]);
+        AppendSortHeader(sb, data, "created", culture["WgApp.List.Applied"]);
+        AppendSortHeader(sb, data, "responded", culture["WgApp.List.FirstResponse"]);
+        sb.Append("<th scope=\"col\"><span class=\"visually-hidden\">");
         sb.Append(WebUtility.HtmlEncode(culture["Common.Details"]));
         sb.Append("</span></th></tr></thead><tbody>");
         foreach (var a in data.PageItems)
@@ -240,5 +236,28 @@ internal static class EmployerApplicationsListSsrShells
         }
 
         sb.Append("</div>");
+    }
+
+    private static void AppendSortHeader(
+        StringBuilder sb,
+        EmployerApplicationsListSsrData.PageData data,
+        string sortKey,
+        string label)
+    {
+        var active = string.Equals(data.Query.SortKey, sortKey, StringComparison.OrdinalIgnoreCase);
+        var nextAsc = active && !data.Query.SortAsc;
+        var href = EmployerApplicationsListSsrQuery.BuildListPath(
+            data.Query with { SortKey = sortKey, SortAsc = nextAsc, Page = 1 });
+        sb.Append("<th scope=\"col\"><a class=\"wg-app-sort");
+        if (active)
+        {
+            sb.Append(data.Query.SortAsc ? " is-asc" : " is-desc");
+        }
+
+        sb.Append("\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(href));
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(label));
+        sb.Append("</a></th>");
     }
 }
