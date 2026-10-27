@@ -194,6 +194,18 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 return new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
             }
 
+            if (path.StartsWith("/api/candidate/external-vacancies/", StringComparison.OrdinalIgnoreCase)
+                && request.Method == HttpMethod.Get
+                && path.Count(c => c == '/') >= 4)
+            {
+                var idPart = path["/api/candidate/external-vacancies/".Length..].Trim('/');
+                if (Guid.TryParse(idPart, out var extId)
+                    && extId == CandidateExternalVacancyDetailHttpTests.PurgedExternalId)
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+                }
+            }
+
             var json = IllustratedPagesApiStub.BuildJson(pathAndQuery, emptyAppsAndLikes, minimalPassportProfile);
             return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
