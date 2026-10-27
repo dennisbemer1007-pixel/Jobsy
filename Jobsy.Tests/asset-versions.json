@@ -299,9 +299,13 @@
     "sha256": "1f17cd2984d474f41d5b5c5e752db44482ed32d27e9fe639393193cbaa0c4784",
     "v": "20261004-10"
   },
+  "css/features/leerling-paspoort-g78.css": {
+    "sha256": "099634bf7c15f23ba2309ee9c5ba6535a52dc09c074e821b163c0211e5687f8e",
+    "v": "20261027-g78"
+  },
   "css/features/scholen.css": {
-    "sha256": "c95114b4ee8330dda08dc28fd6678bc4687e204feef4c09b20996b60989af80d",
-    "v": "20261027-20"
+    "sha256": "8b4356cc4ddc6604a229d9df29ba28057c33fe663cb674a441b32be1ad366103",
+    "v": "20261027-21"
   },
   "css/features/signup-static.css": {
     "sha256": "2bef7a071ba7c93834490b922d243cd8b5c84db67293bdba244cc856ca3806bd",
@@ -492,8 +496,8 @@
     "sha256": "28c46e72dca0219814ad44aef3a56baa4e89d0b90a11ddd24134301c71b8e472"
   },
   "js/ndm-employer-outcome.js": {
-    "v": "20261026-outcome-once1",
-    "sha256": "5ac39e0bd5409ab81468ec1a743cd02d4c2dbfad2376c9d036776c9a487f7587"
+    "v": "20261026-outcome-before-interview1",
+    "sha256": "5daa7fb9b11e71b32ca113c0a8292959067a0292a9f0c23d6782d72f56604f71"
   },
   "js/ndm-employer-reschedule.js": {
     "v": "20261025-kreeft15",
@@ -521,7 +525,7 @@
   },
   "js/ndm-pick-slot.js": {
     "v": "20261026-pick-propose1",
-    "sha256": "PLACEHOLDER"
+    "sha256": "f165d2bcf3a462f81c9a02b40edb8898c7c2dd8c153712cafdbea2e209c379e2"
   },
   "js/ndm-reschedule.js": {
     "v": "20261026-reschedule-alt1",
@@ -530,6 +534,38 @@
   "js/passport-availability-matrix.js": {
     "v": "20261026-passport-matrix1",
     "sha256": "aa1edd53d19803ce1fa291143d16b90e1647ac53528fc184dce0c57532a2cad4"
+  },
+  "js/passport-ssr-tabs.js": {
+    "v": "20261026-passport-tabs2",
+    "sha256": "94ce68e8b4f91bd42548cb1e5247ffa1916f357d0479b096f1bb03424c7a12c7"
+  },
+  "js/passport-ssr-fit.js": {
+    "v": "20261026-passport-fit1",
+    "sha256": "7a1a648ca0ae41f63aa5446fb2fb619d9c21cdaaebd77cd1284bc38fb4fd6626"
+  },
+  "js/passport-ssr-proof.js": {
+    "v": "20261026-passport-proof1",
+    "sha256": "398007640d5dde9d7cb33d068694c5543253b3e679d7ad9a5b8107eb24a00943"
+  },
+  "js/passport-ssr-extras.js": {
+    "v": "20261026-passport-extras1",
+    "sha256": "629316f185f12649e005c0a78ee7b6496a7d1a87bca5f0317388c59d840fb4d0"
+  },
+  "js/saved-ssr-filters.js": {
+    "v": "20261026-bewaard-filters1",
+    "sha256": "3f17741a88558ad2c19ee93210b24f76459012e9afea5831ed35361564a10fd3"
+  },
+  "js/saved-ssr-unsave.js": {
+    "v": "20261026-bewaard-unsave1",
+    "sha256": "eb7ed55b45ea4364559588d0bcde4e46485cf60801333918c4c880b86f97aa7b"
+  },
+  "js/match-ssr.js": {
+    "v": "20261026-match-swipe1",
+    "sha256": "7c32873888fc95c36f72ef683f9c4bed49970a5de86c3468bc1ca22758278c22"
+  },
+  "js/career-ssr.js": {
+    "v": "20261026-carriere-tabs1",
+    "sha256": "bde82b7ba1756108da45287c9b838f753a8e4c147a0fa19960ae0023ba97756b"
   },
   "js/onboarding-client-form.js": {
     "v": "20261025-kreeft15",
@@ -622,5 +658,13 @@
   "js/uwv-ondernemer.js": {
     "v": "20261026-r10-e0ba4315",
     "sha256": "e0ba4315043921c56efe2f6a865975f98b33ecce6e8c66255b3d978c684a2b06"
+  },
+  "js/wg-applications-list-ssr.js": {
+    "v": "20261027-r11b-7ee9dafa",
+    "sha256": "7ee9dafa4fbc370e76b1b7cdbec985b16a2edcd1c0e6a4849d26bd0878989687"
+  },
+  "js/wg-bottom-nav-ssr.js": {
+    "v": "20261027-r11e",
+    "sha256": "3edb587d29bca65de14df7cf23124830d83366020a70bf8c6e542e0d5e6ed7ad"
   }
 }

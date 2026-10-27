@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace Jobsy.Web.Hosting;
@@ -15,29 +16,62 @@ public static class WwwrootAssetCatalog
     };
 
     private static readonly Lazy<IReadOnlyDictionary<string, string>> Versions = new(LoadVersions);
+    private static readonly ConcurrentDictionary<string, byte> MissingVersionWarnings = new(StringComparer.Ordinal);
 
     public static string Version(string relativeWwwrootPath)
     {
         var key = NormalizeKey(relativeWwwrootPath);
-        if (Versions.Value.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v))
-        {
-            return v;
-        }
-
-        throw new InvalidOperationException(
-            $"wwwroot-asset-versions.json has no version for '{key}'. Run: python3 Jobsy.Tests/update-asset-versions.py");
+        return TryGetVersion(key, out var v) ? v : "";
     }
 
     public static string Url(string relativeWwwrootPath)
     {
         var path = relativeWwwrootPath.TrimStart('~', '/');
-        return $"{path}?v={Version(path)}";
+        var key = NormalizeKey(relativeWwwrootPath);
+        if (!TryGetVersion(key, out var v))
+        {
+            WarnMissingVersion(key);
+            return path;
+        }
+
+        return $"{path}?v={v}";
     }
 
     public static string UrlLeadingSlash(string relativeWwwrootPath)
     {
         var path = relativeWwwrootPath.TrimStart('~').TrimStart('/');
-        return $"/{path}?v={Version(path)}";
+        var key = NormalizeKey(relativeWwwrootPath);
+        if (!TryGetVersion(key, out var v))
+        {
+            WarnMissingVersion(key);
+            return $"/{path}";
+        }
+
+        return $"/{path}?v={v}";
+    }
+
+    private static bool TryGetVersion(string key, out string version)
+    {
+        if (Versions.Value.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v))
+        {
+            version = v;
+            return true;
+        }
+
+        version = "";
+        return false;
+    }
+
+    private static void WarnMissingVersion(string key)
+    {
+        if (!MissingVersionWarnings.TryAdd(key, 0))
+        {
+            return;
+        }
+
+        Trace.TraceWarning(
+            "WwwrootAssetCatalog: wwwroot-asset-versions.json has no version for '{0}'. Run: python3 Jobsy.Tests/update-asset-versions.py",
+            key);
     }
 
     private static string NormalizeKey(string relativeWwwrootPath) =>
