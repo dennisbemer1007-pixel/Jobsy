@@ -25,11 +25,16 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     private IHost? _kestrel;
     private readonly bool _emptyAppsAndLikes;
     private readonly bool _minimalPassportProfile;
+    private readonly bool _companyMapInitiativeEnabled;
 
-    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false, bool minimalPassportProfile = false)
+    public IllustratedPagesWebFactory(
+        bool emptyAppsAndLikes = false,
+        bool minimalPassportProfile = false,
+        bool companyMapInitiativeEnabled = true)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
         _minimalPassportProfile = minimalPassportProfile;
+        _companyMapInitiativeEnabled = companyMapInitiativeEnabled;
         _ = CreateClient();
     }
 
@@ -55,7 +60,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
             var uwvOn = ResolveUwvFeaturesForIllustratedTests();
-            services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
+            services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn, _companyMapInitiativeEnabled));
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes, _minimalPassportProfile));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
@@ -112,13 +117,14 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                || string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase);
     }
 
-    private sealed class PassportOnFlags(bool uwvFeaturesEnabled) : IFeatureFlags
+    private sealed class PassportOnFlags(bool uwvFeaturesEnabled, bool companyMapInitiativeEnabled) : IFeatureFlags
     {
         private readonly FeatureFlagSnapshot _snap = new(
             EmployersEnabled: true,
             CandidatePassportEnabled: true,
             CandidateExternalVacanciesEnabled: true,
             ProactiveMatchingEnabled: false,
+            CompanyMapInitiativeEnabled: companyMapInitiativeEnabled,
             UwvFeaturesEnabled: uwvFeaturesEnabled);
 
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)

@@ -77,7 +77,7 @@
     private bool _meerOpen;
     private bool _bootstrapped;
     private bool _kandidatenkaartEnabled;
-    private bool _companyMapInitiativeEnabled = true;
+    private bool _companyMapInitiativeEnabled;
 
     private EmployerRole Role => Scope.DisplayRole(HttpContextAccessor.HttpContext?.User);
     private WerkgeverNavContext Ctx => new(
@@ -97,9 +97,9 @@
         Counts.Changed += OnCounts;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender || _bootstrapped)
+        if (_bootstrapped)
         {
             return;
         }
@@ -110,7 +110,6 @@
         var flags = await FeatureFlags.GetAsync();
         _kandidatenkaartEnabled = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
         _companyMapInitiativeEnabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
-        StateHasChanged();
     }
 
     private void OnLoc(object? s, LocationChangedEventArgs e)

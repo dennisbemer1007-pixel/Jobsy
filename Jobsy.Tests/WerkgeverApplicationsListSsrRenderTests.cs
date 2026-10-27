@@ -25,6 +25,21 @@ public sealed class WerkgeverApplicationsListSsrRenderTests
     }
 
     [Fact]
+    public async Task List_view_sidebar_omits_open_for_initiative_when_company_map_flag_off()
+    {
+        await using var web = new IllustratedPagesWebFactory(companyMapInitiativeEnabled: false);
+        using var handler = new HttpClientHandler { AllowAutoRedirect = true, UseCookies = true };
+        using var http = new HttpClient(handler) { BaseAddress = new Uri(web.ServerAddress) };
+        var path = "/werkgever/sollicitaties?view=lijst";
+        await http.GetAsync($"/__test/sign-in?role=employer&return={Uri.EscapeDataString(path)}");
+        var response = await http.GetAsync(path);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain("/werkgever/open-voor-initiatief", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Open voor initiatief", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task List_view_sidebar_uses_branch_manager_nav_group_label()
     {
         await using var web = new IllustratedPagesWebFactory();
