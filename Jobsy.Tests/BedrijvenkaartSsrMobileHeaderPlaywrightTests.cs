@@ -61,7 +61,7 @@ public sealed class BedrijvenkaartSsrMobileHeaderPlaywrightTests : IAsyncLifetim
 
         if (width <= 900)
         {
-            var tagline = page.Locator(".app-shell--banenkaart-shell .brand__tagline");
+            var tagline = page.Locator(".app-shell--banenkaart-shell .brand-tagline");
             if (await tagline.CountAsync() > 0)
             {
                 Assert.False(await tagline.IsVisibleAsync(), "Brand tagline should be hidden on narrow bedrijvenkaart SSR.");
