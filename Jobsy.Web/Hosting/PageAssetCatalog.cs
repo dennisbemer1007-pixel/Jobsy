@@ -451,6 +451,9 @@ public static class PageAssetCatalog
     public static bool IncludeBedrijvenkaartClientScript(string? rawPath)
         => Bedrijvenkaart.BedrijvenkaartSsrPaths.IsHostPath(PageSeoCatalog.Normalize(rawPath));
 
+    public static bool IncludeBedrijvenkaartSsrLayoutScript(string? rawPath)
+        => IncludeBedrijvenkaartClientScript(rawPath);
+
     /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> bedrijvenkaart SSR.</summary>
     public static IReadOnlyList<string> BedrijvenkaartSsrStylesheets() =>
     [
