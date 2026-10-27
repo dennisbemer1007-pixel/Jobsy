@@ -303,16 +303,29 @@ window.jobsyMaps = (function () {
             document.addEventListener("jobsy-bk-map-pane-visible", onMapPaneVisible);
         }
 
-        ensure("discovery").then(function () {
-            if (deferMapBootWhileListMode()) {
-                var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
-                if (root && root.getAttribute("data-kb-view") === "map") {
-                    onMapPaneVisible();
+        function startEnsure() {
+            ensure("discovery").then(function () {
+                if (deferMapBootWhileListMode()) {
+                    var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
+                    if (root && root.getAttribute("data-kb-view") === "map") {
+                        onMapPaneVisible();
+                    }
+                    return;
                 }
-                return;
-            }
-            startDiscoveryMapAfterVisible();
-        }).catch(function () { });
+                startDiscoveryMapAfterVisible();
+            }).catch(function () { });
+        }
+
+        // Defer MapLibre + jobMap until after window load — they were pushing load to ~3–4s on 1440.
+        afterWindowLoad(startEnsure);
+    }
+
+    function afterWindowLoad(cb) {
+        if (document.readyState === "complete") {
+            cb();
+            return;
+        }
+        window.addEventListener("load", cb, { once: true });
     }
 
     function scheduleWarmBoot() {
