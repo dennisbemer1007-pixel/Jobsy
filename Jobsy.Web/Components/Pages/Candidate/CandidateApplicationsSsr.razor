@@ -6,6 +6,7 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Features
 @using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Features
 @using Jobsy.Web.Hosting
@@ -37,6 +38,10 @@
 {
     <PageContentSkeleton Variant="apps" CardCount="3" LoadingLabel="@Culture["Common.Loading"]" />
 }
+else if (_notFound)
+{
+    <NotFoundView Embedded="true" SignedInCandidate="true" />
+}
 else if (!string.IsNullOrWhiteSpace(_fatalMessage))
 {
     <p class="state-message">@_fatalMessage</p>
@@ -48,6 +53,7 @@ else if (_bodyHtml is not null)
 
 @code {
     private bool _loading = true;
+    private bool _notFound;
     private string? _fatalMessage;
     private string? _bodyHtml;
 
@@ -117,6 +123,14 @@ else if (_bodyHtml is not null)
                 candidateEmail,
                 mobileDetailShell,
                 berichtenThreadId);
+
+            if (selectedId is Guid requestedSel
+                && data.AllRows.All(r => r.RowId != requestedSel))
+            {
+                http.Response.StatusCode = StatusCodes.Status404NotFound;
+                _notFound = true;
+                return;
+            }
 
             _bodyHtml = ApplicationsSsrShells.BuildBody(
                 Culture,
