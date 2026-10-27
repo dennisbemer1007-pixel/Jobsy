@@ -128,6 +128,7 @@ public class SchoolRun8ReadAloudTests : BunitContext
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
         Services.AddSingleton<IAntiforgery>(new AlwaysValidAntiforgery());
         Services.AddSingleton<IPupilQuestionSetRegistry>(new PupilQuestionSetRegistry());
+        Services.AddSingleton<IFeatureFlags>(new ReadAloudFeatureFlags());
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://api.test/") }));
     }
 
@@ -181,6 +182,25 @@ public class SchoolRun8ReadAloudTests : BunitContext
         var buttons = cut.FindAll("[data-read-aloud]");
         Assert.Contains(buttons, button => button.GetAttribute("aria-label") == "Lees voor");
         await Task.CompletedTask;
+    }
+
+    private sealed class ReadAloudFeatureFlags : IFeatureFlags
+    {
+        private static readonly FeatureFlagSnapshot Snap = new(
+            false,
+            false,
+            SchoolsEnabled: true,
+            PupilPassportV2Enabled: true);
+
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap);
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap.IsEnabled(feature));
+
+        public void Invalidate()
+        {
+        }
     }
 
     private static PupilProgressStateDto QuestionProgress()
