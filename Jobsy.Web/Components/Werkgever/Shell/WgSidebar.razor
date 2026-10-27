@@ -2,12 +2,14 @@
 @using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Http
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
 @inject NavigationManager Navigation
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject WerkgeverCountsState Counts
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <aside class="wg-sidebar" aria-label="@Culture["WgShell.MainNav"]">
@@ -77,7 +79,7 @@
     private bool _kandidatenkaartEnabled;
     private bool _companyMapInitiativeEnabled = true;
 
-    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private EmployerRole Role => Scope.DisplayRole(HttpContextAccessor.HttpContext?.User);
     private WerkgeverNavContext Ctx => new(
         HasTakeovers: true,
         CandidateInsightsEnabled: true,
