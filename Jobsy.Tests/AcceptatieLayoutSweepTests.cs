@@ -131,10 +131,14 @@ public class AcceptatieLayoutSweepTests
             foreach (Match match in Regex.Matches(text, """/(?:css|js)/[^"' ]+\?v=[^"' ]+"""))
             {
                 var url = match.Value.TrimStart('/');
+                var assetPath = url.Split('?', 2)[0];
+                var catalogRef = $"WwwrootAssetCatalog.Url(\"{assetPath}\")";
                 Assert.True(
                     app.Contains(url, StringComparison.Ordinal)
                     || catalog.Contains(url, StringComparison.Ordinal)
-                    || core.Contains(url, StringComparison.Ordinal),
+                    || core.Contains(url, StringComparison.Ordinal)
+                    || app.Contains(catalogRef, StringComparison.Ordinal)
+                    || catalog.Contains(catalogRef, StringComparison.Ordinal),
                     $"Precache {url} must be referenced from App.razor, PageAssetCatalog, or app-core.js.");
             }
         }
