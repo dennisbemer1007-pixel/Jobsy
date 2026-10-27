@@ -469,6 +469,10 @@
 }
 
 @media (max-width: 900px) {
+    .app-shell--banenkaart-shell .app-header .brand__tagline {
+        display: none;
+    }
+
     .app-shell--banenkaart-shell .notification-bell__panel,
     .app-shell--banenkaart-shell .notification-dropdown {
         position: fixed;
