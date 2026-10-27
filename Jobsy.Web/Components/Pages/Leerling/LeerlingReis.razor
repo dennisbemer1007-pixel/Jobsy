@@ -2,6 +2,7 @@
 @layout LeerlingLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
@@ -61,6 +62,9 @@ else
     var worldKey = item?.WorldKey ?? _state.CurrentWorldKey ?? "koraalrif";
     var world = PupilWorldCatalog.Find(worldKey);
     var worldNum = PupilWorldCatalog.TestWorldNumber(worldKey);
+    var themeKey = _state.VisualThemeKey;
+    var worldTitleKey = PupilJourneyTheme.WorldTitleKey(themeKey, worldKey);
+    var worldSubKey = PupilJourneyTheme.WorldSubtitleKey(themeKey, worldKey);
     var qLabel = item is null ? "" : Culture[item.TextKey];
     var imagineRaw = item is null ? "" : Culture[item.ImagineKey];
     var imagineHeading = Culture["Leerling.Reis.Imagine"];
@@ -98,9 +102,11 @@ else
 
                     var done = IsWorldDone(w.Key);
                     var current = string.Equals(w.Key, worldKey, StringComparison.OrdinalIgnoreCase);
+                    var titleKey = PupilJourneyTheme.WorldTitleKey(themeKey, w.Key);
+                    var subKey = PupilJourneyTheme.WorldSubtitleKey(themeKey, w.Key);
                     <li class="@(done ? "is-done" : null) @(current ? "is-now" : null)">
-                        <strong>@Culture[w.TitleKey]</strong>
-                        <small>@Culture[w.SubtitleKey]</small>
+                        <strong>@Culture[titleKey]</strong>
+                        <small>@Culture[subKey]</small>
                     </li>
                 }
             </ol>
@@ -120,7 +126,11 @@ else
             <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Reis.Progress"]">
                 <span class="ll-progress-bar__fill" style="width:@ProgressPercent()"></span>
             </div>
-            <p class="ll-question__world">@(world is null ? "" : Culture[world.TitleKey])</p>
+            @if (_state.QuestionSet == PupilQuestionSet.Groep78 && worldNum > 0)
+            {
+                <p class="ll-question__meta">@string.Format(Culture["Leerling.Reis.PartOf"], worldNum)</p>
+            }
+            <p class="ll-question__world">@Culture[worldTitleKey]</p>
             <h1 id="ll-q-title"
                 class="ll-question__text"
                 aria-describedby="@(_infoOpen ? infoId : null)">@qLabel</h1>

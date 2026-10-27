@@ -81,6 +81,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
 
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await PickGroep78ThemeIfNeededAsync(page);
         await page.WaitForURLAsync("**/leerling/start**", DomReady);
         await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
         await page.WaitForTimeoutAsync(3_000);
@@ -104,7 +105,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.WaitForTimeoutAsync(3_000);
         Assert.Contains("/leerling/reis", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
-        await Assertions.Expect(page.Locator(".ll-question__meta")).ToContainTextAsync("Vraag 2");
+        await Assertions.Expect(page.Locator(".ll-question__meta")).ToContainTextAsync("Deel 1 van 4");
 
         for (var step = 0; step < 80 && !page.Url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)
              && !page.Url.Contains("/leerling/droombaan", StringComparison.OrdinalIgnoreCase); step++)
@@ -240,6 +241,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             page.SetDefaultNavigationTimeout(90_000);
             await page.Context.ClearCookiesAsync();
             await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId);
+            await PickGroep78ThemeIfNeededAsync(page);
             await page.WaitForURLAsync("**/leerling/start**", DomReady);
             if (width == 1366)
             {
@@ -490,7 +492,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             try
             {
                 await page.WaitForURLAsync(
-                    url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
+                    url => url.Contains("/leerling/werelden", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
@@ -512,6 +515,20 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     private static bool IsClassListNotReady(PlaywrightException ex)
         => ex.Message.Contains("class option missing", StringComparison.Ordinal)
            || ex.Message.Contains("login form missing", StringComparison.Ordinal);
+
+    private static async Task PickGroep78ThemeIfNeededAsync(IPage page)
+    {
+        if (!page.Url.Contains("/leerling/werelden", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        await page.GetByTestId("ll-theme-zee").ClickAsync();
+        await page.WaitForURLAsync(
+            url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
+                || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase),
+            UrlCommitted);
+    }
 
     private static async Task AnswerOneAsync(IPage page)
     {
@@ -635,6 +652,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
         var started = DateTime.UtcNow;
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await PickGroep78ThemeIfNeededAsync(page);
         await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", UrlCommitted);
         await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
         var elapsedMs = (DateTime.UtcNow - started).TotalMilliseconds;
@@ -698,6 +716,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 AnswersJson = answersJson,
                 PuzzlesJson = puzzlesJson,
                 CurrentIndex = answered,
+                VisualThemeKey = PupilJourneyTheme.Zee,
                 LikesJson = "[]",
                 DislikesJson = "[]",
                 ChipsSavedAtUtc = chipsSaved ? now : null,

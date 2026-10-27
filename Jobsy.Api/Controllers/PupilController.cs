@@ -89,6 +89,17 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpPut("progress/theme")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SaveTheme(
+        [FromBody] PupilVisualThemeRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SaveVisualThemeAsync(User, request.ThemeKey, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpPut("progress/chips")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
     public async Task<IActionResult> SaveChips(

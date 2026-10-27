@@ -135,6 +135,13 @@ else
                 <p class="ll-error" role="alert">@_error</p>
             }
 
+            @if (_state is { QuestionSet: PupilQuestionSet.Groep78, CanChangeVisualTheme: true })
+            {
+                <p class="ll-island__theme">
+                    <a href="/leerling/werelden">@Culture["Leerling.Theme.Change"]</a>
+                </p>
+            }
+
             <div class="ll-question__nav">
                 <a class="btn-secondary" href="/leerling/reis">@Culture["Leerling.Reis.Prev"]</a>
                 <button type="button" class="btn-primary" disabled="@_busy" @onclick="Save">

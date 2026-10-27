@@ -41,6 +41,11 @@ public sealed class PupilPuzzleGateTests : IClassFixture<RoleFunctionalWebAppFac
             seed.SchoolId, seed.ClassId, seed.PlainCode));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
 
+        var theme = await client.PutAsJsonAsync(
+            "api/pupil/progress/theme",
+            new PupilVisualThemeRequest(PupilJourneyTheme.Zee));
+        Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
+
         var bank = new PupilQuestionBank();
         for (var i = 0; i < 15; i++)
         {

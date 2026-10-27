@@ -5,6 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Core.Scholen
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -40,7 +41,7 @@ else if (!_known)
 }
 else
 {
-    <section class="ll-card ll-puzzle" data-testid="ll-puzzle-root">
+    <section class="ll-card ll-puzzle ll-puzzle--@Key.ToLowerInvariant()" data-testid="ll-puzzle-root">
         <p class="ll-question__meta">@Culture["Leerling.Puzzle.Break"]</p>
         <h1 class="ll-question__text">@Title</h1>
         <p class="ll-puzzle__lead">@Lead</p>
@@ -155,7 +156,7 @@ else
     private List<int> _shellOrder = [1, 3, 2, 4];
     private int? _shellPick;
 
-    private readonly string[] _cardSymbols = ["🐚", "⚓", "🐠", "🐚", "⚓", "🐠"];
+    private string? _visualTheme;
     private List<string> _cardFaces = [];
     private HashSet<int> _cardOpen = [];
     private HashSet<string> _cardMatched = [];
@@ -166,21 +167,9 @@ else
     private int? _lampLit;
     private bool _lampPlayMode;
 
-    private string Title => Key.ToLowerInvariant() switch
-    {
-        "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Title"],
-        "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Title"],
-        "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Title"],
-        _ => Culture["Leerling.Puzzle.Title"]
-    };
+    private string Title => Culture[PupilJourneyTheme.PuzzleTitleKey(_visualTheme, Key)];
 
-    private string Lead => Key.ToLowerInvariant() switch
-    {
-        "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Lead"],
-        "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Lead"],
-        "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Lead"],
-        _ => Culture["Leerling.Puzzle.Lead"]
-    };
+    private string Lead => Culture[PupilJourneyTheme.PuzzleLeadKey(_visualTheme, Key)];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -228,6 +217,7 @@ else
                 return;
             }
 
+            _visualTheme = state.VisualThemeKey;
             ResetPuzzleUi();
         }
         finally
@@ -242,7 +232,7 @@ else
         _error = null;
         _shellPick = null;
         _shellOrder = [1, 3, 2, 4];
-        _cardFaces = _cardSymbols.OrderBy(_ => Random.Shared.Next()).ToList();
+        _cardFaces = PupilJourneyTheme.PuzzleMatchFaces(_visualTheme).OrderBy(_ => Random.Shared.Next()).ToList();
         _cardOpen = [];
         _cardMatched = [];
         _cardFirst = null;

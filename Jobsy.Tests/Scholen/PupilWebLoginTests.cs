@@ -55,7 +55,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             response.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.Found,
             $"expected redirect, got {(int)response.StatusCode} {text}");
         var location = response.Headers.Location?.ToString() ?? "";
-        Assert.Contains("/leerling/start", location, StringComparison.Ordinal);
+        Assert.Contains("/leerling/werelden", location, StringComparison.Ordinal);
         Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
         Assert.Contains(cookies!, c => c.StartsWith(PupilAuthDefaults.CookieName + "=", StringComparison.Ordinal));
         Assert.Contains(cookies!, c => c.StartsWith(PupilApiSessionCookie.Name + "=", StringComparison.Ordinal));
@@ -77,9 +77,12 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         var login = await PostLoginAsync(client, seed);
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
-        Assert.Contains("/leerling/start", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        Assert.Contains("/leerling/werelden", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
         var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name);
         Assert.False(string.IsNullOrWhiteSpace(apiTicket));
+
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+        await PickThemeAsync(api, apiTicket!);
 
         var start = await client.GetAsync("/leerling/start");
         var html = await start.Content.ReadAsStringAsync();
@@ -88,7 +91,6 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains(PupilSessionDuration.Groep78, html, StringComparison.Ordinal);
         Assert.DoesNotContain("Inloggen bij Lobsy", html, StringComparison.Ordinal);
 
-        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
         var progress = await GetProgressAsync(api, apiTicket!);
         Assert.Equal(HttpStatusCode.OK, progress.Status);
         Assert.False(progress.Body!.Completed);
@@ -107,6 +109,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         var login = await PostLoginAsync(client, seed);
         var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        await PickThemeAsync(api, apiTicket);
         var first = await GetProgressAsync(api, apiTicket);
         Assert.Equal(HttpStatusCode.OK, first.Status);
         var itemId = first.Body!.CurrentItemId;
@@ -265,8 +268,20 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         return await api.SendAsync(request);
     }
 
+    private static async Task PickThemeAsync(HttpClient api, string apiTicket, string theme = PupilJourneyTheme.Zee)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/theme")
+        {
+            Content = JsonContent.Create(new PupilVisualThemeRequest(theme), options: JobsyApiClient.ApiJson)
+        };
+        request.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        var response = await api.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     private static async Task FinishJourneyAsync(HttpClient api, string apiTicket)
     {
+        await PickThemeAsync(api, apiTicket);
         for (var step = 0; step < 80; step++)
         {
             var progress = await GetProgressAsync(api, apiTicket);
