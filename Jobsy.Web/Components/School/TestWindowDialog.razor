@@ -3,11 +3,24 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Shared
 @inject CultureState Culture
+@implements IAsyncDisposable
 
 @if (Open)
 {
-    <div class="sch-dialog-backdrop" @onclick="Cancel">
-        <div class="sch-dialog" role="dialog" aria-modal="true" aria-labelledby="tw-title" @onclick:stopPropagation="true">
+    <div @onkeydown:window="OnWindowKeyDown"></div>
+    <div class="sch-dialog-backdrop"
+         @onclick="Cancel"
+         @onkeydown="OnBackdropKeyDown"
+         tabindex="-1"
+         @ref="_backdrop">
+        <div class="sch-dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="tw-title"
+             tabindex="0"
+             @ref="_dialog"
+             @onkeydown="OnBackdropKeyDown"
+             @onclick:stopPropagation="true">
             <h2 id="tw-title">@Culture["School.TestWindow.Title"]</h2>
             <p class="muted">@Culture["School.TestWindow.Lead"]</p>
             <p>
@@ -72,12 +85,40 @@
     [Parameter] public string? Error { get; set; }
     [Parameter] public string? FixHref { get; set; }
     [Parameter] public EventCallback<(string Action, DateOnly? ClosesOn)> OnAction { get; set; }
+    [Parameter] public ElementReference? RestoreFocusTo { get; set; }
 
     private DateOnly? _closesOn;
+    private ElementReference _backdrop;
+    private ElementReference _dialog;
+    private bool _wasOpen;
 
     protected override void OnParametersSet()
     {
         _closesOn = ClosesOn;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Open && !_wasOpen)
+        {
+            try
+            {
+                await _dialog.FocusAsync();
+            }
+            catch
+            {
+                try
+                {
+                    await _backdrop.FocusAsync();
+                }
+                catch
+                {
+                    // ignore focus failures in prerender/tests
+                }
+            }
+        }
+
+        _wasOpen = Open;
     }
 
     private string StatusLabel => State switch
@@ -94,10 +135,17 @@
         _ => "sch-pill--warn"
     };
 
+    private Task OnWindowKeyDown(KeyboardEventArgs e)
+        => string.Equals(e.Key, "Escape", StringComparison.OrdinalIgnoreCase) ? Cancel() : Task.CompletedTask;
+
+    private Task OnBackdropKeyDown(KeyboardEventArgs e)
+        => OnWindowKeyDown(e);
+
     private async Task Cancel()
     {
         Open = false;
         await OpenChanged.InvokeAsync(false);
+        await RestoreFocusAsync();
     }
 
     private Task OpenWindow() => Emit("open");
@@ -108,4 +156,23 @@
     {
         await OnAction.InvokeAsync((action, _closesOn));
     }
+
+    private async Task RestoreFocusAsync()
+    {
+        if (RestoreFocusTo is not { } target)
+        {
+            return;
+        }
+
+        try
+        {
+            await target.FocusAsync();
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

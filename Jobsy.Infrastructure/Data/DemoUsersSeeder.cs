@@ -16,6 +16,9 @@ public static class DemoSchoolIds
 {
     public static readonly Guid SchoolId = Guid.Parse("99999999-1111-1111-1111-111111111111");
     public static readonly Guid Class1AId = Guid.Parse("99999999-2222-2222-2222-222222222222");
+    /// <summary>Demo groep 7/8 klas (apart van VMBO 2A).</summary>
+    public static readonly Guid ClassGroep78Id = Guid.Parse("99999999-3333-3333-3333-333333333333");
+    public const string ClassGroep78Name = "8B";
     public static readonly Guid SchoolAdminUserId = Guid.Parse("bbbbbbbb-2222-2222-2222-222222222222");
     public static readonly Guid TeacherUserId = Guid.Parse("bbbbbbbb-3333-3333-3333-333333333333");
     public static readonly Guid WerkcoachUserId = Guid.Parse("bbbbbbbb-4444-4444-4444-444444444444");
@@ -580,18 +583,50 @@ internal static class DemoUsersSeeder
             added++;
         }
 
+        var groep78 = await db.SchoolClasses.FirstOrDefaultAsync(c => c.Id == DemoSchoolIds.ClassGroep78Id);
+        if (groep78 is null)
+        {
+            groep78 = new SchoolClass
+            {
+                Id = DemoSchoolIds.ClassGroep78Id,
+                SchoolId = DemoSchoolIds.SchoolId,
+                Name = DemoSchoolIds.ClassGroep78Name,
+                Level = SchoolLevel.Groep78,
+                QuestionSet = PupilQuestionSet.Groep78,
+                Year = 8,
+                SchoolYearStart = yearStart,
+                PupilCount = 10,
+                TestWindow = TestWindowState.Open,
+                IsTestData = true,
+                CreatedAtUtc = now
+            };
+            db.SchoolClasses.Add(groep78);
+            added++;
+        }
+        else
+        {
+            groep78.Name = DemoSchoolIds.ClassGroep78Name;
+            groep78.Level = SchoolLevel.Groep78;
+            groep78.QuestionSet = PupilQuestionSet.Groep78;
+            groep78.PupilCount = Math.Max(groep78.PupilCount, 10);
+            groep78.TestWindow = TestWindowState.Open;
+        }
+
         foreach (var uid in new[] { teacherId, coachId })
         {
-            if (!await db.TeacherClassAssignments.AnyAsync(
-                    a => a.TeacherUserId == uid && a.SchoolClassId == DemoSchoolIds.Class1AId))
+            foreach (var classId in new[] { DemoSchoolIds.ClassGroep78Id, DemoSchoolIds.Class1AId })
             {
-                db.TeacherClassAssignments.Add(new TeacherClassAssignment
+                if (!await db.TeacherClassAssignments.AnyAsync(
+                        a => a.TeacherUserId == uid && a.SchoolClassId == classId))
                 {
-                    TeacherUserId = uid,
-                    SchoolClassId = DemoSchoolIds.Class1AId,
-                    CreatedAtUtc = now
-                });
-                added++;
+                    db.TeacherClassAssignments.Add(new TeacherClassAssignment
+                    {
+                        TeacherUserId = uid,
+                        SchoolClassId = classId,
+                        CreatedAtUtc = now
+                    });
+                    added++;
+                }
             }
         }
 
