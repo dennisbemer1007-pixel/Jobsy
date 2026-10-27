@@ -28,6 +28,7 @@ public class PupilPdfProxyTests
     {
         Assert.True(JobsyApiAuthHandler.ForwardsPupilCookie("/api/pupil/progress"));
         Assert.True(JobsyApiAuthHandler.ForwardsPupilCookie("/leerling/pdf"));
+        Assert.True(JobsyApiAuthHandler.NeedsStoredPupilTicket("/api/pupil/passport/g78"));
         Assert.False(JobsyApiAuthHandler.ForwardsPupilCookie("/api/school/classes"));
         Assert.False(JobsyApiAuthHandler.ForwardsPupilCookie("/leerling"));
     }

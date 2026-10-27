@@ -514,3 +514,37 @@
 .lp-g78__foot b {
     color: var(--lp-navy);
 }
+
+.ll-reis[data-testid="leerling-paspoort-page"] {
+    max-width: min(100%, 960px);
+    margin-inline: auto;
+    padding-bottom: calc(var(--space-6) + 72px);
+    box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+    .ll-reis[data-testid="leerling-paspoort-page"] {
+        width: 100%;
+        max-width: min(100%, 720px);
+        margin-inline: auto;
+        padding-inline: var(--space-4);
+        box-sizing: border-box;
+    }
+
+    .ll-reis[data-testid="leerling-paspoort-page"] > .lp-g78-page-tools,
+    .ll-reis[data-testid="leerling-paspoort-page"] .lp-g78 {
+        width: 100%;
+        max-width: 100%;
+        margin-inline: auto;
+    }
+
+    .ll-reis[data-testid="leerling-paspoort-page"] .ll-result__actions {
+        position: sticky;
+        bottom: 0;
+        margin-inline: calc(-1 * var(--space-4));
+        padding: var(--space-3) var(--space-4);
+        padding-bottom: max(var(--space-3), env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(to top, var(--bg, #f6efe4) 75%, transparent);
+        z-index: 5;
+    }
+}

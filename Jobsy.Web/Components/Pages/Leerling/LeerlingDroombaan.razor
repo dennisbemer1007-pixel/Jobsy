@@ -44,6 +44,8 @@ else
                 <input type="search"
                        value="@_search"
                        @oninput="OnSearchInput"
+                       @onfocus="OnSearchFocus"
+                       @onblur="OnSearchBlur"
                        placeholder="@Culture["LeerlingDroom.Search"]"
                        autocomplete="off"
                        enterkeyhint="search"
@@ -141,6 +143,7 @@ else
     private DreamJobRouteStubDto? _dream;
     private string _search = "";
     private bool _searchTouched;
+    private bool _searchFocused;
     private bool _contentReady;
     private Task? _initialLoadTask;
     private IReadOnlyList<DreamJob> _matches = [];
@@ -227,7 +230,7 @@ else
 
     private void HydrateSearchFromDream()
     {
-        if (_searchTouched || !string.IsNullOrWhiteSpace(_search))
+        if (_searchTouched || _searchFocused || !string.IsNullOrWhiteSpace(_search))
         {
             return;
         }
@@ -237,6 +240,14 @@ else
         {
             _search = title;
         }
+    }
+
+    private void OnSearchFocus() => _searchFocused = true;
+
+    private void OnSearchBlur()
+    {
+        _searchFocused = false;
+        HydrateSearchFromDream();
     }
 
     private void OnSearchInput(ChangeEventArgs e)
@@ -259,10 +270,13 @@ else
     {
         try
         {
-            await Task.Delay(200, cancellationToken);
+            await Task.Delay(400, cancellationToken);
             var query = _search;
             _matches = string.IsNullOrWhiteSpace(query) ? [] : DreamJobCatalog.Search(query, 8);
-            await InvokeAsync(StateHasChanged);
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -283,9 +297,10 @@ else
             }
 
             _dream = resp.DreamJob;
-            if (!string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
+                && !_searchFocused
+                && !_searchTouched)
             {
-                _searchTouched = false;
                 _search = resp.DreamJob.JobTitle ?? _search;
             }
 

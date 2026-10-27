@@ -190,7 +190,17 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Discover.Letter.I.1"] = "Welk vraagstuk zou jij willen uitzoeken?";
         d["LeerlingPassport.Discover.Letter.I.2"] = "Welke proef of onderzoeksopdracht vond je leuk?";
         d["LeerlingPassport.Discover.Letter.I.3"] = "Welk vak geeft je het meeste 'weten hoe het zit'?";
+        d["LeerlingPassport.Tip.Letter.R.1"] =
+            "Kijk samen naar iets dat je met je handen hebt gemaakt of gerepareerd. Wat vond je het leukst?";
+        d["LeerlingPassport.Tip.Letter.I.1"] =
+            "Kies een onderwerp waar jij nieuwsgierig naar bent en zoek samen één feit op. Geen toets, wel ontdekken.";
+        d["LeerlingPassport.Tip.Letter.A.1"] =
+            "Teken of maak iets kleins thuis en vertel waarom je dit koos. Het hoeft niet perfect.";
         d["LeerlingPassport.Tip.Letter.S.1"] = "Praat thuis over momenten waarop je iemand hielp. Wat deed je precies?";
+        d["LeerlingPassport.Tip.Letter.E.1"] =
+            "Bedenk samen een mini-plan: wat zou jij organiseren op school of thuis? Wie helpt mee?";
+        d["LeerlingPassport.Tip.Letter.C.1"] =
+            "Sorteer iets dat rommelig is (boeken, spullen) en vertel wat je fijn vindt aan netjes werken.";
         d["LeerlingPassport.Tip.Generic.2"] = "Er is geen goed of fout antwoord; het gaat om ontdekken.";
 
         d["LeerlingPassport.Vo.Archetype.Default"] = "Nieuwsgierige ontdekker. Leert door te proberen";

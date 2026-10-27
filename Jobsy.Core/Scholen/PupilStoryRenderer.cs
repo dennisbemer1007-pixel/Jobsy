@@ -139,7 +139,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
     {
         var raw = ResolveCopy(key, ctx, nowLabel);
         var parts = raw.Split('|', 2);
-        return parts.Length == 2 ? $"{parts[0]} — {parts[1]}" : raw;
+        return parts.Length == 2 ? $"{parts[0]} · {parts[1]}" : raw;
     }
 
     private static string ResolveCopy(string key, PupilClassContext ctx, string nowLabel)

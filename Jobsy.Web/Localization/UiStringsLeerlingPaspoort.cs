@@ -78,6 +78,23 @@ public static class UiStringsLeerlingPaspoort
         "LeerlingPassport.Vo.Form.Lead" => "Optional · shown on your PDF when filled in",
         "LeerlingPassport.Vo.Form.Save" => "Save and continue",
         "LeerlingPassport.Vo.Form.Skip" => "Skip",
+        "LeerlingPassport.Tip.Letter.R.1" =>
+            "Look together at something you made or fixed with your hands. What did you enjoy most?",
+        "LeerlingPassport.Tip.Letter.I.1" =>
+            "Pick a topic you are curious about and look up one fact together. No test, just exploring.",
+        "LeerlingPassport.Tip.Letter.A.1" =>
+            "Draw or make something small at home and say why you chose it. It does not have to be perfect.",
+        "LeerlingPassport.Tip.Letter.S.1" =>
+            "Talk at home about times you helped someone. What did you do exactly?",
+        "LeerlingPassport.Tip.Letter.E.1" =>
+            "Think of a mini plan together: what would you organise at school or home? Who helps?",
+        "LeerlingPassport.Tip.Letter.C.1" =>
+            "Sort something messy (books, stuff) and say what you like about working neatly.",
+        "LeerlingPassport.Tip.dierenarts.1" =>
+            "Visit a petting zoo or animal shelter together and ask what the carers do.",
+        "LeerlingPassport.Tip.dierenarts.2" =>
+            "Ask what they liked most. There is no right or wrong answer.",
+        "LeerlingPassport.Tip.Generic.2" => "There is no right or wrong answer; it is about exploring.",
         _ when key.StartsWith("LeerlingPassport.Strength.", StringComparison.Ordinal) && key.EndsWith(".Sub", StringComparison.Ordinal)
             => EnStrengthSubtitle(nl),
         _ when key.StartsWith("LeerlingPassport.", StringComparison.Ordinal) && nl.Length < 160 => TranslateLite(nl, "en"),

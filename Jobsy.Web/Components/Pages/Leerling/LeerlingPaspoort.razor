@@ -42,7 +42,7 @@ else
         </div>
         <LeerlingPaspoortG78View Model="_model"
                                  AllowNameEdit="true"
-                                 DisplayName="_displayName"
+                                 DisplayName="@_displayName"
                                  DisplayNameChanged="OnNameChanged" />
         <div class="ll-result__actions">
             <a class="btn-secondary" href="/leerling/dit-ben-jij">@Culture["LeerlingPassport.Page.Back"]</a>
@@ -65,9 +65,9 @@ else
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
+        var flagsTask = Features.GetAsync();
         await Culture.InitializeAsync();
-
-        var flags = await Features.GetAsync();
+        var flags = await flagsTask;
         _enabled = flags.PupilPassportV2Enabled;
         if (!_enabled)
         {
