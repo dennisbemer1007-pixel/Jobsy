@@ -729,7 +729,8 @@
     border: 1px solid var(--border);
     border-radius:var(--radius-pill);
     overflow: hidden;
-}.wg-app__views button {
+}.wg-app__views button,
+.wg-app__views a {
     appearance: none;
     border: 0;
     background:transparent;
@@ -738,7 +739,12 @@
     font: inherit;
     color: var(--ink);
     cursor: pointer;
-}.wg-app__views button.is-active {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}.wg-app__views button.is-active,
+.wg-app__views a.is-active {
     background:var(--brand-deep);
     color: var(--pearl);
     font-weight: 600;

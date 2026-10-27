@@ -1,4 +1,4 @@
-@page "/werkgever/sollicitaties"
+@page "/werkgever/sollicitaties/pipeline"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Features
@@ -16,6 +16,7 @@
 @using Jobsy.Web.Werkgever
 @using Jobsy.Web.Components.Bedrijvenkaart
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
@@ -575,12 +576,17 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var q = QueryHelpers.ParseQuery(uri.Query);
-        if (q.TryGetValue("view", out var view) && !string.IsNullOrWhiteSpace(view))
+        if (q.TryGetValue("view", out var view) && !string.IsNullOrWhiteSpace(view)
+            && string.Equals(view, ApplicationPipelineRules.ViewList, StringComparison.OrdinalIgnoreCase))
         {
-            _view = string.Equals(view, ApplicationPipelineRules.ViewList, StringComparison.OrdinalIgnoreCase)
-                ? ApplicationPipelineRules.ViewList
-                : ApplicationPipelineRules.ViewPipeline;
+            Navigation.NavigateTo(
+                EmployerApplicationsListSsrQuery.BuildListPath(
+                    EmployerApplicationsListSsrQuery.Parse(new QueryCollection(q))),
+                forceLoad: true);
+            return;
         }
+
+        _view = ApplicationPipelineRules.ViewPipeline;
 
         if (q.TryGetValue("filter", out var filter)
             && string.Equals(filter, ApplicationPipelineRules.FilterOverdue, StringComparison.OrdinalIgnoreCase))
@@ -688,24 +694,25 @@
 
     private Task SetViewAsync(string view)
     {
-        _view = view;
+        if (string.Equals(view, ApplicationPipelineRules.ViewList, StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo(BuildListViewUrlFromState(), forceLoad: true);
+            return Task.CompletedTask;
+        }
+
+        _view = ApplicationPipelineRules.ViewPipeline;
         SyncQuery();
         return Task.CompletedTask;
     }
 
     private void ShowAllInList()
     {
-        _view = ApplicationPipelineRules.ViewList;
-        SyncQuery();
+        Navigation.NavigateTo(BuildListViewUrlFromState(), forceLoad: true);
     }
 
     private void SyncQuery()
     {
         var parts = new List<string>();
-        if (_view == ApplicationPipelineRules.ViewList)
-        {
-            parts.Add("view=lijst");
-        }
 
         if (_overdueOnly)
         {
@@ -722,8 +729,29 @@
             parts.Add($"kandidaat={_selected.Id:D}");
         }
 
-        var url = "/werkgever/sollicitaties" + (parts.Count == 0 ? "" : "?" + string.Join('&', parts));
+        var url = "/werkgever/sollicitaties/pipeline" + (parts.Count == 0 ? "" : "?" + string.Join('&', parts));
         Navigation.NavigateTo(url, replace: true);
+    }
+
+    private string BuildListViewUrlFromState()
+    {
+        var parts = new List<string> { $"view={ApplicationPipelineRules.ViewList}" };
+        if (_overdueOnly)
+        {
+            parts.Add("filter=overdue");
+        }
+
+        if (Guid.TryParse(_vacancyId, out var vacancyId))
+        {
+            parts.Add($"vacancyId={vacancyId:D}");
+        }
+
+        if (_selected is not null && _drawerOpen)
+        {
+            parts.Add($"kandidaat={_selected.Id:D}");
+        }
+
+        return "/werkgever/sollicitaties?" + string.Join('&', parts);
     }
 
     private void OpenCandidate(Guid id)
@@ -788,9 +816,22 @@
 
     private void OpenRejectedList()
     {
-        _listStatusFilter = "rejected";
-        _view = ApplicationPipelineRules.ViewList;
-        SyncQuery();
+        var parts = new List<string>
+        {
+            $"view={ApplicationPipelineRules.ViewList}",
+            "status=rejected"
+        };
+        if (_overdueOnly)
+        {
+            parts.Add("filter=overdue");
+        }
+
+        if (Guid.TryParse(_vacancyId, out var vacancyId))
+        {
+            parts.Add($"vacancyId={vacancyId:D}");
+        }
+
+        Navigation.NavigateTo("/werkgever/sollicitaties?" + string.Join('&', parts), forceLoad: true);
     }
 
     private void ToggleSort(string key)
