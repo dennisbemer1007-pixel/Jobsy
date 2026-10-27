@@ -18,6 +18,9 @@ public sealed class BedrijvenkaartSsrRenderTests
         Assert.Contains("css/features/kandidaat-banen.css", html, StringComparison.Ordinal);
         Assert.Contains("bk-shell", html, StringComparison.Ordinal);
         Assert.Contains("bedrijvenkaart-map", html, StringComparison.Ordinal);
+        Assert.Contains("data-bk-view-toggle", html, StringComparison.Ordinal);
+        Assert.Contains("bedrijvenkaart-ssr-layout.js", html, StringComparison.Ordinal);
+        Assert.Contains("bk-shell--desktop-split", html, StringComparison.Ordinal);
     }
 
     [Fact]

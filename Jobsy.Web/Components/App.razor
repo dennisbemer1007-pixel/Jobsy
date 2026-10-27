@@ -445,6 +445,10 @@
             <script src="@($"/{WwwrootAssetCatalog.Url("js/wg-bottom-nav-ssr.js")}")" nonce="@Nonce" defer></script>
             <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>
         }
+        @if (IncludeBedrijvenkaartSsrLayoutScript)
+        {
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/bedrijvenkaart-ssr-layout.js")}")" nonce="@Nonce" defer></script>
+        }
         @if (IncludeOnboardingClientScript)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-client-form.js")}")" nonce="@Nonce" defer></script>
@@ -568,6 +572,9 @@
 
     private bool IncludeBedrijvenkaartClientScript =>
         PageAssetCatalog.IncludeBedrijvenkaartClientScript(RequestPath);
+
+    private bool IncludeBedrijvenkaartSsrLayoutScript =>
+        PageAssetCatalog.IncludeBedrijvenkaartSsrLayoutScript(RequestPath);
 
     private bool IncludeKandidaatDiscoveryMapSsr =>
         IncludeBanenkaartClientScript || IncludeBedrijvenkaartClientScript;

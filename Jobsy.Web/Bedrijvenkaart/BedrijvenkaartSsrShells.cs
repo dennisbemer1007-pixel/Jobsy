@@ -12,7 +12,7 @@ internal static class BedrijvenkaartSsrShells
     internal static string BuildBody(CultureState culture, BedrijvenkaartSsrData.PageModel model)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"bk-page panel-page--cand-ill\" data-bedrijvenkaart-ssr=\"1\" data-testid=\"bedrijvenkaart-ssr-root\">");
+        sb.Append("<div class=\"bk-page panel-page--cand-ill\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-testid=\"bedrijvenkaart-ssr-root\">");
         sb.Append("<div class=\"bk-page__hero-stack\">");
         sb.Append("<div class=\"bk-map-toggle\" role=\"tablist\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Jobs"]))
@@ -37,7 +37,17 @@ internal static class BedrijvenkaartSsrShells
             .Append(model.OpenCount)
             .Append(" staan open voor jou</p>");
 
-        sb.Append("<div class=\"bk-shell\">");
+        sb.Append("<div class=\"bk-mobile-view-toggle kb-view-toggle kb-view-toggle--mobile\" role=\"radiogroup\" aria-label=\"")
+            .Append(WebUtility.HtmlEncode(culture["Kb.View.ToggleAria"]))
+            .Append("\" data-bk-view-toggle=\"1\">");
+        sb.Append("<button type=\"button\" class=\"kb-view-toggle__btn is-active\" role=\"radio\" aria-checked=\"true\" data-bk-view-map=\"1\">")
+            .Append(WebUtility.HtmlEncode(culture["Discovery.Map"]))
+            .Append("</button>");
+        sb.Append("<button type=\"button\" class=\"kb-view-toggle__btn\" role=\"radio\" aria-checked=\"false\" data-bk-view-list=\"1\">")
+            .Append(WebUtility.HtmlEncode(culture["Discovery.List"]))
+            .Append("</button></div>");
+
+        sb.Append("<div class=\"bk-shell bk-shell--desktop-split\">");
         sb.Append("<div class=\"bk-list\" role=\"list\">");
         foreach (var pin in model.Pins)
         {

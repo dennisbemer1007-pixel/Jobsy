@@ -1937,6 +1937,46 @@ textarea.bk-wg-input {
   }
 }
 
+/* Bedrijvenkaart SSR preview: desktop split; mobile list/map toggle only. */
+[data-bedrijvenkaart-ssr="1"] .bk-mobile-view-toggle {
+  display: none;
+  margin: 0 var(--bk-gutter, 1rem) 0.65rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  [data-bedrijvenkaart-ssr="1"] .bk-mobile-view-toggle {
+    display: inline-flex;
+  }
+
+  [data-bedrijvenkaart-ssr="1"][data-bk-mobile-view="map"] .bk-list {
+    display: none !important;
+  }
+
+  [data-bedrijvenkaart-ssr="1"][data-bk-mobile-view="list"] .bk-map-pane {
+    display: none !important;
+  }
+
+  [data-bedrijvenkaart-ssr="1"] .bk-list,
+  [data-bedrijvenkaart-ssr="1"] .bk-map-pane {
+    order: unset;
+  }
+}
+
+@media (min-width: 901px) {
+  [data-bedrijvenkaart-ssr="1"] .bk-mobile-view-toggle {
+    display: none !important;
+  }
+
+  [data-bedrijvenkaart-ssr="1"] .bk-shell--desktop-split {
+    grid-template-columns: minmax(300px, min(420px, 36vw)) minmax(0, 1fr);
+    min-height: calc(100dvh - 17.5rem);
+    border: 1px solid #e2e6eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+}
+
 .pp-sfeer-ph,
 .bk-map-placeholder {
   min-height: 120px;
