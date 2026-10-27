@@ -11,7 +11,7 @@ public sealed class AssistantClientEndpointsGuardTests
         Assert.True(emptyIdx >= 0);
         Assert.True(sendIdx > emptyIdx);
         var between = src[emptyIdx..sendIdx];
-        Assert.DoesNotContain("SendAssistantChatAsync", between, StringComparison.Ordinal);
+        Assert.Contains("TryWarmEmployerAssistantBootAsync", between, StringComparison.Ordinal);
         Assert.Contains("Reply = culture[\"Assistant.Greeting\"]", between, StringComparison.Ordinal);
     }
 
