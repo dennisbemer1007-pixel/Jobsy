@@ -68,8 +68,26 @@
     });
   }
 
+  function originCoords() {
+    var el = root();
+    if (!el) {
+      return null;
+    }
+    var lat = parseFloat(el.getAttribute("data-bk-origin-lat") || "");
+    var lng = parseFloat(el.getAttribute("data-bk-origin-lng") || "");
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return null;
+    }
+    return { lat: lat, lng: lng };
+  }
+
   function pinsUrl(km) {
-    return "/api/bedrijvenkaart-client/pins?radiusKm=" + encodeURIComponent(String(km));
+    var url = "/api/bedrijvenkaart-client/pins?radiusKm=" + encodeURIComponent(String(km));
+    var o = originCoords();
+    if (o) {
+      url += "&lat=" + encodeURIComponent(String(o.lat)) + "&lng=" + encodeURIComponent(String(o.lng));
+    }
+    return url;
   }
 
   function ensureMaps() {
@@ -83,11 +101,17 @@
     if (!window.jobMap || typeof window.jobMap.init !== "function") {
       return;
     }
-    window.jobMap.init("bedrijvenkaart-map", markers, {
+    var opts = {
       pinsUrl: pinsUrl(km),
       mapMode: "companies",
       preferFilledLocation: false
-    });
+    };
+    var o = originCoords();
+    if (o) {
+      opts.origin = { lat: o.lat, lng: o.lng };
+      opts.travel = { radiusKm: km };
+    }
+    window.jobMap.init("bedrijvenkaart-map", markers, opts);
     if (typeof window.jobMap.invalidate === "function") {
       window.requestAnimationFrame(function () {
         window.jobMap.invalidate();

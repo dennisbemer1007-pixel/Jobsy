@@ -14,13 +14,17 @@ internal static class BedrijvenkaartSsrData
         IReadOnlyList<CompanyMapPinDto> Pins,
         int RadiusKm,
         int OpenCount,
-        bool CompanyMapEnabled);
+        bool CompanyMapEnabled,
+        double OriginLat,
+        double OriginLng,
+        bool OriginFromProfile);
 
     internal static async Task<PageModel?> LoadAsync(
         JobsyApiClient api,
         IFeatureFlags featureFlags,
         IConfiguration configuration,
         IWebHostEnvironment environment,
+        HttpContext? http,
         int radiusKm,
         CancellationToken ct = default)
     {
@@ -32,10 +36,12 @@ internal static class BedrijvenkaartSsrData
             return null;
         }
 
+        var origin = await BedrijvenkaartMapOrigin.ResolveAsync(http, api, ct);
+
         IReadOnlyList<CompanyMapPinDto> pins;
         try
         {
-            pins = await api.GetCompanyMapPinsAsync(null, null, radiusKm, ct);
+            pins = await api.GetCompanyMapPinsAsync(origin.Lat, origin.Lng, radiusKm, ct);
         }
         catch
         {
@@ -48,6 +54,13 @@ internal static class BedrijvenkaartSsrData
         }
 
         var openCount = pins.Count(p => p.OpenForInitiative);
-        return new PageModel(pins, radiusKm, openCount, initiativeOn);
+        return new PageModel(
+            pins,
+            radiusKm,
+            openCount,
+            initiativeOn,
+            origin.Lat,
+            origin.Lng,
+            origin.FromProfile);
     }
 }
