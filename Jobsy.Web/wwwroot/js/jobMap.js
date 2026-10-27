@@ -155,7 +155,33 @@ window.jobMap = (function () {
         }
     }
 
+    function companyPinFromId(id) {
+        const key = id != null ? String(id) : "";
+        if (!key || !companyMapMode) {
+            return null;
+        }
+        const rec = markersById[key];
+        const job = rec && rec.options && rec.options.jobData;
+        if (!job) {
+            return null;
+        }
+        return Object.assign({}, job, { _detailLoaded: true });
+    }
+
+    function popupDetailHref(v) {
+        if (companyMapMode && v && v.companyHref) {
+            return String(v.companyHref);
+        }
+        return detailHrefForVacancy(v && v.id);
+    }
+
     function detailHrefForVacancy(id) {
+        if (companyMapMode) {
+            const job = companyPinFromId(id);
+            if (job && job.companyHref) {
+                return String(job.companyHref);
+            }
+        }
         const base = "/vacancies/" + encodeURIComponent(String(id || ""));
         const q = [];
         if (travelOptions.transport) {
@@ -1459,18 +1485,21 @@ window.jobMap = (function () {
                 "\" alt=\"\" width=\"400\" height=\"267\" loading=\"lazy\" decoding=\"async\" />";
         }
 
-        const detailHref = detailHrefForVacancy(v.id);
+        const detailHref = popupDetailHref(v);
         const viewLabel = escapeHtml(uiLabels.viewJob || "Bekijk deze baan");
+        const jobIdAttr = companyMapMode && v.companyHref
+            ? ""
+            : (" data-job-id=\"" + escapeAttr(v.id) + "\"");
 
         return (
             "<div class=\"" + popupRootClass("") + "\">" +
                 "<div class=\"map-popup__main\">" +
-                    "<a class=\"" + mediaClassFinal + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                    "<a class=\"" + mediaClassFinal + "\" href=\"" + escapeAttr(detailHref) + "\"" + jobIdAttr + ">" +
                         mediaInner +
                     "</a>" +
                     "<div class=\"map-popup__body\">" +
-                        "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                            escapeHtml(v.title || vacancyFallbackTitle()) +
+                        "<a class=\"map-popup__title map-popup__cta\" href=\"" + escapeAttr(detailHref) + "\"" + jobIdAttr + ">" +
+                            escapeHtml(v.title || v.company || vacancyFallbackTitle()) +
                         "</a>" +
                         companyLineHtml(v, detailHref) +
                         matchLineHtml(v) +
@@ -1479,10 +1508,10 @@ window.jobMap = (function () {
                 "</div>" +
                 whyLineHtml(v) +
                 "<div class=\"map-popup__actions\">" +
-                    "<a class=\"map-popup__view map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                    "<a class=\"map-popup__view map-popup__cta\" href=\"" + escapeAttr(detailHref) + "\"" + jobIdAttr + ">" +
                         viewLabel + " <span aria-hidden=\"true\">›</span>" +
                     "</a>" +
-                    heartButtonHtml(v) +
+                    (companyMapMode ? "" : heartButtonHtml(v)) +
                 "</div>" +
             "</div>"
         );
@@ -1757,6 +1786,9 @@ window.jobMap = (function () {
         if (!job || !job.id) {
             return Promise.resolve(job);
         }
+        if (companyMapMode) {
+            return Promise.resolve(Object.assign({}, job, { _detailLoaded: true }));
+        }
         const key = String(job.id);
         const cached = detailCache[key];
         if (!cached) {
@@ -1771,6 +1803,9 @@ window.jobMap = (function () {
     }
 
     function prefetchClusterCards(jobs) {
+        if (companyMapMode) {
+            return Promise.resolve([]);
+        }
         const ids = (jobs || []).map(function (j) { return j && j.id; }).filter(Boolean);
         const batches = [];
         for (let i = 0; i < ids.length; i += 25) {
@@ -2231,6 +2266,10 @@ window.jobMap = (function () {
                     return;
                 }
                 if (card === null) {
+                    if (companyMapMode) {
+                        paint(Object.assign({}, job, { _detailLoaded: true }), replaceInPlace);
+                        return;
+                    }
                     paint(Object.assign({}, job, { _unavailable: true }), replaceInPlace);
                     return;
                 }
@@ -3569,6 +3608,10 @@ window.jobMap = (function () {
         if (!key) {
             return Promise.resolve(null);
         }
+        if (companyMapMode) {
+            const pinJob = companyPinFromId(key);
+            return Promise.resolve(pinJob);
+        }
         if (detailCache[key]) {
             return detailCache[key];
         }
@@ -3962,7 +4005,7 @@ window.jobMap = (function () {
                 renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page, 0, true);
             });
 
-            if (firstJob && firstJob.id) {
+            if (!companyMapMode && firstJob && firstJob.id) {
                 fetchVacancyCard(firstJob.id).then(function (card) {
                     if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
                         return;
@@ -6449,7 +6492,7 @@ window.jobMap = (function () {
                 const feats = map.queryRenderedFeatures(ev.point, {
                     layers: prefetchLayers
                 });
-                if (feats && feats[0] && feats[0].properties && feats[0].properties.id) {
+                if (!companyMapMode && feats && feats[0] && feats[0].properties && feats[0].properties.id) {
                     fetchVacancyCard(feats[0].properties.id);
                 }
             };
@@ -8019,7 +8062,22 @@ window.jobMap = (function () {
             return true;
         }
 
+        if (companyMapMode) {
+            const pinJob = companyPinFromId(key);
+            if (pinJob && pinJob.companyHref) {
+                window.location.href = String(pinJob.companyHref);
+                return true;
+            }
+        }
+
         fetchVacancyCard(key).then(function (card) {
+            if (companyMapMode && card && card.companyHref) {
+                const fallback = recordFromVacancyPin(card);
+                if (fallback) {
+                    openVacancyPopup(fallback);
+                }
+                return;
+            }
             if (!card || card.id == null) {
                 window.location.href = "/vacancies/" + encodeURIComponent(key);
                 return;
