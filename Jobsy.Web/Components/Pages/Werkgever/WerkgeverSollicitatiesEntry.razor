@@ -1,0 +1,58 @@
+@page "/werkgever/sollicitaties"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.WebUtilities
+@inject CultureState Culture
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["WgNav.Applications"] · Lobsy</PageTitle>
+
+@if (_redirectIssued)
+{
+    <p class="state-message" role="status">@Culture["Common.Loading"]</p>
+}
+else if (_bodyHtml is not null)
+{
+    <WgPageShell Title="@Culture["WgNav.Applications"]" Lead="@Culture["WgApp.Lead"]">
+        @((MarkupString)_bodyHtml)
+    </WgPageShell>
+}
+
+@code {
+    private bool _redirectIssued;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+        var query = http.Request.Query;
+        if (!EmployerApplicationsListSsrQuery.IsListView(query))
+        {
+            if (!http.Response.HasStarted)
+            {
+                http.Response.Redirect(EmployerApplicationsListSsrQuery.BuildPipelineRedirectPath(query));
+                _redirectIssued = true;
+            }
+
+            return;
+        }
+
+        await ScopeBootstrap.EnsureLoadedAsync();
+        var parsed = EmployerApplicationsListSsrQuery.Parse(query);
+        _bodyHtml = EmployerApplicationsListSsrShells.BuildRouteShell(Culture, parsed);
+    }
+}
