@@ -35,6 +35,7 @@ public class PupilPassportG78WebTests
         Assert.Equal("Dit ben jij", PupilPassportCopy.Get("LeerlingPassport.Section.DitBenIk"));
         Assert.Equal("Dit vind ik leuk", PupilPassportCopy.Get("LeerlingPassport.Section.Likes"));
         Assert.DoesNotContain("!", PupilPassportCopy.Get("LeerlingPassport.Tip.dierenarts.2"), StringComparison.Ordinal);
+        Assert.DoesNotContain("alle vragen", PupilPassportCopy.Get("LeerlingPassport.Kicker"), StringComparison.OrdinalIgnoreCase);
     }
 
     private PupilPassportPdfModel BuildModel(string? name)

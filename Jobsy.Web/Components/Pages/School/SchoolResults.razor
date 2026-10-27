@@ -180,7 +180,6 @@ else
     {
         if (!_bootstrapped)
         {
-            await Culture.SetLanguageAsync("nl");
             _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
             _bootstrapped = true;
             if (_disabled)

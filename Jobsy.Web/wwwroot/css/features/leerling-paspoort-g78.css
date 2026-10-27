@@ -1,3 +1,15 @@
+.lp-g78-page-tools {
+    display: flex;
+    justify-content: flex-end;
+    max-width: 960px;
+    margin: 0 auto var(--space-2);
+}
+
+.lp-g78-page-tools .language-selector__toggle {
+    background: var(--lp-paper);
+    border: 1px solid var(--lp-line);
+}
+
 .lp-g78 {
     --lp-navy: #10284a;
     --lp-teal: #0f5b66;

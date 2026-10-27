@@ -4,8 +4,10 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Features
 @using Jobsy.Core.Scholen.PupilPassport
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Services
+@implements IDisposable
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IFeatureFlags Features
@@ -33,6 +35,9 @@ else if (_model is null)
 else
 {
     <div class="ll-reis" data-testid="leerling-paspoort-page">
+        <div class="lp-g78-page-tools">
+            <LanguageSelector />
+        </div>
         <LeerlingPaspoortG78View Model="_model"
                                  AllowNameEdit="true"
                                  DisplayName="_displayName"
@@ -57,6 +62,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        Culture.Changed += OnCultureChanged;
+        await Culture.InitializeAsync();
+
         var flags = await Features.GetAsync();
         _enabled = flags.PupilPassportV2Enabled;
         if (!_enabled)
@@ -76,4 +84,8 @@ else
         _displayName = name;
         return Task.CompletedTask;
     }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
 }

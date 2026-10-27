@@ -119,9 +119,9 @@
                 <div class="lp-g78__dream-head">
                     <span class="lp-g78__dream-hand">@Culture["LeerlingPassport.Section.Droom"]</span>
                     <h3 class="lp-g78__dream-job">@Model.DreamJobTitle</h3>
-                    @if (!string.IsNullOrWhiteSpace(Model.DreamEncouragement))
+                    @if (!string.IsNullOrWhiteSpace(Model.DreamJobTitle))
                     {
-                        <span class="lp-g78__dream-bub">@Model.DreamEncouragement</span>
+                        <span class="lp-g78__dream-bub">@DreamBubbleText</span>
                     }
                     <img class="lp-g78__dream-lob" src="/images/leerling-paspoort-g78/g78-kreeft-kaart.png" alt="" />
                 </div>
@@ -236,6 +236,17 @@
     [Parameter] public EventCallback<string?> DisplayNameChanged { get; set; }
 
     private string? _name;
+
+    private string DreamBubbleText
+    {
+        get
+        {
+            var title = Model?.DreamJobTitle?.TrimEnd('!', '.') ?? "";
+            return string.IsNullOrWhiteSpace(title)
+                ? ""
+                : Culture.Format("LeerlingPassport.Dream.Bubble", title);
+        }
+    }
 
     protected override void OnParametersSet()
     {

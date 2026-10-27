@@ -71,7 +71,6 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         if (_disabled)
         {
