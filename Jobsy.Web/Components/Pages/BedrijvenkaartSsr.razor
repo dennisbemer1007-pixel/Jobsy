@@ -1,9 +1,7 @@
 @page "/bedrijvenkaart/ssr"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
-@using Jobsy.Core.Features
 @using Jobsy.Web.Bedrijvenkaart
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
@@ -56,6 +54,7 @@
         var model = await BedrijvenkaartSsrData.LoadAsync(
             Api,
             FeatureFlags,
+            Configuration,
             HostEnvironment,
             radiusKm,
             http.RequestAborted);
