@@ -25,6 +25,21 @@ public sealed class WerkgeverApplicationsListSsrRenderTests
     }
 
     [Fact]
+    public async Task List_view_sidebar_uses_branch_manager_nav_group_label()
+    {
+        await using var web = new IllustratedPagesWebFactory();
+        using var handler = new HttpClientHandler { AllowAutoRedirect = true, UseCookies = true };
+        using var http = new HttpClient(handler) { BaseAddress = new Uri(web.ServerAddress) };
+        var path = "/werkgever/sollicitaties?view=lijst";
+        await http.GetAsync($"/__test/sign-in?role=employer&return={Uri.EscapeDataString(path)}");
+        var response = await http.GetAsync(path);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Mijn vestiging", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("wg-sidebar__group-label\">Organisatie</span>", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void List_ssr_shell_has_no_inline_event_handlers()
     {
         var shells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Werkgever/EmployerApplicationsListSsrShells.cs"));

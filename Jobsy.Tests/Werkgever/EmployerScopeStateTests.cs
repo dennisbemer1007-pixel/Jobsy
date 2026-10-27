@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Jobsy.Core.Authorization;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Werkgever;
 
@@ -5,6 +7,16 @@ namespace Jobsy.Tests.Werkgever;
 
 public class EmployerScopeStateTests
 {
+    [Fact]
+    public void DisplayRole_uses_claims_before_scope_initialized()
+    {
+        var state = new EmployerScopeState();
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(ClaimTypes.Role, JobsyRoles.BranchManager)],
+            "test"));
+        Assert.Equal(EmployerRole.Vestigingsmanager, state.DisplayRole(user));
+    }
+
     [Fact]
     public void Defaults_per_role()
     {

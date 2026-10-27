@@ -760,6 +760,10 @@
     align-items: stretch;
     overflow-x: auto;
     padding-bottom: var(--space-2);
+}.wg-app__list-desktop {
+    display: none;
+}.wg-app__list-mobile {
+    display: block;
 }@media (min-width: 1024px) {.wg-app__pipeline {
         display: grid;
         grid-template-columns: repeat(5, minmax(12.5rem, 1fr));
@@ -767,11 +771,7 @@
         display: block;
     }.wg-app__list-mobile {
         display: none;
-    }}.wg-app__list-desktop {
-    display: none;
-}.wg-app__list-mobile {
-    display: block;
-}[data-wg-list-ssr="1"] {
+    }}[data-wg-list-ssr="1"] {
     max-width: 100%;
     overflow-x: clip;
 }[data-wg-list-ssr="1"] .ent-data-table {
