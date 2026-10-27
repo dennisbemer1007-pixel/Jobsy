@@ -45,7 +45,6 @@ else
                        value="@_search"
                        @oninput="OnSearchInput"
                        @onfocus="OnSearchFocus"
-                       @onblur="OnSearchBlur"
                        placeholder="@Culture["LeerlingDroom.Search"]"
                        autocomplete="off"
                        enterkeyhint="search"
@@ -146,6 +145,7 @@ else
     private bool _userEditedSearch;
     private bool _searchFocused;
     private bool _contentReady;
+    private bool _initialSearchHydrated;
     private Task? _initialLoadTask;
     private IReadOnlyList<DreamJob> _matches = [];
     private string? _error;
@@ -221,7 +221,7 @@ else
             _result = outcome.Value;
             _dream = _result.DreamJob;
             _contentReady = true;
-            HydrateSearchFromDream();
+            HydrateSearchFromDreamOnce();
         }
         finally
         {
@@ -229,9 +229,9 @@ else
         }
     }
 
-    private void HydrateSearchFromDream()
+    private void HydrateSearchFromDreamOnce()
     {
-        if (_userEditedSearch || _searchTouched || _searchFocused)
+        if (_initialSearchHydrated || _userEditedSearch || _searchTouched || _searchFocused)
         {
             return;
         }
@@ -241,20 +241,17 @@ else
         {
             _search = title;
         }
+
+        _initialSearchHydrated = true;
     }
 
     private void OnSearchFocus() => _searchFocused = true;
-
-    private void OnSearchBlur()
-    {
-        _searchFocused = false;
-        HydrateSearchFromDream();
-    }
 
     private void OnSearchInput(ChangeEventArgs e)
     {
         _searchTouched = true;
         _userEditedSearch = true;
+        _initialSearchHydrated = true;
         _search = e.Value?.ToString() ?? "";
         ScheduleMatchUpdate();
     }

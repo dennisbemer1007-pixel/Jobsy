@@ -154,19 +154,25 @@ public sealed class PupilController : ControllerBase
 
     [HttpGet("passport/g78")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
-    public async Task<IActionResult> G78Passport([FromQuery] string? naam, CancellationToken cancellationToken)
+    public async Task<IActionResult> G78Passport(
+        [FromQuery] string? naam,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken)
     {
         NoStore();
-        var (ok, error, status) = await _portal.GetG78PassportWebAsync(User, naam, cancellationToken);
+        var (ok, error, status) = await _portal.GetG78PassportWebAsync(User, naam, lang, cancellationToken);
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
     [HttpGet("~/leerling/pdf")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
-    public async Task<IActionResult> Pdf([FromQuery] string? naam, CancellationToken cancellationToken)
+    public async Task<IActionResult> Pdf(
+        [FromQuery] string? naam,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken)
     {
         NoStore();
-        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, naam, cancellationToken);
+        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, naam, lang, cancellationToken);
         if (bytes is null)
         {
             return StatusCode(status, error);

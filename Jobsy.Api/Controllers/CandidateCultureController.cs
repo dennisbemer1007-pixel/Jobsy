@@ -35,7 +35,7 @@ public sealed class CandidateCultureController : ControllerBase
     }
 
     [HttpPut]
-    [EnableRateLimiting("public-write")]
+    [EnableRateLimiting("assessment-write")]
     public async Task<ActionResult<CandidateCulturePersonalityStateDto>> Save(
         [FromBody] SaveCandidateCompetenciesRequest request,
         CancellationToken cancellationToken)

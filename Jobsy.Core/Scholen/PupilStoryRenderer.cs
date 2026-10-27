@@ -2,6 +2,7 @@ using System.Text.Json;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Scholen.PupilPassport;
 
 namespace Jobsy.Core.Scholen;
 
@@ -10,7 +11,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
 {
     public const int TemplateVersion = PupilStoryTemplates.Version;
 
-    public PupilStoryViewDto Render(PupilResult result, PupilProgress? progress)
+    public PupilStoryViewDto Render(PupilResult result, PupilProgress? progress, string language = "nl")
     {
         ArgumentNullException.ThrowIfNull(result);
         var likes = ParseChips(progress?.LikesJson);
@@ -19,44 +20,44 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
 
         var sentences = new List<string>
         {
-            PupilVerhaalCopy.Get(keys.BigFiveKey),
-            PupilVerhaalCopy.Get(keys.RiasecKey),
-            PupilVerhaalCopy.Get(keys.SchwartzKey),
-            PupilVerhaalCopy.Get(keys.CultureKey)
+            PupilVerhaalLocalized.Get(keys.BigFiveKey, language),
+            PupilVerhaalLocalized.Get(keys.RiasecKey, language),
+            PupilVerhaalLocalized.Get(keys.SchwartzKey, language),
+            PupilVerhaalLocalized.Get(keys.CultureKey, language)
         };
 
         if (keys.LikeChipKeys.Count >= 2)
         {
-            var a = ChipInSentence(keys.LikeChipKeys[0]);
-            var b = ChipInSentence(keys.LikeChipKeys[1]);
+            var a = ChipInSentence(keys.LikeChipKeys[0], language);
+            var b = ChipInSentence(keys.LikeChipKeys[1], language);
             sentences.Add(string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
-                PupilVerhaalCopy.Get("LeerlingStory.Likes.Two"), a, b));
+                PupilVerhaalLocalized.Get("LeerlingStory.Likes.Two", language), a, b));
         }
         else if (keys.LikeChipKeys.Count == 1)
         {
             sentences.Add(string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
-                PupilVerhaalCopy.Get("LeerlingStory.Likes.One"),
-                ChipInSentence(keys.LikeChipKeys[0])));
+                PupilVerhaalLocalized.Get("LeerlingStory.Likes.One", language),
+                ChipInSentence(keys.LikeChipKeys[0], language)));
         }
 
-        MergeDuplicateBedenkt(sentences);
+        MergeDuplicateBedenkt(sentences, language);
         var body = string.Join(" ", sentences);
         var tiles = new List<PupilStoryTileDto>
         {
             new("competence",
-                PupilVerhaalCopy.Get("LeerlingStory.Tile.ZoBenJij"),
-                PupilVerhaalCopy.Get(keys.TileCompetenceKey)),
+                PupilVerhaalLocalized.Get("LeerlingStory.Tile.ZoBenJij", language),
+                PupilVerhaalLocalized.Get(keys.TileCompetenceKey, language)),
             new("riasec",
-                PupilVerhaalCopy.Get("LeerlingStory.Tile.DitDoeJe"),
-                PupilVerhaalCopy.Get(PupilStoryTemplates.NormalizeTileRiasecKey(keys.TileRiasecKey))),
+                PupilVerhaalLocalized.Get("LeerlingStory.Tile.DitDoeJe", language),
+                PupilVerhaalLocalized.Get(PupilStoryTemplates.NormalizeTileRiasecKey(keys.TileRiasecKey), language)),
             new("values",
-                PupilVerhaalCopy.Get("LeerlingStory.Tile.Belangrijk"),
-                PupilVerhaalCopy.Get(keys.TileValueKey)),
+                PupilVerhaalLocalized.Get("LeerlingStory.Tile.Belangrijk", language),
+                PupilVerhaalLocalized.Get(keys.TileValueKey, language)),
             new("culture",
-                PupilVerhaalCopy.Get("LeerlingStory.Tile.Thuis"),
-                PupilVerhaalCopy.Get(keys.TileCultureKey)),
+                PupilVerhaalLocalized.Get("LeerlingStory.Tile.Thuis", language),
+                PupilVerhaalLocalized.Get(keys.TileCultureKey, language)),
         };
 
         var jobIdeas = keys.JobIdeaKeys
@@ -64,14 +65,18 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             .ToList();
 
         return new PupilStoryViewDto(
-            Title: PupilVerhaalCopy.Get("LeerlingStory.Title"),
+            Title: PupilVerhaalLocalized.Get("LeerlingStory.Title", language),
             Body: body,
             Tiles: tiles,
             JobIdeas: jobIdeas,
             LikeChipKeys: keys.LikeChipKeys.ToList());
     }
 
-    public DreamJobRouteStubDto RenderDreamRoute(PupilResult result, PupilProgress? progress, PupilClassContext classContext)
+    public DreamJobRouteStubDto RenderDreamRoute(
+        PupilResult result,
+        PupilProgress? progress,
+        PupilClassContext classContext,
+        string language = "nl")
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(classContext);
@@ -100,9 +105,9 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
         }
 
         var now = PupilDreamJobRoutes.NowLabel(classContext);
-        var have = fit.HaveSentenceKeys.Select(k => ResolveCopy(k, classContext, now)).ToList();
-        var learn = fit.NeedSentenceKeys.Select(k => ResolveNeedNext(k, classContext, now)).ToList();
-        var steps = fit.RouteStepKeys.Select(k => ResolveRouteStep(k, classContext, now)).ToList();
+        var have = fit.HaveSentenceKeys.Select(k => ResolveCopy(k, classContext, now, language)).ToList();
+        var learn = fit.NeedSentenceKeys.Select(k => ResolveNeedNext(k, classContext, now, language)).ToList();
+        var steps = fit.RouteStepKeys.Select(k => ResolveRouteStep(k, classContext, now, language)).ToList();
 
         return new DreamJobRouteStubDto(
             JobKey: fit.JobKey,
@@ -112,8 +117,8 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             HaveItems: have,
             LearnItems: learn,
             RouteSteps: steps,
-            Encouragement: ResolveCopy(fit.EncouragementKey, classContext, now),
-            AltRoute: fit.AltRouteKey is null ? null : ResolveCopy(fit.AltRouteKey, classContext, now));
+            Encouragement: ResolveCopy(fit.EncouragementKey, classContext, now, language),
+            AltRoute: fit.AltRouteKey is null ? null : ResolveCopy(fit.AltRouteKey, classContext, now, language));
     }
 
     public IReadOnlyList<string> ConversationStarterKeys(PupilResult result)
@@ -126,30 +131,30 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             .Select(k => PupilVerhaalCopy.TryGet(k, out var t) ? t : k)
             .ToList();
 
-    private static string ResolveNeedNext(string key, PupilClassContext ctx, string nowLabel)
+    private static string ResolveNeedNext(string key, PupilClassContext ctx, string nowLabel, string language)
     {
         var nextKey = key.EndsWith(".Next", StringComparison.Ordinal) ? key : key + ".Next";
-        var resolved = ResolveCopy(nextKey, ctx, nowLabel);
+        var resolved = ResolveCopy(nextKey, ctx, nowLabel, language);
         return string.Equals(resolved, nextKey, StringComparison.Ordinal)
-            ? ResolveCopy(key, ctx, nowLabel)
+            ? ResolveCopy(key, ctx, nowLabel, language)
             : resolved;
     }
 
-    private static string ResolveRouteStep(string key, PupilClassContext ctx, string nowLabel)
+    private static string ResolveRouteStep(string key, PupilClassContext ctx, string nowLabel, string language)
     {
-        var raw = ResolveCopy(key, ctx, nowLabel);
+        var raw = ResolveCopy(key, ctx, nowLabel, language);
         var parts = raw.Split('|', 2);
         return parts.Length == 2 ? $"{parts[0]} · {parts[1]}" : raw;
     }
 
-    private static string ResolveCopy(string key, PupilClassContext ctx, string nowLabel)
-        => PupilVerhaalCopy.Get(key, ctx).Replace("{nu}", nowLabel, StringComparison.Ordinal);
+    private static string ResolveCopy(string key, PupilClassContext ctx, string nowLabel, string language)
+        => PupilVerhaalLocalized.Get(key, language, ctx).Replace("{nu}", nowLabel, StringComparison.Ordinal);
 
     /// <summary>
     /// Innovatie + an artistic sentence both start with "bedenkt graag".
     /// One sentence keeps both ideas.
     /// </summary>
-    private static void MergeDuplicateBedenkt(List<string> sentences)
+    private static void MergeDuplicateBedenkt(List<string> sentences, string language)
     {
         if (sentences.Count < 2)
         {
@@ -159,66 +164,38 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
         var first = sentences[0];
         var second = sentences[1];
         if (!first.Contains("bedenkt graag", StringComparison.Ordinal)
-            || !second.Contains("bedenkt graag", StringComparison.Ordinal))
+            && !first.Contains("like to come up", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
-        sentences[0] = second.Contains("zoekt uit", StringComparison.Ordinal)
-            ? "Jij bedenkt graag nieuwe manieren en zoekt uit hoe iets werkt."
-            : "Jij bedenkt graag nieuwe manieren en maakt graag iets moois.";
+        if (!second.Contains("bedenkt graag", StringComparison.Ordinal)
+            && !second.Contains("like to come up", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        sentences[0] = PupilVerhaalLocalized.IsEnglish(language)
+            ? (second.Contains("find out", StringComparison.OrdinalIgnoreCase)
+                ? "You like to come up with new ideas and find out how things work."
+                : "You like to come up with new ideas and make something beautiful.")
+            : second.Contains("zoekt uit", StringComparison.Ordinal)
+                ? "Jij bedenkt graag nieuwe manieren en zoekt uit hoe iets werkt."
+                : "Jij bedenkt graag nieuwe manieren en maakt graag iets moois.";
         sentences.RemoveAt(1);
     }
 
-    private static string ChipLabel(string chipKey)
+    private static string ChipLabel(string chipKey, string language)
+        => PupilPortalChipLabels.Label(chipKey, language);
+
+    private static string ChipInSentence(string chipKey, string language)
     {
-        var chip = PupilInterestChipCatalog.LikeChips
-            .FirstOrDefault(c => string.Equals(c.Key, chipKey, StringComparison.OrdinalIgnoreCase));
-        if (chip is null)
-        {
-            return chipKey;
-        }
-
-        // Chip labels live in UiStringsScholen; use a short fallback from key.
-        return chipKey switch
-        {
-            "sport" => "Sport",
-            "buiten" => "Buiten zijn",
-            "dieren" => "Dieren",
-            "gamen" => "Gamen",
-            "tekenen" => "Tekenen",
-            "muziek" => "Muziek",
-            "koken" => "Koken of bakken",
-            "fietsen-repareren" => "Fietsen repareren",
-            "bouwen" => "Bouwen & knutselen",
-            "techniek" => "Techniek",
-            "lezen" => "Lezen",
-            "dansen" => "Dansen",
-            "theater" => "Theater",
-            "filmpjes" => "Filmpjes maken",
-            "mode" => "Mode",
-            "kleine-kinderen" => "Kleine kinderen",
-            "natuur" => "Natuur",
-            "autos" => "Auto's & motoren",
-            "computers" => "Computers",
-            "puzzels" => "Puzzels",
-            "rekenen" => "Rekenen",
-            "talen" => "Talen",
-            "reizen" => "Reizen",
-            "programmeren" => "Programmeren",
-            "voor-de-klas" => "Voor de klas praten",
-            "lang-stilzitten" => "Lang stilzitten",
-            "hard-werken-kou" => "Hard werken in de kou",
-            "veel-lezen" => "Veel lezen",
-            "alleen-werken" => "Alleen werken",
-            "druk-lawaai" => "Druk en lawaai",
-            "vies-worden" => "Vies worden",
-            _ => chipKey
-        };
+        var label = ChipLabel(chipKey, language);
+        var culture = PupilVerhaalLocalized.IsEnglish(language)
+            ? System.Globalization.CultureInfo.GetCultureInfo("en-GB")
+            : System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
+        return label.ToLower(culture);
     }
-
-    private static string ChipInSentence(string chipKey)
-        => ChipLabel(chipKey).ToLower(System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
 
     private static List<string> ParseChips(string? json)
     {

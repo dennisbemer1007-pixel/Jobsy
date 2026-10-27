@@ -73,11 +73,13 @@ public interface IPupilPortalService
     Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal pupil,
         string? displayNameOnPdf = null,
+        string? language = null,
         CancellationToken cancellationToken = default);
 
     Task<(PupilG78PassportWebDto? Ok, PupilErrorDto? Error, int StatusCode)> GetG78PassportWebAsync(
         ClaimsPrincipal pupil,
         string? displayNameOnPdf = null,
+        string? language = null,
         CancellationToken cancellationToken = default);
 
     Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
@@ -930,6 +932,7 @@ public sealed class PupilPortalService : IPupilPortalService
     public async Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal pupil,
         string? displayNameOnPdf = null,
+        string? language = null,
         CancellationToken cancellationToken = default)
     {
         var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
@@ -956,7 +959,7 @@ public sealed class PupilPortalService : IPupilPortalService
         if (features.PupilPassportV2Enabled)
         {
             var passportModel = _passportModelBuilder.Build(
-                code, schoolClass, schoolName, display, displayNameOnPdf);
+                code, schoolClass, schoolName, display, displayNameOnPdf, language ?? "nl");
             bytes = _passportV2.Render(passportModel);
         }
         else
@@ -974,6 +977,7 @@ public sealed class PupilPortalService : IPupilPortalService
     public async Task<(PupilG78PassportWebDto? Ok, PupilErrorDto? Error, int StatusCode)> GetG78PassportWebAsync(
         ClaimsPrincipal pupil,
         string? displayNameOnPdf = null,
+        string? language = null,
         CancellationToken cancellationToken = default)
     {
         var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
@@ -1003,7 +1007,7 @@ public sealed class PupilPortalService : IPupilPortalService
         var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
         displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
         var passportModel = _passportModelBuilder.Build(
-            code, schoolClass, schoolName, display, displayNameOnPdf);
+            code, schoolClass, schoolName, display, displayNameOnPdf, language ?? "nl");
         return (PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true), null, 200);
     }
 
