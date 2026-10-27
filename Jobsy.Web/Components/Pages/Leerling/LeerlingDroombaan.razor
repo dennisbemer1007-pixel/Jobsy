@@ -12,6 +12,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IServiceProvider Services
+@inject IJSRuntime Js
 
 <PageTitle>@Culture["LeerlingDroom.Title"] · Lobsy</PageTitle>
 
@@ -42,6 +43,7 @@ else
             <label class="ll-field">
                 <span class="visually-hidden">@Culture["LeerlingDroom.Search"]</span>
                 <input type="search"
+                       @ref="_searchInput"
                        value="@_search"
                        @oninput="OnSearch"
                        placeholder="@Culture["LeerlingDroom.Search"]"
@@ -69,13 +71,12 @@ else
             @if (_dream is not null && !string.IsNullOrWhiteSpace(_dream.JobKey)
                  && !string.Equals(_dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
             {
-                <p class="ll-dream__progress">
-                    @string.Format(Culture["LeerlingDroom.Progress"], _dream.HaveCount)
-                </p>
-                <div class="ll-stars" aria-hidden="true">
+                <div class="ll-progress-dots ll-progress-dots--dream"
+                     role="group"
+                     aria-label="@Culture["LeerlingDroom.ProgressLabel"]">
                     @for (var i = 0; i < 5; i++)
                     {
-                        <span class="ll-star @(i < _dream.HaveCount ? "is-on" : null)">★</span>
+                        <span class="ll-progress-dots__dot @(i < _dream.HaveCount ? "is-on" : null)"></span>
                     }
                 </div>
 
@@ -156,8 +157,11 @@ else
 
     private string CoachHint =>
         !string.IsNullOrWhiteSpace(_dream?.JobTitle)
-            ? $"{_dream.JobTitle}? Wauw!"
+            ? $"{_dream.JobTitle}? Mooi."
             : Culture["Leerling.Coach.Dream"];
+
+    private ElementReference _searchInput;
+    private bool _focusSearchOnce;
 
     private string Spoken
     {
@@ -185,6 +189,22 @@ else
     }
 
     protected override Task OnInitializedAsync() => LoadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusSearchOnce && !_loading && _result is not null)
+        {
+            _focusSearchOnce = true;
+            try
+            {
+                await _searchInput.FocusAsync();
+            }
+            catch (InvalidOperationException)
+            {
+                // prerender / bUnit
+            }
+        }
+    }
 
     private async Task LoadAsync()
     {

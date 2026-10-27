@@ -377,7 +377,7 @@ public sealed class PupilPortalService : IPupilPortalService
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -449,7 +449,7 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, new PupilErrorDto("validation", "Antwoord moet 1–5 zijn."), 400);
         }
 
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, includeResult: false, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -598,7 +598,7 @@ public sealed class PupilPortalService : IPupilPortalService
         PupilChipsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -676,7 +676,7 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         puzzleKey = puzzleKey.Trim();
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -748,7 +748,7 @@ public sealed class PupilPortalService : IPupilPortalService
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -800,7 +800,7 @@ public sealed class PupilPortalService : IPupilPortalService
         string? key,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -844,7 +844,7 @@ public sealed class PupilPortalService : IPupilPortalService
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -865,7 +865,7 @@ public sealed class PupilPortalService : IPupilPortalService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -927,7 +927,7 @@ public sealed class PupilPortalService : IPupilPortalService
         string? displayNameOnPdf = null,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, null, ctx.Error, ctx.StatusCode);
@@ -1193,7 +1193,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
     private async Task<(PupilCode? Code, SchoolClass? Class, PupilErrorDto? Error, int StatusCode)> ResolveSessionAsync(
         ClaimsPrincipal pupil,
-        CancellationToken cancellationToken)
+        bool includeResult = true,
+        CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(pupil.FindFirst(PupilClaimTypes.PupilCodeId)?.Value, out var codeId)
             || !int.TryParse(pupil.FindFirst(PupilClaimTypes.SessionVersion)?.Value, out var claimVersion))
@@ -1201,11 +1202,15 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, null, new PupilErrorDto(SessionInvalidError, "Sessie ongeldig."), 401);
         }
 
-        var code = await _db.PupilCodes
+        IQueryable<PupilCode> query = _db.PupilCodes
             .Include(c => c.Progress)
-            .Include(c => c.Result)
-            .Include(c => c.SchoolClass)!.ThenInclude(sc => sc!.School)
-            .FirstOrDefaultAsync(c => c.Id == codeId, cancellationToken);
+            .Include(c => c.SchoolClass)!.ThenInclude(sc => sc!.School);
+        if (includeResult)
+        {
+            query = query.Include(c => c.Result);
+        }
+
+        var code = await query.FirstOrDefaultAsync(c => c.Id == codeId, cancellationToken);
 
         if (code?.SchoolClass?.School is null)
         {

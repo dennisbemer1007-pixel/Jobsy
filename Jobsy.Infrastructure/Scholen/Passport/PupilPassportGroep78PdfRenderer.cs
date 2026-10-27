@@ -156,10 +156,7 @@ internal static class PupilPassportGroep78PdfRenderer
             if (!string.IsNullOrWhiteSpace(m.DreamJobTitle))
             {
                 col.Item().Text(m.DreamJobTitle!).FontFamily(PupilPassportFonts.Fredoka).FontSize(15).FontColor(Purple);
-                col.Item().PaddingTop(2).Text(string.Format(
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    PupilVerhaalCopy.Get("LeerlingDroom.Progress"),
-                    m.DreamHaveCount)).FontSize(6.5f).FontColor(Muted);
+                col.Item().PaddingTop(2).Text(PupilVerhaalCopy.Get("LeerlingDroom.Progress")).FontSize(6.5f).FontColor(Muted);
                 col.Item().PaddingTop(3).Row(r =>
                 {
                     r.RelativeItem().Column(left =>

@@ -382,7 +382,7 @@ public static class UiStringsScholen
         nl["Leerling.Answer.NotReally"] = "Niet echt";
         nl["Leerling.Answer.Sometimes"] = "Soms";
         nl["Leerling.Answer.Quite"] = "Best wel";
-        nl["Leerling.Answer.Yes"] = "Ja!";
+        nl["Leerling.Answer.Yes"] = "Ja";
         nl["Leerling.Vo.Answer.1"] = "Klopt niet";
         nl["Leerling.Vo.Answer.2"] = "Klopt meestal niet";
         nl["Leerling.Vo.Answer.3"] = "Klopt deels";
@@ -404,7 +404,9 @@ public static class UiStringsScholen
         nl["Leerling.Reis.Bubble"] = "Goed bezig! Elke 6 vragen valt er een schaaltje af.";
         nl["Leerling.Reis.Bubble.Vo"] = "Elke 10 vragen valt er een schaaltje af. Je antwoorden worden bewaard.";
         nl["Leerling.Reis.PlatesGone"] = "Dit is het schild van Lobsy.";
-        nl["Leerling.Reis.Done"] = "Klaar!";
+        nl["Leerling.Reis.Progress"] = "Voortgang";
+        nl["Leerling.Reis.WorldProgress"] = "Wereldvoortgang";
+        nl["Leerling.Reis.Done"] = "Klaar";
         nl["Leerling.Reis.DoneLead"] = "Je hebt alle vragen beantwoord.";
         nl["Leerling.Reis.ToResult"] = "Dit ben jij";
         nl["Leerling.WindowClosed.Title"] = "Even pauze";
@@ -447,7 +449,8 @@ public static class UiStringsScholen
         nl["Leerling.Puzzle.Vuurtoren.Lead"] = "Onthoud het lichtpatroon en tik het na.";
         nl["Leerling.Puzzle.Vuurtoren.Hint"] = "Kijk goed, daarna tik jij de lampen in dezelfde volgorde.";
         nl["Leerling.Puzzle.Vuurtoren.Watch"] = "Kijk goed…";
-        nl["Leerling.Puzzle.Vuurtoren.YourTurn"] = "Jouw beurt!";
+        nl["Leerling.Puzzle.Vuurtoren.YourTurn"] = "Jouw beurt";
+        nl["Leerling.Puzzle.Vuurtoren.Lamp"] = "Lamp {0}";
         // —— Pauze-eiland chips ——
         nl["Leerling.Island.Title"] = "Pauze-eiland";
         nl["Leerling.Island.Lead"] = "Even uitrusten. Waar word jij blij van?";
@@ -456,7 +459,8 @@ public static class UiStringsScholen
         nl["Leerling.Island.Other"] = "Iets anders";
         nl["Leerling.Island.OtherHint"] = "Typ geen namen (ook niet je eigen naam), adres of telefoonnummer.";
         nl["Leerling.Island.OtherPlaceholder"] = "bijv. paardrijden";
-        nl["Leerling.Island.Continue"] = "Klaar, verder!";
+        nl["Leerling.Island.Continue"] = "Klaar, verder";
+        nl["Leerling.Island.ProgressLabel"] = "Voortgang reis";
         nl["Leerling.Island.ToWorld3"] = "Door naar wereld 3";
         nl["Leerling.Island.NameRejected"] = "Dat lijkt op een naam. Kies liever een knop.";
         nl["Leerling.Island.InvalidOther"] = "Gebruik alleen letters, spaties of een streepje (max. 24).";

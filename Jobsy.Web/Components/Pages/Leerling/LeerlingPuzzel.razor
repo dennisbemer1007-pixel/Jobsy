@@ -93,7 +93,8 @@ else
                     var lamp = i;
                     <button type="button"
                             class="ll-puzzle__lamp @(_lampLit == lamp ? "is-lit" : null)"
-                            disabled="@_busy || _lampPlayMode"
+                            disabled="@(_lampPlayMode)"
+                            aria-label="@string.Format(Culture["Leerling.Puzzle.Vuurtoren.Lamp"], lamp + 1)"
                             data-testid="ll-puzzle-lamp"
                             @onclick="() => TapLamp(lamp)">
                         <span class="ll-puzzle__lamp-glow"></span>
