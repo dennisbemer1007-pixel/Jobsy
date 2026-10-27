@@ -40,8 +40,8 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart-auth-chrome.css": {
-    "v": "20261027-bk-employer-d",
-    "sha256": "0000f55e0ebabe5a6817c94b128728ba74c4feee819ccfb2b4de28ab84134573"
+    "v": "20261027-bk4-i",
+    "sha256": "5d3c53daece1dee2d23ae2b45af6b646d9349cfdb53d95cbf3847fcb6d96857b"
   },
   "css/features/banenkaart-illustrated.css": {
     "v": "20261025-kreeft12",
@@ -404,8 +404,8 @@
     "sha256": "a8cc3a3b17430a04477111139ff2281856f1f2aa12da83d8f98967c460720be5"
   },
   "js/bedrijvenkaart-ssr-map.js": {
-    "v": "20261027-bk-map-e",
-    "sha256": "f3866e3ab1595e41c06de7c00aabc9368e193faf6f37e72422da6b235a6fb60a"
+    "v": "20261027-bk4-g",
+    "sha256": "7eb194e6c55fc43e9b15e84d985af7d3d6370380c3aaf88981e497261c7e6de9"
   },
   "js/blazor-boot.js": {
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
@@ -444,8 +444,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "v": "20261026-r8b-deeplink",
-    "sha256": "ec3106add48984a652087ab51996297c569a0f1478ee7b9bdfe55cd867252bb5"
+    "v": "20261027-bk4-f",
+    "sha256": "10abaf3fa53b63bce5ff56a79b43dcbbd812e1983eba623a02552a719824814b"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
