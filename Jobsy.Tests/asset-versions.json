@@ -388,8 +388,8 @@
     "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261027-bk4-h",
-    "sha256": "6a26ed9a1b42573963dc444703043289385907e3ff60c9f9486b3ed6da338f14"
+    "v": "20261027-24",
+    "sha256": "55c246f8301ea802a0680ac0f77b28c0931a8b1fa7cf63728e4baef3873d89d5"
   },
   "js/banenkaart-prefetch.js": {
     "v": "20261027-bk4-h",
