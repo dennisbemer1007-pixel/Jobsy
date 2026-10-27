@@ -879,13 +879,15 @@
         padding-inline: 0;
     }.ll-lob-zone { display: block; }.ll-lob-zone--mobile { display: none; }.ll-scene--mobile { display: none; }.ll-scene--desktop { display: block; }}@media (max-width: 480px) {.ll-reis.ll-result,
     .ll-reis.ll-dream {
-        width: calc(100% + var(--ll-coach-gutter, 0px));
+        /* Extend into coach gutter only until symmetric page padding (--space-4), not flush to viewport edge. */
+        width: calc(100% + max(0px, var(--ll-coach-gutter, 0px) - var(--space-4)));
         max-width: none;
-        margin-inline-end: calc(-1 * var(--ll-coach-gutter, 0px));
+        margin-inline-end: calc(-1 * max(0px, var(--ll-coach-gutter, 0px) - var(--space-4)));
+        box-sizing: border-box;
     }.ll-card.ll-puzzle {
-        width: calc(100% + var(--ll-coach-gutter, 0px));
+        width: calc(100% + max(0px, var(--ll-coach-gutter, 0px) - var(--space-4)));
         max-width: none;
-        margin-inline-end: calc(-1 * var(--ll-coach-gutter, 0px));
+        margin-inline-end: calc(-1 * max(0px, var(--ll-coach-gutter, 0px) - var(--space-4)));
         box-sizing: border-box;
     }}@media (prefers-reduced-motion: reduce) {.ll-bub, .ll-lob__fall { animation: none !important; }}.ll-result__mascot {
     display: flex;
