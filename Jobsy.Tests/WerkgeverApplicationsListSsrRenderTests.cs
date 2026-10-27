@@ -39,7 +39,11 @@ public sealed class WerkgeverApplicationsListSsrRenderTests
         Assert.Contains("data-wg-meer-panel", html, StringComparison.Ordinal);
         Assert.Contains("wg-bottom-nav-ssr.js", html, StringComparison.Ordinal);
         Assert.Contains("lobsy-coach-ssr.js", html, StringComparison.Ordinal);
+        Assert.Contains("read-aloud.js", html, StringComparison.Ordinal);
         Assert.Contains("lobsy-assistant-launcher-btn", html, StringComparison.Ordinal);
+        Assert.Contains("data-business=\"1\"", html, StringComparison.Ordinal);
+        Assert.Contains("data-title=\"Lobsy-assistent\"", html, StringComparison.Ordinal);
+        Assert.Contains("data-disclaimer-link=\"Meer over Lobsy\"", html, StringComparison.Ordinal);
     }
 
     [Fact]

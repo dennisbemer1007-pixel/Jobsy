@@ -12,6 +12,14 @@
     return val == null ? (fallback || "") : val;
   }
 
+  function isBusinessCoach() {
+    return cfg("data-business", "") === "1" || !!document.querySelector('[data-ssr-coach="business"]');
+  }
+
+  function warmBootEnabled() {
+    return cfg("data-warm", "1") !== "0";
+  }
+
   function syncClearance() {
     var dock = document.querySelector(".lobsy-coach-dock[data-ssr-coach]");
     if (!dock) return;
@@ -33,7 +41,7 @@
     if (existing) return existing;
 
     var shell = document.createElement("div");
-    var business = document.querySelector('[data-ssr-coach="business"]');
+    var business = isBusinessCoach();
     shell.className = business
       ? "lobsy-assistant lobsy-assistant--business-panel"
       : "lobsy-assistant lobsy-assistant--coach lobsy-assistant--skin-warm";
@@ -41,11 +49,16 @@
     shell.hidden = true;
     if (hasBottomNav()) shell.classList.add("has-bottom-nav");
 
+    var brandHtml = business
+      ? '<span class="lobsy-assistant__avatar lobsy-assistant__avatar--business" aria-hidden="true">' +
+        '<img src="/brand/svg/lobsy-monochroom-wit.svg" alt="" width="24" height="24" decoding="async" /></span>'
+      : '<img class="lobsy-assistant__avatar" src="/brand/svg/lobsy-merkteken.svg" alt="" width="40" height="40" decoding="async" />';
+
     shell.innerHTML =
       '<div id="lobsy-assistant-panel" class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1">' +
       '<header class="lobsy-assistant__header">' +
       '<div class="lobsy-assistant__brand">' +
-      '<img class="lobsy-assistant__avatar" src="/brand/svg/lobsy-merkteken.svg" alt="" width="40" height="40" decoding="async" />' +
+      brandHtml +
       "<div><h2 id=\"lobsy-assistant-title\"></h2><p class=\"lobsy-assistant__lead\"></p></div>" +
       "</div>" +
       '<div class="lobsy-assistant__header-actions">' +
@@ -73,7 +86,17 @@
     shell.querySelector("[data-ssr-assistant-new]").setAttribute("aria-label", cfg("data-new-chat", "New chat"));
     shell.querySelector(".lobsy-assistant__send").textContent = cfg("data-send", "Send");
     shell.querySelector("#lobsy-assistant-input").placeholder = cfg("data-placeholder", "");
-    shell.querySelector(".lobsy-assistant__disclaimer").textContent = cfg("data-disclaimer", "");
+    var disclaimer = shell.querySelector(".lobsy-assistant__disclaimer");
+    disclaimer.textContent = cfg("data-disclaimer", "") + " ";
+    if (business) {
+      var about = document.createElement("a");
+      about.className = "auth-link";
+      about.href = "/gebruiksvoorwaarden";
+      about.target = "_blank";
+      about.rel = "noopener";
+      about.textContent = cfg("data-disclaimer-link", "");
+      disclaimer.appendChild(about);
+    }
 
     var closeBtn = shell.querySelector("[data-ssr-assistant-close]");
     if (closeBtn && closeBtn.dataset.ssrCloseBound !== "1") {
@@ -126,26 +149,53 @@
     }
   }
 
+  function bindReadAloudButtons(root) {
+    if (!root) return;
+    root.querySelectorAll("[data-read-aloud-text]").forEach(function (btn) {
+      if (btn.getAttribute("data-read-aloud-bound") === "1") return;
+      btn.setAttribute("data-read-aloud-bound", "1");
+      btn.addEventListener("click", function () {
+        var text = btn.getAttribute("data-read-aloud-text") || "";
+        var lang = cfg("data-lang", document.documentElement.lang || "nl");
+        if (!text || !window.lobsyReadAloud || typeof window.lobsyReadAloud.speak !== "function") return;
+        window.lobsyReadAloud.speak(text, lang);
+      });
+    });
+  }
+
   function renderMessages() {
     var chat = document.querySelector("[data-ssr-assistant-chat]");
     if (!chat) return;
     chat.innerHTML = "";
     var you = cfg("data-you", "You");
-    var bot = cfg("data-title", "Lobsy");
+    var bot = cfg("data-bot-name", cfg("data-title", "Lobsy"));
+    var business = isBusinessCoach();
     state.messages.forEach(function (msg) {
       var bubble = document.createElement("div");
       bubble.className = "lobsy-assistant__bubble lobsy-assistant__bubble--" + msg.role;
       if (msg.role === "assistant") {
+        var headLogo = business
+          ? '<span class="lobsy-assistant__bubble-logo lobsy-assistant__avatar--business" aria-hidden="true">' +
+            '<img src="/brand/svg/lobsy-monochroom-wit.svg" alt="" width="20" height="20" /></span>'
+          : '<img class="lobsy-assistant__bubble-logo" src="/brand/svg/lobsy-merkteken.svg" alt="" width="32" height="32" />';
         bubble.innerHTML =
-          '<div class="lobsy-assistant__bubble-head">' +
-          '<img class="lobsy-assistant__bubble-logo" src="/brand/svg/lobsy-merkteken.svg" alt="" width="32" height="32" />' +
-          "<span>" + bot + "</span></div>";
+          '<div class="lobsy-assistant__bubble-head">' + headLogo + "<span>" + bot + "</span></div>";
       } else {
         bubble.innerHTML = '<span class="lobsy-assistant__bubble-role">' + you + "</span>";
       }
       var p = document.createElement("p");
       p.textContent = msg.content;
       bubble.appendChild(p);
+      if (msg.role === "assistant" && business && msg.content) {
+        var readBtn = document.createElement("button");
+        readBtn.type = "button";
+        readBtn.className = "read-aloud read-aloud--icon";
+        readBtn.setAttribute("data-read-aloud-text", msg.content);
+        readBtn.setAttribute("aria-label", cfg("data-read-aloud-aria", ""));
+        readBtn.setAttribute("title", cfg("data-read-aloud-play", ""));
+        readBtn.innerHTML = '<span class="read-aloud__icon" aria-hidden="true">🔊</span>';
+        bubble.appendChild(readBtn);
+      }
       chat.appendChild(bubble);
     });
     if (state.busy) {
@@ -154,6 +204,7 @@
       typing.innerHTML = "<p>" + cfg("data-typing", "…") + "</p>";
       chat.appendChild(typing);
     }
+    bindReadAloudButtons(chat);
     chat.scrollTop = chat.scrollHeight;
   }
 
@@ -220,7 +271,7 @@
     return postChat({
       messages: [],
       pagePath: window.location.pathname + window.location.search,
-      warm: true
+      warm: warmBootEnabled()
     })
       .then(function (data) {
         var ctx = document.querySelector("[data-ssr-assistant-context]");
