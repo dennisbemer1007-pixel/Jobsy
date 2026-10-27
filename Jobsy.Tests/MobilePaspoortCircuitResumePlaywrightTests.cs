@@ -245,7 +245,6 @@ public class MobilePaspoortCircuitResumePlaywrightTests
 
         public PaspoortCircuitWebFactory()
         {
-            _ = CreateClient();
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)

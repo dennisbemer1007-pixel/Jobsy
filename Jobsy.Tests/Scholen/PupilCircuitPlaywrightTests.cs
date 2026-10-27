@@ -739,6 +739,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             QuestionSet = PupilQuestionSet.Groep78,
             SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
             PupilCount = 1,
+            TestWindow = TestWindowState.Open,
+            ParentalInfoConfirmedAtUtc = DateTime.UtcNow,
+            ParentalInfoConfirmedByUserId = _api.AdminId,
+            ParentalInfoTextVersion = "1",
             CreatedAtUtc = DateTime.UtcNow
         };
         db.Schools.Add(school);
