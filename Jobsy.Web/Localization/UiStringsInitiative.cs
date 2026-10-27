@@ -32,6 +32,8 @@ public static class UiStringsInitiative
         Add("Bk.Filter.Agencies", "Uitzendbureaus en detacheerders", "Agencies and staffing firms");
         Add("Bk.Filter.RespondsFast", "Reageert snel (≤ 3 dagen)", "Responds fast (≤ 3 days)");
         Add("Bk.Sort.Best", "Past het best", "Best fit");
+        Add("Bk.Empty.Lead", "Geen bedrijven binnen deze straal. Vergroot de afstand om meer bedrijven te zien.", "No companies within this radius. Widen the distance to see more companies.");
+        Add("Bk.Empty.ExpandRadius", "Vergroot afstand", "Widen distance");
         Add("Initiative.Match.Strong", "Sterke match", "Strong match");
         Add("Initiative.Match.Good", "Past goed", "Good fit");
         Add("Initiative.Match.Reasonable", "Past redelijk", "Reasonable fit");
