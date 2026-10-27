@@ -267,6 +267,14 @@ public static class UiStringsScholen
         nl["Leraar.Kpi.InProgress"] = "Bezig";
         nl["Leraar.Kpi.NotStarted"] = "Nog niet gestart";
         nl["Leraar.Kpi.AvgTime"] = "Gem. tijd";
+        nl["Leraar.Overview.ProgressTitle"] = "Voortgang van de klas";
+        nl["Leraar.Overview.ProgressLegend.Completed"] = "Afgerond";
+        nl["Leraar.Overview.ProgressLegend.InProgress"] = "Bezig";
+        nl["Leraar.Overview.ProgressLegend.NotStarted"] = "Nog niet gestart";
+        nl["Leraar.Pending.Title"] = "Nog niet klaar";
+        nl["Leraar.Pending.Subtitle"] = "{0} codes · zoek de naam op je eigen lijst";
+        nl["Leraar.Pending.NotLoggedIn"] = "nog niet ingelogd";
+        nl["Leraar.Pending.InProgress"] = "Bezig · {0}/{1}";
 
         nl["Leraar.Codes.Title"] = "Leerlingcodes";
         nl["Leraar.Codes.All"] = "Alle codes";

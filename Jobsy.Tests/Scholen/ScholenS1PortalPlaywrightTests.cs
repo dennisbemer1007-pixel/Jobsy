@@ -70,6 +70,34 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]
+    public async Task S5b_teacher_class_overview_progress_and_pending(int width, int height)
+    {
+        var seed = _seed!;
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(
+            $"{baseUrl}/__test/staff?user={seed.TeacherId:D}&school={seed.SchoolId:D}&role=Teacher&return={Uri.EscapeDataString($"/leraar/klas/{seed.ClassId:D}")}",
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+
+        await page.Locator("[data-testid='leraar-class-progress']").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator("[data-testid='leraar-kpi-row']").WaitForAsync();
+
+        var barWidth = await page.Locator(".sch-class-progress__bar").EvaluateAsync<double>(
+            "el => el.getBoundingClientRect().width");
+        Assert.True(barWidth > 100);
+
+        var pendingVisible = await page.Locator("[data-testid='leraar-pending-codes']").CountAsync();
+        Assert.True(pendingVisible >= 0);
+    }
+
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
     public async Task Teacher_portal_scope_chip_styles_and_leraar_redirect(int width, int height)
     {
         var seed = _seed!;

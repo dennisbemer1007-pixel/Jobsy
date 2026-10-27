@@ -79,8 +79,26 @@ else
         <EntKpiCard Label="@Culture["Leraar.Kpi.Completed"]" Value="@($"{_overview.CompletedCount}/{_overview.CodeCount}")" Delta="@($"{_overview.CompletedPercent:0}%")" DeltaTone="positive" />
         <EntKpiCard Label="@Culture["Leraar.Kpi.InProgress"]" Value="@_overview.InProgressCount.ToString()" />
         <EntKpiCard Label="@Culture["Leraar.Kpi.NotStarted"]" Value="@_overview.NotStartedCount.ToString()" />
-        <EntKpiCard Label="@Culture["Leraar.Kpi.AvgTime"]" Value="@(_overview.AverageMinutes is int m ? $"{m} min" : "—")" />
+        <EntKpiCard Label="@Culture["Leraar.Kpi.AvgTime"]" Value="@(_overview.AverageMinutes is int m ? $"{m} min" : "n.v.t.")" />
     </div>
+
+    @if (_overview.CodeCount > 0)
+    {
+        <section class="sch-card sch-class-progress" data-testid="leraar-class-progress">
+            <h2>@Culture["Leraar.Overview.ProgressTitle"]</h2>
+            <div class="sch-class-progress__bar" role="img"
+                 aria-label="@($"{_overview.CompletedCount} afgerond, {_overview.InProgressCount} bezig, {_overview.NotStartedCount} nog niet gestart")">
+                <span class="is-done" style="width:@($"{CompletedShare:0.##}")%"></span>
+                <span class="is-busy" style="width:@($"{InProgressShare:0.##}")%"></span>
+                <span class="is-idle" style="width:@($"{NotStartedShare:0.##}")%"></span>
+            </div>
+            <ul class="sch-class-progress__legend">
+                <li><i class="is-done" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.Completed"]</li>
+                <li><i class="is-busy" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.InProgress"]</li>
+                <li><i class="is-idle" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.NotStarted"]</li>
+            </ul>
+        </section>
+    }
 
     <div class="sch-overview-grid">
         <section class="sch-card">
@@ -124,6 +142,26 @@ else
         </section>
 
         <aside class="sch-overview-side">
+            @if (_pendingCodes.Count > 0)
+            {
+                <section class="sch-card" data-testid="leraar-pending-codes">
+                    <h2>@Culture["Leraar.Pending.Title"]</h2>
+                    <p class="muted">@Culture.Format("Leraar.Pending.Subtitle", _pendingCodes.Count)</p>
+                    <ul class="sch-pending-list">
+                        @foreach (var row in _pendingCodes)
+                        {
+                            <li>
+                                <div>
+                                    <code>@row.DisplayCode</code>
+                                    <small>@PendingDetail(row)</small>
+                                </div>
+                                <span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span>
+                            </li>
+                        }
+                    </ul>
+                    <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.All"]</a>
+                </section>
+            }
             <section class="sch-card">
                 <h2>@Culture["Leraar.Group.Interests"]</h2>
                 @if (!_overview.GroupInsights.Visible)
@@ -209,7 +247,18 @@ else
     private string? _loadError;
     private string? _windowError;
     private TeacherClassOverviewDto? _overview;
+    private IReadOnlyList<TeacherCodeRowDto> _pendingCodes = [];
     private CancellationTokenSource? _pollCts;
+
+    private double CompletedShare => Share(_overview?.CompletedCount);
+    private double InProgressShare => Share(_overview?.InProgressCount);
+    private double NotStartedShare => Share(_overview?.NotStartedCount);
+
+    private double Share(int? count)
+    {
+        var total = _overview?.CodeCount ?? 0;
+        return total == 0 ? 0 : 100d * (count ?? 0) / total;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -232,10 +281,23 @@ else
         try
         {
             _overview = await Api.GetTeacherOverviewAsync(ClassId);
+            if (_overview is not null)
+            {
+                var codes = await Api.GetTeacherCodesAsync(ClassId);
+                _pendingCodes = codes
+                    .Where(c => c.Status != PupilCodeStatus.Completed)
+                    .Take(8)
+                    .ToList();
+            }
+            else
+            {
+                _pendingCodes = [];
+            }
         }
         catch (Exception ex)
         {
             _overview = null;
+            _pendingCodes = [];
             _loadError = PortalLoad.IsNotFound(ex) ? null : Culture["Leraar.LoadFailed"];
             if (_loadError is not null)
             {
@@ -331,6 +393,16 @@ else
 
     private string StatusLabel(TeacherCodeRowDto row)
         => PupilCodeStatusText.Label(Culture, row.Status, row.LastSeenAtUtc);
+
+    private string PendingDetail(TeacherCodeRowDto row)
+    {
+        if (row.Status == PupilCodeStatus.NotStarted)
+        {
+            return Culture["Leraar.Pending.NotLoggedIn"];
+        }
+
+        return Culture.Format("Leraar.Pending.InProgress", row.ProgressCurrent, row.ProgressTotal);
+    }
 
     private static string StatusPill(PupilCodeStatus s) => s switch
     {
