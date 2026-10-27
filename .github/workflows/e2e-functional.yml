@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 25
     env:
       JOBSY_E2E_FUNCTIONAL_GATE: "1"
+      SIXLABORS_LICENSE_KEY: ${{ secrets.SIXLABORS_LICENSE_KEY }}
     services:
       postgres:
         image: postgis/postgis:16-3.4
