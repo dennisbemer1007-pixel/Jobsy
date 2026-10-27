@@ -679,6 +679,7 @@ app.MapAfterMatchEmployerCancelClientEndpoints();
 app.MapWerkgeverClientEndpoints();
 app.MapAfterMatchEmployerOutcomeClientEndpoints();
 app.MapBanenkaartClientEndpoints();
+app.MapBedrijvenkaartClientEndpoints();
 app.MapAssistantClientEndpoints();
 app.MapMapBasemapEndpoints();
 app.MapOnboardingStartFormEndpoints();

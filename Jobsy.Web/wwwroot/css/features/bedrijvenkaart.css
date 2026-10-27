@@ -1971,10 +1971,46 @@ textarea.bk-wg-input {
   [data-bedrijvenkaart-ssr="1"] .bk-shell--desktop-split {
     grid-template-columns: minmax(300px, min(420px, 36vw)) minmax(0, 1fr);
     min-height: calc(100dvh - 17.5rem);
+    max-height: calc(100dvh - 17.5rem);
+    align-items: start;
     border: 1px solid #e2e6eb;
     border-radius: 12px;
     overflow: hidden;
   }
+
+  [data-bedrijvenkaart-ssr="1"] .bk-shell--desktop-split .bk-list {
+    max-height: calc(100dvh - 17.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  [data-bedrijvenkaart-ssr="1"] .bk-shell--desktop-split .bk-map-pane {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: calc(100dvh - 17.5rem);
+    min-height: min(480px, calc(100dvh - 17.5rem));
+    max-height: calc(100dvh - 17.5rem);
+  }
+
+  [data-bedrijvenkaart-ssr="1"] .bk-shell--desktop-split .bk-map-pane .job-map {
+    height: 100%;
+    min-height: 320px;
+  }
+}
+
+[data-bedrijvenkaart-ssr="1"] .bk-card--link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+[data-bedrijvenkaart-ssr="1"] .bk-card--link:hover .bk-card__title {
+  color: var(--brand);
+}
+
+[data-bedrijvenkaart-ssr="1"] .bk-card[hidden] {
+  display: none !important;
 }
 
 .pp-sfeer-ph,

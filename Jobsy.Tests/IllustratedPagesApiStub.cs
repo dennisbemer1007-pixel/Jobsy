@@ -235,9 +235,10 @@ public static class IllustratedPagesApiStub
             return "[]";
         }
 
-        if (path.Contains("/company-map-initiative/pins", StringComparison.OrdinalIgnoreCase))
+        if (path.Contains("/company-map-initiative/pins", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/bedrijvenkaart-client/pins", StringComparison.OrdinalIgnoreCase))
         {
-            return "[]";
+            return SampleCompanyMapPinsJson();
         }
 
         if (path.Contains("/companies/mine", StringComparison.OrdinalIgnoreCase))
@@ -765,6 +766,40 @@ public static class IllustratedPagesApiStub
         return kompas;
 #endif
     }
+
+    private static string SampleCompanyMapPinsJson()
+        => """
+           [
+             {
+               "companyId": "11111111-1111-1111-1111-111111111101",
+               "rootCompanyId": "11111111-1111-1111-1111-111111111101",
+               "name": "Bakkerij De Korenaar",
+               "sectorLabel": "Horeca",
+               "city": "Den Haag",
+               "latitude": 52.07,
+               "longitude": 4.28,
+               "openForInitiative": true,
+               "isIntermediary": false,
+               "vacancyCount": 2,
+               "openTeamCount": 1,
+               "publicPath": "/12345678"
+             },
+             {
+               "companyId": "11111111-1111-1111-1111-111111111102",
+               "rootCompanyId": "11111111-1111-1111-1111-111111111102",
+               "name": "Care & Co",
+               "sectorLabel": "Zorg",
+               "city": "Amsterdam",
+               "latitude": 52.37,
+               "longitude": 4.89,
+               "openForInitiative": false,
+               "isIntermediary": false,
+               "vacancyCount": 0,
+               "openTeamCount": 0,
+               "publicPath": "/87654321"
+             }
+           ]
+           """;
 
     private static AfterMatchThreadDto BuildNotNowAfterMatchThread()
     {

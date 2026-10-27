@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Api.Controllers;
 
@@ -19,15 +20,18 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     private readonly ICompanyMapInitiativeService _service;
     private readonly IFeatureFlags _featureFlags;
     private readonly IConfiguration _configuration;
+    private readonly IHostEnvironment _environment;
 
     public CompanyMapInitiativeController(
         ICompanyMapInitiativeService service,
         IFeatureFlags featureFlags,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         _service = service;
         _featureFlags = featureFlags;
         _configuration = configuration;
+        _environment = environment;
     }
 
     [HttpGet("public/{kvk}/profile")]
@@ -60,7 +64,9 @@ public sealed class CompanyMapInitiativeController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var flags = await _featureFlags.GetAsync(cancellationToken);
-        var previewOn = BedrijvenkaartSsrPreview.IsEnabled(_configuration);
+        var previewOn = BedrijvenkaartSsrPreview.IsEnabled(_configuration)
+                        || _environment.IsDevelopment()
+                        || string.Equals(_environment.EnvironmentName, "Acceptatie", StringComparison.OrdinalIgnoreCase);
         if (!flags.IsEnabled(PlatformFeature.CompanyMapInitiative) && !previewOn)
         {
             return NotFound(new ProblemDetails
