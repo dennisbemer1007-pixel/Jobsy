@@ -446,6 +446,11 @@
             <script src="@($"/{WwwrootAssetCatalog.Url("js/read-aloud.js")}")" nonce="@Nonce" defer></script>
             <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>
         }
+        @if (IncludeBedrijvenkaartClientScript)
+        {
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-maps-boot.js")}")" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/bedrijvenkaart-ssr-map.js")}")" nonce="@Nonce" defer></script>
+        }
         @if (IncludeBedrijvenkaartSsrLayoutScript)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/bedrijvenkaart-ssr-layout.js")}")" nonce="@Nonce" defer></script>

@@ -8,6 +8,7 @@ using Jobsy.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Configuration;
 
 namespace Jobsy.Api.Controllers;
 
@@ -16,10 +17,17 @@ namespace Jobsy.Api.Controllers;
 public sealed class CompanyMapInitiativeController : ControllerBase
 {
     private readonly ICompanyMapInitiativeService _service;
+    private readonly IFeatureFlags _featureFlags;
+    private readonly IConfiguration _configuration;
 
-    public CompanyMapInitiativeController(ICompanyMapInitiativeService service)
+    public CompanyMapInitiativeController(
+        ICompanyMapInitiativeService service,
+        IFeatureFlags featureFlags,
+        IConfiguration configuration)
     {
         _service = service;
+        _featureFlags = featureFlags;
+        _configuration = configuration;
     }
 
     [HttpGet("public/{kvk}/profile")]
@@ -45,13 +53,25 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     [HttpGet("pins")]
     [AllowAnonymous]
     [EnableRateLimiting("public-read")]
-    [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<ActionResult<IReadOnlyList<CompanyMapPinDto>>> GetPins(
         [FromQuery] double? lat,
         [FromQuery] double? lng,
         [FromQuery] int radiusKm = 25,
         CancellationToken cancellationToken = default)
     {
+        var flags = await _featureFlags.GetAsync(cancellationToken);
+        var previewOn = BedrijvenkaartSsrPreview.IsEnabled(_configuration);
+        if (!flags.IsEnabled(PlatformFeature.CompanyMapInitiative) && !previewOn)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = $"Feature '{PlatformFeature.CompanyMapInitiative}' is not available.",
+                Type = FeatureGateFilter.FeatureDisabledType
+            });
+        }
+
         Guid? candidateId = null;
         if (User.Identity?.IsAuthenticated == true
             && Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid)
