@@ -3,10 +3,12 @@
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject EmployerScopeState Scope
 @inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <div class="wg-shell @(ShowBottomNav ? "wg-has-bottom-nav" : null)"
@@ -39,15 +41,22 @@
         <FeedbackWidget HasBottomNav="ShowBottomNav" />
         <ConsentReacceptDialog />
     }
+    else if (_ssrAssistant)
+    {
+        <LobsyAssistantBusinessSsr HasBottomNav="ShowBottomNav" />
+    }
     <CookieConsentBanner />
     <SessionIdleGuard />
 </div>
 
 @code {
     private bool ShowBottomNav => true; // CSS hides ≥1024
+    private bool _ssrAssistant;
 
     protected override void OnInitialized()
     {
+        _ssrAssistant = !RendererInfo.IsInteractive
+                        && AssistantChatHost.IsAvailableFor(HttpContextAccessor.HttpContext?.User);
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
         Scope.Changed += OnScopeChanged;

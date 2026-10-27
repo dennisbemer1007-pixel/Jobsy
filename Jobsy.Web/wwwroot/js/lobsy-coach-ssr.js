@@ -33,7 +33,10 @@
     if (existing) return existing;
 
     var shell = document.createElement("div");
-    shell.className = "lobsy-assistant lobsy-assistant--coach lobsy-assistant--skin-warm";
+    var business = document.querySelector('[data-ssr-coach="business"]');
+    shell.className = business
+      ? "lobsy-assistant lobsy-assistant--business-panel"
+      : "lobsy-assistant lobsy-assistant--coach lobsy-assistant--skin-warm";
     shell.id = "lobsy-assistant-ssr-shell";
     shell.hidden = true;
     if (hasBottomNav()) shell.classList.add("has-bottom-nav");
@@ -100,7 +103,10 @@
 
   function setOpen(on) {
     state.open = !!on;
-    var btn = document.getElementById("lobsy-coach-btn");
+    var btn =
+      document.getElementById("lobsy-coach-btn") ||
+      document.getElementById("lobsy-assistant-launcher-btn") ||
+      document.querySelector("[data-ssr-coach-open]");
     if (btn) btn.setAttribute("aria-expanded", state.open ? "true" : "false");
     syncDockOpenClass();
     if (state.open) {

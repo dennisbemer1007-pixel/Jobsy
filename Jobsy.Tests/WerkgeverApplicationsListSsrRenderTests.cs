@@ -2,7 +2,7 @@ using System.Net;
 
 namespace Jobsy.Tests;
 
-[Collection("SequentialApi")]
+[Collection("BanenkaartPlaywright")]
 public sealed class WerkgeverApplicationsListSsrRenderTests
 {
     [Fact]
@@ -22,6 +22,24 @@ public sealed class WerkgeverApplicationsListSsrRenderTests
         Assert.Contains("css/features/notifications.css", html, StringComparison.Ordinal);
         Assert.Contains("wg-applications-list-ssr.js", html, StringComparison.Ordinal);
         Assert.Contains("data-wg-list-ssr=\"1\"", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task List_view_includes_static_meer_panel_markup_for_ssr_chrome()
+    {
+        await using var web = new IllustratedPagesWebFactory();
+        using var handler = new HttpClientHandler { AllowAutoRedirect = true, UseCookies = true };
+        using var http = new HttpClient(handler) { BaseAddress = new Uri(web.ServerAddress) };
+        var path = "/werkgever/sollicitaties?view=lijst";
+        await http.GetAsync($"/__test/sign-in?role=employer&return={Uri.EscapeDataString(path)}");
+        var response = await http.GetAsync(path);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("data-wg-meer-toggle", html, StringComparison.Ordinal);
+        Assert.Contains("data-wg-meer-panel", html, StringComparison.Ordinal);
+        Assert.Contains("wg-bottom-nav-ssr.js", html, StringComparison.Ordinal);
+        Assert.Contains("lobsy-coach-ssr.js", html, StringComparison.Ordinal);
+        Assert.Contains("lobsy-assistant-launcher-btn", html, StringComparison.Ordinal);
     }
 
     [Fact]
