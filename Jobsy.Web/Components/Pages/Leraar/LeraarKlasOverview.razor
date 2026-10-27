@@ -93,9 +93,9 @@ else
                 <span class="is-idle" style="width:@($"{NotStartedShare:0.##}")%"></span>
             </div>
             <ul class="sch-class-progress__legend">
-                <li><i class="is-done" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.Completed"]</li>
-                <li><i class="is-busy" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.InProgress"]</li>
-                <li><i class="is-idle" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.NotStarted"]</li>
+                <li><i class="is-done" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.Completed"] (@_overview.CompletedCount)</li>
+                <li><i class="is-busy" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.InProgress"] (@_overview.InProgressCount)</li>
+                <li><i class="is-idle" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.NotStarted"] (@_overview.NotStartedCount)</li>
             </ul>
         </section>
     }
@@ -142,20 +142,32 @@ else
         </section>
 
         <aside class="sch-overview-side">
-            @if (_pendingCodes.Count > 0)
+            @if (_pendingTotal > 0)
             {
                 <section class="sch-card" data-testid="leraar-pending-codes">
                     <h2>@Culture["Leraar.Pending.Title"]</h2>
-                    <p class="muted">@Culture.Format("Leraar.Pending.Subtitle", _pendingCodes.Count)</p>
+                    <p class="muted">
+                        @if (_pendingTotal <= _pendingPreview.Count)
+                        {
+                            @Culture.Format("Leraar.Pending.Subtitle", _pendingTotal)
+                        }
+                        else
+                        {
+                            @Culture.Format("Leraar.Pending.Partial", _pendingPreview.Count, _pendingTotal)
+                        }
+                    </p>
                     <ul class="sch-pending-list">
-                        @foreach (var row in _pendingCodes)
+                        @foreach (var row in _pendingPreview)
                         {
                             <li>
-                                <div>
+                                <a class="sch-pending-list__link" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">
                                     <code>@row.DisplayCode</code>
                                     <small>@PendingDetail(row)</small>
-                                </div>
-                                <span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span>
+                                </a>
+                                @if (row.Status == PupilCodeStatus.NotStarted)
+                                {
+                                    <span class="sch-pill sch-pill--muted">@Culture["Leraar.Kpi.NotStarted"]</span>
+                                }
                             </li>
                         }
                     </ul>
@@ -194,7 +206,7 @@ else
                     <ol class="sch-rank-list">
                         @foreach (var v in _overview.GroupInsights.TopValues)
                         {
-                            <li>@PupilDimensionText.Value(Culture, v.Key) <span class="muted">· @v.Count</span></li>
+                            <li>@($"{PupilDimensionText.Value(Culture, v.Key)} · {v.Count}")</li>
                         }
                     </ol>
                 }
@@ -212,7 +224,7 @@ else
                         <div class="sch-chip-list">
                             @foreach (var d in _overview.GroupInsights.DreamJobs)
                             {
-                                <span class="sch-chip">@d.Key @d.Count</span>
+                                <span class="sch-chip">@DreamJobChipLabel(d)</span>
                             }
                         </div>
                     }
@@ -247,7 +259,9 @@ else
     private string? _loadError;
     private string? _windowError;
     private TeacherClassOverviewDto? _overview;
-    private IReadOnlyList<TeacherCodeRowDto> _pendingCodes = [];
+    private const int PendingPreviewMax = 8;
+    private int _pendingTotal;
+    private IReadOnlyList<TeacherCodeRowDto> _pendingPreview = [];
     private CancellationTokenSource? _pollCts;
 
     private double CompletedShare => Share(_overview?.CompletedCount);
@@ -284,20 +298,24 @@ else
             if (_overview is not null)
             {
                 var codes = await Api.GetTeacherCodesAsync(ClassId);
-                _pendingCodes = codes
+                var pending = codes
                     .Where(c => c.Status != PupilCodeStatus.Completed)
-                    .Take(8)
+                    .OrderBy(c => c.Number)
                     .ToList();
+                _pendingTotal = pending.Count;
+                _pendingPreview = pending.Take(PendingPreviewMax).ToList();
             }
             else
             {
-                _pendingCodes = [];
+                _pendingTotal = 0;
+                _pendingPreview = [];
             }
         }
         catch (Exception ex)
         {
             _overview = null;
-            _pendingCodes = [];
+            _pendingTotal = 0;
+            _pendingPreview = [];
             _loadError = PortalLoad.IsNotFound(ex) ? null : Culture["Leraar.LoadFailed"];
             if (_loadError is not null)
             {
@@ -389,6 +407,12 @@ else
         {
             _busy = false;
         }
+    }
+
+    private string DreamJobChipLabel(NamedCountDto d)
+    {
+        var label = PupilDreamJobText.Label(Culture, d.Key);
+        return $"{label} ({d.Count})";
     }
 
     private string StatusLabel(TeacherCodeRowDto row)

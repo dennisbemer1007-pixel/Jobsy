@@ -125,6 +125,40 @@
     border-radius:var(--r-sm);
 }.sch-bottom-nav {
     display: none;
+}.sch-bottom-nav__item--btn {
+    border: none;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}.sch-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgb(15 40 74 / 35%);
+    z-index: 40;
+}.sch-teacher-meer {
+    z-index: 50;
+}.sch-teacher-meer__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-4);
+}.sch-teacher-meer__link {
+    display: block;
+    padding: var(--space-3);
+    border-radius: var(--r-sm);
+    text-decoration: none;
+    color: var(--text);
+    min-height: 44px;
+}.sch-teacher-meer__link.is-active,
+.sch-teacher-meer__link:hover {
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}.sch-pending-list__link {
+    flex: 1;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}.sch-pending-list__link:hover code {
+    text-decoration: underline;
 }.sch-pill {
     display: inline-flex;
     align-items: center;
@@ -367,7 +401,7 @@
 }.sch-class-progress__bar .is-done {
     background: #33505f;
 }.sch-class-progress__bar .is-busy {
-    background: var(--brand, #0f5b66);
+    background: #c4552a;
 }.sch-class-progress__bar .is-idle {
     background: #ddd8cf;
 }.sch-class-progress__legend {
@@ -391,7 +425,7 @@
 }.sch-class-progress__legend i.is-done {
     background: #33505f;
 }.sch-class-progress__legend i.is-busy {
-    background: var(--brand, #0f5b66);
+    background: #c4552a;
 }.sch-class-progress__legend i.is-idle {
     background: #ddd8cf;
 }.sch-pending-list {
