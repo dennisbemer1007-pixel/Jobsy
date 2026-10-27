@@ -71,7 +71,7 @@ public sealed class TestAccountsPostgresSeedTests
                 Assert.Equal(10, await db.Users.CountAsync(u => u.IsTestAccount));
                 Assert.Equal(0, await db.PupilCodes.CountAsync());
                 Assert.Equal(PupilQuestionSet.Vo, (await db.SchoolClasses.SingleAsync(c => c.Name == "1A")).QuestionSet);
-                Assert.Equal(PupilQuestionSet.Groep78, (await db.SchoolClasses.SingleAsync(c => c.Name == "7A")).QuestionSet);
+                Assert.Equal(PupilQuestionSet.Groep78, (await db.SchoolClasses.SingleAsync(c => c.Name == "2A")).QuestionSet);
             }
 
             var withKey = AcceptatieConfig(builder.ConnectionString, databaseName, includeHmac: true);
