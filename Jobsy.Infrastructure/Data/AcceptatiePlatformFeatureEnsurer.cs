@@ -23,6 +23,7 @@ public static class AcceptatiePlatformFeatureEnsurer
     {
         await EnsureEmployersEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsureActivityLogEnabledAsync(db, configuration, logger, cancellationToken);
+        await EnsureSchoolsEnabledAsync(db, configuration, logger, cancellationToken);
     }
 
     internal static async Task EnsureEmployersEnabledAsync(
@@ -103,6 +104,46 @@ public static class AcceptatiePlatformFeatureEnsurer
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation(
                 "Acceptatie: synced ActivityLogEnabled=true (removed admin override lock when present).");
+        }
+    }
+
+    internal static async Task EnsureSchoolsEnabledAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(configuration))
+        {
+            return;
+        }
+
+        if (!configuration.GetValue("JobsyFeatures:SchoolsEnabled", false))
+        {
+            return;
+        }
+
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings { Id = PlatformSettingsId };
+            row.SchoolsEnabled = true;
+            db.PlatformFeatureSettings.Add(row);
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Acceptatie: created platform settings with SchoolsEnabled=true.");
+            return;
+        }
+
+        var overrides = PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson);
+        var lockedOff = overrides.Contains("SchoolsEnabled") && !row.SchoolsEnabled;
+        if (!row.SchoolsEnabled || lockedOff)
+        {
+            row.SchoolsEnabled = true;
+            row.AdminFlagOverridesJson =
+                PlatformFeatureFlagOverrides.RemoveKey(row.AdminFlagOverridesJson, "SchoolsEnabled");
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Acceptatie: synced SchoolsEnabled=true (removed admin override lock when present).");
         }
     }
 }
