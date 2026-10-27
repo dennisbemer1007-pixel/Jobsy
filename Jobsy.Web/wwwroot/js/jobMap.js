@@ -3353,12 +3353,16 @@ window.jobMap = (function () {
         if (!raw) {
             return null;
         }
-        const id = raw.id != null ? String(raw.id) : (raw.Id != null ? String(raw.Id) : "");
+        const id = raw.id != null ? String(raw.id)
+            : (raw.Id != null ? String(raw.Id)
+                : (raw.companyId != null ? String(raw.companyId)
+                    : (raw.CompanyId != null ? String(raw.CompanyId) : "")));
         if (!id) {
             return null;
         }
-        const lat = Number(raw.lat != null ? raw.lat : raw.Lat);
-        const lng = Number(raw.lng != null ? raw.lng : raw.Lng);
+        const lat = Number(raw.lat != null ? raw.lat : (raw.Lat != null ? raw.Lat : (raw.latitude != null ? raw.latitude : raw.Latitude)));
+        const lng = Number(raw.lng != null ? raw.lng : (raw.Lng != null ? raw.Lng : (raw.longitude != null ? raw.longitude : raw.Longitude)));
+        const displayName = raw.title || raw.name || raw.Name || raw.company || raw.Company || "";
         const radiusKm = agencyRadiusKm(raw);
         const colour = raw.categoryColor || raw.colour || raw.Colour || null;
         const matchPercent = raw.matchPercent != null ? raw.matchPercent
@@ -3372,10 +3376,14 @@ window.jobMap = (function () {
         const openForInitiative = raw.openForInitiative === true || raw.OpenForInitiative === true;
         const isIntermediary = raw.isIntermediary === true || raw.IsIntermediary === true;
         const kansberoep = raw.kansberoep === true || raw.kansberoep === 1 || raw.Kansberoep === true;
+        const companyHref = raw.companyHref || raw.publicPath || raw.PublicPath || null;
         return Object.assign({}, raw, {
             id: id,
             lat: lat,
             lng: lng,
+            title: raw.title || displayName,
+            company: raw.company || raw.Company || displayName,
+            companyHref: companyHref,
             kansberoep: kansberoep,
             categoryColor: colour,
             colour: colour,
