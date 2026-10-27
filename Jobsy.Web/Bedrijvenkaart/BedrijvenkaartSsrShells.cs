@@ -15,7 +15,12 @@ internal static class BedrijvenkaartSsrShells
         var sb = new StringBuilder();
         sb.Append("<div class=\"bk-page panel-page--cand-ill\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-bk-radius-km=\"")
             .Append(model.RadiusKm)
-            .Append("\" data-testid=\"bedrijvenkaart-ssr-root\">");
+            .Append("\" data-bk-origin-lat=\"")
+            .Append(model.OriginLat.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Append("\" data-bk-origin-lng=\"")
+            .Append(model.OriginLng.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Append(model.OriginFromProfile ? "\" data-bk-origin-profile=\"1\"" : "\"")
+            .Append(" data-testid=\"bedrijvenkaart-ssr-root\">");
         sb.Append("<div class=\"bk-page__hero-stack\">");
         sb.Append("<div class=\"bk-map-toggle\" role=\"tablist\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Jobs"]))

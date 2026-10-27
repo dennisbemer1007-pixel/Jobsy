@@ -404,8 +404,8 @@
     "sha256": "a8cc3a3b17430a04477111139ff2281856f1f2aa12da83d8f98967c460720be5"
   },
   "js/bedrijvenkaart-ssr-map.js": {
-    "v": "20261027-bk-map-e",
-    "sha256": "f3866e3ab1595e41c06de7c00aabc9368e193faf6f37e72422da6b235a6fb60a"
+    "v": "20261027-bk4-g",
+    "sha256": "7eb194e6c55fc43e9b15e84d985af7d3d6370380c3aaf88981e497261c7e6de9"
   },
   "js/blazor-boot.js": {
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",

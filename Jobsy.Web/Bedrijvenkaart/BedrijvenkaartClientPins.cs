@@ -17,9 +17,25 @@ internal static class BedrijvenkaartClientPins
             radiusKm = parsed;
         }
 
+        double lat;
+        double lng;
+        if (double.TryParse(http.Request.Query["lat"], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var qLat)
+            && double.TryParse(http.Request.Query["lng"], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var qLng)
+            && BedrijvenkaartMapOrigin.IsValidCoord(qLat, qLng))
+        {
+            lat = qLat;
+            lng = qLng;
+        }
+        else
+        {
+            var origin = await BedrijvenkaartMapOrigin.ResolveAsync(http, api, cancellationToken);
+            lat = origin.Lat;
+            lng = origin.Lng;
+        }
+
         try
         {
-            var pins = await api.GetCompanyMapPinsAsync(null, null, radiusKm, cancellationToken);
+            var pins = await api.GetCompanyMapPinsAsync(lat, lng, radiusKm, cancellationToken);
             return TypedResults.Ok(pins);
         }
         catch

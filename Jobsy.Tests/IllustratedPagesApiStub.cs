@@ -238,7 +238,7 @@ public static class IllustratedPagesApiStub
         if (path.Contains("/company-map-initiative/pins", StringComparison.OrdinalIgnoreCase)
             || path.Contains("/bedrijvenkaart-client/pins", StringComparison.OrdinalIgnoreCase))
         {
-            return SampleCompanyMapPinsJson();
+            return SampleCompanyMapPinsJson(path);
         }
 
         if (path.Contains("/companies/mine", StringComparison.OrdinalIgnoreCase))
@@ -451,6 +451,11 @@ public static class IllustratedPagesApiStub
                   "drijfverenDriverKeys": ["security", "connection", "growth"]
                 }
                 """;
+        }
+
+        if (path.Contains("/public/companies/", StringComparison.OrdinalIgnoreCase))
+        {
+            return SamplePublicCompanyApiJson(path);
         }
 
         return "{}";
@@ -767,39 +772,203 @@ public static class IllustratedPagesApiStub
 #endif
     }
 
-    private static string SampleCompanyMapPinsJson()
-        => """
-           [
-             {
-               "companyId": "11111111-1111-1111-1111-111111111101",
-               "rootCompanyId": "11111111-1111-1111-1111-111111111101",
-               "name": "Bakkerij De Korenaar",
-               "sectorLabel": "Horeca",
-               "city": "Den Haag",
-               "latitude": 52.07,
-               "longitude": 4.28,
-               "openForInitiative": true,
-               "isIntermediary": false,
-               "vacancyCount": 2,
-               "openTeamCount": 1,
-               "publicPath": "/12345678"
-             },
-             {
-               "companyId": "11111111-1111-1111-1111-111111111102",
-               "rootCompanyId": "11111111-1111-1111-1111-111111111102",
-               "name": "Care & Co",
-               "sectorLabel": "Zorg",
-               "city": "Amsterdam",
-               "latitude": 52.37,
-               "longitude": 4.89,
-               "openForInitiative": false,
-               "isIntermediary": false,
-               "vacancyCount": 0,
-               "openTeamCount": 0,
-               "publicPath": "/87654321"
-             }
-           ]
-           """;
+    private static string SamplePublicCompanyApiJson(string path)
+    {
+        if (path.Contains("/engagement", StringComparison.OrdinalIgnoreCase))
+        {
+            return "[]";
+        }
+
+        if (path.Contains("/vacancies", StringComparison.OrdinalIgnoreCase))
+        {
+            return $$"""
+                [
+                  {
+                    "id": "{{SampleVacancyId}}",
+                    "title": "Kasmedewerker",
+                    "companyName": "KasWerk Naaldwijk",
+                    "companyId": "{{SampleCompanyId}}",
+                    "companyAddress": "Dijkweg 12, Naaldwijk",
+                    "kvkNumber": "71001001",
+                    "vestigingsnummer": "0001",
+                    "workTypes": ["Regular"],
+                    "categoryName": "Tuinbouw",
+                    "latitude": 51.9944,
+                    "longitude": 4.2097,
+                    "kind": "Regular"
+                  }
+                ]
+                """;
+        }
+
+        if (path.Contains("/71001001/0001", StringComparison.OrdinalIgnoreCase)
+            || path.EndsWith("/71001001/0001", StringComparison.OrdinalIgnoreCase))
+        {
+            return """
+                {
+                  "kvk": "71001001",
+                  "kvkNumber": "71001001",
+                  "vestigingsnummer": "0001",
+                  "name": "KasWerk Naaldwijk",
+                  "city": "Naaldwijk",
+                  "branches": [
+                    {
+                      "name": "Naaldwijk",
+                      "city": "Naaldwijk",
+                      "vestigingsnummer": "0001",
+                      "path": "/71001001/0001",
+                      "vacancyCount": 1
+                    }
+                  ]
+                }
+                """;
+        }
+
+        if (path.Contains("/company-map-initiative/public/71001001/profile", StringComparison.OrdinalIgnoreCase))
+        {
+            return """
+                {
+                  "openForInitiative": false,
+                  "openTeamCount": 0,
+                  "rootCompanyId": "a1000000-0000-0000-0000-000000000001",
+                  "teams": []
+                }
+                """;
+        }
+
+        return "{}";
+    }
+
+    private static string SampleCompanyMapPinsJson(string path)
+    {
+        var pins = new List<CompanyMapPinDto>
+        {
+            new(
+                Guid.Parse("11111111-1111-1111-1111-111111111101"),
+                Guid.Parse("11111111-1111-1111-1111-111111111101"),
+                "Bakkerij De Korenaar",
+                "Horeca",
+                "Naaldwijk",
+                51.994,
+                4.210,
+                true,
+                false,
+                2,
+                1,
+                null,
+                null,
+                "12345678",
+                "/12345678"),
+            new(
+                Guid.Parse("11111111-1111-1111-1111-111111111102"),
+                Guid.Parse("11111111-1111-1111-1111-111111111102"),
+                "Care & Co",
+                "Zorg",
+                "De Lier",
+                52.005,
+                4.225,
+                false,
+                false,
+                0,
+                0,
+                null,
+                null,
+                "87654321",
+                "/87654321"),
+            new(
+                Guid.Parse("11111111-1111-1111-1111-111111111103"),
+                Guid.Parse("11111111-1111-1111-1111-111111111103"),
+                "Utrecht Hub BV",
+                "Logistiek",
+                "Utrecht",
+                52.16,
+                5.30,
+                false,
+                false,
+                1,
+                0,
+                null,
+                null,
+                "11223344",
+                "/11223344"),
+            new(
+                Guid.Parse("11111111-1111-1111-1111-111111111104"),
+                Guid.Parse("11111111-1111-1111-1111-111111111104"),
+                "Far Away BV",
+                "Logistiek",
+                "Groningen",
+                53.22,
+                6.57,
+                false,
+                false,
+                1,
+                0,
+                null,
+                null,
+                "99887766",
+                "/99887766"),
+        };
+
+        if (TryParsePinsQuery(path, out var lat, out var lng, out var radiusKm))
+        {
+            pins = pins.Where(p => HaversineKm(lat, lng, p.Latitude, p.Longitude) <= radiusKm).ToList();
+        }
+
+        return Serialize(pins);
+    }
+
+    private static bool TryParsePinsQuery(string path, out double lat, out double lng, out int radiusKm)
+    {
+        lat = 0;
+        lng = 0;
+        radiusKm = 25;
+        var qIndex = path.IndexOf('?', StringComparison.Ordinal);
+        if (qIndex < 0)
+        {
+            return false;
+        }
+
+        var query = path[(qIndex + 1)..];
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length != 2)
+            {
+                continue;
+            }
+
+            var key = Uri.UnescapeDataString(kv[0]);
+            var val = Uri.UnescapeDataString(kv[1]);
+            if (key.Equals("lat", StringComparison.OrdinalIgnoreCase)
+                && double.TryParse(val, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsedLat))
+            {
+                lat = parsedLat;
+            }
+            else if (key.Equals("lng", StringComparison.OrdinalIgnoreCase)
+                     && double.TryParse(val, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsedLng))
+            {
+                lng = parsedLng;
+            }
+            else if (key.Equals("radiusKm", StringComparison.OrdinalIgnoreCase)
+                     && int.TryParse(val, out var parsedRadius))
+            {
+                radiusKm = parsedRadius;
+            }
+        }
+
+        return lat is >= -90 and <= 90 && lng is >= -180 and <= 180;
+    }
+
+    private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double r = 6371;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+                + Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180)
+                * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return r * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+    }
 
     private static AfterMatchThreadDto BuildNotNowAfterMatchThread()
     {
