@@ -464,8 +464,8 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "v": "20261027-r11e",
-    "sha256": "9328a9bf4973d3bd988ccb64e0b20349b39e00dfff5048ea8ca58f2ecd446096"
+    "v": "20261027-wg-assist",
+    "sha256": "32e05457b423c65f3182974bfa7b23afd563e41d1c5ef12b45d9c5548a923017"
   },
   "js/lobsyPush.js": {
     "sha256": "e0a545e6c648b91e17ba038d23a4ef693a338fe5ce1b122d3cb8ead53f136e0e",
