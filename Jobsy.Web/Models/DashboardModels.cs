@@ -24,6 +24,8 @@ public class CompanySummary
     public string? ContactWhatsApp { get; set; }
     public string? PreferredPaymentMethod { get; set; }
     public bool RequireEmailVerificationForApplications { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }
 
 public class CompanyBillingHistoryItem
