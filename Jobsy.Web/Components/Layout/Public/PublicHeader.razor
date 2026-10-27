@@ -7,7 +7,7 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 
-<header class="pub-header @(Compact ? "pub-header--compact" : null) @(AuthShell ? "pub-header--auth" : null)">
+<header class="pub-header @(Compact ? "pub-header--compact" : null) @(AuthShell ? "pub-header--auth" : null) @(HideLangMenu ? "pub-header--no-lang" : null)">
     <div class="pub-header__inner">
         <a class="pub-header__brand" href="@PublicRoutes.Landing" aria-label="Lobsy">
             <LobsyLogo Class="pub-header__logo" Alt="Lobsy" Animate="false" Variant="LobsyLogoVariant.Horizontal" />
@@ -163,6 +163,8 @@
     [Parameter] public bool TeaserCampaign { get; set; }
     /// <summary>Employer registration wizard (/register).</summary>
     [Parameter] public bool EmployerWizard { get; set; }
+    /// <summary>UWV adviseur share deel page: no NL/EN switch in public header.</summary>
+    [Parameter] public bool HideLangMenu { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 

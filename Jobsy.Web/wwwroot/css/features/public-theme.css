@@ -52,6 +52,8 @@
   z-index: 40;
   background: var(--pub-bg);
   border-bottom: 1px solid color-mix(in srgb, var(--pub-line) 55%, transparent);
+}.pub-theme .pub-header--no-lang .pub-lang {
+  display: none !important;
 }.pub-theme .pub-header__inner {
   display: flex;
   align-items: center;
