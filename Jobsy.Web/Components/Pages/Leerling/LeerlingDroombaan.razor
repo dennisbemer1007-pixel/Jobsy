@@ -1,4 +1,5 @@
 @page "/leerling/droombaan"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @layout LeerlingLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
@@ -44,7 +45,6 @@ else
                 <input type="search"
                        value="@_search"
                        @oninput="OnSearchInput"
-                       @onfocus="OnSearchFocus"
                        placeholder="@Culture["LeerlingDroom.Search"]"
                        autocomplete="off"
                        enterkeyhint="search"
@@ -141,11 +141,7 @@ else
     private PupilResultPageDto? _result;
     private DreamJobRouteStubDto? _dream;
     private string _search = "";
-    private bool _searchTouched;
-    private bool _userEditedSearch;
-    private bool _searchFocused;
     private bool _contentReady;
-    private bool _initialSearchHydrated;
     private Task? _initialLoadTask;
     private IReadOnlyList<DreamJob> _matches = [];
     private string? _error;
@@ -221,7 +217,6 @@ else
             _result = outcome.Value;
             _dream = _result.DreamJob;
             _contentReady = true;
-            HydrateSearchFromDreamOnce();
         }
         finally
         {
@@ -229,29 +224,8 @@ else
         }
     }
 
-    private void HydrateSearchFromDreamOnce()
-    {
-        if (_initialSearchHydrated || _userEditedSearch || _searchTouched || _searchFocused)
-        {
-            return;
-        }
-
-        var title = _dream?.JobTitle;
-        if (!string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(_search))
-        {
-            _search = title;
-        }
-
-        _initialSearchHydrated = true;
-    }
-
-    private void OnSearchFocus() => _searchFocused = true;
-
     private void OnSearchInput(ChangeEventArgs e)
     {
-        _searchTouched = true;
-        _userEditedSearch = true;
-        _initialSearchHydrated = true;
         _search = e.Value?.ToString() ?? "";
         ScheduleMatchUpdate();
     }
@@ -296,14 +270,6 @@ else
             }
 
             _dream = resp.DreamJob;
-            if (!string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
-                && !_searchFocused
-                && !_searchTouched
-                && !_userEditedSearch)
-            {
-                _search = resp.DreamJob.JobTitle ?? _search;
-            }
-
             _matches = [];
         }
         catch
