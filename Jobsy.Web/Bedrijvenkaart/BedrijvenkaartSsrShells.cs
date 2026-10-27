@@ -55,6 +55,14 @@ internal static class BedrijvenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Discovery.List"]))
             .Append("</button></div>");
 
+        sb.Append("<div class=\"bk-empty-state\" data-bk-empty-state=\"1\"")
+            .Append(model.Pins.Count == 0 ? "" : " hidden")
+            .Append("><p class=\"bk-empty-state__lead\">")
+            .Append(WebUtility.HtmlEncode(culture["Bk.Empty.Lead"]))
+            .Append("</p><button type=\"button\" class=\"jobsy-action\" data-bk-expand-radius=\"1\">")
+            .Append(WebUtility.HtmlEncode(culture["Bk.Empty.ExpandRadius"]))
+            .Append("</button></div>");
+
         sb.Append("<div class=\"bk-shell bk-shell--desktop-split\">");
         sb.Append("<div class=\"bk-list\" role=\"list\">");
         foreach (var pin in model.Pins)

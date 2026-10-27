@@ -66,8 +66,10 @@
         var http = HttpContextAccessor.HttpContext;
         var user = http?.User;
         _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
+        var path = http?.Request.Path.Value?.TrimStart('/') ?? "";
         _hideCandidateBrandTagline = user?.Identity?.IsAuthenticated == true
-            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+            && (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
+                || MainLayout.IsBanenkaartPath(path));
         _showCandidatePrimaryNav = user?.Identity?.IsAuthenticated == true
             && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
     }

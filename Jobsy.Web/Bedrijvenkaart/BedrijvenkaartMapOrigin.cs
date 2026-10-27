@@ -1,3 +1,6 @@
+using Jobsy.Core.Authorization;
+using Jobsy.Web.Auth;
+using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Http;
 
@@ -23,6 +26,35 @@ internal static class BedrijvenkaartMapOrigin
 
         if (http?.User?.Identity?.IsAuthenticated == true)
         {
+            if (RoleClaimMatching.HasAnyRole(http.User, JobsyRoles.EmployerRoles))
+            {
+                try
+                {
+                    var companies = await api.GetMyCompaniesAsync(ct);
+                    CompanySummary? branch = null;
+                    foreach (var c in companies)
+                    {
+                        if (c.Latitude is double la && c.Longitude is double lo && IsValidCoord(la, lo))
+                        {
+                            branch = c;
+                            break;
+                        }
+                    }
+
+                    branch ??= companies.Count > 0 ? companies[0] : null;
+                    if (branch?.Latitude is double bLat
+                        && branch.Longitude is double bLng
+                        && IsValidCoord(bLat, bLng))
+                    {
+                        return new Resolved(bLat, bLng, true);
+                    }
+                }
+                catch
+                {
+                    // optional
+                }
+            }
+
             try
             {
                 var profile = await api.GetMyProfileAsync(ct);
@@ -62,6 +94,6 @@ internal static class BedrijvenkaartMapOrigin
     }
 
     internal static bool IsValidCoord(double lat, double lng)
-        => lat is >= -90 and <= 90 && lng is >= -180 and <= 180
+        => lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
            && double.IsFinite(lat) && double.IsFinite(lng);
 }

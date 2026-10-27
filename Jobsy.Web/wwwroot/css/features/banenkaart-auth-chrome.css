@@ -52,10 +52,18 @@
 
     .app-shell--banenkaart-shell .app-header {
         box-sizing: border-box;
+        width: 100%;
+        max-width: 100vw;
         height: 55px;
         min-height: 55px;
         max-height: 55px;
         padding: 8px 0.85rem;
+        overflow: hidden;
+    }
+
+    .app-shell--banenkaart-shell .app-header__brand {
+        flex: 1 1 auto;
+        min-width: 0;
         overflow: hidden;
     }
 
@@ -108,7 +116,8 @@
     min-width: 0;
 }
 
-.app-shell--candidate .app-header .brand-tagline {
+.app-shell--candidate .app-header .brand-tagline,
+.app-shell--banenkaart-shell .app-header .brand-tagline {
     display: none !important;
 }
 
@@ -469,8 +478,9 @@
 }
 
 @media (max-width: 900px) {
-    .app-shell--banenkaart-shell .app-header .brand__tagline {
-        display: none;
+    .app-shell--banenkaart-shell .app-header .brand__tagline,
+    .app-shell--banenkaart-shell .app-header .brand-tagline {
+        display: none !important;
     }
 
     .app-shell--banenkaart-shell .notification-bell__panel,

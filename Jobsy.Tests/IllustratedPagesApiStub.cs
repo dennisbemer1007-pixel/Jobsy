@@ -248,11 +248,13 @@ public static class IllustratedPagesApiStub
                   {
                     "id": "{{SampleCompanyId}}",
                     "name": "Care & Co",
-                    "address": "Zaandam",
+                    "address": "Westland",
                     "kvkNumber": "12345678",
                     "verificationStatus": "Verified",
                     "tokenBalance": 42,
-                    "activeVacancies": 2
+                    "activeVacancies": 2,
+                    "latitude": 51.9935,
+                    "longitude": 4.2300
                   }
                 ]
                 """;

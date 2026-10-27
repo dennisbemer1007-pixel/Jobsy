@@ -136,6 +136,24 @@
     });
   }
 
+  function toggleEmptyState(count) {
+    var empty = root() && root().querySelector("[data-bk-empty-state]");
+    if (!empty) {
+      return;
+    }
+    empty.hidden = count > 0;
+  }
+
+  function nextRadiusKm(current) {
+    if (current === 10) {
+      return 25;
+    }
+    if (current === 25) {
+      return 40;
+    }
+    return 40;
+  }
+
   function updateMeta(count, km, openCount) {
     var host = root();
     if (!host) {
@@ -270,8 +288,13 @@
     } else {
       syncListVisibility(filtered);
     }
-    initMap(toMarkers(filtered), km);
+    var markers = toMarkers(filtered);
+    if (window.jobMap && typeof window.jobMap.setVacancies === "function") {
+      window.jobMap.setVacancies(markers);
+    }
+    initMap(markers, km);
     updateMeta(filtered.length, km, openCount(filtered));
+    toggleEmptyState(filtered.length);
   }
 
   function fetchPins(km) {
@@ -329,6 +352,12 @@
         if (km === 10 || km === 25 || km === 40) {
           onRadius(km);
         }
+        return;
+      }
+      var expand = ev.target.closest("button[data-bk-expand-radius]");
+      if (expand) {
+        ev.preventDefault();
+        onRadius(nextRadiusKm(radiusKm()));
         return;
       }
       var chip = ev.target.closest("button[data-bk-filter]");
