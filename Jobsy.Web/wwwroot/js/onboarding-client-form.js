@@ -1917,6 +1917,20 @@
         bindKompasComplete();
     }
 
+    function preserveSubmitButtonInForm(form, submitter) {
+        if (!submitter || !submitter.name) return;
+        var marker = "data-ob-ssr-submit-clone";
+        var hidden = form.querySelector('input[type="hidden"][' + marker + '="' + submitter.name + '"]');
+        if (!hidden) {
+            hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.setAttribute(marker, submitter.name);
+            hidden.name = submitter.name;
+            form.appendChild(hidden);
+        }
+        hidden.value = submitter.value || "";
+    }
+
     function bindSsrOnboardingForm() {
         document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
             if (form.__obSsrFormBound) return;
@@ -1926,6 +1940,7 @@
                     ev.preventDefault();
                     return;
                 }
+                preserveSubmitButtonInForm(form, ev.submitter);
                 form.setAttribute("data-ob-submitting", "1");
                 form.querySelectorAll("button[type=submit]").forEach(function (b) {
                     b.disabled = true;
