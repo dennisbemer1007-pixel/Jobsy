@@ -136,6 +136,10 @@
 
             _currentClassId = ExtractClassId(path) ?? _assigned.FirstOrDefault()?.Id;
             RefreshTeacherNav();
+            if (path.Equals("/leraar", StringComparison.OrdinalIgnoreCase) && _assigned.Count > 0)
+            {
+                Nav.NavigateTo($"/leraar/klas/{_assigned[0].Id:D}", replace: true);
+            }
         }
         else if (RoleClaimMatching.HasRole(user, JobsyRoles.Teacher)
                  && !RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin))
@@ -240,7 +244,6 @@
             path = HomeHref;
         }
 
-        return string.Equals(path, href, StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+        return ScholenNavRouting.IsNavActive(path, href);
     }
 }

@@ -68,15 +68,15 @@ else if (_dash is not null)
                     @foreach (var row in _dash.Classes)
                     {
                         <tr class="ent-data-table__row" @onclick="() => OpenClass(row.Id)">
-                            <td>@row.ClassName</td>
-                            <td>@(row.TeacherNames ?? "—")</td>
-                            <td class="tabular">@row.CodeCount</td>
-                            <td class="tabular">@row.StartedCount</td>
-                            <td class="tabular">@row.CompletedCount</td>
-                            <td>
+                            <td data-label="@Culture["School.Col.Class"]">@row.ClassName</td>
+                            <td data-label="@Culture["School.Col.Teacher"]">@(row.TeacherNames ?? "—")</td>
+                            <td class="tabular" data-label="@Culture["School.Col.Codes"]">@row.CodeCount</td>
+                            <td class="tabular" data-label="@Culture["School.Col.Started"]">@row.StartedCount</td>
+                            <td class="tabular" data-label="@Culture["School.Col.Completed"]">@row.CompletedCount</td>
+                            <td data-label="@Culture["School.Col.Progress"]">
                                 <span class="tabular">@row.CompletionPercent.ToString("0")%</span>
                             </td>
-                            <td><span class="sch-pill @WindowPill(row.TestWindow)">@WindowLabel(row)</span></td>
+                            <td data-label="@Culture["School.Col.Window"]"><span class="sch-pill @WindowPill(row.TestWindow)">@WindowLabel(row)</span></td>
                         </tr>
                     }
                 </Rows>

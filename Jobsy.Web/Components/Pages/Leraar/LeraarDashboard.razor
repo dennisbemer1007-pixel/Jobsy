@@ -73,6 +73,7 @@ else if (_empty && !_redirectSchoolAdmin)
             }
 
             Nav.NavigateTo($"/leraar/klas/{classes[0].Id:D}", replace: true);
+            return;
         }
         catch (Exception ex)
         {
