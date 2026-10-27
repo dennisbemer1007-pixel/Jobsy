@@ -270,7 +270,11 @@
     } else {
       syncListVisibility(filtered);
     }
-    initMap(toMarkers(filtered), km);
+    var markers = toMarkers(filtered);
+    if (window.jobMap && typeof window.jobMap.setVacancies === "function") {
+      window.jobMap.setVacancies(markers);
+    }
+    initMap(markers, km);
     updateMeta(filtered.length, km, openCount(filtered));
   }
 

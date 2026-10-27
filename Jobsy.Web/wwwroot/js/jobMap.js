@@ -3732,8 +3732,8 @@ window.jobMap = (function () {
     }
 
     function viewportQueryString() {
-        // Lagen: keep the full travel-radius pin set; list/carousel use discover viewport, not /pins bbox.
-        if (lagenLayout) {
+        // Lagen / bedrijvenkaart: full radius pin set; do not clip map pins to viewport bbox.
+        if (lagenLayout || companyMapMode) {
             return "";
         }
         var box = readViewportBounds();
@@ -7297,6 +7297,7 @@ window.jobMap = (function () {
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
         const nextPinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        const prevPinsBase = pinsBaseUrl;
         if (nextPinsUrl) {
             pinsBaseUrl = stripViewportParams(nextPinsUrl);
             pinsUrl = pinsBaseUrl + viewportQueryString();
@@ -7324,9 +7325,21 @@ window.jobMap = (function () {
         }
 
         // Early boot() may already have painted pins — do not re-fetch (one pins request/load).
-        const alreadyPinned = live && Object.keys(markersById).length > 0;
-        if (!alreadyPinned) {
-            const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
+        const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
+        const nextPinsBase = nextPinsUrl ? stripViewportParams(nextPinsUrl) : null;
+        const pinsUrlChanged = !!(nextPinsBase && prevPinsBase && nextPinsBase !== prevPinsBase);
+        const alreadyPinned = live && Object.keys(markersById).length > 0 && !(companyMapMode && seedPins.length > 0);
+        if (companyMapMode && seedPins.length > 0 && (pinsUrlChanged || !alreadyPinned)) {
+            if (pinsUrlChanged) {
+                Object.keys(pinsByFilterKey).forEach(function (k) { delete pinsByFilterKey[k]; });
+                pinsEtag = null;
+                pinsCachedPayload = null;
+            }
+            setVacancies(seedPins);
+            if (nextPinsUrl && !catalogModeActive) {
+                fetchPins(nextPinsUrl);
+            }
+        } else if (!alreadyPinned) {
             if (seedPins.length > 0) {
                 setVacancies(seedPins);
             } else {
