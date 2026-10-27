@@ -308,8 +308,8 @@
     "v": "20261004-10"
   },
   "css/features/scholen.css": {
-    "sha256": "d0ee8d95fd2636f3bd0afcebbfa0fe9f41723972fd4d6ddc4bd95b56dd7e7e4d",
-    "v": "20261027-wereld4"
+    "sha256": "b3622b5550b5d5e483011661f48ece16669833b95a68619d3b6f4b777a3a319e",
+    "v": "20261027-wereld5"
   },
   "css/features/signup-static.css": {
     "sha256": "2bef7a071ba7c93834490b922d243cd8b5c84db67293bdba244cc856ca3806bd",
@@ -366,6 +366,138 @@
   "images/brand/mascot-128.png": {
     "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
     "v": "20261004-13"
+  },
+  "images/leerling/werelden/puzzles/ster/card-back.jpg": {
+    "sha256": "34c9e93fe01e5bf89b91bf57564eb8971824596833a540093a04a68c70775062",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/lamp-1.jpg": {
+    "sha256": "f4a6479f3794a4c5d0d4ca39eb481e9d1080635de969ce992c0a31918f2f8614",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/lamp-2.jpg": {
+    "sha256": "8fdfdd82c2ca3e9019cb954add4fa0fa0475121e23e06ec76e7fd41c9021aa7e",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/lamp-3.jpg": {
+    "sha256": "4e413637610cdba269f14e581ce37bf77821585d8bb6c64a91accde4525d27ce",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/match-1.jpg": {
+    "sha256": "4868b9662cdd55deb91ba9016073e79c90c2b97355729c5a79c293da498da969",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/match-2.jpg": {
+    "sha256": "8da6b2c3849658bf166c7906dc346749c3b57bb2ead37a4acfc2f4bb0fa3b4f4",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/match-3.jpg": {
+    "sha256": "c31e2f53c88dedfcfbfc63f18e3e23de3f9352fc208a258e7d22c843bc4a2d44",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/sort-1.jpg": {
+    "sha256": "4868b9662cdd55deb91ba9016073e79c90c2b97355729c5a79c293da498da969",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/sort-2.jpg": {
+    "sha256": "8da6b2c3849658bf166c7906dc346749c3b57bb2ead37a4acfc2f4bb0fa3b4f4",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/sort-3.jpg": {
+    "sha256": "c31e2f53c88dedfcfbfc63f18e3e23de3f9352fc208a258e7d22c843bc4a2d44",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/ster/sort-4.jpg": {
+    "sha256": "f4a6479f3794a4c5d0d4ca39eb481e9d1080635de969ce992c0a31918f2f8614",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/card-back.jpg": {
+    "sha256": "22ff290667966533f4600a529ee1b08c3c841be8968462971fcf68ab06493f46",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/lamp-1.jpg": {
+    "sha256": "a2aa8b13e0a0f2f832da6a8da37f24654529b8387e726e30ccdbe7bcaca7ccd3",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/lamp-2.jpg": {
+    "sha256": "90a39e293630c5fba23291c9c334638defc9b1dd7f6e47a7faa2a7093ed29732",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/lamp-3.jpg": {
+    "sha256": "c5936620e2394f7f358694dfaf565e42feaa5227f5734e245ed80350cfce766e",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/match-1.jpg": {
+    "sha256": "56b7b6d3e513433592f5d63bacffdf0a96d8d496ded9d556c1e3c71bd1416311",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/match-2.jpg": {
+    "sha256": "96831ecf465f79f684814fc81e2dc5f82329d44e79edaad5e16500ff373f6de0",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/match-3.jpg": {
+    "sha256": "801b1a068e125ba5ed7bcb36d4bfe3419e233eb3ff5414035e86df14d1c38289",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/sort-1.jpg": {
+    "sha256": "56b7b6d3e513433592f5d63bacffdf0a96d8d496ded9d556c1e3c71bd1416311",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/sort-2.jpg": {
+    "sha256": "96831ecf465f79f684814fc81e2dc5f82329d44e79edaad5e16500ff373f6de0",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/sort-3.jpg": {
+    "sha256": "801b1a068e125ba5ed7bcb36d4bfe3419e233eb3ff5414035e86df14d1c38289",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/tuin/sort-4.jpg": {
+    "sha256": "a2aa8b13e0a0f2f832da6a8da37f24654529b8387e726e30ccdbe7bcaca7ccd3",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/card-back.jpg": {
+    "sha256": "e040432a958f9318ce68f673a6afedff5f7b89317ad29fb9cd8746b1156323fa",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/lamp-1.jpg": {
+    "sha256": "4b43c97e2a8bc9910849fbb2afbb7b51d3110d81be38cd1b8f757d66f38cf708",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/lamp-2.jpg": {
+    "sha256": "11a5645e1ddb24e3724006a9be8d9eda4cb240da38cb5d06a924e1a2b4b74e20",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/lamp-3.jpg": {
+    "sha256": "650bb9558427b1787225847065598404233614bcb3e808d02d6590b75bbef9e3",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/match-1.jpg": {
+    "sha256": "f80e66be6a998aecb8517921c9312998d53dde9dea242cb42ef3a52d85311a30",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/match-2.jpg": {
+    "sha256": "e7782f224570c8ca088330143f52f03e5c7463ecdb2942f4d4dea227a35215f8",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/match-3.jpg": {
+    "sha256": "11d3798ebdd730ada423cefca78143561462b65467bdd291309c35188dbd97f8",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/sort-1.png": {
+    "sha256": "e1ebf7b7d6111ece900547e139a4028e3336b85db1b38f1edf4c3bf1ec0377a3",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/sort-2.png": {
+    "sha256": "fa6ed80fb6846fd8db051dc9e84dade9cab50eeb37d211ee597cfbbf59e510bb",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/sort-3.png": {
+    "sha256": "7e8452286be9bcf2c70ffabfd30bc3ac45d12362255a6586541e863f94d46ec8",
+    "v": "20261027-wereld-puzzle"
+  },
+  "images/leerling/werelden/puzzles/zee/sort-4.png": {
+    "sha256": "7e8452286be9bcf2c70ffabfd30bc3ac45d12362255a6586541e863f94d46ec8",
+    "v": "20261027-wereld-puzzle"
   },
   "js/admin-shell.js": {
     "v": "20261025-kreeft15",

@@ -6,8 +6,9 @@ Productbesluiten voor de visuele reis (**Zee-expeditie**, **Eilandtuin**, **Ster
 
 ### 1. Denkspel-tekeningen per wereld
 
-- Elke wereld heeft **eigen tekeningen/art** voor de drie denkspelen (schelpenrij/zaadrij/steenpad, kaartspel, lichtjes).
-- **Puzzel-logica en antwoorden blijven identiek** (zelfde stappen, zelfde oplossingen); alleen presentatie (CSS, symbolen, titels) verschilt per thema.
+- Elke wereld heeft **eigen aquarel-tekeningen** voor de drie denkspelen (sorteerpuzzel, kaartspel, lichtjes), afgeleid van `docs/mockups/leerling/werelden` (zelfde stijl als Zee-expeditie).
+- Assets staan onder `Jobsy.Web/wwwroot/images/leerling/werelden/puzzles/{zee,tuin,ster}/`, worden **lazy** geladen in `LeerlingPuzzel.razor` en zijn **versioned** via `WwwrootAssetCatalog` / `asset-versions.json`.
+- **Puzzel-logica en antwoorden blijven identiek** (zelfde stappen, zelfde oplossingen); alleen presentatie (titels + raster-art) verschilt per thema.
 
 ### 2. Wisselen van wereld
 

@@ -7,6 +7,7 @@
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Scholen
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -60,7 +61,13 @@ else
                             disabled="@_busy"
                             data-testid="ll-puzzle-shell"
                             @onclick="() => PickShell(idx)">
-                        <span class="ll-puzzle__shell-icon" data-size="@size"></span>
+                        <img class="ll-puzzle__shell-img"
+                             src="@AssetUrl(PupilJourneyTheme.PuzzleSortAsset(_visualTheme, size))"
+                             width="56"
+                             height="56"
+                             loading="lazy"
+                             decoding="async"
+                             alt="" />
                         <span class="visually-hidden">@string.Format(Culture["Leerling.Puzzle.ShellSize"], size)</span>
                     </button>
                 }
@@ -73,14 +80,33 @@ else
                 @for (var i = 0; i < _cardFaces.Count; i++)
                 {
                     var idx = i;
-                    var face = _cardFaces[idx];
-                    var open = _cardOpen.Contains(idx) || _cardMatched.Contains(face);
+                    var pairId = _cardFaces[idx];
+                    var open = _cardOpen.Contains(idx) || _cardMatched.Contains(pairId);
                     <button type="button"
-                            class="ll-puzzle__card @(open ? "is-open" : null) @(_cardMatched.Contains(face) ? "is-matched" : null)"
+                            class="ll-puzzle__card @(open ? "is-open" : null) @(_cardMatched.Contains(pairId) ? "is-matched" : null)"
                             disabled="@(_busy || open || _cardFirst == idx)"
                             data-testid="ll-puzzle-card"
                             @onclick="() => FlipCard(idx)">
-                        @(open ? face : "?")
+                        @if (open)
+                        {
+                            <img class="ll-puzzle__card-face"
+                                 src="@AssetUrl(PupilJourneyTheme.PuzzleMatchAsset(_visualTheme, pairId))"
+                                 width="96"
+                                 height="96"
+                                 loading="lazy"
+                                 decoding="async"
+                                 alt="" />
+                        }
+                        else
+                        {
+                            <img class="ll-puzzle__card-back"
+                                 src="@AssetUrl(PupilJourneyTheme.PuzzleCardBackAsset(_visualTheme))"
+                                 width="96"
+                                 height="96"
+                                 loading="lazy"
+                                 decoding="async"
+                                 alt="" />
+                        }
                     </button>
                 }
             </div>
@@ -98,6 +124,13 @@ else
                             aria-label="@string.Format(Culture["Leerling.Puzzle.Vuurtoren.Lamp"], lamp + 1)"
                             data-testid="ll-puzzle-lamp"
                             @onclick="() => TapLamp(lamp)">
+                        <img class="ll-puzzle__lamp-art"
+                             src="@AssetUrl(PupilJourneyTheme.PuzzleLampAsset(_visualTheme, lamp))"
+                             width="48"
+                             height="48"
+                             loading="lazy"
+                             decoding="async"
+                             alt="" />
                         <span class="ll-puzzle__lamp-glow"></span>
                     </button>
                 }
@@ -232,7 +265,7 @@ else
         _error = null;
         _shellPick = null;
         _shellOrder = [1, 3, 2, 4];
-        _cardFaces = PupilJourneyTheme.PuzzleMatchFaces(_visualTheme).OrderBy(_ => Random.Shared.Next()).ToList();
+        _cardFaces = PupilJourneyTheme.PuzzleMatchPairIds(_visualTheme).OrderBy(_ => Random.Shared.Next()).ToList();
         _cardOpen = [];
         _cardMatched = [];
         _cardFirst = null;
@@ -370,6 +403,9 @@ else
     {
         await SaveAsync(new PupilPuzzleRequest("skipped"));
     }
+
+    private static string AssetUrl(string wwwrootPath)
+        => WwwrootAssetCatalog.UrlLeadingSlash(wwwrootPath.TrimStart('/'));
 
     private async Task SaveAsync(PupilPuzzleRequest request)
     {

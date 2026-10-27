@@ -158,12 +158,70 @@ public static class PupilJourneyTheme
         };
     }
 
-    /// <summary>Memory-match faces per theme (same pairs, different art).</summary>
-    public static IReadOnlyList<string> PuzzleMatchFaces(string? themeKey)
-        => Normalize(themeKey) switch
+    /// <summary>Memory-match pair ids (same logic; art via <see cref="PuzzleMatchAsset"/>).</summary>
+    public static IReadOnlyList<string> PuzzleMatchPairIds(string? themeKey)
+    {
+        _ = Normalize(themeKey);
+        return ["1", "2", "3", "1", "2", "3"];
+    }
+
+    /// <summary>Sort puzzle piece for logical size 1–4 (schelpenrij / zaadrij / steenpad).</summary>
+    public static string PuzzleSortAsset(string? themeKey, int size)
+    {
+        var theme = Normalize(themeKey);
+        var clamped = Math.Clamp(size, 1, 4);
+        var ext = theme == Zee ? "png" : "jpg";
+        return $"/images/leerling/werelden/puzzles/{theme}/sort-{clamped}.{ext}";
+    }
+
+    /// <summary>Memory-match face art for pair id 1–3.</summary>
+    public static string PuzzleMatchAsset(string? themeKey, string pairId)
+    {
+        var theme = Normalize(themeKey);
+        var id = pairId.Trim();
+        if (id is not ("1" or "2" or "3"))
         {
-            Tuin => ["🌸", "🌿", "🦋", "🌸", "🌿", "🦋"],
-            Ster => ["⭐", "🌙", "☁", "⭐", "🌙", "☁"],
-            _ => ["🐚", "⚓", "🐠", "🐚", "⚓", "🐠"],
-        };
+            id = "1";
+        }
+
+        return $"/images/leerling/werelden/puzzles/{theme}/match-{id}.jpg";
+    }
+
+    /// <summary>Vuurtorenlampen lamp art (0-based index).</summary>
+    public static string PuzzleLampAsset(string? themeKey, int lampIndex)
+    {
+        var theme = Normalize(themeKey);
+        var n = Math.Clamp(lampIndex + 1, 1, 3);
+        return $"/images/leerling/werelden/puzzles/{theme}/lamp-{n}.jpg";
+    }
+
+    public static string PuzzleCardBackAsset(string? themeKey)
+    {
+        var theme = Normalize(themeKey);
+        return $"/images/leerling/werelden/puzzles/{theme}/card-back.jpg";
+    }
+
+    /// <summary>All puzzle raster paths (relative to wwwroot) for cache busting.</summary>
+    public static IEnumerable<string> AllPuzzleAssetPaths()
+    {
+        foreach (var theme in All)
+        {
+            for (var size = 1; size <= 4; size++)
+            {
+                yield return PuzzleSortAsset(theme, size).TrimStart('/');
+            }
+
+            for (var pair = 1; pair <= 3; pair++)
+            {
+                yield return PuzzleMatchAsset(theme, pair.ToString()).TrimStart('/');
+            }
+
+            for (var lamp = 1; lamp <= 3; lamp++)
+            {
+                yield return PuzzleLampAsset(theme, lamp - 1).TrimStart('/');
+            }
+
+            yield return PuzzleCardBackAsset(theme).TrimStart('/');
+        }
+    }
 }

@@ -76,4 +76,23 @@ public sealed class PupilJourneyThemeTests
     {
         Assert.Equal(expected, PupilJourneyTheme.PuzzleTitleKey(theme, puzzle));
     }
+
+    [Theory]
+    [InlineData(PupilJourneyTheme.Zee, 1, "/images/leerling/werelden/puzzles/zee/sort-1.png")]
+    [InlineData(PupilJourneyTheme.Tuin, 4, "/images/leerling/werelden/puzzles/tuin/sort-4.jpg")]
+    [InlineData(PupilJourneyTheme.Ster, 2, "/images/leerling/werelden/puzzles/ster/sort-2.jpg")]
+    public void Puzzle_sort_assets_per_theme(string theme, int size, string expected)
+    {
+        Assert.Equal(expected, PupilJourneyTheme.PuzzleSortAsset(theme, size));
+    }
+
+    [Fact]
+    public void Puzzle_match_pair_ids_are_shared_logic()
+    {
+        var ids = PupilJourneyTheme.PuzzleMatchPairIds(PupilJourneyTheme.Tuin);
+        Assert.Equal(["1", "2", "3", "1", "2", "3"], ids);
+        Assert.Equal(
+            "/images/leerling/werelden/puzzles/ster/match-2.jpg",
+            PupilJourneyTheme.PuzzleMatchAsset(PupilJourneyTheme.Ster, "2"));
+    }
 }
