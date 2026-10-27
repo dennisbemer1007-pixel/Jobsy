@@ -117,6 +117,7 @@ public static class PageAssetCatalog
 
     public static readonly string[] SchoolCss =
     [
+        WwwrootAssetCatalog.Url("css/features/enterprise-ui.css"),
         WwwrootAssetCatalog.Url("css/features/scholen.css"),
     ];
 
