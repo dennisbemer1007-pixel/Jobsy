@@ -229,6 +229,22 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Authenticated employer/candidate writes (e.g. kandidatenkaart invite POST).
+    options.AddPolicy("authenticated-write", httpContext =>
+    {
+        var userId = RateLimitPartitioning.ResolveUserId(httpContext.User);
+        var partition = string.IsNullOrWhiteSpace(userId)
+            ? "authenticated-write:" + RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret)
+            : "authenticated-write:uid:" + userId;
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partition,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicWriteLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+    });
     options.AddPolicy("kvk-search", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),

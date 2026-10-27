@@ -12,6 +12,7 @@
 @inject CultureState Culture
 @inject IJSRuntime Js
 @using Jobsy.Web.Werkgever
+@using Jobsy.Web.Navigation
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 
@@ -131,7 +132,18 @@
 
         <div class="kk-layout-b">
             <div class="kk-layout-b__list">
+                @if (_needsPublishedVacancy)
+                {
+                    <div class="kk-empty-vacancy" data-kk-no-vacancy="1">
+                        <h2>@Culture["Kk.NoVacancy.Title"]</h2>
+                        <p>@Culture["Kk.NoVacancy.Body"]</p>
+                        <a class="login-submit kk-btn--block" href="@EmployerLinks.NewVacancy">@Culture["Kk.NoVacancy.Cta"]</a>
+                    </div>
+                }
+                else
+                {
                 <KandidatenkaartAreaListPanel Compact="false" Map="_map" SelectedArea="@_selectedArea" OnSelect="SelectArea" Culture="Culture" />
+                }
                 @if (ShowInviteCta)
                 {
                     <div class="kk-list-invite-bar">
@@ -142,6 +154,12 @@
                 }
             </div>
             <div class="kk-layout-b__map">
+                @if (_needsPublishedVacancy)
+                {
+                    <div class="kk-map-pane kk-map-pane--placeholder" aria-hidden="true"></div>
+                }
+                else
+                {
                 <div id="@_mapId" class="map-pane kk-map-pane" aria-label="@Culture["Kk.Title"]">
                     <div class="map-pane__top-chrome">
                         <div class="map-legend">
@@ -152,13 +170,25 @@
                         </div>
                     </div>
                 </div>
+                }
             </div>
         </div>
 
-        <div class="kk-mobile-sheet @(_map?.BelowThreshold == true ? "kk-mobile-sheet--sparse" : null)">
+        <div class="kk-mobile-sheet @(_map?.BelowThreshold == true ? "kk-mobile-sheet--sparse" : null) @(_needsPublishedVacancy ? "kk-mobile-sheet--no-vacancy" : null)">
             <div class="kk-mobile-sheet__peek">@Culture["Kk.Mobile.AreasPeek"]</div>
             <div class="kk-mobile-sheet__body kk-mobile-sheet__body--list">
+                @if (_needsPublishedVacancy)
+                {
+                    <div class="kk-empty-vacancy kk-empty-vacancy--mobile" data-kk-no-vacancy="1">
+                        <h2>@Culture["Kk.NoVacancy.Title"]</h2>
+                        <p>@Culture["Kk.NoVacancy.Body"]</p>
+                        <a class="login-submit kk-btn--block" href="@EmployerLinks.NewVacancy">@Culture["Kk.NoVacancy.Cta"]</a>
+                    </div>
+                }
+                else
+                {
                 <KandidatenkaartAreaListPanel Compact="true" Map="_map" SelectedArea="@_selectedArea" OnSelect="SelectArea" Culture="Culture" />
+                }
             </div>
             @if (ShowInviteCta)
             {
@@ -301,6 +331,7 @@
     private DotNetObjectReference<KandidatenkaartMapAreaBridge>? _mapBridgeRef;
     private bool _initialized;
     private bool _mapMounted;
+    private bool _needsPublishedVacancy;
 
     private int InviteMatchFloor => KandidatenkaartRules.MinMatchPercentForInvite;
 
@@ -341,14 +372,32 @@
         {
             _vacancyId = _vacancies[0].Id;
         }
+        else
+        {
+            _needsPublishedVacancy = true;
+        }
 
-        await KandidatenkaartMapInterop.EnsureLoadedAsync(Js);
-        _mapBridgeRef = DotNetObjectReference.Create(new KandidatenkaartMapAreaBridge(this));
+        if (!_needsPublishedVacancy)
+        {
+            await KandidatenkaartMapInterop.EnsureLoadedAsync(Js);
+            _mapBridgeRef = DotNetObjectReference.Create(new KandidatenkaartMapAreaBridge(this));
+        }
+
         await ReloadAsync();
     }
 
     private async Task ReloadAsync()
     {
+        if (_vacancyId is null || _vacancies.Count == 0)
+        {
+            _needsPublishedVacancy = true;
+            _map = null;
+            _selectedArea = null;
+            StateHasChanged();
+            return;
+        }
+
+        _needsPublishedVacancy = false;
         _map = await Api.GetKandidatenkaartMapAsync(
             CurrentCompanyId,
             _vacancyId,
@@ -356,6 +405,19 @@
             _travelKm,
             _availability,
             _hours);
+
+        if (_map is null)
+        {
+            _needsPublishedVacancy = true;
+            StateHasChanged();
+            return;
+        }
+
+        if (_mapBridgeRef is null)
+        {
+            await KandidatenkaartMapInterop.EnsureLoadedAsync(Js);
+            _mapBridgeRef = DotNetObjectReference.Create(new KandidatenkaartMapAreaBridge(this));
+        }
 
         if (_map?.BelowThreshold == true)
         {
