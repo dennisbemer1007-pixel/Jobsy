@@ -21,7 +21,6 @@
 
 <section class="pub-section uwv-adviseur-deel-page" aria-labelledby="uwv-deel-title">
     <div class="pub-card uwv-adviseur-deel-card">
-        <PublicLangMenu ReturnPath="@ReturnPath" />
         @if (!string.IsNullOrWhiteSpace(_problem))
         {
             <h1 id="uwv-deel-title">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Link expired" : "Link verlopen")</h1>
@@ -50,8 +49,6 @@
     private string? _problem;
     private string? _documentHtml;
     private string _viewLanguage = "nl";
-
-    private string ReturnPath => "/deel/uwv-adviseur/" + Token;
 
     protected override async Task OnInitializedAsync()
     {
