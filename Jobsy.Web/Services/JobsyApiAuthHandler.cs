@@ -99,7 +99,14 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var refreshed = await TrySilentDeviceRefreshAsync(httpContext, cancellationToken);
         if (!refreshed)
         {
-            await NotifySessionExpiredAsync(httpContext);
+            var apiPath = request.RequestUri?.AbsolutePath ?? "";
+            // Pupil circuits call staff profile endpoints during culture init; a 401 there
+            // must not tear down the leerling session or redirect the paspoort document.
+            if (!(IsPupilPrincipal(user) && !ForwardsPupilCookie(apiPath)))
+            {
+                await NotifySessionExpiredAsync(httpContext);
+            }
+
             return response;
         }
 

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -119,7 +120,8 @@ public sealed class CultureState
         try
         {
             var state = await _authState.GetAuthenticationStateAsync();
-            if (state.User.Identity?.IsAuthenticated == true)
+            if (state.User.Identity?.IsAuthenticated == true
+                && !JobsyApiAuthHandler.IsPupilPrincipal(state.User))
             {
                 api = _services.GetRequiredService<JobsyApiClient>();
                 var profile = await api.GetMyProfileAsync();
@@ -193,7 +195,8 @@ public sealed class CultureState
         await PersistCookieAsync(Language);
 
         var auth = await _authState.GetAuthenticationStateAsync();
-        if (auth.User.Identity?.IsAuthenticated == true)
+        if (auth.User.Identity?.IsAuthenticated == true
+            && !JobsyApiAuthHandler.IsPupilPrincipal(auth.User))
         {
             try
             {
