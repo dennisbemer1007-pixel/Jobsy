@@ -354,6 +354,11 @@ public static class PageAssetCatalog
                 : [];
         }
 
+        if (Bedrijvenkaart.BedrijvenkaartSsrPaths.IsHostPath(path))
+        {
+            return [];
+        }
+
         if (path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/ondernemerscheck", StringComparison.OrdinalIgnoreCase)
@@ -442,6 +447,19 @@ public static class PageAssetCatalog
         var path = PageSeoCatalog.Normalize(rawPath);
         return path is "/banenkaart" or "/banen";
     }
+
+    public static bool IncludeBedrijvenkaartClientScript(string? rawPath)
+        => Bedrijvenkaart.BedrijvenkaartSsrPaths.IsHostPath(PageSeoCatalog.Normalize(rawPath));
+
+    /// <summary>Lean styles for <c>[NoBlazorRuntime]</c> bedrijvenkaart SSR.</summary>
+    public static IReadOnlyList<string> BedrijvenkaartSsrStylesheets() =>
+    [
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-header-strip.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/kandidaat-banen.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart-illustrated.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/bedrijvenkaart.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-hero-compact-preview.css"),
+    ];
 
     /// <summary>Idle prefetch of banenkaart catalog + map assets (candidate paspoort home).</summary>
     public static bool IncludeBanenkaartPrefetch(string? rawPath)

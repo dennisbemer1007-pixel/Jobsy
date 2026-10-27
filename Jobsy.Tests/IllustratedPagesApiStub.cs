@@ -235,6 +235,11 @@ public static class IllustratedPagesApiStub
             return "[]";
         }
 
+        if (path.Contains("/company-map-initiative/pins", StringComparison.OrdinalIgnoreCase))
+        {
+            return "[]";
+        }
+
         if (path.Contains("/companies/mine", StringComparison.OrdinalIgnoreCase))
         {
             return $$"""
