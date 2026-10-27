@@ -371,6 +371,17 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Onboarding mini-test saves (many partial PUTs while clicking through steps 7–10).
+    options.AddPolicy("assessment-write", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 240,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     // GET api/privacy/export: per signed-in user, same budget as the web download.
     options.AddPolicy("export", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(

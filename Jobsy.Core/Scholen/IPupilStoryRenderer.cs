@@ -8,9 +8,13 @@ namespace Jobsy.Core.Scholen;
 /// </summary>
 public interface IPupilStoryRenderer
 {
-    PupilStoryViewDto Render(PupilResult result, PupilProgress? progress);
+    PupilStoryViewDto Render(PupilResult result, PupilProgress? progress, string language = "nl");
 
-    DreamJobRouteStubDto RenderDreamRoute(PupilResult result, PupilProgress? progress, PupilClassContext classContext);
+    DreamJobRouteStubDto RenderDreamRoute(
+        PupilResult result,
+        PupilProgress? progress,
+        PupilClassContext classContext,
+        string language = "nl");
 
     /// <summary>Resolved Dutch starter lines (not localization keys).</summary>
     IReadOnlyList<string> ConversationStarterKeys(PupilResult result);

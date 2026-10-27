@@ -87,7 +87,19 @@ public static class OnboardingStartFormEndpoints
         {
             var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
             var pickBody = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
-            var pickMerged = MergeNavFlags(pickBody, advance: false, goBack: false, skipOptional: false);
+            var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
+                currentStep,
+                api,
+                featureFlags,
+                culture,
+                cancellationToken);
+            var total = mini.Questions.Count;
+            var lastQuestionInBlock = total > 0 && q >= total;
+            var pickMerged = MergeNavFlags(
+                pickBody,
+                advance: lastQuestionInBlock,
+                goBack: false,
+                skipOptional: false);
             var (pickStatus, pickPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
                 currentStep,
                 pickMerged,
@@ -101,24 +113,17 @@ public static class OnboardingStartFormEndpoints
                 return ToRedirect(pickStatus, pickPayload, currentStep, false, false, culture);
             }
 
-            var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
-                currentStep,
-                api,
-                featureFlags,
-                culture,
-                cancellationToken);
-            var total = mini.Questions.Count;
+            if (lastQuestionInBlock)
+            {
+                return ToRedirect(pickStatus, pickPayload, currentStep, advance: true, goBack: false, culture);
+            }
+
             if (total > 0 && q < total)
             {
                 return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q + 1));
             }
 
-            if (currentStep < 10)
-            {
-                return SeeOther(OnboardingRoutes.StepUrl(currentStep + 1));
-            }
-
-            return SeeOther(OnboardingRoutes.KompasReadyPath);
+            return SeeOther(OnboardingRoutes.StepUrl(currentStep));
         }
 
         if (!string.IsNullOrWhiteSpace(obDreamPick) && currentStep == 6)

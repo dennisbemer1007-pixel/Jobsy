@@ -58,9 +58,26 @@ else
     private PupilG78PassportWebDto? _model;
     private string? _displayName;
 
-    private string PdfHref => string.IsNullOrWhiteSpace(_displayName)
-        ? "/leerling/pdf"
-        : $"/leerling/pdf?naam={Uri.EscapeDataString(_displayName)}";
+    private string PdfHref
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(_displayName))
+            {
+                parts.Add($"naam={Uri.EscapeDataString(_displayName)}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(_languageQuery))
+            {
+                parts.Add($"lang={Uri.EscapeDataString(_languageQuery)}");
+            }
+
+            return parts.Count == 0 ? "/leerling/pdf" : $"/leerling/pdf?{string.Join("&", parts)}";
+        }
+    }
+
+    private string? _languageQuery;
 
     protected override async Task OnInitializedAsync()
     {
@@ -75,10 +92,16 @@ else
             return;
         }
 
-        _model = await Api.GetPupilG78PassportAsync();
+        await ReloadPassportAsync();
+        _loading = false;
+    }
+
+    private async Task ReloadPassportAsync()
+    {
+        _languageQuery = Culture.Language;
+        _model = await Api.GetPupilG78PassportAsync(language: _languageQuery);
         _enabled = _model?.Enabled == true;
         _displayName = _model?.DisplayName;
-        _loading = false;
     }
 
     private Task OnNameChanged(string? name)
@@ -87,7 +110,11 @@ else
         return Task.CompletedTask;
     }
 
-    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    private void OnCultureChanged() => _ = InvokeAsync(async () =>
+    {
+        await ReloadPassportAsync();
+        StateHasChanged();
+    });
 
     public void Dispose() => Culture.Changed -= OnCultureChanged;
 }

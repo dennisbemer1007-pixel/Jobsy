@@ -17,7 +17,9 @@ public static class PupilPassportWebMapper
             return new PupilG78PassportWebDto(Enabled: false);
         }
 
-        var nl = System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
+        var dateCulture = PupilVerhaalLocalized.IsEnglish(m.Language)
+            ? System.Globalization.CultureInfo.GetCultureInfo("en-GB")
+            : System.Globalization.CultureInfo.GetCultureInfo("nl-NL");
         var worlds = m.Worlds.Select(w => new PupilG78PassportWorldDto(
             PlaceName: w.Title,
             SectionLabel: w.Subtitle,
@@ -31,7 +33,7 @@ public static class PupilPassportWebMapper
                 : RoutePhaseKeys[Math.Min(i, RoutePhaseKeys.Length - 2)];
             var title = SplitTitle(step.Title);
             return new PupilG78PassportRouteStepDto(
-                PupilPassportCopy.Get(phaseKey),
+                PupilPassportLocalizedCopy.Get(phaseKey, m.Language),
                 title,
                 step.Detail,
                 step.IsGoal);
@@ -53,7 +55,7 @@ public static class PupilPassportWebMapper
             SchoolName: m.SchoolName,
             ClassLabel: m.ClassLabel,
             DisplayCode: m.DisplayCode,
-            DateLabel: m.Date.ToString("d MMM yyyy", nl),
+            DateLabel: m.Date.ToString("d MMM yyyy", dateCulture),
             DisplayName: m.DisplayNameOnPdf,
             StoryBody: m.StoryBody,
             Worlds: worlds,
@@ -83,8 +85,10 @@ public static class PupilPassportWebMapper
 
         var title = m.DreamJobTitle.TrimEnd('!', '.');
         return string.Format(
-            System.Globalization.CultureInfo.GetCultureInfo("nl-NL"),
-            PupilPassportCopy.Get("LeerlingPassport.Dream.Bubble"),
+            PupilVerhaalLocalized.IsEnglish(m.Language)
+                ? System.Globalization.CultureInfo.GetCultureInfo("en-GB")
+                : System.Globalization.CultureInfo.GetCultureInfo("nl-NL"),
+            PupilPassportLocalizedCopy.Get("LeerlingPassport.Dream.Bubble", m.Language),
             title);
     }
 

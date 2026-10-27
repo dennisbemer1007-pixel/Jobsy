@@ -38,7 +38,7 @@ public sealed class CandidateCareerInterestsController : ControllerBase
     }
 
     [HttpPut("career-interests")]
-    [EnableRateLimiting("public-write")]
+    [EnableRateLimiting("assessment-write")]
     public async Task<ActionResult<CandidateCareerInterestStateDto>> Save(
         [FromBody] SaveCandidateCompetenciesRequest request,
         CancellationToken cancellationToken)

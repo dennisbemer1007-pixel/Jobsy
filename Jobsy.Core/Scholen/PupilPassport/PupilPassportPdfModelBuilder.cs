@@ -20,10 +20,11 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         var progress = code.Progress;
         var ctx = PupilClassContext.From(schoolClass);
         var variant = ctx.Set == PupilQuestionSet.Groep78 ? PupilPassportVariant.Groep78 : PupilPassportVariant.Vo;
-        var storyView = story.Render(result, progress);
-        var dream = story.RenderDreamRoute(result, progress, ctx);
-        var likes = ResolveChipLabels(ParseTagList(progress?.LikesJson));
-        var dislikes = ResolveChipLabels(ParseTagList(progress?.DislikesJson));
+        var lang = NormalizeLanguage(language);
+        var storyView = story.Render(result, progress, lang);
+        var dream = story.RenderDreamRoute(result, progress, ctx, lang);
+        var likes = ResolveChipLabels(ParseTagList(progress?.LikesJson), lang);
+        var dislikes = ResolveChipLabels(ParseTagList(progress?.DislikesJson), lang);
         var likeKeys = ParseTagList(progress?.LikesJson);
         var keys = PupilStoryTemplates.TryParse(result.StoryKeysJson)
                    ?? PupilStoryTemplates.SelectKeys(result, likeKeys, ctx.Set);
@@ -45,8 +46,8 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         var jobKeys = keys.JobIdeaKeys;
         var cards = PupilPassportJobCards.Build(jobKeys, likes, ctx.Set);
         var strengths = PupilPassportStrengths.For(result);
-        var discovery = PupilPassportCopy.DiscoveryQuestions(dream.JobKey, holland);
-        var tips = PupilPassportCopy.HomeClassTips(dream.JobKey, riasecLetter);
+        var discovery = PupilPassportLocalizedCopy.DiscoveryQuestions(dream.JobKey, holland, lang);
+        var tips = PupilPassportLocalizedCopy.HomeClassTips(dream.JobKey, riasecLetter, lang);
 
         var date = DateOnly.FromDateTime(result.CompletedAtUtc == default
             ? DateTime.UtcNow
@@ -117,7 +118,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             Variant: variant,
             Language: language,
             SchoolName: schoolName,
-            ClassLabel: BuildClassLabel(ctx, schoolClass.Name),
+            ClassLabel: BuildClassLabel(ctx, schoolClass.Name, lang),
             DisplayCode: displayCode,
             Date: date,
             WorldsCompleted: 4,
@@ -142,8 +143,8 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             DiscoveryQuestions: discovery,
             HomeClassTips: tips,
             FooterPrivacy: variant == PupilPassportVariant.Groep78
-                ? PupilPassportCopy.Get("LeerlingPassport.Footer.G78")
-                : PupilPassportCopy.Get("LeerlingPassport.Footer.Vo"),
+                ? PupilPassportLocalizedCopy.Get("LeerlingPassport.Footer.G78", lang)
+                : PupilPassportLocalizedCopy.Get("LeerlingPassport.Footer.Vo", lang),
             ArchetypeTagline: variant == PupilPassportVariant.Vo
                 ? PupilPassportCopy.ArchetypeTagline(holland)
                 : null,
@@ -193,9 +194,11 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         _ => $"Wereld {n}"
     };
 
-    private static string BuildClassLabel(PupilClassContext ctx, string className)
+    private static string BuildClassLabel(PupilClassContext ctx, string className, string language)
         => ctx.Set == PupilQuestionSet.Groep78
-            ? $"Groep {ctx.Year} · {className}"
+            ? PupilVerhaalLocalized.IsEnglish(language)
+                ? $"Group {ctx.Year} · {className}"
+                : $"Groep {ctx.Year} · {className}"
             : $"{LevelShort(ctx.Level, ctx.Year)} · {className}";
 
     private static string LevelShort(SchoolLevel level, int year) => level switch
@@ -236,8 +239,11 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         }
     }
 
-    private static List<string> ResolveChipLabels(IReadOnlyList<string> keys)
-        => keys.Select(PupilPortalChipLabels.Dutch).ToList();
+    private static List<string> ResolveChipLabels(IReadOnlyList<string> keys, string language)
+        => keys.Select(k => PupilPortalChipLabels.Label(k, language)).ToList();
+
+    private static string NormalizeLanguage(string language)
+        => string.IsNullOrWhiteSpace(language) ? "nl" : language.Trim();
 
     private static string? ProfileLabel(string? key) => key switch
     {
@@ -294,6 +300,9 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
 /// <summary>Shared chip labels (keeps builder free of Infrastructure).</summary>
 public static class PupilPortalChipLabels
 {
+    public static string Label(string key, string language)
+        => PupilVerhaalLocalized.IsEnglish(language) ? English(key) : Dutch(key);
+
     public static string Dutch(string key) => key switch
     {
         "sport" => "Sport",
@@ -311,5 +320,24 @@ public static class PupilPortalChipLabels
         "druk-lawaai" => "Druk en lawaai",
         "voor-de-klas" => "Voor de klas staan",
         _ => key
+    };
+
+    public static string English(string key) => key switch
+    {
+        "sport" => "Sport",
+        "buiten" => "Being outdoors",
+        "dieren" => "Animals",
+        "gamen" => "Gaming",
+        "tekenen" => "Drawing",
+        "muziek" => "Music",
+        "koken" => "Cooking",
+        "techniek" => "Technology",
+        "lezen" => "Reading",
+        "natuur" => "Nature",
+        "puzzels" => "Puzzles",
+        "lang-stilzitten" => "Sitting still for long",
+        "druk-lawaai" => "Noise and bustle",
+        "voor-de-klas" => "Speaking in front of class",
+        _ => Dutch(key)
     };
 }

@@ -76,11 +76,25 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilDreamJobResponse>(response.Content, ct);
     }
 
-    public async Task<PupilG78PassportWebDto?> GetPupilG78PassportAsync(string? displayName = null, CancellationToken ct = default)
+    public async Task<PupilG78PassportWebDto?> GetPupilG78PassportAsync(
+        string? displayName = null,
+        string? language = null,
+        CancellationToken ct = default)
     {
-        var q = string.IsNullOrWhiteSpace(displayName)
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(displayName))
+        {
+            query.Add($"naam={Uri.EscapeDataString(displayName)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(language))
+        {
+            query.Add($"lang={Uri.EscapeDataString(language)}");
+        }
+
+        var q = query.Count == 0
             ? "api/pupil/passport/g78"
-            : $"api/pupil/passport/g78?naam={Uri.EscapeDataString(displayName)}";
+            : $"api/pupil/passport/g78?{string.Join("&", query)}";
         return await GetApiJsonAsync<PupilG78PassportWebDto>(q, ct);
     }
 

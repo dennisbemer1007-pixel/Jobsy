@@ -3841,6 +3841,7 @@ public static class UiStrings
         UiStringsLeerlingVragenVo.MergeNl(nl);
         UiStringsLeerlingVerhaal.MergeNl(nl);
         UiStringsLeerlingPaspoort.MergeAll(nl, en, pl, ro, ar);
+        en["LeerlingStory.CheckDream"] = "Check your dream job";
         UiStringsSales.MergeNl(nl);
         UiStringsLanding.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateSignup.MergeAll(nl, en, pl, ro, ar);
