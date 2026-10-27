@@ -59,11 +59,13 @@ internal static class BedrijvenkaartSsrShells
             .Append(model.Pins.Count == 0 ? "" : " hidden")
             .Append("><p class=\"bk-empty-state__lead\">")
             .Append(WebUtility.HtmlEncode(culture["Bk.Empty.Lead"]))
-            .Append("</p><button type=\"button\" class=\"jobsy-action\" data-bk-expand-radius=\"1\">")
+            .Append("</p><button type=\"button\" class=\"btn btn-secondary\" data-bk-expand-radius=\"1\">")
             .Append(WebUtility.HtmlEncode(culture["Bk.Empty.ExpandRadius"]))
             .Append("</button></div>");
 
-        sb.Append("<div class=\"bk-shell bk-shell--desktop-split\">");
+        sb.Append("<div class=\"bk-shell bk-shell--desktop-split\"")
+            .Append(model.Pins.Count == 0 ? " data-bk-list-empty=\"1\"" : "")
+            .Append('>');
         sb.Append("<div class=\"bk-list\" role=\"list\">");
         foreach (var pin in model.Pins)
         {
@@ -93,16 +95,8 @@ internal static class BedrijvenkaartSsrShells
         sb.Append("<div class=\"bk-filters\" data-bk-filter-form=\"1\">");
         sb.Append("<div class=\"bk-filters__track\">");
         sb.Append("<div class=\"bk-filters__row\">");
-        sb.Append("<div class=\"bk-filters__group\" role=\"group\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllSectors"]))
-            .Append("\"><button type=\"button\" class=\"jobsy-action is-active\" aria-pressed=\"true\">")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllSectors"]))
-            .Append("</button></div>");
-        sb.Append("<div class=\"bk-filters__group\" role=\"group\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllFields"]))
-            .Append("\"><button type=\"button\" class=\"jobsy-action is-active\" aria-pressed=\"true\">")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllFields"]))
-            .Append("</button></div>");
+        AppendFilterMenu(sb, "sector", culture["Bk.Filter.AllSectors"]);
+        AppendFilterMenu(sb, "field", culture["Bk.Filter.AllFields"]);
         sb.Append("<div class=\"bk-filters__group\" role=\"group\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Bk.Filter.Distance"]))
             .Append("\">");
@@ -132,6 +126,21 @@ internal static class BedrijvenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Bk.Filter.RespondsFast"]))
             .Append("</button>");
         sb.Append("</div></div></div>");
+    }
+
+    private static void AppendFilterMenu(StringBuilder sb, string kind, string allLabel)
+    {
+        sb.Append("<div class=\"bk-filters__group bk-filters__group--menu\" role=\"group\" aria-label=\"")
+            .Append(WebUtility.HtmlEncode(allLabel))
+            .Append("\"><button type=\"button\" class=\"jobsy-action is-active\" aria-pressed=\"true\" aria-haspopup=\"listbox\" aria-expanded=\"false\" data-bk-filter-menu=\"")
+            .Append(WebUtility.HtmlEncode(kind))
+            .Append("\" data-bk-filter-all-label=\"")
+            .Append(WebUtility.HtmlEncode(allLabel))
+            .Append("\">")
+            .Append(WebUtility.HtmlEncode(allLabel))
+            .Append("</button><div class=\"bk-filter-menu\" role=\"listbox\" hidden data-bk-filter-menu-panel=\"")
+            .Append(WebUtility.HtmlEncode(kind))
+            .Append("\"></div></div>");
     }
 
     private static void AppendCard(StringBuilder sb, CultureState culture, CompanyMapPinDto pin)
