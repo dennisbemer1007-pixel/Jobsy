@@ -80,4 +80,40 @@ public sealed class AcceptatieActivityLogEnsurerTests
             "EmployersEnabled",
             PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson));
     }
+
+    [Fact]
+    public async Task EnsureKandidatenkaartEnabled_turns_on_locked_off_acceptatie_row()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        await using var db = new JobsyDbContext(options);
+
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            KandidatenkaartEnabled = false,
+            AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(null, "KandidatenkaartEnabled")
+        });
+        await db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Lobsy:DeploymentEnvironment"] = "Acceptatie",
+                ["JobsyFeatures:KandidatenkaartEnabled"] = "true"
+            })
+            .Build();
+
+        await AcceptatiePlatformFeatureEnsurer.EnsureKandidatenkaartEnabledAsync(
+            db,
+            config,
+            NullLogger.Instance);
+
+        var row = await db.PlatformFeatureSettings.SingleAsync();
+        Assert.True(row.KandidatenkaartEnabled);
+        Assert.DoesNotContain(
+            "KandidatenkaartEnabled",
+            PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson));
+    }
 }

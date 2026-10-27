@@ -14,6 +14,22 @@ public sealed class AcceptatieAfterMatchConfigTests
     }
 
     [Fact]
+    public void Api_acceptatie_appsettings_enables_kandidatenkaart()
+    {
+        var path = Path.Combine(TestRepo.FindRoot(), "Jobsy.Api/appsettings.Acceptatie.json");
+        var json = File.ReadAllText(path);
+        Assert.Contains("\"KandidatenkaartEnabled\": true", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Web_acceptatie_appsettings_enables_kandidatenkaart()
+    {
+        var path = Path.Combine(TestRepo.FindRoot(), "Jobsy.Web/appsettings.Acceptatie.json");
+        var json = File.ReadAllText(path);
+        Assert.Contains("\"KandidatenkaartEnabled\": true", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Acceptatie_bootstrap_hosted_service_source_requires_after_match()
     {
         var path = Path.Combine(
