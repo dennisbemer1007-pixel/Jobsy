@@ -34,6 +34,32 @@ public static partial class ScholenNavRouting
         return currentPath.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>School mobile bottom nav: Dashboard only on <c>/school</c>; Meer on secondary school pages.</summary>
+    public static bool IsSchoolBottomNavActive(string currentPath, string labelKey, string href)
+    {
+        currentPath = NormalizePath(currentPath);
+        if (string.Equals(labelKey, "School.Nav.Dashboard", StringComparison.Ordinal))
+        {
+            return string.Equals(currentPath, "/school", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (string.Equals(labelKey, "School.Nav.More", StringComparison.Ordinal))
+        {
+            if (string.Equals(currentPath, "/school", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return currentPath.StartsWith("/school/te-doen", StringComparison.OrdinalIgnoreCase)
+                   || currentPath.StartsWith("/school/leraren", StringComparison.OrdinalIgnoreCase)
+                   || currentPath.StartsWith("/school/gegevens", StringComparison.OrdinalIgnoreCase)
+                   || currentPath.StartsWith("/school/privacy", StringComparison.OrdinalIgnoreCase)
+                   || currentPath.StartsWith("/school/materiaal", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return IsNavActive(currentPath, href);
+    }
+
     private static string NormalizePath(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
