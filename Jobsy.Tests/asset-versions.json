@@ -403,6 +403,10 @@
     "v": "20261027-bk-pr2",
     "sha256": "a8cc3a3b17430a04477111139ff2281856f1f2aa12da83d8f98967c460720be5"
   },
+  "js/bedrijvenkaart-ssr-map.js": {
+    "v": "20261027-bk-map-pr3",
+    "sha256": "fe92044371b883e8850cb6f0e33aaa51f0e6a579188f11b8202ee683687b560a"
+  },
   "js/blazor-boot.js": {
     "sha256": "c2e0e0546bbd82bbf8cc7ca7516e4f5853ab4609018475ee4a62a9d63bf8bb06",
     "v": "20261021-15"

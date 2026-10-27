@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -12,7 +13,9 @@ internal static class BedrijvenkaartSsrShells
     internal static string BuildBody(CultureState culture, BedrijvenkaartSsrData.PageModel model)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"bk-page panel-page--cand-ill\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-testid=\"bedrijvenkaart-ssr-root\">");
+        sb.Append("<div class=\"bk-page panel-page--cand-ill\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-bk-radius-km=\"")
+            .Append(model.RadiusKm)
+            .Append("\" data-testid=\"bedrijvenkaart-ssr-root\">");
         sb.Append("<div class=\"bk-page__hero-stack\">");
         sb.Append("<div class=\"bk-map-toggle\" role=\"tablist\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Jobs"]))
@@ -62,7 +65,10 @@ internal static class BedrijvenkaartSsrShells
             .Append("</span></div>");
         sb.Append("<div>Alle bedrijven op Lobsy</div>");
         sb.Append("<div>Uitzendbureau vestiging</div>");
-        sb.Append("</div></div></div></div></div>");
+        sb.Append("</div></div></div></div>");
+        sb.Append("<script type=\"application/json\" id=\"bedrijvenkaart-ssr-pins\">");
+        sb.Append(JsonSerializer.Serialize(model.Pins));
+        sb.Append("</script></div>");
         return sb.ToString();
     }
 

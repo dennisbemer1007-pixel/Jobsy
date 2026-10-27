@@ -15,7 +15,10 @@ public sealed class BedrijvenkaartSsrRenderTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("data-bedrijvenkaart-ssr=\"1\"", html, StringComparison.Ordinal);
         Assert.Contains("css/features/bedrijvenkaart.css", html, StringComparison.Ordinal);
+        Assert.Contains("css/features/banenkaart-page.css", html, StringComparison.Ordinal);
         Assert.Contains("css/features/kandidaat-banen.css", html, StringComparison.Ordinal);
+        Assert.Contains("bedrijvenkaart-ssr-map.js", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"bedrijvenkaart-ssr-pins\"", html, StringComparison.Ordinal);
         Assert.Contains("bk-shell", html, StringComparison.Ordinal);
         Assert.Contains("bedrijvenkaart-map", html, StringComparison.Ordinal);
         Assert.Contains("data-bk-view-toggle", html, StringComparison.Ordinal);
