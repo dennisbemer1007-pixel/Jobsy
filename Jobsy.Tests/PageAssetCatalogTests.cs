@@ -9,7 +9,7 @@ public class PageAssetCatalogTests
     private const int WerkgeverCss = 6;
     private const int BeheerCss = 2;
     private const int SalesCss = 1;
-    private const int SchoolCss = 1;
+    private const int SchoolCss = 2;
 
     [Theory]
     [InlineData("/", CoreCss)]
@@ -62,9 +62,12 @@ public class PageAssetCatalogTests
             Assert.Contains(kkSheets, s => s.StartsWith("css/features/kandidatenkaart.css", StringComparison.Ordinal));
         }
 
-        if (path.StartsWith("/leerling", StringComparison.Ordinal))
+        if (path.StartsWith("/leerling", StringComparison.Ordinal)
+            || path.StartsWith("/leraar", StringComparison.Ordinal)
+            || path.StartsWith("/school", StringComparison.Ordinal))
         {
             Assert.Contains(sheets, s => s.StartsWith("css/features/scholen.css", StringComparison.Ordinal));
+            Assert.Contains(sheets, s => s.StartsWith("css/features/enterprise-ui.css", StringComparison.Ordinal));
             Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
         }
     }

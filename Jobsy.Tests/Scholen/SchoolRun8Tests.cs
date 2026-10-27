@@ -99,7 +99,7 @@ public class SchoolRun8CopyTests : BunitContext
     {
         var root = TestRepo.FindRoot();
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("\"/wie-zijn-wij\"", app, StringComparison.Ordinal);
+        Assert.Contains("PageSeoCatalog", app, StringComparison.Ordinal);
         Assert.Equal("Seo.AboutTitle", PageSeoCatalog.Resolve("/wie-zijn-wij").TitleKey);
         Assert.Equal("Seo.SchoolsTitle", PageSeoCatalog.Resolve("/scholen").TitleKey);
     }

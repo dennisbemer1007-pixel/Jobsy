@@ -109,11 +109,11 @@ else
                 @foreach (var codeRow in _detail.Codes)
                 {
                     <tr class="ent-data-table__row">
-                        <td class="tabular">@codeRow.Number</td>
-                        <td><span class="sch-code">@codeRow.DisplayCode</span></td>
-                        <td><span class="sch-pill @StatusPill(codeRow.Status)">@StatusLabel(codeRow)</span></td>
-                        <td>@(codeRow.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
-                        <td class="sch-row-actions">
+                        <td class="tabular" data-label="#">@codeRow.Number</td>
+                        <td data-label="@Culture["School.Col.Code"]"><span class="sch-code">@codeRow.DisplayCode</span></td>
+                        <td data-label="@Culture["School.Col.Status"]"><span class="sch-pill @StatusPill(codeRow.Status)">@StatusLabel(codeRow)</span></td>
+                        <td data-label="@Culture["School.Col.LastActive"]">@(codeRow.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
+                        <td class="sch-row-actions" data-label="">
                             <button type="button" class="btn-compact" @onclick="() => ReplaceCode(codeRow.Id)" disabled="@_busy">
                                 @Culture["School.Codes.Replace"]
                             </button>

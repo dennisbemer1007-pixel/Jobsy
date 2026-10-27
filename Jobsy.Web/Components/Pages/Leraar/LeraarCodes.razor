@@ -67,15 +67,15 @@ else
             @foreach (var row in Filtered)
             {
                 <tr class="ent-data-table__row">
-                    <td class="tabular">@row.Number</td>
-                    <td><span class="sch-code">@row.DisplayCode</span></td>
-                    <td><span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span></td>
-                    <td>
+                    <td class="tabular" data-label="#">@row.Number</td>
+                    <td data-label="@Culture["School.Col.Code"]"><span class="sch-code">@row.DisplayCode</span></td>
+                    <td data-label="@Culture["School.Col.Status"]"><span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span></td>
+                    <td data-label="@Culture["School.Col.Progress"]">
                         <progress class="sch-progress-meter" max="@row.ProgressTotal" value="@row.ProgressCurrent"></progress>
                         <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
                     </td>
-                    <td>@(row.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
-                    <td class="sch-row-actions">
+                    <td data-label="@Culture["School.Col.LastActive"]">@(row.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
+                    <td class="sch-row-actions" data-label="">
                         @if (row.Status == PupilCodeStatus.Completed)
                         {
                             <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
