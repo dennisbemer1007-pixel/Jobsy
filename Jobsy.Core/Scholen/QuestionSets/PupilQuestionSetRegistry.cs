@@ -53,7 +53,12 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             Bank: g78Bank,
             Worlds: g78Worlds,
             IslandAfter: 30,
-            PuzzleSlots: [],
+            PuzzleSlots:
+            [
+                new PupilPuzzleSlot(15, "schelpenrij"),
+                new PupilPuzzleSlot(30, "schatkaart"),
+                new PupilPuzzleSlot(45, "vuurtorenlampen"),
+            ],
             AnswerLabels: g78Labels,
             ItemsPerPlate: 6,
             PlateCount: 10,

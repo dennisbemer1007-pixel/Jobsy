@@ -638,8 +638,8 @@
         "answeredCount": 15,
         "platesShed": 2,
         "completed": false,
-        "nextItemId": "9016",
-        "nextWorldKey": "schatgrot",
+        "nextItemId": null,
+        "nextWorldKey": null,
         "needsIsland": false,
         "resultPending": false
       }
@@ -653,8 +653,8 @@
         "answeredCount": 15,
         "platesShed": 2,
         "newShell": false,
-        "currentItemId": "9016",
-        "currentWorldKey": "schatgrot",
+        "currentItemId": null,
+        "currentWorldKey": null,
         "answers": {
           "9001": 1,
           "9002": 4,
@@ -1509,8 +1509,8 @@
         "platesShed": 5,
         "completed": false,
         "nextItemId": null,
-        "nextWorldKey": "pauze-eiland",
-        "needsIsland": true,
+        "nextWorldKey": null,
+        "needsIsland": false,
         "resultPending": false
       }
     },
@@ -1524,7 +1524,7 @@
         "platesShed": 5,
         "newShell": false,
         "currentItemId": null,
-        "currentWorldKey": "pauze-eiland",
+        "currentWorldKey": null,
         "answers": {
           "9001": 1,
           "9002": 4,
@@ -1559,7 +1559,7 @@
         },
         "windowOpen": true,
         "completed": false,
-        "needsIsland": true,
+        "needsIsland": false,
         "islandDone": false,
         "likes": [],
         "dislikes": [],
@@ -1572,8 +1572,8 @@
       "body": {
         "ok": true,
         "currentIndex": 30,
-        "nextItemId": "9031",
-        "nextWorldKey": "vuurtoren"
+        "nextItemId": null,
+        "nextWorldKey": null
       }
     },
     {
@@ -1585,8 +1585,8 @@
         "answeredCount": 30,
         "platesShed": 5,
         "newShell": false,
-        "currentItemId": "9031",
-        "currentWorldKey": "vuurtoren",
+        "currentItemId": null,
+        "currentWorldKey": null,
         "answers": {
           "9001": 1,
           "9002": 4,
@@ -2740,8 +2740,8 @@
         "answeredCount": 45,
         "platesShed": 7,
         "completed": false,
-        "nextItemId": "9046",
-        "nextWorldKey": "lagune",
+        "nextItemId": null,
+        "nextWorldKey": null,
         "needsIsland": false,
         "resultPending": false
       }
@@ -2755,8 +2755,8 @@
         "answeredCount": 45,
         "platesShed": 7,
         "newShell": false,
-        "currentItemId": "9046",
-        "currentWorldKey": "lagune",
+        "currentItemId": null,
+        "currentWorldKey": null,
         "answers": {
           "9001": 1,
           "9002": 4,

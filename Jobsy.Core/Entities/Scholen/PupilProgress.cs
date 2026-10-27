@@ -16,6 +16,8 @@ public class PupilProgress
     public string? DislikeOtherWord { get; set; }
     /// <summary>Set when the pupil confirms pauze-eiland chips (even if empty).</summary>
     public DateTime? ChipsSavedAtUtc { get; set; }
+    /// <summary>JSON map puzzle key → <see cref="Jobsy.Core.Scholen.QuestionSets.PupilPuzzleStatus"/> (int).</summary>
+    public string PuzzlesJson { get; set; } = "{}";
     public string? DreamJobKey { get; set; }
     public DateTime StartedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

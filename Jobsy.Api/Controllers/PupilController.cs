@@ -99,6 +99,18 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpPut("progress/puzzles/{puzzleKey}")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SavePuzzle(
+        string puzzleKey,
+        [FromBody] PupilPuzzleRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SavePuzzleAsync(User, puzzleKey, request, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpGet("result")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
     public async Task<IActionResult> Result(CancellationToken cancellationToken)

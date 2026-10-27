@@ -44,6 +44,19 @@ public sealed partial class JobsyApiClient
         throw new HttpRequestException(body, null, response.StatusCode);
     }
 
+    public async Task<PupilPuzzleResponse?> SavePupilPuzzleAsync(
+        string puzzleKey,
+        PupilPuzzleRequest request,
+        CancellationToken ct = default)
+    {
+        using var response = await PutApiJsonAsync(
+            $"api/pupil/progress/puzzles/{Uri.EscapeDataString(puzzleKey)}",
+            request,
+            ct);
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<PupilPuzzleResponse>(response.Content, ct);
+    }
+
     public async Task<PupilResultPageDto?> GetPupilResultAsync(CancellationToken ct = default)
         => await GetApiJsonAsync<PupilResultPageDto>("api/pupil/result", ct);
 

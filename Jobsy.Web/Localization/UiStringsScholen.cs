@@ -425,6 +425,29 @@ public static class UiStringsScholen
         nl["Leerling.Result.Placeholder"] = "Klaar! Je verhaal komt eraan.";
         nl["Leerling.Result.DoneLead"] = "Klaar! Je verhaal komt eraan.";
 
+        // —— Groep 7/8 puzzelpauzes ——
+        nl["Leerling.Puzzle.Title"] = "Puzzelpauze";
+        nl["Leerling.Puzzle.Lead"] = "Even iets anders doen, daarna ga je verder met je reis.";
+        nl["Leerling.Puzzle.Break"] = "Puzzelpauze";
+        nl["Leerling.Puzzle.Coach"] = "Los de puzzel op — of kies overslaan als het even niet lukt.";
+        nl["Leerling.Puzzle.Continue"] = "Verder met de reis";
+        nl["Leerling.Puzzle.Skip"] = "Overslaan";
+        nl["Leerling.Puzzle.BackReis"] = "Terug naar de reis";
+        nl["Leerling.Puzzle.WrongStep"] = "Deze puzzel is nu niet aan de beurt.";
+        nl["Leerling.Puzzle.Unknown"] = "Deze puzzel bestaat niet.";
+        nl["Leerling.Puzzle.SaveFailed"] = "Opslaan lukte niet. Probeer het nog eens.";
+        nl["Leerling.Puzzle.Schelpenrij.Title"] = "Schelpenrij";
+        nl["Leerling.Puzzle.Schelpenrij.Lead"] = "Zet de schelpen van klein naar groot.";
+        nl["Leerling.Puzzle.Schelpenrij.Hint"] = "Tik twee schelpen om ze te wisselen.";
+        nl["Leerling.Puzzle.ShellSize"] = "Schelp maat {0}";
+        nl["Leerling.Puzzle.Schatkaart.Title"] = "Schatkaart";
+        nl["Leerling.Puzzle.Schatkaart.Lead"] = "Vind de bij elkaar horende symbolen.";
+        nl["Leerling.Puzzle.Schatkaart.Hint"] = "Tik twee kaarten om ze om te draaien.";
+        nl["Leerling.Puzzle.Vuurtoren.Title"] = "Vuurtorenlampen";
+        nl["Leerling.Puzzle.Vuurtoren.Lead"] = "Onthoud het lichtpatroon en tik het na.";
+        nl["Leerling.Puzzle.Vuurtoren.Hint"] = "Kijk goed, daarna tik jij de lampen in dezelfde volgorde.";
+        nl["Leerling.Puzzle.Vuurtoren.Watch"] = "Kijk goed…";
+        nl["Leerling.Puzzle.Vuurtoren.YourTurn"] = "Jouw beurt!";
         // —— Pauze-eiland chips ——
         nl["Leerling.Island.Title"] = "Pauze-eiland";
         nl["Leerling.Island.Lead"] = "Even uitrusten. Waar word jij blij van?";
