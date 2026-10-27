@@ -76,12 +76,6 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilDreamJobResponse>(response.Content, ct);
     }
 
-    public async Task<bool> GetPupilG78PassportEnabledAsync(CancellationToken ct = default)
-    {
-        var dto = await GetApiJsonAsync<PupilG78PassportWebDto>("api/pupil/passport/g78", ct);
-        return dto?.Enabled == true;
-    }
-
     public async Task<PupilG78PassportWebDto?> GetPupilG78PassportAsync(string? displayName = null, CancellationToken ct = default)
     {
         var q = string.IsNullOrWhiteSpace(displayName)
