@@ -307,9 +307,10 @@ public sealed class PupilPortalService : IPupilPortalService
         var def = _registry.ForClass(schoolClass);
         await EnsureResultAsync(code, def, cancellationToken);
 
+        var answersAtLogin = ParseAnswers(code.Progress?.AnswersJson);
         var completed = code.Status == PupilCodeStatus.Completed
-                        || code.Progress?.CompletedAtUtc is not null
-                        || code.Result is not null;
+                        && code.Result is not null
+                        && def.Bank.AllItems.All(i => answersAtLogin.ContainsKey(i.Id));
         if (schoolClass.TestWindow != TestWindowState.Open && !completed)
         {
             return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,

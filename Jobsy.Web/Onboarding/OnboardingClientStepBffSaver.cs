@@ -221,7 +221,7 @@ public static class OnboardingClientStepBffSaver
                         stepCompleted: true,
                         finishReached: true,
                         ct: cancellationToken);
-                    api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+                    api.InvalidateMeCache();
                     try
                     {
                         await api.UpdateMyProfileAsync(openForWork: true, ct: cancellationToken);

@@ -349,32 +349,6 @@ else
             ApplySaveResponse(predicted, itemId, value);
         }
 
-        if (predicted is not null
-            && (predicted.Completed || string.Equals(predicted.NextStep, "done", StringComparison.OrdinalIgnoreCase)))
-        {
-            _leaving = true;
-            Nav.NavigateTo("/leerling/dit-ben-jij");
-            _busy = true;
-            try
-            {
-                await Api.SavePupilAnswerAsync(itemId, value);
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
-            {
-                _windowClosed = true;
-            }
-            catch
-            {
-                _saveError = Culture["Leerling.Reis.SaveFailed"];
-            }
-            finally
-            {
-                _busy = false;
-            }
-
-            return;
-        }
-
         _busy = true;
         try
         {

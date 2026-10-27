@@ -158,6 +158,41 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.True(bytes.Length > 4 && bytes[0] == (byte)'%' && bytes[1] == (byte)'P');
     }
 
+    /// <summary>
+    /// Manual Acceptatie repro: set <c>JOBSY_ACC_E2E=1</c>, <c>JOBSY_ACC_PUPIL_CODE</c>, optional school/class ids.
+    /// </summary>
+    [Fact(Timeout = 300_000)]
+    public async Task Droombaan_search_keeps_typing_on_acceptatie_when_configured()
+    {
+        if (!AcceptatieE2E.Enabled)
+        {
+            return;
+        }
+
+        _ = TestContext.Current.CancellationToken;
+        var baseUrl = AcceptatieE2E.BaseUrl.TrimEnd('/');
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl =
+            $"{baseUrl}/leerling?schoolId={AcceptatieE2E.SchoolId}&classId={AcceptatieE2E.ClassId}";
+        await LoginAsync(page, loginUrl, AcceptatieE2E.PlainCode, Guid.Parse(AcceptatieE2E.ClassId));
+        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var search = page.Locator("[data-testid=leerling-droombaan-search]");
+        await search.WaitForAsync();
+        await search.ClickAsync();
+        await search.FillAsync("");
+        const string typed = "Dierenarts";
+        await search.PressSequentiallyAsync(typed, new() { Delay = 60 });
+        await page.WaitForTimeoutAsync(1500);
+        await Assertions.Expect(search).ToHaveValueAsync(typed);
+        await page.WaitForTimeoutAsync(1500);
+        await Assertions.Expect(search).ToHaveValueAsync(typed);
+    }
+
     [Theory(Timeout = 300_000)]
     [InlineData(390, 844)]
     [InlineData(1440, 900)]
@@ -1073,5 +1108,24 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
             base.Dispose(disposing);
         }
+    }
+
+    private static class AcceptatieE2E
+    {
+        public static bool Enabled =>
+            string.Equals(Environment.GetEnvironmentVariable("JOBSY_ACC_E2E"), "1", StringComparison.Ordinal)
+            && !string.IsNullOrWhiteSpace(PlainCode)
+            && Guid.TryParse(ClassId, out _);
+
+        public static string BaseUrl =>
+            Environment.GetEnvironmentVariable("JOBSY_ACC_BASE_URL") ?? "https://acceptatie.lobsy.nl";
+
+        public static string PlainCode => Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_CODE") ?? "";
+
+        public static string SchoolId =>
+            Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_SCHOOL_ID") ?? "";
+
+        public static string ClassId =>
+            Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_CLASS_ID") ?? "";
     }
 }

@@ -68,7 +68,8 @@ public sealed class CandidateMatchProfileService
         var hasEducation = MatchProfileCompleteness.HasEducationLevel(educations);
         var basics = whoAmI?.ProfileFilled == true;
         var wizardDone = onboarding?.IsComplete == true
-                         || onboarding?.CompletedAtUtc is not null;
+                         || onboarding?.CompletedAtUtc is not null
+                         || onboarding?.FinishReached == true;
         var competency = whoAmI?.CompetencyCompleted == true;
         var career = whoAmI?.CareerCompleted == true;
         var culture = whoAmI?.CultureCompleted == true;
