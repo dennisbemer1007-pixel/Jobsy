@@ -1,0 +1,75 @@
+@page "/bedrijvenkaart/ssr"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Bedrijvenkaart
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>@Culture["Kb.MapToggle.Companies"] · Lobsy</PageTitle>
+
+@if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+
+        if (!BedrijvenkaartSsrPreview.IsEnabled(Configuration))
+        {
+            if (!http.Response.HasStarted)
+            {
+                http.Response.Redirect("/bedrijvenkaart");
+            }
+
+            return;
+        }
+
+        var radiusKm = 25;
+        if (http.Request.Query.TryGetValue("radiusKm", out var raw)
+            && int.TryParse(raw.ToString(), out var parsed)
+            && parsed is 10 or 25 or 40)
+        {
+            radiusKm = parsed;
+        }
+
+        var model = await BedrijvenkaartSsrData.LoadAsync(
+            Api,
+            FeatureFlags,
+            HostEnvironment,
+            radiusKm,
+            http.RequestAborted);
+        if (model is null)
+        {
+            if (!http.Response.HasStarted)
+            {
+                http.Response.StatusCode = StatusCodes.Status302Found;
+                http.Response.Headers.Location = "/";
+            }
+
+            return;
+        }
+
+        _bodyHtml = BedrijvenkaartSsrShells.BuildBody(Culture, model);
+    }
+}

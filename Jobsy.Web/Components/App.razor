@@ -104,11 +104,21 @@
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/signup-static.css")" />
     }
-    @if (!LoadBlazorRuntime && IncludeBanenkaartClientScript)
+    @if (!LoadBlazorRuntime && IncludeKandidaatDiscoveryMapSsr)
     {
-        @foreach (var href in PageAssetCatalog.BanenkaartSsrStylesheets())
+        @if (IncludeBanenkaartClientScript)
         {
-            <link rel="stylesheet" href="@href" />
+            @foreach (var href in PageAssetCatalog.BanenkaartSsrStylesheets())
+            {
+                <link rel="stylesheet" href="@href" />
+            }
+        }
+        @if (IncludeBedrijvenkaartClientScript)
+        {
+            @foreach (var href in PageAssetCatalog.BedrijvenkaartSsrStylesheets())
+            {
+                <link rel="stylesheet" href="@href" />
+            }
         }
         @if (BanenkaartAuthenticatedShell)
         {
@@ -126,7 +136,7 @@
         }
     }
     @* Logged-in candidate [NoBlazorRuntime] SSR (sollicitaties, bewaard, paspoort, …): render-blocking route bundles in head — not late HeadContent. *@
-    @if (!LoadBlazorRuntime && IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript)
+    @if (!LoadBlazorRuntime && IncludeCandidateNoBlazorChromeCss && !IncludeKandidaatDiscoveryMapSsr)
     {
         @foreach (var href in PageStylesheets)
         {
@@ -409,7 +419,7 @@
                 <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-maps-boot.js")}")" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
             }
         }
-        @if (!IncludeBanenkaartClientScript)
+        @if (!IncludeKandidaatDiscoveryMapSsr)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/public-pages.js")}")" nonce="@Nonce" defer></script>
         }
@@ -526,7 +536,7 @@
     /// <summary>Blazor or logged-in candidate SSR bundles already include tokens, stijl-a, and decorative layers.</summary>
     private bool UsesFullRouteStylesheetBundle =>
         LoadBlazorRuntime
-        || (IncludeCandidateNoBlazorChromeCss && !IncludeBanenkaartClientScript)
+        || (IncludeCandidateNoBlazorChromeCss && !IncludeKandidaatDiscoveryMapSsr)
         || IncludeWerkgeverNoBlazorAfterMatchCss;
 
     private bool IncludeLandingScript =>
@@ -555,6 +565,12 @@
 
     private bool IncludeBanenkaartClientScript =>
         PageAssetCatalog.IncludeBanenkaartClientScript(RequestPath);
+
+    private bool IncludeBedrijvenkaartClientScript =>
+        PageAssetCatalog.IncludeBedrijvenkaartClientScript(RequestPath);
+
+    private bool IncludeKandidaatDiscoveryMapSsr =>
+        IncludeBanenkaartClientScript || IncludeBedrijvenkaartClientScript;
 
     private bool IncludeBanenkaartPrefetch =>
         PageAssetCatalog.IncludeBanenkaartPrefetch(RequestPath);
