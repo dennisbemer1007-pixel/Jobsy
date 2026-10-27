@@ -158,8 +158,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.True(bytes.Length > 4 && bytes[0] == (byte)'%' && bytes[1] == (byte)'P');
     }
 
-    [Fact(Timeout = 300_000)]
-    public async Task Droombaan_search_keeps_fast_typing_right_after_load()
+    [Theory(Timeout = 300_000)]
+    [InlineData(390, 844)]
+    [InlineData(1440, 900)]
+    public async Task Droombaan_search_keeps_fast_typing_right_after_load(int width, int height)
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
@@ -167,7 +169,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var baseUrl = EnsureWeb();
         var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
         {
-            ViewportSize = new ViewportSize { Width = 390, Height = 844 }
+            ViewportSize = new ViewportSize { Width = width, Height = height }
         });
         page.SetDefaultTimeout(90_000);
         await page.Context.ClearCookiesAsync();
@@ -180,7 +182,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await search.FillAsync("");
         const string typed = "Dierenarts";
         await search.PressSequentiallyAsync(typed, new LocatorPressSequentiallyOptions { Delay = 60 });
-        await page.WaitForTimeoutAsync(500);
+        await page.WaitForTimeoutAsync(1500);
+        await Assertions.Expect(search).ToHaveValueAsync(typed);
+        await page.WaitForTimeoutAsync(1500);
         await Assertions.Expect(search).ToHaveValueAsync(typed);
     }
 
@@ -198,9 +202,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
 
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 3; i++)
         {
-            await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            var response = await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            Assert.NotNull(response);
+            Assert.True(response!.Ok, $"paspoort visit {i + 1} returned {(int)response.Status}");
             await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
             Assert.DoesNotContain("error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
         }
@@ -209,6 +215,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
         Assert.DoesNotContain("error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
+
+        await page.GotoAsync($"{baseUrl}/taal/nl?return=/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
         Assert.DoesNotContain("/leerling?error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
     }
 

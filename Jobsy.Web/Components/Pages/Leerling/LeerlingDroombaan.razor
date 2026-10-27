@@ -143,6 +143,7 @@ else
     private DreamJobRouteStubDto? _dream;
     private string _search = "";
     private bool _searchTouched;
+    private bool _userEditedSearch;
     private bool _searchFocused;
     private bool _contentReady;
     private Task? _initialLoadTask;
@@ -230,13 +231,13 @@ else
 
     private void HydrateSearchFromDream()
     {
-        if (_searchTouched || _searchFocused || !string.IsNullOrWhiteSpace(_search))
+        if (_userEditedSearch || _searchTouched || _searchFocused)
         {
             return;
         }
 
         var title = _dream?.JobTitle;
-        if (!string.IsNullOrWhiteSpace(title))
+        if (!string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(_search))
         {
             _search = title;
         }
@@ -253,6 +254,7 @@ else
     private void OnSearchInput(ChangeEventArgs e)
     {
         _searchTouched = true;
+        _userEditedSearch = true;
         _search = e.Value?.ToString() ?? "";
         ScheduleMatchUpdate();
     }
@@ -270,7 +272,7 @@ else
     {
         try
         {
-            await Task.Delay(400, cancellationToken);
+            await Task.Delay(250, cancellationToken);
             var query = _search;
             _matches = string.IsNullOrWhiteSpace(query) ? [] : DreamJobCatalog.Search(query, 8);
             if (!cancellationToken.IsCancellationRequested)
@@ -299,7 +301,8 @@ else
             _dream = resp.DreamJob;
             if (!string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
                 && !_searchFocused
-                && !_searchTouched)
+                && !_searchTouched
+                && !_userEditedSearch)
             {
                 _search = resp.DreamJob.JobTitle ?? _search;
             }

@@ -48,11 +48,19 @@
     {
         var path = Nav.ToBaseRelativePath(Nav.Uri);
         var onPassport = path.StartsWith("leerling/paspoort", StringComparison.OrdinalIgnoreCase);
+        var onLoginGate = path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
+                          || path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase);
         if (onPassport)
         {
             _displayLanguage?.Dispose();
             _displayLanguage = null;
             await Culture.InitializeAsync();
+        }
+        else if (onLoginGate)
+        {
+            _displayLanguage?.Dispose();
+            _displayLanguage = null;
+            Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         }
         else
         {

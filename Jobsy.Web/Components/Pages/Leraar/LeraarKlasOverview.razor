@@ -23,7 +23,7 @@
 {
     <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
 }
-else if (_loading)
+else if (_loading && _overview is null)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }

@@ -171,11 +171,6 @@
     private IReadOnlyList<TeacherAssignedClassDto> _assigned = [];
     private IReadOnlyList<EntScopeChip.ScopeOption> _scopeOptions = [];
 
-    protected override void OnInitialized()
-    {
-        ApplyRouteShellBeforeAuth();
-    }
-
     protected override async Task OnInitializedAsync()
     {
         await Culture.InitializeAsync();
@@ -192,6 +187,7 @@
             _shellKind = SchShellKind.Teacher;
             HomeHref = "/leraar";
             _roleLabel = Culture["Leraar.RoleChip"];
+            _currentClassId = ExtractClassId(path);
             if (!_featureOff)
             {
                 try
@@ -204,7 +200,7 @@
                 }
             }
 
-            _currentClassId = ExtractClassId(path) ?? _assigned.FirstOrDefault()?.Id;
+            _currentClassId ??= _assigned.FirstOrDefault()?.Id;
             RefreshTeacherNav();
             if (path.Equals("/leraar", StringComparison.OrdinalIgnoreCase) && _assigned.Count > 0)
             {
@@ -252,7 +248,8 @@
         _currentClassId = ExtractClassId(path);
         if (_currentClassId is Guid cid)
         {
-            _groups = ScholenNav.TeacherGroupsForClass(cid, []);
+            var pairs = _assigned.Select(c => (c.Id, c.ClassName)).ToList();
+            _groups = ScholenNav.TeacherGroupsForClass(cid, pairs);
             _bottom = ScholenNav.TeacherBottomNavForClass(cid);
             RefreshTeacherMoreItems(cid);
         }

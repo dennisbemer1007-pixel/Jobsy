@@ -698,7 +698,7 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.Route.architect.Goal"] = "Architect!|Bij een bureau of in de bouw";
         d["LeerlingDroom.Route.kok.1"] = "Nu: {nu}|Kies straks consumptief of economie";
         d["LeerlingDroom.Route.kok.2"] = "Vmbo of havo|Praktijkervaring telt mee";
-        d["LeerlingDroom.Route.kok.3"] = "Mbo Kok|Mbo niveau 2 tot 4 · 2 tot 4 jaar";
+        d["LeerlingDroom.Route.kok.3"] = "Mbo Kok|Mbo niveau 2 tot 4, opleiding duurt 2 tot 4 jaar";
         d["LeerlingDroom.Route.kok.Goal"] = "Kok|In een restaurant, keuken of catering";
         d["LeerlingDroom.Alt.kok"] = "Via mbo Kok of Gastheer/-vrouw kun je snel aan de slag.";
         d["LeerlingDroom.Route.brandweer.1"] = "Nu: {nu}|Blijf sporten en samenwerken oefenen";
