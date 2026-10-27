@@ -329,7 +329,7 @@ else
                 return;
             }
 
-            _selectedTeamId = _initiative?.Teams.FirstOrDefault()?.Id;
+            _selectedTeamId = _initiative?.Teams?.FirstOrDefault()?.Id;
             ApplyCaptureQueryFlags();
             _engagementCompanyId = _vacancies.FirstOrDefault()?.CompanyId ?? _initiative?.RootCompanyId ?? Guid.Empty;
             var badges = await Api.GetPublicEngagementAsync(_engagementCompanyId);
@@ -541,6 +541,13 @@ else
                     : null
             };
         }).ToList();
+
+    [JSInvokable]
+    public Task OnMapTilesReady()
+    {
+        _mapReady = true;
+        return Task.CompletedTask;
+    }
 
     private async Task OnSelect(Guid id)
     {

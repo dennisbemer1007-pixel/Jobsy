@@ -14,11 +14,11 @@
         </div>
         <p class="pp-initiative-card__lead">@Culture["Initiative.Panel.RespondDays"]</p>
 
-        @if (Profile?.Teams.Count > 0)
+        @if (Profile?.Teams is { Count: > 0 } teams)
         {
             <fieldset class="pp-initiative-teams">
                 <legend class="visually-hidden">@Culture["Initiative.Panel.Team"]</legend>
-                @foreach (var team in Profile.Teams)
+                @foreach (var team in teams)
                 {
                     <label class="pp-initiative-team @(team.Id == SelectedTeamId ? "is-selected" : null)">
                         <input type="radio" name="initiative-team" checked="@(team.Id == SelectedTeamId)" @onchange="() => SelectedTeamIdChanged.InvokeAsync(team.Id)" />
