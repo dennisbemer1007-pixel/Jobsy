@@ -38,4 +38,21 @@ public sealed class ScholenNavRoutingTests
         var actual = Jobsy.Web.Navigation.ScholenNavRouting.IsSchoolBottomNavActive(path, labelKey, href);
         Assert.Equal(expected, actual);
     }
+
+    [Theory]
+    [InlineData("/leraar/klas/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/droombanen", "Leraar.Nav.More", true)]
+    [InlineData("/leraar/klas/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/codes", "Leraar.Nav.More", false)]
+    [InlineData("/leraar/klas/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/codes", "Leraar.Nav.Codes", true)]
+    public void IsTeacherBottomNavActive_separates_meer_overflow_routes(string path, string labelKey, bool expected)
+    {
+        var classId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var href = labelKey switch
+        {
+            "Leraar.Nav.More" => $"/leraar/klas/{classId:D}/materiaal",
+            "Leraar.Nav.Codes" => $"/leraar/klas/{classId:D}/codes",
+            _ => $"/leraar/klas/{classId:D}"
+        };
+        var actual = Jobsy.Web.Navigation.ScholenNavRouting.IsTeacherBottomNavActive(path, labelKey, href, classId);
+        Assert.Equal(expected, actual);
+    }
 }

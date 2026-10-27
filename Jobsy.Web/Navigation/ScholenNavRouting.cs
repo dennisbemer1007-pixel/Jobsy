@@ -60,6 +60,26 @@ public static partial class ScholenNavRouting
         return IsNavActive(currentPath, href);
     }
 
+    /// <summary>Teacher mobile bottom nav: Meer is active on overflow routes (droombanen, testvenster, materiaal).</summary>
+    public static bool IsTeacherBottomNavActive(string currentPath, string labelKey, string href, Guid? classId)
+    {
+        currentPath = NormalizePath(currentPath);
+        if (string.Equals(labelKey, "Leraar.Nav.More", StringComparison.Ordinal))
+        {
+            if (classId is null)
+            {
+                return false;
+            }
+
+            var basePath = $"/leraar/klas/{classId:D}";
+            return currentPath.StartsWith($"{basePath}/droombanen", StringComparison.OrdinalIgnoreCase)
+                   || currentPath.StartsWith($"{basePath}/testvenster", StringComparison.OrdinalIgnoreCase)
+                   || currentPath.StartsWith($"{basePath}/materiaal", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return IsNavActive(currentPath, href);
+    }
+
     private static string NormalizePath(string path)
     {
         if (string.IsNullOrWhiteSpace(path))

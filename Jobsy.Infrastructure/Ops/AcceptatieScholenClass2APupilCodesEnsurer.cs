@@ -97,14 +97,19 @@ public static class AcceptatieScholenClass2APupilCodesEnsurer
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        var unused = await CountUnusedCodesAsync(db, schoolClass.Id, cancellationToken);
-        var missing = MinimumPupilCodes - unused;
-        if (missing <= 0)
+        var total = await db.PupilCodes.CountAsync(c => c.SchoolClassId == schoolClass.Id, cancellationToken);
+        if (total >= MinimumPupilCodes)
         {
+            if (schoolClass.PupilCount < total)
+            {
+                schoolClass.PupilCount = total;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
             return changed;
         }
 
-        var total = await db.PupilCodes.CountAsync(c => c.SchoolClassId == schoolClass.Id, cancellationToken);
+        var missing = MinimumPupilCodes - total;
         if (schoolClass.PupilCount < total + missing)
         {
             schoolClass.PupilCount = total + missing;
@@ -113,7 +118,7 @@ public static class AcceptatieScholenClass2APupilCodesEnsurer
 
         await pupilCodes.GenerateAsync(missing, schoolClass, cancellationToken);
         logger.LogInformation(
-            "Acceptatie scholen G78 codes: generated {Count} unused codes for class {ClassId} ({Name}, unused now {Target}).",
+            "Acceptatie scholen G78 codes: generated {Count} codes for class {ClassId} ({Name}, total now {Target}).",
             missing,
             schoolClass.Id,
             schoolClass.Name,

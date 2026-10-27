@@ -257,9 +257,96 @@ public sealed class AcceptatieScholenClass2APupilCodesEnsurerTests
         Assert.True(await AcceptatieScholenClass2APupilCodesEnsurer.TryEnsureAsync(
             db, codes, config, NullLogger.Instance));
 
-        var unused = await AcceptatieScholenClass2APupilCodesEnsurer.CountUnusedCodesAsync(
-            db, classId, CancellationToken.None);
-        Assert.Equal(AcceptatieScholenClass2APupilCodesEnsurer.MinimumPupilCodes, unused);
+        var total = await db.PupilCodes.CountAsync(c => c.SchoolClassId == classId);
+        Assert.Equal(AcceptatieScholenClass2APupilCodesEnsurer.MinimumPupilCodes, total);
+    }
+
+    [Fact]
+    public async Task Ensure_does_not_add_codes_when_class_already_has_minimum_total()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var now = DateTime.UtcNow;
+        var classId = DemoSchoolIds.ClassGroep78Id;
+        db.Schools.Add(new School
+        {
+            Id = DemoSchoolIds.SchoolId,
+            Name = "Demo College Lobsy",
+            City = "Naaldwijk",
+            AllowedEmailDomains = """["jobsy.local"]""",
+            IsActive = true,
+            IsTestData = true,
+            CreatedAtUtc = now,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(now),
+            ProcessorAgreementVersion = "demo"
+        });
+        db.Users.Add(new User
+        {
+            Id = DemoSchoolIds.TeacherUserId,
+            Email = AcceptatieScholenClass2APupilCodesEnsurer.LeraarEmail,
+            FullName = "Demo Leraar",
+            Role = UserRole.Teacher,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true,
+            SessionVersion = 0
+        });
+        db.SchoolClasses.Add(new SchoolClass
+        {
+            Id = classId,
+            SchoolId = DemoSchoolIds.SchoolId,
+            Name = DemoSchoolIds.ClassGroep78Name,
+            Level = SchoolLevel.Groep78,
+            QuestionSet = PupilQuestionSet.Groep78,
+            Year = 8,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(now)),
+            PupilCount = 20,
+            TestWindow = TestWindowState.Open,
+            IsTestData = true,
+            CreatedAtUtc = now
+        });
+        for (var n = 1; n <= 20; n++)
+        {
+            var codeId = Guid.NewGuid();
+            var inProgress = n == 1;
+            db.PupilCodes.Add(new PupilCode
+            {
+                Id = codeId,
+                SchoolClassId = classId,
+                Number = n,
+                CodeLookupHash = $"hash-{n}",
+                CodeProtected = "protected",
+                Status = inProgress ? PupilCodeStatus.InProgress : PupilCodeStatus.NotStarted,
+                CreatedAtUtc = now
+            });
+            if (inProgress)
+            {
+                db.PupilProgresses.Add(new PupilProgress
+                {
+                    PupilCodeId = codeId,
+                    CurrentIndex = 1,
+                    AnswersJson = "{}",
+                    StartedAtUtc = now,
+                    UpdatedAtUtc = now
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Lobsy:DeploymentEnvironment"] = "Acceptatie",
+                ["JobsyFeatures:SchoolsEnabled"] = "true",
+                ["Scholen:CodeHmacKey"] = "test-hmac-key-for-scholen-unit-tests"
+            })
+            .Build();
+        var dp = DataProtectionProvider.Create(Path.Combine(Path.GetTempPath(), "scholen-dp-" + Guid.NewGuid()));
+        var codes = new PupilCodeService(db, dp, config, new FakeHostEnvironment());
+        await AcceptatieScholenClass2APupilCodesEnsurer.TryEnsureAsync(db, codes, config, NullLogger.Instance);
+        Assert.Equal(20, await db.PupilCodes.CountAsync(c => c.SchoolClassId == classId));
     }
 
     private sealed class FakeHostEnvironment : IHostEnvironment

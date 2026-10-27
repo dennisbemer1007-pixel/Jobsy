@@ -258,6 +258,11 @@ public static class UiStringsScholen
         nl["Leraar.Nav.MyClasses"] = "Mijn klassen";
         nl["Leraar.Nav.ClassItem"] = "Klas";
         nl["Leraar.Nav.More"] = "Meer";
+        nl["Leraar.Nav.MoreSheet"] = "Meer in je klas";
+        nl["Leraar.Nav.Overview.Short"] = "Overzicht";
+        nl["Leraar.Nav.Codes.Short"] = "Codes";
+        nl["Leraar.Nav.Group.Short"] = "Groep";
+        nl["Leraar.Nav.More.Short"] = "Meer";
 
         nl["Leraar.Overview.Title"] = "Klasoverzicht";
         nl["Leraar.Class.NotFound"] = "Klas niet gevonden.";
@@ -273,6 +278,7 @@ public static class UiStringsScholen
         nl["Leraar.Overview.ProgressLegend.NotStarted"] = "Nog niet gestart";
         nl["Leraar.Pending.Title"] = "Nog niet klaar";
         nl["Leraar.Pending.Subtitle"] = "{0} codes · zoek de naam op je eigen lijst";
+        nl["Leraar.Pending.Partial"] = "Eerste {0} van {1} · zoek de naam op je eigen lijst";
         nl["Leraar.Pending.NotLoggedIn"] = "nog niet ingelogd";
         nl["Leraar.Pending.InProgress"] = "Bezig · {0}/{1}";
 

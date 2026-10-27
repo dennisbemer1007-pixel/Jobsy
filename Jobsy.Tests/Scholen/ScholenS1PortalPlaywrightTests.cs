@@ -98,6 +98,29 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]
+    public async Task S10_teacher_never_sees_school_admin_nav_on_class_overview(int width, int height)
+    {
+        var seed = _seed!;
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(
+            $"{baseUrl}/__test/staff?user={seed.TeacherId:D}&school={seed.SchoolId:D}&role=Teacher&return={Uri.EscapeDataString($"/leraar/klas/{seed.ClassId:D}")}",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+
+        await Assertions.Expect(page.Locator(".sch-sidebar__link", new() { HasText = "Dashboard" })).ToHaveCountAsync(0);
+        await Assertions.Expect(page.Locator(".sch-sidebar__link", new() { HasText = "Klassen & codes" })).ToHaveCountAsync(0);
+        await page.Locator("[data-testid='leraar-class-progress']").WaitForAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(page.Locator(".sch-sidebar__link", new() { HasText = "Dashboard" })).ToHaveCountAsync(0);
+    }
+
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
     public async Task Teacher_portal_scope_chip_styles_and_leraar_redirect(int width, int height)
     {
         var seed = _seed!;
