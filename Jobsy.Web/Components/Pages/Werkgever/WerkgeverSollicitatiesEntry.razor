@@ -10,8 +10,13 @@
 @using Jobsy.Web.Werkgever
 @using Microsoft.AspNetCore.WebUtilities
 @inject CultureState Culture
+@inject JobsyApiClient Api
 @inject EmployerScopeBootstrap ScopeBootstrap
+@inject EmployerScopeState Scope
+@inject AuthenticationStateProvider AuthState
 @inject IHttpContextAccessor HttpContextAccessor
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>@Culture["WgNav.Applications"] · Lobsy</PageTitle>
 
@@ -51,8 +56,14 @@ else if (_bodyHtml is not null)
             return;
         }
 
-        await ScopeBootstrap.EnsureLoadedAsync();
         var parsed = EmployerApplicationsListSsrQuery.Parse(query);
-        _bodyHtml = EmployerApplicationsListSsrShells.BuildRouteShell(Culture, parsed);
+        var pageData = await EmployerApplicationsListSsrData.LoadAsync(
+            Api,
+            ScopeBootstrap,
+            Scope,
+            AuthState,
+            parsed,
+            http.RequestAborted);
+        _bodyHtml = EmployerApplicationsListSsrShells.BuildBody(Culture, pageData);
     }
 }

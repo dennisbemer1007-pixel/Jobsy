@@ -31,6 +31,8 @@ public sealed class WerkgeverSollicitatiesRouteSplitTests
         Assert.Contains("wg-applications-list-ssr", shells, StringComparison.Ordinal);
         Assert.Contains("/werkgever/sollicitaties/pipeline", shells, StringComparison.Ordinal);
         Assert.Contains("view=lijst", shells, StringComparison.Ordinal);
+        Assert.Contains("ent-data-table", shells, StringComparison.Ordinal);
+        Assert.Contains("EmployerApplicationsListSsrData", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Werkgever/EmployerApplicationsListSsrData.cs")), StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
