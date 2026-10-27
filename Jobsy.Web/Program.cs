@@ -564,6 +564,7 @@ app.UseWebSockets(new WebSocketOptions
 app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseAdminLegacyRedirects();
 app.UseCandidateLegacyRedirects();
+app.UseBedrijvenkaartSsrPreviewRedirect();
 app.UseAfterMatchPickSlotRouteRewrite();
 app.UseResponseCompression();
 

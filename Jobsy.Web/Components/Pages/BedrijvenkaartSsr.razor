@@ -1,4 +1,4 @@
-@page "/bedrijvenkaart"
+@page "/bedrijvenkaart/ssr"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
 @attribute [ExcludeFromInteractiveRouting]
@@ -12,6 +12,8 @@
 @inject JobsyApiClient Api
 @inject IFeatureFlags FeatureFlags
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
+@inject IWebHostEnvironment HostEnvironment
 
 <PageTitle>@Culture["Kb.MapToggle.Companies"] · Lobsy</PageTitle>
 
@@ -32,6 +34,17 @@
         }
 
         http.Response.Headers.CacheControl = "no-store";
+
+        if (!BedrijvenkaartSsrPreview.IsEnabled(Configuration))
+        {
+            if (!http.Response.HasStarted)
+            {
+                http.Response.Redirect("/bedrijvenkaart");
+            }
+
+            return;
+        }
+
         var radiusKm = 25;
         if (http.Request.Query.TryGetValue("radiusKm", out var raw)
             && int.TryParse(raw.ToString(), out var parsed)
@@ -40,7 +53,12 @@
             radiusKm = parsed;
         }
 
-        var model = await BedrijvenkaartSsrData.LoadAsync(Api, FeatureFlags, radiusKm, http.RequestAborted);
+        var model = await BedrijvenkaartSsrData.LoadAsync(
+            Api,
+            FeatureFlags,
+            HostEnvironment,
+            radiusKm,
+            http.RequestAborted);
         if (model is null)
         {
             if (!http.Response.HasStarted)

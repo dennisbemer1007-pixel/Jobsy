@@ -2,6 +2,8 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Features;
 using Jobsy.Web.Features;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Web.Bedrijvenkaart;
 
@@ -16,6 +18,7 @@ internal static class BedrijvenkaartSsrData
     internal static async Task<PageModel?> LoadAsync(
         JobsyApiClient api,
         IFeatureFlags featureFlags,
+        IWebHostEnvironment environment,
         int radiusKm,
         CancellationToken ct = default)
     {
@@ -29,12 +32,13 @@ internal static class BedrijvenkaartSsrData
         try
         {
             pins = await api.GetCompanyMapPinsAsync(null, null, radiusKm, ct);
-            if (pins.Count == 0)
-            {
-                pins = BedrijvenkaartDemoPins.All;
-            }
         }
         catch
+        {
+            pins = [];
+        }
+
+        if (pins.Count == 0 && environment.IsDevelopment())
         {
             pins = BedrijvenkaartDemoPins.All;
         }

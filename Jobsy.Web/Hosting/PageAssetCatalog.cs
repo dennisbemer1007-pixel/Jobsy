@@ -404,7 +404,7 @@ public static class PageAssetCatalog
     public static bool IncludeMapPreconnect(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
-        return path is "/banenkaart" or "/banen" or "/bedrijvenkaart" or "/werkgever/kandidatenkaart"
+        return path is "/banenkaart" or "/banen" or "/bedrijvenkaart" or "/bedrijvenkaart/ssr" or "/werkgever/kandidatenkaart"
                || (path.Length == 8 && path.All(char.IsDigit));
     }
 

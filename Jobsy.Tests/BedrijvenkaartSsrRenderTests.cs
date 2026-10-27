@@ -2,7 +2,7 @@ using System.Net;
 
 namespace Jobsy.Tests;
 
-[Collection("SequentialApi")]
+[Collection("BanenkaartPlaywright")]
 public sealed class BedrijvenkaartSsrRenderTests
 {
     [Fact]
@@ -10,7 +10,7 @@ public sealed class BedrijvenkaartSsrRenderTests
     {
         await using var web = new IllustratedPagesWebFactory();
         using var http = new HttpClient { BaseAddress = new Uri(web.ServerAddress) };
-        var response = await http.GetAsync("/bedrijvenkaart");
+        var response = await http.GetAsync("/bedrijvenkaart/ssr");
         var html = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("data-bedrijvenkaart-ssr=\"1\"", html, StringComparison.Ordinal);
@@ -18,6 +18,18 @@ public sealed class BedrijvenkaartSsrRenderTests
         Assert.Contains("css/features/kandidaat-banen.css", html, StringComparison.Ordinal);
         Assert.Contains("bk-shell", html, StringComparison.Ordinal);
         Assert.Contains("bedrijvenkaart-map", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Main_bedrijvenkaart_route_stays_on_blazor_discovery()
+    {
+        await using var web = new IllustratedPagesWebFactory();
+        using var http = new HttpClient { BaseAddress = new Uri(web.ServerAddress) };
+        var response = await http.GetAsync("/bedrijvenkaart");
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain("data-bedrijvenkaart-ssr=\"1\"", html, StringComparison.Ordinal);
+        Assert.Contains("bk-page", html, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -43,7 +43,7 @@ public sealed class BedrijvenkaartSsrLayoutPlaywrightTests : IAsyncLifetime
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(_baseUrl + "/bedrijvenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.GotoAsync(_baseUrl + "/bedrijvenkaart/ssr", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
         await page.WaitForSelectorAsync("[data-bedrijvenkaart-ssr=\"1\"]", new() { Timeout = 60_000 });
         Assert.True(await page.Locator(".bk-list .bk-card").CountAsync() >= 3);
         Assert.True(await page.Locator("#bedrijvenkaart-map").IsVisibleAsync());

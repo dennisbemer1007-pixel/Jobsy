@@ -51,7 +51,8 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
                 ["Jobsy:CandidateCompactHeroEnabled"] = "true",
-                ["Features:UwvFeatures"] = uwvOn ? "true" : "false"
+                ["Features:UwvFeatures"] = uwvOn ? "true" : "false",
+                ["JobsyFeatures:BedrijvenkaartSsrPreview"] = "true"
             });
         });
         builder.ConfigureTestServices(services =>
