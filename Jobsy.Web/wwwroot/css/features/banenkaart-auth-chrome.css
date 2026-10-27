@@ -305,6 +305,9 @@
     top: calc(100% + 0.45rem);
     right: 0;
     width: min(22rem, 90vw);
+    max-width: 90vw;
+    margin-left: auto;
+    margin-right: 0;
     max-height: min(70vh, 28rem);
     overflow: auto;
     z-index: 60;
@@ -313,6 +316,174 @@
     border-radius: 0.85rem;
     box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16);
     padding: 0.75rem;
+}
+
+.app-shell--banenkaart-shell .notification-bell__panel.notification-dropdown.mx-auto {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+.notification-bell__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.notification-bell__subtitle {
+    margin: 0.1rem 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.notification-bell__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.notification-bell__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.notification-bell__close:hover {
+    background: color-mix(in srgb, var(--border) 35%, transparent);
+    color: var(--text);
+}
+
+.notification-bell__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.notification-bell__item {
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    background: color-mix(in srgb, var(--surface) 92%, var(--pearl-cool) 8%);
+}
+
+.notification-bell__item.is-unread {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--border));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.notification-bell__item-btn {
+    display: grid;
+    gap: 0.2rem;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.notification-bell__item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.notification-bell__item-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.notification-bell__item-body {
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.notification-bell__item-meta {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.notification-bell__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-top: 0.35rem;
+    border-radius: 999px;
+    background: var(--brand);
+    flex-shrink: 0;
+}
+
+.notification-bell__action {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 0.45rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+    font-size: 0.82rem;
+    font-weight: 650;
+    color: var(--brand);
+    text-decoration: none;
+}
+
+.notification-bell__action:hover {
+    background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+}
+
+.notification-bell__empty,
+.notification-bell__empty-state {
+    margin: 0.35rem 0;
+}
+
+.notification-bell__empty-title {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+}
+
+.app-shell--banenkaart-shell .muted {
+    color: var(--muted);
+}
+
+.header-dropdown-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: color-mix(in srgb, var(--brand-deep) 28%, transparent);
+}
+
+@media (max-width: 900px) {
+    .app-shell--banenkaart-shell .notification-bell__panel,
+    .app-shell--banenkaart-shell .notification-dropdown {
+        position: fixed;
+        top: calc(var(--app-header-height, 4.25rem) + 0.35rem);
+        right: max(0.75rem, env(safe-area-inset-right, 0px));
+        left: auto;
+        width: min(22rem, calc(100vw - 1.5rem));
+        max-width: calc(100vw - 1.5rem);
+        margin-left: auto;
+        margin-right: 0;
+        bottom: auto;
+        max-height: min(70vh, 28rem);
+        overflow: auto;
+        z-index: 60;
+    }
 }
 
 .app-footer {
