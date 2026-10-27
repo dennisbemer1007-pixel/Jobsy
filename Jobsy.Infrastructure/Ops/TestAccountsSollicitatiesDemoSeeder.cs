@@ -63,6 +63,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return false;
         }
 
+        await KandidaatDemoProfileEnsurer.EnsureAsync(db, logger, cancellationToken);
+
         var branchManager = await FindBranchManagerAsync(db, configuration, cancellationToken);
         if (branchManager is null)
         {
