@@ -165,7 +165,8 @@ public static class PageAssetCatalog
             return Area.GratisDna;
         }
 
-        if (path is "/banenkaart" or "/banen" or "/bedrijvenkaart")
+        if (path is "/banenkaart" or "/banen" or "/bedrijvenkaart"
+            || Bedrijvenkaart.BedrijvenkaartSsrPaths.IsHostPath(path))
         {
             return Area.CandidatePublic;
         }
@@ -458,10 +459,11 @@ public static class PageAssetCatalog
     public static IReadOnlyList<string> BedrijvenkaartSsrStylesheets() =>
     [
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-header-strip.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart-page.css"),
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/kandidaat-banen.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart.css"),
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/banenkaart-illustrated.css"),
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/bedrijvenkaart.css"),
-        WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-hero-compact-preview.css"),
     ];
 
     /// <summary>Idle prefetch of banenkaart catalog + map assets (candidate paspoort home).</summary>

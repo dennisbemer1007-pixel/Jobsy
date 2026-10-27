@@ -1,4 +1,4 @@
-using Jobsy.Web.Bedrijvenkaart;
+using Jobsy.Core.Features;
 using Microsoft.AspNetCore.Http.Extensions;
 
 namespace Jobsy.Web.Middleware;

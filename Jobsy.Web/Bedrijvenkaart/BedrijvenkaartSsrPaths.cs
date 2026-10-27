@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Web.Seo;
 
 namespace Jobsy.Web.Bedrijvenkaart;
