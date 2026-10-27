@@ -486,9 +486,10 @@
         var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
-        var immersive = onRoute && !_isCandidate;
+        var bedrijvenSsr = IsBedrijvenkaartSsrPath(path);
+        var immersive = onRoute && !_isCandidate && !bedrijvenSsr;
         var candidateShell = onRoute;
-        var mockupTop = onRoute && !_isCandidate;
+        var mockupTop = onRoute && !_isCandidate && !bedrijvenSsr;
         var changed = false;
         if (_banenkaartImmersive != immersive)
         {
@@ -520,6 +521,9 @@
                || path.Equals("bedrijvenkaart/ssr", StringComparison.OrdinalIgnoreCase)
                || IsCompanyKvkPath(path);
     }
+
+    private static bool IsBedrijvenkaartSsrPath(string path)
+        => path.TrimStart('/').Equals("bedrijvenkaart/ssr", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsCompanyKvkPath(string path)
     {
