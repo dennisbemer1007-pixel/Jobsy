@@ -186,6 +186,10 @@ public class OntdekkingsreisServiceMigrationTests
         public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<VacancyDiscoveryRecord>>([]);
 
+        public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
+            CancellationToken cancellationToken = default)
+            => GetActiveAsync(cancellationToken);
+
         public Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(new VacancyMapView(52.1, 5.1, 8, 0));
 

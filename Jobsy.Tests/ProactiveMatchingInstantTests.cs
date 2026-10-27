@@ -265,6 +265,10 @@ public sealed class ProactiveMatchingInstantTests
             return rows.Select(VacancyDiscoveryIndex.ToRecord).ToList();
         }
 
+        public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
+            CancellationToken cancellationToken = default)
+            => GetActiveAsync(cancellationToken);
+
         public Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(new VacancyMapView(52.0, 4.3, 10, 1));
     }

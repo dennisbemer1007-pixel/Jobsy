@@ -248,7 +248,9 @@
         .then(function (data) {
           setSaveDiagnostics(page, data && data.status, data && data.code);
           if (!data || data.ok === false) {
+            setSaveDiagnostics(page, data && data.status, data && data.code);
             showToast(page, page.getAttribute("data-toast-error"));
+            window.location.reload();
             return;
           }
           showToast(page, page.getAttribute("data-toast-liked"));
@@ -257,6 +259,7 @@
         .catch(function () {
           setSaveDiagnostics(page, 500, "client_exception");
           showToast(page, page.getAttribute("data-toast-error"));
+          window.location.reload();
         });
     });
   }
@@ -268,7 +271,16 @@
         if (action === "more") {
           var vacancyId = currentVacancyId(page);
           if (vacancyId) {
-            window.location.href = "/vacancies/" + vacancyId;
+            try {
+              sessionStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({ index: state.index, vacancyIds: boot.vacancyIds || [] })
+              );
+            } catch (_eMore) {
+              /* ignore */
+            }
+            window.location.href =
+              "/vacancies/" + vacancyId + "?return=match&matchIndex=" + state.index;
           }
           return;
         }
@@ -444,7 +456,11 @@
       if (JSON.stringify(saved.vacancyIds) !== JSON.stringify(boot.vacancyIds)) {
         return boot.index || 0;
       }
-      return typeof saved.index === "number" ? saved.index : 0;
+      var idx = typeof saved.index === "number" ? saved.index : 0;
+      if (idx < 0 || idx >= boot.vacancyIds.length) {
+        return boot.index || 0;
+      }
+      return idx;
     } catch (_e) {
       return boot.index || 0;
     }
@@ -470,9 +486,19 @@
     bindKeys(page, boot, state, deferredOnce);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
+  function bootInit() {
     init();
   }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootInit);
+  } else {
+    bootInit();
+  }
+
+  window.addEventListener("pageshow", function (ev) {
+    if (ev.persisted) {
+      bootInit();
+    }
+  });
 })();
