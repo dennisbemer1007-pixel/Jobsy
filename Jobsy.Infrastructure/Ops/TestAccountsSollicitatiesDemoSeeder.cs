@@ -897,36 +897,36 @@ public static class TestAccountsSollicitatiesDemoSeeder
                 break;
 
             case DemoApplicationScenario.Scheduled:
-            {
-                var vacancy = await db.Vacancies.AsNoTracking()
-                    .Include(v => v.Company)
-                    .FirstAsync(v => v.Id == vacancyId, cancellationToken);
-                var interviewLocation = vacancy.Company?.Address ?? "Teststraat 1, Honselersdijk";
-                var slotStarts = AfterMatchEmployerDemoSlots.InitialUtc();
-                await EnsureInterviewAsync(
-                    db,
-                    applicationId,
-                    branchManagerId,
-                    InterviewStatus.Scheduled,
-                    proposeSlots: true,
-                    chooseFirstSlot: true,
-                    cancellationToken,
-                    interviewLocation,
-                    slotStarts);
-                var chosenLocal = AmsterdamTime.ToLocal(slotStarts[0]);
-                var employerLine =
-                    $"Top, {chosenLocal:dddd d MMMM} past goed voor ons team.";
-                var candidateLine = $"Tot {chosenLocal:dddd d MMMM}!";
-                await EnsureDemoConversationAsync(
-                    db,
-                    applicationId,
-                    branchManagerId,
-                    candidate.Id,
-                    employerLine,
-                    candidateLine,
-                    cancellationToken);
-                break;
-            }
+                {
+                    var vacancy = await db.Vacancies.AsNoTracking()
+                        .Include(v => v.Company)
+                        .FirstAsync(v => v.Id == vacancyId, cancellationToken);
+                    var interviewLocation = vacancy.Company?.Address ?? "Teststraat 1, Honselersdijk";
+                    var slotStarts = AfterMatchEmployerDemoSlots.InitialUtc();
+                    await EnsureInterviewAsync(
+                        db,
+                        applicationId,
+                        branchManagerId,
+                        InterviewStatus.Scheduled,
+                        proposeSlots: true,
+                        chooseFirstSlot: true,
+                        cancellationToken,
+                        interviewLocation,
+                        slotStarts);
+                    var chosenLocal = AmsterdamTime.ToLocal(slotStarts[0]);
+                    var employerLine =
+                        $"Top, {chosenLocal:dddd d MMMM} past goed voor ons team.";
+                    var candidateLine = $"Tot {chosenLocal:dddd d MMMM}!";
+                    await EnsureDemoConversationAsync(
+                        db,
+                        applicationId,
+                        branchManagerId,
+                        candidate.Id,
+                        employerLine,
+                        candidateLine,
+                        cancellationToken);
+                    break;
+                }
 
             case DemoApplicationScenario.UnreadMessages:
                 await EnsureInterviewAsync(
