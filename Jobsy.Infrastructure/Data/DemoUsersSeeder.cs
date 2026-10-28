@@ -106,7 +106,10 @@ internal static class DemoUsersSeeder
             FullName = "Onboarding E2E",
             Role = UserRole.Candidate,
             CompanyId = null,
+            DateOfBirth = new DateOnly(2000, 3, 1),
             OpenForWork = true,
+            HomeLocation = new GeoPoint(51.9930, 4.2150),
+            PreferencesJson = """{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20}""",
             IsActive = true
         });
 
@@ -311,6 +314,22 @@ internal static class DemoUsersSeeder
                 && !string.IsNullOrWhiteSpace(template.FullName))
             {
                 existing.FullName = template.FullName;
+            }
+
+            if (template.HomeLocation is not null && existing.HomeLocation is null)
+            {
+                existing.HomeLocation = template.HomeLocation;
+            }
+
+            if (!string.IsNullOrWhiteSpace(template.PreferencesJson)
+                && string.IsNullOrWhiteSpace(existing.PreferencesJson))
+            {
+                existing.PreferencesJson = template.PreferencesJson;
+            }
+
+            if (template.DateOfBirth is not null && existing.DateOfBirth is null)
+            {
+                existing.DateOfBirth = template.DateOfBirth;
             }
 
             // Demo accounts stay on the current consent version so version bumps don't block the public demo.

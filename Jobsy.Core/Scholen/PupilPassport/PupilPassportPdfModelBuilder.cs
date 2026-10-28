@@ -31,7 +31,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         var holland = result.HollandCode ?? "";
         var riasecLetter = string.IsNullOrWhiteSpace(holland) ? 'S' : char.ToUpperInvariant(holland[0]);
 
-        var worlds = BuildWorlds(storyView);
+        var worlds = BuildWorlds(storyView, lang);
         var routeSteps = dream.RouteSteps
             .Select((step, i) =>
             {
@@ -126,7 +126,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             DisplayNameOnPdf: displayNameOnPdf,
             StoryBody: storyView.Body,
             Worlds: worlds,
-            DreamJobTitle: dream.JobTitle,
+            DreamJobTitle: LocalizedDreamTitle(dream, lang),
             DreamJobKey: dream.JobKey,
             DreamHaveCount: dream.HaveCount,
             DreamTotalCount: dream.TotalCount,
@@ -165,7 +165,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             TravelInfoSubline: travelSub);
     }
 
-    private static IReadOnlyList<PupilPassportWorldStamp> BuildWorlds(PupilStoryViewDto story)
+    private static IReadOnlyList<PupilPassportWorldStamp> BuildWorlds(PupilStoryViewDto story, string language)
     {
         var tones = new[] { "w1", "w2", "w3", "w4" };
         var stamps = new List<PupilPassportWorldStamp>();
@@ -174,7 +174,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         {
             var worldNo = n + 1;
             stamps.Add(new PupilPassportWorldStamp(
-                WorldTitle(worldNo),
+                PupilPassportLocalizedCopy.WorldName(worldNo, language),
                 tile.KidLabel,
                 tile.Explanation,
                 worldNo,
@@ -185,14 +185,20 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         return stamps;
     }
 
-    private static string WorldTitle(int n) => n switch
+    private static string? LocalizedDreamTitle(DreamJobRouteStubDto dream, string language)
     {
-        1 => "Koraalrif",
-        2 => "Schatgrot",
-        3 => "Vuurtoren",
-        4 => "Lagune",
-        _ => $"Wereld {n}"
-    };
+        if (string.IsNullOrWhiteSpace(dream.JobKey))
+        {
+            return dream.JobTitle;
+        }
+
+        if (string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return PupilPassportLocalizedCopy.JobTitle(dream.JobKey, language);
+    }
 
     private static string BuildClassLabel(PupilClassContext ctx, string className, string language)
         => ctx.Set == PupilQuestionSet.Groep78

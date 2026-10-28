@@ -145,6 +145,21 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Footer.Vo"] =
             "Geen cijfer en geen schooladvies. Dit paspoort is om te ontdekken.\nLobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.";
 
+        d["LeerlingPassport.Strength.Samenwerken.Title"] = "Samenwerken";
+        d["LeerlingPassport.Strength.Resultaat.Title"] = "Doelen halen";
+        d["LeerlingPassport.Strength.Stress.Title"] = "Rustig blijven";
+        d["LeerlingPassport.Strength.Innovatie.Title"] = "Nieuwe ideeën";
+        d["LeerlingPassport.Strength.Extraversie.Title"] = "Met mensen";
+        d["LeerlingPassport.Strength.Zorgvuldig.Title"] = "Netjes werken";
+        d["LeerlingPassport.Strength.Helpen.Title"] = "Helpen";
+        d["LeerlingPassport.Strength.Onderzoek.Title"] = "Uitzoeken";
+        d["LeerlingPassport.Strength.Praktisch.Title"] = "Zelf aanpakken";
+        d["LeerlingPassport.Strength.Verbinding.Title"] = "Verbinding";
+        d["LeerlingPassport.Strength.Doelen.Title"] = "Doelen";
+        d["LeerlingPassport.Strength.Impact.Title"] = "Verschil maken";
+        d["LeerlingPassport.Strength.Betrouwbaar.Title"] = "Betrouwbaar";
+        d["LeerlingPassport.Footer.PageLabel"] = "pagina 1/1";
+
         d["LeerlingPassport.Strength.Samenwerken.Sub"] = "ik luister en denk mee";
         d["LeerlingPassport.Strength.Zorgvuldig.Sub"] = "ik doe dingen netjes";
         d["LeerlingPassport.Strength.Helpen.Sub"] = "ik zie het als iemand vastzit";

@@ -117,6 +117,30 @@ public class MatchProfileGateTests
     }
 
     [Fact]
+    public void MatchVacancyService_FilterRelevant_keeps_outside_travel_when_discovery_widened()
+    {
+        var gate = new MatchProfileGateViewModel
+        {
+            IsProfileComplete = true,
+            Educations = ["MBO"],
+            MaxTravelMinutes = 20,
+            PreferredTransport = "Fiets"
+        };
+
+        var vacancies = new List<VacancyListItem>
+        {
+            new() { Id = Guid.NewGuid(), Title = "Reachable", RequiredEducation = "MBO", TravelMinutes = 55 },
+        };
+
+        var strict = MatchVacancyService.FilterRelevant(vacancies, gate, take: 24, outsideTravelFallback: false);
+        Assert.Empty(strict);
+
+        var widened = MatchVacancyService.FilterRelevant(vacancies, gate, take: 24, outsideTravelFallback: true);
+        Assert.Single(widened);
+        Assert.Equal("Reachable", widened[0].Title);
+    }
+
+    [Fact]
     public void Match_page_wires_unlock_gate_and_services()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));

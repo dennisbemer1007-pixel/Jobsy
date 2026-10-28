@@ -170,9 +170,6 @@ public class SchoolRun8ReadAloudTests : BunitContext
         _handler.JsonByPath["/api/pupil/result"] = Json(ResultPage());
         nav.NavigateTo("http://localhost/leerling/dit-ben-jij");
         await AssertSpoken(Render<LeerlingDitBenJij>());
-
-        nav.NavigateTo("http://localhost/leerling/droombaan");
-        await AssertSpoken(Render<LeerlingDroombaan>());
     }
 
     private static async Task AssertSpoken<TComponent>(IRenderedComponent<TComponent> cut)

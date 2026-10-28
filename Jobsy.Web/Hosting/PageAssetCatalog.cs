@@ -122,6 +122,17 @@ public static class PageAssetCatalog
         WwwrootAssetCatalog.Url("css/features/leerling-paspoort-g78.css"),
     ];
 
+    /// <summary>Lean bundles for pupil pages rendered outside the Blazor shell.</summary>
+    private static readonly string[] PupilSsrCoreCss =
+    [
+        WwwrootAssetCatalog.Url("css/tokens.css"),
+        WwwrootAssetCatalog.Url("css/app.min.css"),
+        WwwrootAssetCatalog.Url("css/features/stijl-a.css"),
+        WwwrootAssetCatalog.Url("css/features/form-fields.css"),
+        WwwrootAssetCatalog.Url("css/features/enterprise-ui.css"),
+        WwwrootAssetCatalog.Url("css/features/scholen.css"),
+    ];
+
     public static readonly string[] AccountCss =
     [
         WwwrootAssetCatalog.Url("css/features/account-mfa.css"),
@@ -237,6 +248,21 @@ public static class PageAssetCatalog
 
         // Authenticated shell pages (partner, status, …) — lean candidate bundles.
         return Area.CandidatePublic | Area.CandidateApp;
+    }
+
+    public static IReadOnlyList<string> StylesheetsForPupilSsr(string? rawPath = null)
+    {
+        var list = new List<string>(PupilSsrCoreCss.Length + 4);
+        list.AddRange(PupilSsrCoreCss);
+        foreach (var url in RouteStylesheets(rawPath))
+        {
+            if (!list.Contains(url, StringComparer.Ordinal))
+            {
+                list.Add(url);
+            }
+        }
+
+        return list;
     }
 
     public static IReadOnlyList<string> StylesheetsFor(Area areas, string? rawPath = null)

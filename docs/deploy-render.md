@@ -285,7 +285,7 @@ See also [email-deliverability.md](email-deliverability.md) for the Dennis check
 - Zonder die sleutel gaat er geen mail via Resend. Lobsy logt één fout: Mail: niet ingesteld. Resend (`POST https://api.resend.com/emails`) geldt alleen als `Mail__Provider=Resend`.
 - SMTP is alleen fallback. Open- en klikmeting sturen we niet mee.
 
-Acceptatie zet `Mail__AllowedRecipientPattern` op `^test-[^@]+@lobsy\.nl$`. Andere adressen worden overgeslagen. Het log toont alleen een afgeschermd adres. `Mail__AllowedRecipientAddresses__0` is het extra adres van de beheerder. Productie laat het patroon leeg: daar gaat elke mail eruit.
+Acceptatie zet `Mail__AllowedRecipientPattern` op `^(test-[^@]+@lobsy\.nl|.+@mail\.grokbot\.com)$` (staat in `render.yaml`; sync niet uit). Andere adressen worden overgeslagen. Het log toont alleen een afgeschermd adres. `Mail__AllowedRecipientAddresses__0` is het extra adres van de beheerder. Productie laat het patroon leeg: daar gaat elke mail eruit.
 
 Zet `Mail__Provider` en `Lettermint__ApiKey` ook op de **web**-service. De privacyzin leest dezelfde config. De web-service verstuurt geen mail; hij kijkt alleen of de sleutel er is.
 
@@ -305,7 +305,7 @@ Zet op `jobsy-api` (en provider + Lettermint-sleutel ook op `jobsy-web`):
 | `Mail__ReplyTo` | `support@lobsy.nl` |
 | `Mail__SupportAddress` | `support@lobsy.nl` |
 | `Mail__LegalName` / `Mail__LegalAddress` / `Mail__KvkNumber` | Footer legal line (address + KvK still pending from Dennis) |
-| `Mail__AllowedRecipientPattern` | leeg in productie. Acceptatie: `^test-[^@]+@lobsy\.nl$` |
+| `Mail__AllowedRecipientPattern` | leeg in productie. Acceptatie: `^(test-[^@]+@lobsy\.nl\|.+@mail\.grokbot\.com)$` |
 | `Mail__AllowedRecipientAddresses__0` | leeg, of het eigen adres van de beheerder |
 
 **B. Admin UI**

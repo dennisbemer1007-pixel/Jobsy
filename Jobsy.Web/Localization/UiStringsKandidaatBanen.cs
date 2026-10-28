@@ -543,6 +543,12 @@ public static class UiStringsKandidaatBanen
             "Brak ofert w czasie dojazdu. Mapa pokazuje, gdzie są oferty.",
             "Nicio ofertă în timpul tău de călătorie. Harta se focusează unde sunt joburi.",
             "لا وظائف ضمن وقت التنقل. تتمركز الخريطة حيث توجد الوظائف.");
+        Add("Kb.Map.NoVacanciesInViewport",
+            "Geen vacatures in beeld. Pas filters aan of verruim je reistijd.",
+            "No vacancies in view. Adjust filters or widen your travel time.",
+            "Brak ofert na mapie. Zmień filtry lub wydłuż czas dojazdu.",
+            "Nicio ofertă în vizor. Ajustează filtrele sau mărește timpul de călătorie.",
+            "لا وظائف في العرض. عدّل الفلاتر أو وسّع وقت التنقل.");
         Add("Kb.Map.VacancyFallback",
             "Vacature", "Vacancy",
             "Oferta", "Ofertă", "وظيفة");
@@ -689,6 +695,12 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.ResultWithin",
             "binnen {0} min {1}", "within {0} min {1}",
             "w {0} min {1}", "în {0} min {1}", "خلال {0} د {1}");
+        Add("Kb.Filter.ResultOutsideTravelHint",
+            "Geen vacatures binnen je reistijd. Dit zijn de dichtstbijzijnde banen.",
+            "No vacancies within your travel time. These are the nearest jobs.",
+            "Brak ofert w czasie dojazdu. To najbliższe oferty.",
+            "Nicio ofertă în timpul tău de călătorie. Acestea sunt cele mai apropiate joburi.",
+            "لا وظائف ضمن وقت التنقل. هذه أقرب الوظائف.");
         Add("Kb.Filter.RemoveTag",
             "Verwijder filter {0}", "Remove filter {0}",
             "Usuń filtr {0}", "Elimină filtrul {0}", "إزالة عامل التصفية {0}");

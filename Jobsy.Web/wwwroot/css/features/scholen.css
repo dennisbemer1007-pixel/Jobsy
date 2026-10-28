@@ -1501,3 +1501,56 @@ html.using-keyboard .ll-question__text:focus-visible {
 @media (min-width: 900px) {
     .ll-puzzle__cards { max-width: 360px; }
 }
+
+.ll-dream-ssr__form {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+}
+
+.ll-dream-ssr__form .ll-field input {
+    width: 100%;
+    min-height: 48px;
+}
+
+.ll-dream-ssr__save {
+    width: 100%;
+    min-height: 52px;
+}
+
+.ll-dream-ssr__pick-label {
+    margin: var(--space-4) 0 var(--space-2);
+    font-weight: 600;
+}
+
+.ll-dream-ssr__suggestions {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-1);
+}
+
+.ll-dream-ssr__pick {
+    width: 100%;
+    min-height: 44px;
+    text-align: start;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    font: inherit;
+    cursor: pointer;
+}
+
+.ll-dream-ssr__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.ll-dream-ssr__nav .btn-primary,
+.ll-dream-ssr__nav .btn-secondary {
+    min-height: 52px;
+}

@@ -20,8 +20,7 @@ public sealed class PupilPassportEnglishGuardTests
     [Fact]
     public void English_g78_passport_web_has_no_obvious_dutch_leaks()
     {
-        var model = BuildModel("Alex");
-        model = model with { Language = "en" };
+        var model = BuildModel("Alex", "en");
         var web = PupilPassportWebMapper.ToGroep78Web(model, enabled: true);
         var json = System.Text.Json.JsonSerializer.Serialize(web);
 
@@ -35,8 +34,7 @@ public sealed class PupilPassportEnglishGuardTests
     [Fact]
     public void English_g78_passport_pdf_has_no_dutch_leaks_or_raw_keys()
     {
-        var model = BuildModel("Alex");
-        model = model with { Language = "en" };
+        var model = BuildModel("Alex", "en");
         var bytes = new PupilPassportPdfService().Render(model);
         Assert.True(bytes.Length > 2000);
         using var doc = PdfDocument.Open(bytes);
@@ -48,9 +46,42 @@ public sealed class PupilPassportEnglishGuardTests
         Assert.DoesNotContain("groep 8", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("What you already have", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("MY DNA PASSPORT", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Koraalrif", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("pagina 1/1", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\u2013", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u2014", text, StringComparison.Ordinal);
+        Assert.Contains("Chef", text, StringComparison.Ordinal);
+        Assert.Contains("Coral reef", text, StringComparison.OrdinalIgnoreCase);
+
+        foreach (var strength in model.Strengths)
+        {
+            Assert.Contains(strength.Title, text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains(strength.Subtitle, text, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
-    private PupilPassportPdfModel BuildModel(string? name)
+    [Fact]
+    public void Dutch_g78_passport_pdf_has_no_raw_keys_or_english_leaks()
+    {
+        var model = BuildModel("Alex", "nl");
+        var bytes = new PupilPassportPdfService().Render(model);
+        using var doc = PdfDocument.Open(bytes);
+        var text = string.Join(' ', doc.GetPages().SelectMany(p => p.GetWords()).Select(w => w.Text));
+
+        Assert.DoesNotContain("LeerlingPassport.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("LeerlingDroom.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("MY DNA PASSPORT", text, StringComparison.Ordinal);
+        Assert.Contains("Dit heb je al", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Koraal", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("pagina 1/1", text, StringComparison.OrdinalIgnoreCase);
+
+        foreach (var strength in model.Strengths)
+        {
+            Assert.Contains(strength.Title, text, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private PupilPassportPdfModel BuildModel(string? name, string language = "nl")
     {
         var result = new PupilResult
         {
@@ -86,6 +117,6 @@ public sealed class PupilPassportEnglishGuardTests
             QuestionSet = PupilQuestionSet.Groep78
         };
         return new PupilPassportPdfModelBuilder(_renderer).Build(
-            code, cls, "Demo College Lobsy", "K7Q-M2P", name, language: "en");
+            code, cls, "Demo College Lobsy", "K7Q-M2P", name, language: language);
     }
 }

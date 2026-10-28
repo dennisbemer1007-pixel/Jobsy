@@ -1,0 +1,50 @@
+---
+description: Dennis/Lobsy vaste regels (28 okt 2026) — rebuild, filmed flows, PR prioriteit + acc Playwright
+alwaysApply: true
+---
+
+# Dennis / Lobsy vaste regels (28 okt 2026)
+
+Gelden voor **alle** agent- en PR-werk vanaf deze datum, tenzij Dennis expliciet anders zegt.
+
+## 1. Geen eindeloos patchen op acceptatie
+
+Werkt een fix **niet** na **één** gerichte poging op **acceptatie**, bouw dat onderdeel **opnieuw vanaf nul** (verwijder oude component/handlers/JS/CSS waar nodig; nieuwe SSR/minimal implementatie). Geen tweede laag patches op hetzelfde kapotte pad.
+
+## 2. Gefilmde stromen: zero visible defects + performance
+
+In deze stromen mag **geen** bug, foutmelding, lege staat of haperende layout zichtbaar zijn. Pagina’s strak en snel.
+
+| Stroom | Scope |
+|--------|--------|
+| Kandidaat-onboarding | stappen **1–10** |
+| Match | volledige flow |
+| Banenkaart | na onboarding |
+| #1301 | alle punten uit die scope |
+
+**Laadtijd (acc, realistisch netwerk):**
+
+- Doel: **&lt; 1 s** per pagina/stap
+- Harde grens: **3 s** (fail de check / fix vóór merge)
+- Filters banenkaart: **&lt; 500 ms**
+
+Meet en rapporteer per stap in PR-evidence waar Dennis om Playwright vraagt.
+
+## 3. Prioriteit + PR-levering
+
+Volgorde (zie ook `dennis-priority-order` in agent store):
+
+1. **S15 fixes + knoppen-herbouw** (#1306)
+2. **#1305** (Match / banenkaart vacatures)
+3. **#1301**
+
+Daarna (aparte Dennis-volgorde 28 okt ~05:34): voorbeeld-bug AssessmentItemExamples → **plain-stijl kandidaat** (#878) → **#1290** drie werelden.
+
+**Per PR** in de prioriteitsblok (1–3): lever een **Playwright-run tegen acceptatie** mee die minimaal omvat:
+
+- Volledige **onboarding**
+- **Match**
+- **Banenkaart**
+- **Laadtijden per stap** (log/assert tegen doel 1 s / max 3 s; filters 500 ms)
+
+Geen wachtwoorden in PR-body of CI-logs. Geen naam “Roland” in user-facing PR-tekst.

@@ -180,6 +180,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var loginUrl =
             $"{baseUrl}/leerling?schoolId={AcceptatieE2E.SchoolId}&classId={AcceptatieE2E.ClassId}";
         await LoginAsync(page, loginUrl, AcceptatieE2E.PlainCode, Guid.Parse(AcceptatieE2E.ClassId));
+        var consoleErrors = new List<string>();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
         await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         var search = page.Locator("[data-testid=leerling-droombaan-search]");
         await search.WaitForAsync();
@@ -191,6 +199,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await Assertions.Expect(search).ToHaveValueAsync(typed);
         await page.WaitForTimeoutAsync(1500);
         await Assertions.Expect(search).ToHaveValueAsync(typed);
+        Assert.Empty(consoleErrors);
     }
 
     [Theory(Timeout = 300_000)]
@@ -221,6 +230,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await Assertions.Expect(search).ToHaveValueAsync(typed);
         await page.WaitForTimeoutAsync(1500);
         await Assertions.Expect(search).ToHaveValueAsync(typed);
+        await CaptureWalkthroughScreenshotIfRequestedAsync(page, $"droombaan-ssr-{width}.png");
     }
 
     [Fact(Timeout = 300_000)]
@@ -238,15 +248,116 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.Context.ClearCookiesAsync();
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
-        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var consoleErrors = new List<string>();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
         var search = page.Locator("[data-testid=leerling-droombaan-search]");
         await search.WaitForAsync();
         await search.FillAsync("Dierenarts");
-        await page.Locator(".ll-dream__save").ClickAsync();
+        await page.Locator(".ll-dream-ssr__save").ClickAsync();
         await page.WaitForURLAsync("**/leerling/droombaan**");
         await Assertions.Expect(search).ToHaveValueAsync("Dierenarts");
-        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await Assertions.Expect(search).ToHaveValueAsync("Dierenarts");
+        AssertNoMeaningfulConsoleErrors(consoleErrors);
+    }
+
+    [Fact(Timeout = 300_000)]
+    public async Task Droombaan_pick_piloot_persists_on_acceptatie_when_configured()
+    {
+        if (!AcceptatieE2E.Enabled)
+        {
+            return;
+        }
+
+        _ = TestContext.Current.CancellationToken;
+        var baseUrl = AcceptatieE2E.BaseUrl.TrimEnd('/');
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl =
+            $"{baseUrl}/leerling?schoolId={AcceptatieE2E.SchoolId}&classId={AcceptatieE2E.ClassId}";
+        await LoginAsync(page, loginUrl, AcceptatieE2E.PlainCode, Guid.Parse(AcceptatieE2E.ClassId));
+        var consoleErrors = new List<string>();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var search = page.Locator("[data-testid=leerling-droombaan-search]");
+        await search.WaitForAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Piloot" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/droombaan**");
+        Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Er ging iets mis", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+        await Assertions.Expect(search).ToHaveValueAsync("Piloot");
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await Assertions.Expect(search).ToHaveValueAsync("Piloot");
+        Assert.Empty(consoleErrors);
+    }
+
+    [Theory(Timeout = 300_000)]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task Paspoort_actions_bar_does_not_overlap_route(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        await EnablePassportV2Async();
+        var seed = await SeedCompletedWithDreamJobAsync("dierenarts");
+        var baseUrl = EnsureWeb();
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height }
+        });
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
+        var layoutJson = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const pageEl = document.querySelector('[data-testid=leerling-paspoort-page]');
+              const actions = pageEl?.querySelector('[data-testid=leerling-paspoort-actions]');
+              const route = pageEl?.querySelector('.lp-g78__route');
+              const content = pageEl?.querySelector('.lp-g78');
+              if (!pageEl || !actions || !route || !content) {
+                return JSON.stringify({ ok: false, reason: 'missing-elements' });
+              }
+              const ar = actions.getBoundingClientRect();
+              const rr = route.getBoundingClientRect();
+              const contentRect = content.getBoundingClientRect();
+              const leftMargin = Math.round(ar.left - contentRect.left);
+              const rightMargin = Math.round(contentRect.right - ar.right);
+              return JSON.stringify({
+                ok: ar.top >= rr.bottom - 2,
+                overlapPx: Math.max(0, rr.bottom - ar.top),
+                leftMargin,
+                rightMargin
+              });
+            }
+            """);
+        using var layout = System.Text.Json.JsonDocument.Parse(layoutJson);
+        var root = layout.RootElement;
+        Assert.True(root.GetProperty("ok").GetBoolean(), layoutJson);
+        var left = root.GetProperty("leftMargin").GetInt32();
+        var right = root.GetProperty("rightMargin").GetInt32();
+        Assert.True(Math.Abs(left - right) <= 2, layoutJson);
+        await CaptureWalkthroughScreenshotIfRequestedAsync(page, $"paspoort-actions-{width}.png");
     }
 
     [Fact(Timeout = 300_000)]
@@ -1134,6 +1245,30 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
             base.Dispose(disposing);
         }
+    }
+
+    private static void AssertNoMeaningfulConsoleErrors(IReadOnlyList<string> consoleErrors)
+    {
+        var bad = consoleErrors.Where(e =>
+            !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)
+            && !e.Contains("Refused to apply style", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.True(bad.Count == 0, "Console errors: " + string.Join("; ", bad));
+    }
+
+    private static async Task CaptureWalkthroughScreenshotIfRequestedAsync(IPage page, string fileName)
+    {
+        var dir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
+        if (string.IsNullOrWhiteSpace(dir))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(dir);
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(dir, fileName),
+            FullPage = true
+        });
     }
 
     private static class AcceptatieE2E

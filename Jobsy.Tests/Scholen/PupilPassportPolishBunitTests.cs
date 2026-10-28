@@ -44,26 +44,6 @@ public sealed class PupilPassportPolishBunitTests : BunitContext
     }
 
     [Fact]
-    public async Task Droombaan_renders_ssr_form_with_saved_value_after_load()
-    {
-        var culture = Services.GetRequiredService<CultureState>();
-        await culture.SetLanguageAsync("nl");
-        _handler.ResultJson = Json(ResultWithDream("kok", "Kok"));
-        _handler.ResultDelayMs = 400;
-
-        var nav = Services.GetRequiredService<NavigationManager>();
-        nav.NavigateTo("http://localhost/leerling/droombaan");
-        var cut = Render<LeerlingDroombaan>();
-
-        cut.WaitForAssertion(
-            () => Assert.Equal("Kok", cut.Find("[data-testid=leerling-droombaan-search]").GetAttribute("value")),
-            TimeSpan.FromSeconds(5));
-        Assert.Contains("method=\"post\"", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("name=\"jobTitle\"", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("data-enhance=\"false\"", cut.Markup, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task Paspoort_page_binds_display_name_not_literal_parameter_name()
     {
         var culture = Services.GetRequiredService<CultureState>();
@@ -105,19 +85,6 @@ public sealed class PupilPassportPolishBunitTests : BunitContext
         }, TimeSpan.FromSeconds(5));
         Assert.Equal(2, _handler.PassportCalls);
     }
-
-    private static PupilResultPageDto ResultWithDream(string key, string title)
-        => new(
-            "8A",
-            "ABC-123",
-            "School",
-            new PupilStoryViewDto("Dit ben jij", "Verhaal.", [], ["Dierenarts"], []),
-            [],
-            [],
-            new DreamJobRouteStubDto(key, title, 1, 3, ["Iets"], [], [], null, null),
-            key,
-            60,
-            PupilQuestionSet.Groep78);
 
     private static PupilG78PassportWebDto MinimalPassport(string? name)
         => new(
