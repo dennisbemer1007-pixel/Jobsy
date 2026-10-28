@@ -92,8 +92,7 @@ public static class IllustratedPagesVacancyStub
             var q = ParseQuery(path);
             var lat = TryDouble(q, "lat") ?? OriginLat;
             var lng = TryDouble(q, "lng") ?? OriginLng;
-            q.TryGetValue("minutes", out var minutes);
-            return LagenIsochroneFixtures.FeatureCollectionJson(lat, lng, minutes);
+            return LagenIsochroneFixtures.FeatureCollectionJson(lat, lng);
         }
 
         if (path.Contains("/discover", StringComparison.OrdinalIgnoreCase))

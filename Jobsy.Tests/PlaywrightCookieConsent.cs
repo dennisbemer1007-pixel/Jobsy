@@ -11,7 +11,6 @@ internal static class PlaywrightCookieConsent
     public const string InitScript = """
         try {
           localStorage.setItem('Jobsy.CookieConsent', 'necessary');
-          document.documentElement.classList.add('cookie-consent-known');
         } catch (e) {}
         """;
 

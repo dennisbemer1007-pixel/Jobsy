@@ -262,18 +262,15 @@ internal static class Plain878PageClickAuditHelpers
               const y = Math.min(window.innerHeight - 1, Math.max(1, r.top + r.height / 2));
               const hit = document.elementFromPoint(x, y);
               if (!hit) return { ok: false, reason: 'no-hit' };
-              const blockerClass = (node) => {
-                if (!(node instanceof HTMLElement)) return null;
-                if (node.classList.contains('cookie-consent')) return 'cookie-consent';
-                if (node.classList.contains('lobsy-assistant')) return 'lobsy-assistant';
-                if (node.classList.contains('coach-pill')) return 'coach-pill';
-                if (node.classList.contains('lobsy-coach-dock')) return 'coach-pill';
-                return null;
-              };
+              const blockers = ['cookie-consent', 'lobsy-assistant', 'coach-pill', 'lobsy-coach-dock'];
               let n = hit;
               while (n) {
-                const b = blockerClass(n);
-                if (b) return { ok: false, reason: 'blocked-by-' + b };
+                const cls = (n.className && String(n.className)) || '';
+                for (const b of blockers) {
+                  if (cls.includes(b) || (n.id && n.id.includes(b))) {
+                    return { ok: false, reason: 'blocked-by-' + b };
+                  }
+                }
                 n = n.parentElement;
               }
               const ok = hit === el || el.contains(hit);
