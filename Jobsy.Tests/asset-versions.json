@@ -91,13 +91,13 @@
     "sha256": "80b4b799ed5efbcef0759e9ac1262eaa92d489d5b77a399c7628e05c702f25de",
     "v": "20261018-02"
   },
-  "css/features/candidate-plain-public.css": {
-    "sha256": "6decc1146f797a6ffd47200aa5a1e96c9c0981ff5850805f254cdfdf3ce4c18f",
-    "v": "20261028-catalog"
-  },
   "css/features/candidate-no-blazor-chrome.css": {
     "sha256": "a16cea6f64ddf3dd4da4eb2c17fb74aa2e9616d0a1860b657dd27f7398fb76ee",
     "v": "20261025-68"
+  },
+  "css/features/candidate-plain-public.css": {
+    "sha256": "6decc1146f797a6ffd47200aa5a1e96c9c0981ff5850805f254cdfdf3ce4c18f",
+    "v": "20261028-catalog"
   },
   "css/features/carriere.css": {
     "sha256": "0fcf50008f62c405ae6b81e5bf591e2ef66ab64535b21fe4b1e7d622dce0addb",
@@ -500,7 +500,7 @@
     "v": "20261021-02"
   },
   "js/match-ssr.js": {
-    "sha256": "b3c2e530a826585caf005450430179f70ee30323a94bbb53820cd6aaa4d11844",
+    "sha256": "3fe62fdebdab27d36870a254951c1763f87b5b8991e7c7320d6f67fed05914d1",
     "v": "20261026-17"
   },
   "js/navFeedback.js": {
