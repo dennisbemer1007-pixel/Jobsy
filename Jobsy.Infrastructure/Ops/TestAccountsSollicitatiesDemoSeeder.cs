@@ -75,6 +75,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return false;
         }
 
+        await EnsureDemoCompaniesPersistedAsync(db, logger, cancellationToken);
+
         var beforeApps = await db.Applications.CountAsync(
             a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null,
             cancellationToken);
@@ -232,28 +234,9 @@ public static class TestAccountsSollicitatiesDemoSeeder
 
         await RemoveStaleDemoApplicationsAsync(db, candidateId, logger, cancellationToken);
 
-        try
-        {
-            await new VacancyCategoryService(db).EnsureDefaultsAsync(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "VacancyCategory EnsureDefaults failed; resolving regulier category for sollicitaties demo.");
-        }
-
+        await EnsureDemoCompaniesPersistedAsync(db, logger, cancellationToken);
         var regulierCategoryId = await ResolveRegulierCategoryIdAsync(db, cancellationToken);
-        if (db.ChangeTracker.HasChanges())
-        {
-            await db.SaveChangesAsync(cancellationToken);
-        }
-
         var companies = BuildCompanies();
-        foreach (var company in companies)
-        {
-            await UpsertCompanyAsync(db, company, cancellationToken);
-        }
-
-        await db.SaveChangesAsync(cancellationToken);
 
         var vacancies = BuildVacancies(companies);
         foreach (var vacancy in vacancies)
@@ -1479,6 +1462,33 @@ public static class TestAccountsSollicitatiesDemoSeeder
         }
 
         return await set.AsNoTracking().AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+    }
+
+    private static async Task EnsureDemoCompaniesPersistedAsync(
+        JobsyDbContext db,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await new VacancyCategoryService(db).EnsureDefaultsAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "VacancyCategory EnsureDefaults failed; resolving regulier category for sollicitaties demo.");
+        }
+
+        _ = await ResolveRegulierCategoryIdAsync(db, cancellationToken);
+
+        foreach (var company in BuildCompanies())
+        {
+            await UpsertCompanyAsync(db, company, cancellationToken);
+        }
+
+        if (db.ChangeTracker.HasChanges())
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 
 }

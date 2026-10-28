@@ -67,16 +67,26 @@ internal static class AfterMatchDemoSeeder
             });
         }
 
-        // ondernemer@jobsy.local (BranchManager) must access Den Haag Centrum / Westland demo apps.
-        if (!await db.UserCompanies.AnyAsync(m => m.UserId == BranchManagerId && m.CompanyId == WestlandId))
-        {
-            db.UserCompanies.Add(new UserCompany { UserId = BranchManagerId, CompanyId = WestlandId });
-        }
+        await EnsureRetailBranchCompanyAsync(db, WestlandId, "Westland Fresh Logistics", "12345678", "12345678_0001",
+            "'s-Gravenzandseweg 10, Honselersdijk", new GeoPoint(51.9812, 4.2235));
+        await EnsureRetailBranchCompanyAsync(db, CafeId, "Boutique Café De Stad", "87654321", "87654321_0001",
+            "Grote Markt 14, Den Haag Centrum", new GeoPoint(52.0735, 4.3120));
+        await EnsureRetailBranchCompanyAsync(db, SupermarketId, "Supermarkt De Fred", "11223344", "11223344_0001",
+            "Frederik Hendriklaan 88, Den Haag (Statenkwartier)", new GeoPoint(52.0910, 4.2815));
 
+        // ondernemer@jobsy.local (BranchManager) must access Den Haag Centrum / Westland demo apps.
         var branchManager = await db.Users.FirstOrDefaultAsync(u => u.Id == BranchManagerId);
-        if (branchManager is not null && branchManager.CompanyId != WestlandId)
+        if (branchManager is not null)
         {
-            branchManager.CompanyId = WestlandId;
+            if (!await db.UserCompanies.AnyAsync(m => m.UserId == BranchManagerId && m.CompanyId == WestlandId))
+            {
+                db.UserCompanies.Add(new UserCompany { UserId = BranchManagerId, CompanyId = WestlandId });
+            }
+
+            if (branchManager.CompanyId != WestlandId)
+            {
+                branchManager.CompanyId = WestlandId;
+            }
         }
 
         await db.SaveChangesAsync();
@@ -161,6 +171,20 @@ internal static class AfterMatchDemoSeeder
         return null;
     }
 
+    private static async Task<Guid?> ResolveEmployerUserIdAsync(JobsyDbContext db)
+    {
+        if (await db.Users.AsNoTracking().AnyAsync(u => u.Id == BranchManagerId))
+        {
+            return BranchManagerId;
+        }
+
+        return await db.Users.AsNoTracking()
+            .Where(u => u.Role == UserRole.BranchManager && u.IsActive)
+            .OrderBy(u => u.Email)
+            .Select(u => (Guid?)u.Id)
+            .FirstOrDefaultAsync();
+    }
+
     private static async Task EnsureApplicationsAsync(JobsyDbContext db, ILogger logger)
     {
         var candidateUserId = await ResolveDemoCandidateUserIdAsync(db);
@@ -170,12 +194,19 @@ internal static class AfterMatchDemoSeeder
             return;
         }
 
-        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.WaitApp, InterviewStatus.Proposing, null, hasMessage: true);
-        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.PickSlotsApp, InterviewStatus.Proposing, "slots", hasMessage: true);
-        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.ScheduledApp, InterviewStatus.Scheduled, "scheduled", hasMessage: true);
-        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.RescheduleApp, InterviewStatus.RescheduleRequested, "reschedule", hasMessage: true);
-        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.NotNowApp, InterviewStatus.Done, "notnow", hasMessage: false, outcome: AfterMatchOutcomeKind.NotNow);
-        await UpsertAndSaveAppAsync(db, candidateUserId.Value, AfterMatchDemoIds.Verkoop4790App, InterviewStatus.Scheduled, "scheduled4790", hasMessage: true);
+        var employerUserId = await ResolveEmployerUserIdAsync(db);
+        if (employerUserId is null)
+        {
+            logger.LogInformation("After-match demo seed skipped (no branch manager user).");
+            return;
+        }
+
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, employerUserId.Value, AfterMatchDemoIds.WaitApp, InterviewStatus.Proposing, null, hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, employerUserId.Value, AfterMatchDemoIds.PickSlotsApp, InterviewStatus.Proposing, "slots", hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, employerUserId.Value, AfterMatchDemoIds.ScheduledApp, InterviewStatus.Scheduled, "scheduled", hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, employerUserId.Value, AfterMatchDemoIds.RescheduleApp, InterviewStatus.RescheduleRequested, "reschedule", hasMessage: true);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, employerUserId.Value, AfterMatchDemoIds.NotNowApp, InterviewStatus.Done, "notnow", hasMessage: false, outcome: AfterMatchOutcomeKind.NotNow);
+        await UpsertAndSaveAppAsync(db, candidateUserId.Value, employerUserId.Value, AfterMatchDemoIds.Verkoop4790App, InterviewStatus.Scheduled, "scheduled4790", hasMessage: true);
 
         logger.LogInformation("After-match demo applications ensured.");
     }
@@ -183,6 +214,7 @@ internal static class AfterMatchDemoSeeder
     private static async Task UpsertAndSaveAppAsync(
         JobsyDbContext db,
         Guid candidateUserId,
+        Guid employerUserId,
         Guid appId,
         InterviewStatus interviewStatus,
         string? scenario,
@@ -190,7 +222,7 @@ internal static class AfterMatchDemoSeeder
         AfterMatchOutcomeKind? outcome = null)
     {
         var yesAt = DemoYesAtUtc();
-        await UpsertAppAsync(db, candidateUserId, appId, interviewStatus, scenario, hasMessage, outcome, yesAt);
+        await UpsertAppAsync(db, candidateUserId, employerUserId, appId, interviewStatus, scenario, hasMessage, outcome, yesAt);
         await db.SaveChangesAsync();
         if (scenario is "scheduled" or "scheduled4790" or "reschedule")
         {
@@ -220,6 +252,7 @@ internal static class AfterMatchDemoSeeder
     private static async Task UpsertAppAsync(
         JobsyDbContext db,
         Guid candidateUserId,
+        Guid employerUserId,
         Guid appId,
         InterviewStatus interviewStatus,
         string? scenario,
@@ -396,7 +429,7 @@ internal static class AfterMatchDemoSeeder
                     Outcome = kind,
                     Reason = "Je was heel zorgvuldig en vriendelijk. We kozen nu voor iemand die al zelfstandig aan de oven kan staan.",
                     CreatedAtUtc = DateTime.UtcNow,
-                    RecordedByUserId = BranchManagerId,
+                    RecordedByUserId = employerUserId,
                     ToneCheckOk = true
                 });
             }
@@ -419,7 +452,7 @@ internal static class AfterMatchDemoSeeder
                 {
                     Id = Guid.NewGuid(),
                     ApplicationId = appId,
-                    SenderUserId = BranchManagerId,
+                    SenderUserId = employerUserId,
                     Body = "Hoi Sanne, leuk dat je wilt komen kennismaken! Ik stuur je vandaag nog een paar momenten.",
                     CreatedAtUtc = yesAt.AddHours(3),
                     BlockReason = ApplicationMessageBlockReason.None
@@ -503,5 +536,35 @@ internal static class AfterMatchDemoSeeder
         };
         interview.Slots.Add(slot);
         return slot;
+    }
+
+    private static async Task EnsureRetailBranchCompanyAsync(
+        JobsyDbContext db,
+        Guid companyId,
+        string name,
+        string kvk,
+        string kvkEstablishment,
+        string address,
+        GeoPoint location)
+    {
+        if (await db.Companies.AnyAsync(c => c.Id == companyId))
+        {
+            return;
+        }
+
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = name,
+            KvkNumber = kvk,
+            KvkEstablishmentId = kvkEstablishment,
+            Address = address,
+            Type = CompanyType.Employer,
+            Location = location,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
     }
 }
