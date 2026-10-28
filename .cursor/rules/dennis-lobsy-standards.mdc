@@ -1,5 +1,5 @@
 ---
-description: Dennis/Lobsy vaste regels (28 okt 2026) — rebuild, filmed flows, PR prioriteit + acc Playwright
+description: Dennis/Lobsy vaste regels (28 okt 2026) — kleine PR's, scoped acc-test, rebuild, eindtotaal
 alwaysApply: true
 ---
 
@@ -7,13 +7,15 @@ alwaysApply: true
 
 Gelden voor **alle** agent- en PR-werk vanaf deze datum, tenzij Dennis expliciet anders zegt.
 
-## 1. Geen eindeloos patchen op acceptatie
+**Werkwijze (28 okt ~07:43):** kleine stapjes, snel vooruit. **Eén onderwerp per PR** — houd PR's klein.
 
-Werkt een fix **niet** na **één** gerichte poging op **acceptatie**, bouw dat onderdeel **opnieuw vanaf nul** (verwijder oude component/handlers/JS/CSS waar nodig; nieuwe SSR/minimal implementatie). Geen tweede laag patches op hetzelfde kapotte pad.
+## 1. Fix faalt → max één patch, daarna rebuild
 
-## 2. Gefilmde stromen: zero visible defects + performance
+Werkt een fix **niet** na **één** gerichte poging op **acceptatie**, bouw dat onderdeel **opnieuw vanaf nul** (verwijder oude component/handlers/JS/CSS waar nodig; nieuwe SSR/minimal implementatie). Geen eindeloos patchen op hetzelfde kapotte pad.
 
-In deze stromen mag **geen** bug, foutmelding, lege staat of haperende layout zichtbaar zijn. Pagina’s strak en snel.
+## 2. Gefilmde stromen (kwaliteitsdoel, eindtotaal)
+
+Uiteindelijk (één **totale** test als alles af is) mag in deze stromen **geen** bug, foutmelding, lege staat of haperende layout zichtbaar zijn:
 
 | Stroom | Scope |
 |--------|--------|
@@ -25,26 +27,42 @@ In deze stromen mag **geen** bug, foutmelding, lege staat of haperende layout zi
 **Laadtijd (acc, realistisch netwerk):**
 
 - Doel: **&lt; 1 s** per pagina/stap
-- Harde grens: **3 s** (fail de check / fix vóór merge)
+- Harde grens: **3 s**
 - Filters banenkaart: **&lt; 500 ms**
 
-Meet en rapporteer per stap in PR-evidence waar Dennis om Playwright vraagt.
+Volledige onboarding/Match/banenkaart-regressie **niet** per PR — alleen bij de **eindtotaal**-run.
 
-## 3. Prioriteit + PR-levering
+## 3. Prioriteit (volgorde)
 
-Volgorde (zie ook `dennis-priority-order` in agent store):
-
-1. **S15 fixes + knoppen-herbouw** (#1306)
-2. **#1305** (Match / banenkaart vacatures)
+1. **#1308** — ImageSharp → SkiaSharp (MIT)
+2. **#1305** — Match / banenkaart vacatures
 3. **#1301**
+4. Voorbeeld-bug **AssessmentItemExamples**
+5. **Plain-stijl kandidaat** (#878)
+6. **#1290** — drie werelden
 
-Daarna (aparte Dennis-volgorde 28 okt ~05:34): voorbeeld-bug AssessmentItemExamples → **plain-stijl kandidaat** (#878) → **#1290** drie werelden.
+(S16 / #1307 en eerdere items: afgerond waar gemerged.)
 
-**Per PR** in de prioriteitsblok (1–3): lever een **Playwright-run tegen acceptatie** mee die minimaal omvat:
+## 4. Acceptatie zelf-test (goedgekeurd 28 okt ~07:27)
 
-- Volledige **onboarding**
-- **Match**
-- **Banenkaart**
-- **Laadtijden per stap** (log/assert tegen doel 1 s / max 3 s; filters 500 ms)
+Agent mag **zelf** op **https://acceptatie.lobsy.nl** testen met **@jobsy.local** seed-accounts. Wachtwoord: constante in `DemoUsersSeeder` — **nooit** in PR, logs, screenshots, commits of agent-samenvattingen.
 
-Geen wachtwoorden in PR-body of CI-logs. Geen naam “Roland” in user-facing PR-tekst.
+**Veiligheid op acc:**
+
+- Alleen **nepdata**; accounts **niet** verwijderen.
+- **Niet** klikken: “Later verder”, “Account verwijderen”, “Begin opnieuw”, “Intrekken”.
+- Geen **echte** sollicitaties.
+- Geen **nieuwe leerling-seed-codes** verbruiken zonder noodzaak.
+- Geen naam **“Roland”** in user-facing tekst.
+
+## 5. Acc-evidence **per PR** (scoped, 28 okt ~07:43)
+
+**Per PR** alleen de **gefixte onderdelen** op acc testen na deploy:
+
+- Werkt het?
+- Zijn **alle knoppen/links in dat onderdeel** klikbaar?
+- **Laadtijd** van die schermen/stappen meten en kort rapporteren.
+
+Playwright/screenshots **1440** + **390** waar nuttig voor **die scope** — geen volledige onboarding-regressierun per PR.
+
+**PR pas melden aan Dennis** als scoped acc-check + evidence klaar is. **Eén totale test** (volledige stromen) pas als de prioriteitslijst (§3) af is.
