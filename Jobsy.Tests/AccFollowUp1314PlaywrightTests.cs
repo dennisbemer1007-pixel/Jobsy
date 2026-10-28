@@ -38,31 +38,104 @@ public sealed class AccFollowUp1314PlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        var metrics = new Dictionary<string, object> { ["acc_head"] = "82e9f64" };
+        var accHead = await ResolveAcceptatieCommitAsync(baseUrl);
+        var artifactPrefix = $"acc-{accHead}-1314";
+        var metrics = new Dictionary<string, object> { ["acc_head"] = accHead, ["artifact_prefix"] = artifactPrefix };
 
-        await Capture1314ExamplesAsync(browser, baseUrl, password, metrics);
-        await Capture1301VacancySearchUrlSyncAsync(browser, baseUrl, password, metrics);
-        await MeasureCandidatePerfAsync(browser, baseUrl, password, metrics);
+        await Capture1314ExamplesAsync(browser, baseUrl, password, artifactPrefix, metrics);
+        await TryCaptureAsync(metrics, "1301_url_sync", () => Capture1301VacancySearchUrlSyncAsync(browser, baseUrl, password, accHead, metrics));
+        await TryCaptureAsync(metrics, "1323_werkgever_search_capture", () => CaptureWerkgeverSearchFieldAsync(browser, baseUrl, password, accHead, metrics));
+        await TryCaptureAsync(metrics, "perf", () => MeasurePerfAsync(browser, baseUrl, password, metrics));
 
         var metricsPath = Path.Combine(ArtifactDir, "acc-followup-metrics.json");
         var metricsJson = JsonSerializer.Serialize(metrics, new JsonSerializerOptions { WriteIndented = true });
         await File.WriteAllTextAsync(metricsPath, metricsJson);
         await File.WriteAllTextAsync(Path.Combine(AgentStoreDir, "acc-followup-metrics.json"), metricsJson);
+
+        if (metrics.TryGetValue("1314_failures", out var failuresObj)
+            && failuresObj is List<string> failures
+            && failures.Count > 0)
+        {
+            Assert.Fail("Acc #1314 capture failures: " + string.Join("; ", failures));
+        }
+    }
+
+    private static async Task TryCaptureAsync(
+        Dictionary<string, object> metrics,
+        string key,
+        Func<Task> capture)
+    {
+        try
+        {
+            await capture();
+            metrics[$"{key}_status"] = "ok";
+        }
+        catch (Exception ex)
+        {
+            metrics[$"{key}_status"] = "fail";
+            metrics[$"{key}_error"] = ex.Message;
+            if (!metrics.TryGetValue("1314_failures", out var listObj)
+                || listObj is not List<string> list)
+            {
+                list = [];
+                metrics["1314_failures"] = list;
+            }
+
+            list.Add($"{key}: {ex.GetType().Name}");
+        }
+    }
+
+    private static async Task<string> ResolveAcceptatieCommitAsync(string baseUrl)
+    {
+        var env = (Environment.GetEnvironmentVariable("JOBSY_ACC_HEAD") ?? "").Trim();
+        if (env.Length is >= 7 and <= 40)
+        {
+            return env.Length > 12 ? env[..12] : env;
+        }
+
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        var html = await http.GetStringAsync(baseUrl.TrimEnd('/') + "/login");
+        const string marker = "name=\"lobsy-commit\" content=\"";
+        var start = html.IndexOf(marker, StringComparison.Ordinal);
+        if (start < 0)
+        {
+            return "unknown";
+        }
+
+        start += marker.Length;
+        var end = html.IndexOf('"', start);
+        if (end <= start)
+        {
+            return "unknown";
+        }
+
+        var full = html[start..end].Trim();
+        return full.Length >= 12 ? full[..12] : full;
     }
 
     private static async Task Capture1314ExamplesAsync(
         IBrowser browser,
         string baseUrl,
         string password,
+        string artifactPrefix,
         Dictionary<string, object> metrics)
     {
-        foreach (var (lang, locale, prefix) in new[] { ("nl", "nl-NL", "acc-1314-nl"), ("en", "en-GB", "acc-1314-en") })
+        foreach (var (lang, locale) in new[] { ("nl", "nl-NL"), ("en", "en-GB") })
         {
             foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
             {
-                await CaptureQuickScanExampleAsync(browser, baseUrl, password, metrics, lang, locale, prefix, width, height, tag);
-                await CaptureOnboardingMiniExampleAsync(browser, baseUrl, password, metrics, lang, locale, prefix, width, height, tag);
-                await CaptureDeepAnalysisExampleAsync(browser, baseUrl, password, metrics, lang, locale, prefix, width, height, tag);
+                await TryCaptureAsync(
+                    metrics,
+                    $"1314_{lang}_quick_{tag}",
+                    () => CaptureQuickScanExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag));
+                await TryCaptureAsync(
+                    metrics,
+                    $"1314_{lang}_mini_{tag}",
+                    () => CaptureOnboardingMiniExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag));
+                await TryCaptureAsync(
+                    metrics,
+                    $"1314_{lang}_deep_{tag}",
+                    () => CaptureDeepAnalysisExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag));
             }
         }
     }
@@ -74,24 +147,27 @@ public sealed class AccFollowUp1314PlaywrightTests
         Dictionary<string, object> metrics,
         string lang,
         string locale,
-        string prefix,
+        string artifactPrefix,
         int width,
         int height,
         string tag)
     {
-        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_ONBOARDING_EMAIL") ?? OnboardingE2eProfileEnsurer.LoginEmail).Trim();
+        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_INCOMPLETE_EMAIL") ?? KbE2e.DefaultIncompleteEmail).Trim();
         await using var context = await NewContextAsync(browser, width, height, locale);
         var page = await NewLoggedInPageAsync(context, baseUrl, email, password);
         await SetCultureAsync(page, lang);
 
-        await NavigateToQuickScanQuestionAsync(page, baseUrl);
+        await page.GotoAsync(baseUrl + "/candidate/competencies?stap=vraag", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        await EnsureTestFlowReadyAsync(page);
 
         var example = page.Locator("[data-testid=test-item-example]");
         await example.WaitForAsync(new() { Timeout = 90_000 });
         var text = (await example.InnerTextAsync()).Trim();
         Assert.False(string.IsNullOrWhiteSpace(text));
 
-        var file = $"{prefix}-quick-{tag}.png";
+        var file = $"{artifactPrefix}-{lang}-quick-{tag}.png";
         await SaveScreenshotAsync(page, file, fullPage: true);
         metrics[$"1314_{lang}_quick_{tag}"] = new { exampleChars = text.Length, url = page.Url };
     }
@@ -103,12 +179,12 @@ public sealed class AccFollowUp1314PlaywrightTests
         Dictionary<string, object> metrics,
         string lang,
         string locale,
-        string prefix,
+        string artifactPrefix,
         int width,
         int height,
         string tag)
     {
-        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_ONBOARDING_EMAIL") ?? OnboardingE2eProfileEnsurer.LoginEmail).Trim();
+        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail).Trim();
         await using var context = await NewContextAsync(browser, width, height, locale);
         var page = await NewLoggedInPageAsync(context, baseUrl, email, password);
         await SetCultureAsync(page, lang);
@@ -124,11 +200,12 @@ public sealed class AccFollowUp1314PlaywrightTests
             await TryAdvanceWizardToMiniBlockAsync(page);
         }
 
+        await EnsureTestFlowReadyAsync(page);
         await example.WaitForAsync(new() { Timeout = 90_000 });
         var text = (await example.InnerTextAsync()).Trim();
         Assert.False(string.IsNullOrWhiteSpace(text));
 
-        var file = $"{prefix}-onboarding-mini-{tag}.png";
+        var file = $"{artifactPrefix}-{lang}-onboarding-mini-{tag}.png";
         await SaveScreenshotAsync(page, file, fullPage: true);
         metrics[$"1314_{lang}_mini_{tag}"] = new { exampleChars = text.Length, url = page.Url };
     }
@@ -140,7 +217,7 @@ public sealed class AccFollowUp1314PlaywrightTests
         Dictionary<string, object> metrics,
         string lang,
         string locale,
-        string prefix,
+        string artifactPrefix,
         int width,
         int height,
         string tag)
@@ -157,13 +234,13 @@ public sealed class AccFollowUp1314PlaywrightTests
         var example = page.Locator("[data-testid=test-item-example]");
         try
         {
+            await EnsureTestFlowReadyAsync(page);
             await example.WaitForAsync(new() { Timeout = 45_000 });
         }
         catch (TimeoutException)
         {
             await page.GotoAsync(baseUrl + "/candidate/competencies?stap=vraag", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await AcceptTestConsentIfPresentAsync(page);
-            await ClickBeginOrContinueAsync(page);
+            await EnsureTestFlowReadyAsync(page);
             await example.WaitForAsync(new() { Timeout = 60_000 });
             metrics[$"1314_{lang}_deep_fallback_quick_{tag}"] = page.Url;
         }
@@ -171,7 +248,7 @@ public sealed class AccFollowUp1314PlaywrightTests
         var text = (await example.InnerTextAsync()).Trim();
         Assert.False(string.IsNullOrWhiteSpace(text));
 
-        var file = $"{prefix}-deep-{tag}.png";
+        var file = $"{artifactPrefix}-{lang}-deep-{tag}.png";
         await SaveScreenshotAsync(page, file, fullPage: true);
         metrics[$"1314_{lang}_deep_{tag}"] = new { exampleChars = text.Length, url = page.Url };
     }
@@ -201,59 +278,30 @@ public sealed class AccFollowUp1314PlaywrightTests
         }
     }
 
-    private static async Task NavigateToQuickScanQuestionAsync(IPage page, string baseUrl)
+    private static async Task EnsureTestFlowReadyAsync(IPage page)
     {
-        await page.GotoAsync(baseUrl + "/candidate/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            await AcceptTestConsentIfPresentAsync(page);
+            await ClickBeginOrContinueAsync(page);
 
-        var testsTab = page.Locator(".passport-tab", new() { HasText = "Mijn tests" });
-        if (await testsTab.CountAsync() == 0)
-        {
-            testsTab = page.GetByRole(AriaRole.Tab, new() { Name = "Mijn tests" });
-        }
+            if (await page.Locator("[data-testid=test-item-example]").CountAsync() > 0)
+            {
+                return;
+            }
 
-        if (await testsTab.CountAsync() > 0)
-        {
-            await testsTab.First.ClickAsync();
-            await page.WaitForTimeoutAsync(500);
-        }
+            var circuitReady = await page.EvaluateAsync<bool>(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'");
+            if (circuitReady && await page.Locator(".test-flow__statement, .test-flow").CountAsync() > 0)
+            {
+                return;
+            }
 
-        var startCompetence = page.Locator("a[href*='/candidate/competencies'], button:has-text('Hoe je werkt')").First;
-        if (await startCompetence.CountAsync() > 0)
-        {
-            await startCompetence.ClickAsync();
-            await page.WaitForURLAsync("**/candidate/competencies**", new() { Timeout = 60_000 });
-        }
-        else
-        {
-            await page.GotoAsync(baseUrl + "/candidate/competencies?stap=vraag", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.WaitForTimeoutAsync(750);
         }
 
-        await WaitForInteractiveAppAsync(page);
-        await AcceptTestConsentIfPresentAsync(page);
-        await ClickBeginOrContinueAsync(page);
-        await WaitForInteractiveAppAsync(page);
-    }
-
-    private static async Task WaitForInteractiveAppAsync(IPage page)
-    {
-        try
-        {
-            await page.WaitForFunctionAsync(
-                """
-                () => {
-                  if (document.querySelector('[data-testid=test-item-example]')) return true;
-                  return document.documentElement.getAttribute('data-lobsy-circuit') === 'ready';
-                }
-                """,
-                null,
-                new() { Timeout = 120_000 });
-        }
-        catch (TimeoutException)
-        {
-            // fall through — example wait will surface failure
-        }
+        var debugName = $"acc-1314-debug-{DateTime.UtcNow:yyyyMMddHHmmssfff}.png";
+        await SaveScreenshotAsync(page, debugName, fullPage: true);
     }
 
     private static async Task ClickBeginOrContinueAsync(IPage page)
@@ -308,9 +356,20 @@ public sealed class AccFollowUp1314PlaywrightTests
 
     private static async Task SaveScreenshotAsync(IPage page, string fileName, bool fullPage)
     {
+        Directory.CreateDirectory(ArtifactDir);
+        Directory.CreateDirectory(AgentStoreDir);
         var artifactPath = Path.Combine(ArtifactDir, fileName);
         await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = fullPage });
-        File.Copy(artifactPath, Path.Combine(AgentStoreDir, fileName), overwrite: true);
+        var storePath = Path.Combine(AgentStoreDir, fileName);
+        try
+        {
+            File.Copy(artifactPath, storePath, overwrite: true);
+        }
+        catch (IOException)
+        {
+            var bytes = await File.ReadAllBytesAsync(artifactPath);
+            await File.WriteAllBytesAsync(storePath, bytes);
+        }
     }
 
     private static async Task AcceptTestConsentIfPresentAsync(IPage page)
@@ -337,10 +396,43 @@ public sealed class AccFollowUp1314PlaywrightTests
             new() { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 
+    private static async Task CaptureWerkgeverSearchFieldAsync(
+        IBrowser browser,
+        string baseUrl,
+        string password,
+        string accHead,
+        Dictionary<string, object> metrics)
+    {
+        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_EMAIL") ?? "ondernemer@jobsy.local").Trim();
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+        {
+            metrics["1323_werkgever_search"] = "employer_login_failed";
+            return;
+        }
+
+        await page.GotoAsync(baseUrl + "/werkgever/vacatures", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var search = page.Locator(".ent-filter-bar input[type=search], .ent-filter-bar input").First;
+        await search.WaitForAsync(new() { Timeout = 60_000 });
+        await search.FocusAsync();
+        var file = $"acc-{accHead}-1323-werkgever-search-1440.png";
+        await SaveScreenshotAsync(page, file, fullPage: false);
+        metrics["1323_werkgever_search"] = new { file, url = page.Url };
+    }
+
     private static async Task Capture1301VacancySearchUrlSyncAsync(
         IBrowser browser,
         string baseUrl,
         string password,
+        string accHead,
         Dictionary<string, object> metrics)
     {
         var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_EMAIL") ?? "ondernemer@jobsy.local").Trim();
@@ -368,16 +460,31 @@ public sealed class AccFollowUp1314PlaywrightTests
             new() { Timeout = 15_000 });
 
         metrics["1301_url_sync"] = new { q = probe, search = page.Url };
-        await SaveScreenshotAsync(page, "acc-1301-vacatures-url-sync-1440.png", fullPage: false);
+        await SaveScreenshotAsync(page, $"acc-{accHead}-1301-vacatures-url-sync-1440.png", fullPage: false);
     }
 
-    private static async Task MeasureCandidatePerfAsync(
+    private static async Task MeasurePerfAsync(
         IBrowser browser,
         string baseUrl,
         string password,
         Dictionary<string, object> metrics)
     {
-        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? "kandidaat@jobsy.local").Trim();
+        var employerEmail = (Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_EMAIL") ?? "ondernemer@jobsy.local").Trim();
+        await using var employerCtx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(employerCtx);
+        var employerPage = await employerCtx.NewPageAsync();
+        Assert.True(await KbE2e.TryLoginAsync(employerPage, baseUrl, employerEmail, password));
+
+        var wgSollicMs = await NavigationReadyMsAsync(employerPage, baseUrl + "/werkgever/sollicitaties");
+        metrics["perf_werkgever_sollicitaties_readyMs"] = wgSollicMs;
+        metrics["perf_werkgever_sollic_targetMs"] = 1000;
+        metrics["perf_werkgever_sollic_maxMs"] = 3000;
+
+        var candidateEmail = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail).Trim();
         await using var context = await browser.NewContextAsync(new()
         {
             ViewportSize = new() { Width = 1440, Height = 900 },
@@ -385,20 +492,16 @@ public sealed class AccFollowUp1314PlaywrightTests
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, candidateEmail, password));
 
-        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, password));
-
-        var sollicMs = await NavigationReadyMsAsync(page, baseUrl + "/candidate/applications");
         var banenMs = await NavigationReadyMsAsync(page, baseUrl + "/banenkaart?weergave=lijst");
-        metrics["perf_sollicitaties_readyMs"] = sollicMs;
         metrics["perf_banenkaart_readyMs"] = banenMs;
-        metrics["perf_sollic_targetMs"] = 1000;
-        metrics["perf_sollic_maxMs"] = 3000;
 
-        await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.Locator(".sollic-card, .sollicitaties-page-wrap, [data-testid=sollic-list]").First
-            .WaitForAsync(new() { Timeout = 60_000 });
-        await SaveScreenshotAsync(page, "acc-perf-sollic-1440.png", fullPage: false);
+        await employerPage.GotoAsync(baseUrl + "/werkgever/sollicitaties", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await employerPage.Locator(
+                ".ent-data-table, .wg-sollic, .sollicitaties-page-wrap, .werkgever-sollic, main, h1")
+            .First.WaitForAsync(new() { Timeout = 60_000 });
+        await SaveScreenshotAsync(employerPage, "acc-perf-werkgever-sollic-1440.png", fullPage: false);
 
         await page.GotoAsync(baseUrl + "/banenkaart?weergave=lijst", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=kb-list-row], .banenkaart-page-wrap, .map-pane").First
