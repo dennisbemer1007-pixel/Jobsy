@@ -41,7 +41,7 @@ public static class PupilLeerlingSsrFrame
         }
 
         sb.Append("<link rel=\"stylesheet\" href=\"");
-        sb.Append(WwwrootAssetCatalog.Url("css/features/errors.css"));
+        sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("css/features/errors.css"));
         sb.Append("\" /></head><body><div class=\"ll-shell\" lang=\"");
         sb.Append(WebUtility.HtmlEncode(lang));
         sb.Append("\"><header class=\"ll-topbar\"><a class=\"ll-topbar__brand\" href=\"/leerling\">");

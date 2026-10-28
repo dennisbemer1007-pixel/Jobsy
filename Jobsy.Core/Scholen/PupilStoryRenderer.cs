@@ -86,7 +86,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
         {
             return new DreamJobRouteStubDto(
                 JobKey: key,
-                JobTitle: null,
+                JobTitle: ResolveDisplayTitle(result, progress),
                 HaveCount: 0,
                 TotalCount: 5,
                 HaveItems: [],
@@ -111,7 +111,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
 
         return new DreamJobRouteStubDto(
             JobKey: fit.JobKey,
-            JobTitle: fit.JobTitle,
+            JobTitle: ResolveDisplayTitle(result, progress) ?? fit.JobTitle,
             HaveCount: fit.HaveCount,
             TotalCount: fit.TotalCount,
             HaveItems: have,
@@ -145,6 +145,12 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
         var raw = ResolveCopy(key, ctx, nowLabel, language);
         var parts = raw.Split('|', 2);
         return parts.Length == 2 ? $"{parts[0]} · {parts[1]}" : raw;
+    }
+
+    private static string? ResolveDisplayTitle(PupilResult result, PupilProgress? progress)
+    {
+        var custom = progress?.DreamJobDisplayTitle ?? result.DreamJobDisplayTitle;
+        return string.IsNullOrWhiteSpace(custom) ? null : custom.Trim();
     }
 
     private static string ResolveCopy(string key, PupilClassContext ctx, string nowLabel, string language)

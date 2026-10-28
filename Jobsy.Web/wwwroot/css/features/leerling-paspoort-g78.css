@@ -553,6 +553,25 @@
     text-align: center;
     white-space: normal;
     box-sizing: border-box;
+    text-decoration: none;
+    border-radius: var(--radius, 12px);
+    padding: var(--space-2) var(--space-3);
+    font-weight: 600;
+    line-height: 1.25;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.ll-reis[data-testid="leerling-paspoort-page"] .lp-g78-paspoort-actions .btn-primary {
+    background: var(--brand, #0f2d5c);
+    color: #fff;
+    border-color: var(--brand, #0f2d5c);
+}
+
+.ll-reis[data-testid="leerling-paspoort-page"] .lp-g78-paspoort-actions .btn-secondary {
+    background: var(--surface, #fffcfa);
+    color: var(--brand, #0f2d5c);
+    border-color: var(--border, #ddd5cc);
 }
 
 @media (max-width: 480px) {

@@ -55,7 +55,10 @@ public sealed class MatchDeck
 
                 foreach (var item in ordered)
                 {
-                    _items.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: showMatchPercentage));
+                    _items.Add(SwipeViewModel.FromVacancy(
+                        item,
+                        showMatchPercentage: showMatchPercentage,
+                        candidatePreferredTransport: Gate.PreferredTransport));
                 }
             }
         }

@@ -19,6 +19,8 @@ public class PupilProgress
     /// <summary>JSON map puzzle key → <see cref="Jobsy.Core.Scholen.QuestionSets.PupilPuzzleStatus"/> (int).</summary>
     public string PuzzlesJson { get; set; } = "{}";
     public string? DreamJobKey { get; set; }
+    /// <summary>Exact text the pupil typed or picked (may differ from catalog title).</summary>
+    public string? DreamJobDisplayTitle { get; set; }
     public DateTime StartedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }

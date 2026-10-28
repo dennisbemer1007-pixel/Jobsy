@@ -12,6 +12,7 @@ public sealed class PupilDroombaanSsrTests
         var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PupilDroombaanFormEndpoints.cs"));
         var html = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilDroombaanSsrHtml.cs"));
         var frame = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilLeerlingSsrFrame.cs"));
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
         Assert.Contains("MapGet(PagePath", endpoints, StringComparison.Ordinal);
         Assert.Contains("SavePath", endpoints, StringComparison.Ordinal);
         Assert.Contains("name=\\\"DreamJob\\\"", html, StringComparison.Ordinal);
@@ -20,6 +21,8 @@ public sealed class PupilDroombaanSsrTests
         Assert.DoesNotContain("LeerlingCoachCue", html, StringComparison.Ordinal);
         Assert.DoesNotContain("_framework/blazor", frame, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("blazor.web", frame, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("UrlLeadingSlash", catalog, StringComparison.Ordinal);
+        Assert.Contains("UrlLeadingSlash", frame, StringComparison.Ordinal);
     }
 
     [Fact]

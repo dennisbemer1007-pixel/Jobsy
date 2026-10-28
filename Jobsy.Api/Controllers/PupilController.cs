@@ -128,7 +128,7 @@ public sealed class PupilController : ControllerBase
         CancellationToken cancellationToken)
     {
         NoStore();
-        var (ok, error, status) = await _portal.SaveDreamJobAsync(User, request.Key, cancellationToken);
+        var (ok, error, status) = await _portal.SaveDreamJobAsync(User, request.Key, request.DisplayTitle, cancellationToken);
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 

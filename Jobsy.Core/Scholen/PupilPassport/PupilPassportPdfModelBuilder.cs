@@ -187,14 +187,21 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
 
     private static string? LocalizedDreamTitle(DreamJobRouteStubDto dream, string language)
     {
-        if (string.IsNullOrWhiteSpace(dream.JobKey))
+        if (string.IsNullOrWhiteSpace(dream.JobKey)
+            || string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
         {
             return dream.JobTitle;
         }
 
-        if (string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(dream.JobTitle))
         {
-            return null;
+            var nlCat = PupilPassportLocalizedCopy.JobTitle(dream.JobKey, "nl");
+            var langCat = PupilPassportLocalizedCopy.JobTitle(dream.JobKey, language);
+            if (!string.Equals(dream.JobTitle.Trim(), nlCat, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(dream.JobTitle.Trim(), langCat, StringComparison.OrdinalIgnoreCase))
+            {
+                return dream.JobTitle.Trim();
+            }
         }
 
         return PupilPassportLocalizedCopy.JobTitle(dream.JobKey, language);

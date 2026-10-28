@@ -125,12 +125,12 @@ public static class PageAssetCatalog
     /// <summary>Lean bundles for pupil pages rendered outside the Blazor shell.</summary>
     private static readonly string[] PupilSsrCoreCss =
     [
-        WwwrootAssetCatalog.Url("css/tokens.css"),
-        WwwrootAssetCatalog.Url("css/app.min.css"),
-        WwwrootAssetCatalog.Url("css/features/stijl-a.css"),
-        WwwrootAssetCatalog.Url("css/features/form-fields.css"),
-        WwwrootAssetCatalog.Url("css/features/enterprise-ui.css"),
-        WwwrootAssetCatalog.Url("css/features/scholen.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/tokens.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/app.min.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/stijl-a.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/form-fields.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/enterprise-ui.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/scholen.css"),
     ];
 
     public static readonly string[] AccountCss =

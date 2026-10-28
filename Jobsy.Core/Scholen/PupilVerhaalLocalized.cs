@@ -35,6 +35,12 @@ public static class PupilVerhaalLocalized
             return en;
         }
 
+        if (key.StartsWith("LeerlingDroom.", StringComparison.Ordinal))
+        {
+            var nl = PupilVerhaalCopy.Get(key, ctx);
+            return PupilVerhaalEnglishDreamFallback.FromDutch(nl);
+        }
+
         return PupilVerhaalCopy.Get(key, ctx);
     }
 
