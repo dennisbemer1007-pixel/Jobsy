@@ -18,8 +18,6 @@ public sealed class CandidatePlainPublicRenderTests
         var html = await client.GetStringAsync("/");
 
         Assert.Contains("cp-plain-landing", html, StringComparison.Ordinal);
-        Assert.Contains("/css/features/candidate-plain-public.css", html, StringComparison.Ordinal);
-        Assert.Contains("data-plain-public-css", html, StringComparison.Ordinal);
         Assert.Contains("Werk dat bij je past", html, StringComparison.Ordinal);
         Assert.Contains("Account maken", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/account-maken\"", html, StringComparison.Ordinal);
@@ -40,30 +38,6 @@ public sealed class CandidatePlainPublicRenderTests
         Assert.Contains("action=\"/account/login\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/account-maken", html, StringComparison.Ordinal);
         Assert.DoesNotContain("kreeft-header-strip", html, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Signup_renders_plain_card_when_plain_skin_enabled()
-    {
-        await using var factory = new PlainPublicWebFactory();
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var html = await client.GetStringAsync("/account-maken");
-
-        Assert.Contains("cp-plain-card", html, StringComparison.Ordinal);
-        Assert.Contains("action=\"/account/email-code/start\"", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("kreeft-header-strip", html, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Forgot_password_renders_plain_card_when_plain_skin_enabled()
-    {
-        await using var factory = new PlainPublicWebFactory();
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var html = await client.GetStringAsync("/wachtwoord-vergeten");
-
-        Assert.Contains("cp-plain-card", html, StringComparison.Ordinal);
-        Assert.Contains("Wachtwoord vergeten", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("au-card__mascot", html, StringComparison.Ordinal);
     }
 
     private sealed class PlainPublicWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>

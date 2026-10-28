@@ -20,35 +20,20 @@
 @inject IEmployersSwitch Employers
 @inject CultureState Culture
 @inject NavigationManager Navigation
-@inject CandidatePlainPublicResolver PlainPublicResolver
 
-<PageTitle>@(_plainShell ? Culture["PlainPublic.Signup.Title"] : Culture["Signup.Title"]) · Lobsy</PageTitle>
+<PageTitle>@Culture["Signup.Title"] · Lobsy</PageTitle>
 
-<div class="@(_plainShell ? "cp-plain-wrap cp-plain-login-wrap" : null)">
-<section class="@(_plainShell ? "cp-plain-login-section" : "au-stage au-stage--illustrated au-stage--kreeft-strip pub-signup")"
+<section class="au-stage au-stage--illustrated au-stage--kreeft-strip pub-signup"
          aria-labelledby="signup-title">
-    @if (!_plainShell)
-    {
-        <KreeftHeaderStrip StripKey="inloggen"
-                           DeskUrl="@KreeftHeaderStripAssets.InloggenDesk"
-                           MobUrl="@KreeftHeaderStripAssets.InloggenMob"
-                           CssClass="au-kreeft-header-strip kreeft-header-strip" />
-    }
-    <div class="@(_plainShell ? null : "au-col")">
-        <div class="@(_plainShell ? "cp-plain-card" : "au-card au-card--illustrated")">
-            @if (_plainShell)
-            {
-                <nav class="cp-plain-tabs" aria-label="@Culture["PlainPublic.Login.TabSignup"]">
-                    <a href="@($"/login?returnUrl={Uri.EscapeDataString(_returnUrl)}")">@Culture["PlainPublic.Login.TabLogin"]</a>
-                    <span class="cp-plain-tabs__active">@Culture["PlainPublic.Login.TabSignup"]</span>
-                </nav>
-            }
-            else
-            {
-                <p class="au-eyebrow">@Culture["Signup.Eyebrow"]</p>
-            }
-            <h1 id="signup-title" class="@(_plainShell ? null : "au-title")">@(_plainShell ? Culture["PlainPublic.Signup.Title"] : Culture["Signup.Title"])</h1>
-            <p class="@(_plainShell ? "cp-plain-lead" : "au-lead")">@(_plainShell ? Culture["PlainPublic.Signup.Lead"] : Culture["Signup.Lead"])</p>
+    <KreeftHeaderStrip StripKey="inloggen"
+                       DeskUrl="@KreeftHeaderStripAssets.InloggenDesk"
+                       MobUrl="@KreeftHeaderStripAssets.InloggenMob"
+                       CssClass="au-kreeft-header-strip kreeft-header-strip" />
+    <div class="au-col">
+        <div class="au-card au-card--illustrated">
+            <p class="au-eyebrow">@Culture["Signup.Eyebrow"]</p>
+            <h1 id="signup-title" class="au-title">@Culture["Signup.Title"]</h1>
+            <p class="au-lead">@Culture["Signup.Lead"]</p>
 
         @if (_fromTest)
         {
@@ -160,10 +145,8 @@
         </div>
     </div>
 </section>
-</div>
 
 @code {
-    private bool _plainShell;
     private string _returnUrl = AuthRedirects.BanenkaartPath;
     private string? _van;
     private string? _errorMessage;
@@ -180,7 +163,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _plainShell = await PlainPublicResolver.IsPlainShellAsync();
         var http = HttpContext ?? HttpContextAccessor.HttpContext;
         if (http?.User.Identity?.IsAuthenticated == true)
         {

@@ -15,7 +15,6 @@ public static class PublicRoutes
     public const string Partner = "/partner";
     public const string CompanyRegister = "/register";
     public const string Login = "/login";
-    public const string ForgotPassword = "/wachtwoord-vergeten";
     public const string HowItWorks = "/hoe-werkt-lobsy";
     public const string Privacy = "/privacy";
     public const string PrivacyCookies = "/privacy#cookies";

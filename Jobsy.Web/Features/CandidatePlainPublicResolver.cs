@@ -36,7 +36,8 @@ public sealed class CandidatePlainPublicResolver
             return ValueTask.FromResult(cached);
         }
 
-        var enabled = IsPlainShellForRequest(http, _environment, _configuration);
+        var path = http?.Request.Path.Value;
+        var enabled = ResolveEnabled(http) && IsPlainPublicPath(path);
         if (http is not null)
         {
             http.Items[HttpContextItemsKey] = enabled;
@@ -45,21 +46,9 @@ public sealed class CandidatePlainPublicResolver
         return ValueTask.FromResult(enabled);
     }
 
-    /// <summary>
-    /// Static entry for <c>App.razor</c> head (renders before layout HeadContent on NoBlazorRuntime SSR).
-    /// </summary>
-    public static bool IsPlainShellForRequest(
-        HttpContext? http,
-        IHostEnvironment environment,
-        IConfiguration configuration)
+    private bool ResolveEnabled(HttpContext? http)
     {
-        var path = http?.Request.Path.Value;
-        return ResolveEnabled(http, environment, configuration) && IsPlainPublicPath(path);
-    }
-
-    private static bool ResolveEnabled(HttpContext? http, IHostEnvironment environment, IConfiguration configuration)
-    {
-        if (environment.IsDevelopment()
+        if (_environment.IsDevelopment()
             && http is not null
             && http.Request.Query.TryGetValue(QueryName, out var query)
             && TryParse(query.ToString(), out var fromQuery))
@@ -67,8 +56,8 @@ public sealed class CandidatePlainPublicResolver
             return fromQuery;
         }
 
-        if (LandingVariantResolver.AllowsConfigOverride(environment, configuration)
-            && TryParse(configuration[ConfigKey], out var fromConfig))
+        if (LandingVariantResolver.AllowsConfigOverride(_environment, _configuration)
+            && TryParse(_configuration[ConfigKey], out var fromConfig))
         {
             return fromConfig;
         }
@@ -78,9 +67,7 @@ public sealed class CandidatePlainPublicResolver
 
     public static bool IsPlainPublicPath(string? path)
         => string.Equals(path, PublicRoutes.Landing, StringComparison.OrdinalIgnoreCase)
-           || string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase)
-           || string.Equals(path, PublicRoutes.CreateAccount, StringComparison.OrdinalIgnoreCase)
-           || string.Equals(path, PublicRoutes.ForgotPassword, StringComparison.OrdinalIgnoreCase);
+           || string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase);
 
     public static bool TryParse(string? raw, out bool enabled)
     {
