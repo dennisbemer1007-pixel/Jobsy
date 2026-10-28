@@ -105,7 +105,7 @@ internal static class SavedSsrShells
         }
         else
         {
-            AppendToolbar(sb, culture, data);
+            AppendToolbar(sb, culture, data, plainShell);
             AppendBodyWithRail(sb, culture, data, plainShell);
         }
 
@@ -223,14 +223,16 @@ internal static class SavedSsrShells
         sb.Append("</a></div></div></div>");
     }
 
-    private static void AppendToolbar(StringBuilder sb, CultureState culture, SavedSsrData.PageData data)
+    private static void AppendToolbar(StringBuilder sb, CultureState culture, SavedSsrData.PageData data, bool plainShell)
     {
         sb.Append("<div class=\"kb-saved__toolbar\"><div class=\"kb-saved__filters\" role=\"group\">");
-        AppendFilterChip(sb, data, SavedSsrQuery.FilterAll, culture["Kb.Saved.FilterAll"], data.Items.Count);
-        AppendFilterChip(sb, data, SavedSsrQuery.FilterOpen, culture["Kb.Saved.FilterOpen"], data.CountOpen);
-        AppendFilterChip(sb, data, SavedSsrQuery.FilterClosed, culture["Kb.Saved.FilterClosed"], data.CountClosed);
+        AppendFilterChip(sb, data, SavedSsrQuery.FilterAll, culture["Kb.Saved.FilterAll"], data.Items.Count, plainShell);
+        AppendFilterChip(sb, data, SavedSsrQuery.FilterOpen, culture["Kb.Saved.FilterOpen"], data.CountOpen, plainShell);
+        AppendFilterChip(sb, data, SavedSsrQuery.FilterClosed, culture["Kb.Saved.FilterClosed"], data.CountClosed, plainShell);
         sb.Append("</div><div class=\"kb-saved__meta\"><span class=\"kb-saved__count\" data-saved-filter-count data-saved-count-template=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Count"]));
+        sb.Append("\" data-saved-count-one=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.CountOne"]));
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(FormatSavedCount(culture, data.Filtered.Count)));
         sb.Append("</span><label class=\"kb-saved__sort\"><span class=\"visually-hidden\">");
@@ -249,10 +251,12 @@ internal static class SavedSsrShells
         SavedSsrData.PageData data,
         string filter,
         string label,
-        int count)
+        int count,
+        bool plainShell)
     {
         var active = string.Equals(data.Filter, filter, StringComparison.Ordinal);
-        sb.Append("<button type=\"button\" class=\"kb-chip");
+        sb.Append("<button type=\"button\" class=\"");
+        sb.Append(plainShell ? "sollicitaties-chip" : "kb-chip");
         if (active)
         {
             sb.Append(" is-selected");

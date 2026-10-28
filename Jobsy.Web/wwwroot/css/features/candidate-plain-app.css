@@ -116,6 +116,14 @@
   background: var(--cp-bg);
 }
 
+.app-shell:has([data-plain-app]) .app-main,
+.app-shell:has([data-plain-app]) .app-main__content,
+.app-shell:has([data-plain-app="sollicitaties"]) .sollicitaties-page-wrap,
+.app-shell:has([data-plain-app="bewaard"]) .saved-page-wrap {
+  background: var(--cp-bg) !important;
+  background-image: none !important;
+}
+
 .cp-plain-app .sollicitaties-hero-strip,
 .cp-plain-app .sollicitaties-hero-strip__inner,
 .cp-plain-app .kreeft-header-strip {
@@ -178,6 +186,7 @@
 }
 
 .cp-plain-app .sollicitaties-intro__title {
+  font-family: var(--cp-font) !important;
   font-size: 32px;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -208,10 +217,11 @@
   font-weight: 600;
 }
 
-.cp-plain-app .sollicitaties-chip.is-selected {
+.cp-plain-app .sollicitaties-chip.is-selected,
+.cp-plain-app .kb-saved__filters .sollicitaties-chip.is-selected {
   border-color: var(--cp-accent);
-  background: var(--cp-accent-soft);
-  color: var(--cp-accent-ink);
+  background: var(--cp-accent);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -270,7 +280,7 @@
   font-family: var(--cp-font);
   font-size: 18px;
   line-height: 1.6;
-  padding-bottom: calc(var(--bottom-nav-h, 56px) + var(--lobsy-coach-pill-h, 52px) + 20px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--bottom-nav-h, 56px) + var(--lobsy-coach-pill-h, 52px) + 36px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 700px) {
@@ -341,10 +351,11 @@
 }
 
 .cp-plain-app .sollicitaties-chip.is-selected {
-  color: var(--cp-accent-ink);
+  color: #fff;
 }
 
-.cp-plain-app .sollicitaties-toolbar__filters {
+.cp-plain-app .sollicitaties-toolbar__filters,
+.cp-plain-app .kb-saved__filters {
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
@@ -352,6 +363,10 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   max-width: 100%;
+  position: relative;
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent);
+  padding-inline-end: 8px;
 }
 
 .cp-plain-app .sollicitaties-toolbar__filters::-webkit-scrollbar {
@@ -386,7 +401,32 @@
   line-height: 1.25;
 }
 
+.cp-plain-app [data-testid="applications-page-ssr"] .sollicitaties-layout,
+.cp-plain-app [data-testid="applications-page-ssr"] .sollicitaties-list,
+.cp-plain-app [data-testid="applications-page-ssr"] .application-card-list,
+.cp-plain-app [data-testid="applications-page-ssr"] .sollicitaties-shell {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.cp-plain-app .panel-page.sollicitaties-page--plain[data-testid="applications-page-ssr"] {
+  width: min(1120px, 100%) !important;
+  max-width: 1120px !important;
+}
+
+@media (max-width: 700px) {
+  .cp-plain-app .panel-page.sollicitaties-page--plain[data-testid="applications-page-ssr"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 .cp-plain-app .sollic-card.sollic-card--app {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
@@ -508,7 +548,7 @@
   border-radius: 8px;
 }
 
-.cp-plain-app .kb-saved__filters .kb-saved__chip,
+.cp-plain-app .kb-saved__filters :is(.kb-chip, .sollicitaties-chip),
 .cp-plain-app .kb-saved__filters a {
   min-height: 52px;
   border-radius: 8px;
@@ -582,4 +622,122 @@
     flex: 0 0 auto;
     white-space: nowrap;
   }
+}
+
+/* WgTopBar candidate chrome (same as banenkaart/paspoort; banenkaart.css not loaded on sollicitaties/bewaard). */
+.app-shell--plain-candidate header.wg-topbar.wg-topbar--candidate {
+  background: #0a2044;
+  color: #fff;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate {
+  min-height: 56px;
+  padding-inline: 12px;
+  align-items: center;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__brand .wg-topbar__logo {
+  width: auto !important;
+  height: 36px;
+  max-width: min(154px, 38vw);
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__logo img,
+.app-shell--plain-candidate .wg-topbar--candidate .lobsy-logo__img {
+  width: auto;
+  height: 100%;
+  max-height: 36px;
+  object-fit: contain;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .language-selector {
+  display: flex !important;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .notification-bell__toggle,
+.app-shell--plain-candidate .wg-topbar--candidate .language-selector__toggle {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .notification-bell__icon,
+.app-shell--plain-candidate .wg-topbar--candidate .notification-bell__icon svg,
+.app-shell--plain-candidate .wg-topbar--candidate .auth-icon-btn svg,
+.app-shell--plain-candidate .wg-topbar--candidate .account-menu__toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  max-width: 1.15rem;
+  max-height: 1.15rem;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .account-menu__av {
+  display: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  place-items: center;
+  flex: none;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .account-menu__toggle,
+.app-shell--plain-candidate .wg-topbar--candidate .account-menu__toggle:hover {
+  border: 0;
+  background: transparent;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .app-shell--plain-candidate .wg-topbar--candidate .account-menu__toggle .auth-user {
+    display: none;
+  }
+
+  .app-shell--plain-candidate .wg-topbar--candidate .account-menu__toggle .account-menu__av {
+    display: grid;
+  }
+
+  .app-shell--plain-candidate .wg-topbar--candidate .account-menu__toggle .account-menu__icon {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__brand .wg-topbar__logo {
+    height: 28px;
+    max-width: 120px;
+  }
+
+  .app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__logo img,
+  .app-shell--plain-candidate .wg-topbar--candidate .lobsy-logo__img {
+    max-height: 28px;
+  }
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .auth-link--login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex: none;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .auth-link__icon {
+  display: none;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .auth-link__label {
+  display: inline;
 }
