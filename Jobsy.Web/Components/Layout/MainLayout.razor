@@ -68,7 +68,7 @@
         }
     </main>
 
-    @if (!_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
+    @if (!_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive && !_plainBanenkaartShell)
     {
         @if (_noBlazorCandidateNav)
         {
@@ -138,6 +138,7 @@
     private bool _noBlazorCandidateNav;
     private bool _ssrCoachAvailable;
     private bool _plainCandidateShell;
+    private bool _plainBanenkaartShell;
 
     private bool ShowInstallBanner =>
         RendererInfo.IsInteractive
@@ -293,7 +294,7 @@
 
     private Task OnBottomNavItemsChanged(bool hasItems)
     {
-        if (_isQuestionnairePage || _isOnboardingWizardFocus)
+        if (_isQuestionnairePage || _isOnboardingWizardFocus || _plainBanenkaartShell)
         {
             if (_hasBottomNav)
             {
@@ -400,12 +401,19 @@
         _isCandidate = true;
         _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
         _noBlazorCandidateNav = _noBlazorRuntime;
-        if (_noBlazorCandidateNav && !_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
+        SyncBanenkaartImmersive();
+        if (_noBlazorCandidateNav
+            && !_isQuestionnairePage
+            && !_isOnboardingWizardFocus
+            && !_banenkaartImmersive
+            && !_plainBanenkaartShell)
         {
             _hasBottomNav = true;
         }
-
-        SyncBanenkaartImmersive();
+        else if (_plainBanenkaartShell)
+        {
+            _hasBottomNav = false;
+        }
     }
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
@@ -479,9 +487,11 @@
 
         var hidePassportChrome = IsPassportOrProfileCoachHidden(path)
                                  || (_plainCandidateShell && IsPaspoortPath(path));
+        var plainBanenkaartChrome = _plainCandidateShell && banenkaart;
         var hideCoach = IsLobsyCoachExcludedPath(path)
                         || IsVacancyOrNotificationsCoachHidden(path)
-                        || (_plainCandidateShell && IsPaspoortPath(path));
+                        || (_plainCandidateShell && IsPaspoortPath(path))
+                        || plainBanenkaartChrome;
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -489,7 +499,8 @@
         }
 
         var hideFloatingChrome = hidePassportChrome
-                                 || IsVacancyOrNotificationsCoachHidden(path);
+                                 || IsVacancyOrNotificationsCoachHidden(path)
+                                 || plainBanenkaartChrome;
         if (_hideFloatingChrome != hideFloatingChrome)
         {
             _hideFloatingChrome = hideFloatingChrome;
@@ -505,9 +516,10 @@
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
         var bedrijvenSsr = IsBedrijvenkaartSsrPath(path);
-        var immersive = onRoute && !_isCandidate && !bedrijvenSsr;
+        var plainBanenkaart = onRoute && _plainCandidateShell;
+        var immersive = onRoute && !_isCandidate && !bedrijvenSsr && !plainBanenkaart;
         var candidateShell = onRoute;
-        var mockupTop = onRoute && !_isCandidate && !bedrijvenSsr;
+        var mockupTop = onRoute && !_isCandidate && !bedrijvenSsr && !plainBanenkaart;
         var changed = false;
         if (_banenkaartImmersive != immersive)
         {
@@ -527,6 +539,16 @@
             changed = true;
         }
 
+        if (_plainBanenkaartShell != plainBanenkaart)
+        {
+            _plainBanenkaartShell = plainBanenkaart;
+            changed = true;
+            if (plainBanenkaart && _hasBottomNav)
+            {
+                _hasBottomNav = false;
+            }
+        }
+
         return changed;
     }
 
@@ -534,6 +556,7 @@
     {
         var http = HttpContextAccessor.HttpContext;
         _plainCandidateShell = CandidatePlainPublicResolver.IsPlainShellForRequest(http, HostEnvironment, Configuration);
+        SyncBanenkaartImmersive();
     }
 
     private async Task RefreshPlainCandidateShellAsync()
@@ -550,6 +573,7 @@
             }
 
             _plainCandidateShell = next;
+            SyncBanenkaartImmersive();
             await InvokeAsync(StateHasChanged);
         }
         catch

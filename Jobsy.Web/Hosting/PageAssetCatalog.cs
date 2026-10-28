@@ -522,6 +522,13 @@ public static class PageAssetCatalog
         WwwrootAssetCatalog.Url("css/features/candidate-header-tablet.css"),
     ];
 
+    /// <summary>WgTopBar auth controls (NL/EN, bell, profile) on plain #878 banenkaart without full app.min.css.</summary>
+    public static IReadOnlyList<string> CandidatePlainBanenkaartHeadCss() =>
+    [
+        WwwrootAssetCatalog.Url("css/features/banenkaart-auth-chrome.css"),
+        WwwrootAssetCatalog.Url("css/features/form-fields.css"),
+    ];
+
     /// <summary>Primary nav + bottom bar styles for logged-in candidate NoBlazor SSR pages.</summary>
     public static IReadOnlyList<string> CandidateNoBlazorChromeCss() =>
     [

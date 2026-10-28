@@ -81,7 +81,7 @@ internal static class BanenkaartSsrListHtml
         sb.Append("<div class=\"meta\">");
         if (!string.IsNullOrEmpty(travel))
         {
-            sb.Append("<span><svg class=\"ic s\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/><circle cx=\"18\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/><path d=\"M6 16l4-7h5l3 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\"/></svg>")
+            sb.Append("<span>").Append(BanenkaartSsrTransportIcons.MetaTravelSvg(query.Transport))
                 .Append(WebUtility.HtmlEncode(travel)).Append("</span>");
         }
 

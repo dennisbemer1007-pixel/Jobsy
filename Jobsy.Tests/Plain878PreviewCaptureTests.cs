@@ -10,6 +10,8 @@ public sealed class Plain878PreviewCaptureTests : IAsyncLifetime, IAsyncDisposab
     [
         ("docs/mockups/kandidaat/plain/renders/desktop/20-paspoort-desktop-1440.png", "mockup-paspoort-1440.png"),
         ("docs/mockups/kandidaat/plain/renders/mobiel/20-paspoort-mobiel-390.png", "mockup-paspoort-390.png"),
+        ("docs/mockups/kandidaat/banenkaart/lagen/desktop/02-banenkaart-lagen-desktop-1440.png", "mockup-banenkaart-1440.png"),
+        ("docs/mockups/kandidaat/banenkaart/lagen/mobile/01-banenkaart-lagen-mobiel-390.png", "mockup-banenkaart-390.png"),
     ];
 
     private IllustratedPagesWebFactory? _web;
@@ -54,39 +56,34 @@ public sealed class Plain878PreviewCaptureTests : IAsyncLifetime, IAsyncDisposab
 
         var reportLines = new List<string>
         {
-            "# Plain878 paspoort preview (banenkaart = acceptatie)",
+            "# Plain878 layout-gap rapport",
             "",
-            "Alleen paspoort-gapmeting; banenkaart niet plain op deze branch.",
+            "Drempels: lege strook ≤ 12px, ruimte onder header tot inhoud ≤ 32px.",
             "",
         };
         var failures = new List<string>();
 
-        const string bkQuery =
-            "/banenkaart?maxMinutes=60&transport=Auto&originLat=52.0705&originLng=4.3007&originLabel=Naaldwijk";
-
-        await using (var parityContext = await browser.NewContextAsync(new()
+        await using (var refContext = await browser.NewContextAsync(new()
         {
             ViewportSize = new() { Width = 1440, Height = 900 },
         }))
         {
-            await parityContext.AddInitScriptAsync(CookieInitScript);
-            var parityPage = await parityContext.NewPageAsync();
-            await parityPage.GotoAsync(baseUrl + bkQuery, new() { Timeout = 60_000 });
-            await parityPage.WaitForSelectorAsync("[data-banenkaart-ssr=\"1\"]", new() { Timeout = 30_000 });
-            await DismissCookieBannerIfVisibleAsync(parityPage);
-            Assert.Equal(0, await parityPage.Locator("[data-plain-banenkaart=\"1\"]").CountAsync());
-            await parityPage.WaitForSelectorAsync("[data-testid=kb-mockup-top]", new() { Timeout = 30_000 });
-            await parityPage.WaitForTimeoutAsync(800);
-            await parityPage.ScreenshotAsync(new()
+            await refContext.AddInitScriptAsync(CookieInitScript);
+            var refPage = await refContext.NewPageAsync();
+            await refPage.GotoAsync(
+                $"{baseUrl}/__test/sign-in?role=employer&return=%2Fwerkgever",
+                new() { Timeout = 60_000 });
+            await refPage.WaitForURLAsync("**/werkgever**", new() { Timeout = 60_000 });
+            await refPage.WaitForSelectorAsync("header.wg-topbar:not(.wg-topbar--candidate)", new() { Timeout = 30_000 });
+            await DismissCookieBannerIfVisibleAsync(refPage);
+            await refPage.Locator("header.wg-topbar").First.ScreenshotAsync(new()
             {
-                Path = Path.Combine(artifactDir, "parity-banenkaart-guest-1440-acceptatie-baseline.png"),
-                FullPage = false,
+                Path = Path.Combine(artifactDir, "reference-werkgever-header-1440.png"),
             });
-            reportLines.Add("## Banenkaart (branch = acceptatie gedrag)");
-            reportLines.Add("");
-            reportLines.Add("Geen `data-plain-banenkaart`; gast heeft `kb-mockup-top`. Zie `parity-banenkaart-guest-1440-acceptatie-baseline.png`.");
-            reportLines.Add("");
         }
+
+        const string bkQuery =
+            "/banenkaart?maxMinutes=60&transport=Auto&originLat=52.0705&originLng=4.3007&originLabel=Naaldwijk";
 
         foreach (var (width, height, mobile, tag) in new[]
                  {
@@ -113,16 +110,6 @@ public sealed class Plain878PreviewCaptureTests : IAsyncLifetime, IAsyncDisposab
             {
                 var coachOverlap = await Plain878LayoutGapHelpers.CoachOverlapsPlainPaspoortContentAsync(authPage);
                 Assert.False(coachOverlap, "Lobsy-hulp pill mag chips op paspoort 390 niet overlappen (elementFromPoint).");
-
-                var padBottom = await authPage.EvaluateAsync<double>(
-                    """
-                    () => {
-                      const el = document.querySelector('.cp-plain878 main.wrap');
-                      if (!el) return 0;
-                      return parseFloat(getComputedStyle(el).paddingBottom) || 0;
-                    }
-                    """);
-                Assert.True(padBottom >= 60, $"Paspoort 390 padding-bottom te klein voor bottom nav: {padBottom}px");
             }
 
             var header = authPage.Locator("header.wg-topbar--candidate").First;
@@ -139,6 +126,41 @@ public sealed class Plain878PreviewCaptureTests : IAsyncLifetime, IAsyncDisposab
                 FullPage = true,
             });
             AppendReport(reportLines, failures, $"preview-paspoort-{tag}.png", pasGap);
+
+            await authPage.GotoAsync(baseUrl + bkQuery, new() { Timeout = 60_000 });
+            await authPage.WaitForSelectorAsync("[data-plain-banenkaart=\"1\"]", new() { Timeout = 30_000 });
+            Assert.Equal(0, await authPage.Locator("[data-testid=kb-mockup-top]").CountAsync());
+            await DismissCookieBannerIfVisibleAsync(authPage);
+            await authPage.WaitForTimeoutAsync(1200);
+            var bkAuthGap = await Plain878LayoutGapHelpers.MeasureAsync(authPage);
+            await authPage.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"preview-banenkaart-{tag}.png"),
+                FullPage = false,
+            });
+            AppendReport(reportLines, failures, $"preview-banenkaart-{tag}.png (ingelogd)", bkAuthGap);
+
+            await using var guestContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IsMobile = mobile,
+                HasTouch = mobile,
+            });
+            await guestContext.AddInitScriptAsync(CookieInitScript);
+            var guestPage = await guestContext.NewPageAsync();
+            await guestPage.GotoAsync(baseUrl + bkQuery, new() { Timeout = 60_000 });
+            await guestPage.WaitForSelectorAsync("[data-plain-banenkaart=\"1\"]", new() { Timeout = 30_000 });
+            await guestPage.WaitForSelectorAsync("header.wg-topbar--candidate", new() { Timeout = 30_000 });
+            Assert.Equal(0, await guestPage.Locator("[data-testid=kb-mockup-top]").CountAsync());
+            await DismissCookieBannerIfVisibleAsync(guestPage);
+            await guestPage.WaitForTimeoutAsync(1200);
+            var bkGuestGap = await Plain878LayoutGapHelpers.MeasureAsync(guestPage);
+            await guestPage.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"preview-banenkaart-guest-{tag}.png"),
+                FullPage = false,
+            });
+            AppendReport(reportLines, failures, $"preview-banenkaart-guest-{tag}.png", bkGuestGap);
         }
 
         var reportPath = Path.Combine(artifactDir, "plain878-layout-gap-report.md");

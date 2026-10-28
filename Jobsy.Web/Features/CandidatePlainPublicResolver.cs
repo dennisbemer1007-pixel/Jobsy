@@ -88,10 +88,12 @@ public sealed class CandidatePlainPublicResolver
            || string.Equals(path, PublicRoutes.CreateAccount, StringComparison.OrdinalIgnoreCase)
            || string.Equals(path, PublicRoutes.ForgotPassword, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Logged-in plain app: paspoort home (mockup plain #878 screen 20).</summary>
+    /// <summary>Plain candidate app: paspoort and banenkaart (mockup plain #878).</summary>
     public static bool IsPlainCandidateAppPath(string? path)
         => string.Equals(path, "/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-           || path?.StartsWith("/candidate/paspoort/", StringComparison.OrdinalIgnoreCase) == true;
+           || path?.StartsWith("/candidate/paspoort/", StringComparison.OrdinalIgnoreCase) == true
+           || string.Equals(path, "/banenkaart", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, "/banen", StringComparison.OrdinalIgnoreCase);
 
     public static bool TryParse(string? raw, out bool enabled)
     {

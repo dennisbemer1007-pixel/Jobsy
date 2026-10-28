@@ -94,8 +94,10 @@
   background: var(--map-land, #f8f4f0);
 }
 
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] .job-map-placeholder {
-  z-index: 2;
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .map-stage.is-live .job-map-placeholder {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @media (max-width: 700px) {
