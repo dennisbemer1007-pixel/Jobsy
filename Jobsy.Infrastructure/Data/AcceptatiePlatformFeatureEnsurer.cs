@@ -25,6 +25,7 @@ public static class AcceptatiePlatformFeatureEnsurer
         await EnsureActivityLogEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsureSchoolsEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsurePupilPassportV2EnabledAsync(db, configuration, logger, cancellationToken);
+        await EnsureTestItemExamplesEnabledAsync(db, configuration, logger, cancellationToken);
     }
 
     internal static async Task EnsureEmployersEnabledAsync(
@@ -190,6 +191,46 @@ public static class AcceptatiePlatformFeatureEnsurer
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation(
                 "Acceptatie: synced PupilPassportV2Enabled=true (removed admin override lock when present).");
+        }
+    }
+
+    internal static async Task EnsureTestItemExamplesEnabledAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(configuration))
+        {
+            return;
+        }
+
+        if (!configuration.GetValue("JobsyFeatures:TestItemExamplesEnabled", false))
+        {
+            return;
+        }
+
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings { Id = PlatformSettingsId };
+            row.TestItemExamplesEnabled = true;
+            db.PlatformFeatureSettings.Add(row);
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Acceptatie: created platform settings with TestItemExamplesEnabled=true.");
+            return;
+        }
+
+        var overrides = PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson);
+        var lockedOff = overrides.Contains("TestItemExamplesEnabled") && !row.TestItemExamplesEnabled;
+        if (!row.TestItemExamplesEnabled || lockedOff)
+        {
+            row.TestItemExamplesEnabled = true;
+            row.AdminFlagOverridesJson =
+                PlatformFeatureFlagOverrides.RemoveKey(row.AdminFlagOverridesJson, "TestItemExamplesEnabled");
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Acceptatie: synced TestItemExamplesEnabled=true (removed admin override lock when present).");
         }
     }
 }

@@ -46,6 +46,39 @@ public sealed class AcceptatieActivityLogEnsurerTests
     }
 
     [Fact]
+    public async Task EnsureTestItemExamplesEnabled_turns_on_locked_off_acceptatie_row()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        await using var db = new JobsyDbContext(options);
+
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            TestItemExamplesEnabled = false,
+            AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(null, "TestItemExamplesEnabled")
+        });
+        await db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Lobsy:DeploymentEnvironment"] = "Acceptatie",
+                ["JobsyFeatures:TestItemExamplesEnabled"] = "true"
+            })
+            .Build();
+
+        await AcceptatiePlatformFeatureEnsurer.EnsureTestItemExamplesEnabledAsync(
+            db,
+            config,
+            NullLogger.Instance);
+
+        var row = await db.PlatformFeatureSettings.SingleAsync();
+        Assert.True(row.TestItemExamplesEnabled);
+    }
+
+    [Fact]
     public async Task EnsureEmployersEnabled_turns_on_locked_off_acceptatie_row()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

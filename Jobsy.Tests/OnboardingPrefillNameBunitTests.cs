@@ -10,6 +10,7 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,7 @@ public sealed class OnboardingPrefillNameBunitTests : BunitContext
         Services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate());
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
+        Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
     }
 
     [Fact]

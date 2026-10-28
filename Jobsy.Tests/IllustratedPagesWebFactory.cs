@@ -270,6 +270,12 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
 
                     if (path.StartsWith("/api/banenkaart-client", StringComparison.OrdinalIgnoreCase))
                     {
+                        if (path.Contains("/all", StringComparison.OrdinalIgnoreCase))
+                        {
+                            await nxt();
+                            return;
+                        }
+
                         ctx.Response.ContentType = "application/json; charset=utf-8";
                         await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
                         return;

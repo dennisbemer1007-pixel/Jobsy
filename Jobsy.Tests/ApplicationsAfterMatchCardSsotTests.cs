@@ -45,6 +45,15 @@ public sealed class ApplicationsAfterMatchCardSsotTests
     }
 
     [Fact]
+    public void Berichten_threads_load_only_on_berichten_tab()
+    {
+        var root = TestRepo.FindRoot();
+        var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Applications", "ApplicationsSsrData.cs"));
+        Assert.Contains("ApplicationsSsrQuery.TabBerichten", data, StringComparison.Ordinal);
+        Assert.Contains("loadBerichtenThreads", data, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_prefetch_skips_isochrones_off_map()
     {
         var root = TestRepo.FindRoot();

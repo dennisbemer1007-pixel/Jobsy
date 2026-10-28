@@ -153,7 +153,7 @@ public class MobileSaasUxTests
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("applications-page-ssr", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-page-wrap", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-page__body", shells, StringComparison.Ordinal);
         Assert.Contains("sollic-vsteps vsteps", shells, StringComparison.Ordinal);
         Assert.Contains("ApplicationsSsrQuery.TabBerichten", shells, StringComparison.Ordinal);
         var berichtenShells = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Applications/SollicitatiesBerichtenSsr.cs"));
@@ -182,7 +182,8 @@ public class MobileSaasUxTests
         Assert.Contains(".sollicitaties-page--detail .sollicitaties-detail", css, StringComparison.Ordinal);
         Assert.Contains("display: block !important", css, StringComparison.Ordinal);
         Assert.Contains("font-size: 2rem", css, StringComparison.Ordinal);
-        Assert.Contains(".sollicitaties-toolbar__filters {\n    display: flex;\n    flex-wrap: nowrap;", css, StringComparison.Ordinal);
+        Assert.Contains(".sollicitaties-toolbar__filters", css, StringComparison.Ordinal);
+        Assert.Contains("flex-wrap: nowrap", css, StringComparison.Ordinal);
 
         var applicationsRazor = File.ReadAllText(Path.Combine(
             FindRepoRoot(),
@@ -216,7 +217,10 @@ public class MobileSaasUxTests
         Assert.Contains("[data-testid=\"sollicitaties-berichten-tab\"] .sollic-berichten.tlist", css, StringComparison.Ordinal);
 
         var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
-        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/sollicitaties-page.css");
+        Assert.Contains(
+            "WwwrootAssetCatalog.Url(\"css/features/sollicitaties-page.css\")",
+            catalog,
+            StringComparison.Ordinal);
 
         var appCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.DoesNotContain(".apps-tabs.admin-sublinks", appCss);

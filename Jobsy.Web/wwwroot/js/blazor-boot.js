@@ -270,7 +270,8 @@
             console.info("[lobsy] reload (" + reason + ")");
         } catch (e3) { }
         allowDocumentReload();
-        window.location.reload();
+        var nativeReload = window.location.reload.bind(window.location);
+        nativeReload();
         return true;
     }
 
@@ -611,7 +612,8 @@
                         console.warn("[lobsy] candidate nav desync — reloading", expected);
                     } catch (e) { }
                     allowDocumentReload();
-                    location.reload();
+                    var nativeReload = window.location.reload.bind(window.location);
+                    nativeReload();
                     return;
                 }
                 requestAnimationFrame(tick);

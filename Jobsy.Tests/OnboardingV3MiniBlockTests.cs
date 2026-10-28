@@ -1,5 +1,6 @@
 using Bunit;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Components.Shared.Questionnaire;
@@ -32,6 +33,20 @@ public sealed class OnboardingV3MiniBlockTests : BunitContext
             culture.InitializeFromLanguage("nl");
             return culture;
         });
+        Services.AddSingleton<IFeatureFlags>(new OffFeatureFlags());
+    }
+
+    private sealed class OffFeatureFlags : IFeatureFlags
+    {
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(new FeatureFlagSnapshot(false, false));
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
+
+        public void Invalidate()
+        {
+        }
     }
 
     [Theory]
