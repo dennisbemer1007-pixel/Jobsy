@@ -4516,7 +4516,7 @@ window.jobMap = (function () {
         try {
             const normalized = mode === "real"
                 ? "real"
-                : (mode === "unavailable" || mode === "loading" ? mode : "approx");
+                : (mode === "unavailable" || mode === "loading" || mode === "none" ? mode : "approx");
             const host = map && map.getContainer ? map.getContainer() : null;
             if (!host) {
                 return;
@@ -4675,6 +4675,15 @@ window.jobMap = (function () {
         }
         if (kkMode) {
             drawKkRadiusRing(lat, lng);
+            return;
+        }
+        const transportMode = canonicalTransport(travelOptions.transport || "Fiets");
+        // OV: filter list/pins by travel time server-side; no isochrone line on the map.
+        if (transportMode === "OV") {
+            lastRingDrawKey = String(lat) + "," + String(lng) + "|ov|"
+                + String(travelOptions.maxMinutes) + "|OV";
+            clearTravelRings();
+            setIsoMode("none");
             return;
         }
         if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {

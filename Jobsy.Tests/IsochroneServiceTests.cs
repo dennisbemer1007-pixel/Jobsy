@@ -49,6 +49,8 @@ public class IsochroneServiceTests
         Assert.Contains("getComputedStyle", js, StringComparison.Ordinal);
         Assert.Contains("--brand", js, StringComparison.Ordinal);
         Assert.Contains("data-iso-mode", js, StringComparison.Ordinal);
+        Assert.Contains("transportMode === \"OV\"", js, StringComparison.Ordinal);
+        Assert.Contains("setIsoMode(\"none\")", js, StringComparison.Ordinal);
         Assert.DoesNotContain("#2563eb", js, StringComparison.Ordinal);
         Assert.DoesNotContain("#1d4ed8", js, StringComparison.Ordinal);
 
