@@ -5,8 +5,8 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class DeepAnalysisQuestionHelp
 {
-    public static string ExampleFor(DeepAnalysisQuestion question)
-        => AssessmentItemExamples.ExampleFor(question);
+    public static string ExampleFor(DeepAnalysisQuestion question, string lang = "nl")
+        => AssessmentItemExamples.ExampleFor(question, lang);
 
     public static string DomainLabel(string domain) => DimensionLabels.For(domain);
 }
