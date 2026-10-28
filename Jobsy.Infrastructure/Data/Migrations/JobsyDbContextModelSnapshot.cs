@@ -7652,6 +7652,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("DreamJobDisplayTitle")
+                        .HasColumnType("text");
+
                     b.Property<string>("DreamJobKey")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
@@ -7714,6 +7717,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<string>("CultureScoresJson")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DreamJobDisplayTitle")
                         .HasColumnType("text");
 
                     b.Property<string>("DreamJobKey")

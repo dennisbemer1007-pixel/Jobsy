@@ -173,12 +173,11 @@ public static class PupilDroombaanSsrHtml
         }
 
         var dream = fromApi?.Dream;
-        if (dream is null || string.IsNullOrWhiteSpace(dream.JobKey)
-            || string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(dream?.JobTitle))
         {
-            return "";
+            return dream.JobTitle.Trim();
         }
 
-        return dream.JobTitle?.Trim() ?? "";
+        return "";
     }
 }

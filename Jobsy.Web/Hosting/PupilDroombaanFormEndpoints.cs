@@ -114,25 +114,26 @@ public static class PupilDroombaanFormEndpoints
 
         var dreamJob = form["DreamJob"].ToString().Trim();
         string key;
-        string displayForRedirect;
+        string? displayForRedirect;
         if (string.IsNullOrWhiteSpace(dreamJob))
         {
             key = PupilDreamJobFit.UndecidedKey;
-            displayForRedirect = "";
+            displayForRedirect = null;
         }
-        else if (!DreamJobCatalog.TryResolveKey(dreamJob, out var resolved))
+        else if (DreamJobCatalog.TryResolveExactKey(dreamJob, out var resolved))
         {
-            return Results.Redirect($"{PagePath}?error=unknown");
+            key = resolved;
+            displayForRedirect = dreamJob;
         }
         else
         {
-            key = resolved;
+            key = PupilDreamJobFit.UndecidedKey;
             displayForRedirect = dreamJob;
         }
 
         try
         {
-            var resp = await api.SavePupilDreamJobAsync(key, cancellationToken);
+            var resp = await api.SavePupilDreamJobAsync(key, displayForRedirect, cancellationToken);
             if (resp is null)
             {
                 return Results.Redirect($"{PagePath}?error=save");

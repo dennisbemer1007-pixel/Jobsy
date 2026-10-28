@@ -110,7 +110,7 @@ public sealed record PupilResultPageDto(
     int TotalItems = 60,
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo);
 
-public sealed record PupilDreamJobRequest(string? Key);
+public sealed record PupilDreamJobRequest(string? Key, string? DisplayTitle = null);
 
 public sealed record PupilDreamJobResponse(string Key, DreamJobRouteStubDto DreamJob);
 

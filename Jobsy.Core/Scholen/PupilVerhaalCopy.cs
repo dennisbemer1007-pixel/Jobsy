@@ -313,8 +313,8 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.Have.Curious"] = "Je bent nieuwsgierig — daarom kijk je hier. Dat is een goed begin.";
         d["LeerlingDroom.Cheer.Low"] = "Het is een lange reis, maar jij hebt al een goede start. Een kreeft groeit ook stap voor stap. Vraag je leraar wat je nu al kunt doen.";
         d["LeerlingDroom.Cheer.Low.Vo"] = "Het is een lange reis, maar jij hebt al een goede start. Een kreeft groeit ook stap voor stap. Vraag je docent of mentor wat je nu al kunt doen.";
-        d["LeerlingDroom.Cheer.Mid"] = "Mooi! Je hebt al een paar dingen te pakken. Blijf oefenen en praat met je leraar over de volgende stap.";
-        d["LeerlingDroom.Cheer.Mid.Vo"] = "Mooi! Je hebt al een paar dingen te pakken. Blijf oefenen en praat met je docent of mentor over de volgende stap.";
+        d["LeerlingDroom.Cheer.Mid"] = "Mooi. Je hebt al een paar dingen te pakken. Blijf oefenen en praat met je leraar over de volgende stap.";
+        d["LeerlingDroom.Cheer.Mid.Vo"] = "Mooi. Je hebt al een paar dingen te pakken. Blijf oefenen en praat met je docent of mentor over de volgende stap.";
         d["LeerlingDroom.Cheer.High"] = "Jij past hier al goed bij. Blijf nieuwsgierig — stap voor stap kom je er.";
         d["LeerlingDroom.Lobster.Generic"] = "Welk beroep past bij jou? Laten we kijken.";
         d["LeerlingPdf.Header"] = "Mijn ontdekkingsreis";
@@ -675,7 +675,7 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.Route.dierenarts.3.G78"] = "Diergeneeskunde studeren|Pas na vwo of na een hbo-propedeuse · 6 jaar";
         d["LeerlingDroom.Route.advocaat.3.Havo"] = "Rechten studeren|Na vwo, of na havo via een hbo-propedeuse · ongeveer 4 tot 6 jaar";
         d["LeerlingDroom.Route.arts.3.Havo"] = "Geneeskunde|Na vwo met biologie, scheikunde en wiskunde · 6 jaar plus specialisatie";
-        d["LeerlingDroom.Route.dierenarts.Goal"] = "Dierenarts!|In een praktijk, dierentuin of op de boerderij";
+        d["LeerlingDroom.Route.dierenarts.Goal"] = "Dierenarts|In een praktijk, dierentuin of op de boerderij";
         d["LeerlingDroom.Alt.dierenarts"] = "Zit je op vmbo? Via mbo Dierenartsassistent (niveau 4) kan je ook verder.";
         d["LeerlingDroom.Route.piloot.1"] = "Nu: {nu}|Kies straks wiskunde en natuurkunde";
         d["LeerlingDroom.Route.piloot.2"] = "Havo of vwo afmaken|Goede cijfers voor bètavakken helpen";

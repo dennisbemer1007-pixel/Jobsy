@@ -251,9 +251,10 @@ internal static class BanenkaartSsrData
             effectiveQuery.Transport,
             effectiveQuery.RadiusKm);
 
-        bootPins = [];
+        bootPins = BanenkaartMapBoot.ToBootPinsFromList(vacancies);
 
         var catalogUrl = BanenkaartClientCatalog.AllPath;
+        var pinsUrl = BanenkaartMapBoot.BuildPinsApiUrl(effectiveQuery, isCandidate);
         var highlightSeed = HashVacancyIds(vacancies.Select(v => v.Id));
         var fitByVacancyId = isCandidate && showFitFilters
             ? vacancies
@@ -275,7 +276,8 @@ internal static class BanenkaartSsrData
             highlightSeed,
             explicitRadiusKm,
             fitByVacancyId,
-            showFitFilters);
+            showFitFilters,
+            pinsUrl);
 
         var defaults = new KbFilterDefaults(
             AgeYears: effectiveQuery.AgeYears,

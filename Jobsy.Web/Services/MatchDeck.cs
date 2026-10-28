@@ -50,12 +50,16 @@ public sealed class MatchDeck
                 {
                     ordered = raw
                         .OrderByDescending(v => v.FitPercent ?? v.MatchPercent ?? int.MinValue)
+                        .ThenBy(v => v.TravelMinutes ?? int.MaxValue)
                         .ThenBy(v => v.Id);
                 }
 
                 foreach (var item in ordered)
                 {
-                    _items.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: showMatchPercentage));
+                    _items.Add(SwipeViewModel.FromVacancy(
+                        item,
+                        showMatchPercentage: showMatchPercentage,
+                        candidatePreferredTransport: Gate.PreferredTransport));
                 }
             }
         }

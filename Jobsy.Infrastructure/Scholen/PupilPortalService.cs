@@ -59,6 +59,7 @@ public interface IPupilPortalService
     Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
         ClaimsPrincipal pupil,
         string? key,
+        string? displayTitle,
         CancellationToken cancellationToken = default);
 
     Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> GetVoPassportAsync(
@@ -806,6 +807,7 @@ public sealed class PupilPortalService : IPupilPortalService
     public async Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
         ClaimsPrincipal pupil,
         string? key,
+        string? displayTitle,
         CancellationToken cancellationToken = default)
     {
         var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
@@ -839,6 +841,14 @@ public sealed class PupilPortalService : IPupilPortalService
         code.Progress.DreamJobKey = storeKey;
         code.Progress.UpdatedAtUtc = _clock.GetUtcNow().UtcDateTime;
         code.Result.DreamJobKey = storeKey;
+        var display = string.IsNullOrWhiteSpace(displayTitle) ? null : displayTitle.Trim();
+        if (display is { Length: > 96 })
+        {
+            display = display[..96];
+        }
+
+        code.Progress.DreamJobDisplayTitle = display;
+        code.Result.DreamJobDisplayTitle = display;
 
         var fit = PupilDreamJobFit.Evaluate(code.Result, code.Progress, storeKey);
         code.Result.FitSnapshotJson = fit is null ? null : PupilDreamJobFit.SerializeSnapshot(fit.Snapshot);

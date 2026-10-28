@@ -95,6 +95,7 @@ public class MailRecipientAllowListTests
     [InlineData("jan@lobsy.nl", true)]
     [InlineData("test-jan@example.com", true)]
     [InlineData("lobsy-test+s14@mail.grokbot.com", false)]
+    [InlineData("lobsy-test+s16@mail.grokbot.com", false)]
     [InlineData("other@gmail.com", true)]
     public void Acceptatie_pattern_allows_only_test_addresses(string recipient, bool blocked)
     {

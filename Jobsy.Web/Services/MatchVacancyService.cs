@@ -28,7 +28,7 @@ public sealed class MatchVacancyService
         }
 
         var transport = string.IsNullOrWhiteSpace(gate.PreferredTransport)
-            ? "Auto"
+            ? "Fiets"
             : gate.PreferredTransport!;
         var maxMinutes = gate.MaxTravelMinutes is int m && m > 0 ? m : 45;
 
@@ -49,7 +49,37 @@ public sealed class MatchVacancyService
             return [];
         }
 
-        return FilterRelevant(page.Items, gate, take, page.OutsideTravelFallback);
+        var relevant = FilterRelevant(page.Items, gate, take * 3, page.OutsideTravelFallback);
+        return OrderMatchDeck(relevant, maxMinutes, take);
+    }
+
+    internal static IReadOnlyList<VacancyListItem> OrderMatchDeck(
+        IEnumerable<VacancyListItem> items,
+        int maxTravelMinutes,
+        int take)
+    {
+        var list = items.ToList();
+        if (list.Count <= 1)
+        {
+            return list;
+        }
+
+        static int MatchScore(VacancyListItem v) => v.FitPercent ?? v.MatchPercent ?? int.MinValue;
+
+        var within = list
+            .Where(v => v.TravelMinutes is int t && t <= maxTravelMinutes)
+            .OrderByDescending(MatchScore)
+            .ThenBy(v => v.TravelMinutes ?? int.MaxValue)
+            .ThenBy(v => v.Id)
+            .ToList();
+        var outside = list
+            .Where(v => v.TravelMinutes is not int minutes || minutes > maxTravelMinutes)
+            .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
+            .ThenByDescending(MatchScore)
+            .ThenBy(v => v.Id)
+            .ToList();
+
+        return within.Concat(outside).Take(take).ToList();
     }
 
     public static IReadOnlyList<VacancyListItem> FilterRelevant(
