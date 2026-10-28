@@ -13,6 +13,20 @@ public sealed class CandidatePlainAppSsrHeadTests
         Assert.Contains("IsPlainCandidateAppPath", resolver, StringComparison.Ordinal);
         Assert.Contains("/candidate/paspoort", resolver, StringComparison.Ordinal);
         Assert.Contains("/banenkaart", resolver, StringComparison.Ordinal);
+        Assert.Contains("/candidate/applications", resolver, StringComparison.Ordinal);
+        Assert.Contains("/candidate/liked", resolver, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Plain_app_shells_skip_kreeft_strips_on_sollicitaties_and_bewaard()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var apps = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
+        var saved = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Saved/SavedSsrShells.cs"));
+        Assert.Contains("plainShell", apps, StringComparison.Ordinal);
+        Assert.Contains("cp-plain-app", apps, StringComparison.Ordinal);
+        Assert.Contains("plainShell", saved, StringComparison.Ordinal);
+        Assert.Contains("cp-plain-app", saved, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -19,6 +19,8 @@
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject AuthenticationStateProvider AuthState
+@inject IHostEnvironment HostEnvironment
+@inject IConfiguration Configuration
 
 <PageTitle>@Culture["Kb.Saved.Title"] · Lobsy</PageTitle>
 
@@ -74,7 +76,11 @@ else if (_bodyHtml is not null)
                 actionSaved);
 
             var tokens = Antiforgery.GetAndStoreTokens(http);
-            _bodyHtml = SavedSsrShells.BuildBody(Culture, data, tokens.RequestToken ?? "", http);
+            var plainShell = CandidatePlainPublicResolver.IsPlainShellForRequest(
+                http,
+                HostEnvironment,
+                Configuration);
+            _bodyHtml = SavedSsrShells.BuildBody(Culture, data, tokens.RequestToken ?? "", http, plainShell);
         }
         catch
         {

@@ -52,7 +52,8 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
                 ["Jobsy:CandidateCompactHeroEnabled"] = "true",
                 ["Features:UwvFeatures"] = uwvOn ? "true" : "false",
-                ["JobsyFeatures:BedrijvenkaartSsrPreview"] = "true"
+                ["JobsyFeatures:BedrijvenkaartSsrPreview"] = "true",
+                ["CandidatePublic:PlainSkin"] = "true"
             });
         });
         builder.ConfigureTestServices(services =>
@@ -126,7 +127,9 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             CandidateExternalVacanciesEnabled: true,
             ProactiveMatchingEnabled: false,
             CompanyMapInitiativeEnabled: companyMapInitiativeEnabled,
-            UwvFeaturesEnabled: uwvFeaturesEnabled);
+            UwvFeaturesEnabled: uwvFeaturesEnabled,
+            AfterMatchEnabled: true,
+            ActivityLogEnabled: false);
 
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult(_snap);
@@ -306,7 +309,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                     {
                         "employer" or "werkgever" => ("BranchManager", "Ondernemer Demo"),
                         "admin" => ("Admin", "Admin Demo"),
-                        _ => ("Candidate", "Sanne de Vries")
+                        _ => ("Candidate", "Sam de Wit")
                     };
 
                     var claims = new List<Claim>
