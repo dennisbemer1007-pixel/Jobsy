@@ -278,6 +278,7 @@ internal static class BanenkaartSsrShells
         {
             sb.Append("<button type=\"button\" class=\"sq deskonly kb-address__clear\" data-testid=\"kb-address-clear\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Common.Clear"]))
+                .Append("\">")
                 .Append(InlineIcon("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\" /></svg>"))
                 .Append("</button>");
         }

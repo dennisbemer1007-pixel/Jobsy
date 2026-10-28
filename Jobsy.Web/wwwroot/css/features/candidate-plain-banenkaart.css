@@ -288,10 +288,32 @@
   align-items: center;
 }
 
+@media (min-width: 701px) {
+  .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .rh.results-meta .srow {
+    flex-wrap: nowrap;
+  }
+
+  .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart label.results-meta__sort.sel {
+    border: none;
+    background: transparent;
+    padding: 0;
+    height: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+}
+
 .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .results-meta__sort {
   flex: 1 1 140px;
   min-width: 0;
   max-width: 100%;
+}
+
+@media (min-width: 701px) {
+  .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .results-meta__sort {
+    flex: 0 0 auto;
+    max-width: none;
+  }
 }
 
 .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .kb-view-toggle {
@@ -342,6 +364,44 @@
   .app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__logo img,
   .app-shell--plain-candidate .wg-topbar--candidate .lobsy-logo__img {
     max-height: 28px;
+  }
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .auth-link--login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex: none;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .auth-link--login:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .auth-link__icon {
+  display: none;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .auth-link__label {
+  display: inline;
+}
+
+@media (max-width: 700px) {
+  .app-shell--plain-candidate .wg-topbar--candidate .auth-link--login {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 15px;
   }
 }
 

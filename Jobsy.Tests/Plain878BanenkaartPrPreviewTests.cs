@@ -310,6 +310,39 @@ public sealed class Plain878BanenkaartPrPreviewTests : IAsyncLifetime, IAsyncDis
                 .some(s => s.getBoundingClientRect().height > 48);
               push('Geen gigantische iconen', !bigSvg, bigSvg ? 'ic > 48px' : 'ok');
 
+              const isoMode = document.querySelector('.map-pane[data-iso-mode], .job-map[data-iso-mode], #job-map[data-iso-mode]')
+                || document.querySelector('[data-iso-mode]');
+              const isoAttr = isoMode?.getAttribute('data-iso-mode') || '';
+              const transport = (document.querySelector('[data-testid=kb-travel-chip]')?.textContent || '').toLowerCase();
+              const isOv = transport.includes('ov') || transport.includes('openbaar');
+              let ringFeatures = 0;
+              try {
+                const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                const src = map && map.getSource && map.getSource('jobsy-travel-rings');
+                if (src && src._data && Array.isArray(src._data.features)) {
+                  ringFeatures = src._data.features.length;
+                }
+              } catch (eIso) { }
+              if (!isOv && !mobile) {
+                push('Isochroon zichtbaar (Auto)', isoAttr === 'real' || ringFeatures > 0,
+                  'mode=' + isoAttr + ' features=' + ringFeatures);
+              }
+
+              const guestLogin = header?.querySelector('.auth-link--login .auth-link__label');
+              if (guestLogin) {
+                const loginText = (guestLogin.textContent || '').trim();
+                push('Gast Inloggen-knop tekst', loginText.length > 2, loginText);
+                const loginIcon = header.querySelector('.auth-link--login .auth-link__icon svg');
+                const iconBox = loginIcon ? loginIcon.getBoundingClientRect().height : 0;
+                push('Geen gigantisch inlogicoon', iconBox <= 2 || !loginIcon, 'icon ' + Math.round(iconBox) + 'px');
+              }
+
+              const clearBtn = document.querySelector('[data-testid=kb-address-clear]');
+              if (clearBtn) {
+                const clearSvg = clearBtn.querySelector('svg');
+                push('Wissen-knop met icoon', !!clearSvg, clearSvg ? 'svg ok' : 'leeg vierkant');
+              }
+
               const bottomNav = document.querySelector('.bottom-nav, .wg-bottom-nav');
               push('Geen Carrière-bottom-nav op plain banenkaart', !bottomNav, bottomNav ? 'nav zichtbaar' : 'afwezig');
 
