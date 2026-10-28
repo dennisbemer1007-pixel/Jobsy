@@ -51,6 +51,11 @@ public sealed class CandidatePlainPublicRenderTests
 
         Assert.Contains("cp-plain-card", html, StringComparison.Ordinal);
         Assert.Contains("action=\"/account/email-code/start\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"au-field\"", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"signup-email\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"au-input\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("w-full px-4 py-3", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("pub-signup__form", html, StringComparison.Ordinal);
         Assert.DoesNotContain("kreeft-header-strip", html, StringComparison.Ordinal);
     }
 

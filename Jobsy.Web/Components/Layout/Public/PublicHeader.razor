@@ -23,16 +23,16 @@
 
         @if (CandidatePlain)
         {
-            <div class="pub-header__actions">
+            <div class="pub-header__actions pub-header__actions--plain">
                 <PublicLangMenu ReturnPath="@ReturnPath" />
                 @if (_employersOn)
                 {
                     <a class="cp-plain-header-link cp-plain-header-link--desk" href="@PublicRoutes.Employers">@Culture["PublicNav.Employers"]</a>
                 }
-                <a class="cp-plain-header-login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-            </div>
-            <div class="pub-header__mobile">
-                <PublicLangMenu ReturnPath="@ReturnPath" />
+                @if (_showPlainHeaderLogin)
+                {
+                    <a class="cp-plain-header-login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                }
             </div>
         }
         else if (AuthShell)
@@ -194,11 +194,21 @@
 
     private bool _signedIn;
     private bool _employersOn;
+    private bool _showPlainHeaderLogin = true;
     private string ReturnPath => PublicLangMenu.SanitizeReturnPath(Navigation.Uri);
 
     protected override async Task OnParametersSetAsync()
     {
         _employersOn = await Employers.IsEnabledAsync();
+        try
+        {
+            var path = new Uri(Navigation.Uri).AbsolutePath;
+            _showPlainHeaderLogin = !string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            _showPlainHeaderLogin = true;
+        }
 
         if (AuthenticationState is null)
         {
