@@ -211,10 +211,9 @@ public sealed class AccFollowUp1314PlaywrightTests
         var page = await NewLoggedInPageAsync(context, baseUrl, email, password);
         await SetCultureAsync(page, lang);
 
-        await page.GotoAsync(baseUrl + "/candidate/competencies?stap=intro", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+        await page.GotoAsync(baseUrl + "/candidate/competencies?stap=vraag", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-        await AcceptTestConsentIfPresentAsync(page);
         await EnsureTestFlowReadyAsync(page);
 
         var example = page.Locator("[data-testid=test-item-example]");
