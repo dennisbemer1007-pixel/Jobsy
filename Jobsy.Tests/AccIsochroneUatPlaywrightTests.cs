@@ -178,6 +178,12 @@ public sealed class AccIsochroneUatPlaywrightTests
             """);
         var listCount = await page.Locator(".kb-list-row, .banenkaart-ssr-list__row, [data-testid='kb-list-row']").CountAsync();
 
+        var emptyStrip = await AccLayoutEmptyStripAudit.MeasureBanenkaartAsync(page);
+        Assert.True(
+            emptyStrip.largest_empty_strip_px <= AccLayoutEmptyStripAudit.MaxAllowedEmptyStripPx,
+            $"Layout empty strip too large ({emptyStrip.largest_empty_strip_px}px > "
+            + $"{AccLayoutEmptyStripAudit.MaxAllowedEmptyStripPx}px), tag={tag}");
+
         var screenshot = $"{prefix}-{tag}.png";
         var shotPath = Path.Combine(ArtifactDir, screenshot);
         var mapShot = page.Locator("#job-map").First;
@@ -221,6 +227,9 @@ public sealed class AccIsochroneUatPlaywrightTests
             travel_ring_feature_count = ringFeatureCount,
             rendered_pin_features = renderedPinFeatures,
             list_row_count = listCount,
+            largest_empty_strip_px = emptyStrip.largest_empty_strip_px,
+            empty_holder_px = emptyStrip.empty_holder_px,
+            band_gap_px = emptyStrip.band_gap_px,
             screenshot
         };
     }

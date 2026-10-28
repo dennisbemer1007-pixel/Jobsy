@@ -9,7 +9,7 @@ window.jobsyMaps = (function () {
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
         "/js/jobsyMapLibre.min.js?v=20261027-54"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261027-04"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261028-60"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -195,7 +195,7 @@ window.jobsyMaps = (function () {
                 setTimeout(function () {
                     try { po.disconnect(); } catch (ePo) { }
                     scheduleSoon();
-                }, 1200);
+                }, 450);
                 return;
             } catch (eObs) { }
         }
@@ -295,10 +295,18 @@ window.jobsyMaps = (function () {
                     + "&lng=" + encodeURIComponent(String(origin.lng))
                     + "&mode=" + encodeURIComponent(mode)
                     + "&minutes=" + encodeURIComponent(String(maxMin));
-                fetch(isoUrl, {
-                    credentials: "same-origin",
-                    headers: { Accept: "application/geo+json, application/json" }
-                }).catch(function () { });
+                try {
+                    window.__jobsyIsoPrefetchUrl = isoUrl;
+                    window.__jobsyIsoPrefetch = fetch(isoUrl, {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/geo+json, application/json" }
+                    }).then(function (res) {
+                        if (!res.ok) {
+                            return null;
+                        }
+                        return res.json();
+                    }).catch(function () { return null; });
+                } catch (eIsoStore) { }
             }
         } catch (eIsoWarm) { }
         var view = parsed.view || (parsed.mapInit && parsed.mapInit.view) || null;

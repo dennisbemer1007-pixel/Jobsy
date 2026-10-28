@@ -717,7 +717,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261027-54"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261027-04"
+        "/js/jobMap.min.js?v=20261028-60"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
