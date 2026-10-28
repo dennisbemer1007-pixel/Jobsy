@@ -3,8 +3,10 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Core.Features
 @using Jobsy.Web.Localization
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 <TestBlockBackground Slug="@_blockArtSlug" Enabled="@(!RustigLayout && Questions.Count > 0)">
 <div class="@(RustigLayout ? "ob-rustig__test-tabs" : $"ob-wizard__test-tabs{(JourneyShell ? " journey-segments" : "")}")"
@@ -159,8 +161,9 @@ else
     private AssessmentKind _kind = AssessmentKind.Competence;
     private string _blockArtSlug = TestBlockArt.SlugForFamily(TestBlockFamily.HoeJeWerkt);
     private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
+    private bool _showExamples;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         _kind = Step switch
         {
@@ -170,8 +173,20 @@ else
             _ => AssessmentKind.Competence
         };
         _blockArtSlug = TestBlockArt.SlugForAssessment(_kind);
+        _showExamples = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestItemExamples);
+        var lang = Culture.Language;
         _flowQuestions = Questions
-            .Select(q => new TestQuestionFlow.FlowQuestion(q.Id, QuestionText(q)))
+            .Select(q =>
+            {
+                string? example = null;
+                if (_showExamples)
+                {
+                    var domain = DomainForQuestionId?.Invoke(q.Id) ?? "";
+                    example = AssessmentItemExamples.ExampleFor(_kind, q.Id, domain, reverse: false, lang);
+                }
+
+                return new TestQuestionFlow.FlowQuestion(q.Id, QuestionText(q), example);
+            })
             .ToList();
     }
 

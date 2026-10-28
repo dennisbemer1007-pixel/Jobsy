@@ -83,6 +83,22 @@ public sealed class AccFollowUp1314PlaywrightTests
                 {
                     await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
                     await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                    await AcceptTestConsentIfPresentAsync(page);
+                    if (path.Contains("competencies", StringComparison.Ordinal))
+                    {
+                        var begin = page.GetByRole(AriaRole.Button, new() { Name = "Begin" });
+                        if (await begin.CountAsync() == 0)
+                        {
+                            begin = page.GetByRole(AriaRole.Button, new() { Name = "Verder" });
+                        }
+
+                        if (await begin.CountAsync() > 0)
+                        {
+                            await begin.First.ClickAsync();
+                            await page.WaitForTimeoutAsync(800);
+                        }
+                    }
+
                     var example = page.Locator("[data-testid=test-item-example]");
                     try
                     {
@@ -90,8 +106,17 @@ public sealed class AccFollowUp1314PlaywrightTests
                     }
                     catch (TimeoutException)
                     {
-                        metrics[$"1314_missing_{culture.Item1}_{tag}_{path}"] = page.Url;
-                        continue;
+                        if (path.Contains("deep-analysis", StringComparison.Ordinal))
+                        {
+                            await page.GotoAsync(baseUrl + "/candidate/start/wizard", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                            await AcceptTestConsentIfPresentAsync(page);
+                            await example.WaitForAsync(new() { Timeout = 45_000 });
+                        }
+                        else
+                        {
+                            metrics[$"1314_missing_{culture.Item1}_{tag}_{path}"] = page.Url;
+                            continue;
+                        }
                     }
 
                     var text = (await example.InnerTextAsync()).Trim();
@@ -102,6 +127,16 @@ public sealed class AccFollowUp1314PlaywrightTests
                     metrics[$"1314_{culture.Item1}_{slug}_{tag}"] = new { exampleChars = text.Length, url = page.Url };
                 }
             }
+        }
+    }
+
+    private static async Task AcceptTestConsentIfPresentAsync(IPage page)
+    {
+        var consent = page.Locator("[data-consent=test] button.btn-primary");
+        if (await consent.CountAsync() > 0)
+        {
+            await consent.First.ClickAsync();
+            await page.WaitForTimeoutAsync(600);
         }
     }
 
