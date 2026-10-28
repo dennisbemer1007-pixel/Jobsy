@@ -1,2 +1,3 @@
 en	Email.ProactiveMatch.Subject
 pl	Email.ProactiveMatch.Subject
+en	Email.ApplicationStatusAlert.Cta

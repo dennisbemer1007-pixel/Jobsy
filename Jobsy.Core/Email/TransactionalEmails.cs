@@ -293,6 +293,13 @@ public static partial class TransactionalEmails
             "kandidatenkaartinvitewithdrawn" => KandidatenkaartInviteWithdrawn(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
                 Links(ctx.PublicWebBaseUrl).Absolute("/"), c),
+            "applicationstatusalert" => ApplicationStatusAlert(
+                ctx.PublicWebBaseUrl,
+                ctx.RecipientName,
+                "Status update",
+                "Je sollicitatie heeft een nieuwe status.",
+                "/candidate/applications/voorbeeld",
+                c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

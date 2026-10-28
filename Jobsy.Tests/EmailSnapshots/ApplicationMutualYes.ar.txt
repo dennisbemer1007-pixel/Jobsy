@@ -1,0 +1,31 @@
+KEY: ApplicationMutualYes
+SUBJECT: Wederzijds ja bij ⁨Bakkerij De Gouden Korrel⁩
+PREHEADER: ⁨Bakkerij De Gouden Korrel⁩ wil verder met je sollicitatie.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+⁨Bakkerij De Gouden Korrel⁩ wil verder met je
+
+⁨Bakkerij De Gouden Korrel⁩ wil verder met je sollicitatie voor ⁨Weekendhulp
+verkoop⁩. Jullie kunnen nu een gesprek plannen.
+
+Plan je gesprek: https://lobsy.nl/candidate/applications/22222222-2222-2222-2222-222222222222/after-match
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تقدّمت عبر Lobsy.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: ⁨Bakkerij De Gouden Korrel⁩ wil verder met je
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Plan je gesprek -> https://lobsy.nl/candidate/applications/22222222-2222-2222-2222-222222222222/after-match
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/lobsy-mark-128.png?v=20260930-mail2 alt= width=64 height=64

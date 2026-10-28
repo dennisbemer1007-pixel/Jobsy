@@ -26,8 +26,8 @@ public sealed class SollicitatiesMarkReadBffTests
     {
         var root = FindRepoRoot();
         var razor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateApplicationsSsr.razor"));
-        Assert.Contains("sollicitaties-mark-read-flush.js?v=20261025-mark-read-bff2", razor, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-berichten.js?v=20261025-mark-read-bff2", razor, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/sollicitaties-mark-read-flush.js\")", razor, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/sollicitaties-berichten.js\")", razor, StringComparison.Ordinal);
 
         var flushIdx = razor.IndexOf("sollicitaties-mark-read-flush.js", StringComparison.Ordinal);
         var berichtenIdx = razor.IndexOf("sollicitaties-berichten.js", StringComparison.Ordinal);

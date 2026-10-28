@@ -1932,6 +1932,12 @@ html[dir="rtl"] .account-menu__panel {
     position: relative;
 }
 
+@media (min-width: 1024px) {
+    .app-shell--candidate:has(.jobsy-discovery) .bottom-nav {
+        display: none !important;
+    }
+}
+
 /* Vestiging / ondernemer public page: list-first with a smaller map. */
 .jobsy-discovery--branch {
     grid-template-columns: minmax(320px, 58%) minmax(240px, 42%);

@@ -714,10 +714,10 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20261027-bk4-h"
+        "/js/jobsyMapLibre.min.js?v=20261027-54"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261027-bk5-g2"
+        "/js/jobMap.min.js?v=20261027-04"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -1599,8 +1599,8 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261024-acc10"
-        : "/service-worker.js?v=20261024-acc10";
+        ? "/service-worker.published.js?v=20261024-52"
+        : "/service-worker.js?v=20261024-52";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
     var userRequestedReload = false;

@@ -1,0 +1,29 @@
+KEY: ApplicationStatusAlert
+SUBJECT: Status update
+PREHEADER: Je sollicitatie heeft een nieuwe status.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+Status update
+
+Je sollicitatie heeft een nieuwe status.
+
+افتح في Lobsy: https://lobsy.nl/candidate/applications/voorbeeld
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Status update
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: افتح في Lobsy -> https://lobsy.nl/candidate/applications/voorbeeld
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

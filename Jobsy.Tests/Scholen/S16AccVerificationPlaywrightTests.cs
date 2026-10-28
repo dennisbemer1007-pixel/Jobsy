@@ -172,6 +172,7 @@ public sealed class S16AccVerificationPlaywrightTests
                 var enText = await pPage.Locator("[data-testid=leerling-paspoort-page]").InnerTextAsync();
                 Assert.DoesNotContain("Mijn droombaan", enText, StringComparison.Ordinal);
                 Assert.DoesNotContain("Er ging iets mis", enText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("!", enText, StringComparison.Ordinal);
                 await ShotAsync(pPage, artifactDir, $"paspoort-en-kok-{tag}", sw.ElapsedMilliseconds);
 
                 // Dierenarts EN: switch dream via droombaan if needed
@@ -184,6 +185,7 @@ public sealed class S16AccVerificationPlaywrightTests
                 await pPage.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
                 enText = await pPage.Locator("[data-testid=leerling-paspoort-page]").InnerTextAsync();
                 Assert.Contains("Dream", enText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("!", enText, StringComparison.Ordinal);
                 await ShotAsync(pPage, artifactDir, $"paspoort-en-dierenarts-{tag}", 0);
 
                 // PDF links (NL + EN)
