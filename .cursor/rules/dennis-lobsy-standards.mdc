@@ -19,17 +19,22 @@ Na afloop van de prioriteitenlijst: één **totale** test. Onboarding 1–10, Ma
 
 Geen volledige regressie **per PR** (behalve waar plain per pagina expliciet alles test, §6).
 
-## 3. Prioriteit (volgorde, 28 okt ~07:47)
+## 3. Taakverdeling (28 okt ~07:49)
 
-1. **#1308** — ImageSharp → SkiaSharp (MIT)
-2. **Plain-stijl kandidaat** (#878) — mockup `docs/mockups/kandidaat/plain` @ `592a3596f`
-   - Eerst pagina's **buiten** onboarding, daarna **onboarding**
-3. **#1305** — Match / banenkaart vacatures *(achter eerste plain-PR's, tenzij al klaar)*
-4. **#1301**
-5. Voorbeeld-bug **AssessmentItemExamples** *(zelfde verschuiving)*
-6. **#1290** — drie werelden
+**Deze agent (bouwer 1):**
 
-#1305 / #1301 / voorbeeld-bug **niet** tussendoor starten tenzij expliciet afgestemd met Dennis (melden als je ze toch wilt afronden).
+1. **#1307** — scoped acc-test van de gemergede fixes (eigen run + evidence)
+2. **#1308** — ImageSharp → SkiaSharp (MIT)
+3. **Plain-stijl kandidaat** (#878) — mockup `docs/mockups/kandidaat/plain` @ `592a3596f` (§6)
+4. **#1290** — drie werelden
+
+**Bouwer 2 (`bc-0b311ff5`):** #1305 (banenkaart/Match), #1301 (demo-bugs + Sam de Wit), AssessmentItemExamples-bug.
+
+**Niet aanraken:** branches/PR's van #1305, #1301 en AssessmentItemExamples — geen commits, rebase of PR-updates door bouwer 1.
+
+**Dennis:** eindcontrole (totale test).
+
+Plain: eerst pagina's **buiten** onboarding, daarna onboarding.
 
 ## 4. Acceptatie zelf-test (28 okt ~07:27)
 
