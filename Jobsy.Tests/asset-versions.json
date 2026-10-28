@@ -404,7 +404,7 @@
     "v": "20261025-87"
   },
   "js/banenkaart-maps-boot.js": {
-    "sha256": "e9d4dc520392a1a8c03fe4ee248672c4d1cfa7ebeb09fa2841510feb4e1ea497",
+    "sha256": "94b5d375798d97a6b59f44bf907c0b6c38043f650c56898cd4a7503f98547f52",
     "v": "20261027-04"
   },
   "js/banenkaart-prefetch.js": {
@@ -468,7 +468,7 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "5a8ce5f513d9afceb50f4e1543ecef8d0714dc43c6756b12b3108ed37706b276",
+    "sha256": "97ac9c7bab8b28c820ae62589763c508ff5cbf0fb207bf4ca29846aa6a722811",
     "v": "20261027-04"
   },
   "js/jobsy-basemap-warm.js": {

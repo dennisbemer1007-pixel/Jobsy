@@ -4684,6 +4684,10 @@ window.jobMap = (function () {
                 + String(travelOptions.maxMinutes) + "|OV";
             clearTravelRings();
             setIsoMode("none");
+            finishOpeningFrame();
+            if (map && typeof map.resize === "function") {
+                try { map.resize(); } catch (eOvResize) { }
+            }
             return;
         }
         if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
@@ -4733,30 +4737,9 @@ window.jobMap = (function () {
         // Real isochrones only — no cruise-speed circle placeholder (OV / provider miss / timeout).
         clearTravelRings();
         setIsoMode("loading");
-        scheduleIsoLoad(loadIsochronesWhenIdle);
-
-        function scheduleIsoLoad(fn) {
-            if (map && typeof map.once === "function") {
-                if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()
-                    && map.areTilesLoaded && map.areTilesLoaded()) {
-                    if (typeof requestIdleCallback === "function") {
-                        requestIdleCallback(fn, { timeout: 5000 });
-                    } else {
-                        setTimeout(fn, 32);
-                    }
-                } else {
-                    map.once("idle", function () {
-                        if (typeof requestIdleCallback === "function") {
-                            requestIdleCallback(fn, { timeout: 5000 });
-                        } else {
-                            setTimeout(fn, 32);
-                        }
-                    });
-                }
-            } else {
-                fn();
-            }
-        }
+        // Pins/list must not wait for Valhalla; reveal the map immediately.
+        finishOpeningFrame();
+        setTimeout(loadIsochronesWhenIdle, 0);
     }
 
     function ringBounds(lat, lng, radiusM) {
