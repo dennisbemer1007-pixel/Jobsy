@@ -15,8 +15,10 @@ internal static class BedrijvenkaartSsrData
         int RadiusKm,
         int OpenCount,
         bool CompanyMapEnabled,
-        double OriginLat,
-        double OriginLng,
+        bool HasOrigin,
+        bool ShowStartPrompt,
+        double? OriginLat,
+        double? OriginLng,
         bool OriginFromProfile);
 
     internal static async Task<PageModel?> LoadAsync(
@@ -36,19 +38,28 @@ internal static class BedrijvenkaartSsrData
             return null;
         }
 
-        var origin = await BedrijvenkaartMapOrigin.ResolveAsync(http, api, ct);
+        var origin = await BedrijvenkaartMapOrigin.TryResolveAsync(http, api, ct);
+        var hasOrigin = origin is not null;
+        var showStartPrompt = !hasOrigin;
 
         IReadOnlyList<CompanyMapPinDto> pins;
-        try
+        if (hasOrigin)
         {
-            pins = await api.GetCompanyMapPinsAsync(origin.Lat, origin.Lng, radiusKm, ct);
+            try
+            {
+                pins = await api.GetCompanyMapPinsAsync(origin!.Lat, origin.Lng, radiusKm, ct);
+            }
+            catch
+            {
+                pins = [];
+            }
         }
-        catch
+        else
         {
             pins = [];
         }
 
-        if (pins.Count == 0 && environment.IsDevelopment())
+        if (pins.Count == 0 && environment.IsDevelopment() && hasOrigin)
         {
             pins = BedrijvenkaartDemoPins.All;
         }
@@ -59,8 +70,10 @@ internal static class BedrijvenkaartSsrData
             radiusKm,
             openCount,
             initiativeOn,
-            origin.Lat,
-            origin.Lng,
-            origin.FromProfile);
+            hasOrigin,
+            showStartPrompt,
+            origin?.Lat,
+            origin?.Lng,
+            origin?.FromProfile ?? false);
     }
 }

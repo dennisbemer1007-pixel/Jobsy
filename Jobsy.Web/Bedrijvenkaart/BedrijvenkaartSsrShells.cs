@@ -13,14 +13,25 @@ internal static class BedrijvenkaartSsrShells
     internal static string BuildBody(CultureState culture, BedrijvenkaartSsrData.PageModel model)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"bk-page panel-page--cand-ill\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-bk-radius-km=\"")
+        sb.Append("<div class=\"bk-page panel-page--cand-ill")
+            .Append(model.ShowStartPrompt ? " kb-start-prompt-open" : "")
+            .Append("\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-bk-radius-km=\"")
             .Append(model.RadiusKm)
-            .Append("\" data-bk-origin-lat=\"")
-            .Append(model.OriginLat.ToString(System.Globalization.CultureInfo.InvariantCulture))
-            .Append("\" data-bk-origin-lng=\"")
-            .Append(model.OriginLng.ToString(System.Globalization.CultureInfo.InvariantCulture))
-            .Append(model.OriginFromProfile ? "\" data-bk-origin-profile=\"1\"" : "\"")
-            .Append(" data-testid=\"bedrijvenkaart-ssr-root\">");
+            .Append('"');
+        if (model.HasOrigin && model.OriginLat is double oLat && model.OriginLng is double oLng)
+        {
+            sb.Append(" data-bk-origin-lat=\"")
+                .Append(oLat.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .Append("\" data-bk-origin-lng=\"")
+                .Append(oLng.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .Append('"');
+            if (model.OriginFromProfile)
+            {
+                sb.Append(" data-bk-origin-profile=\"1\"");
+            }
+        }
+
+        sb.Append(" data-testid=\"bedrijvenkaart-ssr-root\">");
         sb.Append("<div class=\"bk-page__hero-stack\">");
         sb.Append("<div class=\"bk-map-toggle\" role=\"tablist\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Jobs"]))
@@ -73,6 +84,21 @@ internal static class BedrijvenkaartSsrShells
         }
 
         sb.Append("</div><div class=\"bk-map-pane\">");
+        if (model.ShowStartPrompt)
+        {
+            sb.Append("<div class=\"kb-start-prompt\" role=\"dialog\" aria-labelledby=\"bk-start-title\">")
+                .Append("<h2 id=\"bk-start-title\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.Title"]))
+                .Append("</h2><p class=\"kb-start-prompt__hint\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.Hint"]))
+                .Append("</p><div class=\"kb-start-prompt__actions\">")
+                .Append("<button type=\"button\" class=\"kb-start-prompt__primary\" data-testid=\"kb-start-locate\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.UseMyLocation"]))
+                .Append("</button><button type=\"button\" class=\"kb-start-prompt__later\" data-testid=\"kb-start-later\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.Later"]))
+                .Append("</button></div></div>");
+        }
+
         sb.Append("<div id=\"bedrijvenkaart-map\" class=\"job-map\" aria-label=\"Kaart\"></div>");
         sb.Append("<div class=\"bk-map-legend\">");
         sb.Append("<div><span class=\"bk-chip bk-chip--open\">")

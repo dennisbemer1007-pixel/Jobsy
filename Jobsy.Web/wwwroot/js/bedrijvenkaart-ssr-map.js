@@ -361,6 +361,38 @@
       });
   }
 
+  function applyOriginFromGeolocation(lat, lng) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return;
+    }
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set("originLat", String(lat));
+      url.searchParams.set("originLng", String(lng));
+      window.location.assign(url.toString());
+    } catch (e) {
+      window.location.assign(
+        window.location.pathname +
+          "?originLat=" +
+          encodeURIComponent(String(lat)) +
+          "&originLng=" +
+          encodeURIComponent(String(lng))
+      );
+    }
+  }
+
+  function dismissStartPrompt() {
+    var host = root();
+    if (!host) {
+      return;
+    }
+    host.classList.remove("kb-start-prompt-open");
+    var prompt = host.querySelector(".kb-start-prompt");
+    if (prompt) {
+      prompt.remove();
+    }
+  }
+
   function bootMap() {
     if (!root()) {
       return;
@@ -541,6 +573,25 @@
         chip.setAttribute("aria-pressed", pressed ? "false" : "true");
         chip.classList.toggle("is-active", !pressed);
         refreshFromPins(readAllPins(), radiusKm(), false);
+        return;
+      }
+      if (ev.target.closest("[data-testid=kb-start-locate]")) {
+        ev.preventDefault();
+        if (window.jobsyGeo && typeof window.jobsyGeo.requestLocation === "function") {
+          window.jobsyGeo
+            .requestLocation()
+            .then(function (pos) {
+              var lat = Number(pos.lat != null ? pos.lat : pos.Lat);
+              var lng = Number(pos.lng != null ? pos.lng : pos.Lng);
+              applyOriginFromGeolocation(lat, lng);
+            })
+            .catch(function () {});
+        }
+        return;
+      }
+      if (ev.target.closest("[data-testid=kb-start-later]")) {
+        ev.preventDefault();
+        dismissStartPrompt();
       }
     });
   }
