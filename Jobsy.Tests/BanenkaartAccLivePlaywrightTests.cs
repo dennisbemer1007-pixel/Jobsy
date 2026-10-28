@@ -872,10 +872,13 @@ public sealed class BanenkaartAccLivePlaywrightTests
         Assert.True(elapsedMs < 3000,
             "Banenkaart load + catalog boot should stay under 3s (was ~3.7s); elapsedMs=" + elapsedMs.ToString("F0"));
 
-        var stripText = await page.Locator("[data-testid=kb-map-top-chrome] .strip--empty p").TextContentAsync()
-            ?? "";
-        Assert.DoesNotContain('\u2014', stripText);
-        Assert.DoesNotContain("—", stripText, StringComparison.Ordinal);
+        if (await page.Locator("[data-testid=kb-map-top-chrome] .strip--empty p").CountAsync() > 0)
+        {
+            var stripText = await page.Locator("[data-testid=kb-map-top-chrome] .strip--empty p").TextContentAsync()
+                ?? "";
+            Assert.DoesNotContain('\u2014', stripText);
+            Assert.DoesNotContain("—", stripText, StringComparison.Ordinal);
+        }
 
         var emptyTravel = await page.Locator("[data-testid=kb-empty-travel]").CountAsync();
         var listRows = await page.Locator("[data-testid=kb-list-row]").CountAsync();

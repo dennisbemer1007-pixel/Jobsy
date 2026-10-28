@@ -115,6 +115,24 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_boot_json_includes_map_pins_url_for_catalog_mode()
+    {
+        var root = FindRepoRoot();
+        var boot = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartMapBoot.cs"));
+        Assert.Contains("[\"pinsUrl\"]", boot, StringComparison.Ordinal);
+        Assert.Contains("BuildClientMapPinsUrl", boot, StringComparison.Ordinal);
+        Assert.Contains("scope=map", boot, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_catalog_mode_bootstraps_map_pins_before_full_catalog()
+    {
+        var root = FindRepoRoot();
+        var jobMap = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
+        Assert.Contains("catalogPinsBootstrapPending", jobMap, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_legend_hides_while_vacancy_popup_or_sheet_open()
     {
         var root = FindRepoRoot();

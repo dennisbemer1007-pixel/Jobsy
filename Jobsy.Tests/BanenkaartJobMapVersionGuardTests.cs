@@ -27,10 +27,16 @@ public sealed class BanenkaartJobMapVersionGuardTests
     {
         var root = TestRepo.FindRoot();
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
-        AssetVersions.AssertHostUsesManifestVersion(app, "js/banenkaart-maps-boot.js");
+        Assert.Contains(
+            "WwwrootAssetCatalog.Url(\"js/banenkaart-maps-boot.js\")",
+            app,
+            StringComparison.Ordinal);
         Assert.Equal(
             AssetVersions.Version("js/jobMap.min.js"),
             AssetVersions.Version("js/banenkaart-maps-boot.js"));
+        Assert.Equal(
+            AssetVersions.Version("js/banenkaart-maps-boot.js"),
+            Jobsy.Web.Hosting.WwwrootAssetCatalog.Version("js/banenkaart-maps-boot.js"));
     }
 
     [Fact]

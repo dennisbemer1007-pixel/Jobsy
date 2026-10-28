@@ -9,7 +9,7 @@ window.jobsyMaps = (function () {
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
         "/js/jobsyMapLibre.min.js?v=20261027-bk4-h"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261027-bk5-g2"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261028-bk6-b"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -277,6 +277,12 @@ window.jobsyMaps = (function () {
         var warmUrl = parsed.catalogMode ? parsed.catalogUrl : (parsed.catalogUrl || parsed.pinsUrl);
         if (!hasInlinePins(parsed) && warmUrl && typeof fetch === "function") {
             fetch(String(warmUrl), {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" }
+            }).catch(function () { });
+        }
+        if (parsed.catalogMode && parsed.pinsUrl && typeof fetch === "function") {
+            fetch(String(parsed.pinsUrl), {
                 credentials: "same-origin",
                 headers: { Accept: "application/json" }
             }).catch(function () { });

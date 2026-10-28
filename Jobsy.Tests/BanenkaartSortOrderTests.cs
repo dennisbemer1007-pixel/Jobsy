@@ -41,6 +41,7 @@ public sealed class BanenkaartSortOrderTests
         var root = FindRepoRoot();
         var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
         Assert.Contains("mergeUrlFiltersWithBoot", catalog, StringComparison.Ordinal);
+        Assert.Contains("boot.maxMinutes", catalog, StringComparison.Ordinal);
         Assert.Contains("kb-sheet-sort", catalog, StringComparison.Ordinal);
 
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));

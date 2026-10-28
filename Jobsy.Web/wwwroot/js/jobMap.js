@@ -3797,8 +3797,15 @@ window.jobMap = (function () {
         } catch (eClear) { }
     }
 
+    function catalogPinsBootstrapPending() {
+        return catalogModeActive
+            && window.jobsyBanenkaartCatalog
+            && typeof window.jobsyBanenkaartCatalog.isReady === "function"
+            && !window.jobsyBanenkaartCatalog.isReady();
+    }
+
     function fetchPins(url) {
-        if (catalogModeActive) {
+        if (catalogModeActive && !catalogPinsBootstrapPending()) {
             return Promise.resolve([]);
         }
         if (!url) {
@@ -6103,7 +6110,11 @@ window.jobMap = (function () {
             .catch(function () { });
     }
 
-    function onClusterClick(ev) {
+    /**
+     * MapLibre GL JS 5.x is promise-only for getClusterLeaves.
+     * Cluster tap opens the pager immediately — no easeTo zoom.
+     */
+    async function onClusterClick(ev) {
         if (!map || !ev.features || !ev.features.length) {
             return;
         }
@@ -6128,7 +6139,7 @@ window.jobMap = (function () {
         const feature = ev.features[0];
         const props = feature.properties || {};
         const source = map.getSource(PIN_SOURCE);
-        if (!source) {
+        if (!source || typeof source.getClusterLeaves !== "function") {
             return;
         }
         if (ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
@@ -6143,61 +6154,22 @@ window.jobMap = (function () {
         if (!coords) {
             return;
         }
-        const total = Math.max(Number(props.point_count) || 2, 2);
-        const zoomNow = map.getZoom();
-        const maxZ = BASEMAP_MAX_ZOOM;
-
-        function openCompactListAtMax() {
-            openClusterListFromClusterId(source, clusterId, coords, total);
-        }
-
-        function easeToClusterZoom(targetZoom) {
-            map.easeTo({
-                center: coords,
-                zoom: clampBanenZoom(targetZoom),
-                duration: 320
-            });
-        }
-
-        if (zoomNow >= maxZ - 0.02) {
-            openCompactListAtMax();
-            return;
-        }
-
-        if (typeof source.getClusterExpansionZoom !== "function") {
-            const fallback = clampBanenZoom(Math.min(zoomNow + 1.75, maxZ));
-            if (fallback <= zoomNow + 0.05) {
-                openCompactListAtMax();
-            } else {
-                easeToClusterZoom(fallback);
+        try {
+            const total = Math.max(Number(props.point_count) || 2, 2);
+            const cap = Math.min(total, 100);
+            const leaves = await source.getClusterLeaves(clusterId, cap, 0);
+            if (!map) {
+                return;
             }
-            return;
-        }
-
-        Promise.resolve(source.getClusterExpansionZoom(clusterId))
-            .then(function (expansionZoom) {
-                if (!map) {
-                    return;
-                }
-                const exp = typeof expansionZoom === "number" ? expansionZoom : zoomNow + 2;
-                let target = clampBanenZoom(Math.min(exp, maxZ));
-                if (map.getZoom() >= maxZ - 0.02 || target <= map.getZoom() + 0.05) {
-                    openCompactListAtMax();
-                    return;
-                }
-                easeToClusterZoom(target);
-            })
-            .catch(function () {
-                if (!map) {
-                    return;
-                }
-                const target = clampBanenZoom(Math.min(map.getZoom() + 1.5, maxZ));
-                if (target <= map.getZoom() + 0.05) {
-                    openCompactListAtMax();
-                } else {
-                    easeToClusterZoom(target);
-                }
-            });
+            const childMarkers = (leaves || [])
+                .map(function (leaf) {
+                    return markerByLeafId(leaf.properties && leaf.properties.id);
+                })
+                .filter(Boolean);
+            if (childMarkers.length >= 1) {
+                openClusterList(childMarkers, coords);
+            }
+        } catch (_e) { /* ignore */ }
     }
 
     function onPinClick(ev) {
@@ -6596,7 +6568,7 @@ window.jobMap = (function () {
             return;
         }
         catalogModeActive = bootPayload.catalogMode === true;
-        if (catalogModeActive) {
+        if (catalogModeActive && !bootPayload.pinsUrl) {
             clearPinsFetchState();
         }
         const mapInit = bootPayload.mapInit || null;
@@ -7314,7 +7286,7 @@ window.jobMap = (function () {
             ? options.illustratedVacancySpots
             : {};
 
-        if (catalogModeActive) {
+        if (catalogModeActive && !nextPinsUrl) {
             clearPinsFetchState();
         }
         bootZoomOutsideTravel = !!(options && options.zoomToPinsOutsideTravel);
@@ -7378,7 +7350,7 @@ window.jobMap = (function () {
                         fetchPins(pinsUrl);
                     }
                 });
-            } else if (pinsUrl && !catalogModeActive) {
+            } else if (pinsUrl && (!catalogModeActive || catalogPinsBootstrapPending())) {
                 fetchPins(pinsUrl);
             }
         } else if (!pinsUrl) {
