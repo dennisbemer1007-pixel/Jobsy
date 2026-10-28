@@ -1,6 +1,8 @@
 @page "/leerling/droombaan"
 @layout LeerlingLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Rules

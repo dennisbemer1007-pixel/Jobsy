@@ -250,6 +250,90 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Droombaan_pick_piloot_persists_on_acceptatie_when_configured()
+    {
+        if (!AcceptatieE2E.Enabled)
+        {
+            return;
+        }
+
+        _ = TestContext.Current.CancellationToken;
+        var baseUrl = AcceptatieE2E.BaseUrl.TrimEnd('/');
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl =
+            $"{baseUrl}/leerling?schoolId={AcceptatieE2E.SchoolId}&classId={AcceptatieE2E.ClassId}";
+        await LoginAsync(page, loginUrl, AcceptatieE2E.PlainCode, Guid.Parse(AcceptatieE2E.ClassId));
+        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var search = page.Locator("[data-testid=leerling-droombaan-search]");
+        await search.WaitForAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Piloot" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/droombaan**");
+        Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Er ging iets mis", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+        await Assertions.Expect(search).ToHaveValueAsync("Piloot");
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await Assertions.Expect(search).ToHaveValueAsync("Piloot");
+    }
+
+    [Theory(Timeout = 300_000)]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task Paspoort_actions_bar_does_not_overlap_route(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        await EnablePassportV2Async();
+        var seed = await SeedCompletedWithDreamJobAsync("kok");
+        var baseUrl = EnsureWeb();
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height }
+        });
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
+        var layoutJson = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const pageEl = document.querySelector('[data-testid=leerling-paspoort-page]');
+              const actions = pageEl?.querySelector('.ll-result__actions');
+              const route = pageEl?.querySelector('.lp-g78__route');
+              if (!pageEl || !actions || !route) {
+                return JSON.stringify({ ok: false, reason: 'missing-elements' });
+              }
+              const ar = actions.getBoundingClientRect();
+              const rr = route.getBoundingClientRect();
+              const pageRect = pageEl.getBoundingClientRect();
+              const leftMargin = Math.round(ar.left - pageRect.left);
+              const rightMargin = Math.round(pageRect.right - ar.right);
+              return JSON.stringify({
+                ok: ar.top >= rr.bottom - 2,
+                overlapPx: Math.max(0, rr.bottom - ar.top),
+                leftMargin,
+                rightMargin
+              });
+            }
+            """);
+        using var layout = System.Text.Json.JsonDocument.Parse(layoutJson);
+        var root = layout.RootElement;
+        Assert.True(root.GetProperty("ok").GetBoolean(), layoutJson);
+        if (width == 390)
+        {
+            var left = root.GetProperty("leftMargin").GetInt32();
+            var right = root.GetProperty("rightMargin").GetInt32();
+            Assert.True(Math.Abs(left - right) <= 2, layoutJson);
+        }
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Paspoort_double_visit_and_english_switch_keep_session()
     {
         _ = TestContext.Current.CancellationToken;

@@ -13,7 +13,9 @@ namespace Jobsy.Web.Hosting;
 /// <summary>SSR POST for /leerling/droombaan — no Blazor binding or autosave.</summary>
 public static class PupilDroombaanFormEndpoints
 {
-    public const string Path = "/leerling/droombaan";
+    public const string PagePath = "/leerling/droombaan";
+    /// <summary>POST target — separate from the Blazor page route to avoid circuit POST 500s.</summary>
+    public const string Path = "/leerling/droombaan/save";
 
     public static IEndpointRouteBuilder MapPupilDroombaanFormEndpoints(this IEndpointRouteBuilder app)
     {
@@ -34,13 +36,13 @@ public static class PupilDroombaanFormEndpoints
 
         if (!http.Request.HasFormContentType)
         {
-            return Results.Redirect(Path);
+            return Results.Redirect(PagePath);
         }
 
         var form = await http.Request.ReadFormAsync(cancellationToken);
         if (!await antiforgery.IsRequestValidAsync(http))
         {
-            return Results.Redirect($"{Path}?error=retry");
+            return Results.Redirect($"{PagePath}?error=retry");
         }
 
         var action = form["action"].ToString();
@@ -58,7 +60,7 @@ public static class PupilDroombaanFormEndpoints
             var title = form["jobTitle"].ToString();
             if (!DreamJobCatalog.TryResolveKey(title, out var resolved))
             {
-                return Results.Redirect($"{Path}?error=unknown");
+                return Results.Redirect($"{PagePath}?error=unknown");
             }
 
             key = resolved;
@@ -69,14 +71,14 @@ public static class PupilDroombaanFormEndpoints
             var resp = await api.SavePupilDreamJobAsync(key, cancellationToken);
             if (resp is null)
             {
-                return Results.Redirect($"{Path}?error=save");
+                return Results.Redirect($"{PagePath}?error=save");
             }
         }
         catch
         {
-            return Results.Redirect($"{Path}?error=save");
+            return Results.Redirect($"{PagePath}?error=save");
         }
 
-        return Results.Redirect(Path);
+        return Results.Redirect(PagePath);
     }
 }

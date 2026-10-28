@@ -11,10 +11,40 @@ public static class PupilPassportLocalizedCopy
     {
         if (!PupilVerhaalLocalized.IsEnglish(language))
         {
-            return PupilPassportCopy.Get(key);
+            var nl = PupilPassportCopy.Get(key);
+            if (!string.Equals(nl, key, StringComparison.Ordinal))
+            {
+                return nl;
+            }
+
+            return PupilVerhaalCopy.TryGet(key, out var fromVerhaal) ? fromVerhaal : key;
         }
 
         return En(key, PupilPassportCopy.Get(key));
+    }
+
+    public static string WorldName(int worldNumber, string language)
+    {
+        if (!PupilVerhaalLocalized.IsEnglish(language))
+        {
+            return worldNumber switch
+            {
+                1 => "Koraalrif",
+                2 => "Schatgrot",
+                3 => "Vuurtoren",
+                4 => "Lagune",
+                _ => $"Wereld {worldNumber}"
+            };
+        }
+
+        return worldNumber switch
+        {
+            1 => "Coral reef",
+            2 => "Treasure cave",
+            3 => "Lighthouse",
+            4 => "Lagoon",
+            _ => $"World {worldNumber}"
+        };
     }
 
     private static string En(string key, string nl) => key switch
@@ -89,6 +119,7 @@ public static class PupilPassportLocalizedCopy
         "LeerlingPassport.Strength.Betrouwbaar.Sub" => "You can count on me to keep promises",
         "LeerlingDroom.HaveTitle" => "What you already have",
         "LeerlingDroom.NeedTitle" => "What do you still need?",
+        "LeerlingPassport.Footer.PageLabel" => "page 1/1",
         "LeerlingPassport.Discover.dierenarts.1" => "What does a day as a vet look like?",
         "LeerlingPassport.Discover.dierenarts.2" => "Which subjects fit biology in secondary school?",
         "LeerlingPassport.Discover.dierenarts.3" => "Am I also good at making things with my hands?",

@@ -32,10 +32,10 @@ public sealed class MatchVacancyService
             : gate.PreferredTransport!;
         var maxMinutes = gate.MaxTravelMinutes is int m && m > 0 ? m : 45;
 
-        IReadOnlyList<VacancyListItem> raw;
+        VacancyListPage page;
         try
         {
-            raw = await _api.DiscoverVacanciesAsync(
+            page = await _api.DiscoverVacanciesPageAsync(
                 originLat: gate.HomeLatitude,
                 originLng: gate.HomeLongitude,
                 transport: transport,
@@ -49,21 +49,40 @@ public sealed class MatchVacancyService
             return [];
         }
 
-        return FilterRelevant(raw, gate, take);
+        return FilterRelevant(page.Items, gate, take, page.OutsideTravelFallback);
     }
 
     public static IReadOnlyList<VacancyListItem> FilterRelevant(
         IEnumerable<VacancyListItem> vacancies,
         MatchProfileGateViewModel gate,
-        int take = 24)
+        int take = 24,
+        bool outsideTravelFallback = false)
     {
         ArgumentNullException.ThrowIfNull(vacancies);
         ArgumentNullException.ThrowIfNull(gate);
 
-        return vacancies
+        var list = vacancies.ToList();
+        var filtered = list
             .Where(v => MatchVacancyRelevance.IsRelevant(
                 gate.Educations,
                 gate.MaxTravelMinutes,
+                gate.PreferredTransport,
+                v.RequiredEducation,
+                v.TravelMinutes,
+                v.RequiredTransport))
+            .Take(take)
+            .ToList();
+
+        if (filtered.Count > 0 || !outsideTravelFallback || list.Count == 0)
+        {
+            return filtered;
+        }
+
+        // Discovery already widened to nearest reachable pins; keep education/transport fit only.
+        return list
+            .Where(v => MatchVacancyRelevance.IsRelevant(
+                gate.Educations,
+                candidateMaxTravelMinutes: null,
                 gate.PreferredTransport,
                 v.RequiredEducation,
                 v.TravelMinutes,

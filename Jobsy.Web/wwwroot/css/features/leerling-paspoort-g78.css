@@ -524,20 +524,19 @@
 .ll-reis[data-testid="leerling-paspoort-page"] {
     max-width: min(100%, 960px);
     margin-inline: auto;
-    padding-bottom: calc(var(--space-6) + 72px);
+    padding-bottom: var(--space-6);
     box-sizing: border-box;
 }
 
 .ll-reis[data-testid="leerling-paspoort-page"] > .ll-result__actions {
-    position: sticky;
-    bottom: 0;
-    margin-top: var(--space-4);
+    position: static;
+    margin-top: var(--space-5);
     padding: var(--space-3) 0;
     padding-bottom: max(var(--space-3), env(safe-area-inset-bottom, 0px));
-    background: var(--lp-cream, #faf6ef);
-    border-top: 1px solid var(--lp-line, #e6dac3);
-    box-shadow: 0 -8px 24px rgb(16 40 74 / 8%);
-    z-index: 5;
+    background: transparent;
+    border-top: none;
+    box-shadow: none;
+    z-index: auto;
     justify-content: center;
     flex-wrap: wrap;
     gap: var(--space-2) var(--space-3);
