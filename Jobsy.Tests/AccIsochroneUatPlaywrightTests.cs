@@ -40,6 +40,7 @@ public sealed class AccIsochroneUatPlaywrightTests
         var prefix = $"acc-{accHead}-isochroon";
         var rows = new List<object>();
         var failures = new List<string>();
+        var clickByTag = new Dictionary<string, AccPageClickabilityAudit.ViewportResult>();
 
         var cases = new (string transport, int width, int height, int maxMinutes)[]
         {
@@ -56,7 +57,7 @@ public sealed class AccIsochroneUatPlaywrightTests
             var tag = $"{transport.ToLowerInvariant()}-{width}";
             try
             {
-                var row = await RunCaseAsync(browser, baseUrl, prefix, tag, transport, width, height, maxMinutes);
+                var row = await RunCaseAsync(browser, baseUrl, prefix, tag, transport, width, height, maxMinutes, clickByTag);
                 rows.Add(row);
             }
             catch (Exception ex)
@@ -66,11 +67,48 @@ public sealed class AccIsochroneUatPlaywrightTests
             }
         }
 
+        var clickReports = new List<object>();
+        foreach (var transport in new[] { "auto", "fiets", "ov" })
+        {
+            if (!clickByTag.TryGetValue($"{transport}-1440", out var wide)
+                || !clickByTag.TryGetValue($"{transport}-390", out var narrow))
+            {
+                failures.Add($"click-audit-{transport}: missing viewport run");
+                continue;
+            }
+
+            var merged = AccPageClickabilityAudit.MergeViewports(wide, narrow);
+            var reportBase = $"{prefix}-click-{transport}";
+            AccPageClickabilityAudit.WriteReport(
+                ArtifactDir,
+                reportBase,
+                $"Banenkaart isochroon ({transport})",
+                merged,
+                wide.SkippedDangerous.Concat(narrow.SkippedDangerous).ToList(),
+                accHead);
+            TryCopyToAgentStore(
+                Path.Combine(ArtifactDir, reportBase + ".md"),
+                Path.Combine(AgentStoreDir, reportBase + ".md"));
+            TryCopyToAgentStore(
+                Path.Combine(ArtifactDir, reportBase + ".json"),
+                Path.Combine(AgentStoreDir, reportBase + ".json"));
+            clickReports.Add(new { transport, element_count = merged.Count, report = reportBase });
+            try
+            {
+                AccPageClickabilityAudit.AssertAllOk(merged, $"Banenkaart isochroon {transport}");
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"click-audit-{transport}: {ex.Message}");
+            }
+        }
+
         var metrics = new Dictionary<string, object>
         {
             ["acc_head"] = accHead,
             ["artifact_prefix"] = prefix,
             ["cases"] = rows,
+            ["click_audit"] = clickReports,
             ["failures"] = failures
         };
         var json = JsonSerializer.Serialize(metrics, new JsonSerializerOptions { WriteIndented = true });
@@ -93,7 +131,8 @@ public sealed class AccIsochroneUatPlaywrightTests
         string transport,
         int width,
         int height,
-        int maxMinutes)
+        int maxMinutes,
+        Dictionary<string, AccPageClickabilityAudit.ViewportResult> clickByTag)
     {
         await using var ctx = await browser.NewContextAsync(new()
         {
@@ -197,6 +236,8 @@ public sealed class AccIsochroneUatPlaywrightTests
         }
 
         TryCopyToAgentStore(shotPath, Path.Combine(AgentStoreDir, screenshot));
+
+        clickByTag[tag] = await AccPageClickabilityAudit.AuditPageAsync(page, tag);
 
         var isOv = string.Equals(transport, "OV", StringComparison.OrdinalIgnoreCase);
         if (isOv)
