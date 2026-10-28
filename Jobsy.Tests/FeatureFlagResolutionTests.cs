@@ -94,6 +94,51 @@ public sealed class FeatureFlagResolutionTests
     }
 
     [Fact]
+    public async Task Test_item_examples_uses_acceptatie_config_when_db_row_off_without_override()
+    {
+        await using var db = CreateDb();
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            TestItemExamplesEnabled = false
+        });
+        await db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JobsyFeatures:TestItemExamplesEnabled"] = "true"
+            })
+            .Build();
+
+        var snap = await CreateService(db, config).GetAsync();
+        Assert.True(snap.TestItemExamplesEnabled);
+    }
+
+    [Fact]
+    public async Task Test_item_examples_locked_admin_off_wins_over_acceptatie_config()
+    {
+        await using var db = CreateDb();
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            TestItemExamplesEnabled = false,
+            AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(null, "TestItemExamplesEnabled")
+        });
+        await db.SaveChangesAsync();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JobsyFeatures:TestItemExamplesEnabled"] = "true"
+            })
+            .Build();
+
+        var snap = await CreateService(db, config).GetAsync();
+        Assert.False(snap.TestItemExamplesEnabled);
+    }
+
+    [Fact]
     public async Task Pupil_passport_v2_honors_stored_row_when_acceptatie_config_key_missing()
     {
         await using var db = CreateDb();

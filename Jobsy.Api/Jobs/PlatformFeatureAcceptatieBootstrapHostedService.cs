@@ -1,6 +1,7 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Features;
+using Jobsy.Infrastructure.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,8 +20,7 @@ public sealed class PlatformFeatureAcceptatieBootstrapHostedService(
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var deployment = configuration["Lobsy:DeploymentEnvironment"];
-        if (!string.Equals(deployment, "Acceptatie", StringComparison.OrdinalIgnoreCase))
+        if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(configuration))
         {
             return;
         }

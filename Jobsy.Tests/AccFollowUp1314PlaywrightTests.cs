@@ -290,13 +290,6 @@ public sealed class AccFollowUp1314PlaywrightTests
                 return;
             }
 
-            var circuitReady = await page.EvaluateAsync<bool>(
-                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'");
-            if (circuitReady && await page.Locator(".test-flow__statement, .test-flow").CountAsync() > 0)
-            {
-                return;
-            }
-
             await page.WaitForTimeoutAsync(750);
         }
 

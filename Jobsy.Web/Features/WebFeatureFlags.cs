@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Core;
 using Jobsy.Core.Features;
+using Jobsy.Web.Hosting;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Web.Features;
@@ -105,7 +106,13 @@ public sealed class WebFeatureFlags : IFeatureFlags
     /// <summary>Acceptatie Web config can force public test examples when API/DB lag behind deploy.</summary>
     private FeatureFlagSnapshot ApplyAcceptatieConfigOverrides(FeatureFlagSnapshot flags)
     {
-        if (_configuration.GetValue("JobsyFeatures:TestItemExamplesEnabled", false))
+        if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+        {
+            return flags;
+        }
+
+        var enabled = _configuration.GetValue("JobsyFeatures:TestItemExamplesEnabled", true);
+        if (enabled)
         {
             flags = flags with { TestItemExamplesEnabled = true };
         }
