@@ -93,6 +93,11 @@ internal static class ApplicationsSsrData
         }
 
         var rows = new List<SollicitationRow>();
+        IReadOnlyList<WorkInitiativeListItemDto>? initiatives = null;
+        IReadOnlyList<ExternalVacancyListItemDto>? externalApplied = null;
+        CandidateInitiativeWeekDto? initiativeWeek = null;
+        IReadOnlyList<CandidateEngagementItem>? likes = null;
+
         try
         {
             var apps = await GetMyApplicationsWithAcceptatieDemoRetryAsync(
@@ -108,17 +113,56 @@ internal static class ApplicationsSsrData
                 rows.Add(MapApplication(culture, a));
             }
 
+            var initiativesTask = api.GetCandidateInitiativesAsync(cancellationToken);
+            Task<IReadOnlyList<ExternalVacancyListItemDto>>? externalTask = externalOn
+                ? api.ListExternalVacanciesAsync(cancellationToken)
+                : null;
+            var weekTask = api.GetInitiativeWeekAsync(cancellationToken);
+            var likesTask = api.GetMyLikesAsync(cancellationToken);
+
+            await Task.WhenAll(
+                initiativesTask,
+                weekTask,
+                likesTask,
+                externalTask ?? Task.CompletedTask);
+
             try
             {
-                var initiatives = await api.GetCandidateInitiativesAsync(cancellationToken);
-                foreach (var initiative in initiatives)
-                {
-                    rows.Add(MapApplication(culture, InitiativeApplicationMapper.ToApplicationItem(initiative)));
-                }
+                initiatives = await initiativesTask;
             }
             catch
             {
                 // optional
+            }
+
+            try
+            {
+                initiativeWeek = await weekTask;
+            }
+            catch
+            {
+                // optional banner
+            }
+
+            try
+            {
+                likes = await likesTask;
+            }
+            catch
+            {
+                // badge optional
+            }
+
+            if (externalTask is not null)
+            {
+                try
+                {
+                    externalApplied = await externalTask;
+                }
+                catch
+                {
+                    // ignore
+                }
             }
         }
         catch
@@ -126,19 +170,19 @@ internal static class ApplicationsSsrData
             // show empty list
         }
 
-        if (externalOn)
+        if (initiatives is not null)
         {
-            try
+            foreach (var initiative in initiatives)
             {
-                var external = await api.ListExternalVacanciesAsync(cancellationToken);
-                foreach (var e in external.Where(x => x.Status == CandidateExternalVacancyStatus.Applied))
-                {
-                    rows.Add(MapExternal(culture, e));
-                }
+                rows.Add(MapApplication(culture, InitiativeApplicationMapper.ToApplicationItem(initiative)));
             }
-            catch
+        }
+
+        if (externalApplied is not null)
+        {
+            foreach (var e in externalApplied.Where(x => x.Status == CandidateExternalVacancyStatus.Applied))
             {
-                // ignore
+                rows.Add(MapExternal(culture, e));
             }
         }
 
@@ -146,18 +190,10 @@ internal static class ApplicationsSsrData
 
         int? initUsed = null;
         int? initMax = null;
-        try
+        if (initiativeWeek is not null)
         {
-            var week = await api.GetInitiativeWeekAsync(cancellationToken);
-            if (week is not null)
-            {
-                initUsed = week.Used;
-                initMax = week.Max;
-            }
-        }
-        catch
-        {
-            // optional banner
+            initUsed = initiativeWeek.Used;
+            initMax = initiativeWeek.Max;
         }
 
         if (initMax is null or <= 0
@@ -168,15 +204,7 @@ internal static class ApplicationsSsrData
             initMax = 3;
         }
 
-        var savedCount = 0;
-        try
-        {
-            savedCount = (await api.GetMyLikesAsync(cancellationToken)).Count;
-        }
-        catch
-        {
-            // badge optional
-        }
+        var savedCount = likes?.Count ?? 0;
 
         var counts = CountByFilter(rows);
         var filtered = rows.Where(r => ApplicationsSsrQuery.MatchesFilter(r, filter)).ToList();
@@ -192,7 +220,11 @@ internal static class ApplicationsSsrData
         Guid? threadId = berichtenThreadId;
         AfterMatchThreadDto? berichtenThread = null;
         var berichtenThreads = new Dictionary<Guid, AfterMatchThreadDto>();
-        if (afterMatchOn && !readOnly && isCandidate)
+        var loadBerichtenThreads = afterMatchOn
+                                   && !readOnly
+                                   && isCandidate
+                                   && string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal);
+        if (loadBerichtenThreads)
         {
             threadId ??= messageRows.FirstOrDefault()?.ApplicationId;
             if (messageRows.Count > 0)
