@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 
