@@ -1,0 +1,13 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<footer class="pub-footer" aria-label="@Culture["PublicFooter.Legal"]">
+    <div class="cp-plain-foot">
+        <a href="@PublicRoutes.Privacy">@Culture["PublicFooter.Privacy"]</a>
+        <a href="@PublicRoutes.Terms">@Culture["PublicFooter.Terms"]</a>
+        <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
+        <a href="@PublicRoutes.Contact">@Culture["PublicFooter.Contact"]</a>
+        <span>© @DateTime.UtcNow.Year Lobsy</span>
+    </div>
+</footer>

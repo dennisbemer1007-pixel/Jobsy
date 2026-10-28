@@ -1,26 +1,45 @@
 @inherits LayoutComponentBase
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 @inject LandingVariantResolver VariantResolver
+@inject CandidatePlainPublicResolver PlainPublicResolver
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
 @implements IDisposable
 
 <PageSeoHead />
-<div class="pub-theme @(_compact ? "pub-theme--test" : null)"
+@if (_plainShell)
+{
+    <HeadContent>
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-plain-public.css")" />
+    </HeadContent>
+}
+<div class="pub-theme @(_compact ? "pub-theme--test" : null) @(_plainShell ? "pub-theme--plain-candidate" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)"
      lang="@Culture.Language">
     <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    <PublicHeader Variant="_variant" Compact="_compact" AuthShell="_authShell" HideLangMenu="_hideLangMenu" />
+    <PublicHeader Variant="_variant"
+                  Compact="_compact"
+                  AuthShell="_authShell && !_plainShell"
+                  CandidatePlain="_plainShell"
+                  HideLangMenu="_hideLangMenu" />
     <main id="main" class="pub-main @(_compact ? "pub-main--test" : null)">
         @Body
     </main>
     @if (!_compact)
     {
-        <PublicFooter Variant="_variant" />
+        if (_plainShell)
+        {
+            <PublicFooterPlain />
+        }
+        else
+        {
+            <PublicFooter Variant="_variant" />
+        }
     }
     <CookieConsentBanner Mode="_cookieMode" />
 </div>
@@ -31,6 +50,7 @@
     private bool _compact;
     private bool _authShell;
     private bool _hideLangMenu;
+    private bool _plainShell;
 
     protected override void OnInitialized()
     {
@@ -43,6 +63,7 @@
         var http = HttpContextAccessor.HttpContext;
         Culture.InitializeFromRequest(http);
         _variant = await VariantResolver.GetAsync();
+        _plainShell = await PlainPublicResolver.IsPlainShellAsync();
         _compact = IsTestPath(Navigation.Uri, http);
         _authShell = IsAuthShellPath(Navigation.Uri, http);
         _hideLangMenu = IsUwvAdviseurDeelPath(Navigation.Uri, http);

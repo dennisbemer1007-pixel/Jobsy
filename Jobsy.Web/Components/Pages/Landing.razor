@@ -13,51 +13,72 @@
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject LandingVariantResolver VariantResolver
+@inject CandidatePlainPublicResolver PlainPublicResolver
 @inject LandingStatsClient Stats
 @inject LandingPriceClient Prices
 @inject PageSeoContext Seo
 @inject IHttpContextAccessor HttpContextAccessor
 
-<HeadContent>
-    @if (_variant == LandingVariant.On)
-    {
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
-    }
-</HeadContent>
+@if (_plainShell)
+{
+    <div class="cp-plain-wrap">
+        <LandingPlain />
+    </div>
+}
+else
+{
+    <HeadContent>
+        @if (_variant == LandingVariant.On)
+        {
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
+        }
+    </HeadContent>
 
-<div class="pub-landing @(_variant == LandingVariant.On ? "pub-landing--combo pub-landing--calm" : "")" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
-    <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" ReiskaartHtml="@(_variant == LandingVariant.On ? KreeftReiskaartMarkup.ForScreen(Culture, 1) : null)" />
-    @if (_variant == LandingVariant.On)
-    {
-        <LandingIllustratedSteps Variant="_variant" />
-        <LandingBanenkaartSection Variant="_variant" VacancyCount="_vacancyDisplay" ComboLayout="true" />
-        <LandingJourneyFive Variant="_variant" ComboLayout="true" />
-        <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" ComboLayout="true" />
-        <LandingPrivacy Variant="_variant" />
-        <LandingEmployersFaq Variant="_variant" PriceEuro="_priceEuro" />
-    }
-    else
-    {
-        <LandingWhatIs Variant="_variant" />
-        <LandingKreeft Variant="_variant" />
-        <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" />
-        <LandingForWhom Variant="_variant" />
-        <LandingPrivacy Variant="_variant" />
-        <LandingFaq Variant="_variant" PriceEuro="_priceEuro" />
-        <LandingClosing Variant="_variant" />
-    }
-</div>
+    <div class="pub-landing @(_variant == LandingVariant.On ? "pub-landing--combo pub-landing--calm" : "")" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
+        <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" ReiskaartHtml="@(_variant == LandingVariant.On ? KreeftReiskaartMarkup.ForScreen(Culture, 1) : null)" />
+        @if (_variant == LandingVariant.On)
+        {
+            <LandingIllustratedSteps Variant="_variant" />
+            <LandingBanenkaartSection Variant="_variant" VacancyCount="_vacancyDisplay" ComboLayout="true" />
+            <LandingJourneyFive Variant="_variant" ComboLayout="true" />
+            <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" ComboLayout="true" />
+            <LandingPrivacy Variant="_variant" />
+            <LandingEmployersFaq Variant="_variant" PriceEuro="_priceEuro" />
+        }
+        else
+        {
+            <LandingWhatIs Variant="_variant" />
+            <LandingKreeft Variant="_variant" />
+            <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" />
+            <LandingForWhom Variant="_variant" />
+            <LandingPrivacy Variant="_variant" />
+            <LandingFaq Variant="_variant" PriceEuro="_priceEuro" />
+            <LandingClosing Variant="_variant" />
+        }
+    </div>
+}
 
 @code {
     private LandingVariant _variant = LandingVariant.On;
+    private bool _plainShell;
     private int? _vacancyDisplay;
     private decimal? _priceEuro;
 
     protected override async Task OnInitializedAsync()
     {
         Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
+        _plainShell = await PlainPublicResolver.IsPlainShellAsync();
         _variant = await VariantResolver.GetAsync();
+        if (_plainShell)
+        {
+            Seo.Set(new PageSeoOverride(
+                Title: Culture["PlainPublic.Landing.SeoTitle"],
+                Description: Culture["PlainPublic.Landing.SeoDescription"],
+                JsonLd: null));
+            return;
+        }
+
         if (_variant == LandingVariant.On)
         {
             var raw = await Stats.GetActiveVacanciesAsync();
