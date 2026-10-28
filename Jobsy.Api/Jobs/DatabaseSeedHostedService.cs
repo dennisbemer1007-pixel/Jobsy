@@ -79,6 +79,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         }
 
         await TryRepairAcceptatieTestCandidateAsync(stoppingToken);
+        await TryEnsureOnboardingE2eAccProfileAsync(stoppingToken);
         await TryEnsureAcceptatieSollicitatiesDemoAsync(stoppingToken);
         await TryEnsureAcceptatieScholenClass2ACodesAsync(stoppingToken);
 
@@ -136,6 +137,29 @@ public sealed class DatabaseSeedHostedService : BackgroundService
     /// Acceptatie only: idempotent sollicitaties mockup rows for the CLI test candidate
     /// (incl. <c>lobsy-test@mail.grokbot.com</c> when flagged as test account).
     /// </summary>
+    private async Task TryEnsureOnboardingE2eAccProfileAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            await OnboardingE2eProfileEnsurer.EnsureAsync(db, _logger, stoppingToken);
+            if (db.ChangeTracker.HasChanges())
+            {
+                await db.SaveChangesAsync(stoppingToken);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Onboarding E2E profile ensure failed; API continues.");
+        }
+    }
+
     private async Task TryEnsureAcceptatieScholenClass2ACodesAsync(CancellationToken stoppingToken)
     {
         try

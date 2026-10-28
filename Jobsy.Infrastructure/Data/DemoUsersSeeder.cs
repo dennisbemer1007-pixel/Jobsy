@@ -5,6 +5,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -270,6 +271,8 @@ internal static class DemoUsersSeeder
             db,
             Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
             "kandidaat@jobsy.local");
+
+        await OnboardingE2eProfileEnsurer.EnsureAsync(db, logger);
 
         if (added > 0 || db.ChangeTracker.HasChanges())
         {
