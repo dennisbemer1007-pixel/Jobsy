@@ -57,12 +57,15 @@ Agent mag **zelf** op **https://acceptatie.lobsy.nl** testen met **@jobsy.local*
 
 ## 5. Acc-evidence **per PR** (scoped, 28 okt ~07:43)
 
-**Per PR** alleen de **gefixte onderdelen** op acc testen na deploy:
+**Jij** test **elke fix zelf** op acc **na deploy** (seed-accounts, §4):
 
 - Werkt het?
-- Zijn **alle knoppen/links in dat onderdeel** klikbaar?
-- **Laadtijd** van die schermen/stappen meten en kort rapporteren.
+- Zijn **alle knoppen/links op die plek** klikbaar?
+- **Laadtijd** meten en in je melding vermelden.
+- **Screenshots 1440 + 390** bij de PR-/statusmelding voor die scope.
 
-Playwright/screenshots **1440** + **390** waar nuttig voor **die scope** — geen volledige onboarding-regressierun per PR.
+Geen volledige onboarding/Match/banenkaart-regressierun **per PR**.
 
-**PR pas melden aan Dennis** als scoped acc-check + evidence klaar is. **Eén totale test** (volledige stromen) pas als de prioriteitslijst (§3) af is.
+**PR pas melden aan Dennis** als scoped acc-check + evidence klaar is. **Eén totale test** (volledige stromen, §2) pas als de prioriteitslijst (§3) af is.
+
+**Actueel:** #1307 (merge `1942dec`) — scoped acc-test zodra live; daarna §3-volgorde.
