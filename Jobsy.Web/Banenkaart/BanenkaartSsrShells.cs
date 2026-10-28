@@ -15,16 +15,27 @@ internal static class BanenkaartSsrShells
         string antiforgeryToken,
         BanenkaartSsrData.PageModel model,
         string? scriptNonce = null,
-        string? candidateDisplayName = null)
+        string? candidateDisplayName = null,
+        bool plainShell = false)
     {
         var sb = new StringBuilder();
         var q = model.Query;
         var viewModeClass = model.Query.DesktopListMode ? " show-list jobsy-discovery--list" : " show-map";
         var viewDataAttr = model.Query.DesktopListMode ? " data-kb-view=\"list\"" : " data-kb-view=\"map\"";
         sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
-        AppendNearbyHeroStrip(sb);
+        if (!plainShell)
+        {
+            AppendNearbyHeroStrip(sb);
+        }
+
         sb.Append("</div>");
-        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen").Append(viewModeClass).Append(viewDataAttr);
+        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-app");
+        }
+
+        sb.Append(viewModeClass).Append(viewDataAttr);
         if (model.IsAuthenticated)
         {
             sb.Append(" data-kb-strip-external=\"1\"");

@@ -95,6 +95,10 @@
     "sha256": "a16cea6f64ddf3dd4da4eb2c17fb74aa2e9616d0a1860b657dd27f7398fb76ee",
     "v": "20261025-68"
   },
+  "css/features/candidate-plain-app.css": {
+    "sha256": "4c02fa6c8cf776e98204d28afd63cc66e2cf1fbbbb7edbf423aba0daebcf7a0d",
+    "v": "20261028-catalog"
+  },
   "css/features/candidate-plain-public.css": {
     "sha256": "f742f4c3e2f430cf834e8afe22d6bc5338e3a85e9de8262e40710d2262c30a20",
     "v": "20261028-01"
