@@ -30,12 +30,11 @@ internal static class BanenkaartSsrShells
 
         sb.Append("</div>");
         sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen");
+        sb.Append(viewModeClass).Append(viewDataAttr);
         if (plainShell)
         {
-            sb.Append(" cp-plain-app");
+            sb.Append(" data-plain-banenkaart=\"1\"");
         }
-
-        sb.Append(viewModeClass).Append(viewDataAttr);
         if (model.IsAuthenticated)
         {
             sb.Append(" data-kb-strip-external=\"1\"");
@@ -77,7 +76,7 @@ internal static class BanenkaartSsrShells
             AppendMockupTopBar(sb, culture, model, candidateDisplayName);
         }
         sb.Append("<div class=\"main kb-lagen-main\">");
-        AppendVacancyPane(sb, culture, model);
+        AppendVacancyPane(sb, culture, model, plainShell);
         AppendMapPane(sb, culture, model);
         sb.Append("</div>");
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
@@ -324,9 +323,15 @@ internal static class BanenkaartSsrShells
             "kb-banenkaart-header-strip kreeft-header-strip");
     }
 
-    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
+    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model, bool plainShell = false)
     {
-        sb.Append("<aside class=\"vacancy-pane panel\">");
+        sb.Append("<aside class=\"vacancy-pane panel");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-banenkaart");
+        }
+
+        sb.Append("\">");
         AppendMockupPanelHead(sb, culture, model);
         AppendMockupResultsRow(sb, culture, model);
         sb.Append("<div class=\"list vacancy-list\" data-testid=\"vacancy-list\">");
