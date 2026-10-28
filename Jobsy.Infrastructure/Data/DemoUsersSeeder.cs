@@ -24,6 +24,11 @@ public static class DemoSchoolIds
     public static readonly Guid WerkcoachUserId = Guid.Parse("bbbbbbbb-4444-4444-4444-444444444444");
 }
 
+public static class DemoCandidateIds
+{
+    public static readonly Guid OnboardingE2eUserId = Guid.Parse("aaaaaaaa-4444-4444-4444-444444444444");
+}
+
 public static class DemoGemeenteIds
 {
     public static readonly Guid CompanyId = Guid.Parse("88888888-8888-8888-8888-888888888888");
@@ -101,7 +106,7 @@ internal static class DemoUsersSeeder
         // without altering the public candidate demo profile.
         added += await EnsureUserAsync(db, new User
         {
-            Id = Guid.Parse("aaaaaaaa-4444-4444-4444-444444444444"),
+            Id = DemoCandidateIds.OnboardingE2eUserId,
             Email = "onboarding.e2e@jobsy.local",
             FullName = "Onboarding E2E",
             Role = UserRole.Candidate,
@@ -109,7 +114,7 @@ internal static class DemoUsersSeeder
             DateOfBirth = new DateOnly(2000, 3, 1),
             OpenForWork = true,
             HomeLocation = new GeoPoint(51.9930, 4.2150),
-            PreferencesJson = """{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20}""",
+            PreferencesJson = """{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20,"preferredTransport":"Fiets"}""",
             IsActive = true
         });
 
@@ -324,6 +329,14 @@ internal static class DemoUsersSeeder
             if (!string.IsNullOrWhiteSpace(template.PreferencesJson)
                 && string.IsNullOrWhiteSpace(existing.PreferencesJson))
             {
+                existing.PreferencesJson = template.PreferencesJson;
+            }
+
+            if (existing.Id == DemoCandidateIds.OnboardingE2eUserId)
+            {
+                existing.OpenForWork = true;
+                existing.FullName = template.FullName;
+                existing.HomeLocation = template.HomeLocation ?? existing.HomeLocation;
                 existing.PreferencesJson = template.PreferencesJson;
             }
 
