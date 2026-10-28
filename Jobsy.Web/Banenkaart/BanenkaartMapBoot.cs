@@ -31,7 +31,8 @@ internal static class BanenkaartMapBoot
         uint highlightSeed,
         bool includeRadiusCap = false,
         IReadOnlyDictionary<string, int>? fitByVacancyId = null,
-        bool showFitFilters = false)
+        bool showFitFilters = false,
+        string? pinsUrl = null)
     {
         var payload = new Dictionary<string, object?>
         {
@@ -48,6 +49,7 @@ internal static class BanenkaartMapBoot
             ["pins"] = pins,
             ["catalogUrl"] = catalogUrl,
             ["catalogMode"] = true,
+            ["pinsUrl"] = string.IsNullOrWhiteSpace(pinsUrl) ? null : pinsUrl,
             ["mapInit"] = new Dictionary<string, object?>
             {
                 ["illustratedPopup"] = false,
@@ -55,6 +57,7 @@ internal static class BanenkaartMapBoot
                 ["preferFilledLocation"] = preferFilledLocation,
                 ["catalogUrl"] = catalogUrl,
                 ["catalogMode"] = true,
+                ["pinsUrl"] = string.IsNullOrWhiteSpace(pinsUrl) ? null : pinsUrl,
                 ["highlightSeed"] = highlightSeed,
                 ["travel"] = BuildTravelBoot(query, includeRadiusCap),
                 ["filters"] = BuildFilterState(query, showFitFilters),
