@@ -17,7 +17,6 @@ public class CandidateIllustratedLandingRenderTests
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
         var html = await client.GetStringAsync("/");
 
-        Assert.DoesNotContain("cp-plain-landing", html, StringComparison.Ordinal);
         Assert.Contains("pub-landing__hero--illustrated", html, StringComparison.Ordinal);
         Assert.Contains("pub-landing__hero-art-band", html, StringComparison.Ordinal);
         Assert.Contains("pub-landing__steps-grid", html, StringComparison.Ordinal);

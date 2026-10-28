@@ -19,9 +19,6 @@
 @inject IFeatureFlags FeatureFlags
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
-@inject CandidatePlainPublicResolver PlainPublicResolver
-@inject IHostEnvironment HostEnvironment
-@inject IConfiguration Configuration
 
 <PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
 <HeadContent>
@@ -90,15 +87,13 @@ else if (_bodyHtml is not null)
             }
 
             var tokens = Antiforgery.GetAndStoreTokens(http);
-            var plainShell = CandidatePlainPublicResolver.IsPlainShellForRequest(http, HostEnvironment, Configuration);
             _bodyHtml = PassportSsrShells.BuildBody(
                 Culture,
                 data,
                 tokens.RequestToken ?? "",
                 sectionValues.FirstOrDefault(),
                 returnUrl,
-                proofItem,
-                plainShell);
+                proofItem);
         }
         catch
         {

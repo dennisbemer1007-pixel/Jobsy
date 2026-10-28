@@ -95,22 +95,6 @@
     "sha256": "a16cea6f64ddf3dd4da4eb2c17fb74aa2e9616d0a1860b657dd27f7398fb76ee",
     "v": "20261025-68"
   },
-  "css/features/candidate-plain-app.css": {
-    "sha256": "4e3078f3d0882c1f50720de4a5df8a4e577f58522269433b8be87ae41bc6e07b",
-    "v": "20261028-02"
-  },
-  "css/features/candidate-plain-banenkaart.css": {
-    "sha256": "94e31a2072005c9ed78dd08a3886937bdc2dedd3bf514df1a2986b09554f37e1",
-    "v": "20261028-banenkaart-preview-fix"
-  },
-  "css/features/candidate-plain-paspoort.css": {
-    "sha256": "aeace0d45630639b463f70ebd159efb6117d59fcd976c503725d1f411ea14948",
-    "v": "20261028-02"
-  },
-  "css/features/candidate-plain-public.css": {
-    "sha256": "741c4907b037e9c489bb782dd233d1163349c9c51221135a45c6f23dfe0c4cf0",
-    "v": "20261028-01"
-  },
   "css/features/carriere.css": {
     "sha256": "0fcf50008f62c405ae6b81e5bf591e2ef66ab64535b21fe4b1e7d622dce0addb",
     "v": "20261018-03"
@@ -417,7 +401,7 @@
   },
   "js/banenkaart-ov-travel.js": {
     "sha256": "38b6f01aec8c8b2ebc464e2c062ae0ae3f2a087b8fc2c120120afb35c8274c64",
-    "v": "20261028-02"
+    "v": "20261028-catalog"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "0afe5fb34b5a95b385b14567331d3c1bf30d6e83aa21d5a21e0e1dc45b34110f",
@@ -602,10 +586,6 @@
   "js/passport-ssr-tabs.js": {
     "sha256": "ad43e6d4f99e0678cd763192f47bdb250400dbce8f562a89a76411646092b971",
     "v": "20261026-31"
-  },
-  "js/plain878-speak.js": {
-    "sha256": "c2d3490a0bde1c40912bb5b3261baa3cf35b348ac69c85f7e8b3f935b1a54027",
-    "v": "20261028-02"
   },
   "js/public-pages.js": {
     "sha256": "e5f1baab87e03d1ea0c7ccb09aa7851d5691ac44d0e38394a85f97d1796cd8a1",

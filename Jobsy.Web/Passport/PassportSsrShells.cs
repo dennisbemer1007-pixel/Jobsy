@@ -20,14 +20,8 @@ internal static class PassportSsrShells
         string antiforgeryToken,
         string? openDataSection = null,
         string? returnUrl = null,
-        string? openProofItem = null,
-        bool plainShell = false)
+        string? openProofItem = null)
     {
-        if (plainShell)
-        {
-            return PassportPlainSsrShells.BuildBody(culture, data);
-        }
-
         var sb = new StringBuilder();
         sb.Append("<div class=\"passport-page-wrap\">");
         KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtPaspoortDesk, KreeftHeaderStripAssets.LichtPaspoortMob, "licht-paspoort");

@@ -26,7 +26,6 @@
 @inject IEmployersSwitch Employers
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
-@inject CandidatePlainPublicResolver PlainPublicResolver
 @inject IDataProtectionProvider DataProtection
 @implements IDisposable
 
@@ -39,38 +38,24 @@
     var passwordInvalid = _state == LoginState.Invalid;
 }
 
-<PageTitle>@(_plainShell ? Culture["PlainPublic.Login.Title"] : Culture["Login.Title"]) · Lobsy</PageTitle>
+<PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-@if (!_plainShell)
-{
-    <HeadContent>
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
-    </HeadContent>
-}
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
+</HeadContent>
 
-<div class="@(_plainShell ? "cp-plain-wrap cp-plain-login-wrap" : null)">
-<section class="@(_plainShell ? "cp-plain-login-section" : "au-stage au-stage--illustrated au-stage--kreeft-strip au-stage--reiskaart")"
+<section class="au-stage au-stage--illustrated au-stage--kreeft-strip au-stage--reiskaart"
          data-au-login
          @attributes="_stageAttrs">
-    @if (!_plainShell)
-    {
-        <KreeftHeaderStrip StripKey="inloggen"
-                           DeskUrl="@KreeftHeaderStripAssets.InloggenDesk"
-                           MobUrl="@KreeftHeaderStripAssets.InloggenMob"
-                           CssClass="au-kreeft-header-strip kreeft-header-strip" />
-    }
+    <KreeftHeaderStrip StripKey="inloggen"
+                       DeskUrl="@KreeftHeaderStripAssets.InloggenDesk"
+                       MobUrl="@KreeftHeaderStripAssets.InloggenMob"
+                       CssClass="au-kreeft-header-strip kreeft-header-strip" />
 
-    <div class="@(_plainShell ? null : "au-col")">
-        <div class="@(_plainShell ? null : "au-reiskaart-grid")">
-        <div class="@(_plainShell ? "cp-plain-card" : $"au-card au-card--illustrated {(isPause ? "au-pause" : null)}")">
-            @if (_plainShell && !isPause)
-            {
-                <nav class="cp-plain-tabs" aria-label="@Culture["PlainPublic.Login.TabLogin"]">
-                    <span class="cp-plain-tabs__active">@Culture["PlainPublic.Login.TabLogin"]</span>
-                    <a href="@CreateAccountHref">@Culture["PlainPublic.Login.TabSignup"]</a>
-                </nav>
-            }
+    <div class="au-col">
+        <div class="au-reiskaart-grid">
+        <div class="au-card au-card--illustrated @(isPause ? "au-pause" : null)">
 
             @if (isPause)
             {
@@ -130,17 +115,11 @@
             }
             else
             {
-                @if (!_plainShell)
-                {
-                    <p class="au-eyebrow">@Culture["Login.Eyebrow"]</p>
-                }
-                <h1 id="login-title" class="@(_plainShell ? null : "au-title")">@(_plainShell ? Culture["PlainPublic.Login.Title"] : Culture["Login.Title"])</h1>
-                <p class="@(_plainShell ? "cp-plain-lead" : "au-lead")">@(_plainShell ? Culture["PlainPublic.Login.Lead"] : Culture["Login.Lead"])</p>
+                <p class="au-eyebrow">@Culture["Login.Eyebrow"]</p>
+                <h1 id="login-title" class="au-title">@Culture["Login.Title"]</h1>
+                <p class="au-lead">@Culture["Login.Lead"]</p>
 
-                @if (!_plainShell)
-                {
-                    <GratisDnaRegisterBox />
-                }
+                <GratisDnaRegisterBox />
 
                 <LoginStatusBlock State="_state" UntilLocalHhMm="@_untilLocal" />
 
@@ -239,10 +218,7 @@
                         <input type="checkbox" name="rememberDevice" value="true" />
                         <span>
                             @Culture["Login.RememberDevice"]
-                            @if (!_plainShell)
-                            {
-                                <span class="au-remember__hint">@Culture["Login.RememberDeviceHint"]</span>
-                            }
+                            <span class="au-remember__hint">@Culture["Login.RememberDeviceHint"]</span>
                         </span>
                     </label>
 
@@ -257,33 +233,21 @@
                     }
                 </form>
 
-                @if (!_plainShell)
-                {
-                    <p class="pub-signup__consent">
-                        @((MarkupString)string.Format(
-                            System.Globalization.CultureInfo.InvariantCulture,
-                            Culture["Signup.Consent"],
-                            $"<a class=\"auth-link\" href=\"{PublicRoutes.UsageTerms}\">{Culture["Signup.ConsentTerms"]}</a>",
-                            $"<a class=\"auth-link\" href=\"{PublicRoutes.Privacy}\">{Culture["Signup.ConsentPrivacy"]}</a>"))
+                <p class="pub-signup__consent">
+                    @((MarkupString)string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        Culture["Signup.Consent"],
+                        $"<a class=\"auth-link\" href=\"{PublicRoutes.UsageTerms}\">{Culture["Signup.ConsentTerms"]}</a>",
+                        $"<a class=\"auth-link\" href=\"{PublicRoutes.Privacy}\">{Culture["Signup.ConsentPrivacy"]}</a>"))
+                </p>
+
+                <div class="au-foot">
+                    <p>
+                        @Culture["Login.CreateAccountLead"]
+                        <a href="@CreateAccountHref">@Culture["Login.CreateAccountCta"]</a>
                     </p>
-                }
+                </div>
 
-                @if (!_plainShell)
-                {
-                    <div class="au-foot">
-                        <p>
-                            @Culture["Login.CreateAccountLead"]
-                            <a href="@CreateAccountHref">@Culture["Login.CreateAccountCta"]</a>
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <p class="cp-plain-note cp-plain-login-help">@Culture["PlainPublic.Login.Help"]</p>
-                }
-
-                @if (!_plainShell)
-                {
                 <div class="au-card__strip">
                     @if (_employersOn)
                     {
@@ -297,26 +261,18 @@
                         <a class="auth-link" href="/ontdek">@Culture["GratisDna.QuietLink.Cta"]</a>
                     </p>
                 </div>
-                }
             }
         </div>
-        @if (!_plainShell)
-        {
-            @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 2))
-        }
+        @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 2))
         </div>
 
-        @if (!_plainShell)
-        {
-            <div class="au-below">
-                <p>
-                    <a href="@_dismissUrl">@Culture[_employersOn ? "Login.BackToMap" : "Login.BackToDiscovery"]</a>
-                </p>
-            </div>
-        }
+        <div class="au-below">
+            <p>
+                <a href="@_dismissUrl">@Culture[_employersOn ? "Login.BackToMap" : "Login.BackToDiscovery"]</a>
+            </p>
+        </div>
     </div>
 </section>
-</div>
 
 <script src="@($"/{WwwrootAssetCatalog.Url("js/features/auth.js")}")" nonce="@nonce" defer></script>
 
@@ -337,7 +293,6 @@
     private string _antiforgeryToken = string.Empty;
     private Dictionary<string, object>? _stageAttrs;
     private Dictionary<string, object>? _passwordAttrs;
-    private bool _plainShell;
 
     private string CreateAccountHref
         => $"{PublicRoutes.CreateAccount}?returnUrl={Uri.EscapeDataString(_returnUrl)}";
@@ -348,7 +303,6 @@
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
-        _plainShell = await PlainPublicResolver.IsPlainShellAsync();
 
         var http = HttpContext ?? HttpContextAccessor.HttpContext;
         if (http is not null)

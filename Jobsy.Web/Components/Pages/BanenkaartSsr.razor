@@ -25,9 +25,6 @@
 @inject AuthenticationStateProvider AuthState
 @using Microsoft.Extensions.Logging
 @inject ILogger<BanenkaartSsr> Logger
-@inject CandidatePlainPublicResolver PlainPublicResolver
-@inject IHostEnvironment HostEnvironment
-@inject IConfiguration Configuration
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
 
@@ -109,7 +106,6 @@ else if (_bodyHtml is not null)
         var displayName = isAuthenticated
             ? auth.User.Identity?.Name
             : null;
-        var plainShell = CandidatePlainPublicResolver.IsPlainShellForRequest(http, HostEnvironment, Configuration);
-        _bodyHtml = BanenkaartSsrShells.BuildPage(Culture, tokens.RequestToken ?? "", model, scriptNonce, displayName, plainShell);
+        _bodyHtml = BanenkaartSsrShells.BuildPage(Culture, tokens.RequestToken ?? "", model, scriptNonce, displayName);
     }
 }
