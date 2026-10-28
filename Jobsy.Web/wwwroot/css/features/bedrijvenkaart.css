@@ -189,6 +189,17 @@
   align-items: stretch;
 }
 
+/* #1288 (bk6): keep bedrijvenkaart tabs/filters above fixed Lobsy coach (z-index 60). */
+.app-shell:has(.bk-page) .bk-page__hero-stack .bk-map-toggle,
+.app-shell:has(.bk-page) .bk-filters,
+.app-shell:has(.bk-page) .bk-mobile-view-toggle,
+.app-shell:has(.bk-page) .bk-result-meta,
+.app-shell:has(.bk-page) .bk-list-panel,
+.app-shell:has(.bk-page) .bk-card {
+  position: relative;
+  z-index: 62;
+}
+
 .bk-filters {
   display: flex;
   flex-direction: column;

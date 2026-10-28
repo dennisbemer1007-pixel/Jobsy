@@ -10,6 +10,14 @@
   --lobsy-coach-pill-font: 0.92rem;
 }
 
+.lobsy-assistant-tab {
+  pointer-events: none;
+}
+
+.lobsy-assistant-tab__btn {
+  pointer-events: auto;
+}
+
 .lobsy-coach-dock[data-lobsy-coach],
 .lobsy-coach-dock[data-ssr-coach] {
   position: fixed;
