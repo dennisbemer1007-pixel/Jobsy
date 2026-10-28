@@ -381,39 +381,6 @@
   border-color: var(--cp-accent);
 }
 
-/* Password toggle sits inside the field (mockup #878), not below the input. */
-.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap:has(.au-input-wrap__toggle) {
-  position: relative;
-}
-
-.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap:has(.au-input-wrap__toggle) .au-input {
-  padding-right: 4.5rem;
-}
-
-.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap__toggle {
-  position: absolute;
-  top: 50%;
-  right: 8px;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 6px;
-  border: 0;
-  background: transparent;
-  color: var(--cp-muted);
-  font: inherit;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap__toggle[hidden] {
-  display: none;
-}
-
 .pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-provider,
 .pub-theme--plain-candidate .cp-plain-login-wrap .au-provider {
   width: 100%;

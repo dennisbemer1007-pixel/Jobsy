@@ -101,10 +101,6 @@
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-public.css")" data-plain-public-css="true" />
     }
-    @if (IncludeCandidatePlainAppCss)
-    {
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-app.css")" data-plain-app-css="true" />
-    }
     @* errors.css after app.min on candidate shells — see UsesFullRouteStylesheetBundle block below. *@
     @if (!UsesFullRouteStylesheetBundle)
     {
@@ -582,10 +578,6 @@
             HttpContextAccessor.HttpContext,
             HostEnvironment,
             Configuration);
-
-    private bool IncludeCandidatePlainAppCss =>
-        IncludeCandidatePlainPublicCss
-        && CandidatePlainPublicResolver.IsPlainCandidateAppPath(RequestPath);
 
     private bool IncludeLeerlingLoginScript =>
         PageAssetCatalog.IncludeLeerlingLoginScript(RequestPath);
