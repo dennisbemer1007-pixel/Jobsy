@@ -22,13 +22,12 @@ internal static class BanenkaartSsrShells
         var q = model.Query;
         var viewModeClass = model.Query.DesktopListMode ? " show-list jobsy-discovery--list" : " show-map";
         var viewDataAttr = model.Query.DesktopListMode ? " data-kb-view=\"list\"" : " data-kb-view=\"map\"";
-        sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
         if (!plainShell)
         {
+            sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
             AppendNearbyHeroStrip(sb);
+            sb.Append("</div>");
         }
-
-        sb.Append("</div>");
         sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen");
         sb.Append(viewModeClass).Append(viewDataAttr);
         if (plainShell)
@@ -71,7 +70,7 @@ internal static class BanenkaartSsrShells
                 .Append("</p>");
         }
 
-        if (!model.IsAuthenticated)
+        if (!model.IsAuthenticated && !plainShell)
         {
             AppendMockupTopBar(sb, culture, model, candidateDisplayName);
         }
@@ -199,13 +198,15 @@ internal static class BanenkaartSsrShells
         if (!model.IsCandidate || model.OpenForWork)
         {
             var matchHref = model.IsAuthenticated ? "/candidate/match" : "/login?returnUrl=%2Fcandidate%2Fmatch";
-            sb.Append("<a class=\"btn match mobonly\" data-testid=\"kb-match-button\" href=\"")
+            sb.Append("<a class=\"btn match mobonly kb-match-button\" data-testid=\"kb-match-button\" href=\"")
                 .Append(matchHref)
                 .Append("\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("\">")
                 .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
-                .Append("</a>");
+                .Append("<span class=\"kb-match-button__label\">")
+                .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
+                .Append("</span></a>");
         }
 
         sb.Append("<div class=\"seg kb-view-toggle\" role=\"radiogroup\" aria-label=\"")

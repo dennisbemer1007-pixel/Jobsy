@@ -31,7 +31,16 @@ public sealed class FunctionalPlain878ClickabilityPlaywrightTests
             return;
         }
 
-        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+        var plainLocal = (Environment.GetEnvironmentVariable("JOBSY_PLAIN_CLICK_CAPTURE") ?? "").Trim() == "1";
+        if (plainLocal)
+        {
+            using var ping = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            _ = await ping.GetAsync(baseUrl.TrimEnd('/') + "/");
+        }
+        else
+        {
+            await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+        }
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
@@ -53,6 +62,24 @@ public sealed class FunctionalPlain878ClickabilityPlaywrightTests
                 await Plain878PageClickAuditHelpers.PreparePageAsync(page, baseUrl, path);
                 allAudits.Add(await Plain878PageClickAuditHelpers.AuditPageAsync(page, path, width));
             }
+        }
+
+        const string guestBanenkaart =
+            "/banenkaart?maxMinutes=30&transport=Auto&originLat=52.0705&originLng=4.3007&originLabel=Naaldwijk";
+        foreach (var (width, height, mobile) in new[] { (1440, 900, false), (390, 844, true) })
+        {
+            await using var ctx = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IsMobile = mobile,
+                HasTouch = mobile,
+                Locale = "nl-NL",
+            });
+            await PlaywrightCookieConsent.AcceptAsync(ctx);
+            var page = await ctx.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
+            await Plain878PageClickAuditHelpers.PreparePageAsync(page, baseUrl, guestBanenkaart);
+            allAudits.Add(await Plain878PageClickAuditHelpers.AuditPageAsync(page, guestBanenkaart + " (gast)", width));
         }
 
         var artifactDir = Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT")
@@ -108,6 +135,11 @@ public sealed class FunctionalPlain878ClickabilityPlaywrightTests
             return true;
         }
 
+        if ((Environment.GetEnvironmentVariable("JOBSY_PLAIN_CLICK_CAPTURE") ?? "").Trim() == "1")
+        {
+            return true;
+        }
+
         if (FunctionalE2eGate.IsRequired)
         {
             return true;
@@ -116,8 +148,16 @@ public sealed class FunctionalPlain878ClickabilityPlaywrightTests
         return false;
     }
 
+    private static IllustratedPagesWebFactory? _plainClickFactory;
+
     private static async Task<(bool Run, string BaseUrl)> TryBeginAsync()
     {
+        if ((Environment.GetEnvironmentVariable("JOBSY_PLAIN_CLICK_CAPTURE") ?? "").Trim() == "1")
+        {
+            _plainClickFactory ??= new IllustratedPagesWebFactory(plainSkin: true);
+            return (true, _plainClickFactory.ServerAddress);
+        }
+
         var baseUrl = FunctionalE2eGate.TryBaseUrl() ?? "";
         if (FunctionalE2eGate.IsRequired)
         {

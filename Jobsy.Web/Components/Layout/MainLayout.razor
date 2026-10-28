@@ -505,9 +505,10 @@
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
         var bedrijvenSsr = IsBedrijvenkaartSsrPath(path);
-        var immersive = onRoute && !_isCandidate && !bedrijvenSsr;
+        var plainBanenkaart = onRoute && _plainCandidateShell;
+        var immersive = onRoute && !_isCandidate && !bedrijvenSsr && !plainBanenkaart;
         var candidateShell = onRoute;
-        var mockupTop = onRoute && !_isCandidate && !bedrijvenSsr;
+        var mockupTop = onRoute && !_isCandidate && !bedrijvenSsr && !plainBanenkaart;
         var changed = false;
         if (_banenkaartImmersive != immersive)
         {
@@ -534,6 +535,7 @@
     {
         var http = HttpContextAccessor.HttpContext;
         _plainCandidateShell = CandidatePlainPublicResolver.IsPlainShellForRequest(http, HostEnvironment, Configuration);
+        SyncBanenkaartImmersive();
     }
 
     private async Task RefreshPlainCandidateShellAsync()
@@ -550,6 +552,7 @@
             }
 
             _plainCandidateShell = next;
+            SyncBanenkaartImmersive();
             await InvokeAsync(StateHasChanged);
         }
         catch

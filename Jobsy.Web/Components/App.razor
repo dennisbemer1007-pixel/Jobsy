@@ -114,6 +114,10 @@
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-paspoort.css")" data-plain-paspoort-css="true" />
     }
+    @if (IncludeCandidatePlainBanenkaartCss)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-banenkaart.css")" data-plain-banenkaart-css="true" />
+    }
     @* errors.css after app.min on candidate shells — see UsesFullRouteStylesheetBundle block below. *@
     @if (!UsesFullRouteStylesheetBundle)
     {
@@ -148,14 +152,14 @@
                 <link rel="stylesheet" href="@href" />
             }
         }
-        @if (DiscoveryMapAuthenticatedShell)
+        @if (DiscoveryMapAuthenticatedShell && !IncludeCandidatePlainBanenkaartCss)
         {
             @foreach (var href in PageAssetCatalog.BanenkaartAuthenticatedShellCss())
             {
                 <link rel="stylesheet" href="@href" />
             }
         }
-        @if (IncludeCandidateNoBlazorChromeCss)
+        @if (IncludeCandidateNoBlazorChromeCss && !IncludeCandidatePlainBanenkaartCss)
         {
             @foreach (var href in PageAssetCatalog.CandidateNoBlazorChromeCss())
             {
@@ -604,6 +608,11 @@
         IncludeCandidatePlainAppCss
         && (string.Equals(RequestPath, "/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
             || RequestPath?.StartsWith("/candidate/paspoort/", StringComparison.OrdinalIgnoreCase) == true);
+
+    private bool IncludeCandidatePlainBanenkaartCss =>
+        IncludeCandidatePlainAppCss
+        && (string.Equals(RequestPath, "/banenkaart", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(RequestPath, "/banen", StringComparison.OrdinalIgnoreCase));
 
     private bool IncludeLeerlingLoginScript =>
         PageAssetCatalog.IncludeLeerlingLoginScript(RequestPath);

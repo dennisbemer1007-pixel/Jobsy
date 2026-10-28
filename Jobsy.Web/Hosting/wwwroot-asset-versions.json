@@ -99,6 +99,10 @@
     "sha256": "4e3078f3d0882c1f50720de4a5df8a4e577f58522269433b8be87ae41bc6e07b",
     "v": "20261028-02"
   },
+  "css/features/candidate-plain-banenkaart.css": {
+    "sha256": "1f1c2e03859462577064cb1678192ef62fc5c5e07fe0d7dc3536ab4d47beb17d",
+    "v": "20261028-banenkaart-shell"
+  },
   "css/features/candidate-plain-paspoort.css": {
     "sha256": "aeace0d45630639b463f70ebd159efb6117d59fcd976c503725d1f411ea14948",
     "v": "20261028-02"
