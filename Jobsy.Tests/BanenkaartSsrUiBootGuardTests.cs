@@ -55,6 +55,36 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_ssr_empty_travel_only_when_discover_list_is_empty()
+    {
+        var root = FindRepoRoot();
+        var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrData.cs"));
+        Assert.Contains("vacancies.Count == 0", data, StringComparison.Ordinal);
+        Assert.Contains("ShowEmptyTravelMessage", data, StringComparison.Ordinal);
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
+        Assert.Contains("else if (!model.ShowEmptyTravelMessage)", shells, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_catalog_list_honors_outside_travel_fallback_like_map()
+    {
+        var root = FindRepoRoot();
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        Assert.Contains("resolveDisplayRows", catalog, StringComparison.Ordinal);
+        Assert.Contains("readBootZoomOutsideTravel", catalog, StringComparison.Ordinal);
+        Assert.Contains("noVacanciesInViewport", catalog, StringComparison.Ordinal);
+        Assert.DoesNotContain("in beeld — pas filters", catalog, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_ssr_skips_redundant_map_view_prefetch()
+    {
+        var root = FindRepoRoot();
+        var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrData.cs"));
+        Assert.DoesNotContain("GetVacancyMapViewAsync", data, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_legend_hides_while_vacancy_popup_or_sheet_open()
     {
         var root = FindRepoRoot();

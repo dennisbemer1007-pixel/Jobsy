@@ -328,13 +328,13 @@ internal static class BanenkaartSsrShells
                 .Append("</button>");
         }
 
-        if (model.Vacancies.Count == 0 && !model.ShowEmptyTravelMessage)
+        if (!model.ShowEmptyTravelMessage && model.Vacancies.Count == 0)
         {
             sb.Append("<p class=\"state-message\">")
                 .Append(WebUtility.HtmlEncode(culture.Format("Kb.Filter.ResultCount", 0)))
                 .Append("</p>");
         }
-        else
+        else if (!model.ShowEmptyTravelMessage)
         {
             BanenkaartSsrListHtml.AppendLagenMockupListRows(sb, culture, model.Query, model.Vacancies);
         }

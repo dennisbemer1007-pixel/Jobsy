@@ -375,6 +375,33 @@
         return sortRows(out, filters);
     }
 
+    function readBootLabel(key) {
+        var node = document.getElementById("jobsy-map-boot");
+        if (!node || !node.textContent) {
+            return "";
+        }
+        try {
+            var parsed = JSON.parse(node.textContent);
+            var labels = parsed && parsed.mapInit && parsed.mapInit.labels;
+            if (labels && labels[key] != null) {
+                return String(labels[key]);
+            }
+        } catch (eLabel) { }
+        return "";
+    }
+
+    function resolveDisplayRows(all, filters) {
+        var travelRows = filterRows(all, filters, false);
+        var allowOutside = readBootZoomOutsideTravel();
+        if (travelRows.length === 0 && allowOutside) {
+            var outsideRows = filterRows(all, filters, true);
+            if (outsideRows.length > 0) {
+                return { rows: outsideRows, outsideTravel: true };
+            }
+        }
+        return { rows: travelRows, outsideTravel: false };
+    }
+
     function toPin(row, filters) {
         filters = filters || currentListFilters;
         var pin = {
@@ -808,13 +835,18 @@
         }
     }
 
-    function syncDiscoveryChrome(filters, travelCount) {
+    function syncDiscoveryChrome(filters, travelCount, outsideTravel) {
         var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
         if (root) {
             root.classList.remove("kb-ssr-travel-empty");
+            if (outsideTravel) {
+                root.classList.add("kb-ssr-travel-outside");
+            } else {
+                root.classList.remove("kb-ssr-travel-outside");
+            }
         }
         updateActiveFiltersUi(filters);
-        updateResultChrome(filters, travelCount);
+        updateResultChrome(filters, travelCount, outsideTravel);
     }
 
     function persistFilterCookieQuietly(filters) {
@@ -1336,7 +1368,10 @@
             return;
         }
         if (!travelRows || !travelRows.length) {
-            host.innerHTML = "<div class=\"strip strip--empty\" role=\"status\"><p>Geen vacatures in beeld — pas filters aan of verruim je reistijd.</p></div>";
+            var emptyCopy = readBootLabel("noVacanciesInViewport")
+                || "Geen vacatures in beeld. Pas filters aan of verruim je reistijd.";
+            host.innerHTML = "<div class=\"strip strip--empty\" role=\"status\"><p>"
+                + escapeHtml(emptyCopy) + "</p></div>";
             return;
         }
         var ic = mapIcons();
@@ -1457,8 +1492,10 @@
         return sub;
     }
 
-    function updateResultChrome(filters, travelCount) {
-        var sub = travelSubtitle(filters);
+    function updateResultChrome(filters, travelCount, outsideTravel) {
+        var sub = outsideTravel
+            ? (readBootLabel("resultOutsideTravelHint") || "")
+            : travelSubtitle(filters);
         document.querySelectorAll(
             "[data-testid=kb-desktop-result-count], [data-testid=kb-mobile-result-count], .results-meta__count"
         ).forEach(function (el) {
@@ -1649,7 +1686,9 @@
             listShown = LIST_PAGE;
         }
         currentListFilters = filters;
-        var travelRows = filterRows(listRows, filters, false);
+        var display = resolveDisplayRows(listRows, filters);
+        var travelRows = display.rows;
+        var outsideTravel = display.outsideTravel;
         var slice = travelRows.slice(0, listShown);
         var listRoot = document.querySelector("[data-banenkaart-ssr=\"1\"] [data-testid=vacancy-list]");
         if (!listRoot) {
@@ -1661,12 +1700,14 @@
             el.remove();
         });
         if (travelRows.length === 0) {
+            var emptyTravelCopy = readBootLabel("noVacanciesInTravel")
+                || "Geen vacatures binnen je reistijd";
             listRoot.insertAdjacentHTML(
                 "afterbegin",
-                "<p class=\"state-message\" data-testid=\"kb-empty-travel\">Geen vacatures binnen je reistijd</p>"
+                "<p class=\"state-message\" data-testid=\"kb-empty-travel\">" + escapeHtml(emptyTravelCopy) + "</p>"
                 + "<button type=\"button\" class=\"filter-sheet__cancel kb-widen-filters-btn\" data-testid=\"kb-widen-filters\">Filters verruimen</button>"
             );
-            syncDiscoveryChrome(filters, 0);
+            syncDiscoveryChrome(filters, 0, false);
             renderMapTopChrome(filters, []);
             return 0;
         }
@@ -1721,7 +1762,7 @@
         html += "</div>";
         listRoot.insertAdjacentHTML("afterbegin", html);
         observeLazyListPhotos(listRoot);
-        syncDiscoveryChrome(filters, travelRows.length);
+        syncDiscoveryChrome(filters, travelRows.length, outsideTravel);
         renderMapTopChrome(filters, travelRows);
         try {
             document.dispatchEvent(new Event("jobsy-bk-list-dom-updated"));
@@ -1772,10 +1813,10 @@
             history.replaceState(null, "", buildBanenkaartUrl(filters));
         } catch (eUrl) { }
         persistFilterCookieQuietly(filters);
-        var travelCount = filterRows(rows, filters, false).length;
-        syncDiscoveryChrome(filters, travelCount);
+        var display = resolveDisplayRows(rows, filters);
+        syncDiscoveryChrome(filters, display.rows.length, display.outsideTravel);
         document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", {
-            detail: { count: travelCount, filters: filters }
+            detail: { count: display.rows.length, filters: filters, outsideTravel: display.outsideTravel }
         }));
     }
 
@@ -1809,8 +1850,13 @@
                 renderListRows(rows, filters);
             }
             persistFilterCookieQuietly(filters);
+            var bootDisplay = rows ? resolveDisplayRows(rows, filters) : { rows: [], outsideTravel: false };
             document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", {
-                detail: { count: rows ? filterRows(rows, filters, false).length : 0, filters: filters }
+                detail: {
+                    count: bootDisplay.rows.length,
+                    filters: filters,
+                    outsideTravel: bootDisplay.outsideTravel
+                }
             }));
             document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", { detail: { count: rows ? rows.length : 0 } }));
             if (!window.jobMap || typeof window.jobMap.setVacanciesFromCatalog !== "function") {
