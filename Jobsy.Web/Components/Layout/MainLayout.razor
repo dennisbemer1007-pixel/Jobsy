@@ -68,7 +68,7 @@
         }
     </main>
 
-    @if (!_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
+    @if (!_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive && !_plainBanenkaartShell)
     {
         @if (_noBlazorCandidateNav)
         {
@@ -138,6 +138,7 @@
     private bool _noBlazorCandidateNav;
     private bool _ssrCoachAvailable;
     private bool _plainCandidateShell;
+    private bool _plainBanenkaartShell;
 
     private bool ShowInstallBanner =>
         RendererInfo.IsInteractive
@@ -293,7 +294,7 @@
 
     private Task OnBottomNavItemsChanged(bool hasItems)
     {
-        if (_isQuestionnairePage || _isOnboardingWizardFocus)
+        if (_isQuestionnairePage || _isOnboardingWizardFocus || _plainBanenkaartShell)
         {
             if (_hasBottomNav)
             {
@@ -400,12 +401,19 @@
         _isCandidate = true;
         _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
         _noBlazorCandidateNav = _noBlazorRuntime;
-        if (_noBlazorCandidateNav && !_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
+        SyncBanenkaartImmersive();
+        if (_noBlazorCandidateNav
+            && !_isQuestionnairePage
+            && !_isOnboardingWizardFocus
+            && !_banenkaartImmersive
+            && !_plainBanenkaartShell)
         {
             _hasBottomNav = true;
         }
-
-        SyncBanenkaartImmersive();
+        else if (_plainBanenkaartShell)
+        {
+            _hasBottomNav = false;
+        }
     }
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
@@ -529,6 +537,16 @@
         {
             _banenkaartMockupTopBar = mockupTop;
             changed = true;
+        }
+
+        if (_plainBanenkaartShell != plainBanenkaart)
+        {
+            _plainBanenkaartShell = plainBanenkaart;
+            changed = true;
+            if (plainBanenkaart && _hasBottomNav)
+            {
+                _hasBottomNav = false;
+            }
         }
 
         return changed;

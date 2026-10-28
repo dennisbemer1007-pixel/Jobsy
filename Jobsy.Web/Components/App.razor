@@ -117,6 +117,13 @@
     @if (IncludeCandidatePlainBanenkaartCss)
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-banenkaart.css")" data-plain-banenkaart-css="true" />
+        @if (!LoadBlazorRuntime && IncludeKandidaatDiscoveryMapSsr)
+        {
+            @foreach (var href in PageAssetCatalog.CandidatePlainBanenkaartHeadCss())
+            {
+                <link rel="stylesheet" href="@href" data-plain-banenkaart-head-css="true" />
+            }
+        }
     }
     @* errors.css after app.min on candidate shells — see UsesFullRouteStylesheetBundle block below. *@
     @if (!UsesFullRouteStylesheetBundle)

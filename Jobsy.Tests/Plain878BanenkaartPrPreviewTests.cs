@@ -133,6 +133,24 @@ public sealed class Plain878BanenkaartPrPreviewTests : IAsyncLifetime, IAsyncDis
             // stub map may be slow; checklist will flag canvas
         }
 
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                  if (!map || typeof map.getZoom !== 'function') return false;
+                  return map.getZoom() >= 9;
+                }
+                """,
+                null,
+                new() { Timeout = 45_000 });
+        }
+        catch
+        {
+            // stub map may not expose zoom; checklist still checks canvas height
+        }
+
         await page.WaitForTimeoutAsync(mobile ? 1500 : 1200);
 
         var shotName = $"preview-{label}-{tag}.png";
@@ -291,6 +309,9 @@ public sealed class Plain878BanenkaartPrPreviewTests : IAsyncLifetime, IAsyncDis
               const bigSvg = Array.from(document.querySelectorAll('header .ic, .kb-panel-head .ic'))
                 .some(s => s.getBoundingClientRect().height > 48);
               push('Geen gigantische iconen', !bigSvg, bigSvg ? 'ic > 48px' : 'ok');
+
+              const bottomNav = document.querySelector('.bottom-nav, .wg-bottom-nav');
+              push('Geen Carrière-bottom-nav op plain banenkaart', !bottomNav, bottomNav ? 'nav zichtbaar' : 'afwezig');
 
               return JSON.stringify(items);
             }

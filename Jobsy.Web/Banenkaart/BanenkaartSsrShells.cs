@@ -116,7 +116,7 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
             .Append("\" data-testid=\"kb-panel-head\"><div class=\"srow mobfirst kb-panel-head__filters-row\">");
         sb.Append("<div class=\"field grow\">")
-            .Append(NavIcons.Search.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+            .Append(InlineIcon(NavIcons.Search))
             .Append("<label class=\"visually-hidden\" for=\"discovery-keyword\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Keyword"]))
             .Append("</label><input id=\"discovery-keyword\" type=\"search\" inputmode=\"search\" autocomplete=\"off\" data-testid=\"kb-keyword-search\" placeholder=\"")
@@ -125,7 +125,7 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(q.SearchQuery ?? ""))
             .Append("\" name=\"q\" form=\"kb-filter-form\" /></div>");
         sb.Append("<button type=\"button\" class=\"btn sec kb-filters-button\" data-testid=\"kb-filters-button\" aria-expanded=\"false\" aria-controls=\"discovery-filters\">")
-            .Append(NavIcons.Filters.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+            .Append(InlineIcon(NavIcons.Filters))
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]));
         if (model.ActiveFilterCount > 0)
         {
@@ -141,7 +141,7 @@ internal static class BanenkaartSsrShells
             sb.Append("<a class=\"btn match deskonly kb-match-button\" data-testid=\"kb-match-button\" href=\"")
                 .Append(matchHref)
                 .Append("\">")
-                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+                .Append(InlineIcon(NavIcons.Match))
                 .Append("<span class=\"kb-match-button__label\">")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("</span></a>");
@@ -203,7 +203,7 @@ internal static class BanenkaartSsrShells
                 .Append("\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("\">")
-                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+                .Append(InlineIcon(NavIcons.Match))
                 .Append("<span class=\"kb-match-button__label\">")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("</span></a>");
@@ -272,12 +272,14 @@ internal static class BanenkaartSsrShells
         sb.Append("<button type=\"button\" class=\"sq kb-address__geo\" data-testid=\"kb-address-locate\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Discovery.UseMyLocation"]))
             .Append("\">")
-            .Append("<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/></svg></button>");
+            .Append(InlineIcon("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/></svg>"))
+            .Append("</button>");
         if (hasOrigin)
         {
             sb.Append("<button type=\"button\" class=\"sq deskonly kb-address__clear\" data-testid=\"kb-address-clear\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Common.Clear"]))
-                .Append("\"><svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\" /></svg></button>");
+                .Append(InlineIcon("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\" /></svg>"))
+                .Append("</button>");
         }
 
         sb.Append("</div><ul class=\"address-suggestions\" role=\"listbox\" data-kb-address-suggest=\"1\" hidden></ul></div>");
@@ -573,5 +575,24 @@ internal static class BanenkaartSsrShells
             .Append("\">")
             .Append(WebUtility.HtmlEncode(culture["Kb.View.OpenMap"]))
             .Append("</button>");
+    }
+
+    private static string InlineIcon(string svgMarkup, int size = 20)
+    {
+        var svg = svgMarkup;
+        if (!svg.Contains("class=\"ic\"", StringComparison.Ordinal))
+        {
+            svg = svg.Replace("<svg ", "<svg class=\"ic\" ", StringComparison.Ordinal);
+        }
+
+        if (!svg.Contains("width=", StringComparison.Ordinal))
+        {
+            svg = svg.Replace(
+                "<svg ",
+                $"<svg width=\"{size}\" height=\"{size}\" ",
+                StringComparison.Ordinal);
+        }
+
+        return svg;
     }
 }

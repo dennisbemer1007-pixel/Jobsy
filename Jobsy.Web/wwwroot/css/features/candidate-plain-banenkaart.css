@@ -71,6 +71,17 @@
   font-size: 16px;
 }
 
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .chip.kb-active-tag {
+  background: var(--cp-accent);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+}
+
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .kb-active-filters__clear {
+  color: var(--cp-accent);
+}
+
 .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .chip .link,
 .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .results-meta__count {
   color: var(--cp-accent);
@@ -230,6 +241,107 @@
   .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .btn.match,
   .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .kb-match-button {
     font-size: 18px;
+  }
+}
+
+/* Fallback icon sizing when discovery bundles load late (SSR plain shell). */
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] svg.ic {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] svg.ic.s {
+  width: 16px;
+  height: 16px;
+}
+
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .field .ic,
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .btn .ic,
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .sq .ic {
+  flex-shrink: 0;
+}
+
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .sq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--cp-border);
+  background: #fff;
+  color: var(--cp-text);
+}
+
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .rh.results-meta .srow {
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .results-meta__sort {
+  flex: 1 1 140px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart .kb-view-toggle {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate {
+  min-height: 56px;
+  padding-inline: 12px;
+  align-items: center;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__brand .wg-topbar__logo {
+  width: auto !important;
+  height: 36px;
+  max-width: min(154px, 38vw);
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__logo img,
+.app-shell--plain-candidate .wg-topbar--candidate .lobsy-logo__img {
+  width: auto;
+  height: 100%;
+  max-height: 36px;
+  object-fit: contain;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .language-selector {
+  display: flex !important;
+}
+
+.app-shell--plain-candidate .wg-topbar--candidate .notification-bell__icon,
+.app-shell--plain-candidate .wg-topbar--candidate .notification-bell__icon svg,
+.app-shell--plain-candidate .wg-topbar--candidate .auth-icon-btn svg,
+.app-shell--plain-candidate .wg-topbar--candidate .account-menu__toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  max-width: 1.15rem;
+  max-height: 1.15rem;
+}
+
+@media (max-width: 700px) {
+  .app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__brand .wg-topbar__logo {
+    height: 28px;
+    max-width: 120px;
+  }
+
+  .app-shell--plain-candidate .wg-topbar--candidate .wg-topbar__logo img,
+  .app-shell--plain-candidate .wg-topbar--candidate .lobsy-logo__img {
+    max-height: 28px;
   }
 }
 
