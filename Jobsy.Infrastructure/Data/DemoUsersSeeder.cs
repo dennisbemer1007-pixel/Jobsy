@@ -40,6 +40,14 @@ internal static class DemoUsersSeeder
     /// <summary>Documented public-demo password for every @jobsy.local seed account.</summary>
     public const string DemoPassword = "Jobsy123!";
 
+    private const string OnboardingE2eEmail = "onboarding.e2e@jobsy.local";
+
+    /// <summary>Haaglanden demo home for banenkaart/match UAT (aligned with vacancy stub).</summary>
+    private const string OnboardingE2eHomeAddress = "Kasweg 12, 2671 AB Naaldwijk";
+
+    private static readonly string OnboardingE2ePreferencesJson =
+        $$"""{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20,"preferredTransport":"Fiets","homeAddress":"{{OnboardingE2eHomeAddress}}"}""";
+
     private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid CafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
@@ -107,14 +115,14 @@ internal static class DemoUsersSeeder
         added += await EnsureUserAsync(db, new User
         {
             Id = DemoCandidateIds.OnboardingE2eUserId,
-            Email = "onboarding.e2e@jobsy.local",
+            Email = OnboardingE2eEmail,
             FullName = "Onboarding E2E",
             Role = UserRole.Candidate,
             CompanyId = null,
             DateOfBirth = new DateOnly(2000, 3, 1),
             OpenForWork = true,
             HomeLocation = new GeoPoint(51.9930, 4.2150),
-            PreferencesJson = """{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20,"preferredTransport":"Fiets"}""",
+            PreferencesJson = OnboardingE2ePreferencesJson,
             IsActive = true
         });
 
@@ -332,7 +340,7 @@ internal static class DemoUsersSeeder
                 existing.PreferencesJson = template.PreferencesJson;
             }
 
-            if (existing.Id == DemoCandidateIds.OnboardingE2eUserId)
+            if (ShouldForceRefreshOnboardingE2e(email))
             {
                 existing.OpenForWork = true;
                 existing.FullName = template.FullName;
@@ -362,6 +370,9 @@ internal static class DemoUsersSeeder
         await EnsurePasswordAsync(db, template, password);
         return 1;
     }
+
+    private static bool ShouldForceRefreshOnboardingE2e(string normalizedEmail)
+        => string.Equals(normalizedEmail, OnboardingE2eEmail, StringComparison.Ordinal);
 
     private static async Task EnsureLoginEmailAliasAsync(JobsyDbContext db, Guid userId, string aliasEmail)
     {
