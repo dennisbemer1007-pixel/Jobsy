@@ -26,15 +26,18 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     private readonly bool _emptyAppsAndLikes;
     private readonly bool _minimalPassportProfile;
     private readonly bool _companyMapInitiativeEnabled;
+    private readonly bool _plainSkin;
 
     public IllustratedPagesWebFactory(
         bool emptyAppsAndLikes = false,
         bool minimalPassportProfile = false,
-        bool companyMapInitiativeEnabled = true)
+        bool companyMapInitiativeEnabled = true,
+        bool plainSkin = false)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
         _minimalPassportProfile = minimalPassportProfile;
         _companyMapInitiativeEnabled = companyMapInitiativeEnabled;
+        _plainSkin = plainSkin;
         _ = CreateClient();
     }
 
@@ -52,7 +55,8 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
                 ["Jobsy:CandidateCompactHeroEnabled"] = "true",
                 ["Features:UwvFeatures"] = uwvOn ? "true" : "false",
-                ["JobsyFeatures:BedrijvenkaartSsrPreview"] = "true"
+                ["JobsyFeatures:BedrijvenkaartSsrPreview"] = "true",
+                ["CandidatePublic:PlainSkin"] = _plainSkin ? "true" : "false"
             });
         });
         builder.ConfigureTestServices(services =>
@@ -306,7 +310,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                     {
                         "employer" or "werkgever" => ("BranchManager", "Ondernemer Demo"),
                         "admin" => ("Admin", "Admin Demo"),
-                        _ => ("Candidate", "Sanne de Vries")
+                        _ => ("Candidate", "Sam de Wit")
                     };
 
                     var claims = new List<Claim>

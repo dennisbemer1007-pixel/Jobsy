@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "884f11bdb4f688f7fcc07b82f300a031ff968f8fc7438abfed72aa8c704013b5",
+    "sha256": "3b2da0a22ff8db2ad6e43126ae265a27f48efaccce90956030c3ab9f5f24f4e0",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -95,8 +95,16 @@
     "sha256": "a16cea6f64ddf3dd4da4eb2c17fb74aa2e9616d0a1860b657dd27f7398fb76ee",
     "v": "20261025-68"
   },
+  "css/features/candidate-plain-app.css": {
+    "sha256": "4e3078f3d0882c1f50720de4a5df8a4e577f58522269433b8be87ae41bc6e07b",
+    "v": "20261028-02"
+  },
+  "css/features/candidate-plain-paspoort.css": {
+    "sha256": "aeace0d45630639b463f70ebd159efb6117d59fcd976c503725d1f411ea14948",
+    "v": "20261028-02"
+  },
   "css/features/candidate-plain-public.css": {
-    "sha256": "6decc1146f797a6ffd47200aa5a1e96c9c0981ff5850805f254cdfdf3ce4c18f",
+    "sha256": "741c4907b037e9c489bb782dd233d1163349c9c51221135a45c6f23dfe0c4cf0",
     "v": "20261028-01"
   },
   "css/features/carriere.css": {
@@ -112,7 +120,7 @@
     "v": "20261017-05"
   },
   "css/features/enterprise-ui.css": {
-    "sha256": "ae1ddc6d138fa27447b9765220154e282134822ef11f305f3b8ef7232e2e1565",
+    "sha256": "3f719ee11030f40950d6f72eb619070db2296bb174ac115ba6fa0cf780040a97",
     "v": "20261027-73"
   },
   "css/features/errors.css": {
@@ -376,7 +384,7 @@
     "v": "20261025-87"
   },
   "js/app-core.js": {
-    "sha256": "ee7b92db731311657a7ce23ba17cd114ebadefeefbfe844fc3059843a8b81806",
+    "sha256": "44f8a6cad03a70ae04b0b3e8493debf38145205bdcb310b9ff3712a62a135723",
     "v": "20261026-87"
   },
   "js/app-extras.js": {
@@ -388,20 +396,24 @@
     "v": "20261016-04"
   },
   "js/banenkaart-catalog.js": {
-    "sha256": "bf3d5c886b36068bf9e0b2f3ec7fd159e3a27f88395e5178084016ec6f09e751",
+    "sha256": "cc50e7e70a39a05cca2cbb5d0fc49eb77c1139bea1d4d6dab85318ce48c9bbb8",
     "v": "20261028-59"
   },
   "js/banenkaart-map-icons.js": {
-    "sha256": "5b00111b16de7f348e45b021286aad973760de1dc69a5ddf1e68ce82c0b06255",
+    "sha256": "5bc226a6df376e481c19df0a0053c9c075b8ac967adc20187d42e65ed1906082",
     "v": "20261025-87"
   },
   "js/banenkaart-map-layers.js": {
-    "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b",
+    "sha256": "4f3b8b688daadf55670fc723d783277c0770b903d4035f5237471a2d65cd455f",
     "v": "20261025-87"
   },
   "js/banenkaart-maps-boot.js": {
-    "sha256": "e9d4dc520392a1a8c03fe4ee248672c4d1cfa7ebeb09fa2841510feb4e1ea497",
-    "v": "20261027-04"
+    "sha256": "e335f371a2dda759754225582b8877719c0ca5ba9e412e1026b67851d488b80a",
+    "v": "20261028-60"
+  },
+  "js/banenkaart-ov-travel.js": {
+    "sha256": "38b6f01aec8c8b2ebc464e2c062ae0ae3f2a087b8fc2c120120afb35c8274c64",
+    "v": "20261028-02"
   },
   "js/banenkaart-prefetch.js": {
     "sha256": "0afe5fb34b5a95b385b14567331d3c1bf30d6e83aa21d5a21e0e1dc45b34110f",
@@ -464,8 +476,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "37e1046b4a77c33b44173c0420131de2950d6b1363cbbf89f08c60d9ddcdde10",
-    "v": "20261027-04"
+    "sha256": "400620e7bf70ef1d634497f68f7c830514ff721593458a9df92fc412ff1c45ab",
+    "v": "20261028-60"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
@@ -586,6 +598,10 @@
   "js/passport-ssr-tabs.js": {
     "sha256": "ad43e6d4f99e0678cd763192f47bdb250400dbce8f562a89a76411646092b971",
     "v": "20261026-31"
+  },
+  "js/plain878-speak.js": {
+    "sha256": "c2d3490a0bde1c40912bb5b3261baa3cf35b348ac69c85f7e8b3f935b1a54027",
+    "v": "20261028-02"
   },
   "js/public-pages.js": {
     "sha256": "e5f1baab87e03d1ea0c7ccb09aa7851d5691ac44d0e38394a85f97d1796cd8a1",

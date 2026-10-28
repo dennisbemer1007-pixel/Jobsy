@@ -37,6 +37,9 @@
 
     function legendRingsHtml(expanded, filters) {
         filters = filters || {};
+        if (String(filters.transport || "").toUpperCase() === "OV") {
+            return "";
+        }
         var hasOrigin = filters.originLat != null && filters.originLng != null;
         if (!hasOrigin) {
             return "";
@@ -170,7 +173,20 @@
         var hint = document.createElement("div");
         hint.className = "hint" + (isMobile() ? " below" : "");
         var ic = icons();
-        hint.innerHTML = (ic ? ic.bikeSvg : "") + (isMobile() ? "Tik" : "Klik") + " om in te zoomen";
+        var transport = "Fiets";
+        if (window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.resolveFilters === "function") {
+            var flt = window.jobsyBanenkaartCatalog.resolveFilters();
+            if (flt && flt.transport) {
+                transport = flt.transport;
+            }
+        } else if (lastLegendFilters && lastLegendFilters.transport) {
+            transport = lastLegendFilters.transport;
+        }
+        var hintIcon = "";
+        if (ic && typeof ic.clusterHintSvg === "function") {
+            hintIcon = ic.clusterHintSvg(transport) || "";
+        }
+        hint.innerHTML = hintIcon + (isMobile() ? "Tik" : "Klik") + " om in te zoomen";
         var wrap = document.querySelector(".map-stage") || document.querySelector("#job-map");
         if (!wrap) {
             return;

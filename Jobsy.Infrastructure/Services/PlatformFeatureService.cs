@@ -379,6 +379,14 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private bool ResolveActivityLogEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "ActivityLogEnabled", row?.ActivityLogEnabled ?? _options.ActivityLogEnabled, false, "JobsyFeatures:ActivityLogEnabled");
 
+    private bool ResolveTestItemExamplesEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(
+            row,
+            "TestItemExamplesEnabled",
+            row?.TestItemExamplesEnabled ?? _options.TestItemExamplesEnabled,
+            _options.TestItemExamplesEnabled,
+            "JobsyFeatures:TestItemExamplesEnabled");
+
     private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
     {
         var baseline = row?.ReferenceVerificationEnabled ?? false;
@@ -568,7 +576,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.CandidateExternalVacanciesEnabled ?? false,
             row?.ProactiveMatchingEnabled ?? false,
             row?.TestsV2Enabled ?? _options.TestsV2Enabled,
-            row?.TestItemExamplesEnabled ?? _options.TestItemExamplesEnabled,
+            ResolveTestItemExamplesEnabled(row),
             row?.TestProgressInsightEnabled ?? _options.TestProgressInsightEnabled,
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,

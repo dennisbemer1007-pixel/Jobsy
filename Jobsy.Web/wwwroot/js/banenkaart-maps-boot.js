@@ -9,7 +9,7 @@ window.jobsyMaps = (function () {
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
         "/js/jobsyMapLibre.min.js?v=20261027-54"
     ];
-    var discoveryScripts = ["/js/jobMap.min.js?v=20261027-04"];
+    var discoveryScripts = ["/js/jobMap.min.js?v=20261028-60"];
 
     function pathOnly(url) {
         var q = url.indexOf("?");
@@ -195,7 +195,7 @@ window.jobsyMaps = (function () {
                 setTimeout(function () {
                     try { po.disconnect(); } catch (ePo) { }
                     scheduleSoon();
-                }, 1200);
+                }, 450);
                 return;
             } catch (eObs) { }
         }
@@ -284,6 +284,31 @@ window.jobsyMaps = (function () {
         if (parsed.catalogMode && window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.prefetch === "function") {
             window.jobsyBanenkaartCatalog.prefetch().catch(function () { });
         }
+        try {
+            var travel = (parsed.mapInit && parsed.mapInit.travel) || parsed.travel || {};
+            var origin = parsed.origin || (parsed.mapInit && parsed.mapInit.origin);
+            var mode = String(travel.transport || "Fiets");
+            var maxMin = parseInt(travel.maxMinutes, 10) || 30;
+            if (origin && Number.isFinite(Number(origin.lat)) && Number.isFinite(Number(origin.lng))
+                && mode.toUpperCase() !== "OV") {
+                var isoUrl = "/api/travel/isochrones?lat=" + encodeURIComponent(String(origin.lat))
+                    + "&lng=" + encodeURIComponent(String(origin.lng))
+                    + "&mode=" + encodeURIComponent(mode)
+                    + "&minutes=" + encodeURIComponent(String(maxMin));
+                try {
+                    window.__jobsyIsoPrefetchUrl = isoUrl;
+                    window.__jobsyIsoPrefetch = fetch(isoUrl, {
+                        credentials: "same-origin",
+                        headers: { Accept: "application/geo+json, application/json" }
+                    }).then(function (res) {
+                        if (!res.ok) {
+                            return null;
+                        }
+                        return res.json();
+                    }).catch(function () { return null; });
+                } catch (eIsoStore) { }
+            }
+        } catch (eIsoWarm) { }
         var view = parsed.view || (parsed.mapInit && parsed.mapInit.view) || null;
         if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
             window.jobsyBasemapWarm.warm(view).catch(function () { });

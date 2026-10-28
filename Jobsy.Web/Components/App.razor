@@ -80,7 +80,7 @@
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/stijl-a.css")" />
     }
-    @if (IncludeCandidatePlainPublicCss)
+    @if (IncludeCandidatePlainPublicCss || IncludeCandidatePlainAppCss)
     {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -100,6 +100,19 @@
     @if (IncludeCandidatePlainPublicCss)
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-public.css")" data-plain-public-css="true" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/werkgever.css")" data-plain-wg-topbar-css="true" />
+    }
+    @if (IncludeCandidatePlainAppCss)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-app.css")" data-plain-app-css="true" />
+        @if (!IncludeCandidatePlainPublicCss)
+        {
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/werkgever.css")" data-plain-wg-topbar-css="true" />
+        }
+    }
+    @if (IncludeCandidatePlainPassportCss)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-paspoort.css")" data-plain-paspoort-css="true" />
     }
     @* errors.css after app.min on candidate shells — see UsesFullRouteStylesheetBundle block below. *@
     @if (!UsesFullRouteStylesheetBundle)
@@ -429,6 +442,10 @@
             {
                 <script src="@($"/{WwwrootAssetCatalog.Url("js/read-aloud.js")}")" nonce="@Nonce" defer></script>
             }
+            @if (IncludeCandidatePlainPassportCss)
+            {
+                <script src="@($"/{WwwrootAssetCatalog.Url("js/plain878-speak.js")}")" nonce="@Nonce" defer></script>
+            }
             @if (IncludeBanenkaartClientScript)
             {
                 <script src="@($"/{WwwrootAssetCatalog.Url("js/banenkaart-maps-boot.js")}")" crossorigin="@("anonymous")" nonce="@Nonce" defer></script>
@@ -578,6 +595,15 @@
             HttpContextAccessor.HttpContext,
             HostEnvironment,
             Configuration);
+
+    private bool IncludeCandidatePlainAppCss =>
+        IncludeCandidatePlainPublicCss
+        && CandidatePlainPublicResolver.IsPlainCandidateAppPath(RequestPath);
+
+    private bool IncludeCandidatePlainPassportCss =>
+        IncludeCandidatePlainAppCss
+        && (string.Equals(RequestPath, "/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
+            || RequestPath?.StartsWith("/candidate/paspoort/", StringComparison.OrdinalIgnoreCase) == true);
 
     private bool IncludeLeerlingLoginScript =>
         PageAssetCatalog.IncludeLeerlingLoginScript(RequestPath);

@@ -24,6 +24,28 @@
   padding: 0;
 }
 
+/* Plain candidate shell reuses WgTopBar + werkgever.css (wg-topbar--candidate). */
+.pub-theme--plain-candidate .wg-topbar--candidate,
+.app-shell--plain-candidate .wg-topbar--candidate {
+  flex-shrink: 0;
+}
+
+.app-shell--plain-candidate .app-main,
+.app-shell--plain-candidate .app-main__content {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.wg-topbar--candidate .wg-topbar__brand .wg-topbar__logo {
+  display: inline-flex !important;
+}
+
+@media (max-width: 1023px) {
+  .wg-topbar--candidate .language-selector {
+    display: flex !important;
+  }
+}
+
 .pub-theme--plain-candidate .pub-header {
   height: 72px;
   background: #fff;
@@ -68,6 +90,16 @@
   margin-left: auto;
 }
 
+.pub-theme--plain-candidate .pub-header--plain .pub-header__mobile {
+  display: none !important;
+}
+
+.pub-theme--plain-candidate .pub-header--plain .pub-header__actions--plain {
+  display: flex !important;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
 .pub-theme--plain-candidate .pub-header--plain .cp-plain-header-link {
   color: var(--cp-muted);
   font-size: 16px;
@@ -80,7 +112,8 @@
 
 .pub-theme--plain-candidate .pub-header--plain .cp-plain-header-login {
   min-height: 44px;
-  padding: 0 20px;
+  max-height: 44px;
+  padding: 0 16px;
   border-radius: 8px;
   border: 1px solid var(--cp-btn-border);
   background: #fff;
@@ -89,7 +122,10 @@
   font-size: 16px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
+  white-space: nowrap;
+  flex: none;
 }
 
 .pub-theme--plain-candidate .pub-footer {
@@ -318,14 +354,38 @@
   gap: 16px;
 }
 
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+}
+
 .pub-theme--plain-candidate .cp-plain-login-wrap .au-field__label {
+  display: block;
   font-size: 17px;
   font-weight: 600;
   color: #374151;
   margin-bottom: 6px;
 }
 
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap:focus-within {
+  border: 0;
+  box-shadow: none;
+}
+
 .pub-theme--plain-candidate .cp-plain-login-wrap .au-input {
+  display: block;
   min-height: 52px;
   font-size: 18px;
   border: 1.5px solid var(--cp-input-border);
@@ -334,6 +394,98 @@
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
+  background: #fff;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--cp-accent) 35%, transparent);
+  outline-offset: 1px;
+  border-color: var(--cp-accent);
+}
+
+/* Password toggle sits inside the field (mockup #878), not below the input. */
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap:has(.au-input-wrap__toggle) {
+  position: relative;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap:has(.au-input-wrap__toggle) .au-input {
+  padding-right: 4.5rem;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap__toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--cp-muted);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-input-wrap__toggle[hidden] {
+  display: none;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-provider,
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-provider {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 8px;
+  border: 1px solid var(--cp-btn-border);
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+  font-size: 17px;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-divider {
+  margin: 8px 0 4px;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-optional {
+  font-weight: 400;
+  color: var(--cp-muted);
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-consent a,
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-inline-links a {
+  color: var(--cp-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-inline-links {
+  margin-top: 20px;
+  font-size: 16px;
+  color: var(--cp-muted);
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-inline-links p {
+  margin: 0 0 10px;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .cp-plain-alert {
+  color: #b91c1c;
+  margin: 0 0 16px;
+}
+
+.pub-theme--plain-candidate .cp-plain-login-wrap .au-below a {
+  color: var(--cp-accent);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .pub-theme--plain-candidate .cp-plain-login-wrap .au-field__label-row a {
@@ -378,6 +530,15 @@
 }
 
 @media (max-width: 700px) {
+  .app-shell--plain-candidate .app-main__content > p:not([class]) {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 700px) {
   .pub-theme--plain-candidate .pub-header {
     height: 56px;
   }
@@ -388,6 +549,17 @@
 
   .pub-theme--plain-candidate .cp-plain-header-link--desk {
     display: none;
+  }
+
+  .pub-theme--plain-candidate .pub-header--plain .pub-header__actions--plain {
+    gap: 8px;
+  }
+
+  .pub-theme--plain-candidate .pub-header--plain .cp-plain-header-login {
+    min-height: 40px;
+    max-height: 40px;
+    padding: 0 12px;
+    font-size: 15px;
   }
 
   .pub-theme--plain-candidate .cp-plain-wrap {
@@ -416,4 +588,30 @@
     gap: 12px;
     padding: 18px 16px;
   }
+}
+
+/* Plain #878: light cookie bar, single consent line, one footer on paspoort. */
+.pub-theme--plain-candidate .cookie-consent {
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 24px rgba(17, 24, 39, 0.06);
+  color: #4b5563;
+}
+
+.pub-theme--plain-candidate .cookie-consent__title {
+  color: #111827;
+}
+
+.pub-theme--plain-candidate .cookie-consent__text-short {
+  display: none !important;
+}
+
+.pub-theme--plain-candidate .cookie-consent .btn-compact--primary {
+  background: #a8481f;
+  border-color: #a8481f;
+  color: #fff;
+}
+
+.pub-theme--plain-candidate:has(.cp-plain878 .foot) .pub-footer {
+  display: none !important;
 }

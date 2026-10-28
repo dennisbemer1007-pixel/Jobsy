@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Features
-@using Jobsy.Web.Auth
+@using Jobsy.Web.Components.Werkgever.Shell
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
@@ -19,18 +19,28 @@
 @inject AuthenticationStateProvider AuthState
 @inject IFeatureFlags FeatureFlags
 @inject IHttpContextAccessor HttpContextAccessor
+@inject CandidatePlainPublicResolver PlainPublicResolver
+@inject IHostEnvironment HostEnvironment
+@inject IConfiguration Configuration
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_banenkaartCandidateShell ? "app-shell--banenkaart-shell" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_plainCandidateShell ? "app-shell--plain-candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_banenkaartCandidateShell ? "app-shell--banenkaart-shell" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <PageRouteStylesHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
     @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartMockupTopBar)
     {
-        <AppShellHeader HomeHref="@_homeHref"
-                        HeaderTagline="@HeaderTagline"
-                        ShowCandidatePwaInstall="@(_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)" />
+        @if (_plainCandidateShell)
+        {
+            <WgTopBar CandidateShell="true" />
+        }
+        else
+        {
+            <AppShellHeader HomeHref="@_homeHref"
+                            HeaderTagline="@HeaderTagline"
+                            ShowCandidatePwaInstall="@(_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)" />
+        }
     }
 
     <main class="app-main">
@@ -52,7 +62,7 @@
                 @Body
             </CircuitErrorBoundary>
         </div>
-        @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
+        @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive && !_plainCandidateShell)
         {
             <AppFooter />
         }
@@ -127,6 +137,7 @@
     private bool _noBlazorRuntime;
     private bool _noBlazorCandidateNav;
     private bool _ssrCoachAvailable;
+    private bool _plainCandidateShell;
 
     private bool ShowInstallBanner =>
         RendererInfo.IsInteractive
@@ -145,6 +156,7 @@
         }
 
         BootstrapCandidateFromHttpContext();
+        BootstrapPlainCandidateShellFromHttp();
         RefreshFocusedFlags();
 
         PwaSheet.Changed += OnPwaSheetChanged;
@@ -159,6 +171,7 @@
         Navigation.LocationChanged += OnLocationChanged;
         AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
         RefreshFocusedFlags();
+        await RefreshPlainCandidateShellAsync();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
         await RefreshHomeHrefAsync();
@@ -209,6 +222,8 @@
             {
                 await InvokeAsync(StateHasChanged);
             }
+
+            await RefreshPlainCandidateShellAsync();
         }
         catch
         {
@@ -311,6 +326,7 @@
         }
 
         var changed = RefreshFocusedFlags();
+        _ = RefreshPlainCandidateShellAsync();
         if (changed)
         {
             _ = InvokeAsync(StateHasChanged);
@@ -461,9 +477,11 @@
             changed = true;
         }
 
-        var hidePassportChrome = IsPassportOrProfileCoachHidden(path);
+        var hidePassportChrome = IsPassportOrProfileCoachHidden(path)
+                                 || (_plainCandidateShell && IsPaspoortPath(path));
         var hideCoach = IsLobsyCoachExcludedPath(path)
-                        || IsVacancyOrNotificationsCoachHidden(path);
+                        || IsVacancyOrNotificationsCoachHidden(path)
+                        || (_plainCandidateShell && IsPaspoortPath(path));
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -512,6 +530,34 @@
         return changed;
     }
 
+    private void BootstrapPlainCandidateShellFromHttp()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        _plainCandidateShell = CandidatePlainPublicResolver.IsPlainShellForRequest(http, HostEnvironment, Configuration);
+    }
+
+    private async Task RefreshPlainCandidateShellAsync()
+    {
+        try
+        {
+            var enabled = await PlainPublicResolver.IsPlainShellAsync();
+            var relative = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+            var path = PageSeoCatalog.Normalize("/" + relative.TrimStart('/'));
+            var next = enabled && CandidatePlainPublicResolver.IsPlainCandidateAppPath(path);
+            if (_plainCandidateShell == next)
+            {
+                return;
+            }
+
+            _plainCandidateShell = next;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // layout teardown races
+        }
+    }
+
     public static bool IsBanenkaartPath(string path)
     {
         path = path.TrimStart('/');
@@ -535,11 +581,18 @@
     public static bool UsesBanenkaartImmersiveChrome(string path, bool isAuthenticatedCandidate)
         => IsBanenkaartPath(path) && !isAuthenticatedCandidate;
 
-    /// <summary>Hide floating chrome on profile (paspoort keeps Lobsy-hulp).</summary>
+    /// <summary>Hide floating coach on profile (paspoort keeps Lobsy-hulp).</summary>
     public static bool IsPassportOrProfileCoachHidden(string path)
     {
         path = path.TrimStart('/');
         return path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsPaspoortPath(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/paspoort/", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>

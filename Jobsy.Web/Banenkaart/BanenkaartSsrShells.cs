@@ -15,16 +15,26 @@ internal static class BanenkaartSsrShells
         string antiforgeryToken,
         BanenkaartSsrData.PageModel model,
         string? scriptNonce = null,
-        string? candidateDisplayName = null)
+        string? candidateDisplayName = null,
+        bool plainShell = false)
     {
         var sb = new StringBuilder();
         var q = model.Query;
         var viewModeClass = model.Query.DesktopListMode ? " show-list jobsy-discovery--list" : " show-map";
         var viewDataAttr = model.Query.DesktopListMode ? " data-kb-view=\"list\"" : " data-kb-view=\"map\"";
         sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
-        AppendNearbyHeroStrip(sb);
+        if (!plainShell)
+        {
+            AppendNearbyHeroStrip(sb);
+        }
+
         sb.Append("</div>");
-        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen").Append(viewModeClass).Append(viewDataAttr);
+        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen");
+        sb.Append(viewModeClass).Append(viewDataAttr);
+        if (plainShell)
+        {
+            sb.Append(" data-plain-banenkaart=\"1\"");
+        }
         if (model.IsAuthenticated)
         {
             sb.Append(" data-kb-strip-external=\"1\"");
@@ -66,7 +76,7 @@ internal static class BanenkaartSsrShells
             AppendMockupTopBar(sb, culture, model, candidateDisplayName);
         }
         sb.Append("<div class=\"main kb-lagen-main\">");
-        AppendVacancyPane(sb, culture, model);
+        AppendVacancyPane(sb, culture, model, plainShell);
         AppendMapPane(sb, culture, model);
         sb.Append("</div>");
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
@@ -82,6 +92,9 @@ internal static class BanenkaartSsrShells
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-map-icons.js")).Append("\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-ov-travel.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
         sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-catalog.js")).Append("\" crossorigin=\"anonymous\" defer")
@@ -313,9 +326,15 @@ internal static class BanenkaartSsrShells
             "kb-banenkaart-header-strip kreeft-header-strip");
     }
 
-    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
+    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model, bool plainShell = false)
     {
-        sb.Append("<aside class=\"vacancy-pane panel\">");
+        sb.Append("<aside class=\"vacancy-pane panel");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-banenkaart");
+        }
+
+        sb.Append("\">");
         AppendMockupPanelHead(sb, culture, model);
         AppendMockupResultsRow(sb, culture, model);
         sb.Append("<div class=\"list vacancy-list\" data-testid=\"vacancy-list\">");

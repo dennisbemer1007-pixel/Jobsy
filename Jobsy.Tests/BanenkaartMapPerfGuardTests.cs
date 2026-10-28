@@ -24,13 +24,20 @@ public class BanenkaartMapPerfGuardTests
         Assert.Contains("jobsyGeo.replaceQuery", maps, StringComparison.Ordinal);
         Assert.Contains("reloadMapPins: false", discovery, StringComparison.Ordinal);
 
-        // Same filter, different travel mode → same cache key.
+        // Same filter, different Fiets/Auto travel mode → same cache key (rings are client-side).
         Assert.Equal(
             PinsFilterKey("/api/vacancies/pins?transport=Fiets&maxMinutes=30&q=hovenier"),
             PinsFilterKey("/api/vacancies/pins?transport=Auto&maxMinutes=30&q=hovenier"));
         Assert.NotEqual(
             PinsFilterKey("/api/vacancies/pins?transport=Fiets&maxMinutes=30"),
             PinsFilterKey("/api/vacancies/pins?transport=Fiets&maxMinutes=45"));
+        // OV pins are server-filtered — transport must stay in the cache key.
+        Assert.NotEqual(
+            PinsFilterKey("/api/vacancies/pins?transport=Fiets&maxMinutes=30&q=hovenier"),
+            PinsFilterKey("/api/vacancies/pins?transport=OV&maxMinutes=30&q=hovenier"));
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
+        Assert.Contains("banenkaart-ov-travel.js", shells, StringComparison.Ordinal);
+        Assert.Contains("jobsyBanenkaartOvTravel", js, StringComparison.Ordinal);
 
         Assert.Contains("reloadMapPins: false", discovery, StringComparison.Ordinal);
         Assert.Contains("OnTransportChanged", discovery, StringComparison.Ordinal);
@@ -70,7 +77,11 @@ public class BanenkaartMapPerfGuardTests
                 var value = Uri.UnescapeDataString(eq >= 0 ? pair[(eq + 1)..] : "");
                 if (string.Equals(key, "transport", StringComparison.OrdinalIgnoreCase))
                 {
-                    continue;
+                    var transportVal = value;
+                    if (!string.Equals(transportVal, "OV", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
                 }
 
                 if (!bag.TryGetValue(key, out var list))

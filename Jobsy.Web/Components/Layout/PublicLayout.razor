@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@using Jobsy.Web.Components.Werkgever.Shell
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Hosting
@@ -22,11 +23,17 @@
      lang="@Culture.Language">
     <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    <PublicHeader Variant="_variant"
-                  Compact="_compact"
-                  AuthShell="_authShell && !_plainShell"
-                  CandidatePlain="_plainShell"
-                  HideLangMenu="_hideLangMenu" />
+    @if (_plainShell)
+    {
+        <WgTopBar CandidateShell="true" />
+    }
+    else
+    {
+        <PublicHeader Variant="_variant"
+                      Compact="_compact"
+                      AuthShell="_authShell"
+                      HideLangMenu="_hideLangMenu" />
+    }
     <main id="main" class="pub-main @(_compact ? "pub-main--test" : null)">
         @Body
     </main>
