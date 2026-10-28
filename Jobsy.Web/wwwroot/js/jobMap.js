@@ -3747,14 +3747,33 @@ window.jobMap = (function () {
             + "&zoom=" + encodeURIComponent(String(Math.round(box.zoom)));
     }
 
-    /** Filter cache key: filter state only (no transport, no viewport bbox). */
+    function pinsCacheIncludesTransport(url) {
+        const ovApi = window.jobsyBanenkaartOvTravel;
+        if (ovApi && typeof ovApi.pinsCacheIncludesTransport === "function") {
+            try {
+                const u = new URL(String(url || ""), window.location.origin);
+                const tr = u.searchParams.get("transport") || travelOptions.transport;
+                if (ovApi.pinsCacheIncludesTransport(tr)) {
+                    return true;
+                }
+            } catch (eTr) { }
+            if (ovApi.pinsCacheIncludesTransport(travelOptions.transport)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Filter cache key: filter state only (no viewport bbox). Transport omitted except OV (server-filtered pins). */
     function pinsFilterKey(url) {
         if (!url) {
             return "";
         }
         try {
             const u = new URL(url, window.location.origin);
-            u.searchParams.delete("transport");
+            if (!pinsCacheIncludesTransport(url)) {
+                u.searchParams.delete("transport");
+            }
             u.searchParams.delete("minLat");
             u.searchParams.delete("minLng");
             u.searchParams.delete("maxLat");
@@ -3810,7 +3829,7 @@ window.jobMap = (function () {
         const filterKey = pinsFilterKey(pinsUrl);
         const cached = !viewportQs && filterKey ? pinsByFilterKey[filterKey] : null;
         if (cached && cached.pins) {
-            // Transport-only changes reuse the same pin set; travel rings update separately.
+            // Fiets/Auto: transport-only changes reuse the same pin set; rings update separately. OV always refetches.
             pinsCachedPayload = cached.payload;
             if (cached.etag) {
                 pinsEtag = cached.etag;
@@ -4282,6 +4301,15 @@ window.jobMap = (function () {
             "&lng=" + encodeURIComponent(lng) +
             "&mode=" + encodeURIComponent(mode) +
             "&minutes=" + encodeURIComponent(minutes.join(","));
+        try {
+            if (window.__jobsyIsoPrefetch
+                && window.__jobsyIsoPrefetchUrl === url) {
+                isochroneCache[key] = Promise.resolve(window.__jobsyIsoPrefetch).then(function (fc) {
+                    return fc && fc.features && fc.features.length ? fc : null;
+                });
+                return isochroneCache[key];
+            }
+        } catch (ePre) { }
         const isoOpts = {
             credentials: "same-origin",
             headers: { Accept: "application/geo+json, application/json" }
@@ -4650,7 +4678,7 @@ window.jobMap = (function () {
                 map.addSource(sourceId, { type: "geojson", data: data });
             }
             const ids = ensureTravelRingLayers(sourceId);
-            travelRingGeo = { sourceId: sourceId, ids: ids };
+            travelRingGeo = { sourceId: sourceId, ids: ids, featureCount: features.length };
             ringRedrawTries = 0;
             ringIdleRetryCount = 0;
             placeTravelRingLabels(lat, lng, features);
@@ -4683,7 +4711,10 @@ window.jobMap = (function () {
             lastRingDrawKey = String(lat) + "," + String(lng) + "|ov|"
                 + String(travelOptions.maxMinutes) + "|OV";
             clearTravelRings();
-            setIsoMode("none");
+            const ovPending = window.jobsyBanenkaartOvTravel
+                && typeof window.jobsyBanenkaartOvTravel.isOvIsoPending === "function"
+                && window.jobsyBanenkaartOvTravel.isOvIsoPending();
+            setIsoMode(ovPending ? "loading" : "none");
             finishOpeningFrame();
             if (map && typeof map.resize === "function") {
                 try { map.resize(); } catch (eOvResize) { }
@@ -4739,7 +4770,7 @@ window.jobMap = (function () {
         setIsoMode("loading");
         // Pins/list must not wait for Valhalla; reveal the map immediately.
         finishOpeningFrame();
-        setTimeout(loadIsochronesWhenIdle, 0);
+        loadIsochronesWhenIdle();
     }
 
     function ringBounds(lat, lng, radiusM) {
@@ -5226,11 +5257,34 @@ window.jobMap = (function () {
         } catch (eDom) { }
     }
 
+    function countRenderedPinFeaturesForReady() {
+        if (!map || typeof map.queryRenderedFeatures !== "function") {
+            return 0;
+        }
+        try {
+            const layerIds = [
+                PIN_LAYER_CLUSTERS,
+                PIN_LAYER_UNCLUSTERED,
+                PIN_LAYER_CLUSTERS + "-hit"
+            ].filter(function (id) { return map.getLayer(id); });
+            return (map.queryRenderedFeatures({ layers: layerIds }) || []).length;
+        } catch (eCount) {
+            return 0;
+        }
+    }
+
     function scheduleCatalogMapReadyAfterIdle() {
         if (!catalogModeActive || catalogMapReadySent || !map) {
             return;
         }
+        let readyTries = 0;
         const onIdle = function () {
+            const pinDataCount = Object.keys(markersById).length;
+            if (pinDataCount > 0 && countRenderedPinFeaturesForReady() === 0 && readyTries < 6) {
+                readyTries += 1;
+                map.once("idle", onIdle);
+                return;
+            }
             emitCatalogMapReady();
         };
         if (typeof map.isStyleLoaded === "function" && map.isStyleLoaded()) {
@@ -5404,7 +5458,10 @@ window.jobMap = (function () {
 
     function pinsGeoJson() {
         const origin = lastOrigin;
-        const outerM = origin ? maxRingRadiusMeters() : 0;
+        const ovSkipRing = window.jobsyBanenkaartOvTravel
+            && typeof window.jobsyBanenkaartOvTravel.skipClientRingOutside === "function"
+            && window.jobsyBanenkaartOvTravel.skipClientRingOutside(travelOptions.transport);
+        const outerM = origin && !ovSkipRing ? maxRingRadiusMeters() : 0;
         return {
             type: "FeatureCollection",
             features: Object.keys(markersById).map(function (id) {
@@ -8004,6 +8061,17 @@ window.jobMap = (function () {
         }
     });
 
+    document.addEventListener("jobsy-bk-ov-pins-applied", function () {
+        if (canonicalTransport(travelOptions.transport || "Fiets") !== "OV") {
+            return;
+        }
+        setIsoMode("none");
+        finishOpeningFrame();
+        if (map && typeof map.triggerRepaint === "function") {
+            try { map.triggerRepaint(); } catch (eRepaint) { }
+        }
+    });
+
     document.addEventListener("jobsy-bk-catalog-ready", function () {
         if (catalogModeActive) {
             syncCatalogToMap();
@@ -8322,6 +8390,9 @@ window.jobMap = (function () {
         __testGetTravelRingFeatureCount: function () {
             if (!map) {
                 return 0;
+            }
+            if (travelRingGeo && typeof travelRingGeo.featureCount === "number") {
+                return travelRingGeo.featureCount;
             }
             try {
                 const src = map.getSource("jobsy-travel-rings");

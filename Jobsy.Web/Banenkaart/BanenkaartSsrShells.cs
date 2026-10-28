@@ -94,6 +94,9 @@ internal static class BanenkaartSsrShells
         sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-map-icons.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");
+        sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-ov-travel.js")).Append("\" crossorigin=\"anonymous\" defer")
+            .Append(nonceAttr)
+            .Append("></script>");
         sb.Append("<script src=\"").Append(WwwrootAssetCatalog.UrlLeadingSlash("js/banenkaart-catalog.js")).Append("\" crossorigin=\"anonymous\" defer")
             .Append(nonceAttr)
             .Append("></script>");

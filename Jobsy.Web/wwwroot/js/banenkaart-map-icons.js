@@ -7,6 +7,36 @@
         + "<path d=\"M6 16l4-7h5l3 7M10 9 8.5 6H7M12.5 16 15 9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
         + "</svg>";
 
+    var CAR_SVG = "<svg class=\"ic\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\">"
+        + "<path d=\"M5 11l1.5-4h11L19 11v6H5z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/>"
+        + "<circle cx=\"8\" cy=\"17\" r=\"1.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/>"
+        + "<circle cx=\"16\" cy=\"17\" r=\"1.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/>"
+        + "</svg>";
+
+    var WALK_SVG = "<svg class=\"ic\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\">"
+        + "<circle cx=\"12\" cy=\"5\" r=\"2\" fill=\"currentColor\"/>"
+        + "<path d=\"M12 8v5l-3 3M12 13l3 3M9 21l3-4 3 4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+        + "</svg>";
+
+    var OV_SVG = "<svg class=\"ic\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\">"
+        + "<rect x=\"4\" y=\"6\" width=\"16\" height=\"11\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/>"
+        + "<path d=\"M4 10h16M8 17h2M14 17h2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"/>"
+        + "</svg>";
+
+    function clusterHintSvg(mode) {
+        var t = String(mode || "Fiets");
+        if (t === "Auto") {
+            return CAR_SVG;
+        }
+        if (t === "OV") {
+            return OV_SVG;
+        }
+        if (t === "Lopend") {
+            return WALK_SVG;
+        }
+        return BIKE_SVG;
+    }
+
     var ICO = {
         truck: "<path d=\"M3 6.5h11v10H3zM14 10h4l3 3.5v3h-7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"7\" cy=\"17.5\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/><circle cx=\"17.5\" cy=\"17.5\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/>",
         leaf: "<path d=\"M5 19c0-8 5-13 14-14 0 9-5 14-13 14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M5 19 13 11\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/>",
@@ -113,6 +143,7 @@
 
     window.jobsyBanenkaartMapIcons = {
         bikeSvg: BIKE_SVG,
+        clusterHintSvg: clusterHintSvg,
         pinW: pinW,
         pinI: pinI,
         isIntermediaryRow: isIntermediaryRow,
