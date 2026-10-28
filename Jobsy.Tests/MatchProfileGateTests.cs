@@ -117,6 +117,29 @@ public class MatchProfileGateTests
     }
 
     [Fact]
+    public void MatchVacancyService_OrderMatchDeck_prefers_within_travel_before_far_high_match()
+    {
+        var far = new VacancyListItem
+        {
+            Id = Guid.NewGuid(),
+            Title = "FarHighMatch",
+            TravelMinutes = 220,
+            FitPercent = 95
+        };
+        var near = new VacancyListItem
+        {
+            Id = Guid.NewGuid(),
+            Title = "NearGoodMatch",
+            TravelMinutes = 18,
+            FitPercent = 70
+        };
+
+        var ordered = MatchVacancyService.OrderMatchDeck([far, near], maxTravelMinutes: 20, take: 24);
+        Assert.Equal("NearGoodMatch", ordered[0].Title);
+        Assert.Equal("FarHighMatch", ordered[1].Title);
+    }
+
+    [Fact]
     public void MatchVacancyService_FilterRelevant_keeps_outside_travel_when_discovery_widened()
     {
         var gate = new MatchProfileGateViewModel
@@ -138,6 +161,16 @@ public class MatchProfileGateTests
         var widened = MatchVacancyService.FilterRelevant(vacancies, gate, take: 24, outsideTravelFallback: true);
         Assert.Single(widened);
         Assert.Equal("Reachable", widened[0].Title);
+    }
+
+    [Fact]
+    public void Onboarding_e2e_demo_seed_refreshes_home_and_travel_prefs()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var seeder = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/DemoUsersSeeder.cs"));
+        Assert.Contains("DemoCandidateIds.OnboardingE2eUserId", seeder, StringComparison.Ordinal);
+        Assert.Contains("existing.Id == DemoCandidateIds.OnboardingE2eUserId", seeder, StringComparison.Ordinal);
+        Assert.Contains("preferredTransport", seeder, StringComparison.Ordinal);
     }
 
     [Fact]
