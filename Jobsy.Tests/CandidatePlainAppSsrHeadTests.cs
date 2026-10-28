@@ -10,6 +10,10 @@ public sealed class CandidatePlainAppSsrHeadTests
         var resolver = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Features/CandidatePlainPublicResolver.cs"));
         Assert.Contains("IncludeCandidatePlainAppCss", app, StringComparison.Ordinal);
         Assert.Contains("candidate-plain-app.css", app, StringComparison.Ordinal);
+        Assert.Contains("IncludeCandidatePlainPassportCss", app, StringComparison.Ordinal);
+        Assert.Contains("candidate-plain-paspoort.css", app, StringComparison.Ordinal);
+        Assert.Contains("IncludeCandidatePlainBanenkaartCss", app, StringComparison.Ordinal);
+        Assert.Contains("candidate-plain-banenkaart.css", app, StringComparison.Ordinal);
         Assert.Contains("IsPlainCandidateAppPath", resolver, StringComparison.Ordinal);
         Assert.Contains("/candidate/paspoort", resolver, StringComparison.Ordinal);
         Assert.Contains("/banenkaart", resolver, StringComparison.Ordinal);
@@ -20,8 +24,10 @@ public sealed class CandidatePlainAppSsrHeadTests
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var passport = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        var passportPlain = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportPlainSsrShells.cs"));
         var banenkaart = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Banenkaart/BanenkaartSsrShells.cs"));
-        Assert.Contains("cp-plain-app", passport, StringComparison.Ordinal);
+        Assert.Contains("PassportPlainSsrShells.BuildBody", passport, StringComparison.Ordinal);
+        Assert.Contains("cp-plain-passport", passportPlain, StringComparison.Ordinal);
         Assert.Contains("plainShell", passport, StringComparison.Ordinal);
         Assert.Contains("data-plain-banenkaart", banenkaart, StringComparison.Ordinal);
         Assert.Contains("cp-plain-banenkaart", banenkaart, StringComparison.Ordinal);
