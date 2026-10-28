@@ -18,11 +18,17 @@ public static class AccLayoutEmptyStripAudit
             """
             () => {
               const root = document.querySelector('[data-banenkaart-ssr="1"]');
-              const vh = window.innerHeight;
               const vw = window.innerWidth;
-              if (!root || vh < 200) {
+              if (!root || window.innerHeight < 200) {
                 return { largest_empty_strip_px: 0, empty_holder_px: 0, note: 'no-root' };
               }
+              const mapView = root.classList.contains('show-map')
+                || root.getAttribute('data-kb-view') === 'map';
+              const scope = mapView
+                ? (root.querySelector('.map-pane') || root.querySelector('.map-col') || root)
+                : root;
+              const scopeRect = scope.getBoundingClientRect();
+              const vh = scopeRect.bottom;
 
               function isVisible(el) {
                 if (!el || !el.getBoundingClientRect) return false;
@@ -44,7 +50,15 @@ public static class AccLayoutEmptyStripAudit
               }
 
               let emptyHolderPx = 0;
-              root.querySelectorAll('*').forEach(el => {
+              const chromeHost = document.querySelector('[data-testid=kb-banenkaart-ssr-chrome]');
+              if (chromeHost && isVisible(chromeHost)) {
+                const cr = chromeHost.getBoundingClientRect();
+                if (cr.height >= 8 && !hasMeaningfulContent(chromeHost)) {
+                  emptyHolderPx = Math.max(emptyHolderPx, Math.round(cr.height));
+                }
+              }
+
+              scope.querySelectorAll('*').forEach(el => {
                 if (!isVisible(el)) return;
                 const r = el.getBoundingClientRect();
                 if (r.height < 24 || r.width < vw * 0.35) return;
@@ -55,19 +69,25 @@ public static class AccLayoutEmptyStripAudit
                 }
               });
 
-              const bandSelectors = [
-                '[data-testid=kb-panel-head]',
-                '[data-testid=kb-map-top-chrome]',
-                '.map-pane',
-                '[data-testid=kb-map-strip]',
-                '[data-testid=kb-map-legend-root] aside',
-                '[data-testid=vacancy-list]',
-                '.kb-list-shell',
-                '[data-testid=kb-empty-travel]'
-              ];
+              const bandSelectors = mapView
+                ? [
+                    '[data-testid=kb-map-top-chrome]',
+                    '.map-stage',
+                    '#job-map',
+                    '[data-testid=kb-map-strip]',
+                    '[data-testid=kb-map-legend-root] aside'
+                  ]
+                : [
+                    '[data-testid=kb-panel-head]',
+                    '[data-testid=kb-map-top-chrome]',
+                    '.map-pane',
+                    '[data-testid=kb-map-strip]',
+                    '[data-testid=vacancy-list]',
+                    '[data-testid=kb-empty-travel]'
+                  ];
               const bands = [];
               bandSelectors.forEach(sel => {
-                root.querySelectorAll(sel).forEach(el => {
+                scope.querySelectorAll(sel).forEach(el => {
                   if (!isVisible(el)) return;
                   const r = el.getBoundingClientRect();
                   if (r.width < vw * 0.2) return;
@@ -81,7 +101,7 @@ public static class AccLayoutEmptyStripAudit
                 const gap = bands[i].top - bands[i - 1].bottom;
                 if (gap > maxGap) maxGap = Math.round(gap);
               }
-              if (bands.length) {
+              if (bands.length && !mapView) {
                 const tail = vh - bands[bands.length - 1].bottom;
                 if (tail > maxGap) maxGap = Math.round(tail);
               }

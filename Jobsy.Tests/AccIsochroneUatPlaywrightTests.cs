@@ -40,6 +40,7 @@ public sealed class AccIsochroneUatPlaywrightTests
         var prefix = $"acc-{accHead}-isochroon";
         var rows = new List<object>();
         var failures = new List<string>();
+        var clickByTag = new Dictionary<string, AccPageClickabilityAudit.ViewportResult>();
 
         var cases = new (string transport, int width, int height, int maxMinutes)[]
         {
@@ -56,8 +57,13 @@ public sealed class AccIsochroneUatPlaywrightTests
             var tag = $"{transport.ToLowerInvariant()}-{width}";
             try
             {
-                var row = await RunCaseAsync(browser, baseUrl, prefix, tag, transport, width, height, maxMinutes);
+                var (row, caseFails) = await RunCaseAsync(
+                    browser, baseUrl, prefix, tag, transport, width, height, maxMinutes, clickByTag);
                 rows.Add(row);
+                foreach (var f in caseFails)
+                {
+                    failures.Add(f);
+                }
             }
             catch (Exception ex)
             {
@@ -66,11 +72,61 @@ public sealed class AccIsochroneUatPlaywrightTests
             }
         }
 
+        var clickReports = new List<object>();
+        foreach (var transport in new[] { "auto", "fiets", "ov" })
+        {
+            if (!clickByTag.TryGetValue($"{transport}-1440", out var wide)
+                || !clickByTag.TryGetValue($"{transport}-390", out var narrow))
+            {
+                failures.Add($"click-audit-{transport}: missing viewport run");
+                continue;
+            }
+
+            var merged = AccPageClickabilityAudit.MergeViewports(wide, narrow);
+            var reportBase = $"{prefix}-click-{transport}";
+            AccPageClickabilityAudit.WriteReport(
+                ArtifactDir,
+                reportBase,
+                $"Banenkaart isochroon ({transport})",
+                merged,
+                wide.SkippedDangerous.Concat(narrow.SkippedDangerous).ToList(),
+                accHead);
+            TryCopyToAgentStore(
+                Path.Combine(ArtifactDir, reportBase + ".md"),
+                Path.Combine(AgentStoreDir, reportBase + ".md"));
+            TryCopyToAgentStore(
+                Path.Combine(ArtifactDir, reportBase + ".json"),
+                Path.Combine(AgentStoreDir, reportBase + ".json"));
+            clickReports.Add(new
+            {
+                transport,
+                element_count = merged.Count,
+                report = reportBase,
+                elements = merged.Select(r => new
+                {
+                    r.Element,
+                    r.Kind,
+                    r.Result1440,
+                    r.Result390,
+                    r.Skipped
+                }).ToList()
+            });
+            try
+            {
+                AccPageClickabilityAudit.AssertAllOk(merged, $"Banenkaart isochroon {transport}");
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"click-audit-{transport}: {ex.Message}");
+            }
+        }
+
         var metrics = new Dictionary<string, object>
         {
             ["acc_head"] = accHead,
             ["artifact_prefix"] = prefix,
             ["cases"] = rows,
+            ["click_audit"] = clickReports,
             ["failures"] = failures
         };
         var json = JsonSerializer.Serialize(metrics, new JsonSerializerOptions { WriteIndented = true });
@@ -85,7 +141,7 @@ public sealed class AccIsochroneUatPlaywrightTests
         }
     }
 
-    private static async Task<object> RunCaseAsync(
+    private static async Task<(object Row, List<string> Failures)> RunCaseAsync(
         IBrowser browser,
         string baseUrl,
         string prefix,
@@ -93,7 +149,8 @@ public sealed class AccIsochroneUatPlaywrightTests
         string transport,
         int width,
         int height,
-        int maxMinutes)
+        int maxMinutes,
+        Dictionary<string, AccPageClickabilityAudit.ViewportResult> clickByTag)
     {
         await using var ctx = await browser.NewContextAsync(new()
         {
@@ -102,6 +159,28 @@ public sealed class AccIsochroneUatPlaywrightTests
         });
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
+        const string seedEmail = "onboarding.e2e@jobsy.local";
+        var seedPassword = (Environment.GetEnvironmentVariable("JOBSY_E2E_PASSWORD")
+                            ?? Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD")
+                            ?? KbE2e.DefaultPassword).Trim();
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, seedEmail, seedPassword))
+        {
+            Assert.Fail("Seed candidate login failed on acceptatie.");
+        }
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              window.__jobsyAccFilterAppliedMs = null;
+              window.__jobsyAccNavStart = performance.now();
+              document.addEventListener('jobsy-bk-filters-applied', () => {
+                if (window.__jobsyAccFilterAppliedMs == null) {
+                  window.__jobsyAccFilterAppliedMs = Math.round(performance.now() - window.__jobsyAccNavStart);
+                }
+              }, { once: true });
+            }
+            """);
+
         var isoStatuses = new List<int>();
         page.Response += (_, res) =>
         {
@@ -178,11 +257,53 @@ public sealed class AccIsochroneUatPlaywrightTests
             """);
         var listCount = await page.Locator(".kb-list-row, .banenkaart-ssr-list__row, [data-testid='kb-list-row']").CountAsync();
 
-        var emptyStrip = await AccLayoutEmptyStripAudit.MeasureBanenkaartAsync(page);
-        Assert.True(
-            emptyStrip.largest_empty_strip_px <= AccLayoutEmptyStripAudit.MaxAllowedEmptyStripPx,
-            $"Layout empty strip too large ({emptyStrip.largest_empty_strip_px}px > "
-            + $"{AccLayoutEmptyStripAudit.MaxAllowedEmptyStripPx}px), tag={tag}");
+        var filterReadyMs = await page.EvaluateAsync<int?>(
+            """
+            () => {
+              const v = window.__jobsyAccFilterAppliedMs;
+              return v == null ? null : Number(v);
+            }
+            """);
+        if (filterReadyMs is null)
+        {
+            filterReadyMs = (int)Math.Min(mapReadyMs, int.MaxValue);
+        }
+
+        if (string.Equals(transport, "OV", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                await page.WaitForFunctionAsync(
+                    """
+                    () => {
+                      try {
+                        const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                        if (!map) return false;
+                        const layers = ['jobsy-pins-clusters', 'jobsy-pins-unclustered', 'jobsy-pins-clusters-hit']
+                          .filter(id => map.getLayer(id));
+                        return (map.queryRenderedFeatures({ layers }) || []).length > 0;
+                      } catch (e) { return false; }
+                    }
+                    """,
+                    null,
+                    new() { Timeout = 20_000 });
+            }
+            catch (TimeoutException)
+            {
+            }
+
+            renderedPinFeatures = await page.EvaluateAsync<int>(
+                """
+                () => {
+                  try {
+                    const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                    if (!map) return 0;
+                    const layers = ['jobsy-pins-clusters', 'jobsy-pins-unclustered', 'jobsy-pins-clusters-hit'];
+                    return (map.queryRenderedFeatures({ layers: layers.filter(id => map.getLayer(id)) }) || []).length;
+                  } catch (e) { return 0; }
+                }
+                """);
+        }
 
         var screenshot = $"{prefix}-{tag}.png";
         var shotPath = Path.Combine(ArtifactDir, screenshot);
@@ -198,22 +319,75 @@ public sealed class AccIsochroneUatPlaywrightTests
 
         TryCopyToAgentStore(shotPath, Path.Combine(AgentStoreDir, screenshot));
 
+        clickByTag[tag] = await AccPageClickabilityAudit.AuditPageAsync(page, tag);
+
+        var emptyStrip = await AccLayoutEmptyStripAudit.MeasureBanenkaartAsync(page);
+        var caseFails = new List<string>();
+
+        if (emptyStrip.largest_empty_strip_px > AccLayoutEmptyStripAudit.MaxAllowedEmptyStripPx)
+        {
+            caseFails.Add(
+                $"{tag}: Layout empty strip too large ({emptyStrip.largest_empty_strip_px}px > "
+                + $"{AccLayoutEmptyStripAudit.MaxAllowedEmptyStripPx}px)");
+        }
+
         var isOv = string.Equals(transport, "OV", StringComparison.OrdinalIgnoreCase);
         if (isOv)
         {
-            Assert.Equal("none", isoMode);
-            Assert.DoesNotContain(200, isoStatuses);
-            Assert.True(ringFeatureCount <= 0, "OV must not draw travel rings, count=" + ringFeatureCount);
-            Assert.True(renderedPinFeatures > 0, "OV map must show filtered vacancy pins, rendered=" + renderedPinFeatures);
+            if (isoMode != "none")
+            {
+                caseFails.Add($"{tag}: OV iso_mode expected none, got {isoMode}");
+            }
+
+            if (isoStatuses.Contains(200))
+            {
+                caseFails.Add($"{tag}: OV must not fetch isochrones (saw HTTP 200)");
+            }
+
+            if (ringFeatureCount > 0)
+            {
+                caseFails.Add($"{tag}: OV must not draw travel rings, count={ringFeatureCount}");
+            }
+
+            if (renderedPinFeatures <= 0)
+            {
+                caseFails.Add($"{tag}: OV map must show filtered vacancy pins, rendered={renderedPinFeatures}");
+            }
         }
         else
         {
-            Assert.Contains(200, isoStatuses);
-            Assert.Equal("real", isoMode);
-            Assert.True(ringFeatureCount > 0, "Expected travel ring features, count=" + ringFeatureCount);
+            if (!isoStatuses.Contains(200))
+            {
+                caseFails.Add($"{tag}: Expected isochrone HTTP 200, got [{string.Join(",", isoStatuses)}]");
+            }
+
+            if (isoMode != "real")
+            {
+                caseFails.Add($"{tag}: Expected iso_mode real, got {isoMode}");
+            }
+
+            if (ringFeatureCount <= 0)
+            {
+                caseFails.Add($"{tag}: Expected travel ring features, count={ringFeatureCount}");
+            }
         }
 
-        return new
+        if (mapReadyMs > 3000)
+        {
+            caseFails.Add($"{tag}: map_ready_ms {mapReadyMs} > 3000");
+        }
+
+        if (isoReadyMs > 3000)
+        {
+            caseFails.Add($"{tag}: iso_mode_ready_ms {isoReadyMs} > 3000");
+        }
+
+        if (filterReadyMs > 500)
+        {
+            caseFails.Add($"{tag}: filter_apply_ms {filterReadyMs} > 500");
+        }
+
+        var row = new
         {
             tag,
             transport,
@@ -221,7 +395,9 @@ public sealed class AccIsochroneUatPlaywrightTests
             maxMinutes,
             dom_content_loaded_ms = domMs,
             map_ready_ms = mapReadyMs,
+            map_ready_target_ms = 1000,
             iso_mode_ready_ms = isoReadyMs,
+            filter_apply_ms = filterReadyMs,
             iso_mode = isoMode,
             isochrone_http_statuses = isoStatuses,
             travel_ring_feature_count = ringFeatureCount,
@@ -230,8 +406,11 @@ public sealed class AccIsochroneUatPlaywrightTests
             largest_empty_strip_px = emptyStrip.largest_empty_strip_px,
             empty_holder_px = emptyStrip.empty_holder_px,
             band_gap_px = emptyStrip.band_gap_px,
-            screenshot
+            screenshot,
+            case_failures = caseFails
         };
+
+        return (row, caseFails);
     }
 
     private static async Task<string> ResolveAcceptatieCommitAsync(string baseUrl)

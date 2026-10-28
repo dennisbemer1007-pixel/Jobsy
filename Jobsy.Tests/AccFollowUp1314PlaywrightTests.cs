@@ -41,8 +41,10 @@ public sealed class AccFollowUp1314PlaywrightTests
         var accHead = await ResolveAcceptatieCommitAsync(baseUrl);
         var artifactPrefix = $"acc-{accHead}-1314";
         var metrics = new Dictionary<string, object> { ["acc_head"] = accHead, ["artifact_prefix"] = artifactPrefix };
+        var clickByScenario = new Dictionary<string, AccPageClickabilityAudit.ViewportResult>();
 
-        await Capture1314ExamplesAsync(browser, baseUrl, password, artifactPrefix, metrics);
+        await Capture1314ExamplesAsync(browser, baseUrl, password, artifactPrefix, metrics, clickByScenario);
+        FinalizeClickAuditReports(artifactPrefix, accHead, clickByScenario, metrics);
         await TryCaptureAsync(metrics, "1301_url_sync", () => Capture1301VacancySearchUrlSyncAsync(browser, baseUrl, password, accHead, metrics));
         await TryCaptureAsync(metrics, "1323_werkgever_search_capture", () => CaptureWerkgeverSearchFieldAsync(browser, baseUrl, password, accHead, metrics));
         await TryCaptureAsync(metrics, "perf", () => MeasurePerfAsync(browser, baseUrl, password, metrics));
@@ -118,7 +120,8 @@ public sealed class AccFollowUp1314PlaywrightTests
         string baseUrl,
         string password,
         string artifactPrefix,
-        Dictionary<string, object> metrics)
+        Dictionary<string, object> metrics,
+        Dictionary<string, AccPageClickabilityAudit.ViewportResult> clickByScenario)
     {
         foreach (var (lang, locale) in new[] { ("nl", "nl-NL"), ("en", "en-GB") })
         {
@@ -127,17 +130,67 @@ public sealed class AccFollowUp1314PlaywrightTests
                 await TryCaptureAsync(
                     metrics,
                     $"1314_{lang}_quick_{tag}",
-                    () => CaptureQuickScanExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag));
+                    () => CaptureQuickScanExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag, clickByScenario));
                 await TryCaptureAsync(
                     metrics,
                     $"1314_{lang}_mini_{tag}",
-                    () => CaptureOnboardingMiniExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag));
+                    () => CaptureOnboardingMiniExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag, clickByScenario));
                 await TryCaptureAsync(
                     metrics,
                     $"1314_{lang}_deep_{tag}",
-                    () => CaptureDeepAnalysisExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag));
+                    () => CaptureDeepAnalysisExampleAsync(browser, baseUrl, password, metrics, lang, locale, artifactPrefix, width, height, tag, clickByScenario));
             }
         }
+    }
+
+    private static void FinalizeClickAuditReports(
+        string artifactPrefix,
+        string accHead,
+        Dictionary<string, AccPageClickabilityAudit.ViewportResult> clickByScenario,
+        Dictionary<string, object> metrics)
+    {
+        var scenarios = clickByScenario.Keys
+            .Select(static k =>
+            {
+                var idx = k.LastIndexOf('-');
+                return idx > 0 ? k[..idx] : k;
+            })
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        var clickReports = new List<object>();
+        var failures = metrics.TryGetValue("1314_failures", out var fObj) && fObj is List<string> fl ? fl : new List<string>();
+
+        foreach (var scenario in scenarios)
+        {
+            if (!clickByScenario.TryGetValue($"{scenario}-1440", out var wide)
+                || !clickByScenario.TryGetValue($"{scenario}-390", out var narrow))
+            {
+                failures.Add($"click-audit-{scenario}: missing viewport");
+                continue;
+            }
+
+            var merged = AccPageClickabilityAudit.MergeViewports(wide, narrow);
+            var reportBase = $"{artifactPrefix}-click-{scenario}";
+            AccPageClickabilityAudit.WriteReport(
+                ArtifactDir,
+                reportBase,
+                $"#1314 {scenario}",
+                merged,
+                wide.SkippedDangerous.Concat(narrow.SkippedDangerous).ToList(),
+                accHead);
+            clickReports.Add(new { scenario, element_count = merged.Count, report = reportBase });
+            try
+            {
+                AccPageClickabilityAudit.AssertAllOk(merged, scenario);
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"click-audit-{scenario}: {ex.Message}");
+            }
+        }
+
+        metrics["1314_click_audit"] = clickReports;
+        metrics["1314_failures"] = failures;
     }
 
     private static async Task CaptureQuickScanExampleAsync(
@@ -150,22 +203,26 @@ public sealed class AccFollowUp1314PlaywrightTests
         string artifactPrefix,
         int width,
         int height,
-        string tag)
+        string tag,
+        Dictionary<string, AccPageClickabilityAudit.ViewportResult> clickByScenario)
     {
         var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail).Trim();
         await using var context = await NewContextAsync(browser, width, height, locale);
         var page = await NewLoggedInPageAsync(context, baseUrl, email, password);
         await SetCultureAsync(page, lang);
 
-        await page.GotoAsync(baseUrl + "/candidate/competencies?stap=vraag", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+        await page.GotoAsync(baseUrl + "/candidate/competencies?stap=intro", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        await AcceptTestConsentIfPresentAsync(page);
         await EnsureTestFlowReadyAsync(page);
 
         var example = page.Locator("[data-testid=test-item-example]");
         await example.WaitForAsync(new() { Timeout = 90_000 });
         var text = (await example.InnerTextAsync()).Trim();
         Assert.False(string.IsNullOrWhiteSpace(text));
+
+        clickByScenario[$"1314_{lang}_quick-{tag}"] = await AccPageClickabilityAudit.AuditPageAsync(page, tag);
 
         var file = $"{artifactPrefix}-{lang}-quick-{tag}.png";
         await SaveScreenshotAsync(page, file, fullPage: true);
@@ -182,7 +239,8 @@ public sealed class AccFollowUp1314PlaywrightTests
         string artifactPrefix,
         int width,
         int height,
-        string tag)
+        string tag,
+        Dictionary<string, AccPageClickabilityAudit.ViewportResult> clickByScenario)
     {
         var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail).Trim();
         await using var context = await NewContextAsync(browser, width, height, locale);
@@ -205,6 +263,8 @@ public sealed class AccFollowUp1314PlaywrightTests
         var text = (await example.InnerTextAsync()).Trim();
         Assert.False(string.IsNullOrWhiteSpace(text));
 
+        clickByScenario[$"1314_{lang}_mini-{tag}"] = await AccPageClickabilityAudit.AuditPageAsync(page, tag);
+
         var file = $"{artifactPrefix}-{lang}-onboarding-mini-{tag}.png";
         await SaveScreenshotAsync(page, file, fullPage: true);
         metrics[$"1314_{lang}_mini_{tag}"] = new { exampleChars = text.Length, url = page.Url };
@@ -220,7 +280,8 @@ public sealed class AccFollowUp1314PlaywrightTests
         string artifactPrefix,
         int width,
         int height,
-        string tag)
+        string tag,
+        Dictionary<string, AccPageClickabilityAudit.ViewportResult> clickByScenario)
     {
         var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_INCOMPLETE_EMAIL") ?? KbE2e.DefaultIncompleteEmail).Trim();
         await using var context = await NewContextAsync(browser, width, height, locale);
@@ -247,6 +308,8 @@ public sealed class AccFollowUp1314PlaywrightTests
 
         var text = (await example.InnerTextAsync()).Trim();
         Assert.False(string.IsNullOrWhiteSpace(text));
+
+        clickByScenario[$"1314_{lang}_deep-{tag}"] = await AccPageClickabilityAudit.AuditPageAsync(page, tag);
 
         var file = $"{artifactPrefix}-{lang}-deep-{tag}.png";
         await SaveScreenshotAsync(page, file, fullPage: true);
