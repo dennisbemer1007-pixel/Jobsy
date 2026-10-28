@@ -245,6 +245,7 @@ public class MobilePaspoortCircuitResumePlaywrightTests
 
         public PaspoortCircuitWebFactory()
         {
+            _ = CreateClient();
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -265,6 +266,8 @@ public class MobilePaspoortCircuitResumePlaywrightTests
                 services.AddSingleton<IStartupFilter>(new CandidateSignInFilter());
                 services.RemoveAll<IFeatureFlags>();
                 services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
+                services.RemoveAll<IHttpClientFactory>();
+                services.AddSingleton<IHttpClientFactory>(new PaspoortHttpClientFactory());
                 services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
                 services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
                     new HttpClient(new StubHandler(), disposeHandler: false)
@@ -343,6 +346,15 @@ public class MobilePaspoortCircuitResumePlaywrightTests
                     ctx.Response.Redirect(ret);
                 });
                 next(app);
+            };
+    }
+
+    private sealed class PaspoortHttpClientFactory : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name)
+            => new(new StubHandler(), disposeHandler: true)
+            {
+                BaseAddress = new Uri("http://api.test/")
             };
     }
 
