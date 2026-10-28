@@ -547,6 +547,12 @@
 .cp-plain-app .panel-page.sollicitaties-page--plain,
 .cp-plain-app .panel-page.kb-saved--plain {
   padding-bottom: 8px;
+  scroll-padding-bottom: calc(var(--bottom-nav-h, 56px) + var(--lobsy-coach-pill-h, 52px) + 24px);
+}
+
+.cp-plain-app .sollicitaties-toolbar,
+.cp-plain-app .kb-saved__toolbar {
+  scroll-margin-bottom: calc(var(--bottom-nav-h, 56px) + var(--lobsy-coach-pill-h, 52px) + 16px);
 }
 
 @media (max-width: 700px) {

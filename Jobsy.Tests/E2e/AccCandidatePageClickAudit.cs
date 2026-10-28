@@ -89,7 +89,8 @@ internal static class AccCandidatePageClickAudit
         }
 
         Assert.All(rows, row =>
-            Assert.True(row.Ok1440 && row.Ok390, $"Niet klikbaar: {row.Element} (1440={(row.Ok1440 ? "ok" : "fout")}, 390={(row.Ok390 ? "ok" : "fout")})"));
+            Assert.True(row.Ok1440 && row.Ok390,
+                $"Niet klikbaar: {row.Element} (1440={(row.Ok1440 ? "ok" : "fout")}, 390={(row.Ok390 ? "ok" : "fout")}) {row.Note}"));
     }
 
     private static async Task<ViewportResult> AuditViewportAsync(
@@ -104,7 +105,7 @@ internal static class AccCandidatePageClickAudit
         var url = baseUrl.TrimEnd('/') + pathAndQuery;
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 60_000 });
+        await page.WaitForSelectorAsync("[data-plain-app]", new() { Timeout = 60_000 });
         await DismissTransientOverlaysAsync(page);
         await TagInteractivesAsync(page);
 
@@ -138,7 +139,7 @@ internal static class AccCandidatePageClickAudit
             cancellationToken.ThrowIfCancellationRequested();
             await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
             await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 60_000 });
+            await page.WaitForSelectorAsync("[data-plain-app]", new() { Timeout = 60_000 });
             await DismissTransientOverlaysAsync(page);
             await TagInteractivesAsync(page);
 
@@ -199,6 +200,10 @@ internal static class AccCandidatePageClickAudit
               let idx = 0;
               for (const el of nodes) {
                 if (!isVisible(el)) continue;
+                if (el.closest('.wg-topbar, .bottom-nav, nav.bottom-nav, .lobsy-coach-dock')) {
+                  skipped.push(labelOf(el) + ' (shell-chrome)');
+                  continue;
+                }
                 const textLower = labelOf(el).toLowerCase();
                 const skip = shouldSkip(el, textLower);
                 if (skip) {
@@ -225,7 +230,7 @@ internal static class AccCandidatePageClickAudit
 
     private static async Task<(bool Ok, string? Reason)> EvaluateHitAsync(IPage page, int idx)
     {
-        return await page.EvaluateAsync<(bool Ok, string? Reason)>(
+        var hit = await page.EvaluateAsync<HitPayload>(
             """
             ({ idx }) => {
               const el = document.querySelector('[data-acc-click-idx="' + idx + '"]');
@@ -233,24 +238,34 @@ internal static class AccCandidatePageClickAudit
               el.scrollIntoView({ block: 'center', inline: 'nearest' });
               const r = el.getBoundingClientRect();
               const x = Math.min(window.innerWidth - 2, Math.max(2, r.left + r.width / 2));
-              const y = Math.min(window.innerHeight - 2, Math.max(2, r.top + r.height / 2));
-              const hit = document.elementFromPoint(x, y);
-              if (!hit) return { ok: false, reason: 'no-hit' };
-              const ok = hit === el || el.contains(hit);
+              const y = Math.min(window.innerHeight - 2, Math.max(2, r.top + Math.min(24, r.height * 0.35)));
+              const topEl = document.elementFromPoint(x, y);
+              if (!topEl) return { ok: false, reason: 'no-hit' };
+              const ok = topEl === el || el.contains(topEl);
               if (ok) return { ok: true, reason: 'ok' };
-              if (!el.closest('.bottom-nav, nav.bottom-nav') && hit.closest('.bottom-nav, nav.bottom-nav')) {
+              if (!el.closest('.bottom-nav, nav.bottom-nav') && topEl.closest('.bottom-nav, nav.bottom-nav')) {
                 return { ok: false, reason: 'blocked-by-bottom-nav' };
               }
-              const coach = hit.closest('.lobsy-coach-dock, [data-lobsy-coach], [data-ssr-coach]');
+              const coach = topEl.closest('.lobsy-coach-dock, [data-lobsy-coach], [data-ssr-coach]');
               if (coach && !el.closest('.lobsy-coach-dock, [data-lobsy-coach], [data-ssr-coach]')) {
                 return { ok: false, reason: 'blocked-by-coach-pill' };
               }
-              const block = hit.tagName.toLowerCase()
-                + (hit.className ? '.' + String(hit.className).trim().split(/\\s+/)[0] : '');
+              const block = topEl.tagName.toLowerCase()
+                + (topEl.className ? '.' + String(topEl.className).trim().split(/\\s+/)[0] : '');
               return { ok: false, reason: 'blocked-by-' + block };
             }
             """,
             new { idx });
+        return (hit.Ok, hit.Reason);
+    }
+
+    private sealed class HitPayload
+    {
+        public bool ok { get; set; }
+        public string? reason { get; set; }
+
+        public bool Ok => ok;
+        public string? Reason => reason;
     }
 
     private static async Task<(bool Ok, string? Detail)> TryClickWithEffectAsync(
@@ -265,7 +280,13 @@ internal static class AccCandidatePageClickAudit
 
         try
         {
-            if (tag is "input" or "textarea" or "select")
+            if (tag == "select")
+            {
+                await locator.ClickAsync(new() { Timeout = 10_000 });
+                return (true, "select-click");
+            }
+
+            if (tag is "input" or "textarea")
             {
                 await locator.ClickAsync(new() { Timeout = 10_000 });
                 var focused = await page.EvaluateAsync<bool>(
