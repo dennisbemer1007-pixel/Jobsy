@@ -143,8 +143,16 @@
     grid-template-rows: 64px auto minmax(0, 1fr);
   }
 
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-plain-banenkaart="1"][data-banenkaart-ssr="1"]:not(:has(> .kb-mockup-top)) {
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
   .app-shell--banenkaart-shell .jobsy-discovery.jobsy-discovery--lagen[data-plain-banenkaart="1"][data-banenkaart-ssr="1"] > .main {
     grid-row: 2 / 4;
+  }
+
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-plain-banenkaart="1"]:not(:has(> .kb-mockup-top)) > .main {
+    grid-row: 1 / -1;
   }
 
   .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-plain-banenkaart="1"].show-map .vacancy-pane,
@@ -168,7 +176,15 @@
     grid-template-rows: 62px auto minmax(0, 1fr) !important;
   }
 
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-plain-banenkaart="1"][data-banenkaart-ssr="1"]:not(:has(> .kb-mockup-top)) {
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
   .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-plain-banenkaart="1"] > .main {
     grid-row: 2 / 4;
+  }
+
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-plain-banenkaart="1"]:not(:has(> .kb-mockup-top)) > .main {
+    grid-row: 1 / -1;
   }
 }
