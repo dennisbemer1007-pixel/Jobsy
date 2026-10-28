@@ -372,7 +372,7 @@
     "sha256": "1b05b82d4323e08f40c5b37c128e9edafc8df0cbc3d74e170253b4d0e7cf6f5c"
   },
   "js/app-core.js": {
-    "sha256": "ad3bea026b57f15f6748fc4633cd2730cd21cf63a12ca87d42046e5949a41d1c",
+    "sha256": "bf6e594af832bf54f958bcc5552c4be4a8be6ad8a5e81627056b7a5e1b056ec1",
     "v": "20261026-kreeft26"
   },
   "js/app-extras.js": {
@@ -396,8 +396,8 @@
     "sha256": "be0981005545b6199c109395104406b6d3f8d03528f9f332d20a504e4ccd3c4b"
   },
   "js/banenkaart-maps-boot.js": {
-    "v": "20261027-bk4-h",
-    "sha256": "6a26ed9a1b42573963dc444703043289385907e3ff60c9f9486b3ed6da338f14"
+    "v": "20261028-bk6-a",
+    "sha256": "574911700d1bc304b395fddd51fc9e4aa6b4dfc9c984262757ceff0652fad2dd"
   },
   "js/banenkaart-prefetch.js": {
     "v": "20261027-bk4-h",

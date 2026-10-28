@@ -270,6 +270,14 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
 
                     if (path.StartsWith("/api/banenkaart-client", StringComparison.OrdinalIgnoreCase))
                     {
+                        // Catalog/pins BFF adds ETag + cache headers; do not short-circuit with raw stub JSON.
+                        if (path.Equals("/api/banenkaart-client/all", StringComparison.OrdinalIgnoreCase)
+                            || path.Equals("/api/banenkaart-client/pins", StringComparison.OrdinalIgnoreCase))
+                        {
+                            await nxt();
+                            return;
+                        }
+
                         ctx.Response.ContentType = "application/json; charset=utf-8";
                         await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
                         return;
