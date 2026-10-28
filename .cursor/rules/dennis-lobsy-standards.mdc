@@ -1,5 +1,5 @@
 ---
-description: Dennis/Lobsy vaste regels (28 okt 2026) — kleine PR's, scoped acc-test, rebuild, eindtotaal
+description: Dennis/Lobsy vaste regels (28 okt 2026) — Skia, plain 2-pagina PR's, scoped acc-test
 alwaysApply: true
 ---
 
@@ -7,65 +7,50 @@ alwaysApply: true
 
 Gelden voor **alle** agent- en PR-werk vanaf deze datum, tenzij Dennis expliciet anders zegt.
 
-**Werkwijze (28 okt ~07:43):** kleine stapjes, snel vooruit. **Eén onderwerp per PR** — houd PR's klein.
+**Werkwijze:** kleine stapjes, snel vooruit.
 
 ## 1. Fix faalt → max één patch, daarna rebuild
 
-Werkt een fix **niet** na **één** gerichte poging op **acceptatie**, bouw dat onderdeel **opnieuw vanaf nul** (verwijder oude component/handlers/JS/CSS waar nodig; nieuwe SSR/minimal implementatie). Geen eindeloos patchen op hetzelfde kapotte pad.
+Werkt een fix **niet** na **één** gerichte poging op **acceptatie**, bouw dat onderdeel **opnieuw vanaf nul**. Geen eindeloos patchen op hetzelfde kapotte pad.
 
-## 2. Gefilmde stromen (kwaliteitsdoel, eindtotaal)
+## 2. Gefilmde stromen (eindtotaal)
 
-Uiteindelijk (één **totale** test als alles af is) mag in deze stromen **geen** bug, foutmelding, lege staat of haperende layout zichtbaar zijn:
+Na afloop van de prioriteitenlijst: één **totale** test. Onboarding 1–10, Match, banenkaart, #1301 — zero visible defects; laadtijd doel **&lt; 1 s**, max **3 s**; banenkaart-filters **&lt; 500 ms**.
 
-| Stroom | Scope |
-|--------|--------|
-| Kandidaat-onboarding | stappen **1–10** |
-| Match | volledige flow |
-| Banenkaart | na onboarding |
-| #1301 | alle punten uit die scope |
+Geen volledige regressie **per PR** (behalve waar plain per pagina expliciet alles test, §6).
 
-**Laadtijd (acc, realistisch netwerk):**
-
-- Doel: **&lt; 1 s** per pagina/stap
-- Harde grens: **3 s**
-- Filters banenkaart: **&lt; 500 ms**
-
-Volledige onboarding/Match/banenkaart-regressie **niet** per PR — alleen bij de **eindtotaal**-run.
-
-## 3. Prioriteit (volgorde)
+## 3. Prioriteit (volgorde, 28 okt ~07:47)
 
 1. **#1308** — ImageSharp → SkiaSharp (MIT)
-2. **#1305** — Match / banenkaart vacatures
-3. **#1301**
-4. Voorbeeld-bug **AssessmentItemExamples**
-5. **Plain-stijl kandidaat** (#878)
+2. **Plain-stijl kandidaat** (#878) — mockup `docs/mockups/kandidaat/plain` @ `592a3596f`
+   - Eerst pagina's **buiten** onboarding, daarna **onboarding**
+3. **#1305** — Match / banenkaart vacatures *(achter eerste plain-PR's, tenzij al klaar)*
+4. **#1301**
+5. Voorbeeld-bug **AssessmentItemExamples** *(zelfde verschuiving)*
 6. **#1290** — drie werelden
 
-(S16 / #1307 en eerdere items: afgerond waar gemerged.)
+#1305 / #1301 / voorbeeld-bug **niet** tussendoor starten tenzij expliciet afgestemd met Dennis (melden als je ze toch wilt afronden).
 
-## 4. Acceptatie zelf-test (goedgekeurd 28 okt ~07:27)
+## 4. Acceptatie zelf-test (28 okt ~07:27)
 
-Agent mag **zelf** op **https://acceptatie.lobsy.nl** testen met **@jobsy.local** seed-accounts. Wachtwoord: constante in `DemoUsersSeeder` — **nooit** in PR, logs, screenshots, commits of agent-samenvattingen.
+Op **https://acceptatie.lobsy.nl** met **@jobsy.local** seed-accounts. Wachtwoord: `DemoUsersSeeder` — **nooit** in PR, logs, screenshots, commits of samenvattingen.
 
-**Veiligheid op acc:**
+Veiligheid: nepdata; accounts niet verwijderen; **niet** klikken op Later verder / Account verwijderen / Begin opnieuw / Intrekken; geen echte sollicitaties; geen nieuwe leerling-codes zonder noodzaak; geen **Roland** in user-facing tekst.
 
-- Alleen **nepdata**; accounts **niet** verwijderen.
-- **Niet** klikken: “Later verder”, “Account verwijderen”, “Begin opnieuw”, “Intrekken”.
-- Geen **echte** sollicitaties.
-- Geen **nieuwe leerling-seed-codes** verbruiken zonder noodzaak.
-- Geen naam **“Roland”** in user-facing tekst.
+## 5. Acc-evidence per gewone PR (scoped)
 
-## 5. Acc-evidence **per PR** (scoped, 28 okt ~07:43)
+**Jij** test de **gefixte onderdelen** na deploy: werkt het, knoppen/links in scope klikbaar, laadtijd, screenshots **1440 + 390** in de melding.
 
-**Jij** test **elke fix zelf** op acc **na deploy** (seed-accounts, §4):
+## 6. Plain-stijl PR's (#878)
 
-- Werkt het?
-- Zijn **alle knoppen/links op die plek** klikbaar?
-- **Laadtijd** meten en in je melding vermelden.
-- **Screenshots 1440 + 390** bij de PR-/statusmelding voor die scope.
+- **Precies 2 pagina's per PR**, target **acceptatie**.
+- **Per pagina** na deploy op acc:
+  - Alles **strak** (layout, geen fouten/leeg/haperen)
+  - **Elke** knop, link en veld **klikbaar en werkend**
+  - Laadtijd **&lt; 1 s** (max **3 s**)
+  - **Screenshots 1440 en 390 per pagina** in je melding
+- Werkt iets niet: §1 (max één fix, daarna rebuild).
 
-Geen volledige onboarding/Match/banenkaart-regressierun **per PR**.
+## 7. PR melden
 
-**PR pas melden aan Dennis** als scoped acc-check + evidence klaar is. **Eén totale test** (volledige stromen, §2) pas als de prioriteitslijst (§3) af is.
-
-**Actueel:** #1307 (merge `1942dec`) — scoped acc-test zodra live; daarna §3-volgorde.
+Pas melden als scoped acc-check + evidence klaar is. Eindtotaal-test pas na hele lijst (§2–3).
