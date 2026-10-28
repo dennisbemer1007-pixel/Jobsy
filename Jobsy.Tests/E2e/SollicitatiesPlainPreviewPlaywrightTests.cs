@@ -4,8 +4,9 @@ namespace Jobsy.Tests.E2e;
 
 [Collection("FunctionalE2e")]
 [Trait("Suite", "FunctionalE2e")]
-public sealed class SollicitatiesPlainPreviewPlaywrightTests : IAsyncLifetime
+public sealed class SollicitatiesPlainPreviewPlaywrightTests(ITestOutputHelper output) : IAsyncLifetime
 {
+    private readonly ITestOutputHelper _output = output;
     private IllustratedPagesWebFactory? _web;
     private string? _baseUrl;
 
@@ -82,6 +83,8 @@ public sealed class SollicitatiesPlainPreviewPlaywrightTests : IAsyncLifetime
 
             Assert.True(gap.LargestEmptyBand < 8, $"{slug}@{width}: lege strook {gap.LargestEmptyBand}px");
             Assert.True(gap.GapUnderHeader < 48, $"{slug}@{width}: gap onder header {gap.GapUnderHeader}px");
+            _output.WriteLine(
+                $"preview-{slug}-{width}: onder header={gap.UnderHeader}, gap={gap.GapUnderHeader}px, grootste lege strook={gap.LargestEmptyBand}px");
 
             Directory.CreateDirectory("/opt/cursor/artifacts");
             var file = $"/opt/cursor/artifacts/preview-{slug}-{width}.png";
