@@ -7,40 +7,57 @@
 @inject EmployerScopeState Scope
 @inject NavigationManager Navigation
 
-<header class="wg-topbar">
+<header class="wg-topbar @(CandidateShell ? "wg-topbar--candidate" : null)">
     <div class="wg-topbar__start">
-        <a class="wg-topbar__brand" href="/werkgever" aria-label="Lobsy Werkgever">
+        <a class="wg-topbar__brand" href="@BrandHref" aria-label="Lobsy">
             <LobsyLogo Class="wg-topbar__logo" Alt="Lobsy" Variant="LobsyLogoVariant.HorizontalDark" />
-            <span class="wg-topbar__brand-text">
-                <span class="wg-topbar__role-tag">@Culture["WgShell.Werkgever"]</span>
-            </span>
+            @if (!CandidateShell)
+            {
+                <span class="wg-topbar__brand-text">
+                    <span class="wg-topbar__role-tag">@Culture["WgShell.Werkgever"]</span>
+                </span>
+            }
         </a>
-        <EntScopeChip Label="@Scope.Label"
-                      SubLabel="@Scope.SubLabel"
-                      SelectedKey="@Scope.Current?.Key"
-                      Options="@ChipOptions"
-                      ShowReadOnlyPill="@Scope.IsReadOnly"
-                      OnSelected="OnScopeSelected"
-                      IconSvg="@NavIcons.Companies" />
+        @if (!CandidateShell)
+        {
+            <EntScopeChip Label="@Scope.Label"
+                          SubLabel="@Scope.SubLabel"
+                          SelectedKey="@Scope.Current?.Key"
+                          Options="@ChipOptions"
+                          ShowReadOnlyPill="@Scope.IsReadOnly"
+                          OnSelected="OnScopeSelected"
+                          IconSvg="@NavIcons.Companies" />
+        }
     </div>
     <div class="wg-topbar__end">
-        @if (Scope.Role != EmployerRole.Regiomanager)
+        @if (!CandidateShell)
         {
-            <TokenWalletChip />
+            @if (Scope.Role != EmployerRole.Regiomanager)
+            {
+                <TokenWalletChip />
+            }
+            <PageHelp />
         }
-        <PageHelp />
         <NotificationBell />
         <LanguageSelector />
-        <AuthorizeView>
-            <Authorized>
-                <AuthHeader />
-                <span class="wg-topbar__account-meta">@RoleLabel</span>
-            </Authorized>
-        </AuthorizeView>
+        <AuthHeader />
+        @if (!CandidateShell)
+        {
+            <AuthorizeView>
+                <Authorized>
+                    <span class="wg-topbar__account-meta">@RoleLabel</span>
+                </Authorized>
+            </AuthorizeView>
+        }
     </div>
 </header>
 
 @code {
+    /// <summary>Plain candidate public/app shell: reuse employer top bar chrome without werkgever-only controls.</summary>
+    [Parameter] public bool CandidateShell { get; set; }
+
+    private string BrandHref => CandidateShell ? PublicRoutes.Landing : "/werkgever";
+
     private IReadOnlyList<EntScopeChip.ScopeOption> ChipOptions =>
         Scope.AvailableScopes
             .Select(s => new EntScopeChip.ScopeOption(s.Key, s.Label, s.SubLabel))

@@ -30,4 +30,15 @@ internal static class PlaywrightCookieConsent
             }
             """);
     }
+
+    public static async Task DismissIfVisibleAsync(IPage page)
+    {
+        await AcceptOnPageAsync(page);
+        var necessary = page.Locator("button[data-consent=\"necessary\"]").First;
+        if (await necessary.CountAsync() > 0 && await necessary.IsVisibleAsync())
+        {
+            await necessary.ClickAsync(new() { Timeout = 5_000 });
+            await page.WaitForTimeoutAsync(200);
+        }
+    }
 }

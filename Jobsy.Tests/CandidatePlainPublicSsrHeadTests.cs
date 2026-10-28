@@ -13,5 +13,11 @@ public sealed class CandidatePlainPublicSsrHeadTests
             app,
             StringComparison.Ordinal);
         Assert.Contains("data-plain-public-css", app, StringComparison.Ordinal);
+        Assert.Contains("data-plain-wg-topbar-css", app, StringComparison.Ordinal);
+        Assert.Contains("css/features/werkgever.css", app, StringComparison.Ordinal);
+        var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/PublicLayout.razor"));
+        Assert.Contains("WgTopBar CandidateShell", layout, StringComparison.Ordinal);
+        var mainLayout = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        Assert.Contains("app-shell--plain-candidate", mainLayout, StringComparison.Ordinal);
     }
 }

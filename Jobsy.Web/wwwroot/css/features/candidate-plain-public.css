@@ -24,6 +24,28 @@
   padding: 0;
 }
 
+/* Plain candidate shell reuses WgTopBar + werkgever.css (wg-topbar--candidate). */
+.pub-theme--plain-candidate .wg-topbar--candidate,
+.app-shell--plain-candidate .wg-topbar--candidate {
+  flex-shrink: 0;
+}
+
+.app-shell--plain-candidate .app-main,
+.app-shell--plain-candidate .app-main__content {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.wg-topbar--candidate .wg-topbar__brand .wg-topbar__logo {
+  display: inline-flex !important;
+}
+
+@media (max-width: 1023px) {
+  .wg-topbar--candidate .language-selector {
+    display: flex !important;
+  }
+}
+
 .pub-theme--plain-candidate .pub-header {
   height: 72px;
   background: #fff;
@@ -508,6 +530,15 @@
 }
 
 @media (max-width: 700px) {
+  .app-shell--plain-candidate .app-main__content > p:not([class]) {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 700px) {
   .pub-theme--plain-candidate .pub-header {
     height: 56px;
   }
@@ -557,4 +588,30 @@
     gap: 12px;
     padding: 18px 16px;
   }
+}
+
+/* Plain #878: light cookie bar, single consent line, one footer on paspoort. */
+.pub-theme--plain-candidate .cookie-consent {
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 24px rgba(17, 24, 39, 0.06);
+  color: #4b5563;
+}
+
+.pub-theme--plain-candidate .cookie-consent__title {
+  color: #111827;
+}
+
+.pub-theme--plain-candidate .cookie-consent__text-short {
+  display: none !important;
+}
+
+.pub-theme--plain-candidate .cookie-consent .btn-compact--primary {
+  background: #a8481f;
+  border-color: #a8481f;
+  color: #fff;
+}
+
+.pub-theme--plain-candidate:has(.cp-plain878 .foot) .pub-footer {
+  display: none !important;
 }

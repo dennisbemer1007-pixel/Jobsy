@@ -1,5 +1,18 @@
 /* Plain candidate app shell — paspoort + banenkaart (mockup #878 @ 592a3596) */
 
+.cp-plain878 {
+  background: #f7f8fa;
+  color: #111827;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.cp-plain878 .passport-page-wrap,
+.cp-plain878 .wrap {
+  box-sizing: border-box;
+}
+
 .cp-plain-app {
   --cp-bg: #f7f8fa;
   --cp-text: #111827;
@@ -88,5 +101,10 @@
 @media (max-width: 700px) {
   .cp-plain-app .passport-page {
     padding: 16px 16px 40px;
+  }
+
+  .app-shell--plain-candidate.has-bottom-nav .cp-plain878 main.wrap,
+  .app-shell--plain-candidate.has-bottom-nav .passport-page-wrap.cp-plain-app {
+    padding-bottom: calc(var(--bottom-nav-clearance, 4.25rem) + env(safe-area-inset-bottom, 0px));
   }
 }
