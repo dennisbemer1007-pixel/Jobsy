@@ -35,12 +35,15 @@ internal static class EmployerApplicationsListSsrData
         try
         {
             int? overdue = query.OverdueOnly ? ApplicationPipelineRules.OverdueHours : null;
-            var items = (await api.GetApplicationsAsync(
+            var companyIds = scope.CompanyIds.Count > 0 ? scope.CompanyIds : null;
+            var itemsTask = api.GetApplicationsAsync(
                 vacancyId: query.VacancyId,
                 overdueHours: overdue,
-                ct: ct)).ToList();
-            var companyIds = scope.CompanyIds.Count > 0 ? scope.CompanyIds : null;
-            var vacancies = (await api.GetManagedVacanciesAsync(companyIds, ct)).ToList();
+                ct: ct);
+            var vacanciesTask = api.GetManagedVacanciesAsync(companyIds, ct);
+            await Task.WhenAll(itemsTask, vacanciesTask);
+            var items = (await itemsTask).ToList();
+            var vacancies = (await vacanciesTask).ToList();
 
             var filtered = FilterList(items, query);
             var totalPages = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)ApplicationPipelineRules.ListPageSize));

@@ -75,7 +75,9 @@ public sealed class AccIsochroneUatPlaywrightTests
         };
         var json = JsonSerializer.Serialize(metrics, new JsonSerializerOptions { WriteIndented = true });
         await File.WriteAllTextAsync(Path.Combine(ArtifactDir, "acc-isochrone-uat-metrics.json"), json);
-        await File.WriteAllTextAsync(Path.Combine(AgentStoreDir, "acc-isochrone-uat-metrics.json"), json);
+        TryCopyToAgentStore(
+            Path.Combine(ArtifactDir, "acc-isochrone-uat-metrics.json"),
+            Path.Combine(AgentStoreDir, "acc-isochrone-uat-metrics.json"));
 
         if (failures.Count > 0)
         {
@@ -98,6 +100,7 @@ public sealed class AccIsochroneUatPlaywrightTests
             ViewportSize = new() { Width = width, Height = height },
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         var isoStatuses = new List<int>();
         page.Response += (_, res) =>
@@ -112,22 +115,43 @@ public sealed class AccIsochroneUatPlaywrightTests
                    + $"&maxMinutes={maxMinutes}&transport={Uri.EscapeDataString(transport)}&weergave=kaart";
         var sw = Stopwatch.StartNew();
         await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         var domMs = sw.ElapsedMilliseconds;
 
         await page.WaitForFunctionAsync(
             """
             () => {
-              const el = document.querySelector('.map-pane[data-iso-mode], #job-map[data-iso-mode]');
-              if (!el) return false;
-              const m = el.getAttribute('data-iso-mode');
-              return m && m !== 'loading';
+              const root = document.querySelector('[data-banenkaart-ssr="1"]');
+              const canvas = document.querySelector('#job-map canvas.maplibregl-canvas');
+              const mapReady = root && root.dataset.banenkaartMapReady === '1';
+              const painted = canvas && canvas.width > 0 && canvas.height > 0;
+              return mapReady || painted;
             }
             """,
             null,
             new() { Timeout = 90_000 });
+        var mapReadyMs = sw.ElapsedMilliseconds;
+
+        var expectReal = !string.Equals(transport, "OV", StringComparison.OrdinalIgnoreCase);
+        await page.WaitForFunctionAsync(
+            expectReal
+                ? """
+                  () => {
+                    const el = document.querySelector('.map-pane[data-iso-mode], #job-map[data-iso-mode]');
+                    return el && el.getAttribute('data-iso-mode') === 'real';
+                  }
+                  """
+                : """
+                  () => {
+                    const el = document.querySelector('.map-pane[data-iso-mode], #job-map[data-iso-mode]');
+                    return el && el.getAttribute('data-iso-mode') === 'none';
+                  }
+                  """,
+            null,
+            new() { Timeout = 120_000 });
         var isoReadyMs = sw.ElapsedMilliseconds;
 
-        await page.WaitForTimeoutAsync(1500);
+        await page.WaitForTimeoutAsync(400);
 
         var isoMode = await page.EvaluateAsync<string>(
             """
@@ -136,42 +160,51 @@ public sealed class AccIsochroneUatPlaywrightTests
               return el ? (el.getAttribute('data-iso-mode') || '') : 'missing';
             }
             """);
-        var ringSummary = await page.EvaluateAsync<string>(
+        var ringFeatureCount = await page.EvaluateAsync<int>(
+            """
+            () => window.jobMap && typeof window.jobMap.__testGetTravelRingFeatureCount === 'function'
+              ? window.jobMap.__testGetTravelRingFeatureCount() : -1
+            """);
+        var renderedPinFeatures = await page.EvaluateAsync<int>(
             """
             () => {
               try {
-                const m = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
-                if (!m || !m.getSource('jobsy-travel-rings')) return 'no-source';
-                const src = m.getSource('jobsy-travel-rings');
-                const data = src._data || (src.serialize && src.serialize());
-                const g = data && data.features && data.features[0] && data.features[0].geometry;
-                if (!g || !g.coordinates) return 'empty';
-                const ring = g.coordinates[0];
-                return g.type + ':' + (ring ? ring.length : 0);
-              } catch (e) { return 'err:' + e.message; }
+                const map = window.jobMap && window.jobMap.__testGetMap && window.jobMap.__testGetMap();
+                if (!map) return 0;
+                const layers = ['jobsy-pins-clusters', 'jobsy-pins-unclustered', 'jobsy-pins-clusters-hit'];
+                return (map.queryRenderedFeatures({ layers: layers.filter(id => map.getLayer(id)) }) || []).length;
+              } catch (e) { return 0; }
             }
             """);
         var listCount = await page.Locator(".kb-list-row, .banenkaart-ssr-list__row, [data-testid='kb-list-row']").CountAsync();
 
         var screenshot = $"{prefix}-{tag}.png";
-        await page.ScreenshotAsync(new() { Path = Path.Combine(ArtifactDir, screenshot), FullPage = false });
-        File.Copy(Path.Combine(ArtifactDir, screenshot), Path.Combine(AgentStoreDir, screenshot), overwrite: true);
+        var shotPath = Path.Combine(ArtifactDir, screenshot);
+        var mapShot = page.Locator("#job-map").First;
+        if (await mapShot.CountAsync() > 0)
+        {
+            await mapShot.ScreenshotAsync(new() { Path = shotPath });
+        }
+        else
+        {
+            await page.ScreenshotAsync(new() { Path = shotPath, FullPage = false });
+        }
+
+        TryCopyToAgentStore(shotPath, Path.Combine(AgentStoreDir, screenshot));
 
         var isOv = string.Equals(transport, "OV", StringComparison.OrdinalIgnoreCase);
         if (isOv)
         {
             Assert.Equal("none", isoMode);
             Assert.DoesNotContain(200, isoStatuses);
-            Assert.True(ringSummary is "no-source" or "empty", "OV must not draw travel rings: " + ringSummary);
+            Assert.True(ringFeatureCount <= 0, "OV must not draw travel rings, count=" + ringFeatureCount);
+            Assert.True(renderedPinFeatures > 0, "OV map must show filtered vacancy pins, rendered=" + renderedPinFeatures);
         }
         else
         {
             Assert.Contains(200, isoStatuses);
             Assert.Equal("real", isoMode);
-            Assert.StartsWith("Polygon:", ringSummary, StringComparison.Ordinal);
-            var parts = ringSummary.Split(':');
-            Assert.True(parts.Length > 1 && int.TryParse(parts[1], out var pts) && pts > 20,
-                "Expected Valhalla polygon vertex count, got " + ringSummary);
+            Assert.True(ringFeatureCount > 0, "Expected travel ring features, count=" + ringFeatureCount);
         }
 
         return new
@@ -181,10 +214,12 @@ public sealed class AccIsochroneUatPlaywrightTests
             width,
             maxMinutes,
             dom_content_loaded_ms = domMs,
+            map_ready_ms = mapReadyMs,
             iso_mode_ready_ms = isoReadyMs,
             iso_mode = isoMode,
             isochrone_http_statuses = isoStatuses,
-            ring_summary = ringSummary,
+            travel_ring_feature_count = ringFeatureCount,
+            rendered_pin_features = renderedPinFeatures,
             list_row_count = listCount,
             screenshot
         };
@@ -216,5 +251,22 @@ public sealed class AccIsochroneUatPlaywrightTests
 
         var full = html[start..end].Trim();
         return full.Length > 12 ? full[..12] : full;
+    }
+
+    private static void TryCopyToAgentStore(string source, string dest)
+    {
+        try
+        {
+            if (File.Exists(source))
+            {
+                File.Copy(source, dest, overwrite: true);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 }

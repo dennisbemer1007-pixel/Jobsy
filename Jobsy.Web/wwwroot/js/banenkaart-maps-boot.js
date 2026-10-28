@@ -284,6 +284,23 @@ window.jobsyMaps = (function () {
         if (parsed.catalogMode && window.jobsyBanenkaartCatalog && typeof window.jobsyBanenkaartCatalog.prefetch === "function") {
             window.jobsyBanenkaartCatalog.prefetch().catch(function () { });
         }
+        try {
+            var travel = (parsed.mapInit && parsed.mapInit.travel) || parsed.travel || {};
+            var origin = parsed.origin || (parsed.mapInit && parsed.mapInit.origin);
+            var mode = String(travel.transport || "Fiets");
+            var maxMin = parseInt(travel.maxMinutes, 10) || 30;
+            if (origin && Number.isFinite(Number(origin.lat)) && Number.isFinite(Number(origin.lng))
+                && mode.toUpperCase() !== "OV") {
+                var isoUrl = "/api/travel/isochrones?lat=" + encodeURIComponent(String(origin.lat))
+                    + "&lng=" + encodeURIComponent(String(origin.lng))
+                    + "&mode=" + encodeURIComponent(mode)
+                    + "&minutes=" + encodeURIComponent(String(maxMin));
+                fetch(isoUrl, {
+                    credentials: "same-origin",
+                    headers: { Accept: "application/geo+json, application/json" }
+                }).catch(function () { });
+            }
+        } catch (eIsoWarm) { }
         var view = parsed.view || (parsed.mapInit && parsed.mapInit.view) || null;
         if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.warm === "function") {
             window.jobsyBasemapWarm.warm(view).catch(function () { });
