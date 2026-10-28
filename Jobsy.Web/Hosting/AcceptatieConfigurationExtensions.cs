@@ -16,4 +16,14 @@ public static class AcceptatieConfigurationExtensions
 
         return builder;
     }
+
+    public static bool IsAcceptatieDeployment(IConfiguration configuration)
+    {
+        var deployment = configuration["Lobsy:DeploymentEnvironment"]
+                         ?? configuration["Lobsy__DeploymentEnvironment"]
+                         ?? configuration["Deployment:Label"]
+                         ?? Environment.GetEnvironmentVariable("Lobsy__DeploymentEnvironment")
+                         ?? Environment.GetEnvironmentVariable("Lobsy:DeploymentEnvironment");
+        return string.Equals(deployment, DeploymentEnvironment.Acceptatie, StringComparison.OrdinalIgnoreCase);
+    }
 }
