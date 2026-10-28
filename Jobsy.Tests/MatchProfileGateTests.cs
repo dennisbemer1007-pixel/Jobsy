@@ -169,8 +169,10 @@ public class MatchProfileGateTests
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var seeder = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/DemoUsersSeeder.cs"));
         Assert.Contains("DemoCandidateIds.OnboardingE2eUserId", seeder, StringComparison.Ordinal);
-        Assert.Contains("existing.Id == DemoCandidateIds.OnboardingE2eUserId", seeder, StringComparison.Ordinal);
+        Assert.Contains("ShouldForceRefreshOnboardingE2e", seeder, StringComparison.Ordinal);
         Assert.Contains("preferredTransport", seeder, StringComparison.Ordinal);
+        Assert.Contains("homeAddress", seeder, StringComparison.Ordinal);
+        Assert.Contains("Kasweg 12", seeder, StringComparison.Ordinal);
     }
 
     [Fact]
