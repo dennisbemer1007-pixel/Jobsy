@@ -24,22 +24,6 @@
 
 <PageTitle>@(_plainShell ? Culture["PlainPublic.Signup.Title"] : Culture["Signup.Title"]) · Lobsy</PageTitle>
 
-@if (_plainShell)
-{
-    <AccountMakenPlain ReturnUrl="@_returnUrl"
-                       LoginHref="@($"/login?returnUrl={Uri.EscapeDataString(_returnUrl)}")"
-                       Van="@_van"
-                       ErrorMessage="@_errorMessage"
-                       FromUnder16="@_fromUnder16"
-                       FromTest="@_fromTest"
-                       EntraEnabled="@_entraEnabled"
-                       GoogleEnabled="@_googleEnabled"
-                       EmployersOn="@_employersOn"
-                       AntiforgeryFieldName="@_antiforgeryFieldName"
-                       AntiforgeryToken="@_antiforgeryToken" />
-}
-else
-{
 <div class="@(_plainShell ? "cp-plain-wrap cp-plain-login-wrap" : null)">
 <section class="@(_plainShell ? "cp-plain-login-section" : "au-stage au-stage--illustrated au-stage--kreeft-strip pub-signup")"
          aria-labelledby="signup-title">
@@ -177,7 +161,6 @@ else
     </div>
 </section>
 </div>
-}
 
 @code {
     private bool _plainShell;
