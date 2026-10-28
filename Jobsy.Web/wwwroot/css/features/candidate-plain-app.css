@@ -61,30 +61,6 @@
   background: var(--cp-bg);
 }
 
-/* Plain banenkaart: never style the map column like the shell (PR #1319 regressed tiles when cp-plain-app sat on .jobsy-discovery). */
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] {
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-}
-
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] .map-pane,
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] .map-stage,
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] .job-map,
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] .maplibregl-canvas-container,
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] canvas.maplibregl-canvas {
-  position: relative;
-  z-index: 1;
-}
-
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] .map-stage {
-  background: var(--map-land, #f8f4f0);
-}
-
-.jobsy-discovery--lagen[data-plain-banenkaart="1"] .job-map-placeholder {
-  z-index: 2;
-}
-
 @media (max-width: 700px) {
   .cp-plain-app .passport-page {
     padding: 16px 16px 40px;
