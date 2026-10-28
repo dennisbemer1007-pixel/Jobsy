@@ -56,7 +56,7 @@
     "v": "20261025-59"
   },
   "css/features/banenkaart.css": {
-    "sha256": "1ef41f4f6835f25976b5fb068c722ead0ec6f939d0e21b4713cc631b56b4586d",
+    "sha256": "c470f45f38165c833f02c3b3374735edbfd00679aba6da8c3027d0376093afd1",
     "v": "20261025-59"
   },
   "css/features/bedrijvenkaart.css": {
@@ -420,7 +420,7 @@
     "v": "20261027-02"
   },
   "js/blazor-boot.js": {
-    "sha256": "d9efcaf5f0b778f40668c56db6d06487c9051878dba8a04a4fa23f2dceb7d3bb",
+    "sha256": "b077c3062507e48f103fc098bf1872668570adf501ddd79e7f358184508d0bbd",
     "v": "20261021-15"
   },
   "js/candidate-settings.js": {
