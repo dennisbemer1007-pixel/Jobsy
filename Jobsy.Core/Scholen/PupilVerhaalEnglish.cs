@@ -342,6 +342,8 @@ public static class PupilVerhaalEnglish
         ["LeerlingStory.Section.Story"] = "This is you",
         ["LeerlingDroom.HaveTitle"] = "What you already have",
         ["LeerlingDroom.NeedTitle"] = "What do you need?",
+        ["LeerlingDroom.Save"] = "Save",
+        ["LeerlingDroom.PickFromList"] = "Or pick from the list (click = save immediately):",
         ["LeerlingDroom.Route.kok.1"] = "Now: {nu}|Choose food technology or economics later",
         ["LeerlingDroom.Route.kok.2"] = "Finish vmbo or havo|Work experience counts too",
         ["LeerlingDroom.Route.kok.3"] = "MBO Chef training|MBO levels 2–4, training takes 2–4 years",

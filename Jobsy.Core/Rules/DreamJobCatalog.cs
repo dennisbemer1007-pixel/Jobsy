@@ -107,6 +107,47 @@ public static class DreamJobCatalog
         return prefix.Concat(contains).Take(Math.Clamp(take, 1, 24)).ToList();
     }
 
+    /// <summary>Resolve typed job title to catalog key (exact title or synonym match).</summary>
+    public static bool TryResolveKey(string? query, out string key)
+    {
+        key = "";
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return false;
+        }
+
+        var norm = Normalize(query);
+        if (norm.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var job in All)
+        {
+            if (Normalize(job.TitleNl) == norm)
+            {
+                key = job.Key;
+                return true;
+            }
+
+            if (job.Synonyms.Any(s => Normalize(s) == norm))
+            {
+                key = job.Key;
+                return true;
+            }
+        }
+
+        var hits = Search(query, 1);
+        if (hits.Count > 0
+            && Normalize(hits[0].TitleNl).StartsWith(norm, StringComparison.Ordinal))
+        {
+            key = hits[0].Key;
+            return true;
+        }
+
+        return false;
+    }
+
     public static string Normalize(string value)
     {
         var formD = value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);

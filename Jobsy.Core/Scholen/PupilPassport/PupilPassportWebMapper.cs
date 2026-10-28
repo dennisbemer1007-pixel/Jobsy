@@ -31,7 +31,7 @@ public static class PupilPassportWebMapper
             var phaseKey = step.IsGoal || i >= RoutePhaseKeys.Length - 1
                 ? RoutePhaseKeys[^1]
                 : RoutePhaseKeys[Math.Min(i, RoutePhaseKeys.Length - 2)];
-            var title = SplitTitle(step.Title);
+            var title = PupilPassportLocalizedCopy.RouteStepTitle(SplitTitle(step.Title), m.Language);
             return new PupilG78PassportRouteStepDto(
                 PupilPassportLocalizedCopy.Get(phaseKey, m.Language),
                 title,

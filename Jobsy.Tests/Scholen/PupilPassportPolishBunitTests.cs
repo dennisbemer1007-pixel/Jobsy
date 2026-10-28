@@ -39,10 +39,12 @@ public sealed class PupilPassportPolishBunitTests : BunitContext
         {
             BaseAddress = new Uri("http://api.test/")
         }));
+        Services.AddHttpContextAccessor();
+        Services.AddAntiforgery();
     }
 
     [Fact]
-    public async Task Droombaan_keeps_fast_typing_when_saved_job_loads_late()
+    public async Task Droombaan_renders_ssr_form_with_saved_value_after_load()
     {
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
@@ -53,20 +55,12 @@ public sealed class PupilPassportPolishBunitTests : BunitContext
         nav.NavigateTo("http://localhost/leerling/droombaan");
         var cut = Render<LeerlingDroombaan>();
 
-        var input = cut.WaitForElement("[data-testid=leerling-droombaan-search]");
-        input.Focus();
-        const string typed = "Dierenarts";
-        var current = "";
-        foreach (var ch in typed)
-        {
-            current += ch;
-            input.Input(current);
-            await Task.Delay(60);
-        }
-
         cut.WaitForAssertion(
-            () => Assert.Equal(typed, cut.Find("[data-testid=leerling-droombaan-search]").GetAttribute("value")),
+            () => Assert.Equal("Kok", cut.Find("[data-testid=leerling-droombaan-search]").GetAttribute("value")),
             TimeSpan.FromSeconds(5));
+        Assert.Contains("method=\"post\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("name=\"jobTitle\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("data-enhance=\"false\"", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -145,7 +145,7 @@
                     @if (Model.DreamHaveItems is { Count: > 0 })
                     {
                         <div>
-                            <h4>@Culture["LeerlingDroom.HaveTitle"]</h4>
+                            <h4>@PupilPassportLocalizedCopy.Get("LeerlingDroom.HaveTitle", Culture.Language)</h4>
                             <ul>
                                 @foreach (var item in Model.DreamHaveItems)
                                 {
@@ -157,7 +157,7 @@
                     @if (Model.DreamLearnItems is { Count: > 0 })
                     {
                         <div>
-                            <h4>@Culture["LeerlingDroom.NeedTitle"]</h4>
+                            <h4>@PupilPassportLocalizedCopy.Get("LeerlingDroom.NeedTitle", Culture.Language)</h4>
                             <ul>
                                 @foreach (var item in Model.DreamLearnItems)
                                 {

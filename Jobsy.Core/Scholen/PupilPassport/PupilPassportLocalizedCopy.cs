@@ -1,3 +1,5 @@
+using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 
 namespace Jobsy.Core.Scholen.PupilPassport;
@@ -184,4 +186,84 @@ public static class PupilPassportLocalizedCopy
             Get($"LeerlingPassport.Discover.Letter.{letter}.3", language)
         ];
     }
+
+    public static string JobTitle(string jobKey, string language)
+    {
+        var catalog = DreamJobCatalog.All.FirstOrDefault(j =>
+            string.Equals(j.Key, jobKey, StringComparison.OrdinalIgnoreCase));
+        if (catalog is null)
+        {
+            return PupilRiasecJobIdeas.TitleFor(jobKey);
+        }
+
+        if (!PupilVerhaalLocalized.IsEnglish(language))
+        {
+            return catalog.TitleNl;
+        }
+
+        return EnJobTitles.TryGetValue(jobKey, out var en) ? en : catalog.TitleNl;
+    }
+
+    public static string JobDomain(string jobKey, string language)
+    {
+        var letter = PupilPassportCopy.JobRiasecLetter(jobKey);
+        return Get($"LeerlingPassport.Card.Domain.{letter}", language);
+    }
+
+    /// <summary>Route step headline for web/PDF (e.g. groep 8 → Group 8 in EN).</summary>
+    public static string RouteStepTitle(string title, string language)
+    {
+        if (!PupilVerhaalLocalized.IsEnglish(language))
+        {
+            return title;
+        }
+
+        if (title.Contains("groep 8", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Group 8";
+        }
+
+        if (title.Contains("groep 7", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Group 7";
+        }
+
+        if (title.Contains("Diergeneeskunde", StringComparison.Ordinal))
+        {
+            return "Study";
+        }
+
+        if (title.Contains("havo", StringComparison.OrdinalIgnoreCase)
+            || title.Contains("vwo", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Havo/vwo";
+        }
+
+        return title;
+    }
+
+    public static string JobBlurb(string jobKey, PupilQuestionSet set, string language)
+    {
+        if (!PupilVerhaalLocalized.IsEnglish(language))
+        {
+            return PupilPassportCopy.JobBlurb(jobKey, set);
+        }
+
+        return Get(set == PupilQuestionSet.Groep78
+            ? "LeerlingPassport.Card.Blurb.Generic.G78"
+            : "LeerlingPassport.Card.Blurb.Generic.Vo", language);
+    }
+
+    private static readonly Dictionary<string, string> EnJobTitles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["elektricien"] = "Electrician",
+        ["programmeur"] = "Programmer",
+        ["ingenieur"] = "Engineer",
+        ["kok"] = "Chef",
+        ["dierenarts"] = "Vet",
+        ["leraar"] = "Teacher",
+        ["politie"] = "Police officer",
+        ["brandweer"] = "Firefighter",
+        ["verpleegkundige"] = "Nurse",
+    };
 }

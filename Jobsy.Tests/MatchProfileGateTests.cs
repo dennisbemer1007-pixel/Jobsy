@@ -32,6 +32,29 @@ public class MatchProfileGateTests
     }
 
     [Fact]
+    public void IsMatchBasicsFilled_requires_name_and_travel_preset()
+    {
+        Assert.True(MatchProfileCompleteness.IsMatchBasicsFilled(
+            fullName: null,
+            firstName: "Sanne",
+            lastName: "Test",
+            maxTravelMinutes: 30,
+            preferredTransport: "Fiets"));
+        Assert.False(MatchProfileCompleteness.IsMatchBasicsFilled(
+            fullName: null,
+            firstName: "",
+            lastName: "",
+            maxTravelMinutes: 30,
+            preferredTransport: "Fiets"));
+        Assert.False(MatchProfileCompleteness.IsMatchBasicsFilled(
+            fullName: null,
+            firstName: "Sanne",
+            lastName: "Test",
+            maxTravelMinutes: 0,
+            preferredTransport: "Fiets"));
+    }
+
+    [Fact]
     public void HasEducationLevel_accepts_geen_as_answered()
     {
         Assert.True(MatchProfileCompleteness.HasEducationLevel(["Geen"]));

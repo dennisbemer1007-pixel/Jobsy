@@ -658,6 +658,7 @@ app.MapMeCandidateProxyEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
+app.MapPupilDroombaanFormEndpoints();
 app.MapPupilPdfEndpoints();
 app.MapAdminFrameEndpoints();
 app.MapLanguageEndpoints();

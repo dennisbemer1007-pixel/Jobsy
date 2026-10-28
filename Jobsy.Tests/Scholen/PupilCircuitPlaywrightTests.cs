@@ -224,6 +224,32 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Droombaan_post_save_persists_after_reload()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedCompletedWithDreamJobAsync("kok");
+        var baseUrl = EnsureWeb();
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        page.SetDefaultTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        var search = page.Locator("[data-testid=leerling-droombaan-search]");
+        await search.WaitForAsync();
+        await search.FillAsync("Dierenarts");
+        await page.Locator(".ll-dream__save").ClickAsync();
+        await page.WaitForURLAsync("**/leerling/droombaan**");
+        await Assertions.Expect(search).ToHaveValueAsync("Dierenarts");
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await Assertions.Expect(search).ToHaveValueAsync("Dierenarts");
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Paspoort_double_visit_and_english_switch_keep_session()
     {
         _ = TestContext.Current.CancellationToken;
