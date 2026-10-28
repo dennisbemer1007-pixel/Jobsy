@@ -20,12 +20,39 @@ internal static class PassportSsrShells
         string antiforgeryToken,
         string? openDataSection = null,
         string? returnUrl = null,
-        string? openProofItem = null)
+        string? openProofItem = null,
+        bool plainShell = false)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"passport-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtPaspoortDesk, KreeftHeaderStripAssets.LichtPaspoortMob, "licht-paspoort");
-        sb.Append("<div class=\"panel-page passport-page passport-page--illustrated passport-page--compact-preview-c\" data-testid=\"passport-page-ssr\" data-passport-ssr=\"1\">");
+        sb.Append("<div class=\"passport-page-wrap");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-app");
+        }
+
+        sb.Append("\">");
+        if (!plainShell)
+        {
+            KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtPaspoortDesk, KreeftHeaderStripAssets.LichtPaspoortMob, "licht-paspoort");
+        }
+
+        sb.Append("<div class=\"panel-page passport-page");
+        if (plainShell)
+        {
+            sb.Append(" passport-page--plain");
+        }
+        else
+        {
+            sb.Append(" passport-page--illustrated passport-page--compact-preview-c");
+        }
+
+        sb.Append("\" data-testid=\"passport-page-ssr\" data-passport-ssr=\"1\"");
+        if (plainShell)
+        {
+            sb.Append(" data-plain-app=\"paspoort\"");
+        }
+
+        sb.Append('>');
         PassportSsrHeroHtml.Append(sb, culture, data.FirstName);
         sb.Append("<div class=\"passport-layout\">");
         AppendSidebarCard(sb, culture, data, compact: false);

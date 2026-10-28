@@ -1,0 +1,68 @@
+/* Plain candidate app shell — paspoort + banenkaart (mockup #878 @ 592a3596) */
+
+.cp-plain-app {
+  --cp-bg: #f7f8fa;
+  --cp-text: #111827;
+  --cp-muted: #4b5563;
+  --cp-border: #e5e7eb;
+  --cp-accent: #a8481f;
+  --cp-accent-ink: #8a3a17;
+  --cp-accent-soft: #fbede5;
+  --cp-font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  font-family: var(--cp-font);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.cp-plain-app .kreeft-header-strip,
+.cp-plain-app .kb-banenkaart-header-strip,
+.cp-plain-app .passport-page--illustrated .passport-hero--illustrated,
+.cp-plain-app .passport-hero__illustration {
+  display: none !important;
+}
+
+.cp-plain-app.passport-page-wrap,
+.cp-plain-app .passport-page {
+  background: var(--cp-bg);
+}
+
+.cp-plain-app .passport-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  box-sizing: border-box;
+}
+
+.cp-plain-app .passport-layout__main-flow > .passport-ssr-footer-nav {
+  border-top: 1px solid var(--cp-border);
+  padding-top: 20px;
+  gap: 16px;
+}
+
+.cp-plain-app .passport-ssr-footer-nav a,
+.cp-plain-app .btn,
+.cp-plain-app .btn-secondary {
+  min-height: 52px;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.cp-plain-app .btn-primary,
+.cp-plain-app .passport-card__pdf-btn {
+  background: var(--cp-accent);
+  border-color: var(--cp-accent);
+  color: #fff;
+}
+
+.cp-plain-app .banenkaart-page-wrap {
+  background: var(--cp-bg);
+}
+
+@media (max-width: 700px) {
+  .cp-plain-app .passport-page {
+    padding: 16px 16px 40px;
+  }
+}
