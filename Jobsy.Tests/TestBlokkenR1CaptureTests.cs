@@ -22,9 +22,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Jobsy.Tests.Testing;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 
 namespace Jobsy.Tests;
 
@@ -155,22 +155,22 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             return;
         }
 
-        using var page = Image.Load<Rgba32>(path);
+        using var page = SkiaTestImage.LoadRgba(path);
         var heroTop = (int)(page.Height * 0.12);
         var heroBottom = (int)(page.Height * 0.38);
         var heroHeight = heroBottom - heroTop;
-        using var hero = new Image<Rgba32>(page.Width, heroHeight);
-        for (var y = 0; y < heroHeight; y++)
+        using var hero = SkiaTestImage.CreateSolid(page.Width, heroHeight, SKColors.Transparent);
+        using (var canvas = new SKCanvas(hero))
         {
-            for (var x = 0; x < page.Width; x++)
-            {
-                hero[x, y] = page[x, heroTop + y];
-            }
+            using var pageBmp = page.ToBitmap();
+            canvas.DrawBitmap(
+                pageBmp,
+                new SKRect(0, heroTop, page.Width, heroBottom),
+                new SKRect(0, 0, page.Width, heroHeight));
         }
 
-        using var ms = new MemoryStream();
-        hero.SaveAsPng(ms);
-        var ex = Record.Exception(() => AssertMobHeroVisiblePixels(ms.ToArray(), stem));
+        var heroPng = SkiaTestImage.EncodePng(hero);
+        var ex = Record.Exception(() => AssertMobHeroVisiblePixels(heroPng, stem));
         Assert.NotNull(ex);
     }
 
@@ -293,18 +293,18 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
     }
 
-    private static Rgba32 MobHeroBlockReference(string slug) => slug switch
+    private static TestRgba MobHeroBlockReference(string slug) => slug switch
     {
-        "hoe-je-werkt" => new Rgba32(232, 238, 246, 255),
-        "leuk" => new Rgba32(248, 236, 230, 255),
-        "sfeer" => new Rgba32(241, 234, 226, 255),
-        "waarden" => new Rgba32(236, 242, 236, 255),
-        _ => new Rgba32(245, 242, 238, 255)
+        "hoe-je-werkt" => new TestRgba(232, 238, 246, 255),
+        "leuk" => new TestRgba(248, 236, 230, 255),
+        "sfeer" => new TestRgba(241, 234, 226, 255),
+        "waarden" => new TestRgba(236, 242, 236, 255),
+        _ => new TestRgba(245, 242, 238, 255)
     };
 
     private static void AssertMobHeroNoHardBlockSeams(byte[] png, string stem)
     {
-        using var image = Image.Load<Rgba32>(png);
+        using var image = SkiaTestImage.LoadRgba(png);
         var block = MobHeroBlockReference(stem);
         var w = image.Width;
         var h = image.Height;
@@ -313,9 +313,9 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         var xHi = (int)(w * 0.92);
         var yStart = Math.Max(1, (int)(h * 0.08));
 
-        static float Lum(Rgba32 p) => 0.299f * p.R + 0.587f * p.G + 0.114f * p.B;
+        static float Lum(TestRgba p) => 0.299f * p.R + 0.587f * p.G + 0.114f * p.B;
 
-        static bool NearBlock(Rgba32 p, Rgba32 c, int tol = 24)
+        static bool NearBlock(TestRgba p, TestRgba c, int tol = 24)
             => Math.Max(Math.Max(Math.Abs(p.R - c.R), Math.Abs(p.G - c.G)), Math.Abs(p.B - c.B)) <= tol;
 
         for (var x = xStart; x < w; x++)
@@ -323,8 +323,8 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             var seam = 0;
             for (var y = 0; y < h; y++)
             {
-                var a = image[x - 1, y];
-                var b = image[x, y];
+                var a = ToTestRgba(image.GetRgba(x - 1, y));
+                var b = ToTestRgba(image.GetRgba(x, y));
                 if (Math.Abs(Lum(a) - Lum(b)) <= 8)
                 {
                     continue;
@@ -347,8 +347,8 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             var seam = 0;
             for (var x = xLo; x < xHi; x++)
             {
-                var a = image[x, y - 1];
-                var b = image[x, y];
+                var a = ToTestRgba(image.GetRgba(x, y - 1));
+                var b = ToTestRgba(image.GetRgba(x, y));
                 if (Math.Abs(Lum(a) - Lum(b)) <= 8)
                 {
                     continue;
@@ -367,6 +367,8 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
     }
 
+    private static TestRgba ToTestRgba((byte R, byte G, byte B, byte A) p) => new(p.R, p.G, p.B, p.A);
+
     private static void AssertMobHeroPersonPixelsFullyOpaque(string slug, byte[] _)
     {
         var root = FindRepoRoot();
@@ -376,8 +378,8 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         Assert.True(File.Exists(cutoutPath), $"Missing figure cutout: {cutoutPath}");
         Assert.True(File.Exists(maskPath), $"Missing person mask: {maskPath}");
 
-        using var cutout = Image.Load<Rgba32>(cutoutPath);
-        using var mask = Image.Load<L8>(maskPath);
+        using var cutout = SkiaTestImage.LoadRgba(cutoutPath);
+        using var mask = SkiaTestImage.LoadRgb(maskPath);
         Assert.Equal(cutout.Width, mask.Width);
         Assert.Equal(cutout.Height, mask.Height);
 
@@ -387,13 +389,13 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         {
             for (var x = 0; x < cutout.Width; x++)
             {
-                if (mask[x, y].PackedValue < 128)
+                if (mask.GetRgb(x, y).R < 128)
                 {
                     continue;
                 }
 
                 personPixels++;
-                if (cutout[x, y].A < 255)
+                if (cutout.GetRgba(x, y).A < 255)
                 {
                     ghostPixels++;
                 }
@@ -405,11 +407,11 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             $"{slug}: {ghostPixels} person-mask pixels have alpha<255 in figure cutout (ghosting).");
     }
 
-    private static Rgba32 SampleMobHeroCreamReference(Image<Rgba32> image)
+    private static TestRgba SampleMobHeroCreamReference(SkiaTestImage image)
     {
         var w = image.Width;
         var h = image.Height;
-        var anchor = image[Math.Min(8, w - 1), Math.Min(8, h - 1)];
+        var anchor = ToTestRgba(image.GetRgba(Math.Min(8, w - 1), Math.Min(8, h - 1)));
         long r = 0;
         long g = 0;
         long b = 0;
@@ -420,7 +422,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         {
             for (var x = 0; x < leftEnd; x++)
             {
-                var p = image[x, y];
+                var p = ToTestRgba(image.GetRgba(x, y));
                 if (p.A < 200)
                 {
                     continue;
@@ -444,12 +446,12 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             return anchor;
         }
 
-        return new Rgba32((byte)(r / count), (byte)(g / count), (byte)(b / count), 255);
+        return new TestRgba((byte)(r / count), (byte)(g / count), (byte)(b / count), 255);
     }
 
     private static void AssertMobHeroVisiblePixels(byte[] png, string stem)
     {
-        using var image = Image.Load<Rgba32>(png);
+        using var image = SkiaTestImage.LoadRgba(png);
         var w = image.Width;
         var h = image.Height;
         var refPx = SampleMobHeroCreamReference(image);
@@ -463,7 +465,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         {
             for (var x = rightStart; x < w; x++)
             {
-                var p = image[x, y];
+                var p = ToTestRgba(image.GetRgba(x, y));
                 if (p.A < 200)
                 {
                     continue;

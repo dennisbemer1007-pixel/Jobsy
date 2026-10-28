@@ -1,5 +1,4 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -30,7 +29,7 @@ public sealed class TestBlockHeroAssetTests
     public void Hero_figure_png_has_no_opaque_frame_border(string slug)
     {
         var path = Path.Combine(FiguresDir(), $"{slug}-hero.png");
-        using var image = Image.Load<Rgba32>(path);
+        using var image = SkiaTestImage.LoadRgba(path);
         var w = image.Width;
         var h = image.Height;
         foreach (var (x, y) in new (int, int)[]
@@ -39,8 +38,9 @@ public sealed class TestBlockHeroAssetTests
                      (2, 2), (w - 3, 2), (2, h - 3), (w - 3, h - 3)
                  })
         {
-            Assert.True(image[x, y].A < 32,
-                $"{slug}-hero.png corner ({x},{y}) should stay transparent, alpha={image[x, y].A}.");
+            var px = image.GetRgba(x, y);
+            Assert.True(px.A < 32,
+                $"{slug}-hero.png corner ({x},{y}) should stay transparent, alpha={px.A}.");
         }
     }
 }

@@ -1,7 +1,5 @@
 using System.Text.Json;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Jobsy.Tests;
 

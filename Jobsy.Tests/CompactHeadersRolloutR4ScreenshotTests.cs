@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -264,7 +264,7 @@ public sealed class CompactHeadersRolloutR4ScreenshotTests : IAsyncLifetime
 
     internal static bool MapPngHasNonUniformPixels(byte[] pngBytes)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         if (img.Width < 40 || img.Height < 40)
         {
             return false;
@@ -288,7 +288,7 @@ public sealed class CompactHeadersRolloutR4ScreenshotTests : IAsyncLifetime
         {
             for (var x = xStart; x < xEnd; x += 6)
             {
-                var p = img[x, y];
+                var p = img.GetRgb(x, y);
                 var lum = (p.R + p.G + p.B) / 3;
                 if (lum < minLum)
                 {

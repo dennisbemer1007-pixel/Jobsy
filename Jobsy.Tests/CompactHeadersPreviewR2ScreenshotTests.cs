@@ -1,8 +1,8 @@
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+
+using Jobsy.Tests.Testing;
+using SkiaSharp;
 
 namespace Jobsy.Tests;
 
@@ -11,7 +11,7 @@ namespace Jobsy.Tests;
 public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
 {
     private const string ArtifactsDir = "/cursor/stores/self/artifacts/compact-headers-preview-r2";
-    private static readonly Rgb24 Pearl = new(247, 244, 240);
+    private static readonly TestRgb Pearl = new(247, 244, 240);
 
     private IllustratedPagesWebFactory? _web;
     private IllustratedPagesWebFactory? _onboardingWeb;
@@ -79,7 +79,7 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
     public async Task Capture_compact_header_preview_r2_variant_c_seamless()
     {
         Directory.CreateDirectory(ArtifactsDir);
-        var pages = new (string Slug, string Server, string Path, bool Onboarding, Rgb24 Cream)[]
+        var pages = new (string Slug, string Server, string Path, bool Onboarding, TestRgb Cream)[]
         {
             ("onboarding-kennismaken", _onboardingWeb!.ServerAddress, "/candidate/start", true, ParseHex(CompactHeroPreviewCream.OnboardingFinaleHero)),
             ("carriere", _web!.ServerAddress, "/carriere", false, ParseHex(CompactHeroPreviewCream.CarriereLearnGrowWide)),
@@ -174,7 +174,7 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
     /// <summary>Fail if a full-height vertical step (&gt;55 RGB delta) appears in the art column band.</summary>
     private static void AssertNoHardVerticalArtEdge(byte[] pngBytes, string slug, string variant)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var heroTop = slug == "onboarding-kennismaken" ? 105 : 64;
         var heroBottom = heroTop + (variant is "b" or "c" ? 132 : 172);
         heroBottom = Math.Min(heroBottom, img.Height - 2);
@@ -188,8 +188,8 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
             var samples = 0;
             for (var y = heroTop + 8; y < heroBottom - 8; y++)
             {
-                var left = img[x, y];
-                var right = img[x + 1, y];
+                var left = img.GetRgb(x, y);
+                var right = img.GetRgb(x + 1, y);
                 var delta = Math.Abs(left.R - right.R) + Math.Abs(left.G - right.G) + Math.Abs(left.B - right.B);
                 if (delta > 55)
                 {
@@ -215,12 +215,12 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
             $"{slug} variant={variant}: hard vertical art edge near x={worstX} (delta={worstDelta}).");
     }
 
-    private static int ColumnPearlToArtDelta(Image<Rgb24> img, int x, int y0, int y1)
+    private static int ColumnPearlToArtDelta(SkiaTestImage img, int x, int y0, int y1)
     {
         var max = 0;
         for (var y = y0; y < y1; y++)
         {
-            var p = img[x, y];
+            var p = img.GetRgb(x, y);
             var d = Math.Abs(p.R - Pearl.R) + Math.Abs(p.G - Pearl.G) + Math.Abs(p.B - Pearl.B);
             if (d > max)
             {
@@ -231,9 +231,9 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
         return max;
     }
 
-    private static void AssertSeamlessBandToArt(byte[] pngBytes, string slug, Rgb24 cream, int width)
+    private static void AssertSeamlessBandToArt(byte[] pngBytes, string slug, TestRgb cream, int width)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var heroTop = slug == "onboarding-kennismaken" ? 105 : 64;
         var heroBottom = Math.Min(heroTop + 132, img.Height - 2);
         var yMid = (heroTop + heroBottom) / 2;
@@ -246,7 +246,7 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
         {
             for (var y = heroTop + 8; y < heroBottom - 8; y++)
             {
-                var p = img[x, y];
+                var p = img.GetRgb(x, y);
                 lr += p.R;
                 lg += p.G;
                 lb += p.B;
@@ -254,7 +254,7 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
             }
         }
 
-        var leftAvg = new Rgb24((byte)(lr / ln), (byte)(lg / ln), (byte)(lb / ln));
+        var leftAvg = new TestRgb((byte)(lr / ln), (byte)(lg / ln), (byte)(lb / ln));
         var leftDrift = ColorDrift(leftAvg, cream);
         Assert.True(leftDrift < 68, $"{slug} c@{width}: left band drift from cream {leftDrift} (avg rgb {leftAvg.R},{leftAvg.G},{leftAvg.B}).");
 
@@ -262,21 +262,21 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
         var jumpX = 0;
         var xStart = (int)(img.Width * 0.38);
         var xEnd = (int)(img.Width * 0.58);
-        Rgb24? prev = null;
+        TestRgb? prev = null;
         for (var x = xStart; x <= xEnd; x++)
         {
             long r = 0, g = 0, b = 0;
             var n = 0;
             for (var y = heroTop + 10; y < heroBottom - 10; y++)
             {
-                var p = img[x, y];
+                var p = img.GetRgb(x, y);
                 r += p.R;
                 g += p.G;
                 b += p.B;
                 n++;
             }
 
-            var avg = new Rgb24((byte)(r / n), (byte)(g / n), (byte)(b / n));
+            var avg = new TestRgb((byte)(r / n), (byte)(g / n), (byte)(b / n));
             if (prev is { } p0)
             {
                 var jump = ColorDrift(avg, p0);
@@ -295,40 +295,43 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
             $"{slug} c@{width}: colour step between band and art at x≈{jumpX} (jump={maxColJump}).");
     }
 
-    private static Rgb24 ParseHex(string hex)
+    private static TestRgb ParseHex(string hex)
     {
         hex = hex.TrimStart('#');
-        return new Rgb24(
+        return new TestRgb(
             Convert.ToByte(hex[..2], 16),
             Convert.ToByte(hex[2..4], 16),
             Convert.ToByte(hex[4..6], 16));
     }
 
-    private static int ColorDrift(Rgb24 a, Rgb24 b)
+    private static int ColorDrift(TestRgb a, TestRgb b)
         => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     private static async Task BuildContactSheetAsync(string slug)
     {
         foreach (var width in new[] { 1440, 390 })
         {
-            var tiles = new List<Image<Rgb24>>();
+            var tiles = new List<SkiaTestImage>();
             foreach (var variant in new[] { "a", "b" })
             {
                 var path = Path.Combine(ArtifactsDir, $"{slug}-{variant}-{width}.png");
                 Assert.True(File.Exists(path), path);
-                tiles.Add(await Image.LoadAsync<Rgb24>(path));
+                tiles.Add(SkiaTestImage.LoadRgb(path));
             }
 
             var tileW = tiles[0].Width;
             var tileH = tiles[0].Height;
-            using var sheet = new Image<Rgb24>(tileW * 2, tileH + 40);
-            sheet.Mutate(ctx => ctx.BackgroundColor(Pearl));
-            for (var i = 0; i < tiles.Count; i++)
+            using var sheet = SkiaTestImage.CreateSolid(tileW * 2, tileH + 40, new SKColor(Pearl.R, Pearl.G, Pearl.B));
+            using (var canvas = new SKCanvas(sheet))
             {
-                sheet.Mutate(ctx => ctx.DrawImage(tiles[i], new Point(i * tileW, 40), 1f));
+                for (var i = 0; i < tiles.Count; i++)
+                {
+                    using var tileBmp = tiles[i].ToBitmap();
+                    canvas.DrawBitmap(tileBmp, i * tileW, 40);
+                }
             }
 
-            await sheet.SaveAsPngAsync(Path.Combine(ArtifactsDir, $"{slug}-contact-{width}.png"));
+            await SkiaTestImage.SavePngAsync(sheet, Path.Combine(ArtifactsDir, $"{slug}-contact-{width}.png"));
             foreach (var t in tiles)
             {
                 t.Dispose();

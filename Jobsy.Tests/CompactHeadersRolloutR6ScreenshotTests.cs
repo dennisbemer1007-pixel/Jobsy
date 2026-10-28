@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -221,19 +221,19 @@ public sealed class CompactHeadersRolloutR6ScreenshotTests : IAsyncLifetime
         }
 
         var png = await page.Locator("#bedrijvenkaart-map").ScreenshotAsync(new() { Type = ScreenshotType.Png });
-        using var image = Image.Load<Rgba32>(png);
+        using var image = SkiaTestImage.LoadRgba(png);
         if (image.Width < 8 || image.Height < 8)
         {
             return false;
         }
 
-        var sample = image[image.Width / 2, image.Height / 2];
+        var sample = image.GetRgb(image.Width / 2, image.Height / 2);
         var uniform = true;
         for (var y = 0; y < image.Height && uniform; y += Math.Max(1, image.Height / 12))
         {
             for (var x = 0; x < image.Width; x += Math.Max(1, image.Width / 12))
             {
-                var p = image[x, y];
+                var p = image.GetRgb(x, y);
                 if (Math.Abs(p.R - sample.R) > 8 || Math.Abs(p.G - sample.G) > 8 || Math.Abs(p.B - sample.B) > 8)
                 {
                     uniform = false;
