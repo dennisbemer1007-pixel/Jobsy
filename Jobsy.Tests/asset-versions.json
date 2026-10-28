@@ -384,8 +384,8 @@
     "v": "20261016-04"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261028-s16a",
-    "sha256": "c8426dd0a7b11f0d704dfa99fe3cb8558a1a420893c773cf54c0f23ca537b88d"
+    "v": "20261028-bk1",
+    "sha256": "bf3d5c886b36068bf9e0b2f3ec7fd159e3a27f88395e5178084016ec6f09e751"
   },
   "js/banenkaart-map-icons.js": {
     "v": "20261025-kreeft15",
