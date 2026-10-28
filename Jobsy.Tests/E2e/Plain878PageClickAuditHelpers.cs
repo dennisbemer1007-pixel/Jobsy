@@ -43,6 +43,11 @@ internal static class Plain878PageClickAuditHelpers
         {
             await page.WaitForSelectorAsync(".cp-plain878 main.wrap, [data-passport-ssr]", new() { Timeout = 60_000 });
         }
+        else if (path.Contains("applications", StringComparison.OrdinalIgnoreCase)
+                 || path.Contains("liked", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.WaitForSelectorAsync("[data-plain-app]", new() { Timeout = 60_000 });
+        }
         else if (path.Contains("banenkaart", StringComparison.OrdinalIgnoreCase))
         {
             await page.WaitForSelectorAsync("[data-banenkaart-ssr=\"1\"]", new() { Timeout = 60_000 });
@@ -262,22 +267,18 @@ internal static class Plain878PageClickAuditHelpers
               const y = Math.min(window.innerHeight - 1, Math.max(1, r.top + r.height / 2));
               const hit = document.elementFromPoint(x, y);
               if (!hit) return { ok: false, reason: 'no-hit' };
-              const blockerClass = (node) => {
-                if (!(node instanceof HTMLElement)) return null;
-                if (node.classList.contains('cookie-consent')) return 'cookie-consent';
-                if (node.classList.contains('lobsy-assistant')) return 'lobsy-assistant';
-                if (node.classList.contains('coach-pill')) return 'coach-pill';
-                if (node.classList.contains('lobsy-coach-dock')) return 'coach-pill';
-                return null;
-              };
-              let n = hit;
-              while (n) {
-                const b = blockerClass(n);
-                if (b) return { ok: false, reason: 'blocked-by-' + b };
-                n = n.parentElement;
+              if (hit === el || el.contains(hit)) return { ok: true, reason: 'ok' };
+              if (!el.closest('.bottom-nav, nav.bottom-nav') && hit.closest('.bottom-nav, nav.bottom-nav')) {
+                return { ok: false, reason: 'blocked-by-bottom-nav' };
               }
-              const ok = hit === el || el.contains(hit);
-              return { ok, reason: ok ? 'ok' : 'occluded' };
+              if (!el.closest('.lobsy-coach-dock, [data-lobsy-coach], [data-ssr-coach]')
+                  && hit.closest('.lobsy-coach-dock, [data-lobsy-coach], [data-ssr-coach]')) {
+                return { ok: false, reason: 'blocked-by-coach-pill' };
+              }
+              if (hit.closest('.cookie-consent')) {
+                return { ok: false, reason: 'blocked-by-cookie-consent' };
+              }
+              return { ok: false, reason: 'occluded' };
             }
             """);
         return (audit.Ok, audit.Ok ? "ok" : $"{label}: {audit.Reason}");

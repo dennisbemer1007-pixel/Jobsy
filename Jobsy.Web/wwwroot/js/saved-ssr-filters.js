@@ -136,9 +136,13 @@
     updateFilterChipCounts(page, filter, visible);
 
     var countEl = page.querySelector("[data-saved-filter-count]");
-    if (countEl && countEl.dataset.savedCountTemplate) {
+    if (countEl) {
       try {
-        countEl.textContent = countEl.dataset.savedCountTemplate.replace("{0}", String(visible));
+        if (visible === 1 && countEl.dataset.savedCountOne) {
+          countEl.textContent = countEl.dataset.savedCountOne;
+        } else if (countEl.dataset.savedCountTemplate) {
+          countEl.textContent = countEl.dataset.savedCountTemplate.replace("{0}", String(visible));
+        }
       } catch (_e2) {
         /* keep server text */
       }

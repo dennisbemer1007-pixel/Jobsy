@@ -390,6 +390,9 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Saved.Count",
             "{0} banen", "{0} jobs",
             "{0} ofert", "{0} joburi", "{0} وظائف");
+        Add("Kb.Saved.CountOne",
+            "1 baan", "1 job",
+            "1 oferta", "1 job", "1 وظيفة");
         Add("Kb.Saved.FilterAll",
             "Alles", "All",
             "Wszystkie", "Toate", "الكل");
