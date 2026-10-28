@@ -349,9 +349,9 @@ public static class IllustratedPagesApiStub
                 : string.Empty;
             return $$"""
                 {
-                  "fullName": "Test Kandidaat",
-                  "firstName": "Test",
-                  "lastName": "Kandidaat",{{testConsentLine}}
+                  "fullName": "Sam de Wit",
+                  "firstName": "Sam",
+                  "lastName": "de Wit",{{testConsentLine}}
                   "role": "Candidate",
                   "openForWork": true,
                   "homeLatitude": 51.9935,
