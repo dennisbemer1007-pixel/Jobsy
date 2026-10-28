@@ -11,7 +11,10 @@ internal static class BanenkaartFilterCookie
     internal const string CookieName = "Jobsy.BanenkaartFilters";
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-    internal static BanenkaartSsrQuery.State Merge(HttpContext http, BanenkaartSsrQuery.State fromUrl)
+    internal static BanenkaartSsrQuery.State Merge(
+        HttpContext http,
+        BanenkaartSsrQuery.State fromUrl,
+        bool omitStoredOrigin = false)
     {
         var urlOriginAbsent = BanenkaartSsrQuery.UrlOmitsOriginWhileFiltered(http.Request.Query);
         if (!TryRead(http.Request, out var stored))
@@ -19,7 +22,8 @@ internal static class BanenkaartFilterCookie
             return fromUrl with { UrlOriginAbsentByQuery = urlOriginAbsent };
         }
 
-        var keepStoredOrigin = !urlOriginAbsent;
+        // Logged-in candidates: profile home (KbMapStart) wins over stale cookie coordinates (e.g. old Utrecht sessions).
+        var keepStoredOrigin = !urlOriginAbsent && !omitStoredOrigin;
         return fromUrl with
         {
             SearchQuery = fromUrl.SearchQuery ?? stored.SearchQuery,

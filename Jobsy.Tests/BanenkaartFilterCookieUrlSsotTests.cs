@@ -66,4 +66,48 @@ public sealed class BanenkaartFilterCookieUrlSsotTests
         Assert.Null(merged.OriginLabel);
         Assert.Equal(30, merged.MaxTravelMinutes);
     }
+
+    [Fact]
+    public void Merge_skips_cookie_origin_for_candidates_when_omitStoredOrigin()
+    {
+        var stored = new BanenkaartSsrQuery.State(
+            SearchQuery: null,
+            WorkTypes: [],
+            MaxTravelMinutes: 20,
+            Transport: "Fiets",
+            RadiusKm: 15,
+            MinHoursPerWeek: 0,
+            MaxHoursPerWeek: 40,
+            MinHourlyWageCents: null,
+            MaxHourlyWageCents: null,
+            AgeYears: null,
+            MinMatchPercent: 0,
+            CategoryIds: [],
+            CompanyIds: [],
+            SortMode: "distance",
+            DesktopListMode: false,
+            OriginLat: 52.089,
+            OriginLng: 5.110,
+            OriginLabel: "Stationsplein 2, Utrecht",
+            Error: null,
+            Saved: false);
+
+        var dtoJson = JsonSerializer.Serialize(new
+        {
+            originLat = stored.OriginLat,
+            originLng = stored.OriginLng,
+            originLabel = stored.OriginLabel,
+        });
+        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(dtoJson));
+
+        var http = new DefaultHttpContext();
+        http.Request.Headers.Cookie = $"{BanenkaartFilterCookie.CookieName}={encoded}";
+
+        var fromUrl = BanenkaartSsrQuery.Parse(http.Request.Query);
+        var merged = BanenkaartFilterCookie.Merge(http, fromUrl, omitStoredOrigin: true);
+
+        Assert.Null(merged.OriginLat);
+        Assert.Null(merged.OriginLng);
+        Assert.Null(merged.OriginLabel);
+    }
 }

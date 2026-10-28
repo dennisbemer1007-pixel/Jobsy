@@ -63,7 +63,7 @@ else if (_bodyHtml is not null)
         var isCandidate = isAuthenticated && auth.User.IsInRole("Candidate");
 
         var fromUrl = BanenkaartSsrQuery.Parse(http.Request.Query);
-        var query = BanenkaartFilterCookie.Merge(http, fromUrl);
+        var query = BanenkaartFilterCookie.Merge(http, fromUrl, omitStoredOrigin: isCandidate);
         var explicitRadiusKm = http.Request.Query.ContainsKey("radiusKm");
         BanenkaartFilterCookie.Persist(http.Response, query);
 
