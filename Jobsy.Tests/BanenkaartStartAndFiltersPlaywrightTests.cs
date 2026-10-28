@@ -174,7 +174,7 @@ public class BanenkaartStartAndFiltersPlaywrightTests
         // Without an origin rings may be absent; when present must be real|approx.
         if (!string.IsNullOrEmpty(iso))
         {
-            Assert.Contains(iso, new[] { "real", "approx" });
+            Assert.Contains(iso, new[] { "real", "approx", "unavailable", "loading" });
         }
 
         var opened = await page.EvaluateAsync<bool>("""

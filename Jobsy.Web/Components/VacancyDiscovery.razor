@@ -4482,7 +4482,13 @@
     [JSInvokable]
     public Task OnIsoModeChanged(string mode)
     {
-        var next = string.Equals(mode, "real", StringComparison.OrdinalIgnoreCase) ? "real" : "approx";
+        var next = mode?.Trim().ToLowerInvariant() switch
+        {
+            "real" => "real",
+            "unavailable" => "unavailable",
+            "loading" => "loading",
+            _ => "approx"
+        };
         if (string.Equals(_isoMode, next, StringComparison.Ordinal))
         {
             return Task.CompletedTask;

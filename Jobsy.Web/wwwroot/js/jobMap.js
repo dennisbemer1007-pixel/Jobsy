@@ -4514,7 +4514,9 @@ window.jobMap = (function () {
 
     function setIsoMode(mode) {
         try {
-            const normalized = mode === "real" ? "real" : "approx";
+            const normalized = mode === "real"
+                ? "real"
+                : (mode === "unavailable" || mode === "loading" ? mode : "approx");
             const host = map && map.getContainer ? map.getContainer() : null;
             if (!host) {
                 return;
@@ -4690,27 +4692,24 @@ window.jobMap = (function () {
         travelRingDrawCount += 1;
 
         const drawGen = ++ringRedrawTries;
+
+        function applyIsochroneUnavailable() {
+            clearTravelRings();
+            setIsoMode("unavailable");
+        }
+
         function applyIsochroneFc(fc) {
             if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
                 Math.abs(lastOrigin.lng - lng) > 1e-7) {
                 return;
             }
             if (!fc) {
-                if (lagenLayout) {
-                    setIsoMode("approx");
-                } else {
-                    try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
-                    setIsoMode("approx");
-                }
+                applyIsochroneUnavailable();
                 return;
             }
             const isoFeatures = featuresFromIsochroneFc(fc);
             if (!isoFeatures.length) {
-                if (lagenLayout) {
-                    setIsoMode("approx");
-                } else {
-                    setIsoMode("approx");
-                }
+                applyIsochroneUnavailable();
                 return;
             }
             applyTravelRingData(isoFeatures, lat, lng);
@@ -4722,14 +4721,9 @@ window.jobMap = (function () {
             fetchIsochrones(lat, lng).then(applyIsochroneFc);
         }
 
-        // Circles first, swap isochrones when they arrive (no flash).
-        const circleFeatures = buildTravelRingFeatures(lat, lng);
-        if (!circleFeatures.length) {
-            clearTravelRings();
-            return;
-        }
-        applyTravelRingData(circleFeatures, lat, lng);
-        setIsoMode("approx");
+        // Real isochrones only — no cruise-speed circle placeholder (OV / provider miss / timeout).
+        clearTravelRings();
+        setIsoMode("loading");
         scheduleIsoLoad(loadIsochronesWhenIdle);
 
         function scheduleIsoLoad(fn) {

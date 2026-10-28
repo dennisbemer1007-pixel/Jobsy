@@ -32,13 +32,14 @@ public class IsochroneServiceTests
     }
 
     [Fact]
-    public void JobMap_fetches_isochrones_and_falls_back_to_circles()
+    public void JobMap_fetches_isochrones_and_clears_rings_when_unavailable()
     {
         var root = FindRepoRoot();
         var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
         Assert.Contains("fetchIsochrones", js, StringComparison.Ordinal);
         Assert.Contains("/api/travel/isochrones", js, StringComparison.Ordinal);
-        Assert.Contains("isochrone fallback", js, StringComparison.Ordinal);
+        Assert.Contains("applyIsochroneUnavailable", js, StringComparison.Ordinal);
+        Assert.DoesNotContain("isochrone fallback: circles", js, StringComparison.Ordinal);
         Assert.Contains("featuresFromIsochroneFc", js, StringComparison.Ordinal);
         Assert.Contains("buildTravelRingFeatures", js, StringComparison.Ordinal);
         // Graduated fill opacities (kandidaat-polish 04 — thinner/lighter rings).
