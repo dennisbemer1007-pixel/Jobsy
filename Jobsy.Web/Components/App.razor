@@ -2,8 +2,10 @@
 @using Jobsy.Web.Applications
 @using Jobsy.Web.Werkgever
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Features
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
+@inject IWebHostEnvironment HostEnvironment
 <!DOCTYPE html>
 <html lang="@HtmlLang" dir="@HtmlDir" data-enhance-nav="@(DisableEnhancedNav ? "false" : null)">
 
@@ -78,14 +80,27 @@
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/stijl-a.css")" />
     }
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/auth.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/landing.css")" />
-    @if (!UsesFullRouteStylesheetBundle)
+    @if (IncludeCandidatePlainPublicCss)
     {
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-decorative-layers.css")" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" />
     }
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-public.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/auth.css")" />
+    @if (!IncludeCandidatePlainPublicCss)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/landing.css")" />
+        @if (!UsesFullRouteStylesheetBundle)
+        {
+            <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-decorative-layers.css")" />
+        }
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-illustrated-public.css")" />
+    }
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/public-pages.css")" />
+    @if (IncludeCandidatePlainPublicCss)
+    {
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-public.css")" data-plain-public-css="true" />
+    }
     @* errors.css after app.min on candidate shells — see UsesFullRouteStylesheetBundle block below. *@
     @if (!UsesFullRouteStylesheetBundle)
     {
@@ -100,7 +115,7 @@
         @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/cookie-consent.css")" />
     }
-    @if (!LoadBlazorRuntime && IncludeSignupStaticCss)
+    @if (!LoadBlazorRuntime && IncludeSignupStaticCss && !IncludeCandidatePlainPublicCss)
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/signup-static.css")" />
     }
@@ -557,6 +572,12 @@
 
     private bool IncludeSignupStaticCss =>
         PageAssetCatalog.IncludeSignupStaticCss(RequestPath);
+
+    private bool IncludeCandidatePlainPublicCss =>
+        CandidatePlainPublicResolver.IsPlainShellForRequest(
+            HttpContextAccessor.HttpContext,
+            HostEnvironment,
+            Configuration);
 
     private bool IncludeLeerlingLoginScript =>
         PageAssetCatalog.IncludeLeerlingLoginScript(RequestPath);

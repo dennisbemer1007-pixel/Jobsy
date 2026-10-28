@@ -14,7 +14,7 @@
 @if (_plainShell)
 {
     <HeadContent>
-        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-plain-public.css")" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.UrlLeadingSlash("css/features/candidate-plain-public.css")" />
     </HeadContent>
 }
 <div class="pub-theme @(_compact ? "pub-theme--test" : null) @(_plainShell ? "pub-theme--plain-candidate" : null)"
