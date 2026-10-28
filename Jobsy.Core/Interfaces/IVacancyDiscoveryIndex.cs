@@ -29,6 +29,12 @@ public interface IVacancyDiscoveryIndex
     Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Public snapshot plus acceptatie test vacancies (same refresh rules as <see cref="GetActiveAsync"/>).
+    /// </summary>
+    Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Centroid + zoom of the current public snapshot, for MapLibre first paint.
     /// </summary>
     Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default);

@@ -71,8 +71,9 @@ internal static class DemoUsersSeeder
         {
             Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
             Email = "sanne@jobsy.local",
-            FullName = "Sanne de Vries",
-            FirstName = "Sanne",
+            FullName = KandidaatDemoProfileEnsurer.DemoFullName,
+            FirstName = KandidaatDemoProfileEnsurer.DemoFirstName,
+            LastName = KandidaatDemoProfileEnsurer.DemoLastName,
             Role = UserRole.Candidate,
             CompanyId = null,
             DateOfBirth = new DateOnly(1998, 4, 12),
@@ -266,11 +267,12 @@ internal static class DemoUsersSeeder
         await EnsureMembershipAsync(db, intermediaryId, CafeId);
         await EnsureMembershipAsync(db, intermediaryId, SupermarketId);
 
-        // Playwright + docs still sign in as kandidaat@jobsy.local (Sanne demo profile since #738).
+        // Playwright + docs still sign in as kandidaat@jobsy.local (same user as sanne@jobsy.local).
         await EnsureLoginEmailAliasAsync(
             db,
-            Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
-            "kandidaat@jobsy.local");
+            KandidaatDemoProfileEnsurer.PrimaryDemoCandidateId,
+            KandidaatDemoProfileEnsurer.DemoLoginEmail);
+        await KandidaatDemoProfileEnsurer.EnsureAsync(db, logger);
 
         await OnboardingE2eProfileEnsurer.EnsureAsync(db, logger);
 

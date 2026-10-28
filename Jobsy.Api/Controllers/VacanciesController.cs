@@ -15,8 +15,10 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Hosting;
 using Jobsy.Infrastructure.Media;
 using Jobsy.Infrastructure.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -51,6 +53,7 @@ public class VacanciesController : ControllerBase
     private readonly IKbDislikeSource _dislikeSource;
     private readonly IAdminAuditLog _audit;
     private readonly IVacancyPublicPhotoBytesLoader _publicPhotoBytes;
+    private readonly IConfiguration _configuration;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -68,7 +71,8 @@ public class VacanciesController : ControllerBase
         ICandidateVacancyCultureFitService cultureFit,
         IKbDislikeSource dislikeSource,
         IAdminAuditLog audit,
-        IVacancyPublicPhotoBytesLoader publicPhotoBytes)
+        IVacancyPublicPhotoBytesLoader publicPhotoBytes,
+        IConfiguration configuration)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -86,6 +90,19 @@ public class VacanciesController : ControllerBase
         _dislikeSource = dislikeSource;
         _audit = audit;
         _publicPhotoBytes = publicPhotoBytes;
+        _configuration = configuration;
+    }
+
+    private async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetDiscoveryRecordsAsync(
+        CancellationToken cancellationToken)
+    {
+        if (AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration)
+            && User.Identity?.IsAuthenticated == true)
+        {
+            return await _discoveryIndex.GetActiveIncludingTestAsync(cancellationToken);
+        }
+
+        return await _discoveryIndex.GetActiveAsync(cancellationToken);
     }
 
     /// <summary>
@@ -104,7 +121,7 @@ public class VacanciesController : ControllerBase
         var isAuthenticated = User.Identity?.IsAuthenticated == true;
         var (takeResolved, _) = VacancyListPaging.ResolveCatalogTake(take, isAuthenticated);
         var showWage = await CanViewerSeeWageAsync(cancellationToken);
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var ordered = records
             .OrderBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(r => r.Id)
@@ -145,7 +162,7 @@ public class VacanciesController : ControllerBase
     [EnableRateLimiting("map-read")]
     public async Task<IActionResult> GetBanenkaartCatalog(CancellationToken cancellationToken)
     {
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var payload = BanenkaartCatalogSerializer.Serialize(records);
         var etag = $"\"{payload.ETag}\"";
         if (Request.Headers.IfNoneMatch.Contains(etag))
@@ -197,7 +214,7 @@ public class VacanciesController : ControllerBase
             : null;
         var records = VacancyDiscoveryQuery.Filter(
             VacancyDiscoveryBbox.Filter(
-                await _discoveryIndex.GetActiveAsync(cancellationToken),
+                await GetDiscoveryRecordsAsync(cancellationToken),
                 bbox),
             companyIds: companyId,
             categoryIds: categoryId,
@@ -349,7 +366,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] string transport = TransportLabels.Bike,
         CancellationToken cancellationToken = default)
     {
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var record = records.FirstOrDefault(r => r.Id == id);
         if (record is null)
         {
@@ -420,7 +437,7 @@ public class VacanciesController : ControllerBase
             return Forbid();
         }
 
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var record = records.FirstOrDefault(r => r.Id == id);
         if (record is null)
         {
@@ -483,7 +500,7 @@ public class VacanciesController : ControllerBase
             return Ok(Array.Empty<VacancyCardDto>());
         }
 
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var byId = records.Where(r => parsed.Contains(r.Id)).ToDictionary(r => r.Id);
         var showWage = await CanViewerSeeWageAsync(cancellationToken);
         var mode = TransportLabels.Parse(transport);
@@ -623,7 +640,7 @@ public class VacanciesController : ControllerBase
 
         var records = VacancyDiscoveryQuery.Filter(
             VacancyDiscoveryBbox.Filter(
-                await _discoveryIndex.GetActiveAsync(cancellationToken),
+                await GetDiscoveryRecordsAsync(cancellationToken),
                 bbox),
             companyIds: companyId,
             categoryIds: categoryId,
@@ -809,7 +826,7 @@ public class VacanciesController : ControllerBase
     [EnableRateLimiting("public-read")]
     public async Task<IActionResult> GetPublicImage(Guid id, CancellationToken cancellationToken)
     {
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var record = records.FirstOrDefault(r => r.Id == id);
         if (record is null)
         {
@@ -844,7 +861,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] string variant = "desktop",
         CancellationToken cancellationToken = default)
     {
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var record = records.FirstOrDefault(r => r.Id == id);
         if (record is null)
         {
@@ -867,9 +884,21 @@ public class VacanciesController : ControllerBase
         }
         else
         {
-            webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width, variant);
-            Response.Headers.CacheControl = "public,max-age=31536000,immutable";
-            Response.Headers["X-Jobsy-Map-Popup-Photo"] = "photo";
+            try
+            {
+                webp = VacancyMapPopupPhotoEncoder.ToWebp(sourceBytes, width, variant);
+                Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+                Response.Headers["X-Jobsy-Map-Popup-Photo"] = "photo";
+            }
+            catch (Exception)
+            {
+                webp = VacancyMapPopupPhotoEncoder.CategoryPlaceholderWebp(
+                    record.CategoryColorHex,
+                    width,
+                    variant);
+                Response.Headers.CacheControl = "no-store";
+                Response.Headers["X-Jobsy-Map-Popup-Photo"] = "decode-fallback";
+            }
         }
 
         return File(webp, "image/webp");
@@ -973,7 +1002,7 @@ public class VacanciesController : ControllerBase
 
         limit = Math.Clamp(limit, 1, 3);
         var origin = vacancy.Location;
-        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var records = await GetDiscoveryRecordsAsync(cancellationToken);
         var withDistance = records
             .Where(r => r.Id != id)
             .Select(r => (Record: r, DistanceKm: GeoDistance.HaversineKm(

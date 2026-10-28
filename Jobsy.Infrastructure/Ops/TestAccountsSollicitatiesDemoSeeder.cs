@@ -4,6 +4,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Time;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -20,7 +21,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
 {
     public const string AcceptatiePrimaryCandidateEmail = "lobsy-test@mail.grokbot.com";
 
-    private static readonly DateTime DemoAnchorUtc = new(2026, 10, 10, 9, 0, 0, DateTimeKind.Utc);
+    private static DateTime DemoAnchorUtc =>
+        DateTime.UtcNow.Date.AddHours(9);
 
     private sealed record CompanySeed(Guid Id, string Name, WorkType WorkType, GeoPoint Location, string City, int KvkOffset);
 
@@ -63,6 +65,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return false;
         }
 
+        await KandidaatDemoProfileEnsurer.EnsureAsync(db, logger, cancellationToken);
+
         var branchManager = await FindBranchManagerAsync(db, configuration, cancellationToken);
         if (branchManager is null)
         {
@@ -70,6 +74,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
                 "Acceptatie sollicitaties demo skipped: no branch/regional manager in DB (run test-accounts seed once on lobsy-acc-api).");
             return false;
         }
+
+        await EnsureDemoCompaniesPersistedAsync(db, logger, cancellationToken);
 
         var beforeApps = await db.Applications.CountAsync(
             a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null,
@@ -228,28 +234,9 @@ public static class TestAccountsSollicitatiesDemoSeeder
 
         await RemoveStaleDemoApplicationsAsync(db, candidateId, logger, cancellationToken);
 
-        try
-        {
-            await new VacancyCategoryService(db).EnsureDefaultsAsync(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "VacancyCategory EnsureDefaults failed; resolving regulier category for sollicitaties demo.");
-        }
-
+        await EnsureDemoCompaniesPersistedAsync(db, logger, cancellationToken);
         var regulierCategoryId = await ResolveRegulierCategoryIdAsync(db, cancellationToken);
-        if (db.ChangeTracker.HasChanges())
-        {
-            await db.SaveChangesAsync(cancellationToken);
-        }
-
         var companies = BuildCompanies();
-        foreach (var company in companies)
-        {
-            await UpsertCompanyAsync(db, company, cancellationToken);
-        }
-
-        await db.SaveChangesAsync(cancellationToken);
 
         var vacancies = BuildVacancies(companies);
         foreach (var vacancy in vacancies)
@@ -475,8 +462,8 @@ public static class TestAccountsSollicitatiesDemoSeeder
             TestAccountsIds.SollicDemoCompanyHoreca,
             "Testbedrijf Horeca (test)",
             WorkType.Horeca,
-            new GeoPoint(52.0780, 4.3100),
-            "Den Haag",
+            new GeoPoint(51.9850, 4.2300),
+            "Honselersdijk",
             0),
         new(
             TestAccountsIds.SollicDemoCompanyRetail,
@@ -893,23 +880,36 @@ public static class TestAccountsSollicitatiesDemoSeeder
                 break;
 
             case DemoApplicationScenario.Scheduled:
-                await EnsureInterviewAsync(
-                    db,
-                    applicationId,
-                    branchManagerId,
-                    InterviewStatus.Scheduled,
-                    proposeSlots: true,
-                    chooseFirstSlot: true,
-                    cancellationToken);
-                await EnsureDemoConversationAsync(
-                    db,
-                    applicationId,
-                    branchManagerId,
-                    candidate.Id,
-                    "Top, dinsdag 27 oktober past goed voor ons team.",
-                    "Tot dinsdag!",
-                    cancellationToken);
-                break;
+                {
+                    var vacancy = await db.Vacancies.AsNoTracking()
+                        .Include(v => v.Company)
+                        .FirstAsync(v => v.Id == vacancyId, cancellationToken);
+                    var interviewLocation = vacancy.Company?.Address ?? "Teststraat 1, Honselersdijk";
+                    var slotStarts = AfterMatchEmployerDemoSlots.InitialUtc();
+                    await EnsureInterviewAsync(
+                        db,
+                        applicationId,
+                        branchManagerId,
+                        InterviewStatus.Scheduled,
+                        proposeSlots: true,
+                        chooseFirstSlot: true,
+                        cancellationToken,
+                        interviewLocation,
+                        slotStarts);
+                    var chosenLocal = AmsterdamTime.ToLocal(slotStarts[0]);
+                    var employerLine =
+                        $"Top, {chosenLocal:dddd d MMMM} past goed voor ons team.";
+                    var candidateLine = $"Tot {chosenLocal:dddd d MMMM}!";
+                    await EnsureDemoConversationAsync(
+                        db,
+                        applicationId,
+                        branchManagerId,
+                        candidate.Id,
+                        employerLine,
+                        candidateLine,
+                        cancellationToken);
+                    break;
+                }
 
             case DemoApplicationScenario.UnreadMessages:
                 await EnsureInterviewAsync(
@@ -1068,9 +1068,14 @@ public static class TestAccountsSollicitatiesDemoSeeder
         InterviewStatus status,
         bool proposeSlots,
         bool chooseFirstSlot,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? locationOrLink = null,
+        DateTime[]? slotStartsUtc = null)
     {
         _ = branchManagerId;
+        var location = string.IsNullOrWhiteSpace(locationOrLink)
+            ? "Teststraat 1, Den Haag"
+            : locationOrLink.Trim();
         var interview = await db.Interviews.FirstOrDefaultAsync(i => i.ApplicationId == applicationId, cancellationToken);
         if (interview is null)
         {
@@ -1082,7 +1087,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
                 CreatedAtUtc = DemoAnchorUtc,
                 UpdatedAtUtc = DemoAnchorUtc,
                 Format = InterviewFormat.OnSite,
-                LocationOrLink = "Teststraat 1, Den Haag",
+                LocationOrLink = location,
                 WithWhom = "Test filiaalmanager",
                 Note = "Mockup-gesprek voor acceptatie."
             };
@@ -1091,7 +1096,7 @@ public static class TestAccountsSollicitatiesDemoSeeder
 
         interview.Status = status;
         interview.Format = InterviewFormat.OnSite;
-        interview.LocationOrLink = "Teststraat 1, Den Haag";
+        interview.LocationOrLink = location;
         interview.UpdatedAtUtc = DateTime.UtcNow;
         interview.ChosenSlotId = null;
 
@@ -1105,12 +1110,9 @@ public static class TestAccountsSollicitatiesDemoSeeder
             return;
         }
 
-        var slotStarts = new[]
-        {
-            DemoAnchorUtc.AddDays(5).AddHours(9),
-            DemoAnchorUtc.AddDays(6).AddHours(14),
-            DemoAnchorUtc.AddDays(8).AddHours(10)
-        };
+        var slotStarts = slotStartsUtc is { Length: > 0 }
+            ? slotStartsUtc
+            : AfterMatchEmployerDemoSlots.InitialUtc();
 
         InterviewSlot? chosen = null;
         foreach (var start in slotStarts)
@@ -1460,6 +1462,33 @@ public static class TestAccountsSollicitatiesDemoSeeder
         }
 
         return await set.AsNoTracking().AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+    }
+
+    private static async Task EnsureDemoCompaniesPersistedAsync(
+        JobsyDbContext db,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await new VacancyCategoryService(db).EnsureDefaultsAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "VacancyCategory EnsureDefaults failed; resolving regulier category for sollicitaties demo.");
+        }
+
+        _ = await ResolveRegulierCategoryIdAsync(db, cancellationToken);
+
+        foreach (var company in BuildCompanies())
+        {
+            await UpsertCompanyAsync(db, company, cancellationToken);
+        }
+
+        if (db.ChangeTracker.HasChanges())
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 
 }

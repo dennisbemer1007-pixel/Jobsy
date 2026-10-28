@@ -1,3 +1,4 @@
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Hosting;
 using Jobsy.Web.Banenkaart;
 using Jobsy.Web.KandidaatBanen;
@@ -46,7 +47,9 @@ public static class BanenkaartClientEndpoints
         }
 
         var fromQuery = BanenkaartSsrQuery.Parse(http.Request.Query);
-        var merged = BanenkaartFilterCookie.Merge(http, fromQuery);
+        var omitStoredOrigin = http.User.Identity?.IsAuthenticated == true
+            && http.User.IsInRole(JobsyRoles.Candidate);
+        var merged = BanenkaartFilterCookie.Merge(http, fromQuery, omitStoredOrigin);
         var state = BanenkaartSsrQuery.FromForm(form, merged);
         BanenkaartFilterCookie.Persist(http.Response, state);
         return SeeOther(BanenkaartSsrQuery.BuildUrl(state));

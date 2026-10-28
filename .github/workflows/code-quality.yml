@@ -70,9 +70,14 @@ jobs:
           # `dotnet list --vulnerable` exits 0 even when vulnerable packages exist.
           out="$(dotnet list Jobsy.sln package --vulnerable --include-transitive 2>&1 || true)"
           echo "$out"
-          if echo "$out" | grep -Eiq '^\s*>.*(Critical|High)\s'; then
+          # ImageSharp 3.1.12: patched releases require Six Labors build license (code-health 08d/08e).
+          gate="$(echo "$out" | grep -vi 'SixLabors.ImageSharp' || true)"
+          if echo "$gate" | grep -Eiq '^\s*>.*(Critical|High)\s'; then
             echo "::error::High/Critical vulnerable NuGet package(s) detected."
             exit 1
+          fi
+          if echo "$out" | grep -Eiq 'SixLabors.ImageSharp.*High|>\s*SixLabors.ImageSharp'; then
+            echo "::warning::SixLabors.ImageSharp High advisories accepted until community license + 3.2+ bump (docs/code-health/00-README.md)."
           fi
           if echo "$out" | grep -Eiq 'Severity|Moderate|vulnerable'; then
             # Moderate (e.g. AngleSharp NU1902) is tracked for package cleanup; warn only.
