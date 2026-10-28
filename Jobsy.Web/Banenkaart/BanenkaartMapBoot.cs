@@ -265,6 +265,8 @@ internal static class BanenkaartMapBoot
         ["transportWalk"] = culture["Transport.Verb.Walk"],
         ["transportDefault"] = culture["Transport.Verb.Default"],
         ["noVacanciesInTravel"] = culture["Kb.Map.NoVacanciesInTravel"],
+        ["noVacanciesInViewport"] = culture["Kb.Map.NoVacanciesInViewport"],
+        ["resultOutsideTravelHint"] = culture["Kb.Filter.ResultOutsideTravelHint"],
         ["canSave"] = isAuthenticated,
         ["wageTooltipTitle"] = culture["Employer.WageByAge"],
         ["wageTooltipTitleEn"] = "Hourly wage (gross)",
