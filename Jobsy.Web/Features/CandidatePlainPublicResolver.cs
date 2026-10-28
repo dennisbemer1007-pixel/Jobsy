@@ -88,12 +88,25 @@ public sealed class CandidatePlainPublicResolver
            || string.Equals(path, PublicRoutes.CreateAccount, StringComparison.OrdinalIgnoreCase)
            || string.Equals(path, PublicRoutes.ForgotPassword, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Plain candidate app: paspoort and banenkaart (mockup plain #878).</summary>
+    /// <summary>Plain candidate app: paspoort, banenkaart, sollicitaties-cluster (mockup #878).</summary>
     public static bool IsPlainCandidateAppPath(string? path)
-        => string.Equals(path, "/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
-           || path?.StartsWith("/candidate/paspoort/", StringComparison.OrdinalIgnoreCase) == true
-           || string.Equals(path, "/banenkaart", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(path, "/banen", StringComparison.OrdinalIgnoreCase);
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return false;
+        }
+
+        if (string.Equals(path, "/candidate/paspoort", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/paspoort/", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/banenkaart", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/banen", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(path, "/candidate/applications", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(path, "/candidate/liked", StringComparison.OrdinalIgnoreCase);
+    }
 
     public static bool TryParse(string? raw, out bool enabled)
     {

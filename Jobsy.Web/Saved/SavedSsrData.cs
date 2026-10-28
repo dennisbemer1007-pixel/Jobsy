@@ -19,6 +19,9 @@ internal static class SavedSsrData
         bool IsAuthenticatedCandidate,
         bool EmployersEnabled,
         bool ShowJobListTabs,
+        bool AfterMatchEnabled,
+        bool ShowActiviteitenTab,
+        int UnreadMessagesTotal,
         string Filter,
         string Sort,
         string? ErrorMessage,
@@ -46,6 +49,8 @@ internal static class SavedSsrData
         var flags = await featureFlags.GetAsync(cancellationToken);
         var employersOn = flags.EmployersEnabled;
         var showTabs = !RoleNavCatalog.ShowsSavedInNav(flags);
+        var afterMatchOn = flags.AfterMatchEnabled;
+        var showActiviteitenTab = flags.IsEnabled(PlatformFeature.ActivityLog);
 
         if (!isCandidate)
         {
@@ -53,6 +58,9 @@ internal static class SavedSsrData
                 false,
                 employersOn,
                 showTabs,
+                afterMatchOn,
+                showActiviteitenTab,
+                0,
                 filter,
                 sort,
                 errorMessage,
@@ -71,6 +79,9 @@ internal static class SavedSsrData
                 true,
                 false,
                 showTabs,
+                afterMatchOn,
+                showActiviteitenTab,
+                0,
                 filter,
                 sort,
                 errorMessage,
@@ -112,6 +123,9 @@ internal static class SavedSsrData
             true,
             true,
             showTabs,
+            afterMatchOn,
+            showActiviteitenTab,
+            0,
             filter,
             sort,
             errorMessage,

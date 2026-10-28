@@ -10,7 +10,11 @@ namespace Jobsy.Web.Applications;
 
 internal static class ApplicationsSsrShells
 {
-    internal static string BuildBody(CultureState culture, ApplicationsSsrData.PageData data, string? detailReturnHref = null)
+    internal static string BuildBody(
+        CultureState culture,
+        ApplicationsSsrData.PageData data,
+        string? detailReturnHref = null,
+        bool plainShell = false)
     {
         if (!data.IsAuthenticatedCandidate)
         {
@@ -23,15 +27,36 @@ internal static class ApplicationsSsrShells
         }
 
         var sb = new StringBuilder();
-        sb.Append("<div class=\"sollicitaties-page-wrap\">");
-        AppendHeroStrip(sb, data);
+        sb.Append("<div class=\"sollicitaties-page-wrap");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-app");
+        }
+
+        sb.Append("\">");
+        if (!plainShell)
+        {
+            AppendHeroStrip(sb, data);
+        }
+
         sb.Append("<div class=\"panel-page sollicitaties-page");
+        if (plainShell)
+        {
+            sb.Append(" sollicitaties-page--plain");
+        }
+
         if (data.DetailView)
         {
             sb.Append(" sollicitaties-page--detail");
         }
 
-        sb.Append("\" data-testid=\"applications-page-ssr\"><div class=\"sollicitaties-shell\">");
+        sb.Append("\" data-testid=\"applications-page-ssr\"");
+        if (plainShell)
+        {
+            sb.Append(" data-plain-app=\"sollicitaties\"");
+        }
+
+        sb.Append("><div class=\"sollicitaties-shell\">");
         AppendPageIntro(sb, culture, data);
         sb.Append("<div class=\"sollicitaties-page__body\">");
         AppendTabsRow(sb, culture, data);
@@ -78,87 +103,20 @@ internal static class ApplicationsSsrShells
 
     private static void AppendSegmentTabs(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)
     {
-        sb.Append("<nav class=\"sollicitaties-segment\" aria-label=\"");
-        sb.Append(WebUtility.HtmlEncode(culture["Nav.MyApplications"]));
-        sb.Append("\">");
-        AppendSegmentTab(
+        var active = string.Equals(data.Tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal)
+            ? ApplicationsSsrClusterTabsSsr.ActiveBerichten
+            : string.Equals(data.Tab, ApplicationsSsrQuery.TabActiviteiten, StringComparison.Ordinal)
+                ? ApplicationsSsrClusterTabsSsr.ActiveActiviteiten
+                : ApplicationsSsrClusterTabsSsr.ActiveSollicitaties;
+        ApplicationsSsrClusterTabsSsr.AppendSegment(
             sb,
-            data,
-            ApplicationsSsrQuery.TabSollicitaties,
-            culture["Nav.ApplicationsTab"],
-            badge: null);
-        if (data.AfterMatchEnabled)
-        {
-            AppendSegmentTab(
-                sb,
-                data,
-                ApplicationsSsrQuery.TabBerichten,
-                culture["Apps.Ndm.Messages"],
-                badge: data.UnreadMessagesTotal > 0 ? data.UnreadMessagesTotal : null);
-        }
-
-        if (data.ShowActiviteitenTab)
-        {
-            AppendSegmentTab(
-                sb,
-                data,
-                ApplicationsSsrQuery.TabActiviteiten,
-                culture["Nav.ActivitiesTab"],
-                badge: null);
-        }
-        sb.Append("<a class=\"sollicitaties-segment__tab");
-        sb.Append("\" href=\"/candidate/liked\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Nav.SavedTab"]));
-        if (data.SavedCount > 0)
-        {
-            sb.Append("<span class=\"sollicitaties-segment__badge\" aria-hidden=\"true\">");
-            sb.Append(data.SavedCount);
-            sb.Append("</span>");
-        }
-
-        sb.Append("</a></nav>");
-    }
-
-    private static void AppendSegmentTab(
-        StringBuilder sb,
-        ApplicationsSsrData.PageData data,
-        string tab,
-        string label,
-        int? badge)
-    {
-        var active = string.Equals(data.Tab, tab, StringComparison.Ordinal);
-        sb.Append("<a class=\"sollicitaties-segment__tab");
-        if (active)
-        {
-            sb.Append(" is-active");
-        }
-
-        sb.Append("\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(ApplicationsSsrQuery.BuildUrl(tab, data.Filter, null)));
-        sb.Append("\" data-sollic-tab=\"");
-        sb.Append(WebUtility.HtmlEncode(tab));
-        sb.Append("\" data-enhance-nav=\"false\"");
-        if (string.Equals(tab, ApplicationsSsrQuery.TabBerichten, StringComparison.Ordinal))
-        {
-            sb.Append(" data-sollic-unread-threads=\"");
-            sb.Append(badge ?? 0);
-            sb.Append('"');
-        }
-        if (active)
-        {
-            sb.Append(" aria-current=\"page\"");
-        }
-
-        sb.Append('>');
-        sb.Append(WebUtility.HtmlEncode(label));
-        if (badge is > 0)
-        {
-            sb.Append("<span class=\"sollicitaties-segment__badge\" aria-hidden=\"true\">");
-            sb.Append(badge.Value);
-            sb.Append("</span>");
-        }
-
-        sb.Append("</a>");
+            culture,
+            new ApplicationsSsrClusterTabsSsr.TabContext(
+                data.AfterMatchEnabled,
+                data.ShowActiviteitenTab,
+                data.UnreadMessagesTotal,
+                data.SavedCount,
+                active));
     }
 
     private static void AppendInitiativeBanner(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data, bool inline)

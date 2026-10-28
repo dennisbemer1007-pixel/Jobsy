@@ -18,6 +18,8 @@ public sealed class CandidatePlainAppSsrHeadTests
         Assert.Contains("/candidate/paspoort", resolver, StringComparison.Ordinal);
         Assert.Contains("\"/banenkaart\"", resolver, StringComparison.Ordinal);
         Assert.Contains("\"/banen\"", resolver, StringComparison.Ordinal);
+        Assert.Contains("/candidate/applications", resolver, StringComparison.Ordinal);
+        Assert.Contains("/candidate/liked", resolver, StringComparison.Ordinal);
     }
 
     [Fact]
