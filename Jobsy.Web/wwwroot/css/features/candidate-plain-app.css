@@ -90,3 +90,99 @@
     padding: 16px 16px 40px;
   }
 }
+
+/* Sollicitaties + bewaard (plain shell) */
+.cp-plain-app.sollicitaties-page-wrap,
+.cp-plain-app.saved-page-wrap {
+  min-height: 100%;
+}
+
+.cp-plain-app .sollicitaties-page-wrap,
+.cp-plain-app.saved-page-wrap {
+  background: var(--cp-bg);
+}
+
+.cp-plain-app .panel-page.sollicitaties-page--plain,
+.cp-plain-app .panel-page.kb-saved--plain {
+  background: transparent;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  box-sizing: border-box;
+}
+
+.cp-plain-app .sollicitaties-intro__eyebrow {
+  color: var(--cp-accent);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cp-plain-app .sollicitaties-intro__title {
+  font-size: 32px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--cp-text);
+}
+
+.cp-plain-app .sollicitaties-intro__lead {
+  color: var(--cp-muted);
+  font-size: 18px;
+  max-width: 620px;
+}
+
+.cp-plain-app .sollicitaties-segment__tab,
+.cp-plain-app .sollicitaties-chip,
+.cp-plain-app .sollicitaties-toolbar__add,
+.cp-plain-app .sollic-card,
+.cp-plain-app .sollicitaties-empty-card__cta,
+.cp-plain-app .kb-saved .btn {
+  min-height: 52px;
+  border-radius: 8px;
+  font-family: var(--cp-font);
+}
+
+.cp-plain-app .sollicitaties-segment__tab.is-active,
+.cp-plain-app .sollicitaties-chip.is-active {
+  border-color: var(--cp-accent);
+  background: var(--cp-accent-soft);
+  color: var(--cp-accent-ink);
+  font-weight: 600;
+}
+
+.cp-plain-app .btn-primary,
+.cp-plain-app .sollicitaties-toolbar__add {
+  background: var(--cp-accent);
+  border-color: var(--cp-accent);
+  color: #fff;
+}
+
+.cp-plain-app .sollic-card,
+.cp-plain-app .sollicitaties-empty-card,
+.cp-plain-app .kb-saved-rail__card,
+.cp-plain-app .kb-saved .cand-side-card {
+  background: #fff;
+  border: 1px solid var(--cp-border);
+  border-radius: 12px;
+}
+
+.cp-plain-app .passport-ssr-footer-nav,
+.cp-plain-app .saved-ssr-footer-nav {
+  border-top: 1px solid var(--cp-border);
+  padding-top: 20px;
+  margin-top: 24px;
+}
+
+@media (max-width: 700px) {
+  .cp-plain-app .panel-page.sollicitaties-page--plain,
+  .cp-plain-app .panel-page.kb-saved--plain {
+    padding: 16px 16px 40px;
+  }
+
+  .cp-plain-app .sollicitaties-intro__title {
+    font-size: 23px;
+  }
+
+  .cp-plain-app .sollicitaties-intro__lead {
+    font-size: 17px;
+  }
+}

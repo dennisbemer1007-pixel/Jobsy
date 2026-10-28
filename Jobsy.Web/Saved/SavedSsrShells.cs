@@ -17,7 +17,12 @@ internal static class SavedSsrShells
 {
     private static readonly CultureInfo Dutch = new("nl-NL");
 
-    internal static string BuildBody(CultureState culture, SavedSsrData.PageData data, string antiforgeryToken, HttpContext http)
+    internal static string BuildBody(
+        CultureState culture,
+        SavedSsrData.PageData data,
+        string antiforgeryToken,
+        HttpContext http,
+        bool plainShell = false)
     {
         if (!data.IsAuthenticatedCandidate)
         {
@@ -30,9 +35,35 @@ internal static class SavedSsrShells
         }
 
         var sb = new StringBuilder();
-        sb.Append("<div class=\"saved-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.BewaardDesk, KreeftHeaderStripAssets.BewaardMob, "bewaard");
-        sb.Append("<div class=\"panel-page kb-saved kb-saved--illustrated panel-page--cand-ill\" data-testid=\"saved-page-ssr\" data-saved-save-path=\"");
+        sb.Append("<div class=\"saved-page-wrap");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-app");
+        }
+
+        sb.Append("\">");
+        if (!plainShell)
+        {
+            KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.BewaardDesk, KreeftHeaderStripAssets.BewaardMob, "bewaard");
+        }
+
+        sb.Append("<div class=\"panel-page kb-saved");
+        if (plainShell)
+        {
+            sb.Append(" kb-saved--plain");
+        }
+        else
+        {
+            sb.Append(" kb-saved--illustrated panel-page--cand-ill");
+        }
+
+        sb.Append("\" data-testid=\"saved-page-ssr\"");
+        if (plainShell)
+        {
+            sb.Append(" data-plain-app=\"bewaard\"");
+        }
+
+        sb.Append(" data-saved-save-path=\"");
         sb.Append(WebUtility.HtmlEncode(BanenkaartSsrQuery.SavePath));
         sb.Append("\" data-saved-unsave-path=\"/api/saved-client/unsave\" data-saved-toast-template=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.UndoToast"]));

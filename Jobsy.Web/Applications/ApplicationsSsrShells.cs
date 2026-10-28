@@ -10,7 +10,11 @@ namespace Jobsy.Web.Applications;
 
 internal static class ApplicationsSsrShells
 {
-    internal static string BuildBody(CultureState culture, ApplicationsSsrData.PageData data, string? detailReturnHref = null)
+    internal static string BuildBody(
+        CultureState culture,
+        ApplicationsSsrData.PageData data,
+        string? detailReturnHref = null,
+        bool plainShell = false)
     {
         if (!data.IsAuthenticatedCandidate)
         {
@@ -23,15 +27,36 @@ internal static class ApplicationsSsrShells
         }
 
         var sb = new StringBuilder();
-        sb.Append("<div class=\"sollicitaties-page-wrap\">");
-        AppendHeroStrip(sb, data);
+        sb.Append("<div class=\"sollicitaties-page-wrap");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-app");
+        }
+
+        sb.Append("\">");
+        if (!plainShell)
+        {
+            AppendHeroStrip(sb, data);
+        }
+
         sb.Append("<div class=\"panel-page sollicitaties-page");
+        if (plainShell)
+        {
+            sb.Append(" sollicitaties-page--plain");
+        }
+
         if (data.DetailView)
         {
             sb.Append(" sollicitaties-page--detail");
         }
 
-        sb.Append("\" data-testid=\"applications-page-ssr\"><div class=\"sollicitaties-shell\">");
+        sb.Append("\" data-testid=\"applications-page-ssr\"");
+        if (plainShell)
+        {
+            sb.Append(" data-plain-app=\"sollicitaties\"");
+        }
+
+        sb.Append("><div class=\"sollicitaties-shell\">");
         AppendPageIntro(sb, culture, data);
         sb.Append("<div class=\"sollicitaties-page__body\">");
         AppendTabsRow(sb, culture, data);

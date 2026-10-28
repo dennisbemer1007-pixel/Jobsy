@@ -132,10 +132,16 @@ else if (_bodyHtml is not null)
                 return;
             }
 
+            var plainShell = CandidatePlainPublicResolver.IsPlainShellForRequest(
+                http,
+                HostEnvironment,
+                Configuration);
+
             _bodyHtml = ApplicationsSsrShells.BuildBody(
                 Culture,
                 data,
-                string.IsNullOrEmpty(detailReturnHref) ? null : detailReturnHref);
+                string.IsNullOrEmpty(detailReturnHref) ? null : detailReturnHref,
+                plainShell);
         }
         catch (Exception ex)
         {
