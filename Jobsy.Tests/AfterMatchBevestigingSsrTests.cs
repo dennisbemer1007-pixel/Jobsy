@@ -37,7 +37,7 @@ public sealed class AfterMatchBevestigingSsrTests : BunitContext
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchBevestigingSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
         Assert.Contains("bevestiging-ssr", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261030-ndm-scroll2", razor, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/features/na-de-match.css\")", razor, StringComparison.Ordinal);
         Assert.Contains("ndm-mail-chrome.js", razor, StringComparison.Ordinal);
     }
 

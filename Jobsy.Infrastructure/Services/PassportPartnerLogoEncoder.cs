@@ -1,6 +1,6 @@
 using Jobsy.Core.Rules;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
+using Jobsy.Infrastructure.Media;
+using SkiaSharp;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -19,29 +19,24 @@ public static class PassportPartnerLogoEncoder
             throw new InvalidOperationException("logo_svg");
         }
 
-        Image image;
+        SKBitmap bitmap;
         try
         {
-            image = Image.Load(bytes);
+            bitmap = SkiaImageCodec.Decode(bytes);
         }
-        catch (UnknownImageFormatException)
+        catch (InvalidOperationException)
         {
             throw new InvalidOperationException("logo_type");
         }
 
-        using (image)
+        using (bitmap)
         {
-            if (image.Width < PassportPartnerLogoRules.MinWidthPx)
+            if (bitmap.Width < PassportPartnerLogoRules.MinWidthPx)
             {
                 throw new InvalidOperationException("logo_too_narrow");
             }
 
-            image.Metadata.ExifProfile = null;
-            image.Metadata.IccProfile = null;
-            image.Metadata.XmpProfile = null;
-            using var output = new MemoryStream();
-            image.Save(output, new PngEncoder());
-            return output.ToArray();
+            return SkiaImageCodec.EncodePng(bitmap);
         }
     }
 }

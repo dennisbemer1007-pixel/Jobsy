@@ -7,7 +7,7 @@ Dit is een testmail
 ===================
 
 Als je dit leest, werkt het versturen van mail vanaf acceptatie (Resend:
-Resend of SMTP). Verstuurd op 19 oktober 2026, 20:07.
+Resend of SMTP). Verstuurd op 28 oktober 2026, 10:58.
 
 Naar e-mails: https://lobsy.nl/admin/content/emails
 

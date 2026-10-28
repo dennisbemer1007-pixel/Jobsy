@@ -493,7 +493,7 @@ internal static class ApplicationsSsrData
         }
 
         var hint = afterMatch is not null
-            ? AfterMatchSollicitatiesPresentation.FormatListCardTimelineSummary(culture, afterMatch)
+            ? null
             : BuildCardHint(culture, a, timeline);
 
         return new SollicitationRow(

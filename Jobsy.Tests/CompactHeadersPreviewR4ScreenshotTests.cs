@@ -1,9 +1,8 @@
 using System.Text.Json;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -50,7 +49,7 @@ public sealed class CompactHeadersPreviewR4ScreenshotTests : IAsyncLifetime
     {
         Directory.CreateDirectory(ArtifactsDir);
         var report = new List<object>();
-        var pages = new (string Slug, string Server, string Path, bool Onboarding, Rgb24 Cream)[]
+        var pages = new (string Slug, string Server, string Path, bool Onboarding, TestRgb Cream)[]
         {
             ("onboarding-kennismaken", _onboardingWeb!.ServerAddress, "/candidate/start", true, ParseHex(CompactHeroPreviewCream.OnboardingFinaleHero)),
             ("carriere", _web!.ServerAddress, "/carriere", false, ParseHex(CompactHeroPreviewCream.CarriereLearnGrowWide)),
@@ -233,7 +232,7 @@ public sealed class CompactHeadersPreviewR4ScreenshotTests : IAsyncLifetime
         return a.X < bx2 && ax2 > b.X && a.Y < by2 && ay2 > b.Y;
     }
 
-    private static Rgb24 PageBackgroundFor(string slug)
+    private static TestRgb PageBackgroundFor(string slug)
         => slug == "onboarding-kennismaken"
             ? ParseHex("#f5f2ee")
             : ParseHex("#f7f4f0");
@@ -244,15 +243,15 @@ public sealed class CompactHeadersPreviewR4ScreenshotTests : IAsyncLifetime
         int heroBottom,
         int bandLeftX,
         int bandRightX,
-        Rgb24 pageBackground,
+        TestRgb pageBackground,
         bool skipRightEdge)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var y0 = heroTop + 10;
         var y1 = Math.Min(heroBottom - 8, heroTop + 24);
         var max = 0;
 
-        static void SampleLeftEdge(Image<Rgb24> image, int edgeX, int yStart, int yEnd, Rgb24 reference, ref int peak)
+        static void SampleLeftEdge(SkiaTestImage image, int edgeX, int yStart, int yEnd, TestRgb reference, ref int peak)
         {
             for (var dx = 0; dx <= 2; dx++)
             {
@@ -267,7 +266,7 @@ public sealed class CompactHeadersPreviewR4ScreenshotTests : IAsyncLifetime
             }
         }
 
-        static void SampleRightEdge(Image<Rgb24> image, int edgeXInclusive, int yStart, int yEnd, Rgb24 reference, ref int peak)
+        static void SampleRightEdge(SkiaTestImage image, int edgeXInclusive, int yStart, int yEnd, TestRgb reference, ref int peak)
         {
             for (var dx = 0; dx <= 2; dx++)
             {
@@ -296,7 +295,7 @@ public sealed class CompactHeadersPreviewR4ScreenshotTests : IAsyncLifetime
 
     private static (int Top, int Bottom) HeroBandY(string slug, byte[] pngBytes)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var heroTop = slug == "onboarding-kennismaken" ? 105 : 64;
         var heroBottom = Math.Min(heroTop + 132, img.Height - 2);
         return (heroTop, heroBottom);
@@ -304,7 +303,7 @@ public sealed class CompactHeadersPreviewR4ScreenshotTests : IAsyncLifetime
 
     private static int MaxColumnDeltaBeforeArtStart(byte[] pngBytes, int heroTop, int heroBottom, int artStartX, int windowPx)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var x0 = Math.Max(1, artStartX - windowPx);
         var x1 = Math.Min(img.Width - 2, artStartX);
         var y0 = heroTop + 8;
@@ -320,41 +319,42 @@ public sealed class CompactHeadersPreviewR4ScreenshotTests : IAsyncLifetime
         return max;
     }
 
-    private static Rgb24 ColumnAverage(Image<Rgb24> img, int x, int y0, int y1)
+    private static TestRgb ColumnAverage(SkiaTestImage img, int x, int y0, int y1)
     {
         long r = 0, g = 0, b = 0;
         var n = 0;
         for (var y = y0; y < y1; y++)
         {
-            var p = img[x, y];
+            var p = img.GetRgb(x, y);
             r += p.R;
             g += p.G;
             b += p.B;
             n++;
         }
 
-        return n == 0 ? new Rgb24(0, 0, 0) : new Rgb24((byte)(r / n), (byte)(g / n), (byte)(b / n));
+        return n == 0 ? new TestRgb(0, 0, 0) : new TestRgb((byte)(r / n), (byte)(g / n), (byte)(b / n));
     }
 
     private static void SaveBoundaryCrop(byte[] pngBytes, int artStartX, int heroTop, int heroBottom, string slug, int width, string suffix)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var x0 = Math.Max(0, artStartX - 24);
         var x1 = Math.Min(img.Width, artStartX + 48);
-        using var crop = img.Clone(ctx => ctx.Crop(new Rectangle(x0, heroTop, x1 - x0, heroBottom - heroTop)));
-        crop.SaveAsPng(Path.Combine(ArtifactsDir, $"{slug}-c-{width}{suffix}-art-left-edge.png"));
+        using var src = img.ToBitmap();
+        using var crop = SkiaTestImage.Crop(src, x0, heroTop, x1 - x0, heroBottom - heroTop);
+        SkiaTestImage.SavePng(crop, Path.Combine(ArtifactsDir, $"{slug}-c-{width}{suffix}-art-left-edge.png"));
     }
 
-    private static Rgb24 ParseHex(string hex)
+    private static TestRgb ParseHex(string hex)
     {
         hex = hex.TrimStart('#');
-        return new Rgb24(
+        return new TestRgb(
             Convert.ToByte(hex[..2], 16),
             Convert.ToByte(hex[2..4], 16),
             Convert.ToByte(hex[4..6], 16));
     }
 
-    private static int ColorDrift(Rgb24 a, Rgb24 b)
+    private static int ColorDrift(TestRgb a, TestRgb b)
         => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     private sealed class CaptureMetrics

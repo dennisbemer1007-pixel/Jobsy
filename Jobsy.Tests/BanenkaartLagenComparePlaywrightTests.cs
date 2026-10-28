@@ -1,9 +1,8 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Jobsy.Tests.Testing;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace Jobsy.Tests;
 
@@ -70,13 +69,13 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         var popupPhotoMetrics = new List<object>();
         try
         {
-        await CaptureViewportAsync(1280, 800, false, "desktop-1280-map-list", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            await WaitForRealIsochronesAsync(page);
-            eightPoint.AddRange(await EvaluateEightPointDesktopAsync(page));
-            var twoCol = await page.EvaluateAsync<bool>(
-                """
+            await CaptureViewportAsync(1280, 800, false, "desktop-1280-map-list", async (page, dir) =>
+            {
+                await WaitReadyAsync(page);
+                await WaitForRealIsochronesAsync(page);
+                eightPoint.AddRange(await EvaluateEightPointDesktopAsync(page));
+                var twoCol = await page.EvaluateAsync<bool>(
+                    """
                 () => {
                   const cards = document.querySelectorAll('.vacancy-list .vc');
                   if (cards.length < 2) return false;
@@ -86,59 +85,59 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                   return s.display === 'grid' && s.gridTemplateColumns.split(' ').length >= 2;
                 }
                 """);
-            buttons.Add(new { action = "desktop-list-2-columns", pass = twoCol });
-            await ShotAsync(page, dir, "01-map-list.png");
-            await SideBySideAsync(
-                Path.Combine(MockupRefRoot, "lagen/desktop/02-banenkaart-lagen-desktop-1440.png"),
-                Path.Combine(dir, "01-map-list.png"),
-                Path.Combine(CompareDir, "side-by-side-desktop-1280-map-list.png"));
-            await SideBySideAsync(
-                Path.Combine(MockupRefRoot, "header/desktop.png"),
-                Path.Combine(dir, "01-map-list.png"),
-                Path.Combine(CompareDir, "side-by-side-header-c-desktop-1280.png"));
-            elementTables.Add(await BuildElementTableAsync(page, 1280, "desktop-1280-map-list"));
-        });
-
-        await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            var opened = await OpenFirstPinPopupAsync(page);
-            buttons.Add(new { action = "employer-pin-popup", pass = opened });
-            if (opened)
-            {
-                var deskPhoto = await WaitForPopupPhotoMetricsAsync(page);
-                if (deskPhoto is not null)
-                {
-                    popupPhotoMetrics.Add(new { profile = "desktop-1280-popup", metrics = deskPhoto });
-                }
-                await page.WaitForTimeoutAsync(300);
-                await ShotAsync(page, dir, "02-popup.png");
+                buttons.Add(new { action = "desktop-list-2-columns", pass = twoCol });
+                await ShotAsync(page, dir, "01-map-list.png");
                 await SideBySideAsync(
-                    Path.Combine(MockupRefRoot, "lagen/desktop/03-banenkaart-lagen-desktop-1440-enkel.png"),
-                    Path.Combine(dir, "02-popup.png"),
-                    Path.Combine(CompareDir, "side-by-side-desktop-1280-popup.png"));
-                var anchoredPop = await page.Locator(".maplibregl-popup.pop.fpop.kb-popup-lagen-pop, .fcw.kb-lagen-fcw").CountAsync() > 0;
-                buttons.Add(new { action = "desktop-anchored-pop", pass = anchoredPop });
-                var cta = page.Locator(".maplibregl-popup, .kb-popup-lagen").Filter(new() { HasText = "Bekijk vacature" });
-                buttons.Add(new { action = "popup-bekijk-vacature-visible", pass = await cta.CountAsync() > 0 });
-            }
-            else
-            {
-                await ShotAsync(page, dir, "02-map-no-popup.png");
-            }
-        });
+                    Path.Combine(MockupRefRoot, "lagen/desktop/02-banenkaart-lagen-desktop-1440.png"),
+                    Path.Combine(dir, "01-map-list.png"),
+                    Path.Combine(CompareDir, "side-by-side-desktop-1280-map-list.png"));
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "header/desktop.png"),
+                    Path.Combine(dir, "01-map-list.png"),
+                    Path.Combine(CompareDir, "side-by-side-header-c-desktop-1280.png"));
+                elementTables.Add(await BuildElementTableAsync(page, 1280, "desktop-1280-map-list"));
+            });
 
-        await CaptureViewportAsync(390, 844, true, "mobile-390-map", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            await WaitForRealIsochronesAsync(page);
-            await AssertMobile390LayoutBeforeCaptureAsync(page);
-            eightPoint.AddRange(await EvaluateEightPointMobileAsync(page));
-            buttons.Add(new
+            await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup", async (page, dir) =>
             {
-                action = "bottom-nav-not-covering-map",
-                pass = await page.EvaluateAsync<bool>(
-                    """
+                await WaitReadyAsync(page);
+                var opened = await OpenFirstPinPopupAsync(page);
+                buttons.Add(new { action = "employer-pin-popup", pass = opened });
+                if (opened)
+                {
+                    var deskPhoto = await WaitForPopupPhotoMetricsAsync(page);
+                    if (deskPhoto is not null)
+                    {
+                        popupPhotoMetrics.Add(new { profile = "desktop-1280-popup", metrics = deskPhoto });
+                    }
+                    await page.WaitForTimeoutAsync(300);
+                    await ShotAsync(page, dir, "02-popup.png");
+                    await SideBySideAsync(
+                        Path.Combine(MockupRefRoot, "lagen/desktop/03-banenkaart-lagen-desktop-1440-enkel.png"),
+                        Path.Combine(dir, "02-popup.png"),
+                        Path.Combine(CompareDir, "side-by-side-desktop-1280-popup.png"));
+                    var anchoredPop = await page.Locator(".maplibregl-popup.pop.fpop.kb-popup-lagen-pop, .fcw.kb-lagen-fcw").CountAsync() > 0;
+                    buttons.Add(new { action = "desktop-anchored-pop", pass = anchoredPop });
+                    var cta = page.Locator(".maplibregl-popup, .kb-popup-lagen").Filter(new() { HasText = "Bekijk vacature" });
+                    buttons.Add(new { action = "popup-bekijk-vacature-visible", pass = await cta.CountAsync() > 0 });
+                }
+                else
+                {
+                    await ShotAsync(page, dir, "02-map-no-popup.png");
+                }
+            });
+
+            await CaptureViewportAsync(390, 844, true, "mobile-390-map", async (page, dir) =>
+            {
+                await WaitReadyAsync(page);
+                await WaitForRealIsochronesAsync(page);
+                await AssertMobile390LayoutBeforeCaptureAsync(page);
+                eightPoint.AddRange(await EvaluateEightPointMobileAsync(page));
+                buttons.Add(new
+                {
+                    action = "bottom-nav-not-covering-map",
+                    pass = await page.EvaluateAsync<bool>(
+                        """
                     () => {
                       const nav = document.querySelector('[data-testid=candidate-bottom-nav-ssr], nav.bottom-nav');
                       const pane = document.querySelector('.jobsy-discovery.show-map .map-pane');
@@ -147,118 +146,118 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
                       return Math.abs(gap) <= 24;
                     }
                     """)
+                });
+                await ShotAsync(page, dir, "01-map.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/mobile/01-banenkaart-lagen-mobiel-390.png"),
+                    Path.Combine(dir, "01-map.png"),
+                    Path.Combine(CompareDir, "side-by-side-mobile-390-map.png"));
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "header/mobile.png"),
+                    Path.Combine(dir, "01-map.png"),
+                    Path.Combine(CompareDir, "side-by-side-header-c-mobile-390.png"));
+                elementTables.Add(await BuildElementTableAsync(page, 390, "mobile-390-map"));
             });
-            await ShotAsync(page, dir, "01-map.png");
-            await SideBySideAsync(
-                Path.Combine(MockupRefRoot, "lagen/mobile/01-banenkaart-lagen-mobiel-390.png"),
-                Path.Combine(dir, "01-map.png"),
-                Path.Combine(CompareDir, "side-by-side-mobile-390-map.png"));
-            await SideBySideAsync(
-                Path.Combine(MockupRefRoot, "header/mobile.png"),
-                Path.Combine(dir, "01-map.png"),
-                Path.Combine(CompareDir, "side-by-side-header-c-mobile-390.png"));
-            elementTables.Add(await BuildElementTableAsync(page, 390, "mobile-390-map"));
-        });
 
-        await CaptureViewportAsync(390, 844, true, "mobile-390-uitleg", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            await page.Locator("[data-testid=kb-map-legbtn]").ClickAsync();
-            await page.WaitForFunctionAsync("() => document.body.classList.contains('s-legend')", null, new() { Timeout = 30_000 });
-            buttons.Add(new { action = "uitleg-kaart-sheet", pass = true });
-            await ShotAsync(page, dir, "02-uitleg.png");
-            await SideBySideAsync(
-                Path.Combine(MockupRefRoot, "lagen/mobile/02-banenkaart-lagen-mobiel-390-uitleg.png"),
-                Path.Combine(dir, "02-uitleg.png"),
-                Path.Combine(CompareDir, "side-by-side-mobile-390-uitleg.png"));
-        });
-
-        await CaptureViewportAsync(390, 844, true, "mobile-390-vacature-sheet", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            var opened = await OpenFirstPinPopupAsync(page);
-            buttons.Add(new { action = "mobile-pin-popup-sheet", pass = opened });
-            if (opened)
+            await CaptureViewportAsync(390, 844, true, "mobile-390-uitleg", async (page, dir) =>
             {
-                var mobPhoto = await WaitForPopupPhotoMetricsAsync(page);
-                if (mobPhoto is not null)
+                await WaitReadyAsync(page);
+                await page.Locator("[data-testid=kb-map-legbtn]").ClickAsync();
+                await page.WaitForFunctionAsync("() => document.body.classList.contains('s-legend')", null, new() { Timeout = 30_000 });
+                buttons.Add(new { action = "uitleg-kaart-sheet", pass = true });
+                await ShotAsync(page, dir, "02-uitleg.png");
+                await SideBySideAsync(
+                    Path.Combine(MockupRefRoot, "lagen/mobile/02-banenkaart-lagen-mobiel-390-uitleg.png"),
+                    Path.Combine(dir, "02-uitleg.png"),
+                    Path.Combine(CompareDir, "side-by-side-mobile-390-uitleg.png"));
+            });
+
+            await CaptureViewportAsync(390, 844, true, "mobile-390-vacature-sheet", async (page, dir) =>
+            {
+                await WaitReadyAsync(page);
+                var opened = await OpenFirstPinPopupAsync(page);
+                buttons.Add(new { action = "mobile-pin-popup-sheet", pass = opened });
+                if (opened)
                 {
-                    popupPhotoMetrics.Add(new { profile = "mobile-390-vacature", metrics = mobPhoto });
+                    var mobPhoto = await WaitForPopupPhotoMetricsAsync(page);
+                    if (mobPhoto is not null)
+                    {
+                        popupPhotoMetrics.Add(new { profile = "mobile-390-vacature", metrics = mobPhoto });
+                    }
+                    await page.WaitForTimeoutAsync(300);
+                    eightPoint.AddRange(await EvaluateEightPointVacancySheetAsync(page));
+                    await ShotAsync(page, dir, "03-vacature.png");
+                    await SideBySideAsync(
+                        Path.Combine(MockupRefRoot, "lagen/mobile/04-banenkaart-lagen-mobiel-390-enkel.png"),
+                        Path.Combine(dir, "03-vacature.png"),
+                        Path.Combine(CompareDir, "side-by-side-mobile-390-vacature.png"));
                 }
-                await page.WaitForTimeoutAsync(300);
-                eightPoint.AddRange(await EvaluateEightPointVacancySheetAsync(page));
-                await ShotAsync(page, dir, "03-vacature.png");
-                await SideBySideAsync(
-                    Path.Combine(MockupRefRoot, "lagen/mobile/04-banenkaart-lagen-mobiel-390-enkel.png"),
-                    Path.Combine(dir, "03-vacature.png"),
-                    Path.Combine(CompareDir, "side-by-side-mobile-390-vacature.png"));
-            }
-        });
+            });
 
-        await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup-cluster", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            var opened = await OpenFirstClusterPopupAsync(page);
-            buttons.Add(new { action = "desktop-cluster-popup", pass = opened });
-            if (opened)
+            await CaptureViewportAsync(1280, 800, false, "desktop-1280-popup-cluster", async (page, dir) =>
             {
-                await page.WaitForTimeoutAsync(400);
-                await ShotAsync(page, dir, "03-popup-cluster.png");
-                await SideBySideAsync(
-                    Path.Combine(MockupRefRoot, "lagen/desktop/04-banenkaart-lagen-desktop-1440-cluster.png"),
-                    Path.Combine(dir, "03-popup-cluster.png"),
-                    Path.Combine(CompareDir, "side-by-side-desktop-1280-popup-cluster.png"));
-            }
-        });
+                await WaitReadyAsync(page);
+                var opened = await OpenFirstClusterPopupAsync(page);
+                buttons.Add(new { action = "desktop-cluster-popup", pass = opened });
+                if (opened)
+                {
+                    await page.WaitForTimeoutAsync(400);
+                    await ShotAsync(page, dir, "03-popup-cluster.png");
+                    await SideBySideAsync(
+                        Path.Combine(MockupRefRoot, "lagen/desktop/04-banenkaart-lagen-desktop-1440-cluster.png"),
+                        Path.Combine(dir, "03-popup-cluster.png"),
+                        Path.Combine(CompareDir, "side-by-side-desktop-1280-popup-cluster.png"));
+                }
+            });
 
-        await CaptureViewportAsync(1280, 800, false, "desktop-1280-uurloon", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            var opened = await OpenFirstPinPopupAsync(page);
-            if (opened)
+            await CaptureViewportAsync(1280, 800, false, "desktop-1280-uurloon", async (page, dir) =>
             {
-                await page.Locator("[data-lagen-wage]").First.HoverAsync();
-                await page.WaitForTimeoutAsync(350);
-                await ShotAsync(page, dir, "04-uurloon-hover.png");
-                await SideBySideAsync(
-                    Path.Combine(MockupRefRoot, "lagen/extra/desktop-1440-enkel-uurloon-hover.png"),
-                    Path.Combine(dir, "04-uurloon-hover.png"),
-                    Path.Combine(CompareDir, "side-by-side-desktop-1280-uurloon-tooltip.png"));
-                buttons.Add(new { action = "desktop-uurloon-tooltip", pass = true });
-            }
-        });
+                await WaitReadyAsync(page);
+                var opened = await OpenFirstPinPopupAsync(page);
+                if (opened)
+                {
+                    await page.Locator("[data-lagen-wage]").First.HoverAsync();
+                    await page.WaitForTimeoutAsync(350);
+                    await ShotAsync(page, dir, "04-uurloon-hover.png");
+                    await SideBySideAsync(
+                        Path.Combine(MockupRefRoot, "lagen/extra/desktop-1440-enkel-uurloon-hover.png"),
+                        Path.Combine(dir, "04-uurloon-hover.png"),
+                        Path.Combine(CompareDir, "side-by-side-desktop-1280-uurloon-tooltip.png"));
+                    buttons.Add(new { action = "desktop-uurloon-tooltip", pass = true });
+                }
+            });
 
-        await CaptureViewportAsync(390, 844, true, "mobile-390-uurloon", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            var opened = await OpenFirstPinPopupAsync(page);
-            if (opened)
+            await CaptureViewportAsync(390, 844, true, "mobile-390-uurloon", async (page, dir) =>
             {
-                await page.Locator("[data-lagen-wage]").First.ClickAsync();
-                await page.WaitForTimeoutAsync(350);
-                await ShotAsync(page, dir, "04-uurloon-tap.png");
-                await SideBySideAsync(
-                    Path.Combine(MockupRefRoot, "lagen/extra/mobiel-390-enkel-uurloon-tik.png"),
-                    Path.Combine(dir, "04-uurloon-tap.png"),
-                    Path.Combine(CompareDir, "side-by-side-mobile-390-uurloon-tooltip.png"));
-                buttons.Add(new { action = "mobile-uurloon-tooltip", pass = true });
-            }
-        });
+                await WaitReadyAsync(page);
+                var opened = await OpenFirstPinPopupAsync(page);
+                if (opened)
+                {
+                    await page.Locator("[data-lagen-wage]").First.ClickAsync();
+                    await page.WaitForTimeoutAsync(350);
+                    await ShotAsync(page, dir, "04-uurloon-tap.png");
+                    await SideBySideAsync(
+                        Path.Combine(MockupRefRoot, "lagen/extra/mobiel-390-enkel-uurloon-tik.png"),
+                        Path.Combine(dir, "04-uurloon-tap.png"),
+                        Path.Combine(CompareDir, "side-by-side-mobile-390-uurloon-tooltip.png"));
+                    buttons.Add(new { action = "mobile-uurloon-tooltip", pass = true });
+                }
+            });
 
-        await CaptureViewportAsync(1440, 900, false, "desktop-1440-map-list", async (page, dir) =>
-        {
-            await WaitReadyAsync(page);
-            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
-            await page.WaitForFunctionAsync(
-                "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
-                null,
-                new() { Timeout = 90_000 });
-            await WaitReadyAsync(page);
-            await ShotAsync(page, dir, "01-map-list-reload.png");
-        });
+            await CaptureViewportAsync(1440, 900, false, "desktop-1440-map-list", async (page, dir) =>
+            {
+                await WaitReadyAsync(page);
+                await page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+                await page.WaitForFunctionAsync(
+                    "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+                    null,
+                    new() { Timeout = 90_000 });
+                await WaitReadyAsync(page);
+                await ShotAsync(page, dir, "01-map-list-reload.png");
+            });
 
-        // Interaction smoke is covered elsewhere; keep compare run bounded (no cluster/toggle loops).
-        buttons.Add(new { action = "compare-interactions-skipped", pass = true, note = "bounded compare run" });
+            // Interaction smoke is covered elsewhere; keep compare run bounded (no cluster/toggle loops).
+            buttons.Add(new { action = "compare-interactions-skipped", pass = true, note = "bounded compare run" });
         }
         finally
         {
@@ -971,30 +970,27 @@ public sealed class BanenkaartLagenComparePlaywrightTests : IAsyncLifetime
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
-        using var a = Image.Load<Rgba32>(mockupPath);
-        using var b = Image.Load<Rgba32>(appPath);
-        var h = Math.Max(a.Height, b.Height);
-        a.Mutate(ctx => ctx.Resize(new ResizeOptions
-        {
-            Size = new Size((int)(a.Width * (h / (float)a.Height)), h),
-            Mode = ResizeMode.Stretch,
-            Sampler = KnownResamplers.Lanczos3,
-        }));
-        b.Mutate(ctx => ctx.Resize(new ResizeOptions
-        {
-            Size = new Size((int)(b.Width * (h / (float)b.Height)), h),
-            Mode = ResizeMode.Stretch,
-            Sampler = KnownResamplers.Lanczos3,
-        }));
+        using var aImg = SkiaTestImage.LoadRgba(mockupPath);
+        using var bImg = SkiaTestImage.LoadRgba(appPath);
+        var h = Math.Max(aImg.Height, bImg.Height);
+        using var a = SkiaTestImage.Resize(
+            aImg.ToBitmap(),
+            Math.Max(1, (int)(aImg.Width * (h / (float)aImg.Height))),
+            h);
+        using var b = SkiaTestImage.Resize(
+            bImg.ToBitmap(),
+            Math.Max(1, (int)(bImg.Width * (h / (float)bImg.Height))),
+            h);
         const int gap = 8;
         const int labelH = 28;
-        using var canvas = new Image<Rgba32>(a.Width + gap + b.Width, h + labelH, new Rgba32(250, 246, 239, 255));
-        canvas.Mutate(ctx =>
+        using var sheet = SkiaTestImage.CreateSolid(a.Width + gap + b.Width, h + labelH, new SKColor(250, 246, 239));
+        using (var canvas = new SKCanvas(sheet))
         {
-            ctx.DrawImage(a, new Point(0, labelH), 1f);
-            ctx.DrawImage(b, new Point(a.Width + gap, labelH), 1f);
-        });
-        canvas.SaveAsPng(outPath);
+            canvas.DrawBitmap(a, 0, labelH);
+            canvas.DrawBitmap(b, a.Width + gap, labelH);
+        }
+
+        SkiaTestImage.SavePng(sheet, outPath);
         return Task.CompletedTask;
     }
 

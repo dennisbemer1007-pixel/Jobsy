@@ -1,9 +1,8 @@
 using System.Net.Http.Headers;
 using Jobsy.Core.Interfaces;
+using Jobsy.Infrastructure.Media;
 using Microsoft.Extensions.Logging;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -95,7 +94,8 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
             var endTileY = (int)Math.Floor((topLeftY + height) / TileSize);
             var n = 1 << zoom;
 
-            using var canvas = new Image<Rgba32>(width, height, Color.ParseHex("dceef8"));
+            using var bitmap = SkiaImageCodec.CreateSolid(width, height, SKColor.Parse("#dceef8"));
+            using var canvas = new SKCanvas(bitmap);
             var client = _httpClientFactory.CreateClient("OsmTiles");
             var anyTile = false;
 
@@ -127,10 +127,10 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
                         continue;
                     }
 
-                    using var tile = Image.Load<Rgba32>(tileBytes);
+                    using var tile = SkiaImageCodec.Decode(tileBytes);
                     var destX = (int)Math.Round(tx * TileSize - topLeftX);
                     var destY = (int)Math.Round(ty * TileSize - topLeftY);
-                    canvas.Mutate(ctx => ctx.DrawImage(tile, new Point(destX, destY), 1f));
+                    canvas.DrawBitmap(tile, destX, destY);
                     anyTile = true;
                 }
             }
@@ -148,10 +148,8 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
             }
 
             DrawMarker(canvas, width / 2, height / 2, markerLogoPng);
-
-            await using var ms = new MemoryStream();
-            await canvas.SaveAsPngAsync(ms, cancellationToken);
-            return ms.ToArray();
+            canvas.Flush();
+            return SkiaImageCodec.EncodePng(bitmap);
         }
         catch (Exception ex)
         {
@@ -165,7 +163,7 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
     /// </summary>
     internal static int ZoomToFitRadius(double latitude, double radiusMeters, int width, int height)
     {
-        var maxPx = Math.Min(width, height) * 0.42; // leave room so the ring is clearly visible
+        var maxPx = Math.Min(width, height) * 0.42;
         for (var zoom = 17; zoom >= 10; zoom--)
         {
             var px = MetersToPixels(latitude, radiusMeters, zoom);
@@ -189,70 +187,42 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
         return meters / metersPerPixel;
     }
 
-    private static void DrawReachCircle(Image<Rgba32> canvas, int cx, int cy, int radius)
+    private static void DrawReachCircle(SKCanvas canvas, int cx, int cy, int radius)
     {
-        // Leaflet-style blue reach ring (matches banenkaart isochrone look).
-        var fill = new Rgba32(51, 136, 255, 48);
-        var ring = new Rgba32(51, 136, 255, 220);
-        FillCircle(canvas, cx, cy, radius, fill);
-        StrokeCircle(canvas, cx, cy, radius, ring, thickness: 2);
-    }
-
-    private static void StrokeCircle(Image<Rgba32> canvas, int cx, int cy, int radius, Rgba32 color, int thickness)
-    {
-        var outer2 = (radius + thickness) * (radius + thickness);
-        var inner2 = Math.Max(0, radius - thickness) * Math.Max(0, radius - thickness);
-        for (var y = cy - radius - thickness; y <= cy + radius + thickness; y++)
+        using var fill = new SKPaint
         {
-            for (var x = cx - radius - thickness; x <= cx + radius + thickness; x++)
-            {
-                var dx = x - cx;
-                var dy = y - cy;
-                var d2 = dx * dx + dy * dy;
-                if (d2 <= outer2 && d2 >= inner2
-                    && (uint)x < (uint)canvas.Width
-                    && (uint)y < (uint)canvas.Height)
-                {
-                    canvas[x, y] = Blend(canvas[x, y], color);
-                }
-            }
-        }
+            Color = new SKColor(51, 136, 255, 48),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+        canvas.DrawCircle(cx, cy, radius, fill);
+        using var ring = new SKPaint
+        {
+            Color = new SKColor(51, 136, 255, 220),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 2
+        };
+        canvas.DrawCircle(cx, cy, radius, ring);
     }
 
-    private static Rgba32 Blend(Rgba32 bottom, Rgba32 top)
+    private static void DrawMarker(SKCanvas canvas, int cx, int cy, byte[]? markerLogoPng)
     {
-        var a = top.A / 255f;
-        return new Rgba32(
-            (byte)(top.R * a + bottom.R * (1 - a)),
-            (byte)(top.G * a + bottom.G * (1 - a)),
-            (byte)(top.B * a + bottom.B * (1 - a)),
-            255);
-    }
-
-    private static void DrawMarker(Image<Rgba32> canvas, int cx, int cy, byte[]? markerLogoPng)
-    {
-        var white = new Rgba32(255, 255, 255);
-        var navy = new Rgba32(15, 45, 92);
-
-        // Soft halo behind the brand mark (same spirit as map pins on the job map).
-        FillCircle(canvas, cx, cy, 18, white);
-        FillCircle(canvas, cx, cy, 16, navy);
+        using var whiteFill = new SKPaint { Color = SKColors.White, IsAntialias = true, Style = SKPaintStyle.Fill };
+        using var navyFill = new SKPaint { Color = new SKColor(15, 45, 92), IsAntialias = true, Style = SKPaintStyle.Fill };
+        canvas.DrawCircle(cx, cy, 18, whiteFill);
+        canvas.DrawCircle(cx, cy, 16, navyFill);
 
         if (markerLogoPng is { Length: > 0 })
         {
             try
             {
-                using var logo = Image.Load<Rgba32>(markerLogoPng);
+                using var logo = SkiaImageCodec.Decode(markerLogoPng);
                 const int markSize = 26;
-                logo.Mutate(ctx => ctx.Resize(new ResizeOptions
-                {
-                    Size = new Size(markSize, markSize),
-                    Mode = ResizeMode.Max
-                }));
-
-                var destX = cx - logo.Width / 2;
-                var destY = cy - logo.Height / 2;
-                canvas.Mutate(ctx => ctx.DrawImage(logo, new Point(destX, destY), 1f));
+                using var scaled = SkiaImageCodec.ResizeToMaxExtent(logo, markSize);
+                var destX = cx - scaled.Width / 2f;
+                var destY = cy - scaled.Height / 2f;
+                canvas.DrawBitmap(scaled, destX, destY);
                 return;
             }
             catch
@@ -261,27 +231,7 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
             }
         }
 
-        FillCircle(canvas, cx, cy, 6, white);
-    }
-
-    private static void FillCircle(Image<Rgba32> canvas, int cx, int cy, int radius, Rgba32 color)
-    {
-        var r2 = radius * radius;
-        for (var y = cy - radius; y <= cy + radius; y++)
-        {
-            for (var x = cx - radius; x <= cx + radius; x++)
-            {
-                var dx = x - cx;
-                var dy = y - cy;
-                if (dx * dx + dy * dy <= r2
-                    && (uint)x < (uint)canvas.Width
-                    && (uint)y < (uint)canvas.Height)
-                {
-                    var existing = canvas[x, y];
-                    canvas[x, y] = color.A < 255 ? Blend(existing, color) : color;
-                }
-            }
-        }
+        canvas.DrawCircle(cx, cy, 6, whiteFill);
     }
 
     private static (double X, double Y) LatLonToPixel(double lat, double lon, int zoom)

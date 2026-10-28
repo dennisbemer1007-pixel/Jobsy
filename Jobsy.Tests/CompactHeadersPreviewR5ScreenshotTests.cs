@@ -1,9 +1,8 @@
 using System.Text.Json;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -352,7 +351,7 @@ public sealed class CompactHeadersPreviewR5ScreenshotTests : IAsyncLifetime
 
     private static (int Top, int Bottom) HeroBandY(string slug, byte[] pngBytes)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var heroTop = slug == "onboarding-kennismaken" ? 105 : 64;
         var heroBottom = slug == "paspoort"
             ? Math.Min(heroTop + 160, img.Height - 2)
@@ -362,7 +361,7 @@ public sealed class CompactHeadersPreviewR5ScreenshotTests : IAsyncLifetime
 
     private static int MaxColumnDeltaBeforeArtStart(byte[] pngBytes, int heroTop, int heroBottom, int artStartX, int windowPx)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var x0 = Math.Max(1, artStartX - windowPx);
         var x1 = Math.Min(img.Width - 2, artStartX);
         var y0 = heroTop + 8;
@@ -378,32 +377,33 @@ public sealed class CompactHeadersPreviewR5ScreenshotTests : IAsyncLifetime
         return max;
     }
 
-    private static Rgb24 ColumnAverage(Image<Rgb24> img, int x, int y0, int y1)
+    private static TestRgb ColumnAverage(SkiaTestImage img, int x, int y0, int y1)
     {
         long r = 0, g = 0, b = 0;
         var n = 0;
         for (var y = y0; y < y1; y++)
         {
-            var p = img[x, y];
+            var p = img.GetRgb(x, y);
             r += p.R;
             g += p.G;
             b += p.B;
             n++;
         }
 
-        return n == 0 ? new Rgb24(0, 0, 0) : new Rgb24((byte)(r / n), (byte)(g / n), (byte)(b / n));
+        return n == 0 ? new TestRgb(0, 0, 0) : new TestRgb((byte)(r / n), (byte)(g / n), (byte)(b / n));
     }
 
     private static void SaveBoundaryCrop(byte[] pngBytes, int artStartX, int heroTop, int heroBottom, string slug, int width, string suffix)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var x0 = Math.Max(0, artStartX - 24);
         var x1 = Math.Min(img.Width, artStartX + 48);
-        using var crop = img.Clone(ctx => ctx.Crop(new Rectangle(x0, heroTop, x1 - x0, heroBottom - heroTop)));
-        crop.SaveAsPng(Path.Combine(ArtifactsDir, $"{slug}-c-{width}{suffix}-art-left-edge.png"));
+        using var src = img.ToBitmap();
+        using var crop = SkiaTestImage.Crop(src, x0, heroTop, x1 - x0, heroBottom - heroTop);
+        SkiaTestImage.SavePng(crop, Path.Combine(ArtifactsDir, $"{slug}-c-{width}{suffix}-art-left-edge.png"));
     }
 
-    private static int ColorDrift(Rgb24 a, Rgb24 b)
+    private static int ColorDrift(TestRgb a, TestRgb b)
         => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     private sealed class CaptureMetrics

@@ -1,5 +1,4 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -9,14 +8,14 @@ public static class CompactHeroPreviewCreamSampler
     /// <summary>Mean RGB of the leftmost <paramref name="columns"/> (preview band fill).</summary>
     public static string AverageLeftColumnsHex(string absoluteImagePath, int columns = 4)
     {
-        using var img = Image.Load<Rgb24>(absoluteImagePath);
+        using var img = SkiaTestImage.LoadRgb(absoluteImagePath);
         var xs = Math.Min(columns, img.Width);
         long r = 0, g = 0, b = 0, n = 0;
         for (var x = 0; x < xs; x++)
         {
             for (var y = 0; y < img.Height; y++)
             {
-                var p = img[x, y];
+                var p = img.GetRgb(x, y);
                 r += p.R;
                 g += p.G;
                 b += p.B;
@@ -34,7 +33,7 @@ public static class CompactHeroPreviewCreamSampler
 
     public static string MedianLeftEdgeHex(string absoluteImagePath)
     {
-        using var img = Image.Load<Rgb24>(absoluteImagePath);
+        using var img = SkiaTestImage.LoadRgb(absoluteImagePath);
         var xs = Math.Min(11, img.Width);
         var rs = new List<int>();
         var gs = new List<int>();
@@ -43,7 +42,7 @@ public static class CompactHeroPreviewCreamSampler
         {
             for (var y = 0; y < img.Height; y++)
             {
-                var p = img[x, y];
+                var p = img.GetRgb(x, y);
                 rs.Add(p.R);
                 gs.Add(p.G);
                 bs.Add(p.B);

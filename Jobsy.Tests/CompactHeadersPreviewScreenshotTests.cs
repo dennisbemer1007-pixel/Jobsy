@@ -1,7 +1,7 @@
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+
+using Jobsy.Tests.Testing;
+using SkiaSharp;
 
 namespace Jobsy.Tests;
 
@@ -165,25 +165,28 @@ public sealed class CompactHeadersPreviewScreenshotTests : IAsyncLifetime
         var labels = new[] { ("before", "Before"), ("a", "A (~170px)"), ("b", "B (~130px)") };
         foreach (var width in new[] { 1440, 390 })
         {
-            var tiles = new List<Image<Rgb24>>();
+            var tiles = new List<SkiaTestImage>();
             foreach (var (variant, _) in labels)
             {
                 var path = Path.Combine(ArtifactsDir, $"{slug}-{variant}-{width}.png");
                 Assert.True(File.Exists(path), path);
-                tiles.Add(await Image.LoadAsync<Rgb24>(path));
+                tiles.Add(SkiaTestImage.LoadRgb(path));
             }
 
             var tileW = tiles[0].Width;
             var tileH = tiles[0].Height;
-            using var sheet = new Image<Rgb24>(tileW * 3, tileH + 40);
-            sheet.Mutate(ctx => ctx.BackgroundColor(new Rgb24(251, 245, 236)));
-            for (var i = 0; i < tiles.Count; i++)
+            using var sheet = SkiaTestImage.CreateSolid(tileW * 3, tileH + 40, new SKColor(251, 245, 236));
+            using (var canvas = new SKCanvas(sheet))
             {
-                sheet.Mutate(ctx => ctx.DrawImage(tiles[i], new Point(i * tileW, 40), 1f));
+                for (var i = 0; i < tiles.Count; i++)
+                {
+                    using var tileBmp = tiles[i].ToBitmap();
+                    canvas.DrawBitmap(tileBmp, i * tileW, 40);
+                }
             }
 
             var outPath = Path.Combine(ArtifactsDir, $"{slug}-contact-{width}.png");
-            await sheet.SaveAsPngAsync(outPath);
+            await SkiaTestImage.SavePngAsync(sheet, outPath);
             foreach (var t in tiles)
             {
                 t.Dispose();

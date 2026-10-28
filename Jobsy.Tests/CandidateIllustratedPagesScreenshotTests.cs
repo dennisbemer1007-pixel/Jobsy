@@ -13,10 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using System.Security.Claims;
 using System.Text;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -43,7 +43,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirMobheroV5 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v5";
     private const string ArtifactsDirMobheroV6 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v6";
     private const string ArtifactsDirMobheroV7 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v7";
-    private static readonly Rgb24 PearlReference = new(247, 244, 240);
+    private static readonly TestRgb PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -1779,7 +1779,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         string? heroMetaPath = null,
         string? mobArtifactsDir = null)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var sb = new StringBuilder();
         sb.AppendLine($"=== Mob hero gate 390: {label} ({img.Width}x{img.Height}) ===");
 
@@ -1820,7 +1820,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         {
             for (var y = 60; y < 76; y++)
             {
-                var px = img[img.Width / 2, y];
+                var px = img.GetRgb(img.Width / 2, y);
                 if (px.R + px.G + px.B < 560)
                 {
                     heroTopY = y + 1;
@@ -1831,7 +1831,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             heroBottomY = heroTopY + 260;
             for (var y = heroTopY + 200; y < Math.Min(heroTopY + 280, img.Height); y++)
             {
-                var px = img[24, y];
+                var px = img.GetRgb(24, y);
                 if (px.R + px.G + px.B > 720)
                 {
                     heroBottomY = y - 1;
@@ -1848,7 +1848,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         var titleSampleY = heroTopY;
         for (var y = heroTopY; y < Math.Min(heroTopY + 96, img.Height); y++)
         {
-            var px = img[textX, y];
+            var px = img.GetRgb(textX, y);
             if (px.R + px.G + px.B < 380)
             {
                 titleInk = true;
@@ -1868,7 +1868,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         {
             for (var x = figureMinX; x <= img.Width - 12; x++)
             {
-                var px = img[x, y];
+                var px = img.GetRgb(x, y);
                 if (IsMobHeroFigurePixel(px))
                 {
                     figureVisible = true;
@@ -1886,7 +1886,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         {
             for (var x = 190; x <= 248; x++)
             {
-                if (IsMobGhostFigurePixel(img[x, y]))
+                if (IsMobGhostFigurePixel(img.GetRgb(x, y)))
                 {
                     ghostPixels++;
                 }
@@ -1898,7 +1898,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         {
             for (var x = figureMinX; x <= img.Width - 8; x++)
             {
-                if (IsMobGhostFigurePixel(img[x, y]))
+                if (IsMobGhostFigurePixel(img.GetRgb(x, y)))
                 {
                     ghostInFigureSlot++;
                 }
@@ -1910,12 +1910,12 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
         var seamStep = 0;
         var seamY = heroTopY + Math.Min(48, Math.Max(24, heroHeightPx / 4));
-        Rgb24? seamPrev = null;
+        TestRgb? seamPrev = null;
         var seamX0 = gateV3 ? (int)Math.Round(img.Width * 0.48) : (int)Math.Round(img.Width * 0.38);
         var seamX1 = gateV3 ? (int)Math.Round(img.Width * 0.58) : (int)Math.Round(img.Width * 0.52);
         for (var x = seamX0; x <= seamX1; x++)
         {
-            var px = img[x, seamY];
+            var px = img.GetRgb(x, seamY);
             if (seamPrev is { } p)
             {
                 seamStep = Math.Max(seamStep, RgbStep(p, px));
@@ -1935,7 +1935,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         {
             for (var x = textX; x <= inkScanRight; x += gateV3 ? 3 : 1)
             {
-                var px = img[x, y];
+                var px = img.GetRgb(x, y);
                 if (px.R + px.G + px.B < (gateV3 ? 520 : 380))
                 {
                     lastInkY = y;
@@ -1967,7 +1967,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 for (var x = rightStart; x < img.Width - 4; x += 2)
                 {
                     samples++;
-                    if (!IsMobileHeroPearl(img[x, y]))
+                    if (!IsMobileHeroPearl(img.GetRgb(x, y)))
                     {
                         nonPearl++;
                     }
@@ -2001,7 +2001,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             {
                 for (var x = rightStart; x < img.Width - 2; x++)
                 {
-                    if (!IsMobHeroSolidFigurePixel(img[x, y]))
+                    if (!IsMobHeroSolidFigurePixel(img.GetRgb(x, y)))
                     {
                         continue;
                     }
@@ -2030,8 +2030,8 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                     for (var x = figMinX; x <= figMaxX; x += 3)
                     {
                         headSamples++;
-                        if (!IsMobileHeroPearl(img[x, y]) && !IsGhostFadePixel(img[x, y])
-                            && IsMobHeroFigurePixel(img[x, y]))
+                        if (!IsMobileHeroPearl(img.GetRgb(x, y)) && !IsGhostFadePixel(img.GetRgb(x, y))
+                            && IsMobHeroFigurePixel(img.GetRgb(x, y)))
                         {
                             headFigurePx++;
                         }
@@ -2056,7 +2056,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 {
                     for (var x = img.Width - 4; x < img.Width; x++)
                     {
-                        if (IsMobHeroSolidFigurePixel(img[x, y]))
+                        if (IsMobHeroSolidFigurePixel(img.GetRgb(x, y)))
                         {
                             edgeSolidCount++;
                         }
@@ -2090,7 +2090,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             {
                 for (var x = rightStart; x < img.Width - 2; x++)
                 {
-                    if (!IsMobHeroSolidFigurePixel(img[x, y]))
+                    if (!IsMobHeroSolidFigurePixel(img.GetRgb(x, y)))
                     {
                         continue;
                     }
@@ -2126,10 +2126,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return sb.ToString();
     }
 
-    private static int MobHeroLuminance(Rgb24 px) => (px.R * 299 + px.G * 587 + px.B * 114) / 1000;
+    private static int MobHeroLuminance(TestRgb px) => (px.R * 299 + px.G * 587 + px.B * 114) / 1000;
 
     private static (int leftVert, int bottomHoriz) MobHeroPilCropEdgeScan(
-        Image<Rgb24> img,
+        SkiaTestImage img,
         int heroTop,
         int heroBottom,
         int figMinX,
@@ -2176,28 +2176,28 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return (leftVert, bottomHoriz);
     }
 
-    private static bool MobHeroPilHardEdgeStep(Image<Rgb24> img, int x0, int y0, int x1, int y1)
+    private static bool MobHeroPilHardEdgeStep(SkiaTestImage img, int x0, int y0, int x1, int y1)
     {
-        var step = Math.Abs(MobHeroLuminance(img[x1, y1]) - MobHeroLuminance(img[x0, y0]));
+        var step = Math.Abs(MobHeroLuminance(img.GetRgb(x1, y1)) - MobHeroLuminance(img.GetRgb(x0, y0)));
         if (step <= 8)
         {
             return false;
         }
 
-        if (IsGhostFadePixel(img[x0, y0]) || IsGhostFadePixel(img[x1, y1]))
+        if (IsGhostFadePixel(img.GetRgb(x0, y0)) || IsGhostFadePixel(img.GetRgb(x1, y1)))
         {
             return false;
         }
 
-        var solid0 = IsMobHeroSolidFigurePixel(img[x0, y0]);
-        var solid1 = IsMobHeroSolidFigurePixel(img[x1, y1]);
+        var solid0 = IsMobHeroSolidFigurePixel(img.GetRgb(x0, y0));
+        var solid1 = IsMobHeroSolidFigurePixel(img.GetRgb(x1, y1));
         if (solid0 && solid1)
         {
             return false;
         }
 
-        var pearl0 = IsMobileHeroPearl(img[x0, y0]);
-        var pearl1 = IsMobileHeroPearl(img[x1, y1]);
+        var pearl0 = IsMobileHeroPearl(img.GetRgb(x0, y0));
+        var pearl1 = IsMobileHeroPearl(img.GetRgb(x1, y1));
         if (pearl0 && pearl1)
         {
             return false;
@@ -2206,7 +2206,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return (pearl0 && solid1) || (solid0 && pearl1);
     }
 
-    private static bool IsMobileHeroPearl(Rgb24 px)
+    private static bool IsMobileHeroPearl(TestRgb px)
     {
         if (RgbStep(PearlReference, px) <= 44)
         {
@@ -2243,7 +2243,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
     private static string ValidateViewportHeroPixels1440(byte[] pngBytes, string label, bool gateR14 = false, bool gateR15 = false, bool gateR16 = false)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var sb = new StringBuilder();
         var gateModern = gateR15 || gateR16;
         var gateLabel = gateR16 ? "R16" : gateR15 ? "R15" : gateR14 ? "R14" : "R13";
@@ -2259,10 +2259,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             }
 
             var maxStep = 0;
-            Rgb24? prev = null;
+            TestRgb? prev = null;
             for (var x = 860; x <= 980; x += 4)
             {
-                var px = img[x, y];
+                var px = img.GetRgb(x, y);
                 if (prev is { } p)
                 {
                     maxStep = Math.Max(maxStep, RgbStep(p, px));
@@ -2297,7 +2297,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             const int topX = 1100;
             for (var y = heroTopY; y < Math.Min(heroTopY + 48, img.Height); y++)
             {
-                if (IsExactPearl(img[topX, y]))
+                if (IsExactPearl(img.GetRgb(topX, y)))
                 {
                     pearlStripPx++;
                 }
@@ -2316,7 +2316,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         {
             for (var x = 860; x <= 980; x++)
             {
-                if (!IsExactPearl(img[x, scanY]))
+                if (!IsExactPearl(img.GetRgb(x, scanY)))
                 {
                     fadeEndX = x - 1;
                     break;
@@ -2337,7 +2337,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             {
                 for (var x = 860; x <= 1000; x++)
                 {
-                    if (IsGhostFadePixel(img[x, y]))
+                    if (IsGhostFadePixel(img.GetRgb(x, y)))
                     {
                         ghostPixels++;
                     }
@@ -2360,10 +2360,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                     continue;
                 }
 
-                Rgb24? prev = null;
+                TestRgb? prev = null;
                 for (var x = 680; x < 1040; x++)
                 {
-                    var px = img[x, y];
+                    var px = img.GetRgb(x, y);
                     if (prev is { } p)
                     {
                         maxHeroWidthStep = Math.Max(maxHeroWidthStep, RgbStep(p, px));
@@ -2383,7 +2383,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             var decorInFade = 0;
             for (var x = expectedArtLeft; x < (int)Math.Round(img.Width * 0.82); x++)
             {
-                if (IsGhostFadePixel(img[x, artScanY]))
+                if (IsGhostFadePixel(img.GetRgb(x, artScanY)))
                 {
                     decorInFade++;
                 }
@@ -2398,7 +2398,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 {
                     for (var x = 980; x <= 1020; x++)
                     {
-                        if (IsGhostFadePixel(img[x, y]))
+                        if (IsGhostFadePixel(img.GetRgb(x, y)))
                         {
                             kompasScaleGhostPx++;
                         }
@@ -2407,8 +2407,8 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
                 for (var y = 110; y <= 260; y++)
                 {
-                    var edge = img[img.Width - 1, y];
-                    var inner = img[img.Width - 12, y];
+                    var edge = img.GetRgb(img.Width - 1, y);
+                    var inner = img.GetRgb(img.Width - 12, y);
                     if (RgbStep(edge, inner) > 120 && edge.R + edge.G + edge.B < 450)
                     {
                         rightEdgeCutoff = true;
@@ -2436,12 +2436,12 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return sb.ToString();
     }
 
-    private static int CountTopCreamStripPx(Image<Rgb24> img, int x, int heroTopY)
+    private static int CountTopCreamStripPx(SkiaTestImage img, int x, int heroTopY)
     {
         var artStartY = heroTopY + 40;
         for (var y = heroTopY; y < Math.Min(heroTopY + 40, img.Height); y++)
         {
-            if (IsHeroArtPeach(img[x, y]))
+            if (IsHeroArtPeach(img.GetRgb(x, y)))
             {
                 artStartY = y;
                 break;
@@ -2451,10 +2451,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return Math.Max(0, artStartY - heroTopY);
     }
 
-    private static bool IsHeroArtPeach(Rgb24 px) =>
+    private static bool IsHeroArtPeach(TestRgb px) =>
         px.R >= 250 && px.G >= 230 && px.B >= 185 && px.R - px.B >= 22;
 
-    private static bool IsMobGhostFigurePixel(Rgb24 px)
+    private static bool IsMobGhostFigurePixel(TestRgb px)
     {
         if (RgbStep(PearlReference, px) < 95)
         {
@@ -2464,7 +2464,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return px.B >= 105 && px.R <= 95 && px.G <= 135 && px.R + px.G + px.B > 480;
     }
 
-    private static bool IsMobHeroFigurePixel(Rgb24 px)
+    private static bool IsMobHeroFigurePixel(TestRgb px)
     {
         if (IsPeachDecorPixel(px))
         {
@@ -2481,7 +2481,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     }
 
     /// <summary>Opaque illustration ink for v4 bbox/head/edge (excludes pearl and fade seam).</summary>
-    private static bool IsMobHeroSolidFigurePixel(Rgb24 px)
+    private static bool IsMobHeroSolidFigurePixel(TestRgb px)
     {
         if (IsPeachDecorPixel(px) || IsMobileHeroPearl(px) || IsGhostFadePixel(px))
         {
@@ -2492,7 +2492,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return dist > 80 && px.R + px.G + px.B < 560;
     }
 
-    private static bool IsGhostFadePixel(Rgb24 px)
+    private static bool IsGhostFadePixel(TestRgb px)
     {
         if (IsPeachDecorPixel(px))
         {
@@ -2503,14 +2503,14 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return dist is > 28 and < 200 && px.R + px.G + px.B < 640;
     }
 
-    private static bool IsPeachDecorPixel(Rgb24 px) =>
+    private static bool IsPeachDecorPixel(TestRgb px) =>
         px.R >= 248 && px.G >= 232 && px.B >= 218 && px.R - px.B <= 40;
 
-    private static int FindFirstFigureEdgeX(Image<Rgb24> img, int y, int startX)
+    private static int FindFirstFigureEdgeX(SkiaTestImage img, int y, int startX)
     {
         for (var x = startX; x < img.Width; x++)
         {
-            var px = img[x, y];
+            var px = img.GetRgb(x, y);
             var dist = RgbStep(PearlReference, px);
             if (dist > 80 && px.R + px.G + px.B < 600)
             {
@@ -2521,14 +2521,14 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return img.Width - 1;
     }
 
-    private static bool IsExactPearl(Rgb24 px) =>
+    private static bool IsExactPearl(TestRgb px) =>
         px.R == PearlReference.R && px.G == PearlReference.G && px.B == PearlReference.B;
 
-    private static int FindFirstFigureX(Image<Rgb24> img, int y, int startX)
+    private static int FindFirstFigureX(SkiaTestImage img, int y, int startX)
     {
         for (var x = Math.Max(startX, (int)Math.Round(img.Width * 0.62)); x < img.Width; x++)
         {
-            var px = img[x, y];
+            var px = img.GetRgb(x, y);
             if (RgbStep(PearlReference, px) > 90 && px.R + px.G + px.B < 520)
             {
                 return x;
@@ -2538,22 +2538,22 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         return img.Width - 1;
     }
 
-    private static int RgbStep(Rgb24 a, Rgb24 b) =>
+    private static int RgbStep(TestRgb a, TestRgb b) =>
         Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     private static HeroSeamReport SampleHeroSeamPixels(byte[] pngBytes, int referenceViewportWidth, int[] pageXs)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var y = img.Height / 2;
         var sb = new StringBuilder();
         sb.AppendLine($"Hero seam pixel sample (y={y}, img {img.Width}x{img.Height}):");
-        Rgb24? prev = null;
+        TestRgb? prev = null;
         var maxStep = 0;
         foreach (var pageX in pageXs)
         {
             var x = (int)Math.Round(pageX / (double)referenceViewportWidth * img.Width);
             x = Math.Clamp(x, 0, img.Width - 1);
-            var px = img[x, y];
+            var px = img.GetRgb(x, y);
             sb.AppendLine($"  x={pageX} (px {x}): RGB({px.R},{px.G},{px.B})");
             if (prev is { } p)
             {

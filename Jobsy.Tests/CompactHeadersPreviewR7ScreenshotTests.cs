@@ -1,9 +1,8 @@
 using System.Text.Json;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -373,7 +372,7 @@ public sealed class CompactHeadersPreviewR7ScreenshotTests : IAsyncLifetime
 
     private static (int Top, int Bottom) HeroBandY(string slug, byte[] pngBytes, CaptureMetrics metrics)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var heroTop = slug == "onboarding-kennismaken" ? 105 : 64;
         var heroBottom = metrics.HeroBandHeightPx > 0
             ? Math.Min(heroTop + metrics.HeroBandHeightPx, img.Height - 2)
@@ -383,7 +382,7 @@ public sealed class CompactHeadersPreviewR7ScreenshotTests : IAsyncLifetime
 
     private static int SeamDeltaAtArtEdge(byte[] pngBytes, int imgLeftX, int heroTop, int heroBottom)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var h = heroBottom - heroTop;
         var ys = new[] { heroTop + h / 4, heroTop + h / 2, heroTop + 3 * h / 4 };
         var xLeft = Math.Clamp(imgLeftX - 10, 1, img.Width - 2);
@@ -392,7 +391,7 @@ public sealed class CompactHeadersPreviewR7ScreenshotTests : IAsyncLifetime
         foreach (var y in ys)
         {
             var yy = Math.Clamp(y, heroTop + 2, heroBottom - 3);
-            max = Math.Max(max, ColorDrift(img[xLeft, yy], img[xRight, yy]));
+            max = Math.Max(max, ColorDrift(img.GetRgb(xLeft, yy), img.GetRgb(xRight, yy)));
         }
 
         return max;
@@ -400,14 +399,15 @@ public sealed class CompactHeadersPreviewR7ScreenshotTests : IAsyncLifetime
 
     private static void SaveBoundaryCrop(byte[] pngBytes, int artStartX, int heroTop, int heroBottom, string slug, int width, string suffix)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var x0 = Math.Max(0, artStartX - 24);
         var x1 = Math.Min(img.Width, artStartX + 48);
-        using var crop = img.Clone(ctx => ctx.Crop(new Rectangle(x0, heroTop, x1 - x0, heroBottom - heroTop)));
-        crop.SaveAsPng(Path.Combine(ArtifactsDir, $"{slug}-c-{width}{suffix}-art-left-edge.png"));
+        using var src = img.ToBitmap();
+        using var crop = SkiaTestImage.Crop(src, x0, heroTop, x1 - x0, heroBottom - heroTop);
+        SkiaTestImage.SavePng(crop, Path.Combine(ArtifactsDir, $"{slug}-c-{width}{suffix}-art-left-edge.png"));
     }
 
-    private static int ColorDrift(Rgb24 a, Rgb24 b)
+    private static int ColorDrift(TestRgb a, TestRgb b)
         => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     private sealed class CaptureMetrics

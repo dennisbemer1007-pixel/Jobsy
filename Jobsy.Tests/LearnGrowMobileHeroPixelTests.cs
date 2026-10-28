@@ -1,3 +1,5 @@
+using Jobsy.Tests.Testing;
+
 namespace Jobsy.Tests;
 
 public class LearnGrowMobileHeroPixelTests
@@ -10,7 +12,7 @@ public class LearnGrowMobileHeroPixelTests
         var path = Path.Combine(FindRepoRoot(), "Jobsy.Tests", "TestAssets", "leren-groeien-mobiel-390.png");
         Assert.True(File.Exists(path), $"Add {path} from opleidingen-r10 capture.");
 
-        using var bmp = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgb24>(path);
+        using var bmp = SkiaTestImage.LoadRgb(path);
         var w = bmp.Width;
         var x0 = (int)(w * 0.55);
         var nonPearl = 0;
@@ -19,7 +21,7 @@ public class LearnGrowMobileHeroPixelTests
         {
             for (var x = x0; x < w; x++)
             {
-                var p = bmp[x, y];
+                var p = bmp.GetRgb(x, y);
                 total++;
                 if (!IsPearl(p.R, p.G, p.B))
                 {

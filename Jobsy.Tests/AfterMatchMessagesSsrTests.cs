@@ -33,8 +33,8 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             root,
             "Jobsy.Web/Components/Pages/Candidate/CandidateAfterMatchMessagesSsr.razor"));
         Assert.Contains("[NoBlazorRuntime]", razor, StringComparison.Ordinal);
-        Assert.Contains("ndm-messages.js?v=20261027-ndm-messages5", razor, StringComparison.Ordinal);
-        Assert.Contains("na-de-match.css?v=20261027-ndm-messages5", razor, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/ndm-messages.js\")", razor, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/features/na-de-match.css\")", razor, StringComparison.Ordinal);
     }
 
     [Fact]

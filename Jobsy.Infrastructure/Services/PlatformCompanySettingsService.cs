@@ -5,9 +5,8 @@ using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using Jobsy.Infrastructure.Media;
+using SkiaSharp;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -165,11 +164,8 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
 
     private static byte[] CreateWatermarkLogo(byte[] sourcePng)
     {
-        using var image = Image.Load<Rgba32>(sourcePng);
-        // Very transparent but still readable on white paper (~12% opacity).
-        image.Mutate(ctx => ctx.Opacity(0.12f));
-        using var ms = new MemoryStream();
-        image.SaveAsPng(ms);
-        return ms.ToArray();
+        using var image = SkiaImageCodec.Decode(sourcePng);
+        using var faded = SkiaImageCodec.ApplyOpacity(image, 0.12f);
+        return SkiaImageCodec.EncodePng(faded);
     }
 }

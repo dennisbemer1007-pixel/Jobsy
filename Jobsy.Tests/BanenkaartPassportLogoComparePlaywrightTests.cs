@@ -1,8 +1,7 @@
 using System.Text.RegularExpressions;
+using Jobsy.Tests.Testing;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace Jobsy.Tests;
 
@@ -83,17 +82,12 @@ public sealed class BanenkaartPassportLogoComparePlaywrightTests : IAsyncLifetim
 
     private static async Task SaveSideBySideAsync(byte[] left, byte[] right, string path)
     {
-        using var leftImg = Image.Load<Rgba32>(left);
-        using var rightImg = Image.Load<Rgba32>(right);
-        var gap = 24;
-        var height = Math.Max(leftImg.Height, rightImg.Height);
-        var width = leftImg.Width + gap + rightImg.Width;
-        using var canvas = new Image<Rgba32>(width, height, new Rgba32(255, 255, 255, 255));
-        canvas.Mutate(ctx =>
-        {
-            ctx.DrawImage(leftImg, new Point(0, (height - leftImg.Height) / 2), 1f);
-            ctx.DrawImage(rightImg, new Point(leftImg.Width + gap, (height - rightImg.Height) / 2), 1f);
-        });
-        await canvas.SaveAsPngAsync(path);
+        using var leftImg = SkiaTestImage.LoadRgba(left);
+        using var rightImg = SkiaTestImage.LoadRgba(right);
+        const int gap = 24;
+        using var leftBmp = leftImg.ToBitmap();
+        using var rightBmp = rightImg.ToBitmap();
+        using var sheet = SkiaTestImage.ComposeHorizontal([leftBmp, rightBmp], gap, SKColors.White);
+        await SkiaTestImage.SavePngAsync(sheet, path);
     }
 }

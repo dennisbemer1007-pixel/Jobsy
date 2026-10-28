@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -432,7 +432,7 @@ public sealed class CompactHeadersPreviewR9ScreenshotTests : IAsyncLifetime
 
     private static (double Left, double Right) ImgEdgeColumnLumaStdDevs(byte[] pngBytes, LocatorBoundingBoxResult imgBox)
     {
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var ix = Math.Clamp((int)Math.Floor(imgBox.X), 0, img.Width - 1);
         var iy = Math.Clamp((int)Math.Floor(imgBox.Y), 0, img.Height - 1);
         var iw = Math.Clamp((int)Math.Ceiling(imgBox.Width), 1, img.Width - ix);
@@ -446,14 +446,14 @@ public sealed class CompactHeadersPreviewR9ScreenshotTests : IAsyncLifetime
         return (ColumnLumaStdDev(img, ix, iy, cols, ih), ColumnLumaStdDev(img, ix + iw - cols, iy, cols, ih));
     }
 
-    private static double ColumnLumaStdDev(Image<Rgb24> img, int x0, int y0, int colCount, int rowCount)
+    private static double ColumnLumaStdDev(SkiaTestImage img, int x0, int y0, int colCount, int rowCount)
     {
         var values = new List<double>(colCount * rowCount);
         for (var x = x0; x < x0 + colCount && x < img.Width; x++)
         {
             for (var y = y0; y < y0 + rowCount && y < img.Height; y++)
             {
-                var p = img[x, y];
+                var p = img.GetRgb(x, y);
                 values.Add(0.299 * p.R + 0.587 * p.G + 0.114 * p.B);
             }
         }

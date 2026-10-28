@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -306,7 +306,7 @@ public sealed class CompactHeadersPreviewR10ScreenshotTests : IAsyncLifetime
             return points;
         }
 
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var hx = (int)Math.Round(heroBox.X);
         var hy = (int)Math.Round(heroBox.Y);
         var hw = (int)Math.Round(heroBox.Width);
@@ -331,7 +331,7 @@ public sealed class CompactHeadersPreviewR10ScreenshotTests : IAsyncLifetime
             {
                 var px = Math.Clamp(x, 0, img.Width - 1);
                 var py = Math.Clamp(y, 0, img.Height - 1);
-                var p = img[px, py];
+                var p = img.GetRgb(px, py);
                 points.Add(new BandSample(name, p.R, p.G, p.B));
             }
 
@@ -357,7 +357,7 @@ public sealed class CompactHeadersPreviewR10ScreenshotTests : IAsyncLifetime
         {
             var px = Math.Clamp(x, 0, img.Width - 1);
             var py = Math.Clamp(y, 0, img.Height - 1);
-            var p = img[px, py];
+            var p = img.GetRgb(px, py);
             points.Add(new BandSample(name, p.R, p.G, p.B));
         }
 

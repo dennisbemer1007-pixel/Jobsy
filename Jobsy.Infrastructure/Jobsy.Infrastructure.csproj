@@ -17,7 +17,8 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
     <PackageReference Include="QRCoder" />
     <PackageReference Include="QuestPDF" />
-    <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="WebPush" />
   </ItemGroup>

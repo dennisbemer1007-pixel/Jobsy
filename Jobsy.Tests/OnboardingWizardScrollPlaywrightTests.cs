@@ -1,9 +1,8 @@
 using System.Text.RegularExpressions;
 using Jobsy.Tests.E2e;
+using Jobsy.Tests.Testing;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace Jobsy.Tests;
 
@@ -133,27 +132,22 @@ public sealed class OnboardingWizardScrollPlaywrightTests
                 continue;
             }
 
-            using var left = Image.Load<Rgba32>(mockup);
-            using var right = Image.Load<Rgba32>(impl);
-            right.Mutate(ctx => ctx.Resize(new ResizeOptions
+            using var left = SkiaTestImage.LoadRgba(mockup);
+            using var rightSrc = SkiaTestImage.LoadRgba(impl);
+            var pad = new SKColor(245, 242, 238);
+            using var rightBmp = SkiaTestImage.ResizePad(rightSrc.ToBitmap(), left.Width, left.Height, pad);
+            using var leftBmp = left.ToBitmap();
+            using var sheet = SkiaTestImage.CreateSolid(left.Width + rightBmp.Width + 8, left.Height, pad);
+            using (var canvas = new SKCanvas(sheet))
             {
-                Size = new Size(left.Width, left.Height),
-                Mode = ResizeMode.Pad,
-                PadColor = SixLabors.ImageSharp.Color.FromRgb(245, 242, 238),
-            }));
-            var height = left.Height;
-            var width = left.Width + right.Width + 8;
-            using var canvas = new Image<Rgba32>(width, height);
-            canvas.Mutate(ctx =>
-            {
-                ctx.BackgroundColor(SixLabors.ImageSharp.Color.FromRgb(245, 242, 238));
-                ctx.DrawImage(left, new Point(0, 0), 1f);
-                ctx.DrawImage(right, new Point(left.Width + 8, 0), 1f);
-            });
-            canvas.SaveAsPng(dest);
+                canvas.DrawBitmap(leftBmp, 0, 0);
+                canvas.DrawBitmap(rightBmp, left.Width + 8, 0);
+            }
+
+            SkiaTestImage.SavePng(sheet, dest);
             var storeCompare = "/cursor/stores/self/onboarding-scroll/compare";
             Directory.CreateDirectory(storeCompare);
-            canvas.SaveAsPng(Path.Combine(storeCompare, $"step-{step:00}-mockup-vs-impl.png"));
+            SkiaTestImage.SavePng(sheet, Path.Combine(storeCompare, $"step-{step:00}-mockup-vs-impl.png"));
         }
     }
 

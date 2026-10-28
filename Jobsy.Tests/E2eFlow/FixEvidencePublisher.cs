@@ -1,6 +1,5 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Processing;
+using Jobsy.Tests.Testing;
+using SkiaSharp;
 
 namespace Jobsy.Tests.E2eFlow;
 
@@ -86,14 +85,16 @@ internal static class FixEvidencePublisher
 
         try
         {
-            using var image = Image.Load(sourcePath);
-            image.Mutate(x => x.Resize(new ResizeOptions
+            using var stream = File.OpenRead(sourcePath);
+            using var decoded = SKBitmap.Decode(stream);
+            if (decoded is null)
             {
-                Mode = ResizeMode.Max,
-                Size = new Size(1440, 9000)
-            }));
+                return;
+            }
+
+            using var resized = SkiaTestImage.ResizeMax(decoded, 1440, 9000);
             var jpegDest = Path.ChangeExtension(destPath, ".jpg");
-            image.Save(jpegDest, new JpegEncoder { Quality = 82 });
+            File.WriteAllBytes(jpegDest, SkiaTestImage.EncodeJpeg(resized, 82));
         }
         catch
         {

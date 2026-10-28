@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+
+using Jobsy.Tests.Testing;
 
 namespace Jobsy.Tests;
 
@@ -153,17 +153,17 @@ public sealed class CompactHeadersPreviewR15ScreenshotTests : IAsyncLifetime
             return new ArtAnalysis();
         }
 
-        using var img = Image.Load<Rgb24>(pngBytes);
+        using var img = SkiaTestImage.LoadRgb(pngBytes);
         var hx = (int)Math.Round(heroBox.X);
         var hw = (int)Math.Round(heroBox.Width);
         var ax = (int)Math.Round(artBox.X);
         var aw = (int)Math.Round(artBox.Width);
         var midY = Math.Clamp((int)Math.Round(heroBox.Y + heroBox.Height / 2), 0, img.Height - 1);
 
-        static int Dist(Rgb24 p) =>
+        static int Dist(TestRgb p) =>
             Math.Abs(p.R - BandRgb.R) + Math.Abs(p.G - BandRgb.G) + Math.Abs(p.B - BandRgb.B);
 
-        static double Saturation(Rgb24 p)
+        static double Saturation(TestRgb p)
         {
             var max = Math.Max(p.R, Math.Max(p.G, p.B));
             var min = Math.Min(p.R, Math.Min(p.G, p.B));
@@ -179,7 +179,7 @@ public sealed class CompactHeadersPreviewR15ScreenshotTests : IAsyncLifetime
         var count = 0;
         for (var x = coreStart; x <= coreEnd; x++)
         {
-            var p = img[Math.Clamp(x, 0, img.Width - 1), midY];
+            var p = img.GetRgb(Math.Clamp(x, 0, img.Width - 1), midY);
             sum += Math.Max(Saturation(p), Math.Clamp(Dist(p) / 100.0, 0, 1));
             count++;
         }
@@ -195,7 +195,7 @@ public sealed class CompactHeadersPreviewR15ScreenshotTests : IAsyncLifetime
         {
             for (var x = scanStart; x <= scanEnd; x++)
             {
-                if (Dist(img[x, y]) > 28)
+                if (Dist(img.GetRgb(x, y)) > 28)
                 {
                     illustrationLeft = Math.Min(illustrationLeft, x);
                     break;
@@ -219,12 +219,12 @@ public sealed class CompactHeadersPreviewR15ScreenshotTests : IAsyncLifetime
         var bestStep = int.MaxValue;
         for (var y = yTop; y <= yBottom; y++)
         {
-            var prev = (Rgb24?)null;
+            var prev = (TestRgb?)null;
             var maxStep = 0;
             foreach (var dx in new[] { -20, 0, 20, 40, 80 })
             {
                 var px = Math.Clamp(edgeX + dx, 0, img.Width - 1);
-                var p = img[px, y];
+                var p = img.GetRgb(px, y);
                 if (prev is not null)
                 {
                     maxStep = Math.Max(maxStep, Math.Max(
@@ -235,7 +235,7 @@ public sealed class CompactHeadersPreviewR15ScreenshotTests : IAsyncLifetime
                 prev = p;
             }
 
-            var tailDist = Dist(img[Math.Clamp(edgeX + 80, 0, img.Width - 1), y]);
+            var tailDist = Dist(img.GetRgb(Math.Clamp(edgeX + 80, 0, img.Width - 1), y));
             if (tailDist >= 12 && maxStep <= 4 && maxStep < bestStep)
             {
                 bestStep = maxStep;
@@ -246,7 +246,7 @@ public sealed class CompactHeadersPreviewR15ScreenshotTests : IAsyncLifetime
         foreach (var (name, dx) in offsets)
         {
             var px = Math.Clamp(edgeX + dx, 0, img.Width - 1);
-            var p = img[px, sampleY];
+            var p = img.GetRgb(px, sampleY);
             samples.Add(new BandSample(name, p.R, p.G, p.B));
         }
 
