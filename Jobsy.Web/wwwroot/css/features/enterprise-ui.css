@@ -48,9 +48,36 @@
 .ent-filter-bar__select select {
     max-width: 100%;
     min-width: 0;
-}.ent-filter-bar__search input {
+}.ent-filter-bar__search,
+label.ent-filter-bar__search {
+    flex: 1 1 12rem;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: text;
+    font-weight: inherit;
+}.ent-filter-bar__search input,
+.ent-filter-bar__search input[type="search"] {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
     min-height: 44px;
     min-width: 12rem;
+    padding: var(--form-input-pad-y, 0.75rem) var(--form-input-pad-x, 0.875rem);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm, 8px);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    line-height: 1.4;
+}.ent-filter-bar__search input:focus,
+.ent-filter-bar__search input:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    outline-offset: 0;
+    border-color: var(--accent);
 }.ent-filter-bar__chips {
     display: flex;
     flex-wrap: wrap;
