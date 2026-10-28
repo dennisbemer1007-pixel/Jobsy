@@ -75,7 +75,7 @@ internal static class SavedSsrShells
         sb.Append("<input type=\"hidden\" id=\"saved-ssr-token\" value=\"");
         sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
         sb.Append("\" />");
-        AppendHero(sb, culture);
+        AppendHero(sb, culture, plainShell);
         if (data.ShowJobListTabs)
         {
             AppendJobListTabs(sb, culture, data.Items.Count);
@@ -96,7 +96,7 @@ internal static class SavedSsrShells
 
         if (data.Items.Count == 0)
         {
-            AppendEmpty(sb, culture);
+            AppendEmpty(sb, culture, plainShell);
         }
         else
         {
@@ -117,8 +117,20 @@ internal static class SavedSsrShells
         return sb.ToString();
     }
 
-    private static void AppendHero(StringBuilder sb, CultureState culture)
+    private static void AppendHero(StringBuilder sb, CultureState culture, bool plainShell)
     {
+        if (plainShell)
+        {
+            sb.Append("<header class=\"sollicitaties-intro\"><span class=\"sollicitaties-intro__eyebrow\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Nav.SavedTab"]));
+            sb.Append("</span><h1 class=\"sollicitaties-intro__title\" tabindex=\"-1\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Title"]));
+            sb.Append("</h1><p class=\"sollicitaties-intro__lead\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Lead"]));
+            sb.Append("</p></header>");
+            return;
+        }
+
         var band = CompactHeroPreviewCream.PageCreamFallback;
         var artDesktop = CandidateIllustratedImages.BewaardHeroBandC;
         var artMobile = CandidateIllustratedImages.MobileFigureUrl(artDesktop) ?? artDesktop;
@@ -159,8 +171,22 @@ internal static class SavedSsrShells
         sb.Append("</a></nav>");
     }
 
-    private static void AppendEmpty(StringBuilder sb, CultureState culture)
+    private static void AppendEmpty(StringBuilder sb, CultureState culture, bool plainShell)
     {
+        if (plainShell)
+        {
+            sb.Append("<div class=\"sollicitaties-empty\" data-testid=\"saved-empty-plain\"><article class=\"sollicitaties-empty-card\"><h2 class=\"sollicitaties-empty-card__title\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Title"]));
+            sb.Append("</h2><p class=\"sollicitaties-empty-card__lead\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Saved.EmptyLikes"]));
+            sb.Append("</p><div class=\"sollicitaties-empty-card__actions\"><a class=\"btn btn-primary sollicitaties-empty-card__cta\" href=\"/banenkaart\" data-enhance-nav=\"false\">");
+            sb.Append(WebUtility.HtmlEncode(culture["CandidateVacancies.BrowseMap"]));
+            sb.Append("</a><a class=\"btn btn-secondary sollicitaties-empty-card__cta\" href=\"/carriere\" data-enhance-nav=\"false\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Nav.CareerPath"]));
+            sb.Append("</a></div></article></div>");
+            return;
+        }
+
         var spot = CandidateIllustratedImages.SpotKaart;
         sb.Append("<div class=\"kb-saved__empty-layout\"><div class=\"cand-empty cand-empty--apps-prominent\" style=\"--cand-empty-art:url('");
         sb.Append(WebUtility.HtmlEncode(spot));
