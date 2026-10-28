@@ -992,11 +992,27 @@
             zoomOutsideTravel: dimmed && mapPins.length > 0,
             skipAutoFit: !!window.__jobsyBkRestoringView
         };
-        if (window.jobsyBanenkaartOvTravel && window.jobsyBanenkaartOvTravel.isOvTransport(filters.transport)) {
+        var ovMode = window.jobsyBanenkaartOvTravel
+            && window.jobsyBanenkaartOvTravel.isOvTransport(filters.transport);
+        if (ovMode) {
             window.jobsyBanenkaartOvTravel.beginOvSession();
+        }
+        function finishMapTravel() {
+            syncMapTravel(filters);
+            syncMapOrigin(filters);
+            if (ovMode) {
+                window.jobsyBanenkaartOvTravel.completeAfterMapPins();
+            }
         }
         if (window.jobMap && typeof window.jobMap.setVacanciesFromCatalog === "function") {
             window.jobMap.setVacanciesFromCatalog(pins, meta);
+            if (ovMode && typeof window.jobMap.__testGetMap === "function") {
+                var map = window.jobMap.__testGetMap();
+                if (map && typeof map.once === "function") {
+                    map.once("idle", finishMapTravel);
+                    return;
+                }
+            }
         } else {
             document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-pins", {
                 detail: {
@@ -1005,11 +1021,7 @@
                 }
             }));
         }
-        syncMapTravel(filters);
-        syncMapOrigin(filters);
-        if (window.jobsyBanenkaartOvTravel && window.jobsyBanenkaartOvTravel.isOvTransport(filters.transport)) {
-            window.jobsyBanenkaartOvTravel.completeAfterMapPins();
-        }
+        finishMapTravel();
     }
 
     function readOriginFromUrl() {
