@@ -164,8 +164,8 @@
     "v": "20261018-01"
   },
   "css/features/leerling-paspoort-g78.css": {
-    "sha256": "c85a1852e78174aae7e58db84d34905c324157ebf39cc6e8103c601dcb620143",
-    "v": "20261027-s11a"
+    "sha256": "4d421ea16496224bde8efccd3adc464862356b51f39d93cc1d55109bb100255f",
+    "v": "20261028-s16a"
   },
   "css/features/lobsy-assistant-panel.css": {
     "v": "20261026-kreeft22",
@@ -384,8 +384,8 @@
     "v": "20261016-04"
   },
   "js/banenkaart-catalog.js": {
-    "v": "20261026-26",
-    "sha256": "505cedf832541fd7fb228b3e9e1fd5651b6cc70a69b1e84f9c6b0776934672ab"
+    "v": "20261028-s16a",
+    "sha256": "c8426dd0a7b11f0d704dfa99fe3cb8558a1a420893c773cf54c0f23ca537b88d"
   },
   "js/banenkaart-map-icons.js": {
     "v": "20261025-kreeft15",

@@ -106,7 +106,10 @@ public sealed class SwipeViewModel
 
     public string HoursSecondary => "uur";
 
-    public static SwipeViewModel FromVacancy(VacancyListItem item, bool showMatchPercentage = true)
+    public static SwipeViewModel FromVacancy(
+        VacancyListItem item,
+        bool showMatchPercentage = true,
+        string? candidatePreferredTransport = null)
     {
         ArgumentNullException.ThrowIfNull(item);
 
@@ -153,7 +156,9 @@ public sealed class SwipeViewModel
             Location = FirstNonEmpty(item.CompanyAddress, item.OfferedByLabel),
             DistanceKm = item.DistanceKm,
             TravelTimeMinutes = item.TravelMinutes,
-            TransportMode = item.RequiredTransport.FirstOrDefault() ?? "Fiets",
+            TransportMode = !string.IsNullOrWhiteSpace(candidatePreferredTransport)
+                ? candidatePreferredTransport
+                : item.RequiredTransport.FirstOrDefault() ?? "Fiets",
             SalaryMin = salaryMin,
             SalaryMax = salaryMax,
             SalaryPeriod = period,

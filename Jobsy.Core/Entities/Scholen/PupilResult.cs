@@ -19,5 +19,6 @@ public class PupilResult
     /// <summary>Template keys, not rendered text.</summary>
     public string StoryKeysJson { get; set; } = "[]";
     public string? DreamJobKey { get; set; }
+    public string? DreamJobDisplayTitle { get; set; }
     public string? FitSnapshotJson { get; set; }
 }

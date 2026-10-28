@@ -137,16 +137,12 @@ public static class DreamJobCatalog
             }
         }
 
-        var hits = Search(query, 1);
-        if (hits.Count > 0
-            && Normalize(hits[0].TitleNl).StartsWith(norm, StringComparison.Ordinal))
-        {
-            key = hits[0].Key;
-            return true;
-        }
-
         return false;
     }
+
+    /// <summary>Exact title or synonym only — no prefix/fuzzy match (SSR droombaan free text).</summary>
+    public static bool TryResolveExactKey(string? query, out string key)
+        => TryResolveKey(query, out key);
 
     public static string Normalize(string value)
     {

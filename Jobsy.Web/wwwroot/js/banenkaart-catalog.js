@@ -177,13 +177,35 @@
         return r * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    var travelMinuteCache = Object.create(null);
+    var travelMinuteCacheOriginKey = "";
+
+    function resetTravelMinuteCache(origin, modeLabel) {
+        var key = (origin && origin.lat != null && origin.lng != null)
+            ? origin.lat + "," + origin.lng + "|" + String(modeLabel || "")
+            : "";
+        if (key === travelMinuteCacheOriginKey) {
+            return;
+        }
+
+        travelMinuteCacheOriginKey = key;
+        travelMinuteCache = Object.create(null);
+    }
+
     function travelMinutes(origin, lat, lng, modeLabel) {
         if (!origin || origin.lat == null || origin.lng == null) {
             return null;
         }
+        var cacheKey = origin.lat + "," + origin.lng + "|" + modeLabel + "|" + lat + "," + lng;
+        if (Object.prototype.hasOwnProperty.call(travelMinuteCache, cacheKey)) {
+            return travelMinuteCache[cacheKey];
+        }
+
         var km = haversineKm(origin.lat, origin.lng, lat, lng);
         var speed = crowFliesKmPerHour(transportMode(modeLabel));
-        return Math.ceil((km / speed) * 60);
+        var mins = Math.ceil((km / speed) * 60);
+        travelMinuteCache[cacheKey] = mins;
+        return mins;
     }
 
     function matchesFilters(row, filters) {
@@ -1800,6 +1822,11 @@
 
     function applyClientFilters(filters) {
         filters = normalizeFilters(filters);
+        resetTravelMinuteCache(
+            filters && filters.originLat != null && filters.originLng != null
+                ? { lat: filters.originLat, lng: filters.originLng }
+                : null,
+            filters ? filters.transport : null);
         if (!rows) {
             return fetchCatalog(false).then(function () {
                 applyClientFilters(filters);

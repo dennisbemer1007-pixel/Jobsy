@@ -139,7 +139,7 @@ internal static class PupilPassportGroep78PdfRenderer
             col.Item().AlignCenter().Width(22).Height(22).Svg(PupilPassportIcons.Icon(PupilPassportIcons.WorldIconKey(w.WorldNumber), Purple, 12));
             col.Item().AlignCenter().Text(w.Title).FontFamily(PupilPassportFonts.Fredoka).FontSize(7f).FontColor(Purple);
             col.Item().AlignCenter().Text(w.Subtitle).FontSize(6f).FontColor(Muted);
-            col.Item().AlignCenter().Text(w.Value).FontSize(6.5f).SemiBold().LineHeight(1.1f).ClampLines(3);
+            col.Item().AlignCenter().Text(w.Value).FontSize(6.5f).Bold().LineHeight(1.15f);
         });
     }
 
@@ -159,7 +159,7 @@ internal static class PupilPassportGroep78PdfRenderer
                         left.Item().Row(h =>
                         {
                             h.ConstantItem(9).Svg(PupilPassportIcons.Icon("check", Color.FromHex("#16865a"), 9));
-                            h.RelativeItem().Text(T(m, "LeerlingDroom.HaveTitle")).SemiBold().FontSize(7.5f);
+                            h.RelativeItem().Text(T(m, "LeerlingDroom.HaveTitle")).Bold().FontSize(7.5f);
                         });
                         foreach (var h in m.DreamHaveItems.Take(3))
                         {
@@ -171,7 +171,7 @@ internal static class PupilPassportGroep78PdfRenderer
                         right.Item().Row(h =>
                         {
                             h.ConstantItem(9).Svg(PupilPassportIcons.Icon("arrow", Color.FromHex("#d9452f"), 9));
-                            h.RelativeItem().Text(T(m, "LeerlingDroom.NeedTitle")).SemiBold().FontSize(7.5f);
+                            h.RelativeItem().Text(T(m, "LeerlingDroom.NeedTitle")).Bold().FontSize(7.5f);
                         });
                         foreach (var n in m.DreamLearnItems.Take(2))
                         {
@@ -226,10 +226,10 @@ internal static class PupilPassportGroep78PdfRenderer
                                     inner.Text(T(m, phaseKey)[..1]).FontSize(7).FontColor(Purple).SemiBold();
                                 }
                             });
-                        x.Item().PaddingTop(3).AlignCenter().Text(shortTitle).FontSize(9f).SemiBold().LineHeight(1.1f);
+                        x.Item().PaddingTop(3).AlignCenter().Text(shortTitle).FontSize(8.5f).Bold().LineHeight(1.15f);
                         if (!string.IsNullOrWhiteSpace(detail))
                         {
-                            x.Item().AlignCenter().Text(detail).FontSize(7.5f).FontColor(Muted).LineHeight(1.15f).ClampLines(2);
+                            x.Item().AlignCenter().Text(detail).FontSize(7.5f).FontColor(Muted).LineHeight(1.15f);
                         }
                     });
                 }
@@ -254,19 +254,9 @@ internal static class PupilPassportGroep78PdfRenderer
 
         part = part.TrimEnd('!', '.');
         part = PupilPassportLocalizedCopy.RouteStepTitle(part, language);
-
-        if (part.Contains("Dierenarts", StringComparison.Ordinal) && !PupilVerhaalLocalized.IsEnglish(language))
-        {
-            part = "Dierenarts!";
-        }
-        else if (part.Contains("Dierenarts", StringComparison.OrdinalIgnoreCase))
-        {
-            part = "Vet!";
-        }
-
         part = part.TrimEnd('!', '.');
 
-        return part.Length > 24 ? part[..24].Trim() : part;
+        return part;
     }
 
     private static string? RouteShortDetail(string? detail)
@@ -331,7 +321,7 @@ internal static class PupilPassportGroep78PdfRenderer
                         x.ConstantItem(20).Svg(PupilPassportIcons.Icon(s.IconKey, iconColor, 14));
                         x.RelativeItem().PaddingLeft(4).Column(t =>
                         {
-                            t.Item().Text(s.Title).SemiBold().FontSize(7.5f).ClampLines(2);
+                            t.Item().Text(s.Title).Bold().FontSize(7.5f).LineHeight(1.15f);
                             t.Item().Text(s.Subtitle).FontSize(7f).FontColor(Muted).ClampLines(2);
                         });
                     });
@@ -356,7 +346,7 @@ internal static class PupilPassportGroep78PdfRenderer
                         {
                             x.Item().AlignCenter().Height(32).Svg(PupilPassportIcons.Icon(card.IconKey, Purple, 24));
                             x.Item().Text(card.DomainLabel.ToUpperInvariant()).FontSize(6.5f).FontColor(Muted);
-                            x.Item().Text(card.Title).SemiBold().FontSize(9.5f);
+                            x.Item().Text(card.Title).Bold().FontSize(9.5f).LineHeight(1.15f);
                             x.Item().PaddingTop(2).Text(card.Blurb).FontSize(7.2f).LineHeight(1.3f);
                             x.Item().PaddingTop(1).Text(T(m, "LeerlingPassport.Cards.Fit") + ": " +
                                                       string.Join(", ", card.FitTags)).FontSize(6.5f).FontColor(Purple);
