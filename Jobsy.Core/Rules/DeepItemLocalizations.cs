@@ -124,8 +124,8 @@ public static class DeepAnalysisQuestionLocales
     public static string Example(this DeepAnalysisQuestion question, string lang, ILogger? logger = null)
     {
         var kind = FamilyToKind(question.Family);
-        var exampleNl = DeepAnalysisQuestionHelp.ExampleFor(question);
-        return DeepItemLocalizations.Resolve(kind, question.Id, question.PromptNl, exampleNl, lang, logger).Example;
+        var example = DeepAnalysisQuestionHelp.ExampleFor(question, lang);
+        return DeepItemLocalizations.Resolve(kind, question.Id, question.PromptNl, example, lang, logger).Example;
     }
 
     private static AssessmentKind FamilyToKind(string family)

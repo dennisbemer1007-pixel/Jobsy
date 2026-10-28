@@ -3,14 +3,20 @@ using Jobsy.Core.Enums;
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Stable NL/EN practice examples per assessment item id (Quick-Scan v2 banks + deep analysis).
-/// Replaces domain-only rotation in <see cref="DeepAnalysisQuestionHelp"/>.
+/// Stable NL/EN practice examples per assessment stelling (Quick-Scan item vs diep-analyse prompt),
+/// not only per shared question number across banks.
 /// </summary>
 public static class AssessmentItemExamples
 {
     public const int MaxLength = 140;
 
-    private static readonly Lazy<IReadOnlyDictionary<(AssessmentKind Kind, int Id, string Lang), string>> Catalog =
+    public enum ExampleScope
+    {
+        QuickScan,
+        DeepAnalysis
+    }
+
+    private static readonly Lazy<IReadOnlyDictionary<(AssessmentKind Kind, ExampleScope Scope, int Id, string Lang), string>> Catalog =
         new(BuildCatalog);
 
     public static string ExampleNl(AssessmentKind kind, int id, string domain, bool reverse)
@@ -22,7 +28,7 @@ public static class AssessmentItemExamples
     public static string ExampleFor(AssessmentKind kind, int id, string domain, bool reverse, string lang)
     {
         var normalized = DeepItemLocalizations.NormalizeLang(lang);
-        if (Catalog.Value.TryGetValue((kind, id, normalized), out var hit))
+        if (Catalog.Value.TryGetValue((kind, ExampleScope.QuickScan, id, normalized), out var hit))
         {
             return hit;
         }
@@ -30,32 +36,31 @@ public static class AssessmentItemExamples
         return ComposeFallback(domain, reverse, id, normalized);
     }
 
-    public static string ExampleFor(DeepAnalysisQuestion question)
-        => ExampleFor(
-            FamilyToKind(question.Family),
-            question.Id,
-            question.Domain,
-            question.Reverse,
-            "nl");
+    public static string ExampleFor(DeepAnalysisQuestion question, string lang = "nl")
+    {
+        var kind = FamilyToKind(question.Family);
+        var normalized = DeepItemLocalizations.NormalizeLang(lang);
+        if (Catalog.Value.TryGetValue((kind, ExampleScope.DeepAnalysis, question.Id, normalized), out var hit))
+        {
+            return hit;
+        }
 
-    public static IEnumerable<(AssessmentKind Kind, int Id)> AllCatalogIds()
+        return ComposeFallback(question.Domain, question.Reverse, question.Id, normalized);
+    }
+
+    public static IEnumerable<(ExampleScope Scope, AssessmentKind Kind, int Id)> AllCatalogIds()
         => Catalog.Value.Keys
             .Where(k => k.Lang == "nl")
-            .Select(k => (k.Kind, k.Id))
+            .Select(k => (k.Scope, k.Kind, k.Id))
             .Distinct();
 
-    private static IReadOnlyDictionary<(AssessmentKind Kind, int Id, string Lang), string> BuildCatalog()
+    private static IReadOnlyDictionary<(AssessmentKind Kind, ExampleScope Scope, int Id, string Lang), string> BuildCatalog()
     {
-        var map = new Dictionary<(AssessmentKind, int, string), string>();
-        var usedNl = new Dictionary<AssessmentKind, HashSet<string>>();
+        var map = new Dictionary<(AssessmentKind, ExampleScope, int, string), string>();
+        var usedNl = new Dictionary<(AssessmentKind Kind, ExampleScope Scope), HashSet<string>>();
 
-        void Add(AssessmentKind kind, int id, string domain, bool _, bool skipIfExists = false)
+        void Add(ExampleScope scope, AssessmentKind kind, int id, string domain, bool _, int stemSeed)
         {
-            if (skipIfExists && map.ContainsKey((kind, id, "nl")))
-            {
-                return;
-            }
-
             var stemsNl = StemsFor(domain, "nl");
             if (stemsNl.Length == 0)
             {
@@ -68,17 +73,18 @@ public static class AssessmentItemExamples
                 stemsEn = EnFallbackStems;
             }
 
-            if (!usedNl.TryGetValue(kind, out var seen))
+            var seenKey = (kind, scope);
+            if (!usedNl.TryGetValue(seenKey, out var seen))
             {
                 seen = [];
-                usedNl[kind] = seen;
+                usedNl[seenKey] = seen;
             }
 
             string nl = "";
             string en = "";
             for (var attempt = 0; attempt < stemsNl.Length; attempt++)
             {
-                var idx = ((id - 1) + attempt) % stemsNl.Length;
+                var idx = (stemSeed + attempt * 13 + id) % stemsNl.Length;
                 nl = Trim(stemsNl[idx]);
                 en = Trim(stemsEn[idx % stemsEn.Length]);
                 if (seen.Add(nl))
@@ -87,39 +93,55 @@ public static class AssessmentItemExamples
                 }
             }
 
-            map[(kind, id, "nl")] = nl;
-            map[(kind, id, "en")] = en;
+            map[(kind, scope, id, "nl")] = nl;
+            map[(kind, scope, id, "en")] = en;
         }
 
         foreach (var q in CompetencyTestCatalogV2.Questions)
         {
-            Add(AssessmentKind.Competence, q.Id, q.Category, q.Reverse);
+            Add(ExampleScope.QuickScan, AssessmentKind.Competence, q.Id, q.Category, q.Reverse, q.Id - 1);
         }
 
         foreach (var q in CareerTestCatalogV2.Questions)
         {
-            Add(AssessmentKind.Career, q.Id, q.Category, q.Reverse);
+            Add(ExampleScope.QuickScan, AssessmentKind.Career, q.Id, q.Category, q.Reverse, q.Id - 1);
         }
 
         foreach (var q in CulturePersonalityCatalogV2.Questions)
         {
-            Add(AssessmentKind.Culture, q.Id, q.Category, q.Reverse);
+            Add(ExampleScope.QuickScan, AssessmentKind.Culture, q.Id, q.Category, q.Reverse, q.Id - 1);
         }
 
         foreach (var q in SchwartzValuesCatalogV2.Questions)
         {
-            Add(AssessmentKind.Values, q.Id, q.Category, q.Reverse);
+            Add(ExampleScope.QuickScan, AssessmentKind.Values, q.Id, q.Category, q.Reverse, q.Id - 1);
         }
 
         foreach (var kind in new[] { AssessmentKind.Competence, AssessmentKind.Career, AssessmentKind.Culture, AssessmentKind.Values })
         {
+            var deepIndex = 0;
             foreach (var q in DeepAnalysisCatalog.QuestionsFor(kind))
             {
-                Add(kind, q.Id, q.Domain, q.Reverse, skipIfExists: true);
+                Add(ExampleScope.DeepAnalysis, kind, q.Id, q.Domain, q.Reverse, StableStemSeed(q.PromptNl));
+                deepIndex++;
             }
         }
 
         return map;
+    }
+
+    private static int StableStemSeed(string promptNl)
+    {
+        unchecked
+        {
+            var hash = 17;
+            foreach (var ch in promptNl)
+            {
+                hash = (hash * 31) + ch;
+            }
+
+            return Math.Abs(hash);
+        }
     }
 
     private static string Trim(string text)
