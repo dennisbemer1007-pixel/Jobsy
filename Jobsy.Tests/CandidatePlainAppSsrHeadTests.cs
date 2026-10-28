@@ -32,5 +32,9 @@ public sealed class CandidatePlainAppSsrHeadTests
         Assert.Contains("data-plain-banenkaart", banenkaart, StringComparison.Ordinal);
         Assert.Contains("cp-plain-banenkaart", banenkaart, StringComparison.Ordinal);
         Assert.Contains("plainShell", banenkaart, StringComparison.Ordinal);
+
+        var plainBkCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/candidate-plain-banenkaart.css"));
+        Assert.Contains("[data-plain-banenkaart=\"1\"][data-banenkaart-ssr=\"1\"]", plainBkCss, StringComparison.Ordinal);
+        Assert.Contains("grid-template-rows: 64px auto minmax(0, 1fr)", plainBkCss, StringComparison.Ordinal);
     }
 }
