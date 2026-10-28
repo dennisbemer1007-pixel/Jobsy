@@ -1,16 +1,15 @@
 KEY: ApplicationCvViewed
-SUBJECT: Je sollicitatie is bekeken bij ⁨Bakkerij De Gouden Korrel⁩
-PREHEADER: ⁨Bakkerij De Gouden Korrel⁩ heeft je CV bekeken.
+SUBJECT: تمت مشاهدة طلبك في ⁨Bakkerij De Gouden Korrel⁩
+PREHEADER: ⁨Bakkerij De Gouden Korrel⁩ شاهد سيرتك الذاتية.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-⁨Bakkerij De Gouden Korrel⁩ heeft je sollicitatie bekeken
+⁨Bakkerij De Gouden Korrel⁩ شاهد طلبك
 
-⁨Bakkerij De Gouden Korrel⁩ heeft je sollicitatie voor ⁨Weekendhulp verkoop⁩
-bekeken.
+⁨Bakkerij De Gouden Korrel⁩ شاهد طلبك على ⁨Weekendhulp verkoop⁩.
 
-Bekijk je sollicitatie: https://lobsy.nl/candidate/applications?tab=sollicitaties&sel=22222222-2222-2222-2222-222222222222
+عرض طلبك: https://lobsy.nl/candidate/applications?tab=sollicitaties&sel=22222222-2222-2222-2222-222222222222
 
 فريق Lobsy
 
@@ -20,11 +19,11 @@ Bekijk je sollicitatie: https://lobsy.nl/candidate/applications?tab=sollicitatie
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: ⁨Bakkerij De Gouden Korrel⁩ heeft je sollicitatie bekeken
+h1: ⁨Bakkerij De Gouden Korrel⁩ شاهد طلبك
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Bekijk je sollicitatie -> https://lobsy.nl/candidate/applications?tab=sollicitaties&sel=22222222-2222-2222-2222-222222222222
+a: عرض طلبك -> https://lobsy.nl/candidate/applications?tab=sollicitaties&sel=22222222-2222-2222-2222-222222222222
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

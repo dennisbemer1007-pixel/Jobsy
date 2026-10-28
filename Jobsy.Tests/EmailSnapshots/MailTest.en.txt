@@ -7,7 +7,7 @@ This is a test email
 ====================
 
 If you can read this, sending mail from acceptatie works (Resend: Resend or
-SMTP). Sent at 28 October 2026, 10:50.
+SMTP). Sent at 28 October 2026, 10:58.
 
 Go to emails: https://lobsy.nl/admin/content/emails
 
