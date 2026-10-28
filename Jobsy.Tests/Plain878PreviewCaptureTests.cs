@@ -65,9 +65,9 @@ public sealed class Plain878PreviewCaptureTests : IAsyncLifetime, IAsyncDisposab
             "/banenkaart?maxMinutes=60&transport=Auto&originLat=52.0705&originLng=4.3007&originLabel=Naaldwijk";
 
         await using (var parityContext = await browser.NewContextAsync(new()
-                     {
-                         ViewportSize = new() { Width = 1440, Height = 900 },
-                     }))
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+        }))
         {
             await parityContext.AddInitScriptAsync(CookieInitScript);
             var parityPage = await parityContext.NewPageAsync();
