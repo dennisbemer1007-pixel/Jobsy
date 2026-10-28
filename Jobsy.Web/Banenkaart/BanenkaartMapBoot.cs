@@ -25,6 +25,7 @@ internal static class BanenkaartMapBoot
         string catalogUrl,
         bool preferFilledLocation,
         bool isAuthenticated,
+        bool isCandidate,
         double? originLat,
         double? originLng,
         bool zoomToPinsOutsideTravel,
@@ -40,6 +41,7 @@ internal static class BanenkaartMapBoot
             ["illustratedPopup"] = false,
             ["lagenLayout"] = true,
             ["zoomToPinsOutsideTravel"] = zoomToPinsOutsideTravel,
+            ["pinsUrl"] = BuildClientMapPinsUrl(query, isCandidate),
             ["view"] = new Dictionary<string, object?>
             {
                 ["lat"] = opening.CenterLat,
@@ -146,11 +148,8 @@ internal static class BanenkaartMapBoot
 
     internal static string BuildPinsApiUrl(BanenkaartSsrQuery.State query, bool isCandidate)
     {
-        var qs = new List<string>
-        {
-            $"transport={Uri.EscapeDataString(query.Transport)}",
-            $"maxMinutes={BanenkaartSsrQuery.DiscoverMaxMinutes(query.MaxTravelMinutes)}"
-        };
+        var qs = new List<string>();
+        AppendSharedPinQuery(qs, query, isCandidate);
 
         if (query.OriginLat is double lat && query.OriginLng is double lng)
         {
@@ -158,6 +157,21 @@ internal static class BanenkaartMapBoot
             qs.Add($"originLng={lng.ToString(CultureInfo.InvariantCulture)}");
             qs.Add($"radiusKm={query.RadiusKm.ToString(CultureInfo.InvariantCulture)}");
         }
+
+        return "/api/vacancies/pins?" + string.Join("&", qs);
+    }
+
+    internal static string BuildClientMapPinsUrl(BanenkaartSsrQuery.State query, bool isCandidate)
+    {
+        var qs = new List<string> { "scope=map" };
+        AppendSharedPinQuery(qs, query, isCandidate);
+        return BanenkaartClientPins.Path + "?" + string.Join("&", qs);
+    }
+
+    private static void AppendSharedPinQuery(List<string> qs, BanenkaartSsrQuery.State query, bool isCandidate)
+    {
+        qs.Add($"transport={Uri.EscapeDataString(query.Transport)}");
+        qs.Add($"maxMinutes={BanenkaartSsrQuery.DiscoverMaxMinutes(query.MaxTravelMinutes)}");
 
         foreach (var wt in query.WorkTypes)
         {
@@ -183,8 +197,6 @@ internal static class BanenkaartMapBoot
         {
             qs.Add($"minMatchPercent={query.MinMatchPercent}");
         }
-
-        return "/api/vacancies/pins?" + string.Join("&", qs);
     }
 
     internal static List<Dictionary<string, object?>> ToBootPins(IEnumerable<VacancyPinBootItem> pins) =>

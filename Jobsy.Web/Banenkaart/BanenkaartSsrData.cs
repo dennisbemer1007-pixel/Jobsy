@@ -270,6 +270,7 @@ internal static class BanenkaartSsrData
             catalogUrl,
             preferFilledLocation: !companyFocus && useOrigin,
             isAuthenticated,
+            isCandidate,
             originLat,
             originLng,
             zoomOutsideTravel,

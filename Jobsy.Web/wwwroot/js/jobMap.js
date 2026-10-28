@@ -3797,8 +3797,15 @@ window.jobMap = (function () {
         } catch (eClear) { }
     }
 
+    function catalogPinsBootstrapPending() {
+        return catalogModeActive
+            && window.jobsyBanenkaartCatalog
+            && typeof window.jobsyBanenkaartCatalog.isReady === "function"
+            && !window.jobsyBanenkaartCatalog.isReady();
+    }
+
     function fetchPins(url) {
-        if (catalogModeActive) {
+        if (catalogModeActive && !catalogPinsBootstrapPending()) {
             return Promise.resolve([]);
         }
         if (!url) {
@@ -6596,7 +6603,7 @@ window.jobMap = (function () {
             return;
         }
         catalogModeActive = bootPayload.catalogMode === true;
-        if (catalogModeActive) {
+        if (catalogModeActive && !bootPayload.pinsUrl) {
             clearPinsFetchState();
         }
         const mapInit = bootPayload.mapInit || null;
@@ -7314,7 +7321,7 @@ window.jobMap = (function () {
             ? options.illustratedVacancySpots
             : {};
 
-        if (catalogModeActive) {
+        if (catalogModeActive && !nextPinsUrl) {
             clearPinsFetchState();
         }
         bootZoomOutsideTravel = !!(options && options.zoomToPinsOutsideTravel);
@@ -7378,7 +7385,7 @@ window.jobMap = (function () {
                         fetchPins(pinsUrl);
                     }
                 });
-            } else if (pinsUrl && !catalogModeActive) {
+            } else if (pinsUrl && (!catalogModeActive || catalogPinsBootstrapPending())) {
                 fetchPins(pinsUrl);
             }
         } else if (!pinsUrl) {

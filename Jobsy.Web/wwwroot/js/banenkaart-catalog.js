@@ -633,6 +633,21 @@
             if (!params.has("sort")) {
                 merged.sort = boot.sort || (boot.showFitFilters ? "match" : merged.sort);
             }
+            if (!params.has("maxMinutes") && boot.maxMinutes != null) {
+                merged.maxMinutes = boot.maxMinutes;
+            }
+            if (!params.has("transport") && boot.transport) {
+                merged.transport = boot.transport;
+            }
+            if (!params.has("originLat") && boot.originLat != null) {
+                merged.originLat = boot.originLat;
+            }
+            if (!params.has("originLng") && boot.originLng != null) {
+                merged.originLng = boot.originLng;
+            }
+            if (!params.has("originLabel") && boot.originLabel) {
+                merged.originLabel = boot.originLabel;
+            }
         } catch (eMerge) {
             if (!merged.sort && boot.sort) {
                 merged.sort = boot.sort;
