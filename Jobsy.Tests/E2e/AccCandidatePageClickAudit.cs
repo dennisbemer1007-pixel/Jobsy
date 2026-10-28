@@ -238,6 +238,10 @@ internal static class AccCandidatePageClickAudit
               if (!hit) return { ok: false, reason: 'no-hit' };
               const ok = hit === el || el.contains(hit);
               if (ok) return { ok: true, reason: 'ok' };
+              const coach = hit.closest('.lobsy-coach-dock, [data-lobsy-coach], [data-ssr-coach]');
+              if (coach && !el.closest('.lobsy-coach-dock, [data-lobsy-coach], [data-ssr-coach]')) {
+                return { ok: false, reason: 'blocked-by-coach-pill' };
+              }
               const block = hit.tagName.toLowerCase()
                 + (hit.className ? '.' + String(hit.className).trim().split(/\\s+/)[0] : '');
               return { ok: false, reason: 'blocked-by-' + block };

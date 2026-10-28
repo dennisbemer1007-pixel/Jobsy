@@ -7,6 +7,7 @@ using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
 using Jobsy.Web.Models;
+using Jobsy.Web.Applications;
 using Jobsy.Web.Banenkaart;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Navigation;
@@ -76,7 +77,11 @@ internal static class SavedSsrShells
         sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
         sb.Append("\" />");
         AppendHero(sb, culture, plainShell);
-        if (data.ShowJobListTabs)
+        if (plainShell)
+        {
+            AppendPlainSegmentTabs(sb, culture, data);
+        }
+        else if (data.ShowJobListTabs)
         {
             AppendJobListTabs(sb, culture, data.Items.Count);
         }
@@ -101,10 +106,13 @@ internal static class SavedSsrShells
         else
         {
             AppendToolbar(sb, culture, data);
-            AppendBodyWithRail(sb, culture, data);
+            AppendBodyWithRail(sb, culture, data, plainShell);
         }
 
-        AppendFooterNav(sb, culture);
+        if (!plainShell)
+        {
+            AppendFooterNav(sb, culture);
+        }
         sb.Append("</div></div>");
         sb.Append("<div class=\"kb-saved__toast\" data-saved-toast role=\"status\" hidden><span data-saved-toast-text></span><button type=\"button\" data-saved-undo hidden>");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Undo"]));
@@ -149,6 +157,19 @@ internal static class SavedSsrShells
         sb.Append(WebUtility.HtmlEncode(artMobile));
         sb.Append("\" alt=\"\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" data-testid=\"cand-compact-hero-mobile-art\" />");
         sb.Append("</div></header>");
+    }
+
+    private static void AppendPlainSegmentTabs(StringBuilder sb, CultureState culture, SavedSsrData.PageData data)
+    {
+        ApplicationsSsrClusterTabsSsr.AppendSegment(
+            sb,
+            culture,
+            new ApplicationsSsrClusterTabsSsr.TabContext(
+                data.AfterMatchEnabled,
+                data.ShowActiviteitenTab,
+                data.UnreadMessagesTotal,
+                data.Items.Count,
+                ApplicationsSsrClusterTabsSsr.ActiveLiked));
     }
 
     private static void AppendJobListTabs(StringBuilder sb, CultureState culture, int savedCount)
@@ -211,7 +232,7 @@ internal static class SavedSsrShells
         sb.Append("</div><div class=\"kb-saved__meta\"><span class=\"kb-saved__count\" data-saved-filter-count data-saved-count-template=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Count"]));
         sb.Append("\">");
-        sb.Append(WebUtility.HtmlEncode(string.Format(culture["Kb.Saved.Count"], data.Filtered.Count)));
+        sb.Append(WebUtility.HtmlEncode(FormatSavedCount(culture, data.Filtered.Count)));
         sb.Append("</span><label class=\"kb-saved__sort\"><span class=\"visually-hidden\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kb.Filter.Sort"]));
         sb.Append("</span><select data-saved-sort data-enhance-nav=\"false\" aria-label=\"");
@@ -264,7 +285,7 @@ internal static class SavedSsrShells
         sb.Append("</option>");
     }
 
-    private static void AppendBodyWithRail(StringBuilder sb, CultureState culture, SavedSsrData.PageData data)
+    private static void AppendBodyWithRail(StringBuilder sb, CultureState culture, SavedSsrData.PageData data, bool plainShell)
     {
         sb.Append("<div class=\"kb-saved__body\">");
         sb.Append("<p class=\"state-message\" data-saved-filter-empty");
@@ -281,11 +302,15 @@ internal static class SavedSsrShells
         foreach (var item in SavedSsrData.SortedAll(data))
         {
             var visible = SavedSsrData.MatchesFilter(item, data.Filter);
-            AppendItem(sb, culture, item, hidden: !visible);
+            AppendItem(sb, culture, item, plainShell, hidden: !visible);
         }
 
         sb.Append("</div>");
-        AppendRail(sb, culture, data);
+        if (!plainShell)
+        {
+            AppendRail(sb, culture, data);
+        }
+
         sb.Append("</div>");
     }
 
@@ -293,6 +318,7 @@ internal static class SavedSsrShells
         StringBuilder sb,
         CultureState culture,
         CandidateEngagementItem item,
+        bool plainShell,
         bool hidden = false)
     {
         var closed = SavedSsrData.IsClosed(item);
@@ -308,6 +334,11 @@ internal static class SavedSsrShells
             sb.Append(" kb-saved-row--closed");
         }
 
+        if (plainShell)
+        {
+            sb.Append(" kb-saved-row--plain");
+        }
+
         sb.Append("\" data-saved-item data-saved-vacancy-id=\"");
         sb.Append(item.VacancyId.ToString("D"));
         sb.Append("\" data-saved-closed=\"");
@@ -318,19 +349,43 @@ internal static class SavedSsrShells
             sb.Append(" hidden");
         }
 
-        sb.Append("><div class=\"kb-saved-row__thumb\">");
-        AppendPhoto(sb, item, "kb-saved-row__photo", "72px", 72, 72);
-        sb.Append("</div><div class=\"kb-saved-row__body\"><h2 class=\"kb-saved-row__title\"><a class=\"kb-saved-row__link\" href=\"");
+        sb.Append('>');
+        var rowPhotoSrc = !string.IsNullOrWhiteSpace(item.ImageUrl) ? item.ImageUrl : item.CompanyLogoUrl;
+        if (!plainShell || !string.IsNullOrWhiteSpace(rowPhotoSrc))
+        {
+            sb.Append("<div class=\"kb-saved-row__thumb\">");
+            if (!string.IsNullOrWhiteSpace(rowPhotoSrc))
+            {
+                AppendPhoto(sb, item, "kb-saved-row__photo", "72px", 72, 72);
+            }
+
+            sb.Append("</div>");
+        }
+
+        sb.Append("<div class=\"kb-saved-row__body\"><h2 class=\"kb-saved-row__title\"><a class=\"kb-saved-row__link\" href=\"");
         sb.Append(WebUtility.HtmlEncode(rowHref));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(item.VacancyTitle));
         sb.Append("</a></h2><p class=\"kb-saved-row__place\">");
         sb.Append(WebUtility.HtmlEncode(companyPlace));
         sb.Append("</p>");
-        AppendFitTags(sb, culture, item, row: true);
+        if (!plainShell)
+        {
+            AppendFitTags(sb, culture, item, row: true);
+        }
+        else
+        {
+            AppendPlainSavedTags(sb, culture, item);
+        }
+
         sb.Append("</div>");
         AppendUnsaveForm(sb, culture, item, "kb-saved-row__heart", heart: true);
         sb.Append("</article>");
+
+        if (plainShell)
+        {
+            return;
+        }
 
         sb.Append("<article class=\"kb-saved-card");
         if (closed)
@@ -426,6 +481,11 @@ internal static class SavedSsrShells
         int height)
     {
         var src = !string.IsNullOrWhiteSpace(item.ImageUrl) ? item.ImageUrl : item.CompanyLogoUrl;
+        if (string.IsNullOrWhiteSpace(src))
+        {
+            return;
+        }
+
         sb.Append("<img class=\"");
         sb.Append(cssClass);
         sb.Append("\" src=\"");
@@ -444,6 +504,33 @@ internal static class SavedSsrShells
 
         sb.Append(" />");
     }
+
+    private static void AppendPlainSavedTags(StringBuilder sb, CultureState culture, CandidateEngagementItem item)
+    {
+        sb.Append("<div class=\"kb-saved-row__tags\">");
+        if (!string.IsNullOrWhiteSpace(item.SavedStateKind)
+            && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal)
+            && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Open), StringComparison.Ordinal))
+        {
+            sb.Append("<span class=\"kb-saved-row__status kb-saved-row__status--");
+            sb.Append(KbLabels.SavedStateCss(item.SavedStateKind));
+            sb.Append("\">");
+            sb.Append(WebUtility.HtmlEncode(KbLabels.SavedStateLabel(culture, item.SavedStateKind, item.DaysUntilEnd)));
+            sb.Append("</span>");
+        }
+
+        if (item.HasApplied)
+        {
+            sb.Append("<span class=\"kb-saved-row__applied\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Kb.Saved.Applied"]));
+            sb.Append("</span>");
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static string FormatSavedCount(CultureState culture, int count)
+        => count == 1 ? culture["Kb.Saved.CountOne"] : string.Format(culture["Kb.Saved.Count"], count);
 
     private static void AppendFitTags(StringBuilder sb, CultureState culture, CandidateEngagementItem item, bool row)
     {
