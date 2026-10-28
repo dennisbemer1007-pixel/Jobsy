@@ -88,6 +88,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestDepthValueMockupEnabled ?? true,
                 dto?.UwvFeaturesEnabled ?? true,
                 dto?.ActivityLogEnabled ?? false);
+            flags = ApplyAcceptatieConfigOverrides(flags);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -95,10 +96,21 @@ public sealed class WebFeatureFlags : IFeatureFlags
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to load feature flags from API; using last known or defaults.");
-            var fallback = _lastKnown ?? FeatureFlagSnapshot.Defaults;
+            var fallback = ApplyAcceptatieConfigOverrides(_lastKnown ?? FeatureFlagSnapshot.Defaults);
             _cache.Set(CacheKey, fallback, TimeSpan.FromSeconds(10));
             return fallback;
         }
+    }
+
+    /// <summary>Acceptatie Web config can force public test examples when API/DB lag behind deploy.</summary>
+    private FeatureFlagSnapshot ApplyAcceptatieConfigOverrides(FeatureFlagSnapshot flags)
+    {
+        if (_configuration.GetValue("JobsyFeatures:TestItemExamplesEnabled", false))
+        {
+            flags = flags with { TestItemExamplesEnabled = true };
+        }
+
+        return flags;
     }
 
     public async ValueTask<bool> IsEnabledAsync(

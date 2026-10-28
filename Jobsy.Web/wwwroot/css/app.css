@@ -2232,7 +2232,7 @@ html[dir="rtl"] .account-menu__panel {
     height: 100%;
 }
 
-.filter-bar__search {
+button.filter-bar__search {
     border: none;
     border-radius: 8px;
     padding: 0.65rem 1.25rem;
@@ -2243,7 +2243,7 @@ html[dir="rtl"] .account-menu__panel {
     cursor: pointer;
 }
 
-.filter-bar__search:hover {
+button.filter-bar__search:hover {
     background: var(--accent-hover);
 }
 
