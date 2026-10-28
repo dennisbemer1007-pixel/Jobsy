@@ -52,6 +52,34 @@ public static class UiStringsPlainPublic
         Add("PlainPublic.Landing.Card3Title", "Jij houdt de regie", "You stay in control");
         Add("PlainPublic.Landing.Card3Body", "Jij bepaalt wat werkgevers zien.", "You decide what employers see.");
 
+        Add("PlainPublic.Passport.Eyebrow", "Resultaat · klaar om te delen", "Result · ready to share");
+        Add("PlainPublic.Passport.Title", "Je paspoort", "Your passport");
+        Add("PlainPublic.Passport.Lead",
+            "Dit is wie je bent, in je eigen woorden. Jij bepaalt wat werkgevers zien.",
+            "This is who you are, in your own words. You decide what employers see.");
+        Add("PlainPublic.Passport.StepLineBold", "Stap {0} van {1}", "Step {0} of {1}");
+        Add("PlainPublic.Passport.GuideTitle", "Je gids", "Your guide");
+        Add("PlainPublic.Passport.GuideSubtitle", "Zo gebruiken we dit", "How we use this");
+        Add("PlainPublic.Passport.GuideBody",
+            "Je paspoort laat werkgevers zien wie je bent. Jij kiest wie het ziet. Je naam blijft verborgen tot een match.",
+            "Your passport shows employers who you are. You choose who sees it. Your name stays hidden until a match.");
+        Add("PlainPublic.Passport.VisibilityTitle", "Zichtbaarheid", "Visibility");
+        Add("PlainPublic.Passport.VisibilityEmployers", "Zichtbaar voor werkgevers", "Visible to employers");
+        Add("PlainPublic.Passport.VisibilityEmployersHint",
+            "Werkgevers met een passende vacature kunnen je paspoort zien.",
+            "Employers with a matching vacancy can see your passport.");
+        Add("PlainPublic.Passport.VisibilityName", "Naam pas tonen na een match", "Show name after a match");
+        Add("PlainPublic.Passport.VisibilityNameHint",
+            "Tot die tijd zien werkgevers alleen je voornaam.",
+            "Until then employers only see your first name.");
+        Add("PlainPublic.Passport.KvWork", "Werkervaring", "Work experience");
+        Add("PlainPublic.Passport.KvEducation", "Opleiding", "Education");
+        Add("PlainPublic.Passport.KvDream", "Droom", "Dream role");
+        Add("PlainPublic.Passport.KvAvailable", "Beschikbaar", "Availability");
+        Add("PlainPublic.Passport.Updated", "Bijgewerkt {0}", "Updated {0}");
+        Add("PlainPublic.Footer.Accessibility", "Toegankelijkheid", "Accessibility");
+        Add("PlainPublic.Footer.Contact", "Contact", "Contact");
+
         Add("PlainPublic.Login.TabLogin", "Inloggen", "Log in");
         Add("PlainPublic.Login.TabSignup", "Account maken", "Create account");
         Add("PlainPublic.Login.Title", "Fijn dat je er bent", "Good to see you");

@@ -1,5 +1,18 @@
 /* Plain candidate app shell — paspoort + banenkaart (mockup #878 @ 592a3596) */
 
+.cp-plain878 {
+  background: #f7f8fa;
+  color: #111827;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.cp-plain878 .passport-page-wrap,
+.cp-plain878 .wrap {
+  box-sizing: border-box;
+}
+
 .cp-plain-app {
   --cp-bg: #f7f8fa;
   --cp-text: #111827;

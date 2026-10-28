@@ -96,7 +96,15 @@
     "v": "20261025-68"
   },
   "css/features/candidate-plain-app.css": {
-    "sha256": "26f93806413a39d02fcfe369528308b5087273145e1c1e8d716a86b9f34b199b",
+    "sha256": "04da8520b104f8eea69dab68434bbfa8ff959b774b61c9484bd8f886bcd2ba8a",
+    "v": "20261028-catalog"
+  },
+  "css/features/candidate-plain-banenkaart.css": {
+    "sha256": "71ce8c8be44f2be591deec347297d1ad579f52cee9bb0807b865bde8fe07bb01",
+    "v": "20261028-catalog"
+  },
+  "css/features/candidate-plain-paspoort.css": {
+    "sha256": "cf3c59ecd59c68e9917a7d73bd48adf576a704be4e0a49090377f271fbc0078a",
     "v": "20261028-catalog"
   },
   "css/features/candidate-plain-public.css": {
