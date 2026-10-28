@@ -1,5 +1,6 @@
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
@@ -34,9 +35,9 @@
                     <div class="account-menu__panel right-0 max-w-[90vw] z-50" role="menu" aria-label="@Culture["Auth.AccountMenu"]">
                         <div class="account-menu__identity" role="presentation">
                             <strong class="account-menu__identity-name">@DisplayName(context.User)</strong>
-                            @if (!string.IsNullOrWhiteSpace(EmailOf(context.User)))
+                            @if (EmailOf(context.User) is { } accountEmail && !string.IsNullOrWhiteSpace(accountEmail))
                             {
-                                <span class="account-menu__identity-email">@EmailOf(context.User)</span>
+                                <span class="account-menu__identity-email">@AccountMasking.RedactEmail(accountEmail)</span>
                             }
                         </div>
                         @if (RoleClaimMatching.HasRole(context.User, JobsyRoles.Admin))

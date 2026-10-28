@@ -25,7 +25,10 @@ public class VacancyListRerenderGuardTests
         Assert.Contains("jobMap.highlight", hoverJs, StringComparison.Ordinal);
         Assert.Contains("root: root", hoverJs, StringComparison.Ordinal);
         Assert.Contains("vacancy-list", hoverJs, StringComparison.Ordinal);
-        AssetVersions.AssertVersionedRefMatchesManifest(discovery, "js/discoveryHover.js");
+        Assert.Contains(
+            "WwwrootAssetCatalog.Url(\"js/discoveryHover.js\")",
+            discovery,
+            StringComparison.Ordinal);
         Assert.Contains("jobsyDiscovery.observeMore", discovery, StringComparison.Ordinal);
     }
 

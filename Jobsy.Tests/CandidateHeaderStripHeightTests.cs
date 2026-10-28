@@ -19,14 +19,10 @@ public sealed class CandidateHeaderStripHeightTests
     [Fact]
     public void Blazor_core_and_applications_route_load_shared_strip_css()
     {
-        Assert.Contains(
-            "css/features/candidate-header-strip.css?v=20261025-acc1093",
-            Jobsy.Web.Hosting.PageAssetCatalog.BlazorCoreCss,
-            StringComparer.Ordinal);
+        var stripUrl = Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css");
+        Assert.Contains(stripUrl, Jobsy.Web.Hosting.PageAssetCatalog.BlazorCoreCss, StringComparer.Ordinal);
         var appsCss = Jobsy.Web.Hosting.PageAssetCatalog.RouteStylesheets("/candidate/applications");
-        Assert.Equal(
-            "css/features/candidate-header-strip.css?v=20261025-acc1093",
-            appsCss[0]);
+        Assert.Contains(stripUrl, appsCss);
     }
 
     [Fact]

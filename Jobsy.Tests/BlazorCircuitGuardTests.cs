@@ -33,7 +33,7 @@ public class BlazorCircuitGuardTests
         Assert.Contains("LoadBlazorRuntime", app);
         Assert.Contains("type === \"unload\"", app);
         Assert.Contains("pagehide", app);
-        Assert.Contains("js/app-core.js?v=", app);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/app-core.js\")", app);
         Assert.Contains("nonce=\"@Nonce\"", app);
         Assert.Contains("defer", app);
     }
@@ -86,9 +86,9 @@ public class BlazorCircuitGuardTests
             Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "nl"),
             Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "ar"));
         Assert.DoesNotContain("onclick=\"location.reload()\"", app);
-        Assert.DoesNotContain("data-reconnect-reload", app, StringComparison.Ordinal);
+        Assert.Contains("data-reconnect-reload", app, StringComparison.Ordinal);
 
-        Assert.Contains("css/features/reconnect.css?v=", app, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/features/reconnect.css\")", app, StringComparison.Ordinal);
         Assert.Contains("data-reconnect-css", app, StringComparison.Ordinal);
         var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
         Assert.Contains(

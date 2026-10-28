@@ -316,16 +316,16 @@ public class OntdekkingsreisRouteTests
     [Fact]
     public void DiscoveryJourney_requires_CandidatePassport_with_start_fallback()
     {
-        var page = typeof(DiscoveryJourney);
-        var attr = page.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true)
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var ssrPage = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateDiscoverySsr.razor"));
+        Assert.Contains("@page \"/candidate/ontdekkingsreis\"", ssrPage, StringComparison.Ordinal);
+        Assert.Contains("RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = \"/candidate/start\")", ssrPage, StringComparison.Ordinal);
+
+        var legacy = typeof(DiscoveryJourney);
+        var attr = legacy.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true)
             .OfType<RequiresFeatureAttribute>()
             .Single(a => a.Feature == PlatformFeature.CandidatePassport);
         Assert.Equal("/candidate/start", attr.FallbackPath);
-
-        var route = page.GetCustomAttributes(typeof(Microsoft.AspNetCore.Components.RouteAttribute), inherit: true)
-            .OfType<Microsoft.AspNetCore.Components.RouteAttribute>()
-            .Single();
-        Assert.Equal("/candidate/ontdekkingsreis", route.Template);
     }
 
     [Fact]
@@ -354,14 +354,13 @@ public class OntdekkingsreisRouteTests
             Assert.True(File.Exists(Path.Combine(dir, name)), name);
         }
 
-        Assert.Contains("<PersonalStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<AvailabilityStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<TransportStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<WorkHistoryStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<EducationStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<DreamJobStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<TestConsentStep", wizard, StringComparison.Ordinal);
+        Assert.Contains("<OnboardingRustigPersonalStepBody", wizard, StringComparison.Ordinal);
+        Assert.Contains("<OnboardingRustigMiniTestStep", wizard, StringComparison.Ordinal);
+        Assert.Contains("<OnboardingRustigDreamStep", wizard, StringComparison.Ordinal);
+        Assert.Contains("<TestConsentFooterFields", wizard, StringComparison.Ordinal);
         Assert.Contains("<OnboardingMiniTest", wizard, StringComparison.Ordinal);
+        Assert.True(File.Exists(Path.Combine(dir, "PersonalStep.razor")));
+        Assert.True(File.Exists(Path.Combine(dir, "AvailabilityStep.razor")));
 
         var personal = File.ReadAllText(Path.Combine(dir, "PersonalStep.razor"));
         Assert.Contains("ob-wizard__field-row", personal, StringComparison.Ordinal);

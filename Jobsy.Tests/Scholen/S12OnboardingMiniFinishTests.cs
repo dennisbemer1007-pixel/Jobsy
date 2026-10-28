@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 
 namespace Jobsy.Tests.Scholen;
@@ -5,20 +6,22 @@ namespace Jobsy.Tests.Scholen;
 public sealed class S12OnboardingMiniFinishTests
 {
     [Theory]
-    [InlineData(7, 1)]
-    [InlineData(10, 5)]
-    public void Last_mini_answer_must_advance_wizard_step(int step, int questionIndex)
+    [InlineData(7)]
+    [InlineData(10)]
+    public void Last_mini_answer_must_advance_wizard_step(int step)
     {
-        var miniIds = OnboardingMiniBlockCompletion.MiniQuestionIds(step, quickScanVersion: 1);
-        Assert.True(miniIds.Length >= questionIndex);
+        var version = AssessmentTestVersions.V3;
+        var miniIds = OnboardingMiniBlockCompletion.MiniQuestionIds(step, version);
+        Assert.True(miniIds.Length >= 2, "Mini block should have at least two questions for this guard.");
+
         var answers = new Dictionary<int, int>();
-        for (var i = 0; i < questionIndex; i++)
+        for (var i = 0; i < miniIds.Length - 1; i++)
         {
             answers[miniIds[i]] = 3;
         }
 
-        Assert.False(OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, 1, answers));
-        answers[miniIds[questionIndex - 1]] = 4;
-        Assert.True(OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, 1, answers));
+        Assert.False(OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, version, answers));
+        answers[miniIds[^1]] = 4;
+        Assert.True(OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, version, answers));
     }
 }
