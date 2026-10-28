@@ -144,12 +144,6 @@ public class PupilFirstLoadBunitTests : BunitContext
             Assert.DoesNotContain("Je sessie is verlopen", result.Markup, StringComparison.Ordinal);
         }, TimeSpan.FromSeconds(10));
 
-        var dream = Render<LeerlingDroombaan>();
-        dream.WaitForAssertion(() =>
-        {
-            Assert.Contains("Even geen verbinding", dream.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", dream.Markup, StringComparison.Ordinal);
-        }, TimeSpan.FromSeconds(10));
     }
 
     [Fact]
@@ -162,9 +156,6 @@ public class PupilFirstLoadBunitTests : BunitContext
         Assert.Contains("Je sessie is verlopen", result.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Even geen verbinding", result.Markup, StringComparison.Ordinal);
 
-        var dream = Render<LeerlingDroombaan>();
-        Assert.Contains("Je sessie is verlopen", dream.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Even geen verbinding", dream.Markup, StringComparison.Ordinal);
     }
 
     private async Task PrepareAsync()

@@ -234,7 +234,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous |
 | `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
-| `/leerling/droombaan` | `Pages/Leerling/LeerlingDroombaan.razor` | authenticated |
+| `/leerling/droombaan` | SSR `PupilDroombaanFormEndpoints` (GET/POST save) | authenticated |
 | `/leerling/eiland` | `Pages/Leerling/LeerlingEiland.razor` | authenticated |
 | `/leerling/puzzel/{Key}` | `Pages/Leerling/LeerlingPuzzel.razor` | authenticated |
 | `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
