@@ -8,28 +8,53 @@ namespace Jobsy.Tests;
 /// </summary>
 public static class LagenIsochroneFixtures
 {
-    internal static string FeatureCollectionJson(double originLat, double originLng)
+    internal static string FeatureCollectionJson(double originLat, double originLng, string? minutesQuery = null)
     {
-        var rings = new (int minutes, double radiusKm, double seed)[]
-        {
-            (30, 5.4, 2.1),
-            (20, 3.6, 1.3),
-            (10, 1.8, 0.4)
-        };
+        var requested = ParseRequestedMinutes(minutesQuery);
+        var rings = requested.Count > 0
+            ? requested
+            : [30, 20, 10];
 
-        var features = rings.Select(r => new
+        var features = rings.Select(minutes =>
         {
-            type = "Feature",
-            properties = new { minutes = r.minutes },
-            geometry = new
+            var radiusKm = RadiusKmForMinutes(minutes);
+            var seed = minutes * 0.041;
+            return new
             {
-                type = "Polygon",
-                coordinates = new[] { IrregularRing(originLng, originLat, r.radiusKm, r.seed) }
-            }
+                type = "Feature",
+                properties = new { minutes },
+                geometry = new
+                {
+                    type = "Polygon",
+                    coordinates = new[] { IrregularRing(originLng, originLat, radiusKm, seed) }
+                }
+            };
         }).ToList();
 
         return JsonSerializer.Serialize(new { type = "FeatureCollection", features });
     }
+
+    private static List<int> ParseRequestedMinutes(string? minutesQuery)
+    {
+        if (string.IsNullOrWhiteSpace(minutesQuery))
+        {
+            return [];
+        }
+
+        var list = new List<int>();
+        foreach (var part in minutesQuery.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (int.TryParse(part, NumberStyles.Integer, CultureInfo.InvariantCulture, out var m) && m > 0)
+            {
+                list.Add(m);
+            }
+        }
+
+        return list.Distinct().OrderByDescending(x => x).ToList();
+    }
+
+    private static double RadiusKmForMinutes(int minutes)
+        => 5.4 * (minutes / 30.0);
 
     /// <summary>Mockup: K(dx,dy) = [lng + dx/68.55, lat + dy/111.2].</summary>
     private static double[][] IrregularRing(double originLng, double originLat, double radiusKm, double seed)

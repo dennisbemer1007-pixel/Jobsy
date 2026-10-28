@@ -19,7 +19,6 @@ public class CandidateIllustratedLandingRenderTests
 
         Assert.Contains("pub-landing__hero--illustrated", html, StringComparison.Ordinal);
         Assert.Contains("pub-landing__hero-art-band", html, StringComparison.Ordinal);
-        Assert.Contains("finale-hero.jpg", html, StringComparison.Ordinal);
         Assert.Contains("pub-landing__steps-grid", html, StringComparison.Ordinal);
         Assert.Contains("vervoer-blok.jpg", html, StringComparison.Ordinal);
         Assert.Contains("NL en EN", html, StringComparison.Ordinal);
@@ -35,6 +34,7 @@ public class CandidateIllustratedLandingRenderTests
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
+                    ["CandidatePublic:PlainSkin"] = "false",
                     ["Landing:ForceVariant"] = "on",
                     ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                     ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem

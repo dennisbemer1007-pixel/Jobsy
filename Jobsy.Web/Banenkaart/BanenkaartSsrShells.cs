@@ -15,16 +15,25 @@ internal static class BanenkaartSsrShells
         string antiforgeryToken,
         BanenkaartSsrData.PageModel model,
         string? scriptNonce = null,
-        string? candidateDisplayName = null)
+        string? candidateDisplayName = null,
+        bool plainShell = false)
     {
         var sb = new StringBuilder();
         var q = model.Query;
         var viewModeClass = model.Query.DesktopListMode ? " show-list jobsy-discovery--list" : " show-map";
         var viewDataAttr = model.Query.DesktopListMode ? " data-kb-view=\"list\"" : " data-kb-view=\"map\"";
-        sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
-        AppendNearbyHeroStrip(sb);
-        sb.Append("</div>");
-        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen").Append(viewModeClass).Append(viewDataAttr);
+        if (!plainShell)
+        {
+            sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
+            AppendNearbyHeroStrip(sb);
+            sb.Append("</div>");
+        }
+        sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen");
+        sb.Append(viewModeClass).Append(viewDataAttr);
+        if (plainShell)
+        {
+            sb.Append(" data-plain-banenkaart=\"1\"");
+        }
         if (model.IsAuthenticated)
         {
             sb.Append(" data-kb-strip-external=\"1\"");
@@ -61,12 +70,12 @@ internal static class BanenkaartSsrShells
                 .Append("</p>");
         }
 
-        if (!model.IsAuthenticated)
+        if (!model.IsAuthenticated && !plainShell)
         {
             AppendMockupTopBar(sb, culture, model, candidateDisplayName);
         }
         sb.Append("<div class=\"main kb-lagen-main\">");
-        AppendVacancyPane(sb, culture, model);
+        AppendVacancyPane(sb, culture, model, plainShell);
         AppendMapPane(sb, culture, model);
         sb.Append("</div>");
         AppendFilterSheet(sb, culture, antiforgeryToken, model);
@@ -107,7 +116,7 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
             .Append("\" data-testid=\"kb-panel-head\"><div class=\"srow mobfirst kb-panel-head__filters-row\">");
         sb.Append("<div class=\"field grow\">")
-            .Append(NavIcons.Search.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+            .Append(InlineIcon(NavIcons.Search))
             .Append("<label class=\"visually-hidden\" for=\"discovery-keyword\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Keyword"]))
             .Append("</label><input id=\"discovery-keyword\" type=\"search\" inputmode=\"search\" autocomplete=\"off\" data-testid=\"kb-keyword-search\" placeholder=\"")
@@ -116,7 +125,7 @@ internal static class BanenkaartSsrShells
             .Append(WebUtility.HtmlEncode(q.SearchQuery ?? ""))
             .Append("\" name=\"q\" form=\"kb-filter-form\" /></div>");
         sb.Append("<button type=\"button\" class=\"btn sec kb-filters-button\" data-testid=\"kb-filters-button\" aria-expanded=\"false\" aria-controls=\"discovery-filters\">")
-            .Append(NavIcons.Filters.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+            .Append(InlineIcon(NavIcons.Filters))
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]));
         if (model.ActiveFilterCount > 0)
         {
@@ -132,7 +141,7 @@ internal static class BanenkaartSsrShells
             sb.Append("<a class=\"btn match deskonly kb-match-button\" data-testid=\"kb-match-button\" href=\"")
                 .Append(matchHref)
                 .Append("\">")
-                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
+                .Append(InlineIcon(NavIcons.Match))
                 .Append("<span class=\"kb-match-button__label\">")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("</span></a>");
@@ -189,13 +198,15 @@ internal static class BanenkaartSsrShells
         if (!model.IsCandidate || model.OpenForWork)
         {
             var matchHref = model.IsAuthenticated ? "/candidate/match" : "/login?returnUrl=%2Fcandidate%2Fmatch";
-            sb.Append("<a class=\"btn match mobonly\" data-testid=\"kb-match-button\" href=\"")
+            sb.Append("<a class=\"btn match mobonly kb-match-button\" data-testid=\"kb-match-button\" href=\"")
                 .Append(matchHref)
                 .Append("\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
                 .Append("\">")
-                .Append(NavIcons.Match.Replace("viewBox", "class=\"ic\" viewBox", StringComparison.Ordinal))
-                .Append("</a>");
+                .Append(InlineIcon(NavIcons.Match))
+                .Append("<span class=\"kb-match-button__label\">")
+                .Append(WebUtility.HtmlEncode(culture["Nav.Match"]))
+                .Append("</span></a>");
         }
 
         sb.Append("<div class=\"seg kb-view-toggle\" role=\"radiogroup\" aria-label=\"")
@@ -261,12 +272,15 @@ internal static class BanenkaartSsrShells
         sb.Append("<button type=\"button\" class=\"sq kb-address__geo\" data-testid=\"kb-address-locate\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Discovery.UseMyLocation"]))
             .Append("\">")
-            .Append("<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/></svg></button>");
+            .Append(InlineIcon("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/></svg>"))
+            .Append("</button>");
         if (hasOrigin)
         {
             sb.Append("<button type=\"button\" class=\"sq deskonly kb-address__clear\" data-testid=\"kb-address-clear\" aria-label=\"")
                 .Append(WebUtility.HtmlEncode(culture["Common.Clear"]))
-                .Append("\"><svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\" /></svg></button>");
+                .Append("\">")
+                .Append(InlineIcon("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\" /></svg>"))
+                .Append("</button>");
         }
 
         sb.Append("</div><ul class=\"address-suggestions\" role=\"listbox\" data-kb-address-suggest=\"1\" hidden></ul></div>");
@@ -316,9 +330,15 @@ internal static class BanenkaartSsrShells
             "kb-banenkaart-header-strip kreeft-header-strip");
     }
 
-    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model)
+    private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model, bool plainShell = false)
     {
-        sb.Append("<aside class=\"vacancy-pane panel\">");
+        sb.Append("<aside class=\"vacancy-pane panel");
+        if (plainShell)
+        {
+            sb.Append(" cp-plain-banenkaart");
+        }
+
+        sb.Append("\">");
         AppendMockupPanelHead(sb, culture, model);
         AppendMockupResultsRow(sb, culture, model);
         sb.Append("<div class=\"list vacancy-list\" data-testid=\"vacancy-list\">");
@@ -556,5 +576,24 @@ internal static class BanenkaartSsrShells
             .Append("\">")
             .Append(WebUtility.HtmlEncode(culture["Kb.View.OpenMap"]))
             .Append("</button>");
+    }
+
+    private static string InlineIcon(string svgMarkup, int size = 20)
+    {
+        var svg = svgMarkup;
+        if (!svg.Contains("class=\"ic\"", StringComparison.Ordinal))
+        {
+            svg = svg.Replace("<svg ", "<svg class=\"ic\" ", StringComparison.Ordinal);
+        }
+
+        if (!svg.Contains("width=", StringComparison.Ordinal))
+        {
+            svg = svg.Replace(
+                "<svg ",
+                $"<svg width=\"{size}\" height=\"{size}\" ",
+                StringComparison.Ordinal);
+        }
+
+        return svg;
     }
 }
