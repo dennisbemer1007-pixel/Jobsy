@@ -831,6 +831,58 @@ public sealed class BanenkaartAccLivePlaywrightTests
         await page.WaitForURLAsync(url => url.Contains("/banenkaart"), new() { Timeout = 60_000 });
     }
 
+    [Fact]
+    public async Task Onboarding_e2e_banenkaart_shows_jobs_after_catalog_boot_under_three_seconds()
+    {
+        const string email = "onboarding.e2e@jobsy.local";
+        const string password = "Jobsy123!";
+        var baseUrl = ResolveBaseUrl();
+        if (!await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 720 },
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await context.NewPageAsync();
+
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+        {
+            Assert.Fail("onboarding.e2e login failed on acceptatie.");
+        }
+
+        var started = DateTime.UtcNow;
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+
+        await page.WaitForFunctionAsync(
+            """
+            () => window.jobsyBanenkaartCatalog && window.jobsyBanenkaartCatalog.isReady()
+            """,
+            null,
+            new() { Timeout = 120_000 });
+
+        var elapsedMs = (DateTime.UtcNow - started).TotalMilliseconds;
+        Assert.True(elapsedMs < 3000,
+            "Banenkaart load + catalog boot should stay under 3s (was ~3.7s); elapsedMs=" + elapsedMs.ToString("F0"));
+
+        var stripText = await page.Locator("[data-testid=kb-map-top-chrome] .strip--empty p").TextContentAsync()
+            ?? "";
+        Assert.DoesNotContain('\u2014', stripText);
+        Assert.DoesNotContain("—", stripText, StringComparison.Ordinal);
+
+        var emptyTravel = await page.Locator("[data-testid=kb-empty-travel]").CountAsync();
+        var listRows = await page.Locator("[data-testid=kb-list-row]").CountAsync();
+        Assert.True(listRows >= 1,
+            "onboarding.e2e should show at least one list row after catalog boot (emptyTravel=" + emptyTravel + ").");
+    }
+
     private static string ResolveBaseUrl()
     {
         var fromEnv = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');

@@ -58,8 +58,6 @@ internal static class BanenkaartSsrData
 
         var branchOptions = new List<string>();
         var categories = new List<VacancyCategoryItem>();
-        VacancyMapView? prefetchedMapView = null;
-
         async Task LoadBranchOptionsAsync()
         {
             try
@@ -86,26 +84,6 @@ internal static class BanenkaartSsrData
             catch
             {
                 categories = [];
-            }
-        }
-
-        async Task LoadMapViewAsync()
-        {
-            try
-            {
-                var dto = await api.GetVacancyMapViewAsync(cancellationToken);
-                if (dto is not null
-                    && dto.PinCount > 0
-                    && double.IsFinite(dto.Lat)
-                    && double.IsFinite(dto.Lng)
-                    && double.IsFinite(dto.Zoom))
-                {
-                    prefetchedMapView = new VacancyMapView(dto.Lat, dto.Lng, dto.Zoom, dto.PinCount);
-                }
-            }
-            catch
-            {
-                // optional
             }
         }
 
@@ -161,7 +139,6 @@ internal static class BanenkaartSsrData
         await Task.WhenAll(
             LoadBranchOptionsAsync(),
             LoadCategoriesAsync(),
-            LoadMapViewAsync(),
             LoadCandidateOriginAsync());
 
         if (!isCandidate && originLat is null)
@@ -196,7 +173,7 @@ internal static class BanenkaartSsrData
 
         IReadOnlyList<VacancyListItem> vacancies = [];
         List<Dictionary<string, object?>> bootPins = [];
-        VacancyMapView? mapView = prefetchedMapView;
+        VacancyMapView? mapView = null;
         var zoomOutsideTravel = false;
         var hasMoreList = false;
         var discoverTotal = 0;
@@ -323,30 +300,31 @@ internal static class BanenkaartSsrData
                 originLat is not null),
             defaults);
 
-        var showEmptyTravel = useOrigin && (outsideTravelFallback || (zoomOutsideTravel && vacancies.Count == 0));
+        var showEmptyTravel = useOrigin
+            && vacancies.Count == 0
+            && (outsideTravelFallback || zoomOutsideTravel);
         var count = discoverTotal > 0 ? discoverTotal : vacancies.Count;
         var heading = showEmptyTravel
             ? culture["Kb.Map.NoVacanciesInTravel"]
             : culture.Format("Kb.Filter.ResultCount", count);
 
         string? subtitle = null;
-        if (string.Equals(effectiveQuery.SortMode, "match", StringComparison.OrdinalIgnoreCase) && showFitFilters)
+        if (outsideTravelFallback && vacancies.Count > 0)
+        {
+            subtitle = culture["Kb.Filter.ResultOutsideTravelHint"];
+        }
+        else if (string.Equals(effectiveQuery.SortMode, "match", StringComparison.OrdinalIgnoreCase) && showFitFilters)
         {
             subtitle = culture["Kb.List.SubBestFirst"];
         }
-        else if (effectiveQuery.MaxTravelMinutes is int travelChipMinutes)
+        else if (effectiveQuery.MaxTravelMinutes is int travelChipMinutes && !showEmptyTravel)
         {
-            subtitle = showEmptyTravel
+            subtitle = originLat is not null
                 ? culture.Format(
                     "Kb.Filter.ResultWithin",
                     travelChipMinutes,
                     UiLabels.TransportVerb(culture, effectiveQuery.Transport))
-                : originLat is not null
-                    ? culture.Format(
-                        "Kb.Filter.ResultWithin",
-                        travelChipMinutes,
-                        UiLabels.TransportVerb(culture, effectiveQuery.Transport))
-                    : null;
+                : null;
         }
 
         return new PageModel(
