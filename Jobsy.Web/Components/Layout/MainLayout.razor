@@ -479,9 +479,11 @@
 
         var hidePassportChrome = IsPassportOrProfileCoachHidden(path)
                                  || (_plainCandidateShell && IsPaspoortPath(path));
+        var plainBanenkaartChrome = _plainCandidateShell && banenkaart;
         var hideCoach = IsLobsyCoachExcludedPath(path)
                         || IsVacancyOrNotificationsCoachHidden(path)
-                        || (_plainCandidateShell && IsPaspoortPath(path));
+                        || (_plainCandidateShell && IsPaspoortPath(path))
+                        || plainBanenkaartChrome;
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -489,7 +491,8 @@
         }
 
         var hideFloatingChrome = hidePassportChrome
-                                 || IsVacancyOrNotificationsCoachHidden(path);
+                                 || IsVacancyOrNotificationsCoachHidden(path)
+                                 || plainBanenkaartChrome;
         if (_hideFloatingChrome != hideFloatingChrome)
         {
             _hideFloatingChrome = hideFloatingChrome;

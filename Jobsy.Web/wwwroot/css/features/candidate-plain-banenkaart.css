@@ -1,5 +1,10 @@
 /* Plain banenkaart shell — tokens from mockup #878, map logic unchanged */
 
+.app-shell--plain-candidate header.wg-topbar.wg-topbar--candidate {
+  background: #0a2044;
+  color: #fff;
+}
+
 .jobsy-discovery--lagen[data-plain-banenkaart="1"] .cp-plain-banenkaart {
   --cp-accent: #a8481f;
   --cp-accent-soft: #fbede5;
