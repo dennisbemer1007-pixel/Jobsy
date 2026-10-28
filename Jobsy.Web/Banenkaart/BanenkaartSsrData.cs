@@ -254,7 +254,7 @@ internal static class BanenkaartSsrData
         bootPins = BanenkaartMapBoot.ToBootPinsFromList(vacancies);
 
         var catalogUrl = BanenkaartClientCatalog.AllPath;
-        var pinsUrl = BanenkaartMapBoot.BuildPinsApiUrl(effectiveQuery, isCandidate);
+        var pinsUrl = BanenkaartMapBoot.BuildClientMapPinsUrl(effectiveQuery, isCandidate);
         var highlightSeed = HashVacancyIds(vacancies.Select(v => v.Id));
         var fitByVacancyId = isCandidate && showFitFilters
             ? vacancies
@@ -270,7 +270,6 @@ internal static class BanenkaartSsrData
             catalogUrl,
             preferFilledLocation: !companyFocus && useOrigin,
             isAuthenticated,
-            isCandidate,
             originLat,
             originLng,
             zoomOutsideTravel,

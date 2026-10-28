@@ -25,7 +25,6 @@ internal static class BanenkaartMapBoot
         string catalogUrl,
         bool preferFilledLocation,
         bool isAuthenticated,
-        bool isCandidate,
         double? originLat,
         double? originLng,
         bool zoomToPinsOutsideTravel,
@@ -41,7 +40,6 @@ internal static class BanenkaartMapBoot
             ["illustratedPopup"] = false,
             ["lagenLayout"] = true,
             ["zoomToPinsOutsideTravel"] = zoomToPinsOutsideTravel,
-            ["pinsUrl"] = BuildClientMapPinsUrl(query, isCandidate),
             ["view"] = new Dictionary<string, object?>
             {
                 ["lat"] = opening.CenterLat,
