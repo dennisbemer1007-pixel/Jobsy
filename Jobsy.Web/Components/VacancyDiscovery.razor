@@ -595,7 +595,8 @@
             <script type="application/json" id="jobsy-map-boot">@((MarkupString)MapBootPinsJson())</script>
             <div class="job-map-placeholder" aria-hidden="true"></div>
             <div @ref="_mapElement" id="job-map" class="job-map"></div>
-            @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
+            @if (_categories.Any(c => c.ShowInLegend && c.IsActive)
+                 && !string.Equals(_selectedTransport, "OV", StringComparison.OrdinalIgnoreCase))
             {
                 <aside class="kb-travel-legend" data-iso-mode="@_isoMode" aria-label="@Culture.Format("Kb.Legend.TravelTitle", UiLabels.TransportVerb(Culture, _selectedTransport))">
                     <p class="kb-travel-legend__title">@Culture.Format("Kb.Legend.TravelTitle", UiLabels.TransportVerb(Culture, _selectedTransport))</p>
@@ -4482,7 +4483,14 @@
     [JSInvokable]
     public Task OnIsoModeChanged(string mode)
     {
-        var next = string.Equals(mode, "real", StringComparison.OrdinalIgnoreCase) ? "real" : "approx";
+        var next = mode?.Trim().ToLowerInvariant() switch
+        {
+            "real" => "real",
+            "unavailable" => "unavailable",
+            "loading" => "loading",
+            "none" => "none",
+            _ => "approx"
+        };
         if (string.Equals(_isoMode, next, StringComparison.Ordinal))
         {
             return Task.CompletedTask;
