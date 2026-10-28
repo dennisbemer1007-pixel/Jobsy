@@ -18,6 +18,8 @@ public sealed class CandidatePlainPublicRenderTests
         var html = await client.GetStringAsync("/");
 
         Assert.Contains("cp-plain-landing", html, StringComparison.Ordinal);
+        Assert.Contains("/css/features/candidate-plain-public.css", html, StringComparison.Ordinal);
+        Assert.Contains("data-plain-public-css", html, StringComparison.Ordinal);
         Assert.Contains("Werk dat bij je past", html, StringComparison.Ordinal);
         Assert.Contains("Account maken", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/account-maken\"", html, StringComparison.Ordinal);

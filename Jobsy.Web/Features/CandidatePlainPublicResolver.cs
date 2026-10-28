@@ -36,8 +36,7 @@ public sealed class CandidatePlainPublicResolver
             return ValueTask.FromResult(cached);
         }
 
-        var path = http?.Request.Path.Value;
-        var enabled = ResolveEnabled(http) && IsPlainPublicPath(path);
+        var enabled = IsPlainShellForRequest(http, _environment, _configuration);
         if (http is not null)
         {
             http.Items[HttpContextItemsKey] = enabled;
@@ -46,9 +45,21 @@ public sealed class CandidatePlainPublicResolver
         return ValueTask.FromResult(enabled);
     }
 
-    private bool ResolveEnabled(HttpContext? http)
+    /// <summary>
+    /// Static entry for <c>App.razor</c> head (renders before layout HeadContent on NoBlazorRuntime SSR).
+    /// </summary>
+    public static bool IsPlainShellForRequest(
+        HttpContext? http,
+        IHostEnvironment environment,
+        IConfiguration configuration)
     {
-        if (_environment.IsDevelopment()
+        var path = http?.Request.Path.Value;
+        return ResolveEnabled(http, environment, configuration) && IsPlainPublicPath(path);
+    }
+
+    private static bool ResolveEnabled(HttpContext? http, IHostEnvironment environment, IConfiguration configuration)
+    {
+        if (environment.IsDevelopment()
             && http is not null
             && http.Request.Query.TryGetValue(QueryName, out var query)
             && TryParse(query.ToString(), out var fromQuery))
@@ -56,8 +67,8 @@ public sealed class CandidatePlainPublicResolver
             return fromQuery;
         }
 
-        if (LandingVariantResolver.AllowsConfigOverride(_environment, _configuration)
-            && TryParse(_configuration[ConfigKey], out var fromConfig))
+        if (LandingVariantResolver.AllowsConfigOverride(environment, configuration)
+            && TryParse(configuration[ConfigKey], out var fromConfig))
         {
             return fromConfig;
         }
