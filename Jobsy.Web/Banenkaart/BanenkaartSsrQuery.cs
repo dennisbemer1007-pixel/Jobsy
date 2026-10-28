@@ -478,6 +478,7 @@ internal static class BanenkaartSsrQuery
         {
             return items
                 .OrderByDescending(v => v.FitPercent ?? v.MatchPercent ?? -1)
+                .ThenBy(v => v.TravelMinutes ?? int.MaxValue)
                 .ThenBy(v => v.Title, StringComparer.CurrentCulture)
                 .ToList();
         }

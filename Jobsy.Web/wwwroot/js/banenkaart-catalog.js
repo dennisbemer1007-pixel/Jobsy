@@ -16,6 +16,7 @@
     var listShown = 20;
     var currentListFilters = null;
     var LIST_PAGE = 20;
+    var ssrBootstrapReady = false;
 
     var WORK_TYPE_FLAG = {
         horeca: 1, winkel: 2, logistiek: 4, tuinbouw: 8, zorg: 16,
@@ -350,6 +351,21 @@
                 var mb = matchPercentForRow(b);
                 if (ma !== mb) {
                     return mb - ma;
+                }
+                if (filters && filters.originLat != null && filters.originLng != null) {
+                    var ta = travelMinutes(
+                        { lat: filters.originLat, lng: filters.originLng },
+                        a.lat,
+                        a.lng,
+                        filters.transport) || 9999;
+                    var tb = travelMinutes(
+                        { lat: filters.originLat, lng: filters.originLng },
+                        b.lat,
+                        b.lng,
+                        filters.transport) || 9999;
+                    if (ta !== tb) {
+                        return ta - tb;
+                    }
                 }
                 return String(a.title || "").localeCompare(String(b.title || ""), "nl");
             });
@@ -1863,41 +1879,77 @@
         applyClientFilters(defaults);
     }
 
+    function markSsrBootstrapReady() {
+        if (ssrBootstrapReady) {
+            return;
+        }
+        var ssrRows = document.querySelectorAll(
+            "[data-banenkaart-ssr=\"1\"] [data-testid=kb-list-row]");
+        if (!ssrRows || ssrRows.length < 1) {
+            return;
+        }
+        ssrBootstrapReady = true;
+        document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", {
+            detail: { count: ssrRows.length, ssrBootstrap: true }
+        }));
+    }
+
+    function scheduleCatalogHydrate(filters) {
+        function runHydrate() {
+            fetchCatalog(false).then(function () {
+                patchBootFilters(filters);
+                syncFilterFormToState(filters);
+                applyToMap(filters);
+                if (rows) {
+                    renderListRows(rows, filters);
+                }
+                persistFilterCookieQuietly(filters);
+                var bootDisplay = rows ? resolveDisplayRows(rows, filters) : { rows: [], outsideTravel: false };
+                document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", {
+                    detail: {
+                        count: bootDisplay.rows.length,
+                        filters: filters,
+                        outsideTravel: bootDisplay.outsideTravel
+                    }
+                }));
+                if (!ssrBootstrapReady) {
+                    document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", {
+                        detail: { count: rows ? rows.length : 0 }
+                    }));
+                }
+                if (!window.jobMap || typeof window.jobMap.setVacanciesFromCatalog !== "function") {
+                    setTimeout(function () { applyToMap(resolveFilters()); }, 400);
+                    setTimeout(function () { applyToMap(resolveFilters()); }, 1500);
+                }
+            }).catch(function () { });
+        }
+        if (typeof requestIdleCallback === "function") {
+            requestIdleCallback(runHydrate, { timeout: 1200 });
+        } else {
+            setTimeout(runHydrate, 0);
+        }
+    }
+
     function bootAndApply() {
         var listRoot = document.querySelector("[data-banenkaart-ssr=\"1\"] [data-testid=vacancy-list]");
         if (listRoot) {
             observeLazyListPhotos(listRoot);
         }
+        markSsrBootstrapReady();
         var filters = resolveFilters();
-        return fetchCatalog(false).then(function () {
-            patchBootFilters(filters);
-            syncFilterFormToState(filters);
+        patchBootFilters(filters);
+        syncFilterFormToState(filters);
+        if (ssrBootstrapReady) {
             applyToMap(filters);
-            if (rows) {
-                renderListRows(rows, filters);
-            }
-            persistFilterCookieQuietly(filters);
-            var bootDisplay = rows ? resolveDisplayRows(rows, filters) : { rows: [], outsideTravel: false };
-            document.dispatchEvent(new CustomEvent("jobsy-bk-filters-applied", {
-                detail: {
-                    count: bootDisplay.rows.length,
-                    filters: filters,
-                    outsideTravel: bootDisplay.outsideTravel
-                }
-            }));
-            document.dispatchEvent(new CustomEvent("jobsy-bk-catalog-ready", { detail: { count: rows ? rows.length : 0 } }));
-            if (!window.jobMap || typeof window.jobMap.setVacanciesFromCatalog !== "function") {
-                setTimeout(function () { applyToMap(resolveFilters()); }, 400);
-                setTimeout(function () { applyToMap(resolveFilters()); }, 1500);
-            }
-        }).catch(function () { });
+        }
+        scheduleCatalogHydrate(filters);
     }
 
     window.jobsyBanenkaartCatalog = {
         url: CATALOG_URL,
         load: fetchCatalog,
         revalidate: function () { return fetchCatalog(true); },
-        isReady: function () { return !!rows; },
+        isReady: function () { return !!rows || ssrBootstrapReady; },
         getRows: function () { return rows; },
         filterRows: filterRows,
         toPin: toPin,

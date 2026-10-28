@@ -28,7 +28,7 @@ public sealed class MatchVacancyService
         }
 
         var transport = string.IsNullOrWhiteSpace(gate.PreferredTransport)
-            ? "Auto"
+            ? "Fiets"
             : gate.PreferredTransport!;
         var maxMinutes = gate.MaxTravelMinutes is int m && m > 0 ? m : 45;
 
@@ -49,7 +49,13 @@ public sealed class MatchVacancyService
             return [];
         }
 
-        return FilterRelevant(page.Items, gate, take, page.OutsideTravelFallback);
+        var relevant = FilterRelevant(page.Items, gate, take * 2, page.OutsideTravelFallback);
+        return relevant
+            .OrderByDescending(v => v.FitPercent ?? v.MatchPercent ?? int.MinValue)
+            .ThenBy(v => v.TravelMinutes ?? int.MaxValue)
+            .ThenBy(v => v.Id)
+            .Take(take)
+            .ToList();
     }
 
     public static IReadOnlyList<VacancyListItem> FilterRelevant(

@@ -77,6 +77,36 @@ public sealed class BanenkaartSsrUiBootGuardTests
     }
 
     [Fact]
+    public void Banenkaart_ssr_boot_includes_discover_pins_and_pins_api_url()
+    {
+        var root = FindRepoRoot();
+        var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrData.cs"));
+        Assert.Contains("ToBootPinsFromList(vacancies)", data, StringComparison.Ordinal);
+        Assert.Contains("BuildPinsApiUrl", data, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_catalog_is_ready_before_full_catalog_hydrate()
+    {
+        var root = FindRepoRoot();
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        Assert.Contains("ssrBootstrapReady", catalog, StringComparison.Ordinal);
+        Assert.Contains("markSsrBootstrapReady", catalog, StringComparison.Ordinal);
+        Assert.Contains("scheduleCatalogHydrate", catalog, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_match_sort_tiebreaks_on_travel_minutes()
+    {
+        var root = FindRepoRoot();
+        var query = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrQuery.cs"));
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        Assert.Contains("ThenBy(v => v.TravelMinutes", query, StringComparison.Ordinal);
+        Assert.Contains("sort === \"match\"", catalog, StringComparison.Ordinal);
+        Assert.Contains("travelMinutes(", catalog, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_ssr_skips_redundant_map_view_prefetch()
     {
         var root = FindRepoRoot();
