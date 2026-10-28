@@ -67,7 +67,9 @@ public sealed class CandidatePlainPublicResolver
 
     public static bool IsPlainPublicPath(string? path)
         => string.Equals(path, PublicRoutes.Landing, StringComparison.OrdinalIgnoreCase)
-           || string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase);
+           || string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, PublicRoutes.CreateAccount, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, PublicRoutes.ForgotPassword, StringComparison.OrdinalIgnoreCase);
 
     public static bool TryParse(string? raw, out bool enabled)
     {

@@ -61,5 +61,19 @@ public static class UiStringsPlainPublic
         Add("PlainPublic.Login.Help",
             "Lukt het niet? Je adviseur of de helpdesk helpt je graag.",
             "Having trouble? Your adviser or the helpdesk will gladly help.");
+
+        Add("PlainPublic.Signup.Title", "Account maken", "Create account");
+        Add("PlainPublic.Signup.Lead",
+            "Vul je e-mailadres in. We sturen je een code om je account te bevestigen.",
+            "Enter your email address. We will send a code to confirm your account.");
+
+        Add("PlainPublic.Forgot.Title", "Wachtwoord vergeten", "Forgot password");
+        Add("PlainPublic.Forgot.Lead",
+            "Vul je e-mailadres in. Je ontvangt een link om een nieuw wachtwoord te kiezen.",
+            "Enter your email address. You will receive a link to choose a new password.");
+        Add("PlainPublic.Forgot.SentTitle", "Check je e-mail", "Check your email");
+        Add("PlainPublic.Forgot.SentLead",
+            "Als dit adres bij ons bekend is, sturen we instructies om je wachtwoord te wijzigen.",
+            "If this address is known to us, we will send instructions to reset your password.");
     }
 }

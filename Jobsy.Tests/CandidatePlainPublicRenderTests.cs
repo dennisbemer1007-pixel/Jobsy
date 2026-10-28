@@ -40,6 +40,30 @@ public sealed class CandidatePlainPublicRenderTests
         Assert.DoesNotContain("kreeft-header-strip", html, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Signup_renders_plain_card_when_plain_skin_enabled()
+    {
+        await using var factory = new PlainPublicWebFactory();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var html = await client.GetStringAsync("/account-maken");
+
+        Assert.Contains("cp-plain-card", html, StringComparison.Ordinal);
+        Assert.Contains("action=\"/account/email-code/start\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("kreeft-header-strip", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Forgot_password_renders_plain_card_when_plain_skin_enabled()
+    {
+        await using var factory = new PlainPublicWebFactory();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var html = await client.GetStringAsync("/wachtwoord-vergeten");
+
+        Assert.Contains("cp-plain-card", html, StringComparison.Ordinal);
+        Assert.Contains("Wachtwoord vergeten", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("au-card__mascot", html, StringComparison.Ordinal);
+    }
+
     private sealed class PlainPublicWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
