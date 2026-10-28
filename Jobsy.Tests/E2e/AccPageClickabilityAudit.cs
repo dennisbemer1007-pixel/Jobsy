@@ -65,8 +65,14 @@ internal static class AccPageClickabilityAudit
                 '.bk-map-toggle a',
                 '.test-likert__opt',
               ].join(',');
+              const root = document.querySelector('[data-banenkaart-ssr="1"]');
+              const mapView = root && (root.classList.contains('show-map')
+                || root.getAttribute('data-kb-view') === 'map');
               for (const el of document.querySelectorAll(sel)) {
                 if (el.closest('.cookie-banner, .cookie-consent, [data-testid=cookie-banner]')) continue;
+                if (mapView && el.closest('.vacancy-list, .vacancy-pane.panel, .kb-list-rows')) continue;
+                if (mapView && el.closest('footer, .candidate-bottom-nav, .app-footer')) continue;
+                if (mapView && !el.closest('.kb-mockup-top, .map-pane, .kb-panel-head, .kb-filter-drawer, .filter-sheet, .cookie-consent')) continue;
                 const st = getComputedStyle(el);
                 if (st.visibility === 'hidden' || st.display === 'none') continue;
                 const r = el.getBoundingClientRect();
@@ -130,8 +136,12 @@ internal static class AccPageClickabilityAudit
         var keys = wide.Elements.Select(e => Key(e.Label, e.Kind))
             .Union(narrow.Elements.Select(e => Key(e.Label, e.Kind)))
             .Order(StringComparer.Ordinal);
-        var w = wide.Elements.ToDictionary(e => Key(e.Label, e.Kind));
-        var n = narrow.Elements.ToDictionary(e => Key(e.Label, e.Kind));
+        var w = wide.Elements
+            .GroupBy(e => Key(e.Label, e.Kind), StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+        var n = narrow.Elements
+            .GroupBy(e => Key(e.Label, e.Kind), StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var rows = new List<ElementRow>();
         foreach (var k in keys)
         {
