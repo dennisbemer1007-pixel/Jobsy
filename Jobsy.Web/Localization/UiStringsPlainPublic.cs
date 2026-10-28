@@ -58,7 +58,8 @@ public static class UiStringsPlainPublic
             "Dit is wie je bent, in je eigen woorden. Jij bepaalt wat werkgevers zien.",
             "This is who you are, in your own words. You decide what employers see.");
         Add("PlainPublic.Passport.StepLineBold", "Stap {0} van {1}", "Step {0} of {1}");
-        Add("PlainPublic.Passport.GuideTitle", "Zo gebruiken we dit", "How we use this");
+        Add("PlainPublic.Passport.GuideTitle", "Je gids", "Your guide");
+        Add("PlainPublic.Passport.GuideSubtitle", "Zo gebruiken we dit", "How we use this");
         Add("PlainPublic.Passport.GuideBody",
             "Je paspoort laat werkgevers zien wie je bent. Jij kiest wie het ziet. Je naam blijft verborgen tot een match.",
             "Your passport shows employers who you are. You choose who sees it. Your name stays hidden until a match.");
@@ -76,6 +77,8 @@ public static class UiStringsPlainPublic
         Add("PlainPublic.Passport.KvDream", "Droom", "Dream role");
         Add("PlainPublic.Passport.KvAvailable", "Beschikbaar", "Availability");
         Add("PlainPublic.Passport.Updated", "Bijgewerkt {0}", "Updated {0}");
+        Add("PlainPublic.Footer.Accessibility", "Toegankelijkheid", "Accessibility");
+        Add("PlainPublic.Footer.Contact", "Contact", "Contact");
 
         Add("PlainPublic.Login.TabLogin", "Inloggen", "Log in");
         Add("PlainPublic.Login.TabSignup", "Account maken", "Create account");
