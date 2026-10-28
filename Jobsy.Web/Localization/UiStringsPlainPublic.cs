@@ -1,0 +1,65 @@
+namespace Jobsy.Web.Localization;
+
+/// <summary>Plain warm candidate public shell (landing + login), mockup kandidaat/plain.</summary>
+public static class UiStringsPlainPublic
+{
+    public static void MergeAll(
+        Dictionary<string, string> nl, Dictionary<string, string> en,
+        Dictionary<string, string> pl, Dictionary<string, string> ro,
+        Dictionary<string, string> ar)
+    {
+        void Add(string key, string nlText, string enText, string? plText = null, string? roText = null, string? arText = null)
+        {
+            nl[key] = nlText;
+            en[key] = enText;
+            pl[key] = plText ?? enText;
+            ro[key] = roText ?? enText;
+            ar[key] = arText ?? enText;
+        }
+
+        Add("PlainPublic.Landing.SeoTitle", "Lobsy", "Lobsy");
+        Add("PlainPublic.Landing.SeoDescription",
+            "Werk dat bij je past. Rustig gevonden. Gratis account, ongeveer twintig minuten.",
+            "Work that fits you. Found calmly. Free account, about twenty minutes.");
+
+        Add("PlainPublic.Landing.Eyebrow", "Voor werkzoekenden", "For job seekers");
+        Add("PlainPublic.Landing.Title", "Werk dat bij je past. Rustig gevonden.", "Work that fits you. Found calmly.");
+        Add("PlainPublic.Landing.Lead",
+            "Je vertelt eerst wie je bent en wat je kunt, daarna pas kijk je naar vacatures. Voor iedereen, met of zonder diploma, jong of wat ouder.",
+            "You share who you are and what you can do before you browse vacancies. For everyone, with or without a diploma, young or a bit older.");
+        Add("PlainPublic.Landing.CtaCreate", "Account maken", "Create account");
+        Add("PlainPublic.Landing.CtaLogin", "Ik heb al een account", "I already have an account");
+        Add("PlainPublic.Landing.Meta",
+            "Gratis. Ongeveer 20 minuten. Je kunt altijd pauzeren en later verder.",
+            "Free. About 20 minutes. You can pause anytime and continue later.");
+
+        Add("PlainPublic.Landing.HowTitle", "Zo werkt het", "How it works");
+        Add("PlainPublic.Landing.Step1Title", "Start", "Start");
+        Add("PlainPublic.Landing.Step1Body", "Account en toestemming", "Account and consent");
+        Add("PlainPublic.Landing.Step2Title", "Over jou", "About you");
+        Add("PlainPublic.Landing.Step2Body", "Wanneer en waar je kunt werken", "When and where you can work");
+        Add("PlainPublic.Landing.Step3Title", "Werk en leren", "Work and learning");
+        Add("PlainPublic.Landing.Step3Body", "Ervaring, opleiding en droombaan", "Experience, education and dream job");
+        Add("PlainPublic.Landing.Step4Title", "Tests", "Tests");
+        Add("PlainPublic.Landing.Step4Body", "Vier korte tests, zonder goed of fout", "Four short tests, no right or wrong");
+        Add("PlainPublic.Landing.Step5Title", "Resultaat", "Result");
+        Add("PlainPublic.Landing.Step5Body", "Jouw Kompas en je paspoort", "Your Compass and your passport");
+
+        Add("PlainPublic.Landing.Card1Title", "Eerst jij, dan het werk", "You first, then the job");
+        Add("PlainPublic.Landing.Card1Body", "Werkgevers zien meer dan een cv.", "Employers see more than a CV.");
+        Add("PlainPublic.Landing.Card2Title", "Geen goed of fout", "No right or wrong");
+        Add("PlainPublic.Landing.Card2Body", "Je ziet woorden die bij je passen, geen cijfers.", "You see words that fit you, not numbers.");
+        Add("PlainPublic.Landing.Card3Title", "Jij houdt de regie", "You stay in control");
+        Add("PlainPublic.Landing.Card3Body", "Jij bepaalt wat werkgevers zien.", "You decide what employers see.");
+
+        Add("PlainPublic.Login.TabLogin", "Inloggen", "Log in");
+        Add("PlainPublic.Login.TabSignup", "Account maken", "Create account");
+        Add("PlainPublic.Login.Title", "Fijn dat je er bent", "Good to see you");
+        Add("PlainPublic.Login.Lead",
+            "Log in met je e-mailadres. Nog geen account? Dat maak je in een minuut.",
+            "Log in with your email address. No account yet? You can create one in a minute.");
+        Add("PlainPublic.Login.Help",
+            "Lukt het niet? Je adviseur of de helpdesk helpt je graag.",
+            "Having trouble? Your adviser or the helpdesk will gladly help.");
+    }
+}

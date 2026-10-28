@@ -1,0 +1,72 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<div class="cp-plain-landing">
+    <div class="cp-plain-hero">
+        <div class="cp-plain-hero__main">
+            <p class="cp-plain-eyebrow">@Culture["PlainPublic.Landing.Eyebrow"]</p>
+            <h1>@Culture["PlainPublic.Landing.Title"]</h1>
+            <p class="cp-plain-lead">@Culture["PlainPublic.Landing.Lead"]</p>
+            <div class="cp-plain-hero__actions">
+                <a class="cp-plain-btn" href="@PublicRoutes.CreateAccount">@Culture["PlainPublic.Landing.CtaCreate"]</a>
+                <a class="cp-plain-btn2" href="@PublicRoutes.Login">@Culture["PlainPublic.Landing.CtaLogin"]</a>
+            </div>
+            <p class="cp-plain-note cp-plain-hero__meta">@Culture["PlainPublic.Landing.Meta"]</p>
+        </div>
+        <div class="cp-plain-card cp-plain-card--steps">
+            <p class="cp-plain-eyebrow">@Culture["PlainPublic.Landing.HowTitle"]</p>
+            <ol class="cp-plain-steps">
+                <li class="cp-plain-steps__item">
+                    <span class="cp-plain-av" aria-hidden="true">1</span>
+                    <div>
+                        <strong>@Culture["PlainPublic.Landing.Step1Title"]</strong>
+                        <span class="cp-plain-note">@Culture["PlainPublic.Landing.Step1Body"]</span>
+                    </div>
+                </li>
+                <li class="cp-plain-steps__item">
+                    <span class="cp-plain-av" aria-hidden="true">2</span>
+                    <div>
+                        <strong>@Culture["PlainPublic.Landing.Step2Title"]</strong>
+                        <span class="cp-plain-note">@Culture["PlainPublic.Landing.Step2Body"]</span>
+                    </div>
+                </li>
+                <li class="cp-plain-steps__item">
+                    <span class="cp-plain-av" aria-hidden="true">3</span>
+                    <div>
+                        <strong>@Culture["PlainPublic.Landing.Step3Title"]</strong>
+                        <span class="cp-plain-note">@Culture["PlainPublic.Landing.Step3Body"]</span>
+                    </div>
+                </li>
+                <li class="cp-plain-steps__item">
+                    <span class="cp-plain-av" aria-hidden="true">4</span>
+                    <div>
+                        <strong>@Culture["PlainPublic.Landing.Step4Title"]</strong>
+                        <span class="cp-plain-note">@Culture["PlainPublic.Landing.Step4Body"]</span>
+                    </div>
+                </li>
+                <li class="cp-plain-steps__item">
+                    <span class="cp-plain-av" aria-hidden="true">5</span>
+                    <div>
+                        <strong>@Culture["PlainPublic.Landing.Step5Title"]</strong>
+                        <span class="cp-plain-note">@Culture["PlainPublic.Landing.Step5Body"]</span>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+    <div class="cp-plain-three">
+        <div class="cp-plain-side">
+            <h2>@Culture["PlainPublic.Landing.Card1Title"]</h2>
+            <p>@Culture["PlainPublic.Landing.Card1Body"]</p>
+        </div>
+        <div class="cp-plain-side">
+            <h2>@Culture["PlainPublic.Landing.Card2Title"]</h2>
+            <p>@Culture["PlainPublic.Landing.Card2Body"]</p>
+        </div>
+        <div class="cp-plain-side">
+            <h2>@Culture["PlainPublic.Landing.Card3Title"]</h2>
+            <p>@Culture["PlainPublic.Landing.Card3Body"]</p>
+        </div>
+    </div>
+</div>
