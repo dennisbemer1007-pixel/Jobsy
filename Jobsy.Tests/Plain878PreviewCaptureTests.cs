@@ -64,9 +64,9 @@ public sealed class Plain878PreviewCaptureTests : IAsyncLifetime, IAsyncDisposab
         var failures = new List<string>();
 
         await using (var refContext = await browser.NewContextAsync(new()
-                     {
-                         ViewportSize = new() { Width = 1440, Height = 900 },
-                     }))
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+        }))
         {
             await refContext.AddInitScriptAsync(CookieInitScript);
             var refPage = await refContext.NewPageAsync();
