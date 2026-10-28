@@ -23,7 +23,8 @@ public sealed class CandidatePlainAppSsrHeadTests
         var banenkaart = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Banenkaart/BanenkaartSsrShells.cs"));
         Assert.Contains("cp-plain-app", passport, StringComparison.Ordinal);
         Assert.Contains("plainShell", passport, StringComparison.Ordinal);
-        Assert.Contains("cp-plain-app", banenkaart, StringComparison.Ordinal);
+        Assert.Contains("data-plain-banenkaart", banenkaart, StringComparison.Ordinal);
+        Assert.Contains("cp-plain-banenkaart", banenkaart, StringComparison.Ordinal);
         Assert.Contains("plainShell", banenkaart, StringComparison.Ordinal);
     }
 }
