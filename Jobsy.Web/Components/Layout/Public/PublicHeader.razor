@@ -6,36 +6,14 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
 @inject NavigationManager Navigation
-@inject IEmployersSwitch Employers
 
-<header class="pub-header @(Compact ? "pub-header--compact" : null) @(AuthShell ? "pub-header--auth" : null) @(HideLangMenu ? "pub-header--no-lang" : null) @(CandidatePlain ? "pub-header--plain" : null)">
+<header class="pub-header @(Compact ? "pub-header--compact" : null) @(AuthShell ? "pub-header--auth" : null) @(HideLangMenu ? "pub-header--no-lang" : null)">
     <div class="pub-header__inner">
         <a class="pub-header__brand" href="@PublicRoutes.Landing" aria-label="Lobsy">
-            @if (CandidatePlain)
-            {
-                <span class="cp-plain-logo" aria-hidden="false">Lobsy<span>.</span></span>
-            }
-            else
-            {
-                <LobsyLogo Class="pub-header__logo" Alt="Lobsy" Animate="false" Variant="LobsyLogoVariant.Horizontal" />
-            }
+            <LobsyLogo Class="pub-header__logo" Alt="Lobsy" Animate="false" Variant="LobsyLogoVariant.Horizontal" />
         </a>
 
-        @if (CandidatePlain)
-        {
-            <div class="pub-header__actions">
-                <PublicLangMenu ReturnPath="@ReturnPath" />
-                @if (_employersOn)
-                {
-                    <a class="cp-plain-header-link cp-plain-header-link--desk" href="@PublicRoutes.Employers">@Culture["PublicNav.Employers"]</a>
-                }
-                <a class="cp-plain-header-login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-            </div>
-            <div class="pub-header__mobile">
-                <PublicLangMenu ReturnPath="@ReturnPath" />
-            </div>
-        }
-        else if (AuthShell)
+        @if (AuthShell)
         {
             <div class="pub-header__actions">
                 <PublicLangMenu ReturnPath="@ReturnPath" />
@@ -187,19 +165,14 @@
     [Parameter] public bool EmployerWizard { get; set; }
     /// <summary>UWV adviseur share deel page: no NL/EN switch in public header.</summary>
     [Parameter] public bool HideLangMenu { get; set; }
-    /// <summary>Plain warm landing/login shell (mockup kandidaat/plain).</summary>
-    [Parameter] public bool CandidatePlain { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     private bool _signedIn;
-    private bool _employersOn;
     private string ReturnPath => PublicLangMenu.SanitizeReturnPath(Navigation.Uri);
 
     protected override async Task OnParametersSetAsync()
     {
-        _employersOn = await Employers.IsEnabledAsync();
-
         if (AuthenticationState is null)
         {
             _signedIn = false;

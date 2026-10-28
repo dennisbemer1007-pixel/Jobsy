@@ -172,7 +172,6 @@ builder.Services.AddScoped<Jobsy.Web.UwvFeatures.IUwvFeaturesGate, Jobsy.Web.Uwv
 builder.Services.AddSingleton<Jobsy.Web.UwvFeatures.IUwvKansberoepenCatalog, Jobsy.Web.UwvFeatures.UwvKansberoepenCatalog>();
 builder.Services.AddSingleton<Jobsy.Web.Hosting.IErrorChromeProvider, Jobsy.Web.Hosting.ErrorChromeProvider>();
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
-builder.Services.AddScoped<Jobsy.Web.Features.CandidatePlainPublicResolver>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingPriceClient>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LegalIdentityProvider>();
