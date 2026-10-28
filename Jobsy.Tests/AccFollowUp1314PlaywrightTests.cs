@@ -152,7 +152,7 @@ public sealed class AccFollowUp1314PlaywrightTests
         int height,
         string tag)
     {
-        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_INCOMPLETE_EMAIL") ?? KbE2e.DefaultIncompleteEmail).Trim();
+        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail).Trim();
         await using var context = await NewContextAsync(browser, width, height, locale);
         var page = await NewLoggedInPageAsync(context, baseUrl, email, password);
         await SetCultureAsync(page, lang);
