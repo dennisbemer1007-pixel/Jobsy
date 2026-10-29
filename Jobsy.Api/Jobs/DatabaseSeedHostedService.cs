@@ -80,6 +80,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
 
         await TryRepairAcceptatieTestCandidateAsync(stoppingToken);
         await TryEnsureOnboardingE2eAccProfileAsync(stoppingToken);
+        await TryEnsureDemoRecordingCandidatesAsync(stoppingToken);
         await TryEnsureAcceptatieSollicitatiesDemoAsync(stoppingToken);
         await TryEnsureAcceptatieScholenClass2ACodesAsync(stoppingToken);
 
@@ -189,6 +190,29 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Acceptatie scholen 2A pupil codes ensure failed; API continues.");
+        }
+    }
+
+    private async Task TryEnsureDemoRecordingCandidatesAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            await AcceptatieDemoRecordingCandidatesEnsurer.EnsureAsync(db, _logger, stoppingToken);
+            if (db.ChangeTracker.HasChanges())
+            {
+                await db.SaveChangesAsync(stoppingToken);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Demo recording candidates ensure failed; API continues.");
         }
     }
 

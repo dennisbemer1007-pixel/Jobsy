@@ -275,6 +275,7 @@ internal static class DemoUsersSeeder
         await KandidaatDemoProfileEnsurer.EnsureAsync(db, logger);
 
         await OnboardingE2eProfileEnsurer.EnsureAsync(db, logger);
+        await AcceptatieDemoRecordingCandidatesEnsurer.EnsureAsync(db, logger);
 
         if (added > 0 || db.ChangeTracker.HasChanges())
         {
