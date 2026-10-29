@@ -29,13 +29,6 @@ internal static class OndernemersCheckSsrShells
         var lang = culture.Language;
         var sb = new StringBuilder(4096);
         sb.Append("<div class=\"journey-page panel-page--cand-ill uwv-ondernemer-intro-page\">");
-        sb.Append("<div class=\"test-kreeft-strip uwv-ondernemer-intro-page__strip\" aria-hidden=\"true\" data-testid=\"kreeft-header-strip\">");
-        sb.Append("<img class=\"test-kreeft-strip__desk\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.OndernemerDesk));
-        sb.Append("\" width=\"1440\" height=\"225\" alt=\"\" loading=\"lazy\" decoding=\"async\" />");
-        sb.Append("<img class=\"test-kreeft-strip__mob\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.OndernemerMob));
-        sb.Append("\" width=\"780\" height=\"105\" alt=\"\" loading=\"lazy\" decoding=\"async\" /></div>");
         sb.Append("<div class=\"opl-wrap uwv-ondernemer-intro-layout\"><header class=\"uwv-ondernemer-intro-layout__head\">");
         sb.Append("<p class=\"uwv-ondernemer-intro-layout__eyebrow\">");
         sb.Append(WebUtility.HtmlEncode(culture.Format("TestFlow.Eyebrow.Intro", UwvMockupCopy.Ondernemer.TestName(lang))));

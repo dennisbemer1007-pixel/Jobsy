@@ -86,15 +86,6 @@
                 </div>
             </header>
 
-            @if (Hero is not null)
-            {
-                @Hero
-            }
-            else if (!string.IsNullOrWhiteSpace(PanoramaDesktop))
-            {
-                <OnboardingRustigHero DesktopUrl="@PanoramaDesktop" MobileUrl="@(PanoramaMobile ?? PanoramaDesktop)" />
-            }
-
             @if (!string.IsNullOrWhiteSpace(Title))
             {
                 <div class="ob-rustig__page-head">

@@ -24,7 +24,6 @@ internal static class PassportSsrShells
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"passport-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtPaspoortDesk, KreeftHeaderStripAssets.LichtPaspoortMob, "licht-paspoort");
 
         sb.Append("<div class=\"panel-page passport-page passport-page--illustrated passport-page--compact-preview-c");
         sb.Append("\" data-testid=\"passport-page-ssr\" data-passport-ssr=\"1\">");

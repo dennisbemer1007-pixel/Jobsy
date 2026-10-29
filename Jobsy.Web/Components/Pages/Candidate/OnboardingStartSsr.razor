@@ -52,8 +52,6 @@ else if (_step is >= 1 and <= 10)
         ? OnboardingSsrMiniNavigation.StepQuestionUrl(_step, _miniQuestionQ)
         : $"/candidate/start?step={_step}";
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
-    var heroDesktop = OnboardingRustigPanoramaAssets.DesktopForStep(_step);
-    var heroMobile = OnboardingRustigPanoramaAssets.MobileForStep(_step) ?? heroDesktop;
     var zoneTag = OnboardingKreeftRailCatalog.ZoneTag(_step, Culture);
     <form method="post"
           action="@formAction"
@@ -94,8 +92,6 @@ else if (_step is >= 1 and <= 10)
             <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
         }
         <div class="ob-rustig ob-rustig--kreeft-steps" data-ob-rustig-screen="@($"step-{_step:D2}")">
-            <OnboardingRustigHero DesktopUrl="@heroDesktop"
-                                  MobileUrl="@heroMobile" />
             <div class="ob-kreeft-ob @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
                 <OnboardingKreeftRail Zones="@OnboardingKreeftRailCatalog.ForOnboardingStep(_step, Culture)" />
 

@@ -11,7 +11,6 @@ internal static class AfterMatchCandidateWaitSsrShells
     internal static string BuildBody(CultureState culture, AfterMatchCandidateWaitSsrData.PageData data, Guid applicationId)
     {
         var sb = new StringBuilder();
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.MomentDesk, KreeftHeaderStripAssets.MomentMob);
 
         sb.Append("<div class=\"ndm ndm-page ndm-wait-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"wait\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));

@@ -22,7 +22,6 @@ internal static class MatchSsrShells
         var sb = new StringBuilder();
         var locked = !(deck.Gate.IsProfileComplete && deck.Gate.FitGateOpen);
         sb.Append("<div class=\"match-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.MatchDesk, KreeftHeaderStripAssets.MatchMob, "match");
         sb.Append("<div class=\"match-page match-page--shell match-page--illustrated");
         if (locked)
         {

@@ -12,14 +12,7 @@ internal static class ExternalVacancyAddSsrShells
         var urlValue = string.IsNullOrWhiteSpace(prefillUrl) ? "" : prefillUrl.Trim();
         var sb = new StringBuilder();
         sb.Append("<div class=\"kb-ext kb-ext--kreeft\" data-testid=\"kb-ext-add\" data-kb-ext-add-ssr>");
-        sb.Append("<div class=\"test-kreeft-strip kb-ext__strip\" aria-hidden=\"true\" data-testid=\"kreeft-header-strip\">");
-        sb.Append("<img class=\"test-kreeft-strip__desk\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.ToevoegenDesk));
-        sb.Append("\" width=\"1440\" height=\"225\" alt=\"\" loading=\"lazy\" decoding=\"async\" />");
-        sb.Append("<img class=\"test-kreeft-strip__mob\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.ToevoegenMob));
-        sb.Append("\" width=\"780\" height=\"105\" alt=\"\" loading=\"lazy\" decoding=\"async\" />");
-        sb.Append("</div><header><h1 class=\"kb-ext__title\">");
+        sb.Append("<header><h1 class=\"kb-ext__title\">");
         sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Add.Title"]));
         sb.Append("</h1><p class=\"kb-ext__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["ExtVac.Add.Lead"]));

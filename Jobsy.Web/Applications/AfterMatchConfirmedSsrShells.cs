@@ -15,7 +15,6 @@ internal static class AfterMatchConfirmedSsrShells
         Guid applicationId)
     {
         var sb = new StringBuilder();
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.NaDeMatchDesk, KreeftHeaderStripAssets.NaDeMatchMob);
 
         sb.Append("<div class=\"ndm ndm-page ndm-confirmed-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"confirmed\" data-ndm-confirmed-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));

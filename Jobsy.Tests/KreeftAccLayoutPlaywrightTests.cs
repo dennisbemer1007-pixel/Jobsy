@@ -14,7 +14,7 @@ public sealed class KreeftAccLayoutPlaywrightTests
 {
     private const string Password = KbE2e.DefaultPassword;
 
-    [Fact]
+    [Fact(Skip = "kreeftstrook verwijderd")]
     public async Task Kreeft_acc_layout_strip_reiskaart_and_coach()
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_KREEFT_ACC_LAYOUT") ?? "").Trim() != "1")

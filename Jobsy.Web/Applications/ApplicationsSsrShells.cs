@@ -24,7 +24,6 @@ internal static class ApplicationsSsrShells
 
         var sb = new StringBuilder();
         sb.Append("<div class=\"sollicitaties-page-wrap\">");
-        AppendHeroStrip(sb, data);
         sb.Append("<div class=\"panel-page sollicitaties-page");
         if (data.DetailView)
         {
@@ -39,17 +38,6 @@ internal static class ApplicationsSsrShells
 
         sb.Append("</div></div></div></div>");
         return sb.ToString();
-    }
-
-    private static void AppendHeroStrip(StringBuilder sb, ApplicationsSsrData.PageData data)
-    {
-        var (desk, mob) = data.Tab switch
-        {
-            ApplicationsSsrQuery.TabActiviteiten => (KreeftHeaderStripAssets.ActiviteitenDesk, KreeftHeaderStripAssets.ActiviteitenMob),
-            ApplicationsSsrQuery.TabBerichten => (KreeftHeaderStripAssets.BerichtenDesk, KreeftHeaderStripAssets.BerichtenMob),
-            _ => (KreeftHeaderStripAssets.SollicitatiesDesk, KreeftHeaderStripAssets.SollicitatiesMob),
-        };
-        KreeftHeaderStripHtml.Append(sb, desk, mob);
     }
 
     private static void AppendPageIntro(StringBuilder sb, CultureState culture, ApplicationsSsrData.PageData data)

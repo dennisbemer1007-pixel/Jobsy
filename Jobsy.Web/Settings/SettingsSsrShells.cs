@@ -14,7 +14,6 @@ internal static class SettingsSsrShells
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"settings-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.InstellingenDesk, KreeftHeaderStripAssets.InstellingenMob, "instellingen");
         sb.Append("<div class=\"panel-page candidate-hub panel-page--cand-ill\" data-testid=\"candidate-settings-ssr\">");
         AppendIntro(sb, culture);
         sb.Append("<div class=\"cand-settings\">");

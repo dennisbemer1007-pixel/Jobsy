@@ -15,7 +15,6 @@ internal static class ProfileSsrShells
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"profile-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.ProfielDesk, KreeftHeaderStripAssets.ProfielMob, "profiel");
         sb.Append("<div class=\"panel-page profile-page profile-page--candidate profile-page--illustrated profile-page--hub-ssr\" data-testid=\"candidate-profile-ssr\">");
         AppendIntro(sb, culture);
         if (data.LoadError || data.Profile is null)

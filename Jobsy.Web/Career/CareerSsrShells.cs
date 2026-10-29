@@ -14,7 +14,6 @@ internal static class CareerSsrShells
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"career-page-wrap\">");
-        AppendHeroStrips(sb, data.ActiveTab);
         sb.Append("<div class=\"journey-page career-page career-page--illustrated panel-page--cand-ill\" data-testid=\"career-page-ssr\" data-career-active-tab=\"");
         sb.Append(WebUtility.HtmlEncode(data.ActiveTab));
         sb.Append("\">");
@@ -50,28 +49,6 @@ internal static class CareerSsrShells
         sb.Append(WwwrootAssetCatalog.Url("js/career-ssr.js"));
         sb.Append("\" defer></script></div></div>");
         return sb.ToString();
-    }
-
-    private static void AppendHeroStrips(StringBuilder sb, string activeTab)
-    {
-        var omscholenActive = string.Equals(activeTab, CareerSsrTabs.Omscholen, StringComparison.OrdinalIgnoreCase);
-        sb.Append("<div data-career-strip-wrap=\"carriere\"");
-        if (omscholenActive)
-        {
-            sb.Append(" hidden");
-        }
-
-        sb.Append('>');
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.CarriereDesk, KreeftHeaderStripAssets.CarriereMob, "carriere");
-        sb.Append("</div><div data-career-strip-wrap=\"omscholen\"");
-        if (!omscholenActive)
-        {
-            sb.Append(" hidden");
-        }
-
-        sb.Append('>');
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.OmscholenDesk, KreeftHeaderStripAssets.OmscholenMob, "omscholen");
-        sb.Append("</div>");
     }
 
     private static void AppendHero(StringBuilder sb, CultureState culture, CareerSsrData.PageData data)

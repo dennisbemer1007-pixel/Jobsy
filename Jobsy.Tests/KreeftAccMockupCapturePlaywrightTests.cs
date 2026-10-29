@@ -28,7 +28,7 @@ public sealed class KreeftAccMockupCapturePlaywrightTests
         ("41-404", "41-404-desktop-1440.png", "41-404-mobiel-390.png", "/status/404", false),
     ];
 
-    [Fact]
+    [Fact(Skip = "kreeftstrook verwijderd")]
     public async Task Capture_kreeft_acc_mockups()
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_KREEFT_ACC") ?? "").Trim() != "1")

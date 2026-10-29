@@ -17,7 +17,6 @@ internal static class AfterMatchRescheduleSsrShells
     {
         var mode = string.Equals(initialMode, "cancel", StringComparison.OrdinalIgnoreCase) ? "cancel" : "reschedule";
         var sb = new StringBuilder();
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.MomentDesk, KreeftHeaderStripAssets.MomentMob);
 
         sb.Append("<div class=\"ndm ndm-page ndm-reschedule-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"reschedule\" data-ndm-reschedule-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));

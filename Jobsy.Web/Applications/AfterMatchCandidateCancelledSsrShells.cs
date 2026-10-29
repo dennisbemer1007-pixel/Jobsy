@@ -10,7 +10,6 @@ internal static class AfterMatchCandidateCancelledSsrShells
     internal static string BuildBody(CultureState culture, AfterMatchCandidateCancelledSsrData.PageData data, Guid applicationId)
     {
         var sb = new StringBuilder();
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.NuNietDesk, KreeftHeaderStripAssets.NuNietMob);
         sb.Append("<div class=\"ndm ndm-page ndm-cancelled-page\" data-testid=\"ndm-candidate-cancelled\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
         sb.Append("\" data-enhance-nav=\"false\"><main class=\"wrap\"><section class=\"intro\"><nav class=\"bc\" aria-label=\"");

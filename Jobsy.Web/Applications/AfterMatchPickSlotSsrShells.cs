@@ -16,7 +16,6 @@ internal static class AfterMatchPickSlotSsrShells
     internal static string BuildBody(CultureState culture, AfterMatchPickSlotSsrData.PageData data, Guid applicationId)
     {
         var sb = new StringBuilder();
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.MomentDesk, KreeftHeaderStripAssets.MomentMob);
 
         sb.Append("<div class=\"ndm ndm-page ndm-pick-slot-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"pick-slot\" data-ndm-pick-slot-ssr=\"1\" data-enhance-nav=\"false\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));

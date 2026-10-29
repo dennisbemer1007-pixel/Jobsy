@@ -20,7 +20,6 @@ internal static class WatDrijftJouSsrShells
         }
 
         sb.Append("<div class=\"journey-page panel-page--cand-ill\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.WatDrijftDesk, KreeftHeaderStripAssets.WatDrijftMob, "wat-drijft");
         sb.Append("<header class=\"cand-hero cand-hero--kompas-band cand-hero--with-art opl-wrap\"><div class=\"cand-hero__copy\">");
         sb.Append("<span class=\"cand-hero__eyebrow\">");
         sb.Append(WebUtility.HtmlEncode(UwvMockupCopy.IsEnglish(lang) ? "My results" : "Mijn resultaten"));

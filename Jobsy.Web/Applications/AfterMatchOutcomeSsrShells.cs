@@ -16,7 +16,6 @@ internal static class AfterMatchOutcomeSsrShells
         Guid applicationId)
     {
         var sb = new StringBuilder();
-        AppendHeroStrip(sb);
         sb.Append("<div class=\"ndm ndm-page ndm-outcome-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"outcome\" data-ndm-outcome-ssr=\"1\" data-application-id=\"");
         sb.Append(applicationId.ToString("D"));
         sb.Append("\"><main class=\"wrap\">");
@@ -32,9 +31,6 @@ internal static class AfterMatchOutcomeSsrShells
         sb.Append("</div>");
         return sb.ToString();
     }
-
-    private static void AppendHeroStrip(StringBuilder sb)
-        => KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.NuNietDesk, KreeftHeaderStripAssets.NuNietMob);
 
     private static void AppendIntro(StringBuilder sb, CultureState culture, AfterMatchOutcomeSsrData.PageData data)
     {

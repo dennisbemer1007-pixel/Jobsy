@@ -18,7 +18,6 @@ public class CandidateIllustratedLandingRenderTests
         var html = await client.GetStringAsync("/");
 
         Assert.Contains("pub-landing__hero--illustrated", html, StringComparison.Ordinal);
-        Assert.Contains("pub-landing__hero-art-band", html, StringComparison.Ordinal);
         Assert.Contains("pub-landing__steps-grid", html, StringComparison.Ordinal);
         Assert.Contains("vervoer-blok.jpg", html, StringComparison.Ordinal);
         Assert.Contains("NL en EN", html, StringComparison.Ordinal);
