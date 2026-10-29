@@ -67,8 +67,10 @@ public sealed class SchoolsFeatureMiddleware
         return path.StartsWith("/school", StringComparison.OrdinalIgnoreCase)
                || path.StartsWith("/leraar", StringComparison.OrdinalIgnoreCase)
                || path.StartsWith("/leerling", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/ouder", StringComparison.OrdinalIgnoreCase)
                || path.StartsWith("/api/school", StringComparison.OrdinalIgnoreCase)
                || path.StartsWith("/api/teacher", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("/api/pupil", StringComparison.OrdinalIgnoreCase);
+               || path.StartsWith("/api/pupil", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/api/parent", StringComparison.OrdinalIgnoreCase);
     }
 }

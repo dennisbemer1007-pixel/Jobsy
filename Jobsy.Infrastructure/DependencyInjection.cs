@@ -514,6 +514,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolCodeListPdfService, SchoolCodeListPdfService>();
         services.AddScoped<ISchoolPortalService, SchoolPortalService>();
         services.AddScoped<ITeacherPortalService, TeacherPortalService>();
+        services.AddScoped<IParentPassportService, ParentPassportService>();
         services.AddScoped<ISchoolAggregateSnapshotter, SchoolAggregateSnapshotter>();
         services.AddScoped<ISchoolRetentionService, SchoolRetentionService>();
         services.AddScoped<ISchoolReportingService, SchoolReportingService>();
@@ -527,6 +528,7 @@ public static class DependencyInjection
         services.AddSingleton<IPupilPassportPdfService, Scholen.Passport.PupilPassportPdfService>();
         services.AddSingleton<PupilPassportPdfModelBuilder>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationHandler, ParentPassportSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();
         services.AddHostedService<SchoolRetentionHostedService>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();

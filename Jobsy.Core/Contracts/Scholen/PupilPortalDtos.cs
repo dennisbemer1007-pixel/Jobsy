@@ -130,3 +130,9 @@ public sealed record PupilVoPassportSaveRequest(
     string? TravelModeKey,
     string? OwnWords,
     IReadOnlyList<string>? LearningGoals);
+
+public sealed record ParentPassportCodeRequest(string Code);
+
+public sealed record ParentPassportErrorDto(string Code, string Message);
+
+public sealed record ParentPassportSessionDto(Guid PupilCodeId, long AccessExpiresUnix);

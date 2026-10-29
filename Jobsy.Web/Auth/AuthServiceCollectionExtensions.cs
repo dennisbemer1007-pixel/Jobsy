@@ -164,6 +164,64 @@ public static class AuthServiceCollectionExtensions
                     http.Response.Redirect("/leerling?error=expired");
                     return Task.CompletedTask;
                 };
+            })
+            .AddCookie(ParentPassportAuthDefaults.Scheme, options =>
+            {
+                options.Cookie.Name = ParentPassportAuthDefaults.CookieName;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SecurePolicy = secureAlways
+                    ? CookieSecurePolicy.Always
+                    : CookieSecurePolicy.SameAsRequest;
+                options.Cookie.Path = "/";
+                options.SlidingExpiration = false;
+                options.ExpireTimeSpan = ParentPassportAuthDefaults.AccessWindow;
+                options.LoginPath = "/ouder";
+                options.AccessDeniedPath = "/ouder";
+                options.Events.OnSigningIn = context =>
+                {
+                    context.Properties.IsPersistent = false;
+                    context.Properties.AllowRefresh = false;
+                    if (long.TryParse(
+                            context.Principal?.FindFirst(ParentPassportClaimTypes.AccessExpiresUtc)?.Value,
+                            out var expiresUnix))
+                    {
+                        context.Properties.ExpiresUtc = DateTimeOffset.FromUnixTimeSeconds(expiresUnix);
+                    }
+
+                    return Task.CompletedTask;
+                };
+                options.Events.OnValidatePrincipal = context =>
+                {
+                    var principal = context.Principal;
+                    if (principal?.Identity?.IsAuthenticated != true)
+                    {
+                        return Task.CompletedTask;
+                    }
+
+                    if (!long.TryParse(
+                            principal.FindFirst(ParentPassportClaimTypes.AccessExpiresUtc)?.Value,
+                            out var expiresUnix))
+                    {
+                        context.RejectPrincipal();
+                        ParentApiSessionCookie.Clear(context.HttpContext);
+                        return Task.CompletedTask;
+                    }
+
+                    if (DateTimeOffset.UtcNow >= DateTimeOffset.FromUnixTimeSeconds(expiresUnix))
+                    {
+                        context.RejectPrincipal();
+                        ParentApiSessionCookie.Clear(context.HttpContext);
+                    }
+
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.HttpContext.Response.Headers.CacheControl = "no-store";
+                    context.HttpContext.Response.Redirect("/ouder?error=expired");
+                    return Task.CompletedTask;
+                };
             });
 
         // Always register schemes so Integraties credentials can activate login without env vars.
@@ -368,7 +426,9 @@ public static class AuthServiceCollectionExtensions
     {
         options.DefaultPolicy = new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser()
-            .RequireAssertion(ctx => !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(ctx.User))
+            .RequireAssertion(ctx =>
+                !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(ctx.User)
+                && !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(ctx.User))
             .Build();
 
         options.AddPolicy(JobsyPolicies.PupilSession, policy =>
@@ -380,6 +440,14 @@ public static class AuthServiceCollectionExtensions
             policy.RequireClaim(PupilClaimTypes.SchoolId);
             policy.RequireClaim(PupilClaimTypes.SessionVersion);
             policy.RequireClaim(PupilClaimTypes.IssuedAt);
+        });
+
+        options.AddPolicy(JobsyPolicies.ParentPassportSession, policy =>
+        {
+            policy.AddAuthenticationSchemes(ParentPassportAuthDefaults.Scheme);
+            policy.RequireAuthenticatedUser();
+            policy.RequireClaim(ParentPassportClaimTypes.PupilCodeId);
+            policy.RequireClaim(ParentPassportClaimTypes.AccessExpiresUtc);
         });
     }
 

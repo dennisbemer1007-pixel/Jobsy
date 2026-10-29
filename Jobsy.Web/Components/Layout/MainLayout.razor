@@ -176,6 +176,19 @@
             _isCandidate = user.Identity?.IsAuthenticated == true
                 && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
             var immersiveChanged = SyncBanenkaartImmersive();
+            if (!_isCandidate && IsOuderGuestShellPath(Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0]))
+            {
+                _isCandidate = true;
+                _homeHref = "/";
+                _hasBottomNav = true;
+                if (wasCandidate != _isCandidate || immersiveChanged)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+
+                return;
+            }
+
             if (!_isCandidate)
             {
                 _homeHref = "/";
@@ -512,6 +525,9 @@
         return changed;
     }
 
+    public static bool IsOuderGuestShellPath(string path)
+        => path.TrimStart('/').Equals("ouder", StringComparison.OrdinalIgnoreCase);
+
     public static bool IsBanenkaartPath(string path)
     {
         path = path.TrimStart('/');
@@ -572,6 +588,11 @@
 
         if (path.StartsWith("account-maken", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("account/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.Equals("ouder", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

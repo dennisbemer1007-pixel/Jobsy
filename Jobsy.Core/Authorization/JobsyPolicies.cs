@@ -18,6 +18,9 @@ public static class JobsyPolicies
     /// <summary>Pupil code session (scheme <c>Pupil</c> only — never staff/candidate cookies).</summary>
     public const string PupilSession = "PupilSession";
 
+    /// <summary>Parent read-only passport session (scheme <c>ParentPassport</c> only).</summary>
+    public const string ParentPassportSession = "ParentPassportSession";
+
     /// <summary>Admin, employer, sales manager and ambassadeur dashboards (manual cache refresh).</summary>
     public const string RequireDashboardAccess = "RequireDashboardAccess";
 }

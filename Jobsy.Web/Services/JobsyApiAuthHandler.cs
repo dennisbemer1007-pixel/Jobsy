@@ -52,6 +52,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyAccessToken(request, user, httpContext);
         ApplyTrustedClientIp(request, httpContext);
         user = await ApplyPupilCookieAsync(request, httpContext, user, cancellationToken);
+        ApplyParentCookie(request, httpContext);
 
         try
         {
@@ -88,6 +89,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         var response = await base.SendAsync(request, cancellationToken);
         CaptureRenewedApiTicket(response, httpContext, user);
+        CaptureRenewedParentApiTicket(response, httpContext);
         if (response.StatusCode != HttpStatusCode.Unauthorized
             || request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("jobsy-retried"), out var retried)
             && retried)
@@ -102,7 +104,8 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             var apiPath = request.RequestUri?.AbsolutePath ?? "";
             // Pupil circuits call staff profile endpoints during culture init; a 401 there
             // must not tear down the leerling session or redirect the paspoort document.
-            if (!(IsPupilPrincipal(user) && !ForwardsPupilCookie(apiPath)))
+            if (!(IsPupilPrincipal(user) && !ForwardsPupilCookie(apiPath))
+                && !(IsParentPassportPrincipal(user) && !ForwardsParentPassportCookie(apiPath)))
             {
                 await NotifySessionExpiredAsync(httpContext);
             }
@@ -117,9 +120,11 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyAccessToken(retry, user, httpContext);
         ApplyTrustedClientIp(retry, httpContext);
         user = await ApplyPupilCookieAsync(retry, httpContext, user, cancellationToken);
+        ApplyParentCookie(retry, httpContext);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         var retriedResponse = await base.SendAsync(retry, cancellationToken);
         CaptureRenewedApiTicket(retriedResponse, httpContext, user);
+        CaptureRenewedParentApiTicket(retriedResponse, httpContext);
         return retriedResponse;
     }
 
@@ -238,6 +243,89 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     internal static bool ForwardsPupilCookie(string absolutePath)
         => absolutePath.Contains("/api/pupil", StringComparison.OrdinalIgnoreCase)
            || absolutePath.Contains("/leerling/", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool ForwardsParentPassportCookie(string absolutePath)
+        => absolutePath.Contains("/api/parent/", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/ouder/pdf", StringComparison.OrdinalIgnoreCase);
+
+    private static void ApplyParentCookie(HttpRequestMessage request, HttpContext? httpContext)
+    {
+        var path = request.RequestUri?.AbsolutePath ?? "";
+        if (!ForwardsParentPassportCookie(path))
+        {
+            return;
+        }
+
+        var cookie = httpContext is null ? null : ParentApiSessionCookie.Read(httpContext);
+        if (string.IsNullOrWhiteSpace(cookie))
+        {
+            return;
+        }
+
+        AppendCookie(request, $"{ParentPassportAuthDefaults.CookieName}={cookie}");
+    }
+
+    private static void AppendCookie(HttpRequestMessage request, string pair)
+    {
+        if (request.Headers.TryGetValues("Cookie", out var existing))
+        {
+            request.Headers.Remove("Cookie");
+            request.Headers.TryAddWithoutValidation(
+                "Cookie",
+                string.Join("; ", existing.Append(pair)));
+        }
+        else
+        {
+            request.Headers.TryAddWithoutValidation("Cookie", pair);
+        }
+    }
+
+    private static void CaptureRenewedParentApiTicket(HttpResponseMessage response, HttpContext? httpContext)
+    {
+        if (!response.Headers.TryGetValues("Set-Cookie", out var values))
+        {
+            return;
+        }
+
+        foreach (var header in values)
+        {
+            if (!ParentApiSessionCookie.TryReadTicket(header, out var value))
+            {
+                continue;
+            }
+
+            if (httpContext is not null && !httpContext.Response.HasStarted)
+            {
+                ParentApiSessionCookie.Set(httpContext, value);
+            }
+
+            return;
+        }
+    }
+
+    public static bool IsParentPassportPrincipal(ClaimsPrincipal? user)
+    {
+        if (user is null)
+        {
+            return false;
+        }
+
+        foreach (var identity in user.Identities)
+        {
+            if (!identity.IsAuthenticated)
+            {
+                continue;
+            }
+
+            if (string.Equals(identity.AuthenticationType, ParentPassportAuthDefaults.Scheme, StringComparison.Ordinal)
+                || identity.HasClaim(c => c.Type == ParentPassportClaimTypes.PupilCodeId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private void ApplyAccessToken(HttpRequestMessage request, ClaimsPrincipal user, HttpContext? httpContext)
     {
@@ -456,7 +544,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         // Pupil sessions use the code form. Never the staff login.
-        if (IsPupilPrincipal(httpContext.User))
+        if (IsPupilPrincipal(httpContext.User) || IsParentPassportPrincipal(httpContext.User))
         {
             return false;
         }
