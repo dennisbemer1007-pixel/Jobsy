@@ -439,6 +439,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    options.AddPolicy("parent-passport", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     // Short referral redirects (/p/{code}) — same envelope as API public-write.
     options.AddPolicy("public-redirect", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -658,8 +668,10 @@ app.MapMeCandidateProxyEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
+app.MapParentPassportAuthEndpoints();
 app.MapPupilDroombaanFormEndpoints();
 app.MapPupilPdfEndpoints();
+app.MapParentPassportPdfEndpoints();
 app.MapAdminFrameEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();

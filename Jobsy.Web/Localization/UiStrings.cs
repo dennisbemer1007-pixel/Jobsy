@@ -3836,6 +3836,7 @@ public static class UiStrings
         UiStringsEnterprise.MergeAll(nl, en, pl, ro, ar);
         // D12: Scholen strings are nl-only; other languages fall back via UiStrings.Get.
         UiStringsScholen.MergeNl(nl);
+        UiStringsOuder.MergeNlEn(nl, en);
         UiStringsScholen.MergeDimensions(nl, en, pl, ro, ar);
         UiStringsLeerlingVragen.MergeNl(nl);
         UiStringsLeerlingVragenVo.MergeNl(nl);

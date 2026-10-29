@@ -258,6 +258,67 @@ public static class AuthorizationExtensions
             };
         });
 
+        authBuilder.AddCookie(ParentPassportAuthDefaults.Scheme, options =>
+        {
+            options.Cookie.Name = ParentPassportAuthDefaults.CookieName;
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.Strict;
+            options.Cookie.SecurePolicy = secureAlways
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
+            options.Cookie.Path = "/";
+            options.SlidingExpiration = false;
+            options.ExpireTimeSpan = ParentPassportAuthDefaults.AccessWindow;
+            options.Events.OnSigningIn = context =>
+            {
+                context.Properties.IsPersistent = false;
+                context.Properties.AllowRefresh = false;
+                if (long.TryParse(
+                        context.Principal?.FindFirst(ParentPassportClaimTypes.AccessExpiresUtc)?.Value,
+                        out var expiresUnix))
+                {
+                    context.Properties.ExpiresUtc = DateTimeOffset.FromUnixTimeSeconds(expiresUnix);
+                }
+
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            };
+            options.Events.OnValidatePrincipal = context =>
+            {
+                var principal = context.Principal;
+                if (principal?.Identity?.IsAuthenticated != true)
+                {
+                    return Task.CompletedTask;
+                }
+
+                if (!long.TryParse(
+                        principal.FindFirst(ParentPassportClaimTypes.AccessExpiresUtc)?.Value,
+                        out var expiresUnix))
+                {
+                    context.RejectPrincipal();
+                    return Task.CompletedTask;
+                }
+
+                var clock = context.HttpContext.RequestServices.GetService(typeof(TimeProvider)) as TimeProvider
+                            ?? TimeProvider.System;
+                if (clock.GetUtcNow() >= DateTimeOffset.FromUnixTimeSeconds(expiresUnix))
+                {
+                    context.RejectPrincipal();
+                }
+
+                return Task.CompletedTask;
+            };
+        });
+
         services.AddAuthorization(options =>
         {
             options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
@@ -327,6 +388,12 @@ public static class AuthorizationExtensions
             {
                 policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);
                 policy.Requirements.Add(new Jobsy.Infrastructure.Scholen.PupilSessionRequirement());
+            });
+
+            options.AddPolicy(JobsyPolicies.ParentPassportSession, policy =>
+            {
+                policy.AddAuthenticationSchemes(ParentPassportAuthDefaults.Scheme);
+                policy.Requirements.Add(new Jobsy.Infrastructure.Scholen.ParentPassportSessionRequirement());
             });
         });
 

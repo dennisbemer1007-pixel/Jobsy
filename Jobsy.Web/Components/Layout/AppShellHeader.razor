@@ -26,6 +26,10 @@
             {
                 <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Header" />
             }
+            else if (_showGuestCandidateNav)
+            {
+                <CandidateHeaderNav />
+            }
             else
             {
                 <AuthorizeView Roles="@JobsyRoles.Candidate">
@@ -59,6 +63,7 @@
 @code {
     private bool _hideCandidateBrandTagline;
     private bool _showCandidatePrimaryNav;
+    private bool _showGuestCandidateNav;
     private bool _noBlazorRuntime;
 
     protected override void OnInitialized()
@@ -70,8 +75,11 @@
         _hideCandidateBrandTagline = user?.Identity?.IsAuthenticated == true
             && (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
                 || MainLayout.IsBanenkaartPath(path));
-        _showCandidatePrimaryNav = user?.Identity?.IsAuthenticated == true
-            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+        var ouderGuest = MainLayout.IsOuderGuestShellPath(path);
+        _showCandidatePrimaryNav = ouderGuest
+            || (user?.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate));
+        _showGuestCandidateNav = ouderGuest && !_noBlazorRuntime;
     }
 
     [Parameter, EditorRequired]

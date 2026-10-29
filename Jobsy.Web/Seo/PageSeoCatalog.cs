@@ -374,6 +374,7 @@ public static partial class PageSeoCatalog
             ["/leerling/dit-ben-jij"] = Private("LeerlingStory.Title", "Seo.PrivateDescription"),
             ["/leerling/droombaan"] = Private("LeerlingDroom.Title", "Seo.PrivateDescription"),
             ["/leerling/pdf"] = Private("LeerlingStory.Pdf", "Seo.PrivateDescription"),
+            ["/ouder"] = Private("Ouder.Seo.Title", "Seo.PrivateDescription"),
         };
 
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =
@@ -398,6 +399,7 @@ public static partial class PageSeoCatalog
         ("/school/", Private("School.DashboardTitle", "Seo.PrivateDescription")),
         ("/leraar/", Private("Leraar.DashboardTitle", "Seo.PrivateDescription")),
         ("/leerling/", Private("Leerling.LoginTitle", "Seo.PrivateDescription")),
+        ("/ouder", Private("Ouder.Seo.Title", "Seo.PrivateDescription")),
         ("/intermediary/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/tokens/", Private("Seo.SiteName", "Seo.PrivateDescription")),
     ];

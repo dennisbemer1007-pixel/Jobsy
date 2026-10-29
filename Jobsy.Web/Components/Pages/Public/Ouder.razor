@@ -1,0 +1,175 @@
+@page "/ouder"
+@layout MainLayout
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Scholen
+@using Jobsy.Core.Scholen.PupilPassport
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Media
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.WebUtilities
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IFeatureFlags Features
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>@Culture["Ouder.Seo.Title"] · Lobsy</PageTitle>
+
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-paspoort-g78.css")" />
+</HeadContent>
+
+@if (_loading)
+{
+    <section class="panel-page panel-section">
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    </section>
+}
+else if (!_schoolsEnabled)
+{
+    <section class="panel-page panel-section">
+        <p class="state-message">@Culture["Ouder.FeatureDisabled"]</p>
+    </section>
+}
+else if (_session && _passportLoading)
+{
+    <section class="panel-page panel-section">
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    </section>
+}
+else if (_session && _passport is not null && _passport.Enabled)
+{
+    <div class="ll-reis" data-testid="ouder-paspoort-page">
+        <LeerlingPaspoortG78View Model="_passport" AllowNameEdit="false" />
+        <nav class="lp-g78-paspoort-actions ouder-downloads" aria-label="@Culture["Ouder.Downloads.Aria"]">
+            <a class="btn-secondary" href="/ouder/uitloggen">@Culture["Ouder.Passport.OtherCode"]</a>
+            <a class="btn-secondary" href="@PassportPdfHref">@Culture["Ouder.Passport.Pdf"]</a>
+            <a class="btn-secondary" href="@AnswersPdfHref">@Culture["Ouder.Answers.Pdf"]</a>
+        </nav>
+    </div>
+}
+else if (_session)
+{
+    <section class="panel-page panel-section">
+        <p class="ll-error" role="alert">@Culture["Ouder.Error.Invalid"]</p>
+        <a class="btn-secondary" href="/ouder/uitloggen">@Culture["Ouder.Passport.OtherCode"]</a>
+    </section>
+}
+else
+{
+    <section class="panel-page panel-section ouder-page" data-testid="ouder-login">
+        <h1>@Culture["Ouder.Page.Title"]</h1>
+        <p class="muted">@Culture["Ouder.Page.Lead"]</p>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="ll-error" role="alert">@_error</p>
+        }
+        <form method="post" action="/ouder/kijk" class="ll-form ouder-form">
+            <AntiforgeryToken />
+            <label class="ll-field">
+                <span>@Culture["Ouder.Form.Code"]</span>
+                <input type="text" name="code" required autocomplete="off" inputmode="text" maxlength="12" />
+            </label>
+            <button type="submit" class="btn-primary">@Culture["Ouder.Form.Submit"]</button>
+        </form>
+    </section>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _schoolsEnabled;
+    private bool _session;
+    private bool _passportLoading;
+    private PupilG78PassportWebDto? _passport;
+    private string? _error;
+    private string? _languageQuery;
+
+    private string PassportPdfHref => PdfHref("/ouder/pdf");
+    private string AnswersPdfHref => PdfHref("/ouder/antwoorden/pdf");
+
+    private string PdfHref(string path)
+    {
+        if (string.IsNullOrWhiteSpace(_languageQuery))
+        {
+            return path;
+        }
+
+        return $"{path}?lang={Uri.EscapeDataString(_languageQuery)}";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await Culture.InitializeAsync();
+        _schoolsEnabled = await SchoolsFeatureGate.IsEnabledAsync(Features);
+        ParseQueryError();
+        await RefreshSessionAsync();
+        _loading = false;
+    }
+
+    private void ParseQueryError()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("error", out var err))
+        {
+            return;
+        }
+
+        _error = err.ToString() switch
+        {
+            "cooldown" => Culture["Ouder.Error.Cooldown"],
+            "retry" => Culture["Ouder.Error.Retry"],
+            "staff" => Culture["Ouder.Error.Staff"],
+            "expired" => Culture["Ouder.Error.Expired"],
+            _ => Culture["Ouder.Error.Invalid"]
+        };
+    }
+
+    private async Task RefreshSessionAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            _session = false;
+            return;
+        }
+
+        var auth = await http.AuthenticateAsync(ParentPassportAuthDefaults.Scheme);
+        _session = auth.Succeeded && auth.Principal?.Identity?.IsAuthenticated == true;
+        if (!_session || !_schoolsEnabled)
+        {
+            _passport = null;
+            return;
+        }
+
+        _passportLoading = true;
+        _languageQuery = Culture.Language;
+        try
+        {
+            _passport = await Api.GetParentG78PassportAsync(_languageQuery);
+        }
+        catch
+        {
+            _passport = null;
+        }
+        finally
+        {
+            _passportLoading = false;
+        }
+    }
+
+    private void OnCultureChanged() => _ = InvokeAsync(async () =>
+    {
+        await RefreshSessionAsync();
+        StateHasChanged();
+    });
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}
