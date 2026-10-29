@@ -603,6 +603,13 @@
     pointer-events: auto;
 }
 
+/* Start prompt sits below the vacancy strip so cards stay clickable. */
+.app-shell--banenkaart-shell .jobsy-discovery--lagen .map-pane > .kb-start-prompt {
+    top: 5.75rem;
+    max-width: min(22rem, calc(100% - 2rem));
+    z-index: 5;
+}
+
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip {
     position: absolute;
     left: 0;
@@ -852,7 +859,9 @@ body.s-legend .app-shell--banenkaart-shell .sheet .cl.cl--flat {
     position: absolute;
     left: 12px;
     bottom: calc(26px + var(--bottom-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
-    z-index: 3;
+    z-index: 12;
+    display: inline-flex;
+    pointer-events: auto;
     height: 46px;
     align-items: center;
     gap: 8px;
@@ -1457,7 +1466,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 @media (min-width: 701px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
         grid-template-columns: minmax(320px, 42%) minmax(0, 58%);
-        grid-template-rows: 64px var(--cand-header-strip-h-desktop, 150px) auto minmax(0, 1fr);
+        grid-template-rows: 64px 0px auto minmax(0, 1fr);
         flex: 1 1 auto;
         min-height: 0;
         height: 100%;
@@ -2120,7 +2129,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 @media (max-width: 700px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: 62px var(--cand-header-strip-h-mobile, 90px) auto minmax(0, 1fr) !important;
+        grid-template-rows: 62px 0px auto minmax(0, 1fr) !important;
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;

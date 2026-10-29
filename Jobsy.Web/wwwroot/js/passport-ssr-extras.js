@@ -30,11 +30,69 @@
     });
   }
 
+  function triggerPdfDownload(href) {
+    if (!href) {
+      return;
+    }
+    try {
+      var url = new URL(href, window.location.href);
+      if (url.origin !== window.location.origin) {
+        window.location.assign(url.href);
+        return;
+      }
+    } catch (eUrl) {
+      window.location.assign(href);
+      return;
+    }
+    fetch(href, { credentials: "same-origin", headers: { Accept: "application/pdf" } })
+      .then(function (res) {
+        if (!res.ok) {
+          throw new Error("pdf");
+        }
+        return res.blob();
+      })
+      .then(function (blob) {
+        var objectUrl = URL.createObjectURL(blob);
+        var temp = document.createElement("a");
+        temp.href = objectUrl;
+        temp.download = "";
+        temp.rel = "noopener";
+        document.body.appendChild(temp);
+        temp.click();
+        temp.remove();
+        setTimeout(function () {
+          URL.revokeObjectURL(objectUrl);
+        }, 60_000);
+      })
+      .catch(function () {
+        window.location.assign(href);
+      });
+  }
+
+  function bindPassportPdfLinks(root) {
+    root.querySelectorAll("[data-testid=passport-download-pdf-mobile], [data-testid=passport-download-pdf]").forEach(function (link) {
+      if (link.getAttribute("data-passport-pdf-bound") === "1") {
+        return;
+      }
+      link.setAttribute("data-passport-pdf-bound", "1");
+      link.addEventListener("click", function (ev) {
+        var href = link.getAttribute("href");
+        if (!href) {
+          return;
+        }
+        ev.preventDefault();
+        ev.stopPropagation();
+        triggerPdfDownload(href);
+      });
+    });
+  }
+
   function init() {
     var root = document.querySelector("[data-passport-ssr]");
     if (!root) return;
     bindReadAloud(root);
     bindRefTip(root);
+    bindPassportPdfLinks(root);
   }
 
   if (document.readyState === "loading") {

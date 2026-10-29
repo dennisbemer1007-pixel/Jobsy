@@ -256,25 +256,45 @@
         }
     }
 
+    var START_PROMPT_DISMISS_KEY = "jobsy.kb.startPromptDismissed";
+
+    function dismissStartPrompt() {
+        try {
+            sessionStorage.setItem(START_PROMPT_DISMISS_KEY, "1");
+        } catch (eDismiss) { }
+        var prompt = qs(".kb-start-prompt");
+        if (prompt) {
+            prompt.remove();
+        }
+        var root = qs("[data-banenkaart-ssr=\"1\"]");
+        if (root) {
+            root.classList.remove("kb-start-prompt-open");
+        }
+    }
+
     function bindStartPrompt() {
+        try {
+            if (sessionStorage.getItem(START_PROMPT_DISMISS_KEY) === "1") {
+                dismissStartPrompt();
+                return;
+            }
+        } catch (eRead) { }
         var later = qs("[data-testid=kb-start-later]");
-        if (later) {
-            later.addEventListener("click", function () {
-                var prompt = qs(".kb-start-prompt");
-                if (prompt) {
-                    prompt.remove();
-                }
-                var root = qs("[data-banenkaart-ssr=\"1\"]");
-                if (root) {
-                    root.classList.remove("kb-start-prompt-open");
-                }
+        if (later && later.getAttribute("data-kb-start-bound") !== "1") {
+            later.setAttribute("data-kb-start-bound", "1");
+            later.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                dismissStartPrompt();
             });
         }
         var locate = qs("[data-testid=kb-start-locate]");
         if (locate && window.jobsyGeo && typeof window.jobsyGeo.requestLocation === "function") {
-            locate.addEventListener("click", function () {
-                window.jobsyGeo.requestLocation().catch(function () { });
-            });
+            if (locate.getAttribute("data-kb-start-bound") !== "1") {
+                locate.setAttribute("data-kb-start-bound", "1");
+                locate.addEventListener("click", function () {
+                    window.jobsyGeo.requestLocation().catch(function () { });
+                });
+            }
         }
     }
 
@@ -1194,6 +1214,11 @@
                         }
                     }).catch(function () { });
                 }
+                return;
+            }
+            if (target.closest("[data-testid=kb-start-later]")) {
+                ev.preventDefault();
+                dismissStartPrompt();
             }
         }, true);
     }

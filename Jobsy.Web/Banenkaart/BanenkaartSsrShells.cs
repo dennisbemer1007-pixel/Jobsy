@@ -22,12 +22,6 @@ internal static class BanenkaartSsrShells
         var q = model.Query;
         var viewModeClass = model.Query.DesktopListMode ? " show-list jobsy-discovery--list" : " show-map";
         var viewDataAttr = model.Query.DesktopListMode ? " data-kb-view=\"list\"" : " data-kb-view=\"map\"";
-        if (!plainShell)
-        {
-            sb.Append("<div class=\"kb-banenkaart-ssr-chrome\" data-testid=\"kb-banenkaart-ssr-chrome\">");
-            AppendNearbyHeroStrip(sb);
-            sb.Append("</div>");
-        }
         sb.Append("<div class=\"jobsy-discovery jobsy-discovery--lagen");
         sb.Append(viewModeClass).Append(viewDataAttr);
         if (plainShell)
@@ -46,6 +40,11 @@ internal static class BanenkaartSsrShells
         if (model.ShowEmptyTravelMessage)
         {
             sb.Append(" kb-ssr-travel-empty");
+        }
+
+        if (model.ShowStartPrompt)
+        {
+            sb.Append(" kb-start-prompt-open");
         }
 
         sb.Append("\" data-banenkaart-ssr=\"1\" data-testid=\"banenkaart-ssr-root\">");
@@ -318,16 +317,6 @@ internal static class BanenkaartSsrShells
         sb.Append("<span class=\"round\" aria-hidden=\"true\">");
         sb.Append("<svg class=\"ic\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"8.5\" r=\"3.5\"/><path d=\"M5 20c1-4 4-6 7-6s6 2 7 6\"/></svg>");
         sb.Append("</span></a></div></header>");
-    }
-
-    private static void AppendNearbyHeroStrip(StringBuilder sb)
-    {
-        KreeftHeaderStripHtml.Append(
-            sb,
-            KreeftHeaderStripAssets.BanenkaartDesk,
-            KreeftHeaderStripAssets.BanenkaartMob,
-            "banenkaart",
-            "kb-banenkaart-header-strip kreeft-header-strip");
     }
 
     private static void AppendVacancyPane(StringBuilder sb, CultureState culture, BanenkaartSsrData.PageModel model, bool plainShell = false)
