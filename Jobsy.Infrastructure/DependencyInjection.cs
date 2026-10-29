@@ -526,6 +526,7 @@ public static class DependencyInjection
         services.AddScoped<IPupilPortalService, PupilPortalService>();
         services.AddSingleton<IPupilReportPdfService, PupilReportPdfService>();
         services.AddSingleton<IPupilPassportPdfService, Scholen.Passport.PupilPassportPdfService>();
+        services.AddSingleton<IParentPassportAnswersPdfService, Scholen.Passport.ParentPassportAnswersPdfService>();
         services.AddSingleton<PupilPassportPdfModelBuilder>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
         services.AddSingleton<IAuthorizationHandler, ParentPassportSessionAuthorizationHandler>();

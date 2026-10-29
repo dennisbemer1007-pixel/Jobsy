@@ -92,7 +92,7 @@ public sealed class ParentPassportServiceTests
     }
 
     [Fact]
-    public async Task GetTestAnswersWebAsync_returns_sections_for_completed_g78_code()
+    public async Task BuildAnswersPdfAsync_returns_pdf_for_completed_g78_code()
     {
         await using var scope = CreateScope(out var db, out var service, out var codes);
         var schoolClass = await SeedClassAsync(db);
@@ -120,13 +120,32 @@ public sealed class ParentPassportServiceTests
         var principal = service.CreatePrincipal(new ParentPassportSessionDto(
             code.Id,
             DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds()));
-        var (ok, _, status) = await service.GetTestAnswersWebAsync(principal);
+        var (bytes, fileName, _, status) = await service.BuildAnswersPdfAsync(principal, "nl");
         Assert.Equal(200, status);
-        Assert.NotNull(ok);
-        Assert.True(ok!.Enabled);
-        Assert.Single(ok.Sections);
-        Assert.Single(ok.Sections[0].Items);
-        Assert.Equal("Leerling.Answer.Yes", ok.Sections[0].Items[0].AnswerLabelKey);
+        Assert.NotNull(bytes);
+        Assert.True(bytes!.Length > 1000);
+        Assert.StartsWith("lobsy-testantwoorden-", fileName, StringComparison.Ordinal);
+        Assert.EndsWith(".pdf", fileName, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Answers_pdf_model_has_no_percent_sign_in_copy()
+    {
+        var def = new PupilQuestionSetRegistry().Get(PupilQuestionSet.Groep78);
+        var item = def.Bank.AllItems[0];
+        var json = JsonSerializer.Serialize(new Dictionary<string, int> { [item.Id] = 3 });
+        var model = ParentPassportAnswersPdfModelBuilder.Build(
+            def,
+            json,
+            "nl",
+            "1A",
+            "School",
+            "ABCD-1234",
+            DateTime.UtcNow);
+        Assert.True(model.Enabled);
+        Assert.DoesNotContain('%', model.Intro);
+        Assert.DoesNotContain('%', model.Footer);
+        Assert.Contains("Gekozen antwoord", model.AnswerLabel, StringComparison.Ordinal);
     }
 
     private static ServiceProvider CreateScope(
@@ -143,6 +162,7 @@ public sealed class ParentPassportServiceTests
         services.AddSingleton<IPupilStoryRenderer, PupilStoryRenderer>();
         services.AddSingleton<PupilPassportPdfModelBuilder>();
         services.AddSingleton<IPupilPassportPdfService, PupilPassportPdfService>();
+        services.AddSingleton<IParentPassportAnswersPdfService, ParentPassportAnswersPdfService>();
         services.AddSingleton<IPlatformFeatureService, FixedFeatures>();
         services.AddSingleton<IPupilQuestionSetRegistry, PupilQuestionSetRegistry>();
         services.AddSingleton(_ => new ParentPassportService(
@@ -150,6 +170,7 @@ public sealed class ParentPassportServiceTests
             codeService,
             _.GetRequiredService<PupilPassportPdfModelBuilder>(),
             _.GetRequiredService<IPupilPassportPdfService>(),
+            _.GetRequiredService<IParentPassportAnswersPdfService>(),
             _.GetRequiredService<IPupilQuestionSetRegistry>(),
             _.GetRequiredService<IPlatformFeatureService>(),
             TimeProvider.System));

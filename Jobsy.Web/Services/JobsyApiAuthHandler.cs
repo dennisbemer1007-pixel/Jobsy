@@ -246,7 +246,8 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
     internal static bool ForwardsParentPassportCookie(string absolutePath)
         => absolutePath.Contains("/api/parent/", StringComparison.OrdinalIgnoreCase)
-           || absolutePath.Contains("/ouder/pdf", StringComparison.OrdinalIgnoreCase);
+           || absolutePath.Contains("/ouder/pdf", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/ouder/antwoorden/pdf", StringComparison.OrdinalIgnoreCase);
 
     private static void ApplyParentCookie(HttpRequestMessage request, HttpContext? httpContext)
     {

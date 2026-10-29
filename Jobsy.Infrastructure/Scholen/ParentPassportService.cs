@@ -24,11 +24,12 @@ public interface IParentPassportService
         string? language,
         CancellationToken cancellationToken = default);
 
-    Task<(ParentPassportAnswersWebDto? Ok, ParentPassportErrorDto? Error, int StatusCode)> GetTestAnswersWebAsync(
+    Task<(byte[]? Bytes, string? FileName, ParentPassportErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal parent,
+        string? language,
         CancellationToken cancellationToken = default);
 
-    Task<(byte[]? Bytes, string? FileName, ParentPassportErrorDto? Error, int StatusCode)> BuildPdfAsync(
+    Task<(byte[]? Bytes, string? FileName, ParentPassportErrorDto? Error, int StatusCode)> BuildAnswersPdfAsync(
         ClaimsPrincipal parent,
         string? language,
         CancellationToken cancellationToken = default);
@@ -44,6 +45,7 @@ public sealed class ParentPassportService : IParentPassportService
     private readonly IPupilCodeService _codes;
     private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
     private readonly IPupilPassportPdfService _passportPdf;
+    private readonly IParentPassportAnswersPdfService _answersPdf;
     private readonly IPupilQuestionSetRegistry _registry;
     private readonly IPlatformFeatureService _features;
     private readonly TimeProvider _clock;
@@ -53,6 +55,7 @@ public sealed class ParentPassportService : IParentPassportService
         IPupilCodeService codes,
         PupilPassportPdfModelBuilder passportModelBuilder,
         IPupilPassportPdfService passportPdf,
+        IParentPassportAnswersPdfService answersPdf,
         IPupilQuestionSetRegistry registry,
         IPlatformFeatureService features,
         TimeProvider? clock = null)
@@ -61,6 +64,7 @@ public sealed class ParentPassportService : IParentPassportService
         _codes = codes;
         _passportModelBuilder = passportModelBuilder;
         _passportPdf = passportPdf;
+        _answersPdf = answersPdf;
         _registry = registry;
         _features = features;
         _clock = clock ?? TimeProvider.System;
@@ -128,26 +132,47 @@ public sealed class ParentPassportService : IParentPassportService
         return (PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true), null, 200);
     }
 
-    public async Task<(ParentPassportAnswersWebDto? Ok, ParentPassportErrorDto? Error, int StatusCode)> GetTestAnswersWebAsync(
+    public async Task<(byte[]? Bytes, string? FileName, ParentPassportErrorDto? Error, int StatusCode)> BuildAnswersPdfAsync(
         ClaimsPrincipal parent,
+        string? language,
         CancellationToken cancellationToken = default)
     {
         var (code, error, status) = await ResolveCodeAsync(parent, cancellationToken);
         if (code is null)
         {
-            return (null, error, status);
+            return (null, null, error, status);
         }
 
         var features = await _features.GetAsync(cancellationToken);
         if (!features.PupilPassportV2Enabled
             || code.SchoolClass!.QuestionSet != PupilQuestionSet.Groep78)
         {
-            return (null, InvalidPassport().Error, InvalidPassport().StatusCode);
+            return (null, null, InvalidPassport().Error, InvalidPassport().StatusCode);
         }
 
+        var display = _codes.Unprotect(code.CodeProtected) is { } raw
+            ? PupilCodeFormat.Display(raw)
+            : "******";
+        var schoolName = code.SchoolClass.School?.Name ?? "";
         var def = _registry.ForClass(code.SchoolClass);
-        var dto = ParentPassportAnswersBuilder.Build(def, code.Progress?.AnswersJson);
-        return (dto, null, 200);
+        var model = ParentPassportAnswersPdfModelBuilder.Build(
+            def,
+            code.Progress?.AnswersJson,
+            language ?? "nl",
+            code.SchoolClass.Name,
+            schoolName,
+            display,
+            code.Result!.CompletedAtUtc);
+        if (!model.Enabled)
+        {
+            return (null, null, InvalidPassport().Error, InvalidPassport().StatusCode);
+        }
+
+        var bytes = _answersPdf.Render(model);
+        var fileName = PupilVerhaalLocalized.IsEnglish(language)
+            ? $"lobsy-test-answers-{SanitizeFilePart(code.SchoolClass.Name)}.pdf"
+            : $"lobsy-testantwoorden-{SanitizeFilePart(code.SchoolClass.Name)}.pdf";
+        return (bytes, fileName, null, 200);
     }
 
     public async Task<(byte[]? Bytes, string? FileName, ParentPassportErrorDto? Error, int StatusCode)> BuildPdfAsync(

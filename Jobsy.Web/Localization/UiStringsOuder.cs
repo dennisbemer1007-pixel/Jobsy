@@ -38,24 +38,19 @@ public static class UiStringsOuder
         nl["Ouder.Error.Expired"] = "Je sessie is verlopen. Vul de code opnieuw in.";
         en["Ouder.Error.Expired"] = "Your session has expired. Enter the code again.";
 
-        nl["Ouder.Passport.Pdf"] = "PDF downloaden";
-        en["Ouder.Passport.Pdf"] = "Download PDF";
+        nl["Ouder.Passport.Pdf"] = "Paspoort (pdf)";
+        en["Ouder.Passport.Pdf"] = "Passport (PDF)";
+
+        nl["Ouder.Answers.Pdf"] = "Antwoorden (pdf)";
+        en["Ouder.Answers.Pdf"] = "Answers (PDF)";
+
+        nl["Ouder.Downloads.Aria"] = "Downloads";
+        en["Ouder.Downloads.Aria"] = "Downloads";
 
         nl["Ouder.Passport.OtherCode"] = "Andere code";
         en["Ouder.Passport.OtherCode"] = "Different code";
 
         nl["Ouder.FeatureDisabled"] = "Deze pagina is nu niet beschikbaar.";
         en["Ouder.FeatureDisabled"] = "This page is not available right now.";
-
-        nl["Ouder.Answers.Title"] = "Testantwoorden";
-        en["Ouder.Answers.Title"] = "Test answers";
-
-        nl["Ouder.Answers.Lead"] =
-            "Dit zijn de antwoorden die je kind tijdens de test heeft gekozen. Er staan geen cijfers of scores bij.";
-        en["Ouder.Answers.Lead"] =
-            "These are the answers your child chose during the test. There are no numbers or scores.";
-
-        nl["Ouder.Answers.Chosen"] = "Gekozen antwoord";
-        en["Ouder.Answers.Chosen"] = "Chosen answer";
     }
 }

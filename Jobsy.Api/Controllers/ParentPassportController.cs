@@ -57,13 +57,20 @@ public sealed class ParentPassportController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
-    [HttpGet("answers")]
+    [HttpGet("~/ouder/antwoorden/pdf")]
     [Authorize(Policy = JobsyPolicies.ParentPassportSession)]
-    public async Task<IActionResult> TestAnswers(CancellationToken cancellationToken)
+    public async Task<IActionResult> AnswersPdf(
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken)
     {
         NoStore();
-        var (ok, error, status) = await _parent.GetTestAnswersWebAsync(User, cancellationToken);
-        return ok is null ? StatusCode(status, error) : Ok(ok);
+        var (bytes, fileName, error, status) = await _parent.BuildAnswersPdfAsync(User, lang, cancellationToken);
+        if (bytes is null)
+        {
+            return StatusCode(status, error);
+        }
+
+        return File(bytes, "application/pdf", fileName);
     }
 
     [HttpGet("~/ouder/pdf")]

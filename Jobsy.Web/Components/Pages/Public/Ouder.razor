@@ -24,8 +24,6 @@
 
 <HeadContent>
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-paspoort-g78.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/scholen.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/ouder-antwoorden.css")" />
 </HeadContent>
 
 @if (_loading)
@@ -50,17 +48,10 @@ else if (_session && _passport is not null && _passport.Enabled)
 {
     <div class="ll-reis" data-testid="ouder-paspoort-page">
         <LeerlingPaspoortG78View Model="_passport" AllowNameEdit="false" />
-        @if (_answersLoading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_answers is not null)
-        {
-            <OuderLeerlingAntwoorden Model="_answers" />
-        }
-        <nav class="lp-g78-paspoort-actions" aria-label="@Culture["Ouder.Passport.Pdf"]">
+        <nav class="lp-g78-paspoort-actions ouder-downloads" aria-label="@Culture["Ouder.Downloads.Aria"]">
             <a class="btn-secondary" href="/ouder/uitloggen">@Culture["Ouder.Passport.OtherCode"]</a>
-            <a class="btn-secondary" href="@PdfHref">@Culture["Ouder.Passport.Pdf"]</a>
+            <a class="btn-secondary" href="@PassportPdfHref">@Culture["Ouder.Passport.Pdf"]</a>
+            <a class="btn-secondary" href="@AnswersPdfHref">@Culture["Ouder.Answers.Pdf"]</a>
         </nav>
     </div>
 }
@@ -97,22 +88,20 @@ else
     private bool _session;
     private bool _passportLoading;
     private PupilG78PassportWebDto? _passport;
-    private ParentPassportAnswersWebDto? _answers;
-    private bool _answersLoading;
     private string? _error;
     private string? _languageQuery;
 
-    private string PdfHref
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(_languageQuery))
-            {
-                return "/ouder/pdf";
-            }
+    private string PassportPdfHref => PdfHref("/ouder/pdf");
+    private string AnswersPdfHref => PdfHref("/ouder/antwoorden/pdf");
 
-            return $"/ouder/pdf?lang={Uri.EscapeDataString(_languageQuery)}";
+    private string PdfHref(string path)
+    {
+        if (string.IsNullOrWhiteSpace(_languageQuery))
+        {
+            return path;
         }
+
+        return $"{path}?lang={Uri.EscapeDataString(_languageQuery)}";
     }
 
     protected override async Task OnInitializedAsync()
@@ -157,27 +146,22 @@ else
         if (!_session || !_schoolsEnabled)
         {
             _passport = null;
-            _answers = null;
             return;
         }
 
         _passportLoading = true;
-        _answersLoading = true;
         _languageQuery = Culture.Language;
         try
         {
             _passport = await Api.GetParentG78PassportAsync(_languageQuery);
-            _answers = await Api.GetParentTestAnswersAsync();
         }
         catch
         {
             _passport = null;
-            _answers = null;
         }
         finally
         {
             _passportLoading = false;
-            _answersLoading = false;
         }
     }
 
