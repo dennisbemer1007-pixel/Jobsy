@@ -14,6 +14,9 @@ public sealed partial class JobsyApiClient
         return await GetApiJsonAsync<PupilG78PassportWebDto>($"api/parent/passport/g78{query}", ct);
     }
 
+    public async Task<ParentPassportAnswersWebDto?> GetParentTestAnswersAsync(CancellationToken ct = default)
+        => await GetApiJsonAsync<ParentPassportAnswersWebDto>("api/parent/passport/answers", ct);
+
     public async Task<(byte[]? Bytes, string? FileName, int StatusCode)> GetParentPassportPdfAsync(
         string? query,
         CancellationToken ct = default)

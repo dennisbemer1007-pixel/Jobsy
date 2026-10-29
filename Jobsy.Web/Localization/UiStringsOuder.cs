@@ -46,5 +46,16 @@ public static class UiStringsOuder
 
         nl["Ouder.FeatureDisabled"] = "Deze pagina is nu niet beschikbaar.";
         en["Ouder.FeatureDisabled"] = "This page is not available right now.";
+
+        nl["Ouder.Answers.Title"] = "Testantwoorden";
+        en["Ouder.Answers.Title"] = "Test answers";
+
+        nl["Ouder.Answers.Lead"] =
+            "Dit zijn de antwoorden die je kind tijdens de test heeft gekozen. Er staan geen cijfers of scores bij.";
+        en["Ouder.Answers.Lead"] =
+            "These are the answers your child chose during the test. There are no numbers or scores.";
+
+        nl["Ouder.Answers.Chosen"] = "Gekozen antwoord";
+        en["Ouder.Answers.Chosen"] = "Chosen answer";
     }
 }

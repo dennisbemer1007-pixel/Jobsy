@@ -271,6 +271,10 @@
     "sha256": "c2e784e4b16be9f645a9a01000dc863b5258d855466898be9c44b0269932efa7",
     "v": "20261025-87"
   },
+  "css/features/ouder-antwoorden.css": {
+    "sha256": "5eeb696b063dff2b03301014266db87fc09ece1016d164919e796cb81f032164",
+    "v": "20261029-catalog"
+  },
   "css/features/proactive-matching.css": {
     "sha256": "8cdcd71b660f4aacf62188dc8f4a3ae0e61c47dbd0e01b7e5564edc965b1ba3c",
     "v": "20261012-03"

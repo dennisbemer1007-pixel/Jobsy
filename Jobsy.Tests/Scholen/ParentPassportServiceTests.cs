@@ -1,8 +1,11 @@
+using System.Text.Json;
+using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Scholen.Passport;
@@ -70,6 +73,62 @@ public sealed class ParentPassportServiceTests
         }
     }
 
+    [Fact]
+    public void TestAnswers_dto_json_has_no_likert_values_or_scores()
+    {
+        var def = new PupilQuestionSetRegistry().Get(PupilQuestionSet.Groep78);
+        var first = def.Bank.AllItems[0];
+        var json = JsonSerializer.Serialize(new Dictionary<string, int> { [first.Id] = 4 });
+        var dto = ParentPassportAnswersBuilder.Build(def, json);
+        var serialized = JsonSerializer.Serialize(dto);
+        Assert.DoesNotContain("AnswersJson", serialized, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"4\"", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("score", serialized, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("percent", serialized, StringComparison.OrdinalIgnoreCase);
+        Assert.True(dto.Enabled);
+        Assert.Single(dto.Sections[0].Items);
+        Assert.Equal(first.TextKey, dto.Sections[0].Items[0].QuestionTextKey);
+        Assert.Equal("Leerling.Answer.Quite", dto.Sections[0].Items[0].AnswerLabelKey);
+    }
+
+    [Fact]
+    public async Task GetTestAnswersWebAsync_returns_sections_for_completed_g78_code()
+    {
+        await using var scope = CreateScope(out var db, out var service, out var codes);
+        var schoolClass = await SeedClassAsync(db);
+        schoolClass.QuestionSet = PupilQuestionSet.Groep78;
+        await db.SaveChangesAsync();
+        var created = await codes.GenerateAsync(1, schoolClass);
+        var code = created[0];
+        code.Status = PupilCodeStatus.Completed;
+        code.Result = MinimalResult(code, schoolClass.Id);
+        var def = new PupilQuestionSetRegistry().Get(PupilQuestionSet.Groep78);
+        var item = def.Bank.AllItems[0];
+        db.PupilProgresses.Add(new PupilProgress
+        {
+            PupilCodeId = code.Id,
+            AnswersJson = JsonSerializer.Serialize(new Dictionary<string, int> { [item.Id] = 5 }),
+            LikesJson = "[]",
+            DislikesJson = "[]",
+            PuzzlesJson = "{}",
+            StartedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+            CompletedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var principal = service.CreatePrincipal(new ParentPassportSessionDto(
+            code.Id,
+            DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds()));
+        var (ok, _, status) = await service.GetTestAnswersWebAsync(principal);
+        Assert.Equal(200, status);
+        Assert.NotNull(ok);
+        Assert.True(ok!.Enabled);
+        Assert.Single(ok.Sections);
+        Assert.Single(ok.Sections[0].Items);
+        Assert.Equal("Leerling.Answer.Yes", ok.Sections[0].Items[0].AnswerLabelKey);
+    }
+
     private static ServiceProvider CreateScope(
         out JobsyDbContext db,
         out ParentPassportService service,
@@ -85,11 +144,13 @@ public sealed class ParentPassportServiceTests
         services.AddSingleton<PupilPassportPdfModelBuilder>();
         services.AddSingleton<IPupilPassportPdfService, PupilPassportPdfService>();
         services.AddSingleton<IPlatformFeatureService, FixedFeatures>();
+        services.AddSingleton<IPupilQuestionSetRegistry, PupilQuestionSetRegistry>();
         services.AddSingleton(_ => new ParentPassportService(
             context,
             codeService,
             _.GetRequiredService<PupilPassportPdfModelBuilder>(),
             _.GetRequiredService<IPupilPassportPdfService>(),
+            _.GetRequiredService<IPupilQuestionSetRegistry>(),
             _.GetRequiredService<IPlatformFeatureService>(),
             TimeProvider.System));
         var sp = services.BuildServiceProvider();
