@@ -3,14 +3,12 @@ namespace Jobsy.Tests;
 public sealed class BanenkaartSsrUiBootGuardTests
 {
     [Fact]
-    public void Banenkaart_ssr_emits_hero_strip_before_filter_chrome()
+    public void Banenkaart_ssr_does_not_emit_external_hero_chrome_wrapper()
     {
         var root = FindRepoRoot();
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
-        var heroIdx = shells.IndexOf("AppendNearbyHeroStrip", StringComparison.Ordinal);
-        var chromeIdx = shells.IndexOf("AppendMockupPanelHead(sb, culture, model)", StringComparison.Ordinal);
-        Assert.True(heroIdx >= 0 && chromeIdx > heroIdx,
-            "Illustration strip must be rendered before filter/search chrome in SSR markup.");
+        Assert.DoesNotContain("kb-banenkaart-ssr-chrome", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("AppendNearbyHeroStrip", shells, StringComparison.Ordinal);
     }
 
     [Fact]

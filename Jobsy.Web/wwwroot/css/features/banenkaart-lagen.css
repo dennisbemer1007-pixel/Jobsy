@@ -603,45 +603,6 @@
     pointer-events: auto;
 }
 
-/* Guest SSR: hero strip lives in kb-banenkaart-ssr-chrome; do not reserve an empty grid row. */
-@media (min-width: 701px) {
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)) {
-        grid-template-rows: 64px auto minmax(0, 1fr);
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)) > .main {
-        grid-row: 2 / 4;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)).show-map .vacancy-pane,
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)).show-map .map-pane {
-        grid-row: 2 / 4;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)).jobsy-discovery--list .vacancy-pane,
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)).show-list .vacancy-pane {
-        grid-row: 2 / 4;
-    }
-}
-
-@media (max-width: 700px) {
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)) {
-        grid-template-rows: 62px auto minmax(0, 1fr) !important;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)) > .main {
-        grid-row: 2 / 4;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery.jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)).show-map:not(.show-list) .vacancy-pane.panel {
-        grid-row: 2;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"]:not(:has(> .kb-nearby-banner--strip)).show-map:not(.show-list) .map-pane.mapw {
-        grid-row: 3;
-    }
-}
-
 /* Start prompt sits below the vacancy strip so cards stay clickable. */
 .app-shell--banenkaart-shell .jobsy-discovery--lagen .map-pane > .kb-start-prompt {
     top: 5.75rem;
@@ -1505,7 +1466,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 @media (min-width: 701px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
         grid-template-columns: minmax(320px, 42%) minmax(0, 58%);
-        grid-template-rows: 64px var(--cand-header-strip-h-desktop, 150px) auto minmax(0, 1fr);
+        grid-template-rows: 64px 0px auto minmax(0, 1fr);
         flex: 1 1 auto;
         min-height: 0;
         height: 100%;
@@ -2168,7 +2129,7 @@ body.s-legend .app-shell--banenkaart-shell .sheet .x {
 @media (max-width: 700px) {
     .app-shell--banenkaart-shell .jobsy-discovery--lagen[data-banenkaart-ssr="1"] {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: 62px var(--cand-header-strip-h-mobile, 90px) auto minmax(0, 1fr) !important;
+        grid-template-rows: 62px 0px auto minmax(0, 1fr) !important;
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
