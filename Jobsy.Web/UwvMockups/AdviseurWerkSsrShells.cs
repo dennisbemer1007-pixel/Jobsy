@@ -24,13 +24,6 @@ internal static class AdviseurWerkSsrShells
         var lang = data.Lang;
         var sb = new StringBuilder(8192);
         sb.Append("<div class=\"journey-page panel-page panel-page--cand-ill uwv-adviseur-page\">");
-        sb.Append("<div class=\"test-kreeft-strip uwv-adviseur-page__strip\" aria-hidden=\"true\" data-testid=\"kreeft-header-strip\">");
-        sb.Append("<img class=\"test-kreeft-strip__desk\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.AdviseurDesk));
-        sb.Append("\" width=\"1440\" height=\"225\" alt=\"\" loading=\"lazy\" decoding=\"async\" />");
-        sb.Append("<img class=\"test-kreeft-strip__mob\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(KreeftHeaderStripAssets.AdviseurMob));
-        sb.Append("\" width=\"780\" height=\"105\" alt=\"\" loading=\"lazy\" decoding=\"async\" /></div>");
         sb.Append("<section class=\"uwv-adviseur uwv-adviseur--full opl-wrap\" aria-labelledby=\"uwv-adviseur-title\" data-testid=\"uwv-adviseur-share\" data-uwv-adviseur-panel=\"1\">");
         var boot = JsonSerializer.Serialize(new
         {

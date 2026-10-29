@@ -13,10 +13,6 @@ public sealed class OnboardingKreeftStripGuardTests
         var hero = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Candidate", "Onboarding", "OnboardingRustigHero.razor"));
         Assert.Contains("height=\"225\"", hero, StringComparison.Ordinal);
         Assert.Contains("height=\"105\"", hero, StringComparison.Ordinal);
-
-        var testHeader = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Candidate", "Tests", "TestQuestionCompactHeader.razor"));
-        Assert.Contains("test-kreeft-strip", testHeader, StringComparison.Ordinal);
-        Assert.Contains("KreeftTestStripAssets", testHeader, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

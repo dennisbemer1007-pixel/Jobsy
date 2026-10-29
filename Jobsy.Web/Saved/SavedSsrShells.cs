@@ -31,7 +31,6 @@ internal static class SavedSsrShells
 
         var sb = new StringBuilder();
         sb.Append("<div class=\"saved-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.BewaardDesk, KreeftHeaderStripAssets.BewaardMob, "bewaard");
         sb.Append("<div class=\"panel-page kb-saved kb-saved--illustrated panel-page--cand-ill\" data-testid=\"saved-page-ssr\" data-saved-save-path=\"");
         sb.Append(WebUtility.HtmlEncode(BanenkaartSsrQuery.SavePath));
         sb.Append("\" data-saved-unsave-path=\"/api/saved-client/unsave\" data-saved-toast-template=\"");

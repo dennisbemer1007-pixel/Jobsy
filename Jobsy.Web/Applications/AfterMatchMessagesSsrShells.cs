@@ -17,7 +17,6 @@ internal static class AfterMatchMessagesSsrShells
         Guid contextApplicationId)
     {
         var sb = new StringBuilder();
-        AppendHeroStrip(sb);
         sb.Append("<div class=\"ndm ndm-page ndm-messages-page\" data-testid=\"ndm-candidate-live\" data-ndm-view=\"messages\" data-ndm-messages-ssr=\"1\" data-context-application-id=\"");
         sb.Append(contextApplicationId.ToString("D"));
         sb.Append("\" data-messages-base=\"");
@@ -35,9 +34,6 @@ internal static class AfterMatchMessagesSsrShells
         sb.Append("</div>");
         return sb.ToString();
     }
-
-    private static void AppendHeroStrip(StringBuilder sb)
-        => KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.BerichtenDesk, KreeftHeaderStripAssets.BerichtenMob);
 
     private static void AppendIntro(StringBuilder sb, CultureState culture, AfterMatchMessagesSsrData.PageData data)
     {

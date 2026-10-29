@@ -55,7 +55,7 @@ public sealed class LandingStartMobielScreenshotTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [Fact(Skip = "kreeftstrook verwijderd")]
     public async Task Capture_start_hero_mobiel_r1_and_no_lead_over_art()
     {
         Directory.CreateDirectory(OutDir);

@@ -26,7 +26,6 @@ internal static class OnboardingStartWelcomeSsrShell
         }
 
         sb.Append("<div class=\"ob-rustig\" data-ob-rustig-screen=\"start\">");
-        AppendHero(sb);
         sb.Append("<div class=\"ob-kreeft-start-grid\">");
         sb.Append("<div class=\"ob-kreeft-start-main\"><p class=\"ob-kreeft-zonetag\"><b>");
         sb.Append(WebUtility.HtmlEncode(culture["Reiskaart.Zone.Strand"]));
@@ -64,18 +63,5 @@ internal static class OnboardingStartWelcomeSsrShell
         KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(3));
         sb.Append("</div></div></form></section>");
         return sb.ToString();
-    }
-
-    private static void AppendHero(StringBuilder sb)
-    {
-        var heroDesk = OnboardingRustigPanoramaAssets.StartDesktop;
-        var heroMob = OnboardingRustigPanoramaAssets.StartMobile;
-        sb.Append("<div class=\"ob-rustig__hero-band ob-start-strand-hero kreeft-header-strip\" aria-hidden=\"true\" data-testid=\"ob-rustig-hero\">");
-        sb.Append("<img class=\"ob-rustig__hero-img ob-rustig__hero-img--desk\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(heroDesk));
-        sb.Append("\" width=\"1440\" height=\"225\" alt=\"\" loading=\"eager\" decoding=\"sync\" fetchpriority=\"high\" data-testid=\"ob-rustig-hero-desk\" />");
-        sb.Append("<img class=\"ob-rustig__hero-img ob-rustig__hero-img--mob\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(heroMob));
-        sb.Append("\" width=\"780\" height=\"105\" alt=\"\" loading=\"eager\" decoding=\"sync\" fetchpriority=\"high\" /></div>");
     }
 }

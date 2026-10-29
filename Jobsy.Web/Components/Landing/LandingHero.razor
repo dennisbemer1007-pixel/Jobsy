@@ -7,13 +7,6 @@
 @inject CultureState Culture
 
 <section class="pub-landing__hero @(Variant == LandingVariant.On ? "pub-landing__hero--illustrated pub-landing__hero--kreeft-strip" : null)" id="top">
-    @if (Variant == LandingVariant.On)
-    {
-        <KreeftHeaderStrip StripKey="landing"
-                           DeskUrl="@KreeftHeaderStripAssets.LandingDesk"
-                           MobUrl="@KreeftHeaderStripAssets.LandingMob"
-                           CssClass="pub-landing__kreeft-strip kreeft-header-strip" />
-    }
     <div class="pub-landing__wrap @(Variant == LandingVariant.On ? (ReiskaartHtml is not null ? "pub-landing__hero-grid--reiskaart" : null) : $"pub-landing__hero-grid {HeroGridClass}")">
         <div class="pub-landing__hero-copy">
             <div class="pub-landing__hero-head">
@@ -25,10 +18,6 @@
                         $"<em class=\"{AccentClass}\">{System.Net.WebUtility.HtmlEncode(LandingText.For("Landing.Hero.TitleAccent", Variant))}</em>"))
                 </h1>
             </div>
-            @if (Variant == LandingVariant.On)
-            {
-                <div class="pub-landing__hero-art-band" aria-hidden="true"></div>
-            }
             <div class="pub-landing__hero-rest">
             <p class="pub-landing__lead">@LandingText.For(HeroSubKey, Variant)</p>
             <div class="pub-landing__ctas">

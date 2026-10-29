@@ -19,7 +19,6 @@ internal static class AfterMatchSsrErrorShells
             : KbRoutes.Applications;
 
         var sb = new StringBuilder();
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.NuNietDesk, KreeftHeaderStripAssets.NuNietMob);
         sb.Append("<div class=\"ndm ndm-page ndm-ssr-error-page\" data-testid=\"ndm-ssr-error\"><main class=\"wrap\">");
         sb.Append("<section class=\"intro\"><nav class=\"bc\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["AfterMatch.Pick.Breadcrumb"]));

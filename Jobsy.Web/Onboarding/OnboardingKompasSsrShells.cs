@@ -51,7 +51,6 @@ internal static class OnboardingKompasSsrShells
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"kompas-page-wrap\">");
-        KreeftHeaderStripHtml.Append(sb, KreeftHeaderStripAssets.LichtKompasDesk, KreeftHeaderStripAssets.LichtKompasMob, "licht-kompas");
         sb.Append("<section class=\"kompas kompas--ssr kompas--ssr-hub\" aria-labelledby=\"kompas-title\" data-testid=\"candidate-kompas-ssr\">");
         sb.Append("<div class=\"kompas-hub-layout__reiskaart\">");
         KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(15));

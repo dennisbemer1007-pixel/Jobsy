@@ -2,23 +2,6 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Onboarding
 
-<div class="test-kreeft-strip" aria-hidden="true" data-testid="test-kreeft-strip">
-    <img class="test-kreeft-strip__desk"
-         src="@KreeftTestStripAssets.Desktop(Slug)"
-         width="1440"
-         height="225"
-         alt=""
-         loading="lazy"
-         decoding="async" />
-    <img class="test-kreeft-strip__mob"
-         src="@KreeftTestStripAssets.Mobile(Slug)"
-         width="780"
-         height="105"
-         alt=""
-         loading="lazy"
-         decoding="async" />
-</div>
-
 @code {
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string Slug { get; set; } = TestBlockArt.SlugForFamily(TestBlockFamily.HoeJeWerkt);
