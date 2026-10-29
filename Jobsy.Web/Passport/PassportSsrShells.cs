@@ -179,7 +179,7 @@ internal static class PassportSsrShells
 
         sb.Append("\"><a class=\"btn btn-secondary passport-card__pdf-btn\" href=\"/api/me/paspoort.pdf\" data-testid=\"");
         sb.Append(compact ? "passport-download-pdf-mobile" : "passport-download-pdf");
-        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append("\" data-enhance-nav=\"false\" download>");
         sb.Append(WebUtility.HtmlEncode(data.Flags.PassportPdfV2Enabled
             ? culture["Passport.DownloadDna"]
             : culture["Passport.LobsyCv"]));

@@ -100,44 +100,77 @@
     }
 
     function bindMobileLegend() {
-        var btn = document.querySelector("[data-testid=kb-map-legbtn]");
-        var sheet = document.querySelector("[data-testid=kb-map-legend-sheet]");
-        var scrim = document.querySelector("[data-testid=kb-map-legend-scrim]");
-        if (!btn || !sheet) {
+        if (document.documentElement.dataset.kbMapLegendBound === "1") {
             return;
         }
-        function close() {
-            sheet.hidden = true;
-            sheet.setAttribute("aria-hidden", "true");
-            if (scrim) {
-                scrim.hidden = true;
+        document.documentElement.dataset.kbMapLegendBound = "1";
+        document.addEventListener("click", function (ev) {
+            var btn = ev.target && ev.target.closest
+                ? ev.target.closest("[data-testid=kb-map-legbtn]")
+                : null;
+            if (!btn || !document.querySelector("[data-banenkaart-ssr=\"1\"]")) {
+                return;
             }
-            document.body.classList.remove("s-legend");
-        }
-        function open() {
-            sheet.innerHTML = "<div class=\"grab\" aria-hidden=\"true\"></div>"
-                + "<button type=\"button\" class=\"x\" data-testid=\"kb-map-legend-close\" aria-label=\"Sluiten\">×</button>"
-                + "<h2 id=\"kb-legend-sheet-title\">Uitleg kaart</h2>" + legendHtml(true, lastLegendFilters)
-                + "<button type=\"button\" class=\"close\" data-testid=\"kb-map-legend-done\">Sluiten</button>";
-            sheet.hidden = false;
-            sheet.setAttribute("aria-hidden", "false");
-            if (scrim) {
-                scrim.hidden = false;
+            if (!isMobile()) {
+                return;
             }
-            document.body.classList.add("s-legend");
-            sheet.querySelector("[data-testid=kb-map-legend-close]")?.addEventListener("click", close);
-            sheet.querySelector("[data-testid=kb-map-legend-done]")?.addEventListener("click", close);
-        }
-        btn.addEventListener("click", function () {
+            ev.preventDefault();
+            var sheet = document.querySelector("[data-testid=kb-map-legend-sheet]");
+            var scrim = document.querySelector("[data-testid=kb-map-legend-scrim]");
+            if (!sheet) {
+                return;
+            }
             if (sheet.hidden) {
-                open();
+                openMobileLegendSheet(sheet, scrim, btn);
             } else {
-                close();
+                closeMobileLegendSheet(sheet, scrim, btn);
             }
         });
+        var scrim = document.querySelector("[data-testid=kb-map-legend-scrim]");
         if (scrim) {
-            scrim.addEventListener("click", close);
+            scrim.addEventListener("click", function () {
+                var sheet = document.querySelector("[data-testid=kb-map-legend-sheet]");
+                var btn = document.querySelector("[data-testid=kb-map-legbtn]");
+                closeMobileLegendSheet(sheet, scrim, btn);
+            });
         }
+    }
+
+    function closeMobileLegendSheet(sheet, scrim, btn) {
+        if (!sheet) {
+            return;
+        }
+        sheet.hidden = true;
+        sheet.setAttribute("aria-hidden", "true");
+        if (scrim) {
+            scrim.hidden = true;
+        }
+        if (btn) {
+            btn.setAttribute("aria-expanded", "false");
+        }
+        document.body.classList.remove("s-legend");
+    }
+
+    function openMobileLegendSheet(sheet, scrim, btn) {
+        sheet.innerHTML = "<div class=\"grab\" aria-hidden=\"true\"></div>"
+            + "<button type=\"button\" class=\"x\" data-testid=\"kb-map-legend-close\" aria-label=\"Sluiten\">×</button>"
+            + "<h2 id=\"kb-legend-sheet-title\">Uitleg kaart</h2>" + legendHtml(true, lastLegendFilters)
+            + "<button type=\"button\" class=\"close\" data-testid=\"kb-map-legend-done\">Sluiten</button>";
+        sheet.hidden = false;
+        sheet.setAttribute("aria-hidden", "false");
+        if (scrim) {
+            scrim.hidden = false;
+        }
+        if (btn) {
+            btn.setAttribute("aria-expanded", "true");
+        }
+        document.body.classList.add("s-legend");
+        sheet.querySelector("[data-testid=kb-map-legend-close]")?.addEventListener("click", function () {
+            closeMobileLegendSheet(sheet, scrim, btn);
+        });
+        sheet.querySelector("[data-testid=kb-map-legend-done]")?.addEventListener("click", function () {
+            closeMobileLegendSheet(sheet, scrim, btn);
+        });
     }
 
     function maybeShowClusterHint() {

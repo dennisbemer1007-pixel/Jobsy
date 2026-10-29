@@ -167,6 +167,8 @@
 }.passport-card__actions--compact {
     flex-direction: column;
     padding-block-start: 0;
+    position: relative;
+    z-index: 2;
 }.passport-card__actions--compact .passport-card__pdf-btn,
 .passport-card__actions--compact .btn-primary {
     inline-size: 100%;

@@ -48,6 +48,11 @@ internal static class BanenkaartSsrShells
             sb.Append(" kb-ssr-travel-empty");
         }
 
+        if (model.ShowStartPrompt)
+        {
+            sb.Append(" kb-start-prompt-open");
+        }
+
         sb.Append("\" data-banenkaart-ssr=\"1\" data-testid=\"banenkaart-ssr-root\">");
         if (!string.IsNullOrWhiteSpace(antiforgeryToken))
         {

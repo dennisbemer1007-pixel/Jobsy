@@ -48,7 +48,7 @@
     "v": "20261025-59"
   },
   "css/features/banenkaart-lagen.css": {
-    "sha256": "735dc0433d91c7dfeee73b8b9a3ee9ed500c6c5bf8ec269a85ae7a0245a4e23b",
+    "sha256": "3d36b4df1aabc21fd332e615d38595e9a599af37343ea5954cce1077fc4859e8",
     "v": "20261026-26"
   },
   "css/features/banenkaart-page.css": {
@@ -184,7 +184,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "d7ff1ac2bc3166f86b64c284cf003228c32b1b17288a64fa23a53cf08e3d0303",
+    "sha256": "4211b72d8b6225361dc1886eec1a2f48fe8a0d54a73fa275042c6c644217e5e3",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
@@ -392,7 +392,7 @@
     "v": "20261025-87"
   },
   "js/banenkaart-map-layers.js": {
-    "sha256": "4f3b8b688daadf55670fc723d783277c0770b903d4035f5237471a2d65cd455f",
+    "sha256": "632596cc1b8c4d7d1e48b242e5ab8e0bea1712a20524df4120747e9bf51dc92c",
     "v": "20261025-87"
   },
   "js/banenkaart-maps-boot.js": {
@@ -408,7 +408,7 @@
     "v": "20261027-54"
   },
   "js/banenkaart-ssr.js": {
-    "sha256": "6b79d92d20b82faf7e12f653fb0e0423e158c64785914e7ba5f39ec676557740",
+    "sha256": "712301f03ec906c8de8e12d1479f753f0cb5e9f67cc430f0625413de8a332a2c",
     "v": "20261026-26"
   },
   "js/bedrijvenkaart-ssr-layout.js": {
@@ -572,7 +572,7 @@
     "v": "20261026-03"
   },
   "js/passport-ssr-extras.js": {
-    "sha256": "629316f185f12649e005c0a78ee7b6496a7d1a87bca5f0317388c59d840fb4d0",
+    "sha256": "e6838ac7c2814cc049b003b17844e83ba83d471479037b36309705b26b407195",
     "v": "20261026-40"
   },
   "js/passport-ssr-fit.js": {
