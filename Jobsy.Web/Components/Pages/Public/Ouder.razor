@@ -9,7 +9,6 @@
 @using Jobsy.Core.Scholen.PupilPassport
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Components.Leerling
-@using Jobsy.Web.Media
 @using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.WebUtilities
@@ -22,31 +21,33 @@
 
 <PageTitle>@Culture["Ouder.Seo.Title"] · Lobsy</PageTitle>
 
-<HeadContent>
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-paspoort-g78.css")" />
-</HeadContent>
-
 @if (_loading)
 {
-    <section class="panel-page panel-section">
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    </section>
+    <div class="ll-login">
+        <section class="ll-card">
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        </section>
+    </div>
 }
 else if (!_schoolsEnabled)
 {
-    <section class="panel-page panel-section">
-        <p class="state-message">@Culture["Ouder.FeatureDisabled"]</p>
-    </section>
+    <div class="ll-login">
+        <section class="ll-card">
+            <p class="state-message">@Culture["Ouder.FeatureDisabled"]</p>
+        </section>
+    </div>
 }
 else if (_session && _passportLoading)
 {
-    <section class="panel-page panel-section">
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    </section>
+    <div class="ll-login">
+        <section class="ll-card">
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        </section>
+    </div>
 }
 else if (_session && _passport is not null && _passport.Enabled)
 {
-    <div class="ll-reis" data-testid="ouder-paspoort-page">
+    <div class="ll-reis" data-testid="leerling-paspoort-page">
         <LeerlingPaspoortG78View Model="_passport" AllowNameEdit="false" />
         <nav class="lp-g78-paspoort-actions ouder-downloads" aria-label="@Culture["Ouder.Downloads.Aria"]">
             <a class="btn-secondary" href="/ouder/uitloggen">@Culture["Ouder.Passport.OtherCode"]</a>
@@ -57,29 +58,43 @@ else if (_session && _passport is not null && _passport.Enabled)
 }
 else if (_session)
 {
-    <section class="panel-page panel-section">
-        <p class="ll-error" role="alert">@Culture["Ouder.Error.Invalid"]</p>
-        <a class="btn-secondary" href="/ouder/uitloggen">@Culture["Ouder.Passport.OtherCode"]</a>
-    </section>
+    <div class="ll-login">
+        <section class="ll-card">
+            <p class="ll-error" role="alert">@Culture["Ouder.Error.Invalid"]</p>
+            <a class="btn-secondary" href="/ouder/uitloggen">@Culture["Ouder.Passport.OtherCode"]</a>
+        </section>
+    </div>
 }
 else
 {
-    <section class="panel-page panel-section ouder-page" data-testid="ouder-login">
-        <h1>@Culture["Ouder.Page.Title"]</h1>
-        <p class="muted">@Culture["Ouder.Page.Lead"]</p>
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="ll-error" role="alert">@_error</p>
-        }
-        <form method="post" action="/ouder/kijk" class="ll-form ouder-form">
-            <AntiforgeryToken />
-            <label class="ll-field">
-                <span>@Culture["Ouder.Form.Code"]</span>
-                <input type="text" name="code" required autocomplete="off" inputmode="text" maxlength="12" />
-            </label>
-            <button type="submit" class="btn-primary">@Culture["Ouder.Form.Submit"]</button>
-        </form>
-    </section>
+    <div class="ll-login">
+        <section class="ll-card" data-testid="ouder-login">
+            <h1>@Culture["Ouder.Page.Title"]</h1>
+            <p class="muted">@Culture["Ouder.Page.Lead"]</p>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="ll-error" role="alert">@_error</p>
+            }
+
+            <form method="post" action="/ouder/kijk" class="ll-form">
+                <AntiforgeryToken />
+                <label class="ll-field">
+                    <span>@Culture["Ouder.Form.Code"]</span>
+                    <input name="code"
+                           type="text"
+                           maxlength="7"
+                           autocomplete="off"
+                           autocapitalize="characters"
+                           spellcheck="false"
+                           inputmode="text"
+                           placeholder="K7Q-M2P"
+                           required />
+                </label>
+                <button type="submit" class="btn-primary ll-login__submit">@Culture["Ouder.Form.Submit"]</button>
+            </form>
+        </section>
+    </div>
 }
 
 @code {

@@ -25,6 +25,7 @@ public class PageAssetCatalogTests
     [InlineData("/sales/dashboard", CoreCss + SalesCss)]
     [InlineData("/leerling", CoreCss + SchoolCss)]
     [InlineData("/leerling/vo-paspoort", CoreCss + SchoolCss)]
+    [InlineData("/ouder", CoreCss + SchoolCss)]
     public void Route_stylesheets_use_area_bundles_not_the_full_catalog(string path, int expectedMinLinks)
     {
         var areas = Jobsy.Web.Hosting.PageAssetCatalog.ResolveAreas(path);
