@@ -84,6 +84,9 @@ public static class ParentPassportAuthEndpoints
 
             ParentApiSessionCookie.Set(http, apiTicket);
             var principal = ParentPassportPrincipal.Create(session);
+            http.RequestServices.GetService<ParentApiTicketStore>()?.Set(
+                session.PupilCodeId.ToString("D"),
+                apiTicket);
             await http.SignInAsync(
                 ParentPassportAuthDefaults.Scheme,
                 principal,
@@ -99,7 +102,9 @@ public static class ParentPassportAuthEndpoints
         app.MapGet("/ouder/uitloggen", async (HttpContext http) =>
         {
             http.Response.Headers.CacheControl = "no-store";
+            var codeId = http.User.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
             await http.SignOutAsync(ParentPassportAuthDefaults.Scheme);
+            http.RequestServices.GetService<ParentApiTicketStore>()?.Remove(codeId);
             ParentApiSessionCookie.Clear(http);
             return Results.Redirect("/ouder");
         }).AllowAnonymous();

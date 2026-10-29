@@ -204,6 +204,8 @@ public static class AuthServiceCollectionExtensions
                             out var expiresUnix))
                     {
                         context.RejectPrincipal();
+                        var codeId = principal.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+                        context.HttpContext.RequestServices.GetService<ParentApiTicketStore>()?.Remove(codeId);
                         ParentApiSessionCookie.Clear(context.HttpContext);
                         return Task.CompletedTask;
                     }
@@ -211,6 +213,8 @@ public static class AuthServiceCollectionExtensions
                     if (DateTimeOffset.UtcNow >= DateTimeOffset.FromUnixTimeSeconds(expiresUnix))
                     {
                         context.RejectPrincipal();
+                        var codeId = principal.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+                        context.HttpContext.RequestServices.GetService<ParentApiTicketStore>()?.Remove(codeId);
                         ParentApiSessionCookie.Clear(context.HttpContext);
                     }
 
@@ -403,6 +407,7 @@ public static class AuthServiceCollectionExtensions
         });
 
         services.AddSingleton<PupilApiTicketStore>();
+        services.AddSingleton<ParentApiTicketStore>();
         services.AddAuthorization(ConfigureAuthorization);
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();

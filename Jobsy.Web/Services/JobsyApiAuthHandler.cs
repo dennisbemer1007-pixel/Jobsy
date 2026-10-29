@@ -52,7 +52,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyAccessToken(request, user, httpContext);
         ApplyTrustedClientIp(request, httpContext);
         user = await ApplyPupilCookieAsync(request, httpContext, user, cancellationToken);
-        ApplyParentCookie(request, httpContext);
+        ApplyParentCookie(request, httpContext, user);
 
         try
         {
@@ -89,7 +89,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         var response = await base.SendAsync(request, cancellationToken);
         CaptureRenewedApiTicket(response, httpContext, user);
-        CaptureRenewedParentApiTicket(response, httpContext);
+        CaptureRenewedParentApiTicket(response, httpContext, user);
         if (response.StatusCode != HttpStatusCode.Unauthorized
             || request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("jobsy-retried"), out var retried)
             && retried)
@@ -120,11 +120,11 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyAccessToken(retry, user, httpContext);
         ApplyTrustedClientIp(retry, httpContext);
         user = await ApplyPupilCookieAsync(retry, httpContext, user, cancellationToken);
-        ApplyParentCookie(retry, httpContext);
+        ApplyParentCookie(retry, httpContext, user);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         var retriedResponse = await base.SendAsync(retry, cancellationToken);
         CaptureRenewedApiTicket(retriedResponse, httpContext, user);
-        CaptureRenewedParentApiTicket(retriedResponse, httpContext);
+        CaptureRenewedParentApiTicket(retriedResponse, httpContext, user);
         return retriedResponse;
     }
 
@@ -249,7 +249,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
            || absolutePath.Contains("/ouder/pdf", StringComparison.OrdinalIgnoreCase)
            || absolutePath.Contains("/ouder/antwoorden/pdf", StringComparison.OrdinalIgnoreCase);
 
-    private static void ApplyParentCookie(HttpRequestMessage request, HttpContext? httpContext)
+    private void ApplyParentCookie(HttpRequestMessage request, HttpContext? httpContext, ClaimsPrincipal user)
     {
         var path = request.RequestUri?.AbsolutePath ?? "";
         if (!ForwardsParentPassportCookie(path))
@@ -258,6 +258,12 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         var cookie = httpContext is null ? null : ParentApiSessionCookie.Read(httpContext);
+        if (string.IsNullOrWhiteSpace(cookie) && IsParentPassportPrincipal(user))
+        {
+            var codeId = user.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+            cookie = _services.GetService<ParentApiTicketStore>()?.Get(codeId);
+        }
+
         if (string.IsNullOrWhiteSpace(cookie))
         {
             return;
@@ -281,7 +287,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
     }
 
-    private static void CaptureRenewedParentApiTicket(HttpResponseMessage response, HttpContext? httpContext)
+    private void CaptureRenewedParentApiTicket(HttpResponseMessage response, HttpContext? httpContext, ClaimsPrincipal user)
     {
         if (!response.Headers.TryGetValues("Set-Cookie", out var values))
         {
@@ -295,6 +301,8 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
                 continue;
             }
 
+            var codeId = user.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+            _services.GetService<ParentApiTicketStore>()?.Set(codeId, value);
             if (httpContext is not null && !httpContext.Response.HasStarted)
             {
                 ParentApiSessionCookie.Set(httpContext, value);
@@ -635,6 +643,11 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         {
             var state = await _authStateProvider.GetAuthenticationStateAsync();
             if (IsPupilPrincipal(state.User))
+            {
+                return state.User;
+            }
+
+            if (IsParentPassportPrincipal(state.User))
             {
                 return state.User;
             }
