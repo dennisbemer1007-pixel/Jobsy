@@ -238,7 +238,8 @@ public static class PageAssetCatalog
             return Area.Sales;
         }
 
-        if (path.StartsWith("/scholen", StringComparison.Ordinal)
+        if (path.StartsWith("/ouder", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/scholen", StringComparison.Ordinal)
             || path.StartsWith("/leerling", StringComparison.Ordinal)
             || path.StartsWith("/leraar", StringComparison.Ordinal)
             || path.StartsWith("/school", StringComparison.Ordinal))
