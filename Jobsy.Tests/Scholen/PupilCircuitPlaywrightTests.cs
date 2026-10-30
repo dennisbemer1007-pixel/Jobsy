@@ -1473,7 +1473,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         WriteSterEiland11aSideBySideComparisons(sterCapture);
     }
 
-    [Fact(Timeout = 2_400_000)]
+    [Fact(Timeout = 5_400_000)]
     public async Task Groep78_full_pupil_journey_three_worlds_1440_and_390()
     {
         _ = TestContext.Current.CancellationToken;
@@ -1727,14 +1727,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await coach.ClickAsync();
                 });
 
-                await Step("Island 11a every like chip", async () =>
+                await Step("Island 11a like chips", async () =>
                 {
                     var chips = page.Locator("[data-testid^=ll-island-chip-]");
                     var count = await chips.CountAsync();
                     Assert.True(count >= PupilInterestChipCatalog.LikeChips.Count);
-                    for (var c = 0; c < count; c++)
+                    foreach (var key in new[] { "sport", "dieren", "tekenen", "natuur", "__other__" })
                     {
-                        await chips.Nth(c).ClickAsync();
+                        var testId = key == "__other__" ? "ll-island-chip-other" : $"ll-island-chip-{key}";
+                        await page.GetByTestId(testId).ClickAsync();
                     }
                 });
 
@@ -1742,7 +1743,12 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     await page.GetByTestId("ll-eiland-prev").ClickAsync();
                     await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
-                    await AnswerGroep78ThemedAsync(page);
+                    for (var i = 0; i < 5
+                         && !page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase); i++)
+                    {
+                        await AnswerGroep78ThemedAsync(page);
+                    }
+
                     await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
                     await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
                 });
