@@ -382,16 +382,18 @@ def job_pick(name,k,none_selected=False):
         sel=(not none_selected) and default_sel
         art=job_icon(key)
         day_hint=' · <span style="color:var(--teal);font-weight:600">Tik voor een dag in dit beroep</span>' if key=='dierenverzorger' else ''
+        mark='<span class="jmark">✓ Jouw keuze</span>' if sel else ''
         cards+=f'''<button type="button" class="jpick{" sel" if sel else ""}" aria-pressed="{"true" if sel else "false"}">
-<div class="jpick-inner"><div class="jpick-art">{art}</div><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Leuk voor jou omdat {why}{day_hint}</p></div>
-<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></div>
-<span class="jmark">✓ Jouw keuze</span></button>'''
+<div class="jpick-art">{art}</div><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Leuk voor jou omdat {why}{day_hint}</p></div>
+<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span>
+{mark}</button>'''
     none_art=job_none_icon()
+    none_mark='<span class="jmark">✓ Jouw keuze</span>' if none_selected else ''
     cards+=f'''<button type="button" class="jpick jpick-none{" sel" if none_selected else ""}" aria-pressed="{"true" if none_selected else "false"}">
-<div class="jpick-inner"><div class="jpick-art jpick-art-none">{none_art}</div><div class="jbody"><p class="jtitle">{JOB_NONE_LABEL}</p>
+<div class="jpick-art jpick-art-none">{none_art}</div><div class="jbody"><p class="jtitle">{JOB_NONE_LABEL}</p>
 <p class="jblurb">Geen van deze vijf? Dat mag. Je gaat gewoon verder.</p></div>
-<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></div>
-<span class="jmark">✓ Jouw keuze</span></button>'''
+<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span>
+{none_mark}</button>'''
     next_note=f'<p class="note jpick-next{" on" if none_selected else ""}" role="status">{JOB_NONE_NEXT if none_selected else JOB_JOB_NEXT}</p>'
     coach=JOB_COACH
     body=f'''{top(w['small'])}{bandcss('jb',img,360,240,pos,pos)}
