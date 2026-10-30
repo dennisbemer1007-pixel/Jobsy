@@ -1,0 +1,37 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jouw route</title><link rel="stylesheet" href="vo.css"><style>.mrail{display:flex;justify-content:space-between;gap:4px;margin:0 0 14px;position:relative;max-width:560px}
+.mrail::before{content:"";position:absolute;left:24px;right:24px;top:22px;border-top:2px dotted #b9c6c6}
+.ms{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;position:relative;font-size:11.5px;text-align:center;line-height:1.2;color:var(--soft)}
+.ms img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line)}
+.ms.done img{box-shadow:0 0 0 2px var(--sea)}.ms.now img{box-shadow:0 0 0 3px var(--coral)}.ms.now{color:var(--ink);font-weight:700}.ms.next{opacity:.6}
+@media(min-width:601px){.qgrid .mrail,.routebar .mrail{display:none}.pz .mrail{margin:16px 0 4px}}.rt .intro{position:absolute;left:max(28px,calc(50% - 572px));top:40px;max-width:560px}.rt .intro h1{font-size:44px;margin:4px 0 6px}.rt .intro p{margin:0;color:var(--ink)}
+.rt>img{height:520px;object-position:50% 45%}
+.g{display:grid;grid-template-columns:1.25fr 1fr;gap:24px;margin-top:-24px;position:relative}
+.inp{border:1.5px solid var(--sea);border-radius:12px;padding:12px 14px;background:#fff;font-weight:600}
+.steps{list-style:none;padding:0;margin:0;position:relative}
+.steps li{display:flex;gap:14px;padding:10px 0;position:relative}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:17px;top:48px;bottom:-6px;border-left:2px dotted #b9c6c6}
+.steps i{flex:none;width:36px;height:36px;border-radius:50%;background:var(--sea);color:#fff;font:700 14px "DM Sans";display:flex;align-items:center;justify-content:center;font-style:normal}
+.steps .goal i{background:var(--coral)}.steps b{display:block}.steps span{font-size:14.5px;color:var(--soft)}
+.tip{background:#f6ecd9;border-radius:12px;padding:12px 14px;margin:12px 0 0;font-size:14.5px}
+.col{display:flex;flex-direction:column;gap:16px}.col .card{padding:20px}.col h3{font-size:18px;margin-bottom:10px}
+.pf{background:var(--sea2);border-radius:12px;padding:12px 14px}.pf b{display:block;font-family:Fraunces,serif;font-size:19px}.pf span{font-size:14px}.s{font-size:14px;margin:10px 0 0}
+.ol{list-style:none;padding:0;margin:0}.ol li{padding:8px 0;border-bottom:1px solid var(--line)}.ol li:last-child{border:0}.ol b{display:block;font-size:15px}.ol span{font-size:13.5px;color:var(--soft)}
+.acts{margin-top:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px}
+@media(max-width:600px){.rt .intro{position:static;padding:20px 14px 0}.rt .intro h1{font-size:28px}.rt>img{height:260px;object-position:22% 60%}.rt{display:flex;flex-direction:column-reverse}.g{grid-template-columns:1fr;margin-top:-20px;gap:16px}.acts{flex-direction:column;align-items:stretch}}</style></head><body><div class="top"><a class="brand" href="#"><img src="img/merk.png" alt="">Lobsy<small>middelbare school</small></a><div class="r"><span class="chip">H4 · P6S-TBU</span><button class="btn ghost sm">Pauze</button></div></div>
+<div class="big rt"><img src="img/big-route-p1.jpg" alt="Haven met zeilboten die elk een andere kant op varen, Lobsy op de meerpaal">
+<div class="intro"><div class="eyebrow">Na de reis</div><h1>Welke route past bij jou?</h1><p>Kijk welk profiel en welke vervolgopleiding passen bij wat je wilt worden. Je kiest zelf, samen met je mentor.</p></div></div>
+<div class="wrap"><div class="g">
+<div class="card"><div class="eyebrow">Droombaan-checker</div><h2 style="margin:4px 0 12px">Wat wil jij later worden?</h2>
+<div class="inp">Dierenarts</div><div style="display:flex;gap:10px;margin:12px 0 20px;flex-wrap:wrap"><button class="btn ghost sm">Andere baan</button><button class="btn ghost sm">Weet ik nog niet</button><button class="lees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Lees voor</button></div>
+<ol class="steps"><li><i>1</i><div><b>Nu: havo 4</b><span>Kies biologie en scheikunde in je profiel Natuur & Gezondheid.</span></div></li>
+<li><i>2</i><div><b>Vwo of hbo-propedeuse</b><span>Een havo-diploma geeft geen directe toegang. Stroom door naar vwo of haal eerst je hbo-propedeuse.</span></div></li>
+<li><i>3</i><div><b>Diergeneeskunde studeren</b><span>Universiteit, 6 jaar.</span></div></li>
+<li class="goal"><i>★</i><div><b>Dierenarts</b><span>In een dierenkliniek, op het platteland of in de zorg voor landbouwdieren.</span></div></li></ol>
+<p class="tip">Het is een lange route, maar je hebt al een goede start. Vraag je mentor wat je nu al kunt doen.</p></div>
+<div class="col">
+<div class="card"><h3>Profiel dat past</h3><div class="pf"><b>Natuur & Gezondheid</b><span>Biologie, scheikunde, wiskunde A of B</span></div><p class="muted s">Past bij: onderzoeken en helpen, dieren en natuur.</p></div>
+<div class="card"><h3>Vervolgopleidingen om te bekijken</h3><ul class="ol"><li><b>Biologie en medisch laboratoriumonderzoek</b><span>hbo · 4 jaar</span></li><li><b>Dier- en veehouderij</b><span>hbo · 4 jaar</span></li><li><b>Diergeneeskunde</b><span>wo · 6 jaar · via vwo of hbo-propedeuse</span></li></ul></div>
+<div class="card"><h3>Wat kun je nu al doen?</h3><ul class="ol"><li><b>Snuffelstage dierenkliniek</b><span>Kort meekijken, vaak vanaf 15 jaar</span></li><li><b>Open dag bezoeken</b><span>Kies er twee uit de lijst hierboven</span></li></ul></div>
+</div></div>
+<div class="card acts"><span class="muted">Dit komt ook in je DNA-paspoort.</span><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost">Bewaar als PDF</button><button class="btn">Bespreek met je mentor</button></div></div>
+<div style="margin-top:20px"><div class="gids"><img src="img/gids.png" alt="Lobsy"><div class="bubble">Een kreeft groeit ook stap voor stap. Jij kiest je eigen koers.<div class="row"><button class="lees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Lees voor</button></div></div></div></div></div><div class="foot"><a href="#">Privacyverklaring</a><a href="#">Toegankelijkheid</a></div></body></html>

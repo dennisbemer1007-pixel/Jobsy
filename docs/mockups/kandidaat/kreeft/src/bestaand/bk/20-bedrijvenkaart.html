@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup Bedrijvenkaart r21</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/maplibre/maplibre-gl.css"><link rel="stylesheet" href="common.css">
+<style>
+.intro{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding:14px 0 14px}
+.intro h1{font-size:2.1rem;margin-bottom:6px}
+.intro p{margin:0;color:var(--muted);max-width:40rem;line-height:1.5}
+.intro .week{margin-top:8px;font-size:.86rem;color:var(--muted);font-weight:600}
+.seg{display:inline-flex;background:var(--sand);border-radius:999px;padding:4px;flex:none}
+.seg button{border:0;background:transparent;padding:9px 18px;border-radius:999px;font-weight:800;font-size:.9rem;color:var(--muted);font-family:inherit}
+.seg button.on{background:var(--brand);color:#fff}
+.note{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 16px;font-size:.88rem;color:#4b5263;line-height:1.45}
+.note .ic{width:22px;height:22px;flex:none;border-radius:50%;background:var(--terra-soft);color:var(--terra);display:grid;place-items:center;font-weight:800;font-size:.8rem}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 10px}
+.filters .sep{display:none}
+.count{font-size:.9rem;color:var(--muted);font-weight:600;margin:0 0 12px}
+.board{display:grid;grid-template-columns:430px 1fr;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--card);height:640px;box-shadow:0 8px 24px rgba(120,90,50,.07)}
+.list{overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg2)}
+.co{display:flex;gap:12px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-align:left;font-family:inherit;color:inherit;cursor:pointer}
+.co.sel{border-color:#d9b9a3;box-shadow:0 0 0 3px #f6e3d7}
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--brand);font-size:.9rem}
+.av.t{background:#b5522f}.av.s{background:#4f7a56}.av.o{background:#a0772f}
+.co h3{margin:0;font-size:1.04rem;font-weight:800}
+.co .meta{margin:2px 0 8px;font-size:.84rem;color:var(--muted)}
+.co .tags{display:flex;gap:6px;flex-wrap:wrap}
+#map{position:relative;height:100%}
+.pin{width:40px;height:44px;display:block;cursor:pointer}.pin b{position:absolute;left:2px;top:0;width:36px;height:36px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);display:grid;place-items:center;background:var(--brand);border:3px solid #fffaf2;box-shadow:0 3px 8px rgba(60,40,20,.25);cursor:pointer}
+.pin b{position:absolute;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);display:grid;place-items:center;background:var(--brand);border:3px solid #fffaf2;box-shadow:0 3px 8px rgba(60,40,20,.25)}.pin b span{transform:rotate(45deg);color:#fff;font-weight:800;font-size:.72rem}
+.pin.open b{background:var(--terra)}
+.pin.sel b{box-shadow:0 0 0 6px rgba(181,82,47,.18),0 3px 8px rgba(60,40,20,.25)}
+.legend{position:absolute;left:14px;top:14px;z-index:5;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 12px;font-size:.8rem;font-weight:700;display:flex;gap:14px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.ctrls{position:absolute;right:14px;bottom:44px;z-index:5;display:flex;flex-direction:column;gap:8px}
+.ctrls button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:1.05rem;color:var(--text);font-family:inherit;box-shadow:0 2px 6px rgba(60,40,20,.08)}
+.ctrls .grp{display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.ctrls .grp button{border:0;border-radius:0;box-shadow:none}.ctrls .grp button+button{border-top:1px solid var(--line)}
+.maplibregl-ctrl-attrib{background:rgba(255,250,242,.85)!important;font-size:10px}
+.pop{position:absolute;z-index:6;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;width:250px;box-shadow:0 10px 24px rgba(60,40,20,.14)}
+.pop h4{margin:0 0 2px;font-size:.98rem}.pop p{margin:0 0 8px;font-size:.82rem;color:var(--muted)}
+.pop .row{display:flex;gap:8px;margin-top:10px}.pop .btn{padding:8px 14px;font-size:.82rem}
+@media (max-width:600px){
+ .intro{flex-direction:column;align-items:flex-start;gap:10px;padding:10px 0 12px}
+ .seg{order:-1}
+ .intro h1{font-size:1.6rem}
+ .intro p{font-size:.93rem}
+ .filters{flex-wrap:nowrap;overflow-x:auto;margin:12px -16px 10px;padding:0 16px 4px;scrollbar-width:none}
+ .board{display:flex;flex-direction:column-reverse;height:auto;border-radius:20px}
+ #map{height:440px}
+ .list{overflow:visible}
+ .legend{font-size:.74rem;gap:10px;padding:7px 10px;left:10px;top:10px}
+ .ctrls{right:10px;bottom:30px}
+ .pop{left:10px!important;right:62px;top:auto!important;bottom:30px;width:auto}
+ .legend{display:none}
+}
+</style><link rel="stylesheet" href="../../kreeft-inject.css"></head><body>
+<script src="parts.js"></script><script>document.write(header()+hero())</script>
+<main class="page">
+<section class="intro"><div><p class="eyebrow">Bedrijvenkaart</p><h1>Bedrijven bij jou in de buurt</h1>
+<p>Alle bedrijven op Lobsy rond Den Haag. Staat een bedrijf open voor jou, dan kun je ook zonder vacature aankloppen.</p>
+<p class="week"><span class="dots"><i></i><i></i><i></i></span>3 van 3 deze week over</p></div>
+<div class="seg" role="tablist"><button>Banenkaart</button><button class="on">Bedrijvenkaart</button></div></section>
+<div class="note"><span class="ic">i</span><span>Alle bedrijven op Lobsy. Bedrijven met het label Staat open voor jou nemen ook een bericht zonder vacature aan en reageren altijd binnen 5 werkdagen.</span></div>
+<div class="filters"><button class="chip">Alle sectoren<span class="car">▾</span></button><button class="chip">Alle vakgebieden<span class="car">▾</span></button><span class="sep"></span>
+<button class="chip">10 km</button><button class="chip on">25 km</button><button class="chip">40 km</button><span class="sep"></span>
+<button class="chip">Bedrijf open voor initiatief</button><button class="chip">Uitzendbureaus en detacheerders</button><button class="chip">Reageert snel (≤ 3 dagen)</button></div>
+<p class="count">5 bedrijven binnen 25 km · 3 staan open voor jou</p>
+<section class="board"><div class="list" id="list"></div><div id="map"><div class="legend"><span><i style="background:var(--terra)"></i>Staat open voor jou</span><span><i style="background:var(--brand)"></i>Bedrijf</span></div>
+<div class="ctrls"><button>3D</button><div class="grp"><button>+</button><button>−</button></div><button aria-label="Mijn locatie"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button></div></div></section>
+</main>
+<script>document.write(footer())</script>
+<script src="../../vendor/maplibre/maplibre-gl.js"></script>
+<script>
+const M=innerWidth<=600;
+const C=[
+{n:'Bakkerij De Korenaar',i:'BK',c:'t',p:'Den Haag (Statenkwartier)',o:1,v:'2 vacatures',ll:[4.2905,52.0905],sel:1},
+{n:'Kwekerij Het Groene Hart',i:'KG',c:'s',p:'Naaldwijk',o:1,v:'1 vacature',ll:[4.205,51.995]},
+{n:'Fietsenmaker De Spaak',i:'FS',c:'o',p:'Den Haag Centrum',o:1,v:'Geen vacatures',ll:[4.322,52.07]},
+{n:'Zorgcentrum De Duinroos',i:'ZD',c:'',p:'Loosduinen',o:0,v:'3 vacatures',ll:[4.232,52.052]},
+{n:'Flex Intermediair Haaglanden',i:'FI',c:'',p:'Rijswijk · uitzendbureau',o:0,v:'Geen vacatures',ll:[4.326,52.036]}];
+document.getElementById('list').innerHTML=C.map(x=>`<button class="co${x.sel?' sel':''}"><span class="av ${x.c}">${x.i}</span><span><h3>${x.n}</h3><p class="meta">Bedrijf · ${x.p}</p><span class="tags">${x.o?'<span class="tag tag--open">Staat open voor jou</span>':''}<span class="tag tag--plain">${x.v}</span><span class="tag tag--fit">Past goed</span></span></span></button>`).join('');
+const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/positron',bounds:[[4.19,51.985],[4.34,52.10]],fitBoundsOptions:{padding:M?{top:50,bottom:165,left:40,right:70}:{top:60,bottom:40,left:330,right:70}},attributionControl:{compact:false},preserveDrawingBuffer:true});
+map.on('style.load',()=>{for(const l of map.getStyle().layers){const id=l.id;try{
+ if(l.type==='background')map.setPaintProperty(id,'background-color','#f5eee2');
+ else if(l.type==='fill'){let c='#efe6d6';if(/water/.test(id))c='#d3e3df';else if(/park|wood|grass|landcover|green/.test(id))c='#e2e8d2';else if(/building/.test(id))c='#ece1cf';else if(/residential|landuse/.test(id))c='#f1e8da';map.setPaintProperty(id,'fill-color',c);}
+ else if(l.type==='line'){if(/water|river|stream/.test(id))map.setPaintProperty(id,'line-color','#c4d9d4');else if(/boundary/.test(id))map.setPaintProperty(id,'line-color','#d8c7b0');else map.setPaintProperty(id,'line-color',/major|primary|trunk|motorway/.test(id)?'#f1e0c6':'#fffaf2');}
+ else if(l.type==='symbol'){map.setPaintProperty(id,'text-color','#7a6a58');if(l.layout&&l.layout['text-field'])map.setLayoutProperty(id,'text-field',['coalesce',['get','name:nl'],['get','name']]);map.setPaintProperty(id,'text-halo-color','#faf4ea');}
+}catch(e){}}});
+C.forEach(x=>{const e=document.createElement('div');e.className='pin'+(x.o?' open':'')+(x.sel?' sel':'');e.innerHTML='<b><span>'+x.i+'</span></b>';new maplibregl.Marker({element:e,anchor:'bottom'}).setLngLat(x.ll).addTo(map);});
+map.on('load',()=>{const s=C[0];const pt=map.project(s.ll);const p=document.createElement('div');p.className='pop';const W=document.getElementById('map').clientWidth;const pw=M?220:250;p.style.left='14px';p.style.top='64px';
+p.innerHTML='<h4>Bakkerij De Korenaar</h4><p>Den Haag (Statenkwartier) · 2 vacatures</p><span class="tag tag--open">Staat open voor jou</span><div class="row"><button class="btn btn--primary">Bekijk bedrijf</button><button class="btn">Route</button></div>';
+document.getElementById('map').appendChild(p);map.once('idle',()=>document.body.dataset.ready=1);});
+</script><a class="kask" href="#hulp"><img src="../../lobsy-merkteken.svg" alt="">Lobsy-hulp</a></body></html>
