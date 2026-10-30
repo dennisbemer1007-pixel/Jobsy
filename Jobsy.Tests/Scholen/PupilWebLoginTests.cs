@@ -55,7 +55,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             response.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.Found,
             $"expected redirect, got {(int)response.StatusCode} {text}");
         var location = response.Headers.Location?.ToString() ?? "";
-        Assert.Contains("/leerling/start", location, StringComparison.Ordinal);
+        Assert.Contains("/leerling/wereld", location, StringComparison.Ordinal);
         Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
         Assert.Contains(cookies!, c => c.StartsWith(PupilAuthDefaults.CookieName + "=", StringComparison.Ordinal));
         Assert.Contains(cookies!, c => c.StartsWith(PupilApiSessionCookie.Name + "=", StringComparison.Ordinal));
@@ -77,15 +77,15 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         var login = await PostLoginAsync(client, seed);
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
-        Assert.Contains("/leerling/start", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        Assert.Contains("/leerling/wereld", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
         var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name);
         Assert.False(string.IsNullOrWhiteSpace(apiTicket));
 
-        var start = await client.GetAsync("/leerling/start");
-        var html = await start.Content.ReadAsStringAsync();
-        Assert.True(start.StatusCode == HttpStatusCode.OK, $"start returned {(int)start.StatusCode} {html[..Math.Min(html.Length, 400)]}");
-        Assert.DoesNotContain("/login", start.Headers.Location?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(PupilSessionDuration.Groep78, html, StringComparison.Ordinal);
+        var wereld = await client.GetAsync("/leerling/wereld");
+        var html = await wereld.Content.ReadAsStringAsync();
+        Assert.True(wereld.StatusCode == HttpStatusCode.OK, $"wereld returned {(int)wereld.StatusCode} {html[..Math.Min(html.Length, 400)]}");
+        Assert.DoesNotContain("/login", wereld.Headers.Location?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Kies jouw wereld", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Inloggen bij Lobsy", html, StringComparison.Ordinal);
 
         using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
@@ -107,6 +107,15 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         var login = await PostLoginAsync(client, seed);
         var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
+        {
+            Content = JsonContent.Create(
+                new PupilJourneyThemeRequest(PupilJourneyTheme.ZeeExpeditie),
+                options: JobsyApiClient.ApiJson)
+        };
+        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        var theme = await api.SendAsync(themeReq);
+        Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
         var first = await GetProgressAsync(api, apiTicket);
         Assert.Equal(HttpStatusCode.OK, first.Status);
         var itemId = first.Body!.CurrentItemId;

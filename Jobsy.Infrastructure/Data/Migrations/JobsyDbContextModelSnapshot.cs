@@ -7659,6 +7659,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("JourneyThemeKey")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<string>("LikeOtherWord")
                         .HasMaxLength(24)
                         .HasColumnType("character varying(24)");

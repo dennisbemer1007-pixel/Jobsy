@@ -18,6 +18,22 @@ public sealed partial class JobsyApiClient
     public async Task<PupilProgressStateDto?> GetPupilProgressAsync(CancellationToken ct = default)
         => await GetApiJsonAsync<PupilProgressStateDto>("api/pupil/progress", ct);
 
+    public async Task<PupilJourneyThemeResponse?> SavePupilJourneyThemeAsync(
+        string themeKey,
+        CancellationToken ct = default)
+    {
+        using var response = await PutApiJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(themeKey),
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilJourneyThemeResponse>(response.Content, ct);
+    }
+
     public async Task<PupilAnswerResponse?> SavePupilAnswerAsync(
         string itemId,
         int value,

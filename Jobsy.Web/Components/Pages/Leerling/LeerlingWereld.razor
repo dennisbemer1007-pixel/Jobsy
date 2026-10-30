@@ -1,0 +1,211 @@
+@page "/leerling/wereld"
+@layout LeerlingGroep78ShellLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+
+<PageTitle>@Culture["Leerling.Wereld.Title"] · Lobsy</PageTitle>
+
+<HeadContent>
+    <link rel="preload" as="image" href="/leerling/werelden/img/keuze-strip-780w.jpg" media="(max-width: 600px)" />
+    <link rel="preload" as="image" href="/leerling/werelden/img/keuze-strip.jpg" media="(min-width: 601px)" />
+    <link rel="preload" as="image" href="/leerling/werelden/img/haven-780w.jpg" />
+</HeadContent>
+
+@if (_loading)
+{
+    <p class="wrap" style="padding: 2rem 0">@Culture["Common.Loading"]</p>
+}
+else if (_sessionLost)
+{
+    <p class="wrap" style="padding: 2rem 0;color:#b00">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_wrongSet)
+{
+    <p class="wrap" style="padding: 2rem 0">@Culture["Leerling.Wereld.VoOnly"]</p>
+}
+else
+{
+    <section class="band kz" aria-hidden="true"></section>
+    <div class="wrap kz-overlap">
+        <div class="card kz-card">
+            <div class="kz-head">
+                <div>
+                    <p class="kicker">@Culture["Leerling.Wereld.Kicker"]</p>
+                    <h1 class="kz-h serif">@Culture["Leerling.Wereld.Heading"]</h1>
+                    <p class="kz-lead">@Culture["Leerling.Wereld.Lead"]</p>
+                </div>
+                <div class="d-only guide" style="max-width:440px">
+                    <div class="ring" role="img" aria-label="Lobsy"></div>
+                    <div class="bubble tail-l">
+                        <span class="who">Lobsy</span>
+                        @Culture["Leerling.Wereld.Coach"]
+                        <div class="bt">
+                            <LeerlingSpeak Text="@CoachSpoken" SpeechKey="ll-wereld-coach" />
+                            <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="worlds" role="group" aria-label="@Culture["Leerling.Wereld.Heading"]">
+                @foreach (var card in _cards)
+                {
+                    var selected = string.Equals(_savedTheme, card.Key, StringComparison.OrdinalIgnoreCase);
+                    <button type="button"
+                            class="wcard @(selected ? "sel" : null) @(_tapped == card.Key ? "is-tapped" : null) @(_busy ? "is-saving" : null)"
+                            disabled="@_busy"
+                            data-testid="ll-wereld-@card.Key"
+                            @onpointerdown="() => _tapped = card.Key"
+                            @onpointerleave="() => ClearTap(card.Key)"
+                            @onpointerup="() => ClearTap(card.Key)"
+                            @onclick="() => ChooseAsync(card.Key)">
+                        <div class="wimg" style="@WimgStyle(card)"></div>
+                        <div class="wbody">
+                            <h2 class="serif">@Culture[card.TitleKey]</h2>
+                            <p>@Culture[card.DescKey]</p>
+                            <div class="wgo">
+                                <span>@Culture["Leerling.Wereld.ChooseGo"]</span>
+                                <i style="background:@card.Accent">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                </i>
+                            </div>
+                        </div>
+                    </button>
+                }
+            </div>
+
+            <div class="same">
+                <svg style="width:30px;height:30px;color:var(--ok);flex:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.5 3.5L17 9"/></svg>
+                <div>
+                    <b>@Culture["Leerling.Wereld.SameBold"]</b> @Culture["Leerling.Wereld.SameRest"]
+                </div>
+            </div>
+        </div>
+
+        <div class="m-only" style="margin-top:18px">
+            <div class="guide">
+                <div class="ring" role="img" aria-label="Lobsy"></div>
+                <div class="bubble tail-l">
+                    <span class="who">Lobsy</span>
+                    @Culture["Leerling.Wereld.Coach"]
+                    <div class="bt">
+                        <LeerlingSpeak Text="@CoachSpoken" SpeechKey="ll-wereld-coach-m" />
+                        <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private sealed record WorldCard(
+        string Key,
+        string ImageStem,
+        string BgPos,
+        string TitleKey,
+        string DescKey,
+        string Accent);
+
+    private static readonly WorldCard[] Cards =
+    [
+        new(PupilJourneyTheme.ZeeExpeditie, "haven", "center 45%", "Leerling.Wereld.Zee.Title", "Leerling.Wereld.Zee.Desc", "#10284a"),
+        new(PupilJourneyTheme.Eilandtuin, "tuin-baai", "center 60%", "Leerling.Wereld.Tuin.Title", "Leerling.Wereld.Tuin.Desc", "#3a2230"),
+        new(PupilJourneyTheme.Sterrenkust, "sterren-kaart", "center 30%", "Leerling.Wereld.Ster.Title", "Leerling.Wereld.Ster.Desc", "#141c36"),
+    ];
+
+    private readonly IReadOnlyList<WorldCard> _cards = Cards;
+    private bool _loading = true;
+    private bool _sessionLost;
+    private bool _wrongSet;
+    private bool _busy;
+    private string? _savedTheme;
+    private string? _tapped;
+
+    private string CoachSpoken => SpokenText.Join("Lobsy", Culture["Leerling.Wereld.Coach"]);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "wereld");
+        if (outcome.SessionLost)
+        {
+            _sessionLost = true;
+            _loading = false;
+            return;
+        }
+
+        if (outcome.Value is null)
+        {
+            _loading = false;
+            return;
+        }
+
+        var state = outcome.Value;
+
+        if (state.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            _wrongSet = true;
+            _loading = false;
+            Nav.NavigateTo(state.Completed ? "/leerling/dit-ben-jij" : "/leerling/start", replace: true);
+            return;
+        }
+
+        if (state.Completed)
+        {
+            Nav.NavigateTo("/leerling/dit-ben-jij", replace: true);
+            return;
+        }
+
+        _savedTheme = state.JourneyThemeKey;
+        _loading = false;
+    }
+
+    private static string WimgStyle(WorldCard card)
+    {
+        var pos = card.BgPos;
+        return $"background-image:image-set(url('/leerling/werelden/img/{card.ImageStem}-390w.jpg') 1x,url('/leerling/werelden/img/{card.ImageStem}-780w.jpg') 2x,url('/leerling/werelden/img/{card.ImageStem}.jpg') 3x);background-position:{pos}";
+    }
+
+    private void ClearTap(string key)
+    {
+        if (_tapped == key)
+        {
+            _tapped = null;
+        }
+    }
+
+    private async Task ChooseAsync(string key)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _tapped = key;
+        _savedTheme = key;
+        StateHasChanged();
+
+        var saved = await Api.SavePupilJourneyThemeAsync(key);
+        if (saved is null)
+        {
+            _busy = false;
+            _savedTheme = null;
+            StateHasChanged();
+            return;
+        }
+
+        Nav.NavigateTo(saved.RedirectPath, replace: true);
+    }
+}
