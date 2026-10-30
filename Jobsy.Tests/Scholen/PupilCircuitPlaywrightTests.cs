@@ -1473,39 +1473,54 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         WriteSterEiland11aSideBySideComparisons(sterCapture);
     }
 
-    [Fact(Timeout = 5_400_000)]
-    public async Task Groep78_full_pupil_journey_three_worlds_1440_and_390()
+    private static int _groep78E2eReportSeq;
+    private static readonly SemaphoreSlim Groep78E2eReportLock = new(1, 1);
+    private const string Groep78E2eReportPath = "/opt/cursor/artifacts/groep78-e2e-button-results.txt";
+
+    [Theory(Timeout = 2_400_000)]
+    [InlineData(PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 1440, 900, false)]
+    [InlineData(PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 390, 844, true)]
+    [InlineData(PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 1440, 900, false)]
+    [InlineData(PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 390, 844, true)]
+    [InlineData(PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 1440, 900, false)]
+    [InlineData(PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 390, 844, true)]
+    public async Task Groep78_full_pupil_journey_three_worlds_1440_and_390(
+        string theme,
+        string routeBtn,
+        string bandTestId,
+        int width,
+        int height,
+        bool mobile)
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
         await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         Directory.CreateDirectory("/opt/cursor/artifacts");
-        var reportPath = "/opt/cursor/artifacts/groep78-e2e-button-results.txt";
-        if (File.Exists(reportPath))
+        if (Interlocked.Increment(ref _groep78E2eReportSeq) == 1 && File.Exists(Groep78E2eReportPath))
         {
-            File.Delete(reportPath);
+            File.Delete(Groep78E2eReportPath);
         }
 
-        var variants = new[]
-        {
-            (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 1440, 900, false),
-            (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 390, 844, true),
-            (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 1440, 900, false),
-            (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 390, 844, true),
-            (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 1440, 900, false),
-            (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 390, 844, true),
-        };
-
-        var allReport = new List<string>();
-        foreach (var v in variants)
-        {
-            allReport.AddRange(await RunGroep78FullPupilJourneyVariantAsync(
-                baseUrl, v.Item1, v.Item2, v.Item3, v.Item4, v.Item5, v.Item6));
-        }
-        await File.WriteAllLinesAsync(reportPath, allReport);
-        var failures = allReport.Where(l => l.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
+        var report = await RunGroep78FullPupilJourneyVariantAsync(
+            baseUrl, theme, routeBtn, bandTestId, width, height, mobile);
+        await AppendGroep78E2eReportLinesAsync(report);
+        var failures = report.Where(l => l.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
+    private static async Task AppendGroep78E2eReportLinesAsync(IReadOnlyList<string> lines)
+    {
+        await Groep78E2eReportLock.WaitAsync();
+        try
+        {
+            await File.AppendAllLinesAsync(Groep78E2eReportPath, lines);
+            await File.AppendAllLinesAsync(Groep78E2eReportPath, [""]);
+        }
+        finally
+        {
+            Groep78E2eReportLock.Release();
+        }
     }
 
     private async Task<IReadOnlyList<string>> RunGroep78FullPupilJourneyVariantAsync(
