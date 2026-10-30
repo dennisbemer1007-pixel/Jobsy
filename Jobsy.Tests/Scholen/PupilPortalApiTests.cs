@@ -365,6 +365,43 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_login_redirects_to_wereld_until_theme_chosen()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync(
+            level: SchoolLevel.Groep78, year: 8, questionSet: PupilQuestionSet.Groep78);
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+        var login = await client.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
+            seed.SchoolId, seed.ClassId, seed.PlainCode));
+        var body = await login.Content.ReadFromJsonAsync<PupilLoginResponse>(Json);
+        Assert.Equal(PupilGroep78EntryPaths.Wereld, body!.RedirectPath);
+
+        var theme = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(PupilJourneyTheme.Sterrenkust));
+        Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
+        var saved = await theme.Content.ReadFromJsonAsync<PupilJourneyThemeResponse>(Json);
+        Assert.Equal(PupilGroep78EntryPaths.Start, saved!.RedirectPath);
+
+        var zee = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(PupilJourneyTheme.ZeeExpeditie));
+        Assert.Equal(HttpStatusCode.OK, zee.StatusCode);
+        var zeeSaved = await zee.Content.ReadFromJsonAsync<PupilJourneyThemeResponse>(Json);
+        Assert.Equal(PupilGroep78EntryPaths.Route, zeeSaved!.RedirectPath);
+
+        var tuin = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(PupilJourneyTheme.Eilandtuin));
+        Assert.Equal(HttpStatusCode.OK, tuin.StatusCode);
+        var tuinSaved = await tuin.Content.ReadFromJsonAsync<PupilJourneyThemeResponse>(Json);
+        Assert.Equal(PupilGroep78EntryPaths.Route, tuinSaved!.RedirectPath);
+
+        var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
+        Assert.Equal(PupilJourneyTheme.Eilandtuin, progress!.JourneyThemeKey);
+    }
+
+    [Fact]
     public async Task Groep78_class_rejects_9101_as_wrong_set_and_has_60_items()
     {
         await EnableSchoolsAsync(true);
