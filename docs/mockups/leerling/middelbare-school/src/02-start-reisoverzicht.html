@@ -1,0 +1,31 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jouw reis</title><link rel="stylesheet" href="vo.css"><style>.mrail{display:flex;justify-content:space-between;gap:4px;margin:0 0 14px;position:relative;max-width:560px}
+.mrail::before{content:"";position:absolute;left:24px;right:24px;top:22px;border-top:2px dotted #b9c6c6}
+.ms{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;position:relative;font-size:11.5px;text-align:center;line-height:1.2;color:var(--soft)}
+.ms img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line)}
+.ms.done img{box-shadow:0 0 0 2px var(--sea)}.ms.now img{box-shadow:0 0 0 3px var(--coral)}.ms.now{color:var(--ink);font-weight:700}.ms.next{opacity:.6}
+@media(min-width:601px){.qgrid .mrail,.routebar .mrail{display:none}.pz .mrail{margin:16px 0 4px}}.intro{padding-top:26px;padding-bottom:14px}.intro h1{font-size:38px;margin:4px 0 6px}.intro p{margin:0}
+.map>img{height:620px;object-position:50% 60%}
+.pin{position:absolute;display:flex;gap:8px;align-items:flex-start;transform:translate(-14px,-14px)}
+.pin i{flex:none;width:28px;height:28px;border-radius:50%;background:var(--coral);color:#fff;font:700 12px "DM Sans";display:flex;align-items:center;justify-content:center;font-style:normal;box-shadow:0 0 0 4px rgba(255,253,248,.8)}
+.pin.w i{background:var(--sea);width:auto;padding:0 9px;border-radius:14px}
+.pin div{background:rgba(255,253,248,.92);border-radius:10px;padding:5px 10px;box-shadow:0 3px 10px rgba(30,47,59,.12)}
+.pin b{display:block;font-size:14px}.pin span{font-size:12px;color:var(--soft)}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:28px;margin-top:-60px;position:relative}
+.how{padding-left:20px;margin:16px 0 22px}.how li{margin:8px 0}
+.side{padding-top:80px}.mlist{display:none}
+@media(max-width:600px){.intro h1{font-size:27px}.map>img{height:auto;aspect-ratio:16/9}.pin{display:none}
+.grid2{grid-template-columns:1fr;margin-top:16px;gap:18px}.side{padding-top:0;order:-1}
+.mlist{display:block;list-style:none;padding:0;margin:14px 0 0;position:relative}
+.mlist li{display:flex;gap:12px;align-items:center;padding:6px 0;position:relative}
+.mlist li:not(:last-child)::after{content:"";position:absolute;left:25px;top:58px;height:12px;border-left:2px dotted #b9c6c6}
+.mlist img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line)}
+.mlist b{display:block;font-size:15px}.mlist span{font-size:13px;color:var(--soft)}}</style></head><body><div class="top"><a class="brand" href="#"><img src="img/merk.png" alt="">Lobsy<small>middelbare school</small></a><div class="r"><span class="chip">H4 · P6S-TBU</span><button class="btn ghost sm">Pauze</button></div></div><img class="hdr" src="img/hdr-kust-desk.jpg" alt=""><img class="hdr-m" src="img/hdr-kust-mob.jpg" alt="">
+<div class="wrap intro"><div class="eyebrow">Jouw reis</div><h1>Een reis langs de kust, in 4 werelden</h1><p class="muted">Lobsy leert jou kennen, zonder namen. Onderweg zie je steeds waar je bent.</p></div>
+<div class="big map"><img src="img/big-reiskaart.jpg" alt="Kaart van de reis langs koraalrif, schatgrot, pauze-eiland, vuurtoren en lagune"><div class="pin w" style="left:8.33%;top:53.23%"><i>Start</i><div><b>Hier begin je</b><span></span></div></div><div class="pin" style="left:18.75%;top:75.81%"><i>1</i><div><b>Het koraalrif</b><span>Hoe ben jij?</span></div></div><div class="pin" style="left:33.75%;top:45.48%"><i>2</i><div><b>De schatgrot</b><span>Wat doe je graag?</span></div></div><div class="pin w" style="left:58.61%;top:56.45%"><i>Pauze</i><div><b>Pauze-eiland</b><span>Even uitrusten</span></div></div><div class="pin" style="left:72.92%;top:28.23%"><i>3</i><div><b>De vuurtoren</b><span>Wat vind je belangrijk?</span></div></div><div class="pin" style="left:86.81%;top:55.65%"><i>4</i><div><b>De lagune</b><span>Waar voel je je thuis?</span></div></div></div>
+<div class="wrap"><div class="grid2">
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>Zo werkt het</h2><button class="lees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Lees voor</button></div>
+<ul class="how"><li><b>100 vragen</b>, 25 in elke wereld. Er zijn geen foute antwoorden.</li><li>Na wereld 2 kom je op het <b>Pauze-eiland</b>. Daar kies je wat je leuk vindt.</li><li>Het duurt <b>2 lesdelen</b> van 40 tot 45 minuten. Je docent zegt wanneer deel 2 begint.</li><li>Stoppen mag altijd. Je gaat later verder waar je was.</li><li>Twijfel je over een vraag? Open <b>Stel je voor</b> voor een voorbeeld.</li></ul>
+<button class="btn" style="padding:14px 28px">Beginnen</button></div>
+<div class="side"><div class="gids"><img src="img/gids.png" alt="Lobsy"><div class="bubble">Klaar voor de reis? Ik ga met je mee.<div class="row"><button class="lees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Lees voor</button></div></div></div>
+<ol class="mlist"><li><img src="img/th-rif.jpg" alt=""><div><b>Het koraalrif</b><span>Hoe ben jij?</span></div></li><li><img src="img/th-grot.jpg" alt=""><div><b>De schatgrot</b><span>Wat doe je graag?</span></div></li><li><img src="img/th-eiland.jpg" alt=""><div><b>Pauze-eiland</b><span>Waar word jij blij van?</span></div></li><li><img src="img/th-toren.jpg" alt=""><div><b>De vuurtoren</b><span>Wat vind je belangrijk?</span></div></li><li><img src="img/th-lagune.jpg" alt=""><div><b>De lagune</b><span>Waar voel je je thuis?</span></div></li></ol></div>
+</div></div><div class="foot"><a href="#">Privacyverklaring</a><a href="#">Toegankelijkheid</a></div></body></html>

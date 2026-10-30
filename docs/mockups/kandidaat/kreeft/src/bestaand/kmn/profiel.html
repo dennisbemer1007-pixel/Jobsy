@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · Profiel</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css"><style>
+.prof-grid{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.sum{position:sticky;top:16px}
+.sum .who{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.sum .av{width:56px;height:56px;font-size:1.05rem}
+.jump{display:grid;gap:2px;margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--line)}
+.jump a{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-radius:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:.9rem}
+.jump a .pill{font-size:.7rem}
+.pc .between{margin-bottom:10px;flex-wrap:nowrap}
+.pc h2{font-family:Fraunces,Georgia,serif;font-size:1.25rem;margin:0}
+.item{display:grid;grid-template-columns:40px 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.item b{display:block}.item span{font-size:.84rem;color:var(--muted)}
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.day{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:.82rem;background:#fff;color:var(--muted)}
+.day.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.file{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border:1px dashed #cdbfa9;border-radius:12px;padding:10px 12px;background:#fdfbf7;margin-top:6px}
+@media (max-width:900px){.prof-grid{grid-template-columns:1fr}.sum{position:static}.jump{display:none}}
+</style></head>
+<body><div class="page-shell">
+<header class="app-header">
+ <a class="brand" href="/home" aria-label="Lobsy, naar Mijn Lobsy"><img src="img/logo.svg" alt="Lobsy"></a>
+ <nav class="nav" aria-label="Hoofdmenu"><a href="/candidate/ontdekkingsreis">Reis</a><a href="/candidate/paspoort">Paspoort</a><a href="/banenkaart">Zoeken</a><a href="/candidate/applications">Sollicitaties</a><a href="/carriere">Carrière</a></nav>
+ <div class="utils">
+  <a class="util" href="/hoe-werkt-lobsy" aria-label="Uitleg over deze pagina">i</a>
+  <a class="util" href="/notifications" aria-label="Meldingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a>
+  <span class="lang"><img src="img/nl.svg" alt="">NL</span>
+  <button class="account" type="button" aria-haspopup="true"><span class="name">Sam de Wit</span><span class="av">SW</span></button>
+ </div>
+ <div class="menu" role="menu">
+  <div class="who"><strong>Sam de Wit</strong><span>sam@voorbeeld.nl</span></div>
+  <a href="/candidate/profile">Profiel</a><a href="/candidate/settings">Instellingen</a><a href="/hoe-werkt-lobsy">Hoe werkt Lobsy</a><a href="/feedback">Feedback</a><a class="out" href="/logout">Uitloggen</a>
+ </div>
+</header>
+<div class="hero" style="--hi:url(img/hero-profiel.jpg);--hp:center 40%;--mp:26% 50%;--ms:auto 250%" aria-hidden="true"></div>
+<main class="panel-page">
+<div class="head"><p class="eyebrow">Profiel</p><h1>Mijn profiel</h1><p class="lead">Je gegevens, voorkeuren en ervaring. Pas per blok aan wat niet meer klopt, de rest blijft staan.</p></div>
+<div class="prof-grid">
+<aside class="card sum">
+ <div class="who"><span class="av">SW</span><div><b style="font-size:1.05rem">Sam de Wit</b><div class="small muted">Delft · beschikbaar per direct</div></div></div>
+ <div class="pill-row row" style="gap:6px"><span class="pill">Groen en buiten</span><span class="pill">Logistiek</span><span class="pill">Fiets 30 min</span></div>
+ <nav class="jump" aria-label="Blokken">
+  <a href="#persoonlijk">Persoonlijk <span class="pill pill--ok">Compleet</span></a>
+  <a href="#voorkeuren">Voorkeuren en reistijd <span class="pill pill--ok">Compleet</span></a>
+  <a href="#beschikbaarheid">Beschikbaarheid <span class="pill pill--ok">Compleet</span></a>
+  <a href="#ervaring">Cv en ervaring <span class="pill pill--warn">Motivatie ontbreekt</span></a>
+ </nav>
+ <a class="btn btn--sm" style="width:100%;margin-top:12px" href="/candidate/paspoort">Bekijk je paspoort</a>
+</aside>
+<div class="stack">
+ <section class="card pc" id="persoonlijk"><div class="between"><h2>Persoonlijk</h2><a class="btn btn--sm" href="/candidate/profile/persoonlijk">Wijzigen</a></div>
+  <dl class="kv"><dt>Naam</dt><dd>Sam de Wit</dd><dt>Geboortedatum</dt><dd>14 maart 1988</dd><dt>Telefoon</dt><dd>06 12 34 56 78</dd><dt>E-mail</dt><dd>sam@voorbeeld.nl</dd><dt>Thuisadres</dt><dd>Voorbeeldstraat 12, 2611 AA Delft</dd><dt>Talen</dt><dd>Nederlands, Engels</dd></dl>
+  <p class="small muted" style="margin:10px 0 0">Je geboortedatum gebruiken we alleen voor het juiste loon bij je leeftijd. Werkgevers zien je adres niet.</p>
+ </section>
+ <section class="card pc" id="voorkeuren"><div class="between"><h2>Voorkeuren en reistijd</h2><a class="btn btn--sm" href="/candidate/profile/voorkeuren">Wijzigen</a></div>
+  <dl class="kv"><dt>Soort werk</dt><dd>Groenvoorziening, logistiek, klantcontact</dd><dt>Regio</dt><dd>Delft en omgeving</dd><dt>Reistijd</dt><dd>Fiets tot 30 minuten, ov tot 45 minuten</dd><dt>Vervoer</dt><dd>Fiets, ov. Geen auto.</dd><dt>Liever niet</dt><dd>Nachtdiensten</dd></dl>
+ </section>
+ <section class="card pc" id="beschikbaarheid"><div class="between"><h2>Beschikbaarheid</h2><a class="btn btn--sm" href="/candidate/profile/beschikbaarheid">Wijzigen</a></div>
+  <dl class="kv"><dt>Vanaf</dt><dd>Per direct</dd><dt>Uren per week</dt><dd>24 tot 32 uur</dd><dt>Dagen</dt><dd><div class="days"><span class="day on">ma</span><span class="day on">di</span><span class="day on">wo</span><span class="day on">do</span><span class="day">vr</span><span class="day">za</span><span class="day">zo</span></div></dd><dt>Tijden</dt><dd>Overdag, liefst tussen 7:00 en 16:00</dd></dl>
+ </section>
+ <section class="card pc" id="ervaring"><div class="between"><h2>Cv en ervaring</h2><a class="btn btn--sm" href="/candidate/profile/ervaring">Wijzigen</a></div>
+  <div class="note" style="margin-bottom:12px"><span><b>Motivatie ontbreekt nog.</b> Een paar zinnen over wat je zoekt helpt werkgevers je te leren kennen. <a href="/candidate/profile/ervaring#motivatie">Motivatie schrijven</a></span></div>
+  <div class="item"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg></span><div><b>Cv</b><div class="file"><span>cv-sam-de-wit.pdf</span><span class="small muted">toegevoegd op 1 oktober</span></div></div></div>
+  <div class="item"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/></svg></span><div><b>Werkervaring</b><span>Medewerker groen, Gemeente Delft · 2019 tot 2025</span><br><span>Orderpicker, Distributiecentrum Schie · 2015 tot 2019</span></div></div>
+  <div class="item"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg></span><div><b>Opleiding</b><span>Mbo 2 Groene ruimte, Wellantcollege · diploma 2014</span></div></div>
+  <div class="item"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><div><b>Certificaten</b><span>VCA basis · Heftruckcertificaat · Workshop Sterk in een sollicitatiegesprek</span></div></div>
+  <div class="item"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 6 5"/></svg></span><div><b>Referenties</b><span>Marieke Jansen, teamleider bij Gemeente Delft · bevestigd op 9 oktober</span></div></div>
+ </section>
+</div>
+</div>
+</main>
+<footer class="footer"><nav aria-label="Juridisch"><a href="/privacy">Privacyverklaring</a><a href="/algemene-voorwaarden">Algemene voorwaarden</a><a href="/gebruiksvoorwaarden">Gebruiksvoorwaarden</a><a href="/wie-zijn-wij">Wie zijn wij</a><a href="/toegankelijkheid">Toegankelijkheid</a><a href="/bronnen">Bronnen</a></nav><span>© 2026 Lobsy</span></footer>
+</div></body></html>

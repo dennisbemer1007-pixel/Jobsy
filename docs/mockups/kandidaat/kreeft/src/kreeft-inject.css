@@ -1,0 +1,20 @@
+:root{--kterra:#df5530}
+body{padding-bottom:84px}
+.kstrip{position:relative;width:100%;height:var(--dh,220px);overflow:hidden}
+.kstrip img{width:100%;height:100%;object-fit:cover;display:block}
+.kstrip img.mob{display:none}
+.kstrip::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,var(--bg,#faf8f5) 0,transparent 10%,transparent 78%,var(--bg,#faf8f5) 100%)}
+.kcoach{display:flex;gap:12px;align-items:center;background:#fcf3e4;border:1px solid #f0e2cc;border-radius:16px;padding:10px 16px 10px 10px;margin:12px 0 18px;max-width:46rem;font-size:.93rem;color:#0f2d5c;line-height:1.45}
+.kcoach img{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:0 0 46px;background:#fff;border:1px solid #f0e2cc}
+.kcoach b{display:block;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--kterra)}
+.kask{position:fixed;right:24px;bottom:22px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e3ddd4;border-radius:999px;padding:6px 18px 6px 6px;box-shadow:0 8px 24px rgba(15,45,92,.12);font-weight:700;font-size:.92rem;color:#0f2d5c;z-index:60;font-family:"Nunito Sans",system-ui,sans-serif}
+.kask img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #f0e2cc}
+.chatdock{display:none!important}
+@media (max-width:900px){.kstrip{height:var(--mh,120px)}.kstrip img.desk{display:none}.kstrip img.mob{display:block}.kask{right:14px;bottom:14px;font-size:.86rem}.kcoach{font-size:.88rem}}
+body:has(.tabbar) .kask{bottom:84px}
+@media (min-width:901px){body:has(.tabbar) .kask{bottom:22px}}
+
+.kstrip::after{background:linear-gradient(to bottom,var(--bg,#faf8f5) 0,transparent 6%,transparent 94%,var(--bg,#faf8f5) 100%)}
+.kcoach{border-left:3px solid var(--kterra);padding:10px 16px}
+.kcoach img{display:none}
+.kask img{border-radius:10px;object-fit:contain;background:#fff;padding:5px}

@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · Ondernemerscheck vraag</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css"><style>
+.oc-grid{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+.oc-list{margin:8px 0 0;padding-left:20px}.oc-list li{margin-bottom:4px}
+.how{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.how li{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:start}
+.num{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800}
+.q-wrap{max-width:720px;margin:0 auto}
+.bar{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0 18px}
+.bar span{height:8px;border-radius:999px;background:#e6e0d6}.bar span.on{background:var(--brand)}
+.q{font-family:Fraunces,Georgia,serif;font-size:1.55rem;line-height:1.3;margin:6px 0 20px}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.scale a{display:block;text-align:center;border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px 6px;font-weight:700;text-decoration:none;color:var(--text)}
+.res{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:center}
+.res .art{height:240px;border-radius:14px;background:url(img/hero-ondernemerscheck.jpg) 14% 60%/240% no-repeat}
+.steps3{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.steps3 a{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--text);font-weight:700;background:#fff}
+.steps3 a svg{width:18px;color:var(--muted)}
+@media (max-width:900px){.oc-grid,.res{grid-template-columns:1fr}.scale{grid-template-columns:1fr}.scale a{text-align:left;padding:12px 14px}.q{font-size:1.3rem}.res .art{display:none}.res .row .btn{width:100%}}
+</style></head>
+<body><div class="page-shell">
+<header class="app-header">
+ <a class="brand" href="/home" aria-label="Lobsy, naar Mijn Lobsy"><img src="img/logo.svg" alt="Lobsy"></a>
+ <nav class="nav" aria-label="Hoofdmenu"><a href="/candidate/ontdekkingsreis" class="is-active">Reis</a><a href="/candidate/paspoort">Paspoort</a><a href="/banenkaart">Zoeken</a><a href="/candidate/applications">Sollicitaties</a><a href="/carriere">Carrière</a></nav>
+ <div class="utils">
+  <a class="util" href="/hoe-werkt-lobsy" aria-label="Uitleg over deze pagina">i</a>
+  <a class="util" href="/notifications" aria-label="Meldingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a>
+  <span class="lang"><img src="img/nl.svg" alt="">NL</span>
+  <button class="account" type="button" aria-haspopup="true"><span class="name">Sam de Wit</span><span class="av">SW</span></button>
+ </div>
+ <div class="menu" role="menu">
+  <div class="who"><strong>Sam de Wit</strong><span>sam@voorbeeld.nl</span></div>
+  <a href="/candidate/profile">Profiel</a><a href="/candidate/settings">Instellingen</a><a href="/hoe-werkt-lobsy">Hoe werkt Lobsy</a><a href="/feedback">Feedback</a><a class="out" href="/logout">Uitloggen</a>
+ </div>
+</header>
+<div class="hero" style="--hi:url(img/hero-ondernemerscheck.jpg);--hp:center 62%;--mp:6% 66%;--ms:auto 230%" aria-hidden="true"></div>
+<main class="panel-page">
+<div class="q-wrap" style="padding-top:22px">
+ <div class="between"><a class="link" href="/candidate/ondernemerscheck">Terug</a><span class="small muted">Vraag 1 van 6</span></div>
+ <div class="bar" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div>
+ <section class="card">
+  <p class="eyebrow">Past ondernemen bij mij?</p>
+  <p class="q">Ik probeer liever eerst een klein idee uit voordat ik een grote stap zet.</p>
+  <div class="scale" role="group" aria-label="Kies wat bij je past"><a href="?vraag=2&a=1">Helemaal niet</a><a href="?vraag=2&a=2">Niet</a><a href="?vraag=2&a=3">Neutraal</a><a href="?vraag=2&a=4">Wel</a><a href="?vraag=2&a=5">Helemaal wel</a></div>
+  <p class="small muted" style="margin:14px 0 0">Neem je tijd. Je antwoord wordt meteen bewaard.</p>
+ </section>
+</div></main>
+<footer class="footer"><nav aria-label="Juridisch"><a href="/privacy">Privacyverklaring</a><a href="/algemene-voorwaarden">Algemene voorwaarden</a><a href="/gebruiksvoorwaarden">Gebruiksvoorwaarden</a><a href="/wie-zijn-wij">Wie zijn wij</a><a href="/toegankelijkheid">Toegankelijkheid</a><a href="/bronnen">Bronnen</a></nav><span>© 2026 Lobsy</span></footer>
+</div></body></html>

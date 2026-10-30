@@ -1,0 +1,38 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inloggen</title><link rel="stylesheet" href="vo.css"><style>.mrail{display:flex;justify-content:space-between;gap:4px;margin:0 0 14px;position:relative;max-width:560px}
+.mrail::before{content:"";position:absolute;left:24px;right:24px;top:22px;border-top:2px dotted #b9c6c6}
+.ms{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;position:relative;font-size:11.5px;text-align:center;line-height:1.2;color:var(--soft)}
+.ms img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line)}
+.ms.done img{box-shadow:0 0 0 2px var(--sea)}.ms.now img{box-shadow:0 0 0 3px var(--coral)}.ms.now{color:var(--ink);font-weight:700}.ms.next{opacity:.6}
+@media(min-width:601px){.qgrid .mrail,.routebar .mrail{display:none}.pz .mrail{margin:16px 0 4px}}.hero>img{height:500px;object-position:50% 72%}
+.lgrid{display:grid;grid-template-columns:1fr 500px;gap:48px;align-items:start}
+.lleft{padding-top:34px}.lleft h2{font-size:30px;margin:6px 0 8px}.lleft p{margin:0 0 18px;max-width:520px}
+.trow{display:flex;gap:14px;margin-bottom:12px}.trow div{display:flex;flex-direction:column;align-items:center;gap:6px;width:92px;text-align:center;font-size:12.5px;color:var(--soft);line-height:1.25}
+.trow img{width:76px;height:76px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 0 0 1.5px var(--line)}
+.lleft .facts{font-weight:600;color:var(--sea)}
+.login{margin-top:-250px;position:relative}
+.login h1{font-size:34px;margin:6px 0 8px}.login p{margin:0 0 14px}
+label{display:block;font-weight:600;font-size:14px;margin:16px 0 6px}
+.sel,.inp{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;position:relative}
+.sel::after{content:"";position:absolute;right:16px;top:18px;width:8px;height:8px;border-right:2px solid var(--soft);border-bottom:2px solid var(--soft);transform:rotate(45deg)}
+.inp{border-color:var(--sea);letter-spacing:.12em;font-weight:600}
+.note{background:var(--sea2);border-radius:12px;padding:10px 14px;font-size:14px;margin:16px 0}
+.full{width:100%;padding:15px;font-size:16px}
+.gidsrow{margin:8px 0 0}
+@media(max-width:600px){.hero>img{height:300px;object-position:38% 70%}.lgrid{grid-template-columns:1fr;gap:0}.lleft{order:2;padding-top:24px}.lleft h2{font-size:24px}
+.trow{gap:4px;justify-content:space-between}.trow div{width:62px;font-size:11px}.trow img{width:54px;height:54px}.login{margin:-40px 0 0}.login h1{font-size:28px}}</style></head><body><div class="top"><a class="brand" href="#"><img src="img/merk.png" alt="">Lobsy<small>middelbare school</small></a><div class="r"><span class="muted" style="font-size:14px">Voor leerlingen</span></div></div>
+<div class="big hero"><img src="img/big-welkom.jpg" alt="Duinpad naar het strand met Lobsy bij de vlonder"></div>
+<div class="wrap lgrid"><div class="lleft"><div class="eyebrow">Lobsy voor de middelbare school</div><h2>Een reis langs de kust, in 4 werelden</h2>
+<p class="muted">Je beantwoordt vragen over wie jij bent, wat je graag doet en wat je belangrijk vindt. Daarna zie je welke routes bij je passen.</p>
+<div class="trow"><div><img src="img/th-rif.jpg" alt=""><span>Het koraalrif</span></div><div><img src="img/th-grot.jpg" alt=""><span>De schatgrot</span></div><div><img src="img/th-eiland.jpg" alt=""><span>Pauze-eiland</span></div><div><img src="img/th-toren.jpg" alt=""><span>De vuurtoren</span></div><div><img src="img/th-lagune.jpg" alt=""><span>De lagune</span></div></div><p class="facts">100 vragen · 2 lesdelen · geen foute antwoorden</p>
+<div class="gidsrow"><div class="gids"><img src="img/gids.png" alt="Lobsy"><div class="bubble">Hoi! Ik ben Lobsy. Ik reis met je mee langs de kust.<div class="row"><button class="lees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Lees voor</button></div></div></div></div></div>
+<div class="card login">
+ <div class="eyebrow">Welkom</div>
+ <h1>Fijn dat je er bent</h1>
+ <p class="muted">Ontdek wie jij bent en wat bij je past. Kies je school en je klas, en typ de code van je kaartje.</p>
+ <button class="lees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Lees voor</button>
+ <label>Jouw school</label><div class="sel">Demo College Lobsy · Naaldwijk</div>
+ <label>Jouw klas</label><div class="sel">H4 · havo 4</div>
+ <label>Jouw code</label><div class="inp">P6S-TBU</div>
+ <div class="note">Je naam hoeft niet. Lobsy kent alleen je code.</div>
+ <button class="btn full">Start je reis</button>
+</div></div><div class="foot"><a href="#">Privacyverklaring</a><a href="#">Toegankelijkheid</a></div></body></html>

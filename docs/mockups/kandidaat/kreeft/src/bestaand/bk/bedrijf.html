@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup Bedrijfspagina r21</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<style>
+.crumbs{font-size:.86rem;color:var(--muted);padding:12px 0 6px;font-weight:600}.crumbs a{text-decoration:none}.crumbs b{color:var(--text)}
+.co-head{display:flex;gap:16px;align-items:center;padding:6px 0 16px}
+.logo{width:64px;height:64px;border-radius:50%;background:var(--terra);color:#fff;display:grid;place-items:center;font-family:Fraunces,serif;font-size:1.3rem;border:3px solid #fffaf2;box-shadow:0 4px 12px rgba(120,70,40,.18);flex:none}
+.co-head h1{font-size:2.1rem;margin-bottom:6px}
+.co-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.92rem;color:var(--muted);font-weight:600}
+.tag--kvk{background:var(--sage-soft);color:var(--sage);border:1px solid #cfdec8}
+.tabs{display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+.vacs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.vac{background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 6px 18px rgba(120,90,50,.06)}
+.vac .img{position:relative;height:200px;background:#eadfcd center/cover}
+.vac .img .lbl{position:absolute;left:12px;top:12px;background:rgba(255,250,242,.94);color:var(--text);font-size:.74rem;font-weight:800;padding:4px 10px;border-radius:999px}
+.vac .body{padding:14px 16px 16px}
+.vac h3{margin:0 0 4px;font-size:1.05rem;font-weight:800}
+.vac p{margin:0;font-size:.85rem;color:var(--muted)}
+.vac .row{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.vac .row a{font-weight:800;font-size:.88rem;text-decoration:none}
+.block{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px 20px;margin-top:16px}
+.block h2,.side h2{font-family:Fraunces,Georgia,serif;font-size:1.3rem;margin:0 0 8px}
+.block p{margin:0;line-height:1.55;color:#3f4659}
+.sfeer{display:grid;grid-template-columns:1fr 1.1fr 1.1fr;gap:14px;align-items:stretch}
+.sfeer .ph{border-radius:16px;background:#eadfcd center/cover;min-height:150px}
+.report{display:inline-block;margin-top:14px;font-size:.86rem;color:var(--muted)}
+.side{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 8px 24px rgba(120,90,50,.08);position:sticky;top:16px}
+.side .sub{margin:8px 0 14px;font-size:.9rem;color:var(--muted)}
+.opt{display:flex;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;font-size:.92rem;background:#fffaf3;line-height:1.4}
+.opt.on{border-color:#d9b9a3;background:var(--terra-soft)}
+.opt input{accent-color:var(--terra);margin-top:3px}
+.side .btn{width:100%;margin-top:6px;padding:13px}
+.side .small{font-size:.85rem;color:var(--muted);margin:12px 0 0;line-height:1.45}
+@media (max-width:600px){
+ .crumbs{font-size:.8rem}
+ .co-head{gap:12px;padding:4px 0 12px}.logo{width:52px;height:52px;font-size:1.05rem}
+ .co-head h1{font-size:1.5rem}
+ .co-meta{font-size:.84rem}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px 14px;padding:0 16px 4px}
+ .layout{display:flex;flex-direction:column;gap:16px}
+ .side{position:static;order:2}
+ .main{display:contents}
+ .vacs{grid-template-columns:1fr;order:1}
+ .vac .img{height:170px}
+ .rest{order:3}
+ .sfeer{grid-template-columns:1fr 1fr}.sfeer div:first-child{grid-column:1/-1}.sfeer .ph{min-height:120px}
+}
+</style></head><body>
+<script src="parts.js"></script><script>document.write(header()+hero())</script>
+<main class="page">
+<nav class="crumbs"><a href="#">Banenkaart</a> › <a href="#">Bedrijvenkaart</a> › <b>Bakkerij De Korenaar</b></nav>
+<section class="co-head"><div class="logo">BK</div><div><h1>Bakkerij De Korenaar</h1>
+<div class="co-meta"><span>Den Haag (Statenkwartier)</span><span>·</span><span>2 vacatures</span><span class="tag tag--kvk">KvK gecontroleerd</span><span class="tag tag--open">Staat open voor jou</span></div></div></section>
+<div class="tabs"><button class="chip on">Alle vestigingen (2)</button><button class="chip">Den Haag Centrum</button><button class="chip">Bakkerij De Korenaar</button></div>
+<div class="layout"><div class="main">
+<div class="vacs">
+<article class="vac"><div class="img" style="background-image:url(vacancy-bakkerij.webp)"><span class="lbl">Uitgelicht · Horeca</span></div><div class="body"><h3>Allround medewerker bakkerij</h3><p>Den Haag Centrum · 's-Gravenzandseweg 10, Honselersdijk</p><div class="row"><span class="tag tag--fit">Past goed</span><a href="#">Bekijk vacature ›</a></div></div></article>
+<article class="vac"><div class="img" style="background-image:url(vacancy-vitrine.webp)"><span class="lbl">Horeca</span></div><div class="body"><h3>Vakantiewerk vitrine</h3><p>Bakkerij De Korenaar · Frederik Hendriklaan 88, Den Haag</p><div class="row"><span class="tag tag--fit">Past goed</span><a href="#">Bekijk vacature ›</a></div></div></article>
+</div>
+<div class="rest"><section class="block"><h2>Over ons</h2><p>Bakkerij De Korenaar is een familiebedrijf in het hart van Den Haag. We bakken dagvers brood en patisserie.</p></section>
+<section class="block"><div class="sfeer"><div><h2>Sfeer</h2><p>Klein team, korte lijnen, veel vakmanschap en ruimte om te groeien.</p></div><div class="ph" style="background-image:url(sfeer-bakkerij.webp)"></div><div class="ph" style="background-image:url(sfeer-vitrine.webp)"></div></div></section>
+<a class="report" href="#">Klopt er iets niet op deze pagina? Meld het.</a></div>
+</div>
+<aside class="side"><h2>Ik wil hier werken</h2><span class="tag tag--open">Staat open voor jou</span><p class="sub">Reageert altijd binnen 5 werkdagen</p>
+<label class="opt on"><input type="radio" name="o" checked><span>Bakkerij Brood, patisserie en vitrine <span class="tag tag--fit">Past goed</span></span></label>
+<label class="opt"><input type="radio" name="o"><span>Winkel en lunchroom: klantcontact en presentatie in de winkel <span class="tag tag--fit">Past goed</span></span></label>
+<button class="btn btn--primary">Ik wil hier werken</button>
+<p class="small"><span class="dots"><i></i><i></i><i></i></span>3 van 3 deze week over</p>
+<p class="small">Naam en contactgegevens zie je pas na acceptatie.</p></aside>
+</div></main>
+<script>document.write(footer())</script></body></html>

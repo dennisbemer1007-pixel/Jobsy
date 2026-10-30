@@ -1,0 +1,602 @@
+[
+[
+"01",
+"titel",
+"Werk dat bij je past. Rustig gevonden.",
+"Work that suits you. Found calmly."
+],
+[
+"01",
+"moment 0",
+"Dit is jouw reis. Stap voor stap kom je uit je schild.",
+"This is your journey. Step by step you come out of your shell."
+],
+[
+"01",
+"intro",
+"Je begint op het strand, nog helemaal in je schild. Je vertelt eerst wie je bent en wat je kunt, daarna pas kijk je naar vacatures. Voor iedereen, met of zonder diploma, jong of wat ouder, net begonnen of al jaren aan het werk.",
+"You start on the beach, still fully in your shell. First you tell who you are and what you can do, only then do you look at vacancies. For everyone, with or without a diploma, young or a bit older, just starting or working for years."
+],
+[
+"01",
+"knop",
+"Stap op het strand",
+"Step onto the beach"
+],
+[
+"01",
+"zone",
+"Strand · Je begint: Je maakt een account en stapt op het strand. Je leest wat er met je gegevens gebeurt. Nog alle 10 lagen.",
+"Strand: You create an account and step onto the beach. You read what happens with your data. All 10 layers still on."
+],
+[
+"01",
+"zone",
+"Kust · Over jou: Wanneer en waar je kunt werken, en hoe je er komt. Lagen 1 tot en met 3.",
+"Kust: When and where you can work, and how you get there. Layers 1 to 3."
+],
+[
+"01",
+"zone",
+"Rotsen · Achtergrond en droom: Wat je al deed, wat je leerde en waar je heen wilt. Lagen 4 tot en met 6.",
+"Rotsen: What you did, what you learned and where you want to go. Layers 4 to 6."
+],
+[
+"01",
+"zone",
+"Diepte · Wie ben jij: Vier korte tests, zonder goed of fout. Je kijkt naar binnen. Lagen 7 tot en met 10.",
+"Diepte: Four short tests, no right or wrong. You look inward. Layers 7 to 10."
+],
+[
+"01",
+"zone",
+"Licht · Jouw Kompas: Je ziet wat bij je past. Je bent uit je schild en je paspoort is klaar. Nieuw schild.",
+"Licht: You see what suits you. You are out of your shell and your passport is ready. New shell."
+],
+[
+"01",
+"reiskaart",
+"Nog 10 lagen schild. Bij elke stap laat er een los. In het Licht ben je uit je schild.",
+"Still 10 layers of shell. With every step one comes off. In the Light you are out of your shell."
+],
+[
+"02",
+"titel",
+"Fijn dat je er bent",
+"Good to have you here"
+],
+[
+"02",
+"intro",
+"Log in met je e-mailadres. Nog geen account? Dat maak je in een minuut.",
+"Log in with your email address. No account yet? You create one in a minute."
+],
+[
+"02",
+"reiskaart",
+"Nog 10 lagen schild. Bij elke stap laat er een los. In het Licht ben je uit je schild.",
+"Still 10 layers of shell. With every step one comes off. In the Light you are out of your shell."
+],
+[
+"02",
+"tip",
+"Na het inloggen begint je reis op het strand.",
+"After logging in your journey starts on the beach."
+],
+[
+"03",
+"titel",
+"Welkom bij je reis",
+"Welcome to your journey"
+],
+[
+"03",
+"intro",
+"Je loopt in vijf rustige stukken van het strand naar het licht. Onderweg leer je jezelf beter kennen.",
+"You walk in five calm stretches from the beach to the light. Along the way you get to know yourself better."
+],
+[
+"03",
+"zone Strand · Start",
+"Hier begin je. Je leest wat er met je gegevens gebeurt.",
+"This is where you start. You read what happens with your data."
+],
+[
+"03",
+"zone Kust · Over jou",
+"Een paar basisvragen: wanneer en waar je kunt werken.",
+"A few basic questions: when and where you can work."
+],
+[
+"03",
+"zone Rotsen · Achtergrond en Droom",
+"Wat je al hebt gedaan en waar je naartoe wilt.",
+"What you have done so far and where you want to go."
+],
+[
+"03",
+"zone Diepte · Wie ben jij",
+"Vier korte tests over hoe je werkt en wat je belangrijk vindt.",
+"Four short tests about how you work and what matters to you."
+],
+[
+"03",
+"zone Licht · Jouw Kompas",
+"Je ziet wat bij je past en je paspoort is klaar.",
+"You see what suits you and your passport is ready."
+],
+[
+"03",
+"reiskaart",
+"Nog 10 lagen schild. Bij elke stap laat er een los. In het Licht ben je uit je schild.",
+"Still 10 layers of shell. With every step one comes off. In the Light you are out of your shell."
+],
+[
+"03",
+"tip",
+"Je oude schild zit wat krap. Onderweg ontdek je wie eronder zit.",
+"Your old shell is a bit tight. Along the way you find out who is underneath."
+],
+[
+"04",
+"titel",
+"Even kennismaken",
+"Let's get acquainted"
+],
+[
+"04",
+"intro",
+"Eerst wat basisgegevens.",
+"First some basic details."
+],
+[
+"04",
+"reiskaart",
+"Nog 10 lagen schild. Na deze stap laat laag 1 los.",
+"Still 10 layers of shell. After this step layer 1 comes off."
+],
+[
+"04",
+"tip",
+"Je begint rustig: alleen je naam en waar je woont.",
+"You start calmly: just your name and where you live."
+],
+[
+"05",
+"titel",
+"Wanneer kun je werken?",
+"When can you work?"
+],
+[
+"05",
+"intro",
+"Kies wat nu bij je leven past. Je kunt het later altijd aanpassen.",
+"Choose what fits your life now. You can always change it later."
+],
+[
+"05",
+"reiskaart",
+"Nog 9 lagen schild. Na deze stap laat laag 2 los.",
+"Still 9 layers of shell. After this step layer 2 comes off."
+],
+[
+"05",
+"tip",
+"Er is geen goed of fout. Kies wat nu bij je leven past.",
+"There is no right or wrong. Choose what fits your life now."
+],
+[
+"06",
+"titel",
+"Hoe kom je op je werk?",
+"How do you get to work?"
+],
+[
+"06",
+"intro",
+"Dan zie je werk binnen een afstand die voor jou haalbaar is.",
+"Then you see work within a distance that works for you."
+],
+[
+"06",
+"reiskaart",
+"Nog 8 lagen schild. Na deze stap laat laag 3 los.",
+"Still 8 layers of shell. After this step layer 3 comes off."
+],
+[
+"06",
+"tip",
+"Kies hoe ver je wilt reizen. Je ziet dan alleen werk binnen die afstand.",
+"Choose how far you want to travel. You then only see work within that distance."
+],
+[
+"07",
+"titel",
+"Heb je al gewerkt?",
+"Have you worked before?"
+],
+[
+"07",
+"intro",
+"Bijbaan, vrijwilligerswerk of stage telt ook mee.",
+"A side job, volunteering or an internship also counts."
+],
+[
+"07",
+"reiskaart",
+"Nog 7 lagen schild. Na deze stap laat laag 4 los.",
+"Still 7 layers of shell. After this step layer 4 comes off."
+],
+[
+"07",
+"tip",
+"Alles telt mee. Ook vrijwilligerswerk en zorgen voor anderen.",
+"Everything counts. Volunteering and caring for others too."
+],
+[
+"08",
+"titel",
+"Wat is je opleiding?",
+"What is your education?"
+],
+[
+"08",
+"intro",
+"Ook cursussen en dingen die je zelf hebt geleerd tellen mee.",
+"Courses and things you taught yourself count too."
+],
+[
+"08",
+"reiskaart",
+"Nog 6 lagen schild. Na deze stap laat laag 5 los.",
+"Still 6 layers of shell. After this step layer 5 comes off."
+],
+[
+"08",
+"tip",
+"Een diploma is fijn, maar wat je kunt telt net zo zwaar.",
+"A diploma is nice, but what you can do counts just as much."
+],
+[
+"09",
+"titel",
+"Wat is je droombaan?",
+"What is your dream job?"
+],
+[
+"09",
+"intro",
+"Denk groot. In Carrière zie je later een route ernaartoe.",
+"Think big. In Career you will later see a route to it."
+],
+[
+"09",
+"reiskaart",
+"Nog 5 lagen schild. Na deze stap laat laag 6 los.",
+"Still 5 layers of shell. After this step layer 6 comes off."
+],
+[
+"09",
+"tip",
+"Denk gerust groot. De weg ernaartoe zoek je later stap voor stap uit.",
+"Feel free to dream big. You work out the way there later, step by step."
+],
+[
+"10",
+"titel",
+"Hoe werk jij?",
+"How do you work?"
+],
+[
+"10",
+"intro",
+"Kies bij elke zin wat het meest op je lijkt.",
+"For each sentence, choose what is most like you."
+],
+[
+"10",
+"reiskaart",
+"Nog 4 lagen schild. Na deze stap laat laag 7 los.",
+"Still 4 layers of shell. After this step layer 7 comes off."
+],
+[
+"10",
+"tip",
+"Kies wat het meest op je lijkt. Je eerste gevoel is meestal goed.",
+"Choose what is most like you. Your first feeling is usually right."
+],
+[
+"11",
+"titel",
+"Wat vind je leuk?",
+"What do you like?"
+],
+[
+"11",
+"intro",
+"Kies de dingen die je graag doet. Meerdere mag.",
+"Choose the things you enjoy doing. More than one is fine."
+],
+[
+"11",
+"reiskaart",
+"Nog 3 lagen schild. Na deze stap laat laag 8 los.",
+"Still 3 layers of shell. After this step layer 8 comes off."
+],
+[
+"11",
+"tip",
+"Denk aan dagen waarop de tijd voorbij vloog.",
+"Think of days when time flew by."
+],
+[
+"12",
+"titel",
+"Even rusten",
+"A short rest"
+],
+[
+"12",
+"reiskaart",
+"Nog 2 lagen schild. Er zijn er al 8 los.",
+"Still 2 layers of shell. 8 have already come off."
+],
+[
+"12",
+"tip",
+"Je bent halverwege de diepte. Ga verder wanneer je wilt.",
+"You are halfway through the deep. Continue whenever you like."
+],
+[
+"13",
+"titel",
+"Waar voel je je thuis?",
+"Where do you feel at home?"
+],
+[
+"13",
+"intro",
+"Kies de werkplek die het best bij je past.",
+"Choose the workplace that suits you best."
+],
+[
+"13",
+"reiskaart",
+"Nog 2 lagen schild. Na deze stap laat laag 9 los.",
+"Still 2 layers of shell. After this step layer 9 comes off."
+],
+[
+"13",
+"tip",
+"Sommige mensen houden van drukte, anderen van rust. Beide is goed.",
+"Some people like a busy place, others like quiet. Both are fine."
+],
+[
+"14",
+"titel",
+"Wat vind je belangrijk?",
+"What matters to you?"
+],
+[
+"14",
+"intro",
+"Kies er drie. Wat moet je werk je echt geven?",
+"Choose three. What should your work really give you?"
+],
+[
+"14",
+"reiskaart",
+"Nog 1 laag schild. Na deze stap laat laag 10 los.",
+"Still 1 layer of shell. After this step layer 10 comes off."
+],
+[
+"14",
+"tip",
+"Laatste test. Kies wat je echt belangrijk vindt, niet wat hoort.",
+"Last test. Choose what really matters to you, not what you think you should."
+],
+[
+"15",
+"titel",
+"Jouw Kompas",
+"Your Compass"
+],
+[
+"15",
+"reiskaart",
+"Je bent uit je schild. Alle tien lagen zijn los en je nieuwe schild zit goed.",
+"You are out of your shell. All ten layers are off and your new shell fits well."
+],
+[
+"15",
+"tip",
+"Kijk hoe ver je gekomen bent. Dit is je nieuwe schild.",
+"Look how far you have come. This is your new shell."
+],
+[
+"16",
+"titel",
+"Je paspoort",
+"Your passport"
+],
+[
+"16",
+"reiskaart",
+"Je bent uit je schild. Alle tien lagen zijn los en je nieuwe schild zit goed.",
+"You are out of your shell. All ten layers are off and your new shell fits well."
+],
+[
+"16",
+"tip",
+"Je paspoort is klaar. Werkgevers zien wie je bent, niet alleen je cv.",
+"Your passport is ready. Employers see who you are, not just your CV."
+],
+[
+"17",
+"notitie",
+"Welkom terug. Kijk rustig wat er voor je klaarstaat.",
+"Welcome back. Take your time to see what is waiting for you."
+],
+[
+"18",
+"titel",
+"Medewerker thuiszorg",
+"Home care worker"
+],
+[
+"18",
+"notitie",
+"Deze vacature past bij wat je in je reis vertelde. Lees rustig verder.",
+"This vacancy fits what you shared on your journey. Read on at your own pace."
+],
+[
+"21",
+"titel",
+"Bewaard",
+"Saved"
+],
+[
+"22",
+"titel",
+"Nog niets bewaard",
+"Nothing saved yet"
+],
+[
+"22",
+"notitie",
+"Neem je tijd. Wat je mooi vindt, bewaar je hier.",
+"Take your time. What you like, you keep here."
+],
+[
+"24",
+"titel",
+"Nog geen sollicitaties",
+"No applications yet"
+],
+[
+"24",
+"notitie",
+"Dat komt nog. Begin bij een vacature die je aanspreekt.",
+"That will come. Start with a vacancy that appeals to you."
+],
+[
+"26",
+"notitie",
+"Je hoeft niets te onthouden. Je activiteiten staan per week voor je klaar.",
+"You do not have to remember anything. Your activities are ready for you per week."
+],
+[
+"28",
+"notitie",
+"Mooi nieuws. Hieronder lees je stap voor stap wat er nu gebeurt.",
+"Good news. Below you read step by step what happens now."
+],
+[
+"29",
+"notitie",
+"Kies een moment dat bij je past. Verzetten kan altijd.",
+"Choose a moment that suits you. You can always reschedule."
+],
+[
+"31",
+"notitie",
+"Dit keer niet. Dat zegt niets over wie je bent. Morgen kijk je verder.",
+"Not this time. It says nothing about who you are. Tomorrow you look further."
+],
+[
+"32",
+"notitie",
+"Je droom is een richting. Je zet er kleine stappen naartoe.",
+"Your dream is a direction. You take small steps toward it."
+],
+[
+"33",
+"notitie",
+"Wat je al kunt neem je mee. Je begint niet opnieuw.",
+"You take what you can already do with you. You are not starting over."
+],
+[
+"34",
+"notitie",
+"Wat geeft je energie? Daar zit vaak je richting.",
+"What gives you energy? That is often where your direction is."
+],
+[
+"35",
+"notitie",
+"Zelf iets beginnen? Met deze check zie je of het bij je past.",
+"Starting something yourself? This check shows you whether it suits you."
+],
+[
+"36",
+"notitie",
+"Soms helpt een mens om mee te praten. Je adviseur denkt met je mee.",
+"Sometimes it helps to talk to a person. Your advisor thinks along with you."
+],
+[
+"39",
+"titel",
+"Nog geen matches",
+"No matches yet"
+],
+[
+"39",
+"notitie",
+"Maak je reis af, dan zie je meer vacatures. Het licht staat al aan.",
+"Finish your journey and you will see more vacancies. The light is already on."
+],
+[
+"40",
+"titel",
+"Lobsy-hulp",
+"Lobsy help"
+],
+[
+"40",
+"paneel",
+"Hulp bij de app en je reis",
+"Help with the app and your journey"
+],
+[
+"40",
+"hulp",
+"Hoi Sam. Waar wil je hulp bij?",
+"Hi Sam. What would you like help with?"
+],
+[
+"40",
+"hulp",
+"Dat betekent dat werkgevers bij jou in de buurt veel mensen zoeken voor dit werk. Je maakt daar vaak sneller kans op een gesprek.",
+"It means employers near you are looking for many people for this work. You often get an interview sooner there."
+],
+[
+"40",
+"paneel",
+"Lobsy-hulp is een digitale hulp. Voor persoonlijk advies kun je altijd je adviseur vragen.",
+"Lobsy help is a digital helper. For personal advice you can always ask your advisor."
+],
+[
+"41",
+"titel",
+"Deze pagina bestaat niet (meer)",
+"This page does not exist (anymore)"
+],
+[
+"41",
+"notitie",
+"Deze pagina is er niet. Met de knoppen hieronder vind je de weg terug.",
+"This page is not here. The buttons below help you find your way back."
+],
+[
+"42",
+"titel",
+"Er ging iets mis",
+"Something went wrong"
+],
+[
+"42",
+"notitie",
+"Er wordt aan gewerkt. Probeer het zo nog eens.",
+"It is being worked on. Please try again shortly."
+]
+]

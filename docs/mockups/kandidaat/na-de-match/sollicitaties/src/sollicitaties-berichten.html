@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · Sollicitaties</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css"><style>
+.pill--ext{background:#efeaf6;color:#5b3f8c;border-color:#ddd2ec}
+.sol-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sol-actions .chips{margin:0}
+@media (max-width:900px){.sol-actions .btn{width:100%;justify-content:center}}
+.sol-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.week-left{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.tabs .cnt{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:#c2410c;color:#fff;font-size:.72rem;font-weight:800}
+.app{position:relative;display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:start;color:var(--text)}
+.app.is-open{border-color:#c9b9a3;box-shadow:0 0 0 3px #efe7da}
+.app h3{margin:6px 0 2px;font-size:1rem}
+.app h3 a{color:inherit;text-decoration:none}
+.app h3 a::after{content:"";position:absolute;inset:0;border-radius:16px}
+.app .c{margin:0;font-size:.86rem;color:var(--muted)}
+.app .s{margin:8px 0 0;font-size:.84rem;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.app .right{display:flex;align-items:center;gap:10px;margin-top:10px}
+.app .chev{color:var(--muted);width:20px;display:block}
+.act{position:relative;z-index:2;display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:800;padding:5px 12px;border-radius:999px;text-decoration:none;white-space:nowrap}
+.act svg{width:14px;height:14px}
+.act--do{background:var(--brand);color:#fff}
+.act--ok{background:var(--success-soft);color:var(--success);border:1px solid #cfe6d5}
+.msgc{position:relative;z-index:2;display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:800;color:var(--brand);text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 9px}
+.msgc svg{width:15px;height:15px}.msgc b{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:999px;background:#c2410c;color:#fff;font-size:.7rem}
+/* tijdlijn, gelijk aan Na de match */
+.tl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:relative;margin:14px 0 12px}
+.tl .s{position:relative;text-align:center;padding-top:40px;font-size:.78rem;font-weight:700;color:var(--muted);line-height:1.25}
+.tl .s:before{content:"";position:absolute;top:15px;left:-50%;right:50%;height:3px;background:#e4d9ca}.tl .s:first-child:before{display:none}
+.tl .s.done:before,.tl .s.now:before{background:var(--success)}
+.tl .s i{position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:32px;border-radius:50%;background:#fff;border:2px dashed #cbbda9;display:grid;place-items:center;color:var(--muted)}
+.tl .s.done i{background:var(--success);border:2px solid var(--success);color:#fff}.tl .s.now i{border:2px solid #c2410c;color:#c2410c;background:#fdf0e3}
+.tl .s i svg{width:15px;height:15px}.tl .s.done{color:var(--success)}.tl .s.now{color:#c2410c}
+.tl .s small{display:block;font-weight:600;color:var(--muted);font-size:.72rem}
+.acts{display:grid;gap:8px}.acts .btn{width:100%}
+.acts .btn b{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:#c2410c;color:#fff;font-size:.72rem}
+.more{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:.84rem}
+.more a{color:var(--accent);font-weight:700}.more a.danger{color:var(--danger)}
+.empty{text-align:center;padding:26px 18px;color:var(--muted)}
+.empty .ic{width:46px;height:46px;border-radius:50%;background:#f3efe8;display:grid;place-items:center;margin:0 auto 10px;color:var(--brand)}.empty .ic svg{width:22px}
+.back{display:none}
+@media (max-width:900px){
+ .detail{display:none}.app{grid-template-columns:44px 1fr}
+ .app .right{position:absolute;top:16px;right:16px;margin:0}
+ .app h3{padding-right:0}
+ body.is-detail .list-col,body.is-detail .sol-actions,body.is-detail .sol-top,body.is-detail .head,body.is-detail .foot-hint{display:none}
+ body.is-detail .detail{display:block}
+ body.is-detail .back{display:flex;width:max-content;align-items:center;gap:6px;margin:16px 0 12px;font-weight:700;font-size:.9rem}
+}
+/* berichten-tab */
+.thr{display:grid;grid-template-columns:320px minmax(0,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.tlist{border-right:1px solid var(--line);background:#fbf8f3}
+.ti{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);text-decoration:none;color:var(--text);align-items:flex-start}
+.ti.on{background:#fff;box-shadow:inset 3px 0 0 var(--brand)}
+.ti .logo-sq{width:38px;height:38px;font-size:.78rem;border-radius:10px}
+.ti b{display:block;font-size:.92rem}.ti p{margin:2px 0 0;font-size:.8rem;color:var(--muted)}
+.ti .n{margin-left:auto;display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:#c2410c;color:#fff;font-size:.72rem;font-weight:800;flex:0 0 auto}
+.tmain{padding:18px 22px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.thd{display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.thd .logo-sq{width:38px;height:38px;font-size:.78rem;border-radius:10px}
+.thd b{display:block}.thd p{margin:0;font-size:.82rem;color:var(--muted)}
+.thd .lnk{margin-left:auto;font-size:.84rem;font-weight:700}
+.msg{max-width:78%;padding:11px 14px;border-radius:12px;font-size:.92rem;background:#fff;border:1px solid var(--line)}
+.msg.me{align-self:flex-end;background:#eef2f7;border-color:#d6e0ec}
+.msg small{display:block;font-size:.74rem;color:var(--muted);margin-top:4px}
+.sys{align-self:center;font-size:.8rem;color:var(--muted);background:#f3ede4;border-radius:8px;padding:4px 10px;text-align:center}
+.sysact{align-self:center;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:#fbf3e6;border:1px solid #f1e0c4;border-radius:12px;padding:10px 14px;font-size:.88rem}
+.compose{display:flex;gap:8px;align-items:center;border:1.5px solid #d9cdbd;border-radius:12px;background:#fff;padding:6px 6px 6px 12px;color:var(--muted);font-size:.92rem}
+.compose span{flex:1}.compose .btn{padding:8px 12px}.compose svg{width:16px;height:16px}
+.safe{font-size:.8rem;color:var(--muted);margin:0}
+.tsafe{margin:14px 16px;font-size:.82rem;color:#34465c;background:#f3f6fa;border-radius:12px;padding:10px 12px}
+@media (max-width:900px){.tabs{display:grid;grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:1fr 1fr;gap:4px;width:100%;border-radius:18px;overflow:visible}.tabs a{padding:8px 10px;font-size:.86rem;text-align:center;border-radius:14px}.tabs .cnt{margin-left:4px;min-width:18px;height:18px}.tabs a .pill{margin-left:2px!important;padding:0 6px!important}.thr{grid-template-columns:1fr}.tlist{border-right:0}.tmain{display:none}.tsafe{margin:12px}}
+</style></head>
+<body><div class="page-shell">
+<header class="app-header">
+ <a class="brand" href="/home" aria-label="Lobsy, naar Mijn Lobsy"><img src="img/logo.svg" alt="Lobsy"></a>
+ <nav class="nav" aria-label="Hoofdmenu"><a href="/candidate/ontdekkingsreis">Reis</a><a href="/candidate/paspoort">Paspoort</a><a href="/banenkaart">Zoeken</a><a href="/candidate/applications" class="is-active">Sollicitaties</a><a href="/carriere">Carrière</a></nav>
+ <div class="utils">
+  <a class="util" href="/hoe-werkt-lobsy" aria-label="Uitleg over deze pagina">i</a>
+  <a class="util" href="/notifications" aria-label="Meldingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></a>
+  <span class="lang"><img src="img/nl.svg" alt="">NL</span>
+  <button class="account" type="button" aria-haspopup="true"><span class="name">Sanne de Vries</span><span class="av">SV</span></button>
+ </div>
+ <div class="menu" role="menu">
+  <div class="who"><strong>Sanne de Vries</strong><span>sanne@voorbeeld.nl</span></div>
+  <a href="/candidate/profile">Profiel</a><a href="/candidate/settings">Instellingen</a><a href="/hoe-werkt-lobsy">Hoe werkt Lobsy</a><a href="/feedback">Feedback</a><a class="out" href="/logout">Uitloggen</a>
+ </div>
+</header>
+<div class="hero" style="--hi:url(img/hero-sollicitaties.jpg);--hp:center 46%;--mp:20% 55%;--ms:auto 240%" aria-hidden="true"></div>
+<main class="panel-page"><div class="head"><p class="eyebrow">Sollicitaties</p><h1>Mijn sollicitaties</h1><p class="lead">Op vacatures en bij bedrijven waar je zelf aanklopte. Alles op één plek.</p></div><div class="sol-top"><nav class="tabs" aria-label="Onderdelen"><a href="sollicitaties.html">Sollicitaties</a><a href="sollicitaties-berichten.html" class="is-active">Berichten<span class="cnt">1</span></a><a href="/candidate/applications/activiteiten">Mijn activiteiten</a><a href="/candidate/bewaard">Bewaard <span class="pill" style="padding:1px 8px;margin-left:4px">4</span></a></nav><span class="week-left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 6 5"/></svg> Nog 2 van de 3 keer ‘Ik wil hier werken’ deze week</span></div><div class="thr"><div class="tlist">
+<a class="ti on" href="../../src/_na-de-match__10-kandidaat-berichten.html"><span class="logo-sq">BK</span><div><b>Bakkerij De Korenaar</b><p>Linda de Wit · Medewerker bakkerij</p><p>Kies maar wat jou het beste uitkomt.</p></div><span class="n">1</span></a>
+<a class="ti" href="../../src/_na-de-match__10-kandidaat-berichten.html"><span class="logo-sq">GH</span><div><b>Groenland Hoveniers</b><p>Team Groen en onderhoud · gesprek di 27 okt</p><p>Jij: Tot dinsdag!</p></div></a>
+<a class="ti" href="../../src/_na-de-match__10-kandidaat-berichten.html"><span class="logo-sq">WH</span><div><b>Woonzorg Haaglanden</b><p>Algemene ingang · wacht op reactie</p><p>Jij: Bedankt voor de snelle reactie.</p></div></a>
+<div class="tsafe">Je telefoonnummer deel je pas na het gesprek, je bankgegevens pas na een aanbod. Gesprekken van afgeronde sollicitaties staan in het archief.</div>
+</div><div class="tmain">
+<div class="thd"><span class="logo-sq">BK</span><div><b>Linda de Wit · Bakkerij De Korenaar</b><p>Over: Medewerker bakkerij</p></div><a class="lnk" href="sollicitaties-detail.html">Sollicitatie bekijken</a></div>
+<div class="sys">Jullie zeiden allebei ja · 13 oktober</div>
+<div class="msg">Hoi Sanne, leuk dat je wilt komen kennismaken! Ik stuur je vandaag nog een paar momenten.<small>Linda · 13 okt, 15:40</small></div>
+<div class="msg me">Fijn, dank je wel. Ik kijk ernaar uit.<small>Jij · 13 okt, 16:02 · Gelezen door Linda</small></div>
+<div class="sysact"><span>Linda stelde 3 momenten voor · 14 oktober</span><a class="btn btn--primary btn--sm" href="../../src/_na-de-match__04-kandidaat-moment-kiezen.html">Kies een moment</a></div>
+<div class="msg">Kies maar wat jou het beste uitkomt. Je hoeft niets voor te bereiden.<small>Linda · 14 okt, 09:12</small></div>
+<div class="compose"><span>Schrijf een bericht</span><a class="btn btn--primary" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 12 20 4l-6 16-3-7z"/></svg></a></div>
+<p class="safe">Linda ziet je bericht wanneer het haar uitkomt. Je hoeft niet meteen te antwoorden, en zij ook niet.</p>
+</div></div></main>
+<footer class="footer"><nav aria-label="Juridisch"><a href="/privacy">Privacyverklaring</a><a href="/algemene-voorwaarden">Algemene voorwaarden</a><a href="/gebruiksvoorwaarden">Gebruiksvoorwaarden</a><a href="/wie-zijn-wij">Wie zijn wij</a><a href="/toegankelijkheid">Toegankelijkheid</a><a href="/bronnen">Bronnen</a></nav><span>© 2026 Lobsy</span></footer>
+</div></body></html>
