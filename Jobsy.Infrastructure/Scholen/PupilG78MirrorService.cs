@@ -1,6 +1,9 @@
+using System.Net.Http.Json;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
 using Microsoft.Extensions.Logging;
 

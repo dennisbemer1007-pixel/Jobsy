@@ -15,7 +15,6 @@ internal static class PupilPassportGroep78PdfRenderer
     private static readonly Color Ink = Color.FromHex("#3a2d52");
     private static readonly Color Muted = Color.FromHex("#8d83a0");
     private static readonly Color Cover = Color.FromHex("#241538");
-    private static readonly Color Coral = Color.FromHex("#f5503a");
 
     internal static byte[] Render(PupilPassportPdfModel m) => BuildDocument(m).GeneratePdf();
 
