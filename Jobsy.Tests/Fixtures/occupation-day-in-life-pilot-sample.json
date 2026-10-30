@@ -1,0 +1,146 @@
+{
+  "note": "Handmatige B1-voorbeelden (NL + EN) voor 10 diverse ESCO-beroepen. Geen live OpenAI-run; bedoeld als kwaliteitsreferentie voor Dennis.",
+  "model": "gpt-4o",
+  "occupations": [
+    {
+      "escoId": "90f75f67-495d-49fa-ab57-2f320e251d7e",
+      "titleNl": "kok",
+      "nl": {
+        "morning": "Je start met de bestellingen van de dag. Je kijkt wat er bereid moet worden en zet je werkplek klaar.",
+        "closing": "Aan het eind ruim je de keuken op. Je zet spullen weg en sluit af volgens de afspraken.",
+        "varies": "De volgorde van taken en de tijden verschillen per werkgever."
+      },
+      "en": {
+        "morning": "You start with the orders for the day. You see what needs to be cooked and get your work area ready.",
+        "closing": "At the end you clean the kitchen. You put things away and finish according to the rules.",
+        "varies": "The order of tasks and the times differ from one employer to another."
+      }
+    },
+    {
+      "escoId": "0b5dfc02-b825-4445-811d-d39ed442657e",
+      "titleNl": "ambulanceverpleegkundige",
+      "nl": {
+        "morning": "Je controleert de spullen in de ambulance. Je kijkt of alles compleet is voor de ritten van vandaag.",
+        "closing": "Na de dienst vul je materialen aan. Je noteert wat gebruikt is en levert de auto netjes af.",
+        "varies": "Welke ritten je rijdt en met welk team je werkt, hangt af van de roosters van je werkgever."
+      },
+      "en": {
+        "morning": "You check the supplies in the ambulance. You make sure everything is ready for today's trips.",
+        "closing": "After your shift you restock materials. You note what was used and hand over the vehicle in good order.",
+        "varies": "Which trips you drive and which team you work with depends on your employer's schedules."
+      }
+    },
+    {
+      "escoId": "781a6350-e686-45b9-b075-e4c8d5a05ff7",
+      "titleNl": "softwareontwikkelaar voor de cloud",
+      "nl": {
+        "morning": "Je opent je takenlijst. Je bekijkt welke onderdelen van het programma vandaag aangepast moeten worden.",
+        "closing": "Aan het eind zet je je wijzigingen klaar voor controle. Je noteert kort wat je hebt gedaan.",
+        "varies": "Hoe je team werkt en welke tools je gebruikt, verschilt per bedrijf."
+      },
+      "en": {
+        "morning": "You open your task list. You see which parts of the software need changes today.",
+        "closing": "At the end you prepare your changes for review. You write a short note about what you did.",
+        "varies": "How your team works and which tools you use differs from company to company."
+      }
+    },
+    {
+      "escoId": "00674f21-2f8f-4a41-9896-133f7cbe2a6e",
+      "titleNl": "onderwijsassistent basisonderwijs",
+      "nl": {
+        "morning": "Je helpt de klas opstarten. Je zet materialen klaar en ondersteunt leerlingen bij de eerste opdracht.",
+        "closing": "Na school ruim je spullen op. Je bespreekt kort met de docent hoe de dag ging.",
+        "varies": "In welke groep je werkt en welke taken je krijgt, hangt af van de school."
+      },
+      "en": {
+        "morning": "You help the class get started. You prepare materials and support pupils with the first task.",
+        "closing": "After school you tidy up. You briefly talk with the teacher about how the day went.",
+        "varies": "Which class you support and which tasks you get depends on the school."
+      }
+    },
+    {
+      "escoId": "45037d43-a8f5-4f46-b332-b2935bc305f4",
+      "titleNl": "vrachtwagenchauffeur",
+      "nl": {
+        "morning": "Je controleert de vrachtwagen. Je kijkt de route en de lading na voordat je vertrekt.",
+        "closing": "Aan het eind lever je papieren en sleutels in. Je meldt kort of alles goed ging.",
+        "varies": "Routes, laad- en lostijden en rustmomenten verschillen per opdrachtgever."
+      },
+      "en": {
+        "morning": "You check the truck. You review the route and the load before you leave.",
+        "closing": "At the end you hand in papers and keys. You briefly report if everything went well.",
+        "varies": "Routes, loading times and break times differ from one client to another."
+      }
+    },
+    {
+      "escoId": "099c6bb0-22d3-4c5d-8bf5-70910af381ef",
+      "titleNl": "kapper",
+      "nl": {
+        "morning": "Je maakt je werkplek schoon. Je bekijkt wie er op de planning staat en welke behandelingen gepland zijn.",
+        "closing": "Na de laatste klant ruim je op. Je desinfecteert gereedschap en zet alles weg.",
+        "varies": "Openingstijden, prijslijst en extra diensten verschillen per salon."
+      },
+      "en": {
+        "morning": "You clean your work spot. You see who is on the schedule and which treatments are planned.",
+        "closing": "After the last client you tidy up. You disinfect tools and put everything away.",
+        "varies": "Opening hours, prices and extra services differ from salon to salon."
+      }
+    },
+    {
+      "escoId": "23be4cb6-c5e7-449e-8d76-8edfe9a00478",
+      "titleNl": "schoonmaker meubilair",
+      "nl": {
+        "morning": "Je pakt je schoonmaakspullen. Je loopt langs de meubels die vandaag aan de beurt zijn.",
+        "closing": "Aan het eind controleer je of alles droog en netjes is. Je zet materialen weg.",
+        "varies": "Welke ruimtes je doet en welke middelen je gebruikt, hangt af van de opdracht."
+      },
+      "en": {
+        "morning": "You take your cleaning supplies. You walk past the furniture that needs work today.",
+        "closing": "At the end you check that everything is dry and tidy. You store your materials.",
+        "varies": "Which rooms you clean and which products you use depends on the job."
+      }
+    },
+    {
+      "escoId": "02bd7cac-8263-4425-b03d-19001ffe8787",
+      "titleNl": "beheerder van aquacultuurkwekerij",
+      "nl": {
+        "morning": "Je loopt langs de bassins. Je meet waterwaarden en kijkt hoe de dieren eruitzien.",
+        "closing": "Aan het eind noteer je wat je hebt gezien. Je zet voer en materialen op de juiste plek.",
+        "varies": "Welke soorten je verzorgt en hoe vaak je meet, verschilt per kwekerij."
+      },
+      "en": {
+        "morning": "You walk past the tanks. You measure water values and see how the animals look.",
+        "closing": "At the end you write down what you observed. You put feed and materials in the right place.",
+        "varies": "Which species you care for and how often you measure differs from farm to farm."
+      }
+    },
+    {
+      "escoId": "5793c124-c037-47b2-85b6-dd4a705968dc",
+      "titleNl": "politieagent",
+      "nl": {
+        "morning": "Je leest de meldingen van de dienst. Je spreekt af wat je collega's vandaag doen.",
+        "closing": "Aan het eind schrijf je kort je werkzaamheden op. Je levert uitrusting in volgens de regels.",
+        "varies": "Welke taken je krijgt en op welk gebied je werkt, hangt af van het rooster."
+      },
+      "en": {
+        "morning": "You read the reports for your shift. You agree with colleagues what you will do today.",
+        "closing": "At the end you briefly write down your work. You return equipment according to the rules.",
+        "varies": "Which tasks you get and which area you work in depends on the schedule."
+      }
+    },
+    {
+      "escoId": "040fcfa5-24be-43eb-afd5-828297175b16",
+      "titleNl": "magazijnmedewerker kleding",
+      "nl": {
+        "morning": "Je pakt je orderlijst. Je loopt naar de stellingen en zoekt de kledingstukken op.",
+        "closing": "Aan het eind zet je volle bakken klaar voor de volgende stap. Je vinkt je lijst af.",
+        "varies": "Hoe orders binnenkomen en hoe je looptroutes maakt, verschilt per magazijn."
+      },
+      "en": {
+        "morning": "You take your order list. You walk to the racks and find the clothing items.",
+        "closing": "At the end you place full bins ready for the next step. You check off your list.",
+        "varies": "How orders arrive and how pick routes are built differs from warehouse to warehouse."
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Options;
 
 namespace Jobsy.Core.Careers;
 
@@ -169,7 +170,11 @@ public sealed record OccupationDayAdminStatus(
     int GeneratedThisRun,
     int FailedThisRun,
     string? LastError,
-    string? LastEscoId);
+    string? LastEscoId,
+    int DutchComplete = 0,
+    int AllLanguagesComplete = 0,
+    string DefaultModel = OccupationDayInLifeOptions.DefaultModel,
+    OccupationDayBatchEstimate? FillEstimate = null);
 
 public sealed class OccupationDayExportDocument
 {

@@ -7,7 +7,7 @@ public static class OccupationDayInLifePrompt
 {
     public const string System =
         """
-        Je schrijft een typische werkdag voor één beroep. Nederlands, taalniveau B1 of lager. Vriendelijk en helder, niet kinderachtig. Korte zinnen, meestal hooguit 20 woorden.
+        Je schrijft een typische werkdag voor één beroep. Nederlands, taalniveau B1 of lager. Vriendelijk en helder, niet kinderachtig. Ook begrijpelijk voor kinderen van 11 of 12 jaar (groep 7-8): gewone woorden, geen vakjargon. Korte zinnen, meestal hooguit 20 woorden.
 
         Je gebruikt alleen de feiten in het bericht van de gebruiker: de titel, de andere namen, de beschrijving, de vaardigheden en de taken. Dat zijn feiten over het beroep.
 

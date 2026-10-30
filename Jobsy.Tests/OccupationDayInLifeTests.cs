@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Jobsy.Core.Careers;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -27,6 +28,7 @@ public class OccupationDayInLifeTests
         Assert.Contains("geen salaris", prompt, StringComparison.Ordinal);
         Assert.Contains("geen diploma", prompt, StringComparison.Ordinal);
         Assert.Contains("B1", prompt, StringComparison.Ordinal);
+        Assert.Contains("groep 7-8", prompt, StringComparison.Ordinal);
         Assert.Contains("Bron is dun", prompt, StringComparison.Ordinal);
         Assert.Contains("blocks", prompt, StringComparison.Ordinal);
         Assert.Contains("start", prompt, StringComparison.Ordinal);
@@ -391,6 +393,7 @@ public class OccupationDayInLifeTests
         Assert.Equal(["en", "pl", "ro", "ar"], OccupationDayTranslations.TargetLanguages);
         var prompt = OccupationDayTranslationPrompt.System("pl");
         Assert.Contains("B1", prompt, StringComparison.Ordinal);
+        Assert.Contains("11-12", prompt, StringComparison.Ordinal);
         Assert.Contains("Do not add", prompt, StringComparison.Ordinal);
         Assert.Contains("city", prompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("wage", prompt, StringComparison.OrdinalIgnoreCase);
@@ -533,7 +536,83 @@ public class OccupationDayInLifeTests
     [Fact]
     public void Catalog_lists_3039_esco_occupations_for_batch_fill()
     {
-        Assert.Equal(3039, OccupationCatalog.Shared.All.Count);
+        Assert.Equal(3039, OccupationDayBatchPlan.CatalogTotal);
+    }
+
+    [Fact]
+    public void Batch_plan_estimates_openai_cost_for_a_full_catalog_fill()
+    {
+        var estimate = OccupationDayBatchPlan.Estimate(3039);
+        Assert.Equal(OccupationDayInLifeOptions.DefaultModel, estimate.Model);
+        Assert.Equal(3039, estimate.Occupations);
+        Assert.True(estimate.OpenAiCalls > 15_000);
+        Assert.True(estimate.InputTokens > 20_000_000);
+        Assert.True(estimate.EstimatedUsd is > 80 and < 250);
+        Assert.True(estimate.EstimatedDuration.TotalHours is > 8 and < 48);
+    }
+
+    [Fact]
+    public void Stored_counts_track_dutch_and_each_translation_language()
+    {
+        var hash = "abc";
+        var en = OccupationDayTranslations.Serialize(new Dictionary<string, OccupationDayStoredTranslation>
+        {
+            ["en"] = new()
+            {
+                Morning = "a",
+                Midday = "b",
+                Afternoon = "c",
+                Closing = "d",
+                SourceHash = hash
+            }
+        });
+        var rows = new[]
+        {
+            new OccupationDayStoredRow("1", hash, en, "m", "m", "a", "c"),
+            new OccupationDayStoredRow("2", hash, "{}", "m", "m", "a", "c")
+        };
+        var counts = OccupationDayBatchPlan.CountStored(rows);
+        Assert.Equal(2, counts.DutchComplete);
+        Assert.Equal(0, counts.AllLanguagesComplete);
+        Assert.Equal(3039, counts.RemainingComplete);
+        Assert.Equal(1, counts.PerLanguage["en"]);
+        Assert.Equal(2, counts.PerLanguage["nl"]);
+    }
+
+    [Fact]
+    public async Task Generate_waits_between_openai_calls_when_delay_is_configured()
+    {
+        var id = OccupationCatalog.Shared.All[4].Id;
+        await using var db = NewDb();
+        var writer = new ScriptWriter(CleanJson());
+        var generator = new OccupationDayInLifeGenerator(
+            db,
+            writer,
+            new EchoTranslator(),
+            Options.Create(new OccupationDayInLifeOptions { DelayMilliseconds = 40 }),
+            NullLogger<OccupationDayInLifeGenerator>.Instance);
+        var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { id };
+        var started = Environment.TickCount64;
+        var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);
+        var elapsed = Environment.TickCount64 - started;
+        Assert.Equal(1, result.Generated);
+        Assert.True(elapsed >= 120, "Expected delay between compose and translation calls.");
+    }
+
+    [Fact]
+    public void Pilot_sample_lists_ten_diverse_occupations_with_nl_and_en()
+    {
+        var path = Path.Combine(RepoRoot.Find(), "Jobsy.Tests/Fixtures/occupation-day-in-life-pilot-sample.json");
+        using var doc = JsonDocument.Parse(File.ReadAllText(path));
+        var list = doc.RootElement.GetProperty("occupations");
+        Assert.Equal(10, list.GetArrayLength());
+        foreach (var item in list.EnumerateArray())
+        {
+            Assert.True(item.TryGetProperty("nl", out var nl));
+            Assert.True(item.TryGetProperty("en", out var en));
+            Assert.False(string.IsNullOrWhiteSpace(nl.GetProperty("morning").GetString()));
+            Assert.False(string.IsNullOrWhiteSpace(en.GetProperty("morning").GetString()));
+        }
     }
 
     [Fact]
