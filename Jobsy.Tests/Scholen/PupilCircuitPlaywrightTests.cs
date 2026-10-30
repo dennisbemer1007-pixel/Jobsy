@@ -904,6 +904,61 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         WriteSterPuzzelIntroSideBySideComparisons(captureDir);
     }
 
+    [Fact(Timeout = 420_000)]
+    public async Task Groep78_schelpenrij_puzzle_play_capture_three_worlds()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var zeeCapture = "/opt/cursor/artifacts/groep78-zee-puzzel-play-capture";
+        var tuinCapture = "/opt/cursor/artifacts/groep78-tuin-puzzel-play-capture";
+        var sterCapture = "/opt/cursor/artifacts/groep78-ster-puzzel-play-capture";
+        Directory.CreateDirectory(zeeCapture);
+        Directory.CreateDirectory(tuinCapture);
+        Directory.CreateDirectory(sterCapture);
+
+        foreach (var (theme, bandTestId, shellClass, captureDir, builtPrefix) in new[]
+                 {
+                     (PupilJourneyTheme.ZeeExpeditie, "ll-zee-puzzel-play-band", "t-zee", zeeCapture, "zee"),
+                     (PupilJourneyTheme.Eilandtuin, "ll-tuin-puzzel-play-band", "t-tuin", tuinCapture, "tuin"),
+                     (PupilJourneyTheme.Sterrenkust, "ll-ster-puzzel-play-band", "t-ster", sterCapture, "ster"),
+                 })
+        {
+            var seed = await SeedGroep78AtAsync(3, answered: 15, chipsSaved: false, journeyThemeKey: theme);
+            var pupil = seed[0];
+            foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+            {
+                var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height },
+                    IsMobile = width < 600,
+                    HasTouch = width < 600,
+                    DeviceScaleFactor = width < 600 ? 2 : 1,
+                });
+                page.SetDefaultTimeout(90_000);
+                var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+                await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", DomReady);
+                await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();
+                await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", DomReady);
+                await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                await Assertions.Expect(page.Locator($".ll-g78-shell.{shellClass}")).ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator("[data-testid=ll-puzzle-root]")).ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator(".pp-card .vr-qrow [data-read-aloud]")).ToBeVisibleAsync();
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-{builtPrefix}-schelpenrij-play-{tag}.png"),
+                    FullPage = true,
+                });
+                await page.CloseAsync();
+            }
+        }
+
+        WriteZeePuzzelPlaySideBySideComparisons(zeeCapture);
+        WriteTuinPuzzelPlaySideBySideComparisons(tuinCapture);
+        WriteSterPuzzelPlaySideBySideComparisons(sterCapture);
+    }
+
     [Fact(Timeout = 300_000)]
     public async Task Groep78_tuin_vraag_screen_links_and_capture()
     {
@@ -1326,6 +1381,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
                 });
 
+                await Step("Schelpenrij puzzle speakers", async () =>
+                {
+                    await page.Locator(".pp-card .vr-qrow [data-read-aloud]").ClickAsync();
+                    var coach = width >= 600
+                        ? page.Locator(".pp-coach-aside [data-read-aloud]")
+                        : page.Locator(".m-only .guide [data-read-aloud]");
+                    await coach.ClickAsync();
+                });
+
                 await Step("Schelpenrij puzzle controls", async () =>
                 {
                     await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" })).ToBeVisibleAsync();
@@ -1472,6 +1536,51 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     "side-by-side-09-sterrenkust-puzzel-intro-390.png"),
             ]);
 
+    private static void WriteZeePuzzelPlaySideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-zee-puzzel-play-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/03-zee-puzzel-intro.png",
+                    "built-zee-schelpenrij-play-1440.png",
+                    "side-by-side-zee-schelpenrij-play-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/03-zee-puzzel-intro.png",
+                    "built-zee-schelpenrij-play-390.png",
+                    "side-by-side-zee-schelpenrij-play-390.png"),
+            ]);
+
+    private static void WriteTuinPuzzelPlaySideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-tuin-puzzel-play-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/06-eilandtuin-puzzel-intro.png",
+                    "built-tuin-schelpenrij-play-1440.png",
+                    "side-by-side-tuin-schelpenrij-play-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/06-eilandtuin-puzzel-intro.png",
+                    "built-tuin-schelpenrij-play-390.png",
+                    "side-by-side-tuin-schelpenrij-play-390.png"),
+            ]);
+
+    private static void WriteSterPuzzelPlaySideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-ster-puzzel-play-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/09-sterrenkust-puzzel-intro.png",
+                    "built-ster-schelpenrij-play-1440.png",
+                    "side-by-side-ster-schelpenrij-play-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/09-sterrenkust-puzzel-intro.png",
+                    "built-ster-schelpenrij-play-390.png",
+                    "side-by-side-ster-schelpenrij-play-390.png"),
+            ]);
+
     private static void WriteMockupSideBySideComparisons(
         string captureDir,
         string compareDir,
@@ -1522,22 +1631,33 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 RedirectStandardError = true,
             };
             psi.ArgumentList.Add("show");
-            psi.ArgumentList.Add($"pr-878-mockups:{gitPath}");
-            using var proc = System.Diagnostics.Process.Start(psi);
-            if (proc is null)
+            foreach (var gitRef in new[] { "pr-878-mockups", "pr-878" })
             {
-                return;
-            }
+                psi.ArgumentList.Clear();
+                psi.ArgumentList.Add("show");
+                psi.ArgumentList.Add($"{gitRef}:{gitPath}");
+                using var proc = System.Diagnostics.Process.Start(psi);
+                if (proc is null)
+                {
+                    continue;
+                }
 
-            var bytes = proc.StandardOutput.BaseStream;
-            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-            using var fs = File.Create(dest);
-            bytes.CopyTo(fs);
-            proc.WaitForExit(5_000);
+                Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+                using (var fs = File.Create(dest))
+                {
+                    proc.StandardOutput.BaseStream.CopyTo(fs);
+                }
+
+                proc.WaitForExit(5_000);
+                if (proc.ExitCode == 0 && new FileInfo(dest).Length > 0)
+                {
+                    return;
+                }
+            }
         }
         catch
         {
-            // Mockups are optional when pr-878-mockups ref is missing.
+            // Mockups are optional when pr-878 refs are missing.
         }
     }
 

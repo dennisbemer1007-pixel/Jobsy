@@ -1,0 +1,227 @@
+/* Groep 7/8 Schelpenrij play — Zee / Tuin / Ster (derived from mockup 06-puzzel-schelpenrij + intro screens). */
+
+.ll-g78-shell .band.pp {
+  background-image: url("/leerling/werelden/img/rif.jpg");
+  background-position: 68% 75%;
+  background-size: cover;
+  min-height: 300px;
+  padding-top: 130px;
+}
+
+.ll-g78-shell .pp-journey {
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.ll-g78-shell .pp-jmeta {
+  justify-content: flex-start;
+}
+
+.ll-g78-shell .wrap.pp-overlap {
+  margin-top: -24px;
+  position: relative;
+  z-index: 4;
+}
+
+.ll-g78-shell .pp-layout {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 28px;
+  align-items: start;
+}
+
+.ll-g78-shell .pp-layout > * {
+  min-width: 0;
+}
+
+.ll-g78-shell .card.pp-card {
+  padding: 36px 40px;
+}
+
+.ll-g78-shell .pp-title {
+  font-size: 34px;
+  margin: 8px 0 12px;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.ll-g78-shell .pp-hint {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.ll-g78-shell .pp-shell-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  border-radius: 16px;
+  padding: 18px 14px;
+  margin: 8px 0 20px;
+  background: linear-gradient(#e9f3f1, #d7eae8);
+  border: 2px solid #b9d6d2;
+}
+
+.ll-g78-shell .pp-shell {
+  width: 72px;
+  height: 82px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid #b9d6d2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.ll-g78-shell .pp-shell img {
+  max-width: 58px;
+  max-height: 68px;
+  pointer-events: none;
+}
+
+.ll-g78-shell .pp-shell.is-pick {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--coral) 35%, transparent);
+  transform: translateY(-2px);
+}
+
+.ll-g78-shell .pp-shell.is-done {
+  border-color: #2a8f6a;
+}
+
+.ll-g78-shell .pp-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.ll-g78-shell .pp-foot .btn-main {
+  margin-left: auto;
+}
+
+.ll-g78-shell .pp-error {
+  color: #b00020;
+  font-weight: 600;
+  margin: 12px 0 0;
+}
+
+.ll-g78-shell .pp-solved {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #edf8f1;
+  border: 1px solid #b8dfc8;
+  margin: 0 0 16px;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.ll-g78-shell .pp-solved svg {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: #2a8f6a;
+  margin-top: 2px;
+}
+
+.ll-g78-shell.t-tuin .band.pp.pp-tuin {
+  background-image: url("/leerling/werelden/img/tuin-koraal.jpg");
+  background-position: center 82%;
+}
+
+.ll-g78-shell.t-tuin .pp-shell-row {
+  background: linear-gradient(#fbeee2, #f4dcc9);
+  border-color: #e8c6ab;
+}
+
+.ll-g78-shell.t-tuin .pp-shell {
+  border-color: #e8c6ab;
+  background: rgba(255, 250, 244, 0.9);
+}
+
+.ll-g78-shell.t-tuin .vr-journey {
+  background: rgba(58, 34, 48, 0.86);
+  border-color: rgba(232, 185, 138, 0.5);
+}
+
+.ll-g78-shell.t-tuin .vr-jn.is-cur .vr-here {
+  background: var(--coral);
+}
+
+.ll-g78-shell.t-ster .band.pp.pp-ster {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-strand-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-strand-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-strand.jpg") 3x
+  );
+  background-position: center 78%;
+}
+
+.ll-g78-shell.t-ster .pp-shell-row {
+  background: linear-gradient(#1a2446, #2a3763);
+  border: 2px solid #3b4a7a;
+}
+
+.ll-g78-shell.t-ster .pp-shell {
+  border-color: #4a5a8c;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ll-g78-shell.t-ster .pp-shell img {
+  filter: drop-shadow(0 0 6px rgba(230, 225, 200, 0.45));
+}
+
+.ll-g78-shell.t-ster .pp-title,
+.ll-g78-shell.t-ster .pp-hint {
+  color: var(--ink);
+}
+
+.ll-g78-shell.t-ster .vr-journey {
+  background: rgba(20, 28, 54, 0.88);
+  border-color: rgba(217, 199, 154, 0.45);
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell .band.pp {
+    min-height: 190px;
+    padding-top: 118px;
+    background-position: center 75%;
+  }
+
+  .ll-g78-shell .pp-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ll-g78-shell .card.pp-card {
+    padding: 24px 20px;
+  }
+
+  .ll-g78-shell .pp-title {
+    font-size: 26px;
+  }
+
+  .ll-g78-shell .pp-shell {
+    width: 64px;
+    height: 74px;
+  }
+
+  .ll-g78-shell .pp-foot .btn-main {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ll-g78-shell.t-ster .band.pp.pp-ster {
+    min-height: 190px;
+    background-position: center 78%;
+  }
+}

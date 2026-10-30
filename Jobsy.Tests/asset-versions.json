@@ -175,6 +175,10 @@
     "sha256": "0ab24daffc790bf23051b0f5ec335c39c151b39f1af8101bb75d7519e96eeb0d",
     "v": "20261030-catalog"
   },
+  "css/features/leerling-werelden-puzzel-play.css": {
+    "sha256": "1bbf563d6a0237e5b9e7b43f9927f1d07b8717ffb2589754b95f01182f57d8a7",
+    "v": "20261030-catalog"
+  },
   "css/features/leerling-werelden-route.css": {
     "sha256": "8e5c017d003cf6f0dba1d2eab096569b4d2580bfdcf6724434061e64ab21ef9e",
     "v": "20261030-catalog"

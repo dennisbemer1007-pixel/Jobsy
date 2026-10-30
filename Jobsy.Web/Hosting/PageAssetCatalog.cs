@@ -462,6 +462,17 @@ public static class PageAssetCatalog
             ];
         }
 
+        if (path.StartsWith("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css"),
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-vraag.css"),
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-route.css"),
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-puzzel-play.css"),
+            ];
+        }
+
         return [];
     }
 

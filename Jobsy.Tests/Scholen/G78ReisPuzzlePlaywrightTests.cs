@@ -5,7 +5,7 @@ namespace Jobsy.Tests.Scholen;
 /// <summary>
 /// G78 reis puzzels (S2a+S2b): browser load at 1440×900 and 390×844 is covered by
 /// <see cref="PupilCircuitPlaywrightTests.Groep78_schelpenrij_puzzle_loads_under_3_seconds"/>.
-/// This file keeps a fast Chromium check that puzzle markup and scholen.css fit both viewports.
+/// This file keeps a fast Chromium check that themed puzzle markup fits both viewports.
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class G78ReisPuzzlePlaywrightTests
@@ -18,7 +18,12 @@ public sealed class G78ReisPuzzlePlaywrightTests
         var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         Assert.Equal(0, exit);
 
-        var cssPath = Path.Combine(RepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "scholen.css");
+        var cssPaths = new[]
+        {
+            Path.Combine(RepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "leerling-werelden-kies.css"),
+            Path.Combine(RepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "leerling-werelden-vraag.css"),
+            Path.Combine(RepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "leerling-werelden-puzzel-play.css"),
+        };
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
         var page = await browser.NewPageAsync(new BrowserNewPageOptions
@@ -27,17 +32,21 @@ public sealed class G78ReisPuzzlePlaywrightTests
         });
         await page.SetContentAsync("""
             <!DOCTYPE html>
-            <html lang="nl"><body>
-            <section class="ll-card ll-puzzle" data-testid="ll-puzzle-root">
-              <h1 class="ll-question__text">Schelpen op een rij</h1>
-              <div class="ll-puzzle__shells">
-                <button type="button" class="ll-puzzle__shell" data-testid="ll-puzzle-shell"><span class="ll-puzzle__shell-icon" data-size="1"></span></button>
-                <button type="button" class="ll-puzzle__shell" data-testid="ll-puzzle-shell"><span class="ll-puzzle__shell-icon" data-size="3"></span></button>
-              </div>
-              <div class="ll-puzzle__actions">
-                <button type="button" class="btn-secondary">Overslaan</button>
-              </div>
+            <html lang="nl"><body class="ll-g78-shell t-zee">
+            <section class="band pp" data-testid="ll-zee-puzzel-play-band">
+              <div class="pp-journey vr-journey"><div class="vr-jrow"></div></div>
             </section>
+            <div class="wrap pp-overlap">
+              <div class="pp-layout">
+                <div class="card pp-card" data-testid="ll-puzzle-root">
+                  <div class="pp-shell-row">
+                    <button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button>
+                    <button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button>
+                  </div>
+                  <div class="pp-foot"><button type="button" class="btn btn-quiet">Overslaan</button></div>
+                </div>
+              </div>
+            </div>
             </body></html>
             """);
         await page.AddStyleTagAsync(new PageAddStyleTagOptions
@@ -45,15 +54,12 @@ public sealed class G78ReisPuzzlePlaywrightTests
             Content = """
                 * { box-sizing: border-box; }
                 html, body { margin: 0; }
-                :root {
-                  --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px;
-                  --text-sm: 14px; --text-lg: 18px; --text-xl: 22px;
-                  --muted: #5c5348; --text: #3d342b; --surface: #fffaf3; --border: #e6d7c3;
-                  --brand: #c4552a; --radius-md: 8px;
-                }
                 """
         });
-        await page.AddStyleTagAsync(new PageAddStyleTagOptions { Path = cssPath });
+        foreach (var cssPath in cssPaths)
+        {
+            await page.AddStyleTagAsync(new PageAddStyleTagOptions { Path = cssPath });
+        }
 
         var scroll = await page.EvaluateAsync<int>(
             "() => document.documentElement.scrollWidth - document.documentElement.clientWidth");
