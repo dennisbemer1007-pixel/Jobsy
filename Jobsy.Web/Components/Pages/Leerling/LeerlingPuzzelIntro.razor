@@ -44,6 +44,12 @@ else if (string.Equals(_journeyThemeKey, PupilJourneyTheme.Eilandtuin, StringCom
                                  StartHref="@_startHref"
                                  AfterQuestion="@_afterQuestion" />
 }
+else if (string.Equals(_journeyThemeKey, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase))
+{
+    <LeerlingReisSterPuzzleIntro PuzzleKey="@Key"
+                                 StartHref="@_startHref"
+                                 AfterQuestion="@_afterQuestion" />
+}
 else
 {
     <LeerlingReisZeePuzzleIntro PuzzleKey="@Key"

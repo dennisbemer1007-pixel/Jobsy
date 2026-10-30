@@ -324,3 +324,46 @@
     background-position: center 82%;
   }
 }
+
+/* Groep 7/8 screen 09 — Sterrenkust Schelpenrij intro (mockup 09-sterrenkust-puzzel-intro). */
+
+.ll-g78-shell.t-ster .band.pi.pi-ster {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-strand-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-strand-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-strand.jpg") 3x
+  );
+  background-position: center 78%;
+}
+
+.ll-g78-shell.t-ster .pi-prev-row {
+  background: linear-gradient(#1a2446, #2a3763);
+  border: 2px solid #3b4a7a;
+}
+
+.ll-g78-shell.t-ster .pi-slot {
+  border-color: #4a5a8c;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ll-g78-shell.t-ster .pi-slot img {
+  filter: drop-shadow(0 0 6px rgba(230, 225, 200, 0.45));
+}
+
+.ll-g78-shell.t-ster .pi-slot--q {
+  background: rgba(199, 128, 47, 0.12);
+  color: #e8b46a;
+  border-color: #e8b46a;
+}
+
+.ll-g78-shell.t-ster .vr-journey {
+  background: rgba(20, 28, 54, 0.88);
+  border-color: rgba(217, 199, 154, 0.45);
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-ster .band.pi.pi-ster {
+    min-height: 190px;
+    background-position: center 78%;
+  }
+}

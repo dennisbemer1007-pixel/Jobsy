@@ -44,4 +44,10 @@ public sealed class PupilZeePuzzleNavigationTests
     {
         Assert.Equal(1, PupilZeeJourneyBar.IntroNodeIndex("schelpenrij"));
     }
+
+    [Fact]
+    public void IntroNodeIndex_ster_schelpenrij_is_second_stop()
+    {
+        Assert.Equal(1, PupilSterJourneyBar.IntroNodeIndex("schelpenrij"));
+    }
 }

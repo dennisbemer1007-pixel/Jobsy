@@ -847,6 +847,64 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Groep78_ster_puzzel_intro_screen_links_and_capture()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtAsync(
+            3,
+            answered: 15,
+            chipsSaved: false,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var pupil = seed[0];
+        var baseUrl = EnsureWeb();
+        var captureDir = Environment.GetEnvironmentVariable("LEERLING_STER_PUZZEL_INTRO_CAPTURE_DIR")
+            ?? "/opt/cursor/artifacts/groep78-ster-puzzel-intro-capture";
+        Directory.CreateDirectory(captureDir);
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                IsMobile = width < 600,
+                HasTouch = width < 600,
+                DeviceScaleFactor = width < 600 ? 2 : 1,
+            });
+            page.SetDefaultTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+            await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", DomReady);
+            await page.Locator("[data-testid=ll-ster-puzzel-intro-band]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Attached,
+                Timeout = 60_000,
+            });
+            await Assertions.Expect(page.Locator(".ll-g78-shell.t-ster")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("Vind het patroon in de rij schelpen op het maanstrand.")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".pi-foot [data-read-aloud]")).ToBeVisibleAsync();
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(captureDir, $"built-09-sterrenkust-puzzel-intro-{tag}.png"),
+                FullPage = true,
+            });
+
+            var coach = width >= 600
+                ? page.Locator(".pi-coach-aside [data-read-aloud]")
+                : page.Locator(".m-only .guide [data-read-aloud]");
+            await coach.ClickAsync();
+
+            await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", DomReady);
+            await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+            await page.CloseAsync();
+        }
+
+        WriteSterPuzzelIntroSideBySideComparisons(captureDir);
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Groep78_tuin_vraag_screen_links_and_capture()
     {
         _ = TestContext.Current.CancellationToken;
@@ -1249,10 +1307,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     }
 
                     await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", UrlCommitted);
-                    var introBand = theme == PupilJourneyTheme.Eilandtuin
-                        ? "ll-tuin-puzzel-intro-band"
-                        : "ll-zee-puzzel-intro-band";
-                    await page.Locator($"[data-testid={introBand}]").WaitForAsync();
+                    await page.Locator($"[data-testid={PuzzleIntroBandTestId(theme)}]").WaitForAsync();
                 });
 
                 await Step("Puzzle intro speaker", async () =>
@@ -1270,6 +1325,22 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", UrlCommitted);
                     await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
                 });
+
+                await Step("Schelpenrij puzzle controls", async () =>
+                {
+                    await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" })).ToBeVisibleAsync();
+                    var shells = page.Locator("[data-testid=ll-puzzle-shell]");
+                    await shells.Nth(1).ClickAsync();
+                    await shells.Nth(2).ClickAsync();
+                    await Assertions.Expect(page.GetByTestId("ll-puzzle-continue")).ToBeVisibleAsync();
+                });
+
+                await Step("Complete Schelpenrij puzzle", async () =>
+                {
+                    await page.GetByTestId("ll-puzzle-continue").ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
+                    await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                });
             }
             finally
             {
@@ -1283,6 +1354,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var failures = allReport.Where(l => l.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
     }
+
+    private static string PuzzleIntroBandTestId(string theme)
+        => theme switch
+        {
+            var t when string.Equals(t, PupilJourneyTheme.Eilandtuin, StringComparison.Ordinal) => "ll-tuin-puzzel-intro-band",
+            var t when string.Equals(t, PupilJourneyTheme.Sterrenkust, StringComparison.Ordinal) => "ll-ster-puzzel-intro-band",
+            _ => "ll-zee-puzzel-intro-band",
+        };
 
     private static async Task AnswerGroep78ThemedAsync(IPage page)
     {
@@ -1376,6 +1455,21 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     "docs/mockups/leerling/werelden/renders/mobile/08-sterrenkust-vraag.png",
                     "built-08-sterrenkust-vraag-390.png",
                     "side-by-side-08-sterrenkust-vraag-390.png"),
+            ]);
+
+    private static void WriteSterPuzzelIntroSideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-ster-puzzel-intro-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/09-sterrenkust-puzzel-intro.png",
+                    "built-09-sterrenkust-puzzel-intro-1440.png",
+                    "side-by-side-09-sterrenkust-puzzel-intro-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/09-sterrenkust-puzzel-intro.png",
+                    "built-09-sterrenkust-puzzel-intro-390.png",
+                    "side-by-side-09-sterrenkust-puzzel-intro-390.png"),
             ]);
 
     private static void WriteMockupSideBySideComparisons(
