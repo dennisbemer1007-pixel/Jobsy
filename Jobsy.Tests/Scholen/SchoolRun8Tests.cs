@@ -128,6 +128,8 @@ public class SchoolRun8ReadAloudTests : BunitContext
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
         Services.AddSingleton<IAntiforgery>(new AlwaysValidAntiforgery());
         Services.AddSingleton<IPupilQuestionSetRegistry>(new PupilQuestionSetRegistry());
+        Services.AddScoped<Jobsy.Web.Scholen.LeerlingReisShellState>();
+        Services.AddScoped<Jobsy.Web.Scholen.LeerlingGroep78ShellTheme>();
         Services.AddSingleton<IFeatureFlags>(new ReadAloudFeatureFlags());
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://api.test/") }));
     }
@@ -168,8 +170,13 @@ public class SchoolRun8ReadAloudTests : BunitContext
         await AssertSpoken(Render<LeerlingEiland>());
 
         _handler.JsonByPath["/api/pupil/result"] = Json(ResultPage());
+        _handler.JsonByPath["/api/pupil/progress"] = Json(RouteProgress());
         nav.NavigateTo("http://localhost/leerling/dit-ben-jij");
         await AssertSpoken(Render<LeerlingDitBenJij>());
+
+        _handler.JsonByPath["/api/pupil/progress"] = Json(RouteProgress());
+        nav.NavigateTo("http://localhost/leerling/route");
+        await AssertSpoken(Render<LeerlingRoute>());
     }
 
     private static async Task AssertSpoken<TComponent>(IRenderedComponent<TComponent> cut)
@@ -207,6 +214,14 @@ public class SchoolRun8ReadAloudTests : BunitContext
             "9001", "koraalrif", new Dictionary<string, int>(),
             true, false, false, false, [], [], null, null,
             PupilQuestionSet.Groep78, "question");
+
+    private static PupilProgressStateDto RouteProgress()
+        => new(
+            Guid.NewGuid(), "8A", "ABC-123", PupilCodeStatus.NotStarted,
+            0, 60, 0, 0, false,
+            null, null, new Dictionary<string, int>(),
+            true, false, false, false, [], [], null, null,
+            PupilQuestionSet.Groep78, "question", null, PupilJourneyTheme.ZeeExpeditie);
 
     private static PupilProgressStateDto IslandProgress()
         => new(

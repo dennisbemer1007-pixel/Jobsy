@@ -1,0 +1,196 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Scholen
+@inject CultureState Culture
+
+@{
+    var worldKey = Item?.WorldKey ?? State.CurrentWorldKey ?? "koraalrif";
+    var qLabel = Item is null ? "" : Culture[Item.TextKey];
+    var globalQ = State.CurrentIndex + 1;
+    var indexInWorld = Def.IndexInWorld(State.CurrentIndex);
+    var questionInWorld = indexInWorld + 1;
+    var curNode = PupilZeeJourneyBar.CurrentNodeIndex(worldKey, State.Completed);
+    var bandClass = worldKey switch
+    {
+        "schatgrot" => "is-grot",
+        "vuurtoren" => "is-tower",
+        "lagune" => "is-lagoon",
+        _ => "",
+    };
+    var bandImg = PupilZeeJourneyBar.WorldBandImage(worldKey);
+    var kickerKey = PupilZeeJourneyBar.WorldKickerKey(worldKey);
+    var part = PupilZeeJourneyBar.PartNumber(worldKey);
+    var segDone = PupilZeeJourneyBar.SegmentDoneBefore(questionInWorld);
+    var journeyMeta = Culture.Format(
+        "Leerling.Vraag.JourneyMeta",
+        Culture[kickerKey],
+        part,
+        questionInWorld);
+    var coachSpoken = SpokenText.Join("Lobsy", Culture["Leerling.Vraag.Coach"]);
+}
+
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")" data-page-vraag-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-vraag.css")" data-page-vraag-css="true" />
+    <link rel="preload" as="image" href="@bandImg" />
+</HeadContent>
+
+<section class="band vr @bandClass" data-testid="ll-zee-vraag-band">
+    <div class="vr-journey" aria-label="@Culture["Leerling.Vraag.JourneyAria"]">
+        <div class="vr-jrow">
+            <span class="vr-jdone" style="width:@PupilZeeJourneyBar.DoneLineWidth(curNode)"></span>
+            @for (var i = 0; i < PupilZeeJourneyBar.Nodes.Count; i++)
+            {
+                var node = PupilZeeJourneyBar.Nodes[i];
+                var done = i < curNode;
+                var current = i == curNode;
+                var cls = "vr-jn"
+                          + (node.IsPuzzle ? " is-puzzle" : "")
+                          + (node.IsResult ? " is-result" : "")
+                          + (done ? " is-done" : "")
+                          + (current ? " is-cur" : "");
+                <div class="@cls">
+                    @if (current)
+                    {
+                        <span class="vr-here">@Culture["Leerling.Route.Here"]</span>
+                    }
+                    @if (node.IsPuzzle)
+                    {
+                        <span class="dot" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 3a2 2 0 014 0v2h4a1 1 0 011 1v4h-2a2 2 0 000 4h2v4a1 1 0 01-1 1h-4v-2a2 2 0 00-4 0v2H6a1 1 0 01-1-1v-4h2a2 2 0 000-4H5V6a1 1 0 011-1h4V3z"/></svg>
+                        </span>
+                    }
+                    else if (node.IsResult)
+                    {
+                        <span class="dot" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <span class="dot" style="background-image:url(@(node.ImageUrl))" aria-hidden="true"></span>
+                    }
+                    <b>@Culture[node.TitleKey]</b>
+                </div>
+            }
+        </div>
+        <div class="vr-jmeta">
+            <span>@journeyMeta</span>
+            <div class="vr-seg" aria-hidden="true">
+                @for (var k = 0; k < 15; k++)
+                {
+                    var segCls = k < segDone ? "is-f" : k == segDone ? "is-c" : "";
+                    <i class="@segCls"></i>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="wrap vr-overlap">
+    <div class="vr-layout">
+        <div class="card vr-q" role="group" aria-labelledby="ll-zee-q-title">
+            <div class="vr-qmeta">
+                <span class="kicker">@Culture[kickerKey]</span>
+                <span aria-hidden="true">·</span>
+                <span>@Culture.Format("Leerling.Reis.QuestionOf", globalQ, State.TotalItems)</span>
+            </div>
+            <h1 id="ll-zee-q-title" class="vr-qtitle">@qLabel</h1>
+            <div class="vr-qrow">
+                <LeerlingSpeak Text="@qLabel"
+                               SpeechKey="@($"ll-q-{Item?.Id}")"
+                               AlwaysShow="true"
+                               AutoPlay="true" />
+                <span class="speak-label">@Culture["Leerling.Vraag.ReadQuestion"]</span>
+            </div>
+
+            <LeerlingGroep78AnswerScale Labels="Def.AnswerLabels"
+                                        Selected="Selected"
+                                        OnSelect="OnSelect"
+                                        GroupLabel="@Culture["Leerling.Reis.Answers"]"
+                                        Disabled="Busy" />
+
+            @if (Offline)
+            {
+                <p class="vr-error" role="alert">@Culture["Leerling.Reis.Offline"]</p>
+                <button type="button" class="btn-ghost" disabled="@Busy" @onclick="OnReload">
+                    @Culture["Leerling.Reis.Retry"]
+                </button>
+            }
+            else if (!string.IsNullOrEmpty(SaveError))
+            {
+                <p class="vr-error" role="alert">@SaveError</p>
+            }
+            else if (Saved)
+            {
+                <p class="vr-saved">@Culture["Leerling.Reis.Saved"]</p>
+            }
+
+            <div class="vr-qfoot">
+                <button type="button"
+                        class="btn-ghost @(_prevTap ? "is-tapped" : null)"
+                        data-testid="ll-vraag-prev"
+                        disabled="@Busy"
+                        @onpointerdown="() => _prevTap = true"
+                        @onpointerup="ClearPrevTap"
+                        @onpointerleave="ClearPrevTap"
+                        @onpointercancel="ClearPrevTap"
+                        @onclick="OnPrev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                    @Culture["Leerling.Reis.Prev"]
+                </button>
+            </div>
+        </div>
+
+        <aside class="d-only vr-coach-aside">
+            <div class="bubble tail-b">
+                <span class="who">Lobsy</span>
+                @Culture["Leerling.Vraag.Coach"]
+                <div class="bt">
+                    <LeerlingSpeak Text="@coachSpoken" SpeechKey="ll-vraag-coach" AlwaysShow="true" />
+                    <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                </div>
+            </div>
+            <img class="vr-lob"
+                 src="/leerling/werelden/img/kreeft-welkom.png"
+                 width="250"
+                 height="250"
+                 alt=""
+                 decoding="async"
+                 loading="lazy" />
+        </aside>
+
+        <div class="m-only" style="margin-top:18px">
+            <div class="guide">
+                <div class="ring" role="img" aria-label="Lobsy"></div>
+                <div class="bubble tail-l">
+                    <span class="who">Lobsy</span>
+                    @Culture["Leerling.Vraag.Coach"]
+                    <div class="bt">
+                        <LeerlingSpeak Text="@coachSpoken" SpeechKey="ll-vraag-coach-m" AlwaysShow="true" />
+                        <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public PupilProgressStateDto State { get; set; } = default!;
+    [Parameter] public PupilQuestionSetDef Def { get; set; } = default!;
+    [Parameter] public PupilQuestionItem? Item { get; set; }
+    [Parameter] public int? Selected { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Saved { get; set; }
+    [Parameter] public bool Offline { get; set; }
+    [Parameter] public string? SaveError { get; set; }
+    [Parameter] public EventCallback<int> OnSelect { get; set; }
+    [Parameter] public EventCallback OnPrev { get; set; }
+    [Parameter] public EventCallback OnReload { get; set; }
+
+    private bool _prevTap;
+
+    private void ClearPrevTap() => _prevTap = false;
+}

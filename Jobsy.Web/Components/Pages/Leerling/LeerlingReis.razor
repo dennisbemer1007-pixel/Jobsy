@@ -1,10 +1,12 @@
 @page "/leerling/reis"
-@layout LeerlingLayout
+@layout LeerlingReisLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
@@ -14,10 +16,15 @@
 @inject IJSRuntime Js
 @inject IPupilQuestionSetRegistry Registry
 @inject IServiceProvider Services
+@inject LeerlingReisShellState ShellState
+@inject LeerlingGroep78ShellTheme ShellTheme
 
 <PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
 
-<LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
+@if (ShellState.Mode == LeerlingReisShellMode.Classic)
+{
+    <LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
+}
 
 @if (_windowClosed)
 {
@@ -54,6 +61,48 @@ else if (_state.Completed)
         <p>@Culture["Leerling.Reis.DoneLead"]</p>
         <a class="btn-primary" href="/leerling/dit-ben-jij">@Culture["Leerling.Reis.ToResult"]</a>
     </section>
+}
+else if (ShellState.Mode == LeerlingReisShellMode.ZeeExpeditie)
+{
+    <LeerlingReisZeeQuestion State="_state"
+                             Def="_def"
+                             Item="_current"
+                             Selected="_selected"
+                             Busy="_busy"
+                             Saved="@_saved"
+                             SaveError="@_saveError"
+                             Offline="_offline"
+                             OnSelect="SelectAnswer"
+                             OnPrev="GoPrevThemed"
+                             OnReload="Reload" />
+}
+else if (ShellState.Mode == LeerlingReisShellMode.Eilandtuin)
+{
+    <LeerlingReisTuinQuestion State="_state"
+                              Def="_def"
+                              Item="_current"
+                              Selected="_selected"
+                              Busy="_busy"
+                              Saved="@_saved"
+                              SaveError="@_saveError"
+                              Offline="_offline"
+                              OnSelect="SelectAnswer"
+                              OnPrev="GoPrevThemed"
+                              OnReload="Reload" />
+}
+else if (ShellState.Mode == LeerlingReisShellMode.Sterrenkust)
+{
+    <LeerlingReisSterQuestion State="_state"
+                              Def="_def"
+                              Item="_current"
+                              Selected="_selected"
+                              Busy="_busy"
+                              Saved="@_saved"
+                              SaveError="@_saveError"
+                              Offline="_offline"
+                              OnSelect="SelectAnswer"
+                              OnPrev="GoPrevThemed"
+                              OnReload="Reload" />
 }
 else
 {
@@ -188,7 +237,6 @@ else
     private bool _busy;
     private bool _cheerToast;
     private int _platesSeen = int.MinValue;
-
     protected override async Task OnInitializedAsync()
     {
         await Reload();
@@ -234,6 +282,21 @@ else
         _state = state;
         _offline = false;
         _def = Registry.Get(state.QuestionSet);
+        ShellState.Mode = ShellModeFor(state);
+        if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie
+            or LeerlingReisShellMode.Eilandtuin
+            or LeerlingReisShellMode.Sterrenkust)
+        {
+            ShellTheme.ApplyJourney(state.JourneyThemeKey!, routeHeader: true);
+        }
+
+        if (state.QuestionSet == PupilQuestionSet.Groep78
+            && !PupilJourneyTheme.IsValid(state.JourneyThemeKey))
+        {
+            _leaving = true;
+            Nav.NavigateTo(PupilGroep78EntryPaths.Wereld, replace: true);
+            return;
+        }
 
         if (!state.WindowOpen && !state.Completed)
         {
@@ -254,11 +317,15 @@ else
             return;
         }
 
-        if (string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
-            && PupilPuzzleRoutes.IsBuilt(state.NextPuzzleKey))
+        var puzzlePath = PupilZeePuzzleNavigation.TargetPath(
+            state.QuestionSet,
+            state.JourneyThemeKey,
+            state.NextStep,
+            state.NextPuzzleKey);
+        if (puzzlePath is not null)
         {
             _leaving = true;
-            Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(state.NextPuzzleKey!)}");
+            Nav.NavigateTo(puzzlePath);
             return;
         }
 
@@ -381,11 +448,15 @@ else
                 return;
             }
 
-            if (string.Equals(result.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
-                && PupilPuzzleRoutes.IsBuilt(result.NextPuzzleKey))
+            var puzzlePath = PupilZeePuzzleNavigation.TargetPath(
+                _state!.QuestionSet,
+                _state.JourneyThemeKey,
+                result.NextStep,
+                result.NextPuzzleKey);
+            if (puzzlePath is not null)
             {
                 _leaving = true;
-                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(result.NextPuzzleKey!)}");
+                Nav.NavigateTo(puzzlePath);
                 return;
             }
 
@@ -410,23 +481,82 @@ else
         }
     }
 
-    private async Task GoPrev()
+    private Task GoPrevThemed()
     {
-        if (_state is null || _def is null || _state.CurrentIndex <= 0)
+        if (_state is null || _def is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        var prev = _def.Bank.GetByGlobalIndex(_state.CurrentIndex - 1);
+        var activeIndex = ActiveQuestionIndex();
+        if (activeIndex <= 0)
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Route);
+            return Task.CompletedTask;
+        }
+
+        return GoPrev();
+    }
+
+    private Task GoPrev()
+    {
+        if (_state is null || _def is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var activeIndex = ActiveQuestionIndex();
+        if (activeIndex <= 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        var prev = _def.Bank.GetByGlobalIndex(activeIndex - 1);
         if (prev is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
+        _state = _state with
+        {
+            CurrentIndex = prev.GlobalIndex,
+            CurrentItemId = prev.Id,
+            CurrentWorldKey = prev.WorldKey,
+        };
         _current = prev;
         _selected = _state.Answers.TryGetValue(prev.Id, out var v) ? v : null;
+        _saved = false;
+        _saveError = null;
         _infoOpen = false;
-        await Task.CompletedTask;
+        return Task.CompletedTask;
+    }
+
+    private int ActiveQuestionIndex()
+        => _current?.GlobalIndex ?? _state?.CurrentIndex ?? 0;
+
+    private static LeerlingReisShellMode ShellModeFor(PupilProgressStateDto state)
+    {
+        if (state.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            return LeerlingReisShellMode.Classic;
+        }
+
+        if (string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase))
+        {
+            return LeerlingReisShellMode.ZeeExpeditie;
+        }
+
+        if (string.Equals(state.JourneyThemeKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase))
+        {
+            return LeerlingReisShellMode.Eilandtuin;
+        }
+
+        if (string.Equals(state.JourneyThemeKey, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase))
+        {
+            return LeerlingReisShellMode.Sterrenkust;
+        }
+
+        return LeerlingReisShellMode.Classic;
     }
 
     private void ToggleInfo() => _infoOpen = !_infoOpen;

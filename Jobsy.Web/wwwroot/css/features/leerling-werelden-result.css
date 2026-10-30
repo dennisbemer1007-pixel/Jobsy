@@ -1,0 +1,296 @@
+/* Groep 7/8 screen 10 — Dit ben jij result (mockups 10-*-result). */
+
+.ll-g78-shell .band.rs {
+  background-image: url("/leerling/werelden/img/lagune.jpg");
+  background-position: center 40%;
+  background-size: cover;
+  min-height: 460px;
+  padding-top: 36px;
+}
+
+.ll-g78-shell .band.rs.rs-tuin {
+  background-image: url("/leerling/werelden/img/dot-tuin-6.jpg");
+  background-position: center 55%;
+}
+
+.ll-g78-shell .band.rs.rs-ster {
+  background-image: url("/leerling/werelden/img/dot-ster-5.jpg");
+  background-position: center 45%;
+}
+
+.ll-g78-shell .rs-jmeta b {
+  font-weight: 700;
+}
+
+.ll-g78-shell .rs-hdr {
+  display: flex;
+  align-items: flex-end;
+  margin-top: 28px;
+  margin-bottom: 8px;
+}
+
+.ll-g78-shell .rs-title {
+  background: rgba(16, 40, 74, 0.88);
+  border: 1px solid rgba(226, 194, 122, 0.55);
+  border-radius: 20px;
+  padding: 18px 28px;
+  color: #fff;
+}
+
+.ll-g78-shell .pill-done {
+  display: inline-block;
+  background: var(--ok);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-bottom: 8px;
+}
+
+.ll-g78-shell .rs-h {
+  font-size: 52px;
+  color: #ffd98a;
+  margin: 0;
+}
+
+.ll-g78-shell .rs-overlap {
+  position: relative;
+  z-index: 4;
+  margin-top: -20px;
+}
+
+.ll-g78-shell .rs-layout {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 28px;
+  align-items: start;
+}
+
+.ll-g78-shell .rs-layout > * {
+  min-width: 0;
+}
+
+.ll-g78-shell .rs-story-body {
+  font-size: 21px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ll-g78-shell .rs-story-card {
+  margin-bottom: 24px;
+}
+
+.ll-g78-shell .rs-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.ll-g78-shell .rs-tile {
+  background: #fff;
+  border: 1px solid #e4d7bf;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(16, 40, 74, 0.08);
+}
+
+.ll-g78-shell .rs-tile-img {
+  height: 120px;
+  background-size: cover;
+  background-position: center;
+}
+
+.ll-g78-shell .rs-tile-body {
+  padding: 16px 18px;
+}
+
+.ll-g78-shell .rs-tile-body .kicker {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 700;
+  margin: 0;
+}
+
+.ll-g78-shell .rs-tile-txt {
+  font-size: 16px;
+  color: var(--muted);
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
+.ll-g78-shell .rs-tile-body .read-aloud.read-aloud--icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  margin-top: 10px;
+}
+
+.ll-g78-shell .rs-sub {
+  font-family: "Lexend", sans-serif;
+  font-size: 21px;
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.ll-g78-shell .rs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.ll-g78-shell .rs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #d8e8e4;
+  background: #fff;
+  color: var(--ink);
+}
+
+.ll-g78-shell .rs-chip.is-on {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.ll-g78-shell .rs-chip.is-on::before {
+  content: "✓";
+  font-weight: 700;
+}
+
+.ll-g78-shell .rs-likes-card {
+  margin-top: 24px;
+}
+
+.ll-g78-shell .rs-note {
+  margin-top: 22px;
+}
+
+.ll-g78-shell .rs-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+  align-items: stretch;
+}
+
+/* Outlined actions (mockup); overrides question-page .btn-ghost text links. */
+.ll-g78-shell .rs-foot .btn.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  border: 2px solid var(--navy);
+  color: var(--navy);
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+  box-sizing: border-box;
+  width: auto;
+  min-height: 52px;
+  margin-top: 0;
+  cursor: pointer;
+}
+
+.ll-g78-shell .rs-foot .btn.btn-ghost:active,
+.ll-g78-shell .rs-foot .btn.btn-ghost.is-tapped {
+  transform: scale(0.985);
+  filter: brightness(0.97);
+}
+
+.ll-g78-shell .rs-foot .btn-main {
+  margin-left: auto;
+  margin-top: 0;
+  width: auto;
+  min-width: min(100%, 360px);
+}
+
+.ll-g78-shell .rs-coach-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ll-g78-shell .rs-coach-aside .rs-lob {
+  margin-top: 22px;
+  width: 250px;
+  height: auto;
+}
+
+.ll-g78-shell .d-only.rs-coach-aside {
+  display: flex;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell .band.rs {
+    min-height: 300px;
+  }
+
+  .ll-g78-shell .rs-h {
+    font-size: 38px !important;
+  }
+
+  .ll-g78-shell .rs-hdr {
+    margin-top: 16px;
+  }
+
+  .ll-g78-shell .rs-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ll-g78-shell .rs-tiles {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .ll-g78-shell .rs-tile-img {
+    height: 80px !important;
+  }
+
+  .ll-g78-shell .rs-tile-body {
+    padding: 12px !important;
+  }
+
+  .ll-g78-shell .rs-tile-txt {
+    font-size: 15px;
+  }
+
+  .ll-g78-shell .rs-foot {
+    gap: 10px;
+  }
+
+  .ll-g78-shell .rs-foot .btn-main {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0 !important;
+    order: -1;
+  }
+
+  .ll-g78-shell .rs-foot .btn.btn-ghost {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+    width: auto;
+    padding: 14px 12px;
+    font-size: 16px;
+  }
+
+  .ll-g78-shell .m-only.rs-mobile-coach {
+    order: -1;
+    margin-bottom: 18px;
+  }
+}
