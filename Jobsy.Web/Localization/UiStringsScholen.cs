@@ -574,13 +574,18 @@ public static class UiStringsScholen
         nl["Leerling.Puzzle.Vuurtoren.Lamp"] = "Lamp {0}";
         // —— Pauze-eiland chips ——
         nl["Leerling.Island.Title"] = "Pauze-eiland";
-        nl["Leerling.Island.Lead"] = "Even uitrusten. Waar word jij blij van?";
+        nl["Leerling.Island.Lead"] = "Even rust. Waar word jij blij van?";
+        nl["Leerling.Island.G78.SubLikes"] = "Wat jij leuk vindt";
+        nl["Leerling.Island.G78.Step1"] = "Stap 1 van 2";
+        nl["Leerling.Island.G78.BandMeta"] = "· {0} · even rust · stap 1 van 2";
+        nl["Leerling.Island.G78.Coach"] = "Je bent halverwege. Kies wat jij leuk vindt. Je mag ook niks kiezen.";
+        nl["Leerling.Island.ReadLead"] = "Lobsy leest de tekst voor";
         nl["Leerling.Island.Likes"] = "Wat vind jij leuk?";
         nl["Leerling.Island.Dislikes"] = "Wat vind je níet leuk?";
         nl["Leerling.Island.Other"] = "Iets anders";
         nl["Leerling.Island.OtherHint"] = "Typ geen namen (ook niet je eigen naam), adres of telefoonnummer.";
         nl["Leerling.Island.OtherPlaceholder"] = "bijv. paardrijden";
-        nl["Leerling.Island.Continue"] = "Klaar, verder";
+        nl["Leerling.Island.Continue"] = "Klaar, verder!";
         nl["Leerling.Island.ProgressLabel"] = "Voortgang reis";
         nl["Leerling.Island.ToWorld3"] = "Door naar wereld 3";
         nl["Leerling.Island.NameRejected"] = "Dat lijkt op een naam. Kies liever een knop.";

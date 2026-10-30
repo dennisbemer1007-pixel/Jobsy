@@ -124,17 +124,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
             if (page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
             {
-                var likes = page.Locator("fieldset.ll-chips").Nth(0);
-                var dislikes = page.Locator("fieldset.ll-chips").Nth(1);
-                var sport = likes.GetByRole(AriaRole.Button, new() { Name = "Sport", Exact = true });
-                var rekenen = dislikes.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true });
-                await sport.ClickAsync();
-                await Assertions.Expect(sport).ToHaveClassAsync(new Regex(@"\bis-on\b"));
-                await rekenen.ClickAsync();
-                await Assertions.Expect(rekenen).ToHaveClassAsync(new Regex(@"\bis-on\b"));
-                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
-                await page.WaitForFunctionAsync(
-                    "() => !location.pathname.includes('/leerling/eiland')");
+                await CompleteGroep78IslandAsync(page);
                 continue;
             }
 
@@ -530,7 +520,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await page.WaitForURLAsync(
                 url => url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
                 UrlCommitted);
-            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
+            await CompleteGroep78IslandAsync(page);
             await page.WaitForURLAsync(
                 url => url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
                     && !url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
@@ -1424,6 +1414,65 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         }
     }
 
+    [Fact(Timeout = 420_000)]
+    public async Task Groep78_eiland_11a_capture_three_worlds()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var zeeCapture = "/opt/cursor/artifacts/groep78-zee-eiland-11a-capture";
+        var tuinCapture = "/opt/cursor/artifacts/groep78-tuin-eiland-11a-capture";
+        var sterCapture = "/opt/cursor/artifacts/groep78-ster-eiland-11a-capture";
+        Directory.CreateDirectory(zeeCapture);
+        Directory.CreateDirectory(tuinCapture);
+        Directory.CreateDirectory(sterCapture);
+
+        foreach (var (theme, bandTestId, shellClass, captureDir, builtPrefix) in new[]
+                 {
+                     (PupilJourneyTheme.ZeeExpeditie, "ll-zee-eiland-band", "t-zee", zeeCapture, "zee"),
+                     (PupilJourneyTheme.Eilandtuin, "ll-tuin-eiland-band", "t-tuin", tuinCapture, "tuin"),
+                     (PupilJourneyTheme.Sterrenkust, "ll-ster-eiland-band", "t-ster", sterCapture, "ster"),
+                 })
+        {
+            var seed = await SeedGroep78AtAsync(
+                1,
+                answered: 30,
+                chipsSaved: false,
+                completeActivePuzzleGate: true,
+                journeyThemeKey: theme);
+            var pupil = seed[0];
+            foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+            {
+                var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height },
+                    IsMobile = width < 600,
+                    HasTouch = width < 600,
+                    DeviceScaleFactor = width < 600 ? 2 : 1,
+                });
+                page.SetDefaultTimeout(90_000);
+                var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+                await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+                await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator($".ll-g78-shell.{shellClass}")).ToBeVisibleAsync();
+                await page.GetByTestId("ll-island-chip-dieren").ClickAsync();
+                await page.GetByTestId("ll-island-chip-tekenen").ClickAsync();
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-11a-{builtPrefix}-pauze-leuk-{tag}.png"),
+                    FullPage = true,
+                });
+                await page.CloseAsync();
+            }
+        }
+
+        WriteZeeEiland11aSideBySideComparisons(zeeCapture);
+        WriteTuinEiland11aSideBySideComparisons(tuinCapture);
+        WriteSterEiland11aSideBySideComparisons(sterCapture);
+    }
+
     [Fact(Timeout = 2_400_000)]
     public async Task Groep78_full_pupil_journey_three_worlds_1440_and_390()
     {
@@ -1652,6 +1701,66 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
                 });
 
+                await Step("Reach Pauze-eiland 11a", async () =>
+                {
+                    for (var i = 0; i < 40
+                         && !page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase); i++)
+                    {
+                        await AnswerGroep78ThemedAsync(page);
+                    }
+
+                    await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+                    await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
+                    await page.Locator($"[data-testid={IslandBandTestId(theme)}]").WaitForAsync();
+                });
+
+                await Step("Island 11a lead speaker", async () =>
+                {
+                    await page.Locator(".vr-qrow [data-read-aloud]").First.ClickAsync();
+                });
+
+                await Step("Island 11a coach speaker", async () =>
+                {
+                    var coach = width >= 600
+                        ? page.Locator(".vr-coach-aside [data-read-aloud]")
+                        : page.Locator(".m-only .guide [data-read-aloud]");
+                    await coach.ClickAsync();
+                });
+
+                await Step("Island 11a every like chip", async () =>
+                {
+                    var chips = page.Locator("[data-testid^=ll-island-chip-]");
+                    var count = await chips.CountAsync();
+                    Assert.True(count >= PupilInterestChipCatalog.LikeChips.Count);
+                    for (var c = 0; c < count; c++)
+                    {
+                        await chips.Nth(c).ClickAsync();
+                    }
+                });
+
+                await Step("Island 11a Vorige to reis and back", async () =>
+                {
+                    await page.GetByTestId("ll-eiland-prev").ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
+                    await AnswerGroep78ThemedAsync(page);
+                    await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+                    await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
+                });
+
+                await Step("Island 11a Verder to stap 2", async () =>
+                {
+                    await page.GetByTestId("ll-eiland-continue").ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/eiland/stap-2**", UrlCommitted);
+                });
+
+                await Step("Island stap 2 finish", async () =>
+                {
+                    await page.Locator("fieldset.ll-chips").First
+                        .GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true }).ClickAsync();
+                    await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
+                });
+
                 var reachedResult = false;
                 await Step("Finish journey to Dit ben jij", async () =>
                 {
@@ -1790,6 +1899,57 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             _ => "ll-zee-result-band",
         };
 
+    private static string IslandBandTestId(string theme)
+        => theme switch
+        {
+            var t when string.Equals(t, PupilJourneyTheme.Eilandtuin, StringComparison.Ordinal) => "ll-tuin-eiland-band",
+            var t when string.Equals(t, PupilJourneyTheme.Sterrenkust, StringComparison.Ordinal) => "ll-ster-eiland-band",
+            _ => "ll-zee-eiland-band",
+        };
+
+    private static async Task CompleteGroep78IslandAsync(IPage page)
+    {
+        var themedLeuk = page.Locator("[data-testid=ll-eiland-leuk-card]");
+        if (await themedLeuk.CountAsync() > 0)
+        {
+            await page.GetByTestId("ll-island-chip-sport").ClickAsync();
+            await page.GetByTestId("ll-island-chip-dieren").ClickAsync();
+            await page.Locator(".vr-qrow [data-read-aloud]").First.ClickAsync();
+            var coach = page.Locator(".vr-coach-aside [data-read-aloud], .m-only .guide [data-read-aloud]").First;
+            if (await coach.CountAsync() > 0)
+            {
+                await coach.ClickAsync();
+            }
+
+            await page.GetByTestId("ll-eiland-continue").ClickAsync();
+            await page.WaitForURLAsync("**/leerling/eiland/stap-2**", UrlCommitted);
+            var dislikes = page.Locator("fieldset.ll-chips").First;
+            await dislikes.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+            await page.WaitForFunctionAsync("() => !location.pathname.includes('/leerling/eiland')");
+            return;
+        }
+
+        var likes = page.Locator("fieldset.ll-chips").Nth(0);
+        var dislikesClassic = page.Locator("fieldset.ll-chips").Nth(1);
+        if (await dislikesClassic.CountAsync() == 0)
+        {
+            dislikesClassic = page.Locator("fieldset.ll-chips").First;
+            await likes.GetByRole(AriaRole.Button, new() { Name = "Sport", Exact = true }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/eiland/stap-2**", UrlCommitted);
+            await dislikesClassic.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true }).ClickAsync();
+        }
+        else
+        {
+            await likes.GetByRole(AriaRole.Button, new() { Name = "Sport", Exact = true }).ClickAsync();
+            await dislikesClassic.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true }).ClickAsync();
+        }
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+        await page.WaitForFunctionAsync("() => !location.pathname.includes('/leerling/eiland')");
+    }
+
     private static async Task AdvanceGroep78UntilResultAsync(IPage page, int maxSteps = 280)
     {
         for (var step = 0; step < maxSteps; step++)
@@ -1801,14 +1961,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
             if (page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
             {
-                var likes = page.Locator("fieldset.ll-chips").Nth(0);
-                var dislikes = page.Locator("fieldset.ll-chips").Nth(1);
-                var sport = likes.GetByRole(AriaRole.Button, new() { Name = "Sport", Exact = true });
-                var rekenen = dislikes.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true });
-                await sport.ClickAsync();
-                await rekenen.ClickAsync();
-                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
-                await page.WaitForFunctionAsync("() => !location.pathname.includes('/leerling/eiland')");
+                await CompleteGroep78IslandAsync(page);
                 continue;
             }
 
@@ -2221,6 +2374,51 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     "docs/mockups/leerling/werelden/renders/mobile/09-sterrenkust-puzzel-intro.png",
                     "built-ster-schelpenrij-play-390.png",
                     "side-by-side-ster-schelpenrij-play-390.png"),
+            ]);
+
+    private static void WriteZeeEiland11aSideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-zee-eiland-11a-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/11a-zee-pauze-leuk.png",
+                    "built-11a-zee-pauze-leuk-1440.png",
+                    "side-by-side-11a-zee-pauze-leuk-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/11a-zee-pauze-leuk.png",
+                    "built-11a-zee-pauze-leuk-390.png",
+                    "side-by-side-11a-zee-pauze-leuk-390.png"),
+            ]);
+
+    private static void WriteTuinEiland11aSideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-tuin-eiland-11a-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/11a-eilandtuin-pauze-leuk.png",
+                    "built-11a-tuin-pauze-leuk-1440.png",
+                    "side-by-side-11a-eilandtuin-pauze-leuk-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/11a-eilandtuin-pauze-leuk.png",
+                    "built-11a-tuin-pauze-leuk-390.png",
+                    "side-by-side-11a-eilandtuin-pauze-leuk-390.png"),
+            ]);
+
+    private static void WriteSterEiland11aSideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-ster-eiland-11a-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/11a-sterrenkust-pauze-leuk.png",
+                    "built-11a-ster-pauze-leuk-1440.png",
+                    "side-by-side-11a-sterrenkust-pauze-leuk-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/11a-sterrenkust-pauze-leuk.png",
+                    "built-11a-ster-pauze-leuk-390.png",
+                    "side-by-side-11a-sterrenkust-pauze-leuk-390.png"),
             ]);
 
     private static void WriteZeeResultSideBySideComparisons(string captureDir)

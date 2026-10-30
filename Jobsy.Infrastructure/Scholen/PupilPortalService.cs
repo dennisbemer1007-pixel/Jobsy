@@ -710,17 +710,27 @@ public sealed class PupilPortalService : IPupilPortalService
         progress.DislikesJson = JsonSerializer.Serialize(dislikes);
         progress.LikeOtherWord = likeOther;
         progress.DislikeOtherWord = dislikeOther;
-        progress.ChipsSavedAtUtc = now;
+        if (request.FinalizeIsland)
+        {
+            progress.ChipsSavedAtUtc = now;
+        }
+
         progress.UpdatedAtUtc = now;
         code.LastSeenAtUtc = now;
 
         var def = _registry.ForClass(schoolClass);
-        var nextIndex = FirstUnansweredIndex(def, progress.AnswersJson);
-        progress.CurrentIndex = nextIndex;
+        var answers = ParseAnswers(progress.AnswersJson);
+        var puzzles = ParsePuzzles(progress.PuzzlesJson);
+        var islandDone = progress.ChipsSavedAtUtc is not null;
+        if (request.FinalizeIsland)
+        {
+            var nextIndex = FirstUnansweredIndex(def, progress.AnswersJson);
+            progress.CurrentIndex = nextIndex;
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
 
-        var answers = ParseAnswers(progress.AnswersJson);
-        var step = PupilFlow.Next(def, answers, islandDone: true, ParsePuzzles(progress.PuzzlesJson));
+        var step = PupilFlow.Next(def, answers, islandDone, puzzles);
         return (new PupilChipsResponse(
             true,
             step.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : step.Index,

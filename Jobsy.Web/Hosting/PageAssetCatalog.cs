@@ -473,6 +473,18 @@ public static class PageAssetCatalog
             ];
         }
 
+        if (path.Equals("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/leerling/eiland/", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css"),
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-vraag.css"),
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-route.css"),
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-eiland.css"),
+            ];
+        }
+
         return [];
     }
 

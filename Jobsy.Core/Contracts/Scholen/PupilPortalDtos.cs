@@ -75,7 +75,8 @@ public sealed record PupilChipsRequest(
     IReadOnlyList<string>? Likes,
     IReadOnlyList<string>? Dislikes,
     string? LikeOtherWord,
-    string? DislikeOtherWord);
+    string? DislikeOtherWord,
+    bool FinalizeIsland = true);
 
 public sealed record PupilChipsResponse(
     bool Ok,
