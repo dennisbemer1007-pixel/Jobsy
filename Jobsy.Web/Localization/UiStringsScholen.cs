@@ -735,6 +735,9 @@ public static class UiStringsScholen
         }
 
         Add("Leerling.Reis.More", "Meer uitleg", "More help", "Więcej pomocy", "Mai mult ajutor", "مزيد من الشرح");
+        Add("Leerling.Reis.Saved", "Bewaard", "Saved", "Zapisano", "Salvat", "تم الحفظ");
+        Add("Leerling.Reis.SaveFailed", "Niet bewaard — probeer opnieuw", "Not saved — try again", "Nie zapisano — spróbuj ponownie", "Nesalvat — încearcă din nou", "لم يُحفظ — حاول مرة أخرى");
+        Add("Leerling.Reis.Prev", "Vorige", "Previous", "Wstecz", "Anterior", "السابق");
         Add("Leerling.Login.AlreadyTitle", "Je bent al ingelogd", "You are already logged in", "Jesteś już zalogowany", "Ești deja conectat", "أنت مسجّل الدخول بالفعل");
         Add("Leerling.Vo.PartBreak.DocumentTitle", "Deel 1 is klaar", "Part 1 is done", "Część 1 gotowa", "Partea 1 e gata", "انتهى الجزء 1");
         Add("Leraar.DreamJobs.NotFilled", "Nog niet ingevuld", "Not filled in yet", "Jeszcze nie wypełnione", "Încă necompletat", "لم يُملأ بعد");

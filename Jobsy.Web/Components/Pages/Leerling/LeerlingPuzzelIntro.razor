@@ -12,6 +12,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IServiceProvider Services
+@inject LeerlingGroep78ShellTheme ShellTheme
 
 <PageTitle>@Culture["Leerling.PuzzelIntro.PageTitle"] · Lobsy</PageTitle>
 
@@ -87,11 +88,13 @@ else
     private void ApplyProgress(PupilProgressStateDto state)
     {
         if (state.QuestionSet != PupilQuestionSet.Groep78
-            || !string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase))
+            || !PupilJourneyTheme.IsValid(state.JourneyThemeKey))
         {
             _wrongStep = true;
             return;
         }
+
+        ShellTheme.ApplyJourney(state.JourneyThemeKey!, routeHeader: true);
 
         if (!string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
             || !string.Equals(state.NextPuzzleKey, Key, StringComparison.OrdinalIgnoreCase))

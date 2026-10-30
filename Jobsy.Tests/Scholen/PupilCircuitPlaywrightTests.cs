@@ -886,6 +886,258 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         }
     }
 
+    [Fact(Timeout = 1_200_000)]
+    public async Task Groep78_full_pupil_journey_both_worlds_1440_and_390()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var report = new List<string>();
+        var allReport = new List<string>();
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        var reportPath = "/opt/cursor/artifacts/groep78-e2e-button-results.txt";
+        if (File.Exists(reportPath))
+        {
+            File.Delete(reportPath);
+        }
+
+        foreach (var (theme, routeBtn, bandTestId, width, height, mobile) in new[]
+                 {
+                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 1440, 900, false),
+                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 390, 844, true),
+                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 1440, 900, false),
+                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 390, 844, true),
+                 })
+        {
+            var seed = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, completeActivePuzzleGate: true, journeyThemeKey: theme);
+            var pupil = seed[0];
+            var tag = $"{theme}-{width}";
+            var consoleErrors = new List<string>();
+            var failedRequests = new List<string>();
+
+            await using var context = mobile
+                ? await NewMobileContextAsync()
+                : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height },
+                });
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            page.Console += (_, msg) =>
+            {
+                if (msg.Type == "error")
+                {
+                    consoleErrors.Add(msg.Text);
+                }
+            };
+            page.RequestFailed += (_, req) => failedRequests.Add($"{req.Method} {req.Url} {req.Failure}");
+
+            async Task Step(string name, Func<Task> act)
+            {
+                try
+                {
+                    consoleErrors.Clear();
+                    failedRequests.Clear();
+                    await act();
+                    await AssertGroep78UiCleanAsync(page, consoleErrors, failedRequests);
+                    report.Add($"PASS | {tag} | {name}");
+                }
+                catch (Exception ex)
+                {
+                    report.Add($"FAIL | {tag} | {name} | {ex.Message}");
+                }
+            }
+
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+
+            try
+            {
+                await Step("Login + choose world", async () =>
+                {
+                    await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                    await page.WaitForURLAsync("**/leerling/route**", DomReady);
+                });
+
+                await Step("Footer Privacy link", async () =>
+                {
+                    var link = page.GetByRole(AriaRole.Link, new() { Name = "Privacyverklaring" });
+                    await Assertions.Expect(link).ToBeVisibleAsync();
+                    var href = await link.GetAttributeAsync("href");
+                    Assert.False(string.IsNullOrWhiteSpace(href));
+                });
+
+                await Step("Footer Accessibility link", async () =>
+                {
+                    var link = page.GetByRole(AriaRole.Link, new() { Name = "Toegankelijkheid" });
+                    await Assertions.Expect(link).ToBeVisibleAsync();
+                    var href = await link.GetAttributeAsync("href");
+                    Assert.False(string.IsNullOrWhiteSpace(href));
+                });
+
+                await Step("Route coach speaker", async () =>
+                {
+                    var speak = width >= 600
+                        ? page.Locator(".rt-coach [data-read-aloud]")
+                        : page.Locator(".m-only .guide [data-read-aloud]");
+                    await speak.ClickAsync();
+                });
+
+                await Step("Andere wereld kiezen + back", async () =>
+                {
+                    await page.GetByRole(AriaRole.Link, new() { Name = "Andere wereld kiezen" }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/wereld**", DomReady);
+                    await page.Locator($"[data-testid=ll-wereld-{theme}]").ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/route**", DomReady);
+                });
+
+                await Step("Pauze from route", async () =>
+                {
+                    await page.GetByRole(AriaRole.Button, new() { Name = "Pauze" }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/stop**", DomReady);
+                    await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                    await page.WaitForURLAsync("**/leerling/route**", DomReady);
+                });
+
+                await Step("Route main CTA → reis", async () =>
+                {
+                    await page.GetByRole(AriaRole.Link, new() { Name = routeBtn }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/reis**", DomReady);
+                    await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                });
+
+                await Step("Vorige Q1 → route", async () =>
+                {
+                    await page.Locator("[data-testid=ll-vraag-prev]").ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/route**", DomReady);
+                    await page.GetByRole(AriaRole.Link, new() { Name = routeBtn }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/reis**", DomReady);
+                    await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                });
+
+                await Step("Question + coach speakers", async () =>
+                {
+                    await page.Locator(".vr-qrow [data-read-aloud]").ClickAsync();
+                    var coach = width >= 600
+                        ? page.Locator(".vr-coach-aside [data-read-aloud]")
+                        : page.Locator(".m-only .guide [data-read-aloud]");
+                    await coach.ClickAsync();
+                });
+
+                await Step("Answer Q1 (Soms)", async () => await AnswerGroep78ThemedAsync(page));
+
+                await Step("Vorige → Q1 with prior answer", async () =>
+                {
+                    await page.Locator("[data-testid=ll-vraag-prev]").ClickAsync();
+                    await Assertions.Expect(page.Locator(".vr-qmeta")).ToContainTextAsync("Vraag 1 van 60");
+                    await Assertions.Expect(page.GetByRole(AriaRole.Radio, new() { Name = "Soms" })).ToHaveAttributeAsync("aria-checked", "true");
+                });
+
+                await Step("Change Q1 answer (Ja)", async () =>
+                {
+                    await page.GetByRole(AriaRole.Radio, new() { Name = "Ja" }).ClickAsync();
+                    await Assertions.Expect(page.Locator(".vr-qmeta")).ToContainTextAsync("Vraag 2 van 60");
+                });
+
+                await Step("Answer through to Schelpenrij intro", async () =>
+                {
+                    for (var i = 0; i < 20
+                         && !page.Url.Contains("/puzzel-intro/", StringComparison.OrdinalIgnoreCase); i++)
+                    {
+                        await AnswerGroep78ThemedAsync(page);
+                    }
+
+                    await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", UrlCommitted);
+                });
+
+                await Step("Puzzle intro speaker", async () =>
+                {
+                    await page.Locator(".pi-foot [data-read-aloud], .wrap [data-read-aloud]").First.ClickAsync();
+                });
+
+                await Step("Start de puzzel", async () =>
+                {
+                    await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", UrlCommitted);
+                    await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+                });
+            }
+            finally
+            {
+                await page.CloseAsync();
+                allReport.AddRange(report);
+                await File.AppendAllLinesAsync(reportPath, report);
+                report.Clear();
+            }
+        }
+
+        var failures = allReport.Where(l => l.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
+        Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
+    private static async Task AnswerGroep78ThemedAsync(IPage page)
+    {
+        if (page.Url.Contains("/puzzel-intro/", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var before = await page.Locator(".vr-qmeta").InnerTextAsync();
+        await page.GetByRole(AriaRole.Radio, new() { Name = "Soms" }).ClickAsync();
+        await page.WaitForFunctionAsync(
+            """
+            prev => {
+                const meta = document.querySelector('.vr-qmeta');
+                const path = location.pathname;
+                return (meta && meta.innerText !== prev)
+                    || path.includes('/puzzel-intro/')
+                    || path.includes('/puzzel/');
+            }
+            """,
+            before,
+            new PageWaitForFunctionOptions { Timeout = 20_000 });
+    }
+
+    private static async Task AssertGroep78UiCleanAsync(
+        IPage page,
+        IReadOnlyList<string> consoleErrors,
+        IReadOnlyList<string> failedRequests)
+    {
+        var body = await page.Locator("body").InnerTextAsync();
+        Assert.DoesNotContain("_saveError", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("_saved", body, StringComparison.Ordinal);
+        var untranslated = UntranslatedKeyPattern().Match(body);
+        if (untranslated.Success)
+        {
+            throw new InvalidOperationException("Untranslated key visible: " + untranslated.Value);
+        }
+
+        Assert.Equal(0, await page.Locator(".vr-error").CountAsync());
+        Assert.Equal(0, await page.Locator(".ll-error").CountAsync());
+        var noisyConsole = consoleErrors
+            .Where(e => !e.Contains("speechSynthesis", StringComparison.OrdinalIgnoreCase)
+                        && !e.Contains("cors", StringComparison.OrdinalIgnoreCase)
+                        && !e.Contains("Content Security Policy", StringComparison.OrdinalIgnoreCase)
+                        && !e.Contains("fonts.googleapis.com", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        if (noisyConsole.Count > 0)
+        {
+            throw new InvalidOperationException("Console errors: " + string.Join(" | ", noisyConsole));
+        }
+
+        var noisyFailed = failedRequests
+            .Where(r => !r.Contains("favicon", StringComparison.OrdinalIgnoreCase)
+                        && !r.Contains(".gz", StringComparison.OrdinalIgnoreCase)
+                        && !r.Contains("fonts.googleapis.com", StringComparison.OrdinalIgnoreCase)
+                        && !r.Contains(" fonts.gstatic.com", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        if (noisyFailed.Count > 0)
+        {
+            throw new InvalidOperationException("Failed requests: " + string.Join(" | ", noisyFailed));
+        }
+    }
+
+    private static Regex UntranslatedKeyPattern() => new(@"Leerling\.[A-Z][\w.]+", RegexOptions.Compiled);
+
     private async Task<IBrowserContext> NewMobileContextAsync()
         => await _browser!.NewContextAsync(new BrowserNewContextOptions
         {

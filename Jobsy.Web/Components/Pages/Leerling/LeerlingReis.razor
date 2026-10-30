@@ -69,8 +69,8 @@ else if (ShellState.Mode == LeerlingReisShellMode.ZeeExpeditie)
                              Item="_current"
                              Selected="_selected"
                              Busy="_busy"
-                             Saved="_saved"
-                             SaveError="_saveError"
+                             Saved="@_saved"
+                             SaveError="@_saveError"
                              Offline="_offline"
                              OnSelect="SelectAnswer"
                              OnPrev="GoPrevThemed"
@@ -83,8 +83,8 @@ else if (ShellState.Mode == LeerlingReisShellMode.Eilandtuin)
                               Item="_current"
                               Selected="_selected"
                               Busy="_busy"
-                              Saved="_saved"
-                              SaveError="_saveError"
+                              Saved="@_saved"
+                              SaveError="@_saveError"
                               Offline="_offline"
                               OnSelect="SelectAnswer"
                               OnPrev="GoPrevThemed"
@@ -465,40 +465,58 @@ else
         }
     }
 
-    private async Task GoPrevThemed()
+    private Task GoPrevThemed()
     {
         if (_state is null || _def is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        if (_state.CurrentIndex <= 0)
+        var activeIndex = ActiveQuestionIndex();
+        if (activeIndex <= 0)
         {
             Nav.NavigateTo(PupilGroep78EntryPaths.Route);
-            return;
+            return Task.CompletedTask;
         }
 
-        await GoPrev();
+        return GoPrev();
     }
 
-    private async Task GoPrev()
+    private Task GoPrev()
     {
-        if (_state is null || _def is null || _state.CurrentIndex <= 0)
+        if (_state is null || _def is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        var prev = _def.Bank.GetByGlobalIndex(_state.CurrentIndex - 1);
+        var activeIndex = ActiveQuestionIndex();
+        if (activeIndex <= 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        var prev = _def.Bank.GetByGlobalIndex(activeIndex - 1);
         if (prev is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
+        _state = _state with
+        {
+            CurrentIndex = prev.GlobalIndex,
+            CurrentItemId = prev.Id,
+            CurrentWorldKey = prev.WorldKey,
+        };
         _current = prev;
         _selected = _state.Answers.TryGetValue(prev.Id, out var v) ? v : null;
+        _saved = false;
+        _saveError = null;
         _infoOpen = false;
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
+
+    private int ActiveQuestionIndex()
+        => _current?.GlobalIndex ?? _state?.CurrentIndex ?? 0;
 
     private static LeerlingReisShellMode ShellModeFor(PupilProgressStateDto state)
     {

@@ -18,14 +18,14 @@ public sealed class PupilZeePuzzleNavigationTests
     }
 
     [Fact]
-    public void TargetPath_classic_theme_goes_to_puzzle_page()
+    public void TargetPath_tuin_schelpenrij_goes_to_intro()
     {
         var path = PupilZeePuzzleNavigation.TargetPath(
             PupilQuestionSet.Groep78,
             PupilJourneyTheme.Eilandtuin,
             "puzzle",
             "schelpenrij");
-        Assert.Equal("/leerling/puzzel/schelpenrij", path);
+        Assert.Equal("/leerling/puzzel-intro/schelpenrij", path);
     }
 
     [Fact]
