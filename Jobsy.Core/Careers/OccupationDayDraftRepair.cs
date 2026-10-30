@@ -7,9 +7,14 @@ public static class OccupationDayDraftRepair
 {
     public static OccupationDayDraft Apply(OccupationDayDraft draft, OccupationDayFacts facts)
     {
+        var blocks = OccupationDayBlocks.Normalize(draft.Blocks ?? []);
+        blocks = OccupationDayTimeline.AssignChronologicalLabels(blocks);
+        draft = OccupationDayBlocks.WithDerived(draft with { Blocks = blocks.ToList() });
+
         var highlights = RepairHighlights(draft.Highlights, facts);
         var varies = RepairVaries(draft.VariesNote, facts);
-        return draft with { Highlights = highlights, VariesNote = varies };
+        var skills = OccupationDaySkillsForKids.ToDisplayChips(facts.Skills, 8);
+        return draft with { Highlights = highlights, VariesNote = varies, Skills = skills };
     }
 
     private static List<string> RepairHighlights(IReadOnlyList<string> incoming, OccupationDayFacts facts)

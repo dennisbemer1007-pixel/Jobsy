@@ -11,10 +11,10 @@
       "afternoon": "Je beoordeelt de voortgang van de studenten. Je geeft feedback en advies.",
       "closing": "Je werkt administratieve taken af. Je houdt de studentendossiers bij.",
       "highlights": [
-        "studenten bijstaan bij het leren",
-        "onderwijs aanpassen aan de capaciteiten van de student",
-        "in lesmateriaal voorzien",
-        "principes van teamwerk"
+        "Studenten bijstaan bij het leren.",
+        "Onderwijs aanpassen aan de capaciteiten van de student.",
+        "In lesmateriaal voorzien.",
+        "Principes van teamwerk."
       ],
       "variesNote": "De werkplek en de specifieke lesmethoden kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -239,27 +239,27 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtendles",
+          "label": "09:30 Ochtend",
           "text": "Je geeft les aan volwassenen. Je helpt hen met lezen en schrijven."
         },
         {
           "key": "talk",
-          "label": "15:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je bespreekt met collega\u0027s de voortgang van de studenten. Teamwerk is belangrijk."
         },
         {
           "key": "plan",
-          "label": "11:00 Lesplanning",
+          "label": "12:30 Plannen",
           "text": "Samen met de studenten plan je leesactiviteiten. Je past de lessen aan hun niveau aan."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een korte pauze. Even ontspannen en opladen voor de middag."
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middagles",
+          "label": "15:00 Middag",
           "text": "Je beoordeelt de voortgang van de studenten. Je geeft feedback en advies."
         },
         {
@@ -275,14 +275,14 @@
         "Preparing and maintaining student data and other records and submitting reports;"
       ],
       "skills": [
-        "studenten bijstaan bij het leren",
-        "voorbeelden geven bij het leren",
-        "onderwijs aanpassen aan de capaciteiten van de student",
-        "in lesmateriaal voorzien",
-        "instructiestrategie\u00EBn",
-        "lesinhoud voorbereiden",
-        "geletterdheid als sociale praktijk onderwijzen",
-        "volwassenenonderwijs"
+        "Studenten bijstaan bij het leren",
+        "Voorbeelden geven bij het leren",
+        "Onderwijs aanpassen aan de capaciteiten",
+        "In lesmateriaal voorzien",
+        "Instructiestrategie\u00EBn",
+        "Lesinhoud voorbereiden",
+        "Geletterdheid als sociale praktijk onderwijzen",
+        "Volwassenenonderwijs"
       ]
     },
     {
@@ -294,10 +294,10 @@
       "afternoon": "Je installeert nieuwe accu\u0027s en sluit ze aan op de elektrische systemen van de vrachtwagens.",
       "closing": "Je ruimt de werkplek op en zorgt dat alle gereedschappen weer op hun plek liggen.",
       "highlights": [
-        "accu\u0027s assembleren",
-        "batterijcomponenten repareren",
-        "elektrische stroom",
-        "chemische stoffen verwijderen"
+        "Accu\u0027s assembleren.",
+        "Batterijcomponenten repareren.",
+        "Elektrische stroom.",
+        "Chemische stoffen verwijderen."
       ],
       "variesNote": "De specifieke taken en werktijden kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -584,37 +584,37 @@
       "blocks": [
         {
           "key": "start",
-          "label": "07:30 Start",
+          "label": "08:00 Start",
           "text": "De dag begint met het controleren van de planning en het verzamelen van de benodigde gereedschappen."
         },
         {
           "key": "morning",
-          "label": "08:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je inspecteert en test accu\u0027s in vrachtwagens om problemen te identificeren. Je gebruikt elektrische testapparatuur."
         },
         {
           "key": "plan",
-          "label": "10:00 Plannen",
+          "label": "11:00 Plannen",
           "text": "Je plant de volgorde van de werkzaamheden en zorgt dat alle benodigde materialen aanwezig zijn."
         },
         {
           "key": "pause",
-          "label": "12:00 Pauze",
+          "label": "12:30 Pauze",
           "text": "Tijd voor een welverdiende pauze. Even ontspannen en opladen voor de middag."
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "13:30 Middag",
           "text": "Je installeert nieuwe accu\u0027s en sluit ze aan op de elektrische systemen van de vrachtwagens."
         },
         {
           "key": "handover",
-          "label": "15:30 Overdracht",
+          "label": "15:00 Overdracht",
           "text": "Je bespreekt de uitgevoerde werkzaamheden met collega\u0027s en noteert bijzonderheden."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je ruimt de werkplek op en zorgt dat alle gereedschappen weer op hun plek liggen."
         }
       ],
@@ -625,14 +625,14 @@
         "Aansluiten elektrische systemen op stroomvoorziening"
       ],
       "skills": [
-        "energieopslagsystemen",
-        "batterijvloeistoffen",
-        "hybridevoertuigarchitectuur",
-        "chemische samenstelling van batterijen",
-        "batterijmanagementsysteem",
-        "accu\u0027s assembleren",
-        "het vormen van batterijen",
-        "technische documentatie gebruiken"
+        "Energieopslagsystemen",
+        "Batterijvloeistoffen",
+        "Hybridevoertuigarchitectuur",
+        "Chemische samenstelling van batterijen",
+        "Batterijmanagementsysteem",
+        "Accu\u0027s assembleren",
+        "Het vormen van batterijen",
+        "Technische documentatie gebruiken"
       ]
     },
     {
@@ -644,10 +644,10 @@
       "afternoon": "Je monteert en plaatst staalconstructies voor gebouwen en schepen.",
       "closing": "Je voert onderhoud uit aan de machines en ruimt de werkplek op.",
       "highlights": [
-        "problemen oplossen",
-        "werkstukken voorbehandelen",
-        "machineonderhoud uitvoeren",
-        "passende beschermende uitrusting dragen"
+        "Problemen oplossen.",
+        "Werkstukken voorbehandelen.",
+        "Machineonderhoud uitvoeren.",
+        "Passende beschermende uitrusting dragen."
       ],
       "variesNote": "De specifieke taken en projecten kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -936,27 +936,27 @@
       "blocks": [
         {
           "key": "start",
-          "label": "07:00 Start",
+          "label": "08:00 Start",
           "text": "De dag begint met het controleren van de benodigde materialen en gereedschappen."
         },
         {
           "key": "morning",
-          "label": "08:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je markeert het metalen raamwerk als gids voor het boren en snijden."
         },
         {
           "key": "plan",
-          "label": "10:00 Plannen",
+          "label": "11:00 Plannen",
           "text": "Je plant de volgorde van het monteren van metalen onderdelen."
         },
         {
           "key": "pause",
-          "label": "12:00 Pauze",
+          "label": "12:30 Pauze",
           "text": "Tijd voor een welverdiende pauze na een ochtend hard werken."
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "13:30 Middag",
           "text": "Je monteert en plaatst staalconstructies voor gebouwen en schepen."
         },
         {
@@ -977,14 +977,14 @@
         "Je vormen en monteren van constructiestalen platen van schepen in aanbouw of reparatie"
       ],
       "skills": [
-        "problemen oplossen",
-        "werkstukken voorbehandelen",
-        "soorten metaal",
-        "zorgen voor de beschikbaarheid van materiaal",
-        "verwerkt werkstuk verwijderen",
-        "proefdraaien",
-        "ontoereikende werkstukken verwijderen",
-        "kwaliteitsstandaarden"
+        "Problemen oplossen",
+        "Werkstukken voorbehandelen",
+        "Soorten metaal",
+        "Zorgen voor de beschikbaarheid van",
+        "Verwerkt werkstuk verwijderen",
+        "Proefdraaien",
+        "Ontoereikende werkstukken verwijderen",
+        "Kwaliteitsstandaarden"
       ]
     },
     {
@@ -996,9 +996,9 @@
       "afternoon": "Je houdt toezicht op het schoonmaken en voorbereiden van de vangst voor verzending.",
       "closing": "De dag eindigt met het controleren van de waterkwaliteit en het afsluiten van de systemen.",
       "highlights": [
-        "groeitempo van gecultiveerde vissoorten controleren",
-        "kwaliteit van water in kooien beoordelen",
-        "symptomen van visziekten waarnemen"
+        "Groeitempo van gecultiveerde vissoorten controleren.",
+        "Kwaliteit van water in kooien beoordelen.",
+        "Symptomen van visziekten waarnemen."
       ],
       "variesNote": "Werkzaamheden kunnen verschillen per werkgever en locatie. De focus kan liggen op verschillende soorten aquacultuurorganismen.",
       "sourceModel": "gpt-4o",
@@ -1283,12 +1283,12 @@
       "blocks": [
         {
           "key": "start",
-          "label": "07:00 Start",
+          "label": "08:00 Start",
           "text": "De dag begint met het controleren van de apparatuur en voorzieningen. Alles moet goed werken."
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je verzamelt en registreert gegevens over de groei en productie van de vissen."
         },
         {
@@ -1308,12 +1308,12 @@
         },
         {
           "key": "handover",
-          "label": "15:30 Overdracht",
+          "label": "15:00 Overdracht",
           "text": "Je bespreekt de voortgang en eventuele problemen met collega\u0027s. Samenwerken is essentieel."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "De dag eindigt met het controleren van de waterkwaliteit en het afsluiten van de systemen."
         }
       ],
@@ -1324,14 +1324,14 @@
         "Je leveren of vermarkten van producten"
       ],
       "skills": [
-        "groeitempo van gecultiveerde vissoorten controleren",
-        "aquatische productieomgevingen controleren",
-        "kwaliteit van water in kooien beoordelen",
-        "rangschikking van vissen",
-        "vismonsters bewaren voor diagnose",
-        "symptomen van visziekten waarnemen",
-        "depuratie van schelpdieren organiseren",
-        "vissorteringswerkzaamheden uitvoeren"
+        "Groeitempo van gecultiveerde vissoorten controle",
+        "Aquatische productieomgevingen controleren",
+        "Kwaliteit van water in kooien",
+        "Rangschikking van vissen",
+        "Vismonsters bewaren voor diagnose",
+        "Symptomen van visziekten waarnemen",
+        "Depuratie van schelpdieren organiseren",
+        "Vissorteringswerkzaamheden uitvoeren"
       ]
     },
     {
@@ -1645,10 +1645,10 @@
       "afternoon": "Je geeft advies aan wetgevers over economische kwesties. Dit kan invloed hebben op beleidsbeslissingen.",
       "closing": "Je rondt de dag af met het bijwerken van rapporten en het plannen van de volgende dag.",
       "highlights": [
-        "economisch beleid ontwikkelen",
-        "economische tendensen analyseren",
-        "advies geven over economische ontwikkeling",
-        "strategisch onderzoek uitvoeren"
+        "Economisch beleid ontwikkelen.",
+        "Economische tendensen analyseren.",
+        "Advies geven over economische ontwikkeling.",
+        "Strategisch onderzoek uitvoeren."
       ],
       "variesNote": "De specifieke projecten en samenwerkingen kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -1937,37 +1937,37 @@
       "blocks": [
         {
           "key": "start",
-          "label": "08:30 Start",
+          "label": "08:00 Start",
           "text": "De dag begint met het doornemen van de agenda en prioriteiten. Er is vaak een teamoverleg."
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je onderzoekt economische trends en analyseert marktgegevens. Dit helpt bij het ontwikkelen van beleid."
         },
         {
           "key": "talk",
-          "label": "15:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je bespreekt samenwerkingsmogelijkheden met andere afdelingen. Dit versterkt de economische strategie\u00EBn."
         },
         {
           "key": "plan",
-          "label": "11:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je plant strategie\u00EBn voor economische ontwikkeling. Dit omvat het voorspellen van veranderingen in de economie."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een welverdiende pauze. Even ontspannen en opladen voor de middag."
         },
         {
           "key": "afternoon",
-          "label": "13:30 Middag",
+          "label": "15:00 Middag",
           "text": "Je geeft advies aan wetgevers over economische kwesties. Dit kan invloed hebben op beleidsbeslissingen."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je rondt de dag af met het bijwerken van rapporten en het plannen van de volgende dag."
         }
       ],
@@ -1978,14 +1978,14 @@
         "Compiling, analysing and interpreting economic data using economic theory and a variety of statistical and other techniques;"
       ],
       "skills": [
-        "economisch beleid ontwikkelen",
-        "economische tendensen analyseren",
-        "economie",
-        "economische trends voorspellen",
-        "advies geven aan wetgevers",
-        "implementatie van overheidsbeleid",
-        "advies geven over economische ontwikkeling",
-        "advies geven over wetgevingsbesluiten"
+        "Economisch beleid ontwikkelen",
+        "Economische tendensen bekijken",
+        "Economie",
+        "Economische trends voorspellen",
+        "Advies geven aan wetgevers",
+        "Implementatie van overheidsbeleid",
+        "Advies geven over economische ontwikkeling",
+        "Advies geven over wetgevingsbesluiten"
       ]
     },
     {
@@ -1997,10 +1997,10 @@
       "afternoon": "Je werkt aan 3D-schema\u0027s en past patronen aan. Je controleert de kwaliteit van de ontwerpen.",
       "closing": "Je sluit de dag af met het bijwerken van technische documentatie. Alles is klaar voor morgen.",
       "highlights": [
-        "technische schetsen voor schoeisel maken",
-        "CAD voor schoeisel",
-        "materialen en onderdelen voor duurzame schoenen",
-        "productie van schoeisel plannen"
+        "Technische schetsen voor schoeisel maken.",
+        "CAD voor schoeisel.",
+        "Materialen en onderdelen voor duurzame schoenen.",
+        "Productie van schoeisel plannen."
       ],
       "variesNote": "De specifieke taken en verantwoordelijkheden kunnen per werkgever verschillen. Ook de gebruikte software kan vari\u00EBren.",
       "sourceModel": "gpt-4o",
@@ -2294,7 +2294,7 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je maakt technische schetsen voor nieuwe schoenen. Je kiest materialen en onderdelen voor duurzame ontwerpen."
         },
         {
@@ -2309,7 +2309,7 @@
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "13:30 Middag",
           "text": "Je werkt aan 3D-schema\u0027s en past patronen aan. Je controleert de kwaliteit van de ontwerpen."
         },
         {
@@ -2319,7 +2319,7 @@
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je sluit de dag af met het bijwerken van technische documentatie. Alles is klaar voor morgen."
         }
       ],
@@ -2330,14 +2330,14 @@
         "Checking the texture, colour and strength of leather to ensure that it is adequate for a particular purpose;"
       ],
       "skills": [
-        "technische schetsen voor schoeisel maken",
-        "soorten vormtechnieken",
-        "kwaliteit van schoeisel",
+        "Technische schetsen voor schoeisel maken",
+        "Soorten vormtechnieken",
+        "Kwaliteit van schoeisel",
         "CAD voor schoeisel",
         "2D-CAD voor schoenpatronen bedienen",
-        "materialen en onderdelen voor duurzame schoenen",
+        "Materialen en onderdelen voor duurzame",
         "3D-schema\u0027s interpreteren",
-        "soorten schoeisel analyseren"
+        "Soorten schoeisel bekijken"
       ]
     },
     {
@@ -2651,10 +2651,10 @@
       "afternoon": "Je onderhandelt over contracten met reclamebureaus. Je zorgt ervoor dat alles binnen het budget blijft.",
       "closing": "Je sluit de dag af door de voortgang van de campagnes te evalueren. Je maakt aantekeningen voor de volgende dag.",
       "highlights": [
-        "reclamecampagnes co\u00F6rdineren",
-        "persberichten opstellen",
-        "creatieve afdeling beheren",
-        "materiaal voor inclusieve communicatie ontwikkelen"
+        "Reclamecampagnes co\u00F6rdineren.",
+        "Persberichten opstellen.",
+        "Creatieve afdeling beheren.",
+        "Materiaal voor inclusieve communicatie ontwikkelen."
       ],
       "variesNote": "Werkzaamheden kunnen verschillen per organisatie en type campagnes. De werkplek kan vari\u00EBren afhankelijk van de sector.",
       "sourceModel": "gpt-4o",
@@ -2879,7 +2879,7 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je organiseert de middelen voor de lancering van campagnes. Dit kan vari\u00EBren van het voorbereiden van presentatiemateriaal tot het co\u00F6rdineren van persberichten."
         },
         {
@@ -2894,7 +2894,7 @@
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "13:30 Middag",
           "text": "Je onderhandelt over contracten met reclamebureaus. Je zorgt ervoor dat alles binnen het budget blijft."
         },
         {
@@ -2904,7 +2904,7 @@
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je sluit de dag af door de voortgang van de campagnes te evalueren. Je maakt aantekeningen voor de volgende dag."
         }
       ],
@@ -2915,14 +2915,14 @@
         "Toezicht houden op de selectie, training en prestaties van personeel"
       ],
       "skills": [
-        "diplomatieke beginselen",
-        "reclamecampagnes co\u00F6rdineren",
-        "maatschappelijk verantwoord ondernemen",
-        "persberichten opstellen",
-        "retoriek",
-        "behoeften van klanten identificeren",
-        "externe factoren van bedrijven analyseren",
-        "presentatiemateriaal voorbereiden"
+        "Diplomatieke beginselen",
+        "Reclamecampagnes regelen",
+        "Maatschappelijk verantwoord ondernemen",
+        "Persberichten opstellen",
+        "Retoriek",
+        "Behoeften van klanten identificeren",
+        "Externe factoren van bedrijven bekijken",
+        "Presentatiemateriaal voorbereiden"
       ]
     },
     {
@@ -2934,10 +2934,10 @@
       "afternoon": "Je werkt aan het ontwikkelen van wetenschappelijke theorie\u00EBn en schrijft rapporten.",
       "closing": "Je rondt de dag af met het bijwerken van de databank en notities.",
       "highlights": [
-        "gegevens verzamelen",
-        "wetenschappelijke gegevens analyseren",
-        "de overdracht van kennis bevorderen",
-        "moleculaire biologie"
+        "Gegevens verzamelen.",
+        "Wetenschappelijke gegevens analyseren.",
+        "De overdracht van kennis bevorderen.",
+        "Moleculaire biologie."
       ],
       "variesNote": "De specifieke projecten en onderzoeksonderwerpen kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -3231,32 +3231,32 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je verzamelt biologische gegevens en analyseert deze met speciale software."
         },
         {
           "key": "talk",
-          "label": "15:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je geeft advies aan organisaties over milieubeheer en klimaatverandering."
         },
         {
           "key": "plan",
-          "label": "11:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je plant onderzoeksactiviteiten en bespreekt deze met collega\u0027s."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een lunchpauze en even ontspannen."
         },
         {
           "key": "afternoon",
-          "label": "13:30 Middag",
+          "label": "15:00 Middag",
           "text": "Je werkt aan het ontwikkelen van wetenschappelijke theorie\u00EBn en schrijft rapporten."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je rondt de dag af met het bijwerken van de databank en notities."
         }
       ],
@@ -3267,14 +3267,14 @@
         "Advies geven aan overheden, organisaties en bedrijven op gebieden als behoud, beheer van natuurlijke hulpbronnen, de gevolgen van klimaatverandering en vervuiling"
       ],
       "skills": [
-        "Professioneel omgaan met anderen in onderzoeks- en beroepsomgevingen.",
-        "gegevens verzamelen",
-        "onderzoeksactiviteiten evalueren",
-        "wetenschappelijke gegevens analyseren",
-        "de overdracht van kennis bevorderen",
-        "software met een open broncode ontwikkelen",
-        "computermateriaal",
-        "open innovatie in onderzoek bevorderen"
+        "Professioneel omgaan met anderen in",
+        "Gegevens verzamelen",
+        "Onderzoeksactiviteiten beoordelen",
+        "Gegevens bekijken",
+        "De overdracht van kennis bevorderen",
+        "Software met een open broncode",
+        "Computermateriaal",
+        "Open innovatie in onderzoek bevorderen"
       ]
     },
     {
@@ -3286,10 +3286,10 @@
       "afternoon": "Je helpt bij het bereiden en etiketteren van medicijnen volgens recepten.",
       "closing": "Je sluit de dag af door de administratie bij te werken en de kassa te controleren.",
       "highlights": [
-        "zorgen voor kwaliteitscontrole van farmaceutische producten",
-        "gezondheidsvoorlichting bieden",
-        "kassa\u0027s bedienen",
-        "farmaceutisch advies geven"
+        "Zorgen voor kwaliteitscontrole van farmaceutische producten.",
+        "Gezondheidsvoorlichting bieden.",
+        "Kassa\u0027s bedienen.",
+        "Farmaceutisch advies geven."
       ],
       "variesNote": "De exacte taken kunnen verschillen per apotheek. Sommige apotheken hebben meer focus op klantcontact, andere op voorraadbeheer.",
       "sourceModel": "gpt-4o",
@@ -3583,22 +3583,22 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je beheert de voorraad en zorgt dat geneesmiddelen goed worden bewaard."
         },
         {
           "key": "talk",
-          "label": "10:30 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je geeft klanten advies over het juiste gebruik van hun medicijnen."
         },
         {
           "key": "pause",
-          "label": "12:00 Pauze",
+          "label": "12:30 Pauze",
           "text": "Even pauze om bij te komen en iets te eten."
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "13:30 Middag",
           "text": "Je helpt bij het bereiden en etiketteren van medicijnen volgens recepten."
         },
         {
@@ -3608,7 +3608,7 @@
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je sluit de dag af door de administratie bij te werken en de kassa te controleren."
         }
       ],
@@ -3619,14 +3619,14 @@
         "Je opslaan en bewaren van vaccins, serums en andere geneesmiddelen die worden aangetast"
       ],
       "skills": [
-        "zorgen voor kwaliteitscontrole van farmaceutische producten",
-        "gebruikers van gezondheidszorg doorverwijzen",
-        "elektronische en mobiele gezondheidstechnologie\u00EBn gebruiken",
-        "kassa\u0027s bedienen",
-        "informatie over de medische status van gebruikers van gezondheidszorg verkrijgen",
-        "wetgeving in verband met gezondheidszorg naleven",
-        "gezondheidsvoorlichting bieden",
-        "wisselwerking met medicatie melden aan apotheker"
+        "Zorgen voor kwaliteitscontrole van farmaceutisch",
+        "Gebruikers van gezondheidszorg doorverwijzen",
+        "Elektronische en mobiele gezondheidstechnologie\u00EB",
+        "Kassa\u0027s bedienen",
+        "Informatie over de medische status",
+        "Wetgeving in verband met gezondheidszorg",
+        "Gezondheidsvoorlichting bieden",
+        "Wisselwerking met medicatie melden aan"
       ]
     },
     {
@@ -3638,10 +3638,10 @@
       "afternoon": "Je maakt 3D-modellen van de kledingstukken. Dit helpt om een beter beeld te krijgen van het eindproduct.",
       "closing": "Je sluit de dag af door de voortgang te noteren. Je bereidt je voor op de taken van morgen.",
       "highlights": [
-        "procescontrole in de kledingindustrie uitvoeren",
-        "technische tekeningen van modestukken maken",
-        "CAD voor de confectie-industrie",
-        "3D-prototypes van kleding analyseren"
+        "Procescontrole in de kledingindustrie uitvoeren.",
+        "Technische tekeningen van modestukken maken.",
+        "CAD voor de confectie-industrie.",
+        "3D-prototypes van kleding analyseren."
       ],
       "variesNote": "De specifieke software en apparatuur kunnen per werkgever verschillen. Ook de focus op 2D of 3D ontwerpen kan vari\u00EBren.",
       "sourceModel": "gpt-4o",
@@ -3935,7 +3935,7 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je werkt aan 2D-ontwerpen van kledingstukken. Je gebruikt \u0027surface modelling\u0027 om de patronen te tekenen."
         },
         {
@@ -3950,7 +3950,7 @@
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "13:30 Middag",
           "text": "Je maakt 3D-modellen van de kledingstukken. Dit helpt om een beter beeld te krijgen van het eindproduct."
         },
         {
@@ -3960,7 +3960,7 @@
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je sluit de dag af door de voortgang te noteren. Je bereidt je voor op de taken van morgen."
         }
       ],
@@ -3971,13 +3971,13 @@
         "Bedradingsschema\u0027s, assemblageschema\u0027s en lay-outtekeningen voor de fabricage, installatie en reparatie van elektrische apparatuur in fabrieken, elektriciteitscentrales en gebouwen"
       ],
       "skills": [
-        "procescontrole in de kledingindustrie uitvoeren",
-        "technische tekeningen van modestukken maken",
-        "voorbeeldkledij onderzoeken",
-        "productie van textielconfectieartikelen",
-        "standaard maatsystemen voor kleding",
-        "aftekenen",
-        "schetsen maken voor de ontwikkeling van textielartikelen met behulp van software",
+        "Procescontrole in de kledingindustrie uitvoeren",
+        "Technische tekeningen van modestukken maken",
+        "Voorbeeldkledij onderzoeken",
+        "Productie van textielconfectieartikelen",
+        "Standaard maatsystemen voor kleding",
+        "Aftekenen",
+        "Schetsen maken voor de ontwikkeling",
         "CAD voor de confectie-industrie"
       ]
     },
@@ -4292,9 +4292,9 @@
       "afternoon": "Bezoeken van klaslokalen om onderwijstechnieken te observeren en te evalueren.",
       "closing": "De dag eindigt met het documenteren van de voortgang en het evalueren van nieuwe cursussen.",
       "highlights": [
-        "zorg voor personen met een handicap",
-        "onderwijsprogramma\u2019s promoten",
-        "advies geven over lesplannen"
+        "Zorg voor personen met een handicap.",
+        "Onderwijsprogramma\u2019s promoten.",
+        "Advies geven over lesplannen."
       ],
       "variesNote": "De specifieke scholen en programma\u0027s kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -4584,7 +4584,7 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Er worden scholen bezocht om met personeel te overleggen over leerplannen en onderwijsmethoden."
         },
         {
@@ -4594,22 +4594,22 @@
         },
         {
           "key": "plan",
-          "label": "15:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Ontwikkelen van nieuwe onderwijsprogramma\u0027s en het opstellen van doelstellingen."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een korte pauze om even te ontspannen en te lunchen."
         },
         {
           "key": "afternoon",
-          "label": "13:30 Middag",
+          "label": "15:00 Middag",
           "text": "Bezoeken van klaslokalen om onderwijstechnieken te observeren en te evalueren."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "De dag eindigt met het documenteren van de voortgang en het evalueren van nieuwe cursussen."
         }
       ],
@@ -4620,14 +4620,14 @@
         "Bezoeken van klaslokalen om onderwijstechnieken te observeren en de prestaties van leerkrachten te evalueren, en verkregen schoolresultaten"
       ],
       "skills": [
-        "zorg voor personen met een handicap",
-        "helpen bij de organisatie van schoolevenementen",
-        "door de overheid gefinancierde programma\u2019s beheren",
-        "toezicht houden op onderwijsontwikkelingen",
-        "onderwijsprogramma\u2019s promoten",
-        "onderwijs voor leerlingen met bijzondere behoeften",
-        "soorten handicaps",
-        "projectbeheer"
+        "Zorg voor personen met een",
+        "Helpen bij de organisatie van",
+        "Door de overheid gefinancierde programma\u2019s",
+        "Toezicht houden op onderwijsontwikkelingen",
+        "Onderwijsprogramma\u2019s promoten",
+        "Onderwijs voor leerlingen met bijzondere",
+        "Soorten handicaps",
+        "Projectbeheer"
       ]
     },
     {
@@ -4639,10 +4639,10 @@
       "afternoon": "Je berekent totalen en percentages voor financi\u00EBle documenten. Je houdt verslagen bij.",
       "closing": "Je sluit de dag af door je werkplek op te ruimen en je taken voor morgen voor te bereiden.",
       "highlights": [
-        "gegevens van financi\u00EBle transacties bijhouden",
-        "informatie geven over financi\u00EBle producten",
-        "verzekeringsinschrijvingen verwerken",
-        "financi\u00EBle verslagen bijhouden"
+        "Gegevens van financi\u00EBle transacties bijhouden.",
+        "Informatie geven over financi\u00EBle producten.",
+        "Verzekeringsinschrijvingen verwerken.",
+        "Financi\u00EBle verslagen bijhouden."
       ],
       "variesNote": "De specifieke taken en verantwoordelijkheden kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -4936,32 +4936,32 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je verwerkt verzekeringsinschrijvingen en annuleert polissen. Je voert gegevens in het systeem in."
         },
         {
           "key": "talk",
-          "label": "15:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je geeft klanten informatie over verzekeringen. Je beantwoordt hun vragen en helpt hen verder."
         },
         {
           "key": "plan",
-          "label": "11:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je plant de verwerking van poliswijzigingen en betalingen. Je zorgt dat alles op tijd gebeurt."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Je neemt een pauze om even te ontspannen en bij te komen van de ochtend."
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "15:00 Middag",
           "text": "Je berekent totalen en percentages voor financi\u00EBle documenten. Je houdt verslagen bij."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je sluit de dag af door je werkplek op te ruimen en je taken voor morgen voor te bereiden."
         }
       ],
@@ -4972,14 +4972,14 @@
         "Maintaining records of bonds, shares and other securities bought or sold on behalf of clients or employer."
       ],
       "skills": [
-        "gegevens van financi\u00EBle transacties bijhouden",
-        "financi\u00EBle transacties verwerken",
-        "papierwerk afhandelen",
-        "routineactiviteiten op kantoor uitvoeren",
-        "administratieve taken uitvoeren",
-        "soorten verzekeringen",
-        "kantoorsystemen gebruiken",
-        "informatie geven over financi\u00EBle producten"
+        "Gegevens van financi\u00EBle transacties bijhouden",
+        "Financi\u00EBle transacties verwerken",
+        "Papierwerk afhandelen",
+        "Routineactiviteiten op kantoor uitvoeren",
+        "Administratieve taken uitvoeren",
+        "Soorten verzekeringen",
+        "Kantoorsystemen gebruiken",
+        "Informatie geven over financi\u00EBle producten"
       ]
     },
     {
@@ -4991,10 +4991,10 @@
       "afternoon": "Je voert verkoopanalyses uit en bekijkt hoe de verkoop verbeterd kan worden.",
       "closing": "Aan het einde van de dag sluit je de afdeling en controleer je de kassa.",
       "highlights": [
-        "verkoopopbrengsten maximaliseren",
-        "werknemers evalueren",
-        "begrotingen beheren",
-        "verkoopanalyses uitvoeren"
+        "Verkoopopbrengsten maximaliseren.",
+        "Werknemers evalueren.",
+        "Begrotingen beheren.",
+        "Verkoopanalyses uitvoeren."
       ],
       "variesNote": "De grootte van de afdeling en het aantal medewerkers kan per winkel verschillen.",
       "sourceModel": "gpt-4o",
@@ -5283,37 +5283,37 @@
       "blocks": [
         {
           "key": "start",
-          "label": "07:00 Start",
+          "label": "08:00 Start",
           "text": "De dag begint met het openen van de afdeling en het controleren van de voorraad."
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je organiseert verkoopacties en zorgt dat de presentatie van de producten aantrekkelijk is."
         },
         {
           "key": "talk",
-          "label": "16:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je hebt een gesprek met een medewerker over zijn prestaties en geeft feedback."
         },
         {
           "key": "plan",
-          "label": "11:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je maakt een planning voor de personeelsbezetting en bespreekt deze met het team."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een korte pauze om even bij te komen van de drukte."
         },
         {
           "key": "afternoon",
-          "label": "14:00 Middag",
+          "label": "15:00 Middag",
           "text": "Je voert verkoopanalyses uit en bekijkt hoe de verkoop verbeterd kan worden."
         },
         {
           "key": "close",
-          "label": "18:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Aan het einde van de dag sluit je de afdeling en controleer je de kassa."
         }
       ],
@@ -5324,14 +5324,14 @@
         "Zorgen voor naleving van de voorschriften voor gezondheid en veiligheid op het werk"
       ],
       "skills": [
-        "zorgen voor de naleving van aankoop- en contractregelgeving",
-        "verkoopopbrengsten maximaliseren",
-        "verkoopacties organiseren",
-        "arbeidswet",
-        "begrotingen beheren",
-        "verkoopanalyses uitvoeren",
-        "naleving met wettelijke vereisten garanderen",
-        "verkoopstrategie\u00EBn ten uitvoer brengen"
+        "Zorgen voor de naleving van",
+        "Verkoopopbrengsten maximaliseren",
+        "Verkoopacties organiseren",
+        "Arbeidswet",
+        "Begrotingen beheren",
+        "Verkoopanalyses uitvoeren",
+        "Naleving met wettelijke vereisten garanderen",
+        "Verkoopstrategie\u00EBn ten uitvoer brengen"
       ]
     },
     {
@@ -5343,10 +5343,10 @@
       "afternoon": "Je evalueert onderzoeksactiviteiten en interpreteert actuele gegevens. Dit is essentieel voor je wetenschappelijke publicaties.",
       "closing": "Je vat de informatie samen en werkt aan wetenschappelijke papers. De dag eindigt met het bijwerken van je notities.",
       "highlights": [
-        "onderzoeksactiviteiten evalueren",
-        "actuele gegevens interpreteren",
-        "informatie samenvatten",
-        "wetenschappelijke publicaties schrijven"
+        "Onderzoeksactiviteiten evalueren.",
+        "Actuele gegevens interpreteren.",
+        "Informatie samenvatten.",
+        "Wetenschappelijke publicaties schrijven."
       ],
       "variesNote": "De specifieke projecten en onderzoeksonderwerpen kunnen per werkgever verschillen.",
       "sourceModel": "gpt-4o",
@@ -5571,32 +5571,32 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtendwerk",
+          "label": "09:30 Ochtend",
           "text": "Je voert metingen uit van vingerafdrukken en netvliezen. Deze gegevens zijn belangrijk voor je onderzoek."
         },
         {
           "key": "talk",
-          "label": "15:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je bespreekt de voortgang met assistenten en statistische medewerkers. Samenwerken is belangrijk voor succes."
         },
         {
           "key": "plan",
-          "label": "11:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je ontwerpt enqu\u00EAtes en stelt vragenlijsten op voor nieuwe onderzoeken. Dit helpt bij het verzamelen van gegevens."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een welverdiende pauze. Even ontspannen voordat je verder gaat met de middagactiviteiten."
         },
         {
           "key": "afternoon",
-          "label": "13:30 Middagwerk",
+          "label": "15:00 Middag",
           "text": "Je evalueert onderzoeksactiviteiten en interpreteert actuele gegevens. Dit is essentieel voor je wetenschappelijke publicaties."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je vat de informatie samen en werkt aan wetenschappelijke papers. De dag eindigt met het bijwerken van je notities."
         }
       ],
@@ -5607,14 +5607,14 @@
         "Wetenschappelijke papers en verslagen opstellen"
       ],
       "skills": [
-        "onderzoeksactiviteiten evalueren",
-        "actuele gegevens interpreteren",
-        "informatie samenvatten",
-        "wetenschappelijke publicaties schrijven",
-        "beginselen van onderzoeksethiek en wetenschappelijke integriteit toepassen in onderzoeksactiviteiten",
-        "software met een open broncode ontwikkelen",
-        "biometrie",
-        "computationele biologie"
+        "Onderzoeksactiviteiten beoordelen",
+        "Actuele gegevens interpreteren",
+        "Informatie samenvatten",
+        "Publicaties schrijven",
+        "Beginselen van onderzoeksethiek en integriteit",
+        "Software met een open broncode",
+        "Biometrie",
+        "Computationele biologie"
       ]
     },
     {
@@ -5626,10 +5626,10 @@
       "afternoon": "Je cre\u00EBert 3D-afbeeldingen en belichtingen. Dit maakt de modellen levendiger en realistischer.",
       "closing": "Je sluit de dag af door de voortgang te controleren en plannen voor morgen te maken.",
       "highlights": [
-        "3D-modellen cre\u00EBren",
-        "grafische 3D-computersoftware bedienen",
-        "opkomende technologie\u00EBn",
-        "onderhandelen over ontwerpoplossingen"
+        "3D-modellen cre\u00EBren.",
+        "Grafische 3D-computersoftware bedienen.",
+        "Opkomende technologie\u00EBn.",
+        "Onderhandelen over ontwerpoplossingen."
       ],
       "variesNote": "De specifieke projecten en software kunnen per werkgever verschillen. Ook de mate van klantcontact varieert.",
       "sourceModel": "gpt-4o",
@@ -5854,32 +5854,32 @@
         },
         {
           "key": "morning",
-          "label": "09:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je werkt aan het ontwerpen van 3D-modellen en virtuele omgevingen. Dit vraagt veel creativiteit en precisie."
         },
         {
           "key": "talk",
-          "label": "15:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je onderhandelt over ontwerpoplossingen met klanten en collega\u0027s. Dit zorgt voor een goede afstemming."
         },
         {
           "key": "plan",
-          "label": "11:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je formuleert ontwerpconcepten en bespreekt deze met het team. Dit helpt om de richting van het project te bepalen."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een pauze. Even ontspannen voordat je verder gaat met de ontwerpen."
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "15:00 Middag",
           "text": "Je cre\u00EBert 3D-afbeeldingen en belichtingen. Dit maakt de modellen levendiger en realistischer."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je sluit de dag af door de voortgang te controleren en plannen voor morgen te maken."
         }
       ],
@@ -5891,11 +5891,11 @@
       ],
       "skills": [
         "3D-modellen cre\u00EBren",
-        "een 3D-structuurkaart cre\u00EBren",
+        "Een 3D-structuurkaart cre\u00EBren",
         "3D-afbeeldingen maken",
-        "grafische 3D-computersoftware bedienen",
+        "Grafische 3D-computersoftware bedienen",
         "3D-belichting",
-        "holografie",
+        "Holografie",
         "3d-omgevingen cre\u00EBren",
         "3D-structurering"
       ]
@@ -5909,9 +5909,9 @@
       "afternoon": "Je werkt aan het opstellen van wetenschappelijke artikelen. Deze worden later gepubliceerd.",
       "closing": "De dag eindigt met het evalueren van de onderzoeksactiviteiten. Dit zorgt voor verbetering in toekomstig werk.",
       "highlights": [
-        "Onderzoek naar oorzaken en betekenissen",
-        "Ontwikkelen van theorie\u00EBn en modellen",
-        "Presenteren van bevindingen en conclusies"
+        "Onderzoek naar oorzaken en betekenissen.",
+        "Ontwikkelen van theorie\u00EBn en modellen.",
+        "Presenteren van bevindingen en conclusies."
       ],
       "variesNote": "De specifieke onderwerpen en projecten kunnen per werkgever verschillen. Ook de werkplek kan vari\u00EBren.",
       "sourceModel": "gpt-4o",
@@ -6128,37 +6128,37 @@
       "blocks": [
         {
           "key": "start",
-          "label": "09:00 Start",
+          "label": "08:00 Start",
           "text": "De dag begint met het lezen van wetenschappelijke literatuur. Dit helpt om op de hoogte te blijven van nieuwe ontwikkelingen."
         },
         {
           "key": "morning",
-          "label": "10:30 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je onderzoekt algemene oorzaken en betekenissen van de wereld. Dit omvat menselijke acties en ervaringen."
         },
         {
           "key": "talk",
-          "label": "15:30 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je neemt deel aan discussies over kennis en realiteit. Argumentatieve vaardigheden zijn hierbij belangrijk."
         },
         {
           "key": "plan",
-          "label": "12:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je plant onderzoeksactiviteiten en evalueert deze. Dit helpt bij het ontwikkelen van nieuwe filosofische concepten."
         },
         {
           "key": "pause",
-          "label": "13:00 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een korte pauze. Even ontspannen voordat de middag begint."
         },
         {
           "key": "afternoon",
-          "label": "14:00 Middag",
+          "label": "15:00 Middag",
           "text": "Je werkt aan het opstellen van wetenschappelijke artikelen. Deze worden later gepubliceerd."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "De dag eindigt met het evalueren van de onderzoeksactiviteiten. Dit zorgt voor verbetering in toekomstig werk."
         }
       ],
@@ -6169,14 +6169,14 @@
         "Presenting findings and conclusions for publication or use by government, political parties or other organizations and interested persons;"
       ],
       "skills": [
-        "projectbeheer uitvoeren",
-        "software met een open broncode ontwikkelen",
-        "opstellen van wetenschappelijke of academische artikelen en technische documentatie",
-        "blijk geven van vakkennis",
-        "onderzoeksactiviteiten evalueren",
-        "beginselen van onderzoeksethiek en wetenschappelijke integriteit toepassen in onderzoeksactiviteiten",
-        "wetenschappelijke literatuur",
-        "wetenschappelijk onderzoek verrichten"
+        "Projectbeheer uitvoeren",
+        "Software met een open broncode",
+        "Opstellen van of academische artikelen",
+        "Blijk geven van vakkennis",
+        "Onderzoeksactiviteiten beoordelen",
+        "Beginselen van onderzoeksethiek en integriteit",
+        "Literatuur",
+        "Wetenschappelijk onderzoek verrichten"
       ]
     },
     {
@@ -6188,9 +6188,9 @@
       "afternoon": "Je controleert de dikte van de afwerkingslaag met meetinstrumenten en noteert de gegevens.",
       "closing": "De werkdag eindigt met het schoonmaken van de werkplek en het controleren van de apparatuur.",
       "highlights": [
-        "Bediening en bewaking van galvaniseerapparatuur",
-        "Voorbereiden en mengen van metalen oplossingen",
-        "Controle van dikte met meetinstrumenten"
+        "Bediening en bewaking van galvaniseerapparatuur.",
+        "Voorbereiden en mengen van metalen oplossingen.",
+        "Controle van dikte met meetinstrumenten."
       ],
       "variesNote": "De specifieke machines en werkprocessen kunnen verschillen per werkgever.",
       "sourceModel": "gpt-4o",
@@ -6475,27 +6475,27 @@
       "blocks": [
         {
           "key": "start",
-          "label": "07:00 Start",
+          "label": "08:00 Start",
           "text": "De dag begint met het controleren van de machines. Alles moet goed werken voor een veilige start."
         },
         {
           "key": "morning",
-          "label": "08:00 Ochtend",
+          "label": "09:30 Ochtend",
           "text": "Je bedient de anodisatiemachines en zorgt dat de metalen werkstukken goed worden behandeld."
         },
         {
           "key": "plan",
-          "label": "10:00 Plannen",
+          "label": "11:00 Plannen",
           "text": "Je bereidt de metalen oplossingen voor en mengt ze volgens de juiste specificaties."
         },
         {
           "key": "pause",
-          "label": "12:00 Pauze",
+          "label": "12:30 Pauze",
           "text": "Tijd voor een welverdiende pauze. Even ontspannen en opladen voor de middag."
         },
         {
           "key": "afternoon",
-          "label": "13:00 Middag",
+          "label": "13:30 Middag",
           "text": "Je controleert de dikte van de afwerkingslaag met meetinstrumenten en noteert de gegevens."
         },
         {
@@ -6505,7 +6505,7 @@
         },
         {
           "key": "close",
-          "label": "16:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "De werkdag eindigt met het schoonmaken van de werkplek en het controleren van de apparatuur."
         }
       ],
@@ -6516,29 +6516,29 @@
         "Voorbereiden en mengen van metalen oplossingen volgens formules of specificaties"
       ],
       "skills": [
-        "soorten metaal",
-        "luchtbalk anodisatietank indrukken",
-        "gezondheid en veiligheid op de werkplek",
-        "kwaliteitsstandaarden",
-        "machine leveren",
-        "passende beschermende uitrusting dragen",
-        "elektrolytisch passiveringsproces",
-        "de wijzigende anodisatie-eigenschappen in acht nemen"
+        "Soorten metaal",
+        "Luchtbalk anodisatietank indrukken",
+        "Gezondheid en veiligheid op de",
+        "Kwaliteitsstandaarden",
+        "Machine leveren",
+        "Passende beschermende uitrusting dragen",
+        "Elektrolytisch passiveringsproces",
+        "De wijzigende anodisatie-eigenschappen in acht"
       ]
     },
     {
       "escoId": "eee68e13-8248-43bb-a9fb-959832a6c217",
       "uri": "http://data.europa.eu/esco/occupation/eee68e13-8248-43bb-a9fb-959832a6c217",
       "titleNl": "bioloog",
-      "morning": "Je bestudeert de oorsprong en ontwikkeling van de verzamelde organismen. Dit omvat hun structuur en levensprocessen.",
+      "morning": "Je bestudeert de oorsprong en ontwikkeling van de verzamelde planten en dieren. Dit omvat hun structuur en levensprocessen.",
       "midday": "Je plant experimenten en bepaalt welke gegevens je verder moet verzamelen voor je onderzoek.",
-      "afternoon": "Je schrijft wetenschappelijke papers en rapporten over je bevindingen. Deze worden gedeeld met de wetenschappelijke gemeenschap.",
+      "afternoon": "Je schrijft wetenschappelijke papers en rapporten over je bevindingen. Deze worden gedeeld met de andere onderzoekers.",
       "closing": "Je sluit de dag af door je onderzoeksgegevens te beheren en te zorgen dat alles goed is gedocumenteerd.",
       "highlights": [
-        "openbare publicaties beheren",
-        "experimentele gegevens verzamelen",
-        "onderzoek naar fauna uitvoeren",
-        "advies geven aan overheden"
+        "Openbare publicaties beheren.",
+        "Experimentele gegevens verzamelen.",
+        "Onderzoek naar fauna uitvoeren.",
+        "Advies geven aan overheden."
       ],
       "variesNote": "De specifieke taken kunnen vari\u00EBren afhankelijk van het onderzoeksgebied en de werkgever.",
       "sourceModel": "gpt-4o",
@@ -6828,36 +6828,36 @@
         {
           "key": "start",
           "label": "08:00 Start",
-          "text": "De dag begint met het verzamelen van specimens en gegevens. Dit kan gaan om planten, dieren of insecten."
+          "text": "De dag begint met het verzamelen van monsters en gegevens. Dit kan gaan om planten, dieren of insecten."
         },
         {
           "key": "morning",
           "label": "09:30 Ochtend",
-          "text": "Je bestudeert de oorsprong en ontwikkeling van de verzamelde organismen. Dit omvat hun structuur en levensprocessen."
+          "text": "Je bestudeert de oorsprong en ontwikkeling van de verzamelde planten en dieren. Dit omvat hun structuur en levensprocessen."
         },
         {
           "key": "talk",
-          "label": "15:00 Gesprek",
+          "label": "11:00 Gesprek",
           "text": "Je geeft advies aan organisaties over behoud en beheer van natuurlijke hulpbronnen."
         },
         {
           "key": "plan",
-          "label": "11:00 Plannen",
+          "label": "12:30 Plannen",
           "text": "Je plant experimenten en bepaalt welke gegevens je verder moet verzamelen voor je onderzoek."
         },
         {
           "key": "pause",
-          "label": "12:30 Pauze",
+          "label": "13:30 Pauze",
           "text": "Tijd voor een welverdiende pauze. Even ontspannen voordat je verder gaat met je werk."
         },
         {
           "key": "afternoon",
-          "label": "13:30 Middag",
-          "text": "Je schrijft wetenschappelijke papers en rapporten over je bevindingen. Deze worden gedeeld met de wetenschappelijke gemeenschap."
+          "label": "15:00 Middag",
+          "text": "Je schrijft wetenschappelijke papers en rapporten over je bevindingen. Deze worden gedeeld met de andere onderzoekers."
         },
         {
           "key": "close",
-          "label": "17:00 Afronden",
+          "label": "16:30 Afronden",
           "text": "Je sluit de dag af door je onderzoeksgegevens te beheren en te zorgen dat alles goed is gedocumenteerd."
         }
       ],
@@ -6868,14 +6868,130 @@
         "Advies geven aan overheden, organisaties en bedrijven op gebieden als behoud, beheer van natuurlijke hulpbronnen, de gevolgen van klimaatverandering en vervuiling"
       ],
       "skills": [
-        "openbare publicaties beheren",
-        "open innovatie in onderzoek bevorderen",
-        "Professioneel omgaan met anderen in onderzoeks- en beroepsomgevingen.",
-        "beginselen van onderzoeksethiek en wetenschappelijke integriteit toepassen in onderzoeksactiviteiten",
-        "experimentele gegevens verzamelen",
-        "onderzoek naar fauna uitvoeren",
-        "onderzoeksgegevens beheren",
-        "ecosysteembeheer"
+        "Openbare publicaties beheren",
+        "Open innovatie in onderzoek bevorderen",
+        "Professioneel omgaan met anderen in",
+        "Beginselen van onderzoeksethiek en integriteit",
+        "Experimentele gegevens verzamelen",
+        "Onderzoek naar fauna uitvoeren",
+        "Onderzoeksgegevens beheren",
+        "Ecosysteembeheer"
+      ]
+    },
+    {
+      "escoId": "2eac08c2-a81a-46fc-8d75-eb0e0f3e0f6d",
+      "uri": "2eac08c2-a81a-46fc-8d75-eb0e0f3e0f6d",
+      "titleNl": "accountmanager",
+      "morning": "Bevordering en reclame van de goederen en diensten van de vestiging.",
+      "midday": "Je bijhouden van registers van voorraadniveaus en financi\u00EBle transacties.",
+      "afternoon": "Controleren van selectie, training en supervisie van personeel.",
+      "closing": "Zorgen voor naleving van de voorschriften voor gezondheid en veiligheid op het werk.",
+      "highlights": [
+        "Zakenrelaties aangaan.",
+        "Je let op productkennis."
+      ],
+      "variesNote": "De volgorde en taken kunnen per werkgever verschillen. Dat is normaal in dit beroep.",
+      "sourceModel": "gpt-4o-grounded-bridge",
+      "generatedAtUtc": "2026-10-30T22:45:48.2968819Z",
+      "contentHash": "trial-bridge",
+      "locale": "nl",
+      "thinSource": false,
+      "translations": {},
+      "blocks": [
+        {
+          "key": "start",
+          "label": "08:00 Start",
+          "text": "Accountmanagers fungeren als intermediair tussen klanten en de organisatie, en beheren zowel de verkoop als de langetermijnrelaties met."
+        },
+        {
+          "key": "morning",
+          "label": "09:30 Ochtend",
+          "text": "Bevordering en reclame van de goederen en diensten van de vestiging."
+        },
+        {
+          "key": "pause",
+          "label": "11:00 Pauze",
+          "text": "Je bijhouden van registers van voorraadniveaus en financi\u00EBle transacties."
+        },
+        {
+          "key": "afternoon",
+          "label": "12:30 Middag",
+          "text": "Controleren van selectie, training en supervisie van personeel."
+        },
+        {
+          "key": "close",
+          "label": "14:30 Afronden",
+          "text": "Zorgen voor naleving van de voorschriften voor gezondheid en veiligheid op het werk."
+        }
+      ],
+      "tasks": [],
+      "skills": [
+        "Productkennis",
+        "Zakenrelaties aangaan",
+        "Rekeningmetrieken voorspellen",
+        "Klantgerichtheid waarborgen",
+        "Eigenschappen van producten",
+        "Ondernemingsbeleid",
+        "Opvolging van klanten uitvoeren",
+        "Klantendiensten"
+      ]
+    },
+    {
+      "escoId": "eda0d957-3c3c-4139-b89a-a18bc9e18897",
+      "uri": "eda0d957-3c3c-4139-b89a-a18bc9e18897",
+      "titleNl": "accountant",
+      "morning": "Accountantscontrole en boekhouding.",
+      "midday": "Je let op boekhoudkundige technieken.",
+      "afternoon": "Je let op boekhoudregelgeving.",
+      "closing": "Je let op boekhoudcertificaten koppelen aan boekhoudkundige transacties.",
+      "highlights": [
+        "Voorlopige balansen opstellen.",
+        "Je let op statistiek."
+      ],
+      "variesNote": "De volgorde en taken kunnen per werkgever verschillen. Dat is normaal in dit beroep.",
+      "sourceModel": "gpt-4o-grounded-bridge",
+      "generatedAtUtc": "2026-10-30T22:45:48.3001475Z",
+      "contentHash": "trial-bridge",
+      "locale": "nl",
+      "thinSource": false,
+      "translations": {},
+      "blocks": [
+        {
+          "key": "start",
+          "label": "08:00 Start",
+          "text": "De accountants evalueren en analyseren financi\u00EBle staten, begrotingen, financi\u00EBle verslagen en bedrijfsplannen om na te gaan of er."
+        },
+        {
+          "key": "morning",
+          "label": "09:30 Ochtend",
+          "text": "Accountantscontrole en boekhouding."
+        },
+        {
+          "key": "pause",
+          "label": "11:00 Pauze",
+          "text": "Je let op boekhoudkundige technieken."
+        },
+        {
+          "key": "afternoon",
+          "label": "12:30 Middag",
+          "text": "Je let op boekhoudregelgeving."
+        },
+        {
+          "key": "close",
+          "label": "14:30 Afronden",
+          "text": "Je let op boekhoudcertificaten koppelen aan boekhoudkundige transacties."
+        }
+      ],
+      "tasks": [],
+      "skills": [
+        "Voorlopige balansen opstellen",
+        "Statistiek",
+        "Boekhoudkundige technieken",
+        "Boekhoudregelgeving",
+        "Boekhoudcertificaten koppelen aan boekhoudkundig",
+        "Fraudedetectie",
+        "Rekeningen beheren",
+        "Boekhoudkundige fouten identificeren"
       ]
     }
   ]

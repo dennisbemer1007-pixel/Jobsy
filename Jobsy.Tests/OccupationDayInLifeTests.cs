@@ -96,7 +96,25 @@ public class OccupationDayInLifeTests
     public void Validator_accepts_six_grounded_blocks()
     {
         var facts = SampleFacts();
-        Assert.True(OccupationDayInLifeValidator.TryValidate(BlockDraft(), facts, out var reasons), string.Join(", ", reasons));
+        var draft = OccupationDayDraftRepair.Apply(BlockDraft(), facts);
+        Assert.True(OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons), string.Join(", ", reasons));
+        Assert.True(OccupationDayTimeline.TryValidate(draft.Blocks!, out _), string.Join(", ", reasons));
+        Assert.StartsWith("08:00", draft.Blocks![0].Label, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Timeline_rejects_backwards_clock_labels()
+    {
+        var blocks = BlockDraft().Blocks!.ToList();
+        for (var i = 0; i < blocks.Count; i++)
+        {
+            var hour = 8 + i;
+            blocks[i] = blocks[i] with { Label = $"{hour:00}:00 {OccupationDayBlocks.DefaultLabel(blocks[i].Key)}" };
+        }
+
+        blocks[2] = blocks[2] with { Label = "07:00 Plannen" };
+        Assert.False(OccupationDayTimeline.TryValidate(blocks, out var reason));
+        Assert.Equal("tijd-niet-stijgend", reason);
     }
 
     [Fact]
@@ -126,6 +144,7 @@ public class OccupationDayInLifeTests
         var blocks = BlockDraft().Blocks!.Where(block => block.Key != "plan").ToList();
         var draft = OccupationDayBlocks.WithDerived(BlockDraft() with { Blocks = blocks });
         Assert.Equal(5, draft.Blocks!.Count);
+        draft = OccupationDayDraftRepair.Apply(draft, SampleFacts());
         Assert.True(OccupationDayInLifeValidator.TryValidate(draft, SampleFacts(), out var reasons), string.Join("; ", reasons));
     }
 
@@ -136,9 +155,10 @@ public class OccupationDayInLifeTests
         Assert.NotNull(facts);
         Assert.False(facts!.IsThin);
         Assert.True(OccupationDayInLifeJson.TryParse(RealisticCookJson(), facts, out var draft, out var error), error);
+        draft = OccupationDayDraftRepair.Apply(draft, facts);
         var blocks = draft.Blocks ?? [];
         Assert.Equal(["start", "morning", "pause", "afternoon", "close"], blocks.Select(block => block.Key).ToArray());
-        Assert.Equal("07:00 Start", blocks[0].Label);
+        Assert.Equal("08:00 Start", blocks[0].Label);
         Assert.Contains("temperatuur", blocks.Single(block => block.Key == "afternoon").Text, StringComparison.Ordinal);
         Assert.True(OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons), string.Join("; ", reasons));
     }
@@ -664,8 +684,7 @@ public class OccupationDayInLifeTests
     public async Task Generate_fails_after_retries_when_quality_never_passes()
     {
         await using var db = NewDb();
-        var bad = RealisticCookJson().Replace("07:00 Start", "Start", StringComparison.Ordinal);
-        var writer = new ScriptWriter([bad, bad, bad, bad]);
+        var writer = new ScriptWriter([ShortCookJson(), ShortCookJson(), ShortCookJson(), ShortCookJson()]);
         var generator = Generator(db, writer);
         var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { CookId };
         var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);

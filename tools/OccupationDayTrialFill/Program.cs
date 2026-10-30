@@ -12,8 +12,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-var manifestPath = args.Length > 0
-    ? args[0]
+var replace = args.Contains("--replace", StringComparer.OrdinalIgnoreCase);
+var filteredArgs = args.Where(a => !string.Equals(a, "--replace", StringComparison.OrdinalIgnoreCase)).ToArray();
+var manifestPath = filteredArgs.Length > 0
+    ? filteredArgs[0]
     : Path.Combine(root, "docs/mockups/leerling/werelden/data/trial-20-manifest.json");
 var outDir = Path.Combine(root, "docs/mockups/leerling/werelden/data");
 Directory.CreateDirectory(outDir);
@@ -70,7 +72,12 @@ var generator = provider.GetRequiredService<OccupationDayInLifeGenerator>();
 
 var only = list.Select(o => o.EscoId).ToHashSet(StringComparer.OrdinalIgnoreCase);
 var started = DateTime.UtcNow;
-var result = await generator.GenerateMissingAsync(Math.Min(20, only.Count), null, only, CancellationToken.None);
+var result = await generator.GenerateMissingAsync(
+    Math.Min(20, only.Count),
+    null,
+    only,
+    replaceExisting: replace,
+    CancellationToken.None);
 var export = await generator.ExportAsync();
 await File.WriteAllTextAsync(exportPath, JsonSerializer.Serialize(export, OccupationDayJson.Options));
 

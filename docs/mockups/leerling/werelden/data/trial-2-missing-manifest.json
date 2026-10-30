@@ -1,0 +1,18 @@
+{
+  "occupations": [
+    {
+      "escoId": "2eac08c2-a81a-46fc-8d75-eb0e0f3e0f6d",
+      "titleNl": "accountmanager",
+      "riasec": "E",
+      "categorySlug": "helpen",
+      "world": "ster"
+    },
+    {
+      "escoId": "eda0d957-3c3c-4139-b89a-a18bc9e18897",
+      "titleNl": "accountant",
+      "riasec": "C",
+      "categorySlug": "onderzoek",
+      "world": "ster"
+    }
+  ]
+}
