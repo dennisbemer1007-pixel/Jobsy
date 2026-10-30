@@ -1062,6 +1062,12 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     var link = page.GetByRole(AriaRole.Link, new() { Name = "Jouw DNA-paspoort" });
                     await Assertions.Expect(link).ToBeVisibleAsync();
+                    await Assertions.Expect(link).ToHaveClassAsync(new Regex(@"\bbtn-ghost\b"));
+                    if (width < 600)
+                    {
+                        await Assertions.Expect(link).ToHaveCSSAsync("border-width", "2px");
+                    }
+
                     await link.ClickAsync();
                     await page.WaitForURLAsync("**/leerling/paspoort**", DomReady);
                     await page.GoBackAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -1071,6 +1077,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     var link = page.GetByRole(AriaRole.Link, new() { Name = "PDF" });
                     await Assertions.Expect(link).ToHaveAttributeAsync("href", "/leerling/pdf");
+                    await Assertions.Expect(link).ToHaveClassAsync(new Regex(@"\bbtn-ghost\b"));
+                    if (width < 600)
+                    {
+                        await Assertions.Expect(link).ToHaveCSSAsync("border-width", "2px");
+                    }
                 });
                 await Step("Check je droombaan", async () =>
                 {
@@ -1094,6 +1105,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
+        await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         var zeeCapture = "/opt/cursor/artifacts/groep78-zee-result-capture";
         var tuinCapture = "/opt/cursor/artifacts/groep78-tuin-result-capture";
@@ -1671,6 +1683,12 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     var link = page.GetByRole(AriaRole.Link, new() { Name = "Jouw DNA-paspoort" });
                     await Assertions.Expect(link).ToBeVisibleAsync();
+                    await Assertions.Expect(link).ToHaveClassAsync(new Regex(@"\bbtn-ghost\b"));
+                    if (mobile)
+                    {
+                        await Assertions.Expect(link).ToHaveCSSAsync("border-width", "2px");
+                    }
+
                     await link.ClickAsync();
                     await page.WaitForURLAsync("**/leerling/paspoort**", DomReady);
                     await page.GoBackAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -1681,6 +1699,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     var link = page.GetByRole(AriaRole.Link, new() { Name = "PDF" });
                     await Assertions.Expect(link).ToHaveAttributeAsync("href", "/leerling/pdf");
+                    await Assertions.Expect(link).ToHaveClassAsync(new Regex(@"\bbtn-ghost\b"));
+                    if (mobile)
+                    {
+                        await Assertions.Expect(link).ToHaveCSSAsync("border-width", "2px");
+                    }
                 });
 
                 await Step("Check je droombaan", async () =>
