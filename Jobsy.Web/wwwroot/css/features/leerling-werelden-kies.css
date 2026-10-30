@@ -164,10 +164,30 @@
   font-weight: 600;
 }
 
-.ll-g78-shell .guide {
+/* Ring + bubble side by side (mockup). Do not pair with .d-only { display:block } alone. */
+.ll-g78-shell .guide,
+.ll-g78-shell .kz-lob {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: flex-end;
   gap: 14px;
+  max-width: 440px;
+}
+
+.ll-g78-shell .kz-lob {
+  align-items: center;
+}
+
+.ll-g78-shell .guide .bubble,
+.ll-g78-shell .kz-lob .bubble {
+  flex: 1;
+  min-width: 0;
+}
+
+.ll-g78-shell .guide .ring,
+.ll-g78-shell .kz-lob .ring {
+  flex: none;
 }
 
 .ll-g78-shell .bubble {
@@ -342,8 +362,13 @@
   margin: 0 10px;
 }
 
-.ll-g78-shell .d-only {
+.ll-g78-shell .d-only:not(.kz-lob):not(.guide) {
   display: block;
+}
+
+.ll-g78-shell .d-only.kz-lob,
+.ll-g78-shell .d-only.guide {
+  display: flex;
 }
 
 .ll-g78-shell .m-only {
@@ -501,6 +526,14 @@
 
   .ll-g78-shell .m-only {
     display: block;
+  }
+
+  .ll-g78-shell .m-only .guide {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    max-width: none;
   }
 
   .ll-g78-shell .band::after {
