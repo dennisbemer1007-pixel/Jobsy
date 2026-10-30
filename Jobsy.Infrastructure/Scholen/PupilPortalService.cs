@@ -35,6 +35,11 @@ public interface IPupilPortalService
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilJourneyThemeResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveJourneyThemeAsync(
+        ClaimsPrincipal pupil,
+        string themeKey,
+        CancellationToken cancellationToken = default);
+
     Task<(PupilAnswerResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveAnswerAsync(
         ClaimsPrincipal pupil,
         string itemId,
@@ -344,11 +349,11 @@ public sealed class PupilPortalService : IPupilPortalService
             }
         }
 
-        var redirect = completed
-            ? "/leerling/dit-ben-jij"
-            : code.Status == PupilCodeStatus.NotStarted && (code.Progress is null || currentIndex == 0)
-                ? "/leerling/start"
-                : "/leerling/reis";
+        var redirect = PupilGroep78EntryPaths.AfterLogin(
+            schoolClass.QuestionSet,
+            code.Status,
+            code.Progress,
+            completed);
 
         var display = PupilCodeFormat.Display(normalized);
         var response = new PupilLoginResponse(
@@ -444,7 +449,59 @@ public sealed class PupilPortalService : IPupilPortalService
             code.Progress?.DislikeOtherWord,
             schoolClass.QuestionSet,
             nextStep,
-            step.PuzzleKey), null, 200);
+            step.PuzzleKey,
+            code.Progress?.JourneyThemeKey), null, 200);
+    }
+
+    public async Task<(PupilJourneyThemeResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveJourneyThemeAsync(
+        ClaimsPrincipal pupil,
+        string themeKey,
+        CancellationToken cancellationToken = default)
+    {
+        if (!PupilJourneyTheme.IsValid(themeKey))
+        {
+            return (null, new PupilErrorDto("validation", "Onbekende wereld."), 400);
+        }
+
+        var ctx = await ResolveSessionAsync(pupil, includeResult: false, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        if (schoolClass.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            return (null, new PupilErrorDto("wrong_set", "Deze keuze hoort alleen bij groep 7/8."), 400);
+        }
+
+        if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
+        {
+            return (null, new PupilErrorDto("already_completed", "Je reis is al klaar."), 409);
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var progress = code.Progress;
+        if (progress is null)
+        {
+            progress = new PupilProgress
+            {
+                PupilCodeId = code.Id,
+                StartedAtUtc = now,
+                UpdatedAtUtc = now,
+            };
+            _db.PupilProgresses.Add(progress);
+            code.Progress = progress;
+        }
+
+        progress.JourneyThemeKey = PupilJourneyTheme.Normalize(themeKey);
+        progress.UpdatedAtUtc = now;
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var redirect = PupilGroep78EntryPaths.AfterThemeChosen(code.Status, progress, progress.JourneyThemeKey);
+        return (new PupilJourneyThemeResponse(progress.JourneyThemeKey, redirect), null, 200);
     }
 
     public async Task<(PupilAnswerResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveAnswerAsync(
