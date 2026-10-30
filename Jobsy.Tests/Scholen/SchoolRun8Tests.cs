@@ -205,7 +205,7 @@ public class SchoolRun8ReadAloudTests : BunitContext
             Guid.NewGuid(), "8A", "ABC-123", PupilCodeStatus.InProgress,
             0, 60, 0, 0, false,
             "9001", "koraalrif", new Dictionary<string, int>(),
-            true, false, false, false, [], [], null, null,
+            true, false, false, false, false, [], [], null, null,
             PupilQuestionSet.Groep78, "question");
 
     private static PupilProgressStateDto IslandProgress()
@@ -213,7 +213,7 @@ public class SchoolRun8ReadAloudTests : BunitContext
             Guid.NewGuid(), "8A", "ABC-123", PupilCodeStatus.InProgress,
             15, 60, 15, 2, false,
             null, "schatgrot", new Dictionary<string, int>(),
-            true, false, true, false, [], [], null, null,
+            true, false, true, false, false, [], [], null, null,
             PupilQuestionSet.Groep78, "island");
 
     private static PupilResultPageDto ResultPage()
