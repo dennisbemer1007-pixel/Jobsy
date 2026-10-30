@@ -37,12 +37,16 @@
     /// <summary>Mockup-faithful pupil shells show the speaker even before TTS probe completes.</summary>
     [Parameter] public bool AlwaysShow { get; set; }
 
+    /// <summary>Speak once when <see cref="SpeechKey"/> or <see cref="Text"/> changes (pupil question flow).</summary>
+    [Parameter] public bool AutoPlay { get; set; }
+
     private bool _show;
     private bool _voiceProbed;
     private bool _speaking;
     private bool _pending;
     private string? _error;
     private string _spoken = "";
+    private string? _autoPlayedKey;
     private DotNetObjectReference<ReadAloudButton>? _self;
     private ReadAloudCoordinator? _coordinator;
 
@@ -91,6 +95,12 @@
         {
             await StopQuietlyAsync();
         }
+
+        if (AutoPlay && _voiceProbed)
+        {
+            _autoPlayedKey = null;
+            _ = TryAutoPlayAsync();
+        }
     }
 
     protected override async Task OnCultureChanged()
@@ -128,6 +138,23 @@
         _voiceProbed = true;
         _show = AlwaysShow || voiceOk;
         StateHasChanged();
+        await TryAutoPlayAsync();
+    }
+
+    private async Task TryAutoPlayAsync()
+    {
+        if (!AutoPlay || !_show || _speaking || _pending || string.IsNullOrWhiteSpace(Text))
+        {
+            return;
+        }
+
+        if (string.Equals(_autoPlayedKey, EffectiveKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _autoPlayedKey = EffectiveKey;
+        await StartSpeakAsync();
     }
 
     private async Task ToggleAsync()
@@ -138,6 +165,16 @@
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            return;
+        }
+
+        await StartSpeakAsync();
+    }
+
+    private async Task StartSpeakAsync()
+    {
         if (string.IsNullOrWhiteSpace(Text))
         {
             return;

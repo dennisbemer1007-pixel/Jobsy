@@ -442,6 +442,15 @@ public static class PageAssetCatalog
             ];
         }
 
+        if (path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css"),
+                WwwrootAssetCatalog.Url("css/features/leerling-werelden-vraag.css"),
+            ];
+        }
+
         return [];
     }
 

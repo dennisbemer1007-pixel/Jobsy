@@ -128,6 +128,7 @@ public class SchoolRun8ReadAloudTests : BunitContext
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
         Services.AddSingleton<IAntiforgery>(new AlwaysValidAntiforgery());
         Services.AddSingleton<IPupilQuestionSetRegistry>(new PupilQuestionSetRegistry());
+        Services.AddScoped<Jobsy.Web.Scholen.LeerlingReisShellState>();
         Services.AddSingleton<IFeatureFlags>(new ReadAloudFeatureFlags());
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://api.test/") }));
     }

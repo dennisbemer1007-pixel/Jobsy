@@ -463,6 +463,10 @@ public static class UiStringsScholen
         nl["Leerling.Reis.Retry"] = "Probeer opnieuw";
         nl["Leerling.Reis.Offline"] = "Even geen verbinding. Probeer opnieuw.";
         nl["Leerling.Reis.Prev"] = "Vorige";
+        nl["Leerling.Vraag.Coach"] = "Ik lees elke vraag voor. Tik op de luidspreker om het nog eens te horen.";
+        nl["Leerling.Vraag.ReadQuestion"] = "Lobsy leest de vraag voor";
+        nl["Leerling.Vraag.JourneyAria"] = "Jouw reis, stop voor stop";
+        nl["Leerling.Vraag.JourneyMeta"] = "{0} · deel {1} van 4 · vraag {2} van 15";
         nl["Leerling.Reis.Bubble"] = "Goed bezig! Elke 6 vragen valt er een schaaltje af.";
         nl["Leerling.Reis.Bubble.Vo"] = "Elke 10 vragen valt er een schaaltje af. Je antwoorden worden bewaard.";
         nl["Leerling.Reis.PlatesGone"] = "Dit is het schild van Lobsy.";
@@ -750,6 +754,10 @@ public static class UiStringsScholen
         Add("Leerling.Route.Stop.Result.Sub", "Jouw eiland", "Your island", "Twoja wyspa", "Insula ta", "جزيرتك");
         Add("Leerling.Coach.Start", "Klaar voor de reis?", "Ready for the trip?", "Gotowy na podróż?", "Gata de drum?", "هل أنت مستعد للرحلة؟");
         Add("Leerling.Coach.Reis", "Kies wat bij je past.", "Choose what fits you.", "Wybierz to, co do ciebie pasuje.", "Alege ce ți se potrivește.", "اختر ما يناسبك.");
+        Add("Leerling.Vraag.Coach", "Ik lees elke vraag voor. Tik op de luidspreker om het nog eens te horen.", "I read every question aloud. Tap the speaker to hear it again.", "Czytam każde pytanie na głos. Dotknij głośnika, by usłyszeć je ponownie.", "Citesc fiecare întrebare cu voce tare. Atinge difuzorul ca s-o auzi din nou.", "أقرأ كل سؤال بصوت عالٍ. اضغط على مكبر الصوت لتسمعه مرة أخرى.");
+        Add("Leerling.Vraag.ReadQuestion", "Lobsy leest de vraag voor", "Lobsy reads the question aloud", "Lobsy czyta pytanie na głos", "Lobsy citește întrebarea cu voce tare", "لوبسي يقرأ السؤال بصوت");
+        Add("Leerling.Vraag.JourneyAria", "Jouw reis, stop voor stop", "Your journey, stop by stop", "Twoja podróż, przystanek po przystanku", "Călătoria ta, oprire cu oprire", "رحلتك، محطة بمحطة");
+        Add("Leerling.Vraag.JourneyMeta", "{0} · deel {1} van 4 · vraag {2} van 15", "{0} · part {1} of 4 · question {2} of 15", "{0} · część {1} z 4 · pytanie {2} z 15", "{0} · partea {1} din 4 · întrebarea {2} din 15", "{0} · جزء {1} من 4 · سؤال {2} من 15");
         Add("Leerling.Coach.Part", "Goed gedaan!", "Well done!", "Dobra robota!", "Bravo!", "أحسنت!");
         Add("Leerling.Coach.Stop", "Tot snel!", "See you soon!", "Do zobaczenia!", "Pe curând!", "إلى اللقاء!");
         Add("Leerling.Coach.Back", "Je bent er weer.", "You are back.", "Znowu tu jesteś.", "Ai revenit.", "لقد عدت.");

@@ -628,6 +628,66 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await mobile.CloseAsync();
     }
 
+    [Fact(Timeout = 300_000)]
+    public async Task Groep78_zee_vraag_screen_links_and_capture()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtAsync(3, answered: 0, chipsSaved: false, completeActivePuzzleGate: true);
+        var pupil = seed[0];
+        var baseUrl = EnsureWeb();
+        var captureDir = Environment.GetEnvironmentVariable("LEERLING_VRAAG_CAPTURE_DIR");
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                IsMobile = width < 600,
+                HasTouch = width < 600,
+                DeviceScaleFactor = width < 600 ? 2 : 1,
+            });
+            page.SetDefaultTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, chooseDefaultWorld: true);
+            await page.WaitForURLAsync("**/leerling/route**", DomReady);
+            await page.GetByRole(AriaRole.Link, new() { Name = "Naar het Koraalrif" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/reis**", DomReady);
+            await page.Locator("[data-testid=ll-zee-vraag-band]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Attached,
+                Timeout = 60_000,
+            });
+            await Assertions.Expect(page.Locator(".vr-ans").First).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".vr-qrow [data-read-aloud]")).ToBeVisibleAsync();
+            if (!string.IsNullOrEmpty(captureDir))
+            {
+                Directory.CreateDirectory(captureDir);
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-02-zee-vraag-{tag}.png"),
+                    FullPage = true,
+                });
+            }
+
+            await page.CloseAsync();
+        }
+
+        var back = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+        });
+        back.SetDefaultTimeout(90_000);
+        var url = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+        await LoginAsync(back, url, pupil.PlainCode, pupil.ClassId, chooseDefaultWorld: true);
+        await back.WaitForURLAsync("**/leerling/route**", DomReady);
+        await back.GetByRole(AriaRole.Link, new() { Name = "Naar het Koraalrif" }).ClickAsync();
+        await back.WaitForURLAsync("**/leerling/reis**", DomReady);
+        await back.Locator("[data-testid=ll-vraag-prev]").ClickAsync();
+        await back.WaitForURLAsync("**/leerling/route**", DomReady);
+        await back.CloseAsync();
+    }
+
     private async Task<IBrowserContext> NewMobileContextAsync()
         => await _browser!.NewContextAsync(new BrowserNewContextOptions
         {

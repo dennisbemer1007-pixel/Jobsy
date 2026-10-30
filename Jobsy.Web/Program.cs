@@ -157,6 +157,7 @@ builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetR
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
 builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.Scholen.LeerlingReisShellState>();
 builder.Services.AddScoped<Jobsy.Web.Pwa.PwaInstallSheetState>();
 builder.Services.AddScoped<Jobsy.Web.Services.ReadAloudCoordinator>();
 // E7: the only place that turns an exception into text a visitor may read.
