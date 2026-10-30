@@ -34,7 +34,11 @@
     /// <summary>Overrides the play aria-label. Pupil pages use the short "Lees voor".</summary>
     [Parameter] public string? PlayAria { get; set; }
 
+    /// <summary>Mockup-faithful pupil shells show the speaker even before TTS probe completes.</summary>
+    [Parameter] public bool AlwaysShow { get; set; }
+
     private bool _show;
+    private bool _voiceProbed;
     private bool _speaking;
     private bool _pending;
     private string? _error;
@@ -69,7 +73,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender || (AlwaysShow && !_voiceProbed))
         {
             await Task.Yield();
             await ProbeAsync();
@@ -78,6 +82,11 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (AlwaysShow && !string.IsNullOrWhiteSpace(Text))
+        {
+            _show = true;
+        }
+
         if (_speaking && !string.Equals(_spoken, Text, StringComparison.Ordinal))
         {
             await StopQuietlyAsync();
@@ -100,20 +109,24 @@
         if (string.IsNullOrWhiteSpace(Text))
         {
             _show = false;
+            _voiceProbed = true;
             StateHasChanged();
             return;
         }
 
+        var voiceOk = false;
         try
         {
             var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
-            _show = probe is { Supported: true, Enabled: true };
+            voiceOk = probe is { Supported: true, Enabled: true };
         }
         catch (Exception)
         {
-            _show = false;
+            voiceOk = false;
         }
 
+        _voiceProbed = true;
+        _show = AlwaysShow || voiceOk;
         StateHasChanged();
     }
 

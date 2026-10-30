@@ -585,10 +585,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "De route" })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Naar het Koraalrif" })).ToBeVisibleAsync();
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Andere wereld kiezen" })).ToBeVisibleAsync();
+            var speak = width >= 600
+                ? page.Locator(".rt-coach [data-read-aloud]")
+                : page.Locator(".m-only .guide [data-read-aloud]");
+            await Assertions.Expect(speak).ToBeVisibleAsync();
             if (!string.IsNullOrEmpty(captureDir))
             {
                 Directory.CreateDirectory(captureDir);
                 await page.Locator(".btn-main").WaitForAsync(new() { Timeout = 30_000 });
+                await speak.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
                 await page.ScreenshotAsync(new()
                 {
                     Path = Path.Combine(captureDir, $"built-01-zee-route-{tag}.png"),

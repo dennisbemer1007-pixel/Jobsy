@@ -170,6 +170,10 @@ public class SchoolRun8ReadAloudTests : BunitContext
         _handler.JsonByPath["/api/pupil/result"] = Json(ResultPage());
         nav.NavigateTo("http://localhost/leerling/dit-ben-jij");
         await AssertSpoken(Render<LeerlingDitBenJij>());
+
+        _handler.JsonByPath["/api/pupil/progress"] = Json(RouteProgress());
+        nav.NavigateTo("http://localhost/leerling/route");
+        await AssertSpoken(Render<LeerlingRoute>());
     }
 
     private static async Task AssertSpoken<TComponent>(IRenderedComponent<TComponent> cut)
@@ -207,6 +211,14 @@ public class SchoolRun8ReadAloudTests : BunitContext
             "9001", "koraalrif", new Dictionary<string, int>(),
             true, false, false, false, [], [], null, null,
             PupilQuestionSet.Groep78, "question");
+
+    private static PupilProgressStateDto RouteProgress()
+        => new(
+            Guid.NewGuid(), "8A", "ABC-123", PupilCodeStatus.NotStarted,
+            0, 60, 0, 0, false,
+            null, null, new Dictionary<string, int>(),
+            true, false, false, false, [], [], null, null,
+            PupilQuestionSet.Groep78, "question", null, PupilJourneyTheme.ZeeExpeditie);
 
     private static PupilProgressStateDto IslandProgress()
         => new(

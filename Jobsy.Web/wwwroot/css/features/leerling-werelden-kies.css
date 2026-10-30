@@ -362,12 +362,13 @@
   margin: 0 10px;
 }
 
-.ll-g78-shell .d-only:not(.kz-lob):not(.guide) {
+.ll-g78-shell .d-only:not(.kz-lob):not(.guide):not(.rt-coach) {
   display: block;
 }
 
 .ll-g78-shell .d-only.kz-lob,
-.ll-g78-shell .d-only.guide {
+.ll-g78-shell .d-only.guide,
+.ll-g78-shell .d-only.rt-coach {
   display: flex;
 }
 
@@ -394,16 +395,17 @@
 }
 
 .ll-g78-shell .read-aloud.read-aloud--icon {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
   border-radius: 50%;
   border: 2px solid var(--navy);
   background: var(--paper);
   color: var(--navy);
   padding: 0;
   box-shadow: none;
+  flex: none;
 }
 
 .ll-g78-shell .read-aloud.read-aloud--icon.is-speaking {
@@ -412,9 +414,13 @@
   box-shadow: 0 0 0 6px rgba(185, 143, 62, 0.35);
 }
 
+.ll-g78-shell .bubble .bt .read-aloud.read-aloud--icon {
+  display: inline-flex;
+}
+
 .ll-g78-shell .read-aloud__icon svg {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
 }
 
 @media (max-width: 600px) {
