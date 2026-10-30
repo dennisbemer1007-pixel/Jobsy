@@ -1,0 +1,217 @@
+@page "/leerling/route"
+@layout LeerlingGroep78ShellLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+@inject LeerlingGroep78ShellTheme ShellTheme
+
+<PageTitle>@Culture["Leerling.Route.Title"] · Lobsy</PageTitle>
+
+@if (_view is not null)
+{
+    <HeadContent>
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")" data-page-route-css="true" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-route.css")" data-page-route-css="true" />
+        <link rel="preload" as="image" href="/leerling/werelden/img/@(_view.HeroImageStem)-780w.jpg" media="(max-width: 600px)" />
+        <link rel="preload" as="image" href="/leerling/werelden/img/@(_view.HeroImageStem).jpg" media="(min-width: 601px)" />
+        <link rel="preload" as="image" href="/leerling/werelden/img/@(_view.MapImageStem)-780w.jpg" imagesrcset="/leerling/werelden/img/@(_view.MapImageStem)-390w.jpg 390w, /leerling/werelden/img/@(_view.MapImageStem)-780w.jpg 780w" imagesizes="100vw" />
+    </HeadContent>
+}
+
+@if (_loading)
+{
+    <p class="wrap" style="padding: 2rem 0">@Culture["Common.Loading"]</p>
+}
+else if (_sessionLost)
+{
+    <p class="wrap" style="padding: 2rem 0;color:#b00">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_view is not null)
+{
+    var bandClass = string.Equals(_view.JourneyKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase)
+        ? "band rt rt-tuin"
+        : "band rt";
+    var mainTestId = string.Equals(_view.JourneyKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase)
+        ? "ll-route-bloemenbaai"
+        : "ll-route-reef";
+
+    <section class="@bandClass">
+        <div class="wrap rt-hero">
+            <h1 class="serif">@Culture["Leerling.Route.Title"]</h1>
+            <p>@Culture[_view.LeadKey]</p>
+        </div>
+    </section>
+    <div class="wrap rt-overlap">
+        <div class="card rt">
+            <div>
+                <div class="rt-map-wrap">
+                    <img src="/leerling/werelden/img/@(_view.MapImageStem)-780w.jpg"
+                         srcset="/leerling/werelden/img/@(_view.MapImageStem)-390w.jpg 390w, /leerling/werelden/img/@(_view.MapImageStem)-780w.jpg 780w, /leerling/werelden/img/@(_view.MapImageStem).jpg 1600w"
+                         sizes="(max-width: 600px) 100vw, min(100vw - 64px, 820px)"
+                         width="1600"
+                         height="900"
+                         alt="@Culture["Leerling.Route.MapAlt"]"
+                         fetchpriority="high"
+                         decoding="async" />
+                    <svg viewBox="0 0 1024 576" aria-hidden="true">
+                        @((MarkupString)_view.MapSvgMarkup)
+                    </svg>
+                </div>
+
+                <div class="d-only rt-coach">
+                    <div class="ring" role="img" aria-label="Lobsy"></div>
+                    <div class="bubble tail-l">
+                        <span class="who">Lobsy</span>
+                        @Culture["Leerling.Route.Coach"]
+                        <div class="bt">
+                            <LeerlingSpeak Text="@CoachSpoken" SpeechKey="ll-route-coach" AlwaysShow="true" />
+                            <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <ol class="rt-stops" aria-label="@Culture["Leerling.Route.StopsAria"]">
+                    @foreach (var stop in _view.Stops)
+                    {
+                        <li class="rt-stop">
+                            <span class="rt-stop__n @(stop.Diamond ? "is-diamond" : "is-circle") @stop.Tone">
+                                @if (stop.Diamond)
+                                {
+                                    <span>@stop.Num</span>
+                                }
+                                else
+                                {
+                                    @stop.Num
+                                }
+                            </span>
+                            <span>
+                                <b>@Culture[stop.TitleKey]</b>
+                                @if (stop.ShowHere)
+                                {
+                                    <span class="rt-here">@Culture["Leerling.Route.Here"]</span>
+                                }
+                                <br />
+                                <small>@Culture[stop.SubKey]</small>
+                            </span>
+                        </li>
+                    }
+                </ol>
+
+                <a class="btn btn-main @(_mainTap ? "is-tapped" : null)"
+                   href="/leerling/reis"
+                   data-testid="@mainTestId"
+                   @onpointerdown="() => _mainTap = true"
+                   @onpointerup="ClearMainTap"
+                   @onpointerleave="ClearMainTap"
+                   @onpointercancel="ClearMainTap">
+                    @Culture[_view.MainButtonKey]
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </a>
+
+                <a class="btn btn-quiet @(_worldTap ? "is-tapped" : null)"
+                   href="/leerling/wereld"
+                   data-testid="ll-route-wereld"
+                   @onpointerdown="() => _worldTap = true"
+                   @onpointerup="ClearWorldTap"
+                   @onpointerleave="ClearWorldTap"
+                   @onpointercancel="ClearWorldTap">
+                    <svg style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3" /></svg>
+                    @Culture["Leerling.Route.ChangeWorld"]
+                </a>
+            </div>
+        </div>
+
+        <div class="m-only" style="margin-top:18px">
+            <div class="guide">
+                <div class="ring" role="img" aria-label="Lobsy"></div>
+                <div class="bubble tail-l">
+                    <span class="who">Lobsy</span>
+                    @Culture["Leerling.Route.Coach"]
+                    <div class="bt">
+                        <LeerlingSpeak Text="@CoachSpoken" SpeechKey="ll-route-coach-m" AlwaysShow="true" />
+                        <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PupilRouteThemeView? _view;
+    private bool _loading = true;
+    private bool _sessionLost;
+    private bool _mainTap;
+    private bool _worldTap;
+
+    private string CoachSpoken => SpokenText.Join("Lobsy", Culture["Leerling.Route.Coach"]);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "route");
+        if (outcome.SessionLost)
+        {
+            _sessionLost = true;
+            _loading = false;
+            return;
+        }
+
+        if (outcome.Value is null)
+        {
+            _loading = false;
+            return;
+        }
+
+        var state = outcome.Value;
+        if (state.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            Nav.NavigateTo("/leerling/start", replace: true);
+            return;
+        }
+
+        if (!PupilJourneyTheme.IsValid(state.JourneyThemeKey))
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Wereld, replace: true);
+            return;
+        }
+
+        _view = PupilGroep78RouteCatalog.Find(state.JourneyThemeKey);
+        if (_view is null)
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Start, replace: true);
+            return;
+        }
+
+        ShellTheme.ApplyJourney(state.JourneyThemeKey!, routeHeader: true);
+
+        if (state.Completed)
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Result, replace: true);
+            return;
+        }
+
+        if (state.CurrentIndex > 0 || state.AnsweredCount > 0)
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Reis, replace: true);
+            return;
+        }
+
+        _loading = false;
+    }
+
+    private void ClearMainTap() => _mainTap = false;
+
+    private void ClearWorldTap() => _worldTap = false;
+}

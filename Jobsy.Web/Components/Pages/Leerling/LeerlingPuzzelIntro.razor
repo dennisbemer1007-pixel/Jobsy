@@ -1,0 +1,115 @@
+@page "/leerling/puzzel-intro/{Key}"
+@layout LeerlingGroep78ShellLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+@inject LeerlingGroep78ShellTheme ShellTheme
+
+<PageTitle>@Culture["Leerling.PuzzelIntro.PageTitle"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="wrap" style="padding: 2rem 0">@Culture["Common.Loading"]</p>
+}
+else if (_sessionLost)
+{
+    <p class="wrap" style="padding: 2rem 0;color:#b00">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_wrongStep)
+{
+    <section class="wrap card" style="margin-top: 2rem">
+        <p>@Culture["Leerling.Puzzle.WrongStep"]</p>
+        <a class="btn btn-main" href="/leerling/reis">@Culture["Leerling.Puzzle.BackReis"]</a>
+    </section>
+}
+else if (!_built)
+{
+    <section class="wrap card" style="margin-top: 2rem">
+        <p>@Culture["Leerling.Puzzle.Unknown"]</p>
+        <a class="btn btn-main" href="/leerling/reis">@Culture["Leerling.Puzzle.BackReis"]</a>
+    </section>
+}
+else
+{
+    <LeerlingReisZeePuzzleIntro PuzzleKey="@Key"
+                                StartHref="@_startHref"
+                                AfterQuestion="@_afterQuestion" />
+}
+
+@code {
+    [Parameter] public string Key { get; set; } = "";
+
+    private bool _loading = true;
+    private bool _sessionLost;
+    private bool _wrongStep;
+    private bool _built;
+    private string _startHref = "";
+    private int _afterQuestion = 15;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _built = PupilPuzzleIntroRoutes.IsBuilt(Key);
+        _loading = true;
+        _sessionLost = false;
+        _wrongStep = false;
+
+        if (!_built)
+        {
+            _loading = false;
+            return;
+        }
+
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "puzzel-intro");
+        if (outcome.SessionLost)
+        {
+            _sessionLost = true;
+        }
+        else if (outcome.Value is null)
+        {
+            _wrongStep = true;
+        }
+        else
+        {
+            ApplyProgress(outcome.Value);
+        }
+
+        _loading = false;
+    }
+
+    private void ApplyProgress(PupilProgressStateDto state)
+    {
+        if (state.QuestionSet != PupilQuestionSet.Groep78
+            || !PupilJourneyTheme.IsValid(state.JourneyThemeKey))
+        {
+            _wrongStep = true;
+            return;
+        }
+
+        ShellTheme.ApplyJourney(state.JourneyThemeKey!, routeHeader: true);
+
+        if (!string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(state.NextPuzzleKey, Key, StringComparison.OrdinalIgnoreCase))
+        {
+            _wrongStep = true;
+            return;
+        }
+
+        _afterQuestion = Key.ToLowerInvariant() switch
+        {
+            "schelpenrij" => 15,
+            "schatkaart" => 30,
+            "vuurtorenlampen" => 45,
+            _ => 15,
+        };
+        _startHref = $"/leerling/puzzel/{Uri.EscapeDataString(Key)}";
+    }
+}
