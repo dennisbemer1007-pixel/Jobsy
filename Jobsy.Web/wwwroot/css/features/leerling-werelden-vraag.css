@@ -1,0 +1,569 @@
+/* Groep 7/8 screen 02 — Zee-expeditie question (mockup 02-zee-vraag). Shell tokens in leerling-werelden-kies.css. */
+
+.ll-g78-shell .band.vr {
+  background-image: url("/leerling/werelden/img/rif.jpg");
+  background-position: center 30%;
+  background-size: cover;
+  min-height: 330px;
+  padding-top: 150px;
+}
+
+.ll-g78-shell .band.vr.is-grot {
+  background-image: url("/leerling/werelden/img/grot.jpg");
+}
+
+.ll-g78-shell .band.vr.is-tower {
+  background-image: url("/leerling/werelden/img/vuurtoren.jpg");
+}
+
+.ll-g78-shell .band.vr.is-lagoon {
+  background-image: url("/leerling/werelden/img/lagune.jpg");
+}
+
+.ll-g78-shell .vr-journey {
+  position: relative;
+  z-index: 3;
+  margin: 0 auto;
+  max-width: 1180px;
+  background: rgba(16, 40, 74, 0.86);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 194, 122, 0.45);
+  border-radius: 18px;
+  padding: 14px 22px 12px;
+  color: var(--cream);
+}
+
+.ll-g78-shell .vr-jrow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+}
+
+.ll-g78-shell .vr-jrow::before {
+  content: "";
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  top: 25px;
+  border-top: 3px dashed rgba(226, 194, 122, 0.55);
+}
+
+.ll-g78-shell .vr-jdone {
+  position: absolute;
+  left: 26px;
+  top: 24px;
+  height: 5px;
+  background: var(--brass2);
+  border-radius: 3px;
+  max-width: calc(100% - 52px);
+}
+
+.ll-g78-shell .vr-jn {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 96px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.25;
+  color: rgba(250, 246, 239, 0.75);
+}
+
+.ll-g78-shell .vr-jn .dot {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid rgba(226, 194, 122, 0.6);
+  filter: saturate(0.35) brightness(0.75);
+  flex: none;
+}
+
+.ll-g78-shell .vr-jn.is-puzzle .dot {
+  width: 38px;
+  height: 38px;
+  margin: 7px 0;
+  border-radius: 9px;
+  transform: rotate(45deg);
+  background: var(--navy2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: none;
+  background-image: none !important;
+}
+
+.ll-g78-shell .vr-jn.is-puzzle .dot svg {
+  transform: rotate(-45deg);
+  width: 20px;
+  height: 20px;
+  color: var(--brass2);
+}
+
+.ll-g78-shell .vr-jn.is-result .dot {
+  background: #7a5a1e url("/leerling/werelden/img/zeekaart.jpg") 84% 22% / 900% no-repeat;
+}
+
+.ll-g78-shell .vr-jn b {
+  display: block;
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--cream);
+  font-size: 14px;
+}
+
+.ll-g78-shell .vr-jn.is-done .dot,
+.ll-g78-shell .vr-jn.is-cur .dot {
+  filter: none;
+  border-color: var(--brass2);
+}
+
+.ll-g78-shell .vr-jn.is-done::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: 18px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ok) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center / 13px no-repeat;
+  border: 2px solid var(--navy);
+}
+
+.ll-g78-shell .vr-jn.is-puzzle.is-done::after {
+  right: 24px;
+}
+
+.ll-g78-shell .vr-jn.is-cur .dot {
+  box-shadow: 0 0 0 5px rgba(226, 194, 122, 0.35), 0 0 18px rgba(226, 194, 122, 0.7);
+  border-color: #ffd98a;
+}
+
+.ll-g78-shell .vr-jn.is-cur b {
+  color: #ffd98a;
+}
+
+.ll-g78-shell .vr-here {
+  position: absolute;
+  top: -30px;
+  background: var(--coral);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.ll-g78-shell .vr-jmeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 15px;
+  color: rgba(250, 246, 239, 0.9);
+  gap: 12px;
+}
+
+.ll-g78-shell .vr-seg {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  max-width: 420px;
+  margin-left: 16px;
+}
+
+.ll-g78-shell .vr-seg i {
+  flex: 1;
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  display: block;
+}
+
+.ll-g78-shell .vr-seg i.is-f {
+  background: var(--brass2);
+}
+
+.ll-g78-shell .vr-seg i.is-c {
+  background: #ffd98a;
+  box-shadow: 0 0 0 2px rgba(255, 217, 138, 0.4);
+}
+
+.ll-g78-shell .wrap.vr-overlap {
+  margin-top: -30px;
+  position: relative;
+  z-index: 4;
+}
+
+.ll-g78-shell .vr-layout {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 28px;
+  align-items: start;
+}
+
+.ll-g78-shell .vr-layout > * {
+  min-width: 0;
+}
+
+.ll-g78-shell .card.vr-q {
+  padding: 36px 40px;
+}
+
+.ll-g78-shell .vr-qmeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 16px;
+  flex-wrap: wrap;
+}
+
+.ll-g78-shell .vr-qmeta .kicker {
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.ll-g78-shell .vr-qtitle {
+  font-family: "Lexend", sans-serif;
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.3;
+  margin: 10px 0 18px;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+.ll-g78-shell .vr-qrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.ll-g78-shell .vr-qrow .read-aloud.read-aloud--icon {
+  width: 52px;
+  height: 52px;
+}
+
+.ll-g78-shell .vr-answers {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.ll-g78-shell .vr-ans {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 112px;
+  border-radius: 18px;
+  background: #f4efe4;
+  border: 2px solid #dccfb6;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.ll-g78-shell .vr-ans:active,
+.ll-g78-shell .vr-ans.is-tapped {
+  transform: scale(0.985);
+}
+
+.ll-g78-shell .vr-ans__lvl {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--teal);
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ll-g78-shell .vr-ans__lvl i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--teal);
+  display: block;
+}
+
+.ll-g78-shell .vr-ans.is-sel {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(185, 143, 62, 0.5);
+}
+
+.ll-g78-shell .vr-ans.is-sel .vr-ans__lvl {
+  border-color: var(--brass2);
+}
+
+.ll-g78-shell .vr-ans.is-sel .vr-ans__lvl i {
+  background: var(--brass2);
+}
+
+.ll-g78-shell .vr-ans:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ll-g78-shell .vr-qfoot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+
+.ll-g78-shell .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--navy);
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 10px 4px;
+  transition: transform 0.12s ease;
+}
+
+.ll-g78-shell .btn-ghost:active,
+.ll-g78-shell .btn-ghost.is-tapped {
+  transform: scale(0.985);
+}
+
+.ll-g78-shell .btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ll-g78-shell .vr-saved {
+  color: var(--ok);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.ll-g78-shell .vr-coach-aside {
+  padding-top: 10px;
+}
+
+.ll-g78-shell .vr-coach-aside .bubble.tail-b::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 46px;
+  width: 20px;
+  height: 20px;
+  background: var(--paper);
+  border-right: 2px solid var(--navy);
+  border-bottom: 2px solid var(--navy);
+  transform: rotate(45deg);
+}
+
+.ll-g78-shell .vr-lob {
+  width: 250px;
+  height: auto;
+  margin-top: 22px;
+  display: block;
+}
+
+.ll-g78-shell .vr-error {
+  color: #b00;
+  margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell .band.vr {
+    min-height: 210px;
+    background-position: center 30%;
+    padding-top: 100px;
+  }
+
+  .ll-g78-shell .vr-journey {
+    border-radius: 14px;
+    padding: 12px 10px 10px;
+    margin: 0 14px;
+  }
+
+  .ll-g78-shell .vr-jn {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ll-g78-shell .vr-jn b {
+    display: none;
+  }
+
+  .ll-g78-shell .vr-jn .dot {
+    width: 30px;
+    height: 30px;
+    border-width: 2px;
+  }
+
+  .ll-g78-shell .vr-jn.is-puzzle .dot {
+    width: 24px;
+    height: 24px;
+    margin: 3px 0;
+  }
+
+  .ll-g78-shell .vr-jrow::before {
+    left: 14px;
+    right: 14px;
+    top: 15px;
+    border-top-width: 2px;
+  }
+
+  .ll-g78-shell .vr-jdone {
+    left: 14px;
+    top: 14px;
+  }
+
+  .ll-g78-shell .vr-here {
+    top: -24px;
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .ll-g78-shell .vr-jmeta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .ll-g78-shell .vr-seg {
+    margin-left: 0;
+    max-width: none;
+  }
+
+  .ll-g78-shell .vr-qtitle {
+    font-size: 25px;
+  }
+
+  .ll-g78-shell .vr-answers {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ll-g78-shell .vr-ans {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: auto;
+    padding: 14px 16px;
+    gap: 14px;
+  }
+
+  .ll-g78-shell .vr-ans__lvl {
+    width: 28px;
+    height: 28px;
+  }
+
+  .ll-g78-shell .vr-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ll-g78-shell .card.vr-q {
+    padding: 22px 18px;
+  }
+}
+
+/* Groep 7/8 screen 05 — Eilandtuin question (mockup 05-eilandtuin-vraag). */
+
+.ll-g78-shell.t-tuin .band.vr.vr-tuin {
+  background-image: image-set(
+    url("/leerling/werelden/img/tuin-baai-390w.jpg") 1x,
+    url("/leerling/werelden/img/tuin-baai-780w.jpg") 2x,
+    url("/leerling/werelden/img/tuin-baai.jpg") 3x
+  );
+  background-position: center 78%;
+}
+
+.ll-g78-shell.t-tuin .band.vr.is-koraaltuin,
+.ll-g78-shell.t-tuin .band.vr.is-waterval {
+  background-image: url("/leerling/werelden/img/tuin-koraal.jpg");
+  background-position: center 40%;
+}
+
+.ll-g78-shell.t-tuin .band.vr.is-zonnelagune {
+  background-image: image-set(
+    url("/leerling/werelden/img/tuin-baai-390w.jpg") 1x,
+    url("/leerling/werelden/img/tuin-baai-780w.jpg") 2x,
+    url("/leerling/werelden/img/tuin-baai.jpg") 3x
+  );
+  background-position: center 55%;
+}
+
+.ll-g78-shell.t-tuin .vr-jn.is-result .dot {
+  background: none;
+  background-image: url("/leerling/werelden/img/dot-tuin-5.jpg");
+  background-size: cover;
+  filter: none;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-tuin .band.vr.vr-tuin {
+    background-position: center 78%;
+  }
+}
+
+/* Groep 7/8 screen 08 — Sterrenkust question (mockup 08-sterrenkust-vraag). */
+
+.ll-g78-shell.t-ster .band.vr.vr-ster {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-kaart-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-kaart-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-kaart.jpg") 3x
+  );
+  background-position: center 82%;
+}
+
+.ll-g78-shell.t-ster .band.vr.is-maangrot {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-kaart-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-kaart-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-kaart.jpg") 3x
+  );
+  background-position: center 55%;
+}
+
+.ll-g78-shell.t-ster .band.vr.is-vuurtoren,
+.ll-g78-shell.t-ster .band.vr.is-sterrenbaai {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-strand-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-strand-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-strand.jpg") 3x
+  );
+  background-position: center 35%;
+}
+
+.ll-g78-shell.t-ster .vr-jn.is-result .dot {
+  background: none;
+  background-image: url("/leerling/werelden/img/dot-ster-6.jpg");
+  background-size: cover;
+  filter: none;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-ster .band.vr.vr-ster {
+    background-position: center 82%;
+  }
+}

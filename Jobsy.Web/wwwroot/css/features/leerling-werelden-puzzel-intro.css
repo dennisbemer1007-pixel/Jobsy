@@ -1,0 +1,369 @@
+/* Groep 7/8 screen 03 — Zee-expeditie Schelpenrij intro (mockup 03-zee-puzzel-intro). */
+
+.ll-g78-shell .band.pi {
+  background-image: url("/leerling/werelden/img/rif.jpg");
+  background-position: 68% 75%;
+  background-size: cover;
+  min-height: 300px;
+  padding-top: 130px;
+}
+
+.ll-g78-shell .pi-journey {
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.ll-g78-shell .pi-jmeta {
+  justify-content: flex-start;
+}
+
+.ll-g78-shell .wrap.pi-overlap {
+  margin-top: -24px;
+  position: relative;
+  z-index: 4;
+}
+
+.ll-g78-shell .pi-layout {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 28px;
+  align-items: start;
+}
+
+.ll-g78-shell .pi-layout > * {
+  min-width: 0;
+}
+
+.ll-g78-shell .card.pi-card {
+  padding: 36px 40px;
+}
+
+.ll-g78-shell .pi-title {
+  font-size: 44px;
+  margin: 6px 0;
+  color: var(--ink);
+}
+
+.ll-g78-shell .pi-lead {
+  font-size: 20px;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+
+.ll-g78-shell .pi-prev-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 18px;
+  background: linear-gradient(#e9f3f1, #d7eae8);
+  border: 2px solid #b9d6d2;
+}
+
+.ll-g78-shell .pi-slot {
+  width: 54px;
+  height: 64px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #b9d6d2;
+  flex: none;
+}
+
+.ll-g78-shell .pi-slot img {
+  max-width: 50px;
+  max-height: 58px;
+}
+
+.ll-g78-shell .pi-slot--q {
+  border: 3px dashed var(--coral);
+  background: #fff6f0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 46px;
+  color: var(--coral);
+  font-weight: 700;
+}
+
+.ll-g78-shell .pi-steps {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 6px;
+  padding: 0;
+}
+
+.ll-g78-shell .pi-steps li {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 19px;
+}
+
+.ll-g78-shell .pi-steps li span {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ll-g78-shell .pi-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ll-g78-shell .pi-facts span {
+  background: var(--cream);
+  border: 1.5px solid var(--brass2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.ll-g78-shell .pi-foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+
+.ll-g78-shell .pi-foot__read {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ll-g78-shell .pi-foot .read-aloud.read-aloud--icon {
+  width: 52px;
+  height: 52px;
+}
+
+.ll-g78-shell .pi-start.btn-main {
+  margin-top: 0;
+}
+
+.ll-g78-shell .pi-start.btn-big {
+  font-size: 22px;
+  padding: 20px 40px;
+  border-radius: 16px;
+}
+
+.ll-g78-shell .pi-start {
+  margin-left: auto;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: auto;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.ll-g78-shell .pi-coach-aside {
+  padding-top: 10px;
+}
+
+.ll-g78-shell .pi-coach-aside .bubble.tail-b::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 46px;
+  width: 20px;
+  height: 20px;
+  background: var(--paper);
+  border-right: 2px solid var(--navy);
+  border-bottom: 2px solid var(--navy);
+  transform: rotate(45deg);
+}
+
+.ll-g78-shell .pi-lob {
+  width: 250px;
+  height: auto;
+  margin-top: 22px;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell .band.pi {
+    min-height: 190px;
+    padding-top: 130px;
+    background-position: 62% 82%;
+  }
+
+  .ll-g78-shell .vr-jn.is-cur .vr-here {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .ll-g78-shell section.band.pi + .wrap.pi-overlap {
+    margin-top: 14px;
+  }
+
+  .ll-g78-shell .pi-title {
+    font-size: 34px;
+  }
+
+  .ll-g78-shell .pi-steps {
+    gap: 10px;
+  }
+
+  .ll-g78-shell .pi-steps li {
+    font-size: 17px;
+    gap: 12px;
+  }
+
+  .ll-g78-shell .pi-facts span {
+    font-size: 14px;
+    padding: 5px 12px;
+  }
+
+  .ll-g78-shell .pi-prev-row {
+    gap: 4px;
+    padding: 10px 4px;
+    margin-inline: -2px;
+  }
+
+  .ll-g78-shell .pi-slot {
+    width: 44px;
+    height: 54px;
+    border-radius: 10px;
+  }
+
+  .ll-g78-shell .pi-slot img {
+    max-width: 34px;
+    max-height: 44px;
+  }
+
+  .ll-g78-shell .pi-slot--q {
+    font-size: 32px;
+  }
+
+  .ll-g78-shell .pi-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ll-g78-shell .card.pi-card {
+    padding: 20px 18px 22px;
+  }
+
+  .ll-g78-shell .pi-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .ll-g78-shell .pi-foot__read {
+    flex: none;
+    width: 100%;
+  }
+
+  .ll-g78-shell .pi-foot__read .speak-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ll-g78-shell .pi-start.btn-big {
+    font-size: 20px;
+    padding: 18px 26px;
+    border-radius: 16px;
+  }
+
+  .ll-g78-shell .pi-start {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+}
+
+/* Groep 7/8 screen 06 — Eilandtuin Schelpenrij intro (mockup 06-eilandtuin-puzzel-intro). */
+
+.ll-g78-shell.t-tuin .band.pi.pi-tuin {
+  background-image: url("/leerling/werelden/img/tuin-koraal.jpg");
+  background-position: center 82%;
+}
+
+.ll-g78-shell.t-tuin .pi-prev-row {
+  background: linear-gradient(#fbeee2, #f4dcc9);
+  border: 2px solid #e8c6ab;
+}
+
+.ll-g78-shell.t-tuin .pi-slot {
+  border-color: #e8c6ab;
+  background: rgba(255, 250, 244, 0.85);
+}
+
+.ll-g78-shell.t-tuin .vr-journey {
+  background: rgba(58, 34, 48, 0.86);
+  border-color: rgba(232, 185, 138, 0.5);
+}
+
+.ll-g78-shell.t-tuin .vr-jn.is-cur .vr-here {
+  background: var(--coral);
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-tuin .band.pi.pi-tuin {
+    background-position: center 82%;
+  }
+}
+
+/* Groep 7/8 screen 09 — Sterrenkust Schelpenrij intro (mockup 09-sterrenkust-puzzel-intro). */
+
+.ll-g78-shell.t-ster .band.pi.pi-ster {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-strand-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-strand-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-strand.jpg") 3x
+  );
+  background-position: center 78%;
+}
+
+.ll-g78-shell.t-ster .pi-prev-row {
+  background: linear-gradient(#1a2446, #2a3763);
+  border: 2px solid #3b4a7a;
+}
+
+.ll-g78-shell.t-ster .pi-slot {
+  border-color: #4a5a8c;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ll-g78-shell.t-ster .pi-slot img {
+  filter: drop-shadow(0 0 6px rgba(230, 225, 200, 0.45));
+}
+
+.ll-g78-shell.t-ster .pi-slot--q {
+  background: rgba(199, 128, 47, 0.12);
+  color: #e8b46a;
+  border-color: #e8b46a;
+}
+
+.ll-g78-shell.t-ster .vr-journey {
+  background: rgba(20, 28, 54, 0.88);
+  border-color: rgba(217, 199, 154, 0.45);
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-ster .band.pi.pi-ster {
+    min-height: 190px;
+    background-position: center 78%;
+  }
+}

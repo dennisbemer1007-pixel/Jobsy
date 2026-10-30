@@ -27,7 +27,7 @@ public static class PupilLeerlingScholenStrings
 
     private static readonly Dictionary<string, string> Nl = new(StringComparer.Ordinal)
     {
-        ["Leerling.World.Reef.Title"] = "Het koraalrif",
+        ["Leerling.World.Reef.Title"] = "Het Koraalrif",
         ["Leerling.World.Reef.Sub"] = "Hoe ben jij?",
         ["Leerling.World.Cave.Title"] = "De schatgrot",
         ["Leerling.World.Cave.Sub"] = "Wat doe je graag?",
@@ -44,7 +44,7 @@ public static class PupilLeerlingScholenStrings
 
     private static readonly Dictionary<string, string> En = new(StringComparer.Ordinal)
     {
-        ["Leerling.World.Reef.Title"] = "The coral reef",
+        ["Leerling.World.Reef.Title"] = "The Coral Reef",
         ["Leerling.World.Reef.Sub"] = "What are you like?",
         ["Leerling.World.Cave.Title"] = "The treasure cave",
         ["Leerling.World.Cave.Sub"] = "What do you like to do?",
