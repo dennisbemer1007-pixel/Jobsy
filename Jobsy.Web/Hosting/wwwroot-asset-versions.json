@@ -167,6 +167,26 @@
     "sha256": "b8c8ebe7ac11ba2ccc445300496c26c652b4044397452912d0306be80467ef69",
     "v": "20261028-59"
   },
+  "css/features/leerling-werelden-kies.css": {
+    "sha256": "ee3e7e0a2fee7faf61d010ce2a87110b7e9d6a577d3849c54c29bc36562cfde4",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-puzzel-intro.css": {
+    "sha256": "0ab24daffc790bf23051b0f5ec335c39c151b39f1af8101bb75d7519e96eeb0d",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-puzzel-play.css": {
+    "sha256": "dd0c1613716b51535ca3b34feee52dfa714ed2226e1b23ee66c5c5d8fad2c80f",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-route.css": {
+    "sha256": "8e5c017d003cf6f0dba1d2eab096569b4d2580bfdcf6724434061e64ab21ef9e",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-vraag.css": {
+    "sha256": "8ee5c85a28f4133f96d1e0f57fed1ef9ebd16495a9b1f50ee8ae169fea72e664",
+    "v": "20261030-catalog"
+  },
   "css/features/lobsy-assistant-panel.css": {
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
     "v": "20261026-08"

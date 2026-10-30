@@ -1,0 +1,208 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Scholen
+@inject CultureState Culture
+
+@{
+    var nodes = PupilGroep78JourneyStripNodes.ForTheme(JourneyThemeKey);
+    var curNode = PupilGroep78JourneyStripNodes.IntroNodeIndex(JourneyThemeKey, "schelpenrij");
+    var doneWidth = PupilGroep78JourneyStripNodes.DoneLineWidth(JourneyThemeKey, curNode);
+    var bandTestId = PupilGroep78JourneyStripNodes.PuzzlePlayBandTestId(JourneyThemeKey);
+    var bandExtra = PupilGroep78JourneyStripNodes.PuzzlePlayBandClass(JourneyThemeKey);
+    var puzzleTitle = Culture["Leerling.Puzzle.Schelpenrij.Title"];
+    var partLabel = Culture["Leerling.PuzzelIntro.Part1"];
+    var lead = Culture["Leerling.Puzzle.Schelpenrij.Lead"];
+    var hint = Culture["Leerling.Puzzle.Schelpenrij.Hint"];
+    var kicker = Culture["Leerling.Puzzle.Schelpenrij.Kicker"];
+    var taskSpoken = SpokenText.Join(puzzleTitle, lead, hint);
+    var coachText = Solved
+        ? Culture["Leerling.Puzzle.Schelpenrij.CoachDone"]
+        : Culture["Leerling.Puzzle.Schelpenrij.Coach"];
+    var coachSpoken = SpokenText.Join("Lobsy", coachText);
+    var lobsterImg = Solved
+        ? "/leerling/werelden/img/kreeft-schild.png"
+        : "/leerling/werelden/img/kreeft-kaart.png";
+}
+
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")" data-page-puzzel-play-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-vraag.css")" data-page-puzzel-play-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-route.css")" data-page-puzzel-play-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-puzzel-play.css")" data-page-puzzel-play-css="true" />
+</HeadContent>
+
+<section class="band pp @bandExtra" data-testid="@bandTestId">
+    <div class="pp-journey vr-journey" aria-label="@Culture["Leerling.Vraag.JourneyAria"]">
+        <div class="vr-jrow">
+            <span class="vr-jdone" style="width:@doneWidth"></span>
+            @for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                var done = i < curNode;
+                var current = i == curNode;
+                var cls = "vr-jn"
+                          + (node.IsPuzzle ? " is-puzzle" : "")
+                          + (node.IsResult ? " is-result" : "")
+                          + (done ? " is-done" : "")
+                          + (current ? " is-cur" : "");
+                <div class="@cls">
+                    @if (current)
+                    {
+                        <span class="vr-here">@Culture["Leerling.Route.Here"]</span>
+                    }
+                    @if (node.IsPuzzle)
+                    {
+                        <span class="dot" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 3a2 2 0 014 0v2h4a1 1 0 011 1v4h-2a2 2 0 000 4h2v4a1 1 0 01-1 1h-4v-2a2 2 0 00-4 0v2H6a1 1 0 01-1-1v-4h2a2 2 0 000-4H5V6a1 1 0 011-1h4V3z"/></svg>
+                        </span>
+                    }
+                    else if (node.IsResult)
+                    {
+                        <span class="dot" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <span class="dot" style="background-image:url(@(node.ImageUrl))" aria-hidden="true"></span>
+                    }
+                    <b>@Culture[node.TitleKey]</b>
+                </div>
+            }
+        </div>
+        <div class="pp-jmeta vr-jmeta">
+            <span><b>@partLabel</b> · @puzzleTitle</span>
+        </div>
+    </div>
+</section>
+
+<div class="wrap pp-overlap">
+    <div class="pp-layout">
+        <div class="card pp-card" data-testid="ll-puzzle-root" role="group" aria-labelledby="ll-schelpenrij-play-title">
+            <div class="vr-qmeta">
+                <span class="kicker">@kicker</span>
+            </div>
+            <h1 id="ll-schelpenrij-play-title" class="pp-title serif">@lead</h1>
+
+            <div class="vr-qrow">
+                <LeerlingSpeak Text="@taskSpoken"
+                               SpeechKey="ll-schelpenrij-play-task"
+                               AlwaysShow="true" />
+                <span class="speak-label">@Culture["Leerling.Puzzle.Schelpenrij.ReadTask"]</span>
+            </div>
+
+            <p class="pp-hint">@hint</p>
+
+            <div class="pp-shell-row" role="group" aria-label="@puzzleTitle">
+                @for (var i = 0; i < ShellOrder.Count; i++)
+                {
+                    var idx = i;
+                    var size = ShellOrder[idx];
+                    <div class="pp-slot">
+                        <button type="button"
+                                class="pp-shell @(ShellPick == idx ? "is-pick" : null) @(IsSorted ? "is-done" : null)"
+                                aria-pressed="@(ShellPick == idx)"
+                                disabled="@Busy"
+                                data-testid="ll-puzzle-shell"
+                                @onclick="() => OnPickShell.InvokeAsync(idx)">
+                            <img src="@PupilSchelpenrijPuzzle.ShellImagePath(size)" width="50" height="58" alt="" decoding="async" />
+                            <span class="visually-hidden">@string.Format(Culture["Leerling.Puzzle.ShellSize"], size)</span>
+                        </button>
+                    </div>
+                }
+                <div class="pp-slot pp-slot--q @(Solved ? "is-filled" : null)" aria-hidden="@(!Solved)">
+                    @if (Solved)
+                    {
+                        <img src="@PupilSchelpenrijPuzzle.ShellImagePath(PupilSchelpenrijPuzzle.NextShellSize)"
+                             width="50"
+                             height="58"
+                             alt=""
+                             decoding="async" />
+                    }
+                    else
+                    {
+                        <span>?</span>
+                    }
+                </div>
+            </div>
+
+            @if (Solved)
+            {
+                <div class="pp-solved" aria-live="polite">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.5 3.5L17 9"/></svg>
+                    <div>@Culture["Leerling.Puzzle.Schelpenrij.Solved"]</div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <p class="pp-error" role="alert">@Error</p>
+            }
+
+            <div class="pp-foot">
+                @if (Solved)
+                {
+                    <button type="button"
+                            class="btn btn-main btn-big"
+                            disabled="@Busy"
+                            data-testid="ll-puzzle-continue"
+                            @onclick="OnContinue">
+                        @Culture["Leerling.Puzzle.Continue"]
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-quiet" disabled="@Busy" @onclick="OnSkip">
+                        @Culture["Leerling.Puzzle.Skip"]
+                    </button>
+                }
+            </div>
+        </div>
+
+        <aside class="d-only pp-coach-aside">
+            <div class="bubble tail-b">
+                <span class="who">Lobsy</span>
+                @coachText
+                <div class="bt">
+                    <LeerlingSpeak Text="@coachSpoken" SpeechKey="ll-schelpenrij-play-coach" AlwaysShow="true" />
+                    <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                </div>
+            </div>
+            <img class="vr-lob"
+                 src="@lobsterImg"
+                 width="250"
+                 height="250"
+                 alt=""
+                 decoding="async"
+                 loading="lazy" />
+        </aside>
+
+        <div class="m-only" style="margin-top:18px">
+            <div class="guide">
+                <div class="ring" role="img" aria-label="Lobsy"></div>
+                <div class="bubble tail-l">
+                    <span class="who">Lobsy</span>
+                    @coachText
+                    <div class="bt">
+                        <LeerlingSpeak Text="@coachSpoken" SpeechKey="ll-schelpenrij-play-coach-m" AlwaysShow="true" />
+                        <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string JourneyThemeKey { get; set; } = PupilJourneyTheme.ZeeExpeditie;
+    [Parameter] public IReadOnlyList<int> ShellOrder { get; set; } = PupilSchelpenrijPuzzle.InitialPlayOrder;
+    [Parameter] public int? ShellPick { get; set; }
+    [Parameter] public bool IsSorted { get; set; }
+    [Parameter] public bool Solved { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public EventCallback<int> OnPickShell { get; set; }
+    [Parameter] public EventCallback OnSkip { get; set; }
+    [Parameter] public EventCallback OnContinue { get; set; }
+
+}
