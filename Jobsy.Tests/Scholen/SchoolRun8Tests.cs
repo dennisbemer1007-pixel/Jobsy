@@ -129,6 +129,7 @@ public class SchoolRun8ReadAloudTests : BunitContext
         Services.AddSingleton<IAntiforgery>(new AlwaysValidAntiforgery());
         Services.AddSingleton<IPupilQuestionSetRegistry>(new PupilQuestionSetRegistry());
         Services.AddScoped<Jobsy.Web.Scholen.LeerlingReisShellState>();
+        Services.AddScoped<Jobsy.Web.Scholen.LeerlingGroep78ShellTheme>();
         Services.AddSingleton<IFeatureFlags>(new ReadAloudFeatureFlags());
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://api.test/") }));
     }
@@ -169,6 +170,7 @@ public class SchoolRun8ReadAloudTests : BunitContext
         await AssertSpoken(Render<LeerlingEiland>());
 
         _handler.JsonByPath["/api/pupil/result"] = Json(ResultPage());
+        _handler.JsonByPath["/api/pupil/progress"] = Json(RouteProgress());
         nav.NavigateTo("http://localhost/leerling/dit-ben-jij");
         await AssertSpoken(Render<LeerlingDitBenJij>());
 

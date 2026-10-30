@@ -368,7 +368,8 @@
 
 .ll-g78-shell .d-only.kz-lob,
 .ll-g78-shell .d-only.guide,
-.ll-g78-shell .d-only.rt-coach {
+.ll-g78-shell .d-only.rt-coach,
+.ll-g78-shell .d-only.rs-coach-aside {
   display: flex;
 }
 
