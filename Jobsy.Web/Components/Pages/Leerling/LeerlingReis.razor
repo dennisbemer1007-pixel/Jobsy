@@ -17,6 +17,7 @@
 @inject IPupilQuestionSetRegistry Registry
 @inject IServiceProvider Services
 @inject LeerlingReisShellState ShellState
+@inject LeerlingGroep78ShellTheme ShellTheme
 
 <PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
 
@@ -72,8 +73,22 @@ else if (ShellState.Mode == LeerlingReisShellMode.ZeeExpeditie)
                              SaveError="_saveError"
                              Offline="_offline"
                              OnSelect="SelectAnswer"
-                             OnPrev="GoPrevZee"
+                             OnPrev="GoPrevThemed"
                              OnReload="Reload" />
+}
+else if (ShellState.Mode == LeerlingReisShellMode.Eilandtuin)
+{
+    <LeerlingReisTuinQuestion State="_state"
+                              Def="_def"
+                              Item="_current"
+                              Selected="_selected"
+                              Busy="_busy"
+                              Saved="_saved"
+                              SaveError="_saveError"
+                              Offline="_offline"
+                              OnSelect="SelectAnswer"
+                              OnPrev="GoPrevThemed"
+                              OnReload="Reload" />
 }
 else
 {
@@ -253,7 +268,11 @@ else
         _state = state;
         _offline = false;
         _def = Registry.Get(state.QuestionSet);
-        ShellState.Mode = UsesZeeQuestionShell(state) ? LeerlingReisShellMode.ZeeExpeditie : LeerlingReisShellMode.Classic;
+        ShellState.Mode = ShellModeFor(state);
+        if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie or LeerlingReisShellMode.Eilandtuin)
+        {
+            ShellTheme.ApplyJourney(state.JourneyThemeKey!, routeHeader: true);
+        }
 
         if (state.QuestionSet == PupilQuestionSet.Groep78
             && !PupilJourneyTheme.IsValid(state.JourneyThemeKey))
@@ -261,12 +280,6 @@ else
             _leaving = true;
             Nav.NavigateTo(PupilGroep78EntryPaths.Wereld, replace: true);
             return;
-        }
-
-        if (state.QuestionSet == PupilQuestionSet.Groep78
-            && !string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase))
-        {
-            ShellState.Mode = LeerlingReisShellMode.Classic;
         }
 
         if (!state.WindowOpen && !state.Completed)
@@ -452,7 +465,7 @@ else
         }
     }
 
-    private async Task GoPrevZee()
+    private async Task GoPrevThemed()
     {
         if (_state is null || _def is null)
         {
@@ -487,9 +500,25 @@ else
         await Task.CompletedTask;
     }
 
-    private static bool UsesZeeQuestionShell(PupilProgressStateDto state)
-        => state.QuestionSet == PupilQuestionSet.Groep78
-           && string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase);
+    private static LeerlingReisShellMode ShellModeFor(PupilProgressStateDto state)
+    {
+        if (state.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            return LeerlingReisShellMode.Classic;
+        }
+
+        if (string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase))
+        {
+            return LeerlingReisShellMode.ZeeExpeditie;
+        }
+
+        if (string.Equals(state.JourneyThemeKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase))
+        {
+            return LeerlingReisShellMode.Eilandtuin;
+        }
+
+        return LeerlingReisShellMode.Classic;
+    }
 
     private void ToggleInfo() => _infoOpen = !_infoOpen;
 

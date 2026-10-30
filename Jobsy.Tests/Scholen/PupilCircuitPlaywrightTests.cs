@@ -705,6 +705,73 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Groep78_tuin_vraag_screen_links_and_capture()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtAsync(
+            3,
+            answered: 0,
+            chipsSaved: false,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+        var pupil = seed[0];
+        var baseUrl = EnsureWeb();
+        var captureDir = Environment.GetEnvironmentVariable("LEERLING_TUIN_VRAAG_CAPTURE_DIR");
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                IsMobile = width < 600,
+                HasTouch = width < 600,
+                DeviceScaleFactor = width < 600 ? 2 : 1,
+            });
+            page.SetDefaultTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+            await page.WaitForURLAsync("**/leerling/route**", DomReady);
+            await page.GetByRole(AriaRole.Link, new() { Name = "Naar de Bloemenbaai" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/reis**", DomReady);
+            await page.Locator("[data-testid=ll-tuin-vraag-band]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Attached,
+                Timeout = 60_000,
+            });
+            await Assertions.Expect(page.Locator(".ll-g78-shell.t-tuin")).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".vr-ans").First).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".vr-qrow [data-read-aloud]")).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".vr-qmeta .kicker")).ToHaveTextAsync("De Bloemenbaai");
+            if (!string.IsNullOrEmpty(captureDir))
+            {
+                Directory.CreateDirectory(captureDir);
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-05-eilandtuin-vraag-{tag}.png"),
+                    FullPage = true,
+                });
+            }
+
+            await page.CloseAsync();
+        }
+
+        var back = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+        });
+        back.SetDefaultTimeout(90_000);
+        var url = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+        await LoginAsync(back, url, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+        await back.WaitForURLAsync("**/leerling/route**", DomReady);
+        await back.GetByRole(AriaRole.Link, new() { Name = "Naar de Bloemenbaai" }).ClickAsync();
+        await back.WaitForURLAsync("**/leerling/reis**", DomReady);
+        await back.Locator("[data-testid=ll-vraag-prev]").ClickAsync();
+        await back.WaitForURLAsync("**/leerling/route**", DomReady);
+        await back.CloseAsync();
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Groep78_zee_vraag_screen_links_and_capture()
     {
         _ = TestContext.Current.CancellationToken;

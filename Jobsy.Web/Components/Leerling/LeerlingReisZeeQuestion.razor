@@ -11,6 +11,7 @@
     var qLabel = Item is null ? "" : Culture[Item.TextKey];
     var globalQ = State.CurrentIndex + 1;
     var indexInWorld = Def.IndexInWorld(State.CurrentIndex);
+    var questionInWorld = indexInWorld + 1;
     var curNode = PupilZeeJourneyBar.CurrentNodeIndex(worldKey, State.Completed);
     var bandClass = worldKey switch
     {
@@ -22,12 +23,12 @@
     var bandImg = PupilZeeJourneyBar.WorldBandImage(worldKey);
     var kickerKey = PupilZeeJourneyBar.WorldKickerKey(worldKey);
     var part = PupilZeeJourneyBar.PartNumber(worldKey);
-    var segDone = PupilZeeJourneyBar.SegmentDoneBefore(indexInWorld);
+    var segDone = PupilZeeJourneyBar.SegmentDoneBefore(questionInWorld);
     var journeyMeta = Culture.Format(
         "Leerling.Vraag.JourneyMeta",
         Culture[kickerKey],
         part,
-        indexInWorld);
+        questionInWorld);
     var coachSpoken = SpokenText.Join("Lobsy", Culture["Leerling.Vraag.Coach"]);
 }
 

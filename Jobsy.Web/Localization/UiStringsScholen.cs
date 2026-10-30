@@ -454,6 +454,10 @@ public static class UiStringsScholen
         nl["Leerling.World.Lighthouse.Sub"] = "Wat vind je belangrijk?";
         nl["Leerling.World.Lagoon.Title"] = "De lagune";
         nl["Leerling.World.Lagoon.Sub"] = "Waar voel je je thuis?";
+        nl["Leerling.World.Tuin.Bloemenbaai.Title"] = "De Bloemenbaai";
+        nl["Leerling.World.Tuin.Koraaltuin.Title"] = "De Koraaltuin";
+        nl["Leerling.World.Tuin.Waterval.Title"] = "De Waterval";
+        nl["Leerling.World.Tuin.Zonnelagune.Title"] = "De Zonnelagune";
         nl["Leerling.Answer.No"] = "Nee";
         nl["Leerling.Answer.NotReally"] = "Niet echt";
         nl["Leerling.Answer.Sometimes"] = "Soms";
@@ -792,6 +796,10 @@ public static class UiStringsScholen
         Add("Leerling.Route.Tuin.Stop.Waterval.Sub", "Vraag 31 tot 45", "Question 31 to 45", "Pytanie 31–45", "Întrebarea 31–45", "سؤال 31 إلى 45");
         Add("Leerling.Route.Tuin.Stop.Zonnelagune.Title", "Zonnelagune", "Sun lagoon", "Laguna słońca", "Laguna soarelui", "بحيرة الشمس");
         Add("Leerling.Route.Tuin.Stop.Zonnelagune.Sub", "Vraag 46 tot 60", "Question 46 to 60", "Pytanie 46–60", "Întrebarea 46–60", "سؤال 46 إلى 60");
+        Add("Leerling.World.Tuin.Bloemenbaai.Title", "De Bloemenbaai", "Flower Bay", "Zatoka kwiatów", "Golful florilor", "خليج الزهور");
+        Add("Leerling.World.Tuin.Koraaltuin.Title", "De Koraaltuin", "The coral garden", "Ogród koralowy", "Grădina de corali", "حديقة المرجان");
+        Add("Leerling.World.Tuin.Waterval.Title", "De Waterval", "The waterfall", "Wodospad", "Cascada", "الشلال");
+        Add("Leerling.World.Tuin.Zonnelagune.Title", "De Zonnelagune", "The sun lagoon", "Laguna słońca", "Laguna soarelui", "بحيرة الشمس");
         Add("Leerling.Route.Stop.Vuurtorenlampen.Title", "Vuurtorenlampen", "Lighthouse lamps", "Latarnie", "Lămpile farului", "مصابيح المنارة");
         Add("Leerling.Route.Stop.Vuurtorenlampen.Sub", "Puzzel 3", "Puzzle 3", "Łamigłówka 3", "Puzzle 3", "لغز 3");
         Add("Leerling.Coach.Start", "Klaar voor de reis?", "Ready for the trip?", "Gotowy na podróż?", "Gata de drum?", "هل أنت مستعد للرحلة؟");

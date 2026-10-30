@@ -4,4 +4,5 @@ public enum LeerlingReisShellMode
 {
     Classic,
     ZeeExpeditie,
+    Eilandtuin,
 }

@@ -485,3 +485,42 @@
     padding: 22px 18px;
   }
 }
+
+/* Groep 7/8 screen 05 — Eilandtuin question (mockup 05-eilandtuin-vraag). */
+
+.ll-g78-shell.t-tuin .band.vr.vr-tuin {
+  background-image: image-set(
+    url("/leerling/werelden/img/tuin-baai-390w.jpg") 1x,
+    url("/leerling/werelden/img/tuin-baai-780w.jpg") 2x,
+    url("/leerling/werelden/img/tuin-baai.jpg") 3x
+  );
+  background-position: center 78%;
+}
+
+.ll-g78-shell.t-tuin .band.vr.is-koraaltuin,
+.ll-g78-shell.t-tuin .band.vr.is-waterval {
+  background-image: url("/leerling/werelden/img/tuin-koraal.jpg");
+  background-position: center 40%;
+}
+
+.ll-g78-shell.t-tuin .band.vr.is-zonnelagune {
+  background-image: image-set(
+    url("/leerling/werelden/img/tuin-baai-390w.jpg") 1x,
+    url("/leerling/werelden/img/tuin-baai-780w.jpg") 2x,
+    url("/leerling/werelden/img/tuin-baai.jpg") 3x
+  );
+  background-position: center 55%;
+}
+
+.ll-g78-shell.t-tuin .vr-jn.is-result .dot {
+  background: none;
+  background-image: url("/leerling/werelden/img/dot-tuin-5.jpg");
+  background-size: cover;
+  filter: none;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-tuin .band.vr.vr-tuin {
+    background-position: center 78%;
+  }
+}

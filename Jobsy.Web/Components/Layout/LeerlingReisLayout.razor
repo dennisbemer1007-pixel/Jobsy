@@ -10,16 +10,17 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject AuthenticationStateProvider AuthState
 @inject Jobsy.Web.Scholen.LeerlingReisShellState ShellState
+@inject Jobsy.Web.Scholen.LeerlingGroep78ShellTheme ShellTheme
 @implements IDisposable
 
-@if (ShellState.Mode == LeerlingReisShellMode.ZeeExpeditie)
+@if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie or LeerlingReisShellMode.Eilandtuin)
 {
-    <div class="ll-g78-shell t-zee" lang="@Culture.Language">
+    <div class="ll-g78-shell @ShellTheme.CssClass" lang="@Culture.Language">
         <header class="top">
             <a class="brand" href="/leerling/wereld">
                 <img src="/leerling/werelden/img/embleem.png" width="40" height="40" alt="" />
                 Lobsy
-                <small>@Culture["Leerling.Route.HeaderExpedition"]</small>
+                <small>@Culture[ShellTheme.HeaderSmallKey]</small>
             </a>
             <div class="sp"></div>
             @if (!string.IsNullOrEmpty(_chip))
@@ -83,13 +84,14 @@ else
     protected override void OnInitialized()
     {
         ShellState.Changed += OnShellChanged;
+        ShellTheme.Changed += OnShellChanged;
     }
 
     protected override async Task OnParametersSetAsync()
     {
         var http = HttpContextAccessor.HttpContext;
         var lang = http?.Request.Query["lang"].ToString();
-        if (ShellState.Mode == LeerlingReisShellMode.ZeeExpeditie)
+        if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie or LeerlingReisShellMode.Eilandtuin)
         {
             if (!string.IsNullOrWhiteSpace(lang))
             {
@@ -151,6 +153,7 @@ else
     public void Dispose()
     {
         ShellState.Changed -= OnShellChanged;
+        ShellTheme.Changed -= OnShellChanged;
         _displayLanguage?.Dispose();
     }
 }
