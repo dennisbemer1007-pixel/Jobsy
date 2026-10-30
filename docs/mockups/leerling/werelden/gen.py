@@ -1,4 +1,4 @@
-import os
+import os,json
 OUT=os.path.dirname(os.path.abspath(__file__))+'/src/'
 SPK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/></svg>'
 PAU='<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
@@ -241,9 +241,217 @@ def result(name,k):
 </style>{FOOT}'''
     page(name,body,w['cls'])
 
+# ---------- pauze-eiland (likes / dislikes split) ----------
+ISLAND_CUR=4
+I='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">%s</svg>'
+PLUS_I=I%('<path d="M12 5v14M5 12h14"/>')
+CHIP_ICO={
+ 'sport':'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>',
+ 'buiten':'<path d="M12 3v4M12 17v4M4.2 7.5l3 3M16.8 16.5l3 3M3 12h4M17 12h4M4.2 16.5l3-3M16.8 7.5l3-3"/>',
+ 'dieren':'<circle cx="9" cy="9" r="2"/><circle cx="15" cy="9" r="2"/><path d="M7 16c1.5-2 8.5-2 10 0"/>',
+ 'gamen':'<rect x="4" y="8" width="16" height="10" rx="3"/><path d="M9 12v4M7 14h4"/>',
+ 'tekenen':'<path d="M4 20l8-8 4 4 8-8"/>',
+ 'muziek':'<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>',
+ 'koken':'<path d="M6 10h12v8H6z"/><path d="M8 10V6M12 10V5M16 10V6"/>',
+ 'fietsen-repareren':'<circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/><path d="M7 17l4-7h3l3 7"/>',
+ 'bouwen':'<path d="M4 20h16M7 20V9l5-4 5 4v11"/>',
+ 'techniek':'<path d="M14 7l3-3 4 4-3 3M5 20l9-9"/>',
+ 'lezen':'<path d="M5 6c2-1 4-1 7 0 3-1 5-1 7 0v12c-2-1-4-1-7 0-3-1-5-1-7 0z"/>',
+ 'dansen':'<path d="M8 20l4-8 4 2-3 6"/>',
+ 'theater':'<path d="M4 8h16M6 8l2 12h8l2-12M9 4h6"/>',
+ 'filmpjes':'<rect x="4" y="7" width="16" height="12" rx="2"/><path d="M10 11l4 2-4 2z"/>',
+ 'mode':'<path d="M8 7l4-3 4 3v13H8z"/>',
+ 'kleine-kinderen':'<circle cx="12" cy="8" r="3"/><path d="M6 20c1-4 10-4 12 0"/>',
+ 'natuur':'<path d="M12 3c-3 4-6 7-6 11a6 6 0 0012 0c0-4-3-7-6-11z"/>',
+ 'autos':'<path d="M5 16l2-5h10l2 5"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/>',
+ 'computers':'<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>',
+ 'puzzels':'<path d="M8 8h3v3H8zM13 8h3v3h-3zM8 13h3v3H8zM13 13h3v3h-3z"/>',
+ 'rekenen':'<path d="M7 7h10v10H7z"/><path d="M9 9l6 6M15 9l-6 6"/>',
+ 'talen':'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 000 18M12 3a14 14 0 010 18"/>',
+ 'reizen':'<path d="M4 16l8-10 8 10H4z"/><path d="M12 6v10"/>',
+ 'programmeren':'<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>',
+ 'voor-de-klas':'<path d="M12 4v16M8 8h8M8 16h8"/>',
+ 'lang-stilzitten':'<rect x="6" y="5" width="12" height="14" rx="2"/><path d="M9 9h6"/>',
+ 'hard-werken-kou':'<path d="M12 3v18M8 7h8M8 11h8M8 15h8"/>',
+ 'veel-lezen':'<path d="M6 6h12v14H6z"/><path d="M9 9h6M9 12h6"/>',
+ 'alleen-werken':'<circle cx="12" cy="8" r="3"/><path d="M6 20c1-3 10-3 12 0"/>',
+ 'druk-lawaai':'<path d="M5 10h4l4-3v14l-4-3H5z"/><path d="M17 9a4 4 0 010 6"/>',
+ 'vies-worden':'<path d="M8 8c0 4 2 8 4 8s4-4 4-8"/>',
+}
+LIKE_LABELS=[
+ ('sport','Sport'),('buiten','Buiten zijn'),('dieren','Dieren'),('gamen','Gamen'),('tekenen','Tekenen'),('muziek','Muziek'),
+ ('koken','Koken of bakken'),('fietsen-repareren','Fietsen repareren'),('bouwen','Bouwen & knutselen'),('techniek','Techniek'),
+ ('lezen','Lezen'),('dansen','Dansen'),('theater','Theater'),('filmpjes','Filmpjes maken'),('mode','Mode'),
+ ('kleine-kinderen','Kleine kinderen'),('natuur','Natuur'),('autos',"Auto's & motoren"),('computers','Computers'),('puzzels','Puzzels'),
+ ('rekenen','Rekenen'),('talen','Talen'),('reizen','Reizen'),('programmeren','Programmeren'),
+]
+DISLIKE_EXTRA=[
+ ('voor-de-klas','Voor de klas praten'),('lang-stilzitten','Lang stilzitten'),('hard-werken-kou','Hard werken in de kou'),
+ ('veel-lezen','Veel lezen'),('alleen-werken','Alleen werken'),('druk-lawaai','Druk en lawaai'),('vies-worden','Vies worden'),
+]
+def chip_btn(key,label,on=False,kind='like'):
+    svg=I%(CHIP_ICO.get(key,'<circle cx="12" cy="12" r="8"/>'))
+    cls='pchip on '+kind if on else 'pchip'
+    return f'<button type="button" class="{cls}"><span class="ico">{svg}</span>{label}</button>'
+def island_band_img(k):
+    for t,lab,img in W[k]['nodes']:
+        if lab=='Pauze-eiland': return img.replace('img/','').replace('.jpg','')
+    return 'eiland'
+def island_page(name,k,step):
+    w=W[k]; ib=island_band_img(k)
+    meta=f'<b>Pauze-eiland</b> · 30 van 60 klaar · Pauze tussen wereld 2 en 3 · stap {step} van 2'
+    pos='center 45%'
+    if step==1:
+        title='Wat vind ik leuk'
+        lead='Even uitrusten. Waar word jij blij van?'
+        coach='Even pauze. Je doet het goed. Tik wat jij leuk vindt. Het mag ook leeg blijven.'
+        on={'dieren','natuur','tekenen'}
+        chips=''.join(chip_btn(key,lab,key in on,'like') for key,lab in LIKE_LABELS)
+        chips+=f'<button type="button" class="pchip other"><span class="ico">{PLUS_I}</span>+ Iets anders</button>'
+        extra=''
+        speak=lead
+    else:
+        title='Wat vind ik niet leuk'
+        lead='Wat vind je níet leuk?'
+        coach='Kies wat je níet leuk vindt. Ook dit mag leeg blijven.'
+        on={'lang-stilzitten','druk-lawaai','voor-de-klas'}
+        all_chips=LIKE_LABELS+DISLIKE_EXTRA
+        chips=''.join(chip_btn(key,lab,key in on,'dislike') for key,lab in all_chips)
+        chips+=f'<button type="button" class="pchip other on dislike"><span class="ico">{PLUS_I}</span>+ Iets anders</button>'
+        extra='''<label class="field" style="margin-top:14px"><span class="island-sub">Iets anders</span>
+<input style="width:100%;font:inherit;font-size:19px;padding:14px 16px;border-radius:12px;border:2px solid #cdbf9f;background:#fff" value="" placeholder="bijv. paardrijden" maxlength="24"></label>
+<p class="warn" style="margin-top:14px"><b>Let op.</b> Typ geen namen (ook niet je eigen naam), adres of telefoonnummer.</p>'''
+        speak=lead
+    body=f'''{top(w['small'])}{bandcss('ib2',ib,280,200,pos,pos)}<section class="band ib2" style="padding-top:130px">{journey(w,ISLAND_CUR,meta)}</section>
+<div class="wrap" style="margin-top:-24px;position:relative;z-index:4"><div class="q-layout"><div class="card">
+<div class="qmeta"><span class="kicker">Pauze-eiland</span><span>·</span><span>30 van 60 klaar</span></div>
+<span class="step-pill">Stap {step} van 2</span>
+<p class="island-sub">{title}</p>
+<h1 class="island-lead">{lead}</h1>
+<div class="qrow"><button class="speak on">{SPK}</button><span class="speak-label">Lobsy leest de tekst voor</span></div>
+<div class="pick-chips" role="group" aria-label="{title}">{chips}</div>{extra}
+<div class="qfoot"><button class="btn btn-ghost">{BACK}Vorige</button><button class="btn btn-main" style="margin-left:auto">Klaar, verder! {NEXT}</button></div></div>
+<aside class="d-only" style="padding-top:10px">{bubble(coach,'b')}<img class="lob" src="img/{w['lob_q']}.png" alt="Lobsy" style="margin-top:22px"></aside>
+<div class="m-only"><div class="guide"><div class="ring"></div>{bubble(coach,'l')}</div></div>
+</div></div>{FOOT}'''
+    page(name,body,w['cls'])
+
+# ---------- beroep kiezen (5 RIASEC-richtingen, groep 7/8 pool) ----------
+DJ='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">%s</svg>'
+JOB_ICONS={
+ 'dierenverzorger':'<path d="M13 9c2-4 4-6 6-5 2 2-1 6-3 8a6 6 0 1 1-10 0c-2-2-5-6-3-8 2-1 4 1 6 5M9 14h.01M15 14h.01"/>',
+ 'bioloog':'<path d="M11 20A7 7 0 0 1 4 13C4 7 10 4 20 4c0 10-3 16-9 16ZM4 17c3-3 6-5 11-7"/>',
+ 'grafisch-ontwerper':'<path d="m12 19 7-7-4-4-7 7-4 1 1-4 7-7 4 4M14 3l7 7M3 21h6"/>',
+ 'hovenier':'<path d="m10 13-3-3 3-6 3 6-3 3ZM10 13v7M18 16l-3-3 3-6 3 6-3 3ZM18 16v4M3 21h18"/>',
+ 'brandweer':'<path d="M12 22c4 0 7-2.7 7-6.5 0-3-2-5-4-7-1 3-3 4-4 5-1-2-1-4 .5-6.5C7 9.5 5 13 5 15.5 5 19.3 8 22 12 22Z"/>',
+}
+# Keys/titles/blurbs/domains align with DreamJobCatalog + PupilPassportCopy (Groep78).
+JOB_PICKS=[
+ ('dierenverzorger','Dierenverzorger','Zorg & dieren',
+  'Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.',
+  'je <b>dieren</b> leuk vindt en graag voor andere zorgt.',True),
+ ('bioloog','Bioloog','Onderzoek',
+  'Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.',
+  'je <b>natuur</b> leuk vindt en wilt weten hoe iets werkt.',False),
+ ('grafisch-ontwerper','Grafisch ontwerper','Creatief',
+  'Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.',
+  'je <b>tekenen</b> leuk vindt en van maken houdt.',False),
+ ('hovenier','Hovenier','Buiten & techniek',
+  'Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.',
+  'je van <b>buiten zijn</b> houdt en van <b>natuur</b>.',False),
+ ('brandweer','Brandweerman/-vrouw','Ondernemen',
+  'Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.',
+  'je snel merkt wanneer iemand hulp nodig heeft.',False),
+]
+def job_pick(name,k):
+    w=W[k]; img,pos=RESULT_BAND[k]; last=len(w['nodes'])-1
+    cards=''
+    for key,title,domain,blurb,why,sel in JOB_PICKS:
+        ico=DJ%(JOB_ICONS[key])
+        day_hint=' · <span style="color:var(--teal);font-weight:600">Tik voor: een dag in dit beroep</span>' if key=='dierenverzorger' else ''
+        cards+=f'''<button type="button" class="jpick{" sel" if sel else ""}" aria-pressed="{"true" if sel else "false"}">
+<span class="jico">{ico}</span><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Past bij jou omdat {why}{day_hint}</p>
+<span class="jmark">✓ Jouw keuze</span></div>
+<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></button>'''
+    coach='Welk beroep past bij jou? Kies er één. Daarna ga je verder.'
+    body=f'''{top(w['small'])}{bandcss('jb',img,360,240,pos,pos)}
+<section class="band jb dark" style="padding-top:36px">{journey(w,last,'<b>Klaar</b> · 60 vragen · kies je droombaan')}</section>
+<div class="wrap" style="position:relative;z-index:4;margin-top:-20px"><div class="q-layout"><div class="card">
+<div class="qmeta"><span class="kicker">Droombaan</span><span>·</span><span>Kies 1 van 5</span></div>
+<h1 class="island-lead" style="margin-top:4px">Welke beroepen passen bij jou?</h1>
+<p class="jpick-hint">Dit zijn vijf ideeën uit jouw antwoorden. Kies er <b>precies één</b>.</p>
+<div class="qrow"><button class="speak on">{SPK}</button><span class="speak-label">Lobsy leest de uitleg voor</span></div>
+<div class="job-picks" role="radiogroup" aria-label="Kies één beroep">{cards}</div>
+<div class="qfoot"><button class="btn btn-ghost">{BACK}Vorige</button><button class="btn btn-main">Bevestig mijn keuze {NEXT}</button></div>
+<p class="jpick-hint" style="margin-top:10px;font-size:14px">De knop werkt pas als je een beroep hebt gekozen.</p></div>
+<aside class="d-only" style="padding-top:10px">{bubble(coach,'b')}<img class="lob" src="img/kreeft-kijker.png" alt="Lobsy" style="margin-top:22px"></aside>
+<div class="m-only"><div class="guide"><div class="ring"></div>{bubble(coach,'l')}</div></div></div></div>{FOOT}'''
+    page(name,body,w['cls'])
+
+# ---------- dag in het leven (OccupationDayBlock timeline, zelfde model als OccupationDayPage) ----------
+DAY_ICO={
+ 'start':DJ%('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+ 'morning':DJ%('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+ 'pause':DJ%('<path d="M8 6h8v12H8zM10 4h4"/>'),
+ 'afternoon':DJ%('<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2"/><circle cx="12" cy="13" r="5"/>'),
+ 'close':DJ%('<path d="M12 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"/><path d="M12 3v3M5 19h14"/>'),
+ 'talk':DJ%('<path d="M8 10h8M8 14h5"/>'),
+ 'plan':DJ%('<path d="M5 6h14M5 12h14M5 18h8"/>'),
+ 'handover':DJ%('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+}
+def load_day_payload():
+    p=os.path.join(os.path.dirname(os.path.abspath(__file__)),'data','occupation-day-dierenverzorger.json')
+    raw=json.load(open(p,encoding='utf-8'))
+    blocks=[]
+    for b in raw.get('blocks') or []:
+        blocks.append({
+            'key': b.get('key') or b.get('Key',''),
+            'label': b.get('label') or b.get('Label',''),
+            'text': b.get('text') or b.get('Text',''),
+        })
+    raw['blocks']=blocks
+    return raw
+DAY_PAYLOAD=load_day_payload()
+def job_day(name,k):
+    w=W[k]; img,pos=RESULT_BAND[k]; last=len(w['nodes'])-1
+    d=DAY_PAYLOAD
+    title=d.get('dreamTitle','Dierenverzorger')
+    blocks=''
+    for b in d['blocks']:
+        key=b['key']; lab=b['label']; txt=b['text']
+        ico=DAY_ICO.get(key,DAY_ICO['morning'])
+        blocks+=f'''<li class="day-block"><span class="dico">{ico}</span><div><h2>{lab}</h2><p>{txt}</p></div>
+<span class="dspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></li>'''
+    facts=''
+    skills=d.get('skills') or []
+    if skills:
+        pills=''.join(f'<li class="day-pill">{s}</li>' for s in skills[:6])
+        facts=f'<section class="day-facts" aria-labelledby="day-skills-title"><h2 id="day-skills-title">Wat dit werk vraagt</h2><ul class="day-cloud">{pills}</ul></section>'
+    varies=(d.get('variesNote') or '').strip()
+    varies_html=f'<p class="day-varies">{varies}</p>' if varies else ''
+    coach='Kom, ik neem je mee door een gewone werkdag.'
+    src_note=''
+    if d.get('source')!='occupation-day-in-life-export':
+        src_note='<p class="day-disclaimer" style="margin-top:12px;font-size:13px">Tekst: <code>OccupationDayBlock</code>-timeline (zelfde velden als de API). Geen DB-export in repo — gegenereerd via <code>tools/day_export</code> uit <code>OccupationDayFacts</code> tot admin <code>occupation-day-in-life.nl.json</code> beschikbaar is.</p>'
+    body=f'''{top(w['small'])}{bandcss('jb',img,320,220,pos,pos)}
+<section class="band jb dark" style="padding-top:32px">{journey(w,last,'<b>Droombaan</b> · een dag in het leven')}</section>
+<div class="wrap" style="position:relative;z-index:4;margin-top:-20px"><div class="q-layout"><div class="card">
+<div class="qmeta"><span class="kicker">Een gewone werkdag</span><span>·</span><span>{title}</span></div>
+<h1 class="island-lead" style="margin-top:4px">Een dag als {title}</h1>
+<p class="day-disclaimer">Een typische dag. Bij elke werkgever kan het anders zijn.</p>
+<div class="qrow"><button class="speak on">{SPK}</button><span class="speak-label">Lobsy leest de uitleg voor</span></div>
+<ol class="day-timeline">{blocks}</ol>{facts}{varies_html}{src_note}
+<div class="qfoot" style="flex-wrap:wrap"><button class="btn btn-ghost">{BACK}Terug naar de beroepen</button>
+<button class="btn btn-main" style="margin-left:auto">Dit past bij mij, kies dit beroep {NEXT}</button></div></div>
+<aside class="d-only" style="padding-top:10px">{bubble(coach,'b')}<img class="lob" src="img/kreeft-kijker.png" alt="Lobsy" style="margin-top:22px"></aside>
+<div class="m-only"><div class="guide"><div class="ring"></div>{bubble(coach,'l')}</div></div></div></div>{FOOT}'''
+    page(name,body,w['cls'])
+
 keuze('00-kies-je-wereld')
 for i,k in enumerate(['zee','tuin','ster']):
     b=1+i*3; nm={'zee':'zee','tuin':'eilandtuin','ster':'sterrenkust'}[k]
     route(f'{b:02d}-{nm}-route',k); question(f'{b+1:02d}-{nm}-vraag',k); intro(f'{b+2:02d}-{nm}-puzzel-intro',k)
-    result(f'10-{nm}-result',k)
+    island_page(f'11a-{nm}-pauze-leuk',k,1); island_page(f'11b-{nm}-pauze-niet-leuk',k,2)
+    result(f'10-{nm}-result',k); job_pick(f'12-{nm}-beroep-kiezen',k)
+    job_day(f'13-{nm}-beroep-dag-dierenverzorger',k)
 print('ok')

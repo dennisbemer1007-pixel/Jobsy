@@ -13,7 +13,9 @@ Alle drie de werelden hebben dezelfde 60 vragen in dezelfde volgorde, dezelfde d
 De kreeft is in alle werelden dezelfde gids (bestaande poses).
 
 ## Schermen (reisvolgorde)
-00 Kies jouw wereld · 01-03 Zee-expeditie (route, vraag, puzzel-intro) · 04-06 Eilandtuin · 07-09 Sterrenkust · 10 Dit ben jij (per wereld)
+00 Kies jouw wereld · 01-03 Zee-expeditie (route, vraag, puzzel-intro) · **11a/11b Pauze-eiland** (wat vind ik leuk / niet leuk, per wereld) · 04-06 Eilandtuin · 07-09 Sterrenkust · 10 Dit ben jij · **12 Beroep kiezen** · **13 Een dag als …** (detail na tik op kaart; voorbeeld: dierenverzorger)
+
+Pauze-eiland is één stop op de reis, maar twee schermen: **11a** hobby-chips (LikeChips) en **11b** niet-leuk-chips (DislikeChips, inclusief school-extra’s en “Iets anders”). Zelfde inhoud in alle werelden; alleen thema en achtergrond verschillen.
 
 ## Bestanden
 - `walkthrough-desktop.html` en `walkthrough-mobiel.html`: klikbaar, ook met de pijltjestoetsen
@@ -22,6 +24,11 @@ De kreeft is in alle werelden dezelfde gids (bestaande poses).
 - `renders/desktop` (1440) en `renders/mobile` (390)
 - `illustraties/`: nieuwe aquarellen voor Eilandtuin en Sterrenkust
 - Bron: `gen.py` (bouwt `src/`), `crops.py`, `meta.py`, `build_extra.py`, `render.js` en `pdf.js` (playwright-core met Chrome)
+
+## Scherm 13 · Een dag als … (product-bron)
+In de app staat dezelfde inhoud op **`OccupationDayPage.razor`** (`/candidate/beroep/{EscoId}/dag`), gelezen via **`OccupationDayInLifeReader`** en getoond als **`OccupationDayBlock`**-timeline (labels met klok). UI-teksten komen uit **`UiStringsOccupationDay`** (`Day.Title`, `Day.Disclaimer`, `Day.Skills`, …). Links: **`OccupationDayLink.razor`** (kompas, functiefit, paspoort). Feature flag: **`OccupationDayInLifeEnabled`**.
+
+Mockup-data: `data/occupation-day-dierenverzorger.json` (ESCO `1ee1b792-4d5f-4555-be4e-ce7e4c05d1a9`). Vernieuwen: `dotnet run --project tools/day_export -- dierenverzorger`. Als `data/occupation-day-in-life.nl.json` (admin-export) aanwezig is, gebruikt het tool de opgeslagen bloktekst.
 
 ## Open punten
 1. **Deel 1 van 4**: in de reisbalk stond eerst "wereld 1 van 4". Nu heten de thema's werelden, dus de vier blokken van 15 vragen heten nu "deel 1 van 4".
