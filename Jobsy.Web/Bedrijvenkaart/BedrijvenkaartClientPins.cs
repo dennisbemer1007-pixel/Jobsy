@@ -28,7 +28,12 @@ internal static class BedrijvenkaartClientPins
         }
         else
         {
-            var origin = await BedrijvenkaartMapOrigin.ResolveAsync(http, api, cancellationToken);
+            var origin = await BedrijvenkaartMapOrigin.TryResolveAsync(http, api, cancellationToken);
+            if (origin is null)
+            {
+                return TypedResults.Ok(Array.Empty<Jobsy.Core.Contracts.CompanyMapPinDto>());
+            }
+
             lat = origin.Lat;
             lng = origin.Lng;
         }
