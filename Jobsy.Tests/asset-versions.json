@@ -167,6 +167,22 @@
     "sha256": "b8c8ebe7ac11ba2ccc445300496c26c652b4044397452912d0306be80467ef69",
     "v": "20261028-59"
   },
+  "css/features/leerling-werelden-kies.css": {
+    "sha256": "1e9bd7ed6eb8107f077f595f298a31a24b63b3915a2883fa485edd7573cc6225",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-puzzel-intro.css": {
+    "sha256": "04eae2129dc6b647d05135e1842e2214b5f7a16a2481352e61b878d24d6b5ae2",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-route.css": {
+    "sha256": "dd56b358c157e9636f82e0ecc126bcc0cfac642e049614efeda6123ad6f65014",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-vraag.css": {
+    "sha256": "14b5c9827dc77f7ed2508c26ac3dcceeef63ff38855cfe113e89b80bc8380b57",
+    "v": "20261030-catalog"
+  },
   "css/features/lobsy-assistant-panel.css": {
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
     "v": "20261026-08"

@@ -50,7 +50,12 @@ public sealed record PupilProgressStateDto(
     string? DislikeOtherWord,
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo,
     string NextStep = "question",
-    string? NextPuzzleKey = null);
+    string? NextPuzzleKey = null,
+    string? JourneyThemeKey = null);
+
+public sealed record PupilJourneyThemeRequest(string Key);
+
+public sealed record PupilJourneyThemeResponse(string JourneyThemeKey, string RedirectPath);
 
 public sealed record PupilAnswerRequest(int Value);
 
