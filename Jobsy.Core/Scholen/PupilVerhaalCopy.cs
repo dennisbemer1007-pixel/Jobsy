@@ -292,6 +292,7 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Privacy.Vo"] = "Je docent kan dit verhaal ook zien, met jouw code. Niemand anders.";
         d["LeerlingStory.Pdf"] = "PDF";
         d["LeerlingStory.CheckDream"] = "Check je droombaan";
+        d["LeerlingStory.PassportButton"] = "Jouw DNA-paspoort";
         d["LeerlingStory.ReadStory"] = "Laat jouw verhaal voorlezen";
         d["LeerlingStory.ReadJobs"] = "Laat de beroepen voorlezen";
         d["LeerlingStory.ResultJourneyMeta"] = "alle {0} vragen · jouw verhaal";

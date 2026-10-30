@@ -132,7 +132,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await Assertions.Expect(sport).ToHaveClassAsync(new Regex(@"\bis-on\b"));
                 await rekenen.ClickAsync();
                 await Assertions.Expect(rekenen).ToHaveClassAsync(new Regex(@"\bis-on\b"));
-                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
                 await page.WaitForFunctionAsync(
                     "() => !location.pathname.includes('/leerling/eiland')");
                 continue;
@@ -530,7 +530,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await page.WaitForURLAsync(
                 url => url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
                 UrlCommitted);
-            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
             await page.WaitForURLAsync(
                 url => url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
                     && !url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
@@ -966,6 +966,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
+        await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         var report = new List<string>();
         Directory.CreateDirectory("/opt/cursor/artifacts");
@@ -1055,6 +1056,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await page.GetByRole(AriaRole.Button, new() { Name = "Pauze" }).ClickAsync();
                     await page.WaitForURLAsync("**/leerling/stop**", DomReady);
                     await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                    await page.WaitForURLAsync("**/leerling/dit-ben-jij**", DomReady);
+                });
+                await Step("Jouw DNA-paspoort link", async () =>
+                {
+                    var link = page.GetByRole(AriaRole.Link, new() { Name = "Jouw DNA-paspoort" });
+                    await Assertions.Expect(link).ToBeVisibleAsync();
+                    await link.ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/paspoort**", DomReady);
+                    await page.GoBackAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
                     await page.WaitForURLAsync("**/leerling/dit-ben-jij**", DomReady);
                 });
                 await Step("PDF link", async () =>
@@ -1375,9 +1385,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
+        await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
-        var report = new List<string>();
-        var allReport = new List<string>();
         Directory.CreateDirectory("/opt/cursor/artifacts");
         var reportPath = "/opt/cursor/artifacts/groep78-e2e-button-results.txt";
         if (File.Exists(reportPath))
@@ -1385,59 +1394,80 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             File.Delete(reportPath);
         }
 
-        foreach (var (theme, routeBtn, bandTestId, width, height, mobile) in new[]
-                 {
-                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 1440, 900, false),
-                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 390, 844, true),
-                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 1440, 900, false),
-                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 390, 844, true),
-                     (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 1440, 900, false),
-                     (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 390, 844, true),
-                 })
+        var variants = new[]
         {
-            var seed = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, completeActivePuzzleGate: true, journeyThemeKey: theme);
-            var pupil = seed[0];
-            var tag = $"{theme}-{width}";
-            var consoleErrors = new List<string>();
-            var failedRequests = new List<string>();
+            (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 1440, 900, false),
+            (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 390, 844, true),
+            (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 1440, 900, false),
+            (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 390, 844, true),
+            (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 1440, 900, false),
+            (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", "ll-ster-vraag-band", 390, 844, true),
+        };
 
-            await using var context = mobile
-                ? await NewMobileContextAsync()
-                : await _browser!.NewContextAsync(new BrowserNewContextOptions
-                {
-                    ViewportSize = new ViewportSize { Width = width, Height = height },
-                });
-            var page = await context.NewPageAsync();
-            page.SetDefaultTimeout(90_000);
-            page.Console += (_, msg) =>
-            {
-                if (msg.Type == "error")
-                {
-                    consoleErrors.Add(msg.Text);
-                }
-            };
-            page.RequestFailed += (_, req) => failedRequests.Add($"{req.Method} {req.Url} {req.Failure}");
+        var allReport = new List<string>();
+        foreach (var v in variants)
+        {
+            allReport.AddRange(await RunGroep78FullPupilJourneyVariantAsync(
+                baseUrl, v.Item1, v.Item2, v.Item3, v.Item4, v.Item5, v.Item6));
+        }
+        await File.WriteAllLinesAsync(reportPath, allReport);
+        var failures = allReport.Where(l => l.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
+        Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
 
-            async Task Step(string name, Func<Task> act)
+    private async Task<IReadOnlyList<string>> RunGroep78FullPupilJourneyVariantAsync(
+        string baseUrl,
+        string theme,
+        string routeBtn,
+        string bandTestId,
+        int width,
+        int height,
+        bool mobile)
+    {
+        var report = new List<string>();
+        var seed = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, completeActivePuzzleGate: true, journeyThemeKey: theme);
+        var pupil = seed[0];
+        var tag = $"{theme}-{width}";
+        var consoleErrors = new List<string>();
+        var failedRequests = new List<string>();
+
+        await using var context = mobile
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
             {
-                try
-                {
-                    consoleErrors.Clear();
-                    failedRequests.Clear();
-                    await act();
-                    await AssertGroep78UiCleanAsync(page, consoleErrors, failedRequests);
-                    report.Add($"PASS | {tag} | {name}");
-                }
-                catch (Exception ex)
-                {
-                    report.Add($"FAIL | {tag} | {name} | {ex.Message}");
-                }
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
             }
+        };
+        page.RequestFailed += (_, req) => failedRequests.Add($"{req.Method} {req.Url} {req.Failure}");
 
-            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
-
+        async Task Step(string name, Func<Task> act)
+        {
             try
             {
+                consoleErrors.Clear();
+                failedRequests.Clear();
+                await act();
+                await AssertGroep78UiCleanAsync(page, consoleErrors, failedRequests);
+                report.Add($"PASS | {tag} | {name}");
+            }
+            catch (Exception ex)
+            {
+                report.Add($"FAIL | {tag} | {name} | {ex.Message}");
+            }
+        }
+
+        var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+
+        try
+        {
                 await Step("Login + choose world", async () =>
                 {
                     await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
@@ -1578,6 +1608,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
                 });
 
+                var reachedResult = false;
                 await Step("Finish journey to Dit ben jij", async () =>
                 {
                     page.SetDefaultTimeout(600_000);
@@ -1586,12 +1617,18 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                         await AdvanceGroep78UntilResultAsync(page);
                         await page.Locator("[data-testid=leerling-dit-ben-jij]").WaitForAsync();
                         await page.Locator($"[data-testid={ResultBandTestId(theme)}]").WaitForAsync();
+                        reachedResult = true;
                     }
                     finally
                     {
                         page.SetDefaultTimeout(90_000);
                     }
                 });
+
+                if (!reachedResult)
+                {
+                    return report;
+                }
 
                 await Step("Result story speaker", async () =>
                 {
@@ -1632,12 +1669,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
                 await Step("Jouw DNA-paspoort link", async () =>
                 {
-                    var link = page.GetByRole(AriaRole.Link, new() { Name = "Mijn DNA-paspoort" });
-                    if (await link.CountAsync() == 0)
-                    {
-                        return;
-                    }
-
+                    var link = page.GetByRole(AriaRole.Link, new() { Name = "Jouw DNA-paspoort" });
+                    await Assertions.Expect(link).ToBeVisibleAsync();
                     await link.ClickAsync();
                     await page.WaitForURLAsync("**/leerling/paspoort**", DomReady);
                     await page.GoBackAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -1655,18 +1688,13 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await page.GetByRole(AriaRole.Link, new() { Name = "Check je droombaan" }).ClickAsync();
                     await page.WaitForURLAsync("**/leerling/droombaan**", DomReady);
                 });
-            }
-            finally
-            {
-                await page.CloseAsync();
-                allReport.AddRange(report);
-                await File.AppendAllLinesAsync(reportPath, report);
-                report.Clear();
-            }
+        }
+        finally
+        {
+            await page.CloseAsync();
         }
 
-        var failures = allReport.Where(l => l.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
-        Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+        return report;
     }
 
     private static string PuzzleIntroBandTestId(string theme)
@@ -1696,7 +1724,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
             if (page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
             {
-                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+                var likes = page.Locator("fieldset.ll-chips").Nth(0);
+                var dislikes = page.Locator("fieldset.ll-chips").Nth(1);
+                var sport = likes.GetByRole(AriaRole.Button, new() { Name = "Sport", Exact = true });
+                var rekenen = dislikes.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true });
+                await sport.ClickAsync();
+                await rekenen.ClickAsync();
+                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
+                await page.WaitForFunctionAsync("() => !location.pathname.includes('/leerling/eiland')");
                 continue;
             }
 
@@ -1727,54 +1762,229 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     private static async Task CompleteActiveGroep78PuzzleAsync(IPage page)
     {
         await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync(new() { Timeout = 20_000 });
+        var url = page.Url;
+
+        if (url.Contains("schelpenrij", StringComparison.OrdinalIgnoreCase))
+        {
+            await SolveSchelpenrijPuzzleByPlayingAsync(page);
+        }
+        else if (url.Contains("schatkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            await SolveSchatkaartPuzzleByPlayingAsync(page);
+        }
+        else if (url.Contains("vuurtorenlampen", StringComparison.OrdinalIgnoreCase))
+        {
+            await SolveVuurtorenlampenPuzzleByPlayingAsync(page);
+        }
+        else
+        {
+            throw new InvalidOperationException("Unknown groep 78 puzzle: " + url);
+        }
 
         var continueBtn = page.GetByTestId("ll-puzzle-continue");
-        if (await continueBtn.IsVisibleAsync())
-        {
-            await continueBtn.ClickAsync(new() { Force = true });
-            await page.WaitForURLAsync(
-                url => !url.Contains("/puzzel/", StringComparison.OrdinalIgnoreCase),
-                UrlCommitted);
-            return;
-        }
-
-        var shells = page.Locator("[data-testid=ll-puzzle-shell]");
-        if (await shells.CountAsync() > 0)
-        {
-            await shells.Nth(1).ClickAsync(new() { Force = true });
-            await shells.Nth(3).ClickAsync(new() { Force = true });
-            if (await continueBtn.IsVisibleAsync())
-            {
-                await continueBtn.ClickAsync(new() { Force = true });
-            }
-
-            await page.WaitForURLAsync(
-                url => !url.Contains("/puzzel/", StringComparison.OrdinalIgnoreCase),
-                UrlCommitted);
-            return;
-        }
-
-        var nav = page.WaitForURLAsync(
+        await continueBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await continueBtn.ClickAsync(new() { Force = true });
+        await page.WaitForURLAsync(
             url => !url.Contains("/puzzel/", StringComparison.OrdinalIgnoreCase),
             UrlCommitted);
-        await page.EvaluateAsync(
-            """
-            () => {
-              const root = document.querySelector('[data-testid=ll-puzzle-root]');
-              if (!root) return;
-              const cont = root.querySelector('[data-testid=ll-puzzle-continue]');
-              if (cont instanceof HTMLButtonElement && !cont.disabled) {
-                cont.click();
-                return;
-              }
-              const skip = Array.from(root.querySelectorAll('button'))
-                .find(b => (b.textContent || '').includes('Overslaan'));
-              if (skip instanceof HTMLButtonElement) {
-                skip.click();
-              }
+    }
+
+    /// <summary>One swap (indices 1 and 3) solves <see cref="PupilSchelpenrijPuzzle.InitialPlayOrder"/>.</summary>
+    private static async Task SolveSchelpenrijPuzzleByPlayingAsync(IPage page)
+    {
+        var shells = page.Locator("[data-testid=ll-puzzle-shell]");
+        await Assertions.Expect(shells).ToHaveCountAsync(PupilSchelpenrijPuzzle.ShellCount);
+        await shells.Nth(1).ClickAsync();
+        await shells.Nth(3).ClickAsync();
+        await Assertions.Expect(page.GetByTestId("ll-puzzle-continue")).ToBeVisibleAsync(new() { Timeout = 15_000 });
+    }
+
+    private static async Task SolveSchatkaartPuzzleByPlayingAsync(IPage page)
+    {
+        var cards = page.Locator("[data-testid=ll-puzzle-card]");
+        await Assertions.Expect(cards).ToHaveCountAsync(6);
+
+        async Task<bool> IsMatchedAsync(int index)
+        {
+            var cls = await cards.Nth(index).GetAttributeAsync("class") ?? "";
+            return cls.Contains("is-matched", StringComparison.Ordinal);
+        }
+
+        async Task<string> FaceAsync(int index) => (await cards.Nth(index).InnerTextAsync()).Trim();
+
+        async Task<bool> IsFaceDownAsync(int index) => await FaceAsync(index) == "?";
+
+        async Task<int> MatchedCountAsync()
+        {
+            var count = 0;
+            for (var i = 0; i < 6; i++)
+            {
+                if (await IsMatchedAsync(i))
+                {
+                    count++;
+                }
             }
-            """);
-        await nav;
+
+            return count;
+        }
+
+        async Task FlipPairAsync(int a, int b)
+        {
+            await cards.Nth(a).ClickAsync(new() { Force = true });
+            await Task.Delay(550);
+            await cards.Nth(b).ClickAsync(new() { Force = true });
+            await Task.Delay(900);
+        }
+
+        var known = new Dictionary<string, int>(StringComparer.Ordinal);
+        var deadline = DateTime.UtcNow.AddMinutes(2);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await page.GetByTestId("ll-puzzle-continue").IsVisibleAsync())
+            {
+                return;
+            }
+
+            var openIndex = -1;
+            string? openFace = null;
+            for (var i = 0; i < 6; i++)
+            {
+                if (await IsMatchedAsync(i))
+                {
+                    continue;
+                }
+
+                var face = await FaceAsync(i);
+                if (face != "?")
+                {
+                    openIndex = i;
+                    openFace = face;
+                    break;
+                }
+            }
+
+            if (openIndex >= 0 && openFace is not null)
+            {
+                if (known.TryGetValue(openFace, out var mate) && mate != openIndex && !await IsMatchedAsync(mate))
+                {
+                    await cards.Nth(mate).ClickAsync(new() { Force = true });
+                    await Task.Delay(900);
+                    known.Remove(openFace);
+                    continue;
+                }
+
+                for (var j = 0; j < 6; j++)
+                {
+                    if (j == openIndex || await IsMatchedAsync(j) || !await IsFaceDownAsync(j))
+                    {
+                        continue;
+                    }
+
+                    await cards.Nth(j).ClickAsync(new() { Force = true });
+                    await Task.Delay(900);
+                    var faceJ = await FaceAsync(j);
+                    if (string.Equals(openFace, faceJ, StringComparison.Ordinal))
+                    {
+                        known.Remove(openFace);
+                    }
+                    else
+                    {
+                        known[openFace] = openIndex;
+                        known[faceJ] = j;
+                    }
+
+                    break;
+                }
+
+                continue;
+            }
+
+            var before = await MatchedCountAsync();
+            var progressed = false;
+            for (var a = 0; a < 6 && !progressed; a++)
+            {
+                if (await IsMatchedAsync(a) || !await IsFaceDownAsync(a))
+                {
+                    continue;
+                }
+
+                for (var b = a + 1; b < 6; b++)
+                {
+                    if (await IsMatchedAsync(b) || !await IsFaceDownAsync(b))
+                    {
+                        continue;
+                    }
+
+                    await FlipPairAsync(a, b);
+                    var after = await MatchedCountAsync();
+                    if (after > before || await page.GetByTestId("ll-puzzle-continue").IsVisibleAsync())
+                    {
+                        progressed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!progressed)
+            {
+                await Task.Delay(400);
+            }
+        }
+
+        throw new InvalidOperationException("Schatkaart puzzle was not solved by playing.");
+    }
+
+    private static async Task SolveVuurtorenlampenPuzzleByPlayingAsync(IPage page)
+    {
+        var root = page.Locator("[data-testid=ll-puzzle-root]");
+        var lamps = root.Locator("[data-testid=ll-puzzle-lamp]");
+        await lamps.First.WaitForAsync();
+        await root.GetByText("Kijk goed…").WaitForAsync(new() { Timeout = 20_000 });
+
+        var pattern = new List<int>();
+        var lastLit = -1;
+        var deadline = DateTime.UtcNow.AddSeconds(25);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await root.GetByText("Jouw beurt").IsVisibleAsync())
+            {
+                break;
+            }
+
+            var litNow = -1;
+            for (var i = 0; i < 3; i++)
+            {
+                if (await lamps.Nth(i).EvaluateAsync<bool>("el => el.classList.contains('is-lit')"))
+                {
+                    litNow = i;
+                }
+            }
+
+            if (litNow >= 0 && litNow != lastLit)
+            {
+                pattern.Add(litNow);
+                lastLit = litNow;
+            }
+            else if (litNow < 0)
+            {
+                lastLit = -1;
+            }
+
+            await Task.Delay(35);
+        }
+
+        if (pattern.Count < 3)
+        {
+            throw new InvalidOperationException("Could not capture vuurtoren lamp pattern.");
+        }
+
+        foreach (var lamp in pattern.Take(3))
+        {
+            await lamps.Nth(lamp).ClickAsync(new() { Force = true });
+            await Task.Delay(300);
+        }
+
+        await Assertions.Expect(page.GetByTestId("ll-puzzle-continue")).ToBeVisibleAsync(new() { Timeout = 30_000 });
     }
 
     private static async Task AnswerGroep78ThemedAsync(IPage page)
@@ -1793,11 +2003,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 const path = location.pathname;
                 return (meta && meta.innerText !== prev)
                     || path.includes('/puzzel-intro/')
-                    || path.includes('/puzzel/');
+                    || path.includes('/puzzel/')
+                    || path.includes('/leerling/eiland')
+                    || path.includes('/leerling/dit-ben-jij')
+                    || path.includes('/leerling/droombaan');
             }
             """,
             before,
-            new PageWaitForFunctionOptions { Timeout = 20_000 });
+            new PageWaitForFunctionOptions { Timeout = 45_000 });
     }
 
     private static async Task AssertGroep78UiCleanAsync(
@@ -1831,7 +2044,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             .Where(r => !r.Contains("favicon", StringComparison.OrdinalIgnoreCase)
                         && !r.Contains(".gz", StringComparison.OrdinalIgnoreCase)
                         && !r.Contains("fonts.googleapis.com", StringComparison.OrdinalIgnoreCase)
-                        && !r.Contains(" fonts.gstatic.com", StringComparison.OrdinalIgnoreCase))
+                        && !r.Contains(" fonts.gstatic.com", StringComparison.OrdinalIgnoreCase)
+                        && !(r.Contains("/leerling/pdf", StringComparison.OrdinalIgnoreCase)
+                             && r.Contains("ERR_ABORTED", StringComparison.OrdinalIgnoreCase)))
             .ToList();
         if (noisyFailed.Count > 0)
         {
@@ -2408,6 +2623,50 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
         await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" })).ToBeVisibleAsync();
         await page.CloseAsync();
+    }
+
+    [Fact(Timeout = 180_000)]
+    public async Task Groep78_vuurtoren_play_solver_smoke()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var seed = await SeedGroep78AtAsync(1, answered: 45, chipsSaved: true, completeActivePuzzleGate: false);
+        var pupil = seed[0];
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+        });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(60_000);
+        var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+        await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/puzzel/vuurtorenlampen", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+        await SolveVuurtorenlampenPuzzleByPlayingAsync(page);
+        await Assertions.Expect(page.GetByTestId("ll-puzzle-continue")).ToBeVisibleAsync();
+    }
+
+    [Fact(Timeout = 180_000)]
+    public async Task Groep78_schatkaart_play_solver_smoke()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var seed = await SeedGroep78AtAsync(1, answered: 30, chipsSaved: false, completeActivePuzzleGate: false);
+        var pupil = seed[0];
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+        });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(60_000);
+        var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+        await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/puzzel/schatkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+        await SolveSchatkaartPuzzleByPlayingAsync(page);
+        await Assertions.Expect(page.GetByTestId("ll-puzzle-continue")).ToBeVisibleAsync();
     }
 
     private async Task<IReadOnlyList<Seed>> SeedGroep78AtAsync(

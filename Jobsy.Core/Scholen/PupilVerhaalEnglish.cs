@@ -137,6 +137,7 @@ public static class PupilVerhaalEnglish
         ["LeerlingStory.Privacy.Vo"] = "Your teacher or mentor can see this story too, with your code. Nobody else.",
         ["LeerlingStory.Pdf"] = "PDF",
         ["LeerlingStory.CheckDream"] = "Check your dream job",
+        ["LeerlingStory.PassportButton"] = "Your DNA passport",
         ["LeerlingStory.ReadStory"] = "Read your story aloud",
         ["LeerlingStory.ReadJobs"] = "Read the jobs aloud",
         ["LeerlingStory.ResultJourneyMeta"] = "all {0} questions · your story",
