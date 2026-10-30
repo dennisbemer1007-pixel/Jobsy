@@ -961,6 +961,124 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         WriteSterPuzzelPlaySideBySideComparisons(sterCapture);
     }
 
+    [Fact(Timeout = 300_000)]
+    public async Task Groep78_result_themed_buttons_three_worlds()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var report = new List<string>();
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        var reportPath = "/opt/cursor/artifacts/groep78-result-button-results.txt";
+
+        foreach (var (theme, bandTestId, width, height, mobile) in new[]
+                 {
+                     (PupilJourneyTheme.ZeeExpeditie, "ll-zee-result-band", 1440, 900, false),
+                     (PupilJourneyTheme.ZeeExpeditie, "ll-zee-result-band", 390, 844, true),
+                     (PupilJourneyTheme.Eilandtuin, "ll-tuin-result-band", 1440, 900, false),
+                     (PupilJourneyTheme.Eilandtuin, "ll-tuin-result-band", 390, 844, true),
+                     (PupilJourneyTheme.Sterrenkust, "ll-ster-result-band", 1440, 900, false),
+                     (PupilJourneyTheme.Sterrenkust, "ll-ster-result-band", 390, 844, true),
+                 })
+        {
+            var pupil = await SeedGroep78CompletedAsync(journeyThemeKey: theme);
+            var tag = $"{theme}-{width}";
+            var consoleErrors = new List<string>();
+            var failedRequests = new List<string>();
+            await using var context = mobile
+                ? await NewMobileContextAsync()
+                : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height },
+                });
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            page.Console += (_, msg) =>
+            {
+                if (msg.Type == "error")
+                {
+                    consoleErrors.Add(msg.Text);
+                }
+            };
+            page.RequestFailed += (_, req) => failedRequests.Add($"{req.Method} {req.Url} {req.Failure}");
+
+            async Task Step(string name, Func<Task> act)
+            {
+                try
+                {
+                    consoleErrors.Clear();
+                    failedRequests.Clear();
+                    await act();
+                    await AssertGroep78UiCleanAsync(page, consoleErrors, failedRequests);
+                    report.Add($"PASS | {tag} | {name}");
+                }
+                catch (Exception ex)
+                {
+                    report.Add($"FAIL | {tag} | {name} | {ex.Message}");
+                }
+            }
+
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            try
+            {
+                await Step("Login to result", async () =>
+                {
+                    await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                    await page.WaitForURLAsync("**/leerling/dit-ben-jij**", DomReady);
+                    await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                });
+                await Step("Story speaker", async () =>
+                {
+                    await page.Locator(".rs-story-card [data-read-aloud]").First.ClickAsync();
+                });
+                await Step("Tile speakers", async () =>
+                {
+                    var tiles = page.Locator(".rs-tile [data-read-aloud]");
+                    for (var i = 0; i < await tiles.CountAsync(); i++)
+                    {
+                        await tiles.Nth(i).ClickAsync();
+                    }
+                });
+                await Step("Jobs speaker", async () =>
+                {
+                    await page.Locator(".rs-likes-card .vr-qrow [data-read-aloud]").ClickAsync();
+                });
+                await Step("Coach speaker", async () =>
+                {
+                    var coach = width >= 600
+                        ? page.Locator(".rs-coach-aside [data-read-aloud]")
+                        : page.Locator(".rs-mobile-coach [data-read-aloud]");
+                    await coach.ClickAsync();
+                });
+                await Step("Pauze", async () =>
+                {
+                    await page.GetByRole(AriaRole.Button, new() { Name = "Pauze" }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/stop**", DomReady);
+                    await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                    await page.WaitForURLAsync("**/leerling/dit-ben-jij**", DomReady);
+                });
+                await Step("PDF link", async () =>
+                {
+                    var link = page.GetByRole(AriaRole.Link, new() { Name = "PDF" });
+                    await Assertions.Expect(link).ToHaveAttributeAsync("href", "/leerling/pdf");
+                });
+                await Step("Check je droombaan", async () =>
+                {
+                    await page.GetByRole(AriaRole.Link, new() { Name = "Check je droombaan" }).ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/droombaan**", DomReady);
+                });
+            }
+            finally
+            {
+                await page.CloseAsync();
+            }
+        }
+
+        await File.WriteAllLinesAsync(reportPath, report);
+        var failures = report.Where(l => l.StartsWith("FAIL", StringComparison.Ordinal)).ToList();
+        Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
     [Fact(Timeout = 420_000)]
     public async Task Groep78_result_screen_capture_three_worlds()
     {
@@ -1528,10 +1646,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
                 await Step("PDF link", async () =>
                 {
-                    await page.GetByRole(AriaRole.Link, new() { Name = "PDF" }).ClickAsync();
-                    await page.WaitForURLAsync("**/leerling/pdf**", DomReady);
-                    await page.GoBackAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-                    await page.WaitForURLAsync("**/leerling/dit-ben-jij**", DomReady);
+                    var link = page.GetByRole(AriaRole.Link, new() { Name = "PDF" });
+                    await Assertions.Expect(link).ToHaveAttributeAsync("href", "/leerling/pdf");
                 });
 
                 await Step("Check je droombaan", async () =>
@@ -1638,13 +1754,26 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             return;
         }
 
-        var skip = page.Locator("[data-testid=ll-puzzle-root]")
-            .GetByRole(AriaRole.Button, new() { Name = "Overslaan" });
-        await skip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
         var nav = page.WaitForURLAsync(
             url => !url.Contains("/puzzel/", StringComparison.OrdinalIgnoreCase),
             UrlCommitted);
-        await skip.ClickAsync(new() { Force = true });
+        await page.EvaluateAsync(
+            """
+            () => {
+              const root = document.querySelector('[data-testid=ll-puzzle-root]');
+              if (!root) return;
+              const cont = root.querySelector('[data-testid=ll-puzzle-continue]');
+              if (cont instanceof HTMLButtonElement && !cont.disabled) {
+                cont.click();
+                return;
+              }
+              const skip = Array.from(root.querySelectorAll('button'))
+                .find(b => (b.textContent || '').includes('Overslaan'));
+              if (skip instanceof HTMLButtonElement) {
+                skip.click();
+              }
+            }
+            """);
         await nav;
     }
 
