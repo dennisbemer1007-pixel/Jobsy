@@ -8,6 +8,7 @@ public static class PupilGroep78EntryPaths
 {
     public const string Wereld = "/leerling/wereld";
     public const string Start = "/leerling/start";
+    public const string Route = "/leerling/route";
     public const string Reis = "/leerling/reis";
     public const string Result = "/leerling/dit-ben-jij";
 
@@ -36,13 +37,21 @@ public static class PupilGroep78EntryPaths
             return Wereld;
         }
 
-        return status == PupilCodeStatus.NotStarted && (progress is null || progress.CurrentIndex == 0)
-            ? Start
+        return AtJourneyStart(status, progress)
+            ? RouteForTheme(progress?.JourneyThemeKey)
             : Reis;
     }
 
-    public static string AfterThemeChosen(PupilCodeStatus status, PupilProgress? progress)
-        => status == PupilCodeStatus.NotStarted && (progress is null || progress.CurrentIndex == 0)
-            ? Start
+    public static string AfterThemeChosen(PupilCodeStatus status, PupilProgress? progress, string themeKey)
+        => AtJourneyStart(status, progress)
+            ? RouteForTheme(themeKey)
             : Reis;
+
+    private static bool AtJourneyStart(PupilCodeStatus status, PupilProgress? progress)
+        => status == PupilCodeStatus.NotStarted && (progress is null || progress.CurrentIndex == 0);
+
+    private static string RouteForTheme(string? themeKey)
+        => string.Equals(themeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase)
+            ? Route
+            : Start;
 }

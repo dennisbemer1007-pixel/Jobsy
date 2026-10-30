@@ -500,7 +500,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        var redirect = PupilGroep78EntryPaths.AfterThemeChosen(code.Status, progress);
+        var redirect = PupilGroep78EntryPaths.AfterThemeChosen(code.Status, progress, progress.JourneyThemeKey);
         return (new PupilJourneyThemeResponse(progress.JourneyThemeKey, redirect), null, 200);
     }
 

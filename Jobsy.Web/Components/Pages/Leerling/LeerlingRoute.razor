@@ -1,0 +1,240 @@
+@page "/leerling/route"
+@layout LeerlingGroep78ShellLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+
+<PageTitle>@Culture["Leerling.Route.Title"] · Lobsy</PageTitle>
+
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")" data-page-route-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-route.css")" data-page-route-css="true" />
+    <link rel="preload" as="image" href="/leerling/werelden/img/oceaan-780w.jpg" media="(max-width: 600px)" />
+    <link rel="preload" as="image" href="/leerling/werelden/img/oceaan.jpg" media="(min-width: 601px)" />
+    <link rel="preload" as="image" href="/leerling/werelden/img/zeekaart-780w.jpg" imagesrcset="/leerling/werelden/img/zeekaart-390w.jpg 390w, /leerling/werelden/img/zeekaart-780w.jpg 780w" imagesizes="100vw" />
+</HeadContent>
+
+@if (_loading)
+{
+    <p class="wrap" style="padding: 2rem 0">@Culture["Common.Loading"]</p>
+}
+else if (_sessionLost)
+{
+    <p class="wrap" style="padding: 2rem 0;color:#b00">@Culture["Leerling.Session.Lost"]</p>
+}
+else
+{
+    <section class="band rt">
+        <div class="wrap rt-hero">
+            <h1 class="serif">@Culture["Leerling.Route.Title"]</h1>
+            <p>@Culture["Leerling.Route.Lead"]</p>
+        </div>
+    </section>
+    <div class="wrap rt-overlap">
+        <div class="card rt">
+            <div>
+                <div class="rt-map-wrap">
+                    <img src="/leerling/werelden/img/zeekaart-780w.jpg"
+                         srcset="/leerling/werelden/img/zeekaart-390w.jpg 390w, /leerling/werelden/img/zeekaart-780w.jpg 780w, /leerling/werelden/img/zeekaart.jpg 1600w"
+                         sizes="(max-width: 600px) 100vw, min(100vw - 64px, 820px)"
+                         width="1600"
+                         height="900"
+                         alt="@Culture["Leerling.Route.MapAlt"]"
+                         fetchpriority="high"
+                         decoding="async" />
+                    <svg viewBox="0 0 1024 576" aria-hidden="true">
+                        <path d="M160,430 C220,400 260,370 300,345 S330,280 352,262 S400,225 425,222 S480,270 505,300 S560,270 578,262 S680,200 718,192 S760,235 770,262 S800,320 812,345 S900,300 905,230 S880,150 855,126" fill="none" stroke="#fffdf8" stroke-width="9" stroke-linecap="round" opacity=".85" />
+                        <path d="M160,430 C220,400 260,370 300,345 S330,280 352,262 S400,225 425,222 S480,270 505,300 S560,270 578,262 S680,200 718,192 S760,235 770,262 S800,320 812,345 S900,300 905,230 S880,150 855,126" fill="none" stroke="#d4532f" stroke-width="4.5" stroke-dasharray="2 11" stroke-linecap="round" />
+                        <circle cx="160" cy="430" r="17" fill="#2f7d5b" stroke="#fffdf8" stroke-width="3" />
+                        <text x="160" y="436" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">1</text>
+                        <circle cx="300" cy="345" r="17" fill="#10284a" stroke="#fffdf8" stroke-width="3" />
+                        <text x="300" y="351" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">2</text>
+                        <rect x="338" y="248" width="28" height="28" rx="5" transform="rotate(45 352 262)" fill="#b98f3e" stroke="#fffdf8" stroke-width="3" />
+                        <text x="352" y="268" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">3</text>
+                        <circle cx="425" cy="222" r="17" fill="#10284a" stroke="#fffdf8" stroke-width="3" />
+                        <text x="425" y="228" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">4</text>
+                        <rect x="491" y="286" width="28" height="28" rx="5" transform="rotate(45 505 300)" fill="#b98f3e" stroke="#fffdf8" stroke-width="3" />
+                        <text x="505" y="306" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">5</text>
+                        <circle cx="578" cy="262" r="17" fill="#0f5b66" stroke="#fffdf8" stroke-width="3" />
+                        <text x="578" y="268" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">6</text>
+                        <circle cx="718" cy="192" r="17" fill="#10284a" stroke="#fffdf8" stroke-width="3" />
+                        <text x="718" y="198" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">7</text>
+                        <rect x="756" y="248" width="28" height="28" rx="5" transform="rotate(45 770 262)" fill="#b98f3e" stroke="#fffdf8" stroke-width="3" />
+                        <text x="770" y="268" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">8</text>
+                        <circle cx="812" cy="345" r="17" fill="#10284a" stroke="#fffdf8" stroke-width="3" />
+                        <text x="812" y="351" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">9</text>
+                        <circle cx="855" cy="126" r="17" fill="#d4532f" stroke="#fffdf8" stroke-width="3" />
+                        <text x="855" y="132" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">10</text>
+                        <circle cx="160" cy="430" r="27" fill="none" stroke="#ffd98a" stroke-width="4" />
+                    </svg>
+                </div>
+
+                <div class="d-only rt-coach">
+                    <div class="ring" role="img" aria-label="Lobsy"></div>
+                    <div class="bubble tail-l">
+                        <span class="who">Lobsy</span>
+                        @Culture["Leerling.Route.Coach"]
+                        <div class="bt">
+                            <LeerlingSpeak Text="@CoachSpoken" SpeechKey="ll-route-coach" />
+                            <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <ol class="rt-stops" aria-label="@Culture["Leerling.Route.StopsAria"]">
+                    @foreach (var stop in Stops)
+                    {
+                        <li class="rt-stop">
+                            <span class="rt-stop__n @(stop.Diamond ? "is-diamond" : "is-circle") @stop.Tone">
+                                @if (stop.Diamond)
+                                {
+                                    <span>@stop.Num</span>
+                                }
+                                else
+                                {
+                                    @stop.Num
+                                }
+                            </span>
+                            <span>
+                                <b>@Culture[stop.TitleKey]</b>
+                                @if (stop.ShowHere)
+                                {
+                                    <span class="rt-here">@Culture["Leerling.Route.Here"]</span>
+                                }
+                                <br />
+                                <small>@Culture[stop.SubKey]</small>
+                            </span>
+                        </li>
+                    }
+                </ol>
+
+                <a class="btn btn-main @(_reefTap ? "is-tapped" : null)"
+                   href="/leerling/reis"
+                   data-testid="ll-route-reef"
+                   @onpointerdown="() => _reefTap = true"
+                   @onpointerup="ClearReefTap"
+                   @onpointerleave="ClearReefTap"
+                   @onpointercancel="ClearReefTap">
+                    @Culture["Leerling.Route.ToReef"]
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </a>
+
+                <a class="btn btn-quiet @(_worldTap ? "is-tapped" : null)"
+                   href="/leerling/wereld"
+                   data-testid="ll-route-wereld"
+                   @onpointerdown="() => _worldTap = true"
+                   @onpointerup="ClearWorldTap"
+                   @onpointerleave="ClearWorldTap"
+                   @onpointercancel="ClearWorldTap">
+                    <svg style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3" /></svg>
+                    @Culture["Leerling.Route.ChangeWorld"]
+                </a>
+            </div>
+        </div>
+
+        <div class="m-only" style="margin-top:18px">
+            <div class="guide">
+                <div class="ring" role="img" aria-label="Lobsy"></div>
+                <div class="bubble tail-l">
+                    <span class="who">Lobsy</span>
+                    @Culture["Leerling.Route.Coach"]
+                    <div class="bt">
+                        <LeerlingSpeak Text="@CoachSpoken" SpeechKey="ll-route-coach-m" />
+                        <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private sealed record RouteStop(int Num, string TitleKey, string SubKey, string Tone, bool Diamond = false, bool ShowHere = false);
+
+    private static readonly RouteStop[] Stops =
+    [
+        new(1, "Leerling.Route.Stop.Haven.Title", "Leerling.Route.Stop.Haven.Sub", "t-ok", ShowHere: true),
+        new(2, "Leerling.Route.Stop.Reef.Title", "Leerling.Route.Stop.Reef.Sub", "t-navy"),
+        new(3, "Leerling.Route.Stop.Schelpenrij.Title", "Leerling.Route.Stop.Schelpenrij.Sub", "t-brass", Diamond: true),
+        new(4, "Leerling.Route.Stop.Cave.Title", "Leerling.Route.Stop.Cave.Sub", "t-navy"),
+        new(5, "Leerling.Route.Stop.Schatkaart.Title", "Leerling.Route.Stop.Schatkaart.Sub", "t-brass", Diamond: true),
+        new(6, "Leerling.Route.Stop.Island.Title", "Leerling.Route.Stop.Island.Sub", "t-teal"),
+        new(7, "Leerling.Route.Stop.Lighthouse.Title", "Leerling.Route.Stop.Lighthouse.Sub", "t-navy"),
+        new(8, "Leerling.Route.Stop.Lamps.Title", "Leerling.Route.Stop.Lamps.Sub", "t-brass", Diamond: true),
+        new(9, "Leerling.Route.Stop.Lagoon.Title", "Leerling.Route.Stop.Lagoon.Sub", "t-navy"),
+        new(10, "Leerling.Route.Stop.Result.Title", "Leerling.Route.Stop.Result.Sub", "t-coral"),
+    ];
+
+    private bool _loading = true;
+    private bool _sessionLost;
+    private bool _reefTap;
+    private bool _worldTap;
+
+    private string CoachSpoken => SpokenText.Join("Lobsy", Culture["Leerling.Route.Coach"]);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "route");
+        if (outcome.SessionLost)
+        {
+            _sessionLost = true;
+            _loading = false;
+            return;
+        }
+
+        if (outcome.Value is null)
+        {
+            _loading = false;
+            return;
+        }
+
+        var state = outcome.Value;
+        if (state.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            Nav.NavigateTo("/leerling/start", replace: true);
+            return;
+        }
+
+        if (!PupilJourneyTheme.IsValid(state.JourneyThemeKey))
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Wereld, replace: true);
+            return;
+        }
+
+        if (!string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase))
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Start, replace: true);
+            return;
+        }
+
+        if (state.Completed)
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Result, replace: true);
+            return;
+        }
+
+        if (state.CurrentIndex > 0 || state.AnsweredCount > 0)
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Reis, replace: true);
+            return;
+        }
+
+        _loading = false;
+    }
+
+    private void ClearReefTap() => _reefTap = false;
+
+    private void ClearWorldTap() => _worldTap = false;
+}

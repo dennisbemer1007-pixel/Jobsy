@@ -15,7 +15,7 @@
         <a class="brand" href="/leerling/wereld">
             <img src="/leerling/werelden/img/embleem.png" width="40" height="40" alt="" />
             Lobsy
-            <small>@Culture["Leerling.Wereld.HeaderGrade"]</small>
+            <small>@Culture[ResolveHeaderSmallKey()]</small>
         </a>
         <div class="sp"></div>
         @if (!string.IsNullOrEmpty(_chip))
@@ -92,6 +92,14 @@
         }
 
         return null;
+    }
+
+    private string ResolveHeaderSmallKey()
+    {
+        var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?', 2)[0];
+        return path.Equals("leerling/route", StringComparison.OrdinalIgnoreCase)
+            ? "Leerling.Route.HeaderExpedition"
+            : "Leerling.Wereld.HeaderGrade";
     }
 
     public void Dispose() => _displayLanguage?.Dispose();
