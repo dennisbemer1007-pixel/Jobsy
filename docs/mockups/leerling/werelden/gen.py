@@ -1,4 +1,20 @@
 import os,json
+from painted_svgs import chip_icon, job_icon, job_none_icon, day_icon, world_deco, PLUS as PLUS_SVG
+
+JOB_INTRO_B1='Op basis van jouw antwoorden passen deze 5 beroepen het beste bij jou.'
+JOB_COACH=(
+    'Op basis van jouw antwoorden passen deze 5 beroepen het beste bij jou. '
+    'Kies er één. Of kies: geen van deze vijf vind ik interessant. Bevestig daarna je keuze.'
+)
+JOB_READ_ALOUD=JOB_COACH
+JOB_NONE_LABEL='Geen van deze 5 vind ik interessant'
+JOB_NONE_NEXT=(
+    'Je gaat door naar <b>Check je droombaan</b>. Daar zoek je zelf een beroep of bekijk je andere ideeën. '
+    'Dat mag — je hoeft nu niet te kiezen.'
+)
+JOB_JOB_NEXT=(
+    'Na bevestigen zie je straks meer over het beroep dat je koos (of ga je verder in je droombaan).'
+)
 OUT=os.path.dirname(os.path.abspath(__file__))+'/src/'
 SPK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/></svg>'
 PAU='<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
@@ -35,7 +51,7 @@ W={
 Q='Als een vriend verdrietig is, merk ik dat snel.'
 
 def page(name,body,cls):
-    open(OUT+name+'.html','w').write(f'<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lobsy · Groep 7/8</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="themes.css"></head><body class="{cls}">{body}</body></html>')
+    open(OUT+name+'.html','w').write(f'<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lobsy · Groep 7/8</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="themes.css"><link rel="stylesheet" href="world-deco.css"></head><body class="{cls}">{body}</body></html>')
 def top(small='Expeditie',code=True):
     r=f'<header class="top"><div class="brand"><img src="img/embleem.png" alt="">Lobsy<small>{small}</small></div><div class="sp"></div>'
     if code: r+=f'<span class="chip-code">8B · K7R-2QM</span><button class="btn-pauze">{PAU}<span>Pauze</span></button>'
@@ -290,7 +306,7 @@ DISLIKE_EXTRA=[
  ('veel-lezen','Veel lezen'),('alleen-werken','Alleen werken'),('druk-lawaai','Druk en lawaai'),('vies-worden','Vies worden'),
 ]
 def chip_btn(key,label,on=False,kind='like'):
-    svg=I%(CHIP_ICO.get(key,'<circle cx="12" cy="12" r="8"/>'))
+    svg=chip_icon(key)
     cls='pchip on '+kind if on else 'pchip'
     return f'<button type="button" class="{cls}"><span class="ico">{svg}</span>{label}</button>'
 def island_band_img(k):
@@ -307,7 +323,7 @@ def island_page(name,k,step):
         coach='Even pauze. Je doet het goed. Tik wat jij leuk vindt. Het mag ook leeg blijven.'
         on={'dieren','natuur','tekenen'}
         chips=''.join(chip_btn(key,lab,key in on,'like') for key,lab in LIKE_LABELS)
-        chips+=f'<button type="button" class="pchip other"><span class="ico">{PLUS_I}</span>+ Iets anders</button>'
+        chips+=f'<button type="button" class="pchip other"><span class="ico">{PLUS_SVG}</span>+ Iets anders</button>'
         extra=''
         speak=lead
     else:
@@ -317,13 +333,13 @@ def island_page(name,k,step):
         on={'lang-stilzitten','druk-lawaai','voor-de-klas'}
         all_chips=LIKE_LABELS+DISLIKE_EXTRA
         chips=''.join(chip_btn(key,lab,key in on,'dislike') for key,lab in all_chips)
-        chips+=f'<button type="button" class="pchip other on dislike"><span class="ico">{PLUS_I}</span>+ Iets anders</button>'
+        chips+=f'<button type="button" class="pchip other on dislike"><span class="ico">{PLUS_SVG}</span>+ Iets anders</button>'
         extra='''<label class="field" style="margin-top:14px"><span class="island-sub">Iets anders</span>
 <input style="width:100%;font:inherit;font-size:19px;padding:14px 16px;border-radius:12px;border:2px solid #cdbf9f;background:#fff" value="" placeholder="bijv. paardrijden" maxlength="24"></label>
 <p class="warn" style="margin-top:14px"><b>Let op.</b> Typ geen namen (ook niet je eigen naam), adres of telefoonnummer.</p>'''
         speak=lead
     body=f'''{top(w['small'])}{bandcss('ib2',ib,280,200,pos,pos)}<section class="band ib2" style="padding-top:130px">{journey(w,ISLAND_CUR,meta)}</section>
-<div class="wrap" style="margin-top:-24px;position:relative;z-index:4"><div class="q-layout"><div class="card">
+<div class="wrap" style="margin-top:-24px;position:relative;z-index:4"><div class="q-layout"><div class="card card-deco">{world_deco(k)}
 <div class="qmeta"><span class="kicker">Pauze-eiland</span><span>·</span><span>30 van 60 klaar</span></div>
 <span class="step-pill">Stap {step} van 2</span>
 <p class="island-sub">{title}</p>
@@ -363,27 +379,38 @@ JOB_PICKS=[
   'Een beroep om over na te denken — geen vacature, wel een idee om verder te ontdekken.',
   'je snel merkt wanneer iemand hulp nodig heeft.',False),
 ]
-def job_pick(name,k):
+def job_pick(name,k,none_selected=False):
     w=W[k]; img,pos=RESULT_BAND[k]; last=len(w['nodes'])-1
     cards=''
-    for key,title,domain,blurb,why,sel in JOB_PICKS:
-        ico=DJ%(JOB_ICONS[key])
+    for key,title,domain,blurb,why,default_sel in JOB_PICKS:
+        sel=(not none_selected) and default_sel
+        art=job_icon(key)
         day_hint=' · <span style="color:var(--teal);font-weight:600">Tik voor: een dag in dit beroep</span>' if key=='dierenverzorger' else ''
         cards+=f'''<button type="button" class="jpick{" sel" if sel else ""}" aria-pressed="{"true" if sel else "false"}">
-<span class="jico">{ico}</span><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Past bij jou omdat {why}{day_hint}</p>
-<span class="jmark">✓ Jouw keuze</span></div>
-<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></button>'''
-    coach='Welk beroep past bij jou? Kies er één. Daarna ga je verder.'
+<div class="jpick-inner"><div class="jpick-art">{art}</div><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Past bij jou omdat {why}{day_hint}</p></div>
+<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></div>
+<span class="jmark">✓ Jouw keuze</span></button>'''
+    none_art=job_none_icon()
+    cards+=f'''<button type="button" class="jpick jpick-none{" sel" if none_selected else ""}" aria-pressed="{"true" if none_selected else "false"}">
+<div class="jpick-inner"><div class="jpick-art jpick-art-none">{none_art}</div><div class="jbody"><p class="jtitle">{JOB_NONE_LABEL}</p>
+<p class="jblurb">Geen enkel idee voelt nu goed? Dat mag. Je gaat verder zonder één van deze vijf te kiezen.</p></div>
+<span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></div>
+<span class="jmark">✓ Jouw keuze</span></button>'''
+    next_note=f'<p class="note jpick-next{" on" if none_selected else ""}" role="status">{JOB_NONE_NEXT if none_selected else JOB_JOB_NEXT}</p>'
+    coach=JOB_COACH
     body=f'''{top(w['small'])}{bandcss('jb',img,360,240,pos,pos)}
 <section class="band jb dark" style="padding-top:36px">{journey(w,last,'<b>Klaar</b> · 60 vragen · kies je droombaan')}</section>
-<div class="wrap" style="position:relative;z-index:4;margin-top:-20px"><div class="q-layout"><div class="card">
-<div class="qmeta"><span class="kicker">Droombaan</span><span>·</span><span>Kies 1 van 5</span></div>
+<div class="wrap" style="position:relative;z-index:4;margin-top:-20px"><div class="q-layout"><div class="card card-deco">{world_deco(k)}
+<div class="qmeta"><span class="kicker">Droombaan</span><span>·</span><span>Kies 1 optie</span></div>
+<p class="job-intro-b1">{JOB_INTRO_B1}</p>
 <h1 class="island-lead" style="margin-top:4px">Welke beroepen passen bij jou?</h1>
-<p class="jpick-hint">Dit zijn vijf ideeën uit jouw antwoorden. Kies er <b>precies één</b>.</p>
-<div class="qrow"><button class="speak on">{SPK}</button><span class="speak-label">Lobsy leest de uitleg voor</span></div>
-<div class="job-picks" role="radiogroup" aria-label="Kies één beroep">{cards}</div>
+<p class="jpick-hint">Kies <b>één</b> beroep — of kies dat geen van deze vijf je aanspreekt.</p>
+<p class="sr-read" id="job-read-aloud">{JOB_READ_ALOUD}</p>
+<div class="qrow"><button class="speak on" aria-describedby="job-read-aloud">{SPK}</button><span class="speak-label">Lobsy leest de uitleg voor</span></div>
+<div class="job-picks" role="radiogroup" aria-label="Kies één beroep of geen van deze vijf">{cards}</div>
+{next_note}
 <div class="qfoot"><button class="btn btn-ghost">{BACK}Vorige</button><button class="btn btn-main">Bevestig mijn keuze {NEXT}</button></div>
-<p class="jpick-hint" style="margin-top:10px;font-size:14px">De knop werkt pas als je een beroep hebt gekozen.</p></div>
+<p class="jpick-hint" style="margin-top:10px;font-size:14px">De knop werkt als je een beroep <b>of</b> “Geen van deze 5” hebt gekozen.</p></div>
 <aside class="d-only" style="padding-top:10px">{bubble(coach,'b')}<img class="lob" src="img/kreeft-kijker.png" alt="Lobsy" style="margin-top:22px"></aside>
 <div class="m-only"><div class="guide"><div class="ring"></div>{bubble(coach,'l')}</div></div></div></div>{FOOT}'''
     page(name,body,w['cls'])
@@ -419,9 +446,9 @@ def job_day(name,k):
     blocks=''
     for b in d['blocks']:
         key=b['key']; lab=b['label']; txt=b['text']
-        ico=DAY_ICO.get(key,DAY_ICO['morning'])
-        blocks+=f'''<li class="day-block"><span class="dico">{ico}</span><div><h2>{lab}</h2><p>{txt}</p></div>
-<span class="dspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></li>'''
+        scene=day_icon(key)
+        blocks+=f'''<li class="day-block" data-moment="{key}"><div class="day-block-inner"><span class="day-scene">{scene}</span><div><h2>{lab}</h2><p>{txt}</p></div>
+<span class="dspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></div></li>'''
     facts=''
     skills=d.get('skills') or []
     if skills:
@@ -435,7 +462,7 @@ def job_day(name,k):
         src_note='<p class="day-disclaimer" style="margin-top:12px;font-size:13px">Tekst: <code>OccupationDayBlock</code>-timeline (zelfde velden als de API). Geen DB-export in repo — gegenereerd via <code>tools/day_export</code> uit <code>OccupationDayFacts</code> tot admin <code>occupation-day-in-life.nl.json</code> beschikbaar is.</p>'
     body=f'''{top(w['small'])}{bandcss('jb',img,320,220,pos,pos)}
 <section class="band jb dark" style="padding-top:32px">{journey(w,last,'<b>Droombaan</b> · een dag in het leven')}</section>
-<div class="wrap" style="position:relative;z-index:4;margin-top:-20px"><div class="q-layout"><div class="card">
+<div class="wrap" style="position:relative;z-index:4;margin-top:-20px"><div class="q-layout"><div class="card card-deco">{world_deco(k)}
 <div class="qmeta"><span class="kicker">Een gewone werkdag</span><span>·</span><span>{title}</span></div>
 <h1 class="island-lead" style="margin-top:4px">Een dag als {title}</h1>
 <p class="day-disclaimer">Een typische dag. Bij elke werkgever kan het anders zijn.</p>
@@ -452,6 +479,6 @@ for i,k in enumerate(['zee','tuin','ster']):
     b=1+i*3; nm={'zee':'zee','tuin':'eilandtuin','ster':'sterrenkust'}[k]
     route(f'{b:02d}-{nm}-route',k); question(f'{b+1:02d}-{nm}-vraag',k); intro(f'{b+2:02d}-{nm}-puzzel-intro',k)
     island_page(f'11a-{nm}-pauze-leuk',k,1); island_page(f'11b-{nm}-pauze-niet-leuk',k,2)
-    result(f'10-{nm}-result',k); job_pick(f'12-{nm}-beroep-kiezen',k)
+    result(f'10-{nm}-result',k); job_pick(f'12-{nm}-beroep-kiezen',k,none_selected=True)
     job_day(f'13-{nm}-beroep-dag-dierenverzorger',k)
 print('ok')
