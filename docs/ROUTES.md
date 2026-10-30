@@ -238,6 +238,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/leerling/paspoort` | `Pages/Leerling/LeerlingPaspoort.razor` | authenticated |
 | `/leerling/puzzel/{Key}` | `Pages/Leerling/LeerlingPuzzel.razor` | authenticated |
 | `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
+| `/leerling/wereld` | `Pages/Leerling/LeerlingWereld.razor` | authenticated |
 | `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | authenticated |
 | `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |
 | `/leerling/vo-paspoort` | `Pages/Leerling/LeerlingVoPaspoort.razor` | authenticated |

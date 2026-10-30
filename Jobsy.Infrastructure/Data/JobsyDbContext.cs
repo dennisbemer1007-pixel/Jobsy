@@ -3302,6 +3302,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.LikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DislikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DreamJobKey).HasMaxLength(64);
+            entity.Property(e => e.JourneyThemeKey).HasMaxLength(16);
             entity.Property(e => e.VoProfileKey).HasMaxLength(64);
             entity.Property(e => e.VoTravelModeKey).HasMaxLength(32);
             entity.Property(e => e.VoOwnWords).HasMaxLength(2000);
