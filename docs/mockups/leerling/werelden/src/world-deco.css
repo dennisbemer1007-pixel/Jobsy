@@ -46,33 +46,38 @@
 
 .pchip.on.dislike .ico{background:linear-gradient(145deg,#c98878,#7a3b2a)!important;border-color:#5c2a1c!important;color:#fff!important}
 
-/* Job cards — extends style.css grid (do not set display:block) */
+/* Job cards — large painted illustration per beroep */
 .card-deco .jpick{
   position:relative;overflow:hidden;width:100%;max-width:100%;box-sizing:border-box;
-  grid-template-columns:72px minmax(0,1fr) auto!important;align-items:start;
+  grid-template-columns:150px minmax(0,1fr) auto!important;align-items:start;
 }
+.card-deco .jpick-paint{
+  margin:0;width:150px;height:150px;border-radius:18px;overflow:hidden;flex:none;
+  grid-row:1/span 4;align-self:start;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 6px 16px rgba(16,40,74,.12);
+}
+.card-deco .jpick-paint img{width:100%;height:100%;object-fit:cover;display:block}
+.card-deco .jpick-paint::after{
+  content:'';position:absolute;inset:0;pointer-events:none;border-radius:18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(0,0,0,.12));
+}
+.card-deco .jpick-paint{position:relative}
 .card-deco .jpick-art{
   width:72px;height:72px;border-radius:16px;display:flex;align-items:center;justify-content:center;
-  flex:none;position:relative;overflow:hidden;grid-row:span 1;
+  flex:none;position:relative;overflow:hidden;
 }
-.card-deco .jpick-art::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(0,0,0,.1));pointer-events:none}
-.card-deco .jpick-art svg.painted{width:46px;height:46px;position:relative;z-index:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
-.card-deco .jpick-art svg.painted .shade{fill:#fff;opacity:.18}
-.card-deco .jpick-art svg.painted .main{fill:#fff!important;stroke:#fff!important;stroke-width:2.4!important}
-.card-deco .jpick-art svg.painted path.main[fill="none"],.card-deco .jpick-art svg.painted rect.main[fill="none"]{fill:none!important;stroke-width:2.8!important}
-.card-deco .jpick-art svg.painted .accent{fill:#ffd98a!important;stroke:#fff!important;stroke-width:2.2!important}
-.card-deco .jpick-art svg.painted circle.accent,.card-deco .jpick-art svg.painted ellipse.accent{fill:#ffd98a!important;stroke:none!important}
+.card-deco .jpick-art svg.painted{width:46px;height:46px;position:relative;z-index:1}
 
 .t-zee .jpick{background:linear-gradient(135deg,#fff 0%,#eef8f6 55%,#e3f2ef 100%);border-color:#8ec4bc}
-.t-zee .jpick-art{background:linear-gradient(145deg,#5eb8b0,#2f8a96 55%,#1b5a7a),url(img/schelp-2.png) bottom -6px right -8px/44px no-repeat}
+.t-zee .jpick-paint{box-shadow:inset 0 0 0 2px rgba(142,196,188,.55),0 6px 18px rgba(47,138,150,.18)}
 .t-zee .jpick.sel{border-color:var(--ok);box-shadow:0 0 0 4px rgba(47,125,91,.22),0 6px 18px rgba(47,138,150,.15);background:#f6fbf8}
 
 .t-tuin .jpick{background:linear-gradient(135deg,#fffaf4 0%,#f8ebe0 55%,#f0dcc8 100%);border-color:#e0c4a8}
-.t-tuin .jpick-art{background:linear-gradient(145deg,#c08a4a,#8a5a3a 50%,#5d8a52),url(img/dot-tuin-2.jpg) center/cover}
+.t-tuin .jpick-paint{box-shadow:inset 0 0 0 2px rgba(224,196,168,.65),0 6px 18px rgba(58,34,48,.12)}
 .t-tuin .jpick.sel{box-shadow:0 0 0 4px rgba(77,122,92,.25),0 6px 18px rgba(58,34,48,.1)}
 
 .t-ster .jpick{background:linear-gradient(135deg,#fcfcfa 0%,#e8eaf2 55%,#d8dce8 100%);border-color:#b8bfd4}
-.t-ster .jpick-art{background:linear-gradient(145deg,#6f86a8,#24305a 55%,#141c36),url(img/dot-ster-2.jpg) center/cover}
+.t-ster .jpick-paint{box-shadow:inset 0 0 0 2px rgba(184,191,212,.7),0 6px 18px rgba(20,28,54,.14)}
 .t-ster .jpick.sel{box-shadow:0 0 0 4px rgba(183,160,106,.35),0 6px 18px rgba(20,28,54,.12)}
 
 .card-deco .jpick .jmark{grid-column:1/-1;margin-top:2px}
@@ -80,6 +85,8 @@
 
 .jpick-none{border-style:dashed}
 .jpick-none .jtitle{font-size:18px;line-height:1.35}
+.card-deco .jpick-none{grid-template-columns:72px minmax(0,1fr) auto!important}
+.card-deco .jpick-none .jpick-art{grid-row:1}
 .jpick-art-none{background:linear-gradient(145deg,#e8e4dc,#c8c0b4)!important;color:var(--ink)!important}
 .jpick-art-none svg.painted .main{fill:#4c5a70!important;stroke:#4c5a70!important}
 .jpick-art-none svg.painted .accent{fill:#7a3b2a!important;stroke:#7a3b2a!important}
@@ -91,28 +98,29 @@
 
 /* Day timeline */
 .card-deco .day-block{display:block;position:relative;overflow:hidden;border-width:2px;padding:0;width:100%;max-width:100%;box-sizing:border-box}
-.card-deco .day-block-inner{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:14px 16px;align-items:start;padding:16px 18px;width:100%;box-sizing:border-box}
+.card-deco .day-block-inner{display:grid;grid-template-columns:80px minmax(0,1fr) auto;gap:14px 16px;align-items:start;padding:16px 18px;width:100%;box-sizing:border-box}
 .card-deco .day-block-inner > div{min-width:0}
 .card-deco .day-block h2,.card-deco .day-block p{overflow-wrap:anywhere;word-break:normal}
-.card-deco .day-scene{width:72px;height:72px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex:none;position:relative;overflow:hidden}
-.card-deco .day-scene svg.painted{width:46px;height:46px;position:relative;z-index:2}
-.card-deco .day-scene svg.painted .main{fill:#fff;stroke:#fff;stroke-width:2}
-.card-deco .day-scene svg.painted .accent{fill:#ffe8a8;stroke:#ffe8a8}
-.card-deco .day-scene::before{content:'';position:absolute;inset:0;z-index:0;opacity:.95}
+.card-deco .day-job-hero{
+  margin:12px 0 18px;border-radius:20px;overflow:hidden;
+  box-shadow:0 10px 28px rgba(16,40,74,.14),inset 0 0 0 1px rgba(255,255,255,.4);
+  max-width:100%;
+}
+.card-deco .day-job-hero img{width:100%;height:auto;max-height:220px;object-fit:cover;display:block}
+.card-deco .day-scene{width:80px;height:80px;border-radius:16px;display:block;flex:none;position:relative;overflow:hidden}
+.card-deco .day-scene-img{width:100%;height:100%;object-fit:cover;display:block}
+.card-deco .day-scene::after{
+  content:'';position:absolute;inset:0;border-radius:16px;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.1));
+}
 
 .t-zee .day-block{background:linear-gradient(135deg,#fff 0%,#eef8f6 100%);border-color:#9ec9c4}
-.t-zee .day-scene::before{background:linear-gradient(160deg,#7ec8c0,#2f8a96 70%,#1b4a6a),url(img/oceaan.jpg) center/cover}
-.t-zee .day-block[data-moment="start"] .day-scene::before{background:linear-gradient(160deg,rgba(245,217,160,.85),rgba(94,184,176,.75)),url(img/rif.jpg) center/cover}
-.t-zee .day-block[data-moment="close"] .day-scene::before{background:linear-gradient(160deg,rgba(36,48,90,.75),rgba(47,138,150,.8)),url(img/vuurtoren.jpg) center/cover}
-
 .t-tuin .day-block{background:linear-gradient(135deg,#fffaf4 0%,#f6ebe0 100%);border-color:#e8c6ab}
-.t-tuin .day-scene::before{background:linear-gradient(160deg,rgba(232,198,171,.8),rgba(93,138,82,.85)),url(img/tuin-baai.jpg) center/cover}
-.t-tuin .day-block[data-moment="pause"] .day-scene::before{background:linear-gradient(160deg,rgba(244,220,201,.85),rgba(192,138,74,.75)),url(img/dot-tuin-3.jpg) center/cover}
-
 .t-ster .day-block{background:linear-gradient(135deg,#fcfcfa 0%,#e8eaf2 100%);border-color:#c5cad8}
-.t-ster .day-scene::before{background:linear-gradient(160deg,rgba(154,172,200,.85),rgba(36,48,90,.9)),url(img/sterren-strand.jpg) center/cover}
-.t-ster .day-block[data-moment="start"] .day-scene::before{background:linear-gradient(160deg,rgba(26,36,70,.8),rgba(232,180,106,.65)),url(img/dot-ster-1.jpg) center/cover}
-.t-ster .day-block[data-moment="afternoon"] .day-scene::before{background:linear-gradient(160deg,rgba(199,128,47,.7),rgba(111,134,168,.85)),url(img/dot-ster-4.jpg) center/cover}
+.t-zee .day-job-hero{box-shadow:0 10px 28px rgba(47,138,150,.2),inset 0 0 0 2px rgba(158,201,196,.6)}
+.t-tuin .day-job-hero{box-shadow:0 10px 28px rgba(58,34,48,.12),inset 0 0 0 2px rgba(232,198,171,.65)}
+.t-ster .day-job-hero{box-shadow:0 10px 28px rgba(20,28,54,.16),inset 0 0 0 2px rgba(197,202,216,.75)}
 
 .day-pill{border-width:1.5px;font-weight:500}
 .t-zee .day-pill{background:linear-gradient(180deg,#eef8f6,#dff3f0);border-color:#9ec9c4;color:#0f5b66}
@@ -120,9 +128,18 @@
 .t-ster .day-pill{background:linear-gradient(180deg,#eef0f6,#dfe4ef);border-color:#b8bfd4;color:#24305a}
 
 @media (max-width:600px){
- .card-deco .jpick{grid-template-columns:60px minmax(0,1fr) auto!important}
- .card-deco .jpick-art{width:60px;height:60px}
- .card-deco .jpick-art svg.painted{width:40px;height:40px}
- .card-deco .day-block-inner{grid-template-columns:60px minmax(0,1fr) auto}
- .card-deco .day-scene{width:60px;height:60px}
+ .card-deco .jpick{
+   grid-template-columns:minmax(0,1fr) auto!important;
+   grid-template-rows:auto auto auto;
+ }
+ .card-deco .jpick-paint{
+   grid-column:1/-1;grid-row:1;width:100%;height:132px;max-height:160px;margin:0 0 4px;
+ }
+ .card-deco .jpick .jbody{grid-column:1;grid-row:2}
+ .card-deco .jpick .jspeak{grid-column:2;grid-row:2;align-self:start}
+ .card-deco .jpick .jmark{grid-column:1/-1;grid-row:3}
+ .card-deco .jpick-none .jpick-art{width:60px;height:60px;grid-row:1;grid-column:1}
+ .card-deco .day-block-inner{grid-template-columns:72px minmax(0,1fr) auto}
+ .card-deco .day-scene{width:72px;height:72px}
+ .card-deco .day-job-hero img{max-height:180px}
 }

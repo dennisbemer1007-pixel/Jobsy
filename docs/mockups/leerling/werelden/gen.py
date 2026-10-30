@@ -1,5 +1,15 @@
 import os,json
-from painted_svgs import chip_icon, job_icon, job_none_icon, day_icon, world_deco, PLUS as PLUS_SVG
+from painted_svgs import (
+    chip_icon,
+    job_icon,
+    job_none_icon,
+    day_icon,
+    world_deco,
+    job_paint_img,
+    day_hero_img,
+    day_scene_img,
+    PLUS as PLUS_SVG,
+)
 
 JOB_INTRO_B1='Dit zijn 5 beroepen die goed bij jou passen. Dat zien we aan jouw antwoorden!'
 JOB_COACH=(
@@ -380,11 +390,11 @@ def job_pick(name,k,none_selected=False):
     cards=''
     for key,title,domain,blurb,why,default_sel in JOB_PICKS:
         sel=(not none_selected) and default_sel
-        art=job_icon(key)
+        paint=job_paint_img(k, key)
         day_hint=' · <span style="color:var(--teal);font-weight:600">Tik voor een dag in dit beroep</span>' if key=='dierenverzorger' else ''
         mark='<span class="jmark">✓ Jouw keuze</span>' if sel else ''
         cards+=f'''<button type="button" class="jpick{" sel" if sel else ""}" aria-pressed="{"true" if sel else "false"}">
-<div class="jpick-art">{art}</div><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Leuk voor jou omdat {why}{day_hint}</p></div>
+<figure class="jpick-paint"><img src="{paint}" alt="" width="520" height="360"></figure><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Leuk voor jou omdat {why}{day_hint}</p></div>
 <span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span>
 {mark}</button>'''
     none_art=job_none_icon()
@@ -444,8 +454,8 @@ def job_day(name,k):
     blocks=''
     for b in d['blocks']:
         key=b['key']; lab=b['label']; txt=b['text']
-        scene=day_icon(key)
-        blocks+=f'''<li class="day-block" data-moment="{key}"><div class="day-block-inner"><span class="day-scene">{scene}</span><div><h2>{lab}</h2><p>{txt}</p></div>
+        scene_src=day_scene_img(k, key)
+        blocks+=f'''<li class="day-block" data-moment="{key}"><div class="day-block-inner"><span class="day-scene"><img class="day-scene-img" src="{scene_src}" alt="" width="280" height="280"></span><div><h2>{lab}</h2><p>{txt}</p></div>
 <span class="dspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></div></li>'''
     facts=''
     skills=d.get('skills') or []
@@ -463,6 +473,7 @@ def job_day(name,k):
 <div class="qmeta"><span class="kicker">Een werkdag</span><span>·</span><span>{title}</span></div>
 <h1 class="island-lead" style="margin-top:4px">Een dag als {title}</h1>
 <p class="day-disclaimer">Zo kan een dag eruitzien. Overal is het een beetje anders.</p>
+<figure class="day-job-hero"><img src="{day_hero_img(k)}" alt="" width="960" height="380"></figure>
 <div class="qrow"><button class="speak on">{SPK}</button><span class="speak-label">Lobsy leest de uitleg voor</span></div>
 <ol class="day-timeline">{blocks}</ol>{facts}{varies_html}
 <div class="qfoot" style="flex-wrap:wrap"><button class="btn btn-ghost">{BACK}Terug naar de beroepen</button>

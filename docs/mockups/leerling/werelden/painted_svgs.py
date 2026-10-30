@@ -240,3 +240,15 @@ def day_icon(key: str) -> str:
 
 def world_deco(world_key: str) -> str:
     return WORLD_DECO.get(world_key, WORLD_DECO["zee"])
+
+
+def job_paint_img(world_key: str, job_key: str) -> str:
+    return f"img/painted/jobs/{world_key}/{job_key}.jpg"
+
+
+def day_hero_img(world_key: str, occupation_key: str = "dierenverzorger") -> str:
+    return f"img/painted/day-hero/{world_key}/{occupation_key}.jpg"
+
+
+def day_scene_img(world_key: str, moment_key: str) -> str:
+    return f"img/painted/day-scenes/{world_key}/{moment_key}.jpg"
